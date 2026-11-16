@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isPasswordPwned } from "@/lib/auth/hibp";
@@ -141,16 +141,37 @@ export async function checkPasswordLeak(password: string): Promise<boolean> {
   return isPasswordPwned(password);
 }
 
-// Ponowne wysłanie linku potwierdzającego. Zawsze „sukces” — nie zdradzamy stanu konta.
-export async function resendConfirmation(email: string): Promise<AuthFormState> {
+// Wspólna kontrola ponownego wysłania linku: e-mail (zod) i Turnstile. Publiczna akcja bez nich pozwalałaby zalewać skrzynki.
+// Zwraca błąd do pokazania albo znormalizowany e-mail.
+async function sprawdzPonowneWyslanie(
+  email: string,
+  turnstileToken: string | null,
+): Promise<{ blad: AuthFormState } | { email: string }> {
+  const parsed = resetRequestSchema.safeParse({ email });
+  if (!parsed.success) {
+    return { blad: { status: "error", fieldErrors: { email: "Podaj poprawny e-mail" } } };
+  }
+  const naglowki = await headers();
+  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  if (!(await verifyTurnstile(turnstileToken, ip))) {
+    return { blad: { status: "error", message: "Potwierdź, że nie jesteś botem" } };
+  }
+  return { email: parsed.data.email };
+}
+
+// Ponowne wysłanie linku potwierdzającego. Po przejściu kontroli zawsze „sukces” — nie zdradzamy stanu konta.
+export async function resendConfirmation(email: string, turnstileToken: string | null): Promise<AuthFormState> {
+  const kontrola = await sprawdzPonowneWyslanie(email, turnstileToken);
+  if ("blad" in kontrola) return kontrola.blad;
+
   const origin = await originZNaglowkow();
   const supabase = await createClient();
   await supabase.auth.resend({
     type: "signup",
-    email: email.trim().toLowerCase(),
+    email: kontrola.email,
     options: { emailRedirectTo: `${origin}/auth/confirm` },
   });
-  return { status: "success", email };
+  return { status: "success", email: kontrola.email };
 }
 
 // Prośba o reset hasła: zod → Turnstile → Supabase. Zawsze ten sam sukces, niezależnie od tego, czy konto istnieje.
@@ -175,9 +196,22 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
   return { status: "success", email: parsed.data.email };
 }
 
-// Nowe hasło po kliknięciu linku z maila (link tworzy sesję recovery).
+// Nowe hasło po kliknięciu linku z maila. Wymaga ciasteczka rhytm_recovery (ustawia je tylko /auth/confirm
+// po udanym recovery) ORAZ sesji — samo bycie zalogowanym nie pozwala zmienić hasła bez starego.
 // Po zmianie wylogowujemy pozostałe urządzenia, a bieżące przechodzi do aplikacji.
 export async function updatePassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const WYGASL: AuthFormState = { status: "error", message: "Link wygasł. Poproś o nowy." };
+
+  const ciasteczka = await cookies();
+  if (!ciasteczka.get("rhytm_recovery")) return WYGASL;
+
+  // Sesję sprawdzamy przed jakimkolwiek zapytaniem do HIBP
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return WYGASL;
+
   const parsed = newPasswordSchema.safeParse({
     password: formData.get("password"),
     confirm: formData.get("confirm"),
@@ -195,30 +229,31 @@ export async function updatePassword(_prev: AuthFormState, formData: FormData): 
     return { status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { status: "error", message: "Link wygasł. Poproś o nowy." };
-  }
-
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
     return { status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." };
   }
   await supabase.auth.signOut({ scope: "others" });
+  // Znacznik jest jednorazowy
+  ciasteczka.delete("rhytm_recovery");
 
   redirect("/dzis");
 }
 
-// Ponowne wysłanie linku (potwierdzenie konta albo reset hasła). Zawsze „sukces” — nie zdradzamy stanu konta.
-export async function resendLink(type: "signup" | "recovery", email: string): Promise<AuthFormState> {
+// Ponowne wysłanie linku (potwierdzenie konta albo reset hasła). Kontrola e-maila i Turnstile, potem zawsze „sukces”.
+export async function resendLink(
+  type: "signup" | "recovery",
+  email: string,
+  turnstileToken: string | null,
+): Promise<AuthFormState> {
   if (type === "signup") {
-    return resendConfirmation(email);
+    return resendConfirmation(email, turnstileToken);
   }
+  const kontrola = await sprawdzPonowneWyslanie(email, turnstileToken);
+  if ("blad" in kontrola) return kontrola.blad;
+
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${origin}/auth/confirm` });
-  return { status: "success", email };
+  await supabase.auth.resetPasswordForEmail(kontrola.email, { redirectTo: `${origin}/auth/confirm` });
+  return { status: "success", email: kontrola.email };
 }

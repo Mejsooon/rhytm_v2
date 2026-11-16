@@ -49,8 +49,8 @@ export function ResetSteps() {
               <Link href="/logowanie">Wróć do logowania</Link>
             </Button>
           }
-          onResend={async () => {
-            await resendLink("recovery", state.email ?? "");
+          onResend={async (token) => {
+            await resendLink("recovery", state.email ?? "", token);
           }}
         />
       ) : (

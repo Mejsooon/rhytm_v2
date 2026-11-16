@@ -69,8 +69,8 @@ export function RegisterForm() {
     return (
       <CheckInbox
         email={adres}
-        onResend={async () => {
-          await resendConfirmation(adres);
+        onResend={async (token) => {
+          await resendConfirmation(adres, token);
         }}
       />
     );

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, updateUser, signOutMock, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
+const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, updateUser, signOutMock, cookieGet, cookieDelete, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUpMock: vi.fn(),
   resendMock: vi.fn(),
@@ -8,6 +8,8 @@ const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, upda
   getUser: vi.fn(),
   updateUser: vi.fn(),
   signOutMock: vi.fn(),
+  cookieGet: vi.fn(),
+  cookieDelete: vi.fn(),
   isPasswordPwned: vi.fn(),
   maybeSingle: vi.fn(),
   verifyTurnstile: vi.fn(),
@@ -31,6 +33,7 @@ vi.mock("@/lib/auth/turnstile", () => ({ verifyTurnstile }));
 vi.mock("@/lib/auth/hibp", () => ({ isPasswordPwned }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8", host: "localhost:3000" }),
+  cookies: async () => ({ get: cookieGet, delete: cookieDelete }),
 }));
 // redirect w Next rzuca wyjątek — odwzorowujemy to, żeby sprawdzić cel
 vi.mock("next/navigation", () => ({
@@ -163,11 +166,28 @@ describe("checkPasswordLeak", () => {
 });
 
 describe("resendConfirmation", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    verifyTurnstile.mockResolvedValue(true);
+  });
+
+  it("zły e-mail → błąd pola, bez wysyłki", async () => {
+    const wynik = await resendConfirmation("nie-email", "tok");
+    expect(wynik.fieldErrors?.email).toBe("Podaj poprawny e-mail");
+    expect(resendMock).not.toHaveBeenCalled();
+  });
+
+  it("błąd Turnstile → „Potwierdź, że nie jesteś botem”, bez wysyłki", async () => {
+    verifyTurnstile.mockResolvedValue(false);
+    const wynik = await resendConfirmation("ala@przyklad.pl", null);
+    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    expect(verifyTurnstile).toHaveBeenCalledWith(null, "1.2.3.4");
+    expect(resendMock).not.toHaveBeenCalled();
+  });
 
   it("wysyła ponownie link i zwraca sukces", async () => {
     resendMock.mockResolvedValue({ error: null });
-    const wynik = await resendConfirmation("ala@przyklad.pl");
+    const wynik = await resendConfirmation("ala@przyklad.pl", "tok");
     expect(resendMock).toHaveBeenCalledWith({
       type: "signup",
       email: "ala@przyklad.pl",
@@ -178,33 +198,34 @@ describe("resendConfirmation", () => {
 
   it("błąd Supabase nie zdradza stanu konta — też sukces", async () => {
     resendMock.mockResolvedValue({ error: { message: "x" } });
-    expect((await resendConfirmation("ala@przyklad.pl")).status).toBe("success");
+    expect((await resendConfirmation("ala@przyklad.pl", "tok")).status).toBe("success");
   });
 });
 
 describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    verifyTurnstile.mockResolvedValue(true);
     resendMock.mockResolvedValue({ error: null });
   });
   afterEach(() => vi.unstubAllEnvs());
 
   it("używa NEXT_PUBLIC_SITE_URL (bez końcowego ukośnika), ignorując nagłówki", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://rhytm.app/");
-    await resendConfirmation("a@b.pl");
+    await resendConfirmation("a@b.pl", "tok");
     expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("https://rhytm.app/auth/confirm");
   });
 
   it("bez zmiennej poza produkcją — zapas z nagłówków", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
-    await resendConfirmation("a@b.pl");
+    await resendConfirmation("a@b.pl", "tok");
     expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("http://localhost:3000/auth/confirm");
   });
 
   it("w produkcji bez zmiennej — czytelny błąd, bez wysyłki", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     vi.stubEnv("NODE_ENV", "production");
-    await expect(resendConfirmation("a@b.pl")).rejects.toThrow("NEXT_PUBLIC_SITE_URL");
+    await expect(resendConfirmation("a@b.pl", "tok")).rejects.toThrow("NEXT_PUBLIC_SITE_URL");
     expect(resendMock).not.toHaveBeenCalled();
   });
 });
@@ -249,6 +270,7 @@ describe("updatePassword", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+    cookieGet.mockReturnValue({ name: "rhytm_recovery", value: "1" });
     isPasswordPwned.mockResolvedValue(false);
     updateUser.mockResolvedValue({ error: null });
     signOutMock.mockResolvedValue({ error: null });
@@ -258,6 +280,21 @@ describe("updatePassword", () => {
     await expect(updatePassword({ status: "idle" }, formularz(dane))).rejects.toThrow("REDIRECT:/dzis");
     expect(updateUser).toHaveBeenCalledWith({ password: "rytm2026dobre" });
     expect(signOutMock).toHaveBeenCalledWith({ scope: "others" });
+    expect(cookieDelete).toHaveBeenCalledWith("rhytm_recovery");
+  });
+
+  it("bez ciasteczka rhytm_recovery → „Link wygasł”, bez getUser, HIBP i zmiany", async () => {
+    cookieGet.mockReturnValue(undefined);
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik).toEqual({ status: "error", message: "Link wygasł. Poproś o nowy." });
+    expect(isPasswordPwned).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("getUser jest sprawdzane przed HIBP (brak sesji → HIBP nie jest wołane)", async () => {
+    getUser.mockResolvedValue({ data: { user: null } });
+    await updatePassword({ status: "idle" }, formularz(dane));
+    expect(isPasswordPwned).not.toHaveBeenCalled();
   });
 
   it("niezgodne hasła → błąd pola confirm", async () => {
@@ -292,12 +329,13 @@ describe("updatePassword", () => {
 describe("resendLink", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    verifyTurnstile.mockResolvedValue(true);
     resendMock.mockResolvedValue({ error: null });
     resetForEmail.mockResolvedValue({ error: null });
   });
 
   it("signup → resend potwierdzenia", async () => {
-    const wynik = await resendLink("signup", "Ala@Przyklad.pl");
+    const wynik = await resendLink("signup", "Ala@Przyklad.pl", "tok");
     expect(resendMock).toHaveBeenCalledWith({
       type: "signup",
       email: "ala@przyklad.pl",
@@ -308,8 +346,18 @@ describe("resendLink", () => {
 
   it("recovery → resetPasswordForEmail, zawsze sukces", async () => {
     resetForEmail.mockResolvedValue({ error: { message: "x" } });
-    const wynik = await resendLink("recovery", "ala@przyklad.pl");
+    const wynik = await resendLink("recovery", "ala@przyklad.pl", "tok");
     expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", { redirectTo: "http://localhost:3000/auth/confirm" });
     expect(wynik.status).toBe("success");
+  });
+
+  it("recovery: zły e-mail → błąd pola, błąd Turnstile → komunikat; w obu bez wysyłki", async () => {
+    expect((await resendLink("recovery", "zle", "tok")).fieldErrors?.email).toBe("Podaj poprawny e-mail");
+    verifyTurnstile.mockResolvedValue(false);
+    expect(await resendLink("recovery", "ala@przyklad.pl", null)).toEqual({
+      status: "error",
+      message: "Potwierdź, że nie jesteś botem",
+    });
+    expect(resetForEmail).not.toHaveBeenCalled();
   });
 });

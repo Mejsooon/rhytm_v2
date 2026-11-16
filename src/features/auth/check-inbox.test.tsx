@@ -1,6 +1,10 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/components/auth/turnstile-widget", () => ({
+  TurnstileWidget: () => <input type="hidden" name="cf-turnstile-response" value="tok" />,
+}));
+
 import { CheckInbox } from "./check-inbox";
 
 // Licznik przestawia kolejny timeout dopiero po renderze — przesuwamy czas po 1 s, każdy krok w act
@@ -39,6 +43,8 @@ describe("CheckInbox", () => {
     const przycisk = screen.getByRole("button", { name: /Wyślij ponownie/ });
     await act(async () => przycisk.click());
     expect(onResend).toHaveBeenCalledTimes(1);
+    // Token Turnstile z formularza trafia do onResend
+    expect(onResend).toHaveBeenCalledWith("tok");
     expect(przycisk).toBeDisabled();
     uplyw(1);
     expect(przycisk).toHaveTextContent("0:59");

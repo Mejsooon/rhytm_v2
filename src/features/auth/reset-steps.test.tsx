@@ -49,7 +49,7 @@ describe("ResetSteps", () => {
     await screen.findByText("krok 2 / 3");
     for (let i = 0; i < 60; i++) await act(async () => void vi.advanceTimersByTime(1000));
     await user.click(screen.getByRole("button", { name: /Wyślij ponownie/ }));
-    expect(resendLink).toHaveBeenCalledWith("recovery", "ala@przyklad.pl");
+    expect(resendLink).toHaveBeenCalledWith("recovery", "ala@przyklad.pl", "token");
     vi.useRealTimers();
   });
 });

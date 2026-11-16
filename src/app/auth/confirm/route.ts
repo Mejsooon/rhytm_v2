@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // Dozwolone typy linków z maili — tylko one trafiają do verifyOtp (żadnych dowolnych wartości z adresu)
-const TYPY = ["signup", "email", "recovery", "email_change"] as const;
+const TYPY = ["signup", "email", "recovery"] as const;
 type TypLinku = (typeof TYPY)[number];
 
 // Gdzie prowadzi udane potwierdzenie danego typu
@@ -11,7 +11,6 @@ const CEL: Record<TypLinku, string> = {
   signup: "/potwierdzono",
   email: "/potwierdzono",
   recovery: "/nowe-haslo",
-  email_change: "/ustawienia",
 };
 
 // Link z maila (szablony w supabase/templates): wymiana token_hash na sesję.
@@ -28,5 +27,17 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.verifyOtp({ type: typ, token_hash: tokenHash });
   if (error) return blad;
 
-  return NextResponse.redirect(new URL(CEL[typ], origin));
+  const odpowiedz = NextResponse.redirect(new URL(CEL[typ], origin));
+  // Recovery: znacznik, że sesja pochodzi z linku resetu. Tylko z nim /nowe-haslo pozwala zmienić hasło bez starego
+  // (zwykła zalogowana sesja nie wystarczy). Ważny 15 minut.
+  if (typ === "recovery") {
+    odpowiedz.cookies.set("rhytm_recovery", "1", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 900,
+      path: "/",
+    });
+  }
+  return odpowiedz;
 }

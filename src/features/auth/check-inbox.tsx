@@ -1,8 +1,9 @@
 "use client";
 
 import { Check, Mail } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { Button } from "@/components/controls/button";
 
 // Stan „Sprawdź skrzynkę”: ikona, tekst, „Wyślij ponownie” z odliczaniem.
@@ -17,7 +18,8 @@ export function CheckInbox({
 }: {
   // Adres jest częścią kontraktu komponentu, ale makieta go nie pokazuje — nie renderujemy go
   email?: string;
-  onResend: () => Promise<void>;
+  // Token Turnstile (niewidoczny widżet w formularzu „Wyślij ponownie”) — serwer wymaga go przy każdym wysłaniu
+  onResend: (turnstileToken: string | null) => Promise<void>;
   cooldownSeconds?: number;
   kind?: "signup" | "reset";
   // Własny opis zamiast domyślnego tekstu o linku potwierdzającym
@@ -34,9 +36,15 @@ export function CheckInbox({
     return () => clearTimeout(t);
   }, [pozostalo]);
 
-  async function ponownie() {
-    await onResend();
+  // Token jednorazowy: po każdym wysłaniu widżet dostaje nowy resetKey
+  const [odnowienia, setOdnowienia] = useState(0);
+
+  async function ponownie(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const token = new FormData(e.currentTarget).get("cf-turnstile-response");
+    await onResend(typeof token === "string" ? token : null);
     setPozostalo(cooldownSeconds);
+    setOdnowienia((n) => n + 1);
   }
 
   const licznik = `${Math.floor(pozostalo / 60)}:${String(pozostalo % 60).padStart(2, "0")}`;
@@ -68,15 +76,17 @@ export function CheckInbox({
         </p>
       </div>
       {before}
-      <Button
-        type="button"
-        disabled={pozostalo > 0}
-        onClick={ponownie}
-        className={reset ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0" : "px-3 py-2 font-normal"}
-      >
-        Wyślij ponownie
-        {pozostalo > 0 && <span className="font-mono text-[#6b6b6b]">{licznik}</span>}
-      </Button>
+      <form onSubmit={ponownie} className={reset ? "flex flex-col items-center max-[799px]:w-full" : "flex flex-col items-center"}>
+        <TurnstileWidget resetKey={odnowienia} />
+        <Button
+          type="submit"
+          disabled={pozostalo > 0}
+          className={reset ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0" : "px-3 py-2 font-normal"}
+        >
+          Wyślij ponownie
+          {pozostalo > 0 && <span className="font-mono text-[#6b6b6b]">{licznik}</span>}
+        </Button>
+      </form>
     </div>
   );
 }
