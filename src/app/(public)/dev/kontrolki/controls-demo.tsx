@@ -7,12 +7,14 @@ import {
   Button,
   Checkbox,
   Chip,
+  DatePicker,
   Dropdown,
   FormDialog,
   MonoLabel,
   Segment,
   StatusBadge,
   Switch,
+  TimePicker,
   WordConfirm,
   type BadgeTone,
 } from "@/components/controls";
@@ -51,6 +53,8 @@ export function ControlsDemo() {
   const [cb1, setCb1] = React.useState(true);
   const [cb2, setCb2] = React.useState(false);
   const [chip, setChip] = React.useState("pr");
+  const [data, setData] = React.useState<string | null>("2026-11-20");
+  const [godzina, setGodzina] = React.useState("12:00");
   const [potwierdzono, setPotwierdzono] = React.useState(false);
 
   return (
@@ -176,6 +180,15 @@ export function ControlsDemo() {
         <StatusBadge tone="blue">W toku</StatusBadge>
         <StatusBadge tone="red">Pilne</StatusBadge>
         <StatusBadge tone="gray">Do zrobienia</StatusBadge>
+      </Sekcja>
+
+      <Sekcja makieta="Books.dc.html — wybór daty (dp)">
+        <DatePicker ariaLabel="Termin" value={data} onChange={setData} />
+        <DatePicker ariaLabel="Pusta data" value={null} onChange={setData} weekStart="sun" />
+      </Sekcja>
+
+      <Sekcja makieta="SettingsNotifications.dc.html — wybór godziny (.tmb / .tpop)">
+        <TimePicker ariaLabel="Godzina przypomnienia" value={godzina} onChange={setGodzina} />
       </Sekcja>
 
       <Sekcja makieta="VaultReset.dc.html — potwierdzenie słowem">
