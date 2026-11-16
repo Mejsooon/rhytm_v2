@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wariant A — sidebar, Subscriptions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}a:hover{color:#000000}
+.nav a:hover{background:#f5f5f5}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; display: flex; flex-wrap: wrap">
+
+  <!-- SIDEBAR -->
+  <nav class="nav" aria-label="Główna nawigacja" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; border-right: 1px solid #eaeaea; background: #ffffff; padding: 12px 10px; display: flex; flex-direction: column; gap: 4px">
+    <button type="button" style="display: flex; align-items: center; gap: 10px; background: none; border: 0; color: #171717; font: inherit; padding: 8px 8px; border-radius: 6px; cursor: pointer; text-align: left">
+      <svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg>
+      <span style="font-weight: 600; flex: 1; letter-spacing: -0.045em; font-size: 16px">rhytm</span>
+      <span class="mono" style="font-size: 11px; color: #666666; border: 1px solid #e0e0e0; border-radius: 4px; padding: 1px 6px">Mejson</span>
+    </button>
+    <label style="display: flex; align-items: center; gap: 8px; border: 1px solid #eaeaea; border-radius: 6px; padding: 7px 10px; margin: 6px 0 10px; color: #666666; background: #fafafa">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" placeholder="Szukaj…" aria-label="Szukaj" style="flex: 1; min-width: 0; background: none; border: 0; color: #171717; font: inherit; outline: none">
+      <span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 0 5px">⌘K</span>
+    </label>
+
+    <div class="mono" style="font-size: 11px; color: #6b6b6b; padding: 6px 8px; text-transform: uppercase; letter-spacing: .06em">Moduły</div>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Dziś</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Kalendarz</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Sport</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>Nawyki i sen</a>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px">
+      <span class="mono" style="font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Strony</span>
+      <button type="button" aria-label="Dodaj stronę" style="background: none; border: 0; color: #666666; cursor: pointer; padding: 2px; display: flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+    </div>
+    <a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; background: #f0f0f0; color: #171717">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Subscriptions</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Books</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Projects</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Websites</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Passwords</a>
+    <a href="NewPage.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #6b6b6b">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowa strona</a>
+
+    <div style="flex: 1"></div>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #666666">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>Ustawienia</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
+      <div class="mono" style="font-size: 13px; color: #666666; display: flex; gap: 8px; align-items: center">
+        <span>Strony</span><span style="color: #b0b0b0">/</span><span style="color: #171717">Subscriptions</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button type="button" style="background: #ffffff; color: #171717; border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 12px; font: inherit; cursor: pointer">Filtruj</button>
+        <button type="button" style="background: #ffffff; color: #171717; border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 12px; font: inherit; cursor: pointer">+ Pole</button>
+        <button type="button" style="background: #171717; color: #ffffff; border: 1px solid #171717; border-radius: 6px; padding: 7px 12px; font: inherit; font-weight: 500; cursor: pointer">Nowy wiersz</button>
+      </div>
+    </header>
+
+    <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%">
+      <div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1>
+        <p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">13 wierszy · 12 aktywnych · 5 pól · szablon „Subscription tracker”</p>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
+        <div style="background: #ffffff; padding: 16px 18px">
+          <div class="mono" style="font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Σ miesięcznie</div>
+          <div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">517,79 <span style="font-size: 14px; color: #666666">zł</span></div>
+        </div>
+        <div style="background: #ffffff; padding: 16px 18px">
+          <div class="mono" style="font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Σ rocznie</div>
+          <div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">6 213,50 <span style="font-size: 14px; color: #666666">zł</span></div>
+        </div>
+        <div style="background: #ffffff; padding: 16px 18px">
+          <div class="mono" style="font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Najbliższe odnowienie</div>
+          <div style="font-size: 18px; margin-top: 10px; font-weight: 500">Netflix <span class="mono" style="font-size: 13px; color: {{accent}}">za 6 dni</span></div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow-x: auto">
+        <dc-t-table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px">
+          <dc-t-thead>
+            <dc-t-tr style="background: #fafafa">
+              <dc-t-th scope="col" style="text-align: left; padding: 10px 14px; border-bottom: 1px solid #eaeaea; font-weight: 500; color: #666666"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</dc-t-th>
+              <dc-t-th scope="col" style="text-align: right; padding: 10px 14px; border-bottom: 1px solid #eaeaea; font-weight: 500; color: #666666; width: 258px"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↻zł</span>Kwota cykliczna</dc-t-th>
+              <dc-t-th scope="col" style="text-align: left; padding: 10px 14px 10px 48px; border-bottom: 1px solid #eaeaea; font-weight: 500; color: #666666"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↻</span>Data odnowienia <span class="mono" style="margin-left: 6px; font-size: 10px; color: {{accent}}; border: 1px solid #bbe5cc; border-radius: 4px; padding: 1px 5px">w kalendarzu</span></dc-t-th>
+              <dc-t-th scope="col" style="text-align: left; padding: 10px 14px; border-bottom: 1px solid #eaeaea; font-weight: 500; color: #666666"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Kategoria</dc-t-th>
+              <dc-t-th scope="col" style="text-align: left; padding: 10px 14px; border-bottom: 1px solid #eaeaea; font-weight: 500; color: #666666"><span class="mono" style="color: #6b6b6b; margin-right: 6px">✓</span>Aktywna</dc-t-th>
+            </dc-t-tr>
+          </dc-t-thead>
+          <dc-t-tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="13">
+              <dc-t-tr style="{{r.rowS}}">
+                <dc-t-td style="padding: 11px 14px; border-bottom: 1px solid #f0f0f0; font-weight: 500">{{r.name}}</dc-t-td>
+                <dc-t-td class="mono" style="padding: 11px 14px; border-bottom: 1px solid #f0f0f0; text-align: right">{{r.price}} <span style="color: #6b6b6b">/ {{r.cycle}}</span></dc-t-td>
+                <dc-t-td class="mono" style="padding: 11px 14px 11px 48px; border-bottom: 1px solid #f0f0f0">{{r.date}} <span style="color: #6b6b6b; margin-left: 6px">{{r.rel}}</span></dc-t-td>
+                <dc-t-td style="padding: 11px 14px; border-bottom: 1px solid #f0f0f0"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">{{r.cat}}</span></dc-t-td>
+                <dc-t-td style="padding: 11px 14px; border-bottom: 1px solid #f0f0f0"><input type="checkbox" defaultChecked="{{r.active}}" aria-label="Aktywna" style="accent-color: {{accent}}"></dc-t-td>
+              </dc-t-tr>
+            </sc-for>
+          </dc-t-tbody>
+          <dc-t-tfoot>
+            <dc-t-tr style="background: #fafafa">
+              <dc-t-td style="padding: 10px 14px"><button type="button" style="background: none; border: 0; color: #666666; font: inherit; cursor: pointer; padding: 0">+ Nowy wiersz</button></dc-t-td>
+              <dc-t-td class="mono" style="padding: 10px 14px; text-align: right; color: #171717">Σ 517,79 zł / mies.</dc-t-td>
+              <dc-t-td class="mono" style="padding: 10px 14px 10px 48px; color: #6b6b6b">12 w kalendarzu</dc-t-td>
+              <dc-t-td></dc-t-td><dc-t-td></dc-t-td>
+            </dc-t-tr>
+          </dc-t-tfoot>
+        </dc-t-table>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#15803d","options":["#15803d","#171717","#0090ff","#f5a524"]},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#15803d',
+      rows: [
+        { name: 'Netflix', price: '43,00', cycle: 'mies.', date: '21.11.2026', rel: 'za 6 dni', cat: 'Rozrywka' },
+        { name: 'YouTube Premium', price: '29,99', cycle: 'mies.', date: '24.11.2026', rel: 'za 9 dni', cat: 'Rozrywka' },
+        { name: 'iCloud+', price: '4,99', cycle: 'mies.', date: '28.11.2026', rel: 'za 13 dni', cat: 'Chmura' },
+        { name: 'Siłownia — karnet', price: '129,00', cycle: 'mies.', date: '01.12.2026', rel: 'za 16 dni', cat: 'Zdrowie' },
+        { name: 'Spotify', price: '23,99', cycle: 'mies.', date: '02.12.2026', rel: 'za 17 dni', cat: 'Rozrywka' },
+        { name: 'Claude Pro', price: '99,00', cycle: 'mies.', date: '05.12.2026', rel: 'za 20 dni', cat: 'Praca' },
+        { name: 'GitHub Copilot', price: '40,00', cycle: 'mies.', date: '08.12.2026', rel: 'za 23 dni', cat: 'Praca' },
+        { name: 'Google One 2 TB', price: '46,99', cycle: 'mies.', date: '12.12.2026', rel: 'za 27 dni', cat: 'Chmura' },
+        { name: 'Disney+', price: '37,99', cycle: 'mies.', date: '03.01.2027', rel: 'anulowana', cat: 'Rozrywka', active: false },
+        { name: 'Strava', price: '249,99', cycle: 'rok', date: '10.02.2027', rel: 'za 3 mies.', cat: 'Sport' },
+        { name: 'Framer Mini', price: '600,00', cycle: 'rok', date: '14.03.2027', rel: 'za 4 mies.', cat: 'Praca' },
+        { name: 'Duolingo Super', price: '239,99', cycle: 'rok', date: '20.04.2027', rel: 'za 5 mies.', cat: 'Nauka' },
+        { name: 'Domena .photo', price: '120,00', cycle: 'rok', date: '09.06.2027', rel: 'za 7 mies.', cat: 'Praca' }
+      ].map((r) => ({ ...r, active: r.active !== false, rowS: r.active === false ? 'color:#6b6b6b;text-decoration:line-through' : '' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

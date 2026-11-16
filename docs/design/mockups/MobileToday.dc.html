@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Dziś</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px; overflow: hidden">
+  <header style="display: flex; align-items: center; gap: 8px; padding: 14px 12px; border-bottom: 1px solid #eaeaea">
+    <button type="button" aria-label="Menu" style="width: 44px; height: 44px; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+    <div style="flex: 1"><div style="font-weight: 600">Dziś</div><div class="mono" style="font-size: 11px; color: #6b6b6b">nd · 15.11</div></div>
+    <a href="CommandK.dc.html" aria-label="Szukaj" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a>
+  </header>
+
+  <div style="flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
+      <div style="background: #ffffff; padding: 12px"><div class="lbl">Nawyki</div><div class="mono" style="font-size: 20px; margin-top: 4px">3/5</div></div>
+      <div style="background: #ffffff; padding: 12px"><div class="lbl">Sen</div><div class="mono" style="font-size: 20px; margin-top: 4px">7:12</div></div>
+      <div style="background: #ffffff; padding: 12px"><div class="lbl">Zadania</div><div class="mono" style="font-size: 20px; margin-top: 4px">6/11</div></div>
+      <div style="background: #ffffff; padding: 12px"><div class="lbl">Km tydz.</div><div class="mono" style="font-size: 20px; margin-top: 4px">18,4</div></div>
+    </div>
+
+    <section style="border: 1px solid #eaeaea; border-radius: 8px">
+      <div style="padding: 12px 14px; border-bottom: 1px solid #eaeaea; font-weight: 600">Plan dnia</div>
+      <div style="padding: 12px 14px; border-bottom: 1px solid #f0f0f0; border-left: 3px solid #15803d">
+        <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-weight: 500">rhytm — kod</span><span class="mono" style="font-size: 10px; color: #15803d; border: 1px solid #bbe5cc; background: #f0faf4; border-radius: 4px; padding: 1px 6px">TERAZ</span></div>
+        <div class="mono" style="font-size: 12px; color: #666666; margin-top: 2px">10:30–12:30 · 2/4</div>
+        <label style="display: flex; align-items: center; gap: 10px; min-height: 40px; margin-top: 6px"><input type="checkbox" style="accent-color: #15803d; width: 20px; height: 20px">Okno „+ Pole”</label>
+        <label style="display: flex; align-items: center; gap: 10px; min-height: 40px"><input type="checkbox" style="accent-color: #15803d; width: 20px; height: 20px">Testy RLS</label>
+      </div>
+      <div style="padding: 12px 14px; border-bottom: 1px solid #f0f0f0; border-left: 3px solid #c2410c"><div style="font-weight: 500">Bieg 10 km</div><div class="mono" style="font-size: 12px; color: #666666; margin-top: 2px">16:00–17:00 · Sport</div></div>
+      <div style="padding: 12px 14px; border-left: 3px solid #0070f3"><div style="font-weight: 500">Bazy danych — projekt</div><div class="mono" style="font-size: 12px; color: #666666; margin-top: 2px">19:00–20:00 · 1/4</div></div>
+    </section>
+
+    <section style="border: 1px solid #eaeaea; border-radius: 8px; padding: 6px 14px">
+      <label style="display: flex; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid #f0f0f0"><input type="checkbox" defaultChecked="{{true}}" style="accent-color: #15803d; width: 20px; height: 20px"><span style="flex: 1">Woda 2 l</span><span class="mono" style="font-size: 11px; color: #6b6b6b">12 dni</span></label>
+      <label style="display: flex; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid #f0f0f0"><input type="checkbox" defaultChecked="{{true}}" style="accent-color: #15803d; width: 20px; height: 20px"><span style="flex: 1">Czytanie 20 min</span><span class="mono" style="font-size: 11px; color: #6b6b6b">5 dni</span></label>
+      <label style="display: flex; align-items: center; gap: 12px; min-height: 44px"><input type="checkbox" style="accent-color: #15803d; width: 20px; height: 20px"><span style="flex: 1">Angielski</span><span class="mono" style="font-size: 11px; color: #6b6b6b">2/4 tydz.</span></label>
+    </section>
+  </div>
+
+  <nav aria-label="Moduły" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid #eaeaea; background: #fafafa; padding: 6px 4px 18px">
+    <a href="MobileToday.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; font-size: 11px; font-weight: 500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Dziś</a>
+    <a href="MobileCalendar.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; font-size: 11px; color: #666666"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Kalendarz</a>
+    <a href="Sport.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; font-size: 11px; color: #666666"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Sport</a>
+    <a href="Habits.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; font-size: 11px; color: #666666"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>Nawyki</a>
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; font-size: 11px; color: #666666"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Strony</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

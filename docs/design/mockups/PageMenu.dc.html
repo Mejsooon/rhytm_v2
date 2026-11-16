@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Menu strony w sidebarze</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="books" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Strony</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Books</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btn">Filtruj</button><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; opacity: .5">
+      <div style="font-size: 24px; font-weight: 600">Books</div><div style="margin-top: 24px; height: 90px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafafa"></div><div style="margin-top: 24px; height: 420px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafafa"></div>
+    </div>
+  </main>
+  <div role="menu" aria-label="Strona Books" style="position: absolute; z-index: 5; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 6px; box-sizing: border-box; left: 196px; top: 318px; width: 230px">
+    <button type="button" class="mi" style="color: #171717;"><span class="mono" aria-hidden="true" style="width: 18px; color: #6b6b6b">✎</span><span style="flex: 1">Zmień nazwę</span><span class="mono" style="font-size: 11px; color: #6b6b6b">F2</span></button><button type="button" class="mi" style="color: #171717; background: #f5f5f5;"><span class="mono" aria-hidden="true" style="width: 18px; color: #6b6b6b">◇</span><span style="flex: 1">Zmień ikonę</span><span class="mono" style="font-size: 11px; color: #6b6b6b">›</span></button><button type="button" class="mi" style="color: #171717;"><span class="mono" aria-hidden="true" style="width: 18px; color: #6b6b6b">⧉</span><span style="flex: 1">Duplikuj</span></button><button type="button" class="mi" style="color: #171717;"><span class="mono" aria-hidden="true" style="width: 18px; color: #6b6b6b">⇅</span><span style="flex: 1">Przenieś wyżej / niżej</span></button>
+    <div style="height: 1px; background: #eaeaea; margin: 6px 4px"></div><button type="button" class="mi" style="color: #b91c1c;"><span class="mono" aria-hidden="true" style="width: 18px; color: #b91c1c">✕</span><span style="flex: 1">Usuń stronę</span></button>
+  </div>
+  <div role="dialog" aria-label="Wybór ikony" style="position: absolute; z-index: 5; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 6px; box-sizing: border-box; left: 434px; top: 360px; width: 236px; padding: 10px">
+    <input class="inp" type="text" placeholder="Szukaj ikony" aria-label="Szukaj ikony" style="margin-bottom: 8px">
+    <div class="mono" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; font-size: 15px; text-align: center">
+      <button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">▦</button><button type="button" style="height: 32px; border: 1px solid #171717; border-radius: 6px; background: #f5f5f5; font: inherit; cursor: pointer">▤</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">◉</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">★</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">♪</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">✈</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">⌂</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">✎</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">⚑</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">◷</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">✱</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">☰</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">⚙</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">◆</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">●</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">▲</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">♥</button><button type="button" style="height: 32px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer">✉</button>
+    </div>
+  </div>
+  <div role="alertdialog" aria-label="Usuń stronę" style="position: absolute; right: 60px; bottom: 60px; width: 360px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); padding: 18px; display: flex; flex-direction: column; gap: 10px">
+    <span class="lbl">Po kliknięciu „Usuń stronę”</span>
+    <div style="font-weight: 600">Usunąć stronę „Books”?</div>
+    <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p>
+    <div style="display: flex; justify-content: flex-end; gap: 8px"><button type="button" class="btn">Anuluj</button><button type="button" class="btnd">Usuń</button></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

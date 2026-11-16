@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ustawienia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff;overflow:hidden}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;background:#fafafa;border-top:1px solid #eaeaea}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="ustawienia" min-height="1180" hint-size="100%,1180px"></dc-import></div>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666">Ustawienia <span style="color: #b0b0b0">/</span> <span style="color: #171717">Ogólne</span></div>
+    </header>
+
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <a href="#" aria-current="page" style="padding: 7px 10px; border-radius: 6px; background: #f0f0f0; font-weight: 500; text-decoration: none">Ogólne</a>
+        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Konto i bezpieczeństwo</a>
+        <a href="Vault.dc.html" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Sejf</a>
+        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Powiadomienia</a>
+        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Kategorie kalendarza</a>
+      </nav>
+
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Ogólne</h1>
+
+        <section class="card">
+          <div style="padding: 20px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Profil</h2>
+            <p style="margin: 4px 0 16px; color: #666666">Waga i wzrost służą do liczenia kcal biegów.</p>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wyświetlana nazwa<input class="inp" type="text" value="Mejson"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Strefa czasowa<select class="inp"><option>Europe/Warsaw (UTC+01:00)</option></select></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Waga (kg)<input class="inp mono" type="text" value="[TWOJA WAGA]"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wzrost (cm)<input class="inp mono" type="text" value="[TWÓJ WZROST]"></label>
+            </div>
+          </div>
+          <div class="foot"><span style="font-size: 13px; color: #666666">Zmiany zapisują się dopiero po kliknięciu.</span><button type="button" class="btnp">Zapisz</button></div>
+        </section>
+
+        <section class="card">
+          <div style="padding: 20px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Cele</h2>
+            <p style="margin: 4px 0 16px; color: #666666">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Cel snu<input class="inp mono" type="text" value="8:00"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Tygodniowy cel km<input class="inp mono" type="text" value="25"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Waluta stron<select class="inp"><option>PLN (zł)</option></select></label>
+            </div>
+          </div>
+          <div class="foot"><span style="font-size: 13px; color: #666666">Waluta dotyczy pól „Kwota cykliczna”.</span><button type="button" class="btnp">Zapisz</button></div>
+        </section>
+
+        <section class="card">
+          <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Konto</h2>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">E-mail</div><div class="mono" style="font-size: 12px; color: #666666">mejson@example.com · potwierdzony</div></div><button type="button" class="btn">Zmień</button></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">Hasło do konta</div><div class="mono" style="font-size: 12px; color: #666666">zmienione 15.11.2026</div></div><button type="button" class="btn">Zmień hasło</button></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0"><div><div style="font-weight: 500">Sesja</div><div class="mono" style="font-size: 12px; color: #666666">Chrome · Parrot OS · teraz</div></div><a href="Login.dc.html" class="btn" style="text-decoration: none">Wyloguj</a></div>
+          </div>
+        </section>
+
+        <section style="border: 1px solid #fecaca; border-radius: 8px; overflow: hidden">
+          <div style="padding: 20px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Usuń konto</h2>
+            <p style="margin: 4px 0 0; color: #666666">Trwale usuwa konto, wszystkie strony, sejf i dane modułów. Tego nie da się cofnąć.</p>
+          </div>
+          <div style="display: flex; justify-content: flex-end; padding: 12px 20px; background: #fef2f2; border-top: 1px solid #fecaca"><button type="button" style="background: #b91c1c; color: #ffffff; border: 1px solid #b91c1c; border-radius: 6px; padding: 7px 12px; font: inherit; font-weight: 500; cursor: pointer">Usuń konto</button></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

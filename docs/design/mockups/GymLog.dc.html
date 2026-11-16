@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trening siłowy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 1200px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="1200" hint-size="100%,1200px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Sport</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Push · czw 19.11</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btn">Zapisz jako szablon</button><button type="button" class="btnp">Zakończ trening</button></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Push</h1><p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">czw 19.11.2026 · 15:00–16:30 · z szablonu „Push”</p></div>
+        <div style="display: grid; grid-template-columns: repeat(2, auto); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
+          <div style="background: #fff; padding: 10px 16px"><div class="lbl">Objętość</div><div class="mono" style="font-size: 18px; margin-top: 4px">{{vol}}</div></div>
+          <div style="background: #fff; padding: 10px 16px"><div class="lbl">Serie</div><div class="mono" style="font-size: 18px; margin-top: 4px">{{sets}}</div></div>
+        </div>
+      </div>
+      <sc-for list="{{items}}" as="e" hint-placeholder-count="4">
+        <section class="card" style="padding: 14px 16px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px">
+            <a href="ExerciseDetail.dc.html" style="font-weight: 600; text-decoration: none">{{e.name}}</a>
+            <span class="mono" style="font-size: 12px; color: #6b6b6b">1RM {{e.best}} · {{e.note}}</span>
+          </div>
+          <div class="mono" style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; font-size: 11px; color: #6b6b6b; padding: 4px 0; border-bottom: 1px solid #f0f0f0"><span>seria</span><span>kg</span><span>powt.</span><span>✓</span></div>
+          <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
+            <div class="mono" style="{{s.rowS}}"><span>{{s.n}}</span><input class="inp" type="text" value="{{s.kg}}" aria-label="Ciężar" style="padding: 5px 8px"><input class="inp" type="text" value="{{s.reps}}" aria-label="Powtórzenia" style="padding: 5px 8px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="Seria zrobiona" style="accent-color: #15803d; width: 18px; height: 18px"></div>
+          </sc-for>
+          <button type="button" style="background: none; border: 0; padding: 8px 0 0; font: inherit; font-size: 13px; color: #666666; cursor: pointer">+ Seria</button>
+        </section>
+      </sc-for>
+      <button type="button" class="btn" style="align-self: flex-start">+ Ćwiczenie</button>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { done: { '0-0': true, '0-1': true, '0-2': true, '1-0': true, '1-1': true } }; }
+  renderVals() {
+    const ex = [
+      ['Wyciskanie na ławce', [[70, 6], [70, 6], [72.5, 5], [72.5, 4]], '82,5 kg', '+2,5 kg vs ostatnio'],
+      ['Wyciskanie hantli skos', [[26, 10], [26, 10], [26, 9]], '34 kg', 'jak ostatnio'],
+      ['Pompki na poręczach', [[0, 12], [0, 10], [0, 9]], '—', 'masa ciała'],
+      ['Wznosy bokiem', [[10, 15], [10, 14], [10, 12]], '—', '']
+    ];
+    const done = this.state.done;
+    let vol = 0, cnt = 0, all = 0;
+    const items = ex.map((e, i) => ({
+      name: e[0], best: e[2], note: e[3],
+      sets: e[1].map((s, j) => {
+        const k = i + '-' + j; const d = !!done[k]; all++; if (d) { cnt++; vol += s[0] * s[1]; }
+        return { n: String(j + 1), kg: s[0] ? String(s[0]).replace('.', ',') : 'MC', reps: String(s[1]), d,
+          toggle: () => this.setState({ done: Object.assign({}, done, { [k]: !d }) }),
+          rowS: 'display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 0;' + (d ? 'color:#6b6b6b' : '') };
+      })
+    }));
+    return { items, vol: vol.toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all };
+  }
+}
+</script>
+</body>
+</html>

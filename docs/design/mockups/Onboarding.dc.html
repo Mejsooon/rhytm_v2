@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Onboarding 1 — Profil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fafafa}
+a{color:#171717}a:hover{color:#15803d}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;height:40px;padding:0 12px;font:inherit;font-size:14px;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:500}
+.hint{font-weight:400;color:#737373}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;color:#171717;font:500 14px 'Geist',system-ui,sans-serif;text-decoration:none;cursor:pointer;box-sizing:border-box;transition:background-color 150ms cubic-bezier(0.22,1,0.36,1)}
+.btn:hover{background:#f4f4f5;color:#171717}
+.btnp{background:#171717;border-color:#171717;color:#ffffff}
+.btnp:hover{background:#2e2e2e;color:#ffffff}
+.ghost{border-color:transparent;background:transparent;color:#525252}
+.seg{display:flex;padding:4px;gap:4px;background:#f4f4f5;border-radius:10px}
+.seg button{flex:1;height:32px;border:0;border-radius:6px;background:transparent;font:500 13px 'Geist',system-ui,sans-serif;color:#525252;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#ffffff;color:#171717;box-shadow:0 1px 2px rgba(0,0,0,0.08)}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid #e0e0e0;border-radius:10px;background:#ffffff;font:inherit;color:#171717;cursor:pointer;box-sizing:border-box;transition:border-color 150ms cubic-bezier(0.22,1,0.36,1),background-color 150ms cubic-bezier(0.22,1,0.36,1)}
+.opt:hover{border-color:#a3a3a3}
+.opt[aria-pressed="true"]{border-color:#171717;box-shadow:inset 0 0 0 1px #171717}
+.box{width:18px;height:18px;border-radius:5px;border:1px solid #d4d4d4;display:grid;place-items:center;flex:none;margin-top:1px;box-sizing:border-box}
+.opt[aria-pressed="true"] .box{background:#171717;border-color:#171717;color:#ffffff}
+.sw{width:36px;height:20px;border-radius:10px;border:0;padding:2px;background:#d4d4d4;cursor:pointer;display:flex;flex:none;transition:background-color 150ms cubic-bezier(0.22,1,0.36,1)}
+.sw span{width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:transform 150ms cubic-bezier(0.22,1,0.36,1)}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"] span{transform:translateX(16px)}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;border:1px solid #e0e0e0;border-bottom-width:2px;border-radius:4px;padding:0 6px;background:#ffffff;color:#404040}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #15803d;outline-offset:2px}
+@media (max-width:1100px){.split{grid-template-columns:1fr !important}.pvside{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+  <header style="height: 64px; display: flex; align-items: center; gap: 8px; padding: 0 24px">
+    <svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg><span style="font-weight: 600; font-size: 17px; letter-spacing: -0.02em">rhytm</span>
+    <span class="mono" style="margin-left: auto; font-size: 12px; color: #737373">Krok 1 z 7</span>
+    <a href="Login.dc.html" style="margin-left: 16px; font-size: 13px; color: #525252; text-decoration: none">Wyloguj</a>
+  </header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px 40px">
+    <div style="width: 100%; max-width: 1120px; height: 720px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04); overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; gap: 4px; padding: 16px 20px 0" aria-label="Postęp: krok 1 z 7"><span style="flex: 1; height: 4px; border-radius: 2px; background: #171717"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span></div>
+      <div class="split" style="flex: 1; min-height: 0; display: grid; grid-template-columns: 520px 1fr">
+        <div style="display: flex; flex-direction: column; min-height: 0; padding: 32px 40px 24px">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto">
+            <div>
+              <h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em">Uzupełnij profil</h1>
+              <p style="margin: 8px 0 0; color: #525252">Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px">
+              <span style="width: 56px; height: 56px; border-radius: 50%; background: #171717; color: #ffffff; display: grid; place-items: center; font-size: 18px; font-weight: 500">{{pv.initials}}</span>
+              <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 500">Zdjęcie profilowe</span><span style="font-size: 13px; color: #737373">Bez zdjęcia pokażemy inicjały</span></div>
+              <button type="button" class="btn" style="margin-left: auto; height: 36px">Wgraj</button>
+            </div>
+            <label class="fld">Imię lub pseudonim<input class="inp" type="text" value="{{nameVal}}" onChange="{{onName}}" autocomplete="nickname"></label>
+            <label class="fld">Strefa czasowa<select class="inp" onChange="{{onTz}}"><option value="Europe/Warsaw">Europe/Warsaw (UTC+01:00)</option><option value="Europe/London">Europe/London (UTC+00:00)</option><option value="Europe/Berlin">Europe/Berlin (UTC+01:00)</option><option value="America/New_York">America/New_York (UTC−05:00)</option></select><span class="hint">Wykryta z przeglądarki</span></label>
+            <div class="fld"><span>Tydzień zaczyna się od</span><div class="seg" role="group" aria-label="Początek tygodnia"><button type="button" aria-pressed="{{wkPn}}" onClick="{{setPn}}">Poniedziałku</button><button type="button" aria-pressed="{{wkNd}}" onClick="{{setNd}}">Niedzieli</button></div></div>
+            <div class="fld"><span>Format godziny</span><div class="seg" role="group" aria-label="Format godziny"><button type="button" aria-pressed="{{c24}}" onClick="{{set24}}">24 h · 14:30</button><button type="button" aria-pressed="{{c12}}" onClick="{{set12}}">12 h · 2:30 PM</button></div></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 20px; border-top: 1px solid #f0f0f0">
+            <a class="btn ghost" href="Register.dc.html">Wstecz</a>
+            <span style="flex: 1"></span>
+            <a class="btn btnp" href="OnboardingRole.dc.html">Dalej</a>
+          </div>
+        </div>
+
+        <div class="pvside" style="position: relative; background: #f4f4f5; border-left: 1px solid #eaeaea; overflow: hidden">
+          <div style="position: absolute; left: 40px; top: 48px; width: 600px; height: 640px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; overflow: hidden; font-size: 12px">
+            <div style="width: 176px; flex: none; background: #fafafa; border-right: 1px solid #eaeaea; padding: 12px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px">
+              <div style="{{pv.hProfile}}">
+                <span style="width: 24px; height: 24px; border-radius: 50%; background: #171717; color: #ffffff; display: grid; place-items: center; font-size: 10px; font-weight: 500; flex: none">{{pv.initials}}</span>
+                <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{pv.name}}</span><span style="font-size: 11px; color: #737373">{{pv.tz}}</span></span>
+              </div>
+              <div style="font-size: 11px; color: #737373; padding: 12px 8px 4px">Moduły</div>
+              <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; border-radius: 6px; background: #ffffff; box-shadow: inset 0 0 0 1px #eaeaea; font-weight: 500">Dziś</div>
+              <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #525252">Kalendarz</div>
+              <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #525252">Sport</div>
+              <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #525252">Nawyki i sen</div>
+              <div style="{{pv.hPages}}">
+                <div style="font-size: 11px; color: #737373; padding: 0 8px 4px">Strony</div>
+                <sc-for list="{{pv.pages}}" as="p" hint-placeholder-count="2"><div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #525252">{{p}}</div></sc-for>
+                <sc-if value="{{pv.noPages}}" hint-placeholder-val="{{false}}"><div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #a3a3a3">Brak stron</div></sc-if>
+              </div>
+            </div>
+            <div style="flex: 1; min-width: 0; padding: 16px; position: relative">
+              <div style="font-size: 14px; font-weight: 500">{{pv.day}}</div>
+              <div style="font-size: 11px; color: #737373; margin-top: 2px">{{pv.week}}</div>
+              <div style="{{pv.hCats}}">
+                <sc-for list="{{pv.cats}}" as="c" hint-placeholder-count="3"><span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #eaeaea; border-radius: 6px; background: #ffffff; color: #404040"><span style="{{c.dot}}"></span>{{c.name}}</span></sc-for>
+              </div>
+              <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px">
+                <sc-for list="{{pv.blocks}}" as="b" hint-placeholder-count="4"><div style="display: flex; gap: 8px; align-items: stretch"><span class="mono" style="width: 52px; flex: none; font-size: 11px; color: #737373; padding-top: 6px">{{b.t}}</span><div style="{{b.s}}"><span style="font-weight: 500">{{b.title}}</span><span class="mono" style="font-size: 11px; color: #525252">{{b.meta}}</span></div></div></sc-for>
+              </div>
+              <sc-if value="{{pv.toast}}" hint-placeholder-val="{{false}}">
+                <div style="position: absolute; right: 16px; top: 16px; width: 240px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.10); padding: 10px 12px; display: flex; gap: 10px; outline: 2px solid #15803d; outline-offset: 2px">
+                  <span style="width: 24px; height: 24px; border-radius: 6px; background: #171717; display: grid; place-items: center; flex: none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#4ade80"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect></svg></span>
+                  <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{pv.toastTitle}}</span><span style="color: #525252">{{pv.toastText}}</span></span>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24' }; }
+  renderVals() {
+
+    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo',
+      goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, notify: { perm: true, before: true, renew: true, weekly: true, habits: false } };
+    const S = Object.assign({}, D, this.state || {});
+    const HI = 'border-radius:8px;box-shadow:0 0 0 2px #15803d;';
+    const step = 1;
+    const nm = (S.name || '').trim() || 'Ty';
+    const initials = nm.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    const t = (h, m) => S.clock === '12' ? ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM') : String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    const CAT = { Studia: '#0070f3', Projekty: '#15803d', Praca: '#7c3aed', Sport: '#c2410c', Dom: '#a16207' };
+    const TINT = { Studia: ['#eff6ff', '#bfdbfe'], Projekty: ['#f0fdf4', '#bbf7d0'], Praca: ['#f5f3ff', '#ddd6fe'], Sport: ['#fff7ed', '#fed7aa'], Dom: ['#fefce8', '#fde68a'] };
+    const R = S.roles || {};
+    const catNames = [];
+    if (R.student) catNames.push('Studia');
+    if (R.work) catNames.push('Praca');
+    if (R.free) catNames.push('Projekty');
+    if (R.sport) catNames.push('Sport');
+    if (R.other || !catNames.length) catNames.push('Dom');
+    const cats = catNames.map((c) => ({ name: c, dot: 'width:8px;height:8px;border-radius:50%;background:' + CAT[c] }));
+    const BL = { Studia: [8, 0, 'Matematyka — ćwiczenia', '0/3'], Praca: [9, 0, 'Praca — spotkanie zespołu', '1/2'], Projekty: [11, 0, 'Projekt klienta', '2/4'], Sport: [17, 0, 'Bieg 10 km', ''], Dom: [19, 0, 'Zakupy i pranie', '0/2'] };
+    const blocks = catNames.map((c) => {
+      const b = BL[c];
+      return { t: t(b[0], b[1]), title: b[2], meta: b[3], s: 'flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;height:32px;padding:0 10px;border-radius:6px;box-sizing:border-box;background:' + TINT[c][0] + ';border:1px solid ' + TINT[c][1] };
+    }).sort((a, b) => a.t.localeCompare(b.t));
+    const P = S.pages || {};
+    const pages = ['Subscriptions', 'Projects', 'Books', 'Websites', 'Passwords'].filter((p) => P[p]);
+    const N = S.notify || {};
+    const pv = {
+      name: nm, initials, tz: S.tz,
+      day: S.week === 'nd' ? 'Wtorek, 17 listopada' : 'Wtorek, 17 listopada',
+      week: 'Tydzień ' + (S.week === 'nd' ? 'od niedzieli · 15–21.11' : 'od poniedziałku · 16–22.11') + ' · zegar ' + (S.clock === '12' ? '12 h' : '24 h'),
+      cats, blocks, pages, noPages: pages.length === 0,
+      toast: step === 6 && !!N.perm && !!N.before,
+      toastTitle: 'Za 10 min · ' + (blocks[0] ? blocks[0].title : 'blok'),
+      toastText: 'Start o ' + (blocks[0] ? blocks[0].t : t(8, 0)),
+      hProfile: 'display:flex;align-items:center;gap:8px;padding:6px;' + (step === 1 ? HI : ''),
+      hPages: 'margin-top:8px;padding:4px 0;' + (step === 3 || step === 5 ? HI : ''),
+      hCats: 'margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;padding:4px;' + (step === 2 ? HI : '')
+    };
+
+const v = (e) => (e && e.target ? e.target.value : e);
+    return { pv, nameVal: S.name, onName: (e) => this.setState({ name: v(e) }), onTz: (e) => this.setState({ tz: v(e) }),
+      wkPn: S.week === 'pn' ? 'true' : 'false', wkNd: S.week === 'nd' ? 'true' : 'false', setPn: () => this.setState({ week: 'pn' }), setNd: () => this.setState({ week: 'nd' }),
+      c24: S.clock === '24' ? 'true' : 'false', c12: S.clock === '12' ? 'true' : 'false', set24: () => this.setState({ clock: '24' }), set12: () => this.setState({ clock: '12' }) };
+  }
+}
+</script>
+</body>
+</html>

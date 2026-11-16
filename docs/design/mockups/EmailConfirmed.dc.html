@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>E-mail potwierdzony</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; background-image: linear-gradient(#eeeeee 1px, transparent 1px), linear-gradient(90deg, #eeeeee 1px, transparent 1px); background-size: 48px 48px; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px">
+    <div style="display: flex; align-items: center; gap: 10px"><svg width="26" height="26" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg><span style="font-weight: 600; letter-spacing: -0.045em; font-size: 17px">rhytm</span></div>
+    <a href="Login.dc.html" style="border: 1px solid #e0e0e0; background: #ffffff; border-radius: 6px; padding: 6px 12px; text-decoration: none">Zaloguj się</a>
+  </header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px">
+    <div style="width: 100%; max-width: 420px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04); padding: 28px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; text-align: center; align-items: center">
+      <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #eaeaea; background: #fafafa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600">E-mail potwierdzony</h1>
+      <p style="margin: 0; color: #666666; line-height: 1.5">Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około minuty.</p>
+      <a href="Onboarding.dc.html" class="btnp" style="width: 100%; justify-content: center; padding: 10px 12px; box-sizing: border-box">Dalej</a>
+      <p class="mono" style="margin: 0; font-size: 11px; color: #6b6b6b">Link był jednorazowy i już wygasł.</p>
+    </div>
+    <div style="width: 100%; max-width: 420px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04); padding: 28px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; text-align: center; align-items: center; margin-left: 24px">
+      <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #eaeaea; background: #fafafa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg></span>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600">Link wygasł</h1>
+      <p style="margin: 0; color: #666666; line-height: 1.5">Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój adres.</p>
+      <button type="button" class="btn" style="width: 100%; justify-content: center; padding: 10px 12px">Wyślij nowy link</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

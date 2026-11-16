@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowe pole — wybór typu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="subs" min-height="900" hint-size="100%,900px"></dc-import></div>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; position: relative">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
+      <div class="mono" style="font-size: 13px; color: #666666">Strony <span style="color: #b0b0b0">/</span> <span style="color: #171717">Subscriptions</span></div>
+      <div style="display: flex; gap: 8px"><button type="button" class="btn">Filtruj</button><button type="button" class="btn" aria-expanded="true" style="background: #f0f0f0">+ Pole</button><button type="button" class="btnp">Nowy wiersz</button></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; opacity: .45">
+      <div style="font-size: 24px; font-weight: 600">Subscriptions</div>
+      <div style="margin-top: 24px; height: 90px; border: 1px solid #eaeaea; border-radius: 8px"></div>
+      <div style="margin-top: 24px; height: 260px; border: 1px solid #eaeaea; border-radius: 8px"></div>
+    </div>
+
+    <!-- popover -->
+    <div role="dialog" aria-label="Nowe pole" style="position: absolute; right: 24px; top: 56px; width: min(640px, calc(100% - 48px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.12); display: flex; flex-wrap: wrap; overflow: hidden">
+      <div style="flex: 1 1 230px; border-right: 1px solid #eaeaea; padding: 12px; display: flex; flex-direction: column; gap: 2px; background: #fafafa">
+        <input class="inp" type="text" placeholder="Szukaj typu…" aria-label="Szukaj typu" style="margin-bottom: 8px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div class="lbl" style="padding: 8px 8px 4px">{{g.name}}</div>
+          <sc-for list="{{g.items}}" as="t" hint-placeholder-count="4">
+            <button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}"><span class="mono" aria-hidden="true" style="width: 22px; color: #6b6b6b">{{t.icon}}</span><span style="flex: 1; text-align: left">{{t.name}}</span><span class="mono" style="font-size: 10px; color: #15803d">{{t.badge}}</span></button>
+          </sc-for>
+        </sc-for>
+      </div>
+
+      <div style="flex: 999 1 300px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Nazwa pola<input class="inp" type="text" value="{{sel.defName}}"></label>
+        <div><div style="font-weight: 600">{{sel.name}}</div><p style="margin: 4px 0 0; color: #666666; font-size: 13px; line-height: 1.5">{{sel.desc}}</p></div>
+
+        <sc-if value="{{is.recurring}}" hint-placeholder-val="{{true}}">
+          <div>
+            <div class="row"><span>Domyślny cykl</span><select class="inp" style="width: auto"><option>miesiąc</option><option>rok</option><option>tydzień</option><option>kwartał</option></select></div>
+            <div class="row"><span>Suma w stopce</span><span class="mono" style="font-size: 12px">/ mies. i / rok</span></div>
+            <div class="row" style="border: 0"><span>Waluta</span><span class="mono" style="font-size: 12px; color: #666666">zł (z Ustawień)</span></div>
+          </div>
+          <div class="mono" style="font-size: 12px; background: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 10px 12px; color: #404040">600,00 / rok → 50,00 / mies.</div>
+        </sc-if>
+        <sc-if value="{{is.renewal}}" hint-placeholder-val="{{false}}">
+          <div>
+            <div class="row"><span>Cykl z pola</span><select class="inp" style="width: auto"><option>Cena (Kwota cykliczna)</option><option>własny cykl</option></select></div>
+            <div class="row"><span>Pokaż w kalendarzu</span><input type="checkbox" defaultChecked="{{true}}" aria-label="Pokaż w kalendarzu" style="accent-color: #15803d; width: 16px; height: 16px"></div>
+            <div class="row" style="border: 0"><span>Tylko gdy zaznaczone</span><select class="inp" style="width: auto"><option>Aktywna</option><option>— zawsze —</option></select></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{is.date}}" hint-placeholder-val="{{false}}">
+          <div>
+            <div class="row"><span>Pokaż w kalendarzu</span><input type="checkbox" aria-label="Pokaż w kalendarzu" style="accent-color: #15803d; width: 16px; height: 16px"></div>
+            <div class="row" style="border: 0"><span>Tylko gdy zaznaczone</span><select class="inp" style="width: auto"><option>— zawsze —</option></select></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{is.select}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <span class="mono" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 3px 8px">Rozrywka</span>
+            <span class="mono" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 3px 8px">Praca</span>
+            <span class="mono" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 3px 8px">Chmura</span>
+            <button type="button" class="btn" style="padding: 3px 8px; font-size: 12px">+ Opcja</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{is.secret}}" hint-placeholder-val="{{false}}">
+          <div class="mono" style="font-size: 12px; background: #f0faf4; border: 1px solid #bbe5cc; border-radius: 6px; padding: 10px 12px; color: #15803d; line-height: 1.5">Wartości są szyfrowane w przeglądarce hasłem głównym sejfu. Jeśli sejfu jeszcze nie masz, ustawisz go po dodaniu pola.</div>
+        </sc-if>
+
+        <div style="flex: 1"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #eaeaea; padding-top: 12px">
+          <button type="button" class="btn">Anuluj</button><button type="button" class="btnp">Dodaj pole</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { picked: 'recurring' }; }
+  renderVals() {
+    const types = {
+      text: { icon: 'Aa', name: 'Tekst', desc: 'Zwykły tekst.', defName: 'Notatka' },
+      number: { icon: '#', name: 'Liczba', desc: 'Liczba ze zwykłym formatem, w zł albo w %.', defName: 'Liczba' },
+      checkbox: { icon: '✓', name: 'Checkbox', desc: 'Tak / nie. Może sterować widocznością dat w kalendarzu.', defName: 'Aktywna' },
+      url: { icon: '↗', name: 'URL', desc: 'Klikalny link.', defName: 'Link' },
+      select: { icon: '◉', name: 'Select', desc: 'Jedna opcja z listy, z kolorową etykietą.', defName: 'Kategoria' },
+      status: { icon: '◐', name: 'Status', desc: 'Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.', defName: 'Status' },
+      date: { icon: '▦', name: 'Data', desc: 'Data bez godziny. Może trafić do kalendarza głównego.', defName: 'Termin' },
+      rating: { icon: '★', name: 'Ocena', desc: 'Gwiazdki 1–5.', defName: 'Ocena' },
+      recurring: { icon: '↻zł', name: 'Kwota cykliczna', desc: 'Kwota z cyklem. Sama przelicza się na miesiąc i rok, a pod tabelą liczy sumy.', defName: 'Cena', badge: 'liczy' },
+      renewal: { icon: '↻', name: 'Data odnowienia', desc: 'Pokazuje najbliższą przyszłą datę wg cyklu i liczbę dni do niej. Nic nie trzeba przesuwać ręcznie.', defName: 'Odnowienie', badge: 'liczy' },
+      secret: { icon: '✱', name: 'Sekret', desc: 'Zamaskowana wartość, np. hasło.', defName: 'Hasło', badge: 'szyfr.' }
+    };
+    const picked = this.state.picked;
+    const item = (id) => ({
+      ...types[id],
+      badge: types[id].badge || '',
+      pressed: id === picked ? 'true' : 'false',
+      style: 'display:flex;align-items:center;gap:6px;width:100%;padding:7px 8px;border-radius:6px;border:0;font:inherit;font-size:13px;cursor:pointer;color:#171717;background:' + (id === picked ? '#ffffff;box-shadow:0 0 0 1px #e0e0e0' : 'transparent'),
+      pick: () => this.setState({ picked: id })
+    });
+    return {
+      groups: [
+        { name: 'Podstawowe', items: ['text', 'number', 'checkbox', 'url', 'select', 'status', 'date', 'rating'].map(item) },
+        { name: 'Inteligentne', items: ['recurring', 'renewal'].map(item) },
+        { name: 'Bezpieczne', items: ['secret'].map(item) }
+      ],
+      sel: types[picked],
+      is: { recurring: picked === 'recurring', renewal: picked === 'renewal', date: picked === 'date', select: picked === 'select' || picked === 'status', secret: picked === 'secret' }
+    };
+  }
+}
+</script>
+</body>
+</html>

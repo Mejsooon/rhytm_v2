@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kalendarz — dzień</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 1060px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Moduły</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Kalendarz</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><div class="seg"><a href="CalendarDay.dc.html" aria-current="page" style="padding: 6px 12px; text-decoration: none;  background: #f0f0f0; font-weight: 500; color: #171717">Dzień</a><a href="Calendar.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none; border-left: 1px solid #e0e0e0; color: #666666; background: #ffffff">Tydzień</a><a href="CalendarMonth.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none; border-left: 1px solid #e0e0e0; color: #666666; background: #ffffff">Miesiąc</a></div><a href="BlockDialog.dc.html" class="btnp">Nowy blok</a></div>
+    </header>
+    <div style="padding: 20px 24px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+          <button type="button" class="btn" aria-label="Poprzedni dzień" onClick="{{prevDay}}" style="padding: 6px 10px">‹</button>
+          <button type="button" class="btn" onClick="{{goToday}}" style="padding: 6px 10px">Dziś</button>
+          <button type="button" class="btn" aria-label="Następny dzień" onClick="{{nextDay}}" style="padding: 6px 10px">›</button>
+          <h1 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600">{{dayTitle}}</h1><span class="mono" style="font-size: 12px; color: #6b6b6b">{{summary}}</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <span class="lbl" style="margin-right: 4px">Pokaż</span>
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}" style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.name}} <span class="mono" style="color: #6b6b6b">{{c.count}}</span></button></sc-for>
+        <a href="CategoryDialog.dc.html" class="chip" style="color: #666666; text-decoration: none">+ Kategoria</a>
+      </div>
+        <div style="border: 1px solid #eaeaea; border-radius: 8px">
+          <div style="position: relative; height: 884px; border-radius: 8px; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 51px, #f0f0f0 51px, #f0f0f0 52px)">
+            <sc-for list="{{hours}}" as="h" hint-placeholder-count="17"><div class="mono" style="{{h.s}}">{{h.t}}</div></sc-for>
+            <div style="position: absolute; left: 64px; top: 0; bottom: 0; border-left: 1px solid #eaeaea"></div>
+            <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5"><button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" style="{{b.s}}"><span style="display: flex; gap: 10px; align-items: baseline"><span style="font-weight: 500">{{b.title}}</span><span class="mono" style="font-size: 11px; color: #404040">{{b.meta}}</span><span class="mono" style="margin-left: auto; font-size: 11px; color: #404040">{{b.count}}</span></span></button></sc-for>
+            <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 72px; right: 16px; top: 160px; border: 1px dashed #e0e0e0; border-radius: 8px; padding: 24px; text-align: center; color: #666666; background: #ffffff">Brak bloków w tym dniu. <a href="BlockDialog.dc.html">Dodaj blok</a></div></sc-if>
+            <sc-if value="{{showNow}}" hint-placeholder-val="{{true}}"><div style="{{nowTop}}"></div><span class="mono" style="{{nowLab}}">11:20</span></sc-if>
+            <sc-if value="{{hasPop}}" hint-placeholder-val="{{true}}">
+              <div role="dialog" aria-label="Szczegóły bloku" style="{{pop.style}}">
+                <span aria-hidden="true" style="{{pop.caret}}"></span>
+                <div style="display: flex; align-items: flex-start; gap: 10px">
+                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+                    <span class="mono" style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: .06em"><span style="{{pop.dot}}"></span>{{pop.cat}}</span>
+                    <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{pop.title}}</span>
+                    <span class="mono" style="font-size: 12px; color: #666666">{{pop.when}}</span>
+                  </div>
+                  <button type="button" aria-label="Zamknij" onClick="{{close}}" style="width: 28px; height: 28px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; flex: none">✕</button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Zadania</span><span class="mono" style="font-size: 12px; color: #666666">{{pop.doneN}} z {{pop.total}}</span></div>
+                  <div style="height: 4px; border-radius: 2px; background: #f0f0f0"><div style="{{pop.bar}}"></div></div>
+                  <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #6b6b6b; padding: 6px 0">Brak zadań w tym bloku.</span></sc-if>
+                  <sc-for list="{{pop.tasks}}" as="t" hint-placeholder-count="3"><label style="{{t.s}}"><input type="checkbox" checked="{{t.done}}" onChange="{{t.toggle}}" style="accent-color: #15803d; width: 16px; height: 16px; margin: 0; flex: none">{{t.title}}</label></sc-for>
+                  <label style="display: flex; align-items: center; gap: 10px; min-height: 32px; color: #6b6b6b; border-top: 1px dashed #e0e0e0; padding-top: 6px"><span class="mono" aria-hidden="true">+</span><input type="text" placeholder="Dodaj zadanie" aria-label="Nowe zadanie" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: #171717"></label>
+                </div>
+                <div style="display: flex; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 12px"><a href="BlockDialog.dc.html" class="btn" style="padding: 6px 12px">Edytuj</a><button type="button" style="background: none; border: 0; color: #b91c1c; font: inherit; font-weight: 500; cursor: pointer; padding: 6px 8px">Usuń</button></div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      <aside style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 16px; margin-top: 88px">
+        <section class="card" style="padding: 14px">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px"><span style="font-weight: 600">{{miniLabel}}</span><span style="display: flex; gap: 4px"><button type="button" aria-label="Poprzedni miesiąc" onClick="{{prevM}}" style="width: 28px; height: 28px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; cursor: pointer; font: inherit">‹</button><button type="button" aria-label="Następny miesiąc" onClick="{{nextM}}" style="width: 28px; height: 28px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; cursor: pointer; font: inherit">›</button></span></div>
+          <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 10px; color: #6b6b6b; text-align: center; margin-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{mini}}" as="m" hint-placeholder-count="42"><button type="button" aria-label="{{m.label}}" onClick="{{m.pick}}" style="{{m.s}}">{{m.n}}</button></sc-for></div>
+        </section>
+        <section class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div class="lbl">Dzień w liczbach</div>
+          <div style="display: flex; justify-content: space-between"><span style="color: #666">Zaplanowane</span><span class="mono">{{planned}}</span></div>
+          <div style="display: flex; justify-content: space-between"><span style="color: #666">Wolne (8–20)</span><span class="mono">{{free}}</span></div>
+          <div style="display: flex; justify-content: space-between"><span style="color: #666">Zadania</span><span class="mono">{{tasksSum}}</span></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { hidden: { Dom: true }, day: 17, mOff: 0, sel: 'b1', done: {} }; }
+  renderVals() {
+    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
+    const hidden = this.state.hidden || { Dom: true };
+    const catList = (counts) => CATDEF.map((c) => {
+      const on = !hidden[c[0]];
+      return {
+        name: c[0], count: String(counts[c[0]] || 0), pressed: on ? 'true' : 'false',
+        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
+        s: on ? '' : 'color:#6b6b6b;border-style:dashed;background:#fafafa',
+        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
+      };
+    });
+    const COL = { Studia: '#0070f3', Projekty: '#15803d', Praca: '#7c3aed', Sport: '#c2410c' };
+    const H = 52, S = 6;
+    const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
+    // szablon tygodnia (jak w widoku Tydzień): [start, koniec, tytuł, kategoria, zadania]
+    const WEEK = [
+      [[8, 10, 'Matematyka — ćwiczenia', 'Studia', [['Zadania 4.1–4.6', false], ['Powtórka całek', false], ['Lista 5', false]]], [13, 15, 'Systemy operacyjne', 'Studia', []]],
+      [[8, 9.5, 'Matematyka — ćwiczenia', 'Studia', [['Zadania 4.1–4.6', true], ['Powtórka całek', true]]], [10, 12.5, 'rhytm — kod', 'Projekty', [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]]], [13, 15, 'Systemy operacyjne', 'Studia', [['Laby: procesy', false], ['Notatki z wykładu', false], ['Quiz', false]]], [16, 17, 'Bieg 10 km', 'Sport', []], [18.5, 20, 'Bazy danych — projekt', 'Studia', [['Diagram ERD', false], ['Zapytania z aliasami AS', false], ['Opis części dokumentowej', false]]]],
+      [[9, 11, 'Strona klienta', 'Praca', [['Galeria zdjęć', true], ['Formularz kontaktu', false]]], [18, 19.5, 'Bazy danych', 'Studia', []]],
+      [[8, 9.5, 'Bazy danych', 'Studia', []], [15, 16.5, 'Siłownia — push', 'Sport', []]],
+      [[10, 12, 'NetScope — research', 'Projekty', [['Porównać GUI do nmapa', false], ['Lista funkcji SOFT', false]]], [14, 15, 'Strona klienta', 'Praca', []]],
+      [[10, 11.5, 'Długi bieg (plan)', 'Sport', []]],
+      [[18, 19, 'Plan tygodnia', 'Projekty', [['Przegląd kalendarza', false]]]]
+    ];
+    const DOWL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
+    const MON = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const MONN = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const cur = new Date(Date.UTC(2026, 10, this.state.day));
+    const wd = (cur.getUTCDay() + 6) % 7;
+    const isToday = cur.getUTCFullYear() === 2026 && cur.getUTCMonth() === 10 && cur.getUTCDate() === 17;
+    const raw = WEEK[wd].map((b, i) => ({ id: 'b' + i, s: b[0], e: b[1], title: b[2], cat: b[3], tasks: b[4] }));
+    const counts = {};
+    raw.forEach((b) => { counts[b.cat] = (counts[b.cat] || 0) + 1; });
+    const vis = raw.filter((b) => !hidden[b.cat]);
+    const selB = vis.find((b) => b.id === this.state.sel);
+    const taskState = (b) => b.tasks.map((t, j) => { const key = this.state.day + b.id + j; return [t[0], this.state.done[key] !== undefined ? this.state.done[key] : t[1], key]; });
+    const blocks = vis.map((b) => {
+      const c = COL[b.cat]; const ts = taskState(b); const dn = ts.filter((t) => t[1]).length; const on = selB && selB.id === b.id;
+      return { title: b.title, meta: fmt(b.s) + '–' + fmt(b.e) + ' · ' + b.cat, count: b.cat === 'Sport' ? 'trening' : dn + '/' + ts.length,
+        pressed: on ? 'true' : 'false', pick: () => this.setState({ sel: on ? null : b.id }),
+        s: 'position:absolute;left:72px;right:16px;top:' + Math.round((b.s - S) * H + 3) + 'px;height:' + Math.round((b.e - b.s) * H - 6) + 'px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;text-align:left;font:inherit;font-size:13px;line-height:1.3;color:#171717;cursor:pointer;border-radius:6px;padding:6px 12px;overflow:hidden;background:' + c + '14;border:1px solid ' + c + '40;border-left:3px solid ' + c + (on ? ';box-shadow:0 0 0 2px ' + c : '') };
+    });
+    let pop = null;
+    if (selB) {
+      const ts = taskState(selB);
+      const tasks = ts.map((t) => ({ title: t[0], done: t[1], toggle: () => this.setState({ done: Object.assign({}, this.state.done, { [t[2]]: !t[1] }) }), s: 'display:flex;align-items:center;gap:10px;min-height:32px;font-size:13px;cursor:pointer;' + (t[1] ? 'color:#6b6b6b;text-decoration:line-through' : 'color:#171717') }));
+      const dn = tasks.filter((t) => t.done).length;
+      const top = Math.min((selB.s - S) * H + 6, 17 * H - 400);
+      pop = { title: selB.title, cat: selB.cat, when: DOWL[wd].slice(0, 3).toLowerCase() + ' ' + String(cur.getUTCDate()).padStart(2, '0') + '.' + String(cur.getUTCMonth() + 1).padStart(2, '0') + ' · ' + fmt(selB.s) + '–' + fmt(selB.e),
+        tasks, doneN: dn, total: tasks.length, empty: tasks.length === 0,
+        dot: 'width:8px;height:8px;border-radius:50%;background:' + COL[selB.cat],
+        bar: 'height:4px;border-radius:2px;background:#15803d;width:' + (tasks.length ? Math.round(dn / tasks.length * 100) : 0) + '%',
+        style: 'position:absolute;z-index:5;left:46%;width:340px;max-width:calc(54% - 16px);top:' + top + 'px;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:16px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left',
+        caret: 'position:absolute;left:-7px;top:18px;width:12px;height:12px;background:#ffffff;border-left:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;transform:rotate(45deg)' };
+    }
+    // mini kalendarz
+    const mf = new Date(Date.UTC(2026, 10 + this.state.mOff, 1));
+    const mm = mf.getUTCMonth(), my = mf.getUTCFullYear();
+    const lead = (mf.getUTCDay() + 6) % 7;
+    const mini = Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(Date.UTC(my, mm, 1 - lead + i));
+      const inm = d.getUTCMonth() === mm;
+      const selDay = d.getTime() === cur.getTime();
+      const tdy = d.getUTCFullYear() === 2026 && d.getUTCMonth() === 10 && d.getUTCDate() === 17;
+      const dayNum = Math.round((d.getTime() - Date.UTC(2026, 10, 0)) / 86400000);
+      return { n: String(d.getUTCDate()), label: d.getUTCDate() + ' ' + MON[d.getUTCMonth()], pick: () => this.setState({ day: dayNum, sel: null }),
+        s: 'height:28px;border:0;border-radius:6px;font:inherit;font-size:12px;font-family:Geist Mono,monospace;cursor:pointer;' + (selDay ? 'background:#171717;color:#fff;font-weight:600' : tdy ? 'background:#f0faf4;color:#15803d;font-weight:600' : inm ? 'background:transparent;color:#171717' : 'background:transparent;color:#a3a3a3') };
+    });
+    const planned = vis.reduce((a, b) => a + (b.e - b.s), 0);
+    const allT = vis.reduce((a, b) => a.concat(taskState(b)), []);
+    const hm = (x) => Math.floor(x) + ' h' + (x % 1 ? ' 30 min' : '');
+    return {
+      cats: catList(counts),
+      dayTitle: DOWL[wd] + ', ' + cur.getUTCDate() + ' ' + MON[cur.getUTCMonth()],
+      summary: vis.length + ' z ' + raw.length + ' bloków',
+      hours: Array.from({ length: 17 }, (_, i) => ({ t: String(6 + i).padStart(2, '0') + ':00', s: 'position:absolute;left:12px;top:' + (i * H + 3) + 'px;font-size:11px;color:#6b6b6b' })),
+      blocks, hasPop: !!pop, pop, close: () => this.setState({ sel: null }),
+      showNow: isToday,
+      nowTop: 'position:absolute;left:56px;right:0;top:' + Math.round((11 + 20 / 60 - S) * H) + 'px;border-top:2px solid #b91c1c;pointer-events:none',
+      nowLab: 'position:absolute;left:6px;top:' + (Math.round((11 + 20 / 60 - S) * H) - 9) + 'px;font-size:10px;color:#fff;background:#b91c1c;border-radius:4px;padding:1px 4px',
+      prevDay: () => this.setState({ day: this.state.day - 1, sel: null }), nextDay: () => this.setState({ day: this.state.day + 1, sel: null }), goToday: () => this.setState({ day: 17, mOff: 0, sel: 'b1' }),
+      miniLabel: MONN[mm] + ' ' + my, mini, prevM: () => this.setState({ mOff: this.state.mOff - 1 }), nextM: () => this.setState({ mOff: this.state.mOff + 1 }),
+      planned: hm(planned), free: hm(Math.max(0, 12 - planned)), tasksSum: allT.filter((t) => t[1]).length + ' / ' + allT.length,
+      empty: vis.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

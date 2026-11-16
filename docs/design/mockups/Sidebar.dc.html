@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Sidebar rhytm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Główna nawigacja" style="box-sizing: border-box; min-height: {{mh}}px; height: 100%; width: 100%; background: #fafafa; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; color: #171717">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 6px 8px 8px">
+    <svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg>
+    <span style="font-weight: 600; flex: 1; letter-spacing: -0.045em; font-size: 16px">rhytm</span>
+  </div>
+  <a href="CommandK.dc.html" style="display: flex; align-items: center; gap: 8px; border: 1px solid #eaeaea; border-radius: 6px; padding: 7px 10px; margin: 2px 0 10px; color: #666666; background: #ffffff; text-decoration: none">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <span style="flex: 1">Szukaj…</span>
+    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 0 5px">⌘K</span>
+  </a>
+
+  <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b; padding: 6px 8px; text-transform: uppercase; letter-spacing: .06em">Moduły</div>
+  <a href="Today.dc.html" style="{{s.dzis}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Dziś</a>
+  <a href="Calendar.dc.html" style="{{s.kalendarz}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Kalendarz</a>
+  <a href="Sport.dc.html" style="{{s.sport}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Sport</a>
+  <a href="Habits.dc.html" style="{{s.nawyki}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>Nawyki i sen</a>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px">
+    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Strony</span>
+    <a href="NewPage.dc.html" aria-label="Dodaj stronę" style="color: #666666; display: flex; padding: 2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+  </div>
+  <a href="Main.dc.html" style="{{s.subs}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Subscriptions</a>
+  <a href="Books.dc.html" style="{{s.books}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Books</a>
+  <a href="Projects.dc.html" style="{{s.projects}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Projects</a>
+  <a href="Websites.dc.html" style="{{s.websites}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Websites</a>
+  <a href="Passwords.dc.html" style="{{s.passwords}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Passwords</a>
+  <a href="EmptyPage.dc.html" style="{{s.empty}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Bez tytułu</a>
+  <a href="NewPage.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; color: #6b6b6b; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowa strona</a>
+
+  <div style="flex: 1; min-height: 24px"></div>
+  <a href="Settings.dc.html" style="{{s.ustawienia}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"></path></svg>Ustawienia</a>
+  <a href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px; margin-top: 6px; border-top: 1px solid #eaeaea; color: #171717; text-decoration: none">
+    <span style="width: 26px; height: 26px; border-radius: 50%; background: #f0f0f0; border: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500">M</span>
+    <span style="display: flex; flex-direction: column; min-width: 0; flex: 1"><span style="font-weight: 500">Mejson</span><span style="font-size: 12px; color: #666666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">mejson@example.com</span></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg>
+  </a>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"minHeight":{"editor":"int","default":900,"min":600,"max":2000,"unit":"px"},"active":{"editor":"enum","options":["dzis","kalendarz","sport","nawyki","subs","books","projects","websites","passwords","empty","ustawienia"],"default":"dzis"},"$preview":{"width":240,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'dzis';
+    const base = 'display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;text-decoration:none;';
+    const keys = ['dzis', 'kalendarz', 'sport', 'nawyki', 'subs', 'books', 'projects', 'websites', 'passwords', 'empty', 'ustawienia'];
+    const s = {};
+    keys.forEach((k) => {
+      s[k] = base + (k === active ? 'background:#f0f0f0;color:#171717;font-weight:500;' : 'color:#666666;');
+    });
+    return { s, mh: this.props.minHeight ?? 900 };
+  }
+}
+</script>
+</body>
+</html>

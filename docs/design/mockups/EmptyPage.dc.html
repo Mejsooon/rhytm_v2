@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Pusta strona</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="empty" min-height="900" hint-size="100%,900px"></dc-import></div>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
+      <div class="mono" style="font-size: 13px; color: #666666">Strony <span style="color: #b0b0b0">/</span> <span style="color: #171717">Bez tytułu</span></div>
+      <div style="display: flex; gap: 8px"><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+    </header>
+
+    <div style="padding: 28px 24px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <button type="button" aria-label="Zmień ikonę" style="width: 40px; height: 40px; border: 1px dashed #d4d4d4; border-radius: 8px; background: #fafafa; color: #6b6b6b; font: inherit; cursor: pointer">▦</button>
+        <input type="text" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #171717; flex: 1; min-width: 0">
+      </div>
+
+      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
+        <div style="display: flex; background: #fafafa; border-bottom: 1px solid #eaeaea; font-size: 13px">
+          <div style="flex: 0 0 280px; padding: 10px 14px; font-weight: 500; color: #666666; border-right: 1px solid #eaeaea"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</div>
+          <a href="AddField.dc.html" style="padding: 10px 14px; color: #666666; text-decoration: none">+ Pole</a>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 56px 24px; text-align: center">
+          <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #eaeaea; background: #fafafa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg></span>
+          <div style="font-weight: 600">Pusta tabela</div>
+          <p style="margin: 0; color: #666666; max-width: 380px; line-height: 1.5">Dodaj pola, np. Kwotę cykliczną albo Datę, a potem pierwszy wiersz. Pola możesz później zmieniać i usuwać.</p>
+          <div style="display: flex; gap: 8px; margin-top: 4px"><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">+ Pierwszy wiersz</button></div>
+        </div>
+      </div>
+      <p class="mono" style="margin: 0; font-size: 12px; color: #6b6b6b">Wolisz gotowca? <a href="NewPage.dc.html" style="color: #404040">Użyj szablonu →</a></p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

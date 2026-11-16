@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nawyki i sen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:12px}
+.head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eaeaea}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="nawyki" min-height="1120" hint-size="100%,1120px"></dc-import></div>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600">Nawyki i sen</h1>
+        <span class="mono" style="font-size: 12px; color: #6b6b6b">wtorek · 17.11.2026</span>
+      </div>
+      <div style="display: flex; gap: 8px"><button type="button" class="btn">+ Wpis snu</button><button type="button" class="btnp">Nowy nawyk</button></div>
+    </header>
+
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+      <!-- RZĄD 1: liczby -->
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Nawyki dziś</div><div class="mono" style="font-size: 26px; margin-top: 8px">3/5</div><div style="height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 10px"><div style="width: 60%; height: 4px; background: #15803d; border-radius: 2px"></div></div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Ostatnie 30 dni</div><div class="mono" style="font-size: 26px; margin-top: 8px">84%</div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">+6 pkt vs poprzednie 30</div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Najdłuższa seria</div><div class="mono" style="font-size: 26px; margin-top: 8px">12 <span style="font-size: 14px; color: #666666">dni</span></div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">Woda 2 l</div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Śr. sen · 14 dni</div><div class="mono" style="font-size: 26px; margin-top: 8px">7:21 <span style="font-size: 14px; color: #666666">/ 8:00</span></div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">5 z 14 nocy ≥ cel</div></div>
+      </div>
+
+      <!-- RZĄD 2: nawyki (szerzej) + sen -->
+      <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: stretch">
+        <section class="card" style="display: flex; flex-direction: column">
+          <div class="head">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600">Nawyki</h2>
+            <div class="mono" style="display: grid; grid-template-columns: repeat(7, 24px); gap: 6px; font-size: 10px; color: #6b6b6b; text-align: center; margin-right: 50px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          </div>
+          <sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #f0f0f0">
+              <div style="flex: 1; min-width: 0">
+                <div style="font-weight: 500">{{h.name}}</div>
+                <div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 3px">{{h.schedule}} · seria {{h.streak}}</div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, 24px); gap: 6px">
+                <sc-for list="{{h.week}}" as="c" hint-placeholder-count="7"><span title="{{c.t}}" style="{{c.s}}"></span></sc-for>
+              </div>
+              <button type="button" aria-label="Odhacz dziś" style="{{h.btn}}">✓</button>
+            </div>
+          </sc-for>
+          <div style="flex: 1"></div>
+          <button type="button" style="text-align: left; background: none; border: 0; padding: 12px 16px; font: inherit; color: #666666; cursor: pointer">+ Nowy nawyk</button>
+        </section>
+
+        <section class="card" style="display: flex; flex-direction: column">
+          <div class="head">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600">Sen</h2>
+            <div class="seg" role="group" aria-label="Zakres snu">
+              <button type="button" aria-pressed="true" style="background: #f0f0f0; border: 0; padding: 4px 10px; font: inherit; cursor: pointer">14 dni</button>
+              <button type="button" style="background: #ffffff; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">30 dni</button>
+            </div>
+          </div>
+          <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px; flex: 1">
+            <div style="display: flex; gap: 24px">
+              <div><div class="lbl">Ostatnia noc</div><div class="mono" style="font-size: 20px; margin-top: 6px">7:12</div><div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 2px">23:48 → 07:00</div></div>
+              <div><div class="lbl">Samopoczucie</div><div class="mono" style="font-size: 20px; margin-top: 6px">4/5</div></div>
+            </div>
+            <div style="position: relative; display: flex; align-items: flex-end; gap: 5px; height: 150px; border-bottom: 1px solid #eaeaea; margin-top: auto">
+              <div style="position: absolute; left: 0; right: 0; bottom: 133px; border-top: 1px dashed #15803d"></div>
+              <span class="mono" style="position: absolute; right: 0; bottom: 137px; font-size: 10px; color: #15803d">cel 8 h</span>
+              <sc-for list="{{sleep}}" as="s" hint-placeholder-count="14"><div title="{{s.t}}" style="{{s.s}}"></div></sc-for>
+            </div>
+            <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #6b6b6b; margin-top: -10px"><span>04.11</span><span>17.11</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RZĄD 3: heatmapa na całą szerokość -->
+      <section class="card">
+        <div class="head">
+          <div style="display: flex; align-items: baseline; gap: 10px"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Heatmapa nawyków</h2><span class="mono" style="font-size: 12px; color: #6b6b6b">% nawyków zrobionych danego dnia</span></div>
+          <div class="seg" role="group" aria-label="Zakres heatmapy">
+            <button type="button" style="background: #ffffff; border: 0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">3 mies.</button>
+            <button type="button" style="background: #ffffff; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">6 mies.</button>
+            <button type="button" aria-pressed="true" style="background: #f0f0f0; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; cursor: pointer">Rok</button>
+          </div>
+        </div>
+        <div style="padding: 16px; overflow-x: auto">
+          <div style="display: flex; gap: 8px; width: max-content; margin: 0 auto">
+            <div class="mono" style="display: grid; grid-template-rows: repeat(7, 14px); gap: 4px; font-size: 10px; color: #6b6b6b"><span>pn</span><span></span><span>śr</span><span></span><span>pt</span><span></span><span>nd</span></div>
+            <div style="display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); gap: 4px">
+              <sc-for list="{{heat}}" as="x" hint-placeholder-count="364"><span title="{{x.t}}" style="{{x.s}}"></span></sc-for>
+            </div>
+          </div>
+          <div class="mono" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #6b6b6b; margin-top: 12px">
+            <span>lis 2025 → lis 2026</span>
+            <span style="display: flex; align-items: center; gap: 4px">mniej <span style="width: 12px; height: 12px; border-radius: 3px; background: #f0f0f0"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #bbe5cc"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #4ade80"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #15803d"></span> więcej</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cell = (v) => 'width:24px;height:24px;border-radius:5px;box-sizing:border-box;' + (v === 1 ? 'background:#15803d' : v === 0 ? 'background:#f0f0f0' : 'border:1px dashed #e0e0e0;background:#ffffff');
+    const mk = (pattern) => pattern.split('').map((ch) => ({ s: cell(ch === '1' ? 1 : ch === '0' ? 0 : -1), t: ch === '1' ? 'zrobione' : ch === '0' ? 'nie' : 'nie dotyczy / jeszcze nie' }));
+    const btn = (done) => 'width:34px;height:34px;flex:0 0 34px;border-radius:6px;font:inherit;cursor:pointer;' + (done ? 'background:#15803d;color:#ffffff;border:1px solid #15803d' : 'background:#ffffff;color:#6b6b6b;border:1px solid #e0e0e0');
+    const shades = ['#f0f0f0', '#bbe5cc', '#4ade80', '#15803d'];
+    const heat = [];
+    for (let i = 0; i < 364; i++) {
+      const v = (i * 37 + (i % 7) * 11 + Math.floor(i / 30) * 3) % 10;
+      const lvl = i > 359 ? 0 : v < 2 ? 0 : v < 4 ? 1 : v < 7 ? 2 : 3;
+      heat.push({ s: 'width:14px;height:14px;border-radius:3px;background:' + shades[lvl], t: ['0%', 'do 40%', 'do 80%', 'ponad 80%'][lvl] });
+    }
+    const hrs = [7.1, 6.2, 7.8, 8.2, 6.5, 8.4, 9.0, 7.0, 6.8, 7.9, 8.1, 6.9, 7.5, 7.2];
+    return {
+      habits: [
+        { name: 'Woda 2 l', schedule: 'codziennie', streak: '12 dni', week: mk('11-----'), btn: btn(true) },
+        { name: 'Czytanie 20 min', schedule: 'codziennie', streak: '5 dni', week: mk('11-----'), btn: btn(true) },
+        { name: 'Rozciąganie', schedule: 'pn, śr, pt, nd', streak: '3', week: mk('1------'), btn: btn(false) },
+        { name: 'Bez telefonu po 23:00', schedule: 'codziennie', streak: '1 dzień', week: mk('10-----'), btn: btn(false) },
+        { name: 'Angielski', schedule: '4× w tygodniu', streak: '3 tyg.', week: mk('1------'), btn: btn(false) }
+      ],
+      heat,
+      sleep: hrs.map((h) => ({ t: h + ' h', s: 'flex:1;border-radius:3px 3px 0 0;height:' + Math.round((h / 9) * 150) + 'px;background:' + (h >= 8 ? '#15803d' : '#d4d4d4') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wpis snu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Moduły</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Nawyki i sen</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="SleepDialog.dc.html" class="btn">+ Wpis snu</a><a href="HabitDialog.dc.html" class="btnp">Nowy nawyk</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; opacity: .5">
+      <div style="font-size: 24px; font-weight: 600">Nawyki i sen</div><div style="margin-top: 24px; height: 100px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafafa"></div><div style="margin-top: 24px; height: 300px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafafa"></div><div style="margin-top: 24px; height: 220px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafafa"></div>
+    </div>
+  </main>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.25)"></div>
+  <div role="dialog" aria-modal="true" aria-label="Wpis snu" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(480px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); display: flex; flex-direction: column">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px">
+      <div><h2 style="margin: 0; font-size: 17px; font-weight: 600">Wpis snu</h2><p style="margin: 4px 0 0; color: #666666; font-size: 13px">Noc z poniedziałku na wtorek</p></div>
+      <button type="button" aria-label="Zamknij" style="width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; flex: none">✕</button>
+    </div>
+    <div style="padding: 4px 20px 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <label class="fld">Data pobudki<input class="inp mono" type="text" value="17.11.2026"></label>
+        <label class="fld">Zasnąłem<input class="inp mono" type="text" value="23:48"></label>
+        <label class="fld">Wstałem<input class="inp mono" type="text" value="07:00"></label>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #fafafa; border: 1px solid #eaeaea; border-radius: 8px">
+        <div><div class="lbl">Czas snu</div><div class="mono" style="font-size: 22px; margin-top: 4px">7:12</div></div>
+        <div style="flex: 1"><div style="height: 6px; background: #eaeaea; border-radius: 3px"><div style="width: 90%; height: 6px; background: #171717; border-radius: 3px"></div></div><div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 6px">90% celu 8:00 · brakuje 48 min</div></div>
+      </div>
+      <div class="fld">Samopoczucie
+        <div role="radiogroup" aria-label="Samopoczucie" style="display: flex; gap: 6px">
+          <button type="button" role="radio" aria-checked="false" class="btn" style="width: 44px; justify-content: center">1</button>
+          <button type="button" role="radio" aria-checked="false" class="btn" style="width: 44px; justify-content: center">2</button>
+          <button type="button" role="radio" aria-checked="false" class="btn" style="width: 44px; justify-content: center">3</button>
+          <button type="button" role="radio" aria-checked="true" class="btn" style="width: 44px; justify-content: center; background: #171717; color: #fff; border-color: #171717">4</button>
+          <button type="button" role="radio" aria-checked="false" class="btn" style="width: 44px; justify-content: center">5</button>
+        </div>
+      </div>
+      <label class="fld">Notatka <span class="hint">opcjonalnie</span><input class="inp" type="text" placeholder="np. kawa po 18:00"></label>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #eaeaea; background: #fafafa; border-radius: 0 0 12px 12px">
+<button type="button" class="btn">Anuluj</button><button type="button" class="btnp">Zapisz</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

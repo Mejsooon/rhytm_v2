@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szukaj ⌘K</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:1px 5px;background:#ffffff;color:#404040}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; position: relative; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main aria-hidden="true" style="flex: 999 1 560px; padding: 28px 24px; opacity: .4">
+    <div style="font-size: 24px; font-weight: 600">Dzień dobry, Mejson</div>
+    <div style="margin-top: 24px; height: 80px; border: 1px solid #eaeaea; border-radius: 8px"></div>
+    <div style="margin-top: 24px; height: 360px; border: 1px solid #eaeaea; border-radius: 8px"></div>
+  </main>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.12)"></div>
+
+  <div role="dialog" aria-modal="true" aria-label="Szukaj" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(620px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid #eaeaea">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" value="spo" aria-label="Szukaj" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #171717; background: none">
+      <span class="kbd">esc</span>
+    </label>
+    <div style="padding: 8px; max-height: 440px; overflow: auto">
+      <div class="lbl" style="padding: 8px 10px 6px">Wiersze stron</div>
+      <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; background: #f0f0f0">
+        <span class="mono" style="width: 20px; color: #6b6b6b">▦</span><span style="flex: 1"><b style="font-weight: 600">Spo</b>tify</span><span class="mono" style="font-size: 12px; color: #666666">Subscriptions · 23,99 zł / mies.</span><span class="kbd">↵</span>
+      </a>
+      <a href="EmptyPage.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px">
+        <span class="mono" style="width: 20px; color: #6b6b6b">▦</span><span style="flex: 1">Książka o <b style="font-weight: 600">spo</b>rcie</span><span class="mono" style="font-size: 12px; color: #666666">Books · Czytam</span>
+      </a>
+      <div class="lbl" style="padding: 12px 10px 6px">Moduły</div>
+      <a href="Sport.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px">
+        <span class="mono" style="width: 20px; color: #6b6b6b">⌁</span><span style="flex: 1"><b style="font-weight: 600">Spo</b>rt</span><span class="mono" style="font-size: 12px; color: #666666">moduł</span>
+      </a>
+      <div class="lbl" style="padding: 12px 10px 6px">Strony</div>
+      <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px">
+        <span class="mono" style="width: 20px; color: #6b6b6b">▤</span><span style="flex: 1">Subscriptions</span><span class="mono" style="font-size: 12px; color: #666666">5 wierszy</span>
+      </a>
+      <div class="lbl" style="padding: 12px 10px 6px">Akcje</div>
+      <a href="NewPage.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px">
+        <span class="mono" style="width: 20px; color: #6b6b6b">+</span><span style="flex: 1">Nowa strona</span><span class="kbd">N</span>
+      </a>
+    </div>
+    <div class="mono" style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid #eaeaea; background: #fafafa; font-size: 11px; color: #666666">
+      <span><span class="kbd">↑</span> <span class="kbd">↓</span> wybierz</span><span><span class="kbd">↵</span> otwórz</span><span style="margin-left: auto">sekrety nie są przeszukiwane</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szablony treningów</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Sport</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Szablony treningów</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btnp">Nowy szablon</button></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Szablony treningów</h1><p style="margin: 6px 0 0; color: #666666">Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.</p></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px"><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Push</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: czw 12.11</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 13 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Wyciskanie na ławce · Wyciskanie hantli skos · Pompki na poręczach · Wznosy bokiem</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Pull</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: pt 06.11</span></div><span class="mono" style="font-size: 12px; color: #666">5 ćwiczeń · 15 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Martwy ciąg · Podciąganie · Wiosłowanie sztangą · Face pull · Uginanie hantli</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Nogi</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: —</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 14 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Przysiad · Wykroki · Prostowanie nóg · Łydki</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section></div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

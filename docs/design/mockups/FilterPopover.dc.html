@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Filtr tabeli</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.hint{font-size:12px;color:#6b6b6b;font-weight:400}
+.th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
+.td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;background:#ffffff;color:#404040;cursor:pointer}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
+
+</style>
+</helmet>
+<div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
+  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="subs" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Strony</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Subscriptions</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btn" aria-expanded="true" style="background: #f0f0f0">Filtruj · 3</button><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+    </header>
+    <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%; position: relative">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1><p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">13 wierszy · 12 aktywnych · 5 pól</p></div>
+      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow-x: auto">
+        <dc-t-table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px">
+          <dc-t-thead><dc-t-tr style="background: #fafafa">
+            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</dc-t-th>
+            <dc-t-th scope="col" class="th" style="text-align: right"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↻zł</span>Kwota cykliczna</dc-t-th>
+            <dc-t-th scope="col" class="th" style="padding-left: 48px; "><span class="mono" style="color: #6b6b6b; margin-right: 6px">↻</span>Data odnowienia</dc-t-th>
+            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Kategoria</dc-t-th>
+            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">✓</span>Aktywna</dc-t-th>
+          </dc-t-tr></dc-t-thead>
+          <dc-t-tbody><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Netflix</dc-t-td><dc-t-td class="td mono" style="text-align: right">43,00 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">21.11.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Rozrywka</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">YouTube Premium</dc-t-td><dc-t-td class="td mono" style="text-align: right">29,99 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">24.11.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Rozrywka</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">iCloud+</dc-t-td><dc-t-td class="td mono" style="text-align: right">4,99 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">28.11.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Chmura</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Siłownia — karnet</dc-t-td><dc-t-td class="td mono" style="text-align: right">129,00 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">01.12.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Zdrowie</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Spotify</dc-t-td><dc-t-td class="td mono" style="text-align: right">23,99 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">02.12.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Rozrywka</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Claude Pro</dc-t-td><dc-t-td class="td mono" style="text-align: right">99,00 <span style="color: #6b6b6b">/ mies.</span></dc-t-td><dc-t-td class="td mono" style="padding-left: 48px">05.12.2026</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Praca</span></dc-t-td><dc-t-td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna" style="accent-color: #15803d"></dc-t-td></dc-t-tr></dc-t-tbody>
+        </dc-t-table>
+      </div>
+      <div role="dialog" aria-label="Filtr" style="position: absolute; z-index: 5; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 6px; box-sizing: border-box; right: 0; top: 0; width: 560px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-weight: 600">Filtr</span><span class="mono" style="font-size: 12px; color: #6b6b6b">12 z 13 wierszy</span></div>
+        <div style="display: grid; grid-template-columns: 54px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.2fr) 30px; gap: 6px; align-items: center">
+          <span class="mono" style="font-size: 12px; color: #6b6b6b">Gdzie</span><select class="inp"><option>Aktywna</option></select><select class="inp"><option>jest</option></select><select class="inp"><option>zaznaczone</option></select><button type="button" aria-label="Usuń warunek" style="border: 0; background: none; color: #6b6b6b; cursor: pointer">✕</button>
+          <span class="mono" style="font-size: 12px; color: #6b6b6b">i</span><select class="inp"><option>Kategoria</option></select><select class="inp"><option>jest jednym z</option></select><div class="inp" style="display: flex; gap: 4px; flex-wrap: wrap; padding: 5px 6px"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 1px 6px">Rozrywka</span><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 1px 6px">Chmura</span></div><button type="button" aria-label="Usuń warunek" style="border: 0; background: none; color: #6b6b6b; cursor: pointer">✕</button>
+          <span class="mono" style="font-size: 12px; color: #6b6b6b">i</span><select class="inp"><option>Kwota cykliczna</option></select><select class="inp"><option>/ mies. ≥</option></select><input class="inp mono" type="text" value="20,00"><button type="button" aria-label="Usuń warunek" style="border: 0; background: none; color: #6b6b6b; cursor: pointer">✕</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #eaeaea; padding-top: 10px"><button type="button" class="btn" style="font-size: 13px">+ Dodaj warunek</button><div style="display: flex; gap: 8px"><button type="button" class="btn" style="font-size: 13px">Wyczyść</button><button type="button" class="btnp" style="font-size: 13px">Zapisz jako domyślny</button></div></div>
+        <p class="mono" style="margin: 0; font-size: 11px; color: #6b6b6b">Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.</p>
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
