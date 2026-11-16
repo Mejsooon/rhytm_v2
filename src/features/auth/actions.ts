@@ -257,3 +257,10 @@ export async function resendLink(
   await supabase.auth.resetPasswordForEmail(kontrola.email, { redirectTo: `${origin}/auth/confirm` });
   return { status: "success", email: kontrola.email };
 }
+
+// Wylogowanie: kończy sesję Supabase i wraca na ekran logowania
+export async function signOut(): Promise<never> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/logowanie");
+}

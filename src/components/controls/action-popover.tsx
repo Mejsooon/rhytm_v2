@@ -11,6 +11,7 @@ export function ActionPopover({
   onOpenChange,
   width,
   align = "start",
+  side = "bottom",
   children,
 }: {
   trigger: React.ReactNode;
@@ -18,6 +19,7 @@ export function ActionPopover({
   onOpenChange: (open: boolean) => void;
   width?: number;
   align?: "start" | "end";
+  side?: "top" | "bottom";
   children: React.ReactNode;
 }) {
   return (
@@ -26,6 +28,7 @@ export function ActionPopover({
       <Popover.Portal>
         <Popover.Content
           align={align}
+          side={side}
           sideOffset={6}
           avoidCollisions
           collisionPadding={8}
