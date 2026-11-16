@@ -131,7 +131,7 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
 6. Dopiero teraz (po pierwszym wdrożeniu) połącz bazę. W terminalu w folderze projektu:
    - `supabase login` (otworzy przeglądarkę),
    - `supabase link --project-ref <ref>`: `<ref>` to ciąg liter z adresu projektu w Supabase (`https://supabase.com/dashboard/project/<ref>`); poprosi o Database password z kroku 2,
-   - `supabase db push`: wgrywa tabele i zabezpieczenia (migracje) do bazy produkcyjnej.
+   - `supabase db push --remote` (nowsze CLI bez `--remote` celuje w lokalną bazę): wgrywa tabele i zabezpieczenia (migracje) do bazy produkcyjnej.
 
 ---
 
