@@ -96,6 +96,31 @@ describe("RegisterForm", () => {
     expect(vi.mocked(signUp).mock.calls[0][1].get("tos")).toBe("on");
     expect(screen.getByRole("button", { name: "Utwórz konto" })).toBeDisabled();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Sprawdź skrzynkę" })).toBeInTheDocument());
-    expect(screen.getByText("ala@przyklad.pl")).toBeInTheDocument();
+  });
+
+  it("telefon: podpowiedź siły, placeholdery i ukryta lista reguł z właściwymi klasami breakpointów", async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    // Lista reguł tylko na webie, podpis siły tylko na telefonie
+    expect(screen.getByText(/co najmniej 10 znaków/).closest("ul")).toHaveClass("max-[799px]:hidden");
+    const hint = screen.getByTestId("pw-hint");
+    expect(hint).toHaveTextContent("10+ znaków, wielka litera, cyfra, znak");
+    expect(hint.parentElement).toHaveClass("min-[800px]:hidden");
+    // Placeholdery: telefon w polu, web w nakładce ukrywanej na telefonie
+    expect(screen.getByLabelText("Hasło")).toHaveAttribute("placeholder", "Min. 10 znaków");
+    expect(screen.getByText("Wpisz, żeby zobaczyć wymagania")).toHaveClass("max-[799px]:hidden");
+    expect(screen.getByLabelText(/Nazwa/)).toHaveAttribute("placeholder", "Jak mamy się do ciebie zwracać?");
+    expect(screen.getByText("Jak mamy się do Ciebie zwracać?")).toHaveClass("max-[799px]:hidden");
+    // Punktacja telefonu: Rytm2026! = długość 10 + wielka litera + cyfra + znak = 4 -> Mocne, wszystkie #15803d
+    await user.type(screen.getByLabelText("Hasło"), "Rytm2026!!");
+    expect(hint).toHaveTextContent("Mocne hasło");
+    const seg = screen.getAllByTestId("strength-segment-m");
+    expect(seg).toHaveLength(4);
+    for (const s of seg) expect(s).toHaveStyle({ backgroundColor: KOLOR_OK });
+    // Poziom 3 = #ca8a04 ("Dobre")
+    await user.clear(screen.getByLabelText("Hasło"));
+    await user.type(screen.getByLabelText("Hasło"), "rytm2026!!");
+    expect(hint).toHaveTextContent("Dobre hasło");
+    expect(screen.getAllByTestId("strength-segment-m")[2]).toHaveStyle({ backgroundColor: "#ca8a04" });
   });
 });

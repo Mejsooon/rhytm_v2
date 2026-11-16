@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { signInWithPassword, signUpMock, resendMock, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
@@ -167,5 +167,32 @@ describe("resendConfirmation", () => {
   it("błąd Supabase nie zdradza stanu konta — też sukces", async () => {
     resendMock.mockResolvedValue({ error: { message: "x" } });
     expect((await resendConfirmation("ala@przyklad.pl")).status).toBe("success");
+  });
+});
+
+describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resendMock.mockResolvedValue({ error: null });
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("używa NEXT_PUBLIC_SITE_URL (bez końcowego ukośnika), ignorując nagłówki", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://rhytm.app/");
+    await resendConfirmation("a@b.pl");
+    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("https://rhytm.app/auth/confirm");
+  });
+
+  it("bez zmiennej poza produkcją — zapas z nagłówków", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    await resendConfirmation("a@b.pl");
+    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("http://localhost:3000/auth/confirm");
+  });
+
+  it("w produkcji bez zmiennej — czytelny błąd, bez wysyłki", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    vi.stubEnv("NODE_ENV", "production");
+    await expect(resendConfirmation("a@b.pl")).rejects.toThrow("NEXT_PUBLIC_SITE_URL");
+    expect(resendMock).not.toHaveBeenCalled();
   });
 });

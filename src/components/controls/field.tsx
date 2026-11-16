@@ -28,6 +28,7 @@ export function TextField({
   label,
   error,
   hint,
+  webPlaceholder,
   id,
   className,
   ...props
@@ -35,6 +36,8 @@ export function TextField({
   label: React.ReactNode;
   error?: string;
   hint?: string;
+  // Inny tekst podpowiedzi na webie (≥800 px) — nakładka widoczna tylko przy pustym polu
+  webPlaceholder?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
@@ -42,17 +45,28 @@ export function TextField({
   return (
     <div className="flex flex-col gap-1.5 text-[13px] font-medium max-[799px]:text-[13px]">
       <label htmlFor={inputId}>{label}</label>
-      <input
-        id={inputId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={opisId}
-        className={cn(
-          "w-full rounded-md border border-[#e0e0e0] bg-white px-[11px] py-[9px] text-sm font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
-          error && "border-[#b91c1c]",
-          className,
+      <div className="relative">
+        <input
+          id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={opisId}
+          className={cn(
+            "peer w-full rounded-md border border-[#e0e0e0] bg-white px-[11px] py-[9px] text-sm font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
+            webPlaceholder && "min-[800px]:placeholder:text-transparent",
+            error && "border-[#b91c1c]",
+            className,
+          )}
+          {...props}
+        />
+        {webPlaceholder && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-[#a3a3a3] opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
+          >
+            {webPlaceholder}
+          </span>
         )}
-        {...props}
-      />
+      </div>
       {(error || hint) && (
         <p
           id={opisId}

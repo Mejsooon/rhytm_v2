@@ -56,11 +56,17 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   redirect(pathAfterLogin(profil));
 }
 
-// Adres aplikacji z nagłówków żądania (za proxy: x-forwarded-*)
+// Adres aplikacji do linków zwrotnych. Źródłem jest NEXT_PUBLIC_SITE_URL (nagłówek Host może podszyć atakujący).
+// Nagłówki są tylko zapasem w dev/CI, gdy zmienna nie jest ustawiona; w produkcji jej brak to błąd konfiguracji.
 async function originZNaglowkow(): Promise<string> {
+  const zKonfiguracji = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  if (zKonfiguracji) return zKonfiguracji;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Brak NEXT_PUBLIC_SITE_URL — ustaw adres aplikacji w zmiennych środowiskowych");
+  }
   const naglowki = await headers();
-  const host = naglowki.get("x-forwarded-host") ?? naglowki.get("host");
-  const proto = naglowki.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  const host = naglowki.get("x-forwarded-host") ?? naglowki.get("host") ?? "localhost:3000";
+  const proto = naglowki.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${proto}://${host}`;
 }
 

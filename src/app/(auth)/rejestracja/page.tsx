@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Rejestracja — rhytm" };
 
 export default function RejestracjaPage() {
   return (
-    <AuthShell headerAction={{ href: "/logowanie", label: "Zaloguj się" }} width={400}>
+    <AuthShell headerAction={{ href: "/logowanie", label: "Zaloguj się" }} width={400} phoneBack="/logowanie">
       <RegisterForm />
     </AuthShell>
   );

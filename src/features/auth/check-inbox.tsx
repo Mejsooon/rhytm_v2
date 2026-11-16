@@ -7,11 +7,11 @@ import { Button } from "@/components/controls/button";
 
 // Stan „Sprawdź skrzynkę” (Register.dc.html): ikona koperty, tekst, „Wyślij ponownie” z odliczaniem.
 export function CheckInbox({
-  email,
   onResend,
   cooldownSeconds = 60,
 }: {
-  email: string;
+  // Adres jest częścią kontraktu komponentu, ale makieta go nie pokazuje — nie renderujemy go
+  email?: string;
   onResend: () => Promise<void>;
   cooldownSeconds?: number;
 }) {
@@ -40,7 +40,6 @@ export function CheckInbox({
       <p className="m-0 leading-normal text-[#666666]">
         Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie.
       </p>
-      <p className="m-0 font-mono text-xs break-all text-[#6b6b6b]">{email}</p>
       <Button type="button" disabled={pozostalo > 0} onClick={ponownie} className="px-3 py-2 font-normal">
         Wyślij ponownie
         {pozostalo > 0 && <span className="font-mono text-[#6b6b6b]">{licznik}</span>}

@@ -12,6 +12,7 @@ export function PasswordInput({
   autoComplete,
   rightLink,
   placeholder,
+  webPlaceholder,
   onChange,
   className,
 }: {
@@ -21,6 +22,9 @@ export function PasswordInput({
   rightLink?: ReactNode;
   // Bez własnego placeholdera pole wygląda jak w logowaniu (kropki, na webie ukryte)
   placeholder?: string;
+  // Inny tekst podpowiedzi na webie (≥800 px): natywny placeholder jest wtedy przezroczysty,
+  // a tekst web pokazuje nakładka widoczna tylko przy pustym polu (bez matchMedia)
+  webPlaceholder?: string;
   onChange?: (value: string) => void;
   className?: string;
 }) {
@@ -48,8 +52,16 @@ export function PasswordInput({
           required
           placeholder={placeholder ?? "••••••••"}
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-          className={`w-full rounded-md border border-[#e0e0e0] bg-white py-[9px] pr-11 pl-[11px] text-sm leading-[1.21] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] ${placeholder ? "" : "min-[800px]:placeholder:opacity-0"} focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:py-0 max-[799px]:pr-[52px] max-[799px]:pl-3.5 max-[799px]:text-[15px]`}
+          className={`w-full rounded-md border border-[#e0e0e0] bg-white py-[9px] pr-11 pl-[11px] text-sm leading-[1.21] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] ${webPlaceholder ? "min-[800px]:placeholder:text-transparent" : placeholder ? "" : "min-[800px]:placeholder:opacity-0"} peer focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:py-0 max-[799px]:pr-[52px] max-[799px]:pl-3.5 max-[799px]:text-[15px]`}
         />
+        {webPlaceholder && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-[#a3a3a3] opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
+          >
+            {webPlaceholder}
+          </span>
+        )}
         <button
           type="button"
           aria-label={shown ? "Ukryj hasło" : "Pokaż hasło"}

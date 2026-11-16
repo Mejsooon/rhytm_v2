@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -17,9 +18,12 @@ const SZEROKOSC_KARTY = {
 export function AuthShell({
   headerAction,
   width = 380,
+  phoneBack,
   children,
 }: {
   headerAction?: { href: string; label: string };
+  // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (MRegister.dc.html)
+  phoneBack?: string;
   width?: 380 | 400;
   children: ReactNode;
 }) {
@@ -37,16 +41,29 @@ export function AuthShell({
         )}
       </header>
 
+      {phoneBack && (
+        <header className="box-border flex min-h-[60px] flex-none items-center gap-1 p-2 min-[800px]:hidden">
+          <Link
+            href={phoneBack}
+            aria-label="Wstecz"
+            className="inline-flex size-11 items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+          >
+            <ChevronLeft aria-hidden="true" className="size-[22px]" strokeWidth={2} />
+          </Link>
+        </header>
+      )}
+
       <main className="flex flex-1 items-center justify-center p-6 max-[799px]:items-stretch max-[799px]:p-0">
         <div
           className={cn(
             "box-content flex w-full flex-col gap-4 rounded-xl border border-[#eaeaea] bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_rgba(0,0,0,.04)]",
             SZEROKOSC_KARTY[width],
             // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
-            "max-[799px]:box-border max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pt-14 max-[799px]:pb-6 max-[799px]:shadow-none",
+            "max-[799px]:box-border max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",
+            phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
           )}
         >
-          <RhytmLogo size={48} className="mb-3.5 justify-center min-[800px]:hidden" />
+          {!phoneBack && <RhytmLogo size={48} className="mb-3.5 justify-center min-[800px]:hidden" />}
           {children}
         </div>
       </main>

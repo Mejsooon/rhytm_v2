@@ -16,7 +16,7 @@ import { checkPasswordRules, passwordStrength } from "@/lib/auth/password-rules"
 import { checkPasswordLeak, resendConfirmation, signInWithGoogle, signUp, type AuthFormState } from "./actions";
 import { CheckInbox } from "./check-inbox";
 import { PasswordRulesList, type LeakStatus } from "./password-rules-list";
-import { StrengthBar } from "./strength-bar";
+import { PhoneStrengthBar, StrengthBar } from "./strength-bar";
 
 const POCZATKOWY: AuthFormState = { status: "idle" };
 
@@ -85,10 +85,7 @@ export function RegisterForm() {
     // Na telefonie (MRegister.dc.html) nie ma przycisku Google ani separatora.
     <div className="flex flex-1 flex-col gap-4 max-[799px]:gap-5">
       <div className="order-1">
-        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
-          <span className="max-[799px]:hidden">Załóż konto</span>
-          <span className="min-[800px]:hidden">Załóż konto</span>
-        </h1>
+        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">Załóż konto</h1>
         <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:text-[13px]">
           <span className="max-[799px]:hidden">Wyślemy link, żeby potwierdzić Twój e-mail.</span>
           <span className="min-[800px]:hidden">Kalendarz, nawyki, sport i strony w jednym miejscu.</span>
@@ -111,7 +108,8 @@ export function RegisterForm() {
           name="displayName"
           type="text"
           autoComplete="given-name"
-          placeholder="Jak mamy się do Ciebie zwracać?"
+          placeholder="Jak mamy się do ciebie zwracać?"
+          webPlaceholder="Jak mamy się do Ciebie zwracać?"
           required
           className="leading-[1.21]"
           value={displayName}
@@ -136,14 +134,16 @@ export function RegisterForm() {
             name="password"
             label="Hasło"
             autoComplete="new-password"
-            placeholder="Wpisz, żeby zobaczyć wymagania"
+            placeholder="Min. 10 znaków"
+            webPlaceholder="Wpisz, żeby zobaczyć wymagania"
             onChange={(v) => {
               setPassword(v);
               setLeak("unknown");
             }}
           />
           <StrengthBar score={silaHasla} className="mt-4 max-[799px]:mt-2.5" />
-          <PasswordRulesList password={password} leak={leak} className="mt-2.5" />
+          <PhoneStrengthBar password={password} className="mt-2.5" />
+          <PasswordRulesList password={password} leak={leak} className="mt-2.5 max-[799px]:hidden" />
         </div>
 
         {/* Własny checkbox nie jest natywnym polem — jego stan przekazujemy ukrytym inputem */}

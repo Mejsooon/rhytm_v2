@@ -12,13 +12,13 @@ describe("CheckInbox", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it("pokazuje tekst z makiety i adres e-mail", () => {
+  it("pokazuje tekst z makiety (bez adresu e-mail)", () => {
     render(<CheckInbox email="ala@przyklad.pl" onResend={async () => {}} />);
     expect(screen.getByRole("heading", { name: "Sprawdź skrzynkę" })).toBeInTheDocument();
     expect(
       screen.getByText("Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie."),
     ).toBeInTheDocument();
-    expect(screen.getByText("ala@przyklad.pl")).toBeInTheDocument();
+    expect(screen.queryByText("ala@przyklad.pl")).not.toBeInTheDocument();
   });
 
   it("„Wyślij ponownie” jest nieaktywny z licznikiem 0:59 po 1 s, aktywny po 60 s", () => {
