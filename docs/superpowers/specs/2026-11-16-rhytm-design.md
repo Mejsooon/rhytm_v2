@@ -1,6 +1,6 @@
 # rhytm: dokument projektowy (nowe repo `rhytm_v2`, budowa od zera)
 
-Data: 2026-11-16 (aktualizacja wieczorna) · Status: do akceptacji przez Mejsona
+Data: 2026-11-16 (aktualizacja wieczorna) · Status: zaakceptowany przez Mejsona 2026-11-16
 
 Ten dokument jest **kompletny i samodzielny**. Łączy:
 - funkcje modułów z poprzednich specyfikacji (wersja 2 z 2026-11-14 i wersja 3 z 2026-11-15),
