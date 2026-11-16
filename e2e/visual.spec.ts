@@ -1,0 +1,78 @@
+import { mkdirSync } from "node:fs";
+
+import { expect, test, type Page } from "@playwright/test";
+
+import { createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
+
+// Zrzuty ekranów do ręcznego porównania z makietami. Test pada tylko, gdy strona się nie renderuje.
+// Zrzuty: test-results/visual/<ekran>-<web|mobile>.png; zrzuty makiet: `pnpm mockups:shots` → test-results/mockups/<Makieta>.png.
+const KATALOG = "test-results/visual";
+
+async function zrzut(page: Page, ekran: string, projekt: string) {
+  mkdirSync(KATALOG, { recursive: true });
+  // Czcionki z pakietu `geist` muszą się załadować, zanim zrobimy zrzut
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: `${KATALOG}/${ekran}-${projekt}.png`, fullPage: true });
+}
+
+// Ekrany bez sesji: ścieżka, nagłówek strony (dowód renderu) i makiety (web / telefon)
+const EKRANY_PUBLICZNE = [
+  { ekran: "logowanie", sciezka: "/logowanie", tekst: /Zaloguj się do rhytm|Witaj z powrotem/, makieta: "Login / MLogin" },
+  { ekran: "rejestracja", sciezka: "/rejestracja", tekst: "Załóż konto", makieta: "Register / MRegister" },
+  { ekran: "reset-hasla", sciezka: "/reset-hasla", tekst: /Nie pamiętasz hasła\?|Reset hasła/, makieta: "Forgot / MForgot" },
+  { ekran: "link-wygasl", sciezka: "/link-wygasl", tekst: "Link wygasł", makieta: "EmailConfirmed (stan „Link wygasł”)" },
+];
+
+for (const { ekran, sciezka, tekst, makieta } of EKRANY_PUBLICZNE) {
+  test(`zrzut ${sciezka} (makieta ${makieta})`, async ({ page }, info) => {
+    await page.goto(sciezka);
+    await expect(page.getByRole("heading", { level: 1, name: tekst })).toBeVisible();
+    await zrzut(page, ekran, info.project.name);
+  });
+}
+
+test("zrzut 404 dla gościa (makieta NotFound)", async ({ page }, info) => {
+  // /dev/* przechodzi przez proxy bez logowania, więc zwykła 404 pokazuje się gościowi bez przekierowania
+  const odpowiedz = await page.goto("/dev/nie-ma-takiej-strony");
+  expect(odpowiedz?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Tej strony nie ma" })).toBeVisible();
+  await zrzut(page, "404", info.project.name);
+});
+
+test("zrzut /potwierdzono (makieta EmailConfirmed)", async ({ page }, info) => {
+  await page.goto("/potwierdzono");
+  await expect(page.getByRole("heading", { name: "E-mail potwierdzony" })).toBeVisible();
+  await zrzut(page, "potwierdzono", info.project.name);
+});
+
+test("zrzut /dev/kontrolki (bez makiety)", async ({ page }, info) => {
+  // Strona istnieje tylko poza produkcją; na `pnpm start` zwraca 404
+  const odpowiedz = await page.goto("/dev/kontrolki");
+  test.skip(odpowiedz?.status() === 404, "/dev/kontrolki działa tylko w trybie dev");
+  await zrzut(page, "kontrolki", info.project.name);
+});
+
+test.describe("ekrany z sesją", () => {
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test("zrzut /dzis, pusty (makieta Sidebar / MTabBar)", async ({ page }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+    await expect(page.getByText("Tu pojawi się Twój dzień.")).toBeVisible();
+    await zrzut(page, "dzis", info.project.name);
+  });
+
+  test("zrzut 404 po zalogowaniu (makieta NotFound)", async ({ page }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+    await page.goto("/xyz");
+    await expect(page.getByRole("heading", { name: "Tej strony nie ma" })).toBeVisible();
+    await zrzut(page, "404-zalogowany", info.project.name);
+  });
+});

@@ -18,7 +18,6 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      # Krok e2e dochodzi w Task 14
 
   db:
     runs-on: ubuntu-latest
@@ -30,3 +29,49 @@ jobs:
       # Pomijamy usługi niepotrzebne do testów bazy
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api
       - run: supabase test db
+
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Testowe klucze Cloudflare Turnstile (zawsze przechodzą)
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      # Włącza testy wymagające lokalnego Supabase
+      E2E_SUPABASE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Zostawiamy Mailpit (inbucket) — z niego testy czytają maile
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api
+      - name: Zmienne środowiskowe z lokalnego Supabase
+        run: |
+          supabase status -o env > supabase.env
+          # Nazwy kluczy zależą od wersji CLI: ANON_KEY / PUBLISHABLE_KEY oraz SERVICE_ROLE_KEY / SECRET_KEY
+          pobierz() { for n in "$@"; do w=$(grep -E "^$n=" supabase.env | head -1 | cut -d= -f2- | tr -d '"'); [ -n "$w" ] && { echo "$w"; return; }; done; }
+          echo "NEXT_PUBLIC_SUPABASE_URL=$(pobierz API_URL)" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(pobierz PUBLISHABLE_KEY ANON_KEY)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=$(pobierz SECRET_KEY SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
+          rm supabase.env
+      - run: pnpm exec playwright install --with-deps chromium
+      # NEXT_PUBLIC_* wchodzą do bundla przy budowaniu, więc build po ustawieniu zmiennych
+      - run: pnpm build
+      # Playwright sam uruchamia `pnpm start` na porcie 3000 (webServer w playwright.config.ts)
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-wyniki
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
