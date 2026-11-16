@@ -32,4 +32,11 @@ describe("tokeny globals.css", () => {
   it("nie ma ciemnego motywu", () => {
     expect(css).not.toMatch(/\.dark|prefers-color-scheme/);
   });
+
+  it("html bez nadpisanego font-size (rem zostaje 16 px), body ma 14 px", () => {
+    const html = css.match(/(?:^|\s)html\s*\{([^}]*)\}/)?.[1] ?? "";
+    const body = css.match(/(?:^|\s)body\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(html).not.toMatch(/font-size/);
+    expect(body).toMatch(/font-size:\s*14px/);
+  });
 });
