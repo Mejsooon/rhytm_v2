@@ -365,6 +365,12 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 - **Kalendarz miesiąca:**
   - kolumna „Σ tydz.” z km i liczbą treningów w tygodniu,
   - w komórkach biegi (● km) i treningi (■ nazwa), zaplanowane bez danych jako przerywane,
+  - klik w trening otwiera dymek obok komórki (w dolnych wierszach w górę; przy prawych kolumnach w lewo):
+    - nagłówek: typ (BIEG / SIŁA), stan (wykonany / zaplanowany), tytuł, data i godziny,
+    - bieg wykonany: dystans, czas, tempo, kcal, trudność, godzina; trening siłowy: ćwiczenia, serie, objętość, czas, trudność, rekordy oraz lista ćwiczeń z najlepszą serią,
+    - zaplanowany: plan i godzina startu (bieg) albo szablon i ćwiczenia „jak ostatnio” (siłownia),
+    - notatka, jeśli jest,
+    - akcje: Edytuj / Uzupełnij dane (okno biegu), Otwórz trening / Rozpocznij (ekran treningu), Usuń, znacznik „w kalendarzu”,
   - legenda.
 - Kafelki tygodnia: KM / tydz. względem celu, śr. tempo, treningi (wykonane / plan), kcal.
 - Wykres km tygodniowo z linią celu (ostatnie ~12 tygodni).

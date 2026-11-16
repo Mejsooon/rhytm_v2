@@ -45,9 +45,9 @@ a{color:#171717}a:hover{color:#000000}
 
       <!-- KALENDARZ: MIESIĄC -->
       <sc-if value="{{isMonth}}" hint-placeholder-val="{{true}}">
-        <div style="overflow-x: auto">
-          <div style="min-width: 760px; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
-            <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 88px; background: #fafafa; border-bottom: 1px solid #eaeaea; font-size: 11px; color: #6b6b6b">
+        <div>
+          <div style="min-width: 760px; border: 1px solid #eaeaea; border-radius: 8px; position: relative">
+            <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 88px; background: #fafafa; border-bottom: 1px solid #eaeaea; font-size: 11px; color: #6b6b6b; border-radius: 8px 8px 0 0">
               <span style="padding: 8px 10px">pon</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">wt</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">śr</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">czw</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">pt</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">sob</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea">nd</span><span style="padding: 8px 10px; border-left: 1px solid #eaeaea; text-align: right">Σ tydz.</span>
             </div>
             <sc-for list="{{month}}" as="w" hint-placeholder-count="6">
@@ -55,7 +55,32 @@ a{color:#171717}a:hover{color:#000000}
                 <sc-for list="{{w.days}}" as="d" hint-placeholder-count="7">
                   <div style="{{d.s}}">
                     <span style="{{d.numS}}">{{d.num}}</span>
-                    <sc-for list="{{d.items}}" as="b" hint-placeholder-count="1"><span class="mono" style="{{b.chip}}">{{b.type}} {{b.short}}</span></sc-for>
+                    <sc-for list="{{d.items}}" as="b" hint-placeholder-count="1"><button type="button" class="mono" aria-pressed="{{b.pressed}}" aria-label="{{b.label}}" onClick="{{b.pick}}" style="{{b.chip}}">{{b.type}} {{b.short}}</button></sc-for>
+                    <sc-if value="{{d.hasPop}}" hint-placeholder-val="{{false}}">
+                      <div role="dialog" aria-label="{{d.pop.title}}" style="{{d.pop.s}}">
+                        <div style="display: flex; align-items: center; gap: 8px">
+                          <span class="mono" style="{{d.pop.badge}}">{{d.pop.type}}</span>
+                          <span class="mono" style="font-size: 11px; color: #6b6b6b">{{d.pop.status}}</span>
+                          <button type="button" aria-label="Zamknij" onClick="{{close}}" style="margin-left: auto; width: 26px; height: 26px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; font-size: 12px">✕</button>
+                        </div>
+                        <div style="font-size: 15px; font-weight: 600; margin-top: 8px">{{d.pop.title}}</div>
+                        <div class="mono" style="font-size: 12px; color: #666666; margin-top: 2px">{{d.pop.when}}</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden; margin-top: 12px">
+                          <sc-for list="{{d.pop.stats}}" as="st" hint-placeholder-count="4"><div style="background: #ffffff; padding: 8px 10px"><div class="mono" style="font-size: 10px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">{{st.k}}</div><div class="mono" style="font-size: 14px; font-weight: 500; margin-top: 2px">{{st.v}}</div></div></sc-for>
+                        </div>
+                        <sc-if value="{{d.pop.hasList}}" hint-placeholder-val="{{false}}">
+                          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px">
+                            <sc-for list="{{d.pop.list}}" as="ex" hint-placeholder-count="4"><div style="display: flex; gap: 8px"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ex.n}}</span><span class="mono" style="color: #666666">{{ex.v}}</span></div></sc-for>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{d.pop.hasNote}}" hint-placeholder-val="{{false}}"><div style="margin-top: 12px; font-size: 12px; color: #404040; background: #fafafa; border-radius: 6px; padding: 8px 10px">{{d.pop.note}}</div></sc-if>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eaeaea">
+                          <a href="{{d.pop.href}}" class="btnp" style="text-decoration: none; font-size: 13px">{{d.pop.cta}}</a>
+                          <button type="button" class="btn" style="font-size: 13px; color: #b91c1c">Usuń</button>
+                          <span class="mono" style="margin-left: auto; font-size: 11px; color: #6b6b6b">{{d.pop.cal}}</span>
+                        </div>
+                      </div>
+                    </sc-if>
                   </div>
                 </sc-for>
                 <div class="mono" style="border-left: 1px solid #eaeaea; padding: 8px 10px; text-align: right; font-size: 12px; background: #fafafa"><div style="font-weight: 500">{{w.km}}</div><div style="color: #6b6b6b; font-size: 11px; margin-top: 2px">{{w.count}}</div></div>
@@ -136,7 +161,7 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { filter: 'all' }; }
+  constructor(props) { super(props); this.state = { filter: 'all', sel: '15' }; }
   renderVals() {
     const filter = this.state.filter;
     const segS = (on, first) => 'background:' + (on ? '#f0f0f0;font-weight:500;color:#171717' : '#ffffff;color:#666666') + ';border:0;' + (first ? '' : 'border-left:1px solid #e0e0e0;') + 'padding:6px 12px;font:inherit;cursor:pointer';
@@ -182,14 +207,54 @@ class Component extends DCLogic {
         const idx = r * 7 + c;
         const inMonth = idx >= 6 && idx < 36;
         const num = inMonth ? idx - 5 : (idx < 6 ? monthStart + idx : idx - 35);
-        const items = inMonth ? all.filter((s) => s[0] === num).map((s) => {
+        const dayList = inMonth ? all.filter((s) => s[0] === num) : [];
+        const items = dayList.map((s) => {
           const col = s[1] === 'run' ? RUN : GYM;
+          const on = this.state.sel === String(s[0]);
           if (!s[7]) { km += s[8]; count += 1; }
-          return { type: s[1] === 'run' ? '●' : '■', short: s[6], chip: 'display:block;font-size:11px;border-radius:4px;padding:2px 6px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (s[7] ? col : '#171717') + ';background:' + (s[7] ? '#ffffff' : col + '18') + ';border:1px ' + (s[7] ? 'dashed ' : 'solid ') + col + (s[7] ? '' : '40') };
-        }) : [];
+          return {
+            type: s[1] === 'run' ? '●' : '■', short: s[6], pressed: on ? 'true' : 'false', label: s[4] + ', ' + s[9],
+            pick: () => this.setState({ sel: on ? null : String(s[0]) }),
+            chip: 'display:block;width:100%;text-align:left;cursor:pointer;font-size:11px;border-radius:4px;padding:2px 6px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (s[7] ? col : '#171717') + ';background:' + (s[7] ? '#ffffff' : col + '18') + ';border:1px ' + (s[7] ? 'dashed ' : 'solid ') + col + (s[7] ? '' : '40') + (on ? ';box-shadow:0 0 0 2px ' + col + '55' : '')
+          };
+        });
+        const selS = dayList.find((s) => this.state.sel === String(s[0]));
+        let pop = null;
+        if (selS) {
+          const isRun = selS[1] === 'run';
+          const planned = selS[7];
+          const pace = isRun && !planned ? selS[5].split(' · ')[1].replace('/km', '') : '';
+          const paceMin = pace ? parseInt(pace.split(':')[0]) + parseInt(pace.split(':')[1]) / 60 : 0;
+          const durMin = isRun && !planned ? selS[8] * paceMin : 0;
+          const hms = (m) => { const t = Math.round(m * 60); const h = Math.floor(t / 3600); const mm = Math.floor((t % 3600) / 60); const ss = t % 60; return (h ? h + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
+          // kcal wzorem ACSM, waga z profilu 72 kg (dane przykładowe)
+          const kcal = durMin ? Math.round((3.5 + 0.2 * (1000 / paceMin)) * 72 * durMin / 1000 * 5) : 0;
+          const EX = {
+            Push: [['Wyciskanie na ławce', '72,5 × 5'], ['Wyciskanie hantli skos', '28 × 8'], ['Pompki na poręczach', 'mc × 10'], ['Wznosy bokiem', '10 × 15'], ['Francuskie wyciskanie', '25 × 10']],
+            Pull: [['Martwy ciąg', '110 × 5'], ['Podciąganie', 'mc × 8'], ['Wiosłowanie sztangą', '60 × 8'], ['Face pull', '20 × 15'], ['Uginanie hantli', '14 × 10']]
+          };
+          const vol = selS[5].split(' · ')[1] || '';
+          const stats = isRun
+            ? (planned ? [{ k: 'Plan', v: selS[6] }, { k: 'Start', v: fmt(selS[2]) }, { k: 'Tempo', v: '—' }, { k: 'Kcal', v: '—' }]
+                       : [{ k: 'Dystans', v: selS[6] + ' km' }, { k: 'Czas', v: hms(durMin) }, { k: 'Tempo', v: pace + ' /km' }, { k: 'Kcal', v: '≈ ' + kcal }, { k: 'Trudność', v: selS[10] }, { k: 'Godzina', v: fmt(selS[2]) }])
+            : (planned ? [{ k: 'Szablon', v: selS[4] }, { k: 'Start', v: fmt(selS[2]) }, { k: 'Ćwiczenia', v: '4' }, { k: 'Serie', v: '13' }]
+                       : [{ k: 'Ćwiczenia', v: '5' }, { k: 'Serie', v: '15 / 15' }, { k: 'Objętość', v: vol }, { k: 'Czas', v: '1:30:00' }, { k: 'Trudność', v: selS[10] }, { k: 'Rekordy', v: selS[0] === 12 ? '1' : '0' }]);
+          const NOTES = { 15: 'Ostatnie 2 km mocniej, nogi dobrze.', 10: '6 × 400 m, przerwa 90 s.', 12: 'Nowy rekord w wyciskaniu: 72,5 × 5.' };
+          pop = {
+            type: isRun ? 'BIEG' : 'SIŁA', status: planned ? 'zaplanowany' : 'wykonany', title: selS[4],
+            when: selS[9] + '.2026 · ' + fmt(selS[2]) + '–' + fmt(selS[3]),
+            badge: 'font-size:10px;border-radius:4px;padding:1px 6px;' + (isRun ? 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa' : 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0'),
+            stats, hasList: !isRun, list: !isRun ? (EX[selS[4]] || []).slice(0, planned ? 4 : 5).map((e) => ({ n: e[0], v: planned ? 'jak ostatnio' : e[1] })) : [],
+            hasNote: !!NOTES[selS[0]], note: NOTES[selS[0]] || '',
+            href: isRun ? 'RunDialog.dc.html' : 'GymLog.dc.html',
+            cta: isRun ? (planned ? 'Uzupełnij dane' : 'Edytuj') : (planned ? 'Rozpocznij' : 'Otwórz trening'),
+            cal: '▦ w kalendarzu',
+            s: 'position:absolute;z-index:20;width:300px;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.16);padding:14px 16px;text-align:left;' + (c >= 4 ? 'right:calc(100% + 6px);' : 'left:calc(100% + 6px);') + (r >= 3 ? 'bottom:0;' : 'top:0;')
+          };
+        }
         days.push({
-          num: String(num), items,
-          s: 'min-height:86px;padding:6px 8px;box-sizing:border-box;' + (c ? 'border-left:1px solid #eaeaea;' : '') + (inMonth ? '' : 'background:#fafafa;'),
+          num: String(num), items, hasPop: !!pop, pop: pop || { stats: [], list: [] },
+          s: 'position:relative;min-height:86px;padding:6px 8px;box-sizing:border-box;' + (c ? 'border-left:1px solid #eaeaea;' : '') + (inMonth ? '' : 'background:#fafafa;'),
           numS: 'display:inline-block;font-size:12px;' + (inMonth && num === 17 ? 'background:#15803d;color:#ffffff;border-radius:4px;padding:0 5px;font-weight:600' : inMonth ? 'color:#171717;font-weight:500' : 'color:#a3a3a3')
         });
       }
@@ -198,6 +263,7 @@ class Component extends DCLogic {
     const km = [12, 15, 9, 18, 21, 17, 22, 26, 19, 24, 18.4, 0];
     return {
       isMonth: true,
+      close: () => this.setState({ sel: null }),
       rangeLabel: 'listopad 2026',
       sessions: done.map((s) => ({ date: s[9], type: s[1] === 'run' ? 'BIEG' : 'SIŁA', name: s[4], main: s[1] === 'run' ? s[6] + ' km' : '5 ćw.', sub: s[5].split(' · ')[1], diff: s[10], badge: 'font-size:10px;border-radius:4px;padding:1px 6px;' + (s[1] === 'run' ? 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa' : 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0') })),
       doneCount: done.length,
