@@ -19,12 +19,13 @@ Do tego kroku nie potrzebujesz kont w internecie. Potrzebujesz Dockera (Supabase
 6. Otwórz `.env.local` i uzupełnij:
    - `NEXT_PUBLIC_SUPABASE_URL` = wartość `API URL` z `supabase status` (zwykle `http://127.0.0.1:54321`),
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `Publishable key` (starsze CLI: `anon key`),
-   - `SUPABASE_SECRET_KEY` = `Secret key` (starsze CLI: `service_role key`),
+   - `SUPABASE_SECRET_KEY` = `Secret key` (starsze CLI: `service_role key`): potrzebny tylko testom e2e (zakładają konta testowe), sama aplikacja go nie używa,
    - klucze Turnstile zostaw testowe, które już są w pliku (`1x00000000000000000000AA` i `1x0000000000000000000000000000000AA`): zawsze przechodzą,
    - `NEXT_PUBLIC_SITE_URL` zostaw `http://localhost:3000`.
 7. Uruchom aplikację: `pnpm dev` i wejdź na http://localhost:3000.
 8. Maile (potwierdzenie konta, reset hasła) nie wychodzą do internetu. Otwórz skrzynkę testową Mailpit: http://127.0.0.1:54324 i kliknij link w mailu.
-9. Zatrzymanie lokalnego Supabase: `supabase stop`.
+9. Testy e2e z logowaniem: `E2E_SUPABASE=1 pnpm test:e2e` (Windows PowerShell: `$env:E2E_SUPABASE=1; pnpm test:e2e`). Wymagają działającego lokalnego Supabase z punktu 3 i Mailpit. Bez `E2E_SUPABASE=1` uruchamia się tylko część bez sesji (pozostałe testy są pomijane).
+10. Zatrzymanie lokalnego Supabase: `supabase stop`.
 
 Logowanie przez Google nie działa lokalnie, dopóki nie zrobisz kroku 3 (to normalne).
 
@@ -35,10 +36,11 @@ Logowanie przez Google nie działa lokalnie, dopóki nie zrobisz kroku 3 (to nor
 1. Wejdź na https://supabase.com/dashboard i zaloguj się.
 2. Kliknij **New project**. Wybierz organizację, wpisz nazwę `rhytm`, wymyśl **Database password** (zapisz go w menedżerze haseł, nie w czacie).
 3. W polu **Region** wybierz **Frankfurt (eu-central-1)**. Kliknij **Create new project** i poczekaj, aż projekt się utworzy.
-4. Skopiuj trzy wartości (zapisz je w notatniku, wkleisz je w kroku 6):
+4. Skopiuj dwie wartości (zapisz je w notatniku, wkleisz je w kroku 6):
    - **Project URL**: Project Settings (ikona zębatki, lewy dolny róg) → **Data API** (albo **API**) → pole *Project URL*,
-   - **Publishable key**: Project Settings → **API Keys** → zakładka *Publishable and secret API keys* → klucz `sb_publishable_...`,
-   - **Secret key**: ta sama strona → klucz `sb_secret_...` (przycisk *Reveal*). Jest tajny, patrz krok 7.
+   - **Publishable key**: Project Settings → **API Keys** → zakładka *Publishable and secret API keys* → klucz `sb_publishable_...`.
+
+   Na tej samej stronie jest też **Secret key** (`sb_secret_...`). Aplikacja go nie potrzebuje, więc nie kopiuj go do Vercela; jest tajny, patrz krok 7.
 5. Adresy aplikacji: lewe menu **Authentication** → **URL Configuration**:
    - **Site URL**: `https://<projekt>.vercel.app`
    - **Redirect URLs** → **Add URL**, po jednym adresie (każdy dodaj osobno):
@@ -46,11 +48,13 @@ Logowanie przez Google nie działa lokalnie, dopóki nie zrobisz kroku 3 (to nor
      - `https://<projekt>.vercel.app/auth/confirm`
      - `http://localhost:3000/**`
    - Kliknij **Save changes**.
+   - Wpis `http://localhost:3000/**` przydaje się tylko wtedy, gdy lokalna aplikacja łączy się z produkcyjnym Supabase. Jeśli pracujesz wyłącznie na lokalnym Supabase (krok 1), możesz go usunąć: linki z produkcyjnych maili nie będą wtedy mogły prowadzić na localhost.
 6. Potwierdzanie e-maili: **Authentication** → **Sign In / Providers** (albo **Providers**) → **Email** → upewnij się, że **Enable Email provider** i **Confirm email** są włączone → **Save**.
 7. Szablony maili: **Authentication** → **Emails** → zakładka **Templates**:
    - **Confirm sign up**: w polu *Subject* wpisz `Potwierdź swój e-mail w rhytm`, a w polu *Message body* skasuj całą treść i wklej zawartość pliku `supabase/templates/confirmation.html` z projektu. Kliknij **Save**.
    - **Reset Password**: *Subject* `Ustaw nowe hasło w rhytm`, treść z pliku `supabase/templates/recovery.html`. **Save**.
    - Linki w szablonach używają `{{ .SiteURL }}`, czyli adresu z punktu 5. Dlatego Site URL musi być ustawiony wcześniej.
+8. Limity wysyłki maili: `email_sent = 100` w `supabase/config.toml` działa **tylko lokalnie** (testy e2e wysyłają dużo maili). Limity produkcji ustawiasz w Supabase → **Authentication** → **Rate Limits** (np. *Rate limit for sending emails*); plik `config.toml` ich nie zmienia.
 
 ---
 
@@ -78,7 +82,7 @@ Logowanie przez Google nie działa lokalnie, dopóki nie zrobisz kroku 3 (to nor
 2. Lewe menu → **Turnstile** → **Add widget** (albo **Add site**).
 3. Wypełnij:
    - *Widget name*: `rhytm`,
-   - **Hostname**: dodaj `<projekt>.vercel.app` oraz `localhost` (każdy osobno),
+   - **Hostname**: dodaj `<projekt>.vercel.app` oraz `localhost` (każdy osobno). `localhost` jest potrzebny tylko, gdy lokalna aplikacja używa produkcyjnych kluczy Turnstile; jeśli lokalnie pracujesz wyłącznie z kluczami testowymi z `.env.example`, możesz go usunąć,
    - **Widget Mode**: **Managed**.
 4. Kliknij **Create**.
 5. Skopiuj **Site Key** (publiczny) i **Secret Key** (tajny, patrz krok 7). Wkleisz je w kroku 6.
@@ -114,10 +118,11 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | Project URL z kroku 2 |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key z kroku 2 |
-   | `SUPABASE_SECRET_KEY` | Secret key z kroku 2 |
    | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site Key z kroku 4 |
    | `TURNSTILE_SECRET_KEY` | Secret Key z kroku 4 |
    | `NEXT_PUBLIC_SITE_URL` | `https://<projekt>.vercel.app` (bez ukośnika na końcu) |
+
+   `SUPABASE_SECRET_KEY` **nie dodawaj** do Vercela: aplikacja go nie używa (potrzebują go tylko lokalne testy e2e), a każdy tajny klucz mniej na serwerze to mniejsze ryzyko.
 
    Uwaga: zmienne zaczynające się od `NEXT_PUBLIC_` są wbudowywane w aplikację **podczas budowania**. Jeśli zmienisz którąś później, musisz zrobić **Redeploy** (Deployments → trzy kropki przy ostatnim wdrożeniu → *Redeploy*), samo zapisanie nie wystarczy.
 5. Kliknij **Deploy** i poczekaj na zielony ekran. Adres projektu (np. `rhytm-xxxx.vercel.app`) widać na górze. Jeśli różni się od `<projekt>.vercel.app`, popraw go w Site URL / Redirect URLs (krok 2), w domenach Turnstile (krok 4) i w `NEXT_PUBLIC_SITE_URL`, a potem zrób Redeploy.

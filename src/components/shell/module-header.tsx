@@ -5,7 +5,7 @@ import { Settings } from "lucide-react";
 import { MonoLabel } from "@/components/controls";
 
 // Nagłówek modułu. Oba warianty są w DOM, przełącza je wyłącznie CSS (800 px):
-// - web: „Moduły / Tytuł” w Geist Mono 13 px (EmptyToday.dc.html),
+// - web: „Moduły / Tytuł” w Geist Mono 13 px (EmptyToday.dc.html), „Tytuł” to h1,
 // - telefon: duży tytuł 28 px z etykietą mono nad nim (MToday / MPages).
 export function ModuleHeader({
   title,
@@ -23,7 +23,8 @@ export function ModuleHeader({
       <header className="flex min-h-[34px] items-center gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:hidden">
         <div className="font-mono text-[13px] text-[#666666]">
           <span>Moduły</span> <span className="text-[#b0b0b0]">/</span>{" "}
-          <span className="text-[#171717]">{title}</span>
+          {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
+          <h1 className="inline text-[#171717]">{title}</h1>
         </div>
       </header>
       <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">
