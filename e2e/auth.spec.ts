@@ -95,7 +95,7 @@ test.describe("konto", () => {
     await page.getByRole("button", { name: "Wyślij link" }).click();
     await expect(page.getByRole("heading", { name: "Sprawdź skrzynkę" })).toBeVisible();
 
-    // Link resetu daje sesję z wpisem amr „recovery” i prowadzi na /nowe-haslo
+    // Link resetu ustawia podpisane ciasteczko rhytm_recovery i prowadzi na /nowe-haslo
     await page.goto(await latestLinkFor(email));
     await expect(page).toHaveURL(/\/nowe-haslo$/);
 

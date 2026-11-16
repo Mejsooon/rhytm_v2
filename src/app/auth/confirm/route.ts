@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { RECOVERY_COOKIE, RECOVERY_TTL_S, utworzZnacznikResetu } from "@/lib/auth/recovery";
 import { createClient } from "@/lib/supabase/server";
 
 // Dozwolone typy linków z maili — tylko one trafiają do verifyOtp (żadnych dowolnych wartości z adresu)
@@ -24,9 +25,24 @@ export async function GET(request: NextRequest) {
   if (!tokenHash || !typ) return blad;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ type: typ, token_hash: tokenHash });
+  const { data, error } = await supabase.auth.verifyOtp({ type: typ, token_hash: tokenHash });
   if (error) return blad;
 
-  // Recovery: sesja z verifyOtp ma w JWT wpis amr „recovery” — po nim /nowe-haslo rozpoznaje link resetu
-  return NextResponse.redirect(new URL(CEL[typ], origin));
+  if (typ !== "recovery") {
+    return NextResponse.redirect(new URL(CEL[typ], origin));
+  }
+
+  // Recovery: podpisany znacznik (HMAC, powiązany z id użytkownika, ważny 15 minut). Tylko z nim /nowe-haslo
+  // pozwala zmienić hasło bez starego — zwykła zalogowana sesja nie wystarczy.
+  const userId = data?.user?.id;
+  if (!userId) return blad;
+  const odpowiedz = NextResponse.redirect(new URL(CEL.recovery, origin));
+  odpowiedz.cookies.set(RECOVERY_COOKIE, utworzZnacznikResetu(userId), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: RECOVERY_TTL_S,
+    path: "/",
+  });
+  return odpowiedz;
 }

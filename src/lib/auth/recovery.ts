@@ -1,29 +1,41 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
-// Jak długo po kliknięciu linku resetu wolno ustawić nowe hasło bez starego
-const OKNO_RESETU_S = 15 * 60;
-// Tolerancja rozjechanych zegarów (serwer aplikacji vs serwer Supabase)
-const TOLERANCJA_ZEGARA_S = 60;
+// Znacznik „ta sesja przyszła z linku resetu hasła”: ciasteczko podpisane HMAC-SHA256 sekretem serwera.
+// Wartość: `${userId}.${wygasaS}.${podpis}`, podpis = base64url(HMAC(sekret, `${userId}.${wygasaS}`)).
+// Bez sekretu nie da się go podrobić ani przedłużyć, a powiązanie z userId nie pozwala użyć cudzego.
+// (Claim amr w JWT nie wystarcza: verifyOtp z linku daje w GoTrue wpis „otp”, nie „recovery”.)
+// Moduł wyłącznie serwerowy.
 
-// Czy bieżąca sesja powstała z linku resetu hasła w ciągu ostatnich 15 minut?
-// Źródłem jest podpisany przez Supabase JWT: po verifyOtp({ type: "recovery" }) claim `amr` zawiera
-// wpis { method: "recovery", timestamp }. Zwykłe logowanie go nie ma, a JWT nie da się podrobić
-// (getClaims weryfikuje podpis i ważność), więc sama zalogowana sesja nie wystarczy do zmiany hasła.
-export async function sesjaZLinkuResetu(
-  supabase: { auth: Pick<SupabaseClient["auth"], "getClaims"> },
-  teraz: number = Date.now(),
-): Promise<boolean> {
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data) return false;
+export const RECOVERY_COOKIE = "rhytm_recovery";
+// Jak długo po kliknięciu linku wolno ustawić nowe hasło bez starego
+export const RECOVERY_TTL_S = 15 * 60;
 
-  const terazS = teraz / 1000;
-  const amr = data.claims.amr ?? [];
-  return amr.some(
-    (wpis) =>
-      // Format tekstowy (RFC 8176) nie ma znacznika czasu — nie da się sprawdzić świeżości
-      typeof wpis === "object" &&
-      wpis.method === "recovery" &&
-      terazS - wpis.timestamp <= OKNO_RESETU_S &&
-      wpis.timestamp - terazS <= TOLERANCJA_ZEGARA_S,
-  );
+function sekret(): string {
+  const wartosc = process.env.RECOVERY_COOKIE_SECRET;
+  if (!wartosc) {
+    throw new Error("Brak RECOVERY_COOKIE_SECRET — ustaw sekret (np. `openssl rand -base64 32`) w zmiennych środowiskowych");
+  }
+  return wartosc;
+}
+
+// Tworzy wartość ciasteczka dla użytkownika, który właśnie kliknął link resetu (wywołuje /auth/confirm)
+export function utworzZnacznikResetu(userId: string, teraz: number = Date.now()): string {
+  const wygasa = Math.floor(teraz / 1000) + RECOVERY_TTL_S;
+  const podpis = createHmac("sha256", sekret()).update(`${userId}.${wygasa}`).digest("base64url");
+  return `${userId}.${wygasa}.${podpis}`;
+}
+
+// Sprawdza podpis, ważność i to, że znacznik należy do bieżącego użytkownika (id z getUser())
+export function znacznikResetuPasuje(wartosc: string | undefined, userId: string, teraz: number = Date.now()): boolean {
+  const klucz = sekret();
+  const czesci = (wartosc ?? "").split(".");
+  if (czesci.length !== 3) return false;
+  const [id, wygasa, podpis] = czesci;
+
+  const oczekiwany = createHmac("sha256", klucz).update(`${id}.${wygasa}`).digest();
+  const otrzymany = Buffer.from(podpis, "base64url");
+  // timingSafeEqual wymaga równych długości; porównanie w stałym czasie nie zdradza, ile bajtów się zgadza
+  if (otrzymany.length !== oczekiwany.length || !timingSafeEqual(otrzymany, oczekiwany)) return false;
+
+  return id === userId && Number(wygasa) > teraz / 1000;
 }

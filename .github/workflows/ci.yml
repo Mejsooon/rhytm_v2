@@ -38,6 +38,8 @@ jobs:
       # Testowe klucze Cloudflare Turnstile (zawsze przechodzą)
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      # Sekret HMAC ciasteczka resetu hasła — w CI stała wartość testowa (produkcja ma własny w Vercelu)
+      RECOVERY_COOKIE_SECRET: ci-tylko-testy-recovery-secret-0123456789
       # Włącza testy wymagające lokalnego Supabase
       E2E_SUPABASE: "1"
     steps:

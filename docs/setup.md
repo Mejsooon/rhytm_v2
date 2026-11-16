@@ -22,6 +22,7 @@ Do tego kroku nie potrzebujesz kont w internecie. Potrzebujesz Dockera (Supabase
    - `SUPABASE_SECRET_KEY` = `Secret key` (starsze CLI: `service_role key`): potrzebny tylko testom e2e (zakładają konta testowe), sama aplikacja go nie używa,
    - klucze Turnstile zostaw testowe, które już są w pliku (`1x00000000000000000000AA` i `1x0000000000000000000000000000000AA`): zawsze przechodzą,
    - `NEXT_PUBLIC_SITE_URL` zostaw `http://localhost:3000`.
+   - `RECOVERY_COOKIE_SECRET` = losowy sekret, wygeneruj: `openssl rand -base64 32` (bez niego reset hasła nie działa).
 7. Uruchom aplikację: `pnpm dev` i wejdź na http://localhost:3000.
 8. Maile (potwierdzenie konta, reset hasła) nie wychodzą do internetu. Otwórz skrzynkę testową Mailpit: http://127.0.0.1:54324 i kliknij link w mailu.
 9. Testy e2e z logowaniem: `E2E_SUPABASE=1 pnpm test:e2e` (Windows PowerShell: `$env:E2E_SUPABASE=1; pnpm test:e2e`). Wymagają działającego lokalnego Supabase z punktu 3 i Mailpit. Bez `E2E_SUPABASE=1` uruchamia się tylko część bez sesji (pozostałe testy są pomijane).
@@ -121,6 +122,7 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
    | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site Key z kroku 4 |
    | `TURNSTILE_SECRET_KEY` | Secret Key z kroku 4 |
    | `NEXT_PUBLIC_SITE_URL` | `https://<projekt>.vercel.app` (bez ukośnika na końcu) |
+   | `RECOVERY_COOKIE_SECRET` | nowy losowy sekret: `openssl rand -base64 32` (inny niż lokalny; podpisuje ciasteczko resetu hasła) |
 
    `SUPABASE_SECRET_KEY` **nie dodawaj** do Vercela: aplikacja go nie używa (potrzebują go tylko lokalne testy e2e), a każdy tajny klucz mniej na serwerze to mniejsze ryzyko.
 
@@ -141,6 +143,7 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
 **Nigdy nie wklejaj w czacie** (wpisz je tylko sam w Vercel / Supabase / `.env.local`):
 - **Secret key Supabase** (`sb_secret_...`) i Database password,
 - **Secret Key Turnstile**,
+- **`RECOVERY_COOKIE_SECRET`**,
 - **API key Resend** (`re_...`) i **Client secret Google**,
 - zawartość `.env.local` w całości.
 

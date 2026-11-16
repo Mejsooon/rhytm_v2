@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { verifyOtp } = vi.hoisted(() => ({ verifyOtp: vi.fn() }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { verifyOtp } }),
 }));
+
+import { znacznikResetuPasuje } from "@/lib/auth/recovery";
 
 import { GET } from "./route";
 
@@ -23,8 +25,10 @@ function cel(res: Response) {
 describe("GET /auth/confirm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyOtp.mockResolvedValue({ error: null });
+    vi.stubEnv("RECOVERY_COOKIE_SECRET", "sekret-testowy");
+    verifyOtp.mockResolvedValue({ data: { user: { id: "u1" }, session: {} }, error: null });
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it("signup → verifyOtp i 307 na /potwierdzono", async () => {
     const res = await GET(zadanie("?token_hash=abc&type=signup"));
@@ -50,9 +54,28 @@ describe("GET /auth/confirm", () => {
     expect(verifyOtp).not.toHaveBeenCalled();
   });
 
-  it("nie ustawia żadnych własnych ciasteczek (znacznik resetu to podpisany amr w JWT)", async () => {
+  it("recovery: podpisane ciasteczko rhytm_recovery dla użytkownika z verifyOtp (httpOnly, lax, /, 900 s)", async () => {
     const res = await GET(zadanie("?token_hash=abc&type=recovery"));
-    expect(res.cookies.getAll()).toEqual([]);
+    const wartosc = res.cookies.get("rhytm_recovery")?.value;
+    expect(znacznikResetuPasuje(wartosc, "u1")).toBe(true);
+    expect(znacznikResetuPasuje(wartosc, "u2")).toBe(false);
+    const naglowek = res.headers.get("set-cookie") ?? "";
+    expect(naglowek).toMatch(/HttpOnly/i);
+    expect(naglowek).toMatch(/SameSite=lax/i);
+    expect(naglowek).toMatch(/Path=\//i);
+    expect(naglowek).toMatch(/Max-Age=900/i);
+  });
+
+  it("ciasteczka nie ma dla signup, po błędzie recovery ani bez użytkownika w wyniku", async () => {
+    const ok = await GET(zadanie("?token_hash=abc&type=signup"));
+    expect(ok.cookies.get("rhytm_recovery")).toBeUndefined();
+    verifyOtp.mockResolvedValue({ data: { user: null, session: null }, error: { message: "expired" } });
+    const zle = await GET(zadanie("?token_hash=abc&type=recovery"));
+    expect(zle.cookies.get("rhytm_recovery")).toBeUndefined();
+    verifyOtp.mockResolvedValue({ data: { user: null, session: null }, error: null });
+    const bezUzytkownika = await GET(zadanie("?token_hash=abc&type=recovery"));
+    expect(bezUzytkownika.cookies.get("rhytm_recovery")).toBeUndefined();
+    expect(cel(bezUzytkownika)).toBe("/link-wygasl?type=recovery");
   });
 
   it("błąd verifyOtp → /link-wygasl?type=signup", async () => {
