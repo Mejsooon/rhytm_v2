@@ -1,20 +1,12 @@
 import { Button } from "@/components/controls/button";
 import { cn } from "@/lib/utils";
 
-// Przycisk Google wewnątrz formularza logowania: własna akcja (formAction) przez dostawcę OAuth,
-// bez walidacji pól e-mail/hasło. Etykieta i ikona zależą od szerokości (web / telefon) — tylko CSS.
-export function GoogleButton({
-  action,
-  className,
-}: {
-  action: () => Promise<void>;
-  className?: string;
-}) {
+// Przycisk Google — submit własnego <form action={signInWithGoogle}> (osobnego od formularza hasła).
+// Etykieta i ikona zależą od szerokości (web / telefon) — tylko CSS.
+export function GoogleButton({ className }: { className?: string }) {
   return (
     <Button
       type="submit"
-      formAction={action}
-      formNoValidate
       className={cn("w-full min-h-10 gap-2.5 leading-[1.21] max-[799px]:text-[15px]", className)}
     >
       {/* Web: kolorowe „G” z Login.dc.html */}
