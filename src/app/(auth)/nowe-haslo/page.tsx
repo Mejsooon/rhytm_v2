@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -12,6 +13,8 @@ export const metadata: Metadata = { title: "Nowe hasło — rhytm" };
 // Formularz tylko z ciasteczkiem rhytm_recovery (ustawia je link z maila w /auth/confirm) i sesją.
 // Bez nich (link wygasł, wejście z palca, zwykła zalogowana sesja) pokazujemy „Link wygasł”.
 async function Ekran() {
+  // Odczyt sesji Supabase używa Date.now() — czekamy na żądanie, żeby Next nie traktował go jako prerenderu
+  await connection();
   const maZnacznik = (await cookies()).has("rhytm_recovery");
   const supabase = await createClient();
   const {

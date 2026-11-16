@@ -55,5 +55,5 @@ export async function logInViaForm(page: Page, email: string, password: string):
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await waitForTurnstile(page);
-  await page.getByRole("button", { name: "Zaloguj się" }).click();
+  await page.getByRole("button", { name: "Zaloguj się", exact: true }).click();
 }

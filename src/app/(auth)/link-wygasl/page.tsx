@@ -16,7 +16,7 @@ async function Ekran({ searchParams }: { searchParams: PageProps<"/link-wygasl">
 export default function LinkWygaslPage(props: PageProps<"/link-wygasl">) {
   return (
     <AuthShell headerAction={{ href: "/logowanie", label: "Zaloguj się" }} width={362}>
-      <Suspense fallback={<LinkExpired type="signup" />}>
+      <Suspense fallback={null}>
         <Ekran searchParams={props.searchParams} />
       </Suspense>
     </AuthShell>

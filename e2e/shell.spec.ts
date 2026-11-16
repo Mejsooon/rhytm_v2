@@ -13,6 +13,17 @@ test("/regulamin i /prywatnosc są dostępne bez logowania", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Polityka prywatności" })).toBeVisible();
 });
 
+// Regresja: strony z Suspense nie mogą mieć w HTML drugiej kopii formularza (fallback = ta sama treść)
+test("ekrany konta mają dokładnie jeden formularz", async ({ page }) => {
+  await page.goto("/logowanie");
+  await expect(page.locator('input[name="email"]')).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Zaloguj się", exact: true })).toHaveCount(1);
+
+  await page.goto("/link-wygasl");
+  await expect(page.locator('input[name="email"]')).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Wyślij nowy link" })).toHaveCount(1);
+});
+
 test.describe("powłoka aplikacji", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 

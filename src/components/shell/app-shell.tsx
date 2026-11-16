@@ -1,5 +1,6 @@
 import * as React from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
@@ -14,6 +15,8 @@ async function Powloka({
   children: React.ReactNode;
   requireUser: boolean;
 }) {
+  // Odczyt sesji Supabase używa Date.now() — czekamy na żądanie, żeby Next nie traktował go jako prerenderu
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },

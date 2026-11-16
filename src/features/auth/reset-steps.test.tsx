@@ -47,9 +47,14 @@ describe("ResetSteps", () => {
     await user.type(screen.getByLabelText("E-mail"), "ala@przyklad.pl");
     await user.click(screen.getByRole("button", { name: "Wyślij link" }));
     await screen.findByText("krok 2 / 3");
-    for (let i = 0; i < 60; i++) await act(async () => void vi.advanceTimersByTime(1000));
-    await user.click(screen.getByRole("button", { name: /Wyślij ponownie/ }));
-    expect(resendLink).toHaveBeenCalledWith("recovery", "ala@przyklad.pl", "token");
+    // Odliczanie to łańcuch setTimeout (każdy kolejny powstaje po renderze) — przesuwamy czas, aż przycisk się odblokuje
+    const ponownie = screen.getByRole("button", { name: /Wyślij ponownie/ });
+    for (let i = 0; i < 90 && ponownie.hasAttribute("disabled"); i++) {
+      await act(async () => void vi.advanceTimersByTime(1000));
+    }
+    expect(ponownie).toBeEnabled();
+    await user.click(ponownie);
+    await vi.waitFor(() => expect(resendLink).toHaveBeenCalledWith("recovery", "ala@przyklad.pl", "token"));
     vi.useRealTimers();
   });
 });
