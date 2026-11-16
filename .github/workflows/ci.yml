@@ -18,4 +18,15 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      # Kroki `supabase test db` i e2e dochodzą w Task 4 i 14
+      # Krok e2e dochodzi w Task 14
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Pomijamy usługi niepotrzebne do testów bazy
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api
+      - run: supabase test db
