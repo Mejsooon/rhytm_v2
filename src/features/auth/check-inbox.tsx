@@ -6,6 +6,8 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { Button } from "@/components/controls/button";
 
+import type { AuthFormState } from "./actions";
+
 // Stan „Sprawdź skrzynkę”: ikona, tekst, „Wyślij ponownie” z odliczaniem.
 // kind="signup" — Register.dc.html (koperta, tekst o potwierdzeniu);
 // kind="reset" — Forgot.dc.html / MForgot.dc.html (zielony „ptaszek” tylko na telefonie, własny tekst i slot `before`).
@@ -18,8 +20,9 @@ export function CheckInbox({
 }: {
   // Adres jest częścią kontraktu komponentu, ale makieta go nie pokazuje — nie renderujemy go
   email?: string;
-  // Token Turnstile (niewidoczny widżet w formularzu „Wyślij ponownie”) — serwer wymaga go przy każdym wysłaniu
-  onResend: (turnstileToken: string | null) => Promise<void>;
+  // Token Turnstile (niewidoczny widżet w formularzu „Wyślij ponownie”) — serwer wymaga go przy każdym wysłaniu.
+  // Zwraca wynik akcji: przy błędzie pokazujemy komunikat, a licznik nie startuje od nowa.
+  onResend: (turnstileToken: string | null) => Promise<AuthFormState>;
   cooldownSeconds?: number;
   kind?: "signup" | "reset";
   // Własny opis zamiast domyślnego tekstu o linku potwierdzającym
@@ -38,13 +41,29 @@ export function CheckInbox({
 
   // Token jednorazowy: po każdym wysłaniu widżet dostaje nowy resetKey
   const [odnowienia, setOdnowienia] = useState(0);
+  // W trakcie wysyłania przycisk jest zablokowany (bez podwójnego żądania)
+  const [wysylanie, setWysylanie] = useState(false);
+  const [blad, setBlad] = useState<string | null>(null);
 
   async function ponownie(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (wysylanie) return;
     const token = new FormData(e.currentTarget).get("cf-turnstile-response");
-    await onResend(typeof token === "string" ? token : null);
-    setPozostalo(cooldownSeconds);
-    setOdnowienia((n) => n + 1);
+    setWysylanie(true);
+    setBlad(null);
+    try {
+      const wynik = await onResend(typeof token === "string" ? token : null);
+      if (wynik.status === "success") {
+        setPozostalo(cooldownSeconds);
+      } else {
+        setBlad(wynik.message ?? wynik.fieldErrors?.email ?? "Nie udało się wysłać. Spróbuj ponownie.");
+      }
+    } catch {
+      setBlad("Nie udało się wysłać. Spróbuj ponownie.");
+    } finally {
+      setWysylanie(false);
+      setOdnowienia((n) => n + 1);
+    }
   }
 
   const licznik = `${Math.floor(pozostalo / 60)}:${String(pozostalo % 60).padStart(2, "0")}`;
@@ -80,12 +99,17 @@ export function CheckInbox({
         <TurnstileWidget resetKey={odnowienia} />
         <Button
           type="submit"
-          disabled={pozostalo > 0}
+          disabled={pozostalo > 0 || wysylanie}
           className={reset ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0" : "px-3 py-2 font-normal"}
         >
           Wyślij ponownie
           {pozostalo > 0 && <span className="font-mono text-[#6b6b6b]">{licznik}</span>}
         </Button>
+        {blad && (
+          <p role="alert" className="m-0 mt-2 text-[13px] text-[#b91c1c]">
+            {blad}
+          </p>
+        )}
       </form>
     </div>
   );

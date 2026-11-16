@@ -31,8 +31,11 @@ export function NewPasswordForm() {
     if (!password) return;
     let nieaktualne = false;
     const t = setTimeout(async () => {
-      const wyciek = await checkPasswordLeak(password);
-      if (!nieaktualne) setLeak(wyciek ? "leaked" : "ok");
+      // Błąd sieci lub serwera: stan zostaje „nieznany” (serwer i tak sprawdzi hasło przy wysyłce)
+      try {
+        const wyciek = await checkPasswordLeak(password);
+        if (!nieaktualne) setLeak(wyciek ? "leaked" : "ok");
+      } catch {}
     }, 400);
     return () => {
       nieaktualne = true;
@@ -54,6 +57,7 @@ export function NewPasswordForm() {
           name="password"
           label="Nowe hasło"
           autoComplete="new-password"
+          value={password}
           onChange={(v) => {
             setPassword(v);
             setLeak("unknown");

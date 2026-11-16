@@ -44,4 +44,12 @@ describe('verifyTurnstile', () => {
     vi.stubEnv('TURNSTILE_SECRET_KEY', '')
     expect(await verifyTurnstile('tok', undefined, vi.fn())).toBe(false)
   })
+
+  it('wysyła zapytanie z limitem czasu (AbortSignal), a przekroczenie limitu = false (fail-closed)', async () => {
+    const ok = vi.fn().mockResolvedValue(Response.json({ success: true }))
+    await verifyTurnstile('tok', undefined, ok)
+    expect(ok.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+    const abort = vi.fn().mockRejectedValue(new DOMException('This operation was aborted', 'AbortError'))
+    expect(await verifyTurnstile('tok', undefined, abort)).toBe(false)
+  })
 })

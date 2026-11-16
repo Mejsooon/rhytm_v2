@@ -36,4 +36,14 @@ describe('isPasswordPwned', () => {
     const fetchFn = vi.fn().mockResolvedValue(new Response('C6008F9CAB4083784CBD1874F76618D2A97:0'))
     expect(await isPasswordPwned('password123', fetchFn)).toBe(false)
   })
+
+  it('wysyła zapytanie z limitem czasu (AbortSignal), a przekroczenie limitu = false (fail-open)', async () => {
+    const ok = vi.fn().mockResolvedValue(new Response(''))
+    await isPasswordPwned('x', ok)
+    expect(ok.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+    const timeout = vi.fn().mockRejectedValue(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
+    expect(await isPasswordPwned('x', timeout)).toBe(false)
+    const abort = vi.fn().mockRejectedValue(new DOMException('This operation was aborted', 'AbortError'))
+    expect(await isPasswordPwned('x', abort)).toBe(false)
+  })
 })

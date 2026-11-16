@@ -49,9 +49,7 @@ export function ResetSteps() {
               <Link href="/logowanie">Wróć do logowania</Link>
             </Button>
           }
-          onResend={async (token) => {
-            await resendLink("recovery", state.email ?? "", token);
-          }}
+          onResend={(token) => resendLink("recovery", state.email ?? "", token)}
         />
       ) : (
         <form action={formAction} className="flex flex-col gap-4 max-[799px]:gap-[22px]">

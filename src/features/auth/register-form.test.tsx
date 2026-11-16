@@ -123,4 +123,46 @@ describe("RegisterForm", () => {
     expect(hint).toHaveTextContent("Dobre hasło");
     expect(screen.getAllByTestId("strength-segment-m")[2]).toHaveStyle({ backgroundColor: "#ca8a04" });
   });
+
+  it("telefon: hasło z wycieku ma widoczny powód pod paskiem siły (tylko < 800 px)", async () => {
+    vi.mocked(checkPasswordLeak).mockResolvedValue(true);
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await wpiszHaslo(user, "haslo12345");
+    const powod = screen.getByText("To hasło wyciekło w innym serwisie. Wybierz inne.");
+    expect(powod).toHaveClass("min-[800px]:hidden");
+  });
+
+  it("bez wycieku nie ma tekstu o wycieku", async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await wpiszHaslo(user, "rytm2026dobre");
+    expect(screen.queryByText("To hasło wyciekło w innym serwisie. Wybierz inne.")).not.toBeInTheDocument();
+  });
+
+  it("błąd checkPasswordLeak (sieć) → stan wycieku zostaje nieznany, bez blokady i bez nieobsłużonego błędu", async () => {
+    vi.mocked(checkPasswordLeak).mockRejectedValue(new Error("sieć"));
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await user.click(screen.getByRole("checkbox"));
+    await wpiszHaslo(user, "rytm2026dobre");
+    expect(checkPasswordLeak).toHaveBeenCalled();
+    expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent("○");
+    expect(screen.queryByText("To hasło wyciekło w innym serwisie. Wybierz inne.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Utwórz konto" })).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("po błędzie akcji pole hasła nadal pokazuje to samo hasło co reguły (bez rozjazdu stanu)", async () => {
+    vi.mocked(signUp).mockResolvedValueOnce({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await user.type(screen.getByLabelText(/Nazwa/), "Ala");
+    await user.type(screen.getByLabelText("E-mail"), "a@b.pl");
+    await wpiszHaslo(user, "rytm2026dobre");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "Utwórz konto" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Potwierdź, że nie jesteś botem");
+    expect(screen.getByLabelText("Hasło")).toHaveValue("rytm2026dobre");
+    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("✓");
+  });
 });

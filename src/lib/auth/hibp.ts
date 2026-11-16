@@ -15,9 +15,11 @@ export async function isPasswordPwned(password: string, fetchFn: typeof fetch = 
     const prefix = hash.slice(0, 5)
     const suffix = hash.slice(5)
 
-    // Add-Padding: odpowiedź zawiera wpisy-wypełniacze z licznikiem 0
+    // Add-Padding: odpowiedź zawiera wpisy-wypełniacze z licznikiem 0.
+    // Limit 5 s: zawieszone API nie może blokować rejestracji (przekroczenie = błąd sieci → fail-open)
     const res = await fetchFn(`https://api.pwnedpasswords.com/range/${prefix}`, {
       headers: { 'Add-Padding': 'true' },
+      signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) {
       console.warn(`HIBP: odpowiedź ${res.status}, pomijam sprawdzenie`)

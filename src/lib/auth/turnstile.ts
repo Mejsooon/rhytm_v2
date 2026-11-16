@@ -19,9 +19,11 @@ export async function verifyTurnstile(
   if (ip) body.set('remoteip', ip)
 
   try {
+    // Limit 5 s: przekroczenie = błąd → false (fail-closed)
     const res = await fetchFn('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       body,
+      signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) return false
     const data = (await res.json()) as { success?: boolean }

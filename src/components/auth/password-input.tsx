@@ -13,6 +13,7 @@ export function PasswordInput({
   rightLink,
   placeholder,
   webPlaceholder,
+  value,
   onChange,
   className,
 }: {
@@ -25,6 +26,8 @@ export function PasswordInput({
   // Inny tekst podpowiedzi na webie (≥800 px): natywny placeholder jest wtedy przezroczysty,
   // a tekst web pokazuje nakładka widoczna tylko przy pustym polu (bez matchMedia)
   webPlaceholder?: string;
+  // Pole sterowane: React 19 czyści niesterowane pola po akcji formularza, a stan hasła u rodzica zostałby stary
+  value?: string;
   onChange?: (value: string) => void;
   className?: string;
 }) {
@@ -51,6 +54,7 @@ export function PasswordInput({
           autoComplete={autoComplete}
           required
           placeholder={placeholder ?? "••••••••"}
+          value={value}
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}
           className={`w-full rounded-md border border-[#e0e0e0] bg-white py-[9px] pr-11 pl-[11px] text-sm leading-[1.21] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] ${webPlaceholder ? "min-[800px]:placeholder:text-transparent" : placeholder ? "" : "min-[800px]:placeholder:opacity-0"} peer focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:py-0 max-[799px]:pr-[52px] max-[799px]:pl-3.5 max-[799px]:text-[15px]`}
         />

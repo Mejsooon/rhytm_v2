@@ -57,4 +57,22 @@ describe("ResetSteps", () => {
     await vi.waitFor(() => expect(resendLink).toHaveBeenCalledWith("recovery", "ala@przyklad.pl", "token"));
     vi.useRealTimers();
   });
+
+  it("błąd resendLink (np. Turnstile) → komunikat w role=alert, licznik nie startuje od nowa", async () => {
+    vi.mocked(resendLink).mockResolvedValueOnce({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ResetSteps />);
+    await user.type(screen.getByLabelText("E-mail"), "ala@przyklad.pl");
+    await user.click(screen.getByRole("button", { name: "Wyślij link" }));
+    await screen.findByText("krok 2 / 3");
+    const ponownie = screen.getByRole("button", { name: /Wyślij ponownie/ });
+    for (let i = 0; i < 90 && ponownie.hasAttribute("disabled"); i++) {
+      await act(async () => void vi.advanceTimersByTime(1000));
+    }
+    await user.click(ponownie);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Potwierdź, że nie jesteś botem");
+    expect(ponownie).toBeEnabled();
+    vi.useRealTimers();
+  });
 });

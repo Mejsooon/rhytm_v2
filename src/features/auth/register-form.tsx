@@ -55,8 +55,11 @@ export function RegisterForm() {
     if (!password) return;
     let nieaktualne = false;
     const t = setTimeout(async () => {
-      const wyciek = await checkPasswordLeak(password);
-      if (!nieaktualne) setLeak(wyciek ? "leaked" : "ok");
+      // Błąd sieci lub serwera: stan zostaje „nieznany” (serwer i tak sprawdzi hasło przy wysyłce)
+      try {
+        const wyciek = await checkPasswordLeak(password);
+        if (!nieaktualne) setLeak(wyciek ? "leaked" : "ok");
+      } catch {}
     }, 400);
     return () => {
       nieaktualne = true;
@@ -69,9 +72,7 @@ export function RegisterForm() {
     return (
       <CheckInbox
         email={adres}
-        onResend={async (token) => {
-          await resendConfirmation(adres, token);
-        }}
+        onResend={(token) => resendConfirmation(adres, token)}
       />
     );
   }
@@ -136,6 +137,7 @@ export function RegisterForm() {
             autoComplete="new-password"
             placeholder="Min. 10 znaków"
             webPlaceholder="Wpisz, żeby zobaczyć wymagania"
+            value={password}
             onChange={(v) => {
               setPassword(v);
               setLeak("unknown");
@@ -143,6 +145,12 @@ export function RegisterForm() {
           />
           <StrengthBar score={silaHasla} className="mt-4 max-[799px]:mt-2.5" />
           <PhoneStrengthBar password={password} className="mt-2.5" />
+          {/* Na telefonie nie ma listy reguł — powód blokady wysyłki musi być widoczny tutaj */}
+          {leak === "leaked" && (
+            <p className="m-0 mt-1.5 font-mono text-[11px] text-[#b91c1c] min-[800px]:hidden">
+              To hasło wyciekło w innym serwisie. Wybierz inne.
+            </p>
+          )}
           <PasswordRulesList password={password} leak={leak} className="mt-2.5 max-[799px]:hidden" />
         </div>
 

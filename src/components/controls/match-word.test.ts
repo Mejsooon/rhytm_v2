@@ -12,4 +12,12 @@ describe("matchesWord", () => {
     expect(matchesWord("usun", "USUŃ")).toBe(false);
     expect(matchesWord("RESET", "RESETUJ")).toBe(false);
   });
+
+  it("Ń złożone z N + znaku łączącego (NFD, np. klawiatura macOS) pasuje do „USUŃ” (NFC)", () => {
+    const nfd = "USUŃ".normalize("NFD");
+    expect(nfd).not.toBe("USUŃ");
+    expect(matchesWord(nfd, "USUŃ")).toBe(true);
+    expect(matchesWord("usuń", "USUŃ".normalize("NFD"))).toBe(true);
+    expect(matchesWord("USUN", "USUŃ".normalize("NFD"))).toBe(false);
+  });
 });
