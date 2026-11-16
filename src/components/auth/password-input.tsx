@@ -11,12 +11,17 @@ export function PasswordInput({
   label,
   autoComplete,
   rightLink,
+  placeholder,
+  onChange,
   className,
 }: {
   name: string;
   label: string;
   autoComplete: string;
   rightLink?: ReactNode;
+  // Bez własnego placeholdera pole wygląda jak w logowaniu (kropki, na webie ukryte)
+  placeholder?: string;
+  onChange?: (value: string) => void;
   className?: string;
 }) {
   const id = useId();
@@ -41,8 +46,9 @@ export function PasswordInput({
           type={shown ? "text" : "password"}
           autoComplete={autoComplete}
           required
-          placeholder="••••••••"
-          className="w-full rounded-md border border-[#e0e0e0] bg-white py-[9px] pr-11 pl-[11px] text-sm leading-[1.21] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] min-[800px]:placeholder:opacity-0 focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:py-0 max-[799px]:pr-[52px] max-[799px]:pl-3.5 max-[799px]:text-[15px]"
+          placeholder={placeholder ?? "••••••••"}
+          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+          className={`w-full rounded-md border border-[#e0e0e0] bg-white py-[9px] pr-11 pl-[11px] text-sm leading-[1.21] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] ${placeholder ? "" : "min-[800px]:placeholder:opacity-0"} focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:py-0 max-[799px]:pr-[52px] max-[799px]:pl-3.5 max-[799px]:text-[15px]`}
         />
         <button
           type="button"

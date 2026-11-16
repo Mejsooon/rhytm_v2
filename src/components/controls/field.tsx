@@ -32,7 +32,7 @@ export function TextField({
   className,
   ...props
 }: {
-  label: string;
+  label: React.ReactNode;
   error?: string;
   hint?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {

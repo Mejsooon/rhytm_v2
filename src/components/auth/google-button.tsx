@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 // Przycisk Google — submit własnego <form action={signInWithGoogle}> (osobnego od formularza hasła).
 // Etykieta i ikona zależą od szerokości (web / telefon) — tylko CSS.
-export function GoogleButton({ className }: { className?: string }) {
+export function GoogleButton({ className, webLabel = "Zaloguj się przez Google" }: { className?: string; webLabel?: string }) {
   return (
     <Button
       type="submit"
@@ -16,7 +16,7 @@ export function GoogleButton({ className }: { className?: string }) {
           <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
           <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
       </svg>
-      <span className="max-[799px]:hidden">Zaloguj się przez Google</span>
+      <span className="max-[799px]:hidden">{webLabel}</span>
       {/* Telefon: „G” z MLogin.dc.html */}
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="min-[800px]:hidden">
           <path fill="#4285F4" d="M22 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.6a4.8 4.8 0 0 1-2.1 3.1v2.6h3.4c2-1.8 3.1-4.5 3.1-7.6Z" />
