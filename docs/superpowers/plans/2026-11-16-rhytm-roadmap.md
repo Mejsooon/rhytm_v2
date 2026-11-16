@@ -1,137 +1,274 @@
-# rhytm: mapa etapów
+# rhytm: mapa etapów z listami odbiorczymi
 
-**Spec:** `docs/superpowers/specs/2026-11-16-rhytm-design.md`
-**Makiety:** `docs/design/mockups/` (`npx serve docs/design/mockups`)
+**Spec:** `docs/superpowers/specs/2026-11-16-rhytm-design.md` (aktualizacja wieczorna 2026-11-16)
+**Makiety:** `docs/design/mockups/` (`npx serve docs/design/mockups`). Komputer: `X.dc.html` przy 1440 px. Telefon: `MX.dc.html` przy 390×844.
 
-Każdy etap ma własny, szczegółowy plan (`docs/superpowers/plans/2026-11-16-etap-N-*.md`). Plan powstaje tuż przed startem etapu, bo opiera się na kodzie z poprzednich. Etap jest skończony, gdy:
-- wszystkie ekrany z kolumny „Makiety” wyglądają jak makiety (porównanie zrzutów 1440 px),
-- funkcje z listy działają,
-- testy z listy przechodzą,
-- aplikacja jest wdrożona na Vercel.
+## Jak czytać ten dokument
+- Każdy etap ma **listę odbiorczą**: punkty do odhaczenia, wzięte z makiet i specu. Etap jest skończony, gdy:
+  1. każdy punkt listy działa i ma test (e2e albo komponentowy),
+  2. zrzuty ekranów etapu zgadzają się z makietami (web 1440 px, telefon 390 px; spec 7),
+  3. testy jednostkowe, RLS i e2e przechodzą w CI,
+  4. aplikacja jest wdrożona na Vercel.
+- Szczegółowy plan krok po kroku powstaje **tuż przed etapem** (`docs/superpowers/plans/2026-11-16-etap-N-*.md`), na podstawie kodu z poprzednich etapów i tej listy.
+- Każdy etap robi ekrany **web i telefon jednocześnie**.
+- Sekcja „Wspólne” na początku dotyczy wszystkich etapów.
 
-Tabela pokrycia na dole pilnuje, żeby **każdy ekran z makiet** miał swój etap.
+## Wspólne (obowiązuje w każdym etapie)
+- [ ] Kontrolki wyłącznie z biblioteki z Etapu 0 (spec 3.2): żadnych natywnych `select`, `input type=date|time`.
+- [ ] Dymki: zamykają się wyzwalaczem, wyborem, „Gotowe”, Esc i klikiem poza; nie są przycinane przez karty i tabele.
+- [ ] Liczniki, sumy i karty przeliczają się natychmiast po zmianie (optymistycznie), a zapis idzie w tle; błąd zapisu cofa zmianę i pokazuje komunikat.
+- [ ] Akcje wierszy po najechaniu (web), zawsze dostępne z klawiatury (focus-visible).
+- [ ] Każdy przycisk-ikona ma `aria-label`; kontrast tekstu ≥ 4.5:1; cele dotyku na telefonie ≥ 44 px.
+- [ ] Teksty interfejsu dokładnie jak w makietach (polski).
+- [ ] Puste stany i błędy w stylu makiet.
 
-## Etap 0: Fundament i logowanie
-- **Makiety:** Login, Register, Forgot, EmailConfirmed, NotFound, Sidebar.
-- **Funkcje:**
-  - repo z Next.js 16, Tailwind v4, shadcn/ui (Radix), tokeny z spec 3.1, Geist, komponent logo,
-  - Supabase (lokalnie i w chmurze), tabela `profiles` z RLS,
-  - logowanie e-mail + hasło i Google, rejestracja z regułami hasła i sprawdzaniem wycieków, Turnstile,
-  - potwierdzenie e-maila (oba stany), reset hasła w 3 krokach, wylogowanie,
-  - proxy z przekierowaniami, sidebar z modułami (puste ekrany), blok użytkownika z menu, strona 404,
-  - manifest PWA, CI.
-- **Testy:** reguły hasła, HIBP (mock), Turnstile (mock), routing proxy, RLS `profiles`, e2e rejestracja → potwierdzenie → logowanie → wylogowanie, e2e reset hasła.
+---
+
+## Etap 0: Fundament, kontrolki i logowanie
+**Makiety:** Login, Register, Forgot, EmailConfirmed, NotFound, Sidebar · MLogin, MRegister, MForgot, MTabBar.
+
+**Lista odbiorcza**
+- Fundament
+  - [ ] Repo: Next.js 16, TypeScript, Tailwind v4, shadcn/ui (Radix), Vitest, Testing Library, Playwright, ESLint; CI w GitHub Actions.
+  - [ ] Tokeny ze spec 3.1 jako zmienne CSS + Tailwind; Geist i Geist Mono; komponent logo (3×3, zielony kwadrat).
+  - [ ] Supabase lokalnie i w chmurze, migracje, `profiles` z RLS, pgTAP.
+  - [ ] Odświeżona kopia makiet w `docs/design/mockups` (wszystkie pliki z płótna: web i `M*`) + `index.html` ze spisem; skrypt zrzutów makiet do porównań.
+- Biblioteka kontrolek (spec 3.2), każda z wariantem web i telefon, z historią w stronie `/dev/kontrolki` (tylko lokalnie) do porównania z makietami:
+  - [ ] lista rozwijana (z dopiskiem mono i z plakietką),
+  - [ ] wybór daty (‹ ›, Dziś, Wyczyść, dziś w obwódce),
+  - [ ] wybór godziny (siatka godzin i minut co 5),
+  - [ ] segment, przełącznik, checkbox, chipy, plakietki statusów (kolory z makiet),
+  - [ ] dymek, okno, arkusz (telefon), potwierdzenie słowem,
+  - [ ] przyciski (główny, zwykły, niebezpieczny), pola, etykiety mono.
+- Logowanie i konto
+  - [ ] Logowanie: Google, e-mail + hasło, „Pokaż hasło”, „Nie pamiętasz hasła?”, Turnstile, błąd ogólny „Nieprawidłowy e-mail lub hasło”.
+  - [ ] Rejestracja: nazwa, e-mail, hasło z regułami na żywo (≥ 10 znaków, litery i cyfry, nie w wyciekach) i paskiem siły (telefon), akceptacja regulaminu (telefon: przycisk nieaktywny bez zgody), Turnstile, ekran „Sprawdź skrzynkę” z odliczaniem 60 s.
+  - [ ] Link z maila: stany „E-mail potwierdzony” i „Link wygasł” → „Wyślij nowy link”.
+  - [ ] Reset hasła w 3 krokach (telefon: „Wyślij link” → „Sprawdź skrzynkę” → „Wróć do logowania”, „Wyślij ponownie”).
+  - [ ] Wylogowanie.
+- Nawigacja
+  - [ ] Proxy: niezalogowany → `/logowanie`, zalogowany bez onboardingu → `/onboarding`.
+  - [ ] Sidebar: logo, „Szukaj… ⌘K” (na razie bez akcji), Moduły (puste ekrany), Strony (pusta lista), Ustawienia; hover `#f5f5f5`, aktywna `#f0f0f0`; przyklejony na ≥ 800 px.
+  - [ ] Blok użytkownika: klik otwiera dymek z imieniem, e-mailem i „Wyloguj się”.
+  - [ ] Telefon (< 800 px): dolny pasek z 5 zakładkami (`MTabBar`), sidebar ukryty.
+  - [ ] 404 z sidebarem, „Wróć do Dziś”, „Szukaj ⌘K”.
+  - [ ] Manifest PWA, ikony, motyw jasny.
+  - [ ] Strony-zaślepki `/regulamin` i `/prywatnosc`.
+  - [ ] Instrukcja dla Mejsona krok po kroku: założenie Supabase, Vercel, Google OAuth, Turnstile, Resend i przekazanie kluczy; do tego czasu lokalny Supabase + Mailpit + testowe klucze Turnstile.
+
+**Testy:** reguły hasła, HIBP (mock), Turnstile (mock), routing proxy, RLS `profiles`, komponenty kontrolek (otwieranie, wybór, klawiatura, Esc), e2e rejestracja → potwierdzenie (Mailpit) → logowanie → wylogowanie, e2e reset hasła, zrzuty 1440/390 ekranów etapu.
+
+---
 
 ## Etap 1: Onboarding i profil
-- **Makiety:** Onboarding, OnboardingRole, OnboardingGoals, OnboardingSource, OnboardingPages, OnboardingNotify (bez wysyłki push, tylko zapis wyborów i zgody), OnboardingDone, EmptyToday, Settings (Ogólne bez Kosza).
-- **Funkcje:**
-  - 7 kroków z podglądem na żywo i zapisem po każdym kroku; wznowienie przerwanego onboardingu,
-  - zdjęcie w Storage,
-  - startowe kategorie z ról.
-  - Strony z kroku 5 zapisują się jako „do utworzenia” w `profiles`. Utworzy je etap 6 przy pierwszym wejściu, a do tego czasu sidebar ich nie pokazuje.
-  - Ustawienia → Ogólne: profil, cele, waluta.
-- **Testy:** mapowanie ról na kategorie, mapowanie celów na polecane strony, e2e pełnego onboardingu.
+**Makiety:** Onboarding, OnboardingRole, OnboardingGoals, OnboardingSource, OnboardingPages, OnboardingNotify, OnboardingDone, EmptyToday, Settings (Ogólne bez Kosza) · MOnboarding.
 
-## Etap 2: Kalendarz główny
-- **Makiety:** Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog, Settings (zakładka Kategorie kalendarza).
-- **Funkcje:**
-  - widoki tydzień, dzień i miesiąc z przełącznikiem i nawigacją ‹ Dziś ›,
-  - filtry kategorii z licznikami,
-  - dymek bloku z zadaniami i notatką,
-  - tworzenie przez przeciąganie, przesuwanie i rozciąganie,
-  - okno bloku z powtórzeniami, okno zakresu zmian, okno kategorii,
-  - mini kalendarz, „Dzień w liczbach”, linia „teraz”, wiersz „cały dzień” (na razie pusty).
-- **Testy:** rozwijanie powtórzeń i wyjątków, DST, zadania per wystąpienie, zakres „to i następne”, RLS kalendarza, e2e: blok cykliczny z zadaniem w dymku.
+**Lista odbiorcza**
+- [ ] 7 kroków z paskiem postępu, „Wstecz”/„Dalej”, „Wyloguj”; zapis po każdym kroku; powrót wznawia ostatni krok.
+- [ ] Web: podgląd aplikacji na żywo po prawej z zielonym obrysem zmienianego obszaru.
+- [ ] Telefon: układ z `MOnboarding` (jedno pytanie na ekran, „Dalej” na dole, bez podglądu).
+- [ ] Krok 1: zdjęcie (Storage) albo inicjały, imię (wymagane — „Dalej” nieaktywne), strefa (lista z ✓, wykryta z przeglądarki), tydzień od pn/nd, format 24/12 h.
+- [ ] Krok 2: role (wiele), „Kierunek studiów” przy Studencie, kategorie startowe widoczne na żywo (Studia, Praca, Projekty, Sport; Dom gdy nic).
+- [ ] Krok 3: cele (wiele); Treningi → km/tydz. (−/+), Nawyki i sen → cel snu (−/+ 15 min).
+- [ ] Krok 4: źródło (jedno), „Inne” → „Gdzie dokładnie?”, „Pomiń”.
+- [ ] Krok 5: szablony stron, polecane „z Twoich celów” (zapis „do utworzenia”; utworzy je Etap 6).
+- [ ] Krok 6: zgoda na powiadomienia („Zezwól” → „Włączone” + „Anuluj”; tylko zapis wyborów, push w Etapie 9), 4 przełączniki przypomnień, wskazówka PWA.
+- [ ] Krok 7: podsumowanie z „Zmień” do kroków, „Przejdź do Dziś”.
+- [ ] Dziś w stanie pustym: „Witaj w rhytm”, „Pierwsze kroki” 0–4, pusty plan dnia (web i telefon).
+- [ ] Ustawienia → Ogólne: karty Profil i Cele z regułą „Zapisz/Cofnij/Masz niezapisane zmiany/Zapisano ✓”, walidacje (nazwa, waga 30–250, wzrost 120–230, km 1–300), strefa, waluta, początek tygodnia, cel snu −/+.
+
+**Testy:** mapowanie ról na kategorie, celów na polecane strony, walidacje profilu, e2e pełnego onboardingu (web i telefon 390 px), zrzuty.
+
+---
+
+## Etap 2: Kalendarz główny i zadania
+**Makiety:** Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog, Settings (Kategorie) · MCalendarDay, MCalendarWeek, MCalendarMonth, MBlockSheet.
+
+**Lista odbiorcza**
+- Widoki
+  - [ ] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`).
+  - [ ] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”.
+  - [ ] Siatka 06–22, wiersz „cały dzień” (pusty do Etapu 7), linia „teraz” tylko dziś.
+  - [ ] Dzień: mini kalendarz (dziś zielony, wybrany czarny), „Dzień w liczbach”, pusty dzień „Brak bloków w tym dniu. Dodaj blok”.
+  - [ ] Miesiąc: do 3 wpisów i „+N więcej”, „N wpisów widocznych”.
+- Tworzenie i edycja
+  - [ ] Duch slotu przy najechaniu; klik → dymek „Nowy wpis” (data, godzina, Blok / Bieg / Siłownia) w dniu, tygodniu, miesiącu.
+  - [ ] Przeciągnięcie po siatce → „Nowy blok” z zakresem; przesuwanie i rozciąganie bloków.
+  - [ ] Okno „Nowy blok”: tytuł, kategoria (chipy + „+ Nowa”), dzień (wybór daty), od/do (wybór godziny), powtarzanie (5 opcji, „Własne…” z pn–nd i datą końca), zdanie podsumowania, notatka, przełącznik przypomnienia (`blocks.remind`, domyślnie włączony).
+  - [ ] Okno zakresu (tylko to / to i następne / wszystkie) przy edycji, usuwaniu i przeciąganiu wystąpienia.
+  - [ ] Okno kategorii (nazwa, 8 kolorów, podgląd); otwarte z okna bloku wraca do okna bloku.
+  - [ ] Wszystkie okna wracają do widoku i daty, z których je otwarto.
+- Dymek bloku
+  - [ ] Kategoria, tytuł, data i godziny, pasek „Zadania x z y”, zadania do odhaczenia, „+” dodaj zadanie, notatka, Edytuj, Usuń, „↻ co tydzień”; przy dole siatki otwiera się w górę.
+- Zadania (decyzja 0.2)
+  - [ ] Tabela `tasks`; zadania wystąpienia bloku (każde wystąpienie osobna lista).
+  - [ ] Zadania samodzielne z datą / bez daty (API i logika; ekran w Etapie 5).
+  - [ ] Przypięcie samodzielnego zadania do wystąpienia bloku.
+- Telefon
+  - [ ] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 07–22, linia teraz, „+” i stuknięcie pustego miejsca → arkusz.
+  - [ ] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia.
+  - [ ] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie.
+- [ ] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie).
+
+**Testy:** powtórzenia i wyjątki, DST, zadania per wystąpienie, „to i następne”, zadania samodzielne (daty, zaległe, przypięcie), RLS kalendarza i zadań, e2e blok cykliczny z zadaniem w dymku, e2e „Nowy wpis” → Blok z wypełnioną godziną, zrzuty.
+
+---
 
 ## Etap 3: Nawyki i sen
-- **Makiety:** Habits, HabitDetail, HabitDialog, SleepDialog.
-- **Funkcje:**
-  - harmonogramy (codziennie, wybrane dni, X w tygodniu) z wersjonowaniem, odhaczanie wstecz,
-  - kafelki statystyk, siatka tygodnia, heatmapa 3/6/12 mies.,
-  - sen z wykresem 14/30 dni i celem, szczegóły nawyku, archiwizacja.
-- **Testy:** % dnia, serie dni i tygodni, wersjonowanie harmonogramu, sen przez północ, e2e nawyk i wpis snu.
+**Makiety:** Habits, HabitDetail, HabitDialog, SleepDialog · MHabits, MHabitDetail, MHabitNew, MSleep.
+
+**Lista odbiorcza**
+- [ ] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia.
+- [ ] Kafelki: Nawyki dziś, Ostatnie 30 dni z porównaniem, Najdłuższa seria, Śr. sen 14 dni.
+- [ ] Heatmapa: Miesiąc (‹ › do 12 mies., strzałki nieaktywne na granicy) / 3 / 6 mies. / Rok; dymek „data · x z y nawyków”; dni bez planu szare.
+- [ ] Sen: 14 / 30 dni, wykres z linią celu, dymek słupka, ostatnia noc.
+- [ ] Okno nawyku: nazwa, harmonogram z dniami do zaznaczania i licznikiem X, przypomnienie (przełącznik + wybór godziny), „Pokazuj na ekranie Dziś”.
+- [ ] Szczegóły: kafelki, kalendarz miesiąca ‹ ›, historia harmonogramu, Edytuj, **Usuń** z potwierdzeniem.
+- [ ] Wpis snu: data, zasnąłem/wstałem (wybór godziny web, −/+ telefon), czas na żywo przez północ, samopoczucie 1–5 z etykietami, tagi „Co mogło wpłynąć”, notatka; jeden wpis na dzień.
+- [ ] Telefon: segment Nawyki/Sen, pierścień postępu, lista z dużymi checkboxami i serią, heatmapa 4 tygodni ze stuknięciem.
+
+**Testy:** % dnia, serie dni i tygodni, wersjonowanie harmonogramu, sen przez północ, usunięcie nawyku usuwa historię (RLS), e2e nawyk + wpis snu (web i telefon), zrzuty.
+
+---
 
 ## Etap 4: Sport
-- **Makiety:** Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail.
-- **Funkcje:**
-  - miesiąc z sumami tygodnia i filtrem typu, kafelki, wykres km, karta rekordu, ostatnie treningi,
-  - bieg z tempem i kcal na żywo,
-  - trening siłowy z seriami, objętością i rekordami, biblioteka ćwiczeń,
-  - szablony („Rozpocznij” z ostatnimi ciężarami), szczegóły ćwiczenia,
-  - treningi w kalendarzu głównym jako podgląd (kategoria systemowa Sport).
-- **Testy:** tempo, kcal (ACSM), 1RM (Epley), rekordy, objętość, e2e bieg i trening z szablonu.
+**Makiety:** Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail · MSport, MRunNew, MGym.
 
-## Etap 5: Dziś
-- **Makiety:** Today.
-- **Funkcje:** karta „Ten tydzień” (5 kafelków z danych etapów 2–4), plan dnia z „TERAZ”, linią czasu i dymkiem, treningi w osi, przejście z EmptyToday po pierwszych krokach.
-- **Testy:** liczenie kafelków tygodnia (tydzień od pn/nd wg profilu), e2e odhaczenie zadania z dymku na Dziś.
+**Lista odbiorcza**
+- [ ] Miesiąc z „Σ tydz.”, filtr Wszystko/Bieg/Siłownia, dymek treningu (kierunek w górę/lewo przy krawędziach) z akcjami.
+- [ ] Kafelki tygodnia, wykres km z linią celu (~12 tyg.), karta rekordu ćwiczenia, „Ostatnie treningi”.
+- [ ] Nowy bieg: rodzaj (Spokojny / Tempo / Interwały / Długi / Zawody), data, start, dystans, czas, tempo i kcal na żywo (ACSM), trudność 1–10, notatka, „Pokaż w kalendarzu”; bez czasu = plan.
+- [ ] Trening siłowy: edycja kg/powt., ✓ serii, objętość i serie na żywo, „+ Seria” (kopiuje poprzednią), ✕ serii, „Usuń ćwiczenie”, „+ Ćwiczenie” (wyszukiwanie, biblioteka bez duplikatów, własne, Enter/Esc), REKORD, „Zapisz jako szablon”, „Zakończ trening”.
+- [ ] Szablony: lista + karta „+ Nowy szablon”; edytor (nazwa, dni, godzina startu przy wybranych dniach *[Claude: brak na makiecie, wybór godziny z 3.2 obok dni]*, serie −/+, powtórzenia, przerwa, ↑ ↓ ✕, „+ Ćwiczenie”, Zapisz nieaktywne bez nazwy/ćwiczeń, Anuluj, Usuń, komunikat po zapisie); „Rozpocznij” z ostatnimi ciężarami.
+- [ ] Dni szablonu same tworzą zaplanowane treningi (wystąpienia liczone przy odczycie; „Rozpocznij” / edycja zapisuje sesję; usunięcie wystąpienia = `template_skips`); widoczne w kalendarzu Sportu, głównym i na Dziś.
+- [ ] Szczegóły ćwiczenia: 1RM (Epley), najcięższa seria, najwięcej powtórzeń, zmiana 8 tyg., wykres 3 mies./8 tyg., historia z REKORD, „Zmień nazwę”.
+- [ ] Treningi w kalendarzu głównym jako podgląd (kategoria Sport; plan = przerywana ramka, wykonany = pomarańczowy); „Nowy wpis → Bieg/Siłownia” z kalendarza działa.
+- [ ] Telefon: `MSport` (Tydzień/Miesiąc, karta biegania, wykres ze stuknięciem), `MRunNew` (rodzaj, −/+, tempo liczone, trudność 1–10, „Pokaż w kalendarzu”), `MGym` (pasek postępu, duże checkboxy; bez minutnika przerwy).
 
-## Etap 6: Silnik stron
-- **Makiety:** NewPage, EmptyPage, Books, Projects, Websites, AddField (typy podstawowe), ColumnMenu, FilterPopover, PageMenu, NotFound (link do kosza).
-- **Funkcje:**
-  - tabele `pages`, `page_fields` i `page_rows`, sidebar ze stronami (przeciąganie, menu, ikony, F2),
-  - edycja komórek, dodawanie, ukrywanie, usuwanie i zmiana typu pól,
-  - sort, filtr z zapisem jako domyślny, podsumowania kolumn, przypięte karty,
-  - szablony Books, Projects, Websites i strony z onboardingu,
-  - kosz 30 dni (Cofnij + sekcja w Ustawieniach, czyszczenie pg_cron).
-- **Testy:** walidacja wartości per typ, sort i filtr, podsumowania po filtrze, karty, zmiana typu, RLS stron, e2e strona z szablonu Books.
+**Testy:** tempo, kcal, 1RM, rekordy, objętość, wystąpienia treningów z dni szablonu (zakres dat, pominięcia, zmiana dni), szablon → trening z ostatnimi ciężarami, edytor szablonu (walidacja, kolejność), e2e bieg i trening z szablonu, zrzuty.
+
+---
+
+## Etap 5: Dziś (pełny) i szybkie dodawanie na telefonie
+**Makiety:** Today · MToday, MQuickAdd.
+
+**Lista odbiorcza**
+- [ ] Karta „Ten tydzień” (5 kafelków z danych etapów 2–4; tydzień wg profilu).
+- [ ] Plan dnia: oś 06–22, „TERAZ”, linia czasu, dymek bloku, treningi („plan”), duch slotu + „Nowy wpis”.
+- [ ] „Zadania na dziś” (samodzielne + zaległe, odhaczanie, „+ Zadanie”) i zwijane „Bez daty”; kafelek Zadania liczy oba rodzaje.
+- [ ] Przejście z EmptyToday do pełnego Dziś po pierwszych krokach.
+- [ ] Telefon `MToday`: nagłówek z szukaj i awatarem, kafelki 2×2 jako linki, karta TERAZ z zadaniami, plan dnia jako lista, nawyki z odhaczaniem, karta biegu, pływający „+”.
+- [ ] Telefon `MQuickAdd`: arkusz z segmentem Zadanie/Blok/Bieg/Nawyk, chipy „Kiedy”, link do pełnego formularza, „Dodaj” zapisuje (zadanie z datą lub bez, blok, bieg-plan, nawyk).
+
+**Testy:** liczenie kafelków (pn/nd), zadania zaległe, e2e odhaczenie zadania z dymku na Dziś, e2e szybkie dodanie zadania „Jutro” na telefonie, zrzuty.
+
+---
+
+## Etap 6: Silnik stron i edytor bloków
+**Makiety:** NewPage, EmptyPage, Books, Projects, Websites, AddField (typy podstawowe), ColumnMenu, FilterPopover, PageMenu, NotFound (kosz) · MPages, MEditor.
+
+**Lista odbiorcza**
+- Strony i edytor
+  - [ ] Tabele `pages`, `page_blocks`, `page_fields`, `page_rows`; sidebar ze stronami (przeciąganie, menu strony, ikony, F2); `/strony` na telefonie (Ulubione, Wszystkie, wyszukiwarka).
+  - [ ] Edytor: tytuł (ścieżka na żywo), bloki tekst/nagłówek/lista zadań/separator/tabela, kosz bloku po najechaniu.
+  - [ ] Menu „/” (filtr, ↑↓, Enter, Esc, hover, „Brak bloku”), „+”, Enter na tekście → akapit, chipy „albo zacznij od”, link do szablonów.
+  - [ ] Telefon `MEditor`: pasek skrótów, arkusz „Wstaw blok”, arkusz „Kolumna”, przewijana tabela.
+- Tabele
+  - [ ] Blok tabeli: nazwa, kolumny (dymek: nazwa, typ, opcje Wyboru, ←/→, usuń), „+” kolumny otwiera dymek, „+ Nowy wiersz”, licznik, stopka sum.
+  - [ ] Zmiana typu kolumny z przeliczeniem wartości (zgodne bez straty; pozostałe po potwierdzeniu).
+  - [ ] Tryb wiersza: podgląd (formatowanie, klik w wiersz, Edytuj/Usuń po najechaniu) i edycja (kontrolki z 3.2, Zapisz, ✕); nowy wiersz w edycji; puste tytuły „Bez tytułu/Bez nazwy”.
+  - [ ] „+ Pole” (typy podstawowe), menu kolumny (typ, sort, filtruj, podsumowanie, ukryj, usuń; tytułowe nieusuwalne).
+  - [ ] Filtr (warunki „i”, operatory wg typu, „Zapisz jako domyślny”, licznik, „Filtruj · N”).
+  - [ ] Podsumowania kolumn i przypięte karty liczone z wierszy po filtrze, na żywo.
+- Szablony i kosz
+  - [ ] Nowa strona: lista szablonów, „Pola, które powstaną”, nazwa, „Utwórz stronę”; Books, Projects, Websites z kartami z makiet; strony z onboardingu tworzone przy pierwszym wejściu.
+  - [ ] Projects: „za N dni” czerwone ≤ 7 dni, „minął”, „dziś”, „jutro”, „za N mies.”.
+  - [ ] Kosz 30 dni: „Usunięto · Cofnij”, sekcja w Ustawieniach → Ogólne, czyszczenie pg_cron, link w 404.
+
+**Testy:** walidacja wartości per typ, zmiana typu, sort, filtr, podsumowania po filtrze, karty, kolejność bloków, menu „/”, RLS stron, e2e strona z szablonu Books (dodanie, edycja, usunięcie wiersza), e2e strona z edytora z tabelą i zmianą typu kolumny, zrzuty.
+
+---
 
 ## Etap 7: Inteligentne pola i Subscriptions
-- **Makiety:** Main (Subscriptions), AddField (Kwota cykliczna, Data odnowienia), CalendarRenewal, chip „Subscriptions” w filtrach kalendarza.
-- **Funkcje:**
-  - Kwota cykliczna (przeliczenia, suma w stopce), Data odnowienia (najbliższa data, „za N dni”),
-  - Data z „Pokaż w kalendarzu” i warunkiem „tylko gdy”, wpisy całodniowe w kalendarzu (tydzień, dzień, miesiąc),
-  - dymek podglądu z „Otwórz w …” i podświetleniem wiersza, szablon Subscriptions.
-- **Testy:** cykle (tydzień, miesiąc, kwartał, rok), najbliższe odnowienie, wystąpienia w zakresie, warunek Checkbox, e2e: subskrypcja widoczna, a po odznaczeniu „Aktywna” znika z kalendarza.
+**Makiety:** Main (Subscriptions), AddField (Kwota cykliczna, Data odnowienia), CalendarRenewal · MSubs, MRowEdit.
+
+**Lista odbiorcza**
+- [ ] Kwota cykliczna (tydzień/miesiąc/kwartał/rok, przeliczenia, „43,00 zł / mies.”, suma w stopce); w edycji kwota + segment cyklu.
+- [ ] Data odnowienia (najbliższa przyszła data, „za N dni”), wybór daty w edycji.
+- [ ] Szablon Subscriptions: karty Σ mies., Σ rok, Najbliższe odnowienie; sort po odnowieniu; kategoria jako lista rozwijana z ✓.
+- [ ] Data z „Pokaż w kalendarzu” i „tylko gdy [Checkbox]”; wpisy całodniowe w tygodniu, dniu i miesiącu; chip strony w filtrach.
+- [ ] Dymek podglądu odnowienia z „Otwórz w Subscriptions →” i podświetleniem wiersza.
+- [ ] Telefon: karty wierszy, kafelki sum, „Najbliżej”, chipy filtra, arkusz edycji z kalendarzem, kategoriami, „Aktywna”, „Przypomnij 3 dni przed” (`page_rows.remind`; na komputerze ten sam przełącznik w trybie edycji wiersza), „Usuń wiersz”.
+
+**Testy:** cykle, najbliższe odnowienie, wystąpienia w zakresie, warunek Checkbox, e2e subskrypcja widoczna w kalendarzu i znika po odznaczeniu „Aktywna”, zrzuty.
+
+---
 
 ## Etap 8: Sejf
-- **Makiety:** VaultSetup, Vault, Passwords, VaultReset, Settings (zakładka Sejf).
-- **Funkcje:** pole Sekret, kryptografia (spec 6.9), auto-blokada z odliczaniem, pokaż/kopiuj z czyszczeniem schowka, reset sejfu, zmiana hasła głównego, szablon Passwords.
-- **Testy:** wektory testowe szyfrowania i owijania, błędne hasło, zmiana hasła głównego, serwer odrzuca wartość Sekret w złym kształcie, e2e ustaw → zablokuj → odblokuj.
+**Makiety:** VaultSetup, Vault, Passwords, VaultReset, Settings (Sejf) · MVault, MPasswords.
+
+**Lista odbiorcza**
+- [ ] Ustaw sejf: hasło główne z miernikiem, powtórz, ostrzeżenie, „Rozumiem…” odblokowuje „Utwórz sejf”.
+- [ ] Zablokowany: „— zablokowane”, karta odblokowania, „Nie pamiętam hasła — zresetuj sejf”.
+- [ ] Odblokowany: baner z odliczaniem auto-blokady, „Zablokuj teraz”, pokaż/kopiuj, czyszczenie schowka po 30 s.
+- [ ] Reset: N sekretów, co zostaje, „Wpisz RESETUJ, żeby potwierdzić”, przycisk aktywny po zgodności.
+- [ ] Kryptografia ze spec 6.9; zmiana hasła głównego; Ustawienia → Sejf (stan, zmiana hasła, czas blokady 1/5/15 min, Zablokuj, Reset).
+- [ ] Szablon Passwords.
+- [ ] Telefon: `MVault` (komunikat przy pustym polu), `MPasswords` (wyszukiwanie, rozwijane wiersze, pokaż/kopiuj z komunikatem, „słabe hasło”, kłódka blokuje).
+
+**Testy:** wektory szyfrowania i owijania, błędne hasło, zmiana hasła głównego, serwer odrzuca Sekret w złym kształcie, e2e ustaw → zablokuj → odblokuj, zrzuty.
+
+---
 
 ## Etap 9: Powiadomienia push
-- **Makiety:** SettingsNotifications, OnboardingNotify (prawdziwa subskrypcja).
-- **Funkcje:**
-  - service worker, VAPID, lista urządzeń,
-  - pg_cron i funkcja brzegowa: nawyki, przed blokiem, odnowienia, podsumowanie tygodnia,
-  - cicha noc, „Wyślij testowe”.
-- **Testy:** wybór powiadomień do wysłania w danej minucie (czysta funkcja: strefy, cicha noc, już odhaczone, duplikaty).
+**Makiety:** SettingsNotifications, OnboardingNotify (prawdziwa subskrypcja) · MSettings (sekcja powiadomień).
 
-## Etap 10: Paleta ⌘K, konto, telefon, dopracowanie
-- **Makiety:** CommandK, QuickAdd, SettingsAccount, Settings (skróty konta), MobileToday, MobileCalendar.
-- **Funkcje:**
-  - paleta z wyszukiwaniem i szybkim dodawaniem,
-  - zmiana hasła i e-maila, sesje, eksport JSON, usunięcie konta,
-  - dolny pasek na telefonie, mobilne Dziś i Kalendarz dnia, arkusze zamiast okien.
-  - Końcowe porównanie wszystkich ekranów z makietami.
-- **Testy:** parser szybkiego dodawania, eksport (sekrety zaszyfrowane), e2e usunięcia konta, zrzuty mobilne 390 px.
+**Lista odbiorcza**
+- [ ] Service worker, VAPID, subskrypcja z onboardingu i ustawień.
+- [ ] Ustawienia: push na urządzeniu (wyłączony wyszarza resztę), przełączniki (nawyki, start bloku, odnowienia), cicha noc z wyborem godzin, „Wyślij testowe” z liczbą urządzeń, urządzenia z „TO” i Wyłącz/Włącz, przypomnienia nawyków z wyborem godziny.
+- [ ] pg_cron + funkcja brzegowa: nawyki, start bloku (tylko `blocks.remind`), odnowienia (tylko `page_rows.remind`), podsumowanie tygodnia; cicha noc; `notification_log`.
+
+**Testy:** wybór powiadomień w danej minucie (strefy, cicha noc, odhaczone, duplikaty, wyłączone urządzenia), zrzuty.
+
+---
+
+## Etap 10: Paleta ⌘K, Szukaj, konto, końcowe porównanie
+**Makiety:** CommandK, QuickAdd, SettingsAccount, Settings (skróty konta, Usuń konto) · MSearch, MSettings.
+
+**Lista odbiorcza**
+- [ ] Paleta ⌘K (web): wyszukiwanie w grupach, szybkie dodawanie z parserem i panelem „Rozumiem to tak”, „Otwórz pełny formularz”.
+- [ ] Szukaj (telefon): pole, „Ostatnio”, „Szybkie akcje”, wyniki grupowane na żywo, „Nic nie znaleziono”.
+- [ ] Konto i bezpieczeństwo: zmiana hasła (pasek siły, zgodność, opis braków, wylogowanie innych), zmiana e-maila, karta Sesje (to urządzenie „TA” + „Wyloguj wszystkie inne”), eksport JSON z postępem, usunięcie konta słowem USUŃ.
+- [ ] Ustawienia → Ogólne: „Zmień” e-mail inline, sekcja Usuń konto.
+- [ ] Telefon `MSettings`: profil, początek tygodnia, powiadomienia, konto, „Wyloguj się”.
+- [ ] Końcowe porównanie **wszystkich** ekranów z makietami (web i telefon) i poprawki.
+
+**Testy:** parser szybkiego dodawania, eksport (sekrety zaszyfrowane), e2e usunięcia konta, pełny zestaw zrzutów 1440/390.
+
+---
 
 ## Pokrycie makiet
+Każdy plik z płótna ma etap. Ekrany web bez pary mobilnej na telefonie dostają układ jednokolumnowy / arkusz (spec 6.13).
 
-| Makieta | Etap | | Makieta | Etap |
-|---|---|---|---|---|
-| Login | 0 | | Habits | 3 |
-| Register | 0 | | HabitDetail | 3 |
-| Forgot | 0 | | HabitDialog | 3 |
-| EmailConfirmed | 0 | | SleepDialog | 3 |
-| NotFound | 0 (link do kosza: 6) | | Sport | 4 |
-| Sidebar | 0 (strony: 6) | | RunDialog | 4 |
-| Onboarding | 1 | | GymLog | 4 |
-| OnboardingRole | 1 | | WorkoutTemplates | 4 |
-| OnboardingGoals | 1 | | ExerciseDetail | 4 |
-| OnboardingSource | 1 | | NewPage | 6 |
-| OnboardingPages | 1 (tworzenie stron: 6) | | EmptyPage | 6 |
-| OnboardingNotify | 1 (push: 9) | | Books | 6 |
-| OnboardingDone | 1 | | Projects | 6 |
-| EmptyToday | 1 | | Websites | 6 |
-| Today | 5 | | AddField | 6 + 7 |
-| Calendar | 2 | | ColumnMenu | 6 |
-| CalendarDay | 2 | | FilterPopover | 6 |
-| CalendarMonth | 2 | | PageMenu | 6 |
-| BlockDialog | 2 | | Main (Subscriptions) | 7 |
-| ScopeDialog | 2 | | CalendarRenewal | 7 |
-| CategoryDialog | 2 | | VaultSetup / Vault / Passwords / VaultReset | 8 |
-| Settings (Ogólne) | 1 (Kosz: 6) | | SettingsNotifications | 9 |
-| Settings (Kategorie) | 2 | | CommandK / QuickAdd | 10 |
-| Settings (Sejf) | 8 | | SettingsAccount | 10 |
-| | | | MobileToday / MobileCalendar | 10 |
+| Makieta (web) | Etap | Makieta (telefon) | Etap |
+|---|---|---|---|
+| Login, Register, Forgot, EmailConfirmed | 0 | MLogin, MRegister, MForgot | 0 |
+| NotFound | 0 (kosz: 6) | MTabBar | 0 |
+| Sidebar | 0 (strony: 6) | MOnboarding | 1 |
+| Onboarding, Role, Goals, Source, Pages, Notify, Done | 1 (push: 9, strony: 6) | MToday, MQuickAdd | 5 |
+| EmptyToday | 1 | MSearch | 10 |
+| Today | 5 | MCalendarDay, MCalendarWeek, MCalendarMonth, MBlockSheet | 2 |
+| QuickAdd, CommandK | 10 | MHabits, MHabitDetail, MHabitNew, MSleep | 3 |
+| Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog | 2 | MSport, MRunNew, MGym | 4 |
+| CalendarRenewal | 7 | MPages, MEditor | 6 |
+| Habits, HabitDetail, HabitDialog, SleepDialog | 3 | MSubs, MRowEdit | 7 |
+| Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail | 4 | MVault, MPasswords | 8 |
+| NewPage, EmptyPage, Books, Projects, Websites, AddField (podst.), ColumnMenu, FilterPopover, PageMenu | 6 | MSettings | 9 (powiadomienia) + 10 |
+| Main (Subscriptions), AddField (inteligentne) | 7 | | |
+| VaultSetup, Vault, Passwords, VaultReset | 8 | | |
+| Settings (Ogólne) | 1 (Kosz: 6, konto: 10) | | |
+| Settings (Kategorie) | 2 | | |
+| Settings (Sejf) | 8 | | |
+| SettingsNotifications | 9 | | |
+| SettingsAccount | 10 | | |
+| MobileToday, MobileCalendar (stare, na stronie Web) | zastąpione przez MToday, MCalendarDay | | |

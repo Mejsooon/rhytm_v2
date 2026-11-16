@@ -1,10 +1,19 @@
 # rhytm: dokument projektowy (nowe repo `rhytm_v2`, budowa od zera)
 
-Data: 2026-11-16 · Status: do akceptacji przez Mejsona
+Data: 2026-11-16 (aktualizacja wieczorna) · Status: do akceptacji przez Mejsona
 
 Ten dokument jest **kompletny i samodzielny**. Łączy:
 - funkcje modułów z poprzednich specyfikacji (wersja 2 z 2026-11-14 i wersja 3 z 2026-11-15),
-- wszystko, co zostało zaprojektowane na płótnie „rhytm — układ aplikacji (makiety)”.
+- wszystko, co zostało zaprojektowane na płótnie „Rhytm Design” (dawniej „rhytm — układ aplikacji (makiety)”): strona **Web Design** (ekrany komputera) i strona **Mobile Design** (ekrany telefonu),
+- decyzje z rozmowy 2026-11-16 wieczorem (sekcja 0).
+
+## 0. Decyzje z 2026-11-16 (wieczór)
+1. **Strona to dokument z blokami** (tekst, nagłówek, lista zadań, separator, tabela). Wstawianie przez „/”, „+” i pasek skrótów na telefonie. Jedna strona może mieć kilka tabel. Szablony tworzą stronę z jedną tabelą. Tabele z edytora i z szablonów to ten sam silnik.
+2. **Zadania mogą istnieć samodzielnie**: z datą („Dziś”, „Jutro”, dowolny dzień) albo bez daty. Liczą się do Dziś. Zadanie można przypiąć do wystąpienia bloku. Zadania z bloku „Lista zadań” na stronach to osobna rzecz i nie liczą się do Dziś *[Claude]*.
+3. **Jeden onboarding, 7 kroków** na każdym urządzeniu. Telefon pokazuje te same kroki w układzie z makiety `MOnboarding.dc.html` (bez podglądu aplikacji).
+4. **Telefon ma pełny design** (25 ekranów na stronie Mobile Design). To wzorzec wyglądu i zachowania na szerokości telefonu. Gdzie ekran mobilny i webowy pokazują różną treść, obowiązuje treść webowa (więcej funkcji), a wygląd mobilny; wyjątki wypisane w 6.13.
+5. **Makiety wygrywają** z wcześniejszymi zapisami tego dokumentu. Zmiany z makiet z 2026-11-16 (edycja wierszy z „Zapisz”, własne kontrolki zamiast natywnych pól, usuwanie nawyku zamiast archiwizacji, nowe pola szablonów treningów, tagi snu, nowe ustawienia) są już wpisane poniżej.
+6. Plan: zaktualizowana mapa etapów z listą odbiorczą dla każdego etapu; plan krok po kroku tylko dla Etapu 0, kolejne powstają tuż przed startem etapu.
 
 Tam, gdzie makiety i stare dokumenty się różnią, **wygrywają makiety**. Starych dokumentów nie trzeba czytać.
 
@@ -26,7 +35,7 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
 ### Nie-cele (poza tą wersją)
 - Przenoszenie danych ze starej wersji (start z pustą bazą). Stare repo `Mejsooon/rhytm` i rhytm-delta.vercel.app działają dalej bez zmian.
 - Ciemny motyw.
-- Zagnieżdżone strony, edytor bloków tekstu, formuły, relacje między tabelami, widoki stron inne niż tabela.
+- Zagnieżdżone strony, formuły, relacje między tabelami, widoki tabel inne niż tabela (tablica, galeria), bloki obok siebie w kolumnach, formatowanie tekstu w akapicie (pogrubienie, linki).
 - Udostępnianie, import i eksport CSV, wiele walut naraz.
 - Synchronizacja z Google Calendar, tryb offline, natywne aplikacje.
 - Funkcje ze starych dokumentów, których **nie ma na makietach** *[Claude, do potwierdzenia]*:
@@ -34,7 +43,8 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
   - roczne heatmapy biegów i siłowni,
   - widok tygodnia w Sporcie,
   - harmonogram nawyku „bez planu”,
-  - minutnik przerwy, plany treningowe, panel „Do zaplanowania”.
+  - minutnik przerwy (usunięty też z makiety mobilnej), plany treningowe, panel „Do zaplanowania”.
+  - logowanie biometrią do sejfu, pole „Buty” przy biegu.
 
 ### Anty-cele (porażka, nawet jeśli „działa”)
 - Hasło z sejfu trafia na serwer otwartym tekstem, choćby na chwilę (także do logów albo backupu).
@@ -63,9 +73,10 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
 
 ## 3. Wzorzec wyglądu
 
-Źródłem prawdy o wyglądzie są makiety w repo: `docs/design/mockups/`.
+Źródłem prawdy o wyglądzie są makiety w repo: `docs/design/mockups/` (kopia płótna; odświeżana w Etapie 0, zadanie „Makiety”).
 - Otwiera się je przez `npx serve docs/design/mockups`. Strona `index.html` ma spis ekranów, a każdy ekran jest klikalny.
-- Każdy ekran aplikacji ma odpowiadający plik `*.dc.html`.
+- Każdy ekran aplikacji ma odpowiadający plik `*.dc.html`. Pliki `M*.dc.html` (np. `MToday.dc.html`) to ekrany telefonu 390×844 ze strony Mobile Design; `MTabBar.dc.html` to dolny pasek.
+- Przy porównaniu: komputer 1440 px z plikiem bez `M`, telefon 390 px z plikiem `M*`.
 - Implementując ekran, otwiera się makietę obok i odwzorowuje:
   - strukturę, teksty, rozmiary, odstępy, kolory i stany,
   - zachowanie po kliknięciu (dymki, przełączniki).
@@ -99,6 +110,28 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
 - **Logo:** siatka 3×3 zaokrąglonych kwadratów w trzech odcieniach `#171717` (krycie 1 / .55 / .25) i jeden zielony kwadrat `#15803d` (środkowy w prawej kolumnie) oraz wyraz „rhytm” w Geist 600 z rozstrzeleniem −0.045em.
 - **Hasło marki:** „Your week, in rhythm.” (stopka landing page, materiały).
 
+### 3.2 Wspólne kontrolki (z makiet, obowiązkowe)
+Aplikacja **nie używa natywnych** `<select>`, `<input type="date">` ani `<input type="time">` (wyglądają inaczej niż makiety). Zamiast nich jeden zestaw komponentów, używany wszędzie:
+
+| Kontrolka | Wygląd i zachowanie (makieta wzorcowa) |
+|---|---|
+| **Lista rozwijana** | przycisk jak pole (ramka `#e0e0e0`, 6 px, strzałka ⌄), ramka `#171717` gdy otwarta; dymek 10 px z cieniem `0 12px 32px rgba(0,0,0,.12)`; opcje 13 px, wybrana tło `#f0f0f0` + zielony ✓; opcja może mieć dopisek mono (np. „Warszawa UTC+01:00”) albo plakietkę statusu (`Settings`, `Projects`, `Main`) |
+| **Wybór daty** | przycisk z datą `dd.mm.rrrr` (mono) albo „Wybierz datę”; dymek 244 px: ‹ miesiąc rok ›, nagłówki pn–nd (mono 10 px), dni 30 px, wybrany czarny, dziś w obwódce `#d4d4d4`, stopka „Dziś” i „Wyczyść” (`Books`, `Projects`, `EmptyPage`) |
+| **Wybór godziny** | przycisk mono `12:00 ⌄`; dymek 268 px: „Godzina” siatka 6×4 (00–23), „Minuty” siatka 6×2 (:00–:55 co 5), wybrane czarne, „Gotowe”; klik godziny zostawia dymek, klik minut zamyka (`SettingsNotifications`, `HabitDialog`) |
+| **Segment** | grupa przycisków w ramce, wybrany jasnoszary (web) / biała pigułka z cieniem na szarym tle (telefon) |
+| **Przełącznik** | 40×22 px (web) / 50×30 px (telefon), zielony `#15803d` gdy włączony, płynne przesunięcie |
+| **Checkbox** | zielony kwadrat z białym ✓ (telefon 24 px, web 18 px) |
+| **Dymek akcji** | kontener dymków: zamyka się klikiem w wyzwalacz, „Gotowe”/wybór, Esc i klik poza dymkiem *[Claude: makiety nie mają klik-poza, dodajemy]*; nie jest przycinany przez karty/tabele (portal) |
+| **Arkusz (telefon)** | od dołu, zaokrąglenie 18 px, uchwyt 36×5, przyciemnienie tła `rgba(0,0,0,.4)`; formularze na telefonie otwierają się jako arkusze (`MQuickAdd`, `MBlockSheet`, `MRowEdit`) |
+| **Potwierdzenie słowem** | pole z wpisaniem słowa (RESETUJ, USUŃ), przycisk aktywny dopiero po zgodności, bez znaczenia wielkość liter i spacje na końcu (`VaultReset`, `Settings`) |
+
+Inne zasady z makiet:
+- Akcje wiersza (Edytuj, Usuń) pojawiają się po najechaniu (web), zawsze widoczne w trybie edycji.
+- Liczniki, sumy i karty nad tabelami przeliczają się natychmiast po zmianie danych.
+- Przyciski główne z `<a>` zachowują biały tekst na hover (tło `#2e2e2e`).
+- Sidebar jest przyklejony (sticky, pełna wysokość okna) na szerokości ≥ 800 px; przewija się tylko treść.
+- Hover pozycji sidebaru: tło `#f5f5f5`.
+
 ## 4. Architektura *[Claude]*
 - **Kod:**
   - `src/app` dzieli się na grupy tras `(auth)` (ekrany logowania), `(onboarding)` i `(app)` (wszystko z sidebarem).
@@ -112,8 +145,10 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
   - konto: `/logowanie`, `/rejestracja`, `/reset-hasla`, `/nowe-haslo`, `/auth/confirm`, `/auth/callback`,
   - onboarding: `/onboarding/[krok]`,
   - moduły: `/dzis`, `/kalendarz` (`?widok=dzien|tydzien|miesiac&data=YYYY-MM-DD`), `/sport`, `/sport/trening/[id]`, `/sport/cwiczenia/[id]`, `/sport/szablony`, `/nawyki`, `/nawyki/[id]`,
-  - strony: `/strony/[id]`,
-  - ustawienia: `/ustawienia/(ogolne|konto|sejf|powiadomienia|kategorie)`.
+  - strony: `/strony` (lista stron; na telefonie zakładka „Strony”, `MPages`), `/strony/nowa` (szablony), `/strony/[id]`,
+  - ustawienia: `/ustawienia/(ogolne|konto|sejf|powiadomienia|kategorie)`,
+  - szukaj: `/szukaj` (telefon, `MSearch`; na komputerze ta sama treść w palecie ⌘K).
+- **Jedna aplikacja dla obu szerokości:** te same trasy i dane. Poniżej 800 px układ przełącza się na mobilny z makiet `M*` (dolny pasek `MTabBar`, nagłówek z dużym tytułem, arkusze zamiast okien). Komponenty mają warianty web/mobile tam, gdzie makiety się różnią; logika jest wspólna.
 - **Migracje i testy bazy:** migracje w `supabase/migrations`, testy RLS w pgTAP (`supabase/tests`), lokalnie `supabase start`.
 - **Testy:** jednostkowe Vitest, komponentów Testing Library, przepływów Playwright (logowanie, rejestracja, reset, kluczowe ścieżki modułów). Wszystkie odpalane w CI GitHub Actions.
 
@@ -121,28 +156,34 @@ Najpierw aplikacja dla Mejsona, używana codziennie. Później może SaaS, dlate
 - **Konto:** `profiles` (user_id PK, display_name, avatar_path, timezone, week_start 'mon'|'sun', clock '24'|'12', weight_kg, height_cm, sleep_goal_min DEFAULT 480, weekly_km_goal, currency DEFAULT 'PLN', roles text[], study_field, goals text[], referral_source, referral_other, onboarded_at, created_at)
 - **Kalendarz:**
   - `categories` (id, user_id, name, color, position, is_system, hidden bool). Systemowe „Sport” i „Subscriptions” to filtry podglądu bez własnych bloków.
-  - `blocks` (id, user_id, title, category_id, note, start_local timestamp, duration_min, timezone, recurrence jsonb NULL `{freq: 'daily'|'weekdays'|'weekly'|'custom', byWeekday: int[], until: date}`)
+  - `blocks` (id, user_id, title, category_id, note, start_local timestamp, duration_min, timezone, recurrence jsonb NULL `{freq: 'daily'|'weekdays'|'weekly'|'custom', byWeekday: int[], until: date}`, remind bool DEFAULT true — przełącznik przypomnienia przy bloku, decyzja 9.1)
   - `block_exceptions` (block_id, occurrence_date, kind 'cancelled'|'modified', new_start_local, new_duration_min, new_title)
-  - `block_tasks` (id, block_id, occurrence_date, title, done, position)
+  - `tasks` (id, user_id, title, done, done_at, due_date date NULL, block_id NULL, occurrence_date NULL, position, created_at). Jedna tabela na zadania samodzielne i zadania w wystąpieniu bloku *[Claude, zastępuje `block_tasks`]*:
+    - samodzielne: `block_id` NULL, `due_date` z datą albo NULL („Bez daty”),
+    - w bloku: `block_id` + `occurrence_date` (każde wystąpienie ma własną listę), `due_date` = data wystąpienia,
+    - przypięcie samodzielnego zadania do bloku ustawia `block_id` i `occurrence_date`.
 - **Sport:**
   - `sport_sessions` (id, user_id, type 'run'|'gym', title, start_at, end_at, note, completed, show_in_calendar DEFAULT true, template_id NULL)
-  - `runs` (session_id PK, distance_km, duration_s, difficulty 1–10, weight_kg_snapshot, kcal)
+  - `runs` (session_id PK, kind 'easy'|'tempo'|'intervals'|'long'|'race' DEFAULT 'easy', distance_km, duration_s, difficulty 1–10, weight_kg_snapshot, kcal)
   - `exercises` (id, user_id, name, UNIQUE(user_id, lower(name)))
   - `gym_sets` (id, session_id, exercise_id, exercise_position, set_no, weight_kg NULL, reps, done). NULL ciężar = masa ciała.
-  - `workout_templates` (id, user_id, name, last_used_at), `workout_template_items` (template_id, exercise_id, position, sets_count)
+  - `workout_templates` (id, user_id, name, weekdays int[] NULL, start_time time DEFAULT '17:00', last_used_at), `template_skips` (template_id, date) — pominięte zaplanowane wystąpienia, `workout_template_items` (template_id, exercise_id, position, sets_count, reps_text np. „8–10”, rest_s np. 120)
 - **Nawyki i sen:**
-  - `habits` (id, user_id, name, remind_at time NULL, archived_at, created_at)
+  - `habits` (id, user_id, name, remind_at time NULL, show_on_today bool DEFAULT true, created_at). Usunięcie nawyku jest trwałe (z potwierdzeniem) i usuwa jego historię (makieta `HabitDetail`: „Usuń”, nie „Archiwizuj”).
   - `habit_schedules` (habit_id, valid_from date, schedule_type 'daily'|'weekdays'|'times_per_week', weekdays int[], times_per_week). Harmonogram jest wersjonowany, więc zmiana nie przelicza przeszłości.
   - `habit_checks` (habit_id, date, UNIQUE)
-  - `sleep_logs` (user_id, date pobudki, slept_at time, woke_at time, feeling 1–5, note, UNIQUE(user_id, date))
-- **Strony:**
-  - `pages` (id, user_id, title, icon, template_key NULL, position, settings jsonb: sort, filters, hidden_field_ids, column_summaries, pinned_cards; created_at, deleted_at NULL)
-  - `page_fields` (id, page_id, user_id, name, type, config jsonb, position, is_title)
-  - `page_rows` (id, page_id, user_id, values jsonb `{field_id: wartość}`, position, created_at, updated_at, deleted_at NULL)
+  - `sleep_logs` (user_id, date pobudki, slept_at time, woke_at time, feeling 1–5 (etykiety Źle / Słabo / OK / Dobrze / Super), tags text[] (np. „Kawa po 16”, „Ekran w łóżku”, „Trening”, „Alkohol”, „Stres”), note, UNIQUE(user_id, date))
+- **Strony (dokumenty z blokami):**
+  - `pages` (id, user_id, title, icon, template_key NULL, position, created_at, deleted_at NULL)
+  - `page_blocks` (id, page_id, user_id, type 'text'|'heading'|'todo'|'divider'|'table', position, content jsonb: `{text}` dla text/heading, `{text, done}` dla todo, `{}` dla divider, a dla table `{name, settings: {sort, filters, hidden_field_ids, column_summaries, pinned_cards}}`; created_at, deleted_at NULL)
+  - `page_fields` (id, block_id → page_blocks typu table, user_id, name, type, config jsonb, position, is_title)
+  - `page_rows` (id, block_id, user_id, values jsonb `{field_id: wartość}`, remind bool DEFAULT true — przełącznik „Przypomnij N dni przed” dla dat odnowienia / dat w kalendarzu, position, created_at, updated_at, deleted_at NULL)
+  - Szablon tworzy stronę z jednym blokiem `table`. Strona z szablonu Passwords ma tabelę z polem Sekret.
 - **Sejf:** `vaults` (user_id PK, kdf jsonb `{alg:'PBKDF2-SHA-256', iterations:600000, salt}`, wrapped_key, wrap_iv, created_at, updated_at)
 - **Powiadomienia:**
   - `push_subscriptions` (id, user_id, endpoint UNIQUE, keys jsonb, device_label, last_used_at, created_at)
-  - `notification_settings` (user_id PK, before_block_min NULL|5|10|15|30 DEFAULT 10, renewal_days_before DEFAULT 3, renewal_hour DEFAULT 9, weekly_summary bool DEFAULT true, weekly_summary_at DEFAULT 'sun 18:00', habits_enabled bool, quiet_from DEFAULT 23:00, quiet_to DEFAULT 07:00, quiet_enabled bool)
+  - `notification_settings` (user_id PK, push_enabled bool DEFAULT true, before_block_min NULL|5|10|15|30 DEFAULT 10 (Ustawienia: przełącznik „Start bloku w kalendarzu” + lista 5/10/15/30 min; onboarding „Przed blokiem, 10 min wcześniej”), renewal_days_before DEFAULT 3, renewal_hour DEFAULT 9, renewals_enabled bool, weekly_summary bool DEFAULT true, weekly_summary_at DEFAULT 'sun 18:00', habits_enabled bool, quiet_from DEFAULT 23:00, quiet_to DEFAULT 07:00, quiet_enabled bool)
+  - `push_subscriptions` ma `enabled bool` (przycisk Wyłącz/Włącz przy urządzeniu bez usuwania subskrypcji).
   - `notification_log` (user_id, kind, ref, sent_at) chroni przed duplikatami.
 - **Kosz:** strony i wiersze usunięte mają `deleted_at`. Zadanie pg_cron usuwa je trwale po 30 dniach.
 
@@ -222,6 +263,10 @@ Dla każdego obszaru podana jest makieta (plik w `docs/design/mockups/`).
    - podsumowanie (Profil, Kategorie, Strony, Przypomnienia) z linkami „Zmień” do kroków,
    - wskazówka „Ctrl K”, przycisk „Przejdź do Dziś”.
 
+**Telefon (`MOnboarding.dc.html`):** te same 7 kroków i dane. Nagłówek: logo (krok 1) lub ‹ Wstecz, „Krok n z 7”, „Wyloguj”; pasek 7 segmentów. Jedno pytanie na ekran, „Dalej” przyklejone na dole (krok 4 także „Pomiń”, krok 7 „Przejdź do Dziś”). Bez podglądu aplikacji. Kontrolki mobilne: lista strefy czasowej z ✓, segmenty tygodnia i formatu godziny, role jako lista z checkboxami, cele jako kafelki 2×N, liczniki −/+ dla km i celu snu, źródło jako chipy, strony jako karty z checkboxem i plakietką „z Twoich celów”, karta zgody „Zezwól” → „Włączone” + „Anuluj”, podsumowanie z „Zmień” wracającym do kroku. „Dalej” w kroku 1 nieaktywne bez imienia.
+
+**Wspólne zachowanie (web i telefon):** po zgodzie na powiadomienia obok „Włączone” jest „Anuluj” (cofnięcie zgody w aplikacji). Kategorie z ról widać na żywo pod listą ról.
+
 Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`): „Witaj w rhytm”, lista „Pierwsze kroki” 0–4 (blok, nawyk, trening, wpis snu) i pusty plan dnia.
 
 ### 6.3 Sidebar i nawigacja (`Sidebar.dc.html`, `Main.dc.html`)
@@ -233,13 +278,13 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
   - lista stron z ikoną, „+” przy nagłówku i „+ Nowa strona” na dole,
   - kolejność zmieniana przeciąganiem,
   - menu strony (`PageMenu.dc.html`): Zmień nazwę (F2), Zmień ikonę (siatka 24 ikon), Duplikuj, Przenieś wyżej / niżej, Usuń stronę. Usunięcie wymaga potwierdzenia „11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.”
-- Dół: Ustawienia oraz blok użytkownika (inicjały, imię, e-mail) z menu: Ustawienia, Wyloguj.
-- Aktywna pozycja ma tło `#f0f0f0` i wagę 500.
-- Sidebar ma szerokość 232 px i rozciąga się na całą wysokość strony.
+- Dół: link „Ustawienia” oraz blok użytkownika (inicjały, imię, e-mail, ikona ⇅). Klik w blok użytkownika otwiera dymek nad nim: imię i e-mail, „Wyloguj się” (czerwony). Tylko link „Ustawienia” prowadzi do ustawień.
+- Aktywna pozycja ma tło `#f0f0f0` i wagę 500; hover `#f5f5f5`.
+- Sidebar ma szerokość 232 px, jest przyklejony i ma wysokość okna; przewija się tylko treść.
 
-**Na telefonie:**
-- Dolny pasek: Dziś, Kalendarz, Sport, Nawyki, Strony. „Strony” otwierają arkusz z listą stron.
-- Sidebar chowa się.
+**Na telefonie (`MTabBar.dc.html`):**
+- Dolny pasek 84 px: Dziś, Kalendarz, Sport, Nawyki, Strony (aktywna pozycja czarna i pogrubiona). „Strony” prowadzi do ekranu listy stron `/strony` (`MPages.dc.html`).
+- Sidebar chowa się. Ustawienia otwiera awatar w nagłówku Dziś albo ikona ⚙ na liście stron.
 
 ### 6.4 Kalendarz główny
 
@@ -258,7 +303,11 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
   - lista zadań do odhaczania, „+” dodaj zadanie,
   - notatka,
   - Edytuj, Usuń, oznaczenie „↻ co tydzień”.
-- **Tworzenie bloku:** przeciągnięcie po pustej siatce otwiera „Nowy blok” z wypełnionymi godzinami. Bloki przesuwa się i rozciąga przeciąganiem.
+- **Tworzenie bloku:**
+  - najechanie na pustą siatkę pokazuje „ducha” slotu (pełna godzina pod kursorem); klik otwiera dymek **„Nowy wpis”** z datą i godziną oraz trzema opcjami: **Blok** (okno „Nowy blok” z wypełnionym dniem i godziną), **Bieg** (okno „Nowy bieg”), **Siłownia** (nowy trening siłowy) — tak w widoku dnia, tygodnia, miesiąca (klik w dzień) i na osi Dziś,
+  - przeciągnięcie po pustej siatce otwiera „Nowy blok” z zakresem godzin,
+  - bloki przesuwa się i rozciąga przeciąganiem.
+- **Powrót z okien:** Anuluj, ✕ i Zapisz w oknach (Nowy blok, Zakres, Kategoria) wracają do widoku, z którego okno otwarto (dzień/tydzień/miesiąc/Dziś), z tą samą datą. Okno kategorii otwarte z okna bloku wraca do okna bloku.
 
 **Widok dnia (`CalendarDay.dc.html`):**
 - ‹ Dziś › zmienia dzień, tytuł „Wtorek, 17 listopada”, „x z y bloków”.
@@ -312,8 +361,21 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 - **Plan dnia** jako oś czasu 06:00–22:00:
   - bloki dnia z licznikiem zadań, oznaczenie „TERAZ” na trwającym bloku, czerwona linia aktualnej godziny,
   - klik otwiera dymek jak w kalendarzu,
-  - w osi są też treningi dnia (oznaczenie „plan”).
+  - w osi są też treningi dnia (oznaczenie „plan”),
+  - klik w pusty slot otwiera dymek „Nowy wpis” (Blok / Bieg / Siłownia), jak w kalendarzu.
+- **Zadania samodzielne** (decyzja 0.2) *[Claude: sekcja nie ma jeszcze makiety webowej; wygląd jak lista zadań w dymku bloku]*:
+  - sekcja „Zadania na dziś” pod planem dnia: zadania z `due_date` = dziś i zaległe (z datą wcześniejszą, oznaczone „zaległe”), odhaczanie, „+ Zadanie”,
+  - zwijana sekcja „Bez daty”,
+  - kafelek „Zadania” liczy zadania samodzielne na dziś + zadania z dzisiejszych wystąpień bloków.
 - Stan pusty: lista „Pierwsze kroki” i „Plan dnia jest pusty”.
+
+**Telefon (`MToday.dc.html`):**
+- Nagłówek: etykieta „Niedziela · 15 listopada”, duży tytuł „Dziś”, ikona szukaj (→ `/szukaj`), awatar (→ Ustawienia).
+- Kafelki 2×2: Nawyki x/y, Sen h, Zadania x/y, Km w tyg. x/cel — każdy prowadzi do swojego modułu.
+- Karta „TERAZ” (trwający blok): godziny, „zostało N min”, zadania do odhaczenia.
+- „Plan dnia” jako lista (godzina, pasek koloru kategorii, tytuł, czas, kategoria; zakończone przekreślone), „Kalendarz” →.
+- „Nawyki” z odhaczaniem i serią, „Wszystkie” →. Karta najbliższego biegu.
+- Pływający „+” otwiera arkusz **Szybko dodaj** (`MQuickAdd.dc.html`): segment Zadanie / Blok / Bieg / Nawyk, pole z podpowiedzią zależną od typu, chipy „Kiedy” (Dziś, Dziś 18:00, Jutro, Pn 16.11, Bez daty), link do pełnego formularza bloku lub biegu, „Dodaj”.
 
 ### 6.6 Nawyki i sen
 
@@ -333,11 +395,14 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
   - wykres słupkowy z przerywaną linią celu; słupki z osiągniętym celem są ciemniejsze.
 - **Heatmapa nawyków:**
   - kolor = % nawyków zrobionych danego dnia,
-  - przełącznik 3 mies. / 6 mies. / Rok, legenda mniej–więcej,
+  - przełącznik **Miesiąc** / 3 mies. / 6 mies. / Rok, legenda mniej–więcej,
+  - widok Miesiąc: siatka dni miesiąca ze strzałkami ‹ › (do 12 miesięcy wstecz; strzałka nieaktywna na granicy, wyszarzona),
+  - najechanie na kwadrat pokazuje dymek: data i „x z y nawyków” (na telefonie stuknięcie),
   - dzień bez zaplanowanych nawyków jest szary, nie 0%.
+- Wykres snu: najechanie (stuknięcie) na słupek pokazuje datę i czas snu.
 
 **Szczegóły nawyku (`HabitDetail.dc.html`):**
-- Archiwizuj, Edytuj.
+- **Usuń** (czerwony, z potwierdzeniem; usuwa nawyk i historię), Edytuj.
 - Harmonogram, przypomnienie, data startu.
 - Kafelki: seria, najdłuższa seria, 30 dni %, łącznie razy.
 - Kalendarz miesiąca z ‹ › i stanami zrobione / pominięte / dzień bez nawyku.
@@ -346,12 +411,18 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 **Nowy nawyk (`HabitDialog.dc.html`):**
 - Nazwa.
 - Harmonogram: Codziennie / Wybrane dni (pn–nd) / X razy w tygodniu (1–7), ze zdaniem wyjaśnienia.
-- Przypomnienie push o wybranej godzinie, tylko w dni z harmonogramu.
+- Dni tygodnia jako przyciski do zaznaczania (wybrane czarne).
+- Przypomnienie push: przełącznik i **wybór godziny** z 3.2 (nieaktywny, gdy przypomnienie wyłączone); tylko w dni z harmonogramu.
+- Telefon (`MHabitNew.dc.html`): pełny ekran z „Anuluj” / „Zapisz” w nagłówku, segment Codziennie / Wybrane dni / X w tyg., licznik −/+ dla X, chipy godzin przypomnienia, przełącznik „Pokazuj na ekranie Dziś”, zdanie podsumowania na dole.
 
-**Wpis snu (`SleepDialog.dc.html`):**
-- Data pobudki, zasnąłem, wstałem.
-- Czas snu liczony na żywo, także przez północ, np. „90% celu 8:00 · brakuje 48 min”.
-- Samopoczucie 1–5, notatka. Jeden wpis na dzień, edytowalny.
+**Wpis snu (`SleepDialog.dc.html`, telefon `MSleep.dc.html`):**
+- Data pobudki, zasnąłem, wstałem (telefon: przyciski −/+ co 15 min).
+- Czas snu liczony na żywo, także przez północ, np. „90% celu 8:00 · brakuje 48 min” (telefon: duża liczba i „Powyżej celu” / „Brakuje N min do celu”).
+- Samopoczucie 1–5 z etykietami Źle / Słabo / OK / Dobrze / Super.
+- „Co mogło wpłynąć”: chipy wielokrotnego wyboru (Kawa po 16, Ekran w łóżku, Trening, Alkohol, Stres) — z makiety mobilnej, także na komputerze *[Claude]*.
+- Notatka. Jeden wpis na dzień, edytowalny.
+
+**Telefon (`MHabits.dc.html`, `MHabitDetail.dc.html`):** segment Nawyki / Sen; nawyki: pierścień „x z y zrobione dziś”, lista z dużym checkboxem i „seria N dni”, heatmapa 4 tygodni ze stuknięciem; sen: kafelki, wykres 14/30 dni ze stuknięciem, „Dodaj wpis snu”. Szczegóły: kafelki Seria / Rekord / Skuteczność, kalendarz miesiąca ‹ › (do 5 mies. wstecz), notatki, „Usuń nawyk”.
 
 **Zasady:**
 - % dnia = (zrobione zaplanowane na ten dzień + odhaczone nawyki X/tydz.) / (zaplanowane na ten dzień + odhaczone nawyki X/tydz.). Nawyki X/tydz. mogą tylko podnieść wynik.
@@ -378,7 +449,8 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 - Tabela **Ostatnie treningi:** data, typ (BIEG/SIŁA), wynik, tempo lub objętość, trudność. Klik otwiera trening.
 
 **Nowy bieg (`RunDialog.dc.html`):**
-- Data, start, dystans, czas.
+- Rodzaj biegu (chipy, jeden wybór): Spokojny / Tempo / Interwały / Długi / Zawody; domyślnie Spokojny.
+- Data, start, dystans, czas (wybór daty i godziny z 3.2).
 - Tempo i kcal liczone na żywo.
 - Trudność 1–10, notatka, „Pokaż w kalendarzu głównym jako blok” (domyślnie włączone).
 - Bieg bez czasu zapisuje się jako plan.
@@ -388,11 +460,20 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 - Nagłówek: „Zapisz jako szablon”, „Zakończ trening”.
 - Kafelki: objętość (suma kg × powtórzenia zrobionych serii), serie zrobione/wszystkie.
 - Ćwiczenia z tabelą serii: nr, kg, powtórzenia, ✓, wiersz „1RM … · +2,5 kg vs ostatnio”.
-- „+ Seria”, „+ Ćwiczenie” z podpowiedziami z biblioteki ćwiczeń (bez duplikatów wielkości liter).
+- Pola kg i powtórzeń edytowalne w każdej serii; ✓ odhacza serię; objętość i licznik serii przeliczają się na żywo.
+- „+ Seria” dodaje serię kopiującą ciężar i powtórzenia poprzedniej.
+- ✕ przy serii (widoczne po najechaniu) usuwa serię; „Usuń ćwiczenie” pod ćwiczeniem.
+- „+ Ćwiczenie” otwiera dymek: wyszukiwanie, lista z biblioteki z grupą mięśni (bez ćwiczeń już dodanych, bez duplikatów wielkości liter), „+ Dodaj „…”” dla własnego; Enter wybiera, Esc zamyka. Nowe ćwiczenie dostaje 3 puste serie.
 - Seria cięższa niż dotychczasowe maksimum dostaje plakietkę „REKORD”.
+- Telefon (`MGym.dc.html`): nagłówek z nazwą, „x/y serii · czas”, „Zakończ”; pasek postępu; tabela serii z dużymi checkboxami; „+ Dodaj serię”, „Dodaj ćwiczenie”.
 
 **Szablony (`WorkoutTemplates.dc.html`):**
-- Każda karta: nazwa, „ostatnio”, liczba ćwiczeń i serii, lista ćwiczeń, „Rozpocznij” i „Edytuj”.
+- Lista: karty (nazwa, „ostatnio”, liczba ćwiczeń i serii, dni tygodnia, lista ćwiczeń, „Rozpocznij”, „Edytuj”) i pusta karta „+ Nowy szablon”; „Nowy szablon” także w nagłówku.
+- Edytor szablonu (ten sam ekran, ścieżka „Szablony treningów / Nowy szablon” lub „Edycja: X”):
+  - nazwa (wymagana), dni tygodnia (opcjonalnie, chipy pn–nd),
+  - tabela ćwiczeń: #, nazwa, serie −/+ (1–10), powtórzenia (tekst, np. „8–10”), przerwa (np. „2:00”), ↑ ↓ ✕,
+  - „+ Ćwiczenie” jak w treningu, nowe ćwiczenie: 3 serie, „8–10”, „2:00”,
+  - „Zapisz szablon” (nieaktywne bez nazwy lub bez ćwiczeń), „Anuluj”, „Usuń szablon” (tylko istniejący); po zapisie powrót do listy z zielonym komunikatem.
 - „Rozpocznij” tworzy trening z ciężarami i powtórzeniami z ostatniego wykonania.
 
 **Szczegóły ćwiczenia (`ExerciseDetail.dc.html`):**
@@ -403,24 +484,46 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 
 **Cel tygodniowy km:** z ustawień albo onboardingu.
 
+**Telefon (`MSport.dc.html`, `MRunNew.dc.html`):** segment Tydzień / Miesiąc; karta „Bieganie” (km / cel, pasek, biegi, śr. tempo, siłownia); wykres km ze stuknięciem; przyciski „Bieg” i „Trening”; „Ostatnie”. Nowy bieg: chipy rodzaju, dystans i czas −/+, tempo liczone, trudność 1–10 (z opisem lekko / umiarkowanie / ciężko / maksymalnie), dzień, „Pokaż w kalendarzu głównym”, notatka.
+
 ### 6.8 Strony i tabele
 
 **Nowa strona (`NewPage.dc.html`):**
 - Lista szablonów: Pusta strona, Subscriptions, Books, Projects, Websites, Passwords.
 - Panel „Pola, które powstaną” z opisem działania, nazwa strony, „Utwórz stronę”.
 
-**Pusta strona (`EmptyPage.dc.html`):** tabela z polem Nazwa, stan „Pusta tabela” z przyciskami „+ Pole”, „+ Pierwszy wiersz” i linkiem „Wolisz gotowca? Użyj szablonu →”.
+**Edytor strony (`EmptyPage.dc.html`, telefon `MEditor.dc.html`)** — decyzja 0.1:
+- Nagłówek: ścieżka „Strony / [tytuł]” (aktualizuje się na żywo), „Szablony” (→ Nowa strona).
+- Ikona strony (40×40, przerywana ramka) i tytuł 24 px „Bez tytułu”.
+- Bloki jeden pod drugim; każdy ma kosz po najechaniu (prawa krawędź):
+  - **Tekst** (akapit, placeholder „Pusty akapit”), **Nagłówek** (20 px, 600), **Lista zadań** (checkbox + tekst, zrobione przekreślone), **Separator** (linia), **Tabela**.
+- Linia poleceń na końcu: „+” i pole „Wpisz „/”, aby wstawić blok — tabelę, listę, nagłówek…”.
+  - Wpisanie „/” otwiera menu „Bloki” (Tabela, Lista zadań, Nagłówek, Tekst, Separator — ikona, nazwa, opis), filtrowane na żywo („/tab”); ↑↓ wybór, Enter wstawia, Esc zamyka, najechanie podświetla; „Brak bloku „x””; stopka „↑↓ wybór · Enter wstaw · Esc zamknij”.
+  - Enter na zwykłym tekście wstawia go jako akapit.
+  - Pusta strona: chipy „albo zacznij od:” (Tabela, Lista zadań, Nagłówek, Tekst) i „Wolisz gotowca? Użyj szablonu →”.
+- **Blok Tabela:** pole nazwy tabeli („Tabela bez nazwy”), siatka z kolumnami (pierwsza szersza), kolumna „+” na końcu nagłówka, „+ Nowy wiersz” pod tabelą i licznik „N wierszy · N kolumn”. Nowa tabela: kolumny Nazwa (Tekst), Status (Wybór: Do zrobienia / W toku / Zrobione), Data (Data), 2 puste wiersze.
+  - Klik w nagłówek kolumny otwiera dymek: nazwa, „Typ pola” (Tekst, Liczba, Data, Wybór, Checkbox, Link; w tabelach silnika także pozostałe typy z tabeli niżej), przy Wyborze „Opcje” (plakietki w kolorach z ×, „Nowa opcja…” + Dodaj/Enter), „← W lewo / W prawo →”, „Usuń kolumnę” (nieaktywne przy ostatniej).
+  - „+” dodaje kolumnę „Kolumna N” i od razu otwiera jej dymek.
+  - Zmiana typu przelicza wartości (liczba z tekstu, checkbox z „tak/1/x”, data tylko poprawna, Wybór zbiera istniejące teksty jako opcje).
+  - Stopka z sumą dla Liczby i „x / y” dla Checkboxa.
+  - Na telefonie tabela przewija się poziomo; nagłówek kolumny otwiera arkusz „Kolumna”; Wybór zmienia się stuknięciem po kolei; pasek skrótów na dole (+, tabela, zadanie, H, „N bloków”); „/” lub „+” otwiera arkusz „Wstaw blok”.
+- *[Claude]* W blokach tabel z edytora komórki edytuje się bezpośrednio (jak w makiecie edytora). W tabelach stron z szablonów obowiązuje tryb edycji wiersza (niżej). Silnik jest wspólny; różni się tylko sposób edycji — **do potwierdzenia w 9.1**.
 
-**Strona z tabelą (`Main.dc.html`, `Books`, `Projects`, `Websites`):**
+**Strona z tabelą z szablonu (`Main.dc.html` = Subscriptions, `Books`, `Projects`, `Websites`):**
 - Nagłówek: ścieżka „Strony / X”, Filtruj, „+ Pole”, „Nowy wiersz”.
-- Tytuł i metadane „N wierszy · N pól · szablon „…” · sort: …”.
-- **Przypięte karty** (3) nad tabelą.
+- Tytuł i metadane „N wierszy · N pól · szablon „…” · sort: …” (N liczone na żywo).
+- **Przypięte karty** (3) nad tabelą, przeliczane na żywo (np. Przeczytane w 2026, Czytam teraz, Średnia ocena; W toku, Najbliższy termin z „za N dni” czerwonym ≤ 7 dni, Zrobione x / N; Na żywo, W budowie, Klienci).
 - Tabela:
   - nagłówki z ikoną typu,
-  - edycja w komórce,
-  - stopka z „+ Nowy wiersz” i podsumowaniami kolumn.
+  - **wiersz w trybie podglądu**: sformatowane wartości (plakietki statusu, gwiazdki, daty `dd.mm.rrrr`, „za N dni / minął”, kwoty „43,00 zł / mies.”); cały wiersz klikalny (otwiera edycję); po najechaniu w ostatniej kolumnie „Edytuj” i „Usuń”,
+  - **wiersz w trybie edycji** (tło `#f7fbf8`): pola tekstowe, listy rozwijane (status, kategoria, obszar, hosting), wybór daty, segment cyklu (mies. / rok), gwiazdki do kliknięcia (ponowny klik zeruje), przyciski „Zapisz” (czarny) i ✕ (anuluj),
+  - „Nowy wiersz” dodaje wiersz w trybie edycji na końcu; pusty tytuł zapisuje się jako „Bez tytułu” / „Bez nazwy”,
+  - stopka z „+ Nowy wiersz” i podsumowaniami kolumn (liczonymi na żywo).
 - Wiersze nieaktywne (Checkbox „Aktywna” odznaczony) są przekreślone i szare.
 - Kolumna z „Pokaż w kalendarzu” ma znaczek „w kalendarzu”.
+- Tabela przewija się poziomo tylko poniżej 1100 px; dymki nie są przycinane.
+- Linki (URL, repo) w trybie podglądu nie otwierają edycji wiersza.
+- **Telefon (`MSubs.dc.html`, `MRowEdit.dc.html`, `MPages.dc.html`):** lista stron z sekcjami „Ulubione” i „Wszystkie strony”, wyszukiwarka, „+ Nowa strona”. Strona z szablonu jako karty wierszy (inicjał, nazwa, data · „za N dni”, kwota, plakietka kategorii), kafelki sum, karta „Najbliżej”, chipy filtra (Wszystkie / Miesięczne / Roczne). Stuknięcie wiersza lub „+” otwiera arkusz edycji: nazwa, kwota z „zł”, segment cyklu, wbudowany kalendarz daty odnowienia z „za N dni”, chipy kategorii, przełączniki Aktywna i „Przypomnij 3 dni przed”, „Usuń wiersz”, „Anuluj” / „Zapisz”.
 
 **„+ Pole” (`AddField.dc.html`):**
 - Typy w trzech grupach:
@@ -488,7 +591,8 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 - **Odblokowany (`Passwords.dc.html`):**
   - baner „Sejf odblokowany · blokada za 04:59” z odliczaniem, „Zablokuj teraz”,
   - komórki `••••••••••••` z akcjami pokaż / kopiuj; schowek czyszczony po 30 s.
-- **Reset (`VaultReset.dc.html`):** wyliczenie, co zostanie usunięte (N sekretów), a co zostaje (serwisy, loginy, URL-e); potwierdzenie wpisaniem „RESETUJ”.
+- **Reset (`VaultReset.dc.html`):** wyliczenie, co zostanie usunięte (N sekretów), a co zostaje (serwisy, loginy, URL-e); potwierdzenie wpisaniem „RESETUJ” (w jednym zdaniu „Wpisz RESETUJ, żeby potwierdzić”), przycisk „Zresetuj sejf” nieaktywny do zgodności.
+- **Telefon:** `MVault`, `MPasswords` (6.13). Przycisk „Odblokuj biometrią” z makiety mobilnej: **do potwierdzenia w 9.1** (wymaga WebAuthn z rozszerzeniem PRF; propozycja: poza v1, przycisk ukryty).
 - **Kryptografia** (WebCrypto, tylko w przeglądarce):
   - hasło główne → PBKDF2-SHA-256, 600 000 iteracji, sól 16 B → klucz owijający,
   - losowy klucz danych AES-GCM-256 owinięty i zapisany w `vaults`,
@@ -518,28 +622,30 @@ Jeden skrót: Ctrl K / ⌘K, a także pole „Szukaj…” w sidebarze i „+”
 ### 6.11 Ustawienia (`Settings*.dc.html`)
 Zakładki: Ogólne, Konto i bezpieczeństwo, Sejf, Powiadomienia, Kategorie kalendarza.
 
+**Zasada kart ustawień (z makiet):** każda karta ma własne „Zapisz” w stopce, aktywne dopiero po zmianie; obok pojawia się „Cofnij”; stopka pokazuje „Masz niezapisane zmiany.”, a po zapisie zielone „Zapisano ✓”. Błędy pod polem (12 px, czerwony).
+
 **Ogólne:**
-- Profil: nazwa, strefa, waga, wzrost; „Zmiany zapisują się dopiero po kliknięciu.”
-- Cele: cel snu, tygodniowy cel km.
-- Waluta stron.
-- Konto (skrót): e-mail, hasło, sesja, Usuń konto.
+- Profil: wyświetlana nazwa (wymagana), strefa czasowa (lista rozwijana z miastem i UTC), waga 30–250 kg i wzrost 120–230 cm (opcjonalne, placeholder „np. 75”).
+- Cele: cel snu (−/+ co 15 min, 5:00–11:00), tygodniowy cel km (1–300), waluta stron (PLN zł, EUR €, USD $, GBP £), „Tydzień zaczyna się w” (Poniedziałek / Niedzielę).
+- Konto (skrót): e-mail z „Zmień” (pole nowego adresu ze sprawdzeniem formatu, „Wyślij link”, po wysłaniu „link potwierdzający wysłany na …”), „Zmień hasło” (→ Konto i bezpieczeństwo), sesja z „Wyloguj”.
+- Usuń konto: „Usuń konto” → potwierdzenie słowem USUŃ → „Usuń konto na zawsze”.
 - Kosz.
 
 **Konto i bezpieczeństwo:**
-- Zmiana hasła (obecne, nowe, powtórz; wylogowuje inne urządzenia).
+- Zmiana hasła: obecne, nowe (pasek siły 4 segmenty + opis „Słabe/Średnie/Dobre/Mocne hasło”), powtórz („Hasła są takie same ✓” / „Hasła się różnią”); stopka mówi, czego brakuje; przycisk aktywny, gdy obecne wpisane, nowe ≥ 10 znaków, różne od obecnego i powtórzone; po zmianie pola się czyszczą, inne urządzenia są wylogowane.
 - Zmiana e-maila z potwierdzeniem.
-- Aktywne sesje (przeglądarka, system, kraj, czas; „Wyloguj”, „Wyloguj wszystkie inne”).
-- Eksport danych (.json, sekrety zaszyfrowane).
+- Sesje: bieżące urządzenie z plakietką „TA”, opis, „Wyloguj wszystkie inne”, zielony komunikat „Wylogowano wszystkie inne urządzenia ✓” (decyzja 9.1; bez listy innych sesji).
+- Eksport danych (.json, sekrety zaszyfrowane): „przygotowuję plik…” → nazwa pliku i rozmiar, „Pobierz ponownie”.
 - Usuń konto (trwale, z potwierdzeniem).
 
 **Sejf** *[Claude, brak makiety — w stylu kart ustawień]*: stan sejfu, zmiana hasła głównego, czas auto-blokady (1/5/15 min), Zablokuj teraz, Reset sejfu.
 
 **Powiadomienia:**
-- Push na tym urządzeniu (włącz/wyłącz).
-- Przełączniki z godzinami: przypomnienia o nawykach, odnowienia subskrypcji (ile dni wcześniej, godzina), przed blokiem (ile minut), podsumowanie tygodnia, cicha noc 23:00–07:00.
-- „Wyślij testowe”.
-- Lista urządzeń z „Wyłącz”.
-- Lista przypomnień nawyków z godzinami.
+- Push na tym urządzeniu (przełącznik; wyłączony wyszarza i blokuje pozostałe przełączniki).
+- Przełączniki: przypomnienia o nawykach, start bloku w kalendarzu, odnowienia subskrypcji; cicha noc z przełącznikiem i dwoma **wyborami godziny** (od–do).
+- „Wyślij testowe”: komunikat „Wysłano testowe powiadomienie na N urządzenia ✓”; nieaktywne, gdy push wyłączony albo brak aktywnych urządzeń.
+- Lista urządzeń z plakietką „TO” przy bieżącym i przyciskiem „Wyłącz” / „Włącz”.
+- Lista przypomnień nawyków: przełącznik i wybór godziny przy każdym nawyku (zmiana zapisuje się w nawyku).
 
 **Kategorie kalendarza** *[Claude, brak makiety]*: lista kategorii z kolorem, zmianą nazwy, koloru i kolejności oraz usuwaniem. Systemowe są tylko do ukrywania.
 
@@ -552,14 +658,26 @@ Service worker i Web Push (VAPID). Zadanie pg_cron co minutę wywołuje funkcję
 
 Cicha noc wstrzymuje wysyłkę. `notification_log` pilnuje, żeby nie było duplikatów.
 
-### 6.13 Telefon (`MobileToday.dc.html`, `MobileCalendar.dc.html`)
-- **Dziś:**
-  - nagłówek z datą, kafelki Nawyki, Sen, Zadania, Km tydz.,
-  - plan dnia z blokiem „TERAZ” i jego zadaniami,
-  - nawyki z seriami.
-- **Kalendarz dnia:** pasek tygodnia, wiersz cały dzień, oś godzin, pływający „+”.
-- Dolny pasek nawigacji: Dziś, Kalendarz, Sport, Nawyki, Strony.
-- Pozostałe ekrany są responsywne: okna stają się arkuszami, tabele przewijają się poziomo.
+### 6.13 Telefon (strona Mobile Design, pliki `M*.dc.html`)
+Poniżej 800 px aplikacja wygląda jak te makiety. Ekrany i ich odpowiedniki:
+
+| Telefon | Odpowiednik web | Uwagi |
+|---|---|---|
+| `MLogin`, `MRegister`, `MForgot` | Login, Register, Forgot | pełny ekran bez karty; pasek siły hasła; „Pokaż hasło”; Turnstile i reguły z web *[Claude: makiety mobilne ich nie pokazują, ale obowiązują]* |
+| `MOnboarding` | Onboarding 1–7 | 6.2 |
+| `MToday`, `MQuickAdd`, `MSearch` | Today, QuickAdd, CommandK | 6.5; Szukaj: „Ostatnio” (chipy), „Szybkie akcje”, wyniki grupowane na żywo, „Nic nie znaleziono dla „x”” |
+| `MCalendarDay` | CalendarDay | segment Dzień / Tydzień / Miesiąc (linki); pasek tygodnia z kropkami dni z blokami; oś 07–22 co 56 px; bloki z paskiem koloru; linia „teraz”; stuknięcie pustego miejsca lub „+” → arkusz Nowy blok |
+| `MCalendarWeek` | Calendar | lista dni tygodnia (plakietka dnia, bloki z godziną) |
+| `MCalendarMonth` | CalendarMonth | siatka miesiąca ‹ › z kropkami kategorii (do 3), wybrany dzień czarny, lista bloków dnia pod siatką, „Brak bloków — dodaj” |
+| `MBlockSheet` | BlockDialog | arkusz: nazwa, chipy kategorii z kropką, dzień, od / do −/+ co 15 min, czas trwania, segment powtarzania (Nie / Codziennie / Co tydzień / Dni rob.), zadania (dodaj Enterem, usuń ×), przełącznik przypomnienia |
+| `MHabits`, `MHabitDetail`, `MHabitNew`, `MSleep` | Habits, HabitDetail, HabitDialog, SleepDialog | 6.6 |
+| `MSport`, `MRunNew`, `MGym` | Sport, RunDialog, GymLog | 6.7 |
+| `MPages`, `MSubs`, `MRowEdit`, `MEditor` | lista stron (sidebar), Main, wiersz w edycji, EmptyPage | 6.8 |
+| `MVault`, `MPasswords` | Vault, Passwords | Sejf: hasło główne, „Odblokuj”, komunikat przy pustym polu, „Nie pamiętam hasła głównego”; Hasła: wyszukiwanie, wiersze rozwijane z ••••, pokaż / kopiuj (komunikat „Skopiowano · schowek wyczyści się za 30 s”), ostrzeżenie „słabe hasło”, „auto-blokada za m:ss”, ikona kłódki blokuje |
+| `MSettings` | Settings (wszystkie zakładki) | jedna lista: profil, Motyw *[poza zakresem: tylko jasny — segment ukryty]*, początek tygodnia, powiadomienia (przełączniki), konto, „Wyloguj się”, wersja aplikacji |
+| `MTabBar` | Sidebar | 6.3 |
+
+Ekrany web bez odpowiednika mobilnego (np. AddField, ColumnMenu, FilterPopover, ScopeDialog, CategoryDialog, VaultSetup, VaultReset, WorkoutTemplates, ExerciseDetail, CalendarRenewal, NotFound) na telefonie: okna jako arkusze (3.2), dymki jako arkusze, tabele przewijane poziomo, układ jednokolumnowy *[Claude]*.
 
 ## 7. Testy (obowiązkowe)
 - **Jednostkowe:**
@@ -575,22 +693,26 @@ Cicha noc wstrzymuje wysyłkę. `notification_log` pilnuje, żeby nie było dupl
   - moduły: blok z zadaniem w dymku, nawyk i wpis snu, bieg,
   - strony: strona Subscriptions z wpisem w kalendarzu,
   - sejf: ustawienie, odblokowanie, blokada.
-- **Wygląd:** zrzuty Playwright kluczowych ekranów porównane z makietami (ta sama szerokość 1440 px). Różnice oceniane ręcznie przy przeglądzie.
+- **Dodatkowo (decyzje 0.1–0.2):** zadania samodzielne (daty, zaległe, przypięcie do bloku, liczenie do kafelka), edytor bloków (wstawianie, kolejność, usuwanie, filtr menu „/”), zmiana typu kolumny z przeliczeniem wartości.
+- **Wygląd:** zrzuty Playwright każdego ekranu z listy odbiorczej etapu porównane z makietami: komputer 1440 px z `X.dc.html`, telefon 390×844 z `MX.dc.html`. Zrzut makiety robi się tym samym Playwrightem z `npx serve docs/design/mockups`. Różnice oceniane ręcznie przy przeglądzie etapu.
+- **Interakcje:** każdy punkt listy odbiorczej etapu (mapa etapów) ma test e2e albo komponentowy, który go sprawdza.
 
 ## 8. Etapy
 Szczegóły: `docs/superpowers/plans/2026-11-16-rhytm-roadmap.md`. Każdy etap kończy się działającą, wdrożoną aplikacją.
 
-0. Fundament, logowanie, sidebar, 404, PWA.
-1. Onboarding (7 kroków), profil, Ustawienia → Ogólne, Dziś w stanie pustym.
-2. Kalendarz główny (3 widoki, dymek, okna, powtórzenia, kategorie).
+Każdy etap buduje swoje ekrany **od razu w wersji web i telefon** (makiety `M*` w tym samym etapie), żeby na końcu nie zostało „dorabianie mobilki”.
+
+0. Fundament: wspólne kontrolki z 3.2, logowanie, sidebar i dolny pasek, 404, PWA, odświeżona kopia makiet.
+1. Onboarding (7 kroków, web + telefon), profil, Ustawienia → Ogólne, Dziś w stanie pustym.
+2. Kalendarz główny (3 widoki, dymki, „Nowy wpis”, okna, powtórzenia, kategorie) + zadania (samodzielne i w blokach).
 3. Nawyki i sen.
-4. Sport (z treningami w kalendarzu głównym).
-5. Dziś (pełny).
-6. Silnik stron (tabele, pola proste, menu, filtr, kosz, szablony Books, Projects, Websites).
+4. Sport (z treningami w kalendarzu głównym, szablony z edytorem).
+5. Dziś (pełny, z zadaniami samodzielnymi) i Szybko dodaj na telefonie.
+6. Silnik stron: edytor bloków z „/”, tabele (pola proste, tryby edycji, menu, filtr), kosz, szablony Books, Projects, Websites.
 7. Inteligentne pola, Subscriptions, wpisy stron w kalendarzu.
 8. Sejf, Passwords, Ustawienia → Sejf.
 9. Powiadomienia push.
-10. Paleta ⌘K z szybkim dodawaniem, Ustawienia → Konto, telefon, dopracowanie i porównanie z makietami.
+10. Paleta ⌘K (web) i Szukaj (telefon), Ustawienia → Konto, końcowe porównanie wszystkich ekranów z makietami.
 
 ## 9. Pozostawione builderowi
 - Biblioteki (każda musi dać wygląd z makiet):
@@ -598,8 +720,32 @@ Szczegóły: `docs/superpowers/plans/2026-11-16-rhytm-roadmap.md`. Każdy etap k
   - przeciąganie: dnd-kit,
   - wykresy: Recharts albo SVG.
 - Agregaty liczone w przeglądarce (setki wierszy) albo w SQL.
+- Biblioteka dymków i arkuszy (Radix Popover / Dialog z shadcn/ui, Vaul dla arkuszy) — wygląd musi być jak w 3.2.
+
+### 9.1 Decyzje Mejsona po recenzji (2026-11-16)
+- **Usługi zewnętrzne:** Mejson sam zakłada Supabase (projekt chmurowy), Vercel, Google OAuth, Cloudflare Turnstile, Resend, a później klucze VAPID, i daje dostęp. Plan Etapu 0 zawiera instrukcję krok po kroku, co kliknąć i jakie wartości skopiować. Do czasu podania kluczy e2e w CI działa na lokalnym Supabase z Mailpitem i testowymi kluczami Turnstile.
+- **Domena:** domyślna `*.vercel.app` (adresy powrotne logowania i linki w mailach na tę domenę; zmiana później to aktualizacja zmiennych środowiskowych).
+- **Regulamin i polityka prywatności:** strony-zaślepki `/regulamin` i `/prywatnosc` z tekstem „[TREŚĆ DO UZUPEŁNIENIA]”, linkowane z rejestracji.
+- **Przypomnienia per rzecz (2A):** ustawienia ogólne + przełącznik przy każdym bloku (`blocks.remind`) i przy każdym wierszu z datą w kalendarzu (`page_rows.remind`), domyślnie włączone. Przed blokiem domyślnie 10 min, w Ustawieniach wybór 5/10/15/30 *[Claude]*.
+- **Sport:**
+  - minutnik przerwy wyrzucony (także z makiety `MGym`); pole „przerwa” w szablonie zostaje jako informacja,
+  - bieg ma **rodzaj** (Spokojny / Tempo / Interwały / Długi / Zawody) i **trudność 1–10** (bez „odczucia 1–5”); makiety `RunDialog` i `MRunNew` poprawione,
+  - **dni tygodnia w szablonie same tworzą zaplanowane treningi**: dla każdego dnia z `workout_templates.weekdays` w kalendarzu Sportu i głównym pojawia się zaplanowany trening z szablonu (godzina startu: `workout_templates.start_time`, domyślnie 17:00 *[Claude]*). Wystąpienia są liczone przy odczycie jak powtórzenia bloków (bez generowania wierszy z góry); „Rozpocznij” albo edycja zapisuje konkretną sesję `sport_sessions` z `template_id` i datą, a usunięcie wystąpienia zapisuje wyjątek `template_skips (template_id, date)` *[Claude]*. Zmiana dni w szablonie zmienia tylko przyszłe wystąpienia.
+- **Sesje (A):** v1 bez listy urządzeń: karta „Sesje” z bieżącym urządzeniem (plakietka „TA”), opisem i przyciskiem „Wyloguj wszystkie inne” (Supabase `signOut({ scope: 'others' })`), zielony komunikat po wylogowaniu. Makieta `SettingsAccount` poprawiona. Pełna lista sesji poza zakresem v1.
+
+### 9.2 Rozstrzygnięcia po recenzji *[Claude, do sprawdzenia przy czytaniu]*
+- **Zakres godzin:** siatki kalendarza i oś Dziś obejmują całą dobę 00–24, ale przy otwarciu przewijają się tak, że widać 06–22 (web) / 07–22 (telefon) albo trwający blok. Nic nie jest ucinane ani ukrywane.
+- **Format 12 h:** zmienia wyświetlanie wszystkich godzin (np. „2:30 PM”). Wybór godziny w trybie 12 h ma siatkę 1–12 i przełącznik AM/PM; w trybie 24 h siatkę 00–23.
+- **„Wolne (8–20)”** w „Dzień w liczbach” = czas między 8:00 a 20:00 niezajęty przez bloki tego dnia.
+- **Kafelek „Zadania” na Dziś (karta tygodnia):** wartość główna = zrobione / wszystkie zadania z datą w bieżącym tygodniu (samodzielne + z wystąpień bloków), dopisek „dziś x/y” = to samo dla dziś. Na telefonie kafelek „Zadania” pokazuje tylko dziś.
+- **Przypięcie zadania do bloku:** w wierszu zadania samodzielnego menu „…” → „Przypnij do bloku” z listą wystąpień bloków z dnia zadania (dla zadań bez daty: z dziś). W dymku bloku „Odepnij” przenosi zadanie z powrotem do samodzielnych.
+- **Strony z onboardingu:** zapisywane jako „do utworzenia”, tworzone przy pierwszym wejściu po Etapie 6 (zgodnie z mapą etapów).
+- **Passwords przy zablokowanym sejfie:** wiersz można edytować poza polem Sekret (pokazuje „— zablokowane”, nieedytowalne). Duplikuj kopiuje zaszyfrowaną wartość bez zmian (ten sam klucz).
+- **Podsumowanie tygodnia (push, niedziela 18:00):** „Twój tydzień: N km · N treningów · nawyki N% · śr. sen h:mm · zadania x/y”.
+- **Konto tylko z Google:** w Konto i bezpieczeństwo zamiast „Zmień hasło” jest „Ustaw hasło” (bez pola „obecne hasło”).
 
 ## 10. Historia
+- 2026-11-16 (wieczór): decyzje z sekcji 0; doszły: edytor bloków stron, zadania samodzielne, wspólne kontrolki (3.2), pełny Mobile Design (6.13), edycja wierszy z „Zapisz”, „Nowy wpis” z kliknięcia w kalendarz, edytor szablonów treningów, interaktywne ustawienia, tagi snu, usuwanie nawyków.
 - 2026-11-16: jeden dokument zastępuje specyfikacje z 2026-11-13 i 2026-11-15. Doszło wszystko z makiet:
   - wygląd techniczny i jasny, logo z siatką 3×3, dymki zamiast paneli,
   - Google, 7-krokowy onboarding, nowe ekrany Dziś, Nawyki, Sport, stron, sejfu, ustawień i telefonu,
