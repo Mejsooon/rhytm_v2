@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Edycja subskrypcji</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top"><a href="MPages.dc.html" class="ib" aria-label="Strony"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1"></div><span style="width: 44px"></span></header>
+  <div class="body" style="opacity: .45; padding-top: 0"><h1 class="h1">Subscriptions</h1><div class="grid2" style="height: 90px"></div><div class="card" style="height: 340px"></div></div>
+  <a href="MSubs.dc.html" class="dim" aria-label="Zamknij"></a>
+  <div class="sheet" role="dialog" aria-label="Edytuj subskrypcję" style="height: 90%">
+    <div class="grab"></div>
+    <div style="display: flex; align-items: center; padding: 2px 8px; border-bottom: 1px solid #f0f0f0">
+      <a href="MSubs.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; color: #666666">Anuluj</a>
+      <h2 class="h2" style="flex: 1; text-align: center">Netflix</h2>
+      <a href="MSubs.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; font-weight: 600">Zapisz</a>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 16px 20px 28px; display: flex; flex-direction: column; gap: 18px">
+      <label class="fld">Nazwa<input class="inp" type="text" value="Netflix"></label>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: end">
+        <label class="fld">Kwota<span style="position: relative; display: block"><input class="inp mono" type="text" inputMode="decimal" value="43,00" style="padding-right: 40px"><span style="position: absolute; right: 14px; top: 14px; color: #8a8a8a">zł</span></span></label>
+        <div class="seg" role="group" aria-label="Cykl" style="height: 42px; align-items: stretch"><sc-for list="{{cycles}}" as="c" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="height: auto">{{c.t}}</button></sc-for></div>
+      </div>
+      <div class="fld">Data odnowienia
+        <div class="card" style="padding: 10px 10px 8px; font-weight: 400">
+          <div style="display: flex; align-items: center; padding: 0 2px 6px"><button type="button" class="ib" aria-label="Poprzedni miesiąc" onClick="{{prev}}" style="width: 36px; height: 36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="flex: 1; text-align: center; font-weight: 600; font-size: 14px">{{calLabel}}</span><button type="button" class="ib" aria-label="Następny miesiąc" onClick="{{next}}" style="width: 36px; height: 36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+          <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 10px; color: #8a8a8a; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cal}}" as="d" hint-placeholder-count="35"><button type="button" class="mono" aria-label="{{d.label}}" aria-pressed="{{d.p}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.t}}</button></sc-for></div>
+        </div>
+        <span class="mono" style="font-size: 12px; color: #6b6b6b; font-weight: 400">{{dateTxt}}</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div></div>
+      <div class="card">
+        <div class="row"><span style="flex: 1">Aktywna</span><button type="button" class="sw" role="switch" aria-checked="{{active}}" aria-label="Aktywna" onClick="{{toggleActive}}"></button></div>
+        <div class="row"><span style="flex: 1">Przypomnij 3 dni przed</span><button type="button" class="sw" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div>
+      </div>
+      <a href="MSubs.dc.html" class="btn" style="color: #b91c1c; border-color: #f3c7c7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń wiersz</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const cyc = S.cyc || 'mies.', cat = S.cat || 'Rozrywka', iso = S.iso || '2026-11-18', mo = S.mo || 0;
+    const MON = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const first = new Date(Date.UTC(2026, 10 + mo, 1));
+    const y = first.getUTCFullYear(), m = first.getUTCMonth();
+    const lead = (first.getUTCDay() + 6) % 7, nd = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const p2 = (x) => String(x).padStart(2, '0');
+    const cal = [];
+    for (let i = 0; i < lead; i++) cal.push({ t: '', label: '', p: 'false', s: 'visibility:hidden;height:38px', pick: () => {} });
+    for (let d = 1; d <= nd; d++) {
+      const ds = y + '-' + p2(m + 1) + '-' + p2(d), on = ds === iso, today = ds === '2026-11-15';
+      cal.push({ t: d, label: d + ' ' + MON[m], p: on ? 'true' : 'false', pick: () => this.setState({ iso: ds }),
+        s: 'height:38px;border-radius:9px;font-size:14px;cursor:pointer;border:1px solid ' + (today && !on ? '#d4d4d4' : 'transparent') + ';background:' + (on ? '#171717' : 'transparent') + ';color:' + (on ? '#ffffff' : '#171717') });
+    }
+    const dd = Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    return {
+      cycles: ['mies.', 'rok'].map((c) => ({ t: c, p: c === cyc ? 'true' : 'false', pick: () => this.setState({ cyc: c }) })),
+      cal, calLabel: MON[m] + ' ' + y, prev: () => this.setState({ mo: mo - 1 }), next: () => this.setState({ mo: mo + 1 }),
+      dateTxt: iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) + ' · ' + (dd < 0 ? 'minęło' : dd === 0 ? 'dziś' : 'za ' + dd + ' dni'),
+      cats: ['Rozrywka', 'Chmura', 'Praca', 'Nauka', 'Zdrowie', 'Inne'].map((c) => ({ t: c, p: c === cat ? 'true' : 'false', pick: () => this.setState({ cat: c }) })),
+      active: S.act === false ? 'false' : 'true', toggleActive: () => this.setState({ act: S.act === false }),
+      rem: S.rem ? 'true' : 'false', toggleRem: () => this.setState({ rem: !S.rem })
+    };
+  }
+}
+</script>
+</body>
+</html>

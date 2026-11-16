@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Nowy nawyk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="border-bottom: 1px solid #f0f0f0"><a href="MHabits.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; color: #666666">Anuluj</a><div style="flex: 1; text-align: center; font-weight: 600">Nowy nawyk</div><a href="MHabits.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; font-weight: 600">Zapisz</a></header>
+  <div class="body" style="padding-top: 18px; gap: 20px">
+    <label class="fld">Nazwa<input class="inp" type="text" placeholder="Np. Woda 2 l" value="Medytacja 10 min"></label>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Jak często</span><div class="seg"><sc-for list="{{freqs}}" as="f" hint-placeholder-count="3"><button type="button" class="sg" aria-pressed="{{f.p}}" onClick="{{f.pick}}">{{f.t}}</button></sc-for></div></div>
+    <sc-if value="{{showDays}}" hint-placeholder-val="{{true}}"><div role="group" aria-label="Dni tygodnia" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.p}}" aria-label="{{d.label}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.t}}</button></sc-for></div></sc-if>
+    <sc-if value="{{showTimes}}" hint-placeholder-val="{{false}}"><div class="card"><div class="row"><span style="flex: 1">Razy w tygodniu</span><button type="button" class="ib" aria-label="Mniej" onClick="{{tMinus}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 32px; text-align: center; font-size: 17px">{{times}}</span><button type="button" class="ib" aria-label="Więcej" onClick="{{tPlus}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
+    <div class="card">
+      <div class="row"><span style="flex: 1">Przypomnienie</span><button type="button" class="sw" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div>
+      <sc-if value="{{remOn}}" hint-placeholder-val="{{true}}"><div class="row" style="flex-wrap: wrap; gap: 8px; padding: 10px 14px"><sc-for list="{{times2}}" as="t" hint-placeholder-count="4"><button type="button" class="chip mono" aria-pressed="{{t.p}}" onClick="{{t.pick}}" style="height: 34px">{{t.t}}</button></sc-for></div></sc-if>
+      <div class="row"><span style="flex: 1">Pokazuj na ekranie Dziś</span><button type="button" class="sw" role="switch" aria-checked="{{today}}" aria-label="Pokazuj na ekranie Dziś" onClick="{{toggleToday}}"></button></div>
+    </div>
+    <p class="sub" style="margin: 0; line-height: 1.5">{{summary}}</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const freq = S.freq || 'days';
+    const sel = S.days || [0, 2, 4];
+    const WD = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+    const FULL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'];
+    const times = S.times || 3, at = S.at || '07:30';
+    const rem = S.rem !== false, td = S.td !== false;
+    const when = freq === 'daily' ? 'codziennie' : freq === 'times' ? times + '× w tygodniu' : (sel.length ? sel.slice().sort().map((i) => WD[i]).join(', ') : 'brak dni');
+    return {
+      freqs: [['daily', 'Codziennie'], ['days', 'Wybrane dni'], ['times', 'X w tyg.']].map((f) => ({ t: f[1], p: f[0] === freq ? 'true' : 'false', pick: () => this.setState({ freq: f[0] }) })),
+      showDays: freq === 'days', showTimes: freq === 'times',
+      days: WD.map((w, i) => { const on = sel.indexOf(i) >= 0; return { t: w, label: FULL[i], p: on ? 'true' : 'false',
+        pick: () => this.setState({ days: on ? sel.filter((x) => x !== i) : sel.concat([i]) }),
+        s: 'height:44px;border-radius:10px;font:inherit;font-size:13px;cursor:pointer;border:1px solid ' + (on ? '#171717' : '#e0e0e0') + ';background:' + (on ? '#171717' : '#ffffff') + ';color:' + (on ? '#ffffff' : '#171717') }; }),
+      times, tMinus: () => this.setState({ times: Math.max(1, times - 1) }), tPlus: () => this.setState({ times: Math.min(7, times + 1) }),
+      rem: rem ? 'true' : 'false', remOn: rem, toggleRem: () => this.setState({ rem: !rem }),
+      today: td ? 'true' : 'false', toggleToday: () => this.setState({ td: !td }),
+      times2: ['07:30', '12:00', '18:00', '21:00'].map((t) => ({ t, p: t === at ? 'true' : 'false', pick: () => this.setState({ at: t }) })),
+      summary: 'Nawyk: ' + when + (rem ? ', przypomnienie o ' + at : ', bez przypomnienia') + '.'
+    };
+  }
+}
+</script>
+</body>
+</html>

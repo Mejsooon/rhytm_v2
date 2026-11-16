@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Szybkie dodawanie</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="padding-left: 16px"><div style="flex: 1"><div class="lbl">Niedziela · 15 listopada</div><h1 class="h1" style="margin-top: 2px">Dziś</h1></div></header>
+  <div class="body" style="opacity: .5"><div class="grid2" style="height: 150px"></div><div class="card" style="height: 220px"></div></div>
+  <a href="MToday.dc.html" class="dim" aria-label="Zamknij"></a>
+  <div class="sheet" role="dialog" aria-label="Szybko dodaj">
+    <div class="grab"></div>
+    <div style="display: flex; align-items: center; padding: 4px 8px 4px 20px"><h2 class="h2" style="flex: 1">Szybko dodaj</h2><a href="MToday.dc.html" class="ib" aria-label="Zamknij"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div style="padding: 4px 20px 28px; display: flex; flex-direction: column; gap: 16px">
+      <div class="seg" role="group" aria-label="Rodzaj"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="4"><button type="button" class="sg" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      <label class="fld" style="font-weight: 400"><span class="lbl">{{fieldLbl}}</span><input class="inp" type="text" placeholder="{{ph}}" style="height: 52px; font-size: 17px"></label>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Kiedy</span>
+        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px"><sc-for list="{{whens}}" as="w" hint-placeholder-count="4"><button type="button" class="chip" aria-pressed="{{w.p}}" onClick="{{w.pick}}" style="flex: none">{{w.t}}</button></sc-for></div>
+      </div>
+      <sc-if value="{{isBlock}}" hint-placeholder-val="{{false}}"><a href="MBlockSheet.dc.html" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #404040"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Pełny formularz bloku (kategoria, zadania, powtarzanie)<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
+      <sc-if value="{{isRun}}" hint-placeholder-val="{{false}}"><a href="MRunNew.dc.html" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #404040"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Pełny formularz biegu (dystans, tempo)<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
+      <a href="MToday.dc.html" class="btnp">Dodaj</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const k = S.k || 'task', w = S.w || 'Dziś';
+    const K = [['task', 'Zadanie', 'Co jest do zrobienia?', 'Zadanie'], ['block', 'Blok', 'Nazwa bloku, np. Nauka SQL', 'Blok w kalendarzu'], ['run', 'Bieg', 'Np. 8 km spokojnie', 'Bieg'], ['habit', 'Nawyk', 'Np. Woda 2 l', 'Nawyk']];
+    const cur = K.filter((x) => x[0] === k)[0];
+    return {
+      kinds: K.map((x) => ({ t: x[1], p: x[0] === k ? 'true' : 'false', pick: () => this.setState({ k: x[0] }) })),
+      ph: cur[2], fieldLbl: cur[3], isBlock: k === 'block', isRun: k === 'run',
+      whens: ['Dziś', 'Dziś 18:00', 'Jutro', 'Pn 16.11', 'Bez daty'].map((t) => ({ t, p: t === w ? 'true' : 'false', pick: () => this.setState({ w: t }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

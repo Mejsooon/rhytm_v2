@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Subscriptions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top"><a href="MPages.dc.html" class="ib" aria-label="Strony"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1"></div><a href="MRowEdit.dc.html" class="ib" aria-label="Nowy wiersz"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
+  <div class="body" style="padding-top: 0; padding-bottom: 110px">
+    <h1 class="h1">Subscriptions</h1>
+    <div class="grid2">
+      <div class="stat"><div class="lbl">Miesięcznie</div><div class="num" style="font-size: 20px">{{sumM}}</div></div>
+      <div class="stat"><div class="lbl">Rocznie</div><div class="num" style="font-size: 20px">{{sumY}}</div></div>
+    </div>
+    <div class="card" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fafafa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="flex: 1; font-size: 14px">Najbliżej: <b>{{nextName}}</b></span><span class="mono" style="font-size: 12px; color: #b91c1c">{{nextRel}}</span></div>
+    <div style="display: flex; gap: 8px"><sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" class="chip" aria-pressed="{{f.p}}" onClick="{{f.pick}}" style="height: 34px">{{f.t}}</button></sc-for></div>
+    <div class="card"><sc-for list="{{rows}}" as="r" hint-placeholder-count="7"><a href="MRowEdit.dc.html" class="row" style="min-height: 68px"><span style="{{r.av}}">{{r.ini}}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{r.name}}</span><span class="mono" style="font-size: 12px; color: #6b6b6b">{{r.date}} · <span style="{{r.relS}}">{{r.rel}}</span></span></span><span style="text-align: right"><span class="mono" style="display: block; font-weight: 500">{{r.price}}</span><span class="badge" style="{{r.catS}}">{{r.cat}}</span></span></a></sc-for></div>
+    <div class="mono" style="font-size: 12px; color: #6b6b6b; text-align: center">{{count}}</div>
+  </div>
+  <dc-import name="MTabBar" active="pages" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const f = (this.state && this.state.f) || 'all';
+    const CAT = { 'Rozrywka': 'color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe', 'Chmura': 'color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff', 'Praca': 'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc', 'Nauka': 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa' };
+    const R = [
+      ['Netflix', 43.00, 'mies.', '2026-11-18', 'Rozrywka'], ['Spotify', 23.99, 'mies.', '2026-11-27', 'Rozrywka'], ['iCloud+', 4.99, 'mies.', '2026-12-01', 'Chmura'],
+      ['Claude Pro', 90.00, 'mies.', '2026-12-04', 'Praca'], ['Google One', 99.99, 'rok', '2027-03-12', 'Chmura'], ['fanaberia.photo', 59.90, 'rok', '2027-01-20', 'Praca'], ['Duolingo', 239.99, 'rok', '2027-06-02', 'Nauka']
+    ];
+    const zl = (n) => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł';
+    const days = (iso) => Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    const rel = (d) => d === 0 ? 'dziś' : d === 1 ? 'jutro' : d <= 60 ? 'za ' + d + ' dni' : 'za ' + Math.round(d / 30) + ' mies.';
+    const m = R.reduce((a, r) => a + (r[2] === 'mies.' ? r[1] : r[1] / 12), 0);
+    const list = R.filter((r) => f === 'all' || (f === 'm' ? r[2] === 'mies.' : r[2] === 'rok')).sort((a, b) => days(a[3]) - days(b[3]));
+    const nx = R.slice().sort((a, b) => days(a[3]) - days(b[3]))[0];
+    return {
+      sumM: zl(m), sumY: zl(m * 12), nextName: nx[0] + ' · ' + zl(nx[1]), nextRel: rel(days(nx[3])),
+      filters: [['all', 'Wszystkie'], ['m', 'Miesięczne'], ['y', 'Roczne']].map((x) => ({ t: x[1], p: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      rows: list.map((r) => { const d = days(r[3]); return {
+        name: r[0], ini: r[0].charAt(0).toUpperCase(), price: zl(r[1]) + (r[2] === 'rok' ? '/r' : '/m'),
+        date: r[3].slice(8, 10) + '.' + r[3].slice(5, 7), rel: rel(d), relS: d <= 7 ? 'color:#b91c1c' : '',
+        cat: r[4], catS: CAT[r[4]],
+        av: 'width:40px;height:40px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:600;background:#f5f5f5;color:#404040' }; }),
+      count: list.length + ' z ' + R.length + ' subskrypcji'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -12,16 +12,26 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
 .btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
 .btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
 .seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:13px}
+@keyframes rh-draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+@keyframes rh-fade{from{opacity:0}to{opacity:1}}
+.sp-day .sp-plus{opacity:0;transition:opacity .12s}
+.sp-day:hover .sp-plus{opacity:1}
+.sp-day:hover{background:#fcfcfc}
+.sp-opt:hover{background:#f5f5f5}
+.rh-line{stroke-dasharray:600;stroke-dashoffset:0;animation:rh-draw 1.2s cubic-bezier(.22,1,.36,1) both}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="1460" hint-size="100%,1460px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="1460" hint-size="100%,1460px"></dc-import></div>
 
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
@@ -53,14 +63,14 @@ a{color:#171717}a:hover{color:#000000}
             <sc-for list="{{month}}" as="w" hint-placeholder-count="6">
               <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 88px; border-bottom: 1px solid #eaeaea">
                 <sc-for list="{{w.days}}" as="d" hint-placeholder-count="7">
-                  <div style="{{d.s}}">
-                    <span style="{{d.numS}}">{{d.num}}</span>
+                  <div class="sp-day" style="{{d.s}}" onClick="{{d.add}}">
+                    <span style="{{d.numS}}">{{d.num}}</span><sc-if value="{{d.canAdd}}" hint-placeholder-val="{{true}}"><span class="sp-plus mono" aria-hidden="true" style="float: right; font-size: 13px; color: #a3a3a3; line-height: 1">+</span></sc-if>
                     <sc-for list="{{d.items}}" as="b" hint-placeholder-count="1"><button type="button" class="mono" aria-pressed="{{b.pressed}}" aria-label="{{b.label}}" onClick="{{b.pick}}" style="{{b.chip}}">{{b.type}} {{b.short}}</button></sc-for>
                     <sc-if value="{{d.hasPop}}" hint-placeholder-val="{{false}}">
                       <div role="dialog" aria-label="{{d.pop.title}}" style="{{d.pop.s}}">
                         <div style="display: flex; align-items: center; gap: 8px">
                           <span class="mono" style="{{d.pop.badge}}">{{d.pop.type}}</span>
-                          <span class="mono" style="font-size: 11px; color: #6b6b6b">{{d.pop.status}}</span>
+                          <span class="mono" style="font-size: 11px; color: #6b6b6b; white-space: nowrap">{{d.pop.status}} · {{d.pop.cal}}</span>
                           <button type="button" aria-label="Zamknij" onClick="{{close}}" style="margin-left: auto; width: 26px; height: 26px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; font-size: 12px">✕</button>
                         </div>
                         <div style="font-size: 15px; font-weight: 600; margin-top: 8px">{{d.pop.title}}</div>
@@ -75,9 +85,26 @@ a{color:#171717}a:hover{color:#000000}
                         </sc-if>
                         <sc-if value="{{d.pop.hasNote}}" hint-placeholder-val="{{false}}"><div style="margin-top: 12px; font-size: 12px; color: #404040; background: #fafafa; border-radius: 6px; padding: 8px 10px">{{d.pop.note}}</div></sc-if>
                         <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eaeaea">
-                          <a href="{{d.pop.href}}" class="btnp" style="text-decoration: none; font-size: 13px">{{d.pop.cta}}</a>
+                          <a href="{{d.pop.href}}" class="btnp" style="text-decoration: none; font-size: 13px; white-space: nowrap">{{d.pop.cta}}</a>
                           <button type="button" class="btn" style="font-size: 13px; color: #b91c1c">Usuń</button>
-                          <span class="mono" style="margin-left: auto; font-size: 11px; color: #6b6b6b">{{d.pop.cal}}</span>
+                        </div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{d.hasAdd}}" hint-placeholder-val="{{false}}">
+                      <div role="dialog" aria-label="Dodaj trening" style="{{d.addS}}">
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px">
+                          <span style="font-size: 13px; font-weight: 600">Dodaj trening</span>
+                          <span class="mono" style="font-size: 11px; color: #6b6b6b">{{d.addWhen}}</span>
+                          <button type="button" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: #666666; cursor: pointer; font: inherit; font-size: 12px">✕</button>
+                        </div>
+                        <a href="RunDialog.dc.html" class="sp-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #fff4ed; border: 1px solid #fed7aa; color: #c2410c; display: flex; align-items: center; justify-content: center; font-size: 12px">●</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Bieg</span><span style="font-size: 12px; color: #666666">dystans, czas, tempo</span></span></a>
+                        <a href="GymLog.dc.html" class="sp-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #f5f5f5; border: 1px solid #e0e0e0; color: #404040; display: flex; align-items: center; justify-content: center; font-size: 12px">■</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Siłownia</span><span style="font-size: 12px; color: #666666">pusty trening siłowy</span></span></a>
+                        <div style="border-top: 1px solid #eaeaea; margin: 6px 0 4px"></div>
+                        <div class="mono" style="font-size: 10px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em; padding: 4px 8px">Z szablonu</div>
+                        <div style="display: flex; gap: 6px; padding: 2px 8px 4px">
+                          <a href="GymLog.dc.html" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 999px; padding: 3px 10px; text-decoration: none; color: #404040">Push</a>
+                          <a href="GymLog.dc.html" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 999px; padding: 3px 10px; text-decoration: none; color: #404040">Pull</a>
+                          <a href="GymLog.dc.html" style="font-size: 12px; border: 1px solid #e0e0e0; border-radius: 999px; padding: 3px 10px; text-decoration: none; color: #404040">Nogi</a>
                         </div>
                       </div>
                     </sc-if>
@@ -100,60 +127,73 @@ a{color:#171717}a:hover{color:#000000}
       <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: stretch">
         <section class="card" style="overflow: hidden">
           <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid #eaeaea">
-            <button type="button" aria-pressed="true" style="text-align: left; background: #ffffff; border: 0; border-bottom: 2px solid #171717; padding: 14px 16px; font: inherit; cursor: pointer"><div class="lbl">Km / tydz.</div><div class="mono" style="font-size: 20px; margin-top: 6px; color: #171717">0,0 <span style="font-size: 12px; color: #666666">/ 25</span></div></button>
-            <button type="button" style="text-align: left; background: #fafafa; border: 0; border-left: 1px solid #eaeaea; padding: 14px 16px; font: inherit; cursor: pointer"><div class="lbl">Śr. tempo</div><div class="mono" style="font-size: 20px; margin-top: 6px; color: #171717">5:42</div></button>
-            <button type="button" style="text-align: left; background: #fafafa; border: 0; border-left: 1px solid #eaeaea; padding: 14px 16px; font: inherit; cursor: pointer"><div class="lbl">Treningi</div><div class="mono" style="font-size: 20px; margin-top: 6px; color: #171717">0 <span style="font-size: 12px; color: #666666">/ 3 plan</span></div></button>
-            <button type="button" style="text-align: left; background: #fafafa; border: 0; border-left: 1px solid #eaeaea; padding: 14px 16px; font: inherit; cursor: pointer"><div class="lbl">Kcal</div><div class="mono" style="font-size: 20px; margin-top: 6px; color: #171717">0</div></button>
+            <sc-for list="{{tiles}}" as="ti" hint-placeholder-count="4"><button type="button" aria-pressed="{{ti.pressed}}" onClick="{{ti.pick}}" style="{{ti.s}}"><div class="lbl">{{ti.label}}</div><div class="mono" style="font-size: 20px; margin-top: 6px; color: #171717">{{ti.value}} <span style="font-size: 12px; color: #666666">{{ti.sub}}</span></div></button></sc-for>
           </div>
-          <div style="padding: 18px 16px 12px">
+          <div style="padding: 14px 16px 12px">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px"><span style="font-size: 13px; font-weight: 500">{{chart.title}}</span><span class="mono" style="font-size: 11px; color: #6b6b6b">{{chart.note}}</span></div>
             <div style="position: relative; display: flex; align-items: flex-end; gap: 10px; height: 150px; border-bottom: 1px solid #eaeaea">
-              <div style="position: absolute; left: 0; right: 0; bottom: 125px; border-top: 1px dashed #15803d"></div>
-              <span class="mono" style="position: absolute; right: 0; bottom: 129px; font-size: 10px; color: #15803d">cel 25 km</span>
-              <sc-for list="{{weeks}}" as="w" hint-placeholder-count="12"><div title="{{w.t}}" style="{{w.s}}"></div></sc-for>
+              <sc-if value="{{chart.hasGoal}}" hint-placeholder-val="{{true}}"><div style="{{chart.goalLine}}"></div><span class="mono" style="{{chart.goalLabel}}">{{chart.goalText}}</span></sc-if>
+              <sc-for list="{{chart.bars}}" as="w" hint-placeholder-count="12"><div title="{{w.t}}" style="{{w.s}}"><span class="mono" style="{{w.vs}}">{{w.v}}</span></div></sc-for>
             </div>
             <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #6b6b6b; margin-top: 6px"><span>tydz. 36</span><span>tydz. 47</span></div>
           </div>
         </section>
 
         <section class="card" style="padding: 14px 16px; display: flex; flex-direction: column">
-          <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Wyciskanie na ławce</h2><span class="mono" style="font-size: 11px; color: #15803d; border: 1px solid #bbe5cc; background: #f0faf4; border-radius: 4px; padding: 1px 6px">REKORD</span></div>
-          <div style="display: flex; gap: 24px; margin-top: 12px">
-            <div><div class="lbl">Szac. 1RM</div><div class="mono" style="font-size: 20px; margin-top: 4px">82,5 kg</div></div>
-            <div><div class="lbl">Najlepsza seria</div><div class="mono" style="font-size: 20px; margin-top: 4px">70 × 6</div></div>
+          <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Wyciskanie na ławce</h2><span class="mono" style="{{rm.badgeS}}">{{rm.badge}}</span></div>
+          <div style="display: flex; gap: 24px; margin-top: 12px; align-items: flex-end">
+            <div><div class="lbl">Szac. 1RM</div><div class="mono" style="font-size: 20px; margin-top: 4px">{{rm.cur.v}} kg</div></div>
+            <div><div class="lbl">Najlepsza seria</div><div class="mono" style="font-size: 20px; margin-top: 4px">{{rm.cur.set}}</div></div>
+            <div class="mono" style="margin-left: auto; font-size: 11px; color: #6b6b6b; padding-bottom: 3px">{{rm.cur.when}}</div>
           </div>
-          <svg viewBox="0 0 300 110" width="100%" height="110" role="img" aria-label="Szacowany 1RM rośnie z 72 do 82,5 kg w 8 tygodni" style="margin-top: auto; display: block">
-            <line x1="0" y1="100" x2="300" y2="100" stroke="#eaeaea"></line>
-            <line x1="0" y1="55" x2="300" y2="55" stroke="#f0f0f0"></line>
-            <line x1="0" y1="10" x2="300" y2="10" stroke="#f0f0f0"></line>
-            <polyline points="5,92 45,86 85,80 125,74 165,60 205,52 245,38 290,18" fill="none" stroke="#171717" stroke-width="2"></polyline>
-            <circle cx="290" cy="18" r="4" fill="#15803d"></circle>
-          </svg>
+          <div style="position: relative; margin-top: auto; padding-top: 12px" onMouseLeave="{{rm.leave}}">
+            <div style="position: relative; height: 110px">
+              <svg viewBox="0 0 300 110" preserveAspectRatio="none" width="100%" height="110" role="img" aria-label="Szacowany 1RM rośnie z 72 do 82,5 kg w 8 tygodni" style="display: block; position: absolute; inset: 0">
+                <line x1="0" y1="100" x2="300" y2="100" stroke="#eaeaea" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="55" x2="300" y2="55" stroke="#f0f0f0" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="10" x2="300" y2="10" stroke="#f0f0f0" vector-effect="non-scaling-stroke"></line>
+                <polyline class="rh-line" points="{{rm.points}}" fill="none" stroke="#171717" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+              </svg>
+              <sc-if value="{{rm.hasHov}}" hint-placeholder-val="{{false}}"><div style="{{rm.guideS}}"></div></sc-if>
+              <sc-for list="{{rm.dots}}" as="pt" hint-placeholder-count="8"><span style="{{pt.s}}"></span></sc-for>
+              <sc-for list="{{rm.zones}}" as="z" hint-placeholder-count="8"><button type="button" aria-label="{{z.label}}" onMouseEnter="{{z.enter}}" onFocus="{{z.enter}}" onClick="{{z.enter}}" style="{{z.s}}"></button></sc-for>
+            </div>
+            <sc-if value="{{rm.hasHov}}" hint-placeholder-val="{{false}}">
+              <div role="tooltip" style="{{rm.tipS}}">
+                <div class="mono" style="font-size: 11px; color: #6b6b6b">{{rm.hov.when}}</div>
+                <div class="mono" style="font-size: 14px; font-weight: 600; margin-top: 2px">{{rm.hov.v}} kg <span style="font-size: 11px; font-weight: 400; color: #6b6b6b">szac. 1RM</span></div>
+                <div class="mono" style="font-size: 12px; margin-top: 2px">seria {{rm.hov.set}}</div>
+                <div class="mono" style="{{rm.hov.deltaS}}">{{rm.hov.delta}}</div>
+                <sc-if value="{{rm.hov.rec}}" hint-placeholder-val="{{false}}"><div class="mono" style="display: inline-block; margin-top: 6px; font-size: 10px; color: #15803d; border: 1px solid #bbe5cc; background: #f0faf4; border-radius: 4px; padding: 1px 6px">REKORD</div></sc-if>
+              </div>
+            </sc-if>
+          </div>
           <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #6b6b6b; margin-top: 4px"><span>wrz</span><span>lis</span></div>
         </section>
       </div>
       <!-- OSTATNIE TRENINGI -->
       <section class="card" style="overflow-x: auto">
         <div style="padding: 12px 16px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Ostatnie treningi</h2><span class="mono" style="font-size: 12px; color: #666666">listopad · {{doneCount}} wykonanych</span></div>
-        <dc-t-table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px">
-          <dc-t-thead><dc-t-tr style="background: #fafafa">
-            <dc-t-th scope="col" style="text-align: left; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Data</dc-t-th>
-            <dc-t-th scope="col" style="text-align: left; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Typ</dc-t-th>
-            <dc-t-th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Wynik</dc-t-th>
-            <dc-t-th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Tempo / objętość</dc-t-th>
-            <dc-t-th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Trudność</dc-t-th>
-          </dc-t-tr></dc-t-thead>
-          <dc-t-tbody>
+        <table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px">
+          <thead><tr style="background: #fafafa">
+            <th scope="col" style="text-align: left; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Data</th>
+            <th scope="col" style="text-align: left; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Typ</th>
+            <th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Wynik</th>
+            <th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Tempo / objętość</th>
+            <th scope="col" style="text-align: right; padding: 8px 16px; font-weight: 500; color: #666666; border-bottom: 1px solid #eaeaea">Trudność</th>
+          </tr></thead>
+          <tbody>
             <sc-for list="{{sessions}}" as="r" hint-placeholder-count="6">
-              <dc-t-tr>
-                <dc-t-td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; color: #404040">{{r.date}}</dc-t-td>
-                <dc-t-td style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0"><span class="mono" style="{{r.badge}}">{{r.type}}</span> <span style="margin-left: 6px">{{r.name}}</span></dc-t-td>
-                <dc-t-td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right">{{r.main}}</dc-t-td>
-                <dc-t-td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right; color: #404040">{{r.sub}}</dc-t-td>
-                <dc-t-td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right; color: #666666">{{r.diff}}</dc-t-td>
-              </dc-t-tr>
+              <tr>
+                <td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; color: #404040">{{r.date}}</td>
+                <td style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0"><span class="mono" style="{{r.badge}}">{{r.type}}</span> <span style="margin-left: 6px">{{r.name}}</span></td>
+                <td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right">{{r.main}}</td>
+                <td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right; color: #404040">{{r.sub}}</td>
+                <td class="mono" style="padding: 10px 16px; border-bottom: 1px solid #f0f0f0; text-align: right; color: #666666">{{r.diff}}</td>
+              </tr>
             </sc-for>
-          </dc-t-tbody>
-        </dc-t-table>
+          </tbody>
+        </table>
       </section>
     </div>
   </main>
@@ -161,7 +201,7 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { filter: 'all', sel: '15' }; }
+  constructor(props) { super(props); this.state = { filter: 'all', sel: '15', metric: 'km', hov: null, add: null }; }
   renderVals() {
     const filter = this.state.filter;
     const segS = (on, first) => 'background:' + (on ? '#f0f0f0;font-weight:500;color:#171717' : '#ffffff;color:#666666') + ';border:0;' + (first ? '' : 'border-left:1px solid #e0e0e0;') + 'padding:6px 12px;font:inherit;cursor:pointer';
@@ -214,7 +254,7 @@ class Component extends DCLogic {
           if (!s[7]) { km += s[8]; count += 1; }
           return {
             type: s[1] === 'run' ? '●' : '■', short: s[6], pressed: on ? 'true' : 'false', label: s[4] + ', ' + s[9],
-            pick: () => this.setState({ sel: on ? null : String(s[0]) }),
+            pick: () => this.setState({ sel: on ? null : String(s[0]), add: null }),
             chip: 'display:block;width:100%;text-align:left;cursor:pointer;font-size:11px;border-radius:4px;padding:2px 6px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (s[7] ? col : '#171717') + ';background:' + (s[7] ? '#ffffff' : col + '18') + ';border:1px ' + (s[7] ? 'dashed ' : 'solid ') + col + (s[7] ? '' : '40') + (on ? ';box-shadow:0 0 0 2px ' + col + '55' : '')
           };
         });
@@ -248,22 +288,70 @@ class Component extends DCLogic {
             hasNote: !!NOTES[selS[0]], note: NOTES[selS[0]] || '',
             href: isRun ? 'RunDialog.dc.html' : 'GymLog.dc.html',
             cta: isRun ? (planned ? 'Uzupełnij dane' : 'Edytuj') : (planned ? 'Rozpocznij' : 'Otwórz trening'),
-            cal: '▦ w kalendarzu',
+            cal: 'w kalendarzu',
             s: 'position:absolute;z-index:20;width:300px;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.16);padding:14px 16px;text-align:left;' + (c >= 4 ? 'right:calc(100% + 6px);' : 'left:calc(100% + 6px);') + (r >= 3 ? 'bottom:0;' : 'top:0;')
           };
         }
         days.push({
           num: String(num), items, hasPop: !!pop, pop: pop || { stats: [], list: [] },
-          s: 'position:relative;min-height:86px;padding:6px 8px;box-sizing:border-box;' + (c ? 'border-left:1px solid #eaeaea;' : '') + (inMonth ? '' : 'background:#fafafa;'),
+          canAdd: inMonth,
+          // klik w pusty obszar dnia otwiera wybór: bieg / siłownia
+          add: (e) => { const t = e && e.target; if (!inMonth || (t && t.closest && t.closest('button,a,[role=dialog]'))) return; this.setState({ add: this.state.add === num ? null : num, sel: null }); },
+          hasAdd: inMonth && this.state.add === num,
+          addWhen: ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'][c] + ' ' + String(num).padStart(2, '0') + '.11',
+          addS: 'position:absolute;z-index:20;width:240px;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.16);padding:8px;text-align:left;cursor:default;' + (c >= 4 ? 'right:calc(100% + 6px);' : 'left:calc(100% + 6px);') + (r >= 3 ? 'bottom:0;' : 'top:0;'),
+          s: 'position:relative;min-height:86px;padding:6px 8px;box-sizing:border-box;' + (inMonth ? 'cursor:pointer;' : '') + (c ? 'border-left:1px solid #eaeaea;' : '') + (inMonth ? '' : 'background:#fafafa;'),
           numS: 'display:inline-block;font-size:12px;' + (inMonth && num === 17 ? 'background:#15803d;color:#ffffff;border-radius:4px;padding:0 5px;font-weight:600' : inMonth ? 'color:#171717;font-weight:500' : 'color:#a3a3a3')
         });
       }
       rows.push({ days, km: km ? km.toFixed(1).replace('.', ',') + ' km' : '—', count: count ? count + ' tr.' : '' });
     }
     const km = [12, 15, 9, 18, 21, 17, 22, 26, 19, 24, 18.4, 0];
+    const metric = this.state.metric || 'km';
+    const mmss = (v) => Math.floor(v) + ':' + String(Math.round((v % 1) * 60)).padStart(2, '0');
+    // 12 ostatnich tygodni (tydz. 36–47); ostatni = bieżący, jeszcze bez danych
+    const MET = {
+      km: { label: 'Km / tydz.', value: '0,0', sub: '/ 25', title: 'Kilometry tygodniowo', note: 'ostatnie 12 tyg. · cel 25 km', data: km, max: 30, goal: 25, goalText: 'cel 25 km', fmt: (v) => String(v).replace('.', ',') },
+      pace: { label: 'Śr. tempo', value: '5:42', sub: '/km', title: 'Średnie tempo biegów', note: 'wyższy słupek = szybciej', data: [6.08, 6.0, 5.97, 5.95, 5.9, 5.92, 5.83, 5.78, 5.85, 5.73, 5.7, 0], slow: 6.3, fast: 5.4, goal: 5.75, goalText: 'cel 5:45', fmt: mmss },
+      sessions: { label: 'Treningi', value: '0', sub: '/ 3 plan', title: 'Treningi tygodniowo', note: 'bieg + siłownia', data: [3, 3, 2, 4, 4, 3, 4, 5, 3, 4, 3, 0], max: 6, goal: 3, goalText: 'plan 3', fmt: (v) => String(v) },
+      kcal: { label: 'Kcal', value: '0', sub: '', title: 'Spalone kcal tygodniowo', note: 'biegi, wzór ACSM', data: [1650, 1980, 1240, 2310, 2640, 2150, 2810, 3260, 2390, 3020, 2280, 0], max: 3600, goal: null, goalText: '', fmt: (v) => v.toLocaleString('pl-PL') }
+    };
+    // historia wyciskania: [data, szac. 1RM, najlepsza seria]
+    const RM = [['czw 25.09', 72.0, '60 × 6'], ['czw 02.10', 73.0, '62,5 × 6'], ['czw 09.10', 75.0, '65 × 5'], ['czw 16.10', 74.5, '62,5 × 7'],
+      ['czw 23.10', 77.5, '67,5 × 5'], ['czw 30.10', 79.0, '67,5 × 6'], ['czw 06.11', 80.5, '70 × 5'], ['czw 12.11', 82.5, '70 × 6']];
+    const kg = (v) => v.toFixed(1).replace('.', ',');
+    const px = (i) => 5 + i * (285 / (RM.length - 1));
+    const py = (v) => 100 - ((v - 70) / 14) * 90;
+    let best = 0;
+    const rmPts = RM.map((r, i) => { const rec = r[1] > best; best = Math.max(best, r[1]); return { i, when: r[0] + '.2026', v: kg(r[1]), raw: r[1], set: r[2], rec, x: px(i), y: py(r[1]) }; });
+    const hovI = this.state.hov;
+    const hovP = hovI == null ? null : rmPts[hovI];
+    const cur = hovP || rmPts[rmPts.length - 1];
+    const rm = {
+      points: rmPts.map((p) => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' '),
+      dots: rmPts.map((p) => {
+        const on = hovI === p.i, size = on ? 11 : 7, col = p.rec ? '#15803d' : '#171717';
+        return { s: 'position:absolute;pointer-events:none;box-sizing:border-box;border-radius:50%;width:' + size + 'px;height:' + size + 'px;left:' + (p.x / 3).toFixed(2) + '%;top:' + p.y.toFixed(1) + 'px;transform:translate(-50%,-50%);border:2px solid ' + col + ';background:' + (on ? col : '#ffffff') + ';transition:width .12s,height .12s' };
+      }),
+      zones: rmPts.map((p) => ({ label: p.when + ': ' + p.v + ' kg', enter: () => { if (this.state.hov !== p.i) this.setState({ hov: p.i }); },
+        s: 'position:absolute;top:0;bottom:0;padding:0;border:0;background:transparent;cursor:pointer;left:' + ((p.x - 285 / 14) / 3).toFixed(2) + '%;width:' + (285 / 7 / 3).toFixed(2) + '%' })),
+      guideS: hovP ? 'position:absolute;pointer-events:none;top:4px;bottom:10px;width:0;border-left:1px dashed #a3a3a3;left:' + (hovP.x / 3).toFixed(2) + '%' : '',
+      leave: () => this.setState({ hov: null }),
+      hasHov: !!hovP,
+      hov: hovP ? Object.assign({}, hovP, {
+        delta: hovP.i ? (hovP.raw - RM[hovP.i - 1][1] >= 0 ? '+' : '−') + kg(Math.abs(hovP.raw - RM[hovP.i - 1][1])) + ' kg vs poprz.' : 'pierwszy pomiar',
+        deltaS: 'font-size:11px;margin-top:2px;color:' + (hovP.i && hovP.raw < RM[hovP.i - 1][1] ? '#b91c1c' : '#15803d')
+      }) : { rec: false },
+      tipS: hovP ? 'position:absolute;z-index:5;pointer-events:none;top:' + Math.round(hovP.y < 55 ? 12 + hovP.y + 14 : 12 + hovP.y - 100) + 'px;' + (hovP.i >= 5 ? 'right:calc(' + (100 - hovP.x / 3) + '% + 10px);' : 'left:calc(' + (hovP.x / 3) + '% + 10px);') + 'background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.1);padding:8px 10px;white-space:nowrap;animation:rh-fade .12s ease-out' : '',
+      cur: { v: cur.v, set: cur.set, when: hovP ? cur.when : 'ostatnio: ' + cur.when },
+      badge: cur.rec ? 'REKORD' : 'bez rekordu',
+      badgeS: 'font-size:11px;border-radius:4px;padding:1px 6px;' + (cur.rec ? 'color:#15803d;border:1px solid #bbe5cc;background:#f0faf4' : 'color:#6b6b6b;border:1px solid #e0e0e0;background:#fafafa')
+    };
     return {
       isMonth: true,
+      rm,
       close: () => this.setState({ sel: null }),
+      closeAdd: () => this.setState({ add: null }),
       rangeLabel: 'listopad 2026',
       sessions: done.map((s) => ({ date: s[9], type: s[1] === 'run' ? 'BIEG' : 'SIŁA', name: s[4], main: s[1] === 'run' ? s[6] + ' km' : '5 ćw.', sub: s[5].split(' · ')[1], diff: s[10], badge: 'font-size:10px;border-radius:4px;padding:1px 6px;' + (s[1] === 'run' ? 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa' : 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0') })),
       doneCount: done.length,
@@ -271,7 +359,27 @@ class Component extends DCLogic {
       hours: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map((h) => String(h).padStart(2, '0') + ':00'),
       week,
       month: rows,
-      weeks: km.map((k, i) => ({ t: k + ' km', s: 'flex:1;border-radius:3px 3px 0 0;height:' + Math.max(2, Math.round((k / 30) * 150)) + 'px;background:' + (i === km.length - 1 ? '#15803d' : k >= 25 ? '#171717' : '#d4d4d4') }))
+      tiles: Object.keys(MET).map((k, i) => {
+        const on = metric === k;
+        return { label: MET[k].label, value: MET[k].value, sub: MET[k].sub, pressed: on ? 'true' : 'false', pick: () => this.setState({ metric: k }),
+          s: 'text-align:left;border:0;padding:14px 16px;font:inherit;cursor:pointer;' + (i ? 'border-left:1px solid #eaeaea;' : '') + (on ? 'background:#ffffff;box-shadow:inset 0 -2px 0 #171717' : 'background:#fafafa') };
+      }),
+      chart: (() => {
+        const m = MET[metric];
+        const max = m.max;
+        // tempo: krótszy czas = szybciej = wyższy słupek
+        const h = (v) => metric === 'pace' ? Math.round(((m.slow - v) / (m.slow - m.fast)) * 140) : Math.round((v / max) * 140);
+        const bars = m.data.map((v, i) => {
+          const last = i === m.data.length - 1;
+          const hit = m.goal != null && (metric === 'pace' ? v && v <= m.goal : v >= m.goal);
+          return { t: 'tydz. ' + (36 + i) + ': ' + m.fmt(v), v: v ? m.fmt(v) : '', vs: 'position:absolute;left:0;right:0;top:-16px;text-align:center;font-size:9px;color:#6b6b6b;white-space:nowrap',
+            s: 'position:relative;flex:1;border-radius:3px 3px 0 0;height:' + Math.max(2, v ? h(v) : 2) + 'px;background:' + (last ? '#15803d' : hit ? '#171717' : '#d4d4d4') };
+        });
+        const gb = m.goal != null ? h(m.goal) : 0;
+        return { title: m.title, note: m.note, bars, hasGoal: m.goal != null, goalText: m.goalText,
+          goalLine: 'position:absolute;left:0;right:0;bottom:' + gb + 'px;border-top:1px dashed #15803d;z-index:1',
+          goalLabel: 'position:absolute;right:0;bottom:' + (gb + 4) + 'px;font-size:10px;color:#15803d;background:#ffffff;padding:0 4px;z-index:2' };
+      })()
     };
   }
 }

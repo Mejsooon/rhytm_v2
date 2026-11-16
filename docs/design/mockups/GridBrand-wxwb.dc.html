@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>rhytm — siatka 3×3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.08em}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; position: relative">
+<div style="display: grid; grid-template-columns: 1.15fr 1fr; height: 100%">
+  <div style="padding: 64px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid #eaeaea; background-color: #fafafa; background-image: linear-gradient(#efefef 1px, transparent 1px), linear-gradient(90deg, #efefef 1px, transparent 1px); background-size: 40px 40px">
+    <span class="lbl">Wariant · siatka 3×3</span>
+    <div style="display: flex; flex-direction: column; gap: 36px">
+      <span style="display: inline-flex; align-items: center; gap: 36px"><svg width="120" height="120" viewBox="0 0 48 48" role="img" aria-label="Logo rhytm — siatka 3×3"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg><span style="font-weight: 600; font-size: 132px; letter-spacing: -0.045em; line-height: 1; color: #171717">rhytm</span></span>
+      <div style="font-size: 44px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.1">Your week, in rhythm.</div>
+      <div style="font-size: 20px; color: #666666; max-width: 560px; line-height: 1.5">Calendar, training and habits in one place.</div>
+    </div>
+    <div style="display: flex; gap: 40px; align-items: center">
+      <span style="display: inline-flex; align-items: center; justify-content: center; width: 96px; height: 96px; border-radius: 22px; background: #171717"><svg width="60" height="60" viewBox="0 0 48 48" role="img" aria-label="Logo rhytm — siatka 3×3"><rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect></svg></span>
+      <span style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 15px; background: #ffffff; border: 1px solid #e5e5e5"><svg width="40" height="40" viewBox="0 0 48 48" role="img" aria-label="Logo rhytm — siatka 3×3"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg></span>
+      <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; background: #171717"><svg width="22" height="22" viewBox="0 0 48 48" role="img" aria-label="Logo rhytm — siatka 3×3"><rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect></svg></span>
+      <span style="display: inline-flex; padding: 14px 18px; border-radius: 10px; background: #171717"><span style="display: inline-flex; align-items: center; gap: 10px"><svg width="28" height="28" viewBox="0 0 48 48" role="img" aria-label="Logo rhytm — siatka 3×3"><rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="{{accent}}" opacity="1"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="1"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect></svg><span style="font-weight: 600; font-size: 30px; letter-spacing: -0.045em; line-height: 1; color: #ffffff">rhytm</span></span></span>
+    </div>
+  </div><div style="padding: 64px; display: flex; flex-direction: column; gap: 44px">
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span class="lbl">Kolory</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #171717; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Ink</div><div class="mono" style="font-size: 12px; color: #666666">#171717 · tekst, logo</div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #15803d; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Signal</div><div class="mono" style="font-size: 12px; color: #666666">#15803d · akcent, „dziś”</div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #ffffff; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Paper</div><div class="mono" style="font-size: 12px; color: #666666">#FFFFFF · tło</div></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #fafafa; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Panel</div><div class="mono" style="font-size: 12px; color: #666666">#FAFAFA · sidebar, karty</div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #eaeaea; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Line</div><div class="mono" style="font-size: 12px; color: #666666">#EAEAEA · ramki</div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 88px; border-radius: 10px; background: #666666; border: 1px solid #eaeaea"></div><div style="font-weight: 500; font-size: 14px">Muted</div><div class="mono" style="font-size: 12px; color: #666666">#666666 · tekst drugorzędny</div></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span class="lbl">Typografia</span>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #eaeaea; padding-bottom: 12px"><span style="font-size: 40px; font-weight: 600; letter-spacing: -0.04em">Geist</span><span class="mono" style="font-size: 12px; color: #666">nagłówki, tekst · 400 / 500 / 600</span></div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #eaeaea; padding-bottom: 12px"><span class="mono" style="font-size: 32px">18,4 km · 07:12</span><span class="mono" style="font-size: 12px; color: #666">Geist Mono · liczby, daty, etykiety</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="lbl">Zasady logo</span>
+      <div style="font-size: 15px; color: #404040; line-height: 1.6">Siedem słupków to siedem dni tygodnia. Czwarty, zielony, to „dziś”. Nazwa zawsze małymi literami. Minimalny rozmiar znaku: 16 px. Na ciemnym tle słupki są białe.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent": {"editor": "color", "default": "#15803d", "options": ["#15803d", "#0070f3", "#c2410c", "#171717"]}, "$preview": {"width": 1440, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return { accent: this.props.accent ?? '#15803d' }; }
+}
+</script>
+</body>
+</html>

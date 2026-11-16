@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -28,10 +30,12 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.cal-opt:hover{background:#f5f5f5}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 1060px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="1060" hint-size="100%,1060px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Moduły</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Kalendarz</span></div>
@@ -51,12 +55,26 @@ a{color:#171717}a:hover{color:#000000}
         <a href="CategoryDialog.dc.html" class="chip" style="color: #666666; text-decoration: none">+ Kategoria</a>
       </div>
         <div style="border: 1px solid #eaeaea; border-radius: 8px">
-          <div style="position: relative; height: 884px; border-radius: 8px; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 51px, #f0f0f0 51px, #f0f0f0 52px)">
+          <div style="position: relative; height: 884px; border-radius: 8px; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 51px, #f0f0f0 51px, #f0f0f0 52px); cursor: pointer" onClick="{{dayClick}}" onMouseMove="{{dayMove}}" onMouseLeave="{{dayLeave}}">
             <sc-for list="{{hours}}" as="h" hint-placeholder-count="17"><div class="mono" style="{{h.s}}">{{h.t}}</div></sc-for>
             <div style="position: absolute; left: 64px; top: 0; bottom: 0; border-left: 1px solid #eaeaea"></div>
+            <sc-if value="{{hasGhost}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{ghostS}}">{{ghostT}}</div></sc-if>
             <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5"><button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" style="{{b.s}}"><span style="display: flex; gap: 10px; align-items: baseline"><span style="font-weight: 500">{{b.title}}</span><span class="mono" style="font-size: 11px; color: #404040">{{b.meta}}</span><span class="mono" style="margin-left: auto; font-size: 11px; color: #404040">{{b.count}}</span></span></button></sc-for>
             <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 72px; right: 16px; top: 160px; border: 1px dashed #e0e0e0; border-radius: 8px; padding: 24px; text-align: center; color: #666666; background: #ffffff">Brak bloków w tym dniu. <a href="BlockDialog.dc.html">Dodaj blok</a></div></sc-if>
             <sc-if value="{{showNow}}" hint-placeholder-val="{{true}}"><div style="{{nowTop}}"></div><span class="mono" style="{{nowLab}}">11:20</span></sc-if>
+            <sc-if value="{{hasAdd}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="Nowy wpis" style="{{add.style}}">
+              <span aria-hidden="true" style="{{add.caret}}"></span>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px">
+                <span style="font-size: 13px; font-weight: 600">Nowy wpis</span>
+                <span class="mono" style="font-size: 11px; color: #6b6b6b">{{add.when}}</span>
+                <button type="button" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: #666666; cursor: pointer; font: inherit; font-size: 12px">✕</button>
+              </div>
+              <a href="BlockDialog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #f0fdf4; border: 1px solid #bbe5cc; color: #15803d; display: flex; align-items: center; justify-content: center; font-size: 12px">▤</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Blok</span><span style="font-size: 12px; color: #666666">czas na zadania, z kategorią</span></span></a>
+              <a href="RunDialog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #fff4ed; border: 1px solid #fed7aa; color: #c2410c; display: flex; align-items: center; justify-content: center; font-size: 12px">●</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Bieg</span><span style="font-size: 12px; color: #666666">dystans, czas, tempo</span></span></a>
+              <a href="GymLog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #f5f5f5; border: 1px solid #e0e0e0; color: #404040; display: flex; align-items: center; justify-content: center; font-size: 12px">■</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Siłownia</span><span style="font-size: 12px; color: #666666">trening siłowy</span></span></a>
+            </div>
+            </sc-if>
             <sc-if value="{{hasPop}}" hint-placeholder-val="{{true}}">
               <div role="dialog" aria-label="Szczegóły bloku" style="{{pop.style}}">
                 <span aria-hidden="true" style="{{pop.caret}}"></span>
@@ -101,6 +119,7 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
 class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'CalendarDay.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   constructor(p) { super(p); this.state = { hidden: { Dom: true }, day: 17, mOff: 0, sel: 'b1', done: {} }; }
   renderVals() {
     const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
@@ -142,7 +161,7 @@ class Component extends DCLogic {
     const blocks = vis.map((b) => {
       const c = COL[b.cat]; const ts = taskState(b); const dn = ts.filter((t) => t[1]).length; const on = selB && selB.id === b.id;
       return { title: b.title, meta: fmt(b.s) + '–' + fmt(b.e) + ' · ' + b.cat, count: b.cat === 'Sport' ? 'trening' : dn + '/' + ts.length,
-        pressed: on ? 'true' : 'false', pick: () => this.setState({ sel: on ? null : b.id }),
+        pressed: on ? 'true' : 'false', pick: () => this.setState({ sel: on ? null : b.id, add: null }),
         s: 'position:absolute;left:72px;right:16px;top:' + Math.round((b.s - S) * H + 3) + 'px;height:' + Math.round((b.e - b.s) * H - 6) + 'px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;text-align:left;font:inherit;font-size:13px;line-height:1.3;color:#171717;cursor:pointer;border-radius:6px;padding:6px 12px;overflow:hidden;background:' + c + '14;border:1px solid ' + c + '40;border-left:3px solid ' + c + (on ? ';box-shadow:0 0 0 2px ' + c : '') };
     });
     let pop = null;
@@ -171,6 +190,13 @@ class Component extends DCLogic {
       return { n: String(d.getUTCDate()), label: d.getUTCDate() + ' ' + MON[d.getUTCMonth()], pick: () => this.setState({ day: dayNum, sel: null }),
         s: 'height:28px;border:0;border-radius:6px;font:inherit;font-size:12px;font-family:Geist Mono,monospace;cursor:pointer;' + (selDay ? 'background:#171717;color:#fff;font-weight:600' : tdy ? 'background:#f0faf4;color:#15803d;font-weight:600' : inm ? 'background:transparent;color:#171717' : 'background:transparent;color:#a3a3a3') };
     });
+    const ad = this.state.add;
+    const gh = this.state.ghost;
+    const skip = (e) => { const t = e && e.target; return !!(t && t.closest && t.closest('button,a,[role=dialog],label,input')); };
+    const slot = (e) => { const r = e.currentTarget.getBoundingClientRect(); return Math.max(S, Math.min(22, S + Math.floor((e.clientY - r.top) / (H / 2)) / 2)); };
+    const g = ad || gh;
+    const aRaw = ad ? (ad.start - S) * H + 6 : 0;
+    const aTop = Math.min(aRaw, 17 * H - 220);
     const planned = vis.reduce((a, b) => a + (b.e - b.s), 0);
     const allT = vis.reduce((a, b) => a.concat(taskState(b)), []);
     const hm = (x) => Math.floor(x) + ' h' + (x % 1 ? ' 30 min' : '');
@@ -180,6 +206,19 @@ class Component extends DCLogic {
       summary: vis.length + ' z ' + raw.length + ' bloków',
       hours: Array.from({ length: 17 }, (_, i) => ({ t: String(6 + i).padStart(2, '0') + ':00', s: 'position:absolute;left:12px;top:' + (i * H + 3) + 'px;font-size:11px;color:#6b6b6b' })),
       blocks, hasPop: !!pop, pop, close: () => this.setState({ sel: null }),
+      dayClick: (e) => { if (skip(e)) return; const s = slot(e); this.setState({ add: (ad && ad.start === s) ? null : { start: s }, sel: null }); },
+      dayMove: (e) => { if (skip(e)) { if (this.state.ghost) this.setState({ ghost: null }); return; } const s = slot(e); const o = this.state.ghost; if (!o || o.start !== s) this.setState({ ghost: { start: s } }); },
+      dayLeave: () => { if (this.state.ghost) this.setState({ ghost: null }); },
+      hasGhost: !!g,
+      ghostT: g ? '+ ' + fmt(g.start) + '–' + fmt(g.start + 1) : '',
+      ghostS: g ? 'position:absolute;left:72px;right:16px;top:' + Math.round((g.start - S) * H + 3) + 'px;height:' + (H - 6) + 'px;box-sizing:border-box;border:1px dashed #a3a3a3;border-radius:6px;background:#fafafa;color:#666666;font-size:12px;padding:6px 12px;pointer-events:none;font-family:\'Geist Mono\',ui-monospace,monospace' : '',
+      hasAdd: !!ad,
+      add: ad ? {
+        when: DOWL[wd].slice(0, 3).toLowerCase() + ' ' + String(cur.getUTCDate()).padStart(2, '0') + '.' + String(cur.getUTCMonth() + 1).padStart(2, '0') + ' · ' + fmt(ad.start),
+        style: 'position:absolute;z-index:6;left:46%;width:260px;top:' + aTop + 'px;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:8px;display:flex;flex-direction:column;gap:2px;font-size:14px;text-align:left',
+        caret: 'position:absolute;left:-7px;top:' + (aRaw - aTop + 12) + 'px;width:12px;height:12px;background:#ffffff;border-left:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;transform:rotate(45deg)'
+      } : null,
+      closeAdd: () => this.setState({ add: null }),
       showNow: isToday,
       nowTop: 'position:absolute;left:56px;right:0;top:' + Math.round((11 + 20 / 60 - S) * H) + 'px;border-top:2px solid #b91c1c;pointer-events:none',
       nowLab: 'position:absolute;left:6px;top:' + (Math.round((11 + 20 / 60 - S) * H) - 9) + 'px;font-size:10px;color:#fff;background:#b91c1c;border-radius:4px;padding:1px 4px',

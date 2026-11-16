@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -28,10 +30,12 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
   <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
+
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Moduły</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Nawyki i sen</span></div>
@@ -45,45 +49,73 @@ a{color:#171717}a:hover{color:#000000}
   <div role="dialog" aria-modal="true" aria-label="Nowy nawyk" style="position: absolute; left: 50%; top: 90px; transform: translateX(-50%); width: min(540px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); display: flex; flex-direction: column">
     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px">
       <div><h2 style="margin: 0; font-size: 17px; font-weight: 600">Nowy nawyk</h2></div>
-      <button type="button" aria-label="Zamknij" style="width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; flex: none">✕</button>
+      <a href="Habits.dc.html" aria-label="Zamknij" style="width: 30px; height: 30px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; text-decoration: none; flex: none">✕</a>
     </div>
     <div style="padding: 4px 20px 18px; display: flex; flex-direction: column; gap: 14px">
       <label class="fld">Nazwa<input class="inp" type="text" value="Rozciąganie"></label>
       <div class="fld">Harmonogram
         <div class="seg" role="group" aria-label="Harmonogram" style="width: max-content; max-width: 100%"><sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="{{m.s}}">{{m.label}}</button></sc-for></div>
-        <sc-if value="{{isDays}}" hint-placeholder-val="{{true}}"><div style="display: flex; gap: 6px"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" style="{{d.s}}">{{d.d}}</button></sc-for></div></sc-if>
+        <sc-if value="{{isDays}}" hint-placeholder-val="{{true}}"><div style="display: flex; gap: 6px"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.pressed}}" aria-label="{{d.label}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for></div></sc-if>
         <sc-if value="{{isTimes}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 8px; font-weight: 400"><button type="button" class="btn" aria-label="Mniej" onClick="{{dec}}" style="width: 36px; justify-content: center">−</button><span class="mono" style="font-size: 18px; width: 28px; text-align: center">{{n}}</span><button type="button" class="btn" aria-label="Więcej" onClick="{{inc}}" style="width: 36px; justify-content: center">+</button><span class="hint">razy w tygodniu</span></div></sc-if>
         <span class="hint mono">{{summary}}</span>
       </div>
       <div class="fld">Przypomnienie
         <div style="display: flex; align-items: center; gap: 10px; font-weight: 400">
-          <button type="button" role="switch" aria-checked="{{rem}}" onClick="{{toggleRem}}" style="width: 40px; height: 22px; border-radius: 999px; border: 0; cursor: pointer; position: relative; background: #15803d"><span style="position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff"></span></button>
-          <span>Push o</span><input class="inp mono" type="text" value="20:30" style="width: 90px">
-          <span class="hint">tylko w dni z harmonogramu</span>
+          <button type="button" role="switch" aria-checked="{{remA}}" aria-label="Przypomnienie push" onClick="{{toggleRem}}" style="{{swS}}"><span style="{{knobS}}"></span></button>
+          <span style="{{remTxtS}}">Push o</span><span style="position: relative; display: inline-flex">
+            <button type="button" class="mono" onClick="{{toggleTp}}" aria-disabled="{{remOffA}}" aria-haspopup="dialog" aria-expanded="{{tpExp}}" aria-label="Godzina przypomnienia" style="{{timeS}}">{{time}}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+            <sc-if value="{{tpOpen}}" hint-placeholder-val="{{false}}">
+              <div role="dialog" aria-label="Wybierz godzinę" style="position: absolute; top: calc(100% + 6px); left: 0; z-index: 10; width: 228px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 10px; display: flex; flex-direction: column; gap: 8px">
+                <span class="lbl">Godzina</span>
+                <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px"><sc-for list="{{hours}}" as="h" hint-placeholder-count="18"><button type="button" class="mono" aria-pressed="{{h.pressed}}" onClick="{{h.pick}}" style="{{h.s}}">{{h.t}}</button></sc-for></div>
+                <span class="lbl" style="margin-top: 2px">Minuty</span>
+                <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px"><sc-for list="{{mins}}" as="mm" hint-placeholder-count="4"><button type="button" class="mono" aria-pressed="{{mm.pressed}}" onClick="{{mm.pick}}" style="{{mm.s}}">:{{mm.t}}</button></sc-for></div>
+                <button type="button" onClick="{{toggleTp}}" style="margin-top: 2px; align-self: flex-end; background: #171717; color: #ffffff; border: 1px solid #171717; border-radius: 6px; padding: 5px 12px; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer">Gotowe</button>
+              </div>
+            </sc-if>
+          </span>
+          <span class="hint">{{remHint}}</span>
         </div>
       </div>
     </div>
     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #eaeaea; background: #fafafa; border-radius: 0 0 12px 12px">
-<button type="button" class="btn">Anuluj</button><button type="button" class="btnp">Dodaj nawyk</button>
+<a href="Habits.dc.html" class="btn" style="text-decoration: none">Anuluj</a><a href="Habits.dc.html" class="btnp" style="text-decoration: none">Dodaj nawyk</a>
     </div>
   </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { mode: 'days', n: 4, rem: true }; }
+  constructor(p) { super(p); this.state = { mode: 'days', n: 4, rem: true, on: [0, 2, 4, 6], time: '20:30' }; }
   renderVals() {
     const m = this.state.mode, n = this.state.n, rem = this.state.rem;
     const modes = [['daily','Codziennie'],['days','Wybrane dni'],['times','X razy w tygodniu']];
-    const on = [0, 2, 4, 6];
+    const on = this.state.on;
+    const DN = ['pn','wt','śr','cz','pt','sb','nd'];
+    const FULL = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
+    const picked = DN.filter((d, i) => on.includes(i));
     return {
       modes: modes.map((x, i) => ({ label: x[1], pressed: m === x[0] ? 'true' : 'false', pick: () => this.setState({ mode: x[0] }),
         s: 'padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;border:0;' + (i ? 'border-left:1px solid #e0e0e0;' : '') + (m === x[0] ? 'background:#f0f0f0;font-weight:500;color:#171717' : 'background:#fff;color:#666') })),
       isDays: m === 'days', isTimes: m === 'times', n: String(n),
       inc: () => this.setState({ n: Math.min(7, n + 1) }), dec: () => this.setState({ n: Math.max(1, n - 1) }),
-      days: ['pn','wt','śr','cz','pt','sb','nd'].map((d, i) => ({ d, s: 'width:38px;height:38px;border-radius:6px;font:inherit;font-size:12px;cursor:pointer;' + (on.includes(i) ? 'background:#171717;color:#fff;border:1px solid #171717' : 'background:#fff;color:#404040;border:1px solid #e0e0e0') })),
-      summary: m === 'daily' ? 'Codziennie. Seria liczona w dniach.' : m === 'days' ? 'pn, śr, pt, nd. Pozostałe dni nie psują serii.' : n + '× w tygodniu, dowolne dni. Seria liczona w tygodniach.',
-      rem, toggleRem: () => this.setState({ rem: !rem })
+      days: DN.map((d, i) => ({ d, label: FULL[i], pressed: on.includes(i) ? 'true' : 'false',
+        toggle: () => this.setState({ on: on.includes(i) ? (on.length > 1 ? on.filter((x) => x !== i) : on) : on.concat([i]).sort() }),
+        s: 'width:38px;height:38px;border-radius:6px;font:inherit;font-size:12px;cursor:pointer;' + (on.includes(i) ? 'background:#171717;color:#fff;border:1px solid #171717' : 'background:#fff;color:#404040;border:1px solid #e0e0e0') })),
+      summary: m === 'daily' ? 'Codziennie. Seria liczona w dniach.' : m === 'days' ? (picked.length === 7 ? 'Wszystkie dni — to to samo co „Codziennie”.' : picked.join(', ') + '. Pozostałe dni nie psują serii.') : n + '× w tygodniu, dowolne dni. Seria liczona w tygodniach.',
+      remA: rem ? 'true' : 'false', remOff: !rem, time: this.state.time,
+      toggleRem: () => this.setState({ rem: !rem }),
+      setTime: (e) => this.setState({ time: e.target.value }),
+      tpOpen: !!this.state.tp && rem, tpExp: this.state.tp && rem ? 'true' : 'false',
+      toggleTp: () => { if (this.state.rem) this.setState({ tp: !this.state.tp }); },
+      remOffA: rem ? 'false' : 'true',
+      hours: Array.from({ length: 18 }, (_, i) => i + 6).map((h) => { const t = String(h).padStart(2, '0'); const on = this.state.time.slice(0, 2) === t; return { t, pressed: on ? 'true' : 'false', pick: () => this.setState({ time: t + this.state.time.slice(2) }), s: 'height:28px;border-radius:6px;font-size:12px;cursor:pointer;' + (on ? 'background:#171717;color:#fff;border:1px solid #171717' : 'background:#fff;color:#404040;border:1px solid #eaeaea') }; }),
+      mins: ['00', '15', '30', '45'].map((mm) => { const on = this.state.time.slice(3) === mm; return { t: mm, pressed: on ? 'true' : 'false', pick: () => this.setState({ time: this.state.time.slice(0, 3) + mm }), s: 'height:28px;border-radius:6px;font-size:12px;cursor:pointer;' + (on ? 'background:#171717;color:#fff;border:1px solid #171717' : 'background:#fff;color:#404040;border:1px solid #eaeaea') }; }),
+      swS: 'width:40px;height:22px;flex:none;border-radius:999px;border:0;cursor:pointer;position:relative;transition:background-color 150ms;background:' + (rem ? '#15803d' : '#d4d4d4'),
+      knobS: 'position:absolute;top:3px;left:' + (rem ? '21px' : '3px') + ';width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left 150ms',
+      remTxtS: rem ? '' : 'color:#a3a3a3',
+      timeS: 'display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid ' + (this.state.tp && rem ? '#171717' : '#e0e0e0') + ';border-radius:6px;background:#ffffff;font-size:14px;color:#171717;cursor:' + (rem ? 'pointer' : 'default') + ';' + (rem ? '' : 'opacity:.45'),
+      remHint: rem ? (m === 'days' ? 'tylko w dni z harmonogramu' : m === 'daily' ? 'codziennie' : 'w dni bez odhaczenia') : 'przypomnienia wyłączone'
     };
   }
 }

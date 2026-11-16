@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Onboarding (7 kroków)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="padding: 8px 8px 0 8px; flex-direction: column; align-items: stretch; gap: 8px">
+    <div style="display: flex; align-items: center; gap: 4px">
+      <sc-if value="{{canBack}}" hint-placeholder-val="{{false}}"><button type="button" class="ib" aria-label="Wstecz" onClick="{{prev}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button></sc-if>
+      <sc-if value="{{noBack}}" hint-placeholder-val="{{true}}"><span style="display: flex; align-items: center; padding: 0 8px"><svg width="26" height="26" viewBox="0 0 48 48" role="img" aria-label="rhytm"><rect x="4" y="4" width="11" height="11" rx="3" fill="#171717"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#171717"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#171717" opacity="0.55"></rect></svg></span></sc-if>
+      <span class="lbl" style="flex: 1; text-align: center">Krok {{step}} z 7</span>
+      <a href="MLogin.dc.html" class="ib" style="width: auto; padding: 0 12px; font-size: 14px; color: #666666">Wyloguj</a>
+    </div>
+    <div role="progressbar" aria-label="Postęp onboardingu" aria-valuemin="1" aria-valuemax="7" aria-valuenow="{{step}}" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 0 8px 4px"><sc-for list="{{dots}}" as="d" hint-placeholder-count="7"><span style="{{d.s}}"></span></sc-for></div>
+  </header>
+
+  <div class="body" style="padding: 16px 20px 24px; gap: 18px">
+    <sc-if value="{{s1}}" hint-placeholder-val="{{true}}">
+      <div><h1 class="h1" style="font-size: 26px">Uzupełnij profil</h1><p class="sub" style="margin: 6px 0 0">Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach.</p></div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="width: 64px; height: 64px; border-radius: 50%; background: #f0f0f0; border: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; flex: none">{{initials}}</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 500">Zdjęcie profilowe</span><span class="sub">Bez zdjęcia pokażemy inicjały</span></span>
+        <button type="button" class="btn" style="width: auto; height: 40px; padding: 0 14px">Wgraj</button>
+      </div>
+      <label class="fld">Imię lub pseudonim<input class="inp" type="text" value="{{name}}" onChange="{{onName}}" placeholder="Jak mamy się do Ciebie zwracać?" autocomplete="nickname"></label>
+      <div class="fld">Strefa czasowa
+        <span style="position: relative; display: block"><button type="button" class="inp" onClick="{{tzToggle}}" aria-haspopup="listbox" aria-expanded="{{tzExp}}" style="display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer"><span>{{tzTxt}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{tzSub}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          <sc-if value="{{tzOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Strefa czasowa" style="position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.14); padding: 6px"><sc-for list="{{tzs}}" as="z" hint-placeholder-count="5"><button type="button" role="option" aria-selected="{{z.p}}" onClick="{{z.pick}}" style="{{z.s}}"><span>{{z.t}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{z.sub}}</span></span><span style="color: #15803d">{{z.check}}</span></button></sc-for></div></sc-if>
+        </span>
+        <span class="sub" style="font-weight: 400; font-size: 12px">Wykryta z przeglądarki</span>
+      </div>
+      <div class="fld">Tydzień zaczyna się od<div class="seg"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div></div>
+      <div class="fld">Format godziny<div class="seg"><sc-for list="{{clocks}}" as="c" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{c.p}}" onClick="{{c.pick}}"><span class="mono" style="font-size: 12px">{{c.t}}</span></button></sc-for></div></div>
+    </sc-if>
+
+    <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="h1" style="font-size: 26px">Kim jesteś?</h1><p class="sub" style="margin: 6px 0 0">Dopasujemy kategorie w kalendarzu. Możesz zaznaczyć kilka.</p></div>
+      <div class="card"><sc-for list="{{roles}}" as="r" hint-placeholder-count="5"><button type="button" role="checkbox" aria-checked="{{r.on}}" onClick="{{r.pick}}" class="row" style="width: 100%; border-left: 0; border-right: 0; border-top: 0; background: {{r.bg}}; font: inherit; color: #171717; cursor: pointer; text-align: left; min-height: 64px"><span class="cb" aria-hidden="true" style="{{r.cbS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><span style="flex: 1"><span style="display: block; font-weight: 500">{{r.t}}</span><span class="sub">{{r.d}}</span></span></button></sc-for></div>
+      <sc-if value="{{isStudent}}" hint-placeholder-val="{{true}}"><label class="fld">Kierunek studiów <span class="sub" style="font-weight: 400; font-size: 12px; margin-top: -4px">opcjonalnie</span><input class="inp" type="text" value="{{field}}" onChange="{{onField}}" placeholder="Np. Informatyka"></label></sc-if>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px"><span class="lbl" style="margin-right: 2px">W kalendarzu</span><sc-for list="{{cats}}" as="c" hint-placeholder-count="3"><span style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.t}}</span></sc-for></div>
+    </sc-if>
+
+    <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="h1" style="font-size: 26px">Co chcesz ogarnąć w rhytm?</h1><p class="sub" style="margin: 6px 0 0">Na tej podstawie przygotujemy startowe strony i cele.</p></div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" role="checkbox" aria-checked="{{g.on}}" onClick="{{g.pick}}" style="{{g.s}}"><span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="font-weight: 500">{{g.t}}</span><span class="cb" aria-hidden="true" style="{{g.cbS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span></span><span class="sub" style="font-size: 12px">{{g.d}}</span></button></sc-for></div>
+      <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="card"><div class="row"><span style="flex: 1">Kilometry w tygodniu</span><button type="button" class="ib" aria-label="Mniej kilometrów" onClick="{{kmM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{km}} km</span><button type="button" class="ib" aria-label="Więcej kilometrów" onClick="{{kmP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
+      <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><div class="card"><div class="row"><span style="flex: 1">Cel snu</span><button type="button" class="ib" aria-label="Krócej" onClick="{{slM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{sleep}}</span><button type="button" class="ib" aria-label="Dłużej" onClick="{{slP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="h1" style="font-size: 26px">Skąd o nas usłyszałeś?</h1><p class="sub" style="margin: 6px 0 0">Jedno pytanie, które mówi nam, gdzie warto o rhytm opowiadać. Możesz je pominąć.</p></div>
+      <div role="radiogroup" aria-label="Źródło" style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{srcs}}" as="x" hint-placeholder-count="10"><button type="button" role="radio" class="chip" aria-checked="{{x.p}}" aria-pressed="{{x.p}}" onClick="{{x.pick}}" style="height: 40px">{{x.t}}</button></sc-for></div>
+      <sc-if value="{{isOther}}" hint-placeholder-val="{{false}}"><label class="fld">Gdzie dokładnie?<input class="inp" type="text" value="{{other}}" onChange="{{onOther}}" placeholder="Np. podcast, newsletter"></label></sc-if>
+    </sc-if>
+
+    <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="h1" style="font-size: 26px">Od czego zaczynasz?</h1><p class="sub" style="margin: 6px 0 0">Dodamy te strony do listy Stron. Zaznaczyliśmy je na podstawie Twoich celów.</p></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{pages}}" as="p" hint-placeholder-count="5"><button type="button" role="checkbox" aria-checked="{{p.on}}" onClick="{{p.pick}}" style="{{p.s}}"><span class="cb" aria-hidden="true" style="{{p.cbS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-weight: 600">{{p.t}}</span><span class="badge" style="{{p.recS}}">z Twoich celów</span></span><span class="sub" style="font-size: 13px">{{p.d}}</span><span class="mono" style="font-size: 11px; color: #6b6b6b">{{p.f}}</span></span></button></sc-for></div>
+      <p class="sub" style="margin: 0; font-size: 12px; line-height: 1.5">Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona”.</p>
+    </sc-if>
+
+    <sc-if value="{{s6}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="h1" style="font-size: 26px">Przypomnienia</h1><p class="sub" style="margin: 6px 0 0">Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili.</p></div>
+      <div class="card" style="padding: 14px; display: flex; align-items: center; gap: 12px">
+        <span style="width: 40px; height: 40px; border-radius: 10px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; flex: none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#404040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg></span>
+        <span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Powiadomienia</span><span class="sub" style="font-size: 12px">{{permText}}</span></span>
+        <sc-if value="{{permOff}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{allow}}" style="width: auto; height: 38px; padding: 0 14px">Zezwól</button></sc-if>
+        <sc-if value="{{permOn}}" hint-placeholder-val="{{false}}"><span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px"><span class="badge" style="color: #15803d; background: #f0faf4; border: 1px solid #bbe5cc">Włączone</span><button type="button" onClick="{{revoke}}" style="background: none; border: 0; padding: 4px 0; font: inherit; font-size: 12px; color: #666666; cursor: pointer; text-decoration: underline">Anuluj</button></span></sc-if>
+      </div>
+      <div class="card"><sc-for list="{{rems}}" as="r" hint-placeholder-count="4"><div class="row" style="{{r.rowS}}"><span style="flex: 1; min-width: 0"><span style="display: block">{{r.t}}</span><span class="mono" style="font-size: 12px; color: #6b6b6b">{{r.w}}</span></span><button type="button" class="sw" role="switch" aria-checked="{{r.on}}" aria-label="{{r.t}}" onClick="{{r.toggle}}"></button></div></sc-for></div>
+      <p class="sub" style="margin: 0; font-size: 12px; line-height: 1.5">Dodaj rhytm do ekranu głównego, żeby dostawać push także przy zamkniętej aplikacji.</p>
+    </sc-if>
+
+    <sc-if value="{{s7}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 8px">
+        <span style="width: 64px; height: 64px; border-radius: 18px; background: #f0faf4; border: 1px solid #bbe5cc; display: flex; align-items: center; justify-content: center; color: #15803d"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span>
+        <h1 class="h1" style="font-size: 26px">Gotowe, {{displayName}}</h1>
+        <p class="sub" style="margin: 0">Twój rhytm jest ułożony. Oto co przygotowaliśmy.</p>
+      </div>
+      <div class="card"><sc-for list="{{summary}}" as="s" hint-placeholder-count="4"><div class="row" style="min-height: 60px; align-items: center"><span style="flex: 1; min-width: 0"><span class="lbl" style="display: block">{{s.k}}</span><span style="display: block; margin-top: 2px; font-size: 14px">{{s.v}}</span></span><button type="button" onClick="{{s.go}}" style="background: none; border: 0; font: inherit; font-size: 14px; color: #404040; cursor: pointer; padding: 8px 0 8px 8px; text-decoration: underline">Zmień</button></div></sc-for></div>
+      <div class="card" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fafafa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span class="sub" style="font-size: 13px">Pierwszy blok dodasz przyciskiem „+” na ekranie Dziś.</span></div>
+    </sc-if>
+  </div>
+
+  <div style="flex: none; padding: 12px 20px 30px; border-top: 1px solid #f0f0f0; display: flex; flex-direction: column; gap: 8px; background: #ffffff">
+    <sc-if value="{{notLast}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{next}}" aria-disabled="{{nextDis}}" style="{{nextS}}">Dalej</button></sc-if>
+    <sc-if value="{{s4}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{skip}}" style="border: 0; height: 40px">Pomiń</button></sc-if>
+    <sc-if value="{{s7}}" hint-placeholder-val="{{false}}"><a href="MToday.dc.html" class="btnp">Przejdź do Dziś</a></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const step = S.step || 1;
+    const name = S.name ?? 'Mejson';
+    const nm = name.trim() || 'Ty';
+    const tz = S.tz || 'Europe/Warsaw', week = S.week || 'pn', clock = S.clock || '24';
+    const R = S.roles || { student: true, sport: true };
+    const G = S.goals || { plan: true, sport: true, habits: true, subs: true, proj: true };
+    const P = S.pages;
+    const src = S.src || null;
+    const N = S.notify || { perm: false, before: true, renew: true, weekly: true, habits: false };
+    const km = S.km ?? 25, sleep = S.sleep ?? 480;
+    const go = (n) => this.setState({ step: n, tzOpen: false });
+    const sel = (on) => 'border-color:' + (on ? '#15803d' : '#cfcfcf') + ';background:' + (on ? '#15803d' : '#ffffff');
+    const TZ = [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00']];
+    const tzCur = TZ.filter((z) => z[0] === tz)[0];
+    const ROLES = [['student', 'Student', 'Zajęcia, kolokwia, projekty'], ['work', 'Pracuję', 'Godziny pracy i spotkania'], ['free', 'Freelancer lub firma', 'Klienci, zlecenia, terminy'], ['sport', 'Trenuję regularnie', 'Biegi, siłownia, plan'], ['other', 'Coś innego', 'Kategorie ułożysz sam']];
+    const CAT = { Studia: ['#0070f3', '#eff6ff', '#bfdbfe'], Praca: ['#7c3aed', '#f5f3ff', '#ddd6fe'], Projekty: ['#15803d', '#f0fdf4', '#bbf7d0'], Sport: ['#c2410c', '#fff7ed', '#fed7aa'], Dom: ['#a16207', '#fefce8', '#fde68a'] };
+    const cats = [];
+    if (R.student) cats.push('Studia'); if (R.work) cats.push('Praca'); if (R.free) cats.push('Projekty'); if (R.sport) cats.push('Sport');
+    if (!cats.length) cats.push('Dom');
+    const GOALS = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['pass', 'Hasła', 'Szyfrowany sejf', 'Passwords'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
+    const rec = GOALS.filter((g) => G[g[0]] && g[3]).map((g) => g[3]);
+    const PAGES = [['Subscriptions', 'Sumy miesięczne i roczne, odnowienia w kalendarzu', 'Kwota cykliczna · Data odnowienia · Aktywna'], ['Projects', 'Statusy, terminy i linki do repo', 'Status · Data · URL'], ['Books', 'Przeczytane, w trakcie i na później', 'Status · Ocena · Autor'], ['Websites', 'Zakładki z kategoriami', 'URL · Select · Checkbox'], ['Passwords', 'Hasło główne ustawisz przy pierwszym otwarciu', 'Sekret · URL · Login']];
+    const pages = P || rec.reduce((o, p) => { o[p] = true; return o; }, {});
+    const SRC = ['Od znajomego', 'Na uczelni', 'TikTok', 'Instagram', 'YouTube', 'X', 'Reddit', 'Wyszukiwarka', 'ChatGPT lub inne AI', 'Inne'];
+    const REMS = [['before', 'Przed blokiem', '10 min wcześniej'], ['renew', 'Odnowienie subskrypcji', '3 dni wcześniej, o 9:00'], ['weekly', 'Podsumowanie tygodnia', 'Niedziela, 18:00'], ['habits', 'Nawyki na dziś', 'Codziennie, 21:00']];
+    const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    const nameOk = !!name.trim();
+    const pagesSel = PAGES.filter((p) => pages[p[0]]).map((p) => p[0]);
+    const remOn = REMS.filter((r) => N[r[0]]).length;
+    const canNext = step === 1 ? nameOk : true;
+    return {
+      step, s1: step === 1, s2: step === 2, s3: step === 3, s4: step === 4, s5: step === 5, s6: step === 6, s7: step === 7,
+      canBack: step > 1, noBack: step === 1, notLast: step < 7,
+      dots: [1, 2, 3, 4, 5, 6, 7].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (i <= step ? '#171717' : '#e5e5e5') })),
+      next: () => { if (canNext) go(Math.min(7, step + 1)); }, prev: () => go(Math.max(1, step - 1)),
+      nextDis: canNext ? 'false' : 'true', nextS: canNext ? '' : 'opacity:.4;cursor:not-allowed',
+      skip: () => this.setState({ step: 5, src: null }),
+      name, onName: (e) => this.setState({ name: e.target.value }),
+      initials: nm.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+      tzTxt: tzCur[1], tzSub: tzCur[2], tzOpen: !!S.tzOpen, tzExp: S.tzOpen ? 'true' : 'false', tzToggle: () => this.setState({ tzOpen: !S.tzOpen }),
+      tzs: TZ.map((z) => ({ t: z[1], sub: z[2], p: z[0] === tz ? 'true' : 'false', check: z[0] === tz ? '✓' : '', pick: () => this.setState({ tz: z[0], tzOpen: false }),
+        s: 'display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:8px;font:inherit;font-size:15px;color:#171717;cursor:pointer;text-align:left;background:' + (z[0] === tz ? '#f0f0f0' : 'transparent') })),
+      weeks: [['pn', 'Poniedziałku'], ['nd', 'Niedzieli']].map((w) => ({ t: w[1], p: w[0] === week ? 'true' : 'false', pick: () => this.setState({ week: w[0] }) })),
+      clocks: [['24', '24 h · 14:30'], ['12', '12 h · 2:30 PM']].map((c) => ({ t: c[1], p: c[0] === clock ? 'true' : 'false', pick: () => this.setState({ clock: c[0] }) })),
+      roles: ROLES.map((r) => { const on = !!R[r[0]]; return { t: r[1], d: r[2], on: on ? 'true' : 'false', bg: on ? '#f7fbf8' : '#ffffff', cbS: sel(on), pick: () => this.setState({ roles: Object.assign({}, R, { [r[0]]: !on }) }) }; }),
+      isStudent: !!R.student, field: S.field ?? 'Cyberbezpieczeństwo', onField: (e) => this.setState({ field: e.target.value }),
+      cats: cats.map((c) => ({ t: c, s: 'display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;font-size:13px;background:' + CAT[c][1] + ';border:1px solid ' + CAT[c][2], dot: 'width:8px;height:8px;border-radius:50%;background:' + CAT[c][0] })),
+      goals: GOALS.map((g) => { const on = !!G[g[0]]; return { t: g[1], d: g[2], on: on ? 'true' : 'false', cbS: sel(on) + ';width:20px;height:20px;flex-basis:20px;border-radius:6px',
+        s: 'display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:76px;padding:12px;border-radius:12px;font:inherit;color:#171717;cursor:pointer;text-align:left;border:1px solid ' + (on ? '#15803d' : '#e0e0e0') + ';background:' + (on ? '#f7fbf8' : '#ffffff'),
+        pick: () => this.setState({ goals: Object.assign({}, G, { [g[0]]: !on }), pages: null }) }; }),
+      showKm: !!G.sport, showSleep: !!G.habits, km, sleep: hm(sleep),
+      kmM: () => this.setState({ km: Math.max(5, km - 5) }), kmP: () => this.setState({ km: Math.min(150, km + 5) }),
+      slM: () => this.setState({ sleep: Math.max(300, sleep - 15) }), slP: () => this.setState({ sleep: Math.min(660, sleep + 15) }),
+      srcs: SRC.map((x) => ({ t: x, p: x === src ? 'true' : 'false', pick: () => this.setState({ src: x }) })),
+      isOther: src === 'Inne', other: S.other || '', onOther: (e) => this.setState({ other: e.target.value }),
+      pages: PAGES.map((p) => { const on = !!pages[p[0]]; return { t: p[0], d: p[1], f: p[2], on: on ? 'true' : 'false', cbS: sel(on),
+        recS: rec.indexOf(p[0]) >= 0 ? 'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc' : 'display:none',
+        s: 'display:flex;align-items:flex-start;gap:12px;width:100%;padding:14px;border-radius:12px;font:inherit;color:#171717;cursor:pointer;text-align:left;border:1px solid ' + (on ? '#15803d' : '#e0e0e0') + ';background:' + (on ? '#f7fbf8' : '#ffffff'),
+        pick: () => this.setState({ pages: Object.assign({}, pages, { [p[0]]: !on }) }) }; }),
+      permOn: !!N.perm, permOff: !N.perm, permText: N.perm ? 'Telefon pozwolił na powiadomienia' : 'Telefon zapyta o zgodę',
+      allow: () => this.setState({ notify: Object.assign({}, N, { perm: true }) }), revoke: () => this.setState({ notify: Object.assign({}, N, { perm: false }) }),
+      rems: REMS.map((r) => ({ t: r[1], w: r[2], on: N[r[0]] ? 'true' : 'false', rowS: N.perm ? '' : 'opacity:.55',
+        toggle: () => this.setState({ notify: Object.assign({}, N, { [r[0]]: !N[r[0]] }) }) })),
+      displayName: nm,
+      summary: [
+        { k: 'Profil', v: nm + ' · ' + tzCur[1] + ' · tydzień od ' + (week === 'pn' ? 'pn' : 'nd'), go: () => go(1) },
+        { k: 'Kategorie', v: cats.join(', '), go: () => go(2) },
+        { k: 'Strony', v: pagesSel.join(', ') || 'brak', go: () => go(5) },
+        { k: 'Przypomnienia', v: remOn + ' z 4 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

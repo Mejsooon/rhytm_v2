@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Nowy blok</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="padding-left: 16px"><div style="flex: 1"><div class="lbl">2026 · tydzień 46</div><h1 class="h1" style="margin-top: 2px">Listopad</h1></div></header>
+  <div class="body" style="opacity: .45"><div class="card" style="height: 64px"></div><div class="card" style="height: 400px"></div></div>
+  <a href="MCalendarDay.dc.html" class="dim" aria-label="Zamknij"></a>
+  <div class="sheet" role="dialog" aria-label="Nowy blok" style="height: 88%">
+    <div class="grab"></div>
+    <div style="display: flex; align-items: center; padding: 2px 8px 2px 8px; border-bottom: 1px solid #f0f0f0">
+      <a href="MCalendarDay.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; color: #666666">Anuluj</a>
+      <h2 class="h2" style="flex: 1; text-align: center">Nowy blok</h2>
+      <a href="MCalendarDay.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; font-weight: 600">Zapisz</a>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 16px 20px 28px; display: flex; flex-direction: column; gap: 18px">
+      <input class="inp" type="text" placeholder="Nazwa bloku" aria-label="Nazwa bloku" style="height: 52px; font-size: 18px; font-weight: 500">
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.t}}</button></sc-for></div></div>
+      <div class="card">
+        <div class="row"><span style="flex: 1">Dzień</span><span class="mono" style="color: #404040">nd, 15.11.2026</span></div>
+        <div class="row"><span style="flex: 1">Od</span><button type="button" class="ib" aria-label="Wcześniej" onClick="{{s1m}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{from}}</span><button type="button" class="ib" aria-label="Później" onClick="{{s1p}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div>
+        <div class="row"><span style="flex: 1">Do</span><button type="button" class="ib" aria-label="Wcześniej" onClick="{{s2m}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{to}}</span><button type="button" class="ib" aria-label="Później" onClick="{{s2p}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div>
+        <div class="row" style="min-height: 40px"><span class="mono" style="font-size: 12px; color: #6b6b6b">Czas trwania: {{dur}}</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Powtarzanie</span><div class="seg"><sc-for list="{{reps}}" as="r" hint-placeholder-count="4"><button type="button" class="sg" aria-pressed="{{r.p}}" onClick="{{r.pick}}">{{r.t}}</button></sc-for></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Zadania w bloku · {{taskCount}}</span>
+        <div class="card"><sc-for list="{{tasks}}" as="t" hint-placeholder-count="2"><div class="row"><span style="width: 20px; height: 20px; border: 1.5px solid #cfcfcf; border-radius: 6px; flex: none"></span><span style="flex: 1">{{t.t}}</span><button type="button" class="ib" aria-label="Usuń zadanie" onClick="{{t.del}}" style="width: 36px; height: 36px; color: #8a8a8a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div></sc-for>
+          <div class="row" style="gap: 8px"><input type="text" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{draftKey}}" placeholder="Dodaj zadanie…" aria-label="Nowe zadanie" style="flex: 1; border: 0; outline: 0; font: inherit; background: transparent; min-width: 0; height: 44px"><button type="button" class="ib" aria-label="Dodaj zadanie" onClick="{{addTask}}" style="width: 36px; height: 36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
+        </div>
+      </div>
+      <div class="card"><div class="row"><span style="flex: 1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg><span style="margin-left: 10px">Przypomnij 10 min wcześniej</span></span><button type="button" class="sw" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const CAT = { own: ['#15803d', '#f0faf4', 'Własne'], uni: ['#0070f3', '#eef5ff', 'Studia'], sport: ['#c2410c', '#fff4ed', 'Sport'], work: ['#7c3aed', '#f5f3ff', 'Praca'], life: ['#525252', '#f5f5f5', 'Dom'] };
+    const S = this.state || {};
+    const cat = S.cat || 'own', rep = S.rep || 'Nie';
+    const f = S.f ?? 16 * 60, t = S.t ?? 17 * 60;
+    const tasks = S.tasks || ['Rozgrzewka 10 min', 'Tempo 5:10/km'];
+    const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    const add = (v) => { const x = (v || '').trim(); if (x) this.setState({ tasks: tasks.concat([x]), draft: '' }); };
+    const d = t - f;
+    return {
+      cats: Object.keys(CAT).map((k) => ({ t: CAT[k][2], p: k === cat ? 'true' : 'false', pick: () => this.setState({ cat: k }),
+        s: k === cat ? 'background:' + CAT[k][1] + ';border-color:' + CAT[k][0] + ';color:#171717' : '',
+        dot: 'width:8px;height:8px;border-radius:50%;background:' + CAT[k][0] })),
+      from: hm(f), to: hm(t), dur: Math.floor(d / 60) + ' h ' + (d % 60 ? d % 60 + ' min' : ''),
+      s1m: () => this.setState({ f: Math.max(0, f - 15) }), s1p: () => this.setState({ f: Math.min(t - 15, f + 15) }),
+      s2m: () => this.setState({ t: Math.max(f + 15, t - 15) }), s2p: () => this.setState({ t: Math.min(24 * 60, t + 15) }),
+      reps: ['Nie', 'Codziennie', 'Co tydzień', 'Dni rob.'].map((r) => ({ t: r, p: r === rep ? 'true' : 'false', pick: () => this.setState({ rep: r }) })),
+      tasks: tasks.map((x, i) => ({ t: x, del: () => this.setState({ tasks: tasks.filter((_, j) => j !== i) }) })), taskCount: tasks.length,
+      draft: S.draft || '', onDraft: (e) => this.setState({ draft: e.target.value }),
+      draftKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); add(e.target.value); } }, addTask: () => add(S.draft),
+      rem: S.rem === false ? 'false' : 'true', toggleRem: () => this.setState({ rem: S.rem === false })
+    };
+  }
+}
+</script>
+</body>
+</html>

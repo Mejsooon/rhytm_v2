@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Kalendarz, miesiąc</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="padding: 8px 8px 4px 16px">
+    <div style="flex: 1"><div class="lbl">{{year}}</div><h1 class="h1" style="margin-top: 2px">{{monthName}}</h1></div>
+    <button type="button" class="ib" aria-label="Poprzedni miesiąc" onClick="{{prev}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+    <button type="button" class="ib" aria-label="Następny miesiąc" onClick="{{next}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+  </header>
+  <nav class="seg" aria-label="Widok kalendarza" style="margin: 0 16px 8px; flex: none"><a href="MCalendarDay.dc.html" class="sg">Dzień</a><a href="MCalendarWeek.dc.html" class="sg">Tydzień</a><a href="MCalendarMonth.dc.html" class="sg on" aria-current="page">Miesiąc</a></nav>
+  <div style="padding: 4px 12px 8px; flex: none">
+    <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 11px; color: #8a8a8a; padding-bottom: 6px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cells}}" as="c" hint-placeholder-count="35"><button type="button" aria-label="{{c.label}}" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="{{c.s}}"><span class="mono" style="{{c.ns}}">{{c.t}}</span><span style="display: flex; gap: 2px; height: 5px"><sc-for list="{{c.dots}}" as="dt" hint-placeholder-count="2"><span style="{{dt.s}}"></span></sc-for></span></button></sc-for></div>
+  </div>
+  <div class="body" style="border-top: 1px solid #eaeaea; padding: 14px 16px 100px; gap: 10px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 class="h2">{{selTitle}}</h2><a href="MCalendarDay.dc.html" style="font-size: 14px; color: #666666">Otwórz dzień</a></div>
+    <sc-for list="{{selItems}}" as="b" hint-placeholder-count="3"><a href="MCalendarDay.dc.html" style="{{b.s}}"><span class="mono" style="font-size: 12px; color: #555555; width: 42px">{{b.time}}</span><span style="flex: 1; font-weight: 500; font-size: 14px">{{b.t}}</span></a></sc-for>
+    <sc-if value="{{selEmpty}}" hint-placeholder-val="{{false}}"><a href="MBlockSheet.dc.html" class="card" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; border-style: dashed; color: #666666; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Brak bloków — dodaj</a></sc-if>
+  </div>
+  <dc-import name="MTabBar" active="cal" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const CAT = { own: ['#15803d', '#f0faf4', 'Własne'], uni: ['#0070f3', '#eef5ff', 'Studia'], sport: ['#c2410c', '#fff4ed', 'Sport'], work: ['#7c3aed', '#f5f3ff', 'Praca'], life: ['#525252', '#f5f5f5', 'Dom'] };
+    const DAYS = {
+      9: [[7, 0.5, 'Poranna rutyna', 'life'], [10, 2, 'Systemy operacyjne — wykład', 'uni'], [14, 1.5, 'Strona Fanaberia', 'work'], [18, 1, 'Siłownia — Push', 'sport']],
+      10: [[8, 1.5, 'Bazy danych — lab', 'uni'], [12, 2, 'rhytm — kod', 'own'], [17, 1, 'Bieg 6 km', 'sport']],
+      11: [[9, 3, 'Strona Fanaberia', 'work'], [15, 1.5, 'C# — ćwiczenia', 'uni'], [19, 1, 'Angielski', 'life']],
+      12: [[7, 0.5, 'Poranna rutyna', 'life'], [10, 2, 'rhytm — kod', 'own'], [18, 1.5, 'Siłownia — Pull', 'sport']],
+      13: [[10, 1.5, 'Wstęp do cyberbezpieczeństwa', 'uni'], [13, 2, 'NetScope — research', 'own'], [17, 1, 'Bieg interwały', 'sport']],
+      14: [[9, 1, 'Zakupy', 'life'], [11, 3, 'Strona Fanaberia — klient', 'work'], [16, 2, 'Długi bieg 14 km', 'sport']],
+      15: [[8, 0.5, 'Poranna rutyna', 'life'], [10.5, 2, 'rhytm — kod', 'own'], [16, 1, 'Bieg 10 km', 'sport'], [19, 1, 'Bazy danych — projekt', 'uni']]
+    };
+    const S = this.state || {};
+    const mo = S.mo || 0;
+    const base = new Date(Date.UTC(2026, 10 + mo, 1));
+    const y = base.getUTCFullYear(), m = base.getUTCMonth();
+    const MON = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const MONG = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const lead = (base.getUTCDay() + 6) % 7;
+    const nd = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const sel = S.sel || (mo === 0 ? 15 : 1);
+    const isNov = y === 2026 && m === 10;
+    const evs = (d) => {
+      if (isNov && DAYS[d]) return DAYS[d];
+      const wd = (lead + d - 1) % 7;
+      if (wd === 5 || wd === 6) return [[10, 2, 'Długi bieg', 'sport']];
+      return d % 3 === 0 ? [[10, 2, 'rhytm — kod', 'own'], [18, 1, 'Siłownia', 'sport']] : [[9, 1.5, 'Zajęcia', 'uni']];
+    };
+    const fmt = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + (h % 1 ? '30' : '00');
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push({ t: '', label: '', p: 'false', pick: () => {}, s: 'visibility:hidden;height:46px', ns: '', dots: [] });
+    for (let d = 1; d <= nd; d++) {
+      const on = d === sel, today = isNov && d === 15;
+      const cats = evs(d).map((b) => b[3]).filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
+      cells.push({ t: d, label: d + ' ' + MONG[m], p: on ? 'true' : 'false', pick: () => this.setState({ sel: d }),
+        s: 'height:46px;border:0;border-radius:10px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:' + (on ? '#171717' : today ? '#f0f0f0' : 'transparent'),
+        ns: 'font-size:15px;color:' + (on ? '#ffffff' : '#171717') + (today ? ';font-weight:600' : ''),
+        dots: cats.map((c) => ({ s: 'width:5px;height:5px;border-radius:50%;background:' + (on ? '#ffffff' : CAT[c][0]) })) });
+    }
+    const items = evs(sel);
+    return {
+      year: y, monthName: MON[m], cells,
+      prev: () => this.setState({ mo: mo - 1, sel: 1 }), next: () => this.setState({ mo: mo + 1, sel: 1 }),
+      selTitle: sel + ' ' + MONG[m], selEmpty: !items.length,
+      selItems: items.map((b) => ({ t: b[2], time: fmt(b[0]), s: 'display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border-radius:10px;background:' + CAT[b[3]][1] + ';border-left:3px solid ' + CAT[b[3]][0] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Nowy bieg</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="border-bottom: 1px solid #f0f0f0"><a href="MSport.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; color: #666666">Anuluj</a><div style="flex: 1; text-align: center; font-weight: 600">Nowy bieg</div><a href="MSport.dc.html" style="padding: 0 12px; height: 44px; display: flex; align-items: center; font-weight: 600">Zapisz</a></header>
+  <div class="body" style="padding-top: 18px; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Rodzaj</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="4"><button type="button" class="chip" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div></div>
+    <div class="card">
+      <div class="row" style="min-height: 64px"><span style="flex: 1">Dystans</span><button type="button" class="ib" aria-label="Mniej" onClick="{{dM}}" style="width: 40px; height: 40px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 78px; text-align: center; font-size: 18px">{{dist}} km</span><button type="button" class="ib" aria-label="Więcej" onClick="{{dP}}" style="width: 40px; height: 40px; border: 1px solid #e0e0e0">+</button></div>
+      <div class="row" style="min-height: 64px"><span style="flex: 1">Czas</span><button type="button" class="ib" aria-label="Krócej" onClick="{{tM}}" style="width: 40px; height: 40px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 78px; text-align: center; font-size: 18px">{{time}}</span><button type="button" class="ib" aria-label="Dłużej" onClick="{{tP}}" style="width: 40px; height: 40px; border: 1px solid #e0e0e0">+</button></div>
+      <div class="row" style="min-height: 52px; background: #fafafa"><span style="flex: 1" class="sub">Tempo (liczone)</span><span class="mono" style="font-size: 18px; font-weight: 500">{{pace}} /km</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">Trudność · {{diffTxt}}</span><div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px"><sc-for list="{{feel}}" as="f" hint-placeholder-count="10"><button type="button" aria-pressed="{{f.p}}" aria-label="{{f.label}}" onClick="{{f.pick}}" style="{{f.s}}">{{f.t}}</button></sc-for></div></div>
+    <div class="card"><div class="row"><span style="flex: 1">Dzień</span><span class="mono" style="color: #404040">nd, 15.11 · 16:00</span></div><div class="row"><span style="flex: 1">Pokaż w kalendarzu głównym</span><button type="button" class="sw" role="switch" aria-checked="{{cal}}" aria-label="Pokaż w kalendarzu głównym" onClick="{{toggleCal}}"></button></div></div>
+    <label class="fld">Notatka<textarea class="inp" rows="3" placeholder="Jak poszło?" style="height: 88px; padding: 12px 14px; resize: none"></textarea></label>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const d = S.d ?? 100, t = S.t ?? 3120;
+    const k = S.k || 'Spokojny', f = S.f || 5;
+    const p = Math.round(t / (d / 10));
+    const hms = (s) => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+    return {
+      kinds: ['Spokojny', 'Tempo', 'Interwały', 'Długi', 'Zawody'].map((x) => ({ t: x, p: x === k ? 'true' : 'false', pick: () => this.setState({ k: x }) })),
+      dist: (d / 10).toFixed(1).replace('.', ','), time: hms(t), pace: Math.floor(p / 60) + ':' + String(p % 60).padStart(2, '0'),
+      dM: () => this.setState({ d: Math.max(5, d - 5) }), dP: () => this.setState({ d: d + 5 }),
+      tM: () => this.setState({ t: Math.max(60, t - 60) }), tP: () => this.setState({ t: t + 60 }),
+      feel: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ t: String(n), label: 'Trudność ' + n + ' z 10', p: n === f ? 'true' : 'false', pick: () => this.setState({ f: n }),
+        s: 'height:40px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;padding:0;font-family:Geist Mono,monospace;border:1px solid ' + (n === f ? '#171717' : '#e0e0e0') + ';background:' + (n === f ? '#171717' : '#ffffff') + ';color:' + (n === f ? '#ffffff' : '#171717') })),
+      diffTxt: f <= 3 ? 'lekko' : f <= 6 ? 'umiarkowanie' : f <= 8 ? 'ciężko' : 'maksymalnie',
+      cal: S.cal === false ? 'false' : 'true', toggleCal: () => this.setState({ cal: S.cal === false })
+    };
+  }
+}
+</script>
+</body>
+</html>

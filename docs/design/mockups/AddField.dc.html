@@ -85,7 +85,7 @@ a{color:#171717}a:hover{color:#000000}
 
         <div style="flex: 1"></div>
         <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #eaeaea; padding-top: 12px">
-          <button type="button" class="btn">Anuluj</button><button type="button" class="btnp">Dodaj pole</button>
+          <a href="{{back}}" class="btn" style="text-decoration: none">Anuluj</a><a href="{{back}}" class="btnp" style="text-decoration: none">Dodaj pole</a>
         </div>
       </div>
     </div>
@@ -117,7 +117,10 @@ class Component extends DCLogic {
       style: 'display:flex;align-items:center;gap:6px;width:100%;padding:7px 8px;border-radius:6px;border:0;font:inherit;font-size:13px;cursor:pointer;color:#171717;background:' + (id === picked ? '#ffffff;box-shadow:0 0 0 1px #e0e0e0' : 'transparent'),
       pick: () => this.setState({ picked: id })
     });
+    let back = 'Main.dc.html';
+    try { const f = sessionStorage.getItem('rh-page'); if (f && /^[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
     return {
+      back,
       groups: [
         { name: 'Podstawowe', items: ['text', 'number', 'checkbox', 'url', 'select', 'status', 'date', 'rating'].map(item) },
         { name: 'Inteligentne', items: ['recurring', 'renewal'].map(item) },

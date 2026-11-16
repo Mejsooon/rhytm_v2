@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Ustawienia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top"><a href="MToday.dc.html" class="ib" aria-label="Wstecz"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1; min-width: 0; text-align: center; font-weight: 600">Ustawienia</div><span style="width: 44px"></span></header>
+  <div class="body" style="padding-top: 4px">
+    <div class="card" style="display: flex; align-items: center; gap: 14px; padding: 14px"><span style="width: 52px; height: 52px; border-radius: 50%; background: #f0f0f0; border: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600">M</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 600; font-size: 17px">Mejson</span><span class="sub">mejson@example.com</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></div>
+    <section><div class="lbl" style="margin: 0 0 8px 4px">Wygląd</div><div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px">Motyw</span><div class="seg"><sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" class="sg" aria-pressed="{{t.p}}" onClick="{{t.pick}}">{{t.t}}</button></sc-for></div>
+      <span style="font-size: 14px; margin-top: 4px">Tydzień zaczyna się w</span><div class="seg"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div>
+    </div></section>
+    <section><div class="lbl" style="margin: 0 0 8px 4px">Powiadomienia</div><div class="card"><sc-for list="{{notifs}}" as="n" hint-placeholder-count="4"><div class="row"><span style="flex: 1; min-width: 0"><span style="display: block">{{n.t}}</span><span style="font-size: 12px; color: #6b6b6b">{{n.d}}</span></span><button type="button" class="sw" role="switch" aria-checked="{{n.on}}" aria-label="{{n.t}}" onClick="{{n.toggle}}"></button></div></sc-for></div></section>
+    <section><div class="lbl" style="margin: 0 0 8px 4px">Konto i bezpieczeństwo</div><div class="card">
+      <a href="#" class="row"><span style="flex: 1">Zmień hasło</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a href="MVault.dc.html" class="row"><span style="flex: 1">Sejf — hasło główne</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a href="#" class="row"><span style="flex: 1">Eksport danych</span><span class="mono" style="font-size: 12px; color: #6b6b6b">CSV, JSON</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </div></section>
+    <a href="MLogin.dc.html" class="btn" style="color: #b91c1c; border-color: #f3c7c7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg>Wyloguj się</a>
+    <div class="mono" style="text-align: center; font-size: 11px; color: #8a8a8a">rhytm 3.0 · build 2026.11</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const th = S.th || 'Jasny', wk = S.wk || 'Pon.';
+    const N = S.n || { a: true, b: true, c: false, d: true };
+    const L = [['a', 'Poranne podsumowanie', 'Codziennie o 7:00'], ['b', 'Start bloku', '5 min przed blokiem'], ['c', 'Nawyki wieczorem', 'Jeśli coś zostało — 21:00'], ['d', 'Odnowienia subskrypcji', '3 dni przed płatnością']];
+    return {
+      themes: ['Jasny', 'Ciemny', 'Systemowy'].map((t) => ({ t, p: t === th ? 'true' : 'false', pick: () => this.setState({ th: t }) })),
+      weeks: ['Pon.', 'Niedz.'].map((t) => ({ t: t === 'Pon.' ? 'Poniedziałek' : 'Niedziela', p: t === wk ? 'true' : 'false', pick: () => this.setState({ wk: t }) })),
+      notifs: L.map((x) => ({ t: x[1], d: x[2], on: N[x[0]] ? 'true' : 'false', toggle: () => this.setState({ n: Object.assign({}, N, { [x[0]]: !N[x[0]] }) }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

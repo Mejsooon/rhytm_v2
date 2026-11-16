@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -19,10 +21,11 @@ a{color:#171717}a:hover{color:#000000}
 .btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
 .seg{display:flex;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;font-size:12px}
 .head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eaeaea}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="nawyki" min-height="1120" hint-size="100%,1120px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="nawyki" min-height="1120" hint-size="100%,1120px"></dc-import></div>
 
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
@@ -30,14 +33,14 @@ a{color:#171717}a:hover{color:#000000}
         <h1 style="margin: 0; font-size: 18px; font-weight: 600">Nawyki i sen</h1>
         <span class="mono" style="font-size: 12px; color: #6b6b6b">wtorek · 17.11.2026</span>
       </div>
-      <div style="display: flex; gap: 8px"><button type="button" class="btn">+ Wpis snu</button><button type="button" class="btnp">Nowy nawyk</button></div>
+      <div style="display: flex; gap: 8px"><a href="SleepDialog.dc.html" class="btn" style="text-decoration: none">+ Wpis snu</a><a href="HabitDialog.dc.html" class="btnp" style="text-decoration: none">Nowy nawyk</a></div>
     </header>
 
     <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
 
       <!-- RZĄD 1: liczby -->
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
-        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Nawyki dziś</div><div class="mono" style="font-size: 26px; margin-top: 8px">3/5</div><div style="height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 10px"><div style="width: 60%; height: 4px; background: #15803d; border-radius: 2px"></div></div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Nawyki dziś</div><div class="mono" style="font-size: 26px; margin-top: 8px">{{doneTxt}}</div><div style="height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 10px"><div style="{{doneBar}}"></div></div></div>
         <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Ostatnie 30 dni</div><div class="mono" style="font-size: 26px; margin-top: 8px">84%</div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">+6 pkt vs poprzednie 30</div></div>
         <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Najdłuższa seria</div><div class="mono" style="font-size: 26px; margin-top: 8px">12 <span style="font-size: 14px; color: #666666">dni</span></div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">Woda 2 l</div></div>
         <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Śr. sen · 14 dni</div><div class="mono" style="font-size: 26px; margin-top: 8px">7:21 <span style="font-size: 14px; color: #666666">/ 8:00</span></div><div class="mono" style="font-size: 12px; color: #6b6b6b; margin-top: 8px">5 z 14 nocy ≥ cel</div></div>
@@ -53,25 +56,25 @@ a{color:#171717}a:hover{color:#000000}
           <sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
             <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #f0f0f0">
               <div style="flex: 1; min-width: 0">
-                <div style="font-weight: 500">{{h.name}}</div>
+                <a href="HabitDetail.dc.html" style="font-weight: 500; color: #171717; text-decoration: none">{{h.name}}</a>
                 <div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 3px">{{h.schedule}} · seria {{h.streak}}</div>
               </div>
               <div style="display: grid; grid-template-columns: repeat(7, 24px); gap: 6px">
                 <sc-for list="{{h.week}}" as="c" hint-placeholder-count="7"><span title="{{c.t}}" style="{{c.s}}"></span></sc-for>
               </div>
-              <button type="button" aria-label="Odhacz dziś" style="{{h.btn}}">✓</button>
+              <button type="button" aria-label="{{h.label}}" aria-pressed="{{h.pressed}}" onClick="{{h.toggle}}" style="{{h.btn}}">✓</button>
             </div>
           </sc-for>
           <div style="flex: 1"></div>
-          <button type="button" style="text-align: left; background: none; border: 0; padding: 12px 16px; font: inherit; color: #666666; cursor: pointer">+ Nowy nawyk</button>
+          <a href="HabitDialog.dc.html" style="text-align: left; padding: 12px 16px; color: #666666; text-decoration: none">+ Nowy nawyk</a>
         </section>
 
         <section class="card" style="display: flex; flex-direction: column">
           <div class="head">
             <h2 style="margin: 0; font-size: 15px; font-weight: 600">Sen</h2>
             <div class="seg" role="group" aria-label="Zakres snu">
-              <button type="button" aria-pressed="true" style="background: #f0f0f0; border: 0; padding: 4px 10px; font: inherit; cursor: pointer">14 dni</button>
-              <button type="button" style="background: #ffffff; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">30 dni</button>
+              <button type="button" aria-pressed="{{s14p}}" onClick="{{set14}}" style="{{s14}}">14 dni</button>
+              <button type="button" aria-pressed="{{s30p}}" onClick="{{set30}}" style="{{s30}}">30 dni</button>
             </div>
           </div>
           <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px; flex: 1">
@@ -79,12 +82,13 @@ a{color:#171717}a:hover{color:#000000}
               <div><div class="lbl">Ostatnia noc</div><div class="mono" style="font-size: 20px; margin-top: 6px">7:12</div><div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 2px">23:48 → 07:00</div></div>
               <div><div class="lbl">Samopoczucie</div><div class="mono" style="font-size: 20px; margin-top: 6px">4/5</div></div>
             </div>
-            <div style="position: relative; display: flex; align-items: flex-end; gap: 5px; height: 150px; border-bottom: 1px solid #eaeaea; margin-top: auto">
+            <div style="position: relative; display: flex; align-items: flex-end; gap: {{sleepGap}}; height: 150px; border-bottom: 1px solid #eaeaea; margin-top: auto" onMouseLeave="{{sTipOff}}">
               <div style="position: absolute; left: 0; right: 0; bottom: 133px; border-top: 1px dashed #15803d"></div>
               <span class="mono" style="position: absolute; right: 0; bottom: 137px; font-size: 10px; color: #15803d">cel 8 h</span>
-              <sc-for list="{{sleep}}" as="s" hint-placeholder-count="14"><div title="{{s.t}}" style="{{s.s}}"></div></sc-for>
+              <sc-for list="{{sleep}}" as="s" hint-placeholder-count="14"><div aria-label="{{s.t}}" onMouseEnter="{{s.enter}}" style="{{s.s}}"></div></sc-for>
+              <sc-if value="{{hasSTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{stip.s}}"><div style="font-weight: 600">{{stip.date}}</div><div class="mono" style="font-size: 11px; color: #d4d4d4; margin-top: 2px">{{stip.txt}}</div></div></sc-if>
             </div>
-            <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #6b6b6b; margin-top: -10px"><span>04.11</span><span>17.11</span></div>
+            <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #6b6b6b; margin-top: -10px"><span>{{sleepFrom}}</span><span>17.11</span></div>
           </div>
         </section>
       </div>
@@ -94,20 +98,38 @@ a{color:#171717}a:hover{color:#000000}
         <div class="head">
           <div style="display: flex; align-items: baseline; gap: 10px"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Heatmapa nawyków</h2><span class="mono" style="font-size: 12px; color: #6b6b6b">% nawyków zrobionych danego dnia</span></div>
           <div class="seg" role="group" aria-label="Zakres heatmapy">
-            <button type="button" style="background: #ffffff; border: 0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">3 mies.</button>
-            <button type="button" style="background: #ffffff; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; color: #666666; cursor: pointer">6 mies.</button>
-            <button type="button" aria-pressed="true" style="background: #f0f0f0; border: 0; border-left: 1px solid #e0e0e0; padding: 4px 10px; font: inherit; cursor: pointer">Rok</button>
+            <button type="button" aria-pressed="{{hmp}}" onClick="{{setM}}" style="{{hmS}}">Miesiąc</button>
+            <button type="button" aria-pressed="{{h3p}}" onClick="{{set3}}" style="{{h3}}">3 mies.</button>
+            <button type="button" aria-pressed="{{h6p}}" onClick="{{set6}}" style="{{h6}}">6 mies.</button>
+            <button type="button" aria-pressed="{{h12p}}" onClick="{{set12}}" style="{{h12}}">Rok</button>
           </div>
         </div>
         <div style="padding: 16px; overflow-x: auto">
-          <div style="display: flex; gap: 8px; width: max-content; margin: 0 auto">
-            <div class="mono" style="display: grid; grid-template-rows: repeat(7, 14px); gap: 4px; font-size: 10px; color: #6b6b6b"><span>pn</span><span></span><span>śr</span><span></span><span>pt</span><span></span><span>nd</span></div>
-            <div style="display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); gap: 4px">
-              <sc-for list="{{heat}}" as="x" hint-placeholder-count="364"><span title="{{x.t}}" style="{{x.s}}"></span></sc-for>
+          <sc-if value="{{hm}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 10px; width: max-content; margin: 0 auto">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+              <button type="button" class="btn" aria-label="Poprzedni miesiąc" aria-disabled="{{mPrevOffA}}" onClick="{{mPrev}}" style="{{mPrevS}}">‹</button>
+              <span style="font-weight: 600; font-size: 14px">{{mLabel}}</span>
+              <button type="button" class="btn" aria-label="Następny miesiąc" aria-disabled="{{mNextOffA}}" onClick="{{mNext}}" style="{{mNextS}}">›</button>
+            </div>
+            <div class="mono" style="display: grid; grid-template-columns: repeat(7, 40px); gap: 4px; font-size: 10px; color: #6b6b6b; text-align: center"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+            <div style="position: relative; display: grid; grid-template-columns: repeat(7, 40px); gap: 4px" onMouseLeave="{{mTipOff}}">
+              <sc-for list="{{mcells}}" as="c" hint-placeholder-count="35"><span aria-label="{{c.t}}" onMouseEnter="{{c.enter}}" style="{{c.s}}">{{c.num}}</span></sc-for>
+              <sc-if value="{{hasMTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{mtip.s}}"><div style="font-weight: 600">{{mtip.date}}</div><div class="mono" style="font-size: 11px; color: #d4d4d4; margin-top: 2px">{{mtip.txt}}</div></div></sc-if>
             </div>
           </div>
+          </sc-if>
+          <sc-if value="{{hy}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; gap: 8px; width: max-content; margin: 0 auto">
+            <div class="mono" style="display: grid; grid-template-rows: repeat(7, 14px); gap: 4px; font-size: 10px; color: #6b6b6b"><span>pn</span><span></span><span>śr</span><span></span><span>pt</span><span></span><span>nd</span></div>
+            <div style="position: relative; display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); gap: 4px" onMouseLeave="{{tipOff}}">
+              <sc-for list="{{heat}}" as="x" hint-placeholder-count="364"><span aria-label="{{x.t}}" onMouseEnter="{{x.enter}}" style="{{x.s}}"></span></sc-for>
+              <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{tip.s}}"><div style="font-weight: 600">{{tip.date}}</div><div class="mono" style="font-size: 11px; color: #d4d4d4; margin-top: 2px">{{tip.txt}}</div></div></sc-if>
+            </div>
+          </div>
+          </sc-if>
           <div class="mono" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #6b6b6b; margin-top: 12px">
-            <span>lis 2025 → lis 2026</span>
+            <span>{{heatRange}}</span>
             <span style="display: flex; align-items: center; gap: 4px">mniej <span style="width: 12px; height: 12px; border-radius: 3px; background: #f0f0f0"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #bbe5cc"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #4ade80"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #15803d"></span> więcej</span>
           </div>
         </div>
@@ -119,27 +141,120 @@ a{color:#171717}a:hover{color:#000000}
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
 class Component extends DCLogic {
   renderVals() {
+    const S = this.state || {};
+    const done = S.done || { 0: true, 1: true };
+    const sleepR = S.sleepR || 14;
+    const heatR = S.heatR || 52;
     const cell = (v) => 'width:24px;height:24px;border-radius:5px;box-sizing:border-box;' + (v === 1 ? 'background:#15803d' : v === 0 ? 'background:#f0f0f0' : 'border:1px dashed #e0e0e0;background:#ffffff');
-    const mk = (pattern) => pattern.split('').map((ch) => ({ s: cell(ch === '1' ? 1 : ch === '0' ? 0 : -1), t: ch === '1' ? 'zrobione' : ch === '0' ? 'nie' : 'nie dotyczy / jeszcze nie' }));
-    const btn = (done) => 'width:34px;height:34px;flex:0 0 34px;border-radius:6px;font:inherit;cursor:pointer;' + (done ? 'background:#15803d;color:#ffffff;border:1px solid #15803d' : 'background:#ffffff;color:#6b6b6b;border:1px solid #e0e0e0');
+    const mk = (pattern, today) => pattern.split('').map((ch, i) => { const v = i === 1 ? (today ? 1 : 0) : ch === '1' ? 1 : ch === '0' ? 0 : -1; return { s: cell(v), t: v === 1 ? 'zrobione' : v === 0 ? 'nie' : 'nie dotyczy / jeszcze nie' }; });
+    const btn = (on) => 'width:34px;height:34px;flex:0 0 34px;border-radius:6px;font:inherit;cursor:pointer;transition:background-color 120ms;' + (on ? 'background:#15803d;color:#ffffff;border:1px solid #15803d' : 'background:#ffffff;color:#6b6b6b;border:1px solid #e0e0e0');
+    const segS = (on, first) => 'border:0;' + (first ? '' : 'border-left:1px solid #e0e0e0;') + 'padding:4px 10px;font:inherit;cursor:pointer;' + (on ? 'background:#f0f0f0;color:#171717;font-weight:500' : 'background:#ffffff;color:#666666');
+    const H = [
+      ['Woda 2 l', 'codziennie', '12 dni', '1------'],
+      ['Czytanie 20 min', 'codziennie', '5 dni', '1------'],
+      ['Rozciąganie', 'pn, śr, pt, nd', '3', '1------'],
+      ['Bez telefonu po 23:00', 'codziennie', '1 dzień', '1------'],
+      ['Angielski', '4× w tygodniu', '3 tyg.', '1------']
+    ];
+    const doneN = H.filter((h, i) => done[i]).length;
+    const habits = H.map((h, i) => ({ name: h[0], schedule: h[1], streak: h[2], week: mk(h[3], !!done[i]), btn: btn(!!done[i]),
+      pressed: done[i] ? 'true' : 'false', label: done[i] ? 'Cofnij odhaczenie: ' + h[0] : 'Odhacz dziś: ' + h[0],
+      toggle: () => this.setState({ done: Object.assign({}, done, { [i]: !done[i] }) }) }));
+    // heatmapa: 52 tygodnie, ostatnia komórka = nd 22.11.2026, dziś = wt 17.11 (indeks 358)
     const shades = ['#f0f0f0', '#bbe5cc', '#4ade80', '#15803d'];
-    const heat = [];
+    const MON = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    const DOW = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+    const END = Date.UTC(2026, 10, 22);
+    const all = [];
     for (let i = 0; i < 364; i++) {
-      const v = (i * 37 + (i % 7) * 11 + Math.floor(i / 30) * 3) % 10;
-      const lvl = i > 359 ? 0 : v < 2 ? 0 : v < 4 ? 1 : v < 7 ? 2 : 3;
-      heat.push({ s: 'width:14px;height:14px;border-radius:3px;background:' + shades[lvl], t: ['0%', 'do 40%', 'do 80%', 'ponad 80%'][lvl] });
+      const d = new Date(END - (363 - i) * 86400000);
+      const future = i > 358;
+      const n = i === 358 ? doneN : future ? -1 : Math.min(5, ((i * 37 + (i % 7) * 11 + Math.floor(i / 30) * 3) % 10) % 6 + (i % 4 === 0 ? 1 : 0));
+      const pct = n < 0 ? 0 : n / 5;
+      const lvl = n <= 0 ? 0 : pct <= 0.4 ? 1 : pct <= 0.8 ? 2 : 3;
+      all.push({ i, n, future, date: DOW[i % 7] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(), lvl });
     }
-    const hrs = [7.1, 6.2, 7.8, 8.2, 6.5, 8.4, 9.0, 7.0, 6.8, 7.9, 8.1, 6.9, 7.5, 7.2];
+    const cells = all.slice(364 - heatR * 7);
+    const hm = !!S.hm;
+    const mo = S.mo || 0;
+    const MONF = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const START0 = END - 363 * 86400000;
+    const mFirst = new Date(Date.UTC(2026, 10 + mo, 1));
+    const mLead = (mFirst.getUTCDay() + 6) % 7;
+    const mDays = new Date(Date.UTC(mFirst.getUTCFullYear(), mFirst.getUTCMonth() + 1, 0)).getUTCDate();
+    const mh = S.mh;
+    const mcells = [];
+    for (let k = 0; k < mLead; k++) mcells.push({ num: '', t: '', s: 'width:40px;height:40px;visibility:hidden', enter: () => {} });
+    for (let dd = 1; dd <= mDays; dd++) {
+      const ts = Date.UTC(mFirst.getUTCFullYear(), mFirst.getUTCMonth(), dd);
+      const idx = Math.round((ts - START0) / 86400000);
+      const c = idx >= 0 && idx < 364 ? all[idx] : { i: -1, n: -1, future: ts > END - 5 * 86400000, lvl: 0, date: DOW[(new Date(ts).getUTCDay() + 6) % 7] + ' ' + dd + ' ' + MON[mFirst.getUTCMonth()] + ' ' + mFirst.getUTCFullYear() };
+      const pos = mcells.length;
+      const dark = !c.future && c.n > 0 && c.lvl === 3;
+      mcells.push({ num: String(dd), t: c.date, c,
+        s: 'width:40px;height:40px;box-sizing:border-box;border-radius:6px;padding:4px 5px;font-family:Geist Mono,ui-monospace,monospace;font-size:11px;cursor:default;' + (c.future || c.n < 0 ? 'border:1px dashed #e0e0e0;background:#ffffff;color:#a3a3a3' : 'background:' + shades[c.lvl] + ';color:' + (dark ? '#ffffff' : '#404040')) + (c.i === 358 ? ';font-weight:600' : '') + (mh === pos ? ';box-shadow:0 0 0 2px #171717' : ''),
+        enter: () => { if ((this.state || {}).mh !== pos) this.setState({ mh: pos }); } });
+    }
+    const mhc = mh !== undefined && mh !== null && mcells[mh] ? mcells[mh].c : null;
+    const mhCol = mh ? mh % 7 : 0;
+    const mhRow = mh ? Math.floor(mh / 7) : 0;
+    const hov = S.hov;
+    const heat = cells.map((c, k) => ({
+      t: c.date,
+      s: 'width:14px;height:14px;border-radius:3px;box-sizing:border-box;cursor:default;' + (c.future ? 'border:1px dashed #e0e0e0;background:#ffffff' : 'background:' + shades[c.lvl]) + (hov === k ? ';box-shadow:0 0 0 2px #171717' : ''),
+      enter: () => { if ((this.state || {}).hov !== k) this.setState({ hov: k }); },
+      leave: () => { if (this.state.hov === k) this.setState({ hov: null }); }
+    }));
+    const hc = hov !== undefined && hov !== null ? cells[hov] : null;
+    const col = hov !== undefined && hov !== null ? Math.floor(hov / 7) : 0;
+    const row = hov !== undefined && hov !== null ? hov % 7 : 0;
+    const weeks = heatR;
+    const tipLeft = Math.min(Math.max(col * 18 + 7 - 95, -20), weeks * 18 - 170);
+    const sleepAll = [6.8, 7.4, 7.9, 6.6, 8.1, 7.3, 6.9, 8.5, 7.7, 6.4, 7.0, 8.0, 7.6, 7.2, 6.9, 8.3, 7.1, 6.2, 7.8, 8.2, 6.5, 8.4, 9.0, 7.0, 6.8, 7.9, 8.1, 6.9, 7.5, 7.2];
+    const hrs = sleepAll.slice(30 - sleepR);
+    const sDate = new Date(Date.UTC(2026, 10, 17) - (sleepR - 1) * 86400000);
+    const p2 = (x) => String(x).padStart(2, '0');
     return {
-      habits: [
-        { name: 'Woda 2 l', schedule: 'codziennie', streak: '12 dni', week: mk('11-----'), btn: btn(true) },
-        { name: 'Czytanie 20 min', schedule: 'codziennie', streak: '5 dni', week: mk('11-----'), btn: btn(true) },
-        { name: 'Rozciąganie', schedule: 'pn, śr, pt, nd', streak: '3', week: mk('1------'), btn: btn(false) },
-        { name: 'Bez telefonu po 23:00', schedule: 'codziennie', streak: '1 dzień', week: mk('10-----'), btn: btn(false) },
-        { name: 'Angielski', schedule: '4× w tygodniu', streak: '3 tyg.', week: mk('1------'), btn: btn(false) }
-      ],
+      habits,
+      doneTxt: doneN + '/5',
+      doneBar: 'width:' + Math.round(doneN / 5 * 100) + '%;height:4px;background:#15803d;border-radius:2px;transition:width 200ms',
       heat,
-      sleep: hrs.map((h) => ({ t: h + ' h', s: 'flex:1;border-radius:3px 3px 0 0;height:' + Math.round((h / 9) * 150) + 'px;background:' + (h >= 8 ? '#15803d' : '#d4d4d4') }))
+      heatRange: hm ? 'najedź na dzień, żeby zobaczyć szczegóły' : (() => { const a = new Date(END - (heatR * 7 - 1) * 86400000); return MON[a.getUTCMonth()] + ' ' + a.getUTCFullYear() + ' → lis 2026'; })(),
+      hm, hy: !hm, hmp: hm ? 'true' : 'false', hmS: segS(hm, true),
+      h3: segS(!hm && heatR === 13, false), h6: segS(!hm && heatR === 26, false), h12: segS(!hm && heatR === 52, false),
+      h3p: !hm && heatR === 13 ? 'true' : 'false', h6p: !hm && heatR === 26 ? 'true' : 'false', h12p: !hm && heatR === 52 ? 'true' : 'false',
+      setM: () => this.setState({ hm: true, hov: null, mh: null }),
+      set3: () => this.setState({ heatR: 13, hm: false, hov: null }), set6: () => this.setState({ heatR: 26, hm: false, hov: null }), set12: () => this.setState({ heatR: 52, hm: false, hov: null }),
+      mLabel: MONF[mFirst.getUTCMonth()] + ' ' + mFirst.getUTCFullYear(),
+      mPrev: () => this.setState({ mo: Math.max(-12, mo - 1), mh: null }), mNext: () => this.setState({ mo: Math.min(0, mo + 1), mh: null }),
+      mPrevOffA: mo <= -12 ? 'true' : 'false', mNextOffA: mo >= 0 ? 'true' : 'false',
+      mPrevS: 'padding:4px 10px;font-size:13px;' + (mo <= -12 ? 'opacity:.35;cursor:default' : ''),
+      mNextS: 'padding:4px 10px;font-size:13px;' + (mo >= 0 ? 'opacity:.35;cursor:default' : ''),
+      mcells,
+      mTipOff: () => this.setState({ mh: null }),
+      hasMTip: !!mhc,
+      mtip: mhc ? { date: mhc.date, txt: mhc.future ? 'jeszcze przed nami' : mhc.n < 0 ? 'brak danych' : mhc.n + ' z 5 nawyków · ' + Math.round(mhc.n / 5 * 100) + '%' + (mhc.i === 358 ? ' · dziś' : ''),
+        s: 'position:absolute;z-index:5;pointer-events:none;width:190px;box-sizing:border-box;left:' + Math.min(Math.max(mhCol * 44 + 20 - 95, -30), 7 * 44 - 160) + 'px;' + (mhRow < 1 ? 'top:' + (mhRow * 44 + 46) + 'px;' : 'top:' + (mhRow * 44 - 54) + 'px;') + 'background:#171717;color:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;box-shadow:0 8px 20px rgba(0,0,0,.18)' } : null,
+      hasTip: !!hc,
+      tip: hc ? {
+        date: hc.date,
+        txt: hc.future ? 'jeszcze przed nami' : hc.n + ' z 5 nawyków · ' + Math.round(hc.n / 5 * 100) + '%' + (hc.i === 358 ? ' · dziś' : ''),
+        s: 'position:absolute;z-index:5;pointer-events:none;width:190px;box-sizing:border-box;left:' + tipLeft + 'px;' + (row < 2 ? 'top:' + (row * 18 + 22) + 'px;' : 'top:' + (row * 18 - 52) + 'px;') + 'background:#171717;color:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;box-shadow:0 8px 20px rgba(0,0,0,.18)'
+      } : null,
+      sleep: hrs.map((h, k) => ({ t: h + ' h', enter: () => { if ((this.state || {}).sh !== k) this.setState({ sh: k }); }, s: 'flex:1;border-radius:3px 3px 0 0;cursor:default;height:' + Math.round((h / 9) * 150) + 'px;background:' + (h >= 8 ? '#15803d' : '#d4d4d4') + (S.sh === k ? ';box-shadow:0 0 0 2px #171717' : '') })),
+      sleepGap: sleepR === 30 ? '3px' : '5px',
+      sTipOff: () => this.setState({ sh: null }),
+      hasSTip: S.sh !== undefined && S.sh !== null && S.sh < hrs.length,
+      stip: (S.sh !== undefined && S.sh !== null && S.sh < hrs.length) ? (() => {
+        const k = S.sh; const h = hrs[k]; const d = new Date(Date.UTC(2026, 10, 17) - (hrs.length - 1 - k) * 86400000);
+        const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+        return { date: DOW[(d.getUTCDay() + 6) % 7] + ' ' + p2(d.getUTCDate()) + '.' + p2(d.getUTCMonth() + 1), txt: hh + ':' + p2(mm) + ' h snu' + (h >= 8 ? ' · cel osiągnięty' : ' · ' + Math.round((8 - h) * 60) + ' min do celu'),
+          s: 'position:absolute;z-index:5;pointer-events:none;width:170px;box-sizing:border-box;bottom:' + (Math.round((h / 9) * 150) + 10) + 'px;left:calc(' + ((k + 0.5) / hrs.length * 100) + '% - 85px);background:#171717;color:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;box-shadow:0 8px 20px rgba(0,0,0,.18)' };
+      })() : null,
+      sleepFrom: p2(sDate.getUTCDate()) + '.' + p2(sDate.getUTCMonth() + 1),
+      s14: segS(sleepR === 14, true), s30: segS(sleepR === 30, false), s14p: sleepR === 14 ? 'true' : 'false', s30p: sleepR === 30 ? 'true' : 'false',
+      tipOff: () => this.setState({ hov: null }),
+      set14: () => this.setState({ sleepR: 14, sh: null }), set30: () => this.setState({ sleepR: 30, sh: null })
     };
   }
 }

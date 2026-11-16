@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -48,6 +50,9 @@ a{color:#171717}a:hover{color:#000000}
       <button type="button" aria-label="Zamknij" style="width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; flex: none">✕</button>
     </div>
     <div style="padding: 4px 20px 18px; display: flex; flex-direction: column; gap: 14px">
+      <div class="fld">Rodzaj biegu
+        <div role="radiogroup" aria-label="Rodzaj biegu" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{k.p}}" onClick="{{k.pick}}" style="{{k.s}}">{{k.t}}</button></sc-for></div>
+      </div>
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
         <label class="fld">Data<input class="inp mono" type="text" value="wt 17.11.2026"></label>
         <label class="fld">Start<input class="inp mono" type="text" value="16:00"></label>
@@ -73,10 +78,13 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { diff: 6, cal: true }; }
+  constructor(p) { super(p); this.state = { diff: 6, cal: true, kind: 'Spokojny' }; }
   renderVals() {
     const d = this.state.diff;
-    return { diff: String(d), diffS: 'width:' + (d * 10) + '%;height:6px;border-radius:3px;background:' + (d >= 8 ? '#b91c1c' : d >= 5 ? '#c2410c' : '#15803d'),
+    const kind = this.state.kind;
+    return {
+      kinds: ['Spokojny', 'Tempo', 'Interwały', 'Długi', 'Zawody'].map((t) => ({ t, p: t === kind ? 'true' : 'false', pick: () => this.setState({ kind: t }),
+        s: 'display:inline-flex;align-items:center;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;font-weight:400;cursor:pointer;border:1px solid ' + (t === kind ? '#171717' : '#e0e0e0') + ';background:' + (t === kind ? '#171717' : '#ffffff') + ';color:' + (t === kind ? '#ffffff' : '#404040') })), diff: String(d), diffS: 'width:' + (d * 10) + '%;height:6px;border-radius:3px;background:' + (d >= 8 ? '#b91c1c' : d >= 5 ? '#c2410c' : '#15803d'),
       dots: [1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: String(n), pick: () => this.setState({ diff: n }), s: 'width:32px;height:32px;border-radius:6px;font:inherit;font-size:12px;cursor:pointer;font-family:Geist Mono,monospace;' + (n === d ? 'background:#171717;color:#fff;border:1px solid #171717' : 'background:#fff;color:#404040;border:1px solid #e0e0e0') })),
       cal: this.state.cal, toggleCal: () => this.setState({ cal: !this.state.cal }) };
   }

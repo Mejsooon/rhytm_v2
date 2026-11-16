@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -28,14 +30,18 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.cal-opt:hover{background:#f5f5f5}
+.cm-plus{position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666666;opacity:0;pointer-events:none}
+.cm-day:hover .cm-plus{opacity:1;background:#f0f0f0}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 1000px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="1000" hint-size="100%,1000px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Moduły</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Kalendarz</span></div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><div class="seg"><a href="CalendarDay.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none; color: #666666; background: #ffffff; border-right: 1px solid #e0e0e0">Dzień</a><a href="Calendar.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none; color: #666666; background: #ffffff">Tydzień</a><a href="CalendarMonth.dc.html" aria-current="page" style="padding: 6px 12px; text-decoration: none; border-left: 1px solid #e0e0e0; background: #f0f0f0; font-weight: 500; color: #171717">Miesiąc</a></div><a href="BlockDialog.dc.html" class="btnp">Nowy blok</a></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><div class="seg"><a href="CalendarDay.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none;  color: #666666; background: #ffffff">Dzień</a><a href="Calendar.dc.html" aria-current="false" style="padding: 6px 12px; text-decoration: none; border-left: 1px solid #e0e0e0; color: #666666; background: #ffffff">Tydzień</a><a href="CalendarMonth.dc.html" aria-current="page" style="padding: 6px 12px; text-decoration: none; border-left: 1px solid #e0e0e0; background: #f0f0f0; font-weight: 500; color: #171717">Miesiąc</a></div><a href="BlockDialog.dc.html" class="btnp">Nowy blok</a></div>
     </header>
     <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
       <div style="display: flex; align-items: center; gap: 10px"><button type="button" class="btn" aria-label="Poprzedni miesiąc" onClick="{{prev}}" style="padding: 6px 10px">‹</button><button type="button" class="btn" onClick="{{today}}" style="padding: 6px 10px">Dziś</button><button type="button" class="btn" aria-label="Następny miesiąc" onClick="{{next}}" style="padding: 6px 10px">›</button><h1 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600">{{monthLabel}}</h1><span class="mono" style="font-size: 12px; color: #6b6b6b">{{summary}}</span></div>
@@ -79,7 +85,16 @@ a{color:#171717}a:hover{color:#000000}
           </div>
         </sc-if>
         <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
-          <sc-for list="{{cells}}" as="c" hint-placeholder-count="42"><div style="{{c.s}}"><span style="{{c.numS}}">{{c.num}}</span><sc-for list="{{c.chips}}" as="ch" hint-placeholder-count="1"><button type="button" onClick="{{ch.pick}}" aria-expanded="{{ch.open}}" style="{{ch.s}}">{{ch.t}}</button></sc-for><sc-if value="{{c.more}}" hint-placeholder-val="{{false}}"><span class="mono" style="display: block; font-size: 10px; color: #6b6b6b; margin-top: 3px">{{c.moreT}}</span></sc-if></div></sc-for>
+          <sc-for list="{{cells}}" as="c" hint-placeholder-count="42"><div class="cm-day" onClick="{{c.add}}" style="{{c.s}}"><span style="{{c.numS}}">{{c.num}}</span><span class="cm-plus" aria-hidden="true">+</span><sc-for list="{{c.chips}}" as="ch" hint-placeholder-count="1"><button type="button" onClick="{{ch.pick}}" aria-expanded="{{ch.open}}" style="{{ch.s}}">{{ch.t}}</button></sc-for><sc-if value="{{c.more}}" hint-placeholder-val="{{false}}"><span class="mono" style="display: block; font-size: 10px; color: #6b6b6b; margin-top: 3px">{{c.moreT}}</span></sc-if><sc-if value="{{c.hasAdd}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Nowy wpis" style="{{c.addS}}">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px">
+                <span style="font-size: 13px; font-weight: 600">Nowy wpis</span>
+                <span class="mono" style="font-size: 11px; color: #6b6b6b">{{c.addWhen}}</span>
+                <button type="button" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: #666666; cursor: pointer; font: inherit; font-size: 12px">✕</button>
+              </div>
+              <a href="BlockDialog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #f0fdf4; border: 1px solid #bbe5cc; color: #15803d; display: flex; align-items: center; justify-content: center; font-size: 12px">▤</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Blok</span><span style="font-size: 12px; color: #666666">czas na zadania, z kategorią</span></span></a>
+              <a href="RunDialog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #fff4ed; border: 1px solid #fed7aa; color: #c2410c; display: flex; align-items: center; justify-content: center; font-size: 12px">●</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Bieg</span><span style="font-size: 12px; color: #666666">dystans, czas, tempo</span></span></a>
+              <a href="GymLog.dc.html" class="cal-opt" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; text-decoration: none; color: #171717"><span style="width: 28px; height: 28px; border-radius: 6px; background: #f5f5f5; border: 1px solid #e0e0e0; color: #404040; display: flex; align-items: center; justify-content: center; font-size: 12px">■</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">Siłownia</span><span style="font-size: 12px; color: #666666">trening siłowy</span></span></a>
+            </div></sc-if></div></sc-for>
         </div>
         </div>
       </div></div>
@@ -90,6 +105,7 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'CalendarMonth.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   constructor(p) { super(p); this.state = { hidden: { Dom: true }, sel: { d: 17, k: 0 }, done: {}, off: 0 }; }
   renderVals() {
     const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
@@ -130,8 +146,12 @@ class Component extends DCLogic {
       cells.push({
         num: String(n),
         numS: 'display:inline-block;font-size:12px;font-family:Geist Mono,monospace;' + (today ? 'background:#15803d;color:#fff;border-radius:4px;padding:0 5px;font-weight:600' : inm ? 'color:#171717;font-weight:500' : 'color:#a3a3a3'),
-        s: 'min-height:112px;padding:6px 8px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid #eaeaea') + ';border-left:' + (wd === 0 ? '0' : '1px solid #eaeaea') + ';' + (!inm || wd >= 5 ? 'background:#fafafa;' : ''),
-        chips: items.slice(0, 3).map((e, k) => ({ t: e[0], open: (off === 0 && sel && sel.d === n && sel.k === k && inm) ? 'true' : 'false', pick: () => this.setState({ sel: (sel && sel.d === n && sel.k === k) ? null : { d: n, k } }), s: 'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;' + ((off === 0 && sel && sel.d === n && sel.k === k && inm) ? 'box-shadow:0 0 0 2px #171717;' : '') + 'font-size:11px;border-radius:4px;padding:2px 6px;margin-top:3px;border:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (COL[e[1]] ? 'background:' + COL[e[1]] + '14;border-left:2px solid ' + COL[e[1]] : 'font-family:Geist Mono,monospace;border:1px dashed #a3a3a3;color:#404040') })),
+        add: (ev) => { const t = ev && ev.target; if (t && t.closest && t.closest('button,a,[role=dialog]')) return; const a = this.state.add; this.setState({ add: (a && a.i === i && a.off === off) ? null : { i, off }, sel: null }); },
+        hasAdd: !!(this.state.add && this.state.add.i === i && this.state.add.off === off),
+        addWhen: DOW[wd] + ' ' + String(n).padStart(2, '0') + '.' + String(date.getUTCMonth() + 1).padStart(2, '0'),
+        addS: 'position:absolute;z-index:6;width:260px;' + (wd <= 3 ? 'left:calc(100% + 6px);' : 'right:calc(100% + 6px);') + (i >= 21 ? 'bottom:0;' : 'top:0;') + 'box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:8px;display:flex;flex-direction:column;gap:2px;font-size:14px;text-align:left;cursor:default',
+        s: 'position:relative;cursor:pointer;min-height:112px;padding:6px 8px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid #eaeaea') + ';border-left:' + (wd === 0 ? '0' : '1px solid #eaeaea') + ';' + (!inm || wd >= 5 ? 'background:#fafafa;' : ''),
+        chips: items.slice(0, 3).map((e, k) => ({ t: e[0], open: (off === 0 && sel && sel.d === n && sel.k === k && inm) ? 'true' : 'false', pick: () => this.setState({ sel: (sel && sel.d === n && sel.k === k) ? null : { d: n, k }, add: null }), s: 'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;' + ((off === 0 && sel && sel.d === n && sel.k === k && inm) ? 'box-shadow:0 0 0 2px #171717;' : '') + 'font-size:11px;border-radius:4px;padding:2px 6px;margin-top:3px;border:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (COL[e[1]] ? 'background:' + COL[e[1]] + '14;border-left:2px solid ' + COL[e[1]] : 'font-family:Geist Mono,monospace;border:1px dashed #a3a3a3;color:#404040') })),
         more: items.length > 3, moreT: '+' + (items.length - 3) + ' więcej'
       });
     }
@@ -167,7 +187,7 @@ class Component extends DCLogic {
     }
     return { cats: catList(counts), cells, summary: off === 0 ? shown + ' wpisów widocznych' : 'brak wpisów w makiecie',
       monthLabel: MONTHS[tm] + ' ' + ty,
-      prev: () => this.setState({ off: off - 1, sel: null }), next: () => this.setState({ off: off + 1, sel: null }), today: () => this.setState({ off: 0 }), hasPop: !!pop, pop, close: () => this.setState({ sel: null }) };
+      prev: () => this.setState({ off: off - 1, sel: null, add: null }), next: () => this.setState({ off: off + 1, sel: null, add: null }), today: () => this.setState({ off: 0 }), hasPop: !!pop, pop, close: () => this.setState({ sel: null }), closeAdd: () => this.setState({ add: null }) };
   }
 }
 </script>

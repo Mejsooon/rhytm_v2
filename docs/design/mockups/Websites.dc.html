@@ -28,27 +28,51 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible,.row-wrap:hover .row-del{opacity:1}
+.row-click{cursor:pointer}
+.row-click:hover td{background:#fafafa}
+.ed-in{border:0;outline:0;background:transparent;font:inherit;color:#171717;width:100%;min-width:0;padding:0}
+.ed-in::placeholder{color:#a3a3a3}
+.pop{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:8px;font-family:Geist,system-ui,sans-serif;font-size:13px;color:#171717}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:6px;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left;background:transparent}
+.opt:hover{background:#f5f5f5}
+.act{background:none;border:0;cursor:pointer;padding:4px 6px;display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="websites" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="websites" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Strony</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Websites</span></div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btn">Filtruj</button><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="FilterPopover.dc.html" class="btn">Filtruj</a><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp" onClick="{{addRow}}">Nowy wiersz</button></div>
     </header>
     <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%">
-      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Websites</h1><p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">4 wiersze · 5 pól · szablon „Websites”</p></div>
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Websites</h1><p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">{{countRows}} · 5 pól · szablon „Websites”</p></div>
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
-        <div style="background: #fff; padding: 16px 18px"><div class="lbl">Na żywo</div><div class="mono" style="font-size: 26px; margin-top: 8px">2</div></div>
-        <div style="background: #fff; padding: 16px 18px"><div class="lbl">W budowie</div><div class="mono" style="font-size: 26px; margin-top: 8px">1</div></div>
-        <div style="background: #fff; padding: 16px 18px"><div class="lbl">Klienci</div><div class="mono" style="font-size: 26px; margin-top: 8px">2</div></div>
+        <div style="background: #fff; padding: 16px 18px"><div class="lbl">Na żywo</div><div class="mono" style="font-size: 26px; margin-top: 8px">{{live}}</div></div>
+        <div style="background: #fff; padding: 16px 18px"><div class="lbl">W budowie</div><div class="mono" style="font-size: 26px; margin-top: 8px">{{building}}</div></div>
+        <div style="background: #fff; padding: 16px 18px"><div class="lbl">Klienci</div><div class="mono" style="font-size: 26px; margin-top: 8px">{{clients}}</div></div>
       </div>
-      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow-x: auto"><dc-t-table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px">
-        <dc-t-thead><dc-t-tr style="background: #fafafa"><dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</dc-t-th><dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↗</span>URL</dc-t-th><dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Klient</dc-t-th><dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◐</span>Status</dc-t-th><dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Hosting</dc-t-th></dc-t-tr></dc-t-thead>
-        <dc-t-tbody><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Fanaberia</dc-t-td><dc-t-td class="td mono"><a href="#" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">fanaberia.photo</a></dc-t-td><dc-t-td class="td">Fanaberia</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border-radius: 4px; padding: 2px 7px; color:#15803d;background:#f0faf4;border:1px solid #bbe5cc">Na żywo</span></dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Framer</span></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Portfolio</dc-t-td><dc-t-td class="td mono"><a href="#" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">[TWOJA-DOMENA].dev</a></dc-t-td><dc-t-td class="td">ja</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border-radius: 4px; padding: 2px 7px; color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff">W budowie</span></dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Next.js</span></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">rhytm</dc-t-td><dc-t-td class="td mono"><a href="#" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">rhytm-delta.vercel.app</a></dc-t-td><dc-t-td class="td">ja</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border-radius: 4px; padding: 2px 7px; color:#15803d;background:#f0faf4;border:1px solid #bbe5cc">Na żywo</span></dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Vercel</span></dc-t-td></dc-t-tr><dc-t-tr><dc-t-td class="td" style="font-weight: 500">Strona klienta #2</dc-t-td><dc-t-td class="td mono"><a href="#" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">[ADRES]</a></dc-t-td><dc-t-td class="td">[KLIENT]</dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border-radius: 4px; padding: 2px 7px; color:#404040;background:#f5f5f5;border:1px solid #e0e0e0">Wycena</span></dc-t-td><dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">Framer</span></dc-t-td></dc-t-tr></dc-t-tbody>
-        <dc-t-tfoot><dc-t-tr style="background: #fafafa"><dc-t-td style="padding: 10px 14px"><button type="button" style="background: none; border: 0; color: #666; font: inherit; cursor: pointer; padding: 0">+ Nowy wiersz</button></dc-t-td><dc-t-td class="mono" style="padding: 10px 14px; color: #6b6b6b">4 linki</dc-t-td><dc-t-td></dc-t-td><dc-t-td class="mono" style="padding: 10px 14px; color: #6b6b6b">2 na żywo</dc-t-td><dc-t-td></dc-t-td></dc-t-tr></dc-t-tfoot>
-      </dc-t-table></div>
+      <div class="tbl-wrap" style="border: 1px solid #eaeaea; border-radius: 8px"><table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px">
+        <thead><tr style="background: #fafafa"><th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</th><th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↗</span>URL</th><th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Klient</th><th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◐</span>Status</th><th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Hosting</th><th scope="col" class="th" style="width: 120px"></th></tr></thead>
+        <tbody>
+            <sc-for list="{{list}}" as="r" hint-placeholder-count="4">
+              <sc-if value="{{r.view}}" hint-placeholder-val="{{true}}"><tr class="row-click" onClick="{{r.open}}">
+                <td class="td" style="font-weight: 500">{{r.name}}</td>
+                <td class="td mono"><a href="#" onClick="{{r.link}}" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">{{r.url}}</a></td>
+                <td class="td">{{r.client}}</td>
+                <td class="td"><span class="mono" style="{{r.statusS}}">{{r.status}}</span></td>
+                <td class="td"><span class="mono" style="{{r.hostS}}">{{r.host}}</span></td>
+                <td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="row-del act" aria-label="Edytuj wiersz" onClick="{{r.edit}}" style="color: #404040"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</button><button type="button" class="row-del act" aria-label="Usuń wiersz" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń</button></td>
+              </tr></sc-if>
+              <sc-if value="{{r.editing}}" hint-placeholder-val="{{false}}"><tr style="background: #f7fbf8"><td class="td" style="font-weight: 500"><input type="text" class="ed-in" value="{{r.f.v.name}}" onChange="{{r.f.on.name}}" placeholder="Nazwa…" aria-label="Nazwa"></td><td class="td mono"><input type="text" class="ed-in" value="{{r.f.v.url}}" onChange="{{r.f.on.url}}" placeholder="adres.pl" aria-label="URL"></td><td class="td"><input type="text" class="ed-in" value="{{r.f.v.client}}" onChange="{{r.f.on.client}}" placeholder="Klient" aria-label="Klient"></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" onClick="{{r.f.status.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.status.exp}}" aria-label="Status" style="{{r.f.status.btnS}}"><span class="mono" style="{{r.f.status.bs}}">{{r.f.status.txt}}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{r.f.status.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Status" class="pop" style="width: 170px; display: flex; flex-direction: column; gap: 1px"><sc-for list="{{r.f.status.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="opt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span class="mono" style="{{o.bs}}">{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" onClick="{{r.f.host.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.host.exp}}" aria-label="Hosting" style="{{r.f.host.btnS}}"><span class="mono" style="{{r.f.host.bs}}">{{r.f.host.txt}}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{r.f.host.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Hosting" class="pop" style="width: 160px; display: flex; flex-direction: column; gap: 1px"><sc-for list="{{r.f.host.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="opt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span class="mono" style="{{o.bs}}">{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" onClick="{{r.f.save}}" style="background: #171717; color: #ffffff; border: 1px solid #171717; border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer">Zapisz</button><button type="button" aria-label="Anuluj" onClick="{{r.f.cancel}}" style="margin-left: 4px; background: none; border: 0; color: #666666; font: inherit; cursor: pointer; padding: 4px 6px">✕</button></td></tr></sc-if>
+            </sc-for>
+          </tbody>
+        <tfoot><tr style="background: #fafafa"><td style="padding: 10px 14px"><button type="button" onClick="{{addRow}}" style="background: none; border: 0; color: #666; font: inherit; cursor: pointer; padding: 0">+ Nowy wiersz</button></td><td class="mono" style="padding: 10px 14px; color: #6b6b6b">{{linkTxt}}</td><td></td><td class="mono" style="padding: 10px 14px; color: #6b6b6b">{{liveTxt}}</td><td></td><td></td></tr></tfoot>
+      </table></div>
     </div>
   </main>
 
@@ -56,9 +80,89 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  
+  componentDidMount() { try { sessionStorage.setItem('rh-page', 'Websites.dc.html'); } catch (e) {} }
+
   renderVals() {
-    return {};
+    const S = this.state || {};
+    const E = S.edit || null;
+    const P = S.pick || null;
+    const pl = (n, one, few, many) => n + ' ' + (n === 1 ? one : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? few : many);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const btnBase = 'display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;font:inherit;font-size:12px;color:#171717;cursor:pointer;white-space:nowrap';
+    const setV = (patch) => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, patch) }) });
+    const startEdit = (r) => this.setState({ edit: { id: r.id, isNew: false, v: Object.assign({}, r) }, pick: null });
+    const dd = (key, val, opts, styles) => {
+      const open = !!(P && P.kind === key);
+      return {
+        txt: val, bs: styles[val] || '', open, exp: open ? 'true' : 'false',
+        btnS: btnBase + (open ? ';border-color:#171717' : ''),
+        toggle: () => this.setState({ pick: open ? null : { kind: key } }),
+        opts: opts.map((o) => ({ t: o, bs: styles[o] || '', p: o === val ? 'true' : 'false', check: o === val ? '✓' : '',
+          s: o === val ? 'background:#f0f0f0;font-weight:500' : '',
+          pick: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { [key]: o }) }), pick: null }) }))
+      };
+    };
+
+    const BADGE = 'font-size:11px;border-radius:4px;padding:2px 7px;white-space:nowrap;';
+    const ST = {
+      'Na żywo': BADGE + 'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc',
+      'W budowie': BADGE + 'color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff',
+      'Wycena': BADGE + 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0',
+      'Wstrzymana': BADGE + 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa'
+    };
+    const HOST = BADGE + 'border:1px solid #e0e0e0;color:#404040';
+    const HOSTS = { 'Framer': HOST, 'Next.js': HOST, 'Vercel': HOST, 'Netlify': HOST, 'WordPress': HOST, 'Inny': HOST };
+    const BASE = [
+      { id: 1, name: 'Fanaberia', url: 'fanaberia.photo', client: 'Fanaberia', status: 'Na żywo', host: 'Framer' },
+      { id: 2, name: 'Portfolio', url: '[TWOJA-DOMENA].dev', client: 'ja', status: 'W budowie', host: 'Next.js' },
+      { id: 3, name: 'rhytm', url: 'rhytm-delta.vercel.app', client: 'ja', status: 'Na żywo', host: 'Vercel' },
+      { id: 4, name: 'Strona klienta #2', url: '[ADRES]', client: '[KLIENT]', status: 'Wycena', host: 'Framer' }
+    ];
+    const R = S.rows || BASE;
+    const NEW = { name: '', url: '', client: '', status: 'Wycena', host: 'Framer' };
+    const TEXT = ['name', 'url', 'client'];
+    const CLEAN = (v) => ({ name: (v.name || '').trim() || 'Bez nazwy', url: (v.url || '').trim().replace(/^https?:\/\//, '').replace(/\/$/, ''), client: (v.client || '').trim(), status: v.status, host: v.host });
+    const SHOW = (r) => ({
+      name: r.name || 'Bez nazwy', url: r.url || '—', client: r.client || '—',
+      status: r.status, statusS: ST[r.status], host: r.host, hostS: HOST,
+      link: (e) => { stop(e); if (e && e.preventDefault) e.preventDefault(); }
+    });
+    const FORM = () => ({
+      status: dd('status', E.v.status, Object.keys(ST), ST),
+      host: dd('host', E.v.host, Object.keys(HOSTS), HOSTS)
+    });
+
+    const saveRow = () => {
+      const row = Object.assign(CLEAN(E.v), { id: E.isNew ? Date.now() : E.id });
+      this.setState({ rows: E.isNew ? R.concat([row]) : R.map((x) => (x.id === E.id ? row : x)), edit: null, pick: null });
+    };
+    const form = E ? Object.assign(FORM(), {
+      v: E.v,
+      on: TEXT.reduce((o, k) => { o[k] = (e) => setV({ [k]: e.target.value }); return o; }, {}),
+      save: saveRow,
+      cancel: () => this.setState({ edit: null, pick: null })
+    }) : {};
+    const list = R.map((r) => {
+      const ed = !!(E && !E.isNew && E.id === r.id);
+      return Object.assign(SHOW(r), {
+        view: !ed, editing: ed, f: ed ? form : {},
+        open: () => { if (!ed) startEdit(r); },
+        edit: (e) => { stop(e); startEdit(r); },
+        del: (e) => { stop(e); this.setState({ rows: R.filter((x) => x.id !== r.id), edit: ed ? null : E, pick: ed ? null : P }); }
+      });
+    });
+    if (E && E.isNew) list.push(Object.assign(SHOW(NEW), { view: false, editing: true, f: form }));
+    const addRow = () => this.setState({ edit: { id: 'new', isNew: true, v: Object.assign({}, NEW) }, pick: null });
+
+    const live = R.filter((r) => r.status === 'Na żywo').length;
+    const clients = new Set(R.map((r) => r.client).filter((c) => c && c !== 'ja')).size;
+    return {
+      list, addRow,
+      countRows: pl(R.length, 'wiersz', 'wiersze', 'wierszy'),
+      live, building: R.filter((r) => r.status === 'W budowie').length, clients,
+      liveTxt: live + ' na żywo',
+      linkTxt: pl(R.filter((r) => r.url).length, 'link', 'linki', 'linków')
+    };
   }
 }
 </script>

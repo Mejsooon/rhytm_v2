@@ -12,6 +12,8 @@
 <style>
 body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
+a.btnp,a.btnp:hover{color:#ffffff}
+a.btnp:hover{background:#2e2e2e}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
 .card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
@@ -28,18 +30,61 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.pick{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.pick:hover{background:#f5f5f5}
+.icb{width:30px;height:30px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;font:inherit;cursor:pointer;color:#404040;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.icb:hover{background:#f5f5f5}
+.icb[aria-disabled="true"]{opacity:.35;cursor:not-allowed}
+.exrow{display:grid;grid-template-columns:28px minmax(0,1fr) 128px 96px 96px 108px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
+.card-t:hover{border-color:#d4d4d4}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
-      <div class="mono" style="font-size: 13px; color: #666666"><span>Sport</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Szablony treningów</span></div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btnp">Nowy szablon</button></div>
+      <div class="mono" style="font-size: 13px; color: #666666"><span>Sport</span> <span style="color: #b0b0b0">/</span> <sc-if value="{{isList}}" hint-placeholder-val="{{true}}"><span style="color: #171717">Szablony treningów</span></sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{cancel}}" style="background: none; border: 0; padding: 0; font: inherit; color: #666666; cursor: pointer">Szablony treningów</button> <span style="color: #b0b0b0">/</span> <span style="color: #171717">{{crumb}}</span></sc-if></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><sc-if value="{{isList}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{newT}}">Nowy szablon</button></sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{cancel}}">Anuluj</button><button type="button" class="btnp" onClick="{{saveT}}" aria-disabled="{{saveDis}}" style="{{saveS}}">Zapisz szablon</button></sc-if></div>
     </header>
     <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
       <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Szablony treningów</h1><p style="margin: 6px 0 0; color: #666666">Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.</p></div>
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px"><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Push</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: czw 12.11</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 13 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Wyciskanie na ławce · Wyciskanie hantli skos · Pompki na poręczach · Wznosy bokiem</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Pull</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: pt 06.11</span></div><span class="mono" style="font-size: 12px; color: #666">5 ćwiczeń · 15 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Martwy ciąg · Podciąganie · Wiosłowanie sztangą · Face pull · Uginanie hantli</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Nogi</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: —</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 14 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Przysiad · Wykroki · Prostowanie nóg · Łydki</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section></div>
+      <sc-if value="{{flash}}" hint-placeholder-val="{{false}}"><div role="status" class="card" style="padding: 10px 14px; background: #f0faf4; border-color: #bbe5cc; color: #15803d; font-size: 13px">{{flashTxt}}</div></sc-if>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px">
+        <sc-for list="{{cards}}" as="t" hint-placeholder-count="3"><section class="card card-t" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><span style="font-weight: 600; font-size: 16px">{{t.name}}</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: {{t.last}}</span></div><span class="mono" style="font-size: 12px; color: #666">{{t.meta}}</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">{{t.list}}</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" onClick="{{t.edit}}" style="font-size: 13px">Edytuj</button></div></section></sc-for>
+        <button type="button" onClick="{{newT}}" class="card" style="min-height: 180px; border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: inherit; color: #666666; cursor: pointer"><span style="font-size: 22px; line-height: 1">+</span>Nowy szablon</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">{{editTitle}}</h1><p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">{{editMeta}}</p></div>
+      <section class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px">
+          <label class="fld">Nazwa szablonu<input class="inp" type="text" value="{{d.name}}" onChange="{{onName}}" placeholder="Np. Push, Full body A"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="hint" style="color: #b91c1c">Podaj nazwę.</span></sc-if></label>
+          <div class="fld">Dni tygodnia <span class="hint">(opcjonalnie — pojawi się w kalendarzu Sport)</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{days}}" as="dy" hint-placeholder-count="7"><button type="button" class="chip" aria-pressed="{{dy.p}}" onClick="{{dy.pick}}" style="{{dy.s}}">{{dy.t}}</button></sc-for></div></div>
+        </div>
+        <div>
+          <div class="exrow mono" style="font-size: 11px; color: #6b6b6b; padding: 4px 0"><span>#</span><span>ĆWICZENIE</span><span>SERIE</span><span>POWT.</span><span>PRZERWA</span><span></span></div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4"><div class="exrow"><span class="mono" style="color: #6b6b6b">{{r.n}}</span><span style="font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.name}}</span><span style="display: inline-flex; align-items: center; gap: 6px"><button type="button" class="icb" aria-label="{{r.lessLbl}}" onClick="{{r.less}}">−</button><span class="mono" style="width: 24px; text-align: center">{{r.sets}}</span><button type="button" class="icb" aria-label="{{r.moreLbl}}" onClick="{{r.more}}">+</button></span><input class="inp mono" type="text" value="{{r.reps}}" onChange="{{r.onReps}}" aria-label="{{r.repsLbl}}" style="padding: 5px 8px"><input class="inp mono" type="text" value="{{r.rest}}" onChange="{{r.onRest}}" aria-label="{{r.restLbl}}" style="padding: 5px 8px"><span style="display: inline-flex; gap: 4px; justify-content: flex-end"><button type="button" class="icb" aria-label="{{r.upLbl}}" aria-disabled="{{r.upDis}}" onClick="{{r.up}}">↑</button><button type="button" class="icb" aria-label="{{r.downLbl}}" aria-disabled="{{r.downDis}}" onClick="{{r.down}}">↓</button><button type="button" class="icb" aria-label="{{r.delLbl}}" onClick="{{r.del}}" style="color: #b91c1c">✕</button></span></div></sc-for>
+          <sc-if value="{{noRows}}" hint-placeholder-val="{{false}}"><p class="hint" style="padding: 14px 0; margin: 0">Brak ćwiczeń — dodaj pierwsze poniżej.</p></sc-if>
+          <div style="position: relative; margin-top: 12px; align-self: flex-start; display: inline-block">
+            <button type="button" class="btn" onClick="{{togglePicker}}" aria-haspopup="dialog" aria-expanded="{{pickExp}}">+ Ćwiczenie</button>
+            <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Dodaj ćwiczenie" style="position: absolute; left: 0; top: calc(100% + 6px); z-index: 20; width: 300px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 8px; display: flex; flex-direction: column; gap: 6px">
+              <input class="inp" type="text" value="{{q}}" onChange="{{onQ}}" onKeyDown="{{qKey}}" placeholder="Szukaj albo wpisz własne…" aria-label="Szukaj ćwiczenia">
+              <div style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column"><sc-for list="{{lib}}" as="l" hint-placeholder-count="6"><button type="button" class="pick" onClick="{{l.pick}}"><span>{{l.t}}</span><span class="mono" style="font-size: 11px; color: #6b6b6b">{{l.m}}</span></button></sc-for>
+                <sc-if value="{{custom}}" hint-placeholder-val="{{false}}"><button type="button" class="pick" onClick="{{addCustom}}" style="border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 10px"><span>+ Dodaj „{{q}}”</span><span class="mono" style="font-size: 11px; color: #6b6b6b">własne</span></button></sc-if></div>
+            </div></sc-if>
+          </div>
+        </div>
+      </section>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; gap: 8px"><button type="button" class="btnp" onClick="{{saveT}}" aria-disabled="{{saveDis}}" style="{{saveS}}">Zapisz szablon</button><button type="button" class="btn" onClick="{{cancel}}">Anuluj</button></div>
+        <sc-if value="{{canDelete}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{delT}}" style="color: #b91c1c; border-color: #f3c7c7">Usuń szablon</button></sc-if>
+      </div>
+      </sc-if>
+      <div style="display: none"><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Push</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: czw 12.11</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 13 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Wyciskanie na ławce · Wyciskanie hantli skos · Pompki na poręczach · Wznosy bokiem</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Pull</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: pt 06.11</span></div><span class="mono" style="font-size: 12px; color: #666">5 ćwiczeń · 15 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Martwy ciąg · Podciąganie · Wiosłowanie sztangą · Face pull · Uginanie hantli</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section><section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600; font-size: 16px">Nogi</span><span class="mono" style="font-size: 11px; color: #6b6b6b">ostatnio: —</span></div><span class="mono" style="font-size: 12px; color: #666">4 ćwiczenia · 14 serii</span><p style="margin: 0; font-size: 13px; color: #404040; line-height: 1.6">Przysiad · Wykroki · Prostowanie nóg · Łydki</p><div style="display: flex; gap: 8px; margin-top: auto"><a href="GymLog.dc.html" class="btnp" style="font-size: 13px">Rozpocznij</a><button type="button" class="btn" style="font-size: 13px">Edytuj</button></div></section></div>
+      </div>
     </div>
   </main>
 
@@ -47,9 +92,66 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  
   renderVals() {
-    return {};
+    const S = this.state || {};
+    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const ex = (name, sets, reps, rest) => ({ id: name, name, sets, reps, rest: rest || '2:00' });
+    const SEED = [
+      { id: 't1', name: 'Push', last: 'czw 12.11', days: [3], ex: [ex('Wyciskanie na ławce', 4, '5–6', '3:00'), ex('Wyciskanie hantli skos', 3, '8–10'), ex('Pompki na poręczach', 3, '10–12'), ex('Wznosy bokiem', 3, '12–15', '1:30')] },
+      { id: 't2', name: 'Pull', last: 'pt 06.11', days: [4], ex: [ex('Martwy ciąg', 3, '5', '3:00'), ex('Podciąganie', 3, '6–8'), ex('Wiosłowanie sztangą', 3, '8–10'), ex('Face pull', 3, '12–15', '1:30'), ex('Uginanie hantli', 3, '10–12', '1:30')] },
+      { id: 't3', name: 'Nogi', last: '—', days: [], ex: [ex('Przysiad', 4, '5–6', '3:00'), ex('Wykroki', 3, '10'), ex('Prostowanie nóg', 3, '12–15', '1:30'), ex('Łydki', 4, '15', '1:00')] }
+    ];
+    const T = S.list || SEED;
+    const D = S.draft || null;
+    const pl = (n, a, b, c) => n + ' ' + (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? b : c);
+    const WD = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+    const open = (t) => this.setState({ draft: JSON.parse(JSON.stringify(t)), isNew: false, pick: false, q: '', tried: false, flash: '' });
+    const out = { isList: !D, isEdit: !!D,
+      newT: () => this.setState({ draft: { id: 'n' + nid(), name: '', last: '—', days: [], ex: [] }, isNew: true, pick: false, q: '', tried: false, flash: '' }),
+      flash: !!S.flash, flashTxt: S.flash || '',
+      cards: T.map((t) => ({ name: t.name, last: t.last, edit: () => open(t),
+        meta: pl(t.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(t.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii') + (t.days.length ? ' · ' + t.days.slice().sort().map((i) => WD[i]).join(', ') : ''),
+        list: t.ex.length ? t.ex.map((e) => e.name).join(' · ') : 'Brak ćwiczeń' })) };
+    if (!D) return out;
+    const setD = (patch, extra) => this.setState(Object.assign({ draft: Object.assign({}, D, patch) }, extra || {}));
+    const setEx = (i, patch) => setD({ ex: D.ex.map((e, j) => (j === i ? Object.assign({}, e, patch) : e)) });
+    const move = (i, dir) => { const j = i + dir; if (j < 0 || j >= D.ex.length) return; const a = D.ex.slice(); const t = a[i]; a[i] = a[j]; a[j] = t; setD({ ex: a }); };
+    const valid = !!D.name.trim() && D.ex.length > 0;
+    const LIB = [['Wyciskanie na ławce', 'klatka'], ['Wyciskanie hantli skos', 'klatka'], ['Wyciskanie żołnierskie', 'barki'], ['Wznosy bokiem', 'barki'], ['Rozpiętki na wyciągu', 'klatka'], ['Pompki na poręczach', 'triceps'], ['Francuskie wyciskanie', 'triceps'], ['Przysiad', 'nogi'], ['Martwy ciąg', 'plecy'], ['Podciąganie', 'plecy'], ['Wiosłowanie sztangą', 'plecy'], ['Face pull', 'barki'], ['Uginanie hantli', 'biceps'], ['Wykroki', 'nogi'], ['Hip thrust', 'pośladki'], ['Plank', 'brzuch']];
+    const q = S.q || '', ql = q.trim().toLowerCase();
+    const have = D.ex.map((e) => e.name.toLowerCase());
+    const lib = LIB.filter((l) => have.indexOf(l[0].toLowerCase()) < 0 && (!ql || (l[0] + ' ' + l[1]).toLowerCase().indexOf(ql) >= 0));
+    const addEx = (name) => setD({ ex: D.ex.concat([{ id: nid(), name, sets: 3, reps: '8–10', rest: '2:00' }]) }, { pick: false, q: '' });
+    const pickOpen = !!S.pick;
+    return Object.assign(out, {
+      d: D, crumb: S.isNew ? 'Nowy szablon' : 'Edycja: ' + (D.name || 'bez nazwy'),
+      editTitle: S.isNew ? 'Nowy szablon' : 'Edytuj szablon',
+      editMeta: pl(D.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(D.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii'),
+      onName: (e) => setD({ name: e.target.value }), nameErr: !!S.tried && !D.name.trim(),
+      days: WD.map((w, i) => { const on = D.days.indexOf(i) >= 0; return { t: w, p: on ? 'true' : 'false', s: on ? 'background:#171717;border-color:#171717;color:#ffffff' : '', pick: () => setD({ days: on ? D.days.filter((x) => x !== i) : D.days.concat([i]) }) }; }),
+      rows: D.ex.map((e, i) => ({ n: i + 1, name: e.name, sets: e.sets, reps: e.reps, rest: e.rest,
+        lessLbl: e.name + ': mniej serii', moreLbl: e.name + ': więcej serii', repsLbl: e.name + ': powtórzenia', restLbl: e.name + ': przerwa', upLbl: 'Przesuń ' + e.name + ' w górę', downLbl: 'Przesuń ' + e.name + ' w dół', delLbl: 'Usuń ' + e.name,
+        less: () => setEx(i, { sets: Math.max(1, e.sets - 1) }), more: () => setEx(i, { sets: Math.min(10, e.sets + 1) }),
+        onReps: (ev) => setEx(i, { reps: ev.target.value }), onRest: (ev) => setEx(i, { rest: ev.target.value }),
+        up: () => move(i, -1), down: () => move(i, 1), upDis: i === 0 ? 'true' : 'false', downDis: i === D.ex.length - 1 ? 'true' : 'false',
+        del: () => setD({ ex: D.ex.filter((_, j) => j !== i) }) })),
+      noRows: !D.ex.length,
+      pickOpen, pickExp: pickOpen ? 'true' : 'false', togglePicker: () => this.setState({ pick: !pickOpen, q: '' }),
+      q, onQ: (ev) => this.setState({ q: ev.target.value }),
+      qKey: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const v = (ev.target.value || '').trim(); if (lib[0] && lib[0][0].toLowerCase().indexOf(v.toLowerCase()) >= 0) addEx(lib[0][0]); else if (v) addEx(v); } else if (ev.key === 'Escape') this.setState({ pick: false }); },
+      lib: lib.map((l) => ({ t: l[0], m: l[1], pick: () => addEx(l[0]) })),
+      custom: !!ql && !LIB.some((l) => l[0].toLowerCase() === ql), addCustom: () => addEx(q.trim()),
+      saveDis: valid ? 'false' : 'true', saveS: valid ? '' : 'opacity:.45;cursor:not-allowed',
+      saveT: () => {
+        if (!valid) { this.setState({ tried: true }); return; }
+        const t = Object.assign({}, D, { name: D.name.trim() });
+        const exists = T.some((x) => x.id === t.id);
+        this.setState({ list: exists ? T.map((x) => (x.id === t.id ? t : x)) : T.concat([t]), draft: null, pick: false, flash: (exists ? 'Zapisano zmiany w szablonie „' : 'Dodano szablon „') + t.name + '”.' });
+      },
+      cancel: () => this.setState({ draft: null, pick: false }),
+      canDelete: !S.isNew,
+      delT: () => this.setState({ list: T.filter((x) => x.id !== D.id), draft: null, pick: false, flash: 'Usunięto szablon „' + D.name + '”.' })
+    });
   }
 }
 </script>

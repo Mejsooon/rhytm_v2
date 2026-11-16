@@ -28,10 +28,17 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.set-del{opacity:0;transition:opacity 120ms ease}
+.set-row:hover .set-del,.set-del:focus-visible{opacity:1}
+.addset{background:none;border:0;border-radius:6px;padding:6px 8px;margin:6px 0 0 -8px;font:inherit;font-size:13px;color:#666666;cursor:pointer}
+.addset:hover{background:#f5f5f5;color:#171717}
+.pick{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.pick:hover{background:#f5f5f5}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 1200px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="1200" hint-size="100%,1200px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="sport" min-height="1200" hint-size="100%,1200px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Sport</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Push · czw 19.11</span></div>
@@ -53,12 +60,23 @@ a{color:#171717}a:hover{color:#000000}
           </div>
           <div class="mono" style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; font-size: 11px; color: #6b6b6b; padding: 4px 0; border-bottom: 1px solid #f0f0f0"><span>seria</span><span>kg</span><span>powt.</span><span>✓</span></div>
           <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
-            <div class="mono" style="{{s.rowS}}"><span>{{s.n}}</span><input class="inp" type="text" value="{{s.kg}}" aria-label="Ciężar" style="padding: 5px 8px"><input class="inp" type="text" value="{{s.reps}}" aria-label="Powtórzenia" style="padding: 5px 8px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="Seria zrobiona" style="accent-color: #15803d; width: 18px; height: 18px"></div>
+            <div class="mono set-row" style="{{s.rowS}}"><span>{{s.n}}</span><input class="inp" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="kg" aria-label="{{s.kgLabel}}" style="padding: 5px 8px"><input class="inp" type="text" inputMode="numeric" value="{{s.reps}}" onChange="{{s.onReps}}" placeholder="powt." aria-label="{{s.repsLabel}}" style="padding: 5px 8px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="{{s.doneLabel}}" style="accent-color: #15803d; width: 18px; height: 18px"><button type="button" class="set-del" aria-label="{{s.delLabel}}" onClick="{{s.del}}" style="background: none; border: 0; color: #8a8a8a; cursor: pointer; padding: 4px; font: inherit">✕</button></div>
           </sc-for>
-          <button type="button" style="background: none; border: 0; padding: 8px 0 0; font: inherit; font-size: 13px; color: #666666; cursor: pointer">+ Seria</button>
+          <div style="display: flex; justify-content: space-between; align-items: center"><button type="button" class="addset" onClick="{{e.addSet}}">+ Seria</button><button type="button" class="addset" onClick="{{e.remove}}" style="color: #b91c1c; margin: 6px -8px 0 0">Usuń ćwiczenie</button></div>
         </section>
       </sc-for>
-      <button type="button" class="btn" style="align-self: flex-start">+ Ćwiczenie</button>
+      <div style="position: relative; align-self: flex-start">
+        <button type="button" class="btn" onClick="{{togglePicker}}" aria-haspopup="dialog" aria-expanded="{{pickExp}}">+ Ćwiczenie</button>
+        <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}">
+          <div role="dialog" aria-label="Dodaj ćwiczenie" style="position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 20; width: 300px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 8px; display: flex; flex-direction: column; gap: 6px">
+            <input class="inp" type="text" value="{{q}}" onChange="{{onQ}}" onKeyDown="{{qKey}}" placeholder="Szukaj albo wpisz własne…" aria-label="Szukaj ćwiczenia">
+            <div style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column">
+              <sc-for list="{{lib}}" as="l" hint-placeholder-count="6"><button type="button" class="pick" onClick="{{l.pick}}"><span>{{l.t}}</span><span class="mono" style="font-size: 11px; color: #6b6b6b">{{l.m}}</span></button></sc-for>
+              <sc-if value="{{custom}}" hint-placeholder-val="{{false}}"><button type="button" class="pick" onClick="{{addCustom}}" style="border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 10px"><span>+ Dodaj „{{q}}”</span><span class="mono" style="font-size: 11px; color: #6b6b6b">własne</span></button></sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
     </div>
   </main>
 
@@ -66,26 +84,56 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { done: { '0-0': true, '0-1': true, '0-2': true, '1-0': true, '1-1': true } }; }
   renderVals() {
-    const ex = [
-      ['Wyciskanie na ławce', [[70, 6], [70, 6], [72.5, 5], [72.5, 4]], '82,5 kg', '+2,5 kg vs ostatnio'],
-      ['Wyciskanie hantli skos', [[26, 10], [26, 10], [26, 9]], '34 kg', 'jak ostatnio'],
-      ['Pompki na poręczach', [[0, 12], [0, 10], [0, 9]], '—', 'masa ciała'],
-      ['Wznosy bokiem', [[10, 15], [10, 14], [10, 12]], '—', '']
+    const S = this.state || {};
+    let n = 0;
+    const mkSet = (kg, reps, d) => ({ id: 's' + (n++), kg, reps, d: !!d });
+    const SEED = [
+      { id: 'e1', name: 'Wyciskanie na ławce', best: '82,5 kg', note: '+2,5 kg vs ostatnio', sets: [mkSet('70', '6', 1), mkSet('70', '6', 1), mkSet('72,5', '5', 1), mkSet('72,5', '4')] },
+      { id: 'e2', name: 'Wyciskanie hantli skos', best: '34 kg', note: 'jak ostatnio', sets: [mkSet('26', '10', 1), mkSet('26', '10', 1), mkSet('26', '9')] },
+      { id: 'e3', name: 'Pompki na poręczach', best: '—', note: 'masa ciała', sets: [mkSet('MC', '12'), mkSet('MC', '10'), mkSet('MC', '9')] },
+      { id: 'e4', name: 'Wznosy bokiem', best: '—', note: '', sets: [mkSet('10', '15'), mkSet('10', '14'), mkSet('10', '12')] }
     ];
-    const done = this.state.done;
+    const EX = S.ex || SEED;
+    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const save = (ex, extra) => this.setState(Object.assign({ ex }, extra || {}));
+    const updE = (id, fn) => save(EX.map((e) => (e.id === id ? fn(e) : e)));
+    const updS = (eid, sid, patch) => updE(eid, (e) => Object.assign({}, e, { sets: e.sets.map((s) => (s.id === sid ? Object.assign({}, s, patch) : s)) }));
+    const num = (v) => { const x = parseFloat(String(v || '').replace(',', '.')); return isNaN(x) ? 0 : x; };
     let vol = 0, cnt = 0, all = 0;
-    const items = ex.map((e, i) => ({
-      name: e[0], best: e[2], note: e[3],
-      sets: e[1].map((s, j) => {
-        const k = i + '-' + j; const d = !!done[k]; all++; if (d) { cnt++; vol += s[0] * s[1]; }
-        return { n: String(j + 1), kg: s[0] ? String(s[0]).replace('.', ',') : 'MC', reps: String(s[1]), d,
-          toggle: () => this.setState({ done: Object.assign({}, done, { [k]: !d }) }),
-          rowS: 'display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 0;' + (d ? 'color:#6b6b6b' : '') };
+    const items = EX.map((e) => ({
+      name: e.name, best: e.best, note: e.note || 'nowe',
+      addSet: () => updE(e.id, (x) => { const last = x.sets[x.sets.length - 1]; return Object.assign({}, x, { sets: x.sets.concat([{ id: nid(), kg: last ? last.kg : '', reps: last ? last.reps : '', d: false }]) }); }),
+      remove: () => save(EX.filter((x) => x.id !== e.id)),
+      sets: e.sets.map((s, j) => {
+        all++; if (s.d) { cnt++; vol += num(s.kg) * num(s.reps); }
+        const lbl = e.name + ', seria ' + (j + 1);
+        return { n: String(j + 1), kg: s.kg, reps: s.reps, d: s.d,
+          kgLabel: lbl + ' — ciężar', repsLabel: lbl + ' — powtórzenia', doneLabel: lbl + ' zrobiona', delLabel: 'Usuń ' + lbl,
+          onKg: (ev) => updS(e.id, s.id, { kg: ev.target.value }),
+          onReps: (ev) => updS(e.id, s.id, { reps: ev.target.value }),
+          toggle: () => updS(e.id, s.id, { d: !s.d }),
+          del: () => updE(e.id, (x) => Object.assign({}, x, { sets: x.sets.filter((y) => y.id !== s.id) })),
+          rowS: 'display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) 44px 28px;gap:8px;align-items:center;padding:6px 0;' + (s.d ? 'color:#6b6b6b' : '') };
       })
     }));
-    return { items, vol: vol.toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all };
+    const LIB = [['Wyciskanie żołnierskie', 'barki'], ['Wyciskanie hantli nad głowę', 'barki'], ['Rozpiętki na wyciągu', 'klatka'], ['Wyciskanie wąsko', 'triceps'], ['Prostowanie ramion na wyciągu', 'triceps'], ['Francuskie wyciskanie', 'triceps'], ['Pompki', 'klatka'], ['Przysiad ze sztangą', 'nogi'], ['Martwy ciąg', 'plecy'], ['Podciąganie', 'plecy'], ['Wiosłowanie sztangą', 'plecy'], ['Uginanie ramion', 'biceps']];
+    const q = S.q || '';
+    const ql = q.trim().toLowerCase();
+    const have = EX.map((e) => e.name.toLowerCase());
+    const addEx = (name) => save(EX.concat([{ id: nid(), name, best: '—', note: 'nowe', sets: [{ id: nid() + 'a', kg: '', reps: '', d: false }, { id: nid() + 'b', kg: '', reps: '', d: false }, { id: nid() + 'c', kg: '', reps: '', d: false }] }]), { pick: false, q: '' });
+    const lib = LIB.filter((l) => have.indexOf(l[0].toLowerCase()) < 0 && (!ql || (l[0] + ' ' + l[1]).toLowerCase().indexOf(ql) >= 0));
+    const pickOpen = !!S.pick;
+    return {
+      items, vol: Math.round(vol).toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all,
+      pickOpen, pickExp: pickOpen ? 'true' : 'false',
+      togglePicker: () => this.setState({ pick: !pickOpen, q: '' }),
+      q, onQ: (ev) => this.setState({ q: ev.target.value }),
+      qKey: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const v = (ev.target.value || '').trim(); const hit = lib[0]; if (hit && hit[0].toLowerCase().indexOf(v.toLowerCase()) >= 0) addEx(hit[0]); else if (v) addEx(v); } else if (ev.key === 'Escape') this.setState({ pick: false }); },
+      lib: lib.map((l) => ({ t: l[0], m: l[1], pick: () => addEx(l[0]) })),
+      custom: !!ql && !LIB.some((l) => l[0].toLowerCase() === ql),
+      addCustom: () => addEx(q.trim())
+    };
   }
 }
 </script>

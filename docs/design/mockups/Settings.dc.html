@@ -14,15 +14,27 @@ body{margin:0;background:#ffffff}
 a{color:#171717}a:hover{color:#000000}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
-.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff;overflow:hidden}
+.card{border:1px solid #eaeaea;border-radius:8px;background:#ffffff}
 .btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
 .btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
 .inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;color:#171717;width:100%;box-sizing:border-box}
-.foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;background:#fafafa;border-top:1px solid #eaeaea}
+.foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;background:#fafafa;border-top:1px solid #eaeaea;border-radius:0 0 8px 8px}
+.btnp[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
+.inp:focus{outline:none;border-color:#171717}
+.ok{font-size:13px;color:#15803d}
+.dd{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;box-sizing:border-box;background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font:inherit;font-weight:400;color:#171717;cursor:pointer;text-align:left}
+.dd:hover{border-color:#cfcfcf}
+.dd[aria-expanded="true"]{border-color:#171717}
+.ddpop{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:6px;display:flex;flex-direction:column;gap:1px;font-weight:400}
+.ddopt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
+.ddopt:hover{background:#f5f5f5}
+.ddopt[aria-selected="true"]{background:#f0f0f0;font-weight:500}
+.err{font-size:12px;color:#b91c1c;font-weight:400}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="ustawienia" min-height="1180" hint-size="100%,1180px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="ustawienia" min-height="1180" hint-size="100%,1180px"></dc-import></div>
 
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; align-items: center; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
@@ -31,11 +43,11 @@ a{color:#171717}a:hover{color:#000000}
 
     <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
       <nav aria-label="Sekcje ustawień" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
-        <a href="#" aria-current="page" style="padding: 7px 10px; border-radius: 6px; background: #f0f0f0; font-weight: 500; text-decoration: none">Ogólne</a>
-        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Konto i bezpieczeństwo</a>
+        <a href="Settings.dc.html" aria-current="page" style="padding: 7px 10px; border-radius: 6px; background: #f0f0f0; font-weight: 500; text-decoration: none">Ogólne</a>
+        <a href="SettingsAccount.dc.html" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Konto i bezpieczeństwo</a>
         <a href="Vault.dc.html" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Sejf</a>
-        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Powiadomienia</a>
-        <a href="#" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Kategorie kalendarza</a>
+        <a href="SettingsNotifications.dc.html" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Powiadomienia</a>
+        <a href="CategoryDialog.dc.html" style="padding: 7px 10px; border-radius: 6px; color: #666666; text-decoration: none">Kategorie kalendarza</a>
       </nav>
 
       <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
@@ -46,13 +58,13 @@ a{color:#171717}a:hover{color:#000000}
             <h2 style="margin: 0; font-size: 16px; font-weight: 600">Profil</h2>
             <p style="margin: 4px 0 16px; color: #666666">Waga i wzrost służą do liczenia kcal biegów.</p>
             <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wyświetlana nazwa<input class="inp" type="text" value="Mejson"></label>
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Strefa czasowa<select class="inp"><option>Europe/Warsaw (UTC+01:00)</option></select></label>
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Waga (kg)<input class="inp mono" type="text" value="[TWOJA WAGA]"></label>
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wzrost (cm)<input class="inp mono" type="text" value="[TWÓJ WZROST]"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wyświetlana nazwa<input class="inp" type="text" value="{{p.name}}" onChange="{{onP.name}}"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="err">Nazwa nie może być pusta.</span></sc-if></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Strefa czasowa</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.tz.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.tz.exp}}" aria-label="Strefa czasowa"><span>{{dd.tz.txt}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{dd.tz.sub}}</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.tz.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Strefa czasowa"><sc-for list="{{dd.tz.opts}}" as="o" hint-placeholder-count="6"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{o.sub}}</span></span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Waga (kg)<input class="inp mono" type="text" inputMode="decimal" value="{{p.kg}}" onChange="{{onP.kg}}" placeholder="np. 75"><sc-if value="{{kgErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj liczbę 30–250.</span></sc-if></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wzrost (cm)<input class="inp mono" type="text" inputMode="numeric" value="{{p.cm}}" onChange="{{onP.cm}}" placeholder="np. 180"><sc-if value="{{cmErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj liczbę 120–230.</span></sc-if></label>
             </div>
           </div>
-          <div class="foot"><span style="font-size: 13px; color: #666666">Zmiany zapisują się dopiero po kliknięciu.</span><button type="button" class="btnp">Zapisz</button></div>
+          <div class="foot"><span style="{{pMsgS}}">{{pMsg}}</span><span style="display: flex; gap: 8px"><sc-if value="{{pDirty}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{pReset}}">Cofnij</button></sc-if><button type="button" class="btnp" onClick="{{pSave}}" aria-disabled="{{pDis}}">Zapisz</button></span></div>
         </section>
 
         <section class="card">
@@ -60,19 +72,21 @@ a{color:#171717}a:hover{color:#000000}
             <h2 style="margin: 0; font-size: 16px; font-weight: 600">Cele</h2>
             <p style="margin: 4px 0 16px; color: #666666">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p>
             <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Cel snu<input class="inp mono" type="text" value="8:00"></label>
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Tygodniowy cel km<input class="inp mono" type="text" value="25"></label>
-              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Waluta stron<select class="inp"><option>PLN (zł)</option></select></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Cel snu<span style="display: flex; gap: 6px"><button type="button" class="btn" aria-label="Krócej" onClick="{{sleepM}}" style="padding: 7px 11px">−</button><input class="inp mono" type="text" value="{{g.sleep}}" readonly aria-label="Cel snu" style="text-align: center"><button type="button" class="btn" aria-label="Dłużej" onClick="{{sleepP}}" style="padding: 7px 11px">+</button></span></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Tygodniowy cel km<input class="inp mono" type="text" inputMode="numeric" value="{{g.km}}" onChange="{{onG.km}}"><sc-if value="{{kmErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj liczbę 1–300.</span></sc-if></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Waluta stron</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.cur.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.cur.exp}}" aria-label="Waluta stron"><span>{{dd.cur.txt}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{dd.cur.sub}}</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.cur.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Waluta stron"><sc-for list="{{dd.cur.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{o.sub}}</span></span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Tydzień zaczyna się w</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.week.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.week.exp}}" aria-label="Początek tygodnia"><span>{{dd.week.txt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.week.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Początek tygodnia"><sc-for list="{{dd.week.opts}}" as="o" hint-placeholder-count="2"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
             </div>
           </div>
-          <div class="foot"><span style="font-size: 13px; color: #666666">Waluta dotyczy pól „Kwota cykliczna”.</span><button type="button" class="btnp">Zapisz</button></div>
+          <div class="foot"><span style="{{gMsgS}}">{{gMsg}}</span><span style="display: flex; gap: 8px"><sc-if value="{{gDirty}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{gReset}}">Cofnij</button></sc-if><button type="button" class="btnp" onClick="{{gSave}}" aria-disabled="{{gDis}}">Zapisz</button></span></div>
         </section>
 
         <section class="card">
           <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
             <h2 style="margin: 0; font-size: 16px; font-weight: 600">Konto</h2>
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">E-mail</div><div class="mono" style="font-size: 12px; color: #666666">mejson@example.com · potwierdzony</div></div><button type="button" class="btn">Zmień</button></div>
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">Hasło do konta</div><div class="mono" style="font-size: 12px; color: #666666">zmienione 15.11.2026</div></div><button type="button" class="btn">Zmień hasło</button></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">E-mail</div><div class="mono" style="font-size: 12px; color: #666666">{{mailLine}}</div></div><sc-if value="{{mailIdle}}" hint-placeholder-val="{{true}}"><button type="button" class="btn" onClick="{{mailOpen}}">Zmień</button></sc-if>
+              <sc-if value="{{mailEditing}}" hint-placeholder-val="{{false}}"><div style="flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start"><label style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 4px; font-size: 13px"><span class="sr" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nowy e-mail</span><input class="inp" type="email" value="{{mail}}" onChange="{{onMail}}" placeholder="nowy@adres.pl"><sc-if value="{{mailErr}}" hint-placeholder-val="{{false}}"><span class="err">To nie wygląda na adres e-mail.</span></sc-if></label><button type="button" class="btnp" onClick="{{mailSend}}">Wyślij link</button><button type="button" class="btn" onClick="{{mailCancel}}">Anuluj</button></div></sc-if></div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">Hasło do konta</div><div class="mono" style="font-size: 12px; color: #666666">zmienione 15.11.2026</div></div><a href="SettingsAccount.dc.html" class="btn" style="text-decoration: none">Zmień hasło</a></div>
             <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0"><div><div style="font-weight: 500">Sesja</div><div class="mono" style="font-size: 12px; color: #666666">Chrome · Parrot OS · teraz</div></div><a href="Login.dc.html" class="btn" style="text-decoration: none">Wyloguj</a></div>
           </div>
         </section>
@@ -82,7 +96,8 @@ a{color:#171717}a:hover{color:#000000}
             <h2 style="margin: 0; font-size: 16px; font-weight: 600">Usuń konto</h2>
             <p style="margin: 4px 0 0; color: #666666">Trwale usuwa konto, wszystkie strony, sejf i dane modułów. Tego nie da się cofnąć.</p>
           </div>
-          <div style="display: flex; justify-content: flex-end; padding: 12px 20px; background: #fef2f2; border-top: 1px solid #fecaca"><button type="button" style="background: #b91c1c; color: #ffffff; border: 1px solid #b91c1c; border-radius: 6px; padding: 7px 12px; font: inherit; font-weight: 500; cursor: pointer">Usuń konto</button></div>
+          <sc-if value="{{delIdle}}" hint-placeholder-val="{{true}}"><div style="display: flex; justify-content: flex-end; padding: 12px 20px; background: #fef2f2; border-top: 1px solid #fecaca"><button type="button" onClick="{{delOpen}}" style="background: #b91c1c; color: #ffffff; border: 1px solid #b91c1c; border-radius: 6px; padding: 7px 12px; font: inherit; font-weight: 500; cursor: pointer">Usuń konto</button></div></sc-if>
+          <sc-if value="{{delAsk}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 14px 20px; background: #fef2f2; border-top: 1px solid #fecaca"><label style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #7f1d1d"><span>Wpisz <span class="mono" style="background: #ffffff; border: 1px solid #fecaca; border-radius: 4px; padding: 0 5px">USUŃ</span>, żeby potwierdzić</span><input class="inp mono" type="text" value="{{delTxt}}" onChange="{{onDel}}" placeholder="USUŃ" autocomplete="off"></label><button type="button" class="btn" onClick="{{delCancel}}">Anuluj</button><a href="Login.dc.html" aria-disabled="{{delDis}}" style="{{delS}}">Usuń konto na zawsze</a></div></sc-if>
         </section>
       </div>
     </div>
@@ -91,7 +106,70 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
 class Component extends DCLogic {
-  renderVals() { return {}; }
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'Settings.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const P0 = S.pSaved || { name: 'Mejson', tz: 'Europe/Warsaw', kg: '', cm: '' };
+    const P = S.p || P0;
+    const G0 = S.gSaved || { sleep: 480, km: '25', cur: 'PLN', week: 'pn' };
+    const G = S.g || G0;
+    const same = (a, b) => Object.keys(a).every((k) => String(a[k]) === String(b[k]));
+    const n = (v) => parseFloat(String(v || '').replace(',', '.'));
+    const kgErr = P.kg !== '' && !(n(P.kg) >= 30 && n(P.kg) <= 250);
+    const cmErr = P.cm !== '' && !(n(P.cm) >= 120 && n(P.cm) <= 230);
+    const nameErr = !String(P.name).trim();
+    const kmErr = !(n(G.km) >= 1 && n(G.km) <= 300);
+    const pDirty = !same(P, P0), gDirty = !same(G, G0);
+    const pOk = pDirty && !kgErr && !cmErr && !nameErr, gOk = gDirty && !kmErr;
+    const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    const grey = 'font-size:13px;color:#666666', green = 'font-size:13px;color:#15803d';
+    const mailState = S.mail || 'idle';
+    const mail = S.mailTxt || '';
+    const delTxt = S.delTxt || '';
+    const delOk = delTxt.trim().toUpperCase() === 'USUŃ';
+    const OPEN = S.dd || null;
+    const mkDD = (key, val, list, set) => {
+      const open = OPEN === key;
+      const cur = list.filter((o) => o[0] === val)[0] || list[0];
+      return { open, exp: open ? 'true' : 'false', txt: cur[1], sub: cur[2] || '',
+        toggle: () => this.setState({ dd: open ? null : key }),
+        opts: list.map((o) => ({ t: o[1], sub: o[2] || '', p: o[0] === val ? 'true' : 'false', check: o[0] === val ? '✓' : '', pick: () => set(o[0]) })) };
+    };
+    const dd = {
+      tz: mkDD('tz', P.tz, [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00'], ['Asia/Tokyo', 'Tokio', 'UTC+09:00']], (v) => this.setState({ p: Object.assign({}, P, { tz: v }), dd: null, pMsg: '' })),
+      cur: mkDD('cur', G.cur, [['PLN', 'PLN', 'zł'], ['EUR', 'EUR', '€'], ['USD', 'USD', '$'], ['GBP', 'GBP', '£']], (v) => this.setState({ g: Object.assign({}, G, { cur: v }), dd: null, gMsg: '' })),
+      week: mkDD('week', G.week, [['pn', 'Poniedziałek'], ['nd', 'Niedzielę']], (v) => this.setState({ g: Object.assign({}, G, { week: v }), dd: null, gMsg: '' }))
+    };
+    const onP = {}, onG = {};
+    ['name', 'tz', 'kg', 'cm'].forEach((k) => { onP[k] = (e) => this.setState({ p: Object.assign({}, P, { [k]: e.target.value }), pMsg: '' }); });
+    ['km', 'cur', 'week'].forEach((k) => { onG[k] = (e) => this.setState({ g: Object.assign({}, G, { [k]: e.target.value }), gMsg: '' }); });
+    return {
+      dd, p: P, onP, nameErr, kgErr, cmErr, pDirty,
+      pDis: pOk ? 'false' : 'true',
+      pSave: () => { if (pOk) this.setState({ pSaved: P, p: null, pMsg: 'Zapisano ✓' }); },
+      pReset: () => this.setState({ p: null, pMsg: '' }),
+      pMsg: S.pMsg || (pDirty ? 'Masz niezapisane zmiany.' : 'Waga i wzrost są opcjonalne.'), pMsgS: S.pMsg ? green : grey,
+      g: Object.assign({}, G, { sleep: hm(G.sleep) }), onG, kmErr, gDirty,
+      sleepM: () => this.setState({ g: Object.assign({}, G, { sleep: Math.max(300, G.sleep - 15) }), gMsg: '' }),
+      sleepP: () => this.setState({ g: Object.assign({}, G, { sleep: Math.min(660, G.sleep + 15) }), gMsg: '' }),
+      gDis: gOk ? 'false' : 'true',
+      gSave: () => { if (gOk) this.setState({ gSaved: G, g: null, gMsg: 'Zapisano ✓ — cele zaktualizowane na ekranie Dziś' }); },
+      gReset: () => this.setState({ g: null, gMsg: '' }),
+      gMsg: S.gMsg || (gDirty ? 'Masz niezapisane zmiany.' : 'Waluta dotyczy pól „Kwota cykliczna”.'), gMsgS: S.gMsg ? green : grey,
+      mailIdle: mailState !== 'edit', mailEditing: mailState === 'edit', mail,
+      mailLine: mailState === 'sent' ? 'mejson@example.com · link potwierdzający wysłany na ' + S.mailTo : 'mejson@example.com · potwierdzony',
+      mailOpen: () => this.setState({ mail: 'edit', mailTxt: '', mailTried: false }),
+      onMail: (e) => this.setState({ mailTxt: e.target.value }),
+      mailErr: !!S.mailTried && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail),
+      mailSend: () => { if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) this.setState({ mail: 'sent', mailTo: mail }); else this.setState({ mailTried: true }); },
+      mailCancel: () => this.setState({ mail: 'idle' }),
+      delIdle: !S.del, delAsk: !!S.del, delTxt,
+      delOpen: () => this.setState({ del: true, delTxt: '' }), delCancel: () => this.setState({ del: false }),
+      onDel: (e) => this.setState({ delTxt: e.target.value }),
+      delDis: delOk ? 'false' : 'true',
+      delS: 'text-decoration:none;display:inline-flex;align-items:center;background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font-weight:500;' + (delOk ? 'cursor:pointer' : 'opacity:.4;pointer-events:none')
+    };
+  }
 }
 </script>
 </body>

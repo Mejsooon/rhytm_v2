@@ -28,10 +28,13 @@ a{color:#171717}a:hover{color:#000000}
 .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:4px;padding:0 5px;color:#404040;background:#ffffff}
 
+.btnp[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
+.inp:focus{outline:none;border-color:#171717}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 1060px; position: relative; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="ustawienia" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="ustawienia" min-height="1060" hint-size="100%,1060px"></dc-import></div>
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea; min-height: 34px">
       <div class="mono" style="font-size: 13px; color: #666666"><span>Ustawienia</span> <span style="color: #b0b0b0">/</span> <span style="color: #171717">Konto i bezpieczeństwo</span></div>
@@ -44,21 +47,22 @@ a{color:#171717}a:hover{color:#000000}
         <section class="card" style="overflow: hidden">
           <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
             <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Zmień hasło do konta</h2><p style="margin: 4px 0 0; color: #666666; font-size: 13px">Hasło do konta nie otwiera sejfu.</p></div>
-            <label class="fld">Obecne hasło<input class="inp" type="password" autocomplete="current-password"></label>
-            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><label class="fld">Nowe hasło<input class="inp" type="password" autocomplete="new-password"></label><label class="fld">Powtórz<input class="inp" type="password" autocomplete="new-password"></label></div>
+            <label class="fld">Obecne hasło<input class="inp" type="password" autocomplete="current-password" value="{{cur}}" onChange="{{onCur}}"></label>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><label class="fld">Nowe hasło<input class="inp" type="password" autocomplete="new-password" value="{{nw}}" onChange="{{onNw}}"><span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 2px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="{{b.s}}"></span></sc-for></span><span class="hint">{{strength}}</span></label><label class="fld">Powtórz<input class="inp" type="password" autocomplete="new-password" value="{{rep}}" onChange="{{onRep}}"><span class="hint" style="{{repS}}">{{repTxt}}</span></label></div>
           </div>
-          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: #fafafa; border-top: 1px solid #eaeaea"><span style="font-size: 13px; color: #666666">Min. 10 znaków. Wylogujemy inne urządzenia.</span><button type="button" class="btnp">Zmień hasło</button></div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: #fafafa; border-top: 1px solid #eaeaea"><span style="{{pwMsgS}}">{{pwMsg}}</span><button type="button" class="btnp" onClick="{{pwSave}}" aria-disabled="{{pwDis}}">Zmień hasło</button></div>
         </section>
         <section class="card" style="overflow: hidden">
-          <div style="padding: 14px 20px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Aktywne sesje</h2><button type="button" class="btn">Wyloguj wszystkie inne</button></div>
+          <div style="padding: 14px 20px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Sesje</h2><button type="button" class="btn" onClick="{{logoutAll}}">Wyloguj wszystkie inne</button></div>
           <div style="padding: 0 20px">
             <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0"><div><div style="font-weight: 500">Chrome · Parrot OS</div><div style="font-size: 13px; color: #666666">Polska · teraz · ta sesja</div></div><span class="mono" style="font-size: 11px; color: #15803d; border: 1px solid #bbe5cc; background: #f0faf4; border-radius: 4px; padding: 1px 6px">TA</span></div>
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 0; "><div><div style="font-weight: 500">Safari · iPhone</div><div style="font-size: 13px; color: #666666">wczoraj 21:14</div></div><button type="button" class="btn">Wyloguj</button></div>
+            <p style="margin: 0; padding: 12px 0; font-size: 13px; color: #666666; border-bottom: 1px solid #f0f0f0">„Wyloguj wszystkie inne” kończy sesje na wszystkich pozostałych urządzeniach i przeglądarkach. Tu zostaniesz zalogowany.</p>
+            <sc-if value="{{sessMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 12px 0; font-size: 13px; color: #15803d">{{sessMsgTxt}}</p></sc-if>
           </div>
         </section>
         <section class="card" style="overflow: hidden">
           <div style="padding: 20px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Eksport danych</h2><p style="margin: 4px 0 0; color: #666666; font-size: 13px">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div>
-          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: #fafafa; border-top: 1px solid #eaeaea"><span class="mono" style="font-size: 12px; color: #6b6b6b">ostatni eksport: nigdy</span><button type="button" class="btn">Pobierz .json</button></div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: #fafafa; border-top: 1px solid #eaeaea"><span class="mono" style="{{expS}}">{{expTxt}}</span><button type="button" class="btn" onClick="{{exportNow}}">{{expBtn}}</button></div>
         </section>
       </div>
     </div>
@@ -68,9 +72,38 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
 class Component extends DCLogic {
-  
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'SettingsAccount.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   renderVals() {
-    return {};
+    const S = this.state || {};
+    const cur = S.cur || '', nw = S.nw || '', rep = S.rep || '';
+    const score = (nw.length >= 10 ? 1 : 0) + (/[A-Z]/.test(nw) ? 1 : 0) + (/[0-9]/.test(nw) ? 1 : 0) + (/[^A-Za-z0-9]/.test(nw) ? 1 : 0);
+    const col = ['#e0e0e0', '#b91c1c', '#c2410c', '#ca8a04', '#15803d'][score];
+    const match = !!rep && rep === nw;
+    const ok = !!cur && nw.length >= 10 && match && nw !== cur;
+    const why = !cur ? 'Wpisz obecne hasło.' : nw.length < 10 ? 'Nowe hasło: min. 10 znaków.' : nw === cur ? 'Nowe hasło musi różnić się od obecnego.' : !match ? 'Hasła muszą być takie same.' : 'Gotowe — wylogujemy inne urządzenia.';
+    const SESS = [['ip', 'Safari · iPhone', 'wczoraj 21:14'], ['mac', 'Firefox · Windows 11', 'Lublin · 12.11 08:02']];
+    const out = S.out || {};
+    const left = SESS.filter((s) => !out[s[0]]);
+    const pl = (n) => n === 1 ? '1 sesja' : n + (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? ' sesje' : ' sesji');
+    return {
+      cur, nw, rep,
+      onCur: (e) => this.setState({ cur: e.target.value, pwDone: false }), onNw: (e) => this.setState({ nw: e.target.value, pwDone: false }), onRep: (e) => this.setState({ rep: e.target.value, pwDone: false }),
+      bars: [0, 1, 2, 3].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (i < score ? col : '#ececec') })),
+      strength: nw ? ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'][score] + ' hasło' : '10+ znaków, wielka litera, cyfra, znak',
+      repTxt: !rep ? ' ' : match ? 'Hasła są takie same ✓' : 'Hasła się różnią', repS: match ? 'color:#15803d' : 'color:#b91c1c',
+      pwDis: ok ? 'false' : 'true',
+      pwSave: () => { if (ok) this.setState({ cur: '', nw: '', rep: '', pwDone: true, out: { ip: true, mac: true } }); },
+      pwMsg: S.pwDone ? 'Hasło zmienione ✓ Inne urządzenia zostały wylogowane.' : (cur || nw || rep ? why : 'Min. 10 znaków. Wylogujemy inne urządzenia.'),
+      pwMsgS: 'font-size:13px;color:' + (S.pwDone || ok ? '#15803d' : '#666666'),
+      sessions: left.map((s) => ({ t: s[1], m: s[2], out: () => this.setState({ out: Object.assign({}, out, { [s[0]]: true }), sessMsgTxt: 'Wylogowano: ' + s[1] }) })),
+      hasOthers: left.length > 0, sessCount: pl(left.length + 1),
+      logoutAll: () => this.setState({ out: { ip: true, mac: true }, sessMsgTxt: 'Wylogowano wszystkie inne urządzenia ✓' }),
+      sessMsg: !!S.sessMsgTxt, sessMsgTxt: S.sessMsgTxt || '',
+      expTxt: S.exp === 'busy' ? 'przygotowuję plik…' : S.exp === 'done' ? 'rhytm-export-2026-11-16.json · 2,4 MB · pobrano' : 'ostatni eksport: nigdy',
+      expS: 'font-size:12px;color:' + (S.exp === 'done' ? '#15803d' : '#6b6b6b'),
+      expBtn: S.exp === 'done' ? 'Pobierz ponownie' : 'Pobierz .json',
+      exportNow: () => { this.setState({ exp: 'busy' }); setTimeout(() => this.setState({ exp: 'done' }), 900); }
+    };
   }
 }
 </script>

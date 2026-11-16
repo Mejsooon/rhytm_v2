@@ -1,6 +1,6 @@
 # Makiety rhytm (wzorzec wyglądu)
 
-54 klikalne ekrany aplikacji wyeksportowane z płótna „rhytm — układ aplikacji (makiety)”.
+Klikalne ekrany aplikacji (web i telefon `M*`) skopiowane z płótna „Rhytm Design”.
 Implementacja ma wyglądać **identycznie** jak te ekrany.
 
 Podgląd: `npx serve docs/design/mockups` i otwórz `index.html` (spis ekranów w grupach).

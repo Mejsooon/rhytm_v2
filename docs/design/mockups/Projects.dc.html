@@ -18,57 +18,77 @@ a{color:#171717}a:hover{color:#000000}
 .btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
 .th{text-align:left;padding:10px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap}
 .td{padding:11px 14px;border-bottom:1px solid #f0f0f0}
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible,.row-wrap:hover .row-del{opacity:1}
+.row-click{cursor:pointer}
+.row-click:hover td{background:#fafafa}
+.ed-in{border:0;outline:0;background:transparent;font:inherit;color:#171717;width:100%;min-width:0;padding:0}
+.ed-in::placeholder{color:#a3a3a3}
+.pop{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:8px;font-family:Geist,system-ui,sans-serif;font-size:13px;color:#171717}
+.calnav{width:28px;height:28px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;cursor:pointer;font:inherit}
+.calnav:hover,.lnk:hover{background:#f5f5f5}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:6px;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left;background:transparent}
+.opt:hover{background:#f5f5f5}
+.cday{height:30px;padding:0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;background:transparent;color:#171717}
+.cday:hover{background:#f5f5f5}
+.lnk{background:none;border:0;border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;color:#404040;cursor:pointer}
+.act{background:none;border:0;cursor:pointer;padding:4px 6px;display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="projects" min-height="960" hint-size="100%,960px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="projects" min-height="960" hint-size="100%,960px"></dc-import></div>
 
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
       <div class="mono" style="font-size: 13px; color: #666666">Strony <span style="color: #b0b0b0">/</span> <span style="color: #171717">Projects</span></div>
-      <div style="display: flex; gap: 8px"><button type="button" class="btn">Filtruj</button><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+      <div style="display: flex; gap: 8px"><a href="FilterPopover.dc.html" class="btn">Filtruj</a><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp" onClick="{{addRow}}">Nowy wiersz</button></div>
     </header>
 
     <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%">
       <div>
         <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Projects</h1>
-        <p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">8 wierszy · 5 pól · szablon „Projects” · sort: termin</p>
+        <p class="mono" style="margin: 6px 0 0; font-size: 12px; color: #6b6b6b">{{countRows}} · 5 pól · szablon „Projects” · sort: termin</p>
       </div>
 
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #eaeaea; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
-        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">W toku</div><div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">3</div></div>
-        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Najbliższy termin</div><div style="font-size: 18px; margin-top: 10px; font-weight: 500">Projekt z baz danych <span class="mono" style="font-size: 13px; color: #b91c1c">za 5 dni</span></div></div>
-        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Zrobione</div><div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">1 <span style="font-size: 14px; color: #666666">/ 8</span></div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">W toku</div><div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">{{wip}}</div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Najbliższy termin</div><div style="font-size: 18px; margin-top: 10px; font-weight: 500">{{nearName}} <span class="mono" style="{{nearS}}">{{nearRel}}</span></div></div>
+        <div style="background: #ffffff; padding: 16px 18px"><div class="lbl">Zrobione</div><div class="mono" style="font-size: 26px; margin-top: 8px; font-weight: 500">{{done}} <span style="font-size: 14px; color: #666666">/ {{total}}</span></div></div>
       </div>
 
-      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow-x: auto">
-        <dc-t-table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 13px">
-          <dc-t-thead><dc-t-tr style="background: #fafafa">
-            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</dc-t-th>
-            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◐</span>Status</dc-t-th>
-            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Obszar</dc-t-th>
-            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">▦</span>Termin <span class="mono" style="margin-left: 6px; font-size: 10px; color: #15803d; border: 1px solid #bbe5cc; border-radius: 4px; padding: 1px 5px">w kalendarzu</span></dc-t-th>
-            <dc-t-th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↗</span>Repo</dc-t-th>
-          </dc-t-tr></dc-t-thead>
-          <dc-t-tbody>
-            <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
-              <dc-t-tr>
-                <dc-t-td class="td" style="font-weight: 500">{{r.name}}</dc-t-td>
-                <dc-t-td class="td"><span class="mono" style="{{r.statusS}}">{{r.status}}</span></dc-t-td>
-                <dc-t-td class="td"><span class="mono" style="font-size: 11px; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 7px; color: #404040">{{r.area}}</span></dc-t-td>
-                <dc-t-td class="td mono" style="color: #404040">{{r.date}} <span style="{{r.relS}}">{{r.rel}}</span></dc-t-td>
-                <dc-t-td class="td mono"><a href="#" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">{{r.repo}}</a></dc-t-td>
-              </dc-t-tr>
+      <div class="tbl-wrap" style="border: 1px solid #eaeaea; border-radius: 8px">
+        <table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 13px">
+          <thead><tr style="background: #fafafa">
+            <th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</th>
+            <th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◐</span>Status</th>
+            <th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">◉</span>Obszar</th>
+            <th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">▦</span>Termin <span class="mono" style="margin-left: 6px; font-size: 10px; color: #15803d; border: 1px solid #bbe5cc; border-radius: 4px; padding: 1px 5px">w kalendarzu</span></th>
+            <th scope="col" class="th"><span class="mono" style="color: #6b6b6b; margin-right: 6px">↗</span>Repo</th>
+            <th scope="col" class="th" style="width: 120px"></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{list}}" as="r" hint-placeholder-count="8">
+              <sc-if value="{{r.view}}" hint-placeholder-val="{{true}}"><tr class="row-click" onClick="{{r.open}}">
+                <td class="td" style="font-weight: 500">{{r.name}}</td>
+                <td class="td"><span class="mono" style="{{r.statusS}}">{{r.status}}</span></td>
+                <td class="td"><span class="mono" style="{{r.areaS}}">{{r.area}}</span></td>
+                <td class="td mono" style="color: #404040; white-space: nowrap">{{r.dateTxt}} <span style="{{r.relS}}">{{r.rel}}</span></td>
+                <td class="td mono"><a href="#" onClick="{{r.link}}" style="color: #404040; text-decoration: none; border-bottom: 1px solid #e0e0e0">{{r.repo}}</a></td>
+                <td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="row-del act" aria-label="Edytuj wiersz" onClick="{{r.edit}}" style="color: #404040"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</button><button type="button" class="row-del act" aria-label="Usuń wiersz" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń</button></td>
+              </tr></sc-if>
+              <sc-if value="{{r.editing}}" hint-placeholder-val="{{false}}"><tr style="background: #f7fbf8"><td class="td" style="font-weight: 500"><input type="text" class="ed-in" value="{{r.f.v.name}}" onChange="{{r.f.on.name}}" placeholder="Nazwa…" aria-label="Nazwa"></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" onClick="{{r.f.status.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.status.exp}}" aria-label="Status" style="{{r.f.status.btnS}}"><span class="mono" style="{{r.f.status.bs}}">{{r.f.status.txt}}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{r.f.status.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Status" class="pop" style="width: 190px; display: flex; flex-direction: column; gap: 1px"><sc-for list="{{r.f.status.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="opt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span class="mono" style="{{o.bs}}">{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" onClick="{{r.f.area.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.area.exp}}" aria-label="Obszar" style="{{r.f.area.btnS}}"><span class="mono" style="{{r.f.area.bs}}">{{r.f.area.txt}}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{r.f.area.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Obszar" class="pop" style="width: 160px; display: flex; flex-direction: column; gap: 1px"><sc-for list="{{r.f.area.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="opt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span class="mono" style="{{o.bs}}">{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="mono" onClick="{{r.f.d.toggle}}" aria-haspopup="dialog" aria-expanded="{{r.f.d.exp}}" aria-label="Termin" style="{{r.f.d.btnS}}">{{r.f.d.txt}}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{r.f.d.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="width: 244px; right: 0; left: auto"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 2px 6px"><button type="button" class="calnav" aria-label="Poprzedni miesiąc" onClick="{{r.f.d.prev}}">‹</button><span style="font-size: 13px; font-weight: 600">{{r.f.d.label}}</span><button type="button" class="calnav" aria-label="Następny miesiąc" onClick="{{r.f.d.next}}">›</button></div><div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 10px; color: #6b6b6b; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{r.f.d.cal}}" as="dc" hint-placeholder-count="35"><button type="button" class="mono cday" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; margin-top: 6px; padding-top: 6px"><button type="button" class="lnk" onClick="{{r.f.d.today}}">Dziś</button><button type="button" class="lnk" onClick="{{r.f.d.clear}}">Wyczyść</button></div></div></sc-if></span></td><td class="td mono"><input type="text" class="ed-in" value="{{r.f.v.repo}}" onChange="{{r.f.on.repo}}" placeholder="github.com/…" aria-label="Repo"></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" onClick="{{r.f.save}}" style="background: #171717; color: #ffffff; border: 1px solid #171717; border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer">Zapisz</button><button type="button" aria-label="Anuluj" onClick="{{r.f.cancel}}" style="margin-left: 4px; background: none; border: 0; color: #666666; font: inherit; cursor: pointer; padding: 4px 6px">✕</button></td></tr></sc-if>
             </sc-for>
-          </dc-t-tbody>
-          <dc-t-tfoot><dc-t-tr style="background: #fafafa">
-            <dc-t-td style="padding: 10px 14px"><button type="button" style="background: none; border: 0; color: #666666; font: inherit; cursor: pointer; padding: 0">+ Nowy wiersz</button></dc-t-td>
-            <dc-t-td class="mono" style="padding: 10px 14px; color: #6b6b6b">3 w toku</dc-t-td>
-            <dc-t-td></dc-t-td>
-            <dc-t-td class="mono" style="padding: 10px 14px; color: #6b6b6b">5 terminów</dc-t-td>
-            <dc-t-td class="mono" style="padding: 10px 14px; color: #6b6b6b">6 linków</dc-t-td>
-          </dc-t-tr></dc-t-tfoot>
-        </dc-t-table>
+          </tbody>
+          <tfoot><tr style="background: #fafafa">
+            <td style="padding: 10px 14px"><button type="button" onClick="{{addRow}}" style="background: none; border: 0; color: #666666; font: inherit; cursor: pointer; padding: 0">+ Nowy wiersz</button></td>
+            <td class="mono" style="padding: 10px 14px; color: #6b6b6b">{{wipTxt}}</td>
+            <td></td>
+            <td class="mono" style="padding: 10px 14px; color: #6b6b6b">{{termTxt}}</td>
+            <td class="mono" style="padding: 10px 14px; color: #6b6b6b">{{linkTxt}}</td><td></td>
+          </tr></tfoot>
+        </table>
       </div>
     </div>
   </main>
@@ -76,29 +96,134 @@ a{color:#171717}a:hover{color:#000000}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
 class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-page', 'Projects.dc.html'); } catch (e) {} }
   renderVals() {
-    const st = {
-      'W toku': 'color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff',
-      'Zrobione': 'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc',
-      'Do zrobienia': 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0',
-      'Wstrzymane': 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa'
+    const S = this.state || {};
+    const TODAY = '2026-11-15';
+    const E = S.edit || null;
+    const P = S.pick || null;
+    const MONF = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const p2 = (x) => String(x).padStart(2, '0');
+    const fmt = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '—');
+    const days = (iso) => Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    const pl = (n, one, few, many) => n + ' ' + (n === 1 ? one : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? few : many);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const btnBase = 'display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;font:inherit;font-size:12px;color:#171717;cursor:pointer;white-space:nowrap';
+    const setV = (patch) => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, patch) }) });
+    const startEdit = (r) => this.setState({ edit: { id: r.id, isNew: false, v: Object.assign({}, r) }, pick: null });
+    const dd = (key, val, opts, styles) => {
+      const open = !!(P && P.kind === key);
+      return {
+        txt: val, bs: styles[val] || '', open, exp: open ? 'true' : 'false',
+        btnS: btnBase + (open ? ';border-color:#171717' : ''),
+        toggle: () => this.setState({ pick: open ? null : { kind: key } }),
+        opts: opts.map((o) => ({ t: o, bs: styles[o] || '', p: o === val ? 'true' : 'false', check: o === val ? '✓' : '',
+          s: o === val ? 'background:#f0f0f0;font-weight:500' : '',
+          pick: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { [key]: o }) }), pick: null }) }))
+      };
     };
-    const rows = [
-      ['Projekt z baz danych — drony', 'W toku', 'Studia', '20.11.2026', 'za 5 dni', '—', true],
-      ['rhytm v3', 'W toku', 'Własne', '15.12.2026', 'za 30 dni', 'Mejsooon/rhytm-v3', false],
-      ['Strona Fanaberia', 'W toku', 'Klient', '30.11.2026', 'za 15 dni', 'framer.com', false],
-      ['LeetRepeat', 'Wstrzymane', 'Własne', '—', '', 'Mejsooon/leetrepeat', false],
-      ['NetScope', 'Do zrobienia', 'Własne', '15.02.2027', 'za 3 mies.', 'Mejsooon/netscope', false],
-      ['Chainlock', 'Do zrobienia', 'Własne', '—', '', '—', false],
-      ['Password Manager', 'Wstrzymane', 'Własne', '—', '', 'Mejsooon/password_manager_dev', false],
-      ['rhytm v2', 'Zrobione', 'Własne', '13.11.2026', 'minął', 'Mejsooon/rhytm', false]
+    const dp = (iso) => {
+      const open = !!(P && P.kind === 'date');
+      const mo = open ? (P.mo || 0) : 0;
+      const b = iso || TODAY;
+      const first = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1 + mo, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      const cal = [];
+      for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'visibility:hidden', pick: () => {} });
+      for (let d = 1; d <= nd; d++) {
+        const ds = first.getUTCFullYear() + '-' + p2(first.getUTCMonth() + 1) + '-' + p2(d);
+        const on = ds === iso;
+        cal.push({ t: String(d), s: on ? 'background:#171717;color:#ffffff' : ds === TODAY ? 'border-color:#d4d4d4' : '',
+          pick: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: ds }) }), pick: null }) });
+      }
+      return {
+        txt: iso ? fmt(iso) : 'Wybierz datę', open, exp: open ? 'true' : 'false',
+        btnS: btnBase + (iso ? '' : ';color:#6b6b6b') + (open ? ';border-color:#171717' : ''),
+        toggle: () => this.setState({ pick: open ? null : { kind: 'date', mo: 0 } }),
+        label: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
+        prev: () => this.setState({ pick: { kind: 'date', mo: mo - 1 } }),
+        next: () => this.setState({ pick: { kind: 'date', mo: mo + 1 } }),
+        cal,
+        today: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: TODAY }) }), pick: null }),
+        clear: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: '' }) }), pick: null })
+      };
+    };
+
+    const BADGE = 'font-size:11px;border-radius:4px;padding:2px 7px;white-space:nowrap;';
+    const ST = {
+      'W toku': BADGE + 'color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff',
+      'Do zrobienia': BADGE + 'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0',
+      'Wstrzymane': BADGE + 'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa',
+      'Zrobione': BADGE + 'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc'
+    };
+    const AREA = BADGE + 'border:1px solid #e0e0e0;color:#404040';
+    const AREAS = { 'Studia': AREA, 'Własne': AREA, 'Klient': AREA, 'Praca': AREA };
+    const BASE = [
+      { id: 1, name: 'Projekt z baz danych — drony', status: 'W toku', area: 'Studia', date: '2026-11-20', repo: '' },
+      { id: 2, name: 'rhytm v3', status: 'W toku', area: 'Własne', date: '2026-12-15', repo: 'Mejsooon/rhytm-v3' },
+      { id: 3, name: 'Strona Fanaberia', status: 'W toku', area: 'Klient', date: '2026-11-30', repo: 'framer.com' },
+      { id: 4, name: 'LeetRepeat', status: 'Wstrzymane', area: 'Własne', date: '', repo: 'Mejsooon/leetrepeat' },
+      { id: 5, name: 'NetScope', status: 'Do zrobienia', area: 'Własne', date: '2027-02-15', repo: 'Mejsooon/netscope' },
+      { id: 6, name: 'Chainlock', status: 'Do zrobienia', area: 'Własne', date: '', repo: '' },
+      { id: 7, name: 'Password Manager', status: 'Wstrzymane', area: 'Własne', date: '', repo: 'Mejsooon/password_manager_dev' },
+      { id: 8, name: 'rhytm v2', status: 'Zrobione', area: 'Własne', date: '2026-11-13', repo: 'Mejsooon/rhytm' }
     ];
+    const R = S.rows || BASE;
+    const NEW = { name: '', status: 'Do zrobienia', area: 'Własne', date: '', repo: '' };
+    const TEXT = ['name', 'repo'];
+    const CLEAN = (v) => ({ name: (v.name || '').trim() || 'Bez nazwy', status: v.status, area: v.area, date: v.date || '', repo: (v.repo || '').trim() });
+    const rel = (r) => {
+      if (!r.date) return '';
+      const d = days(r.date);
+      return d < 0 ? 'minął' : d === 0 ? 'dziś' : d === 1 ? 'jutro' : d <= 60 ? 'za ' + d + ' dni' : 'za ' + Math.round(d / 30) + ' mies.';
+    };
+    const urgent = (r) => !!r.date && r.status !== 'Zrobione' && days(r.date) >= 0 && days(r.date) <= 7;
+    const SHOW = (r) => ({
+      name: r.name || 'Bez nazwy', status: r.status, statusS: ST[r.status], area: r.area, areaS: AREA,
+      dateTxt: fmt(r.date), rel: rel(r), relS: 'margin-left:6px;color:' + (urgent(r) ? '#b91c1c' : '#6b6b6b'),
+      repo: r.repo || '—', link: (e) => { stop(e); if (e && e.preventDefault) e.preventDefault(); }
+    });
+    const FORM = () => ({
+      status: dd('status', E.v.status, Object.keys(ST), ST),
+      area: dd('area', E.v.area, Object.keys(AREAS), AREAS),
+      d: dp(E.v.date)
+    });
+
+    const saveRow = () => {
+      const row = Object.assign(CLEAN(E.v), { id: E.isNew ? Date.now() : E.id });
+      this.setState({ rows: E.isNew ? R.concat([row]) : R.map((x) => (x.id === E.id ? row : x)), edit: null, pick: null });
+    };
+    const form = E ? Object.assign(FORM(), {
+      v: E.v,
+      on: TEXT.reduce((o, k) => { o[k] = (e) => setV({ [k]: e.target.value }); return o; }, {}),
+      save: saveRow,
+      cancel: () => this.setState({ edit: null, pick: null })
+    }) : {};
+    const list = R.map((r) => {
+      const ed = !!(E && !E.isNew && E.id === r.id);
+      return Object.assign(SHOW(r), {
+        view: !ed, editing: ed, f: ed ? form : {},
+        open: () => { if (!ed) startEdit(r); },
+        edit: (e) => { stop(e); startEdit(r); },
+        del: (e) => { stop(e); this.setState({ rows: R.filter((x) => x.id !== r.id), edit: ed ? null : E, pick: ed ? null : P }); }
+      });
+    });
+    if (E && E.isNew) list.push(Object.assign(SHOW(NEW), { view: false, editing: true, f: form }));
+    const addRow = () => this.setState({ edit: { id: 'new', isNew: true, v: Object.assign({}, NEW) }, pick: null });
+
+    const near = R.filter((r) => r.date && r.status !== 'Zrobione' && days(r.date) >= 0).sort((a, b) => days(a.date) - days(b.date))[0];
+    const done = R.filter((r) => r.status === 'Zrobione').length;
+    const wip = R.filter((r) => r.status === 'W toku').length;
     return {
-      rows: rows.map((r) => ({
-        name: r[0], status: r[1], area: r[2], date: r[3], rel: r[4], repo: r[5],
-        statusS: 'font-size:11px;border-radius:4px;padding:2px 7px;white-space:nowrap;' + st[r[1]],
-        relS: 'margin-left:6px;color:' + (r[6] ? '#b91c1c' : '#6b6b6b')
-      }))
+      list, addRow,
+      countRows: pl(R.length, 'wiersz', 'wiersze', 'wierszy'),
+      wip, wipTxt: wip + ' w toku',
+      nearName: near ? near.name : 'Brak terminów', nearRel: near ? rel(near) : '',
+      nearS: 'font-size:13px;color:' + (near && urgent(near) ? '#b91c1c' : '#6b6b6b'),
+      done, total: R.length,
+      termTxt: pl(R.filter((r) => r.date).length, 'termin', 'terminy', 'terminów'),
+      linkTxt: pl(R.filter((r) => r.repo).length, 'link', 'linki', 'linków')
     };
   }
 }

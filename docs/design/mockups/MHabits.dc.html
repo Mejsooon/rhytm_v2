@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Nawyki i sen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717;text-decoration:none}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib:hover{background:#f5f5f5}
+.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.h2{font-size:17px;font-weight:600;margin:0}
+.sub{font-size:13px;color:#666666}
+.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
+.row:last-child{border-bottom:0}
+a.row:hover{background:#fafafa}
+.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+a.btnp,a.btnp:hover{color:#ffffff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
+.btn:hover{background:#fafafa}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
+.sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
+.inp:focus{border-color:#171717}
+.inp::placeholder{color:#a3a3a3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
+.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
+.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
+.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw[aria-checked="true"]{background:#15803d}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
+.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
+.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
+.chev{color:#a3a3a3;margin-left:auto;flex:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
+
+  <header class="top" style="padding: 8px 8px 4px 16px"><div style="flex: 1"><div class="lbl">Niedziela · 15 listopada</div><h1 class="h1" style="margin-top: 2px">Nawyki i sen</h1></div><a href="MHabitNew.dc.html" class="ib" aria-label="Nowy nawyk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
+  <div class="seg" role="group" aria-label="Widok" style="margin: 0 16px 8px; flex: none"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{t.p}}" onClick="{{t.pick}}">{{t.t}}</button></sc-for></div>
+  <div class="body" style="padding-bottom: 110px">
+    <sc-if value="{{showHab}}" hint-placeholder-val="{{true}}">
+      <div class="card" style="padding: 14px; display: flex; align-items: center; gap: 14px">
+        <svg width="56" height="56" viewBox="0 0 36 36" role="img" aria-label="{{ringLabel}}"><circle cx="18" cy="18" r="15" fill="none" stroke="#eeeeee" stroke-width="4"></circle><circle cx="18" cy="18" r="15" fill="none" stroke="#15803d" stroke-width="4" stroke-linecap="round" stroke-dasharray="{{dash}}" transform="rotate(-90 18 18)"></circle></svg>
+        <div style="flex: 1"><div style="font-size: 18px; font-weight: 600">{{doneTxt}}</div><div class="sub">Najdłuższa seria: Woda 2 l · 12 dni</div></div>
+      </div>
+      <div class="card"><sc-for list="{{habits}}" as="h" hint-placeholder-count="5"><div class="row" style="min-height: 64px"><button type="button" class="cb" role="checkbox" aria-checked="{{h.on}}" aria-label="{{h.t}}" onClick="{{h.toggle}}" style="width: 28px; height: 28px; flex-basis: 28px; border-radius: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></button><a href="MHabitDetail.dc.html" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px"><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{h.t}}</span><span class="mono" style="font-size: 12px; color: #6b6b6b">{{h.freq}} · seria {{h.streak}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></div></sc-for></div>
+      <section class="card" style="padding: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px"><h2 class="h2">Ostatnie 4 tygodnie</h2><span class="mono" style="font-size: 11px; color: #6b6b6b">{{hovTxt}}</span></div>
+        <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; font-size: 10px; color: #8a8a8a; text-align: center; margin-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px"><sc-for list="{{heat}}" as="c" hint-placeholder-count="28"><button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="{{c.s}}"></button></sc-for></div>
+        <div style="display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 10px; font-size: 11px; color: #6b6b6b">mniej<sc-for list="{{legend}}" as="l" hint-placeholder-count="5"><span style="{{l.s}}"></span></sc-for>więcej</div>
+      </section>
+    </sc-if>
+    <sc-if value="{{showSleep}}" hint-placeholder-val="{{false}}">
+      <div class="grid2">
+        <div class="stat"><div class="lbl">Ostatnia noc</div><div class="num">7:12<span style="font-size: 14px; color: #6b6b6b"> h</span></div><div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 2px">23:48 → 07:00</div></div>
+        <div class="stat"><div class="lbl">Średnio {{rangeTxt}}</div><div class="num">{{avg}}<span style="font-size: 14px; color: #6b6b6b"> h</span></div><div class="mono" style="font-size: 11px; color: #6b6b6b; margin-top: 2px">cel 7:30</div></div>
+      </div>
+      <section class="card" style="padding: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px"><h2 class="h2">Sen</h2><div class="seg" style="width: 120px"><sc-for list="{{ranges}}" as="r" hint-placeholder-count="2"><button type="button" class="sg" aria-pressed="{{r.p}}" onClick="{{r.pick}}" style="height: 28px">{{r.t}}</button></sc-for></div></div>
+        <div class="mono" style="font-size: 12px; color: #404040; min-height: 18px; margin-bottom: 6px">{{barTxt}}</div>
+        <div style="position: relative; height: 140px; display: flex; align-items: flex-end; gap: {{gap}}px; border-bottom: 1px solid #eaeaea">
+          <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 105px; border-top: 1px dashed #bbe5cc"></div>
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="14"><button type="button" aria-label="{{b.label}}" onClick="{{b.pick}}" style="{{b.s}}"></button></sc-for>
+        </div>
+        <div class="mono" style="display: flex; justify-content: space-between; font-size: 10px; color: #8a8a8a; margin-top: 6px"><span>{{firstLbl}}</span><span>dziś</span></div>
+      </section>
+      <a href="MSleep.dc.html" class="btnp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path></svg>Dodaj wpis snu</a>
+    </sc-if>
+  </div>
+  <dc-import name="MTabBar" active="habits" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const HAB = [
+      ['w', 'Woda 2 l', 'Codziennie', 12, [1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1]],
+      ['r', 'Czytanie 20 min', 'Codziennie', 5, [1,0,1,1,1,0,1,1,1,1,0,0,1,1,1,0,1,1,0,1,1,1,1,0,0,1,1,1]],
+      ['e', 'Angielski', '4× w tygodniu', 2, [1,0,1,0,1,0,0,1,0,1,0,1,0,0,1,1,0,1,0,0,0,1,0,1,0,1,0,0]],
+      ['m', 'Medytacja', 'Codziennie', 3, [0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0]],
+      ['s', 'Rozciąganie', 'Pn, Śr, Pt', 0, [1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,1,0,1,0,0,0,0,1,0,1,0,0]]
+    ];
+    const S = this.state || {};
+    const tab = S.tab || 'hab';
+    const T = S.done || { w: true, r: true };
+    const done = HAB.filter((h) => T[h[0]]).length;
+    const per = [];
+    for (let i = 0; i < 28; i++) per.push(HAB.filter((h) => h[4][i]).length);
+    per[27] = done;
+    const shade = ['#f0f0f0', '#cdebd8', '#8fd1a8', '#3fa66b', '#15803d', '#0f5f2e'];
+    const hov = S.hov;
+    const range = S.range || 14;
+    const SLEEP = [7.2, 6.5, 7.8, 6.9, 7.4, 8.1, 7.0, 6.2, 7.5, 7.7, 6.8, 7.3, 8.4, 7.2, 6.6, 7.9, 7.1, 6.4, 7.6, 7.0, 8.0, 7.3, 6.9, 7.5, 7.8, 6.7, 7.4, 7.1, 7.6, 7.2];
+    const sl = SLEEP.slice(-range);
+    const hm = (h) => Math.floor(h) + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+    const dayLbl = (back) => { const d = new Date(Date.UTC(2026, 10, 15 - back)); return String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+    const avg = sl.reduce((a, b) => a + b, 0) / sl.length;
+    const sb = S.sb;
+    return {
+      tabs: [['hab', 'Nawyki'], ['sleep', 'Sen']].map((x) => ({ t: x[1], p: x[0] === tab ? 'true' : 'false', pick: () => this.setState({ tab: x[0] }) })),
+      showHab: tab === 'hab', showSleep: tab === 'sleep',
+      habits: HAB.map((h) => ({ t: h[1], freq: h[2], streak: (h[3] + (T[h[0]] ? 1 : 0)) + ' dni', on: T[h[0]] ? 'true' : 'false',
+        toggle: () => this.setState({ done: Object.assign({}, T, { [h[0]]: !T[h[0]] }) }) })),
+      doneTxt: done + ' z ' + HAB.length + ' zrobione dziś', ringLabel: done + ' z ' + HAB.length + ' nawyków',
+      dash: (done / HAB.length * 94.2).toFixed(1) + ' 94.2',
+      heat: per.map((n, i) => ({ label: dayLbl(27 - i) + ': ' + n + ' z 5 nawyków', pick: () => this.setState({ hov: i }),
+        s: 'aspect-ratio:1;border-radius:6px;border:' + (hov === i ? '2px solid #171717' : '0') + ';padding:0;cursor:pointer;background:' + shade[n] })),
+      hovTxt: hov == null ? 'stuknij dzień' : dayLbl(27 - hov) + ' · ' + per[hov] + '/5',
+      legend: [0, 1, 2, 3, 5].map((n) => ({ s: 'width:12px;height:12px;border-radius:3px;background:' + shade[n] })),
+      ranges: [14, 30].map((r) => ({ t: r + ' dni', p: r === range ? 'true' : 'false', pick: () => this.setState({ range: r, sb: null }) })),
+      rangeTxt: range + ' dni', avg: hm(avg), gap: range === 14 ? 6 : 3,
+      firstLbl: dayLbl(range - 1),
+      barTxt: sb == null ? 'Stuknij słupek, żeby zobaczyć szczegóły' : dayLbl(range - 1 - sb) + ' · ' + hm(sl[sb]) + ' h',
+      bars: sl.map((v, i) => ({ label: dayLbl(range - 1 - i) + ': ' + hm(v) + ' h', pick: () => this.setState({ sb: i }),
+        s: 'flex:1;border:0;padding:0;cursor:pointer;border-radius:4px 4px 0 0;height:' + Math.round((v - 4) / 5 * 140) + 'px;background:' + (sb === i ? '#171717' : v >= 7.5 ? '#15803d' : v >= 6.8 ? '#8fd1a8' : '#e5a582') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

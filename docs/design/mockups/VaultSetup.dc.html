@@ -45,7 +45,7 @@ a{color:#171717}a:hover{color:#000000}
   <div role="dialog" aria-modal="true" aria-label="Ustaw hasło główne sejfu" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: min(500px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); display: flex; flex-direction: column">
     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px">
       <div><h2 style="margin: 0; font-size: 17px; font-weight: 600">Ustaw hasło główne sejfu</h2><p style="margin: 4px 0 0; color: #666666; font-size: 13px">Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko szyfrogram.</p></div>
-      <button type="button" aria-label="Zamknij" style="width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; cursor: pointer; font: inherit; flex: none">✕</button>
+      <a href="Settings.dc.html" aria-label="Zamknij" style="width: 30px; height: 30px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; text-decoration: none; flex: none">✕</a>
     </div>
     <div style="padding: 4px 20px 18px; display: flex; flex-direction: column; gap: 14px">
       <label class="fld">Hasło główne<input class="inp" type="password" value="przykładowe-hasło-główne" autocomplete="new-password"></label>
@@ -56,9 +56,10 @@ a{color:#171717}a:hover{color:#000000}
         <span><b>Nie da się go odzyskać.</b> Jeśli je zapomnisz, jedyna opcja to reset sejfu, który usuwa wszystkie zapisane sekrety. To nie jest hasło do konta.</span>
       </div>
       <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; cursor: pointer"><input type="checkbox" checked="{{ok}}" onChange="{{toggle}}" style="accent-color: #171717; margin-top: 2px">Rozumiem, że zapomnianego hasła głównego nie da się odzyskać.</label>
+
     </div>
     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #eaeaea; background: #fafafa; border-radius: 0 0 12px 12px">
-<button type="button" class="btn">Anuluj</button><button type="button" style="{{btnS}}">Utwórz sejf</button>
+<a href="Settings.dc.html" class="btn">Anuluj</a><a href="Passwords.dc.html" style="{{btnS}}">Utwórz sejf</a>
     </div>
   </div>
 </div>
@@ -67,7 +68,7 @@ a{color:#171717}a:hover{color:#000000}
 class Component extends DCLogic {
   constructor(p) { super(p); this.state = { ok: false }; }
   renderVals() {
-    return { ok: this.state.ok, toggle: () => this.setState({ ok: !this.state.ok }), btnS: 'background:#171717;color:#fff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;opacity:' + (this.state.ok ? '1' : '.4') };
+    return { ok: this.state.ok, toggle: () => this.setState({ ok: !this.state.ok }), btnS: 'text-decoration:none;display:inline-flex;align-items:center;background:#171717;color:#fff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;opacity:' + (this.state.ok ? '1' : '.4') };
   }
 }
 </script>

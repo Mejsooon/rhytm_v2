@@ -15,43 +15,393 @@ a{color:#171717}a:hover{color:#000000}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none}
 .btnp{background:#171717;color:#ffffff;border:1px solid #171717;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer}
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible,.row-wrap:hover .row-del{opacity:1}
+.lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
+.trow{display:grid;align-items:stretch}
+.thead{background:#fafafa;border-radius:8px 8px 0 0}
+.tfoot{background:#fafafa;border-radius:0 0 8px 8px}
+.th{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid #eaeaea;font-weight:500;color:#666666;white-space:nowrap;border-right:1px solid #f0f0f0;min-width:0}
+.td{display:flex;align-items:center;padding:8px 14px;min-height:20px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f5f5f5;min-width:0}
+.trow:hover>.td{background:#fcfcfc}
+.trow:hover .row-del{opacity:1}
+.ed-in{border:0;outline:0;background:transparent;font:inherit;color:#171717;width:100%;min-width:0;padding:0}
+.ed-in::placeholder{color:#a3a3a3}
+.inp{background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px;color:#171717;width:100%;box-sizing:border-box;outline:none}
+.inp:focus{border-color:#171717}
+.pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:#ffffff;border:1px solid #e0e0e0;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);padding:8px;font-family:Geist,system-ui,sans-serif;font-size:13px;color:#171717;text-align:left;white-space:normal}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:6px;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left;background:transparent}
+.opt:hover{background:#f5f5f5}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px;border:0;border-radius:6px;font:inherit;font-size:13px;color:#171717;cursor:pointer;text-align:left;background:transparent}
+.ico{width:32px;height:32px;flex:0 0 32px;border:1px solid #eaeaea;border-radius:6px;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#404040}
+.calnav{width:28px;height:28px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;cursor:pointer;font:inherit}
+.calnav:hover,.lnk:hover{background:#f5f5f5}
+.cday{height:30px;padding:0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;background:transparent;color:#171717}
+.cday:hover{background:#f5f5f5}
+.lnk{background:none;border:0;border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;color:#404040;cursor:pointer}
+.act{background:none;border:0;cursor:pointer;padding:4px 6px;display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+.colbtn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;border-radius:4px;padding:2px 4px;margin:-2px -4px;font:inherit;font-weight:500;color:#666666;cursor:pointer;white-space:nowrap}
+.colbtn:hover,.colbtn[aria-expanded="true"]{background:#efefef;color:#171717}
+.addcol{width:100%;height:100%;min-height:34px;background:none;border:0;font:inherit;font-size:16px;color:#6b6b6b;cursor:pointer}
+.addcol:hover{background:#f0f0f0;color:#171717}
+.cellbtn{background:none;border:0;padding:0;font:inherit;cursor:pointer;min-height:20px;display:inline-flex;align-items:center;color:#404040}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;background:#ffffff;color:#171717;cursor:pointer}
+.chip:hover{background:#f5f5f5}
+.plus{width:24px;height:24px;flex:0 0 24px;border:1px solid #e0e0e0;border-radius:6px;background:#ffffff;color:#6b6b6b;font:inherit;font-size:15px;line-height:1;cursor:pointer;padding:0}
+.plus:hover{background:#f5f5f5;color:#171717}
+.blk{position:relative;padding-right:32px}
+.blk-act{position:absolute;top:4px;right:0;opacity:0;transition:opacity 120ms ease;background:none;border:0;border-radius:6px;color:#b91c1c;cursor:pointer;padding:5px;display:inline-flex}
+.blk:hover .blk-act,.blk-act:focus-visible{opacity:1}
+.blk-act:hover{background:#fef2f2}
+@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+@media (min-width: 800px){.sb-col{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}}
 </style>
 </helmet>
 <div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px">
-  <div style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="empty" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <div class="sb-col" style="flex: 1 1 232px; max-width: 100%; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="empty" min-height="900" hint-size="100%,900px"></dc-import></div>
 
   <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
     <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #eaeaea">
-      <div class="mono" style="font-size: 13px; color: #666666">Strony <span style="color: #b0b0b0">/</span> <span style="color: #171717">Bez tytułu</span></div>
-      <div style="display: flex; gap: 8px"><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">Nowy wiersz</button></div>
+      <div class="mono" style="font-size: 13px; color: #666666">Strony <span style="color: #b0b0b0">/</span> <span style="color: #171717">{{crumb}}</span></div>
+      <div style="display: flex; gap: 8px"><a href="NewPage.dc.html" class="btn">Szablony</a></div>
     </header>
 
-    <div style="padding: 28px 24px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
-      <div style="display: flex; align-items: center; gap: 12px">
+    <div style="padding: 28px 24px 160px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
         <button type="button" aria-label="Zmień ikonę" style="width: 40px; height: 40px; border: 1px dashed #d4d4d4; border-radius: 8px; background: #fafafa; color: #6b6b6b; font: inherit; cursor: pointer">▦</button>
-        <input type="text" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #171717; flex: 1; min-width: 0">
+        <input type="text" value="{{title}}" onChange="{{onTitle}}" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #171717; flex: 1; min-width: 0; background: transparent">
       </div>
 
-      <div style="border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden">
-        <div style="display: flex; background: #fafafa; border-bottom: 1px solid #eaeaea; font-size: 13px">
-          <div style="flex: 0 0 280px; padding: 10px 14px; font-weight: 500; color: #666666; border-right: 1px solid #eaeaea"><span class="mono" style="color: #6b6b6b; margin-right: 6px">Aa</span>Nazwa</div>
-          <a href="AddField.dc.html" style="padding: 10px 14px; color: #666666; text-decoration: none">+ Pole</a>
+      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="0">
+        <div class="blk">
+          <sc-if value="{{b.isH}}" hint-placeholder-val="{{false}}"><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Nagłówek" aria-label="Nagłówek" style="font-size: 20px; font-weight: 600; letter-spacing: -.01em; padding: 6px 0"></sc-if>
+          <sc-if value="{{b.isText}}" hint-placeholder-val="{{false}}"><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Pusty akapit" aria-label="Akapit" style="line-height: 1.6; padding: 3px 0"></sc-if>
+          <sc-if value="{{b.isTodo}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 10px; padding: 3px 0"><button type="button" role="checkbox" aria-checked="{{b.ac}}" aria-label="Zrobione" onClick="{{b.toggle}}" style="{{b.chkS}}">{{b.chk}}</button><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Zadanie" aria-label="Zadanie" style="{{b.todoS}}"></div></sc-if>
+          <sc-if value="{{b.isDiv}}" hint-placeholder-val="{{false}}"><hr style="border: 0; border-top: 1px solid #eaeaea; margin: 12px 0"></sc-if>
+          <sc-if value="{{b.isTable}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin: 6px 0">
+              <input type="text" class="ed-in" value="{{b.t.name}}" onChange="{{b.t.onName}}" placeholder="Tabela bez nazwy" aria-label="Nazwa tabeli" style="font-size: 15px; font-weight: 600">
+              <div class="tbl-wrap" style="border: 1px solid #eaeaea; border-radius: 8px; font-size: 13px">
+                <div class="trow thead" role="row" style="{{b.t.gridS}}">
+                  <sc-for list="{{b.t.cols}}" as="c" hint-placeholder-count="3"><div class="th" role="columnheader"><span style="position: relative; display: inline-flex">
+                    <button type="button" class="colbtn" onClick="{{c.toggle}}" aria-haspopup="dialog" aria-expanded="{{c.exp}}"><span class="mono" style="color: #6b6b6b">{{c.icon}}</span>{{c.name}}</button>
+                    <sc-if value="{{c.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Ustawienia kolumny" class="pop" style="width: 260px; font-weight: 400">
+                      <input type="text" class="inp" value="{{c.name}}" onChange="{{c.onName}}" placeholder="Nazwa kolumny" aria-label="Nazwa kolumny">
+                      <div class="lbl" style="padding: 12px 8px 4px">Typ pola</div>
+                      <sc-for list="{{c.types}}" as="ty" hint-placeholder-count="6"><button type="button" class="opt" onClick="{{ty.pick}}" style="{{ty.s}}"><span style="display: inline-flex; align-items: center; gap: 8px"><span class="mono" style="width: 18px; color: #6b6b6b">{{ty.icon}}</span>{{ty.label}}</span><span style="color: #15803d">{{ty.check}}</span></button></sc-for>
+                      <sc-if value="{{c.isSel}}" hint-placeholder-val="{{false}}">
+                        <div class="lbl" style="padding: 12px 8px 6px">Opcje</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px"><sc-for list="{{c.opts}}" as="op" hint-placeholder-count="3"><span class="mono" style="{{op.s}}">{{op.t}}<button type="button" aria-label="Usuń opcję" onClick="{{op.remove}}" style="background: none; border: 0; padding: 0 0 0 2px; cursor: pointer; color: inherit; font: inherit; opacity: .7">×</button></span></sc-for></div>
+                        <div style="display: flex; gap: 6px; padding: 8px 8px 0"><input type="text" class="inp" value="{{c.newOpt}}" onChange="{{c.onNewOpt}}" onKeyDown="{{c.optKey}}" placeholder="Nowa opcja…" aria-label="Nowa opcja"><button type="button" class="btn" onClick="{{c.addOpt}}" style="padding: 5px 10px; font-size: 12px">Dodaj</button></div>
+                      </sc-if>
+                      <div style="display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; margin-top: 10px; padding-top: 6px"><button type="button" class="lnk" onClick="{{c.moveL}}" aria-disabled="{{c.firstDis}}" style="{{c.moveLS}}">← W lewo</button><button type="button" class="lnk" onClick="{{c.moveR}}" aria-disabled="{{c.lastDis}}" style="{{c.moveRS}}">W prawo →</button></div>
+                      <button type="button" class="opt" onClick="{{c.remove}}" aria-disabled="{{c.delDis}}" style="{{c.delS}}">Usuń kolumnę</button>
+                    </div></sc-if>
+                  </span></div></sc-for>
+                  <div class="th" style="padding: 0"><button type="button" class="addcol" onClick="{{b.t.addCol}}" aria-label="Dodaj kolumnę">+</button></div>
+                </div>
+                <sc-for list="{{b.t.rows}}" as="row" hint-placeholder-count="2"><div class="trow" role="row" style="{{b.t.gridS}}">
+                  <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="3"><div class="td" role="cell" style="{{cell.tdS}}">
+                    <sc-if value="{{cell.isText}}" hint-placeholder-val="{{true}}"><input type="text" class="ed-in" value="{{cell.v}}" onChange="{{cell.on}}" placeholder="{{cell.ph}}" aria-label="{{cell.label}}" style="{{cell.inS}}"></sc-if>
+                    <sc-if value="{{cell.isCheck}}" hint-placeholder-val="{{false}}"><button type="button" role="checkbox" aria-checked="{{cell.ac}}" aria-label="{{cell.label}}" onClick="{{cell.toggle}}" style="{{cell.chkS}}">{{cell.chk}}</button></sc-if>
+                    <sc-if value="{{cell.isDate}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex">
+                      <button type="button" class="cellbtn mono" onClick="{{cell.d.toggle}}" aria-haspopup="dialog" aria-expanded="{{cell.d.exp}}" aria-label="{{cell.label}}" style="{{cell.d.btnS}}">{{cell.d.txt}}</button>
+                      <sc-if value="{{cell.d.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="width: 244px">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 2px 6px"><button type="button" class="calnav" aria-label="Poprzedni miesiąc" onClick="{{cell.d.prev}}">‹</button><span style="font-size: 13px; font-weight: 600">{{cell.d.label}}</span><button type="button" class="calnav" aria-label="Następny miesiąc" onClick="{{cell.d.next}}">›</button></div>
+                        <div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 10px; color: #6b6b6b; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+                        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cell.d.cal}}" as="dc" hint-placeholder-count="35"><button type="button" class="mono cday" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div>
+                        <div style="display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; margin-top: 6px; padding-top: 6px"><button type="button" class="lnk" onClick="{{cell.d.today}}">Dziś</button><button type="button" class="lnk" onClick="{{cell.d.clear}}">Wyczyść</button></div>
+                      </div></sc-if>
+                    </span></sc-if>
+                    <sc-if value="{{cell.isSel}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex">
+                      <button type="button" class="cellbtn" onClick="{{cell.sel.toggle}}" aria-haspopup="listbox" aria-expanded="{{cell.sel.exp}}" aria-label="{{cell.label}}"><span class="mono" style="{{cell.sel.bs}}">{{cell.sel.txt}}</span></button>
+                      <sc-if value="{{cell.sel.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="{{cell.label}}" class="pop" style="width: 200px; display: flex; flex-direction: column; gap: 1px">
+                        <sc-for list="{{cell.sel.opts}}" as="o" hint-placeholder-count="3"><button type="button" role="option" class="opt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span class="mono" style="{{o.bs}}">{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for>
+                        <div style="display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 6px"><button type="button" class="lnk" onClick="{{cell.sel.clear}}">Wyczyść</button><button type="button" class="lnk" onClick="{{cell.sel.edit}}">Edytuj opcje</button></div>
+                      </div></sc-if>
+                    </span></sc-if>
+                  </div></sc-for>
+                  <div class="td" style="padding: 0; display: flex; align-items: center; justify-content: center"><button type="button" class="row-del act" aria-label="Usuń wiersz" onClick="{{row.remove}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg></button></div>
+                </div></sc-for>
+                <sc-if value="{{b.t.hasFoot}}" hint-placeholder-val="{{false}}"><div class="trow tfoot" style="{{b.t.gridS}}"><sc-for list="{{b.t.foot}}" as="ft" hint-placeholder-count="3"><div class="mono" style="{{ft.s}}">{{ft.t}}</div></sc-for><div></div></div></sc-if>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><button type="button" class="lnk" onClick="{{b.t.addRow}}" style="padding-left: 0">+ Nowy wiersz</button><span class="mono" style="font-size: 12px; color: #6b6b6b">{{b.t.meta}}</span></div>
+            </div>
+          </sc-if>
+          <button type="button" class="blk-act" aria-label="Usuń blok" onClick="{{b.remove}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg></button>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 56px 24px; text-align: center">
-          <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #eaeaea; background: #fafafa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg></span>
-          <div style="font-weight: 600">Pusta tabela</div>
-          <p style="margin: 0; color: #666666; max-width: 380px; line-height: 1.5">Dodaj pola, np. Kwotę cykliczną albo Datę, a potem pierwszy wiersz. Pola możesz później zmieniać i usuwać.</p>
-          <div style="display: flex; gap: 8px; margin-top: 4px"><a href="AddField.dc.html" class="btn">+ Pole</a><button type="button" class="btnp">+ Pierwszy wiersz</button></div>
-        </div>
+      </sc-for>
+
+      <div style="position: relative; display: flex; align-items: center; gap: 8px">
+        <button type="button" class="plus" aria-label="Wstaw blok" onClick="{{openMenu}}">+</button>
+        <input type="text" class="ed-in" value="{{cmd}}" onChange="{{onCmd}}" onKeyDown="{{onKey}}" placeholder="Wpisz „/”, aby wstawić blok — tabelę, listę, nagłówek…" aria-label="Nowy blok" aria-haspopup="listbox" aria-expanded="{{menuExp}}" style="padding: 6px 0; color: #404040">
+        <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Bloki" class="pop" style="left: 32px; width: 320px">
+          <div class="lbl" style="padding: 4px 8px 6px">Bloki</div>
+          <sc-for list="{{menu}}" as="m" hint-placeholder-count="5"><button type="button" role="option" class="mi" aria-selected="{{m.sel}}" onClick="{{m.pick}}" onMouseEnter="{{m.hover}}" style="{{m.s}}"><span class="ico mono">{{m.icon}}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="font-weight: 500">{{m.label}}</span><span style="font-size: 12px; color: #6b6b6b">{{m.desc}}</span></span></button></sc-for>
+          <sc-if value="{{menuEmpty}}" hint-placeholder-val="{{false}}"><div style="padding: 8px; color: #6b6b6b; font-size: 13px">Brak bloku „{{q}}”</div></sc-if>
+          <div class="mono" style="border-top: 1px solid #f0f0f0; margin-top: 4px; padding: 6px 8px 2px; font-size: 11px; color: #6b6b6b">↑↓ wybór · Enter wstaw · Esc zamknij</div>
+        </div></sc-if>
       </div>
-      <p class="mono" style="margin: 0; font-size: 12px; color: #6b6b6b">Wolisz gotowca? <a href="NewPage.dc.html" style="color: #404040">Użyj szablonu →</a></p>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px">
+          <span class="mono" style="font-size: 12px; color: #6b6b6b; margin-right: 4px">albo zacznij od:</span>
+          <sc-for list="{{quick}}" as="qk" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{qk.pick}}"><span class="mono" style="color: #6b6b6b">{{qk.icon}}</span>{{qk.label}}</button></sc-for>
+        </div>
+        <p class="mono" style="margin: 24px 0 0; font-size: 12px; color: #6b6b6b">Wolisz gotowca? <a href="NewPage.dc.html" style="color: #404040">Użyj szablonu →</a></p>
+      </sc-if>
     </div>
   </main>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  renderVals() { return {}; }
+  componentDidMount() { try { sessionStorage.setItem('rh-page', 'EmptyPage.dc.html'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const TODAY = '2026-11-15';
+    const B = S.blocks || [];
+    const P = S.pick || null;
+    const cmd = S.cmd || '';
+    const MONF = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const p2 = (x) => String(x).padStart(2, '0');
+    const fmt = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '');
+    const pl = (n, one, few, many) => n + ' ' + (n === 1 ? one : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? few : many);
+    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const BADGE = 'font-size:11px;border-radius:4px;padding:2px 7px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px;';
+    const PAL = [
+      'color:#404040;background:#f5f5f5;border:1px solid #e0e0e0',
+      'color:#0070f3;background:#eef5ff;border:1px solid #cfe2ff',
+      'color:#15803d;background:#f0faf4;border:1px solid #bbe5cc',
+      'color:#c2410c;background:#fff4ed;border:1px solid #fed7aa',
+      'color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe',
+      'color:#b91c1c;background:#fef2f2;border:1px solid #fecaca'
+    ];
+    const TYPES = [
+      { k: 'text', icon: 'Aa', label: 'Tekst' }, { k: 'num', icon: '#', label: 'Liczba' }, { k: 'date', icon: '▦', label: 'Data' },
+      { k: 'sel', icon: '◐', label: 'Wybór' }, { k: 'check', icon: '☑', label: 'Checkbox' }, { k: 'url', icon: '↗', label: 'Link' }
+    ];
+    const DEFS = [
+      { k: 'table', icon: '▦', label: 'Tabela', desc: 'Wiersze i kolumny z typami pól', kw: 'tabela table baza database' },
+      { k: 'todo', icon: '☑', label: 'Lista zadań', desc: 'Punkty do odhaczenia', kw: 'lista zadania todo checkbox' },
+      { k: 'h', icon: 'H', label: 'Nagłówek', desc: 'Tytuł sekcji', kw: 'naglowek heading tytul sekcja' },
+      { k: 'text', icon: '¶', label: 'Tekst', desc: 'Zwykły akapit', kw: 'tekst text akapit' },
+      { k: 'div', icon: '—', label: 'Separator', desc: 'Pozioma linia', kw: 'separator linia divider hr' }
+    ];
+
+    const save = (blocks, extra) => this.setState(Object.assign({ blocks }, extra || {}));
+    const updB = (id, fn, extra) => save(B.map((b) => (b.id === id ? fn(b) : b)), extra);
+    const updT = (id, fn, extra) => updB(id, (b) => Object.assign({}, b, { t: fn(b.t) }), extra);
+    const mk = (k, text) => {
+      if (k !== 'table') return { id: nid(), type: k, text: text || '', done: false };
+      return { id: nid(), type: 'table', t: { name: '', rows: [{ id: nid(), v: {} }, { id: nid() + 'b', v: {} }], cols: [
+        { id: 'c1', name: 'Nazwa', type: 'text' },
+        { id: 'c2', name: 'Status', type: 'sel', opts: ['Do zrobienia', 'W toku', 'Zrobione'] },
+        { id: 'c3', name: 'Data', type: 'date' }
+      ] } };
+    };
+    const insert = (k, text) => save(B.concat([mk(k, text)]), { cmd: '', hi: 0, pick: null });
+
+    // menu „/”
+    const qOf = (val) => (val.charAt(0) === '/' ? val.slice(1).toLowerCase().trim() : null);
+    const filt = (q) => DEFS.filter((d) => !q || (d.label.toLowerCase() + ' ' + d.kw).indexOf(q) >= 0);
+    const q = qOf(cmd);
+    const found = q === null ? [] : filt(q);
+    const hi = Math.max(0, Math.min(S.hi || 0, found.length - 1));
+    const onKey = (e) => {
+      const val = (e.target && e.target.value) || '';
+      const qq = qOf(val);
+      if (qq !== null) {
+        const list = filt(qq);
+        const cur = Math.max(0, Math.min(S.hi || 0, list.length - 1));
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ cmd: val, hi: list.length ? (cur + 1) % list.length : 0 }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ cmd: val, hi: list.length ? (cur - 1 + list.length) % list.length : 0 }); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (list[cur]) insert(list[cur].k); }
+        else if (e.key === 'Escape') { this.setState({ cmd: '', hi: 0 }); }
+      } else if (e.key === 'Enter' && val.trim()) {
+        e.preventDefault();
+        insert('text', val.trim());
+      }
+    };
+
+    // kalendarz w komórce
+    const dp = (iso, key, set) => {
+      const open = !!(P && P.kind === 'date' && P.key === key);
+      const mo = open ? (P.mo || 0) : 0;
+      const b = iso || TODAY;
+      const first = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1 + mo, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      const cal = [];
+      if (open) {
+        for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'visibility:hidden', pick: () => {} });
+        for (let d = 1; d <= nd; d++) {
+          const ds = first.getUTCFullYear() + '-' + p2(first.getUTCMonth() + 1) + '-' + p2(d);
+          cal.push({ t: String(d), s: ds === iso ? 'background:#171717;color:#ffffff' : ds === TODAY ? 'border-color:#d4d4d4' : '', pick: () => set(ds, { pick: null }) });
+        }
+      }
+      return {
+        txt: iso ? fmt(iso) : '—', open, exp: open ? 'true' : 'false', cal,
+        btnS: iso ? '' : 'color:#a3a3a3',
+        toggle: () => this.setState({ pick: open ? null : { kind: 'date', key, mo: 0 } }),
+        label: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
+        prev: () => this.setState({ pick: { kind: 'date', key, mo: mo - 1 } }),
+        next: () => this.setState({ pick: { kind: 'date', key, mo: mo + 1 } }),
+        today: () => set(TODAY, { pick: null }),
+        clear: () => set('', { pick: null })
+      };
+    };
+
+    // zmiana typu kolumny: przelicz istniejące wartości
+    const conv = (v, from, to) => {
+      if (v === undefined || v === null || v === '' || v === false) return to === 'check' ? false : '';
+      if (from === to) return v;
+      if (to === 'check') return v === true || /^(tak|true|1|x|✓)$/i.test(String(v).trim());
+      if (to === 'num') { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? '' : String(n).replace('.', ','); }
+      if (to === 'date') return /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? v : '';
+      if (from === 'check') return v ? 'Tak' : '';
+      if (from === 'date') return fmt(v);
+      return String(v);
+    };
+
+    const table = (blk) => {
+      const T = blk.t;
+      const n = T.cols.length;
+      const cols = T.cols.map((c, ci) => {
+        const open = !!(P && P.kind === 'col' && P.b === blk.id && P.c === c.id);
+        const ty = TYPES.filter((t) => t.k === c.type)[0] || TYPES[0];
+        const setCol = (patch, extra) => updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.map((x) => (x.id === c.id ? Object.assign({}, x, patch) : x)) }), extra);
+        const opts = c.opts || [];
+        const addOpt = (raw) => {
+          const v = (raw || '').trim();
+          if (!v || opts.indexOf(v) >= 0) return;
+          setCol({ opts: opts.concat([v]) }, { newOpt: '' });
+        };
+        const move = (dir) => {
+          const j = ci + dir;
+          if (j < 0 || j >= n) return;
+          updT(blk.id, (t) => { const a = t.cols.slice(); const tmp = a[ci]; a[ci] = a[j]; a[j] = tmp; return Object.assign({}, t, { cols: a }); });
+        };
+        return {
+          name: c.name || 'Bez nazwy', icon: ty.icon, open, exp: open ? 'true' : 'false',
+          toggle: () => this.setState({ pick: open ? null : { kind: 'col', b: blk.id, c: c.id }, newOpt: '' }),
+          onName: (e) => setCol({ name: e.target.value }),
+          types: TYPES.map((t) => ({
+            icon: t.icon, label: t.label, check: t.k === c.type ? '✓' : '',
+            s: t.k === c.type ? 'background:#f0f0f0;font-weight:500' : '',
+            pick: () => {
+              if (t.k === c.type) return;
+              updT(blk.id, (tt) => {
+                const vals = tt.rows.map((r) => conv(r.v[c.id], c.type, t.k)).filter((v) => typeof v === 'string' && v);
+                const nextOpts = t.k === 'sel' ? (opts.length ? opts : (vals.length ? vals.filter((v, i) => vals.indexOf(v) === i) : ['Opcja 1', 'Opcja 2'])) : c.opts;
+                return Object.assign({}, tt, {
+                  cols: tt.cols.map((x) => (x.id === c.id ? Object.assign({}, x, { type: t.k, opts: nextOpts }) : x)),
+                  rows: tt.rows.map((r) => Object.assign({}, r, { v: Object.assign({}, r.v, { [c.id]: conv(r.v[c.id], c.type, t.k) }) }))
+                });
+              });
+            }
+          })),
+          isSel: c.type === 'sel',
+          opts: opts.map((o, oi) => ({ t: o, s: BADGE + PAL[oi % PAL.length], remove: () => setCol({ opts: opts.filter((x) => x !== o) }) })),
+          newOpt: S.newOpt || '',
+          onNewOpt: (e) => this.setState({ newOpt: e.target.value }),
+          optKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); addOpt(e.target.value); } },
+          addOpt: () => addOpt(S.newOpt),
+          moveL: () => move(-1), moveR: () => move(1),
+          firstDis: ci === 0 ? 'true' : 'false', lastDis: ci === n - 1 ? 'true' : 'false',
+          moveLS: ci === 0 ? 'opacity:.4;cursor:not-allowed' : '', moveRS: ci === n - 1 ? 'opacity:.4;cursor:not-allowed' : '',
+          remove: () => { if (n > 1) updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.filter((x) => x.id !== c.id) }), { pick: null }); },
+          delDis: n > 1 ? 'false' : 'true',
+          delS: 'color:#b91c1c;margin-top:4px' + (n > 1 ? '' : ';opacity:.4;cursor:not-allowed')
+        };
+      });
+      const rows = T.rows.map((r) => ({
+        remove: () => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.filter((x) => x.id !== r.id) }), { pick: null }),
+        cells: T.cols.map((c, ci) => {
+          const v = r.v[c.id];
+          const key = blk.id + ':' + r.id + ':' + c.id;
+          const set = (val, extra) => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.map((x) => (x.id === r.id ? Object.assign({}, x, { v: Object.assign({}, x.v, { [c.id]: val }) }) : x)) }), extra);
+          const cell = {
+            isText: c.type === 'text' || c.type === 'num' || c.type === 'url',
+            isCheck: c.type === 'check', isDate: c.type === 'date', isSel: c.type === 'sel',
+            label: c.name || 'Pole', tdS: ci === 0 ? 'font-weight:500' : '', d: {}, sel: {},
+            v: v || '', on: (e) => set(e.target.value), ph: ci === 0 ? 'Bez nazwy' : '',
+            inS: c.type === 'num' ? "text-align:right;font-family:'Geist Mono',monospace" : c.type === 'url' ? "font-family:'Geist Mono',monospace;color:#0070f3" : ''
+          };
+          if (cell.isCheck) {
+            cell.ac = v ? 'true' : 'false'; cell.chk = v ? '✓' : '';
+            cell.chkS = 'width:18px;height:18px;border-radius:4px;border:1px solid ' + (v ? '#171717' : '#d4d4d4') + ';background:' + (v ? '#171717' : '#ffffff') + ';color:#ffffff;font-size:11px;line-height:1;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center';
+            cell.toggle = () => set(!v);
+          }
+          if (cell.isDate) cell.d = dp(v, key, set);
+          if (cell.isSel) {
+            const opts = c.opts || [];
+            const open = !!(P && P.kind === 'sel' && P.key === key);
+            cell.sel = {
+              txt: v || '—', bs: v ? BADGE + PAL[Math.max(0, opts.indexOf(v)) % PAL.length] : 'color:#a3a3a3', open, exp: open ? 'true' : 'false',
+              toggle: () => this.setState({ pick: open ? null : { kind: 'sel', key } }),
+              opts: opts.map((o, oi) => ({ t: o, bs: BADGE + PAL[oi % PAL.length], p: o === v ? 'true' : 'false', check: o === v ? '✓' : '', s: o === v ? 'background:#f0f0f0' : '', pick: () => set(o, { pick: null }) })),
+              clear: () => set('', { pick: null }),
+              edit: () => this.setState({ pick: { kind: 'col', b: blk.id, c: c.id }, newOpt: '' })
+            };
+          }
+          return cell;
+        })
+      }));
+      const foot = T.cols.map((c) => {
+        const s = 'padding:8px 14px;font-size:12px;color:#6b6b6b;' + (c.type === 'num' ? 'text-align:right' : '');
+        if (c.type === 'num') {
+          const sum = T.rows.reduce((a, r) => { const x = parseFloat(String(r.v[c.id] || '').replace(',', '.')); return a + (isNaN(x) ? 0 : x); }, 0);
+          return { s, t: 'Suma ' + (Number.isInteger(sum) ? String(sum) : sum.toFixed(2).replace('.', ',')) };
+        }
+        if (c.type === 'check') return { s, t: T.rows.filter((r) => r.v[c.id]).length + ' / ' + T.rows.length };
+        return { s, t: '' };
+      });
+      return {
+        name: T.name,
+        onName: (e) => updT(blk.id, (t) => Object.assign({}, t, { name: e.target.value })),
+        cols, rows, foot,
+        gridS: 'grid-template-columns:minmax(200px,2fr)' + (n > 1 ? ' repeat(' + (n - 1) + ',minmax(140px,1fr))' : '') + ' 44px;min-width:' + (244 + 140 * (n - 1)) + 'px',
+        hasFoot: T.cols.some((c) => c.type === 'num' || c.type === 'check'),
+        meta: pl(T.rows.length, 'wiersz', 'wiersze', 'wierszy') + ' · ' + pl(n, 'kolumna', 'kolumny', 'kolumn'),
+        addRow: () => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.concat([{ id: nid(), v: {} }]) }), { pick: null }),
+        addCol: () => {
+          const id = 'c' + nid();
+          updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.concat([{ id, name: 'Kolumna ' + (t.cols.length + 1), type: 'text' }]) }), { pick: { kind: 'col', b: blk.id, c: id }, newOpt: '' });
+        }
+      };
+    };
+
+    const blocks = B.map((b) => ({
+      isText: b.type === 'text', isH: b.type === 'h', isTodo: b.type === 'todo', isDiv: b.type === 'div', isTable: b.type === 'table',
+      text: b.text || '',
+      onText: (e) => updB(b.id, (x) => Object.assign({}, x, { text: e.target.value })),
+      ac: b.done ? 'true' : 'false', chk: b.done ? '✓' : '',
+      chkS: 'width:18px;height:18px;flex:0 0 18px;border-radius:4px;border:1px solid ' + (b.done ? '#171717' : '#d4d4d4') + ';background:' + (b.done ? '#171717' : '#ffffff') + ';color:#ffffff;font-size:11px;line-height:1;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center',
+      todoS: b.done ? 'text-decoration:line-through;color:#a3a3a3' : '',
+      toggle: () => updB(b.id, (x) => Object.assign({}, x, { done: !x.done })),
+      remove: () => save(B.filter((x) => x.id !== b.id), { pick: null }),
+      t: b.type === 'table' ? table(b) : {}
+    }));
+
+    return {
+      title: S.title || '', crumb: S.title || 'Bez tytułu',
+      onTitle: (e) => this.setState({ title: e.target.value }),
+      blocks, isEmpty: !B.length,
+      cmd, q: q || '',
+      onCmd: (e) => this.setState({ cmd: e.target.value, hi: 0 }),
+      onKey,
+      openMenu: () => this.setState({ cmd: q === null ? '/' : '', hi: 0, pick: null }),
+      menuOpen: q !== null, menuExp: q !== null ? 'true' : 'false', menuEmpty: q !== null && !found.length,
+      menu: found.map((d, i) => ({
+        icon: d.icon, label: d.label, desc: d.desc, sel: i === hi ? 'true' : 'false',
+        s: i === hi ? 'background:#f0f0f0' : '',
+        pick: () => insert(d.k),
+        hover: () => { if ((S.hi || 0) !== i) this.setState({ hi: i }); }
+      })),
+      quick: DEFS.slice(0, 4).map((d) => ({ icon: d.icon, label: d.label, pick: () => insert(d.k) }))
+    };
+  }
 }
 </script>
 </body>
