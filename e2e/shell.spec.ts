@@ -35,18 +35,28 @@ test.describe("powłoka aplikacji", () => {
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    // Wydłużamy treść, żeby strona dało się przewinąć
+    // Powłoka dociąga się strumieniem (Suspense) — dopiero po treści modułu <main> jest ostateczny.
+    // Wcześniejszy wstrzyknięty element zniknąłby przy podmianie, a strona nie dałaby się przewinąć.
+    const tresc = page.getByText("Tu pojawi się Twój dzień.");
+    await expect(tresc).toBeVisible();
+    const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
+    await expect(sidebar).toBeVisible();
+
+    // Wydłużamy treść, żeby przewijało się okno (sidebar: sticky top-0 h-dvh, przewija się tylko treść)
     await page.evaluate(() => {
       const wypelniacz = document.createElement("div");
       wypelniacz.style.height = "3000px";
       document.querySelector("main")!.appendChild(wypelniacz);
     });
-    await page.evaluate(() => window.scrollBy(0, 1500));
-    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    const trescPrzed = (await tresc.boundingBox())!.y;
+    await page.evaluate(() => window.scrollBy(0, 300));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 
-    const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
-    await expect(sidebar).toBeVisible();
-    expect((await sidebar.boundingBox())?.y).toBe(0);
+    // Treść się przesunęła, a sidebar został na górze, na pełną wysokość okna
+    expect((await tresc.boundingBox())!.y).toBeLessThan(trescPrzed);
+    const ramka = (await sidebar.boundingBox())!;
+    expect(ramka.y).toBe(0);
+    expect(ramka.height).toBe(900);
   });
 
   test("dolny pasek jest przyklejony do dołu i wskazuje aktywny moduł (telefon)", async ({ page }, info) => {
