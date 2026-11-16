@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { isPasswordPwned } from "@/lib/auth/hibp";
 import { pathAfterLogin } from "@/lib/auth/next-path";
-import { signInSchema, signUpSchema } from "@/lib/auth/schemas";
+import { newPasswordSchema, resetRequestSchema, signInSchema, signUpSchema } from "@/lib/auth/schemas";
 import { verifyTurnstile } from "@/lib/auth/turnstile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -150,5 +150,75 @@ export async function resendConfirmation(email: string): Promise<AuthFormState> 
     email: email.trim().toLowerCase(),
     options: { emailRedirectTo: `${origin}/auth/confirm` },
   });
+  return { status: "success", email };
+}
+
+// Prośba o reset hasła: zod → Turnstile → Supabase. Zawsze ten sam sukces, niezależnie od tego, czy konto istnieje.
+export async function requestPasswordReset(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const parsed = resetRequestSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: { email: parsed.error.issues[0]?.message ?? "Podaj poprawny e-mail" } };
+  }
+
+  const naglowki = await headers();
+  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const token = formData.get("cf-turnstile-response");
+  const botOk = await verifyTurnstile(typeof token === "string" ? token : null, ip);
+  if (!botOk) {
+    return { status: "error", message: "Potwierdź, że nie jesteś botem" };
+  }
+
+  // Błąd Supabase (np. brak konta, limit) celowo ignorujemy — odpowiedź dla użytkownika jest zawsze taka sama
+  const origin = await originZNaglowkow();
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${origin}/auth/confirm` });
+  return { status: "success", email: parsed.data.email };
+}
+
+// Nowe hasło po kliknięciu linku z maila (link tworzy sesję recovery).
+// Po zmianie wylogowujemy pozostałe urządzenia, a bieżące przechodzi do aplikacji.
+export async function updatePassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const pole = String(issue.path[0]);
+      fieldErrors[pole] ??= issue.message;
+    }
+    return { status: "error", fieldErrors };
+  }
+
+  if (await isPasswordPwned(parsed.data.password)) {
+    return { status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { status: "error", message: "Link wygasł. Poproś o nowy." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    return { status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." };
+  }
+  await supabase.auth.signOut({ scope: "others" });
+
+  redirect("/dzis");
+}
+
+// Ponowne wysłanie linku (potwierdzenie konta albo reset hasła). Zawsze „sukces” — nie zdradzamy stanu konta.
+export async function resendLink(type: "signup" | "recovery", email: string): Promise<AuthFormState> {
+  if (type === "signup") {
+    return resendConfirmation(email);
+  }
+  const origin = await originZNaglowkow();
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${origin}/auth/confirm` });
   return { status: "success", email };
 }

@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { signInWithPassword, signUpMock, resendMock, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
+const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, updateUser, signOutMock, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUpMock: vi.fn(),
   resendMock: vi.fn(),
+  resetForEmail: vi.fn(),
+  getUser: vi.fn(),
+  updateUser: vi.fn(),
+  signOutMock: vi.fn(),
   isPasswordPwned: vi.fn(),
   maybeSingle: vi.fn(),
   verifyTurnstile: vi.fn(),
@@ -11,7 +15,15 @@ const { signInWithPassword, signUpMock, resendMock, isPasswordPwned, maybeSingle
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
-    auth: { signInWithPassword, signUp: signUpMock, resend: resendMock },
+    auth: {
+      signInWithPassword,
+      signUp: signUpMock,
+      resend: resendMock,
+      resetPasswordForEmail: resetForEmail,
+      getUser,
+      updateUser,
+      signOut: signOutMock,
+    },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
   }),
 }));
@@ -27,7 +39,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-import { checkPasswordLeak, resendConfirmation, signIn, signUp } from "./actions";
+import { checkPasswordLeak, requestPasswordReset, resendConfirmation, resendLink, signIn, signUp, updatePassword } from "./actions";
 
 function formularz(dane: Record<string, string>) {
   const fd = new FormData();
@@ -194,5 +206,110 @@ describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
     vi.stubEnv("NODE_ENV", "production");
     await expect(resendConfirmation("a@b.pl")).rejects.toThrow("NEXT_PUBLIC_SITE_URL");
     expect(resendMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("requestPasswordReset", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    verifyTurnstile.mockResolvedValue(true);
+    resetForEmail.mockResolvedValue({ error: null });
+  });
+
+  it("wysyła link i zwraca sukces z e-mailem", async () => {
+    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: " Ala@Przyklad.pl ", "cf-turnstile-response": "tok" }));
+    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", { redirectTo: "http://localhost:3000/auth/confirm" });
+    expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
+  });
+
+  it("błąd Supabase (np. brak konta) daje ten sam sukces", async () => {
+    resetForEmail.mockResolvedValue({ error: { message: "User not found" } });
+    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "ala@przyklad.pl", "cf-turnstile-response": "tok" }));
+    expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
+  });
+
+  it("błąd Turnstile → komunikat, bez wysyłki", async () => {
+    verifyTurnstile.mockResolvedValue(false);
+    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "ala@przyklad.pl" }));
+    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    expect(resetForEmail).not.toHaveBeenCalled();
+  });
+
+  it("zły format e-maila → błąd pola", async () => {
+    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "nie-email", "cf-turnstile-response": "tok" }));
+    expect(wynik.status).toBe("error");
+    expect(wynik.fieldErrors?.email).toBeTruthy();
+    expect(resetForEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("updatePassword", () => {
+  const dane = { password: "rytm2026dobre", confirm: "rytm2026dobre" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+    isPasswordPwned.mockResolvedValue(false);
+    updateUser.mockResolvedValue({ error: null });
+    signOutMock.mockResolvedValue({ error: null });
+  });
+
+  it("sukces → updateUser, signOut(others), redirect na /dzis", async () => {
+    await expect(updatePassword({ status: "idle" }, formularz(dane))).rejects.toThrow("REDIRECT:/dzis");
+    expect(updateUser).toHaveBeenCalledWith({ password: "rytm2026dobre" });
+    expect(signOutMock).toHaveBeenCalledWith({ scope: "others" });
+  });
+
+  it("niezgodne hasła → błąd pola confirm", async () => {
+    const wynik = await updatePassword({ status: "idle" }, formularz({ password: "rytm2026dobre", confirm: "inne" }));
+    expect(wynik.fieldErrors?.confirm).toBe("Hasła nie są takie same");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("hasło z wycieku → komunikat, bez zmiany", async () => {
+    isPasswordPwned.mockResolvedValue(true);
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik).toEqual({ status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." });
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("brak sesji (link wygasł) → status expired, bez zmiany", async () => {
+    getUser.mockResolvedValue({ data: { user: null } });
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik.status).toBe("error");
+    expect(wynik.message).toBe("Link wygasł. Poproś o nowy.");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("błąd updateUser → ogólny komunikat, bez wylogowania innych sesji", async () => {
+    updateUser.mockResolvedValue({ error: { message: "boom" } });
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik).toEqual({ status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." });
+    expect(signOutMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("resendLink", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resendMock.mockResolvedValue({ error: null });
+    resetForEmail.mockResolvedValue({ error: null });
+  });
+
+  it("signup → resend potwierdzenia", async () => {
+    const wynik = await resendLink("signup", "Ala@Przyklad.pl");
+    expect(resendMock).toHaveBeenCalledWith({
+      type: "signup",
+      email: "ala@przyklad.pl",
+      options: { emailRedirectTo: "http://localhost:3000/auth/confirm" },
+    });
+    expect(wynik.status).toBe("success");
+  });
+
+  it("recovery → resetPasswordForEmail, zawsze sukces", async () => {
+    resetForEmail.mockResolvedValue({ error: { message: "x" } });
+    const wynik = await resendLink("recovery", "ala@przyklad.pl");
+    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", { redirectTo: "http://localhost:3000/auth/confirm" });
+    expect(wynik.status).toBe("success");
   });
 });

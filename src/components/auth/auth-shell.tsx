@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 const SZEROKOSC_KARTY = {
   380: "min-[800px]:max-w-[380px]",
   400: "min-[800px]:max-w-[400px]",
+  // Karty z makiet Forgot / EmailConfirmed mają box-sizing: border-box (380 / 420 px łącznie z ramką i paddingiem 28)
+  322: "min-[800px]:max-w-[322px]",
+  362: "min-[800px]:max-w-[362px]",
 } as const;
 
 // Wspólny układ ekranów konta.
@@ -17,14 +20,17 @@ const SZEROKOSC_KARTY = {
 // Przełączanie wyłącznie klasami CSS — bez matchMedia, żeby hydratacja nie migotała.
 export function AuthShell({
   headerAction,
+  headerNote,
   width = 380,
   phoneBack,
   children,
 }: {
   headerAction?: { href: string; label: string };
+  // Web: mała etykieta mono po prawej zamiast akcji, np. „krok 1 / 3” (Forgot.dc.html)
+  headerNote?: string;
   // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (MRegister.dc.html)
   phoneBack?: string;
-  width?: 380 | 400;
+  width?: keyof typeof SZEROKOSC_KARTY;
   children: ReactNode;
 }) {
   return (
@@ -39,6 +45,7 @@ export function AuthShell({
             {headerAction.label}
           </Link>
         )}
+        {headerNote && <span className="font-mono text-xs text-[#6b6b6b]">{headerNote}</span>}
       </header>
 
       {phoneBack && (
