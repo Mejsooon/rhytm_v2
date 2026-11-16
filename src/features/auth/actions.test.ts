@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, updateUser, signOutMock, cookieGet, cookieDelete, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
+const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, getClaims, updateUser, signOutMock, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUpMock: vi.fn(),
   resendMock: vi.fn(),
@@ -8,8 +8,7 @@ const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, upda
   getUser: vi.fn(),
   updateUser: vi.fn(),
   signOutMock: vi.fn(),
-  cookieGet: vi.fn(),
-  cookieDelete: vi.fn(),
+  getClaims: vi.fn(),
   isPasswordPwned: vi.fn(),
   maybeSingle: vi.fn(),
   verifyTurnstile: vi.fn(),
@@ -23,6 +22,7 @@ vi.mock("@/lib/supabase/server", () => ({
       resend: resendMock,
       resetPasswordForEmail: resetForEmail,
       getUser,
+      getClaims,
       updateUser,
       signOut: signOutMock,
     },
@@ -33,7 +33,6 @@ vi.mock("@/lib/auth/turnstile", () => ({ verifyTurnstile }));
 vi.mock("@/lib/auth/hibp", () => ({ isPasswordPwned }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8", host: "localhost:3000" }),
-  cookies: async () => ({ get: cookieGet, delete: cookieDelete }),
 }));
 // redirect w Next rzuca wyjątek — odwzorowujemy to, żeby sprawdzić cel
 vi.mock("next/navigation", () => ({
@@ -266,11 +265,15 @@ describe("requestPasswordReset", () => {
 
 describe("updatePassword", () => {
   const dane = { password: "rytm2026dobre", confirm: "rytm2026dobre" };
+  // Sesja z linku resetu: JWT z wpisem amr „recovery” sprzed minuty
+  const sesjaResetu = (sekundTemu: number) => ({
+    data: { claims: { sub: "u1", amr: [{ method: "recovery", timestamp: Math.floor(Date.now() / 1000) - sekundTemu }] } },
+    error: null,
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    cookieGet.mockReturnValue({ name: "rhytm_recovery", value: "1" });
+    getClaims.mockResolvedValue(sesjaResetu(60));
     isPasswordPwned.mockResolvedValue(false);
     updateUser.mockResolvedValue({ error: null });
     signOutMock.mockResolvedValue({ error: null });
@@ -280,21 +283,33 @@ describe("updatePassword", () => {
     await expect(updatePassword({ status: "idle" }, formularz(dane))).rejects.toThrow("REDIRECT:/dzis");
     expect(updateUser).toHaveBeenCalledWith({ password: "rytm2026dobre" });
     expect(signOutMock).toHaveBeenCalledWith({ scope: "others" });
-    expect(cookieDelete).toHaveBeenCalledWith("rhytm_recovery");
   });
 
-  it("bez ciasteczka rhytm_recovery → „Link wygasł”, bez getUser, HIBP i zmiany", async () => {
-    cookieGet.mockReturnValue(undefined);
+  it("zwykła sesja (amr bez recovery) → „Link wygasł”, bez HIBP i zmiany", async () => {
+    getClaims.mockResolvedValue({
+      data: { claims: { sub: "u1", amr: [{ method: "password", timestamp: Math.floor(Date.now() / 1000) }] } },
+      error: null,
+    });
     const wynik = await updatePassword({ status: "idle" }, formularz(dane));
     expect(wynik).toEqual({ status: "error", message: "Link wygasł. Poproś o nowy." });
     expect(isPasswordPwned).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("getUser jest sprawdzane przed HIBP (brak sesji → HIBP nie jest wołane)", async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
-    await updatePassword({ status: "idle" }, formularz(dane));
+  it("recovery starszy niż 15 minut → „Link wygasł”, bez HIBP", async () => {
+    getClaims.mockResolvedValue(sesjaResetu(16 * 60));
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik.message).toBe("Link wygasł. Poproś o nowy.");
     expect(isPasswordPwned).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("brak sesji (getClaims bez danych) → „Link wygasł”, bez HIBP i zmiany", async () => {
+    getClaims.mockResolvedValue({ data: null, error: null });
+    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
+    expect(wynik).toEqual({ status: "error", message: "Link wygasł. Poproś o nowy." });
+    expect(isPasswordPwned).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("niezgodne hasła → błąd pola confirm", async () => {
@@ -307,14 +322,6 @@ describe("updatePassword", () => {
     isPasswordPwned.mockResolvedValue(true);
     const wynik = await updatePassword({ status: "idle" }, formularz(dane));
     expect(wynik).toEqual({ status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." });
-    expect(updateUser).not.toHaveBeenCalled();
-  });
-
-  it("brak sesji (link wygasł) → status expired, bez zmiany", async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
-    const wynik = await updatePassword({ status: "idle" }, formularz(dane));
-    expect(wynik.status).toBe("error");
-    expect(wynik.message).toBe("Link wygasł. Poproś o nowy.");
     expect(updateUser).not.toHaveBeenCalled();
   });
 

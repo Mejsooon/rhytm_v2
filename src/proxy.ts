@@ -12,15 +12,16 @@ export async function proxy(request: NextRequest) {
 
   const { response, user, supabase } = await updateSession(request);
 
-  // Status onboardingu czytamy jednym zapytaniem, tylko dla zalogowanego
-  let isOnboarded = false;
+  // Status onboardingu czytamy jednym zapytaniem, tylko dla zalogowanego.
+  // Błąd zapytania = stan nieznany (null): wtedy nie przekierowujemy według onboardingu.
+  let isOnboarded: boolean | null = false;
   if (user) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("onboarded_at")
       .eq("user_id", user.id)
       .maybeSingle();
-    isOnboarded = data?.onboarded_at != null;
+    isOnboarded = error ? null : data?.onboarded_at != null;
   }
 
   const decyzja = resolveRoute({
@@ -33,9 +34,13 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Przekierowanie musi nieść ciasteczka sesji ustawione przez updateSession
+  // Przekierowanie musi nieść ciasteczka sesji ustawione przez updateSession i ich nagłówki no-cache
   const redirect = NextResponse.redirect(new URL(decyzja.redirect, request.url));
   response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+  for (const naglowek of ["Cache-Control", "Expires", "Pragma"]) {
+    const wartosc = response.headers.get(naglowek);
+    if (wartosc) redirect.headers.set(naglowek, wartosc);
+  }
   return redirect;
 }
 

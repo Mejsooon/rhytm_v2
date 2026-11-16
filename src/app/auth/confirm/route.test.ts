@@ -50,22 +50,9 @@ describe("GET /auth/confirm", () => {
     expect(verifyOtp).not.toHaveBeenCalled();
   });
 
-  it("ciasteczko rhytm_recovery ustawiane tylko po udanym recovery (httpOnly, lax, 900 s)", async () => {
+  it("nie ustawia żadnych własnych ciasteczek (znacznik resetu to podpisany amr w JWT)", async () => {
     const res = await GET(zadanie("?token_hash=abc&type=recovery"));
-    const c = res.cookies.get("rhytm_recovery");
-    expect(c?.value).toBe("1");
-    const naglowek = res.headers.get("set-cookie") ?? "";
-    expect(naglowek).toMatch(/HttpOnly/i);
-    expect(naglowek).toMatch(/SameSite=lax/i);
-    expect(naglowek).toMatch(/Max-Age=900/i);
-  });
-
-  it("ciasteczka nie ma dla signup ani po błędzie recovery", async () => {
-    const ok = await GET(zadanie("?token_hash=abc&type=signup"));
-    expect(ok.cookies.get("rhytm_recovery")).toBeUndefined();
-    verifyOtp.mockResolvedValue({ error: { message: "expired" } });
-    const zle = await GET(zadanie("?token_hash=abc&type=recovery"));
-    expect(zle.cookies.get("rhytm_recovery")).toBeUndefined();
+    expect(res.cookies.getAll()).toEqual([]);
   });
 
   it("błąd verifyOtp → /link-wygasl?type=signup", async () => {

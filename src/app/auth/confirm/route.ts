@@ -27,17 +27,6 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.verifyOtp({ type: typ, token_hash: tokenHash });
   if (error) return blad;
 
-  const odpowiedz = NextResponse.redirect(new URL(CEL[typ], origin));
-  // Recovery: znacznik, że sesja pochodzi z linku resetu. Tylko z nim /nowe-haslo pozwala zmienić hasło bez starego
-  // (zwykła zalogowana sesja nie wystarczy). Ważny 15 minut.
-  if (typ === "recovery") {
-    odpowiedz.cookies.set("rhytm_recovery", "1", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 900,
-      path: "/",
-    });
-  }
-  return odpowiedz;
+  // Recovery: sesja z verifyOtp ma w JWT wpis amr „recovery” — po nim /nowe-haslo rozpoznaje link resetu
+  return NextResponse.redirect(new URL(CEL[typ], origin));
 }

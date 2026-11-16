@@ -1,10 +1,11 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isPasswordPwned } from "@/lib/auth/hibp";
 import { pathAfterLogin } from "@/lib/auth/next-path";
+import { sesjaZLinkuResetu } from "@/lib/auth/recovery";
 import { newPasswordSchema, resetRequestSchema, signInSchema, signUpSchema } from "@/lib/auth/schemas";
 import { verifyTurnstile } from "@/lib/auth/turnstile";
 import { createClient } from "@/lib/supabase/server";
@@ -196,21 +197,15 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
   return { status: "success", email: parsed.data.email };
 }
 
-// Nowe hasło po kliknięciu linku z maila. Wymaga ciasteczka rhytm_recovery (ustawia je tylko /auth/confirm
-// po udanym recovery) ORAZ sesji — samo bycie zalogowanym nie pozwala zmienić hasła bez starego.
+// Nowe hasło po kliknięciu linku z maila. Wymaga sesji, która powstała z linku resetu w ciągu 15 minut
+// (wpis „recovery” w podpisanym claimie amr JWT) — samo bycie zalogowanym nie pozwala zmienić hasła bez starego.
 // Po zmianie wylogowujemy pozostałe urządzenia, a bieżące przechodzi do aplikacji.
 export async function updatePassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
-  const WYGASL: AuthFormState = { status: "error", message: "Link wygasł. Poproś o nowy." };
-
-  const ciasteczka = await cookies();
-  if (!ciasteczka.get("rhytm_recovery")) return WYGASL;
-
-  // Sesję sprawdzamy przed jakimkolwiek zapytaniem do HIBP
+  // Sesję resetu sprawdzamy przed jakimkolwiek zapytaniem do HIBP
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return WYGASL;
+  if (!(await sesjaZLinkuResetu(supabase))) {
+    return { status: "error", message: "Link wygasł. Poproś o nowy." };
+  }
 
   const parsed = newPasswordSchema.safeParse({
     password: formData.get("password"),
@@ -234,8 +229,6 @@ export async function updatePassword(_prev: AuthFormState, formData: FormData): 
     return { status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." };
   }
   await supabase.auth.signOut({ scope: "others" });
-  // Znacznik jest jednorazowy
-  ciasteczka.delete("rhytm_recovery");
 
   redirect("/dzis");
 }

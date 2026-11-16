@@ -8,10 +8,11 @@ const ZAWSZE_PRZEPUSZCZANE_PREFIKSY = ["/icons/", "/_next/"];
 export function resolveRoute(input: {
   pathname: string;
   isLoggedIn: boolean;
-  isOnboarded: boolean;
+  // null = nie wiadomo (zapytanie o profil się nie udało) — wtedy nie przekierowujemy według onboardingu
+  isOnboarded: boolean | null;
 }): { redirect: string } | null {
   const { pathname, isLoggedIn, isOnboarded } = input;
-  const domyslnaDlaZalogowanego = isOnboarded ? "/dzis" : "/onboarding";
+  const domyslnaDlaZalogowanego = isOnboarded === false ? "/onboarding" : "/dzis";
 
   // Zasoby statyczne — nigdy nie przekierowujemy
   if (
@@ -44,6 +45,11 @@ export function resolveRoute(input: {
   // Wszystko poniżej wymaga zalogowania
   if (!isLoggedIn) {
     return { redirect: "/logowanie" };
+  }
+
+  // Stan onboardingu nieznany: przepuszczamy, zamiast odbijać użytkownika między /dzis a /onboarding
+  if (isOnboarded === null) {
+    return null;
   }
 
   // Onboarding: ukończony → aplikacja

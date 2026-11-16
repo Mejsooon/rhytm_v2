@@ -51,6 +51,15 @@ describe("resolveRoute", () => {
     expect(resolveRoute({ pathname: "/_next/static/a.js", ...wylogowany })).toBeNull();
   });
 
+  it("nieznany stan onboardingu (błąd zapytania o profil) → bez przekierowań zależnych od onboardingu", () => {
+    const nieznany = { isLoggedIn: true, isOnboarded: null };
+    expect(resolveRoute({ pathname: "/dzis", ...nieznany })).toBeNull();
+    expect(resolveRoute({ pathname: "/onboarding", ...nieznany })).toBeNull();
+    // Ekrany konta i strona główna nadal wymagają celu — wtedy aplikacja
+    expect(resolveRoute({ pathname: "/logowanie", ...nieznany })).toEqual({ redirect: "/dzis" });
+    expect(resolveRoute({ pathname: "/", ...nieznany })).toEqual({ redirect: "/dzis" });
+  });
+
   it("strona główna przekierowuje", () => {
     expect(resolveRoute({ pathname: "/", ...pelny })).toEqual({ redirect: "/dzis" });
     expect(resolveRoute({ pathname: "/", ...wylogowany })).toEqual({ redirect: "/logowanie" });
