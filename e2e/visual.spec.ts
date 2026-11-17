@@ -176,7 +176,7 @@ test.describe("ekrany z sesją", () => {
     }
 
     await page.goto("/ustawienia/kategorie");
-    await expect(page.getByRole("heading", { name: "Kategorie kalendarza" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Kategorie kalendarza" })).toBeVisible();
     await zrzut(page, "ustawienia-kategorie", projekt);
   });
 });
