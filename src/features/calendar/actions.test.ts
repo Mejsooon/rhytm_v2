@@ -1,0 +1,218 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeTable } from "@/test-utils/fake-supabase";
+
+const { getUser, from, rpc, revalidatePath } = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  from: vi.fn(),
+  rpc: vi.fn(),
+  revalidatePath: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({ auth: { getUser }, from, rpc }),
+}));
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => {
+    throw new Error(`REDIRECT:${url}`);
+  },
+}));
+vi.mock("next/cache", () => ({ revalidatePath }));
+
+import { changeOccurrence, createBlock } from "./actions";
+
+const BLAD = "Nie udało się zapisać. Spróbuj ponownie.";
+
+const wejscie = {
+  title: "Nauka",
+  categoryId: null,
+  date: "2026-11-17", // wtorek
+  startMin: 480,
+  durationMin: 60,
+  recurrence: null,
+  note: "",
+  remind: true,
+};
+
+// Cykliczny blok dzienny od 1 listopada
+const blok = {
+  id: "b1",
+  user_id: "u1",
+  title: "Nauka",
+  category_id: null,
+  note: null,
+  start_local: "2026-11-01T08:00:00",
+  duration_min: 60,
+  timezone: "Europe/Warsaw",
+  recurrence: { freq: "daily" },
+  remind: true,
+  created_at: null,
+  updated_at: null,
+};
+
+let tables: Record<string, ReturnType<typeof fakeTable>>;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+  tables = {
+    profiles: fakeTable({ data: { timezone: "Europe/Warsaw" } }),
+    categories: fakeTable({ data: { id: "k1", is_system: false } }),
+    blocks: fakeTable({ data: { id: "b1" } }),
+    tasks: fakeTable(),
+    block_exceptions: fakeTable({ data: [] }),
+  };
+  from.mockImplementation((nazwa: string) => tables[nazwa]);
+  rpc.mockResolvedValue({ data: "nowy", error: null });
+});
+
+describe("createBlock", () => {
+  it("bez sesji przekierowuje na /logowanie", async () => {
+    getUser.mockResolvedValue({ data: { user: null } });
+    await expect(createBlock(wejscie)).rejects.toThrow("REDIRECT:/logowanie");
+  });
+
+  it("pusty tytuł i za krótki czas → ok: false, bez insert", async () => {
+    expect((await createBlock({ ...wejscie, title: "  " })).ok).toBe(false);
+    expect((await createBlock({ ...wejscie, durationMin: 10 })).ok).toBe(false);
+    expect(tables.blocks.insert).not.toHaveBeenCalled();
+  });
+
+  it("kategoria systemowa → ok: false, bez insert", async () => {
+    tables.categories = fakeTable({ data: { id: "k1", is_system: true } });
+    const w = await createBlock({ ...wejscie, categoryId: "k1" });
+    expect(w.ok).toBe(false);
+    expect(tables.blocks.insert).not.toHaveBeenCalled();
+  });
+
+  it("poprawny blok → insert ze strefą z profilu, revalidate", async () => {
+    tables.profiles = fakeTable({ data: { timezone: "Europe/Berlin" } });
+    const w = await createBlock(wejscie);
+    expect(w).toEqual({ ok: true, id: "b1" });
+    expect(tables.blocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: "u1",
+        title: "Nauka",
+        start_local: "2026-11-17T08:00:00",
+        duration_min: 60,
+        timezone: "Europe/Berlin",
+        recurrence: null,
+        note: null,
+        remind: true,
+      }),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/kalendarz");
+  });
+
+  it("błąd zapisu → komunikat", async () => {
+    tables.blocks = fakeTable({ error: { message: "boom" } });
+    expect(await createBlock(wejscie)).toEqual({ ok: false, message: BLAD });
+  });
+
+  it("weekdays zaczęte w sobotę startuje w najbliższy poniedziałek", async () => {
+    await createBlock({
+      ...wejscie,
+      date: "2026-11-21", // sobota
+      recurrence: { freq: "weekdays" },
+      tasks: ["A"],
+    });
+    expect(tables.blocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ start_local: "2026-11-23T08:00:00" }),
+    );
+    // zadanie ląduje w pierwszym prawdziwym wystąpieniu
+    expect(tables.tasks.insert).toHaveBeenCalledWith([
+      expect.objectContaining({ occurrence_date: "2026-11-23", due_date: "2026-11-23" }),
+    ]);
+  });
+
+  it("tasks: ['A','B'] wstawia 2 zadania z occurrence_date = date", async () => {
+    await createBlock({ ...wejscie, tasks: ["A", "B"] });
+    expect(tables.tasks.insert).toHaveBeenCalledWith([
+      expect.objectContaining({ user_id: "u1", title: "A", block_id: "b1", occurrence_date: "2026-11-17" }),
+      expect.objectContaining({ user_id: "u1", title: "B", block_id: "b1", occurrence_date: "2026-11-17" }),
+    ]);
+  });
+});
+
+describe("changeOccurrence", () => {
+  beforeEach(() => {
+    tables.blocks = fakeTable({ data: blok });
+  });
+
+  it("bez sesji przekierowuje na /logowanie", async () => {
+    getUser.mockResolvedValue({ data: { user: null } });
+    await expect(
+      changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "this", delete: true }),
+    ).rejects.toThrow("REDIRECT:/logowanie");
+  });
+
+  it("this + zmiana tytułu → upsert wyjątku", async () => {
+    const w = await changeOccurrence({
+      blockId: "b1",
+      date: "2026-11-10",
+      scope: "this",
+      patch: { title: "Inny" },
+    });
+    expect(w.ok).toBe(true);
+    expect(tables.block_exceptions.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ block_id: "b1", occurrence_date: "2026-11-10", kind: "modified", new_title: "Inny" }),
+      expect.anything(),
+    );
+  });
+
+  it("following w środku serii → rpc split_block_series", async () => {
+    const w = await changeOccurrence({
+      blockId: "b1",
+      date: "2026-11-10",
+      scope: "following",
+      patch: { title: "Inny" },
+    });
+    expect(w.ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("split_block_series", {
+      p_block_id: "b1",
+      p_from: "2026-11-10",
+      p_patch: { title: "Inny" },
+      p_delete: false,
+    });
+  });
+
+  it("this + delete → zadania samodzielne, potem wyjątek cancelled", async () => {
+    const w = await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "this", delete: true });
+    expect(w.ok).toBe(true);
+    expect(tables.tasks.update).toHaveBeenCalledWith({ block_id: null, occurrence_date: null });
+    expect(tables.block_exceptions.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ block_id: "b1", occurrence_date: "2026-11-10", kind: "cancelled" }),
+      expect.anything(),
+    );
+  });
+
+  it("all + delete → zwykłe usunięcie bloku", async () => {
+    await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "all", delete: true });
+    expect(tables.blocks.delete).toHaveBeenCalled();
+  });
+
+  it("all z nową powtarzalnością weekdays normalizuje datę startu", async () => {
+    // blok zaczyna się w sobotę 2026-11-21
+    tables.blocks = fakeTable({ data: { ...blok, start_local: "2026-11-21T08:00:00" } });
+    await changeOccurrence({
+      blockId: "b1",
+      date: "2026-11-21",
+      scope: "all",
+      patch: { recurrence: { freq: "weekdays" } },
+    });
+    expect(tables.blocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ recurrence: { freq: "weekdays" }, start_local: "2026-11-23T08:00:00" }),
+    );
+  });
+
+  it("nieistniejący blok → ok: false", async () => {
+    tables.blocks = fakeTable({ data: null });
+    const w = await changeOccurrence({ blockId: "x", date: "2026-11-10", scope: "this", delete: true });
+    expect(w.ok).toBe(false);
+  });
+
+  it("błąd rpc → komunikat", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    const w = await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "following", delete: true });
+    expect(w).toEqual({ ok: false, message: BLAD });
+  });
+});
