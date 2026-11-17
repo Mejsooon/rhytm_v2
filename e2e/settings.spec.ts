@@ -16,6 +16,9 @@ test.describe("ustawienia ogólne", () => {
 
     await page.goto("/ustawienia");
     await expect(page).toHaveURL(/\/ustawienia\/ogolne$/);
+    // Regresja: pasek zakładek nie może poszerzać strony (na telefonie przeglądarka oddaliłaby widok)
+    await expect(page.getByRole("heading", { name: "Profil", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
     // Karta Profil: nazwa → komunikat o zmianach → zapis
     const profil = page.locator("section", { has: page.getByRole("heading", { name: "Profil", exact: true }) });
@@ -38,22 +41,7 @@ test.describe("ustawienia ogólne", () => {
     await cele.getByRole("button", { name: "Zwiększ Cel snu" }).click();
     await expect(cele.getByText("8:15", { exact: true })).toBeVisible();
     await expect(cele.getByText("Masz niezapisane zmiany.")).toBeVisible();
-    const zapiszCele = cele.getByRole("button", { name: "Zapisz" });
-    await zapiszCele.click({ timeout: 4000 }).catch(async (e) => {
-      const diag = await page.evaluate(() => {
-        const b = Array.from(document.querySelectorAll("button")).filter((x) => x.textContent === "Zapisz").map((x) => {
-          const r = x.getBoundingClientRect();
-          const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-          return { r: [r.x, r.y, r.width, r.height], hit: el?.outerHTML.slice(0, 80) };
-        });
-        const sections = Array.from(document.querySelectorAll("section")).map((x) => {
-          const r = x.getBoundingClientRect();
-          return [x.querySelector("h2")?.textContent, r.y, r.height];
-        });
-        return { b, sections, scrollY: window.scrollY, ih: window.innerHeight, iw: window.innerWidth, sw: document.documentElement.scrollWidth, vv: [window.visualViewport?.scale, window.visualViewport?.offsetTop, window.visualViewport?.pageTop] };
-      });
-      throw new Error("DIAG " + JSON.stringify(diag) + " " + String(e).slice(0, 100));
-    });
+    await cele.getByRole("button", { name: "Zapisz" }).click();
     await expect(cele.getByText(/Zapisano ✓/)).toBeVisible();
 
     await page.reload();
