@@ -1,15 +1,18 @@
 "use client";
 
 // Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
-// Widoki (tydzień, dzień, miesiąc) dojdą w Taskach 6, 10 i 11 — na razie prosta lista dni.
+// Web: tydzień i dzień to siatka godzin (Task 6); miesiąc i telefon dojdą w Taskach 10 i 11 — na razie prosta lista dni.
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
 import { CalendarHeader } from "./calendar-header";
 import { CategoryFilters } from "./category-filters";
+import { DaySide } from "./day-side";
 import type { CalendarData, CategoryRow } from "./load-calendar";
 import { expandOccurrences } from "./occurrences";
+import { TimeGrid } from "./time-grid";
 import { useCalendarStore } from "./use-calendar-store";
 import { viewRange, type CalendarView } from "./view-range";
 
@@ -23,6 +26,7 @@ export function CalendarView({
   view,
   date,
   today,
+  nowMinutes,
   data: daneSerwera,
 }: {
   view: CalendarView;
@@ -32,6 +36,7 @@ export function CalendarView({
   nowMinutes: number;
   data: CalendarData;
 }) {
+  const router = useRouter();
   const { data, applyOptimistic } = useCalendarStore(daneSerwera);
   const { weekStart } = data.profile;
   const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
@@ -67,6 +72,46 @@ export function CalendarView({
     );
   }
 
+  const placeholder = (
+    // Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 10 i 11)
+    <div className="flex flex-col gap-3">
+      {zakres.days.map((dzien) => {
+        const dzienne = widoczne.filter((o) => o.date === dzien);
+        if (dzienne.length === 0) return null;
+        return (
+          <section key={dzien}>
+            <h3 className="font-mono text-xs text-[#6b6b6b]">{dzien}</h3>
+            <ul className="mt-1 flex flex-col gap-1 text-sm">
+              {dzienne.map((o) => (
+                <li key={o.key}>
+                  <span className="font-mono text-xs text-[#6b6b6b]">{godzina(o.startMin)}</span>{" "}
+                  {o.title}
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+
+  const siatka = (
+    <TimeGrid
+      days={zakres.days}
+      occurrences={widoczne}
+      categories={data.categories}
+      tasks={data.tasks}
+      clock={data.profile.clock}
+      today={today}
+      nowMinutes={nowMinutes}
+      variant={view === "dzien" ? "day" : "week"}
+      totalCount={view === "dzien" ? wystapienia.length : undefined}
+      // TODO(Task 7/8): dymek bloku i okno nowego wpisu
+      onBlockClick={() => {}}
+      onSlotClick={() => {}}
+    />
+  );
+
   return (
     <>
       <CalendarHeader
@@ -85,26 +130,23 @@ export function CalendarView({
           // TODO(Task 8): okno nowej kategorii
           onAdd={() => {}}
         />
-        {/* Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 6, 10, 11) */}
-        <div className="flex flex-col gap-3">
-          {zakres.days.map((dzien) => {
-            const dzienne = widoczne.filter((o) => o.date === dzien);
-            if (dzienne.length === 0) return null;
-            return (
-              <section key={dzien}>
-                <h3 className="font-mono text-xs text-[#6b6b6b]">{dzien}</h3>
-                <ul className="mt-1 flex flex-col gap-1 text-sm">
-                  {dzienne.map((o) => (
-                    <li key={o.key}>
-                      <span className="font-mono text-xs text-[#6b6b6b]">{godzina(o.startMin)}</span>{" "}
-                      {o.title}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
+        {view === "tydzien" && <div className="max-[799px]:hidden">{siatka}</div>}
+        {view === "dzien" && (
+          // TODO(Task 11): widok dnia na telefonie
+          <div className="flex flex-wrap items-start gap-6 max-[799px]:hidden">
+            <div className="min-w-0 flex-[999_1_520px]">{siatka}</div>
+            <DaySide
+              date={date}
+              today={today}
+              weekStart={weekStart}
+              occurrences={widoczne.filter((o) => o.date === date)}
+              tasks={data.tasks}
+              onPick={(dzien) => router.push(`/kalendarz?widok=dzien&data=${dzien}`)}
+            />
+          </div>
+        )}
+        {/* TODO(Task 11): tydzień na telefonie; miesiąc: Task 10 */}
+        {view === "miesiac" && placeholder}
       </div>
     </>
   );
