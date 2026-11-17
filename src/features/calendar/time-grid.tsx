@@ -254,6 +254,7 @@ export function TimeGrid({
                           >
                             <button
                               type="button"
+                              data-occurrence-key={o.key}
                               onClick={(e) => onBlockClick(o.key, e.currentTarget)}
                               title={`${o.title} ${godzinyBloku}`}
                               className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}

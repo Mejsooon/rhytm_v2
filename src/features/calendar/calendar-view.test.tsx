@@ -57,12 +57,6 @@ function wyrenderuj(data = dane()) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // jsdom nie ma ResizeObservera, którego używa Radix Popper
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
 });
 
 describe("CalendarView", () => {
@@ -114,6 +108,18 @@ describe("CalendarView", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
     await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("ukrycie kategorii bloku zamyka dymek i nie wraca po ponownym pokazaniu", async () => {
+    setCategoryHidden.mockResolvedValue({ ok: true });
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Studia/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await userEvent.click(screen.getByRole("button", { name: /Studia/ }));
+    await screen.findByRole("button", { name: /^Algebra/ });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

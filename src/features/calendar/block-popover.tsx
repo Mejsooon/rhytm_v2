@@ -3,7 +3,7 @@
 // Dymek bloku wg Calendar.dc.html: kategoria, tytuł, termin, zadania wystąpienia, notatka i akcje.
 // BlockDetails to sama treść (użyje jej też arkusz na telefonie), BlockPopover dokłada
 // Radix Popover zakotwiczony przy klikniętym bloku.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { addTask, deleteTask, toggleTask, unpinTask } from "@/features/tasks/actions";
@@ -134,14 +134,14 @@ export function BlockDetails({
             />
             {category?.name ?? "Bez kategorii"}
           </span>
-          <span className="text-base leading-[1.3] font-semibold">{o.title}</span>
+          <span className="text-base leading-[1.3] font-semibold break-words">{o.title}</span>
           <span className="font-mono text-xs text-[#666666]">{kiedy}</span>
         </div>
         <button
           type="button"
           aria-label="Zamknij"
           onClick={onClose}
-          className="size-7 flex-none cursor-pointer rounded-md border border-[#e0e0e0] bg-white text-[#666666] max-[799px]:size-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] size-7 flex-none cursor-pointer rounded-md border border-[#e0e0e0] bg-white text-[#666666] max-[799px]:size-11"
         >
           ✕
         </button>
@@ -188,7 +188,7 @@ export function BlockDetails({
                   type="button"
                   aria-label={`Odepnij zadanie ${t.title}`}
                   onClick={() => odepnij(t)}
-                  className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2 py-0.5 text-xs text-[#404040] max-[799px]:min-h-11"
+                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2 py-0.5 text-xs text-[#404040] max-[799px]:min-h-11"
                 >
                   Odepnij
                 </button>
@@ -199,7 +199,7 @@ export function BlockDetails({
                 aria-expanded={otwarteMenu === t.id}
                 disabled={tymczasowe}
                 onClick={() => setOtwarteMenu(otwarteMenu === t.id ? null : t.id)}
-                className="flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] max-[799px]:size-11"
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] max-[799px]:size-11"
               >
                 ⋯
               </button>
@@ -208,7 +208,7 @@ export function BlockDetails({
                 aria-label={`Usuń zadanie ${t.title}`}
                 disabled={tymczasowe}
                 onClick={() => usun(t)}
-                className="flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#b91c1c] max-[799px]:size-11"
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#b91c1c] max-[799px]:size-11"
               >
                 ×
               </button>
@@ -226,12 +226,13 @@ export function BlockDetails({
             value={nowy}
             onChange={(e) => setNowy(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              // Enter zatwierdzający wybór znaku w IME nie dodaje zadania
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 dodaj();
               }
             }}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#171717] outline-0"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#171717] outline-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717]"
           />
         </label>
       </div>
@@ -239,7 +240,7 @@ export function BlockDetails({
       {o.note && (
         <div className="border-t border-[#f0f0f0] pt-2.5">
           <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">Notatka</div>
-          <p className="mt-1.5 text-[13px] leading-normal text-[#404040]">{o.note}</p>
+          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-[#404040]">{o.note}</p>
         </div>
       )}
 
@@ -247,14 +248,14 @@ export function BlockDetails({
         <button
           type="button"
           onClick={onEdit}
-          className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-1.5 max-[799px]:min-h-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-1.5 max-[799px]:min-h-11"
         >
           Edytuj
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="cursor-pointer border-0 bg-transparent px-2 py-1.5 font-medium text-[#b91c1c] max-[799px]:min-h-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer border-0 bg-transparent px-2 py-1.5 font-medium text-[#b91c1c] max-[799px]:min-h-11"
         >
           Usuń
         </button>
@@ -269,14 +270,20 @@ export function BlockDetails({
 }
 
 export function BlockPopover({
-  anchor,
   onClose,
   ...reszta
-}: Wlasciwosci & {
-  // Kliknięty blok, przy którym otwiera się dymek
-  anchor: HTMLElement;
-  onClose: () => void;
-}) {
+}: Wlasciwosci & { onClose: () => void }) {
+  // Kotwica to przycisk bloku w siatce, szukany po kluczu wystąpienia (element mógł zostać
+  // podmieniony przy odświeżeniu); bez niego dymek się zamyka
+  const kotwica = document.querySelector<HTMLElement>(
+    `[data-occurrence-key="${reszta.occurrence.key}"]`,
+  );
+  const anchor = kotwica?.isConnected ? kotwica : null;
+  useEffect(() => {
+    if (!anchor) onClose();
+  });
+  if (!anchor) return null;
+
   return (
     <Popover open onOpenChange={(otwarty) => !otwarty && onClose()}>
       <PopoverAnchor virtualRef={{ current: anchor }} />

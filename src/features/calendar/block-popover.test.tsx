@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { addTask, toggleTask, deleteTask, unpinTask, toastError } = vi.hoisted(() => ({
   addTask: vi.fn(),
@@ -17,15 +17,6 @@ import { BlockPopover } from "./block-popover";
 import type { CalendarData } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
 import { useCalendarStore } from "./use-calendar-store";
-
-beforeAll(() => {
-  // jsdom nie ma ResizeObservera, którego używa Radix Popper
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-});
 
 function zadanie(id: string, title: string, done: boolean): TaskRow {
   return {
@@ -82,11 +73,9 @@ function Wrapper({
   onClose?: () => void;
 }) {
   const { data, applyOptimistic } = useCalendarStore(dane);
-  const anchor = document.getElementById("kotwica") as HTMLElement;
   return (
     <BlockPopover
       occurrence={occurrence}
-      anchor={anchor}
       tasks={data.tasks}
       category={data.categories[0]}
       clock={data.profile.clock}
@@ -100,7 +89,7 @@ function Wrapper({
 
 function wyrenderuj(props: React.ComponentProps<typeof Wrapper> = {}) {
   const kotwica = document.createElement("button");
-  kotwica.id = "kotwica";
+  kotwica.dataset.occurrenceKey = "b1:2026-11-17";
   document.body.appendChild(kotwica);
   return render(<Wrapper {...props} />);
 }
@@ -158,6 +147,30 @@ describe("BlockPopover", () => {
     wyrenderuj();
     await userEvent.type(screen.getByRole("textbox", { name: "Nowe zadanie" }), "   {Enter}");
     expect(addTask).not.toHaveBeenCalled();
+  });
+
+  it("błąd dodania cofa zadanie i pokazuje toast", async () => {
+    addTask.mockResolvedValue({ ok: false, message: "x" });
+    wyrenderuj();
+    await userEvent.type(screen.getByRole("textbox", { name: "Nowe zadanie" }), "Kupić mleko{Enter}");
+    await waitFor(() => expect(screen.queryByText("Kupić mleko")).not.toBeInTheDocument());
+    expect(screen.getByText("1 z 3")).toBeInTheDocument();
+    expect(toastError).toHaveBeenCalled();
+  });
+
+  it("błąd usunięcia przywraca zadanie i pokazuje toast", async () => {
+    deleteTask.mockResolvedValue({ ok: false, message: "x" });
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("button", { name: "Usuń zadanie Szablony" }));
+    await waitFor(() => expect(screen.getByText("Szablony")).toBeInTheDocument());
+    expect(toastError).toHaveBeenCalled();
+  });
+
+  it("zamyka się, gdy bloku-kotwicy nie ma w DOM", () => {
+    const onClose = vi.fn();
+    wyrenderuj({ onClose, occurrence: wystapienie({ key: "b1:2026-11-18" }) });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("× usuwa zadanie, a Odepnij je odpina", async () => {

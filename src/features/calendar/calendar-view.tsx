@@ -43,7 +43,13 @@ export function CalendarView({
   const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
 
   // Wybrany blok: klucz wystąpienia i element, przy którym otwiera się dymek
-  const [wybrany, setWybrany] = useState<{ key: string; anchor: HTMLElement } | null>(null);
+  const [wybrany, setWybrany] = useState<string | null>(null);
+  // Zmiana widoku albo dnia zamyka dymek (stan ustawiany w renderze, jak w store)
+  const [widokDla, setWidokDla] = useState(`${view}|${date}`);
+  if (widokDla !== `${view}|${date}`) {
+    setWidokDla(`${view}|${date}`);
+    setWybrany(null);
+  }
 
   const wystapienia = useMemo(
     () => expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
@@ -77,8 +83,11 @@ export function CalendarView({
   }
 
   const wybraneWystapienie = wybrany
-    ? widoczne.find((o) => o.key === wybrany.key)
+    ? widoczne.find((o) => o.key === wybrany)
     : undefined;
+  // Wystąpienie zniknęło (ukryta kategoria, usunięty blok): wybór się czyści,
+  // więc dymek nie wraca po ponownym pokazaniu kategorii
+  if (wybrany && !wybraneWystapienie) setWybrany(null);
 
   const placeholder = (
     // Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 10 i 11)
@@ -115,9 +124,7 @@ export function CalendarView({
       variant={view === "dzien" ? "day" : "week"}
       totalCount={view === "dzien" ? wystapienia.length : undefined}
       // Ponowny klik w ten sam blok zamyka dymek
-      onBlockClick={(key, anchor) =>
-        setWybrany((w) => (w?.key === key ? null : { key, anchor }))
-      }
+      onBlockClick={(key) => setWybrany((w) => (w === key ? null : key))}
       // TODO(Task 8): okno nowego wpisu
       onSlotClick={() => {}}
     />
@@ -162,7 +169,6 @@ export function CalendarView({
       {wybrany && wybraneWystapienie && (
         <BlockPopover
           occurrence={wybraneWystapienie}
-          anchor={wybrany.anchor}
           tasks={data.tasks}
           category={data.categories.find((k) => k.id === wybraneWystapienie.categoryId)}
           clock={data.profile.clock}
