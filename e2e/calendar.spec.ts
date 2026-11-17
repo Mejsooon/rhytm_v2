@@ -60,15 +60,19 @@ test.describe("kalendarz (web)", () => {
     await blok(page, "Matematyka").click();
     const dymek = page.getByRole("dialog", { name: "Szczegóły bloku" });
     await expect(dymek).toContainText("0 z 0");
+    // Najpierw kończy się zapis dodania zadania (osobny POST), dopiero potem odhaczamy
+    const dodanie = poZapisie(page);
     await dymek.getByLabel("Nowe zadanie").fill("Zadanie 1");
     await dymek.getByLabel("Nowe zadanie").press("Enter");
     await expect(dymek).toContainText("0 z 1");
+    await dodanie;
 
-    // Odhaczenie czeka, aż zadanie dostanie prawdziwe id z serwera (do tego czasu pole jest wyłączone)
-    const zapis = poZapisie(page);
+    // Odhaczenie czeka, aż zadanie dostanie prawdziwe id z serwera (do tego czasu pole jest wyłączone);
+    // nowy nasłuch zaczyna się dopiero po zakończeniu dodawania, więc łapie POST odhaczenia
+    const odhaczenie = poZapisie(page);
     await dymek.getByRole("checkbox", { name: "Zadanie 1" }).check();
     await expect(dymek).toContainText("1 z 1");
-    await zapis;
+    await odhaczenie;
 
     // Po odświeżeniu zadanie nadal jest odhaczone
     await page.reload();
@@ -96,8 +100,10 @@ test.describe("kalendarz (web)", () => {
     await page.getByRole("dialog", { name: "Szczegóły bloku" }).getByRole("button", { name: "Edytuj" }).click();
     const okno = page.getByRole("dialog", { name: "Edytuj blok" });
     await okno.getByRole("button", { name: "Od", exact: true }).click();
-    await page.getByRole("button", { name: "11", exact: true }).click();
-    await page.getByRole("button", { name: ":00", exact: true }).click();
+    // Wybór godziny to dymek poza oknem (portal), rozpoznawany po nagłówkach „Godzina” i „Minuty”
+    const wybor = page.getByRole("dialog").filter({ hasText: "Minuty" });
+    await wybor.getByRole("button", { name: "11", exact: true }).click();
+    await wybor.getByRole("button", { name: ":00", exact: true }).click();
     await expect(okno.getByRole("button", { name: "Od", exact: true })).toHaveText("11:00");
     await okno.getByRole("button", { name: "Zapisz blok" }).click();
 
@@ -231,6 +237,8 @@ test.describe("kalendarz (telefon)", () => {
     // Miesiąc: dzień z blokiem ma kropkę w kolorze kategorii
     await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
     await expect(page.getByTestId("kropka-kategorii")).toHaveCount(1);
+    // Kropka jest w komórce 12 stycznia
+    await expect(page.getByRole("button", { name: "12 stycznia" }).getByTestId("kropka-kategorii")).toHaveCount(1);
     await expect(page.getByRole("button", { name: /Fizyka/ })).toBeVisible();
   });
 });

@@ -101,6 +101,7 @@ test.describe("ekrany z sesją", () => {
     await expect(page.getByRole("heading", { name: "Tej strony nie ma" })).toBeVisible();
     await zrzut(page, "404-zalogowany", info.project.name);
   });
+
   test("zrzuty /kalendarz i /ustawienia/kategorie (makiety Calendar…, MCalendar…, BlockDialog, ScopeDialog, CategoryDialog, Settings)", async ({ page }, info) => {
     const projekt = info.project.name;
     const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
@@ -136,7 +137,10 @@ test.describe("ekrany z sesją", () => {
       await expect(page.getByRole("dialog", { name: "Zmieniasz blok, który się powtarza" })).toBeVisible();
       await zrzut(page, "kalendarz-okno-zakresu", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();
+      // Anuluj w oknie zakresu wraca do formularza bloku
+      await expect(page.getByRole("dialog", { name: "Edytuj blok" })).toBeVisible();
       await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
 
       await page.getByRole("button", { name: "Nowy blok" }).click();
       await expect(page.getByRole("dialog", { name: "Nowy blok" })).toBeVisible();

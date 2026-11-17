@@ -86,29 +86,30 @@
 
 **Lista odbiorcza**
 - Widoki
-  - [x] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`).
-  - [x] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”.
-  - [x] Siatka (cała doba, start przewinięty do 06:00), wiersz „cały dzień” (pusty do Etapu 7), linia „teraz” tylko dziś.
-  - [x] Dzień: mini kalendarz (dziś zielony, wybrany czarny), „Dzień w liczbach”, pusty dzień „Brak bloków w tym dniu. Dodaj blok”.
-  - [x] Miesiąc: do 3 wpisów i „+N więcej”, „N wpisów widocznych”.
+  - [x] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`). (e2e: calendar.spec.ts; unit: calendar-header.test.tsx; zrzut)
+  - [x] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”. (e2e: ukrycie po odświeżeniu; unit: category-filters.test.tsx, calendar-view.test.tsx)
+  - [x] Siatka (cała doba, start przewinięty do 06:00), wiersz „cały dzień” (pusty do Etapu 7), linia „teraz” tylko dziś. (unit: time-grid.test.tsx)
+  - [x] Dzień: mini kalendarz (dziś zielony, wybrany czarny), „Dzień w liczbach”, pusty dzień „Brak bloków w tym dniu. Dodaj blok”. (e2e: widok dnia; unit: day-side.test.tsx, time-grid.test.tsx)
+  - [x] Miesiąc: do 3 wpisów i „+N więcej”, „N wpisów widocznych”. (e2e: miesiąc; unit: month-grid.test.tsx, calendar-view.test.tsx)
 - Tworzenie i edycja
-  - [x] Duch slotu przy najechaniu; klik → dymek „Nowy wpis” (data, godzina, Blok / Bieg / Siłownia) w dniu, tygodniu, miesiącu.
-  - [x] Przeciągnięcie po siatce → „Nowy blok” z zakresem; przesuwanie i rozciąganie bloków.
-  - [x] Okno „Nowy blok”: tytuł, kategoria (chipy + „+ Nowa”), dzień (wybór daty), od/do (wybór godziny), powtarzanie (5 opcji, „Własne…” z pn–nd i datą końca), zdanie podsumowania, notatka, przełącznik przypomnienia (`blocks.remind`, domyślnie włączony).
-  - [x] Okno zakresu (tylko to / to i następne / wszystkie) przy edycji, usuwaniu i przeciąganiu wystąpienia.
-  - [x] Okno kategorii (nazwa, 8 kolorów, podgląd); otwarte z okna bloku wraca do okna bloku.
-  - [x] Wszystkie okna wracają do widoku i daty, z których je otwarto.
+  - [x] Duch slotu przy najechaniu; klik → dymek „Nowy wpis” (data, godzina, Blok / Bieg / Siłownia) w dniu, tygodniu, miesiącu. (e2e: tydzień; unit: time-grid.test.tsx, new-entry-popover.test.tsx, calendar-view.test.tsx)
+  - [x] Przeciągnięcie po siatce → „Nowy blok” z zakresem; przesuwanie i rozciąganie bloków. (e2e: przeciągnięcie o godzinę; unit: drag.test.ts, calendar-view.test.tsx)
+  - [x] Okno „Nowy blok”: tytuł, kategoria (chipy + „+ Nowa”), dzień (wybór daty), od/do (wybór godziny), powtarzanie (5 opcji, „Własne…” z pn–nd i datą końca), zdanie podsumowania, notatka, przełącznik przypomnienia (`blocks.remind`, domyślnie włączony). (e2e: blok co tydzień; unit: block-dialog.test.tsx; zrzut)
+  - [x] Okno zakresu (tylko to / to i następne / wszystkie) przy edycji, usuwaniu i przeciąganiu wystąpienia. (e2e: „To i następne”; unit: scope-dialog.test.tsx, delete-block-dialog.test.tsx, calendar-view.test.tsx; zrzut)
+  - [x] Okno kategorii (nazwa, 8 kolorów, podgląd); otwarte z okna bloku wraca do okna bloku. (unit: category-dialog.test.tsx, block-dialog.test.tsx; zrzut)
+  - [x] Wszystkie okna wracają do widoku i daty, z których je otwarto. (e2e: adres po zapisie; unit: calendar-view.test.tsx)
 - Dymek bloku
-  - [x] Kategoria, tytuł, data i godziny, pasek „Zadania x z y”, zadania do odhaczenia, „+” dodaj zadanie, notatka, Edytuj, Usuń, „↻ co tydzień”; przy dole siatki otwiera się w górę.
+  - [x] Kategoria, tytuł, data i godziny, pasek „Zadania x z y”, zadania do odhaczenia, „+” dodaj zadanie, notatka, Edytuj, Usuń, „↻ co tydzień”. (e2e: zadania w dymku; unit: block-popover.test.tsx; zrzut)
+  - [ ] Przy dole siatki dymek otwiera się w górę (brak testu: `align="end"` działa tylko w dolnych wierszach miesiąca, bez testu)
 - Zadania (decyzja 0.2)
-  - [x] Tabela `tasks`; zadania wystąpienia bloku (każde wystąpienie osobna lista).
-  - [x] Zadania samodzielne z datą / bez daty (API i logika; ekran w Etapie 5).
-  - [x] Przypięcie samodzielnego zadania do wystąpienia bloku.
+  - [x] Tabela `tasks`; zadania wystąpienia bloku (każde wystąpienie osobna lista). (e2e: zadania w dymku; unit: model.test.ts; db: supabase/tests/calendar.test.sql)
+  - [x] Zadania samodzielne z datą / bez daty (API i logika; ekran w Etapie 5). (unit: tasks/actions.test.ts, model.test.ts)
+  - [x] Przypięcie samodzielnego zadania do wystąpienia bloku. (unit: tasks/actions.test.ts, model.test.ts; odpięcie: block-popover.test.tsx)
 - Telefon
-  - [x] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 07–22, linia teraz, „+” i stuknięcie pustego miejsca → arkusz.
-  - [x] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia.
-  - [x] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie.
-- [x] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie).
+  - [x] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 00–24 przewinięta do 07:00, linia teraz, „+” i stuknięcie pustego miejsca → arkusz. (e2e: mobile; unit: m-calendar-day.test.tsx, calendar-view-mobile.test.tsx; zrzut)
+  - [x] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia. (e2e: kropka w miesiącu; unit: m-calendar-week.test.tsx, m-calendar-month.test.tsx; zrzut)
+  - [x] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie. (e2e: mobile; unit: m-block-sheet.test.tsx; zrzut)
+- [x] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie). (unit: categories-card.test.tsx; zrzut)
 
 **Testy:** powtórzenia i wyjątki, DST, zadania per wystąpienie, „to i następne”, zadania samodzielne (daty, zaległe, przypięcie), RLS kalendarza i zadań, e2e blok cykliczny z zadaniem w dymku, e2e „Nowy wpis” → Blok z wypełnioną godziną, zrzuty.
 
