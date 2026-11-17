@@ -131,6 +131,14 @@ describe("OnboardingWizard", () => {
     expect(push).toHaveBeenCalledWith("/onboarding/2");
   });
 
+  it("„Wstecz” jest nieaktywne w trakcie zapisu", async () => {
+    saveOnboardingStep.mockReturnValue(new Promise(() => {}));
+    const stopka = pokaz(3);
+    await userEvent.click(stopka.getByRole("button", { name: "Dalej" }));
+    expect(stopka.getByRole("button", { name: "Wstecz" })).toBeDisabled();
+    for (const b of screen.getAllByRole("button", { name: "Wstecz" })) expect(b).toBeDisabled();
+  });
+
   it("„Wstecz” na kroku 1 jest nieaktywne", () => {
     const stopka = pokaz(1);
     expect(stopka.getByRole("button", { name: "Wstecz" })).toBeDisabled();

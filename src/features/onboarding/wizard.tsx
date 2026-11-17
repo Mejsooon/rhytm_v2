@@ -32,8 +32,7 @@ function Wyloguj({ className }: { className?: string }) {
 
 // Kreator onboardingu: nagłówek, pasek postępu, karta z treścią kroku, stopka i podgląd na żywo.
 // Web i telefon są w DOM razem, przełączane klasami (max-[799px]: / min-[800px]:).
-// `now` przychodzi z serwera (strona), żeby data w podglądzie była taka sama przy renderze i hydratacji;
-// bez niego (np. testy bez propsa) bierzemy bieżący czas przy pierwszym renderze.
+// `now` przychodzi z serwera (strona), żeby data w podglądzie była taka sama przy renderze i hydratacji.
 export function OnboardingWizard({
   step,
   initialDraft,
@@ -43,11 +42,10 @@ export function OnboardingWizard({
   step: Step;
   initialDraft: OnboardingDraft;
   avatarUrl: string | null;
-  now?: Date;
+  now: Date;
 }) {
   const router = useRouter();
   const [draft, setDraft] = React.useState(initialDraft);
-  const [teraz] = React.useState(() => now ?? new Date());
   // Stan „w trakcie zapisu” i błąd są przypisane do kroku, więc po przejściu dalej same wygasają
   const [pendingStep, setPendingStep] = React.useState<Step | null>(null);
   const [error, setError] = React.useState<{ step: Step; message: string } | null>(null);
@@ -116,7 +114,7 @@ export function OnboardingWizard({
     if (step > 1) router.push(`/onboarding/${step - 1}`);
   }
 
-  const widok = STEP_VIEWS[step]({ draft, onChange: setDraft });
+  const Widok = STEP_VIEWS[step];
   const mozeDalej = canContinue(step, draft) && !pending;
 
   return (
@@ -135,6 +133,7 @@ export function OnboardingWizard({
             type="button"
             aria-label="Wstecz"
             onClick={wstecz}
+            disabled={pending}
             className="inline-flex size-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] hover:bg-[#f5f5f5]"
           >
             <ChevronLeft aria-hidden="true" className="size-[22px]" strokeWidth={2} />
@@ -172,18 +171,18 @@ export function OnboardingWizard({
           <div className="grid min-h-0 flex-1 grid-cols-[520px_1fr] max-[1100px]:grid-cols-1">
             <div className="flex min-h-0 flex-col px-5 pt-4 pb-0 min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-6">
               <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-6 min-[800px]:pb-0">
-                {widok}
+                <Widok draft={draft} onChange={setDraft} />
               </div>
 
               <div
                 data-testid="wizard-footer"
-                className="flex flex-none flex-col gap-2 border-t border-[#f0f0f0] bg-white pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:-mx-5 max-[799px]:px-5 min-[800px]:flex-row min-[800px]:items-center min-[800px]:pt-5 min-[800px]:pb-0"
+                className="flex flex-none flex-col gap-2 border-t border-[#f0f0f0] bg-white pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:-mx-5 max-[799px]:px-5 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:pt-5 min-[800px]:pb-0"
               >
                 {/* Web: „Wstecz” w stopce; na telefonie jest w nagłówku */}
                 <Button
                   variant="secondary"
                   onClick={wstecz}
-                  disabled={step === 1}
+                  disabled={step === 1 || pending}
                   className="max-[799px]:hidden"
                 >
                   Wstecz
@@ -194,7 +193,7 @@ export function OnboardingWizard({
                     variant="ghost"
                     onClick={pomin}
                     disabled={pending}
-                    className="text-[#525252] max-[799px]:order-2 max-[799px]:h-10 max-[799px]:border-0"
+                    className="text-[#525252] max-[799px]:order-2 max-[799px]:h-11 max-[799px]:border-0"
                   >
                     Pomiń
                   </Button>
@@ -219,7 +218,7 @@ export function OnboardingWizard({
             </div>
 
             <div className="relative overflow-hidden border-l border-[#eaeaea] bg-[#f4f4f5] max-[1100px]:hidden">
-              <LivePreview draft={draft} step={step} avatarUrl={avatarUrl} now={teraz} />
+              <LivePreview draft={draft} step={step} avatarUrl={avatarUrl} now={now} />
             </div>
           </div>
         </div>

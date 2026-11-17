@@ -27,7 +27,7 @@ function Naglowek(step: 1 | 2 | 3 | 4 | 5 | 6 | 7) {
   };
 }
 
-// Rejestr widoków kroków: kreator renderuje STEP_VIEWS[step]({ draft, onChange })
+// Rejestr widoków kroków: kreator renderuje <STEP_VIEWS[step] draft onChange /> jako komponent (widoki mogą używać hooków)
 export const STEP_VIEWS: Record<
   1 | 2 | 3 | 4 | 5 | 6 | 7,
   (props: StepViewProps) => ReactNode
