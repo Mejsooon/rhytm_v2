@@ -133,6 +133,16 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
    - `supabase link --project-ref <ref>`: `<ref>` to ciąg liter z adresu projektu w Supabase (`https://supabase.com/dashboard/project/<ref>`); poprosi o Database password z kroku 2,
    - `supabase db push --remote` (nowsze CLI bez `--remote` celuje w lokalną bazę): wgrywa tabele i zabezpieczenia (migracje) do bazy produkcyjnej.
 
+### Nowa migracja (Etap 1: onboarding i profil)
+
+Po scaleniu Etapu 1 do `main` uruchom u siebie, w folderze projektu:
+
+```
+pnpm exec supabase db push --remote
+```
+
+Nowe migracje `20261117000001` i `20261117000002` muszą trafić do bazy w chmurze **przed** pierwszym wejściem na nową wersję aplikacji. Inaczej onboarding i Ustawienia będą pisać do kolumn, których w produkcji jeszcze nie ma.
+
 ---
 
 ## 7. Przekazanie dostępu Claude'owi: co wolno wkleić, czego nie

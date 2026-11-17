@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
+import { createConfirmedUser, createUserAtOnboardingEnd, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
 // Zrzuty ekranów do ręcznego porównania z makietami. Test pada tylko, gdy strona się nie renderuje.
 // Zrzuty: test-results/visual/<ekran>-<web|mobile>.png; zrzuty makiet: `pnpm mockups:shots` → test-results/mockups/<Makieta>.png.
@@ -55,7 +55,7 @@ test("zrzut /dev/kontrolki (bez makiety)", async ({ page }, info) => {
 test.describe("ekrany z sesją", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("zrzut /dzis, pusty (makieta Sidebar / MTabBar)", async ({ page }, info) => {
+  test("zrzut /dzis, pusty (makieta EmptyToday / MToday)", async ({ page }, info) => {
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createConfirmedUser(email, haslo);
@@ -63,6 +63,31 @@ test.describe("ekrany z sesją", () => {
     await expect(page).toHaveURL(/\/dzis$/);
     await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
+  });
+
+  test("zrzuty /onboarding/1–7 (makiety Onboarding… / MOnboarding)", async ({ page }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createUserAtOnboardingEnd(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/onboarding\/7$/);
+    // Makiety: Onboarding (1), OnboardingRole (2), OnboardingGoals (3), OnboardingSource (4), OnboardingPages (5), OnboardingNotify (6), OnboardingDone (7)
+    for (const krok of [1, 2, 3, 4, 5, 6, 7]) {
+      await page.goto(`/onboarding/${krok}`);
+      await expect(page.getByRole("progressbar", { name: "Postęp onboardingu" })).toHaveAttribute("aria-valuenow", String(krok));
+      await zrzut(page, `onboarding-${krok}`, info.project.name);
+    }
+  });
+
+  test("zrzut /ustawienia/ogolne (makieta Settings)", async ({ page }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+    await page.goto("/ustawienia/ogolne");
+    await expect(page.getByRole("heading", { name: "Profil", exact: true })).toBeVisible();
+    await zrzut(page, "ustawienia-ogolne", info.project.name);
   });
 
   test("zrzut 404 po zalogowaniu (makieta NotFound)", async ({ page }, info) => {
