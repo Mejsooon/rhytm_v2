@@ -99,6 +99,7 @@ export function StepRoles({
           }
           value={draft.studyField}
           placeholder="Np. Informatyka"
+          webPlaceholder=" "
           onChange={(e) => onChange({ ...draft, studyField: e.target.value })}
         />
       )}

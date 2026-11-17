@@ -20,6 +20,7 @@ function inicjaly(imie: string) {
   );
 }
 
+// useSyncExternalStore: strefa przeglądarki to wartość spoza Reacta; na serwerze i przy hydratacji daje undefined, potem właściwą, bez rozjazdu HTML ani setState w efekcie
 const bezSubskrypcji = () => () => {};
 // Strefa przeglądarki; na serwerze (i przy hydratacji) undefined, więc bez rozjazdu HTML
 function wykryjStrefe(): string | undefined {
@@ -55,6 +56,7 @@ export function StepProfile({
   // Szkic jest potrzebny po zakończeniu uploadu, a do tego czasu mógł się zmienić (np. wpisane imię)
   const najnowszy = React.useRef(draft);
   const onChangeRef = React.useRef(onChange);
+  // Efekt bez zależności celowo: po każdym renderze odświeża refy, żeby asynchroniczny upload widział aktualny szkic
   React.useEffect(() => {
     najnowszy.current = draft;
     onChangeRef.current = onChange;
@@ -123,7 +125,7 @@ export function StepProfile({
           </div>
           <Button
             size="sm"
-            className="ml-auto h-9 max-[799px]:h-10 max-[799px]:px-3.5"
+            className="ml-auto h-9 max-[799px]:h-11 max-[799px]:px-3.5"
             disabled={wgrywanie}
             onClick={() => wejscie.current?.click()}
           >
@@ -150,6 +152,7 @@ export function StepProfile({
         autoComplete="nickname"
         value={draft.name}
         placeholder="Jak mamy się do Ciebie zwracać?"
+        webPlaceholder=" "
         onChange={(e) => onChange({ ...draft, name: e.target.value })}
       />
 
