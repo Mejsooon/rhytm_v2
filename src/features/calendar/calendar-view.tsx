@@ -1,0 +1,111 @@
+"use client";
+
+// Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
+// Widoki (tydzień, dzień, miesiąc) dojdą w Taskach 6, 10 i 11 — na razie prosta lista dni.
+import { useMemo } from "react";
+
+import type { IsoDate } from "@/components/controls/calendar-math";
+import { setCategoryHidden } from "@/features/categories/actions";
+import { CalendarHeader } from "./calendar-header";
+import { CategoryFilters } from "./category-filters";
+import type { CalendarData, CategoryRow } from "./load-calendar";
+import { expandOccurrences } from "./occurrences";
+import { useCalendarStore } from "./use-calendar-store";
+import { viewRange, type CalendarView } from "./view-range";
+
+function godzina(minuty: number): string {
+  const h = String(Math.floor(minuty / 60)).padStart(2, "0");
+  const m = String(minuty % 60).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+export function CalendarView({
+  view,
+  date,
+  today,
+  data: daneSerwera,
+}: {
+  view: CalendarView;
+  date: IsoDate;
+  today: IsoDate;
+  // Aktualna godzina w strefie profilu, liczona na serwerze; użyją jej widoki z linią „teraz”
+  nowMinutes: number;
+  data: CalendarData;
+}) {
+  const { data, applyOptimistic } = useCalendarStore(daneSerwera);
+  const { weekStart } = data.profile;
+  const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
+
+  const wystapienia = useMemo(
+    () => expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
+    [data.blocks, data.exceptions, zakres.from, zakres.to],
+  );
+
+  // Liczniki chipów liczą też wystąpienia ukrytych kategorii
+  const liczniki = useMemo(() => {
+    const wynik: Record<string, number> = {};
+    for (const o of wystapienia) {
+      if (o.categoryId) wynik[o.categoryId] = (wynik[o.categoryId] ?? 0) + 1;
+    }
+    return wynik;
+  }, [wystapienia]);
+
+  const ukryte = new Set(data.categories.filter((k) => k.hidden).map((k) => k.id));
+  const widoczne = wystapienia.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
+
+  // Ukrycie od razu znika z widoku; błąd zapisu cofa zmianę i pokazuje toast (w store)
+  function przelaczKategorie(kategoria: CategoryRow) {
+    const hidden = !kategoria.hidden;
+    void applyOptimistic(
+      (d) => ({
+        ...d,
+        categories: d.categories.map((k) =>
+          k.id === kategoria.id ? { ...k, hidden } : k,
+        ),
+      }),
+      () => setCategoryHidden({ id: kategoria.id, hidden }),
+    );
+  }
+
+  return (
+    <>
+      <CalendarHeader
+        view={view}
+        date={date}
+        today={today}
+        weekStart={weekStart}
+        // TODO(Task 8): okno nowego bloku
+        onNewBlock={() => {}}
+      />
+      <div className="flex flex-col gap-3.5 px-6 pt-4 pb-6 max-[799px]:px-4">
+        <CategoryFilters
+          categories={data.categories}
+          counts={liczniki}
+          onToggle={przelaczKategorie}
+          // TODO(Task 8): okno nowej kategorii
+          onAdd={() => {}}
+        />
+        {/* Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 6, 10, 11) */}
+        <div className="flex flex-col gap-3">
+          {zakres.days.map((dzien) => {
+            const dzienne = widoczne.filter((o) => o.date === dzien);
+            if (dzienne.length === 0) return null;
+            return (
+              <section key={dzien}>
+                <h3 className="font-mono text-xs text-[#6b6b6b]">{dzien}</h3>
+                <ul className="mt-1 flex flex-col gap-1 text-sm">
+                  {dzienne.map((o) => (
+                    <li key={o.key}>
+                      <span className="font-mono text-xs text-[#6b6b6b]">{godzina(o.startMin)}</span>{" "}
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}

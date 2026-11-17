@@ -11,7 +11,7 @@ export function fakeTable(
   const zapytanie: any = {};
   for (const metoda of [
     "select", "insert", "update", "upsert", "delete",
-    "eq", "in", "gte", "order", "limit",
+    "eq", "in", "gte", "lte", "lt", "or", "order", "limit",
   ]) {
     zapytanie[metoda] = vi.fn(() => zapytanie);
   }
