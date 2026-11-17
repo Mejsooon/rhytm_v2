@@ -5,6 +5,7 @@ import * as React from "react";
 import { Dropdown, TextField } from "@/components/controls";
 import { parseDecimal, profileSchema } from "@/features/profile/schemas";
 import { saveProfile } from "./actions";
+import { AvatarRow } from "./avatar-row";
 import { CardFooter } from "./card-footer";
 import { useCardForm } from "./use-card-form";
 
@@ -14,8 +15,12 @@ export type ProfileValues = { name: string; tz: string; kg: string; cm: string }
 export function ProfileCard({
   saved,
   timezones,
+  userId,
+  avatarUrl,
 }: {
   saved: ProfileValues;
+  userId: string;
+  avatarUrl: string | null;
   timezones: { value: string; city: string; offset: string }[];
 }) {
   const form = useCardForm(saved);
@@ -71,6 +76,8 @@ export function ProfileCard({
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Profil</h2>
         <p className="mt-1 mb-4 text-[#666666]">Waga i wzrost służą do liczenia kcal biegów.</p>
+        {/* Zdjęcie zapisuje się od razu, niezależnie od „Zapisz” poniżej; inicjał z zapisanej nazwy */}
+        <AvatarRow userId={userId} avatarUrl={avatarUrl} displayName={saved.name} />
         <div className="grid grid-cols-2 gap-3.5 max-[799px]:grid-cols-1">
           <TextField
             label="Wyświetlana nazwa"

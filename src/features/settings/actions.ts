@@ -68,3 +68,57 @@ export async function saveGoals(input: {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+export type AvatarResult = { ok: true } | { ok: false; error: string };
+
+// Zapisuje ścieżkę zdjęcia wgranego już przez przeglądarkę do bucketu `avatars`
+export async function saveAvatar(path: string): Promise<AvatarResult> {
+  const blad: AvatarResult = { ok: false, error: "Nie udało się wgrać zdjęcia." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  // Tylko własny plik `<uid>/avatar.<ext>` (user.id to UUID, więc bez znaków specjalnych w regexie)
+  if (typeof path !== "string" || !new RegExp(`^${user.id}/avatar\\.(png|jpg|jpeg|webp)$`).test(path)) {
+    return blad;
+  }
+
+  // Poprzednia ścieżka — do posprzątania, gdy zmieniło się rozszerzenie (np. png → jpg)
+  const { data: stary } = await supabase.from("profiles").select("avatar_path").eq("user_id", user.id).maybeSingle();
+
+  const { error } = await supabase.from("profiles").update({ avatar_path: path }).eq("user_id", user.id);
+  if (error) return blad;
+
+  // Błąd sprzątania pomijamy — nowe zdjęcie jest już zapisane
+  if (stary?.avatar_path && stary.avatar_path !== path) {
+    await supabase.storage.from("avatars").remove([stary.avatar_path]);
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// Usuwa plik zdjęcia z bucketu i czyści avatar_path (wracają inicjały)
+export async function removeAvatar(): Promise<AvatarResult> {
+  const blad: AvatarResult = { ok: false, error: "Nie udało się usunąć zdjęcia." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data: profil } = await supabase.from("profiles").select("avatar_path").eq("user_id", user.id).maybeSingle();
+
+  if (profil?.avatar_path) {
+    const { error: bladPliku } = await supabase.storage.from("avatars").remove([profil.avatar_path]);
+    if (bladPliku) return blad;
+  }
+
+  const { error } = await supabase.from("profiles").update({ avatar_path: null }).eq("user_id", user.id);
+  if (error) return blad;
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

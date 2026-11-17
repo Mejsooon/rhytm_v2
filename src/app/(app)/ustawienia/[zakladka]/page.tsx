@@ -6,6 +6,7 @@ import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
 import { SETTINGS_TABS, SettingsTabs, type SettingsTabSlug } from "@/features/settings/settings-tabs";
+import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,15 +21,19 @@ async function Ogolne() {
 
   const { data: profil } = await supabase
     .from("profiles")
-    .select("display_name, timezone, weight_kg, height_cm, sleep_goal_min, weekly_km_goal, currency, week_start")
+    .select("display_name, avatar_path, timezone, weight_kg, height_cm, sleep_goal_min, weekly_km_goal, currency, week_start")
     .eq("user_id", user.id)
     .maybeSingle();
 
+  // Podpisany adres zdjęcia (null → inicjały)
+  const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
   const strefa = safeTimezone(profil?.timezone);
   const waluta = profil?.currency;
   return (
     <>
       <ProfileCard
+        userId={user.id}
+        avatarUrl={avatarUrl}
         saved={{
           name: profil?.display_name ?? "",
           tz: strefa,

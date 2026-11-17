@@ -22,6 +22,10 @@ test.describe("ustawienia ogólne", () => {
 
     // Karta Profil: nazwa → komunikat o zmianach → zapis
     const profil = page.locator("section", { has: page.getByRole("heading", { name: "Profil", exact: true }) });
+    // Wiersz zdjęcia profilowego bez zdjęcia (samo wgrywanie wymaga Storage, którego CI nie ma)
+    await expect(profil.getByText("Bez zdjęcia pokażemy inicjały")).toBeVisible();
+    await expect(profil.getByRole("button", { name: "Wgraj" })).toBeVisible();
+    await expect(profil.getByRole("button", { name: "Usuń" })).toHaveCount(0);
     const nazwa = profil.getByLabel("Wyświetlana nazwa");
     await nazwa.fill("Nowa Nazwa");
     await expect(profil.getByText("Masz niezapisane zmiany.")).toBeVisible();
