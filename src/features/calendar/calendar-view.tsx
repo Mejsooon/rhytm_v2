@@ -383,6 +383,11 @@ export function CalendarView({
                   setOkno((o) => (o?.typ === "wpis" ? null : o));
                   setWybrany((w) => (w === key ? null : key));
                 }}
+                // „+N więcej” przechodzi do dnia, więc otwarte dymki znikają
+                onMoreClick={() => {
+                  setWybrany(null);
+                  setOkno((o) => (o?.typ === "wpis" ? null : o));
+                }}
                 // Klik w komórkę: „Nowy wpis” z tym dniem i 09:00; ponowny klik zamyka
                 onDayClick={(dzien, kotwica) => {
                   setWybrany(null);

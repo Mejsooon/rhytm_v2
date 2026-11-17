@@ -75,16 +75,35 @@ describe("MonthGrid", () => {
     );
   });
 
-  it("wpis ma godzinę wg zegara profilu, tytuł i klucz wystąpienia", () => {
+  it("wpis ma tytuł, klucz wystąpienia i godzinę wg zegara profilu w podpowiedzi", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 13 * 60 + 30)], { clock: "12" });
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
-    expect(wpis).toHaveTextContent("1:30 PM");
     expect(wpis).toHaveAttribute("data-occurrence-key", "b1:2026-11-18");
+    expect(wpis).toHaveAttribute("title", "1:30 PM Wpis b1");
   });
 
-  it("wpis bez kategorii ma szarą kropkę", () => {
+  it("wpis z kategorią ma tło w kolorze (alfa 14) i lewy pasek", () => {
+    wyrenderuj([wystapienie("b1", "2026-11-18", 480)]);
+    const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    expect(wpis.style.backgroundColor).toBe("rgba(0, 112, 243, 0.08)");
+    expect(wpis.style.borderLeftColor).toBe("rgb(0, 112, 243)");
+    expect(wpis.className).toContain("border-l-2");
+  });
+
+  it("wpis bez kategorii ma kreskowaną szarą ramkę i tekst mono", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })]);
-    expect(screen.getByTestId("kropka-b1:2026-11-18")).toHaveStyle({ backgroundColor: "#a3a3a3" });
+    const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    expect(wpis.className).toContain("border-dashed");
+    expect(wpis.className).toContain("border-[#a3a3a3]");
+    expect(wpis.className).toContain("font-mono");
+  });
+
+  it("klik w „+2 więcej” woła onMoreClick", async () => {
+    const onMoreClick = vi.fn();
+    const wpisy = [1, 2, 3, 4, 5].map((i) => wystapienie(`b${i}`, "2026-11-18", 480 + i * 60));
+    wyrenderuj(wpisy, { onMoreClick });
+    await userEvent.click(screen.getByRole("link", { name: "+2 więcej" }));
+    expect(onMoreClick).toHaveBeenCalled();
   });
 
   it("klik we wpis woła onEntryClick z kluczem i elementem, nie otwiera „Nowy wpis”", async () => {
