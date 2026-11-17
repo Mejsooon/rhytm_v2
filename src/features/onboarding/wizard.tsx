@@ -38,14 +38,34 @@ export function OnboardingWizard({
   initialDraft,
   avatarUrl,
   now,
+  userId,
+  firstVisit = false,
 }: {
   step: Step;
   initialDraft: OnboardingDraft;
   avatarUrl: string | null;
   now: Date;
+  userId: string;
+  // true, gdy krok 1 nie był jeszcze zapisany (strefa z przeglądarki trafia wtedy do szkicu)
+  firstVisit?: boolean;
 }) {
   const router = useRouter();
   const [draft, setDraft] = React.useState(initialDraft);
+  // Podgląd świeżo wgranego zdjęcia: lokalny object URL, zwalniany przy zmianie i odmontowaniu
+  const [podglad, setPodglad] = React.useState<string | null>(null);
+  const podgladRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    return () => {
+      if (podgladRef.current) URL.revokeObjectURL(podgladRef.current);
+    };
+  }, []);
+  function ustawPodglad(plik: File) {
+    if (podgladRef.current) URL.revokeObjectURL(podgladRef.current);
+    const url = URL.createObjectURL(plik);
+    podgladRef.current = url;
+    setPodglad(url);
+  }
+  const widocznyAvatar = podglad ?? avatarUrl;
   // Stan „w trakcie zapisu” i błąd są przypisane do kroku, więc po przejściu dalej same wygasają
   const [pendingStep, setPendingStep] = React.useState<Step | null>(null);
   const [error, setError] = React.useState<{ step: Step; message: string } | null>(null);
@@ -171,7 +191,15 @@ export function OnboardingWizard({
           <div className="grid min-h-0 flex-1 grid-cols-[520px_1fr] max-[1100px]:grid-cols-1">
             <div className="flex min-h-0 flex-col px-5 pt-4 pb-0 min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-6">
               <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-6 min-[800px]:pb-0">
-                <Widok draft={draft} onChange={setDraft} />
+                <Widok
+                  draft={draft}
+                  onChange={setDraft}
+                  userId={userId}
+                  avatarUrl={widocznyAvatar}
+                  onAvatarFile={ustawPodglad}
+                  firstVisit={firstVisit}
+                  now={now}
+                />
               </div>
 
               <div
@@ -218,7 +246,7 @@ export function OnboardingWizard({
             </div>
 
             <div className="relative overflow-hidden border-l border-[#eaeaea] bg-[#f4f4f5] max-[1100px]:hidden">
-              <LivePreview draft={draft} step={step} avatarUrl={avatarUrl} now={now} />
+              <LivePreview draft={draft} step={step} avatarUrl={widocznyAvatar} now={now} />
             </div>
           </div>
         </div>

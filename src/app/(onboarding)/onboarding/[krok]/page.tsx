@@ -34,6 +34,8 @@ async function Krok({ params }: { params: Promise<{ krok: string }> }) {
       now={new Date()}
       initialDraft={loadDraft(profil, powiadomienia, undefined)}
       avatarUrl={null}
+      userId={user.id}
+      firstVisit={profil.onboarding_step === 1}
     />
   );
 }

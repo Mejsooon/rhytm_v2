@@ -39,6 +39,7 @@ function pokaz(step: number, d: OnboardingDraft = draft) {
       step={step as 1}
       initialDraft={d}
       avatarUrl={null}
+      userId="u1"
       now={NOW}
     />,
   );
@@ -102,7 +103,7 @@ describe("OnboardingWizard", () => {
 
   it("„Pomiń” tylko na kroku 4 i zapisuje null-e", async () => {
     const { unmount } = render(
-      <OnboardingWizard step={3} initialDraft={draft} avatarUrl={null} now={NOW} />,
+      <OnboardingWizard step={3} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />,
     );
     expect(screen.queryByRole("button", { name: "Pomiń" })).not.toBeInTheDocument();
     unmount();

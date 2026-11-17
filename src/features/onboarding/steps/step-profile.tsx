@@ -1,0 +1,208 @@
+"use client";
+
+import * as React from "react";
+
+import { Button, Dropdown, Segment, TextField } from "@/components/controls";
+import { timezoneOptions } from "@/lib/time/timezones";
+import { uploadAvatar, validateAvatarFile } from "../avatar-upload";
+import type { OnboardingDraft } from "../model";
+import { StepHeader } from "./step-header";
+
+function inicjaly(imie: string) {
+  return (
+    imie
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
+}
+
+const bezSubskrypcji = () => () => {};
+// Strefa przeglądarki; na serwerze (i przy hydratacji) undefined, więc bez rozjazdu HTML
+function wykryjStrefe(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return undefined;
+  }
+}
+
+// Krok 1: profil (Onboarding + MOnboarding). Zdjęcie wgrywa się od razu po wyborze pliku.
+export function StepProfile({
+  draft,
+  onChange,
+  userId,
+  avatarUrl,
+  onAvatarFile,
+  firstVisit,
+  now,
+}: {
+  draft: OnboardingDraft;
+  onChange: (next: OnboardingDraft) => void;
+  userId: string;
+  avatarUrl: string | null;
+  onAvatarFile: (file: File) => void;
+  firstVisit: boolean;
+  now: Date;
+}) {
+  const wykryta = React.useSyncExternalStore(bezSubskrypcji, wykryjStrefe, () => undefined);
+  const opcje = timezoneOptions(now, wykryta);
+  const wykrytaPoprawna = wykryta !== undefined && opcje.some((o) => o.value === wykryta);
+
+  // Szkic jest potrzebny po zakończeniu uploadu, a do tego czasu mógł się zmienić (np. wpisane imię)
+  const najnowszy = React.useRef(draft);
+  const onChangeRef = React.useRef(onChange);
+  React.useEffect(() => {
+    najnowszy.current = draft;
+    onChangeRef.current = onChange;
+  });
+
+  // Pierwsza wizyta: wykryta strefa wchodzi do szkicu (raz)
+  const zastosowano = React.useRef(false);
+  React.useEffect(() => {
+    if (zastosowano.current || !firstVisit || !wykrytaPoprawna) return;
+    zastosowano.current = true;
+    if (najnowszy.current.timezone !== wykryta) {
+      onChangeRef.current({ ...najnowszy.current, timezone: wykryta });
+    }
+  }, [firstVisit, wykrytaPoprawna, wykryta]);
+
+  const [blad, setBlad] = React.useState<string | null>(null);
+  const [wgrywanie, setWgrywanie] = React.useState(false);
+  const wejscie = React.useRef<HTMLInputElement>(null);
+
+  async function naWyborPliku(e: React.ChangeEvent<HTMLInputElement>) {
+    const plik = e.target.files?.[0];
+    // Ten sam plik wybrany ponownie też ma odpalić zdarzenie
+    e.target.value = "";
+    if (!plik) return;
+    const komunikat = validateAvatarFile(plik);
+    if (komunikat) {
+      setBlad(komunikat);
+      return;
+    }
+    setBlad(null);
+    setWgrywanie(true);
+    const wynik = await uploadAvatar(plik, userId);
+    setWgrywanie(false);
+    if ("error" in wynik) {
+      setBlad(wynik.error);
+      return;
+    }
+    onChangeRef.current({ ...najnowszy.current, avatarPath: wynik.path });
+    onAvatarFile(plik);
+  }
+
+  return (
+    <>
+      <StepHeader
+        title="Uzupełnij profil"
+        subtitle="Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach"
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-4 max-[799px]:gap-3.5">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt=""
+              className="size-14 flex-none rounded-full object-cover max-[799px]:size-16"
+            />
+          ) : (
+            <span className="grid size-14 flex-none place-items-center rounded-full bg-[#171717] text-lg font-medium text-white max-[799px]:size-16 max-[799px]:border max-[799px]:border-[#e0e0e0] max-[799px]:bg-[#f0f0f0] max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-[#171717]">
+              {inicjaly(draft.name)}
+            </span>
+          )}
+          <div className="flex flex-col gap-1">
+            <span className="font-medium">Zdjęcie profilowe</span>
+            <span className="text-[13px] text-[#737373]">Bez zdjęcia pokażemy inicjały</span>
+          </div>
+          <Button
+            size="sm"
+            className="ml-auto h-9 max-[799px]:h-10 max-[799px]:px-3.5"
+            disabled={wgrywanie}
+            onClick={() => wejscie.current?.click()}
+          >
+            {wgrywanie ? "Wgrywanie…" : "Wgraj"}
+          </Button>
+          <input
+            ref={wejscie}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            aria-label="Wybierz zdjęcie profilowe"
+            className="hidden"
+            onChange={naWyborPliku}
+          />
+        </div>
+        {blad && (
+          <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            {blad}
+          </p>
+        )}
+      </div>
+
+      <TextField
+        label="Imię lub pseudonim"
+        autoComplete="nickname"
+        value={draft.name}
+        placeholder="Jak mamy się do Ciebie zwracać?"
+        onChange={(e) => onChange({ ...draft, name: e.target.value })}
+      />
+
+      <div className="flex flex-col gap-2 text-[13px] font-medium">
+        <span>Strefa czasowa</span>
+        {/* Web: „Europe/Warsaw (UTC+01:00)” */}
+        <div className="max-[799px]:hidden">
+          <Dropdown
+            ariaLabel="Strefa czasowa"
+            value={draft.timezone}
+            onChange={(timezone) => onChange({ ...draft, timezone })}
+            options={opcje.map((o) => ({ value: o.value, label: `${o.value} (${o.offset})` }))}
+          />
+        </div>
+        {/* Telefon: miasto + dopisek mono z przesunięciem */}
+        <div className="min-[800px]:hidden">
+          <Dropdown
+            ariaLabel="Strefa czasowa"
+            value={draft.timezone}
+            onChange={(timezone) => onChange({ ...draft, timezone })}
+            options={opcje.map((o) => ({ value: o.value, label: o.city, hint: o.offset }))}
+          />
+        </div>
+        {wykryta === draft.timezone && (
+          <span className="text-xs font-normal text-[#737373]">Wykryta z przeglądarki</span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 text-[13px] font-medium">
+        <span>Tydzień zaczyna się od</span>
+        <Segment
+          ariaLabel="Początek tygodnia"
+          value={draft.weekStart}
+          onChange={(weekStart) => onChange({ ...draft, weekStart })}
+          options={[
+            { value: "mon", label: "Poniedziałku" },
+            { value: "sun", label: "Niedzieli" },
+          ]}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 text-[13px] font-medium">
+        <span>Format godziny</span>
+        <Segment
+          ariaLabel="Format godziny"
+          value={draft.clock}
+          onChange={(clock) => onChange({ ...draft, clock })}
+          options={[
+            { value: "24", label: "24 h · 14:30" },
+            { value: "12", label: "12 h · 2:30 PM" },
+          ]}
+        />
+      </div>
+    </>
+  );
+}
