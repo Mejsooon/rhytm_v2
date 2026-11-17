@@ -258,6 +258,10 @@ export function CalendarView({
                 blockId: o.blockId,
                 // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
                 occurrenceDate: o.key.slice(o.blockId.length + 1),
+                // Start serii zawsze należy do serii, więc pierwsze wystąpienie ma datę startu bloku
+                firstOccurrence:
+                  data.blocks.find((b) => b.id === o.blockId)?.start_local.slice(0, 10) ===
+                  o.key.slice(o.blockId.length + 1),
               },
             });
           }}

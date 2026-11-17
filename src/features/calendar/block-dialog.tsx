@@ -41,6 +41,8 @@ export type BlockDialogInitial = {
   // Tylko edycja: blok i ORYGINALNA data wystąpienia (blok mógł zostać przesunięty)
   blockId?: string;
   occurrenceDate?: IsoDate;
+  // Edycja serii: czy to pierwsze wystąpienie (tylko wtedy „To i następne” może zmienić dzień)
+  firstOccurrence?: boolean;
 };
 
 type Powtarzanie = "none" | "daily" | "weekdays" | "weekly" | "custom";
@@ -240,6 +242,11 @@ export function BlockDialog({
         timeLabel={`${formatClockTime(Math.floor(initial.startMin / 60), initial.startMin % 60, clock)}–${formatClockTime(Math.floor((initial.startMin + initial.durationMin) / 60), (initial.startMin + initial.durationMin) % 60, clock)}`}
         disableThis={
           seriaTylko ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii." : undefined
+        }
+        disableFollowing={
+          date !== initial.date && !initial.firstOccurrence
+            ? "Zmiana dnia działa dla tego wystąpienia albo dla całej serii."
+            : undefined
         }
         pending={pending}
         error={blad}

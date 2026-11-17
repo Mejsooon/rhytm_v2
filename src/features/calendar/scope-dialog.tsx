@@ -15,6 +15,7 @@ export function ScopeDialog({
   timeLabel,
   intent = "edit",
   disableThis,
+  disableFollowing,
   error,
   pending = false,
   onPick,
@@ -29,12 +30,16 @@ export function ScopeDialog({
   // Powód, dla którego „Tylko to wystąpienie” jest niedostępne (wyjątki nie przechowują kategorii,
   // notatki ani przypomnienia)
   disableThis?: string;
+  // Powód, dla którego „To i następne” jest niedostępne (zmiana dnia poza pierwszym wystąpieniem)
+  disableFollowing?: string;
   error?: string;
   pending?: boolean;
   onPick: (scope: Scope) => void;
   onCancel: () => void;
 }) {
-  const [wybrany, setWybrany] = useState<Scope>(disableThis ? "following" : "this");
+  const [wybrany, setWybrany] = useState<Scope>(
+    !disableThis ? "this" : !disableFollowing ? "following" : "all",
+  );
 
   // „wt 17.11” z daty i dnia tygodnia
   const [, miesiac, dzien] = date.split("-");
@@ -53,7 +58,7 @@ export function ScopeDialog({
       value: "following",
       tytul: "To i następne",
       opis: `Od ${krotko} w przód. Wcześniejsze wystąpienia zostają.`,
-      wylaczona: false,
+      wylaczona: Boolean(disableFollowing),
     },
     {
       value: "all",
@@ -115,6 +120,7 @@ export function ScopeDialog({
         ))}
       </div>
       {disableThis && <p className="m-0 text-xs text-[#6b6b6b]">{disableThis}</p>}
+      {disableFollowing && <p className="m-0 text-xs text-[#6b6b6b]">{disableFollowing}</p>}
       <p className="m-0 font-mono text-xs text-[#6b6b6b]">
         Zadania z odhaczonych wystąpień nie przepadają.
       </p>

@@ -293,4 +293,24 @@ describe("BlockDialog", () => {
     expect(createBlock).toHaveBeenCalledTimes(1);
     koniec({ ok: true });
   });
+
+  it("zmiana dnia poza pierwszym wystąpieniem wyłącza „To i następne” z podpowiedzią", async () => {
+    wyrenderuj("edit", CYKLICZNY);
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(screen.getByRole("button", { name: "18" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    expect(screen.getByLabelText(/To i następne/)).toBeDisabled();
+    expect(screen.getByLabelText(/Tylko to wystąpienie/)).toBeEnabled();
+    expect(
+      screen.getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii."),
+    ).toBeInTheDocument();
+  });
+
+  it("zmiana dnia na pierwszym wystąpieniu zostawia „To i następne” dostępne", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, firstOccurrence: true });
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(screen.getByRole("button", { name: "18" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    expect(screen.getByLabelText(/To i następne/)).toBeEnabled();
+  });
 });
