@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -246,12 +246,12 @@ describe("CalendarView — przeciąganie", () => {
     fireEvent.pointerUp(el, { clientX: doPunktu.x, clientY: doPunktu.y, pointerId: 1 });
   }
 
-  function cykliczne(start: string) {
+  function cykliczne(start: string, freq = "weekly") {
     const d = dane();
     d.blocks[0] = {
       ...d.blocks[0],
       start_local: `${start}T08:00:00`,
-      recurrence: { freq: "weekly" },
+      recurrence: { freq },
     } as never;
     return d;
   }
@@ -373,6 +373,22 @@ describe("CalendarView — przeciąganie", () => {
     expect(within(okno).getByRole("radio", { name: /To i następne/ })).toBeDisabled();
     expect(
       within(okno).getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii."),
+    ).toBeInTheDocument();
+  });
+
+  it("zmiana dnia w serii codziennej zostawia tylko „Tylko to wystąpienie”", async () => {
+    wyrenderuj(cykliczne("2026-11-11", "daily"));
+    przeciagnij(
+      within(screen.getByTestId("blok-b1:2026-11-18")).getAllByRole("button")[0],
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA + 100, y: 394 },
+    );
+    const okno = await screen.findByRole("dialog", { name: "Zmieniasz blok, który się powtarza" });
+    expect(within(okno).getByRole("radio", { name: /Tylko to wystąpienie/ })).toBeEnabled();
+    expect(within(okno).getByRole("radio", { name: /To i następne/ })).toBeDisabled();
+    expect(within(okno).getByRole("radio", { name: /Wszystkie wystąpienia/ })).toBeDisabled();
+    expect(
+      within(okno).getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej."),
     ).toBeInTheDocument();
   });
 
@@ -560,6 +576,38 @@ describe("CalendarView — przeciąganie", () => {
   });
 });
 
+describe("CalendarView — zegar", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("linia „teraz” startuje od wartości z serwera i przesuwa się co minutę", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
+    // 09:05 UTC = 10:05 w Warszawie; serwer podał 10:00 (600 min)
+    vi.setSystemTime(new Date("2026-11-17T09:05:00Z"));
+    wyrenderuj();
+    expect(screen.getByTestId("linia-teraz").style.top).toBe("480px");
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    // 10:06 → 606 min → 484,8 px
+    expect(screen.getByTestId("linia-teraz").style.top).toBe("484.8px");
+  });
+
+  it("o północy „dziś” przechodzi na następny dzień", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
+    // 22:59:30 UTC = 23:59:30 w Warszawie
+    vi.setSystemTime(new Date("2026-11-17T22:59:30Z"));
+    render(<CalendarView view="tydzien" date="2026-11-18" today="2026-11-17" nowMinutes={1439} data={dane()} />);
+    expect(within(screen.getByTestId("kolumna-2026-11-17")).getByTestId("linia-teraz")).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(within(screen.getByTestId("kolumna-2026-11-18")).getByTestId("linia-teraz").style.top).toBe("0px");
+    expect(within(screen.getByTestId("kolumna-2026-11-17")).queryByTestId("linia-teraz")).toBeNull();
+  });
+});
+
 describe("CalendarView — miesiąc", () => {
   function miesiac(data = dane()) {
     return render(
@@ -570,10 +618,27 @@ describe("CalendarView — miesiąc", () => {
   it("nagłówek liczy widoczne wpisy miesiąca i zmienia się po ukryciu kategorii", async () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     miesiac();
-    expect(screen.getByText("2 wpisów widocznych")).toBeInTheDocument();
+    expect(screen.getByText("2 wpisy widoczne")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
-    await waitFor(() => expect(screen.getByText("1 wpisów widocznych")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("1 wpis widoczny")).toBeInTheDocument());
     expect(screen.queryByText(/Sprzątanie/)).not.toBeInTheDocument();
+  });
+
+  it("nagłówek: 5+ i 12–14 wpisów widocznych, 22 wpisy widoczne", () => {
+    for (const [n, napis] of [
+      [5, "5 wpisów widocznych"],
+      [12, "12 wpisów widocznych"],
+      [22, "22 wpisy widoczne"],
+    ] as const) {
+      const d = dane();
+      d.blocks = Array.from({ length: n }, (_, i) => ({
+        ...blok(`b${i}`, `W${i}`, "c1"),
+        start_local: `2026-11-${String(i + 1).padStart(2, "0")}T08:00:00`,
+      }));
+      const { unmount } = miesiac(d);
+      expect(screen.getByText(napis)).toBeInTheDocument();
+      unmount();
+    }
   });
 
   it("klik w komórkę dnia otwiera „Nowy wpis” z tym dniem i 09:00", async () => {

@@ -191,7 +191,7 @@ test.describe("kalendarz (web)", () => {
     await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
     await expect(page.getByTestId(`komorka-${WTOREK}`).getByRole("button", { name: /Matematyka/ })).toBeVisible();
     await expect(page.getByTestId(`komorka-${SRODA}`).getByRole("button", { name: /Bieg/ })).toBeVisible();
-    await expect(page.getByText("2 wpisów widocznych")).toBeVisible();
+    await expect(page.getByText("2 wpisy widoczne")).toBeVisible();
 
     await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
     await expect(page.getByRole("heading", { level: 2, name: "Wtorek, 12 stycznia" })).toBeVisible();

@@ -108,8 +108,10 @@
 - Telefon
   - [x] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 00–24 przewinięta do 07:00, linia teraz, „+” i stuknięcie pustego miejsca → arkusz. (e2e: mobile; unit: m-calendar-day.test.tsx, calendar-view-mobile.test.tsx; zrzut)
   - [x] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia. (e2e: kropka w miesiącu; unit: m-calendar-week.test.tsx, m-calendar-month.test.tsx; zrzut)
-  - [x] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie. (e2e: mobile; unit: m-block-sheet.test.tsx; zrzut)
+  - [x] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie z „Powtarzaj do”, zadania, przypomnienie. (e2e: mobile; unit: m-block-sheet.test.tsx; zrzut)
 - [x] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie). (unit: categories-card.test.tsx; zrzut)
+
+**Znane ograniczenie:** Zadania odpięte lub odłączone od bloku są w bazie, ale widać je dopiero w Etapie 5 (lista zadań).
 
 **Testy:** powtórzenia i wyjątki, DST, zadania per wystąpienie, „to i następne”, zadania samodzielne (daty, zaległe, przypięcie), RLS kalendarza i zadań, e2e blok cykliczny z zadaniem w dymku, e2e „Nowy wpis” → Blok z wypełnioną godziną, zrzuty.
 

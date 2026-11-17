@@ -3,10 +3,10 @@
 // Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
 // Web: tydzień i dzień to siatka godzin, miesiąc to MonthGrid. Telefon (Task 11): MCalendarDay/Week/Month;
 // oba układy są w DOM, przełącza je CSS (800 px). Bez jawnego `widok` w adresie telefon pokazuje dzień.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { IsoDate } from "@/components/controls/calendar-math";
+import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
 import { FormDialog } from "@/components/controls/form-dialog";
 import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
@@ -19,7 +19,7 @@ import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
-import type { CalendarData, CategoryRow } from "./load-calendar";
+import { minutesNow, type CalendarData, type CategoryRow } from "./load-calendar";
 import { MBlockSheet } from "./mobile/m-block-sheet";
 import { MCalendarDay } from "./mobile/m-calendar-day";
 import { MCalendarMonth } from "./mobile/m-calendar-month";
@@ -29,7 +29,13 @@ import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
 import { recurrenceBadge } from "./recurrence-text";
 import { ScopeDialog } from "./scope-dialog";
-import { planScopeChange, type BlockPatch, type Scope } from "./scope";
+import {
+  planScopeChange,
+  ZMIANA_DNIA_NIE_DLA_NASTEPNYCH,
+  ZMIANA_DNIA_TYLKO_TYGODNIOWA,
+  type BlockPatch,
+  type Scope,
+} from "./scope";
 import { TimeGrid } from "./time-grid";
 import { useCalendarStore, type CalendarChange } from "./use-calendar-store";
 import { viewRange, type CalendarView } from "./view-range";
@@ -53,8 +59,8 @@ type Okno =
 export function CalendarView({
   view,
   date,
-  today,
-  nowMinutes,
+  today: dzisSerwera,
+  nowMinutes: terazSerwera,
   data: daneSerwera,
   hasExplicitView = true,
 }: {
@@ -70,6 +76,23 @@ export function CalendarView({
   const router = useRouter();
   const { data, applyOptimistic } = useCalendarStore(daneSerwera);
   const { weekStart } = data.profile;
+
+  // Zegar: start z wartości serwera (bez rozjazdu hydracji), potem co minutę w strefie profilu.
+  // Po północy „dziś” przechodzi na nowy dzień. Nowe wartości z serwera zastępują zegar.
+  const [zegar, setZegar] = useState({ today: dzisSerwera, nowMinutes: terazSerwera });
+  const [zegarDla, setZegarDla] = useState(`${dzisSerwera}|${terazSerwera}`);
+  if (zegarDla !== `${dzisSerwera}|${terazSerwera}`) {
+    setZegarDla(`${dzisSerwera}|${terazSerwera}`);
+    setZegar({ today: dzisSerwera, nowMinutes: terazSerwera });
+  }
+  const strefa = data.profile.timezone;
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setZegar({ today: todayIso(strefa), nowMinutes: minutesNow(strefa) });
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [strefa]);
+  const { today, nowMinutes } = zegar;
   const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
   // Widok telefonu; dzień potrzebuje całego tygodnia (pasek z kropkami), więc dane obejmują tydzień
   const widokTel: CalendarView = hasExplicitView ? view : "dzien";
@@ -346,6 +369,13 @@ export function CalendarView({
 
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
   const wpisyMiesiaca = widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length;
+  // Odmiana: 1 wpis widoczny; 2–4, 22–24… wpisy widoczne (ale 12–14 wpisów); reszta wpisów widocznych
+  const napisWpisow =
+    wpisyMiesiaca === 1
+      ? "1 wpis widoczny"
+      : wpisyMiesiaca % 10 >= 2 && wpisyMiesiaca % 10 <= 4 && (wpisyMiesiaca % 100 < 12 || wpisyMiesiaca % 100 > 14)
+        ? `${wpisyMiesiaca} wpisy widoczne`
+        : `${wpisyMiesiaca} wpisów widocznych`;
   // Dymki w dwóch dolnych wierszach siatki miesiąca wyrównują się do dołu komórki i rosną w górę
   const wyrownanie = (dzien: IsoDate) =>
     view === "miesiac" && zakres.days.indexOf(dzien) >= 28 ? "end" : "start";
@@ -387,7 +417,7 @@ export function CalendarView({
         date={date}
         today={today}
         weekStart={weekStart}
-        subtitle={view === "miesiac" ? `${wpisyMiesiaca} wpisów widocznych` : undefined}
+        subtitle={view === "miesiac" ? napisWpisow : undefined}
         // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
         onNewBlock={() => {
           setWybrany(null);
@@ -606,9 +636,21 @@ export function CalendarView({
             .join(" · ")}
           date={okno.occurrence.key.slice(okno.occurrence.blockId.length + 1)}
           timeLabel={`${formatClockTime(Math.floor(okno.occurrence.startMin / 60), okno.occurrence.startMin % 60, data.profile.clock)}–${formatClockTime(Math.floor((okno.occurrence.startMin + okno.occurrence.durationMin) / 60), (okno.occurrence.startMin + okno.occurrence.durationMin) % 60, data.profile.clock)}`}
+          // Inny dzień: seria codzienna i dni robocze tylko „Tylko to”; inne serie „To i następne”
+          // tylko na pierwszym wystąpieniu (zasady jak w planScopeChange)
           disableFollowing={
-            okno.wynik.date !== okno.occurrence.date && !pierwszeWystapienie(okno.occurrence)
-              ? "Zmiana dnia działa dla tego wystąpienia albo dla całej serii."
+            okno.wynik.date === okno.occurrence.date
+              ? undefined
+              : okno.occurrence.recurrence?.freq === "daily" || okno.occurrence.recurrence?.freq === "weekdays"
+                ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
+                : !pierwszeWystapienie(okno.occurrence)
+                  ? ZMIANA_DNIA_NIE_DLA_NASTEPNYCH
+                  : undefined
+          }
+          disableAll={
+            okno.wynik.date !== okno.occurrence.date &&
+            (okno.occurrence.recurrence?.freq === "daily" || okno.occurrence.recurrence?.freq === "weekdays")
+              ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
               : undefined
           }
           onPick={(zakres) => {

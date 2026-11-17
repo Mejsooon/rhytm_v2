@@ -50,6 +50,22 @@ describe("MCalendarDay", () => {
     expect(screen.getByText("Środa, 18 listopada · 1 blok")).toBeInTheDocument();
   });
 
+  it("liczba bloków odmienia się po polsku (2–4 bloki, 12–14 i 5+ bloków, 22–24 bloki)", () => {
+    // n krótkich bloków w środę, co 30 minut
+    const dzien = (n: number) =>
+      Array.from({ length: n }, (_, i) =>
+        wystapienie(`x${i}:2026-11-18`, "2026-11-18", i * 30, 15, `B${i}`, null),
+      );
+    const oczekiwane: [number, string][] = [
+      [2, "bloki"], [5, "bloków"], [12, "bloków"], [14, "bloków"], [22, "bloki"], [24, "bloki"], [25, "bloków"],
+    ];
+    for (const [n, slowo] of oczekiwane) {
+      const { unmount } = wyrenderuj({ occurrences: dzien(n) });
+      expect(screen.getByText(`Środa, 18 listopada · ${n} ${slowo}`)).toBeInTheDocument();
+      unmount();
+    }
+  });
+
   it("blok pokazuje godziny i kategorię, bez data-occurrence-key", () => {
     const { container } = wyrenderuj();
     expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent("10:00–12:00 · Studia");

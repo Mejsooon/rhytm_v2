@@ -47,7 +47,13 @@ export function MCalendarDay({
   const [, miesiac, numerDnia] = date.split("-").map(Number);
   const tytul = `${DNI_PELNE[weekdayOf(date)]}, ${numerDnia} ${MIESIACE_DOP[miesiac - 1]}`;
   const liczba = dnia.length;
-  const slowoBlok = liczba === 1 ? "blok" : liczba > 1 && liczba < 5 ? "bloki" : "bloków";
+  // Odmiana: 1 blok; 2–4, 22–24, 32–34… bloki (ale 12–14 bloków); reszta bloków
+  const slowoBlok =
+    liczba === 1
+      ? "blok"
+      : liczba % 10 >= 2 && liczba % 10 <= 4 && (liczba % 100 < 12 || liczba % 100 > 14)
+        ? "bloki"
+        : "bloków";
 
   // Oś startuje na 07:00; w dzisiejszym dniu z trwającym blokiem na jego początku (z zapasem pół godziny)
   useEffect(() => {
