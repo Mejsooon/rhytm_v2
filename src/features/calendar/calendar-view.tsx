@@ -8,17 +8,23 @@ import { useRouter } from "next/navigation";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
 import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import { formatClockTime } from "@/lib/time/timezones";
+import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
 import { BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
 import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
+import type { DragResult } from "./drag";
 import type { CalendarData, CategoryRow } from "./load-calendar";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
+import { recurrenceBadge } from "./recurrence-text";
+import { ScopeDialog } from "./scope-dialog";
+import { planScopeChange, type BlockPatch, type Scope } from "./scope";
 import { TimeGrid } from "./time-grid";
-import { useCalendarStore } from "./use-calendar-store";
+import { useCalendarStore, type CalendarChange } from "./use-calendar-store";
 import { viewRange, type CalendarView } from "./view-range";
 
 function godzina(minuty: number): string {
@@ -32,7 +38,9 @@ type Okno =
   | { typ: "wpis"; date: IsoDate; startMin: number }
   | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial }
   | { typ: "kategoria" }
-  | { typ: "usun"; occurrence: Occurrence };
+  | { typ: "usun"; occurrence: Occurrence }
+  // Przeciągnięty blok cykliczny czeka na wybór zakresu zmiany
+  | { typ: "przeciagniecie"; occurrence: Occurrence; wynik: DragResult };
 
 export function CalendarView({
   view,
@@ -58,6 +66,8 @@ export function CalendarView({
   // Okno nowego wpisu / bloku / kategorii / usuwania (naraz tylko jedno) i kotwica dymku „Nowy wpis”
   const [okno, setOkno] = useState<Okno | null>(null);
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
+  // Miejsce, w którym blok stoi po puszczeniu, zanim zapis się skończy (albo „Anuluj” go cofnie)
+  const [podgladBloku, setPodgladBloku] = useState<({ key: string } & DragResult) | null>(null);
   // Zmiana widoku albo dnia zamyka dymek (stan ustawiany w renderze, jak w store)
   const [widokDla, setWidokDla] = useState(`${view}|${date}`);
   if (widokDla !== `${view}|${date}`) {
@@ -125,6 +135,110 @@ export function CalendarView({
     );
   }
 
+  // Na siatce blok czekający na zakres albo zapis stoi już na nowym miejscu
+  const naSiatce = podgladBloku
+    ? widoczne.map((o) =>
+        o.key === podgladBloku.key
+          ? {
+              ...o,
+              date: podgladBloku.date,
+              startMin: podgladBloku.startMin,
+              durationMin: podgladBloku.durationMin,
+            }
+          : o,
+      )
+    : widoczne;
+
+  // Start serii zawsze należy do serii, więc pierwsze wystąpienie ma datę startu bloku
+  function pierwszeWystapienie(o: Occurrence): boolean {
+    return (
+      data.blocks.find((b) => b.id === o.blockId)?.start_local.slice(0, 10) ===
+      o.key.slice(o.blockId.length + 1)
+    );
+  }
+
+  // Zapis przesunięcia/rozciągnięcia: blok od razu stoi na nowym miejscu, błąd cofa i daje toast
+  function zapiszPrzeciagniecie(o: Occurrence, zakres: Scope, wynik: DragResult) {
+    // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
+    const dataOryginalna = o.key.slice(o.blockId.length + 1);
+    const patch: BlockPatch = {};
+    if (wynik.date !== o.date) patch.date = wynik.date;
+    if (wynik.startMin !== o.startMin) patch.startMin = wynik.startMin;
+    if (wynik.durationMin !== o.durationMin) patch.durationMin = wynik.durationMin;
+
+    // Optymistyczna zmiana z tego samego planu, który wykona akcja; podział serii
+    // zostaje do odświeżenia danych (do tego czasu blok trzyma podgląd)
+    const blok = data.blocks.find((b) => b.id === o.blockId);
+    const plan = blok ? planScopeChange({ block: blok, occurrence: o, scope: zakres, patch }) : null;
+    const zmiana: CalendarChange = (d) => {
+      if (plan?.kind === "updateBlock") {
+        const p = plan.patch;
+        return {
+          ...d,
+          blocks: d.blocks.map((b) =>
+            b.id !== o.blockId
+              ? b
+              : {
+                  ...b,
+                  start_local: `${p.date ?? b.start_local.slice(0, 10)}T${
+                    p.startMin === undefined ? b.start_local.slice(11, 19) : `${godzina(p.startMin)}:00`
+                  }`,
+                  duration_min: p.durationMin ?? b.duration_min,
+                },
+          ),
+        };
+      }
+      if (plan?.kind === "upsertException") {
+        return {
+          ...d,
+          exceptions: [
+            ...d.exceptions.filter(
+              (w) => !(w.block_id === plan.row.block_id && w.occurrence_date === plan.row.occurrence_date),
+            ),
+            plan.row,
+          ],
+        };
+      }
+      return d;
+    };
+
+    void applyOptimistic(zmiana, () =>
+      changeOccurrence({ blockId: o.blockId, date: dataOryginalna, scope: zakres, patch }),
+    ).finally(() => setPodgladBloku(null));
+  }
+
+  // Puszczony blok: bez zmiany nic się nie dzieje, jednorazowy zapisuje się od razu,
+  // cykliczny najpierw pyta o zakres (podgląd zostaje na nowym miejscu)
+  function przeciagnietyBlok(o: Occurrence, wynik: DragResult) {
+    setWybrany(null);
+    if (wynik.date === o.date && wynik.startMin === o.startMin && wynik.durationMin === o.durationMin) return;
+    if (!o.recurring) {
+      zapiszPrzeciagniecie(o, "all", wynik);
+      return;
+    }
+    setPodgladBloku({ key: o.key, ...wynik });
+    setOkno({ typ: "przeciagniecie", occurrence: o, wynik });
+  }
+
+  // Przeciągnięty zakres na pustej siatce otwiera okno nowego bloku z tym zakresem
+  function przeciagnietyZakres(zakres: DragResult) {
+    setWybrany(null);
+    setOkno({
+      typ: "blok",
+      mode: "create",
+      initial: {
+        title: "",
+        categoryId: null,
+        date: zakres.date,
+        startMin: zakres.startMin,
+        durationMin: zakres.durationMin,
+        recurrence: null,
+        note: "",
+        remind: true,
+      },
+    });
+  }
+
   const wybraneWystapienie = wybrany
     ? widoczne.find((o) => o.key === wybrany)
     : undefined;
@@ -158,7 +272,7 @@ export function CalendarView({
   const siatka = (
     <TimeGrid
       days={zakres.days}
-      occurrences={widoczne}
+      occurrences={naSiatce}
       categories={data.categories}
       tasks={data.tasks}
       clock={data.profile.clock}
@@ -170,6 +284,8 @@ export function CalendarView({
       onBlockClick={(key) => setWybrany((w) => (w === key ? null : key))}
       activeSlot={okno?.typ === "wpis" ? okno : null}
       onSlotAnchor={setKotwicaWpisu}
+      onRangeDrag={przeciagnietyZakres}
+      onBlockDrag={przeciagnietyBlok}
       // Klik w ten sam slot zamyka dymek, w inny przenosi go
       onSlotClick={(dzien, startMin) => {
         setWybrany(null);
@@ -258,10 +374,7 @@ export function CalendarView({
                 blockId: o.blockId,
                 // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
                 occurrenceDate: o.key.slice(o.blockId.length + 1),
-                // Start serii zawsze należy do serii, więc pierwsze wystąpienie ma datę startu bloku
-                firstOccurrence:
-                  data.blocks.find((b) => b.id === o.blockId)?.start_local.slice(0, 10) ===
-                  o.key.slice(o.blockId.length + 1),
+                firstOccurrence: pierwszeWystapienie(o),
               },
             });
           }}
@@ -320,6 +433,32 @@ export function CalendarView({
             setOkno(null);
           }}
           onCancel={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "przeciagniecie" && (
+        <ScopeDialog
+          subtitle={[
+            `„${okno.occurrence.title}”`,
+            okno.occurrence.recurrence ? recurrenceBadge(okno.occurrence.recurrence).slice(2) : null,
+            `przesunięcie na ${formatClockTime(Math.floor(okno.wynik.startMin / 60), okno.wynik.startMin % 60, data.profile.clock)}–${formatClockTime(Math.floor((okno.wynik.startMin + okno.wynik.durationMin) / 60), (okno.wynik.startMin + okno.wynik.durationMin) % 60, data.profile.clock)}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          date={okno.occurrence.key.slice(okno.occurrence.blockId.length + 1)}
+          timeLabel={`${formatClockTime(Math.floor(okno.occurrence.startMin / 60), okno.occurrence.startMin % 60, data.profile.clock)}–${formatClockTime(Math.floor((okno.occurrence.startMin + okno.occurrence.durationMin) / 60), (okno.occurrence.startMin + okno.occurrence.durationMin) % 60, data.profile.clock)}`}
+          disableFollowing={
+            okno.wynik.date !== okno.occurrence.date && !pierwszeWystapienie(okno.occurrence)
+              ? "Zmiana dnia działa dla tego wystąpienia albo dla całej serii."
+              : undefined
+          }
+          onPick={(zakres) => {
+            setOkno(null);
+            zapiszPrzeciagniecie(okno.occurrence, zakres, okno.wynik);
+          }}
+          onCancel={() => {
+            setOkno(null);
+            setPodgladBloku(null);
+          }}
         />
       )}
       {okno?.typ === "usun" && (

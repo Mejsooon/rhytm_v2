@@ -267,4 +267,28 @@ describe("TimeGrid", () => {
     expect(screen.queryByText(/Brak bloków w tym dniu\./)).not.toBeInTheDocument();
     expect(screen.getByText("0 z 2 bloków")).toBeInTheDocument();
   });
+
+  it("w trakcie przeciągania po pustej siatce pokazuje podgląd zakresu, a puszczenie wywołuje onRangeDrag", () => {
+    const onRangeDrag = vi.fn();
+    wyrenderuj({ onRangeDrag });
+    // Przewijana siatka ma w jsdom zerowy prostokąt (puszczenie byłoby „poza siatką”)
+    const przewijanie = screen.getByTestId("przewijanie");
+    przewijanie.getBoundingClientRect = () => new DOMRect(0, 0, 800, 2000);
+    const kolumna = screen.getByTestId("kolumna-2026-11-18");
+    // Bez układu w jsdom wszystkie kolumny mają left = 0, więc dzień wybiera ostatnia kolumna;
+    // sprawdzamy tylko podgląd i wywołanie
+    fireEvent.pointerDown(kolumna, { clientX: 10, clientY: 480, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(kolumna, { clientX: 10, clientY: 528, pointerId: 1 });
+    expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent("10:00–11:00");
+    fireEvent.pointerUp(kolumna, { clientX: 10, clientY: 528, pointerId: 1 });
+    expect(onRangeDrag).toHaveBeenCalledWith(expect.objectContaining({ startMin: 600, durationMin: 60 }));
+    expect(screen.queryByTestId("podglad-przeciagania")).not.toBeInTheDocument();
+  });
+
+  it("blok ma dolny uchwyt rozciągania, a przyciski bloków nadal się klikają", async () => {
+    const { onBlockClick } = wyrenderuj({ occurrences: [wystapienie({ title: "Algebra" })] });
+    expect(screen.getByTestId("uchwyt-b1:2026-11-17")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(onBlockClick).toHaveBeenCalled();
+  });
 });

@@ -9,8 +9,10 @@ import type { IsoDate } from "@/components/controls/calendar-math";
 import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "./day-layout";
+import type { DragResult } from "./drag";
 import type { CategoryRow } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
+import { useGridDrag } from "./use-grid-drag";
 import { weekdayOf } from "./view-range";
 
 // Wysokość godziny w px: tydzień 48 (Calendar.dc.html), dzień 52 (CalendarDay.dc.html)
@@ -39,6 +41,8 @@ export function TimeGrid({
   onSlotAnchor,
   onSlotClick,
   onBlockClick,
+  onRangeDrag,
+  onBlockDrag,
 }: {
   days: IsoDate[];
   // Wystąpienia widocznych kategorii w zakresie dni
@@ -57,6 +61,10 @@ export function TimeGrid({
   onSlotAnchor?: (el: HTMLElement | null) => void;
   onSlotClick: (date: IsoDate, startMin: number) => void;
   onBlockClick: (key: string, anchorEl: HTMLElement) => void;
+  // Przeciągnięcie po pustej siatce: zakres do utworzenia bloku
+  onRangeDrag?: (range: DragResult) => void;
+  // Przesunięcie albo rozciągnięcie bloku: nowe miejsce wystąpienia
+  onBlockDrag?: (occurrence: Occurrence, result: DragResult) => void;
 }) {
   const wysokoscGodziny = GODZINA[variant];
   const wysokoscSiatki = 24 * wysokoscGodziny;
@@ -65,6 +73,13 @@ export function TimeGrid({
   const przewijanie = useRef<HTMLDivElement>(null);
   // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
   const [duchMyszy, setDuchMyszy] = useState<{ date: IsoDate; startMin: number } | null>(null);
+  // Przeciąganie wskaźnikiem: podgląd zakresu/przesunięcia (logika w use-grid-drag.ts)
+  const { podglad, zacznij, tlumKlik } = useGridDrag({
+    korzen: przewijanie,
+    wysokoscGodziny,
+    onRange: onRangeDrag,
+    onBlock: onBlockDrag,
+  });
 
   // Przy montażu: do trwającego bloku z dzisiejszej kolumny, a gdy go nie ma — do 06:00
   useEffect(() => {
@@ -124,7 +139,13 @@ export function TimeGrid({
           <div
             ref={przewijanie}
             data-testid="przewijanie"
-            className="max-h-[calc(100vh-260px)] min-h-[320px] overflow-y-auto"
+            className={`max-h-[calc(100vh-260px)] min-h-[320px] overflow-y-auto${podglad ? " select-none" : ""}`}
+            // Kursor całej siatki podczas gestu
+            style={
+              podglad
+                ? { cursor: podglad.kind === "resize" ? "ns-resize" : podglad.kind === "move" ? "grabbing" : "crosshair" }
+                : undefined
+            }
           >
             {variant === "week" && (
               <>
@@ -190,21 +211,35 @@ export function TimeGrid({
                 const uklad = layoutDay(dnia);
                 const linia = nowLine({ date: today, minutes: nowMinutes }, dzien);
                 // Aktywny slot (otwarty dymek) ma pierwszeństwo przed duchem myszy, jak w makiecie
-                const duch = activeSlot?.date === dzien ? activeSlot : duchMyszy?.date === dzien ? duchMyszy : null;
+                const duch = podglad
+                  ? null
+                  : activeSlot?.date === dzien
+                    ? activeSlot
+                    : duchMyszy?.date === dzien
+                      ? duchMyszy
+                      : null;
                 const duchAktywny = duch !== null && duch === activeSlot;
                 return (
                   <div
                     key={dzien}
                     data-testid={`kolumna-${dzien}`}
+                    data-kolumna={dzien}
                     className="relative cursor-pointer border-l border-[#eaeaea]"
                     style={{ height: wysokoscSiatki, backgroundImage: tloLinii }}
+                    // Klik zaraz po przeciągnięciu nie otwiera dymku ani nie wybiera slotu
+                    onClickCapture={tlumKlik}
+                    onPointerDown={(e) => {
+                      // Przeciąganie po pustym miejscu tworzy zakres; bloki i przyciski mają własne gesty
+                      if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) return;
+                      zacznij(e, "create");
+                    }}
                     onClick={(e) => {
                       // Klik w blok i w ramkę pustego dnia obsługują własne przyciski
-                      if ((e.target as HTMLElement).closest("button,a,[role=dialog]")) return;
+                      if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) return;
                       onSlotClick(dzien, polgodzinaZ(e) * 30);
                     }}
                     onMouseMove={(e) => {
-                      if ((e.target as HTMLElement).closest("button,a,[role=dialog]")) {
+                      if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) {
                         if (duchMyszy) setDuchMyszy(null);
                         return;
                       }
@@ -226,6 +261,20 @@ export function TimeGrid({
                         }}
                       >
                         {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}–${formatClockTime(Math.floor(Math.min(duch.startMin + 60, 1440) / 60), Math.min(duch.startMin + 60, 1440) % 60, clock)}`}
+                      </div>
+                    )}
+
+                    {podglad?.date === dzien && (
+                      <div
+                        data-testid="podglad-przeciagania"
+                        aria-hidden="true"
+                        className="pointer-events-none absolute right-1 left-1 z-10 box-border overflow-hidden rounded-md border border-dashed border-[#737373] bg-[#fafafa]/90 px-2 py-1 font-mono text-[11px] text-[#404040]"
+                        style={{
+                          top: (podglad.startMin / 60) * wysokoscGodziny + 1,
+                          height: (podglad.durationMin / 60) * wysokoscGodziny - 2,
+                        }}
+                      >
+                        {`${formatClockTime(Math.floor(podglad.startMin / 60), podglad.startMin % 60, clock)}–${formatClockTime(Math.floor((podglad.startMin + podglad.durationMin) / 60), (podglad.startMin + podglad.durationMin) % 60, clock)}`}
                       </div>
                     )}
 
@@ -253,7 +302,7 @@ export function TimeGrid({
                           <div
                             key={o.key}
                             data-testid={`blok-${o.key}`}
-                            className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}`}
+                            className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}${podglad?.key === o.key ? " opacity-40" : ""}`}
                             style={{
                               top: (o.startMin / 60) * wysokoscGodziny,
                               height: (czas / 60) * wysokoscGodziny,
@@ -265,6 +314,8 @@ export function TimeGrid({
                               type="button"
                               data-occurrence-key={o.key}
                               onClick={(e) => onBlockClick(o.key, e.currentTarget)}
+                              // Przeciągnięcie przesuwa blok; ruch poniżej 4 px zostaje zwykłym klikiem
+                              onPointerDown={(e) => zacznij(e, "move", { occurrence: o })}
                               title={`${o.title} ${godzinyBloku}`}
                               className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                               style={{
@@ -303,6 +354,14 @@ export function TimeGrid({
                                 </span>
                               )}
                             </button>
+                            {/* Dolny uchwyt rozciągania; klawiatura korzysta z edycji w dymku */}
+                            <div
+                              data-testid={`uchwyt-${o.key}`}
+                              data-uchwyt
+                              aria-hidden="true"
+                              onPointerDown={(e) => zacznij(e, "resize", { occurrence: o })}
+                              className="absolute right-1 bottom-0 left-1 h-1.5 cursor-ns-resize"
+                            />
                           </div>
                         );
                       })}

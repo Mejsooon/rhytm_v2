@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { setCategoryHidden, createCategory, toastError, push, createBlock, changeOccurrence } = vi.hoisted(() => ({
   setCategoryHidden: vi.fn(),
@@ -206,5 +206,213 @@ describe("CalendarView", () => {
       delete: true,
     });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+});
+
+describe("CalendarView — przeciąganie", () => {
+  // jsdom nie liczy układu: kolumny tygodnia 2026-11-16… mają po 100 px szerokości od x=60,
+  // godzina ma 48 px, a przewijana siatka zajmuje 0–800 × 0–2000
+  const POCZATEK = "2026-11-16";
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.dataset.testid === "przewijanie") {
+        return new DOMRect(0, 0, 800, 2000);
+      }
+      const dzien = this.dataset.kolumna;
+      if (dzien) {
+        const numer = Math.round((Date.parse(dzien) - Date.parse(POCZATEK)) / 86_400_000);
+        return new DOMRect(60 + numer * 100, 0, 100, 1152);
+      }
+      return new DOMRect(0, 0, 0, 0);
+    });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Środek kolumny dnia (środa 18.11 = indeks 2)
+  const X_SRODA = 60 + 2 * 100 + 50;
+
+  function przeciagnij(el: Element, od: { x: number; y: number }, doPunktu: { x: number; y: number }) {
+    fireEvent.pointerDown(el, { clientX: od.x, clientY: od.y, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(el, { clientX: doPunktu.x, clientY: doPunktu.y, pointerId: 1 });
+    fireEvent.pointerUp(el, { clientX: doPunktu.x, clientY: doPunktu.y, pointerId: 1 });
+  }
+
+  function cykliczne(start: string) {
+    const d = dane();
+    d.blocks[0] = {
+      ...d.blocks[0],
+      start_local: `${start}T08:00:00`,
+      recurrence: { freq: "weekly" },
+    } as never;
+    return d;
+  }
+
+  it("ruch o 2 px to klik: otwiera dymek i nie zapisuje", async () => {
+    wyrenderuj();
+    const blok = screen.getByRole("button", { name: /^Algebra/ });
+    przeciagnij(blok, { x: X_SRODA, y: 394 }, { x: X_SRODA + 1, y: 396 });
+    fireEvent.click(blok);
+    expect(await screen.findByRole("dialog", { name: "Szczegóły bloku" })).toBeInTheDocument();
+    expect(changeOccurrence).not.toHaveBeenCalled();
+  });
+
+  it("przesunięcie bloku jednorazowego o godzinę zapisuje od razu z nowym startMin", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj();
+    const blok = screen.getByRole("button", { name: /^Algebra/ });
+    przeciagnij(blok, { x: X_SRODA, y: 394 }, { x: X_SRODA, y: 394 + 48 });
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-18",
+      scope: "all",
+      patch: { startMin: 540 },
+    });
+    // Blok od razu stoi na nowym miejscu (09:00 = 432 px)
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("432px");
+    // Klik po puszczeniu nie otwiera dymku
+    fireEvent.click(blok);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("przesunięcie na inny dzień zmienia date w patchu", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj();
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA + 100, y: 394 },
+    );
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-18",
+      scope: "all",
+      patch: { date: "2026-11-19" },
+    });
+  });
+
+  it("błąd akcji cofa blok na stare miejsce i pokazuje toast", async () => {
+    changeOccurrence.mockResolvedValue({ ok: false, message: "x" });
+    wyrenderuj();
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA, y: 394 + 48 },
+    );
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."),
+    );
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("384px");
+  });
+
+  it("rozciąganie dolnym uchwytem zmienia durationMin", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj();
+    przeciagnij(
+      screen.getByTestId("uchwyt-b1:2026-11-18"),
+      { x: X_SRODA, y: 440 },
+      { x: X_SRODA, y: 440 + 48 },
+    );
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-18",
+      scope: "all",
+      patch: { durationMin: 120 },
+    });
+  });
+
+  it("blok cykliczny: okno zakresu, „Anuluj” przywraca blok na stare miejsce", async () => {
+    wyrenderuj(cykliczne("2026-11-11"));
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA, y: 394 + 48 },
+    );
+    const okno = await screen.findByRole("dialog", { name: "Zmieniasz blok, który się powtarza" });
+    // Podczas pytania blok stoi już na nowym miejscu
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("432px");
+    await userEvent.click(within(okno).getByRole("button", { name: "Anuluj" }));
+    expect(changeOccurrence).not.toHaveBeenCalled();
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("384px");
+  });
+
+  it("blok cykliczny: wybór zakresu woła changeOccurrence z oryginalną datą", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj(cykliczne("2026-11-11"));
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA, y: 394 + 48 },
+    );
+    const okno = await screen.findByRole("dialog", { name: "Zmieniasz blok, który się powtarza" });
+    await userEvent.click(within(okno).getByRole("button", { name: "Zapisz zmianę" }));
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-18",
+      scope: "this",
+      patch: { startMin: 540 },
+    });
+  });
+
+  it("zmiana dnia nie-pierwszego wystąpienia wyłącza „To i następne”", async () => {
+    wyrenderuj(cykliczne("2026-11-11"));
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA + 100, y: 394 },
+    );
+    const okno = await screen.findByRole("dialog", { name: "Zmieniasz blok, który się powtarza" });
+    expect(within(okno).getByRole("radio", { name: /To i następne/ })).toBeDisabled();
+    expect(
+      within(okno).getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii."),
+    ).toBeInTheDocument();
+  });
+
+  it("zmiana dnia pierwszego wystąpienia zostawia „To i następne” dostępne", async () => {
+    wyrenderuj(cykliczne("2026-11-18"));
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: X_SRODA + 100, y: 394 },
+    );
+    const okno = await screen.findByRole("dialog", { name: "Zmieniasz blok, który się powtarza" });
+    expect(within(okno).getByRole("radio", { name: /To i następne/ })).toBeEnabled();
+  });
+
+  it("przeciągnięcie po pustej siatce otwiera „Nowy blok” z zakresem", async () => {
+    wyrenderuj();
+    // 10:00 (480 px) → 11:00 (528 px) w piątek 20.11
+    const kolumna = screen.getByTestId("kolumna-2026-11-20");
+    przeciagnij(kolumna, { x: 60 + 4 * 100 + 50, y: 480 }, { x: 60 + 4 * 100 + 50, y: 528 });
+    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(within(okno).getByRole("button", { name: "Dzień" })).toHaveTextContent("20.11.2026");
+    expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent("10:00");
+    expect(within(okno).getByRole("button", { name: "Do" })).toHaveTextContent("11:00");
+    expect(screen.queryByRole("dialog", { name: "Nowy wpis" })).not.toBeInTheDocument();
+  });
+
+  it("Esc w trakcie przeciągania anuluje zapis", async () => {
+    wyrenderuj();
+    const blok = screen.getByRole("button", { name: /^Algebra/ });
+    fireEvent.pointerDown(blok, { clientX: X_SRODA, clientY: 394, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(blok, { clientX: X_SRODA, clientY: 442, pointerId: 1 });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(blok, { clientX: X_SRODA, clientY: 442, pointerId: 1 });
+    expect(changeOccurrence).not.toHaveBeenCalled();
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("384px");
+  });
+
+  it("puszczenie poza siatką anuluje zapis", async () => {
+    wyrenderuj();
+    przeciagnij(
+      screen.getByRole("button", { name: /^Algebra/ }),
+      { x: X_SRODA, y: 394 },
+      { x: 5000, y: 442 },
+    );
+    expect(changeOccurrence).not.toHaveBeenCalled();
+    expect(screen.getByTestId("blok-b1:2026-11-18").style.top).toBe("384px");
   });
 });
