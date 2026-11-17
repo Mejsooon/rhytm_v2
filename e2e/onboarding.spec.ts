@@ -22,6 +22,8 @@ test.describe("onboarding", () => {
     await zalozKonto(page, info.project.name);
 
     // Krok 1: „Dalej” nieaktywne bez imienia
+    // Konto z API ma w profilu nazwę z metadanych, więc najpierw ją czyścimy
+    await page.getByLabel("Imię lub pseudonim").fill("");
     await expect(dalej(page)).toBeDisabled();
     await page.getByLabel("Imię lub pseudonim").fill("Mejson");
     await expect(dalej(page)).toBeEnabled();

@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 import { createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
 test.describe("ustawienia ogólne", () => {
+  // Krótszy limit akcji: przy błędzie widać, która linia utknęła (a nie ogólny timeout testu)
+  test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
   test("zmiana nazwy, walidacja wagi i cel snu", async ({ page }, info) => {
