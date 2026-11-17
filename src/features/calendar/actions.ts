@@ -309,13 +309,24 @@ export async function changeOccurrence(input: {
         }
       }
 
+      // Seria zamieniona w blok jednorazowy: kasujemy WSZYSTKIE wyjątki (jak split w SQL),
+      // bo odwołanie z dnia bloku by go ukryło, a zmiana nadpisałaby jego godzinę i tytuł
+      const jednorazowy = zmiany.recurrence === null;
+      if (jednorazowy) {
+        const { error: bladWyjatkow } = await supabase
+          .from("block_exceptions")
+          .delete()
+          .eq("block_id", block.id);
+        if (bladWyjatkow) return { ok: false, message: BLAD_ZAPISU };
+      }
+
       // Wyjątki z dni, które nie należą już do serii (np. po przesunięciu na inny dzień tygodnia),
       // kasujemy — i odwołane, i zmienione — żeby nie wróciły przy kolejnej zmianie serii
       const { data: wyjatki } = await supabase
         .from("block_exceptions")
         .select("occurrence_date")
         .eq("block_id", block.id);
-      if (wyjatki && wyjatki.length > 0) {
+      if (!jednorazowy && wyjatki && wyjatki.length > 0) {
         const daty = wyjatki.map((w) => w.occurrence_date).sort();
         const nowyBlok = {
           ...block,

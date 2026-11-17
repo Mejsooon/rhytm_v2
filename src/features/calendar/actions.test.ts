@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/cache", () => ({ revalidatePath }));
 
 import { changeOccurrence, createBlock } from "./actions";
+import { expandOccurrences } from "./occurrences";
 
 const BLAD = "Nie udało się zapisać. Spróbuj ponownie.";
 
@@ -358,5 +359,29 @@ describe("changeOccurrence", () => {
     });
     expect(w.ok).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
+  });
+  it("all zamieniające serię w blok jednorazowy kasuje wszystkie wyjątki (blok zostaje widoczny)", async () => {
+    // Seria wtorkowa od 3.11; odwołane 24.11. Z 17.11: „Nie”, dzień 24.11, „Wszystkie”.
+    const seria = { ...blok, start_local: "2026-11-03T08:00:00", recurrence: { freq: "weekly" } };
+    tables.blocks = fakeTable({ data: [{ id: blok.id }], single: seria });
+    const odwolanie = {
+      block_id: blok.id, user_id: "u1", occurrence_date: "2026-11-24", kind: "cancelled",
+      new_start_local: null, new_duration_min: null, new_title: null,
+    };
+    tables.block_exceptions = fakeTable({ data: [odwolanie] });
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-17", scope: "all", patch: { date: "2026-11-24", recurrence: null },
+    });
+    expect(w.ok).toBe(true);
+    const zmiany = tables.blocks.update.mock.calls[0][0];
+    expect(zmiany).toEqual(expect.objectContaining({ recurrence: null, start_local: "2026-11-24T08:00:00" }));
+    // Wszystkie wyjątki bloku: delete po block_id, bez zawężania do dat
+    expect(tables.block_exceptions.delete).toHaveBeenCalled();
+    expect(tables.block_exceptions.eq).toHaveBeenCalledWith("block_id", blok.id);
+    expect(tables.block_exceptions.in).not.toHaveBeenCalled();
+    // Bez wyjątków blok jednorazowy jest widoczny 24.11 (ze starym odwołaniem byłby ukryty)
+    const poZapisie = { ...seria, ...zmiany };
+    expect(expandOccurrences([poZapisie], [], "2026-11-24", "2026-11-24")).toHaveLength(1);
+    expect(expandOccurrences([poZapisie], [odwolanie], "2026-11-24", "2026-11-24")).toHaveLength(0);
   });
 });
