@@ -53,7 +53,7 @@ export function resolveRoute(input: {
   }
 
   // Onboarding: ukończony → aplikacja
-  if (pathname === "/onboarding") {
+  if (pathname === "/onboarding" || pathname.startsWith("/onboarding/")) {
     return isOnboarded ? { redirect: "/dzis" } : null;
   }
 

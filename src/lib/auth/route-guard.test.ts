@@ -35,6 +35,15 @@ describe("resolveRoute", () => {
     expect(resolveRoute({ pathname: "/onboarding", ...bezOnboardingu })).toBeNull();
   });
 
+  it("/onboarding/[krok]: nieukończony przepuszczony, ukończony → /dzis, nieukończony na /dzis → /onboarding", () => {
+    expect(resolveRoute({ pathname: "/onboarding/3", ...bezOnboardingu })).toBeNull();
+    expect(resolveRoute({ pathname: "/onboarding/3", ...pelny })).toEqual({ redirect: "/dzis" });
+    expect(resolveRoute({ pathname: "/onboarding/3", ...wylogowany })).toEqual({ redirect: "/logowanie" });
+    expect(resolveRoute({ pathname: "/dzis", ...bezOnboardingu })).toEqual({ redirect: "/onboarding" });
+    // prefiks musi być całym segmentem
+    expect(resolveRoute({ pathname: "/onboardingx", ...bezOnboardingu })).toEqual({ redirect: "/onboarding" });
+  });
+
   it("trasy publiczne dla wszystkich", () => {
     expect(resolveRoute({ pathname: "/nowe-haslo", ...pelny })).toBeNull();
     expect(resolveRoute({ pathname: "/potwierdzono", ...pelny })).toBeNull();

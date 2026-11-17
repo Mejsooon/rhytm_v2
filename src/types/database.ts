@@ -48,7 +48,7 @@ export type Database = {
       }
       notification_settings: {
         Row: {
-          before_block_min: number
+          before_block_min: number | null
           created_at: string | null
           habits_enabled: boolean
           push_enabled: boolean
@@ -63,7 +63,7 @@ export type Database = {
           weekly_summary_at: string
         }
         Insert: {
-          before_block_min?: number
+          before_block_min?: number | null
           created_at?: string | null
           habits_enabled?: boolean
           push_enabled?: boolean
@@ -78,7 +78,7 @@ export type Database = {
           weekly_summary_at?: string
         }
         Update: {
-          before_block_min?: number
+          before_block_min?: number | null
           created_at?: string | null
           habits_enabled?: boolean
           push_enabled?: boolean

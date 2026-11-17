@@ -1,12 +1,31 @@
-import { OnboardingForm } from "@/features/onboarding/onboarding-form";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
-// Tymczasowy ekran — etap 1 zastąpi go 7 krokami.
-// Treść jest statyczna; użytkownika czyta dopiero proxy i akcja, więc strona nie wymaga Suspense.
+import { createClient } from "@/lib/supabase/server";
+
+// Wznawianie: przekierowuje na zapisany krok (onboarding_step). Dane zależą od ciasteczek → Suspense.
+async function PrzejdzDoKroku(): Promise<never> {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("onboarding_step")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  redirect(`/onboarding/${profil?.onboarding_step ?? 1}`);
+}
+
 export default function OnboardingPage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-lg font-medium">Onboarding — etap 1</h1>
-      <OnboardingForm />
-    </main>
+    <Suspense fallback={null}>
+      <PrzejdzDoKroku />
+    </Suspense>
   );
 }
