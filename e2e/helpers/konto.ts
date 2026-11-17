@@ -28,8 +28,9 @@ export async function waitForTurnstile(page: Page): Promise<void> {
 
 // Konto z potwierdzonym e-mailem założone przez API administratora (szybciej niż przez formularz).
 // `onboarded` = true ustawia profil jak po onboardingu, więc od razu działa /dzis.
-export async function createConfirmedUser(email: string, password: string, onboarded = true): Promise<void> {
-  await createUser(email, password, onboarded, false);
+// Zwraca id użytkownika (potrzebne do zasiania danych kalendarza).
+export async function createConfirmedUser(email: string, password: string, onboarded = true): Promise<string> {
+  return createUser(email, password, onboarded, false);
 }
 
 // Konto przed zakończeniem onboardingu, ale z zapisanymi krokami 1–6 (onboarding_step = 7) — do zrzutów ekranów
@@ -37,12 +38,16 @@ export async function createUserAtOnboardingEnd(email: string, password: string)
   await createUser(email, password, false, true);
 }
 
-async function createUser(email: string, password: string, onboarded: boolean, allSteps: boolean): Promise<void> {
+// Klient administratora (omija RLS) — do zakładania kont i zasiewania danych
+export function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const klucz = process.env.SUPABASE_SECRET_KEY;
   if (!url || !klucz) throw new Error("Brak NEXT_PUBLIC_SUPABASE_URL lub SUPABASE_SECRET_KEY w środowisku testów");
+  return createClient(url, klucz, { auth: { persistSession: false, autoRefreshToken: false } });
+}
 
-  const admin = createClient(url, klucz, { auth: { persistSession: false, autoRefreshToken: false } });
+async function createUser(email: string, password: string, onboarded: boolean, allSteps: boolean): Promise<string> {
+  const admin = adminClient();
   const { data, error } = await admin.auth.admin.createUser({
     email: email.trim().toLowerCase(),
     password,
@@ -82,6 +87,7 @@ async function createUser(email: string, password: string, onboarded: boolean, a
     const { error: blad } = await admin.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("user_id", data.user.id);
     if (blad) throw new Error(`Nie udało się oznaczyć onboardingu: ${blad.message}`);
   }
+  return data.user.id;
 }
 
 // Logowanie przez formularz; zwraca po wysłaniu (test sam sprawdza, dokąd to prowadzi)

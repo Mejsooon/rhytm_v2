@@ -86,29 +86,29 @@
 
 **Lista odbiorcza**
 - Widoki
-  - [ ] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`).
-  - [ ] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”.
-  - [ ] Siatka 06–22, wiersz „cały dzień” (pusty do Etapu 7), linia „teraz” tylko dziś.
-  - [ ] Dzień: mini kalendarz (dziś zielony, wybrany czarny), „Dzień w liczbach”, pusty dzień „Brak bloków w tym dniu. Dodaj blok”.
-  - [ ] Miesiąc: do 3 wpisów i „+N więcej”, „N wpisów widocznych”.
+  - [x] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`).
+  - [x] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”.
+  - [x] Siatka (cała doba, start przewinięty do 06:00), wiersz „cały dzień” (pusty do Etapu 7), linia „teraz” tylko dziś.
+  - [x] Dzień: mini kalendarz (dziś zielony, wybrany czarny), „Dzień w liczbach”, pusty dzień „Brak bloków w tym dniu. Dodaj blok”.
+  - [x] Miesiąc: do 3 wpisów i „+N więcej”, „N wpisów widocznych”.
 - Tworzenie i edycja
-  - [ ] Duch slotu przy najechaniu; klik → dymek „Nowy wpis” (data, godzina, Blok / Bieg / Siłownia) w dniu, tygodniu, miesiącu.
-  - [ ] Przeciągnięcie po siatce → „Nowy blok” z zakresem; przesuwanie i rozciąganie bloków.
-  - [ ] Okno „Nowy blok”: tytuł, kategoria (chipy + „+ Nowa”), dzień (wybór daty), od/do (wybór godziny), powtarzanie (5 opcji, „Własne…” z pn–nd i datą końca), zdanie podsumowania, notatka, przełącznik przypomnienia (`blocks.remind`, domyślnie włączony).
-  - [ ] Okno zakresu (tylko to / to i następne / wszystkie) przy edycji, usuwaniu i przeciąganiu wystąpienia.
-  - [ ] Okno kategorii (nazwa, 8 kolorów, podgląd); otwarte z okna bloku wraca do okna bloku.
-  - [ ] Wszystkie okna wracają do widoku i daty, z których je otwarto.
+  - [x] Duch slotu przy najechaniu; klik → dymek „Nowy wpis” (data, godzina, Blok / Bieg / Siłownia) w dniu, tygodniu, miesiącu.
+  - [x] Przeciągnięcie po siatce → „Nowy blok” z zakresem; przesuwanie i rozciąganie bloków.
+  - [x] Okno „Nowy blok”: tytuł, kategoria (chipy + „+ Nowa”), dzień (wybór daty), od/do (wybór godziny), powtarzanie (5 opcji, „Własne…” z pn–nd i datą końca), zdanie podsumowania, notatka, przełącznik przypomnienia (`blocks.remind`, domyślnie włączony).
+  - [x] Okno zakresu (tylko to / to i następne / wszystkie) przy edycji, usuwaniu i przeciąganiu wystąpienia.
+  - [x] Okno kategorii (nazwa, 8 kolorów, podgląd); otwarte z okna bloku wraca do okna bloku.
+  - [x] Wszystkie okna wracają do widoku i daty, z których je otwarto.
 - Dymek bloku
-  - [ ] Kategoria, tytuł, data i godziny, pasek „Zadania x z y”, zadania do odhaczenia, „+” dodaj zadanie, notatka, Edytuj, Usuń, „↻ co tydzień”; przy dole siatki otwiera się w górę.
+  - [x] Kategoria, tytuł, data i godziny, pasek „Zadania x z y”, zadania do odhaczenia, „+” dodaj zadanie, notatka, Edytuj, Usuń, „↻ co tydzień”; przy dole siatki otwiera się w górę.
 - Zadania (decyzja 0.2)
-  - [ ] Tabela `tasks`; zadania wystąpienia bloku (każde wystąpienie osobna lista).
-  - [ ] Zadania samodzielne z datą / bez daty (API i logika; ekran w Etapie 5).
-  - [ ] Przypięcie samodzielnego zadania do wystąpienia bloku.
+  - [x] Tabela `tasks`; zadania wystąpienia bloku (każde wystąpienie osobna lista).
+  - [x] Zadania samodzielne z datą / bez daty (API i logika; ekran w Etapie 5).
+  - [x] Przypięcie samodzielnego zadania do wystąpienia bloku.
 - Telefon
-  - [ ] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 07–22, linia teraz, „+” i stuknięcie pustego miejsca → arkusz.
-  - [ ] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia.
-  - [ ] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie.
-- [ ] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie).
+  - [x] `MCalendarDay`: segment widoków, pasek tygodnia z kropkami, oś 07–22, linia teraz, „+” i stuknięcie pustego miejsca → arkusz.
+  - [x] `MCalendarWeek`: lista dni z blokami. `MCalendarMonth`: siatka z kropkami, ‹ ›, lista dnia.
+  - [x] `MBlockSheet`: arkusz z kategoriami, od/do −/+ 15 min, czas trwania, powtarzanie, zadania, przypomnienie.
+- [x] Ustawienia → Kategorie kalendarza (lista, nazwa, kolor, kolejność, usuwanie; systemowe tylko ukrywanie).
 
 **Testy:** powtórzenia i wyjątki, DST, zadania per wystąpienie, „to i następne”, zadania samodzielne (daty, zaległe, przypięcie), RLS kalendarza i zadań, e2e blok cykliczny z zadaniem w dymku, e2e „Nowy wpis” → Blok z wypełnioną godziną, zrzuty.
 
