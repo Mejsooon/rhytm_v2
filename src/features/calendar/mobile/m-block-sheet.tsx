@@ -23,7 +23,12 @@ import type { CategoryRow } from "../load-calendar";
 import type { Recurrence } from "../occurrences";
 import { describeRecurrence, recurrenceBadge } from "../recurrence-text";
 import { ScopeDialog } from "../scope-dialog";
-import type { BlockPatch, Scope } from "../scope";
+import {
+  ZMIANA_DNIA_NIE_DLA_NASTEPNYCH,
+  ZMIANA_DNIA_TYLKO_TYGODNIOWA,
+  type BlockPatch,
+  type Scope,
+} from "../scope";
 import type { CalendarChange } from "../use-calendar-store";
 import { weekdayOf } from "../view-range";
 import { DNI_SKROT } from "./pl";
@@ -84,12 +89,11 @@ export function MBlockSheet({
   const [szkic, setSzkic] = useState("");
   const licznikTymczasowych = useRef(0);
 
-  // Powtarzanie: wybór, dni „Własnych” i data końca (nie edytujemy jej na telefonie, ale zachowujemy)
+  // Powtarzanie: wybór, dni „Własnych” i data końca („Powtarzaj do”, opcjonalna jak w BlockDialog)
   const powtarzanie0: Powtarzanie = initial.recurrence?.freq ?? "none";
   const dni0 = initial.recurrence?.byWeekday ?? [weekdayOf(initial.date)];
   const until0 = initial.recurrence?.until ?? null;
-  // Data końca: na telefonie nie ma jej wyboru, można ją tylko usunąć („Usuń datę końca”)
-  const [until, setUntil] = useState(until0);
+  const [until, setUntil] = useState<IsoDate | null>(until0);
   const [rep, setRep] = useState<Powtarzanie>(powtarzanie0);
   const [dni, setDni] = useState<number[]>(dni0);
 
@@ -276,9 +280,20 @@ export function MBlockSheet({
         disableThis={
           seriaTylko ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii." : undefined
         }
+        // Inny dzień: seria codzienna i dni robocze tylko „Tylko to”; inne serie „To i następne”
+        // tylko na pierwszym wystąpieniu (zasady jak w planScopeChange)
         disableFollowing={
-          date !== initial.date && !initial.firstOccurrence
-            ? "Zmiana dnia działa dla tego wystąpienia albo dla całej serii."
+          date === initial.date
+            ? undefined
+            : rep === "daily" || rep === "weekdays"
+              ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
+              : !initial.firstOccurrence
+                ? ZMIANA_DNIA_NIE_DLA_NASTEPNYCH
+                : undefined
+        }
+        disableAll={
+          date !== initial.date && (rep === "daily" || rep === "weekdays")
+            ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
             : undefined
         }
         pending={pending}
@@ -441,6 +456,22 @@ export function MBlockSheet({
                       </button>
                     );
                   })}
+                </div>
+              )}
+              {rep !== "none" && (
+                <div className="rounded-xl border border-[#eaeaea] bg-white">
+                  <div className={WIERSZ}>
+                    <span className="flex-1">Powtarzaj do</span>
+                    {/* Pusta data = seria bez końca; „Wyczyść” w kalendarzu usuwa koniec */}
+                    <DatePicker
+                      value={until}
+                      onChange={setUntil}
+                      weekStart={weekStart}
+                      today={today}
+                      ariaLabel="Powtarzaj do"
+                      placeholder="bez końca"
+                    />
+                  </div>
                 </div>
               )}
               {rep !== "none" && (

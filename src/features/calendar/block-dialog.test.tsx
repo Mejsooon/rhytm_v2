@@ -313,4 +313,16 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     expect(screen.getByLabelText(/To i następne/)).toBeEnabled();
   });
+  it("zmiana dnia w serii codziennej wyłącza „To i następne” i „Wszystkie” z podpowiedzią", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "daily" }, firstOccurrence: true });
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(screen.getByRole("button", { name: "18" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    expect(screen.getByLabelText(/Tylko to wystąpienie/)).toBeEnabled();
+    expect(screen.getByLabelText(/To i następne/)).toBeDisabled();
+    expect(screen.getByLabelText(/Wszystkie wystąpienia/)).toBeDisabled();
+    expect(
+      screen.getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej."),
+    ).toBeInTheDocument();
+  });
 });

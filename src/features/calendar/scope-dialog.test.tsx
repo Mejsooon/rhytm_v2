@@ -65,4 +65,18 @@ describe("ScopeDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(onPick).toHaveBeenCalledWith("this");
   });
+  it("disableAll i disableFollowing z tą samą podpowiedzią: wybór „Tylko to”, podpowiedź raz", async () => {
+    const podpowiedz = "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.";
+    const { onPick } = wyrenderuj({ disableFollowing: podpowiedz, disableAll: podpowiedz });
+    expect(screen.getByLabelText(/To i następne/)).toBeDisabled();
+    expect(screen.getByLabelText(/Wszystkie wystąpienia/)).toBeDisabled();
+    expect(screen.getAllByText(podpowiedz)).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    expect(onPick).toHaveBeenCalledWith("this");
+  });
+
+  it("wszystkie opcje wyłączone: zapis niedostępny", () => {
+    wyrenderuj({ disableThis: "A", disableFollowing: "B", disableAll: "B" });
+    expect(screen.getByRole("button", { name: "Zapisz zmianę" })).toBeDisabled();
+  });
 });

@@ -217,4 +217,42 @@ describe("MBlockSheet", () => {
     expect(screen.getByRole("textbox", { name: "Nowe zadanie" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Dodaj zadanie" })).toBeDisabled();
   });
+  it("„Powtarzaj do” widać tylko przy powtarzaniu; wybrana data trafia do createBlock", async () => {
+    wyrenderuj("create", { ...NOWY, title: "Algebra" });
+    expect(screen.queryByRole("button", { name: "Powtarzaj do" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "Co tydzień" }));
+    const doKiedy = screen.getByRole("button", { name: "Powtarzaj do" });
+    expect(doKiedy).toHaveTextContent("bez końca");
+    await userEvent.click(doKiedy);
+    await userEvent.click(await screen.findByRole("button", { name: /^25$/ }));
+    expect(screen.getByRole("button", { name: "Powtarzaj do" })).toHaveTextContent("25.11.2026");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    await waitFor(() => expect(createBlock).toHaveBeenCalled());
+    expect(createBlock.mock.calls[0][0].recurrence).toEqual({ freq: "weekly", until: "2026-11-25" });
+  });
+
+  it("„Powtarzaj do” można wyczyścić (seria bez końca)", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "weekly", until: "2026-12-31" } });
+    await userEvent.click(screen.getByRole("button", { name: "Powtarzaj do" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Wyczyść" }));
+    expect(screen.getByRole("button", { name: "Powtarzaj do" })).toHaveTextContent("bez końca");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    await userEvent.click(screen.getByRole("radio", { name: /Wszystkie wystąpienia/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    await waitFor(() => expect(changeOccurrence).toHaveBeenCalled());
+    expect(changeOccurrence.mock.calls[0][0].patch.recurrence).toEqual({ freq: "weekly" });
+  });
+
+  it("zmiana dnia w serii codziennej wyłącza „To i następne” i „Wszystkie”", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "daily" }, firstOccurrence: true });
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(await screen.findByRole("button", { name: /18/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    expect(screen.getByRole("radio", { name: /Tylko to wystąpienie/ })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: /To i następne/ })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: /Wszystkie wystąpienia/ })).toBeDisabled();
+    expect(
+      screen.getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej."),
+    ).toBeInTheDocument();
+  });
 });

@@ -16,6 +16,7 @@ export function ScopeDialog({
   intent = "edit",
   disableThis,
   disableFollowing,
+  disableAll,
   error,
   pending = false,
   onPick,
@@ -32,14 +33,19 @@ export function ScopeDialog({
   disableThis?: string;
   // Powód, dla którego „To i następne” jest niedostępne (zmiana dnia poza pierwszym wystąpieniem)
   disableFollowing?: string;
+  // Powód, dla którego „Wszystkie wystąpienia” jest niedostępne (zmiana dnia serii codziennej
+  // albo dni roboczych)
+  disableAll?: string;
   error?: string;
   pending?: boolean;
   onPick: (scope: Scope) => void;
   onCancel: () => void;
 }) {
+  // Domyślnie pierwsza dostępna opcja
   const [wybrany, setWybrany] = useState<Scope>(
     !disableThis ? "this" : !disableFollowing ? "following" : "all",
   );
+  const wszystkieWylaczone = Boolean(disableThis && disableFollowing && disableAll);
 
   // „wt 17.11” z daty i dnia tygodnia
   const [, miesiac, dzien] = date.split("-");
@@ -64,7 +70,7 @@ export function ScopeDialog({
       value: "all",
       tytul: "Wszystkie wystąpienia",
       opis: "Zmieni całą serię, także przeszłe tygodnie.",
-      wylaczona: false,
+      wylaczona: Boolean(disableAll),
     },
   ];
 
@@ -86,7 +92,7 @@ export function ScopeDialog({
           <Button onClick={onCancel}>Anuluj</Button>
           <Button
             variant={intent === "delete" ? "destructive" : "primary"}
-            disabled={pending}
+            disabled={pending || wszystkieWylaczone}
             onClick={() => onPick(wybrany)}
           >
             {intent === "delete" ? "Usuń" : "Zapisz zmianę"}
@@ -119,8 +125,12 @@ export function ScopeDialog({
           </label>
         ))}
       </div>
-      {disableThis && <p className="m-0 text-xs text-[#6b6b6b]">{disableThis}</p>}
-      {disableFollowing && <p className="m-0 text-xs text-[#6b6b6b]">{disableFollowing}</p>}
+      {/* Podpowiedzi bez powtórzeń (ta sama może dotyczyć dwóch opcji) */}
+      {[...new Set([disableThis, disableFollowing, disableAll].filter(Boolean))].map((p) => (
+        <p key={p} className="m-0 text-xs text-[#6b6b6b]">
+          {p}
+        </p>
+      ))}
       <p className="m-0 font-mono text-xs text-[#6b6b6b]">
         Zadania z odhaczonych wystąpień nie przepadają.
       </p>

@@ -27,7 +27,12 @@ import type { CategoryRow } from "./load-calendar";
 import type { Recurrence } from "./occurrences";
 import { recurrenceBadge, describeRecurrence } from "./recurrence-text";
 import { ScopeDialog } from "./scope-dialog";
-import type { BlockPatch, Scope } from "./scope";
+import {
+  ZMIANA_DNIA_NIE_DLA_NASTEPNYCH,
+  ZMIANA_DNIA_TYLKO_TYGODNIOWA,
+  type BlockPatch,
+  type Scope,
+} from "./scope";
 import { weekdayOf } from "./view-range";
 
 export type BlockDialogInitial = {
@@ -252,9 +257,20 @@ export function BlockDialog({
         disableThis={
           seriaTylko ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii." : undefined
         }
+        // Inny dzień: seria codzienna i dni robocze tylko „Tylko to”; inne serie „To i następne”
+        // tylko na pierwszym wystąpieniu (zasady jak w planScopeChange)
         disableFollowing={
-          date !== initial.date && !initial.firstOccurrence
-            ? "Zmiana dnia działa dla tego wystąpienia albo dla całej serii."
+          date === initial.date
+            ? undefined
+            : rep === "daily" || rep === "weekdays"
+              ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
+              : !initial.firstOccurrence
+                ? ZMIANA_DNIA_NIE_DLA_NASTEPNYCH
+                : undefined
+        }
+        disableAll={
+          date !== initial.date && (rep === "daily" || rep === "weekdays")
+            ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
             : undefined
         }
         pending={pending}
