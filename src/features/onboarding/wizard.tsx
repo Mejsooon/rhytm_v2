@@ -99,15 +99,28 @@ export function OnboardingWizard({
     setPendingStep(null);
   }
 
-  // Po przejściu na inny krok (ten sam komponent, nowe propsy) zdejmujemy blokadę zapisu
-  const [poprzedniKrok, setPoprzedniKrok] = React.useState(step);
-  if (poprzedniKrok !== step) {
-    setPoprzedniKrok(step);
+  // Nowe propsy z serwera (inny krok albo świeży szkic po powrocie na zachowaną trasę):
+  // bierzemy szkic z serwera i zdejmujemy blokadę zapisu oraz błąd
+  const [poprzedniePropsy, setPoprzedniePropsy] = React.useState({ step, initialDraft });
+  if (poprzedniePropsy.step !== step || poprzedniePropsy.initialDraft !== initialDraft) {
+    setPoprzedniePropsy({ step, initialDraft });
+    setDraft(initialDraft);
     setPendingStep(null);
+    setError(null);
   }
   React.useEffect(() => {
     wToku.current = false;
   }, [step]);
+
+  // Next (cacheComponents) chowa trasę w <Activity> i przywraca jej stan. Przy ukryciu czyścimy stan
+  // przejściowy, żeby po powrocie (Wstecz, „Zmień”) przyciski nie zostały zablokowane po udanym zapisie
+  React.useLayoutEffect(() => {
+    return () => {
+      wToku.current = false;
+      setPendingStep(null);
+      setError(null);
+    };
+  }, []);
 
   function dalej() {
     if (ostatni) {

@@ -45,6 +45,15 @@ describe("saveOnboardingStep", () => {
     upsert.mockResolvedValue({ error: null });
   });
 
+  it("nieprawidłowy numer kroku → ok: false, bez zapisu", async () => {
+    for (const zly of [0, 7, 1.5, "2", null]) {
+      const wynik = await saveOnboardingStep(zly as unknown as 1, krok1);
+      expect(wynik).toEqual({ ok: false, message: BLAD });
+    }
+    expect(update).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it("krok 1 z pustą nazwą → ok: false, bez zapisu", async () => {
     const wynik = await saveOnboardingStep(1, { ...krok1, display_name: "" });
     expect(wynik.ok).toBe(false);

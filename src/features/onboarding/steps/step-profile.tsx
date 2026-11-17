@@ -50,7 +50,11 @@ export function StepProfile({
   now: Date;
 }) {
   const wykryta = React.useSyncExternalStore(bezSubskrypcji, wykryjStrefe, () => undefined);
-  const opcje = timezoneOptions(now, wykryta);
+  // Lista zawiera też zapisaną strefę ze szkicu (gdy nie ma jej w domyślnych) oraz wykrytą, bez duplikatów
+  const opcje = timezoneOptions(now, draft.timezone);
+  for (const o of timezoneOptions(now, wykryta)) {
+    if (!opcje.some((istniejaca) => istniejaca.value === o.value)) opcje.push(o);
+  }
   const wykrytaPoprawna = wykryta !== undefined && opcje.some((o) => o.value === wykryta);
 
   // Szkic jest potrzebny po zakończeniu uploadu, a do tego czasu mógł się zmienić (np. wpisane imię)

@@ -135,13 +135,15 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
 
 ### Nowa migracja (Etap 1: onboarding i profil)
 
-Po scaleniu Etapu 1 do `main` uruchom u siebie, w folderze projektu:
+**Przed** scaleniem Etapu 1 do `main` uruchom u siebie, w folderze projektu:
 
 ```
 pnpm exec supabase db push --remote
 ```
 
-Nowe migracje `20261117000001` i `20261117000002` muszą trafić do bazy w chmurze **przed** pierwszym wejściem na nową wersję aplikacji. Inaczej onboarding i Ustawienia będą pisać do kolumn, których w produkcji jeszcze nie ma.
+Vercel wdraża nową wersję zaraz po scaleniu, a nowy kod potrzebuje nowych kolumn i tabel. Migracje `20261117000001` i `20261117000002` muszą więc trafić do bazy w chmurze **przed** merge'em. Inaczej onboarding i Ustawienia będą pisać do kolumn, których w produkcji jeszcze nie ma.
+
+Uwaga: migracja cofa istniejące konta z Etapu 0 na początek onboardingu (`onboarded_at = null`, krok 1), bo nie mają kategorii ani ustawień powiadomień. Po wdrożeniu każde z nich przejdzie kreator jeszcze raz.
 
 ---
 

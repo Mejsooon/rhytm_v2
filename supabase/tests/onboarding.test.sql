@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(17);
 
 -- Użytkownicy A, B, C (długa nazwa) i D (same spacje w nazwie).
 insert into auth.users (id, email, raw_user_meta_data)
@@ -28,6 +28,16 @@ select is(
   (select display_name from public.profiles where user_id = '00000000-0000-0000-0000-00000000000d'),
   null,
   'full_name z samych spacji daje display_name null'
+);
+
+-- Uprawnienia do complete_onboarding: tylko zalogowani.
+select ok(
+  not has_function_privilege('anon', 'public.complete_onboarding(jsonb)', 'execute'),
+  'anon nie może wywołać complete_onboarding'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.complete_onboarding(jsonb)', 'execute'),
+  'authenticated może wywołać complete_onboarding'
 );
 
 -- Dane B wstawione jako superuser.

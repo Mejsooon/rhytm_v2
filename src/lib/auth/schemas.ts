@@ -16,7 +16,7 @@ export const signInSchema = z.object({
 })
 
 export const signUpSchema = z.object({
-  displayName: z.string().trim().min(1, 'Podaj imię').max(60, 'Imię może mieć maksymalnie 60 znaków'),
+  displayName: z.string().trim().min(1, 'Podaj imię').max(40, 'Imię może mieć maksymalnie 40 znaków'),
   email,
   password: newPassword,
   // Checkbox z formularza przesyła 'on' tylko po zaznaczeniu

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { onboardingStepSchemas } from "@/features/profile/schemas";
 import { createClient } from "@/lib/supabase/server";
@@ -8,13 +9,29 @@ import { categoriesForRoles, type RoleKey } from "./model";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
+// Numer kroku przychodzi z klienta, więc sprawdzamy go przed jakimkolwiek zapisem
+const krokSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+]);
+
 export type StepResult = { ok: true } | { ok: false; message: string };
 
 // Zapisuje jeden krok kreatora (kroki 1–6) i podnosi postęp onboarding_step (nigdy go nie cofa).
 export async function saveOnboardingStep(
-  step: 1 | 2 | 3 | 4 | 5 | 6,
+  krok: 1 | 2 | 3 | 4 | 5 | 6,
   payload: unknown,
 ): Promise<StepResult> {
+  const krokParsed = krokSchema.safeParse(krok);
+  if (!krokParsed.success) {
+    return { ok: false, message: BLAD_ZAPISU };
+  }
+  const step = krokParsed.data;
+
   const supabase = await createClient();
   const {
     data: { user },

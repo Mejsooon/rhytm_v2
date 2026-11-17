@@ -67,7 +67,7 @@
 - [x] 7 kroków z paskiem postępu, „Wstecz”/„Dalej”, „Wyloguj”; zapis po każdym kroku; powrót wznawia ostatni krok.
 - [x] Web: podgląd aplikacji na żywo po prawej z zielonym obrysem zmienianego obszaru.
 - [x] Telefon: układ z `MOnboarding` (jedno pytanie na ekran, „Dalej” na dole, bez podglądu).
-- [x] Krok 1: zdjęcie (Storage) albo inicjały, imię (wymagane — „Dalej” nieaktywne), strefa (lista z ✓, wykryta z przeglądarki), tydzień od pn/nd, format 24/12 h.
+- [ ] Krok 1: zdjęcie (Storage) albo inicjały, imię (wymagane — „Dalej” nieaktywne), strefa (lista z ✓, wykryta z przeglądarki), tydzień od pn/nd, format 24/12 h. (do sprawdzenia ręcznie na Vercelu — CI nie ma Storage)
 - [x] Krok 2: role (wiele), „Kierunek studiów” przy Studencie, kategorie startowe widoczne na żywo (Studia, Praca, Projekty, Sport; Dom gdy nic).
 - [x] Krok 3: cele (wiele); Treningi → km/tydz. (−/+), Nawyki i sen → cel snu (−/+ 15 min).
 - [x] Krok 4: źródło (jedno), „Inne” → „Gdzie dokładnie?”, „Pomiń”.

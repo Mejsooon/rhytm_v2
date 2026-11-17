@@ -6,6 +6,18 @@ alter table public.profiles
     constraint profiles_onboarding_step_check check (onboarding_step between 1 and 7),
   add column pending_pages text[];
 
+-- Istniejące nazwy z Etapu 0 mogą nie spełniać nowego CHECK-a (np. 50 znaków albo same spacje),
+-- więc najpierw je przycinamy do 40 znaków; pusta po przycięciu = null.
+update public.profiles
+set display_name = nullif(left(btrim(display_name), 40), '')
+where display_name is not null and char_length(btrim(display_name)) not between 1 and 40;
+
+-- Konta z Etapu 0 mają onboarded_at, ale nie przeszły prawdziwego kreatora (przed tą migracją nie ma kategorii
+-- ani ustawień powiadomień), więc cofamy je na początek onboardingu.
+update public.profiles
+set onboarded_at = null, onboarding_step = 1
+where onboarded_at is not null;
+
 -- Walidacja danych profilu; każda kolumna nadal dopuszcza null.
 alter table public.profiles
   add constraint profiles_weight_kg_check check (weight_kg between 30 and 250),
@@ -84,7 +96,8 @@ create policy "notification_settings_update_own" on public.notification_settings
 
 -- Prywatny bucket na avatary: max 2 MB, tylko png/jpeg/webp.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('avatars', 'avatars', false, 2097152, array['image/png', 'image/jpeg', 'image/webp']);
+values ('avatars', 'avatars', false, 2097152, array['image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do nothing;
 
 -- Użytkownik zarządza plikami tylko w folderze o nazwie swojego id.
 create policy "avatars_select_own" on storage.objects
@@ -156,3 +169,4 @@ end;
 $$;
 
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
+revoke execute on function public.complete_onboarding(jsonb) from public, anon;

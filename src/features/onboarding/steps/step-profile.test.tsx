@@ -115,6 +115,18 @@ describe("StepProfile", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("zapisana strefa spoza listy jest w opcjach i wybrana (bez duplikatów z wykrytą)", async () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "America/Chicago",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    pokaz({ ...draft, timezone: "America/Chicago" });
+    const [webowy] = screen.getAllByRole("button", { name: "Strefa czasowa" });
+    expect(webowy).toHaveTextContent("America/Chicago");
+    await userEvent.click(webowy);
+    expect(screen.getAllByRole("option", { name: /America\/Chicago/ })).toHaveLength(1);
+    vi.restoreAllMocks();
+  });
+
   it("„Wykryta z przeglądarki” gdy strefa = wykryta", () => {
     vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
       timeZone: "Europe/Warsaw",

@@ -28,10 +28,10 @@ describe('schematy formularzy', () => {
     const r = signUpSchema.safeParse({ displayName: 'M', email: 'm@x.pl', password: 'rytm2026abc', tos: 'off' })
     expect(r.error?.issues.find((i) => i.path[0] === 'tos')?.message).toBe('Zaakceptuj regulamin')
   })
-  it('signUp: displayName 1–60 po trim', () => {
+  it('signUp: displayName 1–40 po trim', () => {
     const base = { email: 'm@x.pl', password: 'rytm2026abc', tos: 'on' }
     expect(signUpSchema.safeParse({ ...base, displayName: '   ' }).success).toBe(false)
-    expect(signUpSchema.safeParse({ ...base, displayName: 'a'.repeat(61) }).success).toBe(false)
+    expect(signUpSchema.safeParse({ ...base, displayName: 'a'.repeat(41) }).success).toBe(false)
     expect(signUpSchema.parse({ ...base, displayName: ' Mejson ' }).displayName).toBe('Mejson')
   })
 })

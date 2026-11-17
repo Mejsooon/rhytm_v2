@@ -1,4 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
+import { Activity } from "react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OnboardingDraft } from "./model";
@@ -157,5 +158,42 @@ describe("OnboardingWizard", () => {
     pokaz(2);
     expect(screen.getAllByRole("button", { name: "Wstecz" }).length).toBe(2);
     expect(screen.getAllByRole("button", { name: "Wyloguj" }).length).toBeGreaterThan(0);
+  });
+
+  it("po ukryciu i przywróceniu trasy (Activity) przyciski nie zostają zablokowane", async () => {
+    const wizard = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <OnboardingWizard step={3} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />
+      </Activity>
+    );
+    const { rerender } = render(wizard("visible"));
+    const stopka = within(screen.getByTestId("wizard-footer"));
+    await userEvent.click(stopka.getByRole("button", { name: "Dalej" }));
+    expect(push).toHaveBeenCalledWith("/onboarding/4");
+    // Po udanym zapisie przyciski czekają na zmianę kroku
+    expect(stopka.getByRole("button", { name: "Dalej" })).toBeDisabled();
+
+    // Użytkownik odchodzi (trasa chowana w Activity) i wraca na ten sam krok
+    await act(async () => rerender(wizard("hidden")));
+    await act(async () => rerender(wizard("visible")));
+    expect(stopka.getByRole("button", { name: "Dalej" })).toBeEnabled();
+    expect(stopka.getByRole("button", { name: "Wstecz" })).toBeEnabled();
+  });
+
+  it("nowy initialDraft z serwera zastępuje lokalny szkic", () => {
+    const { rerender } = render(
+      <OnboardingWizard step={1} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />,
+    );
+    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue("Mejson");
+    rerender(
+      <OnboardingWizard
+        step={1}
+        initialDraft={{ ...draft, name: "Ola" }}
+        avatarUrl={null}
+        now={NOW}
+        userId="u1"
+      />,
+    );
+    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue("Ola");
   });
 });

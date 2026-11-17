@@ -73,6 +73,19 @@ test.describe("onboarding", () => {
     await dalej(page).click();
     await expect(page).toHaveURL(/\/onboarding\/4$/);
 
+    // Wstecz 4 → 3 → 2 i z powrotem (bez przeładowania): Next zachowuje trasy, a przyciski mają zostać aktywne
+    await page.getByRole("button", { name: "Wstecz" }).click();
+    await expect(page).toHaveURL(/\/onboarding\/3$/);
+    await expect(dalej(page)).toBeEnabled();
+    await page.getByRole("button", { name: "Wstecz" }).click();
+    await expect(page).toHaveURL(/\/onboarding\/2$/);
+    await expect(dalej(page)).toBeEnabled();
+    await dalej(page).click();
+    await expect(page).toHaveURL(/\/onboarding\/3$/);
+    await expect(dalej(page)).toBeEnabled();
+    await dalej(page).click();
+    await expect(page).toHaveURL(/\/onboarding\/4$/);
+
     // Krok 4: źródło „Inne” z opisem
     const zrodla = widoczny(page.getByTestId(mobile ? "source-phone" : "source-web"));
     await zrodla.getByRole("button", { name: "Inne", exact: true }).click();
@@ -117,6 +130,15 @@ test.describe("onboarding", () => {
       await dalej(page).click();
       await expect(page).toHaveURL(new RegExp(`/onboarding/${krok}$`));
     }
+
+    // „Zmień: Strony” → krok 5, „Dalej” → krok 6, w którym „Dalej” ma być aktywne (trasa 6 była już odwiedzona)
+    await page.getByRole("button", { name: "Zmień: Strony" }).click();
+    await expect(page).toHaveURL(/\/onboarding\/5$/);
+    await dalej(page).click();
+    await expect(page).toHaveURL(/\/onboarding\/6$/);
+    await expect(dalej(page)).toBeEnabled();
+    await dalej(page).click();
+    await expect(page).toHaveURL(/\/onboarding\/7$/);
 
     await page.getByRole("button", { name: "Przejdź do Dziś" }).click();
     await expect(page).toHaveURL(/\/dzis$/);
