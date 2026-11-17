@@ -126,7 +126,9 @@ describe("TimeGrid", () => {
   it("clock 12 pokazuje etykiety „5 PM”", () => {
     wyrenderuj({ clock: "12" });
     expect(screen.getByText("5 PM")).toBeInTheDocument();
-    expect(screen.getByText("12 AM")).toBeInTheDocument();
+    expect(screen.getByText("1 AM")).toBeInTheDocument();
+    // Północ nie ma etykiety (styka się z przyklejonym nagłówkiem)
+    expect(screen.queryByText("12 AM")).not.toBeInTheDocument();
   });
 
   it("clock 24 pokazuje etykiety „17:00”", () => {
@@ -220,22 +222,41 @@ describe("TimeGrid", () => {
     expect(screen.getByTestId("przewijanie").scrollTop).toBe(14 * 48);
   });
 
-  it("w tygodniu ma nagłówki dni, dziś wyróżnione, i pusty wiersz „Cały dzień”", () => {
+  it("w tygodniu ma nagłówki dni, dziś: numer w zielonym kółku i jasne tło kolumny", () => {
     wyrenderuj();
-    expect(screen.getByTestId("naglowek-2026-11-17").className).toContain("text-[#15803d]");
-    expect(screen.getByTestId("naglowek-2026-11-18").className).not.toContain("text-[#15803d]");
-    expect(screen.getByText("Cały dzień")).toBeInTheDocument();
+    const dzis = screen.getByTestId("naglowek-2026-11-17").querySelector("[data-dzis]");
+    expect(dzis).toHaveTextContent("17");
+    expect(dzis?.className).toContain("bg-[#15803d]");
+    expect(dzis?.className).toContain("h-6");
+    expect(screen.getByTestId("naglowek-2026-11-18").querySelector("[data-dzis]")).toBeNull();
+    expect(screen.getByTestId("kolumna-2026-11-17").style.backgroundColor).toBe("rgb(251, 253, 251)");
+    expect(screen.getByTestId("kolumna-2026-11-18").style.backgroundColor).toBe("");
   });
 
-  it("widok dnia: tytuł, „x z y bloków” i nazwa kategorii na bloku", () => {
+  it("nagłówek dni i wiersz „cały dzień” są przyklejone wewnątrz przewijanej siatki", () => {
+    wyrenderuj();
+    const przewijanie = screen.getByTestId("przewijanie");
+    // Bez stałej maksymalnej wysokości: siatka wypełnia rodzica (flex) i sama się przewija
+    expect(przewijanie.className).toContain("flex-1");
+    expect(przewijanie.className).toContain("min-h-0");
+    expect(przewijanie.className).toContain("overflow-auto");
+    expect(przewijanie.className).not.toContain("max-h-");
+    const przyklejony = screen.getByTestId("naglowek-2026-11-17").closest(".sticky");
+    expect(przyklejony).not.toBeNull();
+    expect(przewijanie.contains(przyklejony)).toBe(true);
+    expect(przyklejony).toHaveTextContent(/cały\s*dzień/);
+  });
+
+  it("widok dnia: wiersz „cały dzień” z numerem dnia i nazwa kategorii na bloku", () => {
     wyrenderuj({
       days: ["2026-11-17"],
       variant: "day",
       totalCount: 3,
       occurrences: [wystapienie({ title: "Algebra" })],
     });
-    expect(screen.getByRole("heading", { name: "Wtorek, 17 listopada" })).toBeInTheDocument();
-    expect(screen.getByText("1 z 3 bloków")).toBeInTheDocument();
+    const naglowek = screen.getByTestId("naglowek-2026-11-17");
+    expect(naglowek).toHaveTextContent("17wt");
+    expect(naglowek.querySelector("[data-dzis]")).not.toBeNull();
     expect(screen.getByTestId("blok-b1:2026-11-17")).toHaveTextContent("Studia");
   });
 
@@ -265,7 +286,6 @@ describe("TimeGrid", () => {
   it("gdy filtry ukryły wszystkie bloki dnia, nie ma ramki pustego dnia", () => {
     wyrenderuj({ days: ["2026-11-17"], variant: "day", totalCount: 2 });
     expect(screen.queryByText(/Brak bloków w tym dniu\./)).not.toBeInTheDocument();
-    expect(screen.getByText("0 z 2 bloków")).toBeInTheDocument();
   });
 
   it("w trakcie przeciągania po pustej siatce pokazuje podgląd zakresu, a puszczenie wywołuje onRangeDrag", () => {

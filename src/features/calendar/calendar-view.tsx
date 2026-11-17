@@ -1,8 +1,10 @@
 "use client";
 
-// Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
+// Klientowy korzeń kalendarza: nagłówek (z filtrami kategorii) i wybrany widok.
 // Web: tydzień i dzień to siatka godzin, miesiąc to MonthGrid. Telefon (Task 11): MCalendarDay/Week/Month;
 // oba układy są w DOM, przełącza je CSS (800 px). Bez jawnego `widok` w adresie telefon pokazuje dzień.
+// Kalendarz wypełnia całe okno (web) i ekran nad dolnym paskiem (dzień na telefonie):
+// strona się nie przewija, przewija się tylko siatka albo oś.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -15,7 +17,6 @@ import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
 import { BlockDetails, BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
-import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
@@ -139,15 +140,6 @@ export function CalendarView({
   );
   const wystapieniaTel = tenSamZakres ? wystapienia : wystapieniaTelOsobne;
 
-  // Liczniki chipów liczą też wystąpienia ukrytych kategorii
-  const liczniki = useMemo(() => {
-    const wynik: Record<string, number> = {};
-    for (const o of wystapienia) {
-      if (o.categoryId) wynik[o.categoryId] = (wynik[o.categoryId] ?? 0) + 1;
-    }
-    return wynik;
-  }, [wystapienia]);
-
   const ukryte = new Set(data.categories.filter((k) => k.hidden).map((k) => k.id));
   const widoczne = wystapienia.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
   const widoczneTel = wystapieniaTel.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
@@ -166,7 +158,7 @@ export function CalendarView({
     );
   }
 
-  // Nowa kategoria od razu trafia do danych, żeby chip był od razu widoczny. To wiersz zastępczy
+  // Nowa kategoria od razu trafia do danych, żeby była od razu w menu „Kategorie”. To wiersz zastępczy
   // (user_id i position przybliżone): po zapisie akcja odświeża stronę i dane z serwera z tym samym
   // id zastępują go prawdziwym wierszem.
   function dodajKategorie(nowa: NewCategory) {
@@ -376,6 +368,8 @@ export function CalendarView({
       : wpisyMiesiaca % 10 >= 2 && wpisyMiesiaca % 10 <= 4 && (wpisyMiesiaca % 100 < 12 || wpisyMiesiaca % 100 > 14)
         ? `${wpisyMiesiaca} wpisy widoczne`
         : `${wpisyMiesiaca} wpisów widocznych`;
+  // Widok dnia: „N z M bloków” (M liczy też ukryte kategorie)
+  const napisBlokow = `${widoczne.filter((o) => o.date === date).length} z ${wystapienia.length} bloków`;
   // Dymki w dwóch dolnych wierszach siatki miesiąca wyrównują się do dołu komórki i rosną w górę
   const wyrownanie = (dzien: IsoDate) =>
     view === "miesiac" && zakres.days.indexOf(dzien) >= 28 ? "end" : "start";
@@ -411,43 +405,44 @@ export function CalendarView({
 
   return (
     <>
-      <CalendarHeader
-        view={view}
-        mobileView={widokTel}
-        date={date}
-        today={today}
-        weekStart={weekStart}
-        subtitle={view === "miesiac" ? napisWpisow : undefined}
-        // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
-        onNewBlock={() => {
-          setWybrany(null);
-          setOkno({
-            typ: "blok",
-            mode: "create",
-            initial: {
-              title: "",
-              categoryId: null,
-              date: view === "dzien" ? date : today,
-              startMin: Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60),
-              durationMin: 60,
-              recurrence: null,
-              note: "",
-              remind: true,
-            },
-          });
-        }}
-      />
-      <div className="flex flex-col gap-3.5 px-6 pt-4 pb-6 max-[799px]:px-4">
-        <CategoryFilters
+      <div
+        className={`flex min-h-0 flex-col min-[800px]:h-dvh ${
+          widokTel === "dzien" ? "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]" : ""
+        }`}
+      >
+        <CalendarHeader
+          view={view}
+          mobileView={widokTel}
+          date={date}
+          today={today}
+          weekStart={weekStart}
+          subtitle={view === "miesiac" ? napisWpisow : view === "dzien" ? napisBlokow : undefined}
           categories={data.categories}
-          counts={liczniki}
-          onToggle={przelaczKategorie}
-          onAdd={() => setOkno({ typ: "kategoria" })}
+          onToggleCategory={przelaczKategorie}
+          onAddCategory={() => setOkno({ typ: "kategoria" })}
+          // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
+          onNewBlock={() => {
+            setWybrany(null);
+            setOkno({
+              typ: "blok",
+              mode: "create",
+              initial: {
+                title: "",
+                categoryId: null,
+                date: view === "dzien" ? date : today,
+                startMin: Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60),
+                durationMin: 60,
+                recurrence: null,
+                note: "",
+                remind: true,
+              },
+            });
+          }}
         />
-        {view === "tydzien" && <div className="max-[799px]:hidden">{siatka}</div>}
+        {view === "tydzien" && <div className="flex min-h-0 flex-1 flex-col max-[799px]:hidden">{siatka}</div>}
         {view === "dzien" && (
-          <div className="flex flex-wrap items-start gap-6 max-[799px]:hidden">
-            <div className="min-w-0 flex-[999_1_520px]">{siatka}</div>
+          <div className="flex min-h-0 flex-1 max-[799px]:hidden">
+            {siatka}
             <DaySide
               date={date}
               today={today}
@@ -460,7 +455,7 @@ export function CalendarView({
         )}
         {view === "miesiac" && (
           <>
-            <div className="max-[799px]:hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6 max-[799px]:hidden">
               <MonthGrid
                 days={zakres.days}
                 month0={Number(date.slice(5, 7)) - 1}
@@ -492,7 +487,8 @@ export function CalendarView({
             </div>
           </>
         )}
-        <div className="min-[800px]:hidden">
+        {/* Telefon: dzień wypełnia ekran (przewija się oś), tydzień i miesiąc przewijają stronę */}
+        <div className="flex min-h-0 flex-1 flex-col min-[800px]:hidden">
           {widokTel === "dzien" && (
             <MCalendarDay
               date={date}
@@ -507,29 +503,33 @@ export function CalendarView({
             />
           )}
           {widokTel === "tydzien" && (
-            <MCalendarWeek
-              days={zakresTel.days}
-              date={date}
-              today={today}
-              nowMinutes={nowMinutes}
-              occurrences={widoczneTel}
-              categories={data.categories}
-              clock={data.profile.clock}
-              onAdd={dodajNaTelefonie}
-              onBlockClick={setWybranyTel}
-            />
+            <div className="px-4">
+              <MCalendarWeek
+                days={zakresTel.days}
+                date={date}
+                today={today}
+                nowMinutes={nowMinutes}
+                occurrences={widoczneTel}
+                categories={data.categories}
+                clock={data.profile.clock}
+                onAdd={dodajNaTelefonie}
+                onBlockClick={setWybranyTel}
+              />
+            </div>
           )}
           {widokTel === "miesiac" && (
-            <MCalendarMonth
-              days={zakresTel.days}
-              date={date}
-              today={today}
-              occurrences={widoczneTel}
-              categories={data.categories}
-              clock={data.profile.clock}
-              onAdd={dodajNaTelefonie}
-              onBlockClick={setWybranyTel}
-            />
+            <div className="px-4">
+              <MCalendarMonth
+                days={zakresTel.days}
+                date={date}
+                today={today}
+                occurrences={widoczneTel}
+                categories={data.categories}
+                clock={data.profile.clock}
+                onAdd={dodajNaTelefonie}
+                onBlockClick={setWybranyTel}
+              />
+            </div>
           )}
         </div>
       </div>

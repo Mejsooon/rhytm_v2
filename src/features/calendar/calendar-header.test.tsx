@@ -28,7 +28,8 @@ describe("CalendarHeader", () => {
   it("pokazuje tytuł miesiąca i etykietę tygodnia", () => {
     wyrenderuj();
     expect(screen.getByRole("heading", { name: "Listopad 2026" })).toBeInTheDocument();
-    expect(screen.getByText("tydz. 47 · 16–22.11")).toBeInTheDocument();
+    // Web i telefon (oba w DOM) pokazują numer tygodnia
+    expect(screen.getAllByText("tydz. 47")[0]).toBeInTheDocument();
   });
 
   it("strzałki i Dziś to linki zmieniające datę", () => {
@@ -53,14 +54,31 @@ describe("CalendarHeader", () => {
     expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-18");
   });
 
-  it("zakres tygodnia przechodzący przez miesiące ma obie daty", () => {
-    wyrenderuj({ date: "2026-12-02" }); // tydzień 30.11–6.12
-    expect(screen.getByText("tydz. 49 · 30.11–6.12")).toBeInTheDocument();
+  it("widok dnia: tytuł z dniem tygodnia i podtytuł „N z M bloków”", () => {
+    wyrenderuj({ view: "dzien", date: "2026-11-17", subtitle: "2 z 5 bloków" });
+    expect(screen.getByRole("heading", { level: 1, name: "Wtorek, 17 listopada" })).toBeInTheDocument();
+    expect(screen.getByText("2 z 5 bloków")).toBeInTheDocument();
+  });
+
+  it("widok miesiąca: tytuł miesiąca i podtytuł z liczbą wpisów", () => {
+    wyrenderuj({ view: "miesiac", subtitle: "3 wpisy widoczne" });
+    expect(screen.getByRole("heading", { level: 1, name: "Listopad 2026" })).toBeInTheDocument();
+    expect(screen.getByText("3 wpisy widoczne")).toBeInTheDocument();
+  });
+
+  it("jeden pasek: bez okruszków i bez rzędu chipów; jest przycisk „Kategorie”", () => {
+    wyrenderuj();
+    expect(screen.queryByText("Pokaż")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Kategorie.*\d\/\d/ })).toBeInTheDocument();
+    // Telefon: ikona „Kategorie”, bez „+” w nagłówku (nowy blok dodaje pływający przycisk)
+    expect(screen.getByRole("button", { name: "Kategorie" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(1);
   });
 
   it("tydzień od niedzieli: etykieta i strzałki", () => {
     wyrenderuj({ weekStart: "sun" }); // 15–21.11, środa 18.11 w tygodniu 47
-    expect(screen.getByText("tydz. 47 · 15–21.11")).toBeInTheDocument();
+    // Web i telefon (oba w DOM) pokazują numer tygodnia
+    expect(screen.getAllByText("tydz. 47")[0]).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Następny tydzień" })).toHaveAttribute(
       "href",
       "/kalendarz?widok=tydzien&data=2026-11-25",
@@ -73,7 +91,7 @@ describe("CalendarHeader", () => {
 
   it("Nowy blok woła callback", async () => {
     const { onNewBlock } = wyrenderuj();
-    await userEvent.click(screen.getAllByRole("button", { name: "Nowy blok" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "Nowy blok" }));
     expect(onNewBlock).toHaveBeenCalledTimes(1);
   });
 
