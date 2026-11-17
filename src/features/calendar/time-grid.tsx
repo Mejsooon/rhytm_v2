@@ -244,7 +244,7 @@ export function TimeGrid({
                           <div
                             key={o.key}
                             data-testid={`blok-${o.key}`}
-                            className="absolute box-border px-1 py-0.5"
+                            className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}`}
                             style={{
                               top: (o.startMin / 60) * wysokoscGodziny,
                               height: (czas / 60) * wysokoscGodziny,
@@ -261,6 +261,8 @@ export function TimeGrid({
                                 background: `${kolor}14`,
                                 border: `1px solid ${kolor}40`,
                                 borderLeft: `3px solid ${kolor}`,
+                                // Kompakt: bez górnej i dolnej ramki, żeby linia 11 px się zmieściła
+                                ...(kompakt ? { borderTopWidth: 0, borderBottomWidth: 0 } : {}),
                               }}
                             >
                               {kompakt ? (
