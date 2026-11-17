@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
-import { dragResult, type DragKind, type DragPoint, type DragResult } from "./drag";
+import { dragResult, KROK, type DragKind, type DragPoint, type DragResult } from "./drag";
 import type { Occurrence } from "./occurrences";
 
 // Ruch krótszy niż tyle pikseli to zwykły klik, nie przeciąganie
@@ -53,6 +53,8 @@ export function useGridDrag({
     opis: { occurrence?: Occurrence } = {},
   ) {
     // Tylko główny przycisk; drugi gest w trakcie pierwszego ignorujemy
+    // Dotyk zostaje przewijaniem siatki; przeciągamy myszą i piórem
+    if (e.pointerType === "touch") return;
     if (e.button !== 0 || sprzatanie.current) return;
     const panel = korzen.current;
     if (!panel) return;
@@ -77,7 +79,8 @@ export function useGridDrag({
       return {
         date: kolumna.dataset.kolumna as IsoDate,
         min,
-        poza: x < ramka.left || x > ramka.right || y < ramka.top || y > ramka.bottom,
+        // Przed pierwszą kolumną jest gutter z godzinami: to też „poza siatką”
+        poza: x < kolumny[0].getBoundingClientRect().left || x < ramka.left || x > ramka.right || y < ramka.top || y > ramka.bottom,
       };
     };
 
@@ -96,6 +99,7 @@ export function useGridDrag({
       window.removeEventListener("pointerup", przyPuszczeniu);
       window.removeEventListener("pointercancel", przyAnulowaniu);
       window.removeEventListener("keydown", przyKlawiszu);
+      window.removeEventListener("blur", przyAnulowaniu);
       try {
         element.releasePointerCapture?.(pointerId);
       } catch {
@@ -109,6 +113,11 @@ export function useGridDrag({
 
     function przyRuchu(ev: globalThis.PointerEvent) {
       if (anulowano) return;
+      // Przycisk puszczony poza oknem (pointerup zgubiony): kończymy gest bez zapisu
+      if (ev.buttons === 0) {
+        przyAnulowaniu();
+        return;
+      }
       if (!ruszono) {
         if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < PROG_PX) return;
         ruszono = true;
@@ -120,7 +129,15 @@ export function useGridDrag({
 
     function przyPuszczeniu(ev: globalThis.PointerEvent) {
       const biezaca = pozycja(ev.clientX, ev.clientY);
-      const wynik = ruszono && !anulowano && !biezaca.poza ? dragResult(kind, start, biezaca, oryginal) : null;
+      let wynik = ruszono && !anulowano && !biezaca.poza ? dragResult(kind, start, biezaca, oryginal) : null;
+      // Ruch bez zmiany dnia i bez pełnego kroku w pionie nie zmienia bloku (stare starty spoza siatki zostają)
+      if (
+        kind !== "create" &&
+        biezaca.date === start.date &&
+        Math.round((biezaca.min - start.min) / KROK) === 0
+      ) {
+        wynik = null;
+      }
       koniec();
       if (!wynik) return;
       if (kind === "create") callbacki.current.onRange?.(wynik);
@@ -143,6 +160,7 @@ export function useGridDrag({
     window.addEventListener("pointerup", przyPuszczeniu);
     window.addEventListener("pointercancel", przyAnulowaniu);
     window.addEventListener("keydown", przyKlawiszu);
+    window.addEventListener("blur", przyAnulowaniu);
     sprzatanie.current = koniec;
   }
 

@@ -354,7 +354,8 @@ export function TimeGrid({
                                 </span>
                               )}
                             </button>
-                            {/* Dolny uchwyt rozciągania; klawiatura korzysta z edycji w dymku */}
+                            {/* Dolny uchwyt rozciągania (tylko bloki ≥ 30 min, krótsze da się kliknąć i chwycić); klawiatura korzysta z edycji w dymku */}
+                            {czas >= 30 && (
                             <div
                               data-testid={`uchwyt-${o.key}`}
                               data-uchwyt
@@ -362,6 +363,7 @@ export function TimeGrid({
                               onPointerDown={(e) => zacznij(e, "resize", { occurrence: o })}
                               className="absolute right-1 bottom-0 left-1 h-1.5 cursor-ns-resize"
                             />
+                            )}
                           </div>
                         );
                       })}

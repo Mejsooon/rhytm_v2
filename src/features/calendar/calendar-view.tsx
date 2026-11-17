@@ -68,6 +68,12 @@ export function CalendarView({
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
   // Miejsce, w którym blok stoi po puszczeniu, zanim zapis się skończy (albo „Anuluj” go cofnie)
   const [podgladBloku, setPodgladBloku] = useState<({ key: string } & DragResult) | null>(null);
+  // Nowe dane serwera (np. po podziale serii) zastępują podgląd (stan ustawiany w renderze)
+  const [daneDla, setDaneDla] = useState(daneSerwera);
+  if (daneDla !== daneSerwera) {
+    setDaneDla(daneSerwera);
+    setPodgladBloku(null);
+  }
   // Zmiana widoku albo dnia zamyka dymek (stan ustawiany w renderze, jak w store)
   const [widokDla, setWidokDla] = useState(`${view}|${date}`);
   if (widokDla !== `${view}|${date}`) {
@@ -204,7 +210,10 @@ export function CalendarView({
 
     void applyOptimistic(zmiana, () =>
       changeOccurrence({ blockId: o.blockId, date: dataOryginalna, scope: zakres, patch }),
-    ).finally(() => setPodgladBloku(null));
+    ).then((udane) => {
+      // Podział serii nie ma zmiany optymistycznej: podgląd zostaje do nowych danych serwera
+      if (!udane || plan?.kind !== "split") setPodgladBloku(null);
+    });
   }
 
   // Puszczony blok: bez zmiany nic się nie dzieje, jednorazowy zapisuje się od razu,
@@ -213,6 +222,8 @@ export function CalendarView({
     setWybrany(null);
     if (wynik.date === o.date && wynik.startMin === o.startMin && wynik.durationMin === o.durationMin) return;
     if (!o.recurring) {
+      // Otwarty dymek „Nowy wpis” zamyka się razem z ruchem
+      setOkno((w) => (w?.typ === "wpis" ? null : w));
       zapiszPrzeciagniecie(o, "all", wynik);
       return;
     }

@@ -278,7 +278,7 @@ describe("TimeGrid", () => {
     // Bez układu w jsdom wszystkie kolumny mają left = 0, więc dzień wybiera ostatnia kolumna;
     // sprawdzamy tylko podgląd i wywołanie
     fireEvent.pointerDown(kolumna, { clientX: 10, clientY: 480, button: 0, pointerId: 1 });
-    fireEvent.pointerMove(kolumna, { clientX: 10, clientY: 528, pointerId: 1 });
+    fireEvent.pointerMove(kolumna, { buttons: 1, clientX: 10, clientY: 528, pointerId: 1 });
     expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent("10:00–11:00");
     fireEvent.pointerUp(kolumna, { clientX: 10, clientY: 528, pointerId: 1 });
     expect(onRangeDrag).toHaveBeenCalledWith(expect.objectContaining({ startMin: 600, durationMin: 60 }));
