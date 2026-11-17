@@ -24,6 +24,8 @@ create table public.blocks (
 );
 
 create index blocks_user_id_start_local_idx on public.blocks (user_id, start_local);
+-- Klucz obcy do kategorii (usuwanie kategorii ustawia null w blokach)
+create index blocks_category_id_idx on public.blocks (category_id);
 
 -- Wyjątki od serii: odwołane albo zmienione pojedyncze wystąpienia.
 create table public.block_exceptions (
@@ -36,6 +38,9 @@ create table public.block_exceptions (
   new_title text,
   primary key (block_id, occurrence_date)
 );
+
+-- Wczytywanie kalendarza: wyjątki użytkownika w zakresie dat
+create index block_exceptions_user_id_occurrence_date_idx on public.block_exceptions (user_id, occurrence_date);
 
 -- Zadania: samodzielne albo przypięte do wystąpienia bloku.
 create table public.tasks (
@@ -191,13 +196,15 @@ revoke execute on function public.detach_tasks_before_block_delete() from public
 
 -- Rozcina serię od daty p_from ("to i następne").
 -- Edycja (p_delete = false): stara seria kończy się dzień przed p_from (albo znika, gdy p_from to pierwsze wystąpienie),
--- powstaje nowa seria od p_from z zastosowanym p_patch, a zadania i wyjątki od p_from przechodzą do niej
--- (wyjątki są kasowane, gdy zmienia się czas lub powtarzalność). Zwraca id nowej serii.
+-- powstaje nowa seria od p_from z zastosowanym p_patch, a zadania i wyjątki od p_from przechodzą do niej.
+-- Przy zmianie godziny, czasu trwania lub powtarzalności zmienione wystąpienia (kind = 'modified') są kasowane,
+-- a odwołane przechodzą do nowej serii (przy nowej powtarzalności tylko te, które wciąż do niej należą).
+-- Zwraca id nowej serii.
 -- Usuwanie (p_delete = true): zadania od p_from stają się samodzielne (due_date = data wystąpienia), zwraca null.
 -- Cudzy lub nieistniejący blok (RLS go ukrywa) kończy się błędem, bez żadnych zmian.
 -- p_from musi być datą wystąpienia policzoną przez aplikację: p_from <= data startu bloku oznacza całą serię
 -- (p_from przed startem albo po końcu serii (recurrence.until) to błąd 22023, żeby nie wydłużać serii).
--- Gdy patch zawiera recurrence, zadania od p_from stają się samodzielne, a wyjątki od p_from są kasowane.
+-- Gdy patch zawiera recurrence, zadania od p_from stają się samodzielne; recurrence.until przed p_from to błąd 22023.
 create function public.split_block_series(
   p_block_id uuid,
   p_from date,
@@ -263,6 +270,11 @@ begin
     else v_old.recurrence
   end;
 
+  -- Nowa seria nie może kończyć się przed swoim pierwszym dniem
+  if v_recurrence ? 'until' and (v_recurrence ->> 'until')::date < p_from then
+    raise exception 'until_before_p_from' using errcode = '22023';
+  end if;
+
   insert into public.blocks (
     user_id, title, category_id, note, start_local, duration_min, timezone, recurrence, remind
   )
@@ -280,27 +292,52 @@ begin
   returning id into v_new_id;
 
   if p_patch ? 'recurrence' then
-    -- Zmiana wzorca powtarzania: zadania od p_from stają się samodzielne, wyjątki są kasowane.
+    -- Zmiana wzorca powtarzania: zadania od p_from stają się samodzielne.
     update public.tasks as t
     set due_date = t.occurrence_date, block_id = null, occurrence_date = null
     where t.block_id = p_block_id and t.occurrence_date >= p_from;
+
+    -- Zmienione wystąpienia oraz odwołania z dni spoza nowego wzorca są kasowane
+    -- (nowa seria bez powtarzania to jeden blok, więc kasujemy wszystko).
+    -- Dzień tygodnia: 1 = pn … 7 = nd; "weekly" powtarza dzień tygodnia p_from.
     delete from public.block_exceptions as e
+    where e.block_id = p_block_id
+      and e.occurrence_date >= p_from
+      and (
+        e.kind = 'modified'
+        or v_recurrence is null
+        or (v_recurrence ? 'until' and e.occurrence_date > (v_recurrence ->> 'until')::date)
+        or not (
+          v_recurrence ->> 'freq' = 'daily'
+          or (v_recurrence ->> 'freq' = 'weekdays' and extract(isodow from e.occurrence_date) <= 5)
+          or (v_recurrence ->> 'freq' = 'weekly'
+            and extract(isodow from e.occurrence_date) = extract(isodow from p_from))
+          or (v_recurrence ->> 'freq' = 'custom'
+            and coalesce(v_recurrence -> 'byWeekday', '[]'::jsonb)
+              @> to_jsonb(extract(isodow from e.occurrence_date)::int))
+        )
+      );
+    -- Pozostałe odwołania (dni wciąż w nowym wzorcu) przechodzą do nowej serii.
+    update public.block_exceptions as e
+    set block_id = v_new_id
     where e.block_id = p_block_id and e.occurrence_date >= p_from;
   else
-    -- Zadania od p_from przechodzą do nowej serii.
+    -- Zadania od p_from przechodzą do nowej serii. Przy zmianie godziny lub czasu trwania przesunięcia
+    -- pojedynczych wystąpień znikają, więc termin zadań wraca na dzień wystąpienia.
     update public.tasks as t
-    set block_id = v_new_id
+    set block_id = v_new_id,
+        due_date = case when v_time_changed then t.occurrence_date else t.due_date end
     where t.block_id = p_block_id and t.occurrence_date >= p_from;
 
-    -- Wyjątki od p_from: kasowane przy zmianie godziny lub czasu trwania, inaczej przenoszone.
+    -- Przy zmianie godziny lub czasu trwania kasujemy zmienione wystąpienia; odwołania zostają.
     if v_time_changed then
       delete from public.block_exceptions as e
-      where e.block_id = p_block_id and e.occurrence_date >= p_from;
-    else
-      update public.block_exceptions as e
-      set block_id = v_new_id
-      where e.block_id = p_block_id and e.occurrence_date >= p_from;
+      where e.block_id = p_block_id and e.occurrence_date >= p_from and e.kind = 'modified';
     end if;
+    -- Pozostałe wyjątki od p_from przechodzą do nowej serii.
+    update public.block_exceptions as e
+    set block_id = v_new_id
+    where e.block_id = p_block_id and e.occurrence_date >= p_from;
   end if;
 
   if p_from <= v_first_date then

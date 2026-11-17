@@ -1,5 +1,5 @@
 begin;
-select plan(38);
+select plan(43);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -39,7 +39,8 @@ values ('b0000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000
 insert into public.tasks (user_id, title, due_date)
 values ('00000000-0000-0000-0000-00000000000b', 'Zadanie B', '2026-11-10');
 
--- A: seria weekly od wt 2026-11-03 08:00, zadania na 10.11 i 17.11, wyjątek 17.11.
+-- A: seria weekly od wt 2026-11-03 08:00, zadania na 10.11 i 17.11;
+-- odwołany następny tydzień (24.11) i przesunięte wystąpienie 1.12.
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
 values ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Seria A',
   '2026-11-03 08:00', 60, 'Europe/Warsaw', '{"freq":"weekly","byWeekday":[2]}');
@@ -49,8 +50,11 @@ values
     'a0000000-0000-0000-0000-00000000000a', '2026-11-10'),
   ('a2000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Zadanie 17.11',
     'a0000000-0000-0000-0000-00000000000a', '2026-11-17');
-insert into public.block_exceptions (block_id, user_id, occurrence_date, kind)
-values ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-11-17', 'cancelled');
+insert into public.block_exceptions (block_id, user_id, occurrence_date, kind, new_start_local)
+values
+  ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-11-24', 'cancelled', null),
+  ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-12-01', 'modified',
+    '2026-12-02 08:00');
 
 -- Od teraz jako zalogowany A.
 set local role authenticated;
@@ -115,8 +119,15 @@ select is(
   (select t.block_id from public.tasks as t where t.id = 'a1000000-0000-0000-0000-00000000000a'),
   'a0000000-0000-0000-0000-00000000000a'::uuid, 'zadanie z 10.11 zostaje przy starej serii');
 select is(
-  (select count(*) from public.block_exceptions as e where e.occurrence_date = '2026-11-17'),
-  0::bigint, 'wyjątek z 17.11 skasowany po zmianie godziny');
+  (select t.due_date from public.tasks as t where t.id = 'a2000000-0000-0000-0000-00000000000a'),
+  '2026-11-17'::date, 'zmiana godziny ustawia termin zadania na dzień wystąpienia');
+select is(
+  (select e.block_id from public.block_exceptions as e
+   where e.occurrence_date = '2026-11-24' and e.kind = 'cancelled'),
+  (select new_id from split_result), 'odwołanie z 24.11 przetrwało zmianę godziny w nowej serii');
+select is(
+  (select count(*) from public.block_exceptions as e where e.occurrence_date = '2026-12-01'),
+  0::bigint, 'przesunięcie z 1.12 skasowane po zmianie godziny');
 
 -- Usunięcie od pierwszego wystąpienia: seria znika, zadania stają się samodzielne.
 select is(
@@ -186,17 +197,36 @@ values ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000
 insert into public.tasks (id, user_id, title, block_id, occurrence_date)
 values ('a5100000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'S5 8.12',
   'a5000000-0000-0000-0000-00000000000a', '2026-12-08');
-insert into public.block_exceptions (block_id, user_id, occurrence_date, kind)
-values ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-12-08', 'cancelled');
+-- Odwołania: 15.12 (wt, zostaje w nowym wzorcu pn–pt) i 19.12 (sb, poza nim); przesunięcie 22.12.
+insert into public.block_exceptions (block_id, user_id, occurrence_date, kind, new_start_local)
+values
+  ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-12-15', 'cancelled', null),
+  ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-12-19', 'cancelled', null),
+  ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-12-22', 'modified',
+    '2026-12-22 10:00');
+create temp table split_result5 on commit drop as
 select public.split_block_series(
-  'a5000000-0000-0000-0000-00000000000a', '2026-12-08', '{"recurrence":{"freq":"daily"}}', false);
+  'a5000000-0000-0000-0000-00000000000a', '2026-12-08', '{"recurrence":{"freq":"weekdays"}}', false
+) as new_id;
+grant select on split_result5 to authenticated;
 select is(
   (select (t.block_id is null and t.occurrence_date is null and t.due_date = '2026-12-08')::int
    from public.tasks as t where t.id = 'a5100000-0000-0000-0000-00000000000a'),
   1, 'zmiana recurrence odpina zadania jako samodzielne');
 select is(
-  (select count(*) from public.block_exceptions as e where e.occurrence_date = '2026-12-08'),
-  0::bigint, 'zmiana recurrence kasuje wyjątki');
+  (select e.block_id from public.block_exceptions as e
+   where e.occurrence_date = '2026-12-15'
+     and e.block_id in ('a5000000-0000-0000-0000-00000000000a', (select new_id from split_result5))),
+  (select new_id from split_result5), 'odwołanie w nowym wzorcu przechodzi do nowej serii');
+select is(
+  (select count(*) from public.block_exceptions as e
+   where e.occurrence_date in ('2026-12-19', '2026-12-22')
+     and e.block_id in ('a5000000-0000-0000-0000-00000000000a', (select new_id from split_result5))),
+  0::bigint, 'zmiana recurrence kasuje odwołania spoza wzorca i przesunięcia');
+select throws_ok(
+  $$select public.split_block_series('a5000000-0000-0000-0000-00000000000a', '2026-12-01',
+    '{"recurrence":{"freq":"weekly","until":"2026-11-30"}}', false)$$,
+  '22023', null, 'until przed p_from odrzucone');
 
 -- Cudza kategoria.
 select throws_ok(
@@ -204,6 +234,12 @@ select throws_ok(
     values ('00000000-0000-0000-0000-00000000000a', 'Cudza kat.', '2026-12-20 10:00', 30, 'Europe/Warsaw',
       'c0000000-0000-0000-0000-00000000000b')$$,
   '42501', null, 'A nie ustawi kategorii B w bloku');
+
+-- Polityka update: blok A nie może wskazywać kategorii B.
+select throws_ok(
+  $$update public.blocks set category_id = 'c0000000-0000-0000-0000-00000000000b'
+    where id = 'a4000000-0000-0000-0000-00000000000a'$$,
+  '42501', null, 'A nie przepnie bloku na kategorię B');
 
 -- move_category: zamiana z sąsiadem i renumeracja 0..n-1.
 select ok(not has_function_privilege('anon', 'public.move_category(uuid, int)', 'execute'),
