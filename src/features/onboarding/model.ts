@@ -251,3 +251,37 @@ export function buildSummary(
     { key: "Przypomnienia", value: przypomnienia, step: 6 },
   ];
 }
+
+// Szkic -> payload kroku w kluczach schematów z src/features/profile/schemas.ts (kroki 1–6)
+export function stepPayload(step: 1 | 2 | 3 | 4 | 5 | 6, draft: OnboardingDraft) {
+  switch (step) {
+    case 1:
+      return {
+        display_name: draft.name,
+        timezone: draft.timezone,
+        week_start: draft.weekStart,
+        clock: draft.clock,
+        avatar_path: draft.avatarPath,
+      };
+    case 2:
+      return { roles: draft.roles, study_field: draft.studyField };
+    case 3:
+      return {
+        goals: draft.goals,
+        weekly_km_goal: draft.weeklyKm,
+        sleep_goal_min: draft.sleepGoalMin,
+      };
+    case 4:
+      return { referral_source: draft.source, referral_other: draft.sourceOther };
+    case 5:
+      return { pending_pages: effectivePages(draft) };
+    case 6:
+      return {
+        push_enabled: draft.notify.perm,
+        before: draft.notify.before,
+        renew: draft.notify.renew,
+        weekly: draft.notify.weekly,
+        habits: draft.notify.habits,
+      };
+  }
+}

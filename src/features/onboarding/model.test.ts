@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { onboardingStepSchemas } from "@/features/profile/schemas";
 import {
   buildSummary,
   canContinue,
@@ -12,6 +13,7 @@ import {
   ROLES,
   SOURCES,
   stepKm,
+  stepPayload,
   stepSleep,
   toggleGoal,
   type OnboardingDraft,
@@ -164,5 +166,52 @@ describe("buildSummary", () => {
     expect(s[0].value).toBe("Ty · Berlin · tydzień od nd");
     expect(s[2].value).toBe("brak");
     expect(s[3].value).toBe("3 z 4 włączone");
+  });
+});
+
+describe("stepPayload", () => {
+  it("krok 1: profil w kluczach schematu", () => {
+    expect(stepPayload(1, draft)).toEqual({
+      display_name: "Mejson",
+      timezone: "Europe/Warsaw",
+      week_start: "mon",
+      clock: "24",
+      avatar_path: null,
+    });
+  });
+  it("kroki 2–4", () => {
+    expect(stepPayload(2, draft)).toEqual({
+      roles: ["student", "sport"],
+      study_field: "Cyberbezpieczeństwo",
+    });
+    expect(stepPayload(3, draft)).toEqual({
+      goals: ["plan", "sport", "habits", "subs", "proj"],
+      weekly_km_goal: 25,
+      sleep_goal_min: 480,
+    });
+    expect(stepPayload(4, { ...draft, source: "other", sourceOther: "Blog" })).toEqual({
+      referral_source: "other",
+      referral_other: "Blog",
+    });
+  });
+  it("krok 5: strony efektywne (polecone, gdy pages = null)", () => {
+    expect(stepPayload(5, draft)).toEqual({ pending_pages: ["Subscriptions", "Projects"] });
+    expect(stepPayload(5, { ...draft, pages: null })).toEqual({
+      pending_pages: ["Subscriptions", "Projects"],
+    });
+  });
+  it("krok 6: przypomnienia", () => {
+    expect(stepPayload(6, draft)).toEqual({
+      push_enabled: false,
+      before: true,
+      renew: true,
+      weekly: true,
+      habits: false,
+    });
+  });
+  it("wynik przechodzi przez schematy kroków", () => {
+    for (const s of [1, 2, 3, 4, 5, 6] as const) {
+      expect(onboardingStepSchemas[s].safeParse(stepPayload(s, draft)).success).toBe(true);
+    }
   });
 });

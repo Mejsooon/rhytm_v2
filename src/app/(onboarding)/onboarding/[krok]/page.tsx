@@ -3,23 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { loadDraft } from "@/features/onboarding/load-draft";
-import type { OnboardingDraft } from "@/features/onboarding/model";
+import { OnboardingWizard } from "@/features/onboarding/wizard";
 import { createClient } from "@/lib/supabase/server";
-
-// Tymczasowy zamiennik — Task 5 podmieni go na OnboardingWizard (te same propsy).
-function OnboardingWizard({
-  step,
-}: {
-  step: number;
-  initialDraft: OnboardingDraft;
-  avatarUrl: string | null;
-}) {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center p-6">
-      <h1 className="text-lg font-medium">Krok {step} z 7</h1>
-    </main>
-  );
-}
 
 async function Krok({ params }: { params: Promise<{ krok: string }> }) {
   // Dane zależą od ciasteczek (cacheComponents) — czekamy na żądanie
@@ -45,7 +30,8 @@ async function Krok({ params }: { params: Promise<{ krok: string }> }) {
 
   return (
     <OnboardingWizard
-      step={step}
+      step={step as 1 | 2 | 3 | 4 | 5 | 6 | 7}
+      now={new Date()}
       initialDraft={loadDraft(profil, powiadomienia, undefined)}
       avatarUrl={null}
     />
