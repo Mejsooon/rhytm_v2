@@ -69,8 +69,9 @@ select isnt(
 );
 
 -- Zapamiętujemy czas, żeby sprawdzić brak zmiany po drugim wywołaniu.
-select set_config('t.first_onboarded_at',
-  (select onboarded_at::text from public.profiles where user_id = '00000000-0000-0000-0000-00000000000a'), true);
+-- now() jest stałe w transakcji, więc ustawiamy stałą datę z przeszłości i sprawdzamy, że się nie zmieni.
+update public.profiles set onboarded_at = '2020-01-01 00:00:00+00'
+where user_id = '00000000-0000-0000-0000-00000000000a';
 
 select complete_onboarding('[{"name":"Inna","color":"#111111","is_system":false}]'::jsonb);
 
@@ -80,8 +81,8 @@ select is(
   'drugie wywołanie nie dodaje kategorii'
 );
 select is(
-  (select onboarded_at::text from public.profiles where user_id = '00000000-0000-0000-0000-00000000000a'),
-  current_setting('t.first_onboarded_at'),
+  (select onboarded_at from public.profiles where user_id = '00000000-0000-0000-0000-00000000000a'),
+  '2020-01-01 00:00:00+00'::timestamptz,
   'drugie wywołanie nie zmienia onboarded_at'
 );
 
