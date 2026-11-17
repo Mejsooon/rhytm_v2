@@ -61,7 +61,7 @@ test.describe("ekrany z sesją", () => {
     await createConfirmedUser(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
-    await expect(page.getByText("Tu pojawi się Twój dzień.")).toBeVisible();
+    await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
   });
 

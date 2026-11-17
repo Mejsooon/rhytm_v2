@@ -13,6 +13,7 @@ export function ModuleHeader({
   phoneSettingsLink = false,
   webParent = "Moduły",
   phoneTitle,
+  webAction,
 }: {
   title: string;
   // Pierwszy człon ścieżki na webie („Ustawienia / Ogólne”)
@@ -23,6 +24,8 @@ export function ModuleHeader({
   phoneLabel?: string;
   // Ikona ⚙ → /ustawienia po prawej (MPages)
   phoneSettingsLink?: boolean;
+  // Akcja po prawej stronie nagłówka na webie (np. „Nowy blok”)
+  webAction?: React.ReactNode;
 }) {
   return (
     <>
@@ -32,6 +35,7 @@ export function ModuleHeader({
           {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
           <h1 className="inline text-[#171717]">{title}</h1>
         </div>
+        {webAction && <div className="ml-auto flex items-center gap-2">{webAction}</div>}
       </header>
       <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">
         <div className="min-w-0 flex-1">

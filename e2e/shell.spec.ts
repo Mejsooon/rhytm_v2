@@ -37,7 +37,7 @@ test.describe("powłoka aplikacji", () => {
 
     // Powłoka dociąga się strumieniem (Suspense) — dopiero po treści modułu <main> jest ostateczny.
     // Wcześniejszy wstrzyknięty element zniknąłby przy podmianie, a strona nie dałaby się przewinąć.
-    const tresc = page.getByText("Tu pojawi się Twój dzień.");
+    const tresc = page.getByText("Plan dnia jest pusty");
     await expect(tresc).toBeVisible();
     const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
     await expect(sidebar).toBeVisible();
