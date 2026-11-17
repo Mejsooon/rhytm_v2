@@ -13,6 +13,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      block_exceptions: {
+        Row: {
+          block_id: string
+          kind: string
+          new_duration_min: number | null
+          new_start_local: string | null
+          new_title: string | null
+          occurrence_date: string
+          user_id: string
+        }
+        Insert: {
+          block_id: string
+          kind: string
+          new_duration_min?: number | null
+          new_start_local?: string | null
+          new_title?: string | null
+          occurrence_date: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string
+          kind?: string
+          new_duration_min?: number | null
+          new_start_local?: string | null
+          new_title?: string | null
+          occurrence_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "block_exceptions_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocks: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          duration_min: number
+          id: string
+          note: string | null
+          recurrence: Json | null
+          remind: boolean
+          start_local: string
+          timezone: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          duration_min: number
+          id?: string
+          note?: string | null
+          recurrence?: Json | null
+          remind?: boolean
+          start_local: string
+          timezone: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          duration_min?: number
+          id?: string
+          note?: string | null
+          recurrence?: Json | null
+          remind?: boolean
+          start_local?: string
+          timezone?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string
@@ -163,6 +254,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          block_id: string | null
+          created_at: string | null
+          done: boolean
+          done_at: string | null
+          due_date: string | null
+          id: string
+          occurrence_date: string | null
+          position: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          block_id?: string | null
+          created_at?: string | null
+          done?: boolean
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          occurrence_date?: string | null
+          position?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string | null
+          created_at?: string | null
+          done?: boolean
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          occurrence_date?: string | null
+          position?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -171,6 +309,15 @@ export type Database = {
       complete_onboarding: {
         Args: { p_categories: Json }
         Returns: undefined
+      }
+      split_block_series: {
+        Args: {
+          p_block_id: string
+          p_delete: boolean
+          p_from: string
+          p_patch: Json
+        }
+        Returns: string
       }
     }
     Enums: {
