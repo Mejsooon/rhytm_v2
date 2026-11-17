@@ -64,18 +64,18 @@
 **Makiety:** Onboarding, OnboardingRole, OnboardingGoals, OnboardingSource, OnboardingPages, OnboardingNotify, OnboardingDone, EmptyToday, Settings (Ogólne bez Kosza) · MOnboarding.
 
 **Lista odbiorcza**
-- [ ] 7 kroków z paskiem postępu, „Wstecz”/„Dalej”, „Wyloguj”; zapis po każdym kroku; powrót wznawia ostatni krok.
-- [ ] Web: podgląd aplikacji na żywo po prawej z zielonym obrysem zmienianego obszaru.
-- [ ] Telefon: układ z `MOnboarding` (jedno pytanie na ekran, „Dalej” na dole, bez podglądu).
-- [ ] Krok 1: zdjęcie (Storage) albo inicjały, imię (wymagane — „Dalej” nieaktywne), strefa (lista z ✓, wykryta z przeglądarki), tydzień od pn/nd, format 24/12 h.
-- [ ] Krok 2: role (wiele), „Kierunek studiów” przy Studencie, kategorie startowe widoczne na żywo (Studia, Praca, Projekty, Sport; Dom gdy nic).
-- [ ] Krok 3: cele (wiele); Treningi → km/tydz. (−/+), Nawyki i sen → cel snu (−/+ 15 min).
-- [ ] Krok 4: źródło (jedno), „Inne” → „Gdzie dokładnie?”, „Pomiń”.
-- [ ] Krok 5: szablony stron, polecane „z Twoich celów” (zapis „do utworzenia”; utworzy je Etap 6).
-- [ ] Krok 6: zgoda na powiadomienia („Zezwól” → „Włączone” + „Anuluj”; tylko zapis wyborów, push w Etapie 9), 4 przełączniki przypomnień, wskazówka PWA.
-- [ ] Krok 7: podsumowanie z „Zmień” do kroków, „Przejdź do Dziś”.
-- [ ] Dziś w stanie pustym: „Witaj w rhytm”, „Pierwsze kroki” 0–4, pusty plan dnia (web i telefon).
-- [ ] Ustawienia → Ogólne: karty Profil i Cele z regułą „Zapisz/Cofnij/Masz niezapisane zmiany/Zapisano ✓”, walidacje (nazwa, waga 30–250, wzrost 120–230, km 1–300), strefa, waluta, początek tygodnia, cel snu −/+.
+- [x] 7 kroków z paskiem postępu, „Wstecz”/„Dalej”, „Wyloguj”; zapis po każdym kroku; powrót wznawia ostatni krok.
+- [x] Web: podgląd aplikacji na żywo po prawej z zielonym obrysem zmienianego obszaru.
+- [x] Telefon: układ z `MOnboarding` (jedno pytanie na ekran, „Dalej” na dole, bez podglądu).
+- [x] Krok 1: zdjęcie (Storage) albo inicjały, imię (wymagane — „Dalej” nieaktywne), strefa (lista z ✓, wykryta z przeglądarki), tydzień od pn/nd, format 24/12 h.
+- [x] Krok 2: role (wiele), „Kierunek studiów” przy Studencie, kategorie startowe widoczne na żywo (Studia, Praca, Projekty, Sport; Dom gdy nic).
+- [x] Krok 3: cele (wiele); Treningi → km/tydz. (−/+), Nawyki i sen → cel snu (−/+ 15 min).
+- [x] Krok 4: źródło (jedno), „Inne” → „Gdzie dokładnie?”, „Pomiń”.
+- [x] Krok 5: szablony stron, polecane „z Twoich celów” (zapis „do utworzenia”; utworzy je Etap 6).
+- [x] Krok 6: zgoda na powiadomienia („Zezwól” → „Włączone” + „Anuluj”; tylko zapis wyborów, push w Etapie 9), 4 przełączniki przypomnień, wskazówka PWA.
+- [x] Krok 7: podsumowanie z „Zmień” do kroków, „Przejdź do Dziś”.
+- [x] Dziś w stanie pustym: „Witaj w rhytm”, „Pierwsze kroki” 0–4, pusty plan dnia (web i telefon).
+- [x] Ustawienia → Ogólne: karty Profil i Cele z regułą „Zapisz/Cofnij/Masz niezapisane zmiany/Zapisano ✓”, walidacje (nazwa, waga 30–250, wzrost 120–230, km 1–300), strefa, waluta, początek tygodnia, cel snu −/+.
 
 **Testy:** mapowanie ról na kategorie, celów na polecane strony, walidacje profilu, e2e pełnego onboardingu (web i telefon 390 px), zrzuty.
 
