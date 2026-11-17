@@ -17,7 +17,7 @@ const TYDZIEN = `/kalendarz?widok=tydzien&data=${WTOREK}`;
 const blok = (page: Page, tytul: string) => page.getByRole("button", { name: new RegExp(tytul) });
 
 // Przycisk „Kategorie N/M” w pasku (web); menu z polami wyboru kategorii
-const przyciskKategorii = (page: Page) => page.getByRole("button", { name: /^Kategorie.*\d\/\d/ });
+const przyciskKategorii = (page: Page) => page.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ });
 
 test.describe("kalendarz (web)", () => {
   test.use({ actionTimeout: 10_000 });

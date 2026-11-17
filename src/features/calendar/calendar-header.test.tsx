@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -28,8 +28,9 @@ describe("CalendarHeader", () => {
   it("pokazuje tytuł miesiąca i etykietę tygodnia", () => {
     wyrenderuj();
     expect(screen.getByRole("heading", { name: "Listopad 2026" })).toBeInTheDocument();
-    // Web i telefon (oba w DOM) pokazują numer tygodnia
-    expect(screen.getAllByText("tydz. 47")[0]).toBeInTheDocument();
+    // Numer tygodnia w pasku web (obok tytułu h1), nie w nagłówku telefonu
+    const pasekWeb = screen.getByRole("heading", { level: 1 }).closest("header")!;
+    expect(within(pasekWeb).getByText("tydz. 47")).toBeInTheDocument();
   });
 
   it("strzałki i Dziś to linki zmieniające datę", () => {
@@ -69,7 +70,7 @@ describe("CalendarHeader", () => {
   it("jeden pasek: bez okruszków i bez rzędu chipów; jest przycisk „Kategorie”", () => {
     wyrenderuj();
     expect(screen.queryByText("Pokaż")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Kategorie.*\d\/\d/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ })).toBeInTheDocument();
     // Telefon: ikona „Kategorie”, bez „+” w nagłówku (nowy blok dodaje pływający przycisk)
     expect(screen.getByRole("button", { name: "Kategorie" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(1);
@@ -77,8 +78,9 @@ describe("CalendarHeader", () => {
 
   it("tydzień od niedzieli: etykieta i strzałki", () => {
     wyrenderuj({ weekStart: "sun" }); // 15–21.11, środa 18.11 w tygodniu 47
-    // Web i telefon (oba w DOM) pokazują numer tygodnia
-    expect(screen.getAllByText("tydz. 47")[0]).toBeInTheDocument();
+    // Numer tygodnia w pasku web (obok tytułu h1), nie w nagłówku telefonu
+    const pasekWeb = screen.getByRole("heading", { level: 1 }).closest("header")!;
+    expect(within(pasekWeb).getByText("tydz. 47")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Następny tydzień" })).toHaveAttribute(
       "href",
       "/kalendarz?widok=tydzien&data=2026-11-25",

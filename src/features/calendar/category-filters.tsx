@@ -36,6 +36,8 @@ export function CategoryFilters({
         <button
           ref={przycisk}
           type="button"
+          // Czytnik słyszy „Kategorie, widoczne 3 z 4” zamiast sklejonego „Kategorie3/4”
+          aria-label={`Kategorie, widoczne ${widoczne.length} z ${categories.length}`}
           className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-[#e0e0e0] bg-white px-2.5 py-[5px] text-[13px] text-[#171717] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
         >
           {widoczne.length > 0 && (
@@ -50,7 +52,9 @@ export function CategoryFilters({
             </span>
           )}
           Kategorie
-          <span className="font-mono text-[11px] text-[#6b6b6b]">{`${widoczne.length}/${categories.length}`}</span>
+          <span aria-hidden="true" className="font-mono text-[11px] text-[#6b6b6b]">
+            {`${widoczne.length}/${categories.length}`}
+          </span>
           <span aria-hidden="true" className="text-[#6b6b6b]">
             ▾
           </span>
@@ -164,9 +168,16 @@ export function CategorySheet({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {categories.map((kategoria) => (
+              // Cały wiersz 52 px przełącza kategorię; stuknięcie w sam przełącznik obsługuje on sam
+              // (sprawdzamy cel kliknięcia, żeby nie przełączyć dwa razy)
               <div
                 key={kategoria.id}
-                className="flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-4"
+                data-testid={`wiersz-kategorii-${kategoria.id}`}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("[role=switch]")) return;
+                  onToggle(kategoria);
+                }}
+                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-[#f0f0f0] px-4"
               >
                 <span
                   aria-hidden="true"

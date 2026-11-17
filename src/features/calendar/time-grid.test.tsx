@@ -283,6 +283,29 @@ describe("TimeGrid", () => {
     );
   });
 
+  it("tydzień: blok 45 min jest w jednej linii, blok godzinny ma dwie linie z ciasną linią godzin", () => {
+    wyrenderuj({
+      occurrences: [
+        wystapienie({ blockId: "t1", title: "Trzy kwadranse", startMin: 600, durationMin: 45 }),
+        wystapienie({ blockId: "t2", title: "Godzina", startMin: 720, durationMin: 60 }),
+      ],
+    });
+    expect(screen.getByRole("button", { name: /Trzy kwadranse/ })).toHaveTextContent("Trzy kwadranse · 10:00");
+    const godzina = screen.getByRole("button", { name: /Godzina/ });
+    expect(godzina).toHaveTextContent("Godzina12:00–13:00");
+    const linia = godzina.querySelector(".font-mono") as HTMLElement;
+    expect(linia.className).toContain("leading-[14px]");
+  });
+
+  it("dzień: blok 45 min ma już pełny układ (próg jednej linii to 45 min)", () => {
+    wyrenderuj({
+      days: ["2026-11-17"],
+      variant: "day",
+      occurrences: [wystapienie({ title: "Trzy kwadranse", startMin: 600, durationMin: 45 })],
+    });
+    expect(screen.getByRole("button", { name: /Trzy kwadranse/ })).toHaveTextContent("10:00–10:45 · Studia");
+  });
+
   it("gdy filtry ukryły wszystkie bloki dnia, nie ma ramki pustego dnia", () => {
     wyrenderuj({ days: ["2026-11-17"], variant: "day", totalCount: 2 });
     expect(screen.queryByText(/Brak bloków w tym dniu\./)).not.toBeInTheDocument();

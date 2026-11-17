@@ -311,8 +311,9 @@ export function TimeGrid({
                     const godzinyBloku = `${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
                     const licznik = postep.total > 0 ? `${postep.done}/${postep.total}` : "";
                     const cykliczny = o.recurring ? "↻" : "";
-                    // Bloki krótsze niż 45 min: jedna linia bez pionowych odstępów
-                    const kompakt = czas < 45;
+                    // Jedna linia bez pionowych odstępów: w tygodniu bloki krótsze niż godzina
+                    // (dwie linie nie mieszczą się w 48 px), w dniu krótsze niż 45 min
+                    const kompakt = variant === "week" ? czas < 60 : czas < 45;
                     return (
                       <div
                         key={o.key}
@@ -350,7 +351,7 @@ export function TimeGrid({
                               <span className="block truncate text-xs leading-[1.3] font-medium">
                                 {o.title}
                               </span>
-                              <span className="mt-0.5 block truncate font-mono text-[10px] text-[#404040]">
+                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-[#404040]">
                                 {[godzinyBloku, licznik, cykliczny].filter(Boolean).join(" · ")}
                               </span>
                             </>

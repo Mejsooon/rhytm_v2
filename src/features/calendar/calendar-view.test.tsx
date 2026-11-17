@@ -71,7 +71,7 @@ beforeEach(() => {
 
 // Przycisk „Kategorie N/M” na webie (na telefonie jest ikona o nazwie „Kategorie”).
 // `hidden`: przy otwartym menu reszta strony ma aria-hidden (menu modalne)
-const przyciskKategorii = () => screen.getByRole("button", { name: /^Kategorie.*\d\/\d/, hidden: true });
+const przyciskKategorii = () => screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/, hidden: true });
 
 // Otwiera menu „Kategorie” i zwraca pole wyboru kategorii o tej nazwie
 async function poleKategorii(nazwa: string) {
