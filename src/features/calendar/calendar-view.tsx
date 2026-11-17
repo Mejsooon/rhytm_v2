@@ -1,23 +1,28 @@
 "use client";
 
 // Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
-// Web: tydzień i dzień to siatka godzin (Task 6), miesiąc to MonthGrid (Task 10); telefon dojdzie w Tasku 11 — na razie prosta lista dni.
+// Web: tydzień i dzień to siatka godzin, miesiąc to MonthGrid. Telefon (Task 11): MCalendarDay/Week/Month;
+// oba układy są w DOM, przełącza je CSS (800 px). Bez jawnego `widok` w adresie telefon pokazuje dzień.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
+import { FormDialog } from "@/components/controls/form-dialog";
 import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
-import { BlockPopover } from "./block-popover";
+import { BlockDetails, BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
 import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
 import type { CalendarData, CategoryRow } from "./load-calendar";
+import { MCalendarDay } from "./mobile/m-calendar-day";
+import { MCalendarMonth } from "./mobile/m-calendar-month";
+import { MCalendarWeek } from "./mobile/m-calendar-week";
 import { MonthGrid } from "./month-grid";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
@@ -49,8 +54,11 @@ export function CalendarView({
   today,
   nowMinutes,
   data: daneSerwera,
+  hasExplicitView = true,
 }: {
   view: CalendarView;
+  // Czy adres ma `widok`; bez niego web pokazuje domyślny tydzień, a telefon dzień
+  hasExplicitView?: boolean;
   date: IsoDate;
   today: IsoDate;
   // Aktualna godzina w strefie profilu, liczona na serwerze; użyją jej widoki z linią „teraz”
@@ -61,9 +69,17 @@ export function CalendarView({
   const { data, applyOptimistic } = useCalendarStore(daneSerwera);
   const { weekStart } = data.profile;
   const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
+  // Widok telefonu; dzień potrzebuje całego tygodnia (pasek z kropkami), więc dane obejmują tydzień
+  const widokTel: CalendarView = hasExplicitView ? view : "dzien";
+  const zakresTel = useMemo(
+    () => viewRange(widokTel === "dzien" ? "tydzien" : widokTel, date, weekStart),
+    [widokTel, date, weekStart],
+  );
 
   // Wybrany blok: klucz wystąpienia i element, przy którym otwiera się dymek
   const [wybrany, setWybrany] = useState<string | null>(null);
+  // Na telefonie szczegóły bloku otwiera arkusz, nie dymek przy bloku
+  const [wybranyTel, setWybranyTel] = useState<string | null>(null);
   // Okno nowego wpisu / bloku / kategorii / usuwania (naraz tylko jedno) i kotwica dymku „Nowy wpis”
   const [okno, setOkno] = useState<Okno | null>(null);
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
@@ -80,12 +96,18 @@ export function CalendarView({
   if (widokDla !== `${view}|${date}`) {
     setWidokDla(`${view}|${date}`);
     setWybrany(null);
+    setWybranyTel(null);
     setOkno((o) => (o?.typ === "wpis" ? null : o));
   }
 
   const wystapienia = useMemo(
     () => expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
     [data.blocks, data.exceptions, zakres.from, zakres.to],
+  );
+
+  const wystapieniaTel = useMemo(
+    () => expandOccurrences(data.blocks, data.exceptions, zakresTel.from, zakresTel.to),
+    [data.blocks, data.exceptions, zakresTel.from, zakresTel.to],
   );
 
   // Liczniki chipów liczą też wystąpienia ukrytych kategorii
@@ -99,6 +121,7 @@ export function CalendarView({
 
   const ukryte = new Set(data.categories.filter((k) => k.hidden).map((k) => k.id));
   const widoczne = wystapienia.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
+  const widoczneTel = wystapieniaTel.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
 
   // Ukrycie od razu znika z widoku; błąd zapisu cofa zmianę i pokazuje toast (w store)
   function przelaczKategorie(kategoria: CategoryRow) {
@@ -257,35 +280,65 @@ export function CalendarView({
   // Wystąpienie zniknęło (ukryta kategoria, usunięty blok): wybór się czyści,
   // więc dymek nie wraca po ponownym pokazaniu kategorii
   if (wybrany && !wybraneWystapienie) setWybrany(null);
+  const wybraneTel = wybranyTel ? widoczneTel.find((o) => o.key === wybranyTel) : undefined;
+  if (wybranyTel && !wybraneTel) setWybranyTel(null);
+
+  // Edycja i usuwanie bloku: wspólne dla dymku (web) i arkusza (telefon)
+  function edytuj(o: Occurrence) {
+    setWybrany(null);
+    setWybranyTel(null);
+    setOkno({
+      typ: "blok",
+      mode: "edit",
+      initial: {
+        title: o.title,
+        categoryId: o.categoryId,
+        date: o.date,
+        startMin: o.startMin,
+        durationMin: o.durationMin,
+        recurrence: o.recurrence,
+        note: o.note ?? "",
+        remind: o.remind,
+        blockId: o.blockId,
+        // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
+        occurrenceDate: o.key.slice(o.blockId.length + 1),
+        firstOccurrence: pierwszeWystapienie(o),
+      },
+    });
+  }
+
+  function usunBlok(o: Occurrence) {
+    setWybrany(null);
+    setWybranyTel(null);
+    setOkno({ typ: "usun", occurrence: o });
+  }
+
+  // „+” i stuknięcie pustej osi na telefonie: okno nowego bloku z tym dniem i godziną
+  // (Task 12 podmieni je na MBlockSheet)
+  function dodajNaTelefonie(dzien: IsoDate, startMin: number) {
+    setWybranyTel(null);
+    setOkno({
+      typ: "blok",
+      mode: "create",
+      initial: {
+        title: "",
+        categoryId: null,
+        date: dzien,
+        startMin,
+        // Blok nie przechodzi przez północ
+        durationMin: Math.min(60, 1440 - startMin),
+        recurrence: null,
+        note: "",
+        remind: true,
+      },
+    });
+  }
 
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
   const wpisyMiesiaca = widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length;
   // Dymki w dwóch dolnych wierszach siatki miesiąca wyrównują się do dołu komórki i rosną w górę
   const wyrownanie = (dzien: IsoDate) =>
     view === "miesiac" && zakres.days.indexOf(dzien) >= 28 ? "end" : "start";
-
-  const placeholder = (
-    // Tymczasowy widok na telefon: lista wystąpień dzień po dniu (zastąpi go Task 11)
-    <div className="flex flex-col gap-3">
-      {zakres.days.map((dzien) => {
-        const dzienne = widoczne.filter((o) => o.date === dzien);
-        if (dzienne.length === 0) return null;
-        return (
-          <section key={dzien}>
-            <h3 className="font-mono text-xs text-[#6b6b6b]">{dzien}</h3>
-            <ul className="mt-1 flex flex-col gap-1 text-sm">
-              {dzienne.map((o) => (
-                <li key={o.key}>
-                  <span className="font-mono text-xs text-[#6b6b6b]">{godzina(o.startMin)}</span>{" "}
-                  {o.title}
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
-    </div>
-  );
 
   const siatka = (
     <TimeGrid
@@ -320,6 +373,7 @@ export function CalendarView({
     <>
       <CalendarHeader
         view={view}
+        mobileView={widokTel}
         date={date}
         today={today}
         weekStart={weekStart}
@@ -352,7 +406,6 @@ export function CalendarView({
         />
         {view === "tydzien" && <div className="max-[799px]:hidden">{siatka}</div>}
         {view === "dzien" && (
-          // TODO(Task 11): widok dnia na telefonie
           <div className="flex flex-wrap items-start gap-6 max-[799px]:hidden">
             <div className="min-w-0 flex-[999_1_520px]">{siatka}</div>
             <DaySide
@@ -365,7 +418,6 @@ export function CalendarView({
             />
           </div>
         )}
-        {/* TODO(Task 11): tydzień i miesiąc na telefonie */}
         {view === "miesiac" && (
           <>
             <div className="max-[799px]:hidden">
@@ -398,9 +450,48 @@ export function CalendarView({
                 }}
               />
             </div>
-            <div className="min-[800px]:hidden">{placeholder}</div>
           </>
         )}
+        <div className="min-[800px]:hidden">
+          {widokTel === "dzien" && (
+            <MCalendarDay
+              date={date}
+              today={today}
+              weekStart={weekStart}
+              nowMinutes={nowMinutes}
+              occurrences={widoczneTel}
+              categories={data.categories}
+              clock={data.profile.clock}
+              onAdd={dodajNaTelefonie}
+              onBlockClick={setWybranyTel}
+            />
+          )}
+          {widokTel === "tydzien" && (
+            <MCalendarWeek
+              days={zakresTel.days}
+              date={date}
+              today={today}
+              nowMinutes={nowMinutes}
+              occurrences={widoczneTel}
+              categories={data.categories}
+              clock={data.profile.clock}
+              onAdd={dodajNaTelefonie}
+              onBlockClick={setWybranyTel}
+            />
+          )}
+          {widokTel === "miesiac" && (
+            <MCalendarMonth
+              days={zakresTel.days}
+              date={date}
+              today={today}
+              occurrences={widoczneTel}
+              categories={data.categories}
+              clock={data.profile.clock}
+              onAdd={dodajNaTelefonie}
+              onBlockClick={setWybranyTel}
+            />
+          )}
+        </div>
       </div>
       {wybrany && wybraneWystapienie && (
         <BlockPopover
@@ -410,35 +501,25 @@ export function CalendarView({
           clock={data.profile.clock}
           align={wyrownanie(wybraneWystapienie.date)}
           applyOptimistic={applyOptimistic}
-          onEdit={() => {
-            const o = wybraneWystapienie;
-            setWybrany(null);
-            setOkno({
-              typ: "blok",
-              mode: "edit",
-              initial: {
-                title: o.title,
-                categoryId: o.categoryId,
-                date: o.date,
-                startMin: o.startMin,
-                durationMin: o.durationMin,
-                recurrence: o.recurrence,
-                note: o.note ?? "",
-                remind: o.remind,
-                blockId: o.blockId,
-                // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
-                occurrenceDate: o.key.slice(o.blockId.length + 1),
-                firstOccurrence: pierwszeWystapienie(o),
-              },
-            });
-          }}
-          onDelete={() => {
-            const o = wybraneWystapienie;
-            setWybrany(null);
-            setOkno({ typ: "usun", occurrence: o });
-          }}
+          onEdit={() => edytuj(wybraneWystapienie)}
+          onDelete={() => usunBlok(wybraneWystapienie)}
           onClose={() => setWybrany(null)}
         />
+      )}
+      {wybraneTel && (
+        // Telefon: szczegóły bloku w dolnym arkuszu (FormDialog), nie w dymku przy bloku
+        <FormDialog open onOpenChange={(otwarte) => !otwarte && setWybranyTel(null)} title="Szczegóły bloku">
+          <BlockDetails
+            occurrence={wybraneTel}
+            tasks={data.tasks}
+            category={data.categories.find((k) => k.id === wybraneTel.categoryId)}
+            clock={data.profile.clock}
+            applyOptimistic={applyOptimistic}
+            onEdit={() => edytuj(wybraneTel)}
+            onDelete={() => usunBlok(wybraneTel)}
+            onClose={() => setWybranyTel(null)}
+          />
+        </FormDialog>
       )}
       {okno?.typ === "wpis" && (
         <NewEntryPopover

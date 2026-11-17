@@ -27,13 +27,17 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   // Profil najpierw: dzisiejsza data i początek tygodnia wyznaczają zakres zapytań
   const profil = await loadCalendarProfile(supabase, user.id);
   const dzis = todayIso(profil.timezone);
-  const { view, date } = parseCalendarParams(await searchParams, dzis);
-  const zakres = viewRange(view, date, profil.weekStart);
+  const parametry = await searchParams;
+  const { view, date } = parseCalendarParams(parametry, dzis);
+  const jawnyWidok = parametry.widok === "dzien" || parametry.widok === "tydzien" || parametry.widok === "miesiac";
+  // Dzień na telefonie pokazuje pasek tygodnia z kropkami, więc dane obejmują cały tydzień
+  const zakres = viewRange(view === "dzien" ? "tydzien" : view, date, profil.weekStart);
   const dane = await loadCalendar(supabase, user.id, zakres, profil);
 
   return (
     <CalendarView
       view={view}
+      hasExplicitView={jawnyWidok}
       date={date}
       today={dzis}
       nowMinutes={minutesNow(profil.timezone)}

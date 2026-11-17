@@ -76,4 +76,12 @@ describe("CalendarHeader", () => {
     await userEvent.click(screen.getAllByRole("button", { name: "Nowy blok" })[0]);
     expect(onNewBlock).toHaveBeenCalledTimes(1);
   });
+
+  it("telefon bierze mobileView: segment i strzałki działają na dniach", async () => {
+    wyrenderuj({ mobileView: "dzien" });
+    const segmenty = screen.getAllByRole("radiogroup", { name: "Widok kalendarza" });
+    expect(segmenty[1].querySelector('[aria-checked="true"]')).toHaveTextContent("Dzień");
+    await userEvent.click(screen.getByRole("button", { name: "Następny dzień" }));
+    expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-19");
+  });
 });

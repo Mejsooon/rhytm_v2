@@ -21,6 +21,11 @@ vi.mock("@/features/tasks/actions", () => ({
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
+// Układ telefonu (te same bloki w DOM) ma własny plik testów; tu sprawdzamy web
+vi.mock("./mobile/m-calendar-day", () => ({ MCalendarDay: () => null }));
+vi.mock("./mobile/m-calendar-week", () => ({ MCalendarWeek: () => null }));
+vi.mock("./mobile/m-calendar-month", () => ({ MCalendarMonth: () => null }));
+
 import { CalendarView } from "./calendar-view";
 import type { CalendarData } from "./load-calendar";
 

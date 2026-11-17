@@ -5,7 +5,7 @@
 // Oba układy są w DOM, przełącza je CSS (800 px).
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { Button, MonoLabel, Segment } from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
@@ -57,6 +57,7 @@ function etykietaTygodnia(
 
 export function CalendarHeader({
   view,
+  mobileView = view,
   date,
   today,
   weekStart,
@@ -64,6 +65,8 @@ export function CalendarHeader({
   onNewBlock,
 }: {
   view: CalendarView;
+  // Widok pokazywany na telefonie, gdy różni się od webowego (bez `widok` w adresie: dzień zamiast tygodnia)
+  mobileView?: CalendarView;
   date: IsoDate;
   today: IsoDate;
   weekStart: "mon" | "sun";
@@ -78,10 +81,10 @@ export function CalendarHeader({
   const miesiacWielka = nazwaMiesiaca.charAt(0).toUpperCase() + nazwaMiesiaca.slice(1);
   const tydzien = etykietaTygodnia(view, date, weekStart);
 
-  const segment = (
+  const segment = (wartosc: CalendarView) => (
     <Segment
       ariaLabel="Widok kalendarza"
-      value={view}
+      value={wartosc}
       options={OPCJE_WIDOKU}
       onChange={(v) => router.push(adres(v, date))}
     />
@@ -110,7 +113,7 @@ export function CalendarHeader({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {segment}
+          {segment(view)}
           <Button variant="primary" size="sm" onClick={onNewBlock}>
             Nowy blok
           </Button>
@@ -121,10 +124,26 @@ export function CalendarHeader({
         <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4">
           <div className="min-w-0 flex-1">
             <MonoLabel className="block">
-              {view === "miesiac" ? `${rok}` : `${rok} · tydzień ${isoWeekNumber(date)}`}
+              {mobileView === "miesiac" ? `${rok}` : `${rok} · tydzień ${isoWeekNumber(date)}`}
             </MonoLabel>
             <h2 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">{miesiacWielka}</h2>
           </div>
+          <button
+            type="button"
+            aria-label={`Poprzedni ${OKRES[mobileView]}`}
+            onClick={() => router.push(adres(mobileView, shiftDate(mobileView, date, -1)))}
+            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+          >
+            <ChevronLeft size={22} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={`Następny ${OKRES[mobileView]}`}
+            onClick={() => router.push(adres(mobileView, shiftDate(mobileView, date, 1)))}
+            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+          >
+            <ChevronRight size={22} aria-hidden="true" />
+          </button>
           <button
             type="button"
             aria-label="Nowy blok"
@@ -134,7 +153,7 @@ export function CalendarHeader({
             <Plus size={22} aria-hidden="true" />
           </button>
         </header>
-        <div className="mx-4 mb-2">{segment}</div>
+        <div className="mx-4 mb-2">{segment(mobileView)}</div>
       </div>
     </>
   );
