@@ -4,7 +4,8 @@
 // Jedno okno na tworzenie i edycję. Kroki: formularz -> zakres (edycja bloku cyklicznego, ScopeDialog
 // też jest arkuszem poniżej 800 px). Stan formularza zostaje w tym komponencie, więc po powrocie
 // z kroku zakresu pola są nietknięte. Zapis nie jest optymistyczny: pending + błąd w arkuszu.
-// Zasady zapisu jak w BlockDialog (web): te same schematy i akcje.
+// Zasady zapisu jak w BlockDialog (web): te same schematy i akcje; bliźniacza logika zapisu
+// i zakresu jest w block-dialog.tsx — zmieniając jedną, popraw drugą.
 import { useRef, useState } from "react";
 import { BellIcon, PlusIcon, XIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
@@ -87,6 +88,8 @@ export function MBlockSheet({
   const powtarzanie0: Powtarzanie = initial.recurrence?.freq ?? "none";
   const dni0 = initial.recurrence?.byWeekday ?? [weekdayOf(initial.date)];
   const until0 = initial.recurrence?.until ?? null;
+  // Data końca: na telefonie nie ma jej wyboru, można ją tylko usunąć („Usuń datę końca”)
+  const [until, setUntil] = useState(until0);
   const [rep, setRep] = useState<Powtarzanie>(powtarzanie0);
   const [dni, setDni] = useState<number[]>(dni0);
 
@@ -97,7 +100,7 @@ export function MBlockSheet({
       : {
           freq: rep,
           ...(rep === "custom" ? { byWeekday: [...dni].sort((a, b) => a - b) } : {}),
-          ...(until0 ? { until: until0 } : {}),
+          ...(until ? { until } : {}),
         };
 
   // Kategorie do wyboru bez systemowych
@@ -117,10 +120,16 @@ export function MBlockSheet({
           .filter((t) => t.block_id === initial.blockId && t.occurrence_date === dataOryginalna)
           .sort((a, b) => a.position - b.position)
       : [];
-  const wierszeZadan = mode === "edit" ? zadaniaWystapienia.map((t) => t.title) : nowe;
+  // Wiersze zadań: w edycji z id zadania (usuwanie po id), w tworzeniu z indeksem na liście
+  const wierszeZadan =
+    mode === "edit"
+      ? zadaniaWystapienia.map((t) => ({ klucz: t.id, tytul: t.title, tymczasowe: t.id.startsWith(PREFIKS_TYMCZASOWY) }))
+      : nowe.map((tytul, i) => ({ klucz: `nowe-${i}-${tytul}`, tytul, tymczasowe: false }));
+  // Edycja bez zapisu optymistycznego nie ma jak zapisać zadań, więc pole jest wyłączone
+  const zadaniaWylaczone = mode === "edit" && !applyOptimistic;
 
   const bladPol =
-    until0 && until0 < date ? "Koniec powtarzania nie może być przed początkiem." : "";
+    rep !== "none" && until && until < date ? "Koniec powtarzania nie może być przed początkiem." : "";
   const mozeZapisac =
     title.trim() !== "" && bladPol === "" && !(rep === "custom" && dni.length === 0) && !pending;
 
@@ -129,13 +138,14 @@ export function MBlockSheet({
   const cykliczny = initial.recurrence !== null;
   const zmienionePowtarzanie =
     rep !== powtarzanie0 ||
+    until !== until0 ||
     (rep === "custom" && [...dni].sort().join() !== [...dni0].sort().join());
   const seriaTylko =
     categoryId !== initial.categoryId || remind !== initial.remind || zmienionePowtarzanie;
 
   function dodajZadanie() {
     const tytul = szkic.trim();
-    if (tytul === "") return;
+    if (tytul === "" || zadaniaWylaczone) return;
     setSzkic("");
     if (mode === "create") {
       setNowe((n) => [...n, tytul]);
@@ -155,21 +165,21 @@ export function MBlockSheet({
       position: Number.MAX_SAFE_INTEGER,
       created_at: null,
     };
-    void applyOptimistic?.(
+    void applyOptimistic!(
       (d) => ({ ...d, tasks: [...d.tasks, tymczasowe] }),
       () => addTask({ blockId: initial.blockId ?? "", date: dataOryginalna, title: tytul }),
     );
   }
 
-  function usunZadanie(indeks: number) {
+  function usunZadanie(klucz: string, indeks: number) {
     if (mode === "create") {
       setNowe((n) => n.filter((_, i) => i !== indeks));
       return;
     }
-    const zadanie = zadaniaWystapienia[indeks];
-    void applyOptimistic?.(
-      (d) => ({ ...d, tasks: d.tasks.filter((t) => t.id !== zadanie.id) }),
-      () => deleteTask({ id: zadanie.id }),
+    if (zadaniaWylaczone) return;
+    void applyOptimistic!(
+      (d) => ({ ...d, tasks: d.tasks.filter((t) => t.id !== klucz) }),
+      () => deleteTask({ id: klucz }),
     );
   }
 
@@ -286,7 +296,8 @@ export function MBlockSheet({
     "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0";
 
   return (
-    <Dialog.Root open onOpenChange={(otwarte) => !otwarte && onDone()}>
+    <Dialog.Root open // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
+    onOpenChange={(otwarte) => !otwarte && !pending && onDone()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
@@ -299,6 +310,7 @@ export function MBlockSheet({
             <button
               type="button"
               aria-label="Anuluj"
+              disabled={pending}
               onClick={onDone}
               className={cn(NAGLOWEK_PRZYCISK, "text-[#666666]")}
             >
@@ -320,9 +332,20 @@ export function MBlockSheet({
 
           <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-5 pt-4 pb-7">
             {(blad || bladPol) && (
-              <p role="alert" className="m-0 text-xs text-[#b91c1c]">
-                {blad || bladPol}
-              </p>
+              <div className="flex flex-col items-start gap-1">
+                <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+                  {blad || bladPol}
+                </p>
+                {bladPol && (
+                  <button
+                    type="button"
+                    onClick={() => setUntil(null)}
+                    className="min-h-11 cursor-pointer rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                  >
+                    Usuń datę końca
+                  </button>
+                )}
+              </div>
             )}
 
             <input
@@ -428,15 +451,15 @@ export function MBlockSheet({
             <div className="flex flex-col gap-2">
               <span className={ETYKIETA}>Zadania w bloku · {wierszeZadan.length}</span>
               <div className="rounded-xl border border-[#eaeaea] bg-white">
-                {wierszeZadan.map((tytul, i) => (
-                  <div key={`${i}-${tytul}`} className={WIERSZ}>
+                {wierszeZadan.map(({ klucz, tytul, tymczasowe }, i) => (
+                  <div key={klucz} className={WIERSZ}>
                     <span aria-hidden="true" className="size-5 flex-none rounded-md border-[1.5px] border-[#cfcfcf]" />
                     <span className="min-w-0 flex-1 break-words">{tytul}</span>
                     <button
                       type="button"
                       aria-label={`Usuń zadanie ${tytul}`}
-                      disabled={mode === "edit" && zadaniaWystapienia[i].id.startsWith(PREFIKS_TYMCZASOWY)}
-                      onClick={() => usunZadanie(i)}
+                      disabled={tymczasowe}
+                      onClick={() => usunZadanie(klucz, i)}
                       className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#8a8a8a] outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:opacity-40"
                     >
                       <XIcon aria-hidden="true" className="size-4" />
@@ -450,6 +473,7 @@ export function MBlockSheet({
                     maxLength={200}
                     placeholder="Dodaj zadanie…"
                     aria-label="Nowe zadanie"
+                    disabled={zadaniaWylaczone}
                     onChange={(e) => setSzkic(e.target.value)}
                     onKeyDown={(e) => {
                       // Enter dodaje zadanie (nie podczas składania znaków z klawiatury ekranowej)
@@ -463,6 +487,7 @@ export function MBlockSheet({
                   <button
                     type="button"
                     aria-label="Dodaj zadanie"
+                    disabled={zadaniaWylaczone}
                     onClick={dodajZadanie}
                     className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
                   >

@@ -188,4 +188,33 @@ describe("MBlockSheet", () => {
       patch: { durationMin: 75 },
     });
   });
+
+  it("blok z końcem serii: „Nie” odblokowuje zapis mimo daty końca przed dniem", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "weekly", until: "2026-11-10" } });
+    expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("radio", { name: "Nie" }));
+    expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeEnabled();
+  });
+
+  it("data poza końcem serii: komunikat i „Usuń datę końca” czyści koniec w zapisie", async () => {
+    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "weekly", until: "2026-11-20" } });
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^24$/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Koniec powtarzania nie może być przed początkiem.");
+    expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Usuń datę końca" }));
+    expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    await userEvent.click(screen.getByRole("radio", { name: /Wszystkie wystąpienia/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    await waitFor(() => expect(changeOccurrence).toHaveBeenCalled());
+    const patch = changeOccurrence.mock.calls[0][0].patch;
+    expect(patch.recurrence).toEqual({ freq: "weekly" });
+  });
+
+  it("edycja bez applyOptimistic wyłącza pole zadań", () => {
+    wyrenderuj("edit", { ...NOWY, title: "Algebra", blockId: "b2", occurrenceDate: "2026-11-17" });
+    expect(screen.getByRole("textbox", { name: "Nowe zadanie" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Dodaj zadanie" })).toBeDisabled();
+  });
 });

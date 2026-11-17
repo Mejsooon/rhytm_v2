@@ -558,6 +558,7 @@ export function CalendarView({
       )}
       {okno?.typ === "blok" && okno.tel && (
         <MBlockSheet
+          key={`${okno.initial.blockId ?? "nowy"}:${okno.initial.occurrenceDate ?? okno.initial.date}`}
           mode={okno.mode}
           initial={okno.initial}
           categories={data.categories}
