@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(38);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -24,6 +24,12 @@ select ok(has_function_privilege('authenticated', 'public.split_block_series(uui
 -- Dane wstawione jako superuser.
 insert into public.categories (id, user_id, name, color, position)
 values ('c0000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', 'Kategoria B', '#000000', 0);
+-- A: trzy kategorie z lukami w pozycjach (do move_category).
+insert into public.categories (id, user_id, name, color, position)
+values
+  ('c1000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'A1', '#000000', 5),
+  ('c2000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'A2', '#000000', 7),
+  ('c3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'A3', '#000000', 9);
 -- B: blok, wyjątek i zadanie.
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
 values ('b0000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', 'Blok B',
@@ -198,6 +204,26 @@ select throws_ok(
     values ('00000000-0000-0000-0000-00000000000a', 'Cudza kat.', '2026-12-20 10:00', 30, 'Europe/Warsaw',
       'c0000000-0000-0000-0000-00000000000b')$$,
   '42501', null, 'A nie ustawi kategorii B w bloku');
+
+-- move_category: zamiana z sąsiadem i renumeracja 0..n-1.
+select ok(not has_function_privilege('anon', 'public.move_category(uuid, int)', 'execute'),
+  'anon nie może przesuwać kategorii');
+select public.move_category('c2000000-0000-0000-0000-00000000000a', -1);
+select is(
+  (select string_agg(c.name, ',' order by c.position) from public.categories as c
+   where c.id in ('c1000000-0000-0000-0000-00000000000a', 'c2000000-0000-0000-0000-00000000000a', 'c3000000-0000-0000-0000-00000000000a')),
+  'A2,A1,A3', 'move_category zamienia z sąsiadem');
+select is(
+  (select array_agg(c.position order by c.position) from public.categories as c
+   where c.user_id = '00000000-0000-0000-0000-00000000000a'),
+  array[0, 1, 2], 'move_category numeruje pozycje od 0');
+select public.move_category('c2000000-0000-0000-0000-00000000000a', -1);
+select is(
+  (select c.position from public.categories as c where c.id = 'c2000000-0000-0000-0000-00000000000a'),
+  0, 'na brzegu listy nic się nie zmienia');
+select throws_ok(
+  $$select public.move_category('c0000000-0000-0000-0000-00000000000b', 1)$$,
+  'P0002', null, 'cudzej kategorii nie da się przesunąć');
 
 select * from finish();
 rollback;

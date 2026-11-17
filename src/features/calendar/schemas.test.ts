@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockPatchSchema, createBlockSchema, recurrenceSchema } from "./schemas";
+import { blockPatchSchema, createBlockSchema, isoDateSchema, recurrenceSchema } from "./schemas";
 
 const poprawny = {
   title: "Nauka",
@@ -45,5 +45,14 @@ describe("blockPatchSchema", () => {
   it("pozwala na częściowy patch, odrzuca zły czas trwania", () => {
     expect(blockPatchSchema.safeParse({ title: "Nowy" }).success).toBe(true);
     expect(blockPatchSchema.safeParse({ durationMin: 5 }).success).toBe(false);
+  });
+});
+
+describe("isoDateSchema", () => {
+  it("odrzuca niemożliwe daty, przyjmuje prawdziwe", () => {
+    expect(isoDateSchema.safeParse("2026-13-45").success).toBe(false);
+    expect(isoDateSchema.safeParse("2026-02-30").success).toBe(false);
+    expect(isoDateSchema.safeParse("2026-02-28").success).toBe(true);
+    expect(isoDateSchema.safeParse("2028-02-29").success).toBe(true);
   });
 });

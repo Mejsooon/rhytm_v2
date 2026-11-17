@@ -7,14 +7,13 @@ import { z } from "zod";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
-import { isoDateSchema, zadanieTytul } from "@/features/calendar/schemas";
+import { idSchema, isoDateSchema, zadanieTytul } from "@/features/calendar/schemas";
 import { loadOccurrence } from "@/features/calendar/load-occurrence";
 import { pinTask, unpinTask as unpinTaskFields } from "./model";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const NIE_ZNALEZIONO = "Nie znaleziono wystąpienia bloku.";
 
-const idSchema = z.string().min(1);
 
 // Dodaje zadanie do wystąpienia bloku. `date` to oryginalna data wystąpienia.
 export async function addTask(input: {
@@ -71,14 +70,15 @@ export async function toggleTask(input: {
   const parsed = z.object({ id: idSchema, done: z.boolean() }).safeParse(input);
   if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({
       done: parsed.data.done,
       done_at: parsed.data.done ? new Date().toISOString() : null,
     })
-    .eq("id", parsed.data.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -99,11 +99,12 @@ export async function renameTask(input: {
     return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ title: parsed.data.title })
-    .eq("id", parsed.data.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -119,8 +120,12 @@ export async function deleteTask(input: { id: string }): Promise<ActionResult> {
   const parsed = z.object({ id: idSchema }).safeParse(input);
   if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
 
-  const { error } = await supabase.from("tasks").delete().eq("id", parsed.data.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+  const { data, error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -189,11 +194,12 @@ export async function pinTaskToOccurrence(input: {
   const wczytane = await loadOccurrence(supabase, dane.blockId, dane.date);
   if (!wczytane) return { ok: false, message: NIE_ZNALEZIONO };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update(pinTask(zadanie, wczytane.occurrence))
-    .eq("id", dane.taskId);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    .eq("id", dane.taskId)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -219,11 +225,12 @@ export async function unpinTask(input: {
     .maybeSingle();
   if (!zadanie) return { ok: false, message: BLAD_ZAPISU };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update(unpinTaskFields(zadanie))
-    .eq("id", parsed.data.taskId);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    .eq("id", parsed.data.taskId)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };

@@ -6,11 +6,11 @@ import { z } from "zod";
 
 import type { ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
+import { idSchema } from "@/features/calendar/schemas";
 import { CATEGORY_COLOR_VALUES } from "./colors";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
-const idSchema = z.string().min(1);
 const nazwaSchema = z
   .string()
   .trim()
@@ -94,8 +94,12 @@ export async function updateCategory(input: {
   if (dane.name !== undefined) zmiany.name = dane.name;
   if (dane.color !== undefined) zmiany.color = dane.color;
 
-  const { error } = await supabase.from("categories").update(zmiany).eq("id", dane.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+  const { data, error } = await supabase
+    .from("categories")
+    .update(zmiany)
+    .eq("id", dane.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -115,11 +119,12 @@ export async function setCategoryHidden(input: {
   const parsed = z.object({ id: idSchema, hidden: z.boolean() }).safeParse(input);
   if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .update({ hidden: parsed.data.hidden })
-    .eq("id", parsed.data.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -141,30 +146,12 @@ export async function moveCategory(input: {
     .safeParse(input);
   if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
 
-  const { data: lista, error: bladOdczytu } = await supabase
-    .from("categories")
-    .select("id, position")
-    .eq("user_id", user.id)
-    .order("position", { ascending: true });
-  if (bladOdczytu || !lista) return { ok: false, message: BLAD_ZAPISU };
-
-  const indeks = lista.findIndex((k) => k.id === parsed.data.id);
-  if (indeks === -1) return { ok: false, message: BLAD_ZAPISU };
-
-  // Na brzegu listy nie ma z kim się zamienić
-  const sasiad = lista[indeks + parsed.data.dir];
-  if (!sasiad) return { ok: true };
-  const ta = lista[indeks];
-
-  const { error: blad1 } = await supabase
-    .from("categories")
-    .update({ position: sasiad.position })
-    .eq("id", ta.id);
-  const { error: blad2 } = await supabase
-    .from("categories")
-    .update({ position: ta.position })
-    .eq("id", sasiad.id);
-  if (blad1 || blad2) return { ok: false, message: BLAD_ZAPISU };
+  // Zamiana pozycji w jednej transakcji po stronie bazy (bez wyścigów)
+  const { error } = await supabase.rpc("move_category", {
+    p_id: parsed.data.id,
+    p_dir: parsed.data.dir,
+  });
+  if (error) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -190,8 +177,12 @@ export async function deleteCategory(input: { id: string }): Promise<ActionResul
     return { ok: false, message: "Tej kategorii nie można usunąć." };
   }
 
-  const { error } = await supabase.from("categories").delete().eq("id", parsed.data.id);
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+  const { data, error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };

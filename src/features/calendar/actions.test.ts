@@ -35,7 +35,7 @@ const wejscie = {
 
 // Cykliczny blok dzienny od 1 listopada
 const blok = {
-  id: "b1",
+  id: "b1000000-0000-4000-8000-000000000001",
   user_id: "u1",
   title: "Nauka",
   category_id: null,
@@ -55,9 +55,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
   tables = {
-    profiles: fakeTable({ data: { timezone: "Europe/Warsaw" } }),
-    categories: fakeTable({ data: { id: "k1", is_system: false } }),
-    blocks: fakeTable({ data: { id: "b1" } }),
+    profiles: fakeTable({ single: { timezone: "Europe/Warsaw" } }),
+    categories: fakeTable({ data: [], single: { id: "c1000000-0000-4000-8000-000000000001", is_system: false } }),
+    blocks: fakeTable({ data: [{ id: "b1000000-0000-4000-8000-000000000001" }], single: { id: "b1000000-0000-4000-8000-000000000001" } }),
     tasks: fakeTable(),
     block_exceptions: fakeTable({ data: [] }),
   };
@@ -78,16 +78,16 @@ describe("createBlock", () => {
   });
 
   it("kategoria systemowa → ok: false, bez insert", async () => {
-    tables.categories = fakeTable({ data: { id: "k1", is_system: true } });
-    const w = await createBlock({ ...wejscie, categoryId: "k1" });
+    tables.categories = fakeTable({ single: { id: "c1000000-0000-4000-8000-000000000001", is_system: true } });
+    const w = await createBlock({ ...wejscie, categoryId: "c1000000-0000-4000-8000-000000000001" });
     expect(w.ok).toBe(false);
     expect(tables.blocks.insert).not.toHaveBeenCalled();
   });
 
   it("poprawny blok → insert ze strefą z profilu, revalidate", async () => {
-    tables.profiles = fakeTable({ data: { timezone: "Europe/Berlin" } });
+    tables.profiles = fakeTable({ single: { timezone: "Europe/Berlin" } });
     const w = await createBlock(wejscie);
-    expect(w).toEqual({ ok: true, id: "b1" });
+    expect(w).toEqual({ ok: true, id: "b1000000-0000-4000-8000-000000000001" });
     expect(tables.blocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: "u1",
@@ -127,48 +127,48 @@ describe("createBlock", () => {
   it("tasks: ['A','B'] wstawia 2 zadania z occurrence_date = date", async () => {
     await createBlock({ ...wejscie, tasks: ["A", "B"] });
     expect(tables.tasks.insert).toHaveBeenCalledWith([
-      expect.objectContaining({ user_id: "u1", title: "A", block_id: "b1", occurrence_date: "2026-11-17" }),
-      expect.objectContaining({ user_id: "u1", title: "B", block_id: "b1", occurrence_date: "2026-11-17" }),
+      expect.objectContaining({ user_id: "u1", title: "A", block_id: "b1000000-0000-4000-8000-000000000001", occurrence_date: "2026-11-17" }),
+      expect.objectContaining({ user_id: "u1", title: "B", block_id: "b1000000-0000-4000-8000-000000000001", occurrence_date: "2026-11-17" }),
     ]);
   });
 });
 
 describe("changeOccurrence", () => {
   beforeEach(() => {
-    tables.blocks = fakeTable({ data: blok });
+    tables.blocks = fakeTable({ data: [{ id: blok.id }], single: blok });
   });
 
   it("bez sesji przekierowuje na /logowanie", async () => {
     getUser.mockResolvedValue({ data: { user: null } });
     await expect(
-      changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "this", delete: true }),
+      changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "this", delete: true }),
     ).rejects.toThrow("REDIRECT:/logowanie");
   });
 
   it("this + zmiana tytułu → upsert wyjątku", async () => {
     const w = await changeOccurrence({
-      blockId: "b1",
+      blockId: "b1000000-0000-4000-8000-000000000001",
       date: "2026-11-10",
       scope: "this",
       patch: { title: "Inny" },
     });
     expect(w.ok).toBe(true);
     expect(tables.block_exceptions.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ block_id: "b1", occurrence_date: "2026-11-10", kind: "modified", new_title: "Inny" }),
+      expect.objectContaining({ block_id: "b1000000-0000-4000-8000-000000000001", occurrence_date: "2026-11-10", kind: "modified", new_title: "Inny" }),
       expect.anything(),
     );
   });
 
   it("following w środku serii → rpc split_block_series", async () => {
     const w = await changeOccurrence({
-      blockId: "b1",
+      blockId: "b1000000-0000-4000-8000-000000000001",
       date: "2026-11-10",
       scope: "following",
       patch: { title: "Inny" },
     });
     expect(w.ok).toBe(true);
     expect(rpc).toHaveBeenCalledWith("split_block_series", {
-      p_block_id: "b1",
+      p_block_id: "b1000000-0000-4000-8000-000000000001",
       p_from: "2026-11-10",
       p_patch: { title: "Inny" },
       p_delete: false,
@@ -176,25 +176,25 @@ describe("changeOccurrence", () => {
   });
 
   it("this + delete → zadania samodzielne, potem wyjątek cancelled", async () => {
-    const w = await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "this", delete: true });
+    const w = await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "this", delete: true });
     expect(w.ok).toBe(true);
     expect(tables.tasks.update).toHaveBeenCalledWith({ block_id: null, occurrence_date: null });
     expect(tables.block_exceptions.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ block_id: "b1", occurrence_date: "2026-11-10", kind: "cancelled" }),
+      expect.objectContaining({ block_id: "b1000000-0000-4000-8000-000000000001", occurrence_date: "2026-11-10", kind: "cancelled" }),
       expect.anything(),
     );
   });
 
   it("all + delete → zwykłe usunięcie bloku", async () => {
-    await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "all", delete: true });
+    await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "all", delete: true });
     expect(tables.blocks.delete).toHaveBeenCalled();
   });
 
   it("all z nową powtarzalnością weekdays normalizuje datę startu", async () => {
     // blok zaczyna się w sobotę 2026-11-21
-    tables.blocks = fakeTable({ data: { ...blok, start_local: "2026-11-21T08:00:00" } });
+    tables.blocks = fakeTable({ data: [{ id: blok.id }], single: { ...blok, start_local: "2026-11-21T08:00:00" } });
     await changeOccurrence({
-      blockId: "b1",
+      blockId: "b1000000-0000-4000-8000-000000000001",
       date: "2026-11-21",
       scope: "all",
       patch: { recurrence: { freq: "weekdays" } },
@@ -204,15 +204,57 @@ describe("changeOccurrence", () => {
     );
   });
 
+  it("wynik przechodzący przez północ → ok: false, bez zapisu", async () => {
+    const w = await changeOccurrence({
+      blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "this", patch: { startMin: 1400, durationMin: 60 },
+    });
+    expect(w.ok).toBe(false);
+    expect(tables.block_exceptions.upsert).not.toHaveBeenCalled();
+  });
+
+  it("following z nowym weekdays od soboty → odrzucone, bez rpc", async () => {
+    // 2026-11-14 to sobota
+    const w = await changeOccurrence({
+      blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-14", scope: "following", patch: { recurrence: { freq: "weekdays" } },
+    });
+    expect(w).toEqual({ ok: false, message: "Nowe powtarzanie musi obejmować ten dzień." });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("all ze zmianą powtarzalności odpina zadania spoza nowej serii", async () => {
+    tables.tasks = fakeTable({
+      data: [
+        { id: "f1000000-0000-4000-8000-000000000001", occurrence_date: "2026-11-10" }, // wtorek
+        { id: "f2000000-0000-4000-8000-000000000002", occurrence_date: "2026-11-14" }, // sobota
+      ],
+    });
+    await changeOccurrence({
+      blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "all", patch: { recurrence: { freq: "weekdays" } },
+    });
+    expect(tables.tasks.update).toHaveBeenCalledWith({ block_id: null, occurrence_date: null });
+    expect(tables.tasks.in).toHaveBeenCalledWith("id", ["f2000000-0000-4000-8000-000000000002"]);
+  });
+
+  it("zmiana bloku, której nikt nie widzi (0 wierszy) → ok: false", async () => {
+    tables.blocks = fakeTable({ data: [], single: blok });
+    const w = await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "all", patch: { title: "X" } });
+    expect(w.ok).toBe(false);
+  });
+
+  it("niemożliwa data i zły id → ok: false", async () => {
+    expect((await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-13-45", scope: "this", delete: true })).ok).toBe(false);
+    expect((await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "this", delete: true })).ok).toBe(false);
+  });
+
   it("nieistniejący blok → ok: false", async () => {
-    tables.blocks = fakeTable({ data: null });
-    const w = await changeOccurrence({ blockId: "x", date: "2026-11-10", scope: "this", delete: true });
+    tables.blocks = fakeTable({ data: null, single: null });
+    const w = await changeOccurrence({ blockId: "e0000000-0000-4000-8000-000000000000", date: "2026-11-10", scope: "this", delete: true });
     expect(w.ok).toBe(false);
   });
 
   it("błąd rpc → komunikat", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
-    const w = await changeOccurrence({ blockId: "b1", date: "2026-11-10", scope: "following", delete: true });
+    const w = await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "following", delete: true });
     expect(w).toEqual({ ok: false, message: BLAD });
   });
 });

@@ -12,7 +12,7 @@ import { loadOccurrence } from "./load-occurrence";
 import { planScopeChange, type BlockPatch, type Scope } from "./scope";
 import { changeOccurrenceSchema, createBlockSchema } from "./schemas";
 import { normalizeSeriesStart } from "./series-start";
-import type { Recurrence } from "./occurrences";
+import { expandOccurrences, type Recurrence } from "./occurrences";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
@@ -147,6 +147,20 @@ export async function changeOccurrence(input: {
     }
   }
 
+  // Wyjątki nie mają ograniczenia w bazie, więc pilnujemy północy tutaj (przed planowaniem).
+  // Dla "tylko to" liczy się wystąpienie, dla pozostałych zakresów — sam blok.
+  if (dane.delete !== true) {
+    const minutyBloku =
+      Number(block.start_local.slice(11, 13)) * 60 + Number(block.start_local.slice(14, 16));
+    const bazowyStart = dane.scope === "this" ? occurrence.startMin : minutyBloku;
+    const bazowyCzas = dane.scope === "this" ? occurrence.durationMin : block.duration_min;
+    const wynikowyStart = patch.startMin ?? bazowyStart;
+    const wynikowyCzas = patch.durationMin ?? bazowyCzas;
+    if (wynikowyStart + wynikowyCzas > 1440) {
+      return { ok: false, message: "Blok nie może przechodzić przez północ." };
+    }
+  }
+
   const plan = planScopeChange({
     block,
     occurrence,
@@ -164,11 +178,20 @@ export async function changeOccurrence(input: {
 
   if (plan.kind === "deleteBlock") {
     // Zadania odpina wyzwalacz w bazie
-    const { error } = await supabase.from("blocks").delete().eq("id", block.id);
-    if (error) return { ok: false, message: BLAD_ZAPISU };
+    const { data: usuniete, error } = await supabase
+      .from("blocks")
+      .delete()
+      .eq("id", block.id)
+      .select("id");
+    if (error || !usuniete || usuniete.length === 0) return { ok: false, message: BLAD_ZAPISU };
   }
 
   if (plan.kind === "split") {
+    // Nowe powtarzanie musi obejmować dzień, od którego dzielimy serię
+    const noweRec = patch.recurrence;
+    if (!plan.delete && noweRec && normalizeSeriesStart(plan.from, noweRec) !== plan.from) {
+      return { ok: false, message: "Nowe powtarzanie musi obejmować ten dzień." };
+    }
     const { error } = await supabase.rpc("split_block_series", {
       p_block_id: block.id,
       p_from: plan.from,
@@ -206,10 +229,6 @@ export async function changeOccurrence(input: {
       Number(block.start_local.slice(11, 13)) * 60 + Number(block.start_local.slice(14, 16));
 
     const nowyStart = p.startMin ?? minutyBloku;
-    const nowyCzas = p.durationMin ?? block.duration_min;
-    if (nowyStart + nowyCzas > 1440) {
-      return { ok: false, message: "Blok nie może przechodzić przez północ." };
-    }
 
     const zmiany: Database["public"]["Tables"]["blocks"]["Update"] = { updated_at: new Date().toISOString() };
     if (p.title !== undefined) zmiany.title = p.title;
@@ -228,8 +247,47 @@ export async function changeOccurrence(input: {
       zmiany.start_local = `${dataStartu}T${godzinaZMinut(nowyStart)}`;
     }
 
-    const { error } = await supabase.from("blocks").update(zmiany).eq("id", block.id);
-    if (error) return { ok: false, message: BLAD_ZAPISU };
+    const { data: zmienione, error } = await supabase
+      .from("blocks")
+      .update(zmiany)
+      .eq("id", block.id)
+      .select("id");
+    if (error || !zmienione || zmienione.length === 0) {
+      return { ok: false, message: BLAD_ZAPISU };
+    }
+
+    // Zadania z datami, które nie są już wystąpieniami zmienionej serii, stają się samodzielne
+    // (termin zostaje) — żeby żadne zadanie nie zniknęło z widoku.
+    if (zmiany.start_local !== undefined || zmiany.recurrence !== undefined) {
+      const { data: zadania } = await supabase
+        .from("tasks")
+        .select("id, occurrence_date")
+        .eq("block_id", block.id);
+      const przypiete = (zadania ?? []).filter((z) => z.occurrence_date !== null);
+      if (przypiete.length > 0) {
+        const daty = przypiete.map((z) => z.occurrence_date as string).sort();
+        const nowyBlok = {
+          ...block,
+          start_local: zmiany.start_local ?? block.start_local,
+          recurrence: zmiany.recurrence === undefined ? block.recurrence : zmiany.recurrence,
+        };
+        const dniSerii = new Set(
+          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map((o) =>
+            o.key.slice(-10),
+          ),
+        );
+        const doOdpiecia = przypiete
+          .filter((z) => !dniSerii.has(z.occurrence_date as string))
+          .map((z) => z.id);
+        if (doOdpiecia.length > 0) {
+          const { error: bladOdpiecia } = await supabase
+            .from("tasks")
+            .update({ block_id: null, occurrence_date: null })
+            .in("id", doOdpiecia);
+          if (bladOdpiecia) return { ok: false, message: BLAD_ZAPISU };
+        }
+      }
+    }
   }
 
   revalidatePath("/kalendarz");

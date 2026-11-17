@@ -310,6 +310,13 @@ export type Database = {
         Args: { p_categories: Json }
         Returns: undefined
       }
+      move_category: {
+        Args: {
+          p_dir: number
+          p_id: string
+        }
+        Returns: undefined
+      }
       split_block_series: {
         Args: {
           p_block_id: string

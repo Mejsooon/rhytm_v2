@@ -318,3 +318,61 @@ $$;
 
 revoke execute on function public.split_block_series(uuid, date, jsonb, boolean) from public, anon;
 grant execute on function public.split_block_series(uuid, date, jsonb, boolean) to authenticated;
+
+-- Przesuwa kategorię o jedno miejsce (p_dir = -1 wyżej, 1 niżej) w jednej transakcji:
+-- blokuje kategorie użytkownika, zamienia pozycje z sąsiadem i numeruje pozycje od 0 do n-1.
+-- Na brzegu listy tylko renumeruje. Cudza lub nieistniejąca kategoria kończy się błędem.
+create function public.move_category(p_id uuid, p_dir int)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_idx int;
+begin
+  if p_dir not in (-1, 1) then
+    raise exception 'invalid_direction' using errcode = '22023';
+  end if;
+
+  -- Blokada wszystkich kategorii użytkownika na czas zamiany
+  perform c.id from public.categories as c
+  where c.user_id = (select auth.uid())
+  for update;
+
+  select o.idx into v_idx
+  from (
+    select c.id, (row_number() over (order by c.position, c.id) - 1)::int as idx
+    from public.categories as c
+    where c.user_id = (select auth.uid())
+  ) as o
+  where o.id = p_id;
+  if v_idx is null then
+    raise exception 'category_not_found' using errcode = 'P0002';
+  end if;
+
+  update public.categories as c
+  set position = n.new_position
+  from (
+    select
+      o.id,
+      case
+        when o.idx = v_idx and o.idx + p_dir between 0 and o.total - 1 then o.idx + p_dir
+        when o.idx = v_idx + p_dir and v_idx + p_dir between 0 and o.total - 1 then v_idx
+        else o.idx
+      end as new_position
+    from (
+      select
+        c2.id,
+        (row_number() over (order by c2.position, c2.id) - 1)::int as idx,
+        (count(*) over ())::int as total
+      from public.categories as c2
+      where c2.user_id = (select auth.uid())
+    ) as o
+  ) as n
+  where c.id = n.id;
+end;
+$$;
+
+revoke execute on function public.move_category(uuid, int) from public, anon;
+grant execute on function public.move_category(uuid, int) to authenticated;

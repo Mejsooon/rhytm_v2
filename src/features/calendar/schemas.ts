@@ -1,9 +1,17 @@
 // Walidacja danych z formularzy kalendarza (lustro reguł z migracji calendar.sql).
 import { z } from "zod";
 
+// Id wiersza w bazie (uuid)
+export const idSchema = z.string().uuid("Nieprawidłowy identyfikator.");
+
+// Data RRRR-MM-DD, która naprawdę istnieje (odrzuca np. 2026-13-45 i 2026-02-30)
 export const isoDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Nieprawidłowa data.");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Nieprawidłowa data.")
+  .refine((d) => {
+    const data = new Date(`${d}T00:00:00Z`);
+    return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === d;
+  }, "Nieprawidłowa data.");
 
 export const recurrenceSchema = z
   .object({
@@ -32,7 +40,7 @@ const czas = z
   .int()
   .min(15, "Blok musi trwać co najmniej 15 minut.")
   .max(1440, "Blok może trwać maksymalnie 24 godziny.");
-const idKategorii = z.string().min(1).nullable();
+const idKategorii = idSchema.nullable();
 
 export const zadanieTytul = z
   .string()
@@ -69,7 +77,7 @@ export const blockPatchSchema = z.object({
 });
 
 export const changeOccurrenceSchema = z.object({
-  blockId: z.string().min(1),
+  blockId: idSchema,
   date: isoDateSchema,
   scope: z.enum(["this", "following", "all"]),
   patch: blockPatchSchema.optional(),
