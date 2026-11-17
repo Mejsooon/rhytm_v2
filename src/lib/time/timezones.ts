@@ -54,7 +54,7 @@ export function safeTimezone(tz: string | undefined | null): string {
   return tz && czyPoprawna(tz) ? tz : DOMYSLNA_STREFA;
 }
 
-// "08:00" (24h) albo "8:00 AM" (12h)
+// "08:00" (24h) albo "8:00 AM" (12h); 24:00 (koniec doby) to "24:00" albo "12:00 AM"
 export function formatClockTime(
   h: number,
   m: number,
@@ -62,6 +62,8 @@ export function formatClockTime(
 ): string {
   const minuty = String(m).padStart(2, "0");
   if (clock === "12") {
+    // Północ na końcu doby (24:00) to 12:00 AM, nie południe
+    if (h === 24) return `12:${minuty} AM`;
     return `${h % 12 || 12}:${minuty} ${h < 12 ? "AM" : "PM"}`;
   }
   return `${String(h).padStart(2, "0")}:${minuty}`;

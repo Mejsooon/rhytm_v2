@@ -19,6 +19,7 @@ import {
 } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
 import { changeOccurrence, createBlock } from "./actions";
@@ -159,14 +160,18 @@ export function BlockDialog({
     zapisuje.current = true;
     setPending(true);
     setBlad("");
-    const wynik = await changeOccurrence({
-      blockId: initial.blockId ?? "",
-      date: initial.occurrenceDate ?? initial.date,
-      scope: zakres,
-      patch,
-    });
-    zapisuje.current = false;
-    setPending(false);
+    let wynik: ActionResult;
+    try {
+      wynik = await changeOccurrence({
+        blockId: initial.blockId ?? "",
+        date: initial.occurrenceDate ?? initial.date,
+        scope: zakres,
+        patch,
+      });
+    } finally {
+      zapisuje.current = false;
+      setPending(false);
+    }
     if (!wynik.ok) {
       // Błąd (np. powtarzanie bez tego dnia) pokazujemy w formularzu, żeby można było poprawić
       setBlad(wynik.message);
@@ -190,18 +195,22 @@ export function BlockDialog({
     zapisuje.current = true;
     setPending(true);
     setBlad("");
-    const wynik = await createBlock({
-      title: title.trim(),
-      categoryId,
-      date,
-      startMin,
-      durationMin,
-      recurrence,
-      note,
-      remind,
-    });
-    zapisuje.current = false;
-    setPending(false);
+    let wynik: ActionResult;
+    try {
+      wynik = await createBlock({
+        title: title.trim(),
+        categoryId,
+        date,
+        startMin,
+        durationMin,
+        recurrence,
+        note,
+        remind,
+      });
+    } finally {
+      zapisuje.current = false;
+      setPending(false);
+    }
     if (!wynik.ok) {
       setBlad(wynik.message);
       return;

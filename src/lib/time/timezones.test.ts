@@ -60,6 +60,8 @@ describe("safeTimezone", () => {
 describe("formatClockTime", () => {
   it("formatuje 24h i 12h", () => {
     expect(formatClockTime(8, 0, "24")).toBe("08:00");
+    expect(formatClockTime(24, 0, "24")).toBe("24:00");
+    expect(formatClockTime(24, 0, "12")).toBe("12:00 AM");
     expect(formatClockTime(17, 0, "12")).toBe("5:00 PM");
     expect(formatClockTime(0, 30, "12")).toBe("12:30 AM");
   });

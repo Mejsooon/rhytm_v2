@@ -60,7 +60,7 @@ export function TimePicker({
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >
-          {wTrybie12 && !koniecDoby ? formatClockTime(godzinaLiczba, Number(minuta), "12") : value}
+          {wTrybie12 ? formatClockTime(godzinaLiczba, Number(minuta), "12") : value}
           <ChevronDownIcon aria-hidden="true" className="size-3 flex-none text-[#666666]" />
         </button>
       }
@@ -126,7 +126,7 @@ export function TimePicker({
             }}
             className={KOMORKA}
           >
-            24:00
+            {formatClockTime(24, 0, clock)}
           </button>
         )}
         <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]">

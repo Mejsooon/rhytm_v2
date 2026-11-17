@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 
 import { Button, FormDialog } from "@/components/controls";
+import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import type { Occurrence } from "./occurrences";
@@ -35,14 +36,18 @@ export function DeleteBlockDialog({
     usuwa.current = true;
     setPending(true);
     setBlad("");
-    const wynik = await changeOccurrence({
-      blockId: o.blockId,
-      date: dataOryginalna,
-      scope: zakres,
-      delete: true,
-    });
-    usuwa.current = false;
-    setPending(false);
+    let wynik: ActionResult;
+    try {
+      wynik = await changeOccurrence({
+        blockId: o.blockId,
+        date: dataOryginalna,
+        scope: zakres,
+        delete: true,
+      });
+    } finally {
+      usuwa.current = false;
+      setPending(false);
+    }
     if (!wynik.ok) {
       setBlad(wynik.message);
       return;

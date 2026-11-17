@@ -92,4 +92,17 @@ describe("TimePicker", () => {
     await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
     expect(screen.queryByRole("button", { name: "24:00" })).not.toBeInTheDocument();
   });
+
+  it("allowEndOfDay w trybie 12 h: opcja i przycisk pokazują 12:00 AM, wartość to 24:00", async () => {
+    const u = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <TimePicker value="23:00" onChange={onChange} ariaLabel="Do" clock="12" allowEndOfDay />,
+    );
+    await u.click(screen.getByRole("button", { name: "Do" }));
+    await u.click(screen.getByRole("button", { name: "12:00 AM" }));
+    expect(onChange).toHaveBeenCalledWith("24:00");
+    rerender(<TimePicker value="24:00" onChange={onChange} ariaLabel="Do" clock="12" allowEndOfDay />);
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("12:00 AM");
+  });
 });
