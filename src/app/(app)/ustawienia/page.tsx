@@ -1,10 +1,5 @@
-import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
+import { redirect } from "next/navigation";
 
 export default function UstawieniaPage() {
-  return (
-    <>
-      <ModuleHeader title="Ustawienia" />
-      <EmptyModule>Ustawienia konta powstaną w kolejnych etapach.</EmptyModule>
-    </>
-  );
+  redirect("/ustawienia/ogolne");
 }

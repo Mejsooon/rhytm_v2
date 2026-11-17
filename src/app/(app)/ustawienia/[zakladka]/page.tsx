@@ -1,0 +1,76 @@
+import { Suspense } from "react";
+import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
+
+import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
+import { GoalsCard } from "@/features/settings/goals-card";
+import { ProfileCard } from "@/features/settings/profile-card";
+import { SETTINGS_TABS, SettingsTabs, type SettingsTabSlug } from "@/features/settings/settings-tabs";
+import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
+import { createClient } from "@/lib/supabase/server";
+
+// Karty Profil i Cele z zapisanymi wartościami (dane zależą od ciasteczek → connection + Suspense)
+async function Ogolne() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("display_name, timezone, weight_kg, height_cm, sleep_goal_min, weekly_km_goal, currency, week_start")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const strefa = safeTimezone(profil?.timezone);
+  const waluta = profil?.currency;
+  return (
+    <>
+      <ProfileCard
+        saved={{
+          name: profil?.display_name ?? "",
+          tz: strefa,
+          kg: profil?.weight_kg != null ? String(profil.weight_kg) : "",
+          cm: profil?.height_cm != null ? String(profil.height_cm) : "",
+        }}
+        // Zapisana strefa spoza 6 podstawowych też trafia na listę
+        timezones={timezoneOptions(new Date(), strefa)}
+      />
+      <GoalsCard
+        saved={{
+          sleep: profil?.sleep_goal_min ?? 480,
+          km: profil?.weekly_km_goal != null ? String(profil.weekly_km_goal) : "25",
+          cur: waluta === "EUR" || waluta === "USD" || waluta === "GBP" ? waluta : "PLN",
+          week: profil?.week_start === "sun" ? "sun" : "mon",
+        }}
+      />
+    </>
+  );
+}
+
+export default async function ZakladkaPage({ params }: { params: Promise<{ zakladka: string }> }) {
+  const { zakladka } = await params;
+  const tab = SETTINGS_TABS.find((t) => t.slug === zakladka);
+  if (!tab) notFound();
+
+  return (
+    <>
+      <ModuleHeader title={tab.label} webParent="Ustawienia" phoneTitle="Ustawienia" />
+      <div className="flex w-full max-w-[1100px] items-start gap-8 px-6 py-7 max-[799px]:flex-col max-[799px]:gap-4 max-[799px]:py-2">
+        <SettingsTabs active={tab.slug as SettingsTabSlug} />
+        <div className="flex min-w-0 flex-1 flex-col gap-6 max-[799px]:w-full max-[799px]:gap-4">
+          <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">{tab.label}</h2>
+          {tab.slug === "ogolne" ? (
+            <Suspense fallback={null}>
+              <Ogolne />
+            </Suspense>
+          ) : (
+            <EmptyModule>Ta zakładka powstanie w kolejnym etapie.</EmptyModule>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

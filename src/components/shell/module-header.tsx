@@ -11,8 +11,14 @@ export function ModuleHeader({
   title,
   phoneLabel,
   phoneSettingsLink = false,
+  webParent = "Moduły",
+  phoneTitle,
 }: {
   title: string;
+  // Pierwszy człon ścieżki na webie („Ustawienia / Ogólne”)
+  webParent?: string;
+  // Inny tytuł na telefonie (np. „Ustawienia” zamiast nazwy zakładki)
+  phoneTitle?: string;
   // Etykieta mono nad dużym tytułem na telefonie
   phoneLabel?: string;
   // Ikona ⚙ → /ustawienia po prawej (MPages)
@@ -22,7 +28,7 @@ export function ModuleHeader({
     <>
       <header className="flex min-h-[34px] items-center gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:hidden">
         <div className="font-mono text-[13px] text-[#666666]">
-          <span>Moduły</span> <span className="text-[#b0b0b0]">/</span>{" "}
+          <span>{webParent}</span> <span className="text-[#b0b0b0]">/</span>{" "}
           {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
           <h1 className="inline text-[#171717]">{title}</h1>
         </div>
@@ -30,7 +36,7 @@ export function ModuleHeader({
       <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">
         <div className="min-w-0 flex-1">
           {phoneLabel && <MonoLabel className="block">{phoneLabel}</MonoLabel>}
-          <h1 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">{title}</h1>
+          <h1 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">{phoneTitle ?? title}</h1>
         </div>
         {phoneSettingsLink && (
           <Link

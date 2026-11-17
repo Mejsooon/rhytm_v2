@@ -2,6 +2,7 @@ import * as React from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
+import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
 import { TabBar } from "./tab-bar";
@@ -37,10 +38,11 @@ async function Powloka({
   const email = user.email ?? "";
   const displayName = profil?.display_name?.trim() || email.split("@")[0] || "Konto";
 
+  const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
+
   return (
     <>
-      {/* avatarUrl: zdjęcia profilowe (avatar_path) dojdą razem z Ustawieniami konta */}
-      <AppSidebar user={{ displayName, email, avatarUrl: null }} />
+      <AppSidebar user={{ displayName, email, avatarUrl }} />
       <main className="flex min-w-0 flex-1 flex-col pb-[84px] min-[800px]:pb-0">{children}</main>
       <TabBar />
     </>
