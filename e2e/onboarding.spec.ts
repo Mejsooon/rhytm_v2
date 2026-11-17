@@ -1,8 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
 // Web i telefon są razem w DOM (przełączane CSS), więc wybieramy wariant po nazwie projektu
+// Next trzyma poprzednie kroki w DOM (ukryte), więc lokalizatory po label/testid/tekście zawężamy do widocznych
+const widoczny = (l: Locator) => l.locator("visible=true");
 const dalej = (page: Page) => page.getByRole("button", { name: "Dalej", exact: true });
 
 async function zalozKonto(page: Page, projekt: string) {
@@ -23,9 +25,9 @@ test.describe("onboarding", () => {
 
     // Krok 1: „Dalej” nieaktywne bez imienia
     // Konto z API ma w profilu nazwę z metadanych, więc najpierw ją czyścimy
-    await page.getByLabel("Imię lub pseudonim").fill("");
+    await widoczny(page.getByLabel("Imię lub pseudonim")).fill("");
     await expect(dalej(page)).toBeDisabled();
-    await page.getByLabel("Imię lub pseudonim").fill("Mejson");
+    await widoczny(page.getByLabel("Imię lub pseudonim")).fill("Mejson");
     await expect(dalej(page)).toBeEnabled();
     await page.getByRole("radio", { name: "Niedzieli" }).click();
     await page.getByRole("radio", { name: "12 h · 2:30 PM" }).click();
@@ -37,12 +39,12 @@ test.describe("onboarding", () => {
     const rola = (nazwa: RegExp) => page.getByRole(mobile ? "checkbox" : "button", { name: nazwa });
     await rola(/^Student/).click();
     await rola(/^Trenuję regularnie/).click();
-    await page.getByLabel(/Kierunek studiów/).fill("Informatyka");
+    await widoczny(page.getByLabel(/Kierunek studiów/)).fill("Informatyka");
     if (!mobile) {
       // Podgląd na żywo (tylko web) pokazuje kategorię z zaznaczonej roli
-      await expect(page.getByTestId("pv-cats")).toContainText("Studia");
+      await expect(widoczny(page.getByTestId("pv-cats"))).toContainText("Studia");
     } else {
-      await expect(page.getByTestId("pv-cats")).toBeHidden();
+      await expect(widoczny(page.getByTestId("pv-cats"))).toHaveCount(0);
     }
     await dalej(page).click();
 
@@ -72,17 +74,17 @@ test.describe("onboarding", () => {
     await expect(page).toHaveURL(/\/onboarding\/4$/);
 
     // Krok 4: źródło „Inne” z opisem
-    const zrodla = page.getByTestId(mobile ? "source-phone" : "source-web");
+    const zrodla = widoczny(page.getByTestId(mobile ? "source-phone" : "source-web"));
     await zrodla.getByRole("button", { name: "Inne", exact: true }).click();
-    await page.getByLabel("Gdzie dokładnie?").fill("podcast");
+    await widoczny(page.getByLabel("Gdzie dokładnie?")).fill("podcast");
     await dalej(page).click();
 
     // Krok 5: Subscriptions zaznaczone z celów
     await expect(page).toHaveURL(/\/onboarding\/5$/);
     if (mobile) {
-      await expect(page.getByTestId("pages-phone").getByRole("checkbox", { name: /^Subscriptions/ })).toBeChecked();
+      await expect(widoczny(page.getByTestId("pages-phone")).getByRole("checkbox", { name: /^Subscriptions/ })).toBeChecked();
     } else {
-      await expect(page.getByTestId("pages-web").getByRole("button", { name: /^Subscriptions/ })).toHaveAttribute(
+      await expect(widoczny(page.getByTestId("pages-web")).getByRole("button", { name: /^Subscriptions/ })).toHaveAttribute(
         "aria-pressed",
         "true",
       );
@@ -103,14 +105,14 @@ test.describe("onboarding", () => {
     // Krok 7: podsumowanie
     await expect(page).toHaveURL(/\/onboarding\/7$/);
     await expect(page.getByRole("heading", { name: "Gotowe, Mejson" })).toBeVisible();
-    const podsumowanie = page.getByTestId(mobile ? "done-phone" : "done-web");
+    const podsumowanie = widoczny(page.getByTestId(mobile ? "done-phone" : "done-web"));
     await expect(podsumowanie).toContainText("Studia, Sport");
     await expect(podsumowanie).toContainText("Subscriptions");
 
     // „Zmień” przy Profilu → krok 1 z wpisanym imieniem, potem „Dalej” aż do 7
     await page.getByRole("button", { name: "Zmień: Profil" }).click();
     await expect(page).toHaveURL(/\/onboarding\/1$/);
-    await expect(page.getByLabel("Imię lub pseudonim")).toHaveValue("Mejson");
+    await expect(widoczny(page.getByLabel("Imię lub pseudonim"))).toHaveValue("Mejson");
     for (const krok of [2, 3, 4, 5, 6, 7]) {
       await dalej(page).click();
       await expect(page).toHaveURL(new RegExp(`/onboarding/${krok}$`));
@@ -118,7 +120,7 @@ test.describe("onboarding", () => {
 
     await page.getByRole("button", { name: "Przejdź do Dziś" }).click();
     await expect(page).toHaveURL(/\/dzis$/);
-    await expect(page.getByText("Witaj w rhytm, Mejson")).toBeVisible();
+    await expect(widoczny(page.getByText("Witaj w rhytm, Mejson"))).toBeVisible();
 
     // Po ukończeniu kreator nie jest już dostępny
     await page.goto("/onboarding/2");

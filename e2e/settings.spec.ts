@@ -32,12 +32,6 @@ test.describe("ustawienia ogólne", () => {
       await expect(page.getByRole("navigation", { name: "Główna nawigacja" }).getByText("Nowa Nazwa")).toBeVisible();
     }
 
-    // Waga poza zakresem: błąd i nieaktywny „Zapisz”
-    const profil2 = page.locator("section", { has: page.getByRole("heading", { name: "Profil", exact: true }) });
-    await profil2.getByLabel("Waga (kg)").fill("20");
-    await expect(profil2.getByText("Podaj liczbę 30–250.")).toBeVisible();
-    await expect(profil2.getByRole("button", { name: "Zapisz" })).toBeDisabled();
-
     // Karta Cele: cel snu 8:00 → „+” → 8:15 → zapis
     const cele = page.locator("section", { has: page.getByRole("heading", { name: "Cele", exact: true }) });
     await expect(cele.getByText("8:00", { exact: true })).toBeVisible();
@@ -51,5 +45,11 @@ test.describe("ustawienia ogólne", () => {
     await expect(
       page.locator("section", { has: page.getByRole("heading", { name: "Cele", exact: true }) }).getByText("8:15", { exact: true }),
     ).toBeVisible();
+
+    // Waga poza zakresem: błąd i nieaktywny „Zapisz”
+    const profil2 = page.locator("section", { has: page.getByRole("heading", { name: "Profil", exact: true }) });
+    await profil2.getByLabel("Waga (kg)").fill("20");
+    await expect(profil2.getByText("Podaj liczbę 30–250.")).toBeVisible();
+    await expect(profil2.getByRole("button", { name: "Zapisz" })).toBeDisabled();
   });
 });
