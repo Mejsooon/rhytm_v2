@@ -38,7 +38,22 @@ test.describe("ustawienia ogólne", () => {
     await cele.getByRole("button", { name: "Zwiększ Cel snu" }).click();
     await expect(cele.getByText("8:15", { exact: true })).toBeVisible();
     await expect(cele.getByText("Masz niezapisane zmiany.")).toBeVisible();
-    await cele.getByRole("button", { name: "Zapisz" }).click();
+    const zapiszCele = cele.getByRole("button", { name: "Zapisz" });
+    await zapiszCele.click({ timeout: 4000 }).catch(async (e) => {
+      const diag = await page.evaluate(() => {
+        const b = Array.from(document.querySelectorAll("button")).filter((x) => x.textContent === "Zapisz").map((x) => {
+          const r = x.getBoundingClientRect();
+          const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return { r: [r.x, r.y, r.width, r.height], hit: el?.outerHTML.slice(0, 80) };
+        });
+        const sections = Array.from(document.querySelectorAll("section")).map((x) => {
+          const r = x.getBoundingClientRect();
+          return [x.querySelector("h2")?.textContent, r.y, r.height];
+        });
+        return { b, sections, scrollY: window.scrollY, ih: window.innerHeight, iw: window.innerWidth, sw: document.documentElement.scrollWidth, vv: [window.visualViewport?.scale, window.visualViewport?.offsetTop, window.visualViewport?.pageTop] };
+      });
+      throw new Error("DIAG " + JSON.stringify(diag) + " " + String(e).slice(0, 100));
+    });
     await expect(cele.getByText(/Zapisano ✓/)).toBeVisible();
 
     await page.reload();
