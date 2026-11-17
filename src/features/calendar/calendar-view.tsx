@@ -2,11 +2,12 @@
 
 // Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
 // Web: tydzień i dzień to siatka godzin (Task 6); miesiąc i telefon dojdą w Taskach 10 i 11 — na razie prosta lista dni.
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
+import { BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
 import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
@@ -41,6 +42,9 @@ export function CalendarView({
   const { weekStart } = data.profile;
   const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
 
+  // Wybrany blok: klucz wystąpienia i element, przy którym otwiera się dymek
+  const [wybrany, setWybrany] = useState<{ key: string; anchor: HTMLElement } | null>(null);
+
   const wystapienia = useMemo(
     () => expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
     [data.blocks, data.exceptions, zakres.from, zakres.to],
@@ -71,6 +75,10 @@ export function CalendarView({
       () => setCategoryHidden({ id: kategoria.id, hidden }),
     );
   }
+
+  const wybraneWystapienie = wybrany
+    ? widoczne.find((o) => o.key === wybrany.key)
+    : undefined;
 
   const placeholder = (
     // Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 10 i 11)
@@ -106,8 +114,11 @@ export function CalendarView({
       nowMinutes={nowMinutes}
       variant={view === "dzien" ? "day" : "week"}
       totalCount={view === "dzien" ? wystapienia.length : undefined}
-      // TODO(Task 7/8): dymek bloku i okno nowego wpisu
-      onBlockClick={() => {}}
+      // Ponowny klik w ten sam blok zamyka dymek
+      onBlockClick={(key, anchor) =>
+        setWybrany((w) => (w?.key === key ? null : { key, anchor }))
+      }
+      // TODO(Task 8): okno nowego wpisu
       onSlotClick={() => {}}
     />
   );
@@ -148,6 +159,21 @@ export function CalendarView({
         {/* TODO(Task 11): tydzień na telefonie; miesiąc: Task 10 */}
         {view === "miesiac" && placeholder}
       </div>
+      {wybrany && wybraneWystapienie && (
+        <BlockPopover
+          occurrence={wybraneWystapienie}
+          anchor={wybrany.anchor}
+          tasks={data.tasks}
+          category={data.categories.find((k) => k.id === wybraneWystapienie.categoryId)}
+          clock={data.profile.clock}
+          applyOptimistic={applyOptimistic}
+          // TODO(Task 8): okno edycji bloku
+          onEdit={() => {}}
+          // TODO(Task 8): okno usuwania bloku
+          onDelete={() => {}}
+          onClose={() => setWybrany(null)}
+        />
+      )}
     </>
   );
 }

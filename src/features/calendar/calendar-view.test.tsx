@@ -7,6 +7,12 @@ const { setCategoryHidden, toastError } = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 vi.mock("@/features/categories/actions", () => ({ setCategoryHidden }));
+vi.mock("@/features/tasks/actions", () => ({
+  addTask: vi.fn(),
+  toggleTask: vi.fn(),
+  deleteTask: vi.fn(),
+  unpinTask: vi.fn(),
+}));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -49,7 +55,15 @@ function wyrenderuj(data = dane()) {
   );
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  // jsdom nie ma ResizeObservera, którego używa Radix Popper
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 describe("CalendarView", () => {
   it("liczy wystąpienia kategorii w widoku", () => {
@@ -90,5 +104,16 @@ describe("CalendarView", () => {
       <CalendarView view="tydzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />,
     );
     expect(screen.getByRole("button", { name: /Dom/ }).className).not.toContain("border-dashed");
+  });
+
+  it("klik w blok otwiera dymek, ponowny klik i Esc go zamykają", async () => {
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
+    expect(screen.getByRole("dialog", { name: "Szczegóły bloku" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
