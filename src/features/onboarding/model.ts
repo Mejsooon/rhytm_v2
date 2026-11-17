@@ -158,13 +158,12 @@ export function categoriesForRoles(
   }));
 }
 
-// Strony polecone z celów (w kolejności celów z GOALS)
+// Strony polecone z celów (w kolejności PAGE_TEMPLATES)
 export function recommendedPages(goals: GoalKey[]): PageKey[] {
-  const strony: PageKey[] = [];
-  for (const g of GOALS) {
-    if (g.page && goals.includes(g.key)) strony.push(g.page);
-  }
-  return strony;
+  const strony = GOALS.filter((g) => g.page && goals.includes(g.key)).map(
+    (g) => g.page as PageKey,
+  );
+  return PAGE_TEMPLATES.map((t) => t.key).filter((k) => strony.includes(k));
 }
 
 export function effectivePages(draft: OnboardingDraft): PageKey[] {

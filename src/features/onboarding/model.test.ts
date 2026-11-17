@@ -81,7 +81,7 @@ describe("recommendedPages", () => {
       "Subscriptions",
       "Projects",
     ]);
-    expect(recommendedPages(["pass", "books"])).toEqual(["Passwords", "Books"]);
+    expect(recommendedPages(["pass", "books"])).toEqual(["Books", "Passwords"]);
   });
 });
 
