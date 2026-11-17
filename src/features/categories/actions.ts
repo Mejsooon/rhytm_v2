@@ -58,6 +58,7 @@ export async function createCategory(input: {
   if (error || !data) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
+  revalidatePath("/ustawienia/kategorie");
   return { ok: true, id: data.id };
 }
 
@@ -102,6 +103,7 @@ export async function updateCategory(input: {
   if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
+  revalidatePath("/ustawienia/kategorie");
   return { ok: true };
 }
 
@@ -127,6 +129,7 @@ export async function setCategoryHidden(input: {
   if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
+  revalidatePath("/ustawienia/kategorie");
   return { ok: true };
 }
 
@@ -154,6 +157,7 @@ export async function moveCategory(input: {
   if (error) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
+  revalidatePath("/ustawienia/kategorie");
   return { ok: true };
 }
 
@@ -185,5 +189,6 @@ export async function deleteCategory(input: { id: string }): Promise<ActionResul
   if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
+  revalidatePath("/ustawienia/kategorie");
   return { ok: true };
 }

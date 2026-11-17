@@ -1,30 +1,35 @@
 "use client";
 
-// Okno nowej kategorii wg CategoryDialog.dc.html: nazwa, 8 kolorów (zajęte wyblakłe, ale do wyboru),
+// Okno nowej kategorii (albo edycji nazwy i koloru, gdy podano `category`) wg CategoryDialog.dc.html: nazwa, 8 kolorów (zajęte wyblakłe, ale do wyboru),
 // podgląd chipu i bloku, „Dodaj kategorię”. Zapisuje przez createCategory i oddaje nową kategorię
 // wywołującemu — ten sam komponent obsługuje „+ Kategoria” i „+ Nowa” z okna bloku.
 import { useState } from "react";
 
 import { Button, FormDialog, TextField } from "@/components/controls";
-import { createCategory } from "./actions";
+import { createCategory, updateCategory } from "./actions";
 import { CATEGORY_COLORS } from "./colors";
 
 export type NewCategory = { id: string; name: string; color: string };
 
 export function CategoryDialog({
+  category,
   usedColors = [],
   onSaved,
   onCancel,
 }: {
+  // Tryb edycji: kategoria własna do zmiany nazwy i koloru (bez niej — tworzenie nowej)
+  category?: NewCategory;
   // Kolory istniejących kategorii: wyblakłe, ale nadal do wyboru
   usedColors?: string[];
   onSaved: (category: NewCategory) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState("");
+  const edycja = category !== undefined;
+  const [name, setName] = useState(category?.name ?? "");
   // Domyślnie pierwszy wolny kolor (jak w makiecie, gdzie zajęte są pierwsze cztery)
   const [color, setColor] = useState(
-    (CATEGORY_COLORS.find((c) => !usedColors.includes(c.hex)) ?? CATEGORY_COLORS[0]).hex,
+    category?.color ??
+      (CATEGORY_COLORS.find((c) => !usedColors.includes(c.hex)) ?? CATEGORY_COLORS[0]).hex,
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -35,20 +40,22 @@ export function CategoryDialog({
     if (nazwa === "" || pending) return;
     setPending(true);
     setError("");
-    const wynik = await createCategory({ name: nazwa, color });
+    const wynik = category
+      ? await updateCategory({ id: category.id, name: nazwa, color })
+      : await createCategory({ name: nazwa, color });
     setPending(false);
     if (!wynik.ok) {
       setError(wynik.message);
       return;
     }
-    onSaved({ id: wynik.id ?? "", name: nazwa, color });
+    onSaved({ id: category?.id ?? wynik.id ?? "", name: nazwa, color });
   }
 
   return (
     <FormDialog
       open
       onOpenChange={(otwarte) => !otwarte && onCancel()}
-      title="Nowa kategoria"
+      title={edycja ? "Edytuj kategorię" : "Nowa kategoria"}
       description="Kolor kropki w kalendarzu i w filtrach."
       footer={
         <>
@@ -59,7 +66,7 @@ export function CategoryDialog({
           )}
           <Button onClick={onCancel}>Anuluj</Button>
           <Button variant="primary" disabled={nazwa === "" || pending} onClick={zapisz}>
-            Dodaj kategorię
+            {edycja ? "Zapisz" : "Dodaj kategorię"}
           </Button>
         </>
       }
