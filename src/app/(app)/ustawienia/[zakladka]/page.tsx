@@ -58,7 +58,7 @@ export default async function ZakladkaPage({ params }: { params: Promise<{ zakla
   return (
     <>
       <ModuleHeader title={tab.label} webParent="Ustawienia" phoneTitle="Ustawienia" />
-      <div className="flex w-full max-w-[1100px] items-start gap-8 px-6 py-7 max-[799px]:flex-col max-[799px]:gap-4 max-[799px]:py-2">
+      <div className="flex w-full max-w-[1100px] items-start gap-8 px-6 py-7 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:gap-4 max-[799px]:py-2">
         <SettingsTabs active={tab.slug as SettingsTabSlug} />
         <div className="flex min-w-0 flex-1 flex-col gap-6 max-[799px]:w-full max-[799px]:gap-4">
           <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">{tab.label}</h2>
