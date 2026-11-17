@@ -1,0 +1,90 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { changeOccurrence } = vi.hoisted(() => ({ changeOccurrence: vi.fn() }));
+vi.mock("./actions", () => ({ changeOccurrence }));
+
+import { DeleteBlockDialog } from "./delete-block-dialog";
+import type { Occurrence } from "./occurrences";
+
+function wystapienie(extra: Partial<Occurrence> = {}): Occurrence {
+  return {
+    key: "b1:2026-11-17",
+    blockId: "b1",
+    date: "2026-11-17",
+    startMin: 600,
+    durationMin: 150,
+    title: "rhytm — kod",
+    categoryId: null,
+    note: null,
+    remind: true,
+    recurring: false,
+    recurrence: null,
+    modified: false,
+    ...extra,
+  };
+}
+
+function wyrenderuj(o: Occurrence) {
+  const onDeleted = vi.fn();
+  const onCancel = vi.fn();
+  render(<DeleteBlockDialog occurrence={o} clock="24" onDeleted={onDeleted} onCancel={onCancel} />);
+  return { onDeleted, onCancel };
+}
+
+beforeEach(() => vi.clearAllMocks());
+
+describe("DeleteBlockDialog", () => {
+  it("blok jednorazowy: „Usunąć blok?” i usunięcie po „Usuń”", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    const { onDeleted } = wyrenderuj(wystapienie());
+    expect(screen.getByRole("dialog", { name: "Usunąć blok?" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-17",
+      scope: "all",
+      delete: true,
+    });
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled());
+  });
+
+  it("Anuluj nic nie usuwa", async () => {
+    const { onCancel } = wyrenderuj(wystapienie());
+    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(onCancel).toHaveBeenCalled();
+    expect(changeOccurrence).not.toHaveBeenCalled();
+  });
+
+  it("blok cykliczny: pyta o zakres i usuwa z oryginalną datą wystąpienia", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj(
+      wystapienie({
+        key: "b1:2026-11-10",
+        date: "2026-11-12",
+        recurring: true,
+        recurrence: { freq: "weekly" },
+      }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Usuwasz blok, który się powtarza" }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText(/To i następne/));
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b1",
+      date: "2026-11-10",
+      scope: "following",
+      delete: true,
+    });
+  });
+
+  it("błąd akcji zostaje w oknie", async () => {
+    changeOccurrence.mockResolvedValue({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    const { onDeleted } = wyrenderuj(wystapienie());
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(await screen.findByText("Nie udało się zapisać. Spróbuj ponownie.")).toBeInTheDocument();
+    expect(onDeleted).not.toHaveBeenCalled();
+  });
+});

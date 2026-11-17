@@ -24,7 +24,9 @@ max_rows = 1000
 # `postgres` are reachable through the Data API roles (`anon`, `authenticated`, `service_role`)
 # without explicit GRANTs, matching the cloud default. Set to `false` to require explicit GRANTs
 # instead. Left unset, a fresh project falls back to `true`.
-# auto_expose_new_tables = true
+# Nasz projekt w chmurze NIE nadaje uprawnień automatycznie, więc lokalnie też nie — inaczej testy
+# pgTAP sprawdzające GRANT-y zawsze by przechodziły (Etap 1: brak GRANT-ów zepsuł produkcję).
+auto_expose_new_tables = false
 
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.

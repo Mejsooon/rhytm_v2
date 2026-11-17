@@ -147,6 +147,18 @@ Uwaga: migracja cofa istniejące konta z Etapu 0 na początek onboardingu (`onbo
 
 ---
 
+### Nowa migracja (Etap 2: kalendarz i zadania)
+
+**Przed** scaleniem Etapu 2 do `main` uruchom u siebie, w folderze projektu:
+
+```
+pnpm exec supabase db push --remote
+```
+
+Migracja `20261118000001_calendar.sql` dodaje tabele `blocks`, `block_exceptions` i `tasks` wraz z zabezpieczeniami oraz funkcje `move_category` i podziału serii. Vercel wdraża nową wersję zaraz po scaleniu, a kalendarz czyta te tabele, więc migracja musi trafić do bazy w chmurze **przed** merge'em. Inaczej `/kalendarz` zwróci błąd zapytania do nieistniejących tabel.
+
+---
+
 ## 7. Przekazanie dostępu Claude'owi: co wolno wkleić, czego nie
 
 **Możesz wkleić w czacie** (są publiczne albo bezpieczne):

@@ -1,0 +1,70 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+
+import { kategoria, wystapienie } from "./fixtures";
+import { MCalendarWeek } from "./m-calendar-week";
+
+const dni = ["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"];
+const wystapienia = [
+  wystapienie("b2:2026-11-18", "2026-11-18", 480, 30, "Rutyna", null),
+  wystapienie("b1:2026-11-18", "2026-11-18", 600, 120, "Algebra", "c1"),
+];
+
+function wyrenderuj(over: Partial<React.ComponentProps<typeof MCalendarWeek>> = {}) {
+  return render(
+    <MCalendarWeek
+      days={dni}
+      date="2026-11-18"
+      today="2026-11-17"
+      nowMinutes={600}
+      occurrences={wystapienia}
+      categories={[kategoria("c1", "Studia", "#0070f3")]}
+      clock="24"
+      onAdd={() => {}}
+      onBlockClick={() => {}}
+      {...over}
+    />,
+  );
+}
+
+describe("MCalendarWeek", () => {
+  it("lista ma 7 dni z plakietkami, dziś czarna", () => {
+    wyrenderuj();
+    expect(screen.getAllByRole("link", { name: /listopada$/ })).toHaveLength(7);
+    const dzis = screen.getByRole("link", { name: "Wtorek 17 listopada" });
+    expect(dzis.className).toContain("bg-[#171717]");
+    expect(dzis).toHaveAttribute("href", "/kalendarz?widok=dzien&data=2026-11-17");
+  });
+
+  it("dzień listuje bloki z godzinami", () => {
+    wyrenderuj();
+    const sekcja = screen.getByRole("region", { name: "Środa 18 listopada" });
+    const bloki = within(sekcja).getAllByRole("button");
+    expect(bloki[0]).toHaveTextContent("Rutyna");
+    expect(bloki[0]).toHaveTextContent("08:00");
+    expect(bloki[1]).toHaveTextContent("Algebra");
+    expect(bloki[1]).toHaveTextContent("10:00");
+  });
+
+  it("pusty dzień mówi „Brak bloków”", () => {
+    wyrenderuj();
+    const sekcja = screen.getByRole("region", { name: "Czwartek 19 listopada" });
+    expect(within(sekcja).getByText("Brak bloków")).toBeInTheDocument();
+  });
+
+  it("stuknięcie bloku woła onBlockClick, bez data-occurrence-key", async () => {
+    const onBlockClick = vi.fn();
+    const { container } = wyrenderuj({ onBlockClick });
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(onBlockClick).toHaveBeenCalledWith("b1:2026-11-18");
+    expect(container.querySelector("[data-occurrence-key]")).toBeNull();
+  });
+
+  it("pływający „+” dodaje blok na wybrany dzień", async () => {
+    const onAdd = vi.fn();
+    wyrenderuj({ onAdd });
+    await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
+    expect(onAdd).toHaveBeenCalledWith("2026-11-18", 540);
+  });
+});

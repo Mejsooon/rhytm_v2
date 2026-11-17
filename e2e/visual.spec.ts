@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { zalozKontoKalendarza, zasiejBlok, zasiejZadanie, WTOREK } from "./helpers/kalendarz";
 import { createConfirmedUser, createUserAtOnboardingEnd, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
 // Zrzuty ekranów do ręcznego porównania z makietami. Test pada tylko, gdy strona się nie renderuje.
@@ -99,5 +100,87 @@ test.describe("ekrany z sesją", () => {
     await page.goto("/xyz");
     await expect(page.getByRole("heading", { name: "Tej strony nie ma" })).toBeVisible();
     await zrzut(page, "404-zalogowany", info.project.name);
+  });
+
+  test("zrzuty /kalendarz i /ustawienia/kategorie (makiety Calendar…, MCalendar…, BlockDialog, ScopeDialog, CategoryDialog, Settings)", async ({ page }, info) => {
+    const projekt = info.project.name;
+    const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
+    // Stały tydzień z kilkoma blokami: seria z zadaniami, blok jednorazowy i dwa nakładające się
+    const matematyka = await zasiejBlok(userId, {
+      title: "Matematyka",
+      date: WTOREK,
+      startMin: 600,
+      categoryId: kategorie["Nauka"],
+      recurrence: { freq: "weekly" },
+    });
+    await zasiejZadanie(userId, matematyka, WTOREK, "Zadania z analizy", true);
+    await zasiejZadanie(userId, matematyka, WTOREK, "Powtórka wzorów");
+    await zasiejBlok(userId, { title: "Bieg", date: "2027-01-13", startMin: 420, categoryId: kategorie["Sport"] });
+    await zasiejBlok(userId, { title: "Projekt", date: WTOREK, startMin: 840, durationMin: 120, categoryId: kategorie["Praca"] });
+    await zasiejBlok(userId, { title: "Siłownia", date: "2027-01-14", startMin: 1080, categoryId: kategorie["Sport"] });
+
+    const tydzien = `/kalendarz?widok=tydzien&data=${WTOREK}`;
+    const blok = page.getByRole("button", { name: /Matematyka/ });
+
+    if (projekt === "web") {
+      await page.goto(tydzien);
+      await expect(blok).toBeVisible();
+      await zrzut(page, "kalendarz-tydzien", projekt);
+
+      // Dymek bloku i okno zakresu (edycja bloku z serii)
+      await blok.click();
+      await expect(page.getByRole("dialog", { name: "Szczegóły bloku" })).toContainText("1 z 2");
+      await zrzut(page, "kalendarz-dymek-bloku", projekt);
+      await page.getByRole("button", { name: "Edytuj" }).click();
+      await expect(page.getByRole("dialog", { name: "Edytuj blok" })).toBeVisible();
+      await page.getByRole("button", { name: "Zapisz blok" }).click();
+      await expect(page.getByRole("dialog", { name: "Zmieniasz blok, który się powtarza" })).toBeVisible();
+      await zrzut(page, "kalendarz-okno-zakresu", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      // Anuluj w oknie zakresu wraca do formularza bloku
+      await expect(page.getByRole("dialog", { name: "Edytuj blok" })).toBeVisible();
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      await page.getByRole("button", { name: "Nowy blok" }).click();
+      await expect(page.getByRole("dialog", { name: "Nowy blok" })).toBeVisible();
+      await zrzut(page, "kalendarz-okno-nowy-blok", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+
+      await page.getByRole("button", { name: "+ Kategoria" }).click();
+      await expect(page.getByRole("dialog", { name: "Nowa kategoria" })).toBeVisible();
+      await zrzut(page, "kalendarz-okno-kategorii", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+
+      await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
+      await expect(page.getByText("Dzień w liczbach")).toBeVisible();
+      await zrzut(page, "kalendarz-dzien", projekt);
+
+      await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
+      await expect(page.getByTestId(`komorka-${WTOREK}`)).toBeVisible();
+      await zrzut(page, "kalendarz-miesiac", projekt);
+    } else {
+      // Telefon: dzień (domyślny widok), tydzień, miesiąc i arkusz nowego bloku
+      await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
+      await expect(blok).toBeVisible();
+      await zrzut(page, "kalendarz-dzien", projekt);
+
+      await page.getByRole("button", { name: "Dodaj blok", exact: true }).click();
+      await expect(page.getByRole("dialog", { name: "Nowy blok" })).toBeVisible();
+      await zrzut(page, "kalendarz-arkusz-bloku", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+
+      await page.goto(tydzien);
+      await expect(blok).toBeVisible();
+      await zrzut(page, "kalendarz-tydzien", projekt);
+
+      await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
+      await expect(page.getByTestId("kropka-kategorii").first()).toBeVisible();
+      await zrzut(page, "kalendarz-miesiac", projekt);
+    }
+
+    await page.goto("/ustawienia/kategorie");
+    await expect(page.locator("section").getByRole("heading", { name: "Kategorie kalendarza" })).toBeVisible();
+    await zrzut(page, "ustawienia-kategorie", projekt);
   });
 });

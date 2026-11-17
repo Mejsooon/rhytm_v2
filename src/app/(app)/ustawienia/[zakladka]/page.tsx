@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
+import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
 import { SETTINGS_TABS, SettingsTabs, type SettingsTabSlug } from "@/features/settings/settings-tabs";
@@ -55,6 +56,23 @@ async function Ogolne() {
   );
 }
 
+// Karta Kategorie kalendarza z listą w kolejności z bazy (dane zależą od ciasteczek → connection + Suspense)
+async function Kategorie() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data } = await supabase
+    .from("categories")
+    .select("id, name, color, position, is_system, hidden")
+    .eq("user_id", user.id)
+    .order("position", { ascending: true });
+  return <CategoriesCard categories={data ?? []} />;
+}
+
 export default async function ZakladkaPage({ params }: { params: Promise<{ zakladka: string }> }) {
   const { zakladka } = await params;
   const tab = SETTINGS_TABS.find((t) => t.slug === zakladka);
@@ -70,6 +88,10 @@ export default async function ZakladkaPage({ params }: { params: Promise<{ zakla
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
               <Ogolne />
+            </Suspense>
+          ) : tab.slug === "kategorie" ? (
+            <Suspense fallback={null}>
+              <Kategorie />
             </Suspense>
           ) : (
             <EmptyModule>Ta zakładka powstanie w kolejnym etapie.</EmptyModule>

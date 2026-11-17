@@ -68,7 +68,7 @@ export function DatePicker({
           aria-label={ariaLabel}
           aria-haspopup="dialog"
           className={cn(
-            "inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
+            "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >
