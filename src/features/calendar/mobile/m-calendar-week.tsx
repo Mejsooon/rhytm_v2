@@ -86,7 +86,8 @@ export function MCalendarWeek({
         type="button"
         aria-label="Dodaj blok"
         onClick={() => onAdd(date, startPlusa)}
-        className="fixed right-4 bottom-[100px] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
+        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       >
         <Plus size={26} aria-hidden="true" />
       </button>

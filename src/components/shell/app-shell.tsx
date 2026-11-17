@@ -43,7 +43,7 @@ async function Powloka({
   return (
     <>
       <AppSidebar user={{ displayName, email, avatarUrl }} />
-      <main className="flex min-w-0 flex-1 flex-col pb-[84px] min-[800px]:pb-0">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) min-[800px]:pb-0">{children}</main>
       <TabBar />
     </>
   );
