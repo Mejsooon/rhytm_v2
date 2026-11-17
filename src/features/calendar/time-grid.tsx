@@ -35,6 +35,8 @@ export function TimeGrid({
   nowMinutes,
   variant,
   totalCount,
+  activeSlot,
+  onSlotAnchor,
   onSlotClick,
   onBlockClick,
 }: {
@@ -49,6 +51,10 @@ export function TimeGrid({
   variant: "week" | "day";
   // Widok dnia: ile bloków ma dzień łącznie (z ukrytymi kategoriami) do „x z y bloków”
   totalCount?: number;
+  // Slot, dla którego jest otwarty dymek „Nowy wpis”: duch zostaje na nim mimo ruchu myszy
+  activeSlot?: { date: IsoDate; startMin: number } | null;
+  // Element ducha aktywnego slotu — kotwica dymku „Nowy wpis”
+  onSlotAnchor?: (el: HTMLElement | null) => void;
   onSlotClick: (date: IsoDate, startMin: number) => void;
   onBlockClick: (key: string, anchorEl: HTMLElement) => void;
 }) {
@@ -58,7 +64,7 @@ export function TimeGrid({
   const kolumny = `${szerokoscEtykiet}px repeat(${days.length}, minmax(0, 1fr))`;
   const przewijanie = useRef<HTMLDivElement>(null);
   // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
-  const [duch, setDuch] = useState<{ date: IsoDate; startMin: number } | null>(null);
+  const [duchMyszy, setDuchMyszy] = useState<{ date: IsoDate; startMin: number } | null>(null);
 
   // Przy montażu: do trwającego bloku z dzisiejszej kolumny, a gdy go nie ma — do 06:00
   useEffect(() => {
@@ -183,7 +189,9 @@ export function TimeGrid({
                 const dnia = occurrences.filter((o) => o.date === dzien);
                 const uklad = layoutDay(dnia);
                 const linia = nowLine({ date: today, minutes: nowMinutes }, dzien);
-                const pokazDucha = duch?.date === dzien;
+                // Aktywny slot (otwarty dymek) ma pierwszeństwo przed duchem myszy, jak w makiecie
+                const duch = activeSlot?.date === dzien ? activeSlot : duchMyszy?.date === dzien ? duchMyszy : null;
+                const duchAktywny = duch !== null && duch === activeSlot;
                 return (
                   <div
                     key={dzien}
@@ -197,18 +205,19 @@ export function TimeGrid({
                     }}
                     onMouseMove={(e) => {
                       if ((e.target as HTMLElement).closest("button,a,[role=dialog]")) {
-                        if (duch) setDuch(null);
+                        if (duchMyszy) setDuchMyszy(null);
                         return;
                       }
                       const startMin = polgodzinaZ(e) * 30;
-                      if (duch?.date !== dzien || duch.startMin !== startMin) {
-                        setDuch({ date: dzien, startMin });
+                      if (duchMyszy?.date !== dzien || duchMyszy.startMin !== startMin) {
+                        setDuchMyszy({ date: dzien, startMin });
                       }
                     }}
-                    onMouseLeave={() => setDuch(null)}
+                    onMouseLeave={() => setDuchMyszy(null)}
                   >
-                    {pokazDucha && duch && (
+                    {duch && (
                       <div
+                        ref={duchAktywny ? onSlotAnchor : undefined}
                         aria-hidden="true"
                         className="pointer-events-none absolute right-1 left-1 box-border rounded-md border border-dashed border-[#a3a3a3] bg-[#fafafa] px-2 py-1 font-mono text-[11px] text-[#666666]"
                         style={{
@@ -216,7 +225,7 @@ export function TimeGrid({
                           height: wysokoscGodziny - 4,
                         }}
                       >
-                        {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}`}
+                        {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}–${formatClockTime(Math.floor(Math.min(duch.startMin + 60, 1440) / 60), Math.min(duch.startMin + 60, 1440) % 60, clock)}`}
                       </div>
                     )}
 

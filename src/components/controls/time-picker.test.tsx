@@ -36,4 +36,40 @@ describe("TimePicker", () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByText("Minuty")).not.toBeInTheDocument();
   });
+
+  it("tryb 12 h: siatka 1–12 i AM/PM, wybór 2 + PM + :30 daje 14:30", async () => {
+    const u = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <TimePicker value="09:00" onChange={onChange} ariaLabel="Od" clock="12" />,
+    );
+    // Przycisk pokazuje godzinę w 12 h
+    const przycisk = screen.getByRole("button", { name: "Od" });
+    expect(przycisk).toHaveTextContent("9:00 AM");
+    await u.click(przycisk);
+    expect(screen.queryByRole("button", { name: "13" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "00" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "12" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "AM" })).toHaveAttribute("aria-pressed", "true");
+
+    await u.click(screen.getByRole("button", { name: "2" }));
+    expect(onChange).toHaveBeenLastCalledWith("02:00");
+    rerender(<TimePicker value="02:00" onChange={onChange} ariaLabel="Od" clock="12" />);
+    await u.click(screen.getByRole("button", { name: "PM" }));
+    expect(onChange).toHaveBeenLastCalledWith("14:00");
+    rerender(<TimePicker value="14:00" onChange={onChange} ariaLabel="Od" clock="12" />);
+    await u.click(screen.getByRole("button", { name: ":30" }));
+    expect(onChange).toHaveBeenLastCalledWith("14:30");
+  });
+
+  it("tryb 12 h: 12 AM to 00:00, 12 PM to 12:00", async () => {
+    const u = userEvent.setup();
+    const onChange = vi.fn();
+    render(<TimePicker value="05:15" onChange={onChange} ariaLabel="Od" clock="12" />);
+    await u.click(screen.getByRole("button", { name: "Od" }));
+    await u.click(screen.getByRole("button", { name: "12" }));
+    expect(onChange).toHaveBeenLastCalledWith("00:15");
+    await u.click(screen.getByRole("button", { name: "PM" }));
+    expect(onChange).toHaveBeenLastCalledWith("17:15");
+  });
 });

@@ -7,12 +7,16 @@ import { useRouter } from "next/navigation";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
+import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
 import { BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
 import { CategoryFilters } from "./category-filters";
 import { DaySide } from "./day-side";
+import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { CalendarData, CategoryRow } from "./load-calendar";
-import { expandOccurrences } from "./occurrences";
+import { NewEntryPopover } from "./new-entry-popover";
+import { expandOccurrences, type Occurrence } from "./occurrences";
 import { TimeGrid } from "./time-grid";
 import { useCalendarStore } from "./use-calendar-store";
 import { viewRange, type CalendarView } from "./view-range";
@@ -22,6 +26,13 @@ function godzina(minuty: number): string {
   const m = String(minuty % 60).padStart(2, "0");
   return `${h}:${m}`;
 }
+
+// Otwarte okno kalendarza; okna nie zmieniają adresu, więc widok i data zostają jak były
+type Okno =
+  | { typ: "wpis"; date: IsoDate; startMin: number }
+  | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial }
+  | { typ: "kategoria" }
+  | { typ: "usun"; occurrence: Occurrence };
 
 export function CalendarView({
   view,
@@ -44,11 +55,15 @@ export function CalendarView({
 
   // Wybrany blok: klucz wystąpienia i element, przy którym otwiera się dymek
   const [wybrany, setWybrany] = useState<string | null>(null);
+  // Okno nowego wpisu / bloku / kategorii / usuwania (naraz tylko jedno) i kotwica dymku „Nowy wpis”
+  const [okno, setOkno] = useState<Okno | null>(null);
+  const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
   // Zmiana widoku albo dnia zamyka dymek (stan ustawiany w renderze, jak w store)
   const [widokDla, setWidokDla] = useState(`${view}|${date}`);
   if (widokDla !== `${view}|${date}`) {
     setWidokDla(`${view}|${date}`);
     setWybrany(null);
+    setOkno((o) => (o?.typ === "wpis" ? null : o));
   }
 
   const wystapienia = useMemo(
@@ -79,6 +94,32 @@ export function CalendarView({
         ),
       }),
       () => setCategoryHidden({ id: kategoria.id, hidden }),
+    );
+  }
+
+  // Nowa kategoria od razu trafia do danych (potem nadejdą dane z serwera z tym samym id)
+  function dodajKategorie(nowa: NewCategory) {
+    void applyOptimistic(
+      (d) =>
+        d.categories.some((k) => k.id === nowa.id)
+          ? d
+          : {
+              ...d,
+              categories: [
+                ...d.categories,
+                {
+                  id: nowa.id,
+                  name: nowa.name,
+                  color: nowa.color,
+                  hidden: false,
+                  is_system: false,
+                  position: Math.max(0, ...d.categories.map((k) => k.position)) + 1,
+                  user_id: d.categories[0]?.user_id ?? "",
+                  created_at: null,
+                },
+              ],
+            },
+      async () => ({ ok: true }),
     );
   }
 
@@ -125,8 +166,17 @@ export function CalendarView({
       totalCount={view === "dzien" ? wystapienia.length : undefined}
       // Ponowny klik w ten sam blok zamyka dymek
       onBlockClick={(key) => setWybrany((w) => (w === key ? null : key))}
-      // TODO(Task 8): okno nowego wpisu
-      onSlotClick={() => {}}
+      activeSlot={okno?.typ === "wpis" ? okno : null}
+      onSlotAnchor={setKotwicaWpisu}
+      // Klik w ten sam slot zamyka dymek, w inny przenosi go
+      onSlotClick={(dzien, startMin) => {
+        setWybrany(null);
+        setOkno((o) =>
+          o?.typ === "wpis" && o.date === dzien && o.startMin === startMin
+            ? null
+            : { typ: "wpis", date: dzien, startMin },
+        );
+      }}
     />
   );
 
@@ -137,16 +187,31 @@ export function CalendarView({
         date={date}
         today={today}
         weekStart={weekStart}
-        // TODO(Task 8): okno nowego bloku
-        onNewBlock={() => {}}
+        // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
+        onNewBlock={() => {
+          setWybrany(null);
+          setOkno({
+            typ: "blok",
+            mode: "create",
+            initial: {
+              title: "",
+              categoryId: null,
+              date: view === "dzien" ? date : today,
+              startMin: Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60),
+              durationMin: 60,
+              recurrence: null,
+              note: "",
+              remind: true,
+            },
+          });
+        }}
       />
       <div className="flex flex-col gap-3.5 px-6 pt-4 pb-6 max-[799px]:px-4">
         <CategoryFilters
           categories={data.categories}
           counts={liczniki}
           onToggle={przelaczKategorie}
-          // TODO(Task 8): okno nowej kategorii
-          onAdd={() => {}}
+          onAdd={() => setOkno({ typ: "kategoria" })}
         />
         {view === "tydzien" && <div className="max-[799px]:hidden">{siatka}</div>}
         {view === "dzien" && (
@@ -173,11 +238,90 @@ export function CalendarView({
           category={data.categories.find((k) => k.id === wybraneWystapienie.categoryId)}
           clock={data.profile.clock}
           applyOptimistic={applyOptimistic}
-          // TODO(Task 8): okno edycji bloku
-          onEdit={() => {}}
-          // TODO(Task 8): okno usuwania bloku
-          onDelete={() => {}}
+          onEdit={() => {
+            const o = wybraneWystapienie;
+            setWybrany(null);
+            setOkno({
+              typ: "blok",
+              mode: "edit",
+              initial: {
+                title: o.title,
+                categoryId: o.categoryId,
+                date: o.date,
+                startMin: o.startMin,
+                durationMin: o.durationMin,
+                recurrence: o.recurrence,
+                note: o.note ?? "",
+                remind: o.remind,
+                blockId: o.blockId,
+                // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
+                occurrenceDate: o.key.slice(o.blockId.length + 1),
+              },
+            });
+          }}
+          onDelete={() => {
+            const o = wybraneWystapienie;
+            setWybrany(null);
+            setOkno({ typ: "usun", occurrence: o });
+          }}
           onClose={() => setWybrany(null)}
+        />
+      )}
+      {okno?.typ === "wpis" && (
+        <NewEntryPopover
+          anchor={kotwicaWpisu}
+          date={okno.date}
+          startMin={okno.startMin}
+          clock={data.profile.clock}
+          onBlock={() =>
+            setOkno({
+              typ: "blok",
+              mode: "create",
+              initial: {
+                title: "",
+                categoryId: null,
+                date: okno.date,
+                startMin: okno.startMin,
+                // Blok nie przechodzi przez północ
+                durationMin: Math.min(60, 1440 - okno.startMin),
+                recurrence: null,
+                note: "",
+                remind: true,
+              },
+            })
+          }
+          onClose={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "blok" && (
+        <BlockDialog
+          mode={okno.mode}
+          initial={okno.initial}
+          categories={data.categories}
+          clock={data.profile.clock}
+          weekStart={weekStart}
+          today={today}
+          onCategoryCreated={dodajKategorie}
+          onSaved={() => setOkno(null)}
+          onCancel={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "kategoria" && (
+        <CategoryDialog
+          usedColors={data.categories.map((k) => k.color)}
+          onSaved={(nowa) => {
+            dodajKategorie(nowa);
+            setOkno(null);
+          }}
+          onCancel={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "usun" && (
+        <DeleteBlockDialog
+          occurrence={okno.occurrence}
+          clock={data.profile.clock}
+          onDeleted={() => setOkno(null)}
+          onCancel={() => setOkno(null)}
         />
       )}
     </>

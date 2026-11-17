@@ -189,6 +189,24 @@ describe("TimeGrid", () => {
     expect(onSlotClick).toHaveBeenCalledWith("2026-11-18", 120);
   });
 
+  it("najechanie na pustą kolumnę pokazuje ducha z godziną i zakresem godziny", () => {
+    wyrenderuj();
+    // 100 px / 24 px = 4. półgodzina = 02:00
+    fireEvent.mouseMove(screen.getByTestId("kolumna-2026-11-18"), { clientY: 100 });
+    expect(screen.getByText("+ 02:00–03:00")).toBeInTheDocument();
+    fireEvent.mouseLeave(screen.getByTestId("kolumna-2026-11-18"));
+    expect(screen.queryByText("+ 02:00–03:00")).not.toBeInTheDocument();
+  });
+
+  it("aktywny slot zostaje z duchem mimo opuszczenia kolumny i oddaje element jako kotwicę", () => {
+    const onSlotAnchor = vi.fn();
+    wyrenderuj({ activeSlot: { date: "2026-11-18", startMin: 600 }, onSlotAnchor });
+    expect(screen.getByText("+ 10:00–11:00")).toBeInTheDocument();
+    expect(onSlotAnchor).toHaveBeenCalledWith(expect.any(HTMLElement));
+    fireEvent.mouseLeave(screen.getByTestId("kolumna-2026-11-18"));
+    expect(screen.getByText("+ 10:00–11:00")).toBeInTheDocument();
+  });
+
   it("przewija siatkę na montażu do 06:00", () => {
     wyrenderuj();
     expect(screen.getByTestId("przewijanie").scrollTop).toBe(6 * 48);
