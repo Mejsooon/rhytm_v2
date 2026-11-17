@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(26);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -121,6 +121,23 @@ select is(
   (select (t.block_id is null and t.occurrence_date is null and t.due_date = '2026-11-10')::int
    from public.tasks as t where t.id = 'a1000000-0000-0000-0000-00000000000a'),
   1, 'zadanie samodzielne z due_date = data wystąpienia');
+
+-- Zwykły DELETE bloku z zadaniami: zadania zostają jako samodzielne.
+insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
+values ('a3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Do usunięcia',
+  '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"daily"}');
+insert into public.tasks (user_id, title, block_id, occurrence_date)
+values
+  ('00000000-0000-0000-0000-00000000000a', 'Usuw 1', 'a3000000-0000-0000-0000-00000000000a', '2026-12-01'),
+  ('00000000-0000-0000-0000-00000000000a', 'Usuw 2', 'a3000000-0000-0000-0000-00000000000a', '2026-12-02');
+select lives_ok(
+  $$delete from public.blocks where id = 'a3000000-0000-0000-0000-00000000000a'$$,
+  'usunięcie bloku z zadaniami się udaje');
+select is(
+  (select count(*) from public.tasks as t
+   where t.title in ('Usuw 1', 'Usuw 2') and t.block_id is null and t.occurrence_date is null
+     and t.due_date = case t.title when 'Usuw 1' then date '2026-12-01' else date '2026-12-02' end),
+  2::bigint, 'oba zadania samodzielne z due_date = data wystąpienia');
 
 select * from finish();
 rollback;

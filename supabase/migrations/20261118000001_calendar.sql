@@ -149,6 +149,26 @@ grant select, insert, update, delete on public.block_exceptions to authenticated
 grant select, insert, update, delete on public.tasks to authenticated;
 grant all on public.blocks, public.block_exceptions, public.tasks to service_role;
 
+-- Przed usunięciem bloku jego zadania stają się samodzielne (due_date = data wystąpienia),
+-- bo samo ON DELETE SET NULL naruszyłoby CHECK (block_id is null) = (occurrence_date is null).
+create function public.detach_tasks_before_block_delete()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  update public.tasks as t
+  set due_date = t.occurrence_date, block_id = null, occurrence_date = null
+  where t.block_id = old.id;
+  return old;
+end;
+$$;
+
+create trigger blocks_detach_tasks_before_delete
+  before delete on public.blocks
+  for each row execute function public.detach_tasks_before_block_delete();
+
 -- Rozcina serię od daty p_from ("to i następne").
 -- Edycja (p_delete = false): stara seria kończy się dzień przed p_from (albo znika, gdy p_from to pierwsze wystąpienie),
 -- powstaje nowa seria od p_from z zastosowanym p_patch, a zadania i wyjątki od p_from przechodzą do niej
