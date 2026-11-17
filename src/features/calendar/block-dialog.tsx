@@ -4,7 +4,7 @@
 // Jedno okno na tworzenie i edycję. Kroki: formularz -> (zakres, gdy edytujemy blok cykliczny)
 // albo (nowa kategoria); stan formularza zostaje w tym komponencie, więc po powrocie
 // z innego okna pola są nietknięte. Okna nie zmieniają adresu.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BellIcon } from "lucide-react";
 
 import {
@@ -53,8 +53,6 @@ const OPCJE_POWTARZANIA: { value: Powtarzanie; label: string }[] = [
   { value: "custom", label: "Własne…" },
 ];
 const DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
-// Koniec bloku wybierany w TimePicker nie sięga 24:00, więc przy przesuwaniu „od” kończymy najpóźniej o 23:55
-const MAKS_KONIEC = 23 * 60 + 55;
 
 function naGodzine(minuty: number): string {
   return `${String(Math.floor(minuty / 60)).padStart(2, "0")}:${String(minuty % 60).padStart(2, "0")}`;
@@ -97,6 +95,8 @@ export function BlockDialog({
   const [dodane, setDodane] = useState<NewCategory[]>([]);
   const [pending, setPending] = useState(false);
   const [blad, setBlad] = useState("");
+  // Blokada podwójnego zapisu (dwa szybkie kliknięcia, zanim stan pending się odświeży)
+  const zapisuje = useRef(false);
 
   // Powtarzanie: wybór, dni własnego powtarzania i data końca
   const powtarzanie0: Powtarzanie = initial.recurrence?.freq ?? "none";
@@ -153,6 +153,8 @@ export function BlockDialog({
     if (durationMin !== initial.durationMin) patch.durationMin = durationMin;
     if (zmienionePowtarzanie) patch.recurrence = recurrence;
 
+    if (zapisuje.current) return;
+    zapisuje.current = true;
     setPending(true);
     setBlad("");
     const wynik = await changeOccurrence({
@@ -161,6 +163,7 @@ export function BlockDialog({
       scope: zakres,
       patch,
     });
+    zapisuje.current = false;
     setPending(false);
     if (!wynik.ok) {
       // Błąd (np. powtarzanie bez tego dnia) pokazujemy w formularzu, żeby można było poprawić
@@ -181,6 +184,8 @@ export function BlockDialog({
       await zapiszEdycje("all");
       return;
     }
+    if (zapisuje.current) return;
+    zapisuje.current = true;
     setPending(true);
     setBlad("");
     const wynik = await createBlock({
@@ -193,6 +198,7 @@ export function BlockDialog({
       note,
       remind,
     });
+    zapisuje.current = false;
     setPending(false);
     if (!wynik.ok) {
       setBlad(wynik.message);
@@ -313,7 +319,7 @@ export function BlockDialog({
               // Zmiana „od” przesuwa „do”, zachowując czas trwania
               const nowyStart = zGodziny(v);
               setStartMin(nowyStart);
-              setEndMin(Math.min(nowyStart + durationMin, MAKS_KONIEC));
+              setEndMin(Math.min(nowyStart + durationMin, 1440));
             }}
           />
         </div>
@@ -322,7 +328,8 @@ export function BlockDialog({
           <TimePicker
             clock={clock}
             ariaLabel="Do"
-            value={naGodzine(Math.min(endMin, MAKS_KONIEC))}
+            allowEndOfDay
+            value={naGodzine(endMin)}
             onChange={(v) => setEndMin(zGodziny(v))}
           />
         </div>

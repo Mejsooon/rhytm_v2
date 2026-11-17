@@ -23,17 +23,21 @@ export function TimePicker({
   onChange,
   ariaLabel,
   clock = "24",
+  allowEndOfDay = false,
 }: {
   value: string; // 'HH:MM'
   onChange: (v: string) => void;
   ariaLabel: string;
   clock?: "24" | "12";
+  // Koniec doby: dodatkowa opcja „24:00” (tylko dla pola „do” bloku kończącego się o północy)
+  allowEndOfDay?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [godzina, minuta] = value.split(":");
   const godzinaLiczba = Number(godzina);
   const pm = godzinaLiczba >= 12;
   const wTrybie12 = clock === "12";
+  const koniecDoby = allowEndOfDay && value === "24:00";
 
   // 1–12 + AM/PM -> godzina 24 h ('12 AM' = 00, '12 PM' = 12)
   function zGodziny12(g12: number, popoludnie: boolean): string {
@@ -56,7 +60,7 @@ export function TimePicker({
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >
-          {wTrybie12 ? formatClockTime(godzinaLiczba, Number(minuta), "12") : value}
+          {wTrybie12 && !koniecDoby ? formatClockTime(godzinaLiczba, Number(minuta), "12") : value}
           <ChevronDownIcon aria-hidden="true" className="size-3 flex-none text-[#666666]" />
         </button>
       }
@@ -112,6 +116,19 @@ export function TimePicker({
             ))}
           </div>
         )}
+        {allowEndOfDay && (
+          <button
+            type="button"
+            aria-pressed={koniecDoby}
+            onClick={() => {
+              onChange("24:00");
+              setOpen(false);
+            }}
+            className={KOMORKA}
+          >
+            24:00
+          </button>
+        )}
         <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]">
           Minuty
         </div>
@@ -120,7 +137,8 @@ export function TimePicker({
             <button
               key={m}
               type="button"
-              aria-pressed={m === minuta}
+              aria-pressed={!koniecDoby && m === minuta}
+              disabled={koniecDoby}
               onClick={() => {
                 onChange(`${godzina}:${m}`);
                 setOpen(false);

@@ -72,4 +72,24 @@ describe("TimePicker", () => {
     await u.click(screen.getByRole("button", { name: "PM" }));
     expect(onChange).toHaveBeenLastCalledWith("17:15");
   });
+
+  it("allowEndOfDay dodaje „24:00” i pokazuje je na przycisku", async () => {
+    const u = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <TimePicker value="23:00" onChange={onChange} ariaLabel="Do" allowEndOfDay />,
+    );
+    await u.click(screen.getByRole("button", { name: "Do" }));
+    await u.click(screen.getByRole("button", { name: "24:00" }));
+    expect(onChange).toHaveBeenCalledWith("24:00");
+    rerender(<TimePicker value="24:00" onChange={onChange} ariaLabel="Do" allowEndOfDay />);
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+  });
+
+  it("bez allowEndOfDay nie ma „24:00”", async () => {
+    const u = userEvent.setup();
+    ustaw();
+    await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
+    expect(screen.queryByRole("button", { name: "24:00" })).not.toBeInTheDocument();
+  });
 });

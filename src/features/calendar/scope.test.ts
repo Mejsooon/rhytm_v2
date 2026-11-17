@@ -201,4 +201,48 @@ describe("planScopeChange", () => {
     });
     expect(plan).toEqual({ kind: "deleteBlock" });
   });
+
+  it("all ze zmianą dnia o +1 -> updateBlock z datą startu serii przesuniętą o +1 dzień", () => {
+    const b = blok({ recurrence: { freq: "weekly" } }); // start 2026-11-03 (wt)
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-17"),
+      scope: "all",
+      patch: { date: "2026-11-18", title: "X" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-04", title: "X" } });
+  });
+
+  it("all bez zmiany dnia nie dokłada daty do patcha", () => {
+    const b = blok({ recurrence: { freq: "weekly" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-17"),
+      scope: "all",
+      patch: { date: "2026-11-17", title: "X" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { title: "X" } });
+  });
+
+  it("following na pierwszym wystąpieniu ze zmianą dnia przesuwa start serii", () => {
+    const b = blok({ recurrence: { freq: "weekly" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-03"),
+      scope: "following",
+      patch: { date: "2026-11-05" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-05" } });
+  });
+
+  it("blok jednorazowy zachowuje datę z patcha bez zmian", () => {
+    const b = blok({});
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-03"),
+      scope: "all",
+      patch: { date: "2026-11-09" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-09" } });
+  });
 });

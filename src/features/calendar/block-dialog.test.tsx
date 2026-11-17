@@ -251,4 +251,46 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);
   });
+
+  it("blok 23:00–24:00 pokazuje „Do” 24:00 i zapisuje 60 minut", async () => {
+    createBlock.mockResolvedValue({ ok: true });
+    wyrenderuj("create", { ...NOWY, title: "Noc", startMin: 23 * 60, durationMin: 60 });
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    expect(createBlock).toHaveBeenCalledWith(
+      expect.objectContaining({ startMin: 1380, durationMin: 60 }),
+    );
+  });
+
+  it("edycja bloku 23:00–24:00 pokazuje 24:00", () => {
+    wyrenderuj("edit", { ...NOWY, title: "Noc", startMin: 1380, durationMin: 60, blockId: "b3", occurrenceDate: "2026-11-17" });
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+  });
+
+  it("zmiana dnia + „Wszystkie wystąpienia” przekazuje nową datę w patchu", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    wyrenderuj("edit", CYKLICZNY);
+    await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
+    await userEvent.click(screen.getByRole("button", { name: "18" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    await userEvent.click(screen.getByLabelText(/Wszystkie wystąpienia/));
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    expect(changeOccurrence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "all",
+        date: "2026-11-17",
+        patch: expect.objectContaining({ date: "2026-11-18" }),
+      }),
+    );
+  });
+
+  it("podwójne kliknięcie „Zapisz blok” woła createBlock raz", async () => {
+    let koniec: (v: { ok: true }) => void = () => {};
+    createBlock.mockReturnValue(new Promise((r) => (koniec = r)));
+    wyrenderuj("create", { ...NOWY, title: "X" });
+    const zapisz = screen.getByRole("button", { name: "Zapisz blok" });
+    await userEvent.dblClick(zapisz);
+    expect(createBlock).toHaveBeenCalledTimes(1);
+    koniec({ ok: true });
+  });
 });

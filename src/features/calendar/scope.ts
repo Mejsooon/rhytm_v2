@@ -36,6 +36,22 @@ export type ScopePlan =
     }
   | { kind: "detachTasksAndCancel"; date: IsoDate };
 
+// Zmiana dnia wystąpienia przesuwa całą serię: data startu bloku rusza o tyle dni, o ile
+// przesunięto wystąpienie (tygodniowa seria przechodzi na nowy dzień tygodnia).
+// Bez zmiany dnia data w patchu nie jest potrzebna.
+function patchCalejSerii(
+  block: BlockRow,
+  dataOryginalna: IsoDate,
+  patch: BlockPatch,
+): BlockPatch {
+  const { date, ...reszta } = patch;
+  if (date === undefined || date === dataOryginalna) return reszta;
+  const dni = Math.round(
+    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${dataOryginalna}T00:00:00Z`)) / 86_400_000,
+  );
+  return { ...reszta, date: addDays(block.start_local.slice(0, 10), dni) };
+}
+
 export function planScopeChange(input: {
   block: BlockRow;
   occurrence: Occurrence;
@@ -82,9 +98,7 @@ export function planScopeChange(input: {
   // Zakres "wszystkie": zmiana całej serii. Data startu serii zostaje (patch.date pomijamy).
   if (scope === "all") {
     if (usun) return { kind: "deleteBlock" };
-    const { date: _pomijana, ...patchSerii } = patch;
-    void _pomijana;
-    return { kind: "updateBlock", patch: patchSerii };
+    return { kind: "updateBlock", patch: patchCalejSerii(block, dataOryginalna, patch) };
   }
 
   // Zakres "to i następne": sprawdzamy, czy to pierwsze wystąpienie serii.
@@ -101,9 +115,7 @@ export function planScopeChange(input: {
   // Dla pierwszego wystąpienia "to i następne" = cała seria (SQL nie dzieli na pierwszym)
   if (czyPierwsze) {
     if (usun) return { kind: "deleteBlock" };
-    const { date: _pomijana, ...patchSerii } = patch;
-    void _pomijana;
-    return { kind: "updateBlock", patch: patchSerii };
+    return { kind: "updateBlock", patch: patchCalejSerii(block, dataOryginalna, patch) };
   }
 
   // Środkowe wystąpienie: dzielimy serię; patch zapisujemy kluczami SQL

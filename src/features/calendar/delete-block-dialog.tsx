@@ -1,7 +1,7 @@
 "use client";
 
 // Usuwanie bloku: jednorazowy — małe potwierdzenie „Usunąć blok?”, cykliczny — okno zakresu.
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button, FormDialog } from "@/components/controls";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -24,11 +24,15 @@ export function DeleteBlockDialog({
 }) {
   const [pending, setPending] = useState(false);
   const [blad, setBlad] = useState("");
+  // Blokada podwójnego usunięcia (szybkie dwa kliknięcia)
+  const usuwa = useRef(false);
 
   // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
   const dataOryginalna = o.key.slice(o.blockId.length + 1);
 
   async function usun(zakres: Scope) {
+    if (usuwa.current) return;
+    usuwa.current = true;
     setPending(true);
     setBlad("");
     const wynik = await changeOccurrence({
@@ -37,6 +41,7 @@ export function DeleteBlockDialog({
       scope: zakres,
       delete: true,
     });
+    usuwa.current = false;
     setPending(false);
     if (!wynik.ok) {
       setBlad(wynik.message);

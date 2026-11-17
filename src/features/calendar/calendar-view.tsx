@@ -97,7 +97,9 @@ export function CalendarView({
     );
   }
 
-  // Nowa kategoria od razu trafia do danych (potem nadejdą dane z serwera z tym samym id)
+  // Nowa kategoria od razu trafia do danych, żeby chip był od razu widoczny. To wiersz zastępczy
+  // (user_id i position przybliżone): po zapisie akcja odświeża stronę i dane z serwera z tym samym
+  // id zastępują go prawdziwym wierszem.
   function dodajKategorie(nowa: NewCategory) {
     void applyOptimistic(
       (d) =>
