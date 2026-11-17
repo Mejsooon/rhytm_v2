@@ -111,6 +111,8 @@ export function MCalendarDay({
       <div
         ref={osRef}
         data-testid="m-os-dnia"
+        // 440 px to wysokość reszty ekranu nad osią (nagłówek, segment, filtry, pasek tygodnia, tytuł)
+        // i pod nią (dolny pasek 84 px); przybliżenie, oś ma też min. 300 px
         className="h-[calc(100dvh-440px)] min-h-[300px] overflow-y-auto pt-2 pb-24"
       >
         <div className="relative" style={{ height: 24 * WYSOKOSC_GODZINY }}>
@@ -151,26 +153,42 @@ export function MCalendarDay({
             const godziny = `${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
             // Bloki krótsze niż 45 min: tytuł i godziny w jednej linii
             const kompakt = czas < 45;
+            const wysokosc = (czas / 60) * WYSOKOSC_GODZINY - 4;
+            // Niski blok zachowuje wygląd, ale pole dotyku ma co najmniej 44 px (przezroczysty obszar
+            // wystający poza blok; przy sąsiadach wygrywa blok późniejszy w DOM)
+            const zapas = wysokosc < 44 ? (44 - wysokosc) / 2 : 0;
             return (
               <button
                 key={o.key}
                 type="button"
                 onClick={() => onBlockClick(o.key)}
-                className={`absolute z-[2] box-border flex cursor-pointer overflow-hidden rounded-lg px-2.5 text-left text-[#171717] ${
-                  kompakt ? "items-center gap-2 py-0" : "flex-col gap-px py-1.5"
-                }`}
+                className="absolute z-[2] box-border cursor-pointer rounded-lg px-2.5 text-left text-[#171717]"
                 style={{
                   top: (o.startMin / 60) * WYSOKOSC_GODZINY + 1,
-                  height: (czas / 60) * WYSOKOSC_GODZINY - 4,
+                  height: wysokosc,
                   left: `calc(52px + (100% - 56px) * ${kolumna / kolumn})`,
                   width: `calc((100% - 56px) / ${kolumn})`,
                   background: `${kolor}14`,
                   borderLeft: `3px solid ${kolor}`,
                 }}
               >
-                <span className="min-w-0 truncate text-sm font-semibold">{o.title}</span>
-                <span className="truncate font-mono text-[11px] text-[#555555]">
-                  {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
+                {zapas > 0 && (
+                  <span
+                    aria-hidden="true"
+                    data-testid="obszar-dotyku"
+                    className="absolute inset-x-0"
+                    style={{ top: -zapas, bottom: -zapas }}
+                  />
+                )}
+                <span
+                  className={`flex h-full overflow-hidden ${
+                    kompakt ? "items-center gap-2" : "flex-col gap-px py-1.5"
+                  }`}
+                >
+                  <span className="min-w-0 truncate text-sm font-semibold">{o.title}</span>
+                  <span className="truncate font-mono text-[11px] text-[#555555]">
+                    {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
+                  </span>
                 </span>
               </button>
             );

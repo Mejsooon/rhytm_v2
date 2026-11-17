@@ -105,10 +105,14 @@ export function CalendarView({
     [data.blocks, data.exceptions, zakres.from, zakres.to],
   );
 
-  const wystapieniaTel = useMemo(
-    () => expandOccurrences(data.blocks, data.exceptions, zakresTel.from, zakresTel.to),
-    [data.blocks, data.exceptions, zakresTel.from, zakresTel.to],
+  // Ten sam zakres co web (np. tydzień z jawnym widokiem): bez drugiego rozwijania bloków
+  const tenSamZakres = zakresTel.from === zakres.from && zakresTel.to === zakres.to;
+  const wystapieniaTelOsobne = useMemo(
+    () =>
+      tenSamZakres ? [] : expandOccurrences(data.blocks, data.exceptions, zakresTel.from, zakresTel.to),
+    [tenSamZakres, data.blocks, data.exceptions, zakresTel.from, zakresTel.to],
   );
+  const wystapieniaTel = tenSamZakres ? wystapienia : wystapieniaTelOsobne;
 
   // Liczniki chipów liczą też wystąpienia ukrytych kategorii
   const liczniki = useMemo(() => {

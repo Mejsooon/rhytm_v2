@@ -106,4 +106,21 @@ describe("MCalendarDay", () => {
     });
     expect(screen.getByTestId("m-os-dnia").scrollTop).toBe(Math.round((600 / 60) * 56 - 28));
   });
+
+  it("niski blok (30 min) ma pole dotyku co najmniej 44 px", () => {
+    wyrenderuj({
+      occurrences: [wystapienie("b9:2026-11-18", "2026-11-18", 480, 30, "Rutyna", null)],
+    });
+    const blok = screen.getByRole("button", { name: /Rutyna/ });
+    const wysokosc = parseFloat(blok.style.height);
+    const obszar = screen.getByTestId("obszar-dotyku");
+    const zapas = -parseFloat(obszar.style.top);
+    expect(blok).toContainElement(obszar);
+    expect(wysokosc + 2 * zapas).toBeGreaterThanOrEqual(44);
+  });
+
+  it("wysoki blok nie dostaje dodatkowego obszaru dotyku", () => {
+    wyrenderuj();
+    expect(screen.queryByTestId("obszar-dotyku")).toBeNull();
+  });
 });
