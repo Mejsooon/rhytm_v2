@@ -18,9 +18,13 @@ export const metadata: Metadata = {
   },
 };
 
-// Kolor paska przeglądarki zgodny z tłem aplikacji
+// Kolor paska przeglądarki zgodny z tłem aplikacji.
+// viewport-fit=cover: bez tego env(safe-area-inset-*) zawsze daje 0, więc dolny pasek nie
+// odsuwałby się od paska gestów iPhone'a. Górnego wcięcia nie potrzeba: statusBarStyle „default”
+// zostawia pasek stanu nad stroną (treść nie wchodzi pod niego ani pod notch).
 export const viewport: Viewport = {
   themeColor: "#ffffff",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

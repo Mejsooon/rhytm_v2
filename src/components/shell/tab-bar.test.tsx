@@ -31,5 +31,8 @@ describe("TabBar", () => {
     expect(pasek.className).toContain("h-(--tabbar-h)");
     expect(pasek.className).toContain("pb-[max(8px,env(safe-area-inset-bottom))]");
     expect(pasek.className).not.toContain("84px");
+    // Poziomo: boczne wcięcia ekranu (notch)
+    expect(pasek.className).toContain("pl-[max(4px,env(safe-area-inset-left))]");
+    expect(pasek.className).toContain("pr-[max(4px,env(safe-area-inset-right))]");
   });
 });
