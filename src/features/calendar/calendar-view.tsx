@@ -20,6 +20,7 @@ import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
 import type { CalendarData, CategoryRow } from "./load-calendar";
+import { MBlockSheet } from "./mobile/m-block-sheet";
 import { MCalendarDay } from "./mobile/m-calendar-day";
 import { MCalendarMonth } from "./mobile/m-calendar-month";
 import { MCalendarWeek } from "./mobile/m-calendar-week";
@@ -42,7 +43,8 @@ function godzina(minuty: number): string {
 // Otwarte okno kalendarza; okna nie zmieniają adresu, więc widok i data zostają jak były
 type Okno =
   | { typ: "wpis"; date: IsoDate; startMin: number }
-  | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial }
+  // `tel`: otwarte na telefonie, więc zamiast BlockDialog pokazuje się arkusz MBlockSheet
+  | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial; tel?: boolean }
   | { typ: "kategoria" }
   | { typ: "usun"; occurrence: Occurrence }
   // Przeciągnięty blok cykliczny czeka na wybór zakresu zmiany
@@ -288,12 +290,13 @@ export function CalendarView({
   if (wybranyTel && !wybraneTel) setWybranyTel(null);
 
   // Edycja i usuwanie bloku: wspólne dla dymku (web) i arkusza (telefon)
-  function edytuj(o: Occurrence) {
+  function edytuj(o: Occurrence, tel = false) {
     setWybrany(null);
     setWybranyTel(null);
     setOkno({
       typ: "blok",
       mode: "edit",
+      tel,
       initial: {
         title: o.title,
         categoryId: o.categoryId,
@@ -318,12 +321,13 @@ export function CalendarView({
   }
 
   // „+” i stuknięcie pustej osi na telefonie: okno nowego bloku z tym dniem i godziną
-  // (Task 12 podmieni je na MBlockSheet)
+  // (arkusz MBlockSheet)
   function dodajNaTelefonie(dzien: IsoDate, startMin: number) {
     setWybranyTel(null);
     setOkno({
       typ: "blok",
       mode: "create",
+      tel: true,
       initial: {
         title: "",
         categoryId: null,
@@ -519,7 +523,7 @@ export function CalendarView({
             category={data.categories.find((k) => k.id === wybraneTel.categoryId)}
             clock={data.profile.clock}
             applyOptimistic={applyOptimistic}
-            onEdit={() => edytuj(wybraneTel)}
+            onEdit={() => edytuj(wybraneTel, true)}
             onDelete={() => usunBlok(wybraneTel)}
             onClose={() => setWybranyTel(null)}
           />
@@ -552,7 +556,20 @@ export function CalendarView({
           onClose={() => setOkno(null)}
         />
       )}
-      {okno?.typ === "blok" && (
+      {okno?.typ === "blok" && okno.tel && (
+        <MBlockSheet
+          mode={okno.mode}
+          initial={okno.initial}
+          categories={data.categories}
+          clock={data.profile.clock}
+          weekStart={weekStart}
+          today={today}
+          tasks={data.tasks}
+          applyOptimistic={applyOptimistic}
+          onDone={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "blok" && !okno.tel && (
         <BlockDialog
           mode={okno.mode}
           initial={okno.initial}

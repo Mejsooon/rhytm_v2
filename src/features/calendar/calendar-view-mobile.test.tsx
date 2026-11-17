@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -83,5 +83,22 @@ describe("CalendarView na telefonie", () => {
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(okno).toHaveTextContent("10:00");
     expect(okno).toHaveTextContent("18.11.2026");
+  });
+
+  it("telefon: „Nowy blok” to arkusz MBlockSheet (nagłówek z Zapisz), nie okno web", async () => {
+    render(<CalendarView view="dzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }), { clientY: 10 * 56 });
+    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(within(okno).getByRole("button", { name: "Zapisz blok" })).toBeInTheDocument();
+    expect(within(okno).getByText("Czas trwania: 1 h")).toBeInTheDocument();
+  });
+
+  it("telefon: „Edytuj” w szczegółach bloku otwiera arkusz edycji", async () => {
+    render(<CalendarView view="dzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />);
+    const mobilny = screen.getAllByRole("button", { name: /Algebra/ }).find((b) => !b.hasAttribute("data-occurrence-key"))!;
+    await userEvent.click(mobilny);
+    await userEvent.click(await screen.findByRole("button", { name: "Edytuj" }));
+    const okno = await screen.findByRole("dialog", { name: "Edytuj blok" });
+    expect(within(okno).getByRole("textbox", { name: "Nazwa bloku" })).toHaveValue("Algebra");
   });
 });
