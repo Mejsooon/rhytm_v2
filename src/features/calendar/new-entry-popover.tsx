@@ -18,6 +18,7 @@ export function NewEntryPopover({
   date,
   startMin,
   clock,
+  align = "start",
   onBlock,
   onClose,
 }: {
@@ -25,6 +26,8 @@ export function NewEntryPopover({
   date: IsoDate;
   startMin: number;
   clock: "24" | "12";
+  // "end" otwiera dymek w górę (dolne wiersze siatki miesiąca)
+  align?: "start" | "end";
   onBlock: () => void;
   onClose: () => void;
 }) {
@@ -43,7 +46,7 @@ export function NewEntryPopover({
         role="dialog"
         aria-label="Nowy wpis"
         side="right"
-        align="start"
+        align={align}
         sideOffset={10}
         collisionPadding={12}
         // Klik w siatkę przełącza wpis w kalendarzu (onSlotClick), więc nie zamykamy go tu dwa razy

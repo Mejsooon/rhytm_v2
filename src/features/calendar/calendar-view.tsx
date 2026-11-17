@@ -1,7 +1,7 @@
 "use client";
 
 // Klientowy korzeń kalendarza: nagłówek, filtry kategorii i wybrany widok.
-// Web: tydzień i dzień to siatka godzin (Task 6); miesiąc i telefon dojdą w Taskach 10 i 11 — na razie prosta lista dni.
+// Web: tydzień i dzień to siatka godzin (Task 6), miesiąc to MonthGrid (Task 10); telefon dojdzie w Tasku 11 — na razie prosta lista dni.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -18,6 +18,7 @@ import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
 import type { CalendarData, CategoryRow } from "./load-calendar";
+import { MonthGrid } from "./month-grid";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
 import { recurrenceBadge } from "./recurrence-text";
@@ -257,8 +258,14 @@ export function CalendarView({
   // więc dymek nie wraca po ponownym pokazaniu kategorii
   if (wybrany && !wybraneWystapienie) setWybrany(null);
 
+  // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
+  const wpisyMiesiaca = widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length;
+  // Dymki w dwóch dolnych wierszach siatki miesiąca wyrównują się do dołu komórki i rosną w górę
+  const wyrownanie = (dzien: IsoDate) =>
+    view === "miesiac" && zakres.days.indexOf(dzien) >= 28 ? "end" : "start";
+
   const placeholder = (
-    // Tymczasowy widok: lista wystąpień dzień po dniu (zastąpią go Taski 10 i 11)
+    // Tymczasowy widok na telefon: lista wystąpień dzień po dniu (zastąpi go Task 11)
     <div className="flex flex-col gap-3">
       {zakres.days.map((dzien) => {
         const dzienne = widoczne.filter((o) => o.date === dzien);
@@ -316,6 +323,7 @@ export function CalendarView({
         date={date}
         today={today}
         weekStart={weekStart}
+        subtitle={view === "miesiac" ? `${wpisyMiesiaca} wpisów widocznych` : undefined}
         // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
         onNewBlock={() => {
           setWybrany(null);
@@ -357,8 +365,37 @@ export function CalendarView({
             />
           </div>
         )}
-        {/* TODO(Task 11): tydzień na telefonie; miesiąc: Task 10 */}
-        {view === "miesiac" && placeholder}
+        {/* TODO(Task 11): tydzień i miesiąc na telefonie */}
+        {view === "miesiac" && (
+          <>
+            <div className="max-[799px]:hidden">
+              <MonthGrid
+                days={zakres.days}
+                month0={Number(date.slice(5, 7)) - 1}
+                occurrences={widoczne}
+                categories={data.categories}
+                today={today}
+                clock={data.profile.clock}
+                activeEntryKey={wybrany}
+                activeDay={okno?.typ === "wpis" ? okno.date : null}
+                // Ponowny klik w ten sam wpis zamyka dymek; wpis zamyka też „Nowy wpis”
+                onEntryClick={(key) => {
+                  setOkno((o) => (o?.typ === "wpis" ? null : o));
+                  setWybrany((w) => (w === key ? null : key));
+                }}
+                // Klik w komórkę: „Nowy wpis” z tym dniem i 09:00; ponowny klik zamyka
+                onDayClick={(dzien, kotwica) => {
+                  setWybrany(null);
+                  setKotwicaWpisu(kotwica);
+                  setOkno((o) =>
+                    o?.typ === "wpis" && o.date === dzien ? null : { typ: "wpis", date: dzien, startMin: 540 },
+                  );
+                }}
+              />
+            </div>
+            <div className="min-[800px]:hidden">{placeholder}</div>
+          </>
+        )}
       </div>
       {wybrany && wybraneWystapienie && (
         <BlockPopover
@@ -366,6 +403,7 @@ export function CalendarView({
           tasks={data.tasks}
           category={data.categories.find((k) => k.id === wybraneWystapienie.categoryId)}
           clock={data.profile.clock}
+          align={wyrownanie(wybraneWystapienie.date)}
           applyOptimistic={applyOptimistic}
           onEdit={() => {
             const o = wybraneWystapienie;
@@ -403,6 +441,7 @@ export function CalendarView({
           date={okno.date}
           startMin={okno.startMin}
           clock={data.profile.clock}
+          align={wyrownanie(okno.date)}
           onBlock={() =>
             setOkno({
               typ: "blok",

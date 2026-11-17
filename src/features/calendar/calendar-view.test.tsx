@@ -554,3 +554,38 @@ describe("CalendarView — przeciąganie", () => {
     });
   });
 });
+
+describe("CalendarView — miesiąc", () => {
+  function miesiac(data = dane()) {
+    return render(
+      <CalendarView view="miesiac" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={data} />,
+    );
+  }
+
+  it("nagłówek liczy widoczne wpisy miesiąca i zmienia się po ukryciu kategorii", async () => {
+    setCategoryHidden.mockResolvedValue({ ok: true });
+    miesiac();
+    expect(screen.getByText("2 wpisów widocznych")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
+    await waitFor(() => expect(screen.getByText("1 wpisów widocznych")).toBeInTheDocument());
+    expect(screen.queryByText(/Sprzątanie/)).not.toBeInTheDocument();
+  });
+
+  it("klik w komórkę dnia otwiera „Nowy wpis” z tym dniem i 09:00", async () => {
+    miesiac();
+    fireEvent.click(screen.getByTestId("komorka-2026-11-19"));
+    const dymek = await screen.findByRole("dialog", { name: "Nowy wpis" });
+    expect(within(dymek).getByText("cz 19.11 · 09:00")).toBeInTheDocument();
+    // Ponowny klik w tę samą komórkę zamyka dymek
+    fireEvent.click(screen.getByTestId("komorka-2026-11-19"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Nowy wpis" })).not.toBeInTheDocument());
+  });
+
+  it("klik we wpis otwiera dymek bloku, ponowny klik go zamyka", async () => {
+    miesiac();
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(screen.getByRole("dialog", { name: "Szczegóły bloku" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});

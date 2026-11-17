@@ -38,6 +38,8 @@ type Wlasciwosci = {
   onEdit: () => void;
   onDelete: () => void;
 };
+// Wyrównanie dymku do kotwicy: "end" (dół dymku przy dole kotwicy) otwiera go w górę
+type Wyrownanie = { align?: "start" | "end" };
 
 export function BlockDetails({
   occurrence: o,
@@ -271,8 +273,9 @@ export function BlockDetails({
 
 export function BlockPopover({
   onClose,
+  align = "start",
   ...reszta
-}: Wlasciwosci & { onClose: () => void }) {
+}: Wlasciwosci & Wyrownanie & { onClose: () => void }) {
   // Kotwica to przycisk bloku w siatce, szukany po kluczu wystąpienia (element mógł zostać
   // podmieniony przy odświeżeniu); bez niego dymek się zamyka
   const kotwica = document.querySelector<HTMLElement>(
@@ -293,7 +296,7 @@ export function BlockPopover({
         // Najpierw w prawo od bloku; przy prawej krawędzi Radix przerzuca w lewo,
         // a przy dolnej przesuwa dymek w górę (collisionPadding)
         side="right"
-        align="start"
+        align={align}
         sideOffset={10}
         collisionPadding={12}
         onInteractOutside={(e) => {

@@ -60,12 +60,15 @@ export function CalendarHeader({
   date,
   today,
   weekStart,
+  subtitle,
   onNewBlock,
 }: {
   view: CalendarView;
   date: IsoDate;
   today: IsoDate;
   weekStart: "mon" | "sun";
+  // Podtytuł obok tytułu, gdy widok nie ma etykiety tygodnia (miesiąc: „N wpisów widocznych”)
+  subtitle?: string;
   // Okno nowego bloku podepnie Task 8
   onNewBlock?: () => void;
 }) {
@@ -102,7 +105,9 @@ export function CalendarHeader({
             </Link>
           </Button>
           <h1 className="ml-1.5 text-lg font-semibold">{`${miesiacWielka} ${rok}`}</h1>
-          {tydzien && <span className="font-mono text-xs text-[#6b6b6b]">{tydzien}</span>}
+          {(tydzien ?? subtitle) && (
+            <span className="font-mono text-xs text-[#6b6b6b]">{tydzien ?? subtitle}</span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {segment}
