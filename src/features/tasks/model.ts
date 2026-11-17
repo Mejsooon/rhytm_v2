@@ -56,7 +56,6 @@ export function occurrenceProgress(
 
 // Pola do zapisu przy przypięciu zadania do wystąpienia.
 // occurrence_date to ORYGINALNA data (z klucza), due_date to dzień, na którym wystąpienie jest pokazane.
-export function pinTask(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parametr zostaje dla spójnego API
   _task: TaskRow,
   occurrence: Occurrence,
