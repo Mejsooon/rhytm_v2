@@ -57,6 +57,11 @@ a{color:#171717}a:hover{color:#000000}
           <div style="padding: 20px">
             <h2 style="margin: 0; font-size: 16px; font-weight: 600">Profil</h2>
             <p style="margin: 4px 0 16px; color: #666666">Waga i wzrost służą do liczenia kcal biegów.</p>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #f0f0f0">
+              <span style="{{av.style}}" aria-hidden="true">{{av.txt}}<sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d4d4d4" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="9" r="3.5"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg></sc-if></span>
+              <span style="flex: 1 1 200px; min-width: 0"><span style="display: block; font-weight: 500">Zdjęcie profilowe</span><span style="{{av.subS}}">{{av.sub}}</span></span>
+              <span style="display: flex; gap: 8px"><sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{av.del}}">Usuń</button></sc-if><button type="button" class="btn" onClick="{{av.pick}}">{{av.btn}}</button></span>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
               <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Wyświetlana nazwa<input class="inp" type="text" value="{{p.name}}" onChange="{{onP.name}}"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="err">Nazwa nie może być pusta.</span></sc-if></label>
               <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Strefa czasowa</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.tz.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.tz.exp}}" aria-label="Strefa czasowa"><span>{{dd.tz.txt}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{dd.tz.sub}}</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.tz.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Strefa czasowa"><sc-for list="{{dd.tz.opts}}" as="o" hint-placeholder-count="6"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{o.sub}}</span></span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
@@ -104,7 +109,7 @@ a{color:#171717}a:hover{color:#000000}
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1270}}'>
 class Component extends DCLogic {
   componentDidMount() { try { sessionStorage.setItem('rh-from', 'Settings.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   renderVals() {
@@ -143,8 +148,20 @@ class Component extends DCLogic {
     const onP = {}, onG = {};
     ['name', 'tz', 'kg', 'cm'].forEach((k) => { onP[k] = (e) => this.setState({ p: Object.assign({}, P, { [k]: e.target.value }), pMsg: '' }); });
     ['km', 'cur', 'week'].forEach((k) => { onG[k] = (e) => this.setState({ g: Object.assign({}, G, { [k]: e.target.value }), gMsg: '' }); });
+    // Zdjęcie profilowe: zapis od razu po wyborze pliku, bez „Zapisz” na dole karty
+    const avHas = !!S.avHas;
+    const av = {
+      has: avHas,
+      txt: avHas ? '' : 'M',
+      style: 'width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;' + (avHas ? 'background:#525252' : 'background:#f0f0f0;border:1px solid #e0e0e0;color:#171717;box-sizing:border-box'),
+      sub: S.avMsg || (avHas ? 'PNG, JPG albo WebP, do 2 MB' : 'Bez zdjęcia pokażemy inicjały'),
+      subS: S.avMsg ? 'font-size:13px;color:#15803d' : 'font-size:13px;color:#666666',
+      btn: avHas ? 'Zmień' : 'Wgraj',
+      pick: () => this.setState({ avHas: true, avMsg: 'Zapisano ✓' }),
+      del: () => this.setState({ avHas: false, avMsg: '' })
+    };
     return {
-      dd, p: P, onP, nameErr, kgErr, cmErr, pDirty,
+      av, dd, p: P, onP, nameErr, kgErr, cmErr, pDirty,
       pDis: pOk ? 'false' : 'true',
       pSave: () => { if (pOk) this.setState({ pSaved: P, p: null, pMsg: 'Zapisano ✓' }); },
       pReset: () => this.setState({ p: null, pMsg: '' }),
