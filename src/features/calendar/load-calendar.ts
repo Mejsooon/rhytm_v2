@@ -84,7 +84,9 @@ export async function loadCalendar(
         .from("blocks")
         .select("*")
         .eq("user_id", userId)
-        .lte("start_local", `${to}T23:59:59`),
+        .lte("start_local", `${to}T23:59:59`)
+        // Jednorazowe tylko od początku zakresu; serie mogą zaczynać się dowolnie wcześniej
+        .or(`recurrence.not.is.null,start_local.gte.${from}T00:00:00`),
       // Wyjątki z oryginalną datą w zakresie ORAZ takie, które przenoszą wystąpienie do zakresu z zewnątrz
       supabase
         .from("block_exceptions")
@@ -132,10 +134,35 @@ export async function loadCalendar(
     blocks.push(...((data ?? []) as BlockRow[]));
   }
 
+  // Zadania wystąpień przeniesionych do zakresu z dnia spoza niego. Nowe przeniesienia zmieniają
+  // due_date zadań, ale starsze dane mają termin z oryginalnego dnia — dociągamy je po parze
+  // (blok, oryginalna data).
+  const tasks = (zadaniaRes.data ?? []) as TaskRow[];
+  const spozaZakresu = exceptions.filter(
+    (w) => w.kind === "modified" && (w.occurrence_date < from || w.occurrence_date > to),
+  );
+  if (spozaZakresu.length > 0) {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", userId)
+      .in("block_id", [...new Set(spozaZakresu.map((w) => w.block_id))])
+      .in("occurrence_date", [...new Set(spozaZakresu.map((w) => w.occurrence_date))]);
+    if (error) throw new Error(error.message);
+    const pary = new Set(spozaZakresu.map((w) => `${w.block_id}:${w.occurrence_date}`));
+    const znaneZadania = new Set(tasks.map((t) => t.id));
+    for (const zadanie of (data ?? []) as TaskRow[]) {
+      if (znaneZadania.has(zadanie.id)) continue;
+      if (!pary.has(`${zadanie.block_id}:${zadanie.occurrence_date}`)) continue;
+      tasks.push(zadanie);
+    }
+    tasks.sort((a, b) => a.position - b.position);
+  }
+
   return {
     blocks,
     exceptions,
-    tasks: (zadaniaRes.data ?? []) as TaskRow[],
+    tasks,
     categories: (kategorieRes.data ?? []) as CategoryRow[],
     profile: profil,
   };

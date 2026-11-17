@@ -34,22 +34,56 @@ export type ScopePlan =
       patch: Record<string, unknown>;
       delete: boolean;
     }
-  | { kind: "detachTasksAndCancel"; date: IsoDate };
+  | { kind: "detachTasksAndCancel"; date: IsoDate }
+  // Zmiana niemożliwa (np. inny dzień dla serii codziennej) — akcja zwraca komunikat
+  | { kind: "reject"; message: string };
 
-// Zmiana dnia wystąpienia przesuwa całą serię: data startu bloku rusza o tyle dni, o ile
-// przesunięto wystąpienie (tygodniowa seria przechodzi na nowy dzień tygodnia).
+// Komunikaty odrzuconej zmiany dnia (te same podpowiedzi pokazuje okno zakresu)
+export const ZMIANA_DNIA_TYLKO_TYGODNIOWA =
+  "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.";
+export const ZMIANA_DNIA_NIE_DLA_NASTEPNYCH =
+  "Zmiana dnia działa dla tego wystąpienia albo dla całej serii.";
+
+// Zmiana dnia wystąpienia przy „Wszystkie” (albo „To i następne” na pierwszym wystąpieniu).
+// Przesunięcie liczymy od WIDOCZNEJ daty wystąpienia (tej, którą użytkownik widział i przesunął).
+// - co tydzień: data startu serii rusza o tyle samo dni (seria przechodzi na nowy dzień tygodnia);
+// - własne: start rusza i dni tygodnia obracają się o tyle samo (z zawinięciem nd → pn);
+// - codziennie / dni robocze: odrzucamy, bo wzorzec i tak wróciłby blok na stare miejsce;
+// - nowe „bez powtarzania”: blok staje się jednorazowy w wybranym dniu.
 // Bez zmiany dnia data w patchu nie jest potrzebna.
 function patchCalejSerii(
   block: BlockRow,
-  dataOryginalna: IsoDate,
+  dataWidoczna: IsoDate,
   patch: BlockPatch,
-): BlockPatch {
+): { kind: "updateBlock"; patch: BlockPatch } | { kind: "reject"; message: string } {
   const { date, ...reszta } = patch;
-  if (date === undefined || date === dataOryginalna) return reszta;
+  if (date === undefined || date === dataWidoczna) return { kind: "updateBlock", patch: reszta };
+
+  // Liczy się powtarzanie po zmianie (jeśli patch je zmienia)
+  const rec = patch.recurrence !== undefined ? patch.recurrence : (block.recurrence as Recurrence | null);
+  if (rec === null) return { kind: "updateBlock", patch: { ...reszta, date } };
+  if (rec.freq === "daily" || rec.freq === "weekdays") {
+    return { kind: "reject", message: ZMIANA_DNIA_TYLKO_TYGODNIOWA };
+  }
+
   const dni = Math.round(
-    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${dataOryginalna}T00:00:00Z`)) / 86_400_000,
+    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${dataWidoczna}T00:00:00Z`)) / 86_400_000,
   );
-  return { ...reszta, date: addDays(block.start_local.slice(0, 10), dni) };
+  const nowyStart = addDays(block.start_local.slice(0, 10), dni);
+  if (rec.freq === "weekly") return { kind: "updateBlock", patch: { ...reszta, date: nowyStart } };
+
+  // Własne: dni tygodnia obracamy tylko, gdy użytkownik sam ich nie zmienił w tym patchu
+  if (patch.recurrence !== undefined) {
+    return { kind: "updateBlock", patch: { ...reszta, date: nowyStart } };
+  }
+  // 1 = pn … 7 = nd; ((d - 1 + dni) mod 7) + 1, także dla ujemnych dni
+  const obrocone = (rec.byWeekday ?? [])
+    .map((d) => ((((d - 1 + dni) % 7) + 7) % 7) + 1)
+    .sort((a, b) => a - b);
+  return {
+    kind: "updateBlock",
+    patch: { ...reszta, date: nowyStart, recurrence: { ...rec, byWeekday: obrocone } },
+  };
 }
 
 export function planScopeChange(input: {
@@ -95,10 +129,10 @@ export function planScopeChange(input: {
     };
   }
 
-  // Zakres "wszystkie": zmiana całej serii. Data startu serii zostaje (patch.date pomijamy).
+  // Zakres "wszystkie": zmiana całej serii (zmiana dnia przesuwa serię — patrz patchCalejSerii)
   if (scope === "all") {
     if (usun) return { kind: "deleteBlock" };
-    return { kind: "updateBlock", patch: patchCalejSerii(block, dataOryginalna, patch) };
+    return patchCalejSerii(block, occurrence.date, patch);
   }
 
   // Zakres "to i następne": sprawdzamy, czy to pierwsze wystąpienie serii.
@@ -115,7 +149,12 @@ export function planScopeChange(input: {
   // Dla pierwszego wystąpienia "to i następne" = cała seria (SQL nie dzieli na pierwszym)
   if (czyPierwsze) {
     if (usun) return { kind: "deleteBlock" };
-    return { kind: "updateBlock", patch: patchCalejSerii(block, dataOryginalna, patch) };
+    return patchCalejSerii(block, occurrence.date, patch);
+  }
+
+  // Środkowe wystąpienie nie może zmienić dnia (nowa seria startuje w dniu tego wystąpienia)
+  if (!usun && patch.date !== undefined && patch.date !== occurrence.date) {
+    return { kind: "reject", message: ZMIANA_DNIA_NIE_DLA_NASTEPNYCH };
   }
 
   // Środkowe wystąpienie: dzielimy serię; patch zapisujemy kluczami SQL

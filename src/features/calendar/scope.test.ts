@@ -245,4 +245,117 @@ describe("planScopeChange", () => {
     });
     expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-09" } });
   });
+  it("all ze zmianą dnia w serii codziennej -> odrzucone", () => {
+    const b = blok({ recurrence: { freq: "daily" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-17"),
+      scope: "all",
+      patch: { date: "2026-11-18" },
+    });
+    expect(plan).toEqual({
+      kind: "reject",
+      message: "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.",
+    });
+  });
+
+  it("following na pierwszym wystąpieniu dni roboczych ze zmianą dnia -> odrzucone", () => {
+    const b = blok({ start_local: "2026-11-02T08:00:00", recurrence: { freq: "weekdays" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-02"),
+      scope: "following",
+      patch: { date: "2026-11-03" },
+    });
+    expect(plan.kind).toBe("reject");
+  });
+
+  it("all ze zmianą dnia w serii własnej obraca dni tygodnia (z zawinięciem)", () => {
+    // pn + nd, start pn 2026-11-02; przesunięcie o +1: wt + pn
+    const b = blok({
+      start_local: "2026-11-02T08:00:00",
+      recurrence: { freq: "custom", byWeekday: [1, 7], until: "2026-12-31" },
+    });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-09"),
+      scope: "all",
+      patch: { date: "2026-11-10" },
+    });
+    expect(plan).toEqual({
+      kind: "updateBlock",
+      patch: {
+        date: "2026-11-03",
+        recurrence: { freq: "custom", byWeekday: [1, 2], until: "2026-12-31" },
+      },
+    });
+  });
+
+  it("all ze zmianą dnia w serii własnej o -1 zawija pn na nd", () => {
+    const b = blok({
+      start_local: "2026-11-02T08:00:00",
+      recurrence: { freq: "custom", byWeekday: [1, 3] },
+    });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-04"),
+      scope: "all",
+      patch: { date: "2026-11-03" },
+    });
+    expect(plan).toEqual({
+      kind: "updateBlock",
+      patch: { date: "2026-11-01", recurrence: { freq: "custom", byWeekday: [2, 7] } },
+    });
+  });
+
+  it("all ze zmianą dnia w serii tygodniowej przesuwa tylko start (bez recurrence)", () => {
+    const b = blok({ recurrence: { freq: "weekly" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-10"),
+      scope: "all",
+      patch: { date: "2026-11-12" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-05" } });
+  });
+
+  it("all na przeniesionym wystąpieniu liczy przesunięcie od widocznej daty", () => {
+    // Wystąpienie z wt 17.11 przeniesione na śr 18.11; użytkownik przesuwa je na czw 19.11
+    const b = blok({ recurrence: { freq: "weekly" } }); // start wt 2026-11-03
+    const przeniesione = { ...wystapienie(b, "2026-11-17"), date: "2026-11-18" };
+    const plan = planScopeChange({
+      block: b,
+      occurrence: przeniesione,
+      scope: "all",
+      patch: { date: "2026-11-19" },
+    });
+    // +1 dzień od widocznej daty (nie +2 od oryginalnej)
+    expect(plan).toEqual({ kind: "updateBlock", patch: { date: "2026-11-04" } });
+  });
+
+  it("all na przeniesionym wystąpieniu z datą równą widocznej nie przesuwa serii", () => {
+    const b = blok({ recurrence: { freq: "weekly" } });
+    const przeniesione = { ...wystapienie(b, "2026-11-17"), date: "2026-11-18" };
+    const plan = planScopeChange({
+      block: b,
+      occurrence: przeniesione,
+      scope: "all",
+      patch: { date: "2026-11-18", title: "X" },
+    });
+    expect(plan).toEqual({ kind: "updateBlock", patch: { title: "X" } });
+  });
+
+  it("following ze zmianą dnia na środkowym wystąpieniu -> odrzucone (zamiast cichego pominięcia)", () => {
+    const b = blok({ recurrence: { freq: "weekly" } });
+    const plan = planScopeChange({
+      block: b,
+      occurrence: wystapienie(b, "2026-11-17"),
+      scope: "following",
+      patch: { date: "2026-11-18", title: "X" },
+    });
+    expect(plan).toEqual({
+      kind: "reject",
+      message: "Zmiana dnia działa dla tego wystąpienia albo dla całej serii.",
+    });
+  });
 });

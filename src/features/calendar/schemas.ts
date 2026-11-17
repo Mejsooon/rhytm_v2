@@ -63,6 +63,10 @@ export const createBlockSchema = z
   .refine((b) => b.startMin + b.durationMin <= 1440, {
     message: "Blok nie może przechodzić przez północ.",
     path: ["durationMin"],
+  })
+  .refine((b) => b.recurrence?.until === undefined || b.recurrence.until >= b.date, {
+    message: "Koniec powtarzania nie może być przed początkiem.",
+    path: ["recurrence"],
   });
 
 export const blockPatchSchema = z.object({

@@ -15,6 +15,7 @@ import { normalizeSeriesStart } from "./series-start";
 import { expandOccurrences, type Recurrence } from "./occurrences";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
+const BLAD_UNTIL = "Koniec powtarzania nie może być przed początkiem.";
 
 // 480 → "08:00:00"
 function godzinaZMinut(minuty: number): string {
@@ -169,11 +170,25 @@ export async function changeOccurrence(input: {
     delete: dane.delete,
   });
 
+  if (plan.kind === "reject") {
+    return { ok: false, message: plan.message };
+  }
+
   if (plan.kind === "upsertException") {
     const { error } = await supabase
       .from("block_exceptions")
       .upsert(plan.row, { onConflict: "block_id,occurrence_date" });
     if (error) return { ok: false, message: BLAD_ZAPISU };
+
+    // Termin zadań wystąpienia idzie za wystąpieniem: przeniesione na inny dzień — nowy dzień,
+    // przeniesione z powrotem — znowu oryginalny. Dzięki temu zadania są w tygodniu, w którym widać blok.
+    const nowyDzien = (plan.row.new_start_local ?? plan.row.occurrence_date).slice(0, 10);
+    const { error: bladZadan } = await supabase
+      .from("tasks")
+      .update({ due_date: nowyDzien })
+      .eq("block_id", plan.row.block_id)
+      .eq("occurrence_date", plan.row.occurrence_date);
+    if (bladZadan) return { ok: false, message: BLAD_ZAPISU };
   }
 
   if (plan.kind === "deleteBlock") {
@@ -189,6 +204,9 @@ export async function changeOccurrence(input: {
   if (plan.kind === "split") {
     // Nowe powtarzanie musi obejmować dzień, od którego dzielimy serię
     const noweRec = patch.recurrence;
+    if (!plan.delete && noweRec?.until !== undefined && noweRec.until < plan.from) {
+      return { ok: false, message: BLAD_UNTIL };
+    }
     if (!plan.delete && noweRec && normalizeSeriesStart(plan.from, noweRec) !== plan.from) {
       return { ok: false, message: "Nowe powtarzanie musi obejmować ten dzień." };
     }
@@ -239,12 +257,15 @@ export async function changeOccurrence(input: {
     if (p.recurrence !== undefined) zmiany.recurrence = p.recurrence as Json | null;
 
     // Start zmieniamy, gdy ruszył dzień, godzina albo powtarzalność
+    const rec = p.recurrence !== undefined ? p.recurrence : (block.recurrence as Recurrence | null);
+    let dataStartu = dataBloku;
     if (p.date !== undefined || p.startMin !== undefined || p.recurrence !== undefined) {
-      const nowaData = p.date ?? dataBloku;
-      // Nowa powtarzalność też nie może dać "ducha" na starcie serii
-      const dataStartu =
-        p.recurrence !== undefined ? normalizeSeriesStart(nowaData, p.recurrence) : nowaData;
+      // Seria nie może zaczynać się w dniu, który do niej nie należy („duch” na starcie)
+      dataStartu = normalizeSeriesStart(p.date ?? dataBloku, rec);
       zmiany.start_local = `${dataStartu}T${godzinaZMinut(nowyStart)}`;
+    }
+    if (rec?.until !== undefined && rec.until < dataStartu) {
+      return { ok: false, message: BLAD_UNTIL };
     }
 
     const { data: zmienione, error } = await supabase
@@ -285,6 +306,35 @@ export async function changeOccurrence(input: {
             .update({ block_id: null, occurrence_date: null })
             .in("id", doOdpiecia);
           if (bladOdpiecia) return { ok: false, message: BLAD_ZAPISU };
+        }
+      }
+
+      // Wyjątki z dni, które nie należą już do serii (np. po przesunięciu na inny dzień tygodnia),
+      // kasujemy — i odwołane, i zmienione — żeby nie wróciły przy kolejnej zmianie serii
+      const { data: wyjatki } = await supabase
+        .from("block_exceptions")
+        .select("occurrence_date")
+        .eq("block_id", block.id);
+      if (wyjatki && wyjatki.length > 0) {
+        const daty = wyjatki.map((w) => w.occurrence_date).sort();
+        const nowyBlok = {
+          ...block,
+          start_local: zmiany.start_local ?? block.start_local,
+          recurrence: zmiany.recurrence === undefined ? block.recurrence : zmiany.recurrence,
+        };
+        const dniSerii = new Set(
+          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map((o) =>
+            o.key.slice(-10),
+          ),
+        );
+        const sieroty = daty.filter((d) => !dniSerii.has(d));
+        if (sieroty.length > 0) {
+          const { error: bladWyjatkow } = await supabase
+            .from("block_exceptions")
+            .delete()
+            .eq("block_id", block.id)
+            .in("occurrence_date", sieroty);
+          if (bladWyjatkow) return { ok: false, message: BLAD_ZAPISU };
         }
       }
     }

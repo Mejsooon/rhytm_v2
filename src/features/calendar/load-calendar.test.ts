@@ -159,4 +159,63 @@ describe("loadCalendar", () => {
       ),
     ).rejects.toThrow("boom");
   });
+  it("bloki jednorazowe pyta tylko od początku zakresu (serie bez dolnej granicy)", async () => {
+    const bloki = fakeTable({ data: [] });
+    await loadCalendar(
+      klient({
+        blocks: bloki,
+        block_exceptions: fakeTable({ data: [] }),
+        tasks: fakeTable({ data: [] }),
+        categories: fakeTable({ data: [] }),
+      }),
+      "u1",
+      LISTOPAD,
+      profil,
+    );
+    expect(bloki.or).toHaveBeenCalledWith("recurrence.not.is.null,start_local.gte.2026-11-01T00:00:00");
+  });
+
+  it("dociąga zadania wystąpienia przeniesionego do zakresu spoza niego (stare dane)", async () => {
+    const seria = blok("seria", "2026-10-06T08:00:00", { freq: "weekly" });
+    // Wtorek 27.10 przeniesiony na pn 2.11; zadanie ma stary termin (27.10)
+    const wyjatek = {
+      block_id: "seria",
+      user_id: "u1",
+      occurrence_date: "2026-10-27",
+      kind: "modified",
+      new_start_local: "2026-11-02T09:00:00",
+      new_duration_min: null,
+      new_title: null,
+    };
+    const zadanieWZakresie = { id: "t1", block_id: "seria", occurrence_date: "2026-11-03", position: 1 };
+    const zadaniePrzeniesione = { id: "t2", block_id: "seria", occurrence_date: "2026-10-27", position: 0 };
+    const zadanieInnegoDnia = { id: "t3", block_id: "seria", occurrence_date: "2026-10-20", position: 0 };
+    const zadania = fakeTable({ data: [zadanieWZakresie] });
+    let wywolania = 0;
+    const oryginalnyThen = zadania.then;
+    zadania.then = (ok: (v: unknown) => unknown, blad?: (e: unknown) => unknown) => {
+      wywolania += 1;
+      if (wywolania === 2) {
+        return Promise.resolve({
+          data: [zadaniePrzeniesione, zadanieInnegoDnia, zadanieWZakresie],
+          error: null,
+        }).then(ok, blad);
+      }
+      return oryginalnyThen(ok, blad);
+    };
+    const wynik = await loadCalendar(
+      klient({
+        blocks: fakeTable({ data: [seria] }),
+        block_exceptions: fakeTable({ data: [wyjatek] }),
+        tasks: zadania,
+        categories: fakeTable({ data: [] }),
+      }),
+      "u1",
+      LISTOPAD,
+      profil,
+    );
+    expect(zadania.in).toHaveBeenCalledWith("block_id", ["seria"]);
+    expect(zadania.in).toHaveBeenCalledWith("occurrence_date", ["2026-10-27"]);
+    expect(wynik.tasks.map((t) => t.id)).toEqual(["t2", "t1"]);
+  });
 });

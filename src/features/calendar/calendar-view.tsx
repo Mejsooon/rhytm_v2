@@ -220,6 +220,8 @@ export function CalendarView({
                     p.startMin === undefined ? b.start_local.slice(11, 19) : `${godzina(p.startMin)}:00`
                   }`,
                   duration_min: p.durationMin ?? b.duration_min,
+                  // Seria własna przesunięta na inny dzień ma obrócone dni tygodnia
+                  recurrence: p.recurrence === undefined ? b.recurrence : p.recurrence,
                 },
           ),
         };

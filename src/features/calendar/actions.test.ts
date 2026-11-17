@@ -71,6 +71,12 @@ describe("createBlock", () => {
     await expect(createBlock(wejscie)).rejects.toThrow("REDIRECT:/logowanie");
   });
 
+  it("until przed datą startu → ok: false, bez insert", async () => {
+    const w = await createBlock({ ...wejscie, recurrence: { freq: "daily", until: "2026-11-16" } });
+    expect(w).toEqual({ ok: false, message: "Koniec powtarzania nie może być przed początkiem." });
+    expect(tables.blocks.insert).not.toHaveBeenCalled();
+  });
+
   it("pusty tytuł i za krótki czas → ok: false, bez insert", async () => {
     expect((await createBlock({ ...wejscie, title: "  " })).ok).toBe(false);
     expect((await createBlock({ ...wejscie, durationMin: 10 })).ok).toBe(false);
@@ -256,5 +262,101 @@ describe("changeOccurrence", () => {
     rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
     const w = await changeOccurrence({ blockId: "b1000000-0000-4000-8000-000000000001", date: "2026-11-10", scope: "following", delete: true });
     expect(w).toEqual({ ok: false, message: BLAD });
+  });
+  it("all ze zmianą dnia w serii codziennej → błąd, bez zapisu", async () => {
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "all", patch: { date: "2026-11-11" },
+    });
+    expect(w).toEqual({
+      ok: false,
+      message: "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.",
+    });
+    expect(tables.blocks.update).not.toHaveBeenCalled();
+  });
+
+  it("all ze zmianą dnia w serii własnej obraca dni tygodnia", async () => {
+    // pn + śr od pn 2026-11-02; śr 11.11 → czw 12.11 (+1)
+    tables.blocks = fakeTable({
+      data: [{ id: blok.id }],
+      single: { ...blok, start_local: "2026-11-02T08:00:00", recurrence: { freq: "custom", byWeekday: [1, 3] } },
+    });
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-11", scope: "all", patch: { date: "2026-11-12" },
+    });
+    expect(w.ok).toBe(true);
+    expect(tables.blocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        start_local: "2026-11-03T08:00:00",
+        recurrence: { freq: "custom", byWeekday: [2, 4] },
+      }),
+    );
+  });
+
+  it("all ze zmianą dnia w serii tygodniowej przesuwa start, powtarzanie bez zmian", async () => {
+    tables.blocks = fakeTable({
+      data: [{ id: blok.id }],
+      single: { ...blok, start_local: "2026-11-03T08:00:00", recurrence: { freq: "weekly" } },
+    });
+    await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "all", patch: { date: "2026-11-12" },
+    });
+    const zmiany = tables.blocks.update.mock.calls[0][0];
+    expect(zmiany.start_local).toBe("2026-11-05T08:00:00");
+    expect(zmiany.recurrence).toBeUndefined();
+  });
+
+  it("przesunięcie serii kasuje wyjątki z dni spoza nowego wzorca", async () => {
+    tables.blocks = fakeTable({
+      data: [{ id: blok.id }],
+      single: { ...blok, start_local: "2026-11-03T08:00:00", recurrence: { freq: "weekly" } },
+    });
+    // Wyjątki wtorkowe (stary dzień); po przesunięciu na czwartki żaden nie pasuje
+    tables.block_exceptions = fakeTable({
+      data: [
+        { block_id: blok.id, occurrence_date: "2026-11-17", kind: "cancelled" },
+        { block_id: blok.id, occurrence_date: "2026-11-24", kind: "modified" },
+      ],
+    });
+    await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "all", patch: { date: "2026-11-12" },
+    });
+    expect(tables.block_exceptions.delete).toHaveBeenCalled();
+    expect(tables.block_exceptions.in).toHaveBeenCalledWith("occurrence_date", ["2026-11-17", "2026-11-24"]);
+  });
+
+  it("this z innym dniem przenosi termin zadań wystąpienia na nowy dzień", async () => {
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "this", patch: { date: "2026-11-16" },
+    });
+    expect(w.ok).toBe(true);
+    expect(tables.tasks.update).toHaveBeenCalledWith({ due_date: "2026-11-16" });
+    expect(tables.tasks.eq).toHaveBeenCalledWith("block_id", blok.id);
+    expect(tables.tasks.eq).toHaveBeenCalledWith("occurrence_date", "2026-11-10");
+  });
+
+  it("following z until przed dniem podziału → błąd, bez rpc", async () => {
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "following",
+      patch: { recurrence: { freq: "daily", until: "2026-11-09" } },
+    });
+    expect(w).toEqual({ ok: false, message: "Koniec powtarzania nie może być przed początkiem." });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("all z until przed startem serii → błąd, bez zapisu", async () => {
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "all",
+      patch: { recurrence: { freq: "daily", until: "2026-10-31" } },
+    });
+    expect(w).toEqual({ ok: false, message: "Koniec powtarzania nie może być przed początkiem." });
+    expect(tables.blocks.update).not.toHaveBeenCalled();
+  });
+
+  it("following ze zmianą dnia na środkowym wystąpieniu → błąd, bez rpc", async () => {
+    const w = await changeOccurrence({
+      blockId: blok.id, date: "2026-11-10", scope: "following", patch: { date: "2026-11-11" },
+    });
+    expect(w.ok).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
