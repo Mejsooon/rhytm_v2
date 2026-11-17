@@ -76,6 +76,18 @@ export function TimeGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days.join(","), variant]);
 
+  // Półgodzina (0–47) pod wskaźnikiem w kolumnie dnia
+  const polgodzinaZ = (e: React.MouseEvent<HTMLElement>) =>
+    Math.max(
+      0,
+      Math.min(
+        47,
+        Math.floor(
+          (e.clientY - e.currentTarget.getBoundingClientRect().top) / (wysokoscGodziny / 2),
+        ),
+      ),
+    );
+
   const godziny = Array.from({ length: 24 }, (_, h) => h);
   const tloLinii = `repeating-linear-gradient(to bottom, transparent 0, transparent ${wysokoscGodziny - 1}px, #f0f0f0 ${wysokoscGodziny - 1}px, #f0f0f0 ${wysokoscGodziny}px)`;
 
@@ -159,6 +171,7 @@ export function TimeGrid({
                     className="box-border px-2 py-[3px] text-right font-mono text-[10px] text-[#6b6b6b]"
                     style={{ height: wysokoscGodziny }}
                   >
+                    {/* Tryb 12h: krótka etykieta „5 PM” (formatClockTime dałby „5:00 PM”) */}
                     {clock === "12"
                       ? `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`
                       : formatClockTime(h, 0, "24")}
@@ -180,25 +193,16 @@ export function TimeGrid({
                     onClick={(e) => {
                       // Klik w blok i w ramkę pustego dnia obsługują własne przyciski
                       if ((e.target as HTMLElement).closest("button,a,[role=dialog]")) return;
-                      const gora = e.currentTarget.getBoundingClientRect().top;
-                      const polgodzina = Math.max(
-                        0,
-                        Math.min(47, Math.floor((e.clientY - gora) / (wysokoscGodziny / 2))),
-                      );
-                      onSlotClick(dzien, polgodzina * 30);
+                      onSlotClick(dzien, polgodzinaZ(e) * 30);
                     }}
                     onMouseMove={(e) => {
                       if ((e.target as HTMLElement).closest("button,a,[role=dialog]")) {
                         if (duch) setDuch(null);
                         return;
                       }
-                      const gora = e.currentTarget.getBoundingClientRect().top;
-                      const polgodzina = Math.max(
-                        0,
-                        Math.min(47, Math.floor((e.clientY - gora) / (wysokoscGodziny / 2))),
-                      );
-                      if (duch?.date !== dzien || duch.startMin !== polgodzina * 30) {
-                        setDuch({ date: dzien, startMin: polgodzina * 30 });
+                      const startMin = polgodzinaZ(e) * 30;
+                      if (duch?.date !== dzien || duch.startMin !== startMin) {
+                        setDuch({ date: dzien, startMin });
                       }
                     }}
                     onMouseLeave={() => setDuch(null)}
@@ -234,6 +238,8 @@ export function TimeGrid({
                         const godzinyBloku = `${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
                         const licznik = postep.total > 0 ? `${postep.done}/${postep.total}` : "";
                         const cykliczny = o.recurring ? "↻" : "";
+                        // Bloki krótsze niż 45 min: jedna linia bez pionowych odstępów
+                        const kompakt = czas < 45;
                         return (
                           <div
                             key={o.key}
@@ -249,14 +255,19 @@ export function TimeGrid({
                             <button
                               type="button"
                               onClick={(e) => onBlockClick(o.key, e.currentTarget)}
-                              className="box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 py-[5px] text-left text-[#171717]"
+                              title={`${o.title} ${godzinyBloku}`}
+                              className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                               style={{
                                 background: `${kolor}14`,
                                 border: `1px solid ${kolor}40`,
                                 borderLeft: `3px solid ${kolor}`,
                               }}
                             >
-                              {variant === "week" ? (
+                              {kompakt ? (
+                                <span className="block truncate text-[11px] leading-none font-medium">
+                                  {`${o.title} · ${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}`}
+                                </span>
+                              ) : variant === "week" ? (
                                 <>
                                   <span className="block truncate text-xs leading-[1.3] font-medium">
                                     {o.title}
@@ -285,8 +296,10 @@ export function TimeGrid({
                       })}
                     </div>
 
-                    {variant === "day" && dnia.length === 0 && (
-                      <div className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-[#e0e0e0] bg-white p-6 text-center text-[#666666]">
+                    {variant === "day" && dnia.length === 0 && (totalCount ?? 0) === 0 && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-[#e0e0e0] bg-white p-6 text-center text-[#666666]">
                         Brak bloków w tym dniu.{" "}
                         <button
                           type="button"

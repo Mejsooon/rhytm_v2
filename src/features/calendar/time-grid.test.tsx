@@ -227,4 +227,26 @@ describe("TimeGrid", () => {
     await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
     expect(onSlotClick).toHaveBeenCalledWith("2026-11-17", 480);
   });
+
+  it("krótkie bloki (15 i 30 min) mają widoczny tytuł i atrybut title", () => {
+    wyrenderuj({
+      occurrences: [
+        wystapienie({ blockId: "k1", title: "Kwadrans", startMin: 600, durationMin: 15 }),
+        wystapienie({ blockId: "k2", title: "Pół godziny", startMin: 720, durationMin: 30 }),
+      ],
+    });
+    const k1 = screen.getByRole("button", { name: /Kwadrans/ });
+    expect(k1).toHaveTextContent("Kwadrans · 10:00");
+    expect(k1).toHaveAttribute("title", "Kwadrans 10:00–10:15");
+    expect(screen.getByRole("button", { name: /Pół godziny/ })).toHaveAttribute(
+      "title",
+      "Pół godziny 12:00–12:30",
+    );
+  });
+
+  it("gdy filtry ukryły wszystkie bloki dnia, nie ma ramki pustego dnia", () => {
+    wyrenderuj({ days: ["2026-11-17"], variant: "day", totalCount: 2 });
+    expect(screen.queryByText(/Brak bloków w tym dniu\./)).not.toBeInTheDocument();
+    expect(screen.getByText("0 z 2 bloków")).toBeInTheDocument();
+  });
 });
