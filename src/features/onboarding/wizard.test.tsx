@@ -126,6 +126,14 @@ describe("OnboardingWizard", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Błąd końca.");
   });
 
+  it("krok 7: podwójny klik „Przejdź do Dziś” woła completeOnboarding raz", async () => {
+    completeOnboarding.mockReturnValue(new Promise(() => {}));
+    const stopka = pokaz(7);
+    const przycisk = stopka.getByRole("button", { name: "Przejdź do Dziś" });
+    await userEvent.dblClick(przycisk);
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+  });
+
   it("„Wstecz” na kroku 3 idzie do kroku 2", async () => {
     const stopka = pokaz(3);
     await userEvent.click(stopka.getByRole("button", { name: "Wstecz" }));

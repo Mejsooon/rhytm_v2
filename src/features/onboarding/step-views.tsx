@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
 import type { OnboardingDraft } from "./model";
+import { StepDone } from "./steps/step-done";
 import { StepGoals } from "./steps/step-goals";
+import { StepNotify } from "./steps/step-notify";
+import { StepPages } from "./steps/step-pages";
 import { StepProfile } from "./steps/step-profile";
 import { StepRoles } from "./steps/step-roles";
 import { StepSource } from "./steps/step-source";
@@ -19,22 +22,6 @@ export type StepViewProps = {
   now: Date;
 };
 
-const TYTULY: Record<5 | 6 | 7, string> = {
-  5: "Od czego zaczynasz?",
-  6: "Przypomnienia",
-  7: "Gotowe",
-};
-
-// Na razie tylko nagłówek kroku — prawdziwe widoki 5–7 dochodzą w Task 7.
-function Naglowek(step: 5 | 6 | 7) {
-  return function WidokKroku(props: StepViewProps): ReactNode {
-    void props;
-    return (
-      <h1 className="m-0 text-2xl leading-8 font-medium tracking-[-0.01em]">{TYTULY[step]}</h1>
-    );
-  };
-}
-
 // Rejestr widoków kroków: kreator renderuje <STEP_VIEWS[step] {...props} /> jako komponent (widoki mogą używać hooków)
 export const STEP_VIEWS: Record<
   1 | 2 | 3 | 4 | 5 | 6 | 7,
@@ -44,7 +31,7 @@ export const STEP_VIEWS: Record<
   2: StepRoles,
   3: StepGoals,
   4: StepSource,
-  5: Naglowek(5),
-  6: Naglowek(6),
-  7: Naglowek(7),
+  5: StepPages,
+  6: StepNotify,
+  7: StepDone,
 };
