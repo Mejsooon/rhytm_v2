@@ -32,8 +32,8 @@ export async function saveOnboardingStep(
   let zapis: { error: unknown };
   if (step === 1) {
     const d = parsed.data as ReturnType<typeof onboardingStepSchemas[1]["parse"]>;
-    // Avatar musi leżeć w folderze zalogowanego użytkownika
-    if (d.avatar_path !== null && !d.avatar_path.startsWith(`${user.id}/`)) {
+    // Avatar to dokładnie plik {user_id}/avatar.{ext} (bez podfolderów i "..")
+    if (d.avatar_path !== null && !new RegExp(`^${user.id}/avatar\\.(png|jpg|jpeg|webp)$`).test(d.avatar_path)) {
       return { ok: false, message: "Nieprawidłowe zdjęcie profilowe." };
     }
     zapis = await supabase

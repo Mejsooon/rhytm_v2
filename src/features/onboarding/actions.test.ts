@@ -68,6 +68,15 @@ describe("saveOnboardingStep", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it.each(["u1/../u2/a.png", "u1/x/avatar.png", "u1/avatar.gif", "u1/avatar.png/x"])(
+    "krok 1 z niedozwolonym avatar_path %s → ok: false",
+    async (sciezka) => {
+      const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: sciezka });
+      expect(wynik.ok).toBe(false);
+      expect(update).not.toHaveBeenCalled();
+    },
+  );
+
   it("krok 1 z własnym avatar_path → zapis", async () => {
     const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: "u1/avatar.png" });
     expect(wynik).toEqual({ ok: true });

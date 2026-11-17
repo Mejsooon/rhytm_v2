@@ -36,12 +36,9 @@ test.describe("konto", () => {
     await page.goto(await latestLinkFor(email));
     await expect(page.getByRole("heading", { name: "E-mail potwierdzony" })).toBeVisible();
 
-    // Dalej → tymczasowy onboarding → Dalej → /dzis
+    // Dalej → kreator onboardingu od kroku 1 (pełny przebieg kreatora: e2e/onboarding.spec.ts)
     await page.getByRole("link", { name: "Dalej" }).click();
-    await expect(page).toHaveURL(/\/onboarding$/);
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await expect(page).toHaveURL(/\/dzis$/);
-    await oczekujNawigacji(page, info.project.name);
+    await expect(page).toHaveURL(/\/onboarding\/1$/);
   });
 
   test("logowanie z e-mailem ze spacjami i wielkimi literami", async ({ page }, info) => {
