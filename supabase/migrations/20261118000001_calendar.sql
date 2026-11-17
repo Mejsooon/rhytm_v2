@@ -66,12 +66,30 @@ create policy "blocks_select_own" on public.blocks
 
 create policy "blocks_insert_own" on public.blocks
   for insert to authenticated
-  with check (user_id = (select auth.uid()));
+  with check (
+    user_id = (select auth.uid())
+    and (
+      category_id is null
+      or exists (
+        select 1 from public.categories as c
+        where c.id = blocks.category_id and c.user_id = (select auth.uid())
+      )
+    )
+  );
 
 create policy "blocks_update_own" on public.blocks
   for update to authenticated
   using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+  with check (
+    user_id = (select auth.uid())
+    and (
+      category_id is null
+      or exists (
+        select 1 from public.categories as c
+        where c.id = blocks.category_id and c.user_id = (select auth.uid())
+      )
+    )
+  );
 
 create policy "blocks_delete_own" on public.blocks
   for delete to authenticated
@@ -88,7 +106,7 @@ create policy "block_exceptions_insert_own" on public.block_exceptions
     user_id = (select auth.uid())
     and exists (
       select 1 from public.blocks as b
-      where b.id = block_id and b.user_id = (select auth.uid())
+      where b.id = block_exceptions.block_id and b.user_id = (select auth.uid())
     )
   );
 
@@ -99,7 +117,7 @@ create policy "block_exceptions_update_own" on public.block_exceptions
     user_id = (select auth.uid())
     and exists (
       select 1 from public.blocks as b
-      where b.id = block_id and b.user_id = (select auth.uid())
+      where b.id = block_exceptions.block_id and b.user_id = (select auth.uid())
     )
   );
 
@@ -120,7 +138,7 @@ create policy "tasks_insert_own" on public.tasks
       block_id is null
       or exists (
         select 1 from public.blocks as b
-        where b.id = block_id and b.user_id = (select auth.uid())
+        where b.id = tasks.block_id and b.user_id = (select auth.uid())
       )
     )
   );
@@ -134,7 +152,7 @@ create policy "tasks_update_own" on public.tasks
       block_id is null
       or exists (
         select 1 from public.blocks as b
-        where b.id = block_id and b.user_id = (select auth.uid())
+        where b.id = tasks.block_id and b.user_id = (select auth.uid())
       )
     )
   );
@@ -169,12 +187,17 @@ create trigger blocks_detach_tasks_before_delete
   before delete on public.blocks
   for each row execute function public.detach_tasks_before_block_delete();
 
+revoke execute on function public.detach_tasks_before_block_delete() from public, anon;
+
 -- Rozcina serię od daty p_from ("to i następne").
 -- Edycja (p_delete = false): stara seria kończy się dzień przed p_from (albo znika, gdy p_from to pierwsze wystąpienie),
 -- powstaje nowa seria od p_from z zastosowanym p_patch, a zadania i wyjątki od p_from przechodzą do niej
 -- (wyjątki są kasowane, gdy zmienia się czas lub powtarzalność). Zwraca id nowej serii.
 -- Usuwanie (p_delete = true): zadania od p_from stają się samodzielne (due_date = data wystąpienia), zwraca null.
 -- Cudzy lub nieistniejący blok (RLS go ukrywa) kończy się błędem, bez żadnych zmian.
+-- p_from musi być datą wystąpienia policzoną przez aplikację: p_from <= data startu bloku oznacza całą serię
+-- (p_from przed startem albo po końcu serii (recurrence.until) to błąd 22023, żeby nie wydłużać serii).
+-- Gdy patch zawiera recurrence, zadania od p_from stają się samodzielne, a wyjątki od p_from są kasowane.
 create function public.split_block_series(
   p_block_id uuid,
   p_from date,
@@ -194,7 +217,7 @@ declare
   v_start_time time;
   v_recurrence jsonb;
 begin
-  select b.* into v_old from public.blocks as b where b.id = p_block_id;
+  select b.* into v_old from public.blocks as b where b.id = p_block_id for update;
   if not found then
     raise exception 'block_not_found' using errcode = 'P0002';
   end if;
@@ -203,6 +226,10 @@ begin
   end if;
 
   v_first_date := v_old.start_local::date;
+  if p_from < v_first_date
+    or (v_old.recurrence ? 'until' and p_from > (v_old.recurrence ->> 'until')::date) then
+    raise exception 'p_from_out_of_series' using errcode = '22023';
+  end if;
   p_patch := coalesce(p_patch, '{}'::jsonb);
 
   if p_delete then
@@ -217,7 +244,7 @@ begin
       delete from public.block_exceptions as e
       where e.block_id = p_block_id and e.occurrence_date >= p_from;
       update public.blocks as b
-      set recurrence = jsonb_set(b.recurrence, '{until}', to_jsonb((p_from - 1)::text)),
+      set recurrence = jsonb_set(b.recurrence, '{until}', to_jsonb(to_char(p_from - 1, 'YYYY-MM-DD'))),
           updated_at = now()
       where b.id = p_block_id;
     end if;
@@ -252,26 +279,35 @@ begin
   )
   returning id into v_new_id;
 
-  -- Zadania od p_from przechodzą do nowej serii.
-  update public.tasks as t
-  set block_id = v_new_id
-  where t.block_id = p_block_id and t.occurrence_date >= p_from;
-
-  -- Wyjątki od p_from: kasowane przy zmianie czasu, inaczej przenoszone.
-  if v_time_changed then
+  if p_patch ? 'recurrence' then
+    -- Zmiana wzorca powtarzania: zadania od p_from stają się samodzielne, wyjątki są kasowane.
+    update public.tasks as t
+    set due_date = t.occurrence_date, block_id = null, occurrence_date = null
+    where t.block_id = p_block_id and t.occurrence_date >= p_from;
     delete from public.block_exceptions as e
     where e.block_id = p_block_id and e.occurrence_date >= p_from;
   else
-    update public.block_exceptions as e
+    -- Zadania od p_from przechodzą do nowej serii.
+    update public.tasks as t
     set block_id = v_new_id
-    where e.block_id = p_block_id and e.occurrence_date >= p_from;
+    where t.block_id = p_block_id and t.occurrence_date >= p_from;
+
+    -- Wyjątki od p_from: kasowane przy zmianie godziny lub czasu trwania, inaczej przenoszone.
+    if v_time_changed then
+      delete from public.block_exceptions as e
+      where e.block_id = p_block_id and e.occurrence_date >= p_from;
+    else
+      update public.block_exceptions as e
+      set block_id = v_new_id
+      where e.block_id = p_block_id and e.occurrence_date >= p_from;
+    end if;
   end if;
 
   if p_from <= v_first_date then
     delete from public.blocks as b where b.id = p_block_id;
   else
     update public.blocks as b
-    set recurrence = jsonb_set(b.recurrence, '{until}', to_jsonb((p_from - 1)::text)),
+    set recurrence = jsonb_set(b.recurrence, '{until}', to_jsonb(to_char(p_from - 1, 'YYYY-MM-DD'))),
         updated_at = now()
     where b.id = p_block_id;
   end if;
