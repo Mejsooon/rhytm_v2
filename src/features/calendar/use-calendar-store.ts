@@ -9,11 +9,12 @@ import type { CalendarData } from "./load-calendar";
 
 export type CalendarChange = (data: CalendarData) => CalendarData;
 
-type Oczekujaca = { id: number; zmiana: CalendarChange };
+// zrodlo = dane serwera, przy których zmiana powstała (żeby nie wchłonąć jej drugi raz do nowej bazy)
+type Oczekujaca = { id: number; zmiana: CalendarChange; zrodlo: CalendarData };
 
 type Stan = {
-  zrodlo: CalendarData; // dane z serwera, od których zaczęliśmy
-  baza: CalendarData; // zrodlo + zmiany już potwierdzone przez serwer
+  zrodlo: CalendarData; // aktualne dane z serwera
+  baza: CalendarData; // zrodlo + zmiany potwierdzone, zanim przyszły nowe dane
   oczekujace: Oczekujaca[];
 };
 
@@ -27,11 +28,12 @@ export function useCalendarStore(initial: CalendarData) {
   });
   const licznik = useRef(0);
 
-  // Nowe dane z serwera (inna tożsamość propsa) zastępują wszystko, także zmiany w toku.
-  // Potrzebne, bo Next 16 (Activity) trzyma ukrytą trasę w pamięci i nie montuje jej od nowa.
+  // Nowe dane z serwera (inna tożsamość propsa) stają się bazą — Next 16 (Activity) trzyma
+  // ukrytą trasę w pamięci i nie montuje jej od nowa. Zmiany, których akcje jeszcze trwają,
+  // zostają nałożone na nową bazę i znikają dopiero, gdy ich własna akcja się zakończy.
   let biezacy = stan;
   if (stan.zrodlo !== initial) {
-    biezacy = { zrodlo: initial, baza: initial, oczekujace: [] };
+    biezacy = { zrodlo: initial, baza: initial, oczekujace: stan.oczekujace };
     setStan(biezacy);
   }
 
@@ -42,11 +44,10 @@ export function useCalendarStore(initial: CalendarData) {
     ): Promise<boolean> => {
       const id = ++licznik.current;
       const zrodlo = initial;
-      setStan((s) =>
-        s.zrodlo !== zrodlo
-          ? s
-          : { ...s, oczekujace: [...s.oczekujace, { id, zmiana }] },
-      );
+      setStan((s) => ({
+        ...s,
+        oczekujace: [...s.oczekujace, { id, zmiana, zrodlo }],
+      }));
 
       let udane = false;
       try {
@@ -56,12 +57,11 @@ export function useCalendarStore(initial: CalendarData) {
         udane = false;
       }
 
-      // Jeśli w międzyczasie przyszły nowe dane serwera, nie ruszamy już stanu
       setStan((s) => {
-        if (s.zrodlo !== zrodlo) return s;
         const reszta = s.oczekujace.filter((o) => o.id !== id);
-        // Sukces: zmiana wchodzi do bazy; błąd: znika (cofnięcie)
-        return udane
+        // Sukces: zmiana wchodzi do bazy, o ile baza pochodzi z tych samych danych serwera
+        // (po odświeżeniu serwer już ją zawiera); błąd: zmiana znika (cofnięcie)
+        return udane && s.zrodlo === zrodlo
           ? { ...s, baza: zmiana(s.baza), oczekujace: reszta }
           : { ...s, oczekujace: reszta };
       });

@@ -58,6 +58,19 @@ describe("CalendarHeader", () => {
     expect(screen.getByText("tydz. 49 · 30.11–6.12")).toBeInTheDocument();
   });
 
+  it("tydzień od niedzieli: etykieta i strzałki", () => {
+    wyrenderuj({ weekStart: "sun" }); // 15–21.11, środa 18.11 w tygodniu 47
+    expect(screen.getByText("tydz. 47 · 15–21.11")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Następny tydzień" })).toHaveAttribute(
+      "href",
+      "/kalendarz?widok=tydzien&data=2026-11-25",
+    );
+    expect(screen.getByRole("link", { name: "Poprzedni tydzień" })).toHaveAttribute(
+      "href",
+      "/kalendarz?widok=tydzien&data=2026-11-11",
+    );
+  });
+
   it("Nowy blok woła callback", async () => {
     const { onNewBlock } = wyrenderuj();
     await userEvent.click(screen.getAllByRole("button", { name: "Nowy blok" })[0]);

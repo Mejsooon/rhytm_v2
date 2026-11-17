@@ -109,6 +109,11 @@ export async function loadCalendar(
       profile ? Promise.resolve(profile) : loadCalendarProfile(supabase, userId),
     ]);
 
+  // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty kalendarz
+  for (const wynik of [blokiRes, wyjatkiRes, zadaniaRes, kategorieRes]) {
+    if (wynik.error) throw new Error(wynik.error.message);
+  }
+
   const exceptions = (wyjatkiRes.data ?? []) as ExceptionRow[];
   const blocks = pickBlocksForRange((blokiRes.data ?? []) as BlockRow[], from, to);
 
@@ -118,11 +123,12 @@ export async function loadCalendar(
     ...new Set(exceptions.map((w) => w.block_id).filter((id) => !znane.has(id))),
   ];
   if (brakujace.length > 0) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blocks")
       .select("*")
       .eq("user_id", userId)
       .in("id", brakujace);
+    if (error) throw new Error(error.message);
     blocks.push(...((data ?? []) as BlockRow[]));
   }
 

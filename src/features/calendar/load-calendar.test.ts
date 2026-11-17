@@ -143,4 +143,20 @@ describe("loadCalendar", () => {
     expect(wynik.blocks.map((b) => b.id)).toEqual(["przeniesiony"]);
     expect(wynik.exceptions).toHaveLength(1);
   });
+
+  it("rzuca błąd, gdy któreś zapytanie się nie powiodło", async () => {
+    await expect(
+      loadCalendar(
+        klient({
+          blocks: fakeTable({ data: null, error: { message: "boom" } }),
+          block_exceptions: fakeTable({ data: [] }),
+          tasks: fakeTable({ data: [] }),
+          categories: fakeTable({ data: [] }),
+        }),
+        "u1",
+        LISTOPAD,
+        profil,
+      ),
+    ).rejects.toThrow("boom");
+  });
 });
