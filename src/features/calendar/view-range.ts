@@ -1,6 +1,9 @@
 // Zakresy widoków kalendarza i nawigacja po datach — same stringi YYYY-MM-DD,
 // arytmetyka dni na UTC-owych Date (bez stref, więc bez przesunięć DST).
-import { buildMonthGrid, type IsoDate } from "@/components/controls/calendar-math";
+import {
+  buildMonthGrid,
+  type IsoDate,
+} from "@/components/controls/calendar-math";
 
 export type CalendarView = "dzien" | "tydzien" | "miesiac";
 
@@ -13,6 +16,12 @@ export function addDays(date: IsoDate, n: number): IsoDate {
   return `${wynik.getUTCFullYear()}-${dwie(wynik.getUTCMonth() + 1)}-${dwie(wynik.getUTCDate())}`;
 }
 
+// Dzień tygodnia daty: 1 = poniedziałek … 7 = niedziela
+export function weekdayOf(date: IsoDate): number {
+  const [r, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(r, m - 1, d)).getUTCDay() || 7;
+}
+
 export function viewRange(
   view: CalendarView,
   date: IsoDate,
@@ -23,9 +32,8 @@ export function viewRange(
   }
 
   if (view === "tydzien") {
-    const [r, m, d] = date.split("-").map(Number);
-    const dzienTygodnia = new Date(Date.UTC(r, m - 1, d)).getUTCDay(); // 0 = niedziela
-    const cofnij = weekStart === "mon" ? (dzienTygodnia + 6) % 7 : dzienTygodnia;
+    const dzienTygodnia = weekdayOf(date); // 1 = pn … 7 = nd
+    const cofnij = weekStart === "mon" ? dzienTygodnia - 1 : dzienTygodnia % 7;
     const from = addDays(date, -cofnij);
     const days = Array.from({ length: 7 }, (_, i) => addDays(from, i));
     return { from, to: days[6], days };
@@ -64,7 +72,11 @@ export function parseCalendarParams(
 }
 
 // Strzałki < > : dzień, tydzień albo miesiąc (dzień miesiąca przycięty do jego długości)
-export function shiftDate(view: CalendarView, date: IsoDate, dir: -1 | 1): IsoDate {
+export function shiftDate(
+  view: CalendarView,
+  date: IsoDate,
+  dir: -1 | 1,
+): IsoDate {
   if (view === "dzien") return addDays(date, dir);
   if (view === "tydzien") return addDays(date, 7 * dir);
 

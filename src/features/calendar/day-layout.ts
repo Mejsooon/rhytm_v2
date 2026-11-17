@@ -8,8 +8,12 @@ const DZIEN_DO = 20 * 60;
 
 // Nakładające się bloki dzielą szerokość: każdy dostaje kolumnę `col` z `cols` kolumn grupy.
 // Grupa = ciąg bloków, z których każdy zaczyna się przed końcem poprzednich.
-export function layoutDay(items: Occurrence[]): { key: string; col: number; cols: number }[] {
-  const posortowane = [...items].sort((a, b) => a.startMin - b.startMin || b.durationMin - a.durationMin);
+export function layoutDay(
+  items: Occurrence[],
+): { key: string; col: number; cols: number }[] {
+  const posortowane = [...items].sort(
+    (a, b) => a.startMin - b.startMin || b.durationMin - a.durationMin,
+  );
   const wynik: { key: string; col: number; cols: number }[] = [];
 
   let grupa: { key: string; col: number; cols: number }[] = [];
@@ -44,12 +48,20 @@ export function layoutDay(items: Occurrence[]): { key: string; col: number; cols
 export function dayNumbers(
   items: Occurrence[],
   tasks: { done: boolean }[],
-): { plannedMin: number; freeMin: number; tasksDone: number; tasksTotal: number } {
+): {
+  plannedMin: number;
+  freeMin: number;
+  tasksDone: number;
+  tasksTotal: number;
+} {
   const plannedMin = items.reduce((suma, b) => suma + b.durationMin, 0);
 
   // Zajęte minuty w oknie 8–20 liczymy raz, nawet gdy bloki się nakładają
   const przedzialy = items
-    .map((b) => [Math.max(b.startMin, DZIEN_OD), Math.min(b.startMin + b.durationMin, DZIEN_DO)])
+    .map((b) => [
+      Math.max(b.startMin, DZIEN_OD),
+      Math.min(b.startMin + b.durationMin, DZIEN_DO),
+    ])
     .filter(([od, do_]) => do_ > od)
     .sort((a, b) => a[0] - b[0]);
 
@@ -70,6 +82,9 @@ export function dayNumbers(
 }
 
 // Pozycja linii „teraz" (minuty od północy) albo null, gdy to nie jest ten dzień
-export function nowLine(nowInTz: { date: IsoDate; minutes: number }, day: IsoDate): number | null {
+export function nowLine(
+  nowInTz: { date: IsoDate; minutes: number },
+  day: IsoDate,
+): number | null {
   return nowInTz.date === day ? nowInTz.minutes : null;
 }
