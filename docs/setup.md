@@ -3,6 +3,8 @@
 Ta instrukcja jest dla Ciebie, Mejson. Każdy krok mówi, gdzie kliknąć, co skopiować i gdzie to wkleić.
 Zamień `<projekt>` na nazwę projektu w Vercel (np. `rhytm`), czyli adres `https://<projekt>.vercel.app`.
 
+Region serwera: `vercel.json` ustawia funkcje Vercela na Frankfurt (`fra1`), obok bazy Supabase (`eu-central-1`). Gdyby baza kiedyś zmieniła region, zmień też ten wpis, inaczej każde zapytanie do bazy poleci na drugi koniec świata.
+
 Kolejność: 1 (lokalnie) możesz zrobić od razu. Kroki 2–6 to konta w zewnętrznych usługach, a 7–8 to przekazanie dostępu i sprawdzenie.
 
 ---
