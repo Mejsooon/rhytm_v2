@@ -89,7 +89,7 @@ async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
 const ROZMIAR_STRONY = 1000;
 
 // Wszystkie odhaczenia (PostgREST obcina odpowiedź do 1000 wierszy, więc czytamy stronami)
-async function loadChecks(
+export async function loadChecks(
   supabase: SupabaseClient<Database>,
   userId: string,
   filtr: { habitId?: string },

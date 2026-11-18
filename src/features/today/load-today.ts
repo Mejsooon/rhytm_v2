@@ -11,7 +11,11 @@ import {
   type Occurrence,
 } from "@/features/calendar/occurrences";
 import { addDays } from "@/features/calendar/view-range";
-import { mapHabits, mapSleepLogs } from "@/features/habits/load-habits";
+import {
+  loadChecks,
+  mapHabits,
+  mapSleepLogs,
+} from "@/features/habits/load-habits";
 import type { Checks, Habit } from "@/features/habits/model";
 import type { SleepLog } from "@/features/habits/sleep";
 import type { SportItem } from "@/features/sport/model";
@@ -25,7 +29,7 @@ type ScheduleRow = Database["public"]["Tables"]["habit_schedules"]["Row"];
 type SleepRow = Database["public"]["Tables"]["sleep_logs"]["Row"];
 
 const DOMYSLNY_CEL_SNU_MIN = 480;
-const DOMYSLNY_CEL_KM = 20;
+const DOMYSLNY_CEL_KM = 25;
 const DOMYSLNY_CEL_TRENINGOW = 3;
 
 export type TodayData = {
@@ -107,7 +111,7 @@ export async function loadToday(
     zadaniaInneRes,
     nawykiRes,
     wersjeRes,
-    odhaczeniaRes,
+    odhaczenia,
     senRes,
     liczbaBlokowRes,
     liczbaNawykowRes,
@@ -127,12 +131,14 @@ export async function loadToday(
       today,
       { wszystkieTreningi: true },
     ),
-    // Zaległe niezrobione sprzed tygodnia oraz zadania bez terminu
+    // Zaległe niezrobione sprzed tygodnia oraz samodzielne niezrobione zadania bez terminu
     supabase
       .from("tasks")
       .select("*")
       .eq("user_id", userId)
-      .or(`and(due_date.lt.${weekStartDate},done.eq.false),due_date.is.null`)
+      .or(
+        `and(due_date.lt.${weekStartDate},done.eq.false),and(due_date.is.null,block_id.is.null,done.eq.false)`,
+      )
       .order("position", { ascending: true }),
     supabase
       .from("habits")
@@ -145,12 +151,8 @@ export async function loadToday(
       .select("*")
       .eq("user_id", userId)
       .order("valid_from", { ascending: true }),
-    supabase
-      .from("habit_checks")
-      .select("habit_id, date")
-      .eq("user_id", userId)
-      .gte("date", weekStartDate)
-      .lte("date", koniecTygodnia),
+    // Cała historia odhaczeń (strony po 1000) — seria nawyku idzie wstecz bez limitu
+    loadChecks(supabase, userId, {}),
     supabase
       .from("sleep_logs")
       .select("*")
@@ -172,7 +174,6 @@ export async function loadToday(
     zadaniaInneRes,
     nawykiRes,
     wersjeRes,
-    odhaczeniaRes,
     senRes,
     liczbaBlokowRes,
     liczbaNawykowRes,
@@ -190,12 +191,12 @@ export async function loadToday(
     tasks.push(zadanie);
   }
 
-  // Odhaczenia tygodnia: habitId → zbiór dat
+  // Odhaczenia z całej historii: habitId → zbiór dat
   const checks: Checks = new Map();
-  for (const c of odhaczeniaRes.data ?? []) {
-    const daty = checks.get(c.habit_id) ?? new Set<IsoDate>();
+  for (const c of odhaczenia) {
+    const daty = checks.get(c.habitId) ?? new Set<IsoDate>();
     daty.add(c.date);
-    checks.set(c.habit_id, daty);
+    checks.set(c.habitId, daty);
   }
 
   return {

@@ -93,6 +93,14 @@ describe("loadToday", () => {
     });
   });
 
+  it("domyślny cel km to 25, gdy profil go nie ma", async () => {
+    const { supabase } = klient({
+      profiles: [{ single: { ...PROFIL.single, weekly_km_goal: null } }],
+    });
+    const wynik = await loadToday(supabase, "u1", TERAZ);
+    expect(wynik.profile.weeklyKmGoal).toBe(25);
+  });
+
   it("tydzień od niedzieli, gdy week_start = sun", async () => {
     const { supabase } = klient({
       profiles: [{ single: { ...PROFIL.single, week_start: "sun" } }],
@@ -110,8 +118,9 @@ describe("loadToday", () => {
     }
 
     const odhaczenia = zapytania.find((z) => z.tabela === "habit_checks")!.q;
-    expect(odhaczenia.gte).toHaveBeenCalledWith("date", "2026-11-16");
-    expect(odhaczenia.lte).toHaveBeenCalledWith("date", "2026-11-22");
+    // Odhaczenia bez granic dat — seria nawyku potrzebuje całej historii
+    expect(odhaczenia.gte).not.toHaveBeenCalled();
+    expect(odhaczenia.lte).not.toHaveBeenCalled();
     const sen = zapytania.find((z) => z.tabela === "sleep_logs")!.q;
     expect(sen.gte).toHaveBeenCalledWith("date", "2026-11-16");
     expect(sen.lte).toHaveBeenCalledWith("date", "2026-11-22");
@@ -151,7 +160,7 @@ describe("loadToday", () => {
     // Drugie zapytanie o zadania: zaległe (przed tygodniem, niezrobione) lub bez terminu
     const drugie = zapytania.filter((z) => z.tabela === "tasks")[1].q;
     expect(drugie.or).toHaveBeenCalledWith(
-      "and(due_date.lt.2026-11-16,done.eq.false),due_date.is.null",
+      "and(due_date.lt.2026-11-16,done.eq.false),and(due_date.is.null,block_id.is.null,done.eq.false)",
     );
   });
 
@@ -187,6 +196,7 @@ describe("loadToday", () => {
       habit_checks: [
         {
           data: [
+            { habit_id: "h1", date: "2026-10-05" },
             { habit_id: "h1", date: "2026-11-17" },
             { habit_id: "h1", date: "2026-11-18" },
           ],
@@ -211,6 +221,7 @@ describe("loadToday", () => {
     expect(wynik.habits).toHaveLength(1);
     expect(wynik.habits[0].schedules[0].type).toBe("daily");
     expect([...(wynik.checks.get("h1") ?? [])]).toEqual([
+      "2026-10-05",
       "2026-11-17",
       "2026-11-18",
     ]);
