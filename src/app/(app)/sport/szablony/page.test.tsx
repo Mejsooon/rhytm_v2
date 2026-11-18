@@ -49,6 +49,12 @@ describe("/sport/szablony", () => {
     expect(loadTemplates).toHaveBeenCalledWith(expect.anything(), "u1");
   });
 
+  it("nazwa z adresu przycięta do 60 znaków", async () => {
+    expect(await flash({ komunikat: "dodano", nazwa: "x".repeat(200) })).toBe(
+      `Dodano szablon „${"x".repeat(60)}”.`,
+    );
+  });
+
   it("bez albo z nieznanym komunikatem → brak", async () => {
     expect(await flash({})).toBeNull();
     expect(await flash({ komunikat: "cokolwiek", nazwa: "X" })).toBeNull();

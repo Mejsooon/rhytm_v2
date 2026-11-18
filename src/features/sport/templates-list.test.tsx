@@ -1,13 +1,16 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { push, toastError, createGymSession } = vi.hoisted(() => ({
+const { push, replace, toastError, createGymSession } = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
   toastError: vi.fn(),
   createGymSession: vi.fn(),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+// Stały obiekt routera (jak w Next) — efekt komunikatu zależy od niego
+const router = { push, replace };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("./actions", () => ({ createGymSession }));
 
@@ -119,14 +122,57 @@ describe("TemplatesList", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("zielony komunikat po zapisie i wyczyszczenie adresu", () => {
-    const replace = vi.spyOn(window.history, "replaceState");
-    render(<TemplatesList data={dane()} flash="Dodano szablon „Push”." />);
+  it("zielony komunikat zostaje po wyczyszczeniu adresu i wraca przy kolejnym zapisie", () => {
+    const tekst = "Zapisano zmiany w szablonie „Push”.";
+    const { rerender } = render(<TemplatesList data={dane()} flash={tekst} />);
+    expect(screen.getByRole("status")).toHaveTextContent(tekst);
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith("/sport/szablony", { scroll: false });
+
+    // Po router.replace serwer oddaje stronę bez komunikatu — pasek dalej widać, adresu nie zmieniamy znowu
+    rerender(<TemplatesList data={dane()} flash={null} />);
+    expect(screen.getByRole("status")).toHaveTextContent(tekst);
+    expect(replace).toHaveBeenCalledTimes(1);
+
+    // Drugi zapis tego samego szablonu: ten sam tekst znowu czyści adres
+    rerender(<TemplatesList data={dane()} flash={tekst} />);
+    expect(screen.getByRole("status")).toHaveTextContent(tekst);
+    expect(replace).toHaveBeenCalledTimes(2);
+
+    // Inny komunikat zastępuje poprzedni
+    rerender(<TemplatesList data={dane()} flash="Usunięto szablon „Pull”." />);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Dodano szablon „Push”.",
+      "Usunięto szablon „Pull”.",
     );
-    expect(replace).toHaveBeenCalledWith(null, "", "/sport/szablony");
-    replace.mockRestore();
+  });
+
+  it("„Rozpocznij” w trakcie: przyciski zablokowane, kliknięty aria-busy z tą samą etykietą", async () => {
+    let zakoncz: (v: unknown) => void = () => {};
+    createGymSession.mockReturnValue(
+      new Promise((r) => {
+        zakoncz = r;
+      }),
+    );
+    const d = dane();
+    d.templates[1].items = d.templates[0].items;
+    render(<TemplatesList data={d} flash={null} />);
+    const przycisk = within(karta("Push")).getByRole("button", {
+      name: "Rozpocznij",
+    });
+    await userEvent.click(przycisk);
+    expect(przycisk).toBeDisabled();
+    expect(przycisk).toHaveAttribute("aria-busy", "true");
+    const drugi = within(karta("Nogi")).getByRole("button", {
+      name: "Rozpocznij",
+    });
+    expect(drugi).toBeDisabled();
+    expect(drugi).not.toHaveAttribute("aria-busy");
+
+    // Błąd odblokowuje przyciski
+    await act(async () => zakoncz({ ok: false, message: "Ups." }));
+    expect(przycisk).toBeEnabled();
+    expect(przycisk).not.toHaveAttribute("aria-busy");
+    expect(createGymSession).toHaveBeenCalledTimes(1);
   });
 
   it("bez komunikatu nie ma paska statusu", () => {

@@ -3,7 +3,7 @@
 // Lista szablonów treningów (WorkoutTemplates.dc.html, widok listy): ścieżka „Sport / Szablony treningów”,
 // „Nowy szablon”, zielony komunikat po zapisie / usunięciu, karty szablonów i karta „+ Nowy szablon”.
 // Jedno drzewo dla webu i telefonu — siatka kart sama zawija się w wąskim oknie.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,17 +27,27 @@ export function TemplatesList({
 }) {
   const router = useRouter();
 
-  // Komunikat jest jednorazowy: czyścimy adres bez ponownego pobrania strony,
-  // więc odświeżenie albo powrót do listy już go nie pokaże
+  // Komunikat jest jednorazowy: po pokazaniu zastępujemy adres listą bez ?komunikat/&nazwa,
+  // więc odświeżenie go nie powtórzy. Treść trzymamy w stanie, bo po zamianie adresu serwer odda flash = null.
+  // Kolejny zapis (także tego samego szablonu) zmienia flash z null na tekst i pokazuje go znowu.
+  const [komunikat, setKomunikat] = useState(flash);
+  const [poprzedniFlash, setPoprzedniFlash] = useState(flash);
+  if (flash !== poprzedniFlash) {
+    setPoprzedniFlash(flash);
+    if (flash) setKomunikat(flash);
+  }
   useEffect(() => {
-    if (flash) window.history.replaceState(null, "", "/sport/szablony");
-  }, [flash]);
+    if (flash) router.replace("/sport/szablony", { scroll: false });
+  }, [flash, router]);
 
-  // „Rozpocznij” = wystąpienie szablonu z dziś (akcja idempotentna); blokada chroni przed podwójnym kliknięciem
+  // „Rozpocznij” = wystąpienie szablonu z dziś (akcja idempotentna). W trakcie wszystkie „Rozpocznij” są
+  // zablokowane, a kliknięty ma aria-busy; ref chroni przed podwójnym kliknięciem przed ponownym renderem.
   const tworzy = useRef(false);
+  const [startuje, setStartuje] = useState<string | null>(null);
   async function rozpocznij(templateId: string, startTime: string) {
     if (tworzy.current) return;
     tworzy.current = true;
+    setStartuje(templateId);
     try {
       const wynik = await createGymSession({
         date: data.today,
@@ -45,15 +55,16 @@ export function TemplatesList({
         templateId,
       });
       if (wynik.ok && wynik.id) {
+        // Zostajemy w stanie „w trakcie” aż do przejścia na ekran treningu
         router.push(`/sport/trening/${wynik.id}`);
-      } else {
-        toast.error(wynik.ok ? BLAD_ZAPISU : wynik.message);
+        return;
       }
+      toast.error(wynik.ok ? BLAD_ZAPISU : wynik.message);
     } catch {
       toast.error(BLAD_ZAPISU);
-    } finally {
-      tworzy.current = false;
     }
+    tworzy.current = false;
+    setStartuje(null);
   }
 
   return (
@@ -87,12 +98,12 @@ export function TemplatesList({
           </p>
         </div>
 
-        {flash && (
+        {komunikat && (
           <div
             role="status"
             className="rounded-lg border border-[#bbe5cc] bg-[#f0faf4] px-3.5 py-2.5 text-[13px] text-[#15803d]"
           >
-            {flash}
+            {komunikat}
           </div>
         )}
 
@@ -127,6 +138,8 @@ export function TemplatesList({
                     variant="primary"
                     size="sm"
                     className="text-[13px]"
+                    disabled={startuje !== null}
+                    aria-busy={startuje === t.id ? true : undefined}
                     onClick={() => void rozpocznij(t.id, t.start_time)}
                   >
                     Rozpocznij

@@ -21,7 +21,9 @@ async function Szablony({ searchParams }: { searchParams: Parametry }) {
   const dane = await loadTemplates(supabase, user.id);
 
   // Zielony komunikat po zapisie / usunięciu z edytora (teksty z makiety); nieznany komunikat → brak
-  const { komunikat, nazwa = "" } = await searchParams;
+  // Nazwa z adresu przycięta do długości nazwy szablonu (60 znaków) — link można spreparować ręcznie
+  const { komunikat, nazwa: nazwaZAdresu = "" } = await searchParams;
+  const nazwa = nazwaZAdresu.slice(0, 60);
   const flash =
     komunikat === "dodano"
       ? `Dodano szablon „${nazwa}”.`

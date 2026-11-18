@@ -257,6 +257,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                     <Chip
                       key={etykieta}
                       selected={wlaczony}
+                      variant="solid"
                       onClick={() =>
                         setForm((f) => ({
                           ...f,
@@ -350,7 +351,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       maxLength={20}
                       onChange={(e) => zmienWiersz(i, { reps: e.target.value })}
                       aria-label={`${r.name}: powtórzenia`}
-                      className={cn(POLE, "px-2 py-[5px]")}
+                      className={cn(POLE, "px-2 py-[5px] max-[799px]:h-11")}
                     />
                     <input
                       type="text"
@@ -360,7 +361,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       aria-invalid={zla ? true : undefined}
                       className={cn(
                         POLE,
-                        "px-2 py-[5px]",
+                        "px-2 py-[5px] max-[799px]:h-11",
                         zla && "border-[#b91c1c]",
                       )}
                     />

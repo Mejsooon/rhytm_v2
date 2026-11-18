@@ -83,6 +83,13 @@ describe("TemplateEditor — nowy szablon", () => {
       "8–10",
     );
     expect(screen.getByLabelText("Hip thrust: przerwa")).toHaveValue("2:00");
+    // Pola powtórzeń i przerwy mają ≥ 44 px na telefonie
+    expect(screen.getByLabelText("Hip thrust: powtórzenia")).toHaveClass(
+      "max-[799px]:h-11",
+    );
+    expect(screen.getByLabelText("Hip thrust: przerwa")).toHaveClass(
+      "max-[799px]:h-11",
+    );
     expect(screen.getByText("1 ćwiczenie · 3 serie")).toBeInTheDocument();
   });
 
@@ -95,6 +102,11 @@ describe("TemplateEditor — nowy szablon", () => {
     expect(screen.getByRole("button", { name: "Wt" })).toHaveAttribute(
       "aria-pressed",
       "true",
+    );
+    // Zaznaczony dzień wypełniony na czarno jak w makiecie
+    expect(screen.getByRole("button", { name: "Wt" })).toHaveClass(
+      "bg-[#171717]",
+      "text-white",
     );
     expect(
       screen.getByRole("button", { name: "Godzina startu" }),
