@@ -28,7 +28,6 @@ export function fakeTable(
     "or",
     "order",
     "limit",
-    "ilike",
   ]) {
     zapytanie[metoda] = vi.fn(() => zapytanie);
   }

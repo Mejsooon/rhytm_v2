@@ -337,6 +337,66 @@ describe("createGymSession", () => {
     });
   });
 
+  it("serie z najnowszej wykonanej sesji, gdy starsza też ma to ćwiczenie", async () => {
+    const NOWSZA = "b1000000-0000-4000-8000-000000000003";
+    tables.workout_templates = fakeTable({ single: szablon });
+    tables.workout_template_items = fakeTable({ data: pozycje });
+    const historia = fakeTable({
+      // baza zwraca malejąco po start_local
+      data: [
+        { id: NOWSZA, start_local: "2026-11-16T17:00:00" },
+        { id: STARA, start_local: "2026-11-09T17:00:00" },
+      ],
+    });
+    tables.sport_sessions = [fakeTable({ single: { id: SESJA } }), historia];
+    tables.gym_sets = fakeTable({
+      data: [
+        {
+          id: "s1",
+          session_id: STARA,
+          exercise_id: PRZYSIAD,
+          exercise_position: 1,
+          set_no: 1,
+          weight_kg: 50,
+          reps: 10,
+          done: true,
+        },
+        {
+          id: "s2",
+          session_id: NOWSZA,
+          exercise_id: PRZYSIAD,
+          exercise_position: 1,
+          set_no: 1,
+          weight_kg: 70,
+          reps: 5,
+          done: true,
+        },
+      ],
+    });
+
+    await createGymSession({
+      date: "2026-11-20",
+      start: "17:00",
+      templateId: SZABLON,
+    });
+
+    // Historia ograniczona: wykonane treningi siłowe od najnowszego, z limitem
+    expect(historia.eq).toHaveBeenCalledWith("completed", true);
+    expect(historia.order).toHaveBeenCalledWith("start_local", {
+      ascending: false,
+    });
+    expect(historia.limit).toHaveBeenCalledWith(50);
+    expect((tables.gym_sets as Fake).in).toHaveBeenCalledWith("session_id", [
+      NOWSZA,
+      STARA,
+    ]);
+    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
+      expect.objectContaining({ set_no: 1, weight_kg: 70, reps: 5 }),
+      expect.objectContaining({ set_no: 2, weight_kg: 70, reps: 5 }),
+      expect.objectContaining({ set_no: 3, weight_kg: 70, reps: 5 }),
+    ]);
+  });
+
   it("dziś po godzinie szablonu start = teraz", async () => {
     tables.workout_templates = fakeTable({
       single: { ...szablon, start_time: "08:00:00" },
@@ -403,6 +463,23 @@ describe("addExercise", () => {
     });
   });
 
+  it("wyścig przy tworzeniu (23505) czyta ćwiczenie po nazwie z „*” bez wzorca", async () => {
+    const ponownie = fakeTable({
+      data: [
+        { id: MARTWY, name: "Wyciskanie*" },
+        { id: LAWKA, name: "Wyciskanie na ławce" },
+      ],
+    });
+    tables.exercises = [
+      fakeTable({ data: [] }),
+      fakeTable({ error: { code: "23505", message: "dup" } }),
+      ponownie,
+    ];
+    const w = await addExercise(SESJA, "wyciskanie*");
+    expect(w).toEqual({ ok: true, id: MARTWY });
+    expect(ponownie.eq).toHaveBeenCalledWith("user_id", "u1");
+  });
+
   it("pozycja za ostatnim ćwiczeniem treningu", async () => {
     tables.exercises = fakeTable({
       data: [{ id: PRZYSIAD, name: "Przysiad" }],
@@ -428,6 +505,7 @@ describe("serie", () => {
       weight_kg: 72.5,
       done: true,
     });
+    expect((tables.gym_sets as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
   });
 
   it("addSet kopiuje ciężar i powtórzenia poprzedniej serii", async () => {
@@ -488,7 +566,7 @@ describe("finishWorkout", () => {
     expect((tables.sport_sessions as Fake).update).not.toHaveBeenCalled();
   });
 
-  it("start w przyszłości → bez end_local", async () => {
+  it("dziś, ale start jeszcze nie minął → koniec = start + 90 min", async () => {
     tables.sport_sessions = fakeTable({
       data: [{ id: SESJA }],
       single: { id: SESJA, start_local: "2026-11-18T17:00:00" },
@@ -496,7 +574,19 @@ describe("finishWorkout", () => {
     await finishWorkout(SESJA);
     expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
       completed: true,
-      end_local: null,
+      end_local: "2026-11-18T18:30:00",
+    });
+  });
+
+  it("trening z innego dnia → koniec = start + 90 min (także przez północ)", async () => {
+    tables.sport_sessions = fakeTable({
+      data: [{ id: SESJA }],
+      single: { id: SESJA, start_local: "2026-11-15T23:00:00" },
+    });
+    await finishWorkout(SESJA);
+    expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
+      completed: true,
+      end_local: "2026-11-16T00:30:00",
     });
   });
 });
@@ -581,6 +671,41 @@ describe("saveTemplate", () => {
     expect((tables.workout_template_items as Fake).delete).toHaveBeenCalled();
     expect((tables.workout_template_items as Fake).insert).toHaveBeenCalled();
   });
+  it("edycja: błąd zapisu nowych pozycji przywraca stare", async () => {
+    tables.exercises = fakeTable({
+      data: [
+        { id: PRZYSIAD, name: "Przysiad" },
+        { id: MARTWY, name: "Martwy ciąg" },
+        { id: LAWKA, name: "Wyciskanie na ławce" },
+      ],
+    });
+    tables.workout_templates = fakeTable({ data: [{ id: SZABLON }] });
+    const stare = [
+      {
+        id: "p1",
+        user_id: "u1",
+        template_id: SZABLON,
+        exercise_id: PRZYSIAD,
+        position: 1,
+        sets_count: 3,
+        reps_text: "8–10",
+        rest_s: 120,
+      },
+    ];
+    const odczyt = fakeTable({ data: stare });
+    const usuniecie = fakeTable();
+    const nieudane = fakeTable({ error: { message: "x" } });
+    const przywrocenie = fakeTable();
+    tables.workout_template_items = [odczyt, usuniecie, nieudane, przywrocenie];
+
+    const w = await saveTemplate({ ...wzor, id: SZABLON });
+    expect(w).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
+    expect(usuniecie.delete).toHaveBeenCalled();
+    expect(przywrocenie.insert).toHaveBeenCalledWith(stare);
+  });
 });
 
 describe("saveSessionAsTemplate", () => {
@@ -641,6 +766,7 @@ describe("renameExercise", () => {
     expect((tables.exercises as Fake).update).toHaveBeenCalledWith({
       name: "Przysiad tylny",
     });
+    expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
   });
 });
 
@@ -650,6 +776,27 @@ describe("usuwanie i pominięcia", () => {
     expect(w).toEqual({ ok: true });
     expect((tables.sport_sessions as Fake).delete).toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/dzis");
+  });
+
+  it("deleteSession sesji z szablonu zapisuje pominięcie dnia", async () => {
+    tables.sport_sessions = fakeTable({
+      data: [{ id: SESJA, template_id: SZABLON, template_date: "2026-11-20" }],
+    });
+    const w = await deleteSession(SESJA);
+    expect(w).toEqual({ ok: true });
+    expect((tables.sport_sessions as Fake).eq).toHaveBeenCalledWith(
+      "user_id",
+      "u1",
+    );
+    expect((tables.template_skips as Fake).upsert).toHaveBeenCalledWith(
+      { template_id: SZABLON, user_id: "u1", date: "2026-11-20" },
+      { onConflict: "template_id,date", ignoreDuplicates: true },
+    );
+  });
+
+  it("deleteSession bez szablonu nie zapisuje pominięcia", async () => {
+    await deleteSession(SESJA);
+    expect((tables.template_skips as Fake).upsert).not.toHaveBeenCalled();
   });
 
   it("deleteSession cudzej / nieistniejącej → komunikat", async () => {

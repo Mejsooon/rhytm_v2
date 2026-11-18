@@ -39,6 +39,8 @@ const BRAK_CWICZENIA = "Nie znaleziono ćwiczenia.";
 const BRAK_SERII = "Nie znaleziono serii.";
 const ZAJETA_NAZWA = "Masz już ćwiczenie o tej nazwie.";
 const DOMYSLNE_POWTORZENIA = "8–10";
+const SESJE_HISTORII = 50;
+const ROZMIAR_STRONY = 1000;
 
 export type RunInput = {
   id?: string;
@@ -136,15 +138,17 @@ async function exerciseIdsByName(
       wynik.set(klucz, nowe.id);
       continue;
     }
-    // Równoległy zapis utworzył już to ćwiczenie (unikalne lower(name)) — czytamy je
+    // Równoległy zapis utworzył już to ćwiczenie (unikalne lower(name)) — czytamy je,
+    // porównując nazwy w JS (bez wzorca ilike, w którym % _ * byłyby symbolami wieloznacznymi)
     if (bladWstawienia?.code !== "23505") return null;
-    const wzorzec = nazwa.replace(/[\\%_]/g, (z) => `\\${z}`);
-    const { data: istniejace } = await supabase
+    const { data: ponownie, error: bladPonownie } = await supabase
       .from("exercises")
-      .select("id")
-      .eq("user_id", userId)
-      .ilike("name", wzorzec)
-      .maybeSingle();
+      .select("id, name")
+      .eq("user_id", userId);
+    if (bladPonownie) return null;
+    const istniejace = (ponownie ?? []).find(
+      (e) => e.name.toLowerCase() === klucz,
+    );
     if (!istniejace) return null;
     wynik.set(klucz, istniejace.id);
   }
@@ -272,10 +276,30 @@ export async function deleteSession(id: string): Promise<ActionResult> {
     .delete()
     .eq("id", id)
     .eq("user_id", user.id)
-    .select("id");
+    .select("id, template_id, template_date");
   if (error) return { ok: false, message: BLAD_ZAPISU };
   if (!usuniete || usuniete.length === 0)
     return { ok: false, message: BRAK_TRENINGU };
+
+  // Sesja z szablonu: pominięcie dnia, żeby wystąpienie szablonu nie wróciło jako plan
+  const usunieta = usuniete[0];
+  if (usunieta.template_id && usunieta.template_date) {
+    const { error: bladPominiecia } = await supabase
+      .from("template_skips")
+      .upsert(
+        {
+          template_id: usunieta.template_id,
+          user_id: user.id,
+          date: usunieta.template_date,
+        },
+        { onConflict: "template_id,date", ignoreDuplicates: true },
+      );
+    if (bladPominiecia) {
+      revalidateSport();
+      revalidatePath("/dzis");
+      return { ok: false, message: BLAD_ZAPISU };
+    }
+  }
 
   // Bez /sport/trening/[id]: odświeżona trasa usuniętej sesji dałaby mignięcie 404
   revalidateSport();
@@ -412,46 +436,52 @@ export async function createGymSession(
   const ostatnieSerie = new Map<string, GymSetRow[]>();
   const idCwiczen = [...new Set((pozycje ?? []).map((p) => p.exercise_id))];
   if (!bladHistorii && idCwiczen.length > 0) {
-    const { data: serie, error } = await supabase
-      .from("gym_sets")
-      .select("*")
+    // Ostatnie wykonane treningi siłowe, od najnowszego (ograniczone: ćwiczenie,
+    // którego nie było w ostatnich SESJE_HISTORII treningach, startuje bez historii)
+    const { data: sesje, error: bladSesjiHistorii } = await supabase
+      .from("sport_sessions")
+      .select("id, start_local")
       .eq("user_id", user.id)
-      .in("exercise_id", idCwiczen);
-    bladHistorii = error !== null;
-    const idSesji = [...new Set((serie ?? []).map((s) => s.session_id))].filter(
-      (id) => id !== nowa.id,
-    );
+      .eq("type", "gym")
+      .eq("completed", true)
+      .order("start_local", { ascending: false })
+      .limit(SESJE_HISTORII);
+    bladHistorii = bladSesjiHistorii !== null;
+    const idSesji = (sesje ?? []).map((s) => s.id);
+
+    // Serie ćwiczeń szablonu z tych treningów, stronami (PostgREST obcina odpowiedź do 1000 wierszy)
+    const serie: GymSetRow[] = [];
     if (!bladHistorii && idSesji.length > 0) {
-      const { data: sesje, error: bladSesjiHistorii } = await supabase
-        .from("sport_sessions")
-        .select("id, start_local")
-        .eq("user_id", user.id)
-        .eq("completed", true)
-        .in("id", idSesji);
-      bladHistorii = bladSesjiHistorii !== null;
-      // Dla każdego ćwiczenia: serie z najpóźniejszej wykonanej sesji, w której wystąpiło
-      const startSesji = new Map(
-        (sesje ?? []).map((s) => [s.id, s.start_local]),
-      );
-      for (const cwiczenie of idCwiczen) {
-        let najnowsza: string | null = null;
-        for (const s of serie ?? []) {
-          const startS = startSesji.get(s.session_id);
-          if (s.exercise_id !== cwiczenie || startS === undefined) continue;
-          if (
-            najnowsza === null ||
-            startS > (startSesji.get(najnowsza) as string)
-          )
-            najnowsza = s.session_id;
+      for (let od = 0; ; od += ROZMIAR_STRONY) {
+        const { data, error } = await supabase
+          .from("gym_sets")
+          .select("*")
+          .eq("user_id", user.id)
+          .in("session_id", idSesji)
+          .in("exercise_id", idCwiczen)
+          .order("id", { ascending: true })
+          .range(od, od + ROZMIAR_STRONY - 1);
+        if (error) {
+          bladHistorii = true;
+          break;
         }
-        if (najnowsza === null) continue;
-        ostatnieSerie.set(
-          cwiczenie,
-          (serie ?? []).filter(
-            (s) => s.session_id === najnowsza && s.exercise_id === cwiczenie,
-          ) as GymSetRow[],
-        );
+        serie.push(...((data ?? []) as GymSetRow[]));
+        if ((data ?? []).length < ROZMIAR_STRONY) break;
       }
+    }
+
+    // Dla każdego ćwiczenia: serie z najnowszej wykonanej sesji, w której wystąpiło
+    for (const cwiczenie of idCwiczen) {
+      const najnowsza = idSesji.find((id) =>
+        serie.some((z) => z.session_id === id && z.exercise_id === cwiczenie),
+      );
+      if (!najnowsza) continue;
+      ostatnieSerie.set(
+        cwiczenie,
+        serie.filter(
+          (z) => z.session_id === najnowsza && z.exercise_id === cwiczenie,
+        ),
+      );
     }
   }
 
@@ -741,14 +771,22 @@ export async function finishWorkout(
   if (bladSesji) return { ok: false, message: BLAD_ZAPISU };
   if (!sesja) return { ok: false, message: BRAK_TRENINGU };
 
+  // Koniec = teraz w strefie profilu. Gdy trening nie jest z dziś albo „teraz” nie wypada po starcie
+  // (baza wymaga end_local > start_local), koniec = start + 90 min, jak domyślny czas treningu.
+  const dzis = todayIso(profil.timezone);
   const teraz = minutesNow(profil.timezone);
-  const koniec = `${todayIso(profil.timezone)}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`;
-  // Baza wymaga end_local > start_local; trening zakończony przed planowanym startem zostaje bez końca
+  const start = sesja.start_local.slice(0, 19);
+  let koniec = `${dzis}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`;
+  if (start.slice(0, 10) !== dzis || koniec <= start) {
+    koniec = new Date(Date.parse(`${start}Z`) + 90 * 60000)
+      .toISOString()
+      .slice(0, 19);
+  }
   const { data: zmienione, error } = await supabase
     .from("sport_sessions")
     .update({
       completed: true,
-      end_local: koniec > sesja.start_local.slice(0, 19) ? koniec : null,
+      end_local: koniec,
       ...(difficulty !== undefined ? { difficulty } : {}),
     })
     .eq("id", id)
@@ -795,6 +833,7 @@ export async function saveTemplate(
     start_time: dane.startTime,
   };
   let templateId: string;
+  let starePozycje: TemplateItemRow[] = [];
   if (dane.id) {
     const { data: zmienione, error } = await supabase
       .from("workout_templates")
@@ -806,6 +845,15 @@ export async function saveTemplate(
     if (!zmienione || zmienione.length === 0)
       return { ok: false, message: BRAK_SZABLONU };
     templateId = dane.id;
+
+    // Dotychczasowe pozycje — do przywrócenia, gdyby zapis nowych się nie udał
+    const { data: stare, error: bladStarych } = await supabase
+      .from("workout_template_items")
+      .select("*")
+      .eq("template_id", templateId)
+      .eq("user_id", user.id);
+    if (bladStarych) return { ok: false, message: BLAD_ZAPISU };
+    starePozycje = stare ?? [];
 
     // Pozycje zapisujemy od nowa w kolejności z formularza
     const { error: bladUsuniecia } = await supabase
@@ -838,9 +886,11 @@ export async function saveTemplate(
       })),
     );
   if (bladPozycji) {
-    // Nowy szablon bez pozycji nie ma sensu — cofamy go; przy edycji zgłaszamy błąd
+    // Nowy szablon bez pozycji nie ma sensu — cofamy go; przy edycji przywracamy stare pozycje
     if (!dane.id)
       await supabase.from("workout_templates").delete().eq("id", templateId);
+    else if (starePozycje.length > 0)
+      await supabase.from("workout_template_items").insert(starePozycje);
     return { ok: false, message: BLAD_ZAPISU };
   }
 
