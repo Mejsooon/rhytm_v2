@@ -4,7 +4,7 @@
 // cztery kafelki (szac. 1RM, najcięższa seria, najwięcej powt., zmiana 8 tyg.), wykres 1RM
 // z przełącznikiem 3 mies. / 8 tyg. i historia sesji z plakietką REKORD.
 // Jedno drzewo dla webu i telefonu — kafelki i tabela same się zwężają (tabela przewija się w poziomie).
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
   // „Z masą ciała” optymistycznie: przełącznik zmienia się od razu, błąd go cofa.
   // Nowe dane z serwera (inna wartość flagi) stają się nowym stanem (wzór z use-gym-store).
   const [zMasaCiala, setZMasaCiala] = useState(exercise.bodyweight);
+  const zapisujeMase = useRef(false);
   const [flagaSerwera, setFlagaSerwera] = useState(exercise.bodyweight);
   if (flagaSerwera !== exercise.bodyweight) {
     setFlagaSerwera(exercise.bodyweight);
@@ -158,6 +159,9 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
   };
 
   async function przelaczMaseCiala(nowa: boolean) {
+    // Kolejne kliknięcia w trakcie zapisu ignorujemy, żeby cofnięcie po błędzie nie trafiło w zły stan
+    if (zapisujeMase.current) return;
+    zapisujeMase.current = true;
     setZMasaCiala(nowa);
     let ok = false;
     try {
@@ -166,6 +170,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
     } catch {
       ok = false;
     }
+    zapisujeMase.current = false;
     if (ok) {
       router.refresh();
       return;
@@ -219,7 +224,14 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
               onChange={(v) => void przelaczMaseCiala(v)}
               ariaLabel="Z masą ciała"
             />
-            <span aria-hidden="true">Z masą ciała</span>
+            {/* Klik w napis też przełącza, jak <label> w makiecie */}
+            <span
+              aria-hidden="true"
+              className="cursor-pointer select-none"
+              onClick={() => void przelaczMaseCiala(!zMasaCiala)}
+            >
+              Z masą ciała
+            </span>
           </div>
           <Button
             size="sm"

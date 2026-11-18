@@ -385,4 +385,22 @@ describe("ExerciseDetail — „Z masą ciała”", () => {
     expect(sw).toHaveAttribute("aria-checked", "true");
     expect(toastError).toHaveBeenCalled();
   });
+
+  it("drugie kliknięcie w trakcie zapisu jest ignorowane, a klik w napis też przełącza", async () => {
+    let zakoncz: (v: { ok: true }) => void = () => {};
+    setExerciseBodyweight.mockImplementationOnce(
+      () => new Promise((r) => (zakoncz = r)),
+    );
+    render(<ExerciseDetail data={dane()} />);
+    const sw = screen.getByRole("switch", { name: "Z masą ciała" });
+    await userEvent.click(sw);
+    await userEvent.click(sw);
+    expect(setExerciseBodyweight).toHaveBeenCalledTimes(1);
+    expect(sw).toHaveAttribute("aria-checked", "true");
+    zakoncz({ ok: true });
+    await screen.findByRole("switch", { name: "Z masą ciała" });
+    setExerciseBodyweight.mockResolvedValue({ ok: true });
+    await userEvent.click(screen.getByText("Z masą ciała"));
+    expect(setExerciseBodyweight).toHaveBeenLastCalledWith(WYCISKANIE, false);
+  });
 });
