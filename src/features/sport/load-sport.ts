@@ -412,6 +412,37 @@ export async function loadWorkout(
   };
 }
 
+// Pojedynczy bieg do okna biegu (?bieg={id}), gdy sesji nie ma w wczytanym miesiącu; null, gdy jej nie ma,
+// jest cudza albo to trening siłowy
+export async function loadSportRun(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  sessionId: string,
+): Promise<SportItem | null> {
+  if (!idSchema.safeParse(sessionId).success) return null;
+
+  const { data: sesja, error } = await supabase
+    .from("sport_sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("id", sessionId)
+    .eq("type", "run")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!sesja) return null;
+
+  const { data: bieg, error: blad } = await supabase
+    .from("runs")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("session_id", sessionId);
+  if (blad) throw new Error(blad.message);
+
+  return (
+    sessionItems([sesja as SessionRow], (bieg ?? []) as RunRow[])[0] ?? null
+  );
+}
+
 // Lista szablonów (/sport/szablony)
 export async function loadTemplates(
   supabase: SupabaseClient<Database>,

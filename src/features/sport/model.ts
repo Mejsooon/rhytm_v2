@@ -69,6 +69,22 @@ export function formatDuration(s: number): string {
   return h > 0 ? `${h}:${dwie(m)}:${dwie(sek)}` : `${dwie(m)}:${dwie(sek)}`;
 }
 
+// Czas wpisany ręcznie: "58:00" (mm:ss), "1:02:05" (h:mm:ss) -> sekundy; zły zapis -> null
+export function parseDuration(text: string): number | null {
+  const m = text
+    .trim()
+    .match(/^(?:(\d{1,2}):([0-5]\d)|(\d{1,3}):([0-5]\d):([0-5]\d))$/);
+  if (!m) return null;
+  if (m[1] !== undefined) return Number(m[1]) * 60 + Number(m[2]);
+  return Number(m[3]) * 3600 + Number(m[4]) * 60 + Number(m[5]);
+}
+
+// Dystans wpisany ręcznie: "10,5" albo "10.5" -> 10.5; zły zapis -> null
+export function parseKm(text: string): number | null {
+  const t = text.trim().replace(",", ".");
+  return /^\d+(\.\d{1,3})?$/.test(t) ? Number(t) : null;
+}
+
 // 8 -> "8,0"
 export function formatKm(km: number): string {
   return km.toFixed(1).replace(".", ",");

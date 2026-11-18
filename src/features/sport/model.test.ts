@@ -7,6 +7,8 @@ import {
   formatKg,
   formatKm,
   formatPace,
+  parseDuration,
+  parseKm,
   formatVolume,
   monthGrid,
   paceSPerKm,
@@ -503,5 +505,25 @@ describe("searchExercises", () => {
   it("biblioteka nie ma duplikatów", () => {
     const n = EXERCISE_LIBRARY.map((e) => e.name.toLowerCase());
     expect(new Set(n).size).toBe(n.length);
+  });
+});
+
+describe("parseDuration i parseKm", () => {
+  it("czas: mm:ss i h:mm:ss, zły zapis → null", () => {
+    expect(parseDuration("58:00")).toBe(3480);
+    expect(parseDuration("1:02:05")).toBe(3725);
+    expect(parseDuration(" 0:56:40 ")).toBe(3400);
+    expect(parseDuration("58")).toBeNull();
+    expect(parseDuration("58:70")).toBeNull();
+    expect(parseDuration("1:75:00")).toBeNull();
+    expect(parseDuration("abc")).toBeNull();
+  });
+
+  it("dystans: przecinek lub kropka, zły zapis → null", () => {
+    expect(parseKm("10,5")).toBe(10.5);
+    expect(parseKm("10.5")).toBe(10.5);
+    expect(parseKm("8")).toBe(8);
+    expect(parseKm("-1")).toBeNull();
+    expect(parseKm("x")).toBeNull();
   });
 });

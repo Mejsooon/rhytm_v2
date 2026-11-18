@@ -31,6 +31,7 @@ export function MonthCalendar({
   onOpenRun,
   onStartGym,
   onDelete,
+  suspended = false,
 }: {
   data: SportMonthData;
   // Treningi po filtrze Wszystko / Bieg / Siłownia
@@ -42,6 +43,8 @@ export function MonthCalendar({
   onOpenRun: (req: RunRequest) => void;
   onStartGym: (input: GymSessionInput) => void;
   onDelete: (item: SportItem) => void;
+  // Okno potwierdzenia usunięcia jest otwarte: Esc i klik poza kalendarzem nie zamykają dymka
+  suspended?: boolean;
 }) {
   const { profile, month, today } = data;
   const wiersze = monthGrid(month, profile.weekStart);
@@ -50,7 +53,7 @@ export function MonthCalendar({
 
   // Otwarty dymek zamyka Esc i klik poza kalendarzem
   useEffect(() => {
-    if (!otwarty) return;
+    if (!otwarty || suspended) return;
     function zamknij() {
       onSelect(null);
       onAddDay(null);
@@ -68,7 +71,7 @@ export function MonthCalendar({
       document.removeEventListener("keydown", naKlawisz);
       document.removeEventListener("pointerdown", naKlik);
     };
-  }, [otwarty, onSelect, onAddDay]);
+  }, [otwarty, suspended, onSelect, onAddDay]);
 
   // Godzina nowego treningu z dymku dnia: teraz w strefie profilu, w dół do 15 min
   function godzinaTeraz() {

@@ -9,6 +9,7 @@ const {
   createGymSession,
   deleteSession,
   skipTemplateOccurrence,
+  saveRun,
 } = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
@@ -16,6 +17,7 @@ const {
   createGymSession: vi.fn(),
   deleteSession: vi.fn(),
   skipTemplateOccurrence: vi.fn(),
+  saveRun: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
@@ -23,9 +25,10 @@ vi.mock("./actions", () => ({
   createGymSession,
   deleteSession,
   skipTemplateOccurrence,
+  saveRun,
 }));
 
-import { daneSportu, SESJA_PUSH, SZABLON_PUSH } from "./sport-test-data";
+import { bieg, daneSportu, SESJA_PUSH, SZABLON_PUSH } from "./sport-test-data";
 import { SportView } from "./sport-view";
 
 beforeEach(() => vi.clearAllMocks());
@@ -286,5 +289,113 @@ describe("SportView", () => {
     expect(
       screen.getByRole("dialog", { name: "Długi bieg" }),
     ).toBeInTheDocument();
+  });
+
+  it("zamknięcie dymka usuwa nieaktualny `?wybrany=` z adresu", async () => {
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey="s:a1000000-0000-4000-8000-000000000015"
+        newGym={null}
+      />,
+    );
+    // Otwarty dymek zostaje, adres się nie zmienia
+    expect(replace).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
+    expect(replace).toHaveBeenCalledWith("/sport?miesiac=2026-11", {
+      scroll: false,
+    });
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("Anuluj w potwierdzeniu usunięcia zostawia dymek, Esc zamyka tylko potwierdzenie", async () => {
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={`s:${SESJA_PUSH}`}
+        newGym={null}
+      />,
+    );
+    const dymek = screen.getByRole("dialog", { name: "Push" });
+    await userEvent.click(within(dymek).getByRole("button", { name: "Usuń" }));
+    const okno = screen.getByRole("alertdialog");
+    await userEvent.click(within(okno).getByRole("button", { name: "Anuluj" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Push" })).toBeInTheDocument();
+
+    await userEvent.click(
+      within(screen.getByRole("dialog", { name: "Push" })).getByRole("button", {
+        name: "Usuń",
+      }),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Push" })).toBeInTheDocument();
+  });
+
+  it("?nowy=bieg otwiera okno nowego biegu z datą i godziną; zamknięcie czyści adres", async () => {
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={null}
+        newGym={null}
+        newRun={{ date: "2026-11-20", start: "07:30" }}
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Nowy bieg" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Data" })).toHaveTextContent(
+      "20.11.2026",
+    );
+    expect(screen.getByRole("button", { name: "Start" })).toHaveTextContent(
+      "07:30",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(replace).toHaveBeenCalledWith("/sport?miesiac=2026-11", {
+      scroll: false,
+    });
+    expect(
+      screen.queryByRole("dialog", { name: "Nowy bieg" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("?bieg={id} otwiera okno edycji tego biegu", () => {
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={null}
+        newGym={null}
+        runId="a1000000-0000-4000-8000-000000000015"
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Edytuj bieg" })).toBeVisible();
+    expect(screen.getByLabelText("Dystans (km)")).toHaveValue("12,0");
+  });
+
+  it("?bieg= spoza wczytanych danych bierze bieg wczytany na serwerze", () => {
+    const poza = bieg("a1000000-0000-4000-8000-000000000099", "2025-01-05", {
+      distanceKm: 5,
+      durationS: 1500,
+    });
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={null}
+        newGym={null}
+        runId={poza.sessionId}
+        runItem={poza}
+      />,
+    );
+    expect(screen.getByLabelText("Dystans (km)")).toHaveValue("5,0");
+  });
+
+  it("„Nowy bieg” w nagłówku przechodzi na adres okna biegu", async () => {
+    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    await userEvent.click(screen.getByRole("button", { name: "Nowy bieg" }));
+    expect(push).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^\/sport\?miesiac=2026-11&nowy=bieg&data=2026-11-17&godzina=\d\d:\d\d$/,
+      ),
+      { scroll: false },
+    );
   });
 });

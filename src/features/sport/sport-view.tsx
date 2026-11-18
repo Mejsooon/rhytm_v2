@@ -19,6 +19,7 @@ import type { SportItem } from "./model";
 import { MonthCalendar } from "./month-calendar";
 import { RecentTable } from "./recent-table";
 import { RecordCard } from "./record-card";
+import { RunDialog } from "./run-dialog";
 import { WeekTiles } from "./week-tiles";
 
 type Filtr = "all" | "run" | "gym";
@@ -31,12 +32,21 @@ export function SportView({
   data,
   selectedKey,
   newGym,
+  runId = null,
+  newRun = null,
+  runItem = null,
 }: {
   data: SportMonthData;
   // ?wybrany={klucz} (z kalendarza głównego) — dymek tego treningu otwarty od razu
   selectedKey: string | null;
   // ?nowy=silownia&data&godzina — pusty trening do utworzenia od razu (null w polu = dziś / teraz)
   newGym: { date: IsoDate | null; start: string | null } | null;
+  // ?bieg={id} — okno biegu do edycji / uzupełnienia (bieg z wczytanego miesiąca albo `runItem`)
+  runId?: string | null;
+  // ?nowy=bieg&data&godzina — okno nowego biegu (null w polu = dziś / teraz)
+  newRun?: { date: IsoDate | null; start: string | null } | null;
+  // Bieg z `?bieg=` spoza wczytanych danych (wczytany po stronie serwera)
+  runItem?: SportItem | null;
 }) {
   const router = useRouter();
   const { profile, month, today } = data;
@@ -63,6 +73,43 @@ export function SportView({
   // Trening usunięty (albo spoza danych) nie ma dymka
   if (wybrany !== null && !data.items.some((i) => i.key === wybrany)) {
     setWybrany(null);
+  }
+
+  // Nieaktualny `?wybrany=` znika z adresu, gdy dymek jest już zamknięty (inaczej każde odświeżenie
+  // danych z serwera otwierałoby go znowu). Klucz zamykany raz, żeby nie powtarzać nawigacji.
+  const wyczyszczonyKlucz = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedKey === null) {
+      wyczyszczonyKlucz.current = null;
+      return;
+    }
+    if (wybrany === selectedKey || wyczyszczonyKlucz.current === selectedKey)
+      return;
+    wyczyszczonyKlucz.current = selectedKey;
+    router.replace(`/sport?miesiac=${month}`, { scroll: false });
+  }, [selectedKey, wybrany, month, router]);
+
+  // Okno biegu wynika z adresu; zamknięcie czyści adres (miesiąc zostaje) i chowa okno od razu
+  const kluczBiegu = runId
+    ? `b|${runId}`
+    : newRun
+      ? `n|${newRun.date ?? ""}|${newRun.start ?? ""}`
+      : null;
+  const [zamknietyBieg, setZamknietyBieg] = useState<string | null>(null);
+  if (zamknietyBieg !== null && kluczBiegu !== zamknietyBieg) {
+    setZamknietyBieg(null);
+  }
+  const edytowanyBieg = runId
+    ? (data.items.find((i) => i.kind === "run" && i.sessionId === runId) ??
+      (runItem?.sessionId === runId ? runItem : null))
+    : null;
+  const oknoBiegu =
+    kluczBiegu !== null &&
+    kluczBiegu !== zamknietyBieg &&
+    (newRun !== null || edytowanyBieg !== null);
+  function zamknijBieg() {
+    setZamknietyBieg(kluczBiegu);
+    router.replace(`/sport?miesiac=${month}`, { scroll: false });
   }
 
   const zaznacz = useCallback((klucz: string | null) => {
@@ -280,6 +327,7 @@ export function SportView({
             onOpenRun={otworzBieg}
             onStartGym={(input) => void rozpocznijSilownie(input)}
             onDelete={setDoUsuniecia}
+            suspended={doUsuniecia !== null}
           />
 
           <div className="-mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-[#666666]">
@@ -317,6 +365,21 @@ export function SportView({
           />
         </div>
       </div>
+
+      {oknoBiegu && (
+        <RunDialog
+          key={kluczBiegu}
+          item={edytowanyBieg}
+          date={edytowanyBieg ? edytowanyBieg.date : (newRun?.date ?? today)}
+          start={
+            edytowanyBieg
+              ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
+              : (newRun?.start ?? godzinaTeraz())
+          }
+          profile={profile}
+          onClose={zamknijBieg}
+        />
+      )}
 
       {doUsuniecia && (
         <DeleteSessionDialog

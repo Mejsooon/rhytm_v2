@@ -3,6 +3,7 @@ import { fakeTable } from "@/test-utils/fake-supabase";
 import {
   loadExercise,
   loadSportMonth,
+  loadSportRun,
   loadTemplate,
   loadWorkout,
 } from "./load-sport";
@@ -344,5 +345,40 @@ describe("loadTemplate i loadExercise", () => {
 
   it("loadExercise: nie-uuid → null", async () => {
     expect(await loadExercise(klient(tables), "u1", "x")).toBeNull();
+  });
+});
+
+describe("loadSportRun", () => {
+  it("bieg z danymi jako element kalendarza", async () => {
+    const klientBiegu = klient({
+      sport_sessions: fakeTable({ single: sesjaBiegu }),
+      runs: fakeTable({
+        data: [
+          {
+            session_id: BIEG,
+            kind: "tempo",
+            distance_km: 10,
+            duration_s: 3480,
+            kcal: 700,
+            difficulty: 6,
+          },
+        ],
+      }),
+    });
+    const item = await loadSportRun(klientBiegu, "u1", BIEG);
+    expect(item).toMatchObject({
+      sessionId: BIEG,
+      kind: "run",
+      distanceKm: 10,
+      durationS: 3480,
+      runKind: "tempo",
+      planned: false,
+    });
+  });
+
+  it("brak sesji albo nie-uuid → null", async () => {
+    const pusty = klient({ sport_sessions: fakeTable({ single: null }) });
+    expect(await loadSportRun(pusty, "u1", BIEG)).toBeNull();
+    expect(await loadSportRun(pusty, "u1", "x")).toBeNull();
   });
 });
