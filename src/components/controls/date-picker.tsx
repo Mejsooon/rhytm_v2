@@ -19,6 +19,7 @@ export function DatePicker({
   today,
   ariaLabel,
   placeholder = "Wybierz datę",
+  max,
 }: {
   value: IsoDate | null;
   onChange: (v: IsoDate | null) => void;
@@ -26,6 +27,8 @@ export function DatePicker({
   today?: IsoDate;
   ariaLabel: string;
   placeholder?: string;
+  // Najpóźniejszy dozwolony dzień: późniejsze są zablokowane (także „Dziś”, gdy dziś > max)
+  max?: IsoDate;
 }) {
   const [open, setOpen] = React.useState(false);
   // Wyświetlany miesiąc; ustawiany przy otwarciu na miesiąc wartości albo dzisiejszy
@@ -111,8 +114,10 @@ export function DatePicker({
             key={c.date}
             type="button"
             aria-pressed={c.date === value}
+            disabled={max !== undefined && c.date > max}
             onClick={() => wybierz(c.date)}
             className={cn(
+              "disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent",
               "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-[#171717] hover:bg-[#f5f5f5]",
               !c.inMonth && "text-[#b5b5b5]",
               c.date === dzis && "border-[#d4d4d4]",

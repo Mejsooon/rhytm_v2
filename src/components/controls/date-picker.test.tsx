@@ -65,3 +65,13 @@ describe("DatePicker", () => {
     expect(screen.getByRole("button", { name: "16" })).toHaveAttribute("aria-pressed", "false");
   });
 });
+
+describe("DatePicker — max", () => {
+  it("dni po max są zablokowane, wcześniejsze dostępne", async () => {
+    const u = userEvent.setup();
+    render(<DatePicker value="2026-11-16" onChange={vi.fn()} today="2026-11-16" max="2026-11-16" ariaLabel="Termin" />);
+    await u.click(screen.getByRole("button", { name: "Termin" }));
+    expect(screen.getByRole("button", { name: "17" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "15" })).toBeEnabled();
+  });
+});

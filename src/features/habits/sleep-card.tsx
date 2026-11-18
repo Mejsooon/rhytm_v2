@@ -1,7 +1,7 @@
 "use client";
 
 // Karta „Sen”: ostatnia noc i wykres słupkowy z linią celu (Habits.dc.html, „RZĄD 2”)
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 import { MonoLabel, Segment } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
@@ -18,11 +18,14 @@ export function SleepCard({
   today,
   goalMin,
   clock,
+  onOpenLast,
 }: {
   sleepLogs: SleepLog[];
   today: IsoDate;
   goalMin: number;
   clock: "24" | "12";
+  // Klik w „Ostatnią noc” otwiera okno edycji tego wpisu
+  onOpenLast?: (log: SleepLog) => void;
 }) {
   const [zakres, setZakres] = useState<"14" | "30">("14");
   // Słupek pod myszą albo z fokusem: indeks i element (do pozycji dymka)
@@ -72,7 +75,29 @@ export function SleepCard({
 
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex gap-6">
-          <div>
+          <div
+            // Z wpisem i obsługą kliknięcia blok działa jak przycisk (fokus z klawiatury, Enter/Spacja)
+            {...(ostatnia && onOpenLast
+              ? {
+                  role: "button",
+                  tabIndex: 0,
+                  "aria-label": "Edytuj ostatnią noc",
+                  onClick: () => onOpenLast(ostatnia),
+                  onKeyDown: (e: KeyboardEvent) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onOpenLast(ostatnia);
+                    }
+                  },
+                }
+              : {})}
+            className={cn(
+              "-m-1.5 rounded-md p-1.5",
+              ostatnia &&
+                onOpenLast &&
+                "cursor-pointer outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+            )}
+          >
             <MonoLabel className="block">Ostatnia noc</MonoLabel>
             <div className="mt-1.5 font-mono text-xl">
               {minutyOstatniej === null ? "—" : formatDuration(minutyOstatniej)}

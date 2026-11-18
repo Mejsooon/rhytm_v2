@@ -5,12 +5,15 @@ import { useState } from "react";
 
 import { Button } from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
+import type { IsoDate } from "@/components/controls/calendar-math";
 import { weekdayOf } from "@/features/calendar/view-range";
+import { HabitDialog } from "./habit-dialog";
 import { HabitHeatmap } from "./habit-heatmap";
 import { HabitTiles } from "./habit-tiles";
 import { HabitWeekGrid } from "./habit-week-grid";
 import type { HabitsPageData } from "./load-habits";
 import { SleepCard } from "./sleep-card";
+import { SleepDialog } from "./sleep-dialog";
 import { useHabitsStore } from "./use-habits-store";
 
 // Indeks 0 = poniedziałek
@@ -23,18 +26,24 @@ export function HabitsView({
   data: HabitsPageData;
   // Zakładka „sen” (?tab=sen) — liczy się na telefonie (Task 7); web pokazuje wszystko naraz
   initialTab: "sen" | null;
-  // Okno do otwarcia od razu (?nowy=nawyk|sen) — okna powstaną w Task 5
+  // Okno do otwarcia od razu (?nowy=nawyk|sen); „sen” otwiera wpis na dziś
   openOnLoad: "nawyk" | "sen" | null;
 }) {
   const { checks, toggle } = useHabitsStore(data);
 
-  // TODO(Task 5): stan otwartego okna (nowy nawyk albo wpis snu, z datą dla „sen”) otworzy okna z Task 5.
-  // Na razie przyciski tylko ustawiają stan i nic się nie otwiera.
-  const [, setOtwarteOkno] = useState<{ rodzaj: "nawyk" | "sen"; date?: string } | null>(
-    openOnLoad ? { rodzaj: openOnLoad } : null,
+  // Otwarte okno: nowy nawyk albo wpis snu z datą pobudki (okno samo znajdzie wpis z tego dnia)
+  const [otwarteOkno, setOtwarteOkno] = useState<{ rodzaj: "nawyk" } | { rodzaj: "sen"; date: IsoDate } | null>(
+    openOnLoad === "nawyk"
+      ? { rodzaj: "nawyk" }
+      : openOnLoad === "sen"
+        ? { rodzaj: "sen", date: data.today }
+        : null,
   );
   const onNewHabit = () => setOtwarteOkno({ rodzaj: "nawyk" });
-  const onNewSleep = (date?: string) => setOtwarteOkno({ rodzaj: "sen", date });
+  const onNewSleep = (date?: IsoDate) => setOtwarteOkno({ rodzaj: "sen", date: date ?? data.today });
+  const zamknijOkno = (otwarte: boolean) => {
+    if (!otwarte) setOtwarteOkno(null);
+  };
 
   const dataNaglowka = `${DNI_TYGODNIA[weekdayOf(data.today) - 1]} · ${formatDatePl(data.today)}`;
 
@@ -76,11 +85,40 @@ export function HabitsView({
             onToggle={(habitId, date) => void toggle(habitId, date)}
             onNewHabit={onNewHabit}
           />
-          <SleepCard sleepLogs={data.sleepLogs} today={data.today} goalMin={data.sleepGoalMin} clock={data.clock} />
+          <SleepCard
+            sleepLogs={data.sleepLogs}
+            today={data.today}
+            goalMin={data.sleepGoalMin}
+            clock={data.clock}
+            onOpenLast={(log) => onNewSleep(log.date)}
+          />
         </div>
 
         <HabitHeatmap habits={data.habits} checks={checks} today={data.today} weekStart={data.weekStart} />
       </div>
+
+      <HabitDialog
+        open={otwarteOkno?.rodzaj === "nawyk"}
+        onOpenChange={zamknijOkno}
+        weekStart={data.weekStart}
+        clock={data.clock}
+        today={data.today}
+      />
+      {otwarteOkno?.rodzaj === "sen" && (
+        <SleepDialog
+          // Klucz wymusza świeży formularz przy każdym otwarciu na inną datę
+          key={otwarteOkno.date}
+          open
+          onOpenChange={zamknijOkno}
+          date={otwarteOkno.date}
+          existing={data.sleepLogs.find((l) => l.date === otwarteOkno.date)}
+          logs={data.sleepLogs}
+          goalMin={data.sleepGoalMin}
+          clock={data.clock}
+          weekStart={data.weekStart}
+          today={data.today}
+        />
+      )}
     </div>
   );
 }
