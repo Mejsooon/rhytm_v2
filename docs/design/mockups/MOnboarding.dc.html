@@ -216,6 +216,8 @@ class Component extends DCLogic {
       summary: [
         { k: 'Profil', v: nm + ' · ' + tzCur[1] + ' · tydzień od ' + (week === 'pn' ? 'pn' : 'nd'), go: () => go(1) },
         { k: 'Kategorie', v: cats.join(', '), go: () => go(2) },
+        // Cel treningowy tylko, gdy w kroku 3 zaznaczono „Treningi”
+        ...(G.sport ? [{ k: 'Cel treningowy', v: goalType === 'km' ? String(km).replace('.', ',') + ' km / tydz.' : tr + ' ' + (tr === 1 ? 'trening' : (tr % 10 >= 2 && tr % 10 <= 4 && (tr % 100 < 12 || tr % 100 > 14)) ? 'treningi' : 'treningów') + ' / tydz.', go: () => go(3) }] : []),
         { k: 'Strony', v: pagesSel.join(', ') || 'brak', go: () => go(5) },
         { k: 'Przypomnienia', v: remOn + ' z 4 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
       ]
