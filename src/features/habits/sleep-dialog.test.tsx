@@ -88,6 +88,16 @@ describe("SleepDialog", () => {
     expect(screen.getByRole("button", { name: "16" })).toBeEnabled();
   });
 
+  it("dni starsze niż 60 dni (poza wczytanym snem) są zablokowane", async () => {
+    // dziś 17.11 → najstarszy dozwolony dzień to 19.09 (dziś − 59)
+    const u = userEvent.setup();
+    wyrenderuj({ date: "2026-09-19" });
+    await u.click(screen.getByRole("button", { name: "Data pobudki" }));
+    expect(screen.getByText("wrzesień 2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "18" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "19" })).toBeEnabled();
+  });
+
   it("samopoczucie 1–5 z etykietami, ponowny klik czyści", async () => {
     const u = userEvent.setup();
     wyrenderuj({ date: "2026-11-15" });

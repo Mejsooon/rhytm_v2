@@ -19,6 +19,7 @@ export function DatePicker({
   today,
   ariaLabel,
   placeholder = "Wybierz datę",
+  min,
   max,
 }: {
   value: IsoDate | null;
@@ -27,6 +28,8 @@ export function DatePicker({
   today?: IsoDate;
   ariaLabel: string;
   placeholder?: string;
+  // Najwcześniejszy dozwolony dzień: wcześniejsze są zablokowane (także „Dziś”, gdy dziś < min)
+  min?: IsoDate;
   // Najpóźniejszy dozwolony dzień: późniejsze są zablokowane (także „Dziś”, gdy dziś > max)
   max?: IsoDate;
 }) {
@@ -59,6 +62,8 @@ export function DatePicker({
   }
 
   const siatka = open ? buildMonthGrid(widok.rok, widok.miesiac, weekStart) : [];
+  // „Dziś” jest blokowane, gdy dzisiejszy dzień leży poza zakresem min–max
+  const dzisPozaZakresem = (min !== undefined && dzis < min) || (max !== undefined && dzis > max);
 
   return (
     <ActionPopover
@@ -114,7 +119,7 @@ export function DatePicker({
             key={c.date}
             type="button"
             aria-pressed={c.date === value}
-            disabled={max !== undefined && c.date > max}
+            disabled={(min !== undefined && c.date < min) || (max !== undefined && c.date > max)}
             onClick={() => wybierz(c.date)}
             className={cn(
               "disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent",
@@ -131,8 +136,9 @@ export function DatePicker({
       <div className="mt-1.5 flex justify-between border-t border-[#f0f0f0] pt-1.5">
         <button
           type="button"
+          disabled={dzisPozaZakresem}
           onClick={() => wybierz(today ?? todayIso())}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5]"
+          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5] disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent"
         >
           Dziś
         </button>

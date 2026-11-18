@@ -16,6 +16,7 @@ import {
 } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
+import { addDays } from "@/features/calendar/view-range";
 import { cn } from "@/lib/utils";
 import { saveSleepLog } from "./actions";
 import { SLEEP_TAGS } from "./schemas";
@@ -177,6 +178,8 @@ function SleepForm({
             onChange={zmienDate}
             weekStart={weekStart}
             today={today}
+            // Strona wczytuje sen z ostatnich 60 dni; starszy dzień nadpisałby po cichu wpis, którego okno nie widzi
+            min={addDays(today, -59)}
             max={today}
             ariaLabel="Data pobudki"
           />
