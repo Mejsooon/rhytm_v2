@@ -21,6 +21,7 @@ import {
 } from "./schemas";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
+const BRAK_NAWYKU = "Nie znaleziono nawyku.";
 
 export type HabitInput = {
   name: string;
@@ -38,13 +39,15 @@ export type SleepInput = {
   note: string | null;
 };
 
-// Dzisiejsza data w strefie profilu użytkownika
-async function todayFor(supabase: SupabaseClient<Database>, userId: string): Promise<IsoDate> {
-  const { data } = await supabase
+// Dzisiejsza data w strefie profilu użytkownika; null przy błędzie zapytania
+// (akcja ma wtedy zwrócić błąd, a nie liczyć „dziś” w strefie serwera)
+async function todayFor(supabase: SupabaseClient<Database>, userId: string): Promise<IsoDate | null> {
+  const { data, error } = await supabase
     .from("profiles")
     .select("timezone")
     .eq("user_id", userId)
     .maybeSingle();
+  if (error) return null;
   return todayIso(safeTimezone(data?.timezone));
 }
 
@@ -68,6 +71,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult & { i
   }
   const dane = parsed.data;
   const dzis = await todayFor(supabase, user.id);
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
 
   const { data: nawyk, error } = await supabase
     .from("habits")
@@ -92,7 +96,10 @@ export async function createHabit(input: HabitInput): Promise<ActionResult & { i
   });
   if (bladWersji) {
     // Nie zostawiamy nawyku bez harmonogramu
-    await supabase.from("habits").delete().eq("id", nawyk.id);
+    const { error: bladCofniecia } = await supabase.from("habits").delete().eq("id", nawyk.id);
+    if (bladCofniecia) {
+      return { ok: false, message: "Nie udało się zapisać nawyku. Sprawdź listę nawyków i spróbuj ponownie." };
+    }
     return { ok: false, message: BLAD_ZAPISU };
   }
 
@@ -115,16 +122,21 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
   }
   const dane = parsed.data;
 
+  // Najpierw pola nawyku: zmiana z warunkiem user_id jest jednocześnie sprawdzeniem własności,
+  // więc cudzy nawyk kończy się „nie znaleziono”, zanim dotkniemy harmonogramu.
+  // Gdyby zapis wersji potem się nie udał, zostaje tylko nowa nazwa/godzina — to nieszkodliwe.
   const { data: zmienione, error } = await supabase
     .from("habits")
     .update({ name: dane.name, remind_at: dane.remindAt, show_on_today: dane.showOnToday })
     .eq("id", id)
     .eq("user_id", user.id)
     .select("id");
-  if (error || !zmienione || zmienione.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!zmienione || zmienione.length === 0) return { ok: false, message: BRAK_NAWYKU };
 
   // Nowa wersja harmonogramu tylko wtedy, gdy zmienił się typ, dni albo X
   const dzis = await todayFor(supabase, user.id);
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
   const { data: wersje, error: bladWersji } = await supabase
     .from("habit_schedules")
     .select("*")
@@ -132,8 +144,9 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
     .order("valid_from", { ascending: true });
   if (bladWersji) return { ok: false, message: BLAD_ZAPISU };
 
-  // Obowiązująca dziś: największe valid_from ≤ dziś (gdy wszystkie są w przyszłości — pierwsza)
-  const lista = [...(wersje ?? [])].sort((a, b) => (a.valid_from < b.valid_from ? -1 : 1));
+  // Obowiązująca dziś: największe valid_from ≤ dziś (gdy wszystkie są w przyszłości — pierwsza);
+  // zapytanie już sortuje rosnąco po valid_from
+  const lista = wersje ?? [];
   const obowiazujaca = [...lista].reverse().find((w) => w.valid_from <= dzis) ?? lista[0];
   const zmienilSie =
     !obowiazujaca ||
@@ -177,7 +190,8 @@ export async function deleteHabit(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", user.id)
     .select("id");
-  if (error || !usuniete || usuniete.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!usuniete || usuniete.length === 0) return { ok: false, message: BRAK_NAWYKU };
 
   revalidateHabits();
   return { ok: true };
@@ -199,24 +213,32 @@ export async function setHabitCheck(
     return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
   }
 
-  // Własny nawyk (RLS i tak ukrywa cudze) razem z wersjami harmonogramu
+  // Własny nawyk (RLS i tak ukrywa cudze)
   const { data: nawyk, error } = await supabase
     .from("habits")
     .select("*")
     .eq("id", habitId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (error || !nawyk) return { ok: false, message: "Nie znaleziono nawyku." };
-  const { data: wersje, error: bladWersji } = await supabase
-    .from("habit_schedules")
-    .select("*")
-    .eq("habit_id", habitId);
-  if (bladWersji) return { ok: false, message: BLAD_ZAPISU };
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!nawyk) return { ok: false, message: BRAK_NAWYKU };
 
   const dzis = await todayFor(supabase, user.id);
-  const [habit] = mapHabits([nawyk], wersje ?? []);
-  if (!canCheck(habit, date, dzis)) {
-    return { ok: false, message: "Tego dnia nie można odhaczyć." };
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
+  if (date > dzis) return { ok: false, message: "Tego dnia nie można odhaczyć." };
+
+  // Odznaczać wolno każdy dzień ≤ dziś (także odhaczenie osierocone zmianą harmonogramu);
+  // odhaczać tylko dni, na które pozwala harmonogram
+  if (done) {
+    const { data: wersje, error: bladWersji } = await supabase
+      .from("habit_schedules")
+      .select("*")
+      .eq("habit_id", habitId);
+    if (bladWersji) return { ok: false, message: BLAD_ZAPISU };
+    const [habit] = mapHabits([nawyk], wersje ?? []);
+    if (!canCheck(habit, date, dzis)) {
+      return { ok: false, message: "Tego dnia nie można odhaczyć." };
+    }
   }
 
   if (done) {
@@ -257,15 +279,17 @@ export async function addHabitNote(habitId: string, text: string): Promise<Actio
     return { ok: false, message: parsedText.error.issues[0]?.message ?? BLAD_ZAPISU };
   }
 
-  const { data: nawyk } = await supabase
+  const { data: nawyk, error: bladNawyku } = await supabase
     .from("habits")
     .select("id")
     .eq("id", habitId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!nawyk) return { ok: false, message: "Nie znaleziono nawyku." };
+  if (bladNawyku) return { ok: false, message: BLAD_ZAPISU };
+  if (!nawyk) return { ok: false, message: BRAK_NAWYKU };
 
   const dzis = await todayFor(supabase, user.id);
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
   const { error } = await supabase.from("habit_notes").insert({
     habit_id: habitId,
     user_id: user.id,
@@ -274,7 +298,7 @@ export async function addHabitNote(habitId: string, text: string): Promise<Actio
   });
   if (error) return { ok: false, message: BLAD_ZAPISU };
 
-  revalidatePath("/nawyki/[id]", "page");
+  revalidateHabits();
   return { ok: true };
 }
 
@@ -291,6 +315,10 @@ export async function saveSleepLog(input: SleepInput): Promise<ActionResult> {
   }
   const dane = parsed.data;
 
+  const dzis = await todayFor(supabase, user.id);
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
+  if (dane.date > dzis) return { ok: false, message: "Nie można zapisać snu z przyszłości." };
+
   // Jeden wpis na dzień pobudki: ponowny zapis tej samej daty nadpisuje wpis.
   // Tabela nie ma wyzwalacza updated_at, więc ustawiamy go sami.
   const { error } = await supabase.from("sleep_logs").upsert(
@@ -306,9 +334,9 @@ export async function saveSleepLog(input: SleepInput): Promise<ActionResult> {
     },
     { onConflict: "user_id,date" },
   );
+  // Upsert zawsze tworzy albo nadpisuje własny wiersz (RLS odrzuca cudzy błędem), więc bez sprawdzania liczby wierszy
   if (error) return { ok: false, message: BLAD_ZAPISU };
 
-  revalidatePath("/nawyki");
-  revalidatePath("/dzis");
+  revalidateHabits();
   return { ok: true };
 }

@@ -81,6 +81,31 @@ async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
   };
 }
 
+const ROZMIAR_STRONY = 1000;
+
+// Wszystkie odhaczenia (PostgREST obcina odpowiedź do 1000 wierszy, więc czytamy stronami)
+async function loadChecks(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  filtr: { from?: IsoDate; habitId?: string },
+): Promise<Array<{ habitId: string; date: IsoDate }>> {
+  const wynik: Array<{ habitId: string; date: IsoDate }> = [];
+  for (let od = 0; ; od += ROZMIAR_STRONY) {
+    let zapytanie = supabase.from("habit_checks").select("habit_id, date").eq("user_id", userId);
+    if (filtr.from) zapytanie = zapytanie.gte("date", filtr.from);
+    if (filtr.habitId) zapytanie = zapytanie.eq("habit_id", filtr.habitId);
+    // Stabilna kolejność, żeby strony się nie zachodziły
+    const { data, error } = await zapytanie
+      .order("date", { ascending: true })
+      .order("habit_id", { ascending: true })
+      .range(od, od + ROZMIAR_STRONY - 1);
+    if (error) throw new Error(error.message);
+    for (const c of data ?? []) wynik.push({ habitId: c.habit_id, date: c.date });
+    if ((data ?? []).length < ROZMIAR_STRONY) break;
+  }
+  return wynik;
+}
+
 // Lista nawyków z odhaczeniami z ostatnich 13 miesięcy + 31 dni i snem z 60 dni
 export async function loadHabitsPage(
   supabase: SupabaseClient<Database>,
@@ -94,21 +119,26 @@ export async function loadHabitsPage(
   const odOdhaczen = addDays(trzynascieMiesiecy, -31);
   const odSnu = addDays(profil.today, -60);
 
-  const [nawykiRes, wersjeRes, odhaczeniaRes, senRes] = await Promise.all([
-    supabase.from("habits").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
+  const [nawykiRes, wersjeRes, odhaczenia, senRes] = await Promise.all([
+    supabase
+      .from("habits")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true }),
     supabase.from("habit_schedules").select("*").eq("user_id", userId).order("valid_from", { ascending: true }),
-    supabase.from("habit_checks").select("habit_id, date").eq("user_id", userId).gte("date", odOdhaczen),
+    loadChecks(supabase, userId, { from: odOdhaczen }),
     supabase.from("sleep_logs").select("*").eq("user_id", userId).gte("date", odSnu).order("date", { ascending: true }),
   ]);
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pustą listę
-  for (const wynik of [nawykiRes, wersjeRes, odhaczeniaRes, senRes]) {
+  for (const wynik of [nawykiRes, wersjeRes, senRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
   return {
     ...profil,
     habits: mapHabits((nawykiRes.data ?? []) as HabitRow[], (wersjeRes.data ?? []) as ScheduleRow[]),
-    checks: (odhaczeniaRes.data ?? []).map((c) => ({ habitId: c.habit_id, date: c.date })),
+    checks: odhaczenia,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
   };
 }
@@ -134,9 +164,9 @@ export async function loadHabitDetail(
   if (error) throw new Error(error.message);
   if (!nawyk) return null;
 
-  const [wersjeRes, odhaczeniaRes, notatkiRes, senRes] = await Promise.all([
+  const [wersjeRes, odhaczenia, notatkiRes, senRes] = await Promise.all([
     supabase.from("habit_schedules").select("*").eq("user_id", userId).eq("habit_id", habitId).order("valid_from", { ascending: true }),
-    supabase.from("habit_checks").select("habit_id, date").eq("user_id", userId).eq("habit_id", habitId),
+    loadChecks(supabase, userId, { habitId }),
     supabase
       .from("habit_notes")
       .select("id, date, text")
@@ -146,14 +176,14 @@ export async function loadHabitDetail(
       .order("created_at", { ascending: false }),
     supabase.from("sleep_logs").select("*").eq("user_id", userId).gte("date", odSnu).order("date", { ascending: true }),
   ]);
-  for (const wynik of [wersjeRes, odhaczeniaRes, notatkiRes, senRes]) {
+  for (const wynik of [wersjeRes, notatkiRes, senRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
   return {
     ...profil,
     habits: mapHabits([nawyk as HabitRow], (wersjeRes.data ?? []) as ScheduleRow[]),
-    checks: (odhaczeniaRes.data ?? []).map((c) => ({ habitId: c.habit_id, date: c.date })),
+    checks: odhaczenia,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
     notes: (notatkiRes.data ?? []).map((n) => ({ id: n.id, date: n.date, text: n.text })),
   };

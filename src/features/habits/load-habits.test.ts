@@ -69,6 +69,25 @@ describe("loadHabitsPage", () => {
     expect(t.sleep_logs.gte).toHaveBeenCalledWith("date", "2026-09-19");
   });
 
+  it("scala odhaczenia z dwóch stron (po 1000 wierszy)", async () => {
+    const t = tabele();
+    const strona1 = Array.from({ length: 1000 }, (_, i) => ({ habit_id: NAWYK, date: `d${i}` }));
+    t.habit_checks = fakeTable({ pages: [strona1, [{ habit_id: NAWYK, date: "d1000" }]] });
+    const w = await loadHabitsPage(klient(t), "u1");
+    expect(w.checks).toHaveLength(1001);
+    expect(t.habit_checks.range).toHaveBeenNthCalledWith(1, 0, 999);
+    expect(t.habit_checks.range).toHaveBeenNthCalledWith(2, 1000, 1999);
+    expect(t.habit_checks.range).toHaveBeenCalledTimes(2);
+  });
+
+  it("strefa: 23:30 UTC w Warszawie to już następny dzień", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-18T23:30:00Z"));
+    const w = await loadHabitsPage(klient(tabele()), "u1");
+    vi.useRealTimers();
+    expect(w.today).toBe("2026-11-19");
+  });
+
   it("domyślne wartości profilu i celu snu 480", async () => {
     const t = tabele();
     t.profiles = fakeTable({ single: null });
@@ -90,6 +109,15 @@ describe("loadHabitDetail", () => {
     const w = await loadHabitDetail(klient(tabele()), "u1", NAWYK);
     expect(w?.habits).toHaveLength(1);
     expect(w?.notes).toEqual([{ id: "n1", date: "2026-11-17", text: "Dobrze poszło" }]);
+  });
+
+  it("odhaczenia szczegółów też są stronicowane", async () => {
+    const t = tabele();
+    const strona1 = Array.from({ length: 1000 }, (_, i) => ({ habit_id: NAWYK, date: `d${i}` }));
+    t.habit_checks = fakeTable({ pages: [strona1, []] });
+    const w = await loadHabitDetail(klient(t), "u1", NAWYK);
+    expect(w?.checks).toHaveLength(1000);
+    expect(t.habit_checks.range).toHaveBeenCalledTimes(2);
   });
 
   it("null, gdy nawyku nie ma albo id jest nieprawidłowe", async () => {
