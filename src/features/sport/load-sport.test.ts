@@ -364,6 +364,28 @@ describe("loadTemplate i loadExercise", () => {
     expect(d?.history).toHaveLength(1);
   });
 
+  it("loadExercise: szablon z ćwiczeniem — przy kilku ostatnio używany, bez szablonu null", async () => {
+    tables.workout_template_items = fakeTable({
+      data: [
+        { template_id: SZABLON },
+        { template_id: "c1000000-0000-4000-8000-000000000002" },
+      ],
+    });
+    tables.workout_templates = fakeTable({
+      data: [
+        { name: "Stary", last_used_at: "2026-10-01T10:00:00Z" },
+        { name: "Nowy", last_used_at: "2026-11-10T10:00:00Z" },
+        { name: "Nieużywany", last_used_at: null },
+      ],
+    });
+    const d = await loadExercise(klient(tables), "u1", PRZYSIAD);
+    expect(d?.templateName).toBe("Nowy");
+
+    tables.workout_template_items = fakeTable({ data: [] });
+    const bez = await loadExercise(klient(tables), "u1", PRZYSIAD);
+    expect(bez?.templateName).toBeNull();
+  });
+
   it("loadExercise: nie-uuid → null", async () => {
     expect(await loadExercise(klient(tables), "u1", "x")).toBeNull();
   });

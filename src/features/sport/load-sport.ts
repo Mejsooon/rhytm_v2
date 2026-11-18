@@ -85,6 +85,7 @@ export type ExerciseData = {
   profile: SportProfile;
   exercise: ExerciseRow;
   history: SessionSets[]; // tylko serie tego ćwiczenia
+  templateName: string | null; // szablon z tym ćwiczeniem (przy kilku — ostatnio używany); null, gdy żadnego
 };
 
 const DOMYSLNY_CEL_TRENINGOW = 3;
@@ -558,10 +559,39 @@ export async function loadExercise(
   if (error) throw new Error(error.message);
   if (!cwiczenie) return null;
 
+  // Szablon z tym ćwiczeniem: przy kilku wygrywa ostatnio używany (bez użycia — najniżej), potem nazwa
+  const { data: pozycje, error: bladPozycji } = await supabase
+    .from("workout_template_items")
+    .select("template_id")
+    .eq("user_id", userId)
+    .eq("exercise_id", id);
+  if (bladPozycji) throw new Error(bladPozycji.message);
+  let templateName: string | null = null;
+  const idSzablonow = [...new Set((pozycje ?? []).map((p) => p.template_id))];
+  if (idSzablonow.length > 0) {
+    const { data: szablony, error: bladSzablonow } = await supabase
+      .from("workout_templates")
+      .select("name, last_used_at")
+      .eq("user_id", userId)
+      .in("id", idSzablonow);
+    if (bladSzablonow) throw new Error(bladSzablonow.message);
+    let najlepszy: { name: string; last_used_at: string | null } | null = null;
+    for (const t of szablony ?? []) {
+      const nowszy =
+        najlepszy === null ||
+        (t.last_used_at ?? "") > (najlepszy.last_used_at ?? "") ||
+        ((t.last_used_at ?? "") === (najlepszy.last_used_at ?? "") &&
+          t.name < najlepszy.name);
+      if (nowszy) najlepszy = t;
+    }
+    templateName = najlepszy?.name ?? null;
+  }
+
   return {
     today: todayIso(profile.timezone),
     profile,
     exercise: cwiczenie as ExerciseRow,
     history: await loadSetsHistory(supabase, userId, [id]),
+    templateName,
   };
 }

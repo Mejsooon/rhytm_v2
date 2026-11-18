@@ -66,6 +66,7 @@ function dane(zmiany: Partial<ExerciseData> = {}): ExerciseData {
         seriaTreningu("d2", "sd", WYCISKANIE, 1, 2, 80, 5, false),
       ]),
     ],
+    templateName: "Push",
     ...zmiany,
   };
 }
@@ -88,7 +89,34 @@ describe("ExerciseDetail", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Wyciskanie na ławce" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("4 treningi · od 10.09.2026 · w szablonie „Push”"),
+    ).toBeInTheDocument();
+  });
+
+  it("podtytuł bez szablonu nie ma fragmentu „w szablonie”", () => {
+    render(<ExerciseDetail data={dane({ templateName: null })} />);
     expect(screen.getByText("4 treningi · od 10.09.2026")).toBeInTheDocument();
+  });
+
+  it("sesja tylko z masą ciała: „mc × n”, bez 1RM, punktu wykresu i REKORDU", () => {
+    const d = dane({
+      history: [
+        sesja("sa", "2026-11-05", [
+          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, 70, 5, true),
+        ]),
+        sesja("sb", "2026-11-12", [
+          seriaTreningu("b1", "sb", WYCISKANIE, 1, 1, null, 12, true),
+        ]),
+      ],
+    });
+    render(<ExerciseDetail data={d} />);
+    const wiersze = within(screen.getByRole("table")).getAllByRole("row");
+    expect(wiersze[1]).toHaveTextContent("czw 12.11");
+    expect(wiersze[1]).toHaveTextContent("mc × 12");
+    expect(wiersze[1]).toHaveTextContent("—");
+    expect(wiersze[1]).not.toHaveTextContent("REKORD");
+    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(1);
   });
 
   it("kafelki: szac. 1RM, najcięższa seria, najwięcej powt., zmiana 8 tyg.", () => {
@@ -97,7 +125,7 @@ describe("ExerciseDetail", () => {
     expect(kafelek("Najcięższa seria")).toHaveTextContent("72,5 × 5");
     expect(kafelek("Najwięcej powt.")).toHaveTextContent("60 × 12");
     // 84,5 (ostatnie 8 tyg.) − 80 (8 tyg. wcześniej)
-    expect(kafelek("Zmiana 8 tyg.")).toHaveTextContent("+4,5 kg");
+    expect(kafelek("8 tygodni")).toHaveTextContent("+4,5 kg");
   });
 
   it("kafelki bez danych pokazują „—”", () => {
@@ -106,7 +134,7 @@ describe("ExerciseDetail", () => {
       "Szac. 1RM",
       "Najcięższa seria",
       "Najwięcej powt.",
-      "Zmiana 8 tyg.",
+      "8 tygodni",
     ]) {
       expect(kafelek(e)).toHaveTextContent("—");
     }
@@ -116,7 +144,7 @@ describe("ExerciseDetail", () => {
   it("zmiana 8 tyg. to „—”, gdy poprzednie 8 tygodni jest puste", () => {
     const d = dane();
     render(<ExerciseDetail data={dane({ history: d.history.slice(1) })} />);
-    expect(kafelek("Zmiana 8 tyg.")).toHaveTextContent("—");
+    expect(kafelek("8 tygodni")).toHaveTextContent("—");
   });
 
   it("spadek 1RM jest ze znakiem minus", () => {
@@ -132,7 +160,7 @@ describe("ExerciseDetail", () => {
     });
     render(<ExerciseDetail data={d} />);
     // 81,5 − 93,5
-    expect(kafelek("Zmiana 8 tyg.")).toHaveTextContent("−12 kg");
+    expect(kafelek("8 tygodni")).toHaveTextContent("−12 kg");
   });
 
   it("przełącznik 3 mies. / 8 tyg. zmienia punkty wykresu", async () => {
@@ -200,5 +228,37 @@ describe("ExerciseDetail", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("wyjątek przy zapisie pokazuje komunikat o błędzie zapisu", async () => {
+    const user = userEvent.setup();
+    renameExercise.mockRejectedValue(new Error("sieć"));
+    render(<ExerciseDetail data={dane()} />);
+    await user.click(screen.getByRole("button", { name: "Zmień nazwę" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Nazwa ćwiczenia" }),
+      "x",
+    );
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+    expect(
+      await screen.findByText("Nie udało się zapisać. Spróbuj ponownie."),
+    ).toBeInTheDocument();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("Enter w trakcie zapisu nie wysyła drugiego żądania", async () => {
+    const user = userEvent.setup();
+    let koniec: (v: { ok: true }) => void = () => {};
+    renameExercise.mockReturnValue(
+      new Promise((r) => {
+        koniec = r;
+      }),
+    );
+    render(<ExerciseDetail data={dane()} />);
+    await user.click(screen.getByRole("button", { name: "Zmień nazwę" }));
+    const pole = screen.getByRole("textbox", { name: "Nazwa ćwiczenia" });
+    await user.type(pole, "x{Enter}{Enter}");
+    expect(renameExercise).toHaveBeenCalledTimes(1);
+    koniec({ ok: true });
   });
 });

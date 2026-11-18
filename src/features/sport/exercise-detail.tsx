@@ -152,7 +152,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
   const podtytul =
     sesje.length === 0
       ? "Brak treningów"
-      : `${plPlural(sesje.length, "trening", "treningi", "treningów")} · od ${pierwsza.dzien.slice(8, 10)}.${pierwsza.dzien.slice(5, 7)}.${pierwsza.dzien.slice(0, 4)}`;
+      : `${plPlural(sesje.length, "trening", "treningi", "treningów")} · od ${pierwsza.dzien.slice(8, 10)}.${pierwsza.dzien.slice(5, 7)}.${pierwsza.dzien.slice(0, 4)}${data.templateName ? ` · w szablonie „${data.templateName}”` : ""}`;
 
   return (
     <div className="flex min-w-0 flex-col">
@@ -221,7 +221,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             </div>
           </div>
           <div className="bg-white px-[18px] py-4">
-            <MonoLabel>Zmiana 8 tyg.</MonoLabel>
+            <MonoLabel>8 tygodni</MonoLabel>
             <div
               className="mt-2 font-mono text-[26px]"
               style={{
@@ -410,7 +410,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           error={blad ?? undefined}
           onChange={(e) => setNazwa(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") zapisz();
+            if (e.key === "Enter" && !zapisuje) zapisz();
           }}
         />
       </FormDialog>
