@@ -5,8 +5,14 @@
 // są przyklejone u góry. Cała doba 00–24, przewinięta przy montażu do 06:00 albo do trwającego bloku.
 // Pozycje bloków to czas ścienny (startMin), więc nie zależą od stref.
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
+import {
+  SPORT_COLOR,
+  sportItemHref,
+  type SportItem,
+} from "@/features/sport/model";
 import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "./day-layout";
@@ -26,6 +32,7 @@ const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 export function TimeGrid({
   days,
   occurrences,
+  sport = [],
   categories,
   tasks,
   clock,
@@ -43,6 +50,8 @@ export function TimeGrid({
   days: IsoDate[];
   // Wystąpienia widocznych kategorii w zakresie dni
   occurrences: Occurrence[];
+  // Podgląd treningów (tylko do odczytu): klik prowadzi na /sport, bez przeciągania
+  sport?: SportItem[];
   categories: CategoryRow[];
   tasks: TaskRow[];
   clock: "24" | "12";
@@ -236,7 +245,9 @@ export function TimeGrid({
 
           {days.map((dzien) => {
             const dnia = occurrences.filter((o) => o.date === dzien);
-            const uklad = layoutDay(dnia);
+            const treningi = sport.filter((i) => i.date === dzien);
+            // Bloki i treningi dzielą szerokość przy nakładaniu
+            const uklad = layoutDay([...dnia, ...treningi]);
             const linia = nowLine({ date: today, minutes: nowMinutes }, dzien);
             // Aktywny slot (otwarty dymek) ma pierwszeństwo przed duchem myszy, jak w makiecie
             const duch = podglad
@@ -435,10 +446,77 @@ export function TimeGrid({
                       </div>
                     );
                   })}
+                  {treningi.map((i) => {
+                    const pozycja = uklad.find((u) => u.key === i.key);
+                    const kolumna = pozycja?.col ?? 0;
+                    const kolumn = pozycja?.cols ?? 1;
+                    const czas = Math.min(i.durationMin, 1440 - i.startMin);
+                    const koniec = i.startMin + czas;
+                    const godzinyTreningu = `${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
+                    const kompakt = variant === "week" ? czas < 60 : czas < 45;
+                    return (
+                      <div
+                        key={i.key}
+                        data-testid={`sport-${i.key}`}
+                        className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}`}
+                        style={{
+                          top: (i.startMin / 60) * wysokoscGodziny,
+                          height: (czas / 60) * wysokoscGodziny,
+                          left: `${(kolumna / kolumn) * 100}%`,
+                          width: `${100 / kolumn}%`,
+                        }}
+                      >
+                        {/* Link (nie przycisk): kolumna nie zaczyna na nim przeciągania, a klik
+                            otwiera dymek treningu na /sport. Plan ma przerywaną ramkę, wykonany jest pełny */}
+                        <Link
+                          href={sportItemHref(i)}
+                          data-planned={i.planned || undefined}
+                          draggable={false}
+                          title={`${i.title} ${godzinyTreningu}`}
+                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          style={{
+                            background: i.planned
+                              ? "#ffffff"
+                              : `${SPORT_COLOR}14`,
+                            border: i.planned
+                              ? `1px dashed ${SPORT_COLOR}`
+                              : `1px solid ${SPORT_COLOR}40`,
+                            borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                            ...(kompakt
+                              ? { borderTopWidth: 0, borderBottomWidth: 0 }
+                              : {}),
+                          }}
+                        >
+                          {kompakt ? (
+                            <span className="block truncate text-[11px] leading-none font-medium">
+                              {`${i.title} · ${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)}`}
+                            </span>
+                          ) : variant === "week" ? (
+                            <>
+                              <span className="block truncate text-xs leading-[1.3] font-medium">
+                                {i.title}
+                              </span>
+                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-[#404040]">
+                                {godzinyTreningu}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="flex items-baseline gap-2.5 text-[13px] leading-[1.3]">
+                              <span className="font-medium">{i.title}</span>
+                              <span className="font-mono text-[11px] text-[#404040]">
+                                {`${godzinyTreningu} · Sport`}
+                              </span>
+                            </span>
+                          )}
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {variant === "day" &&
                   dnia.length === 0 &&
+                  treningi.length === 0 &&
                   (totalCount ?? 0) === 0 && (
                     <div
                       onClick={(e) => e.stopPropagation()}

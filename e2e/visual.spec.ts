@@ -16,6 +16,12 @@ import {
   zasiejSen,
 } from "./helpers/nawyki";
 import {
+  dzienTygodnia,
+  zasiejBieg,
+  zasiejSzablon,
+  zasiejTrening,
+} from "./helpers/sport";
+import {
   adminClient,
   createConfirmedUser,
   createUserAtOnboardingEnd,
@@ -399,5 +405,115 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
       await zrzut(page, "nawyk-szczegoly", projekt);
     }
+  });
+
+  test("zrzuty /sport i podstron (makiety Sport, RunDialog, GymLog, WorkoutTemplates, TemplateEditor, ExerciseDetail, MSport, MRunNew, MGym)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    const userId = await zalozKontoNawykow(page, projekt);
+    // Szablon na pojutrze (plan w kalendarzu), biegi z ostatnich tygodni i dwa treningi siłowe z seriami
+    const dzis = dzisWarszawa();
+    const { id: szablonId, cwiczenia } = await zasiejSzablon(userId, {
+      name: "Push",
+      weekdays: [dzienTygodnia(przesunDate(dzis, 2))],
+      startTime: "18:30",
+      cwiczenia: [
+        { name: "Wyciskanie leżąc", sets: 3, reps: "8–10" },
+        { name: "Wyciskanie nad głowę", sets: 3, reps: "10" },
+      ],
+    });
+    for (const [dniTemu, km, sekundy, kind] of [
+      [1, 8, 2880, "easy"],
+      [4, 6, 1860, "tempo"],
+      [8, 12, 4500, "long"],
+      [12, 8, 2850, "easy"],
+      [19, 10, 3420, "easy"],
+      [26, 5, 1500, "intervals"],
+    ] as const) {
+      await zasiejBieg(userId, { dniTemu, km, sekundy, kind });
+    }
+    const lezac = cwiczenia["Wyciskanie leżąc"];
+    const nadGlowe = cwiczenia["Wyciskanie nad głowę"];
+    await zasiejTrening(userId, {
+      dniTemu: 7,
+      title: "Push",
+      serie: [
+        [60, 60, 57.5].map((kg) => ({ exerciseId: lezac, kg, reps: 8 })),
+        [35, 35, 35].map((kg) => ({ exerciseId: nadGlowe, kg, reps: 10 })),
+      ],
+    });
+    const trening = await zasiejTrening(userId, {
+      dniTemu: 2,
+      title: "Push",
+      serie: [
+        [62.5, 62.5, 60].map((kg) => ({ exerciseId: lezac, kg, reps: 8 })),
+        [35, 37.5, 37.5].map((kg) => ({ exerciseId: nadGlowe, kg, reps: 9 })),
+      ],
+    });
+
+    await page.goto("/sport");
+    if (projekt === "web") {
+      const web = page.getByTestId("web-sport");
+      await expect(
+        web.getByRole("heading", { name: "Sport", level: 1 }),
+      ).toBeVisible();
+      await zrzut(page, "sport", projekt);
+
+      await web.getByRole("button", { name: "Nowy bieg", exact: true }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Nowy bieg" }),
+      ).toBeVisible();
+      await zrzut(page, "sport-okno-biegu", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+    } else {
+      const m = page.getByTestId("m-sport");
+      await expect(m.getByRole("heading", { name: "Ostatnie" })).toBeVisible();
+      await zrzut(page, "sport", projekt);
+
+      await m.getByRole("button", { name: "Bieg", exact: true }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Nowy bieg" }),
+      ).toBeVisible();
+      await zrzut(page, "sport-arkusz-biegu", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+    }
+
+    // Trening siłowy (GymLog / MGym)
+    await page.goto(`/sport/trening/${trening}`);
+    await expect(
+      page
+        .getByTestId(projekt === "web" ? "web-gym" : "m-gym")
+        .getByRole("heading", { name: "Push", level: 1 }),
+    ).toBeVisible();
+    await zrzut(page, "sport-trening", projekt);
+
+    // Szablony: lista i edytor; szczegóły ćwiczenia (jedno drzewo dla obu układów)
+    await page.goto("/sport/szablony");
+    await expect(
+      page.getByRole("heading", { name: "Szablony treningów", level: 1 }),
+    ).toBeVisible();
+    await zrzut(page, "sport-szablony", projekt);
+
+    await page.goto(`/sport/szablony/${szablonId}`);
+    await expect(
+      page.getByRole("heading", { name: "Edytuj szablon", level: 1 }),
+    ).toBeVisible();
+    await zrzut(page, "sport-szablon-edytor", projekt);
+
+    await page.goto(`/sport/cwiczenia/${lezac}`);
+    await expect(
+      page.getByRole("heading", { name: "Wyciskanie leżąc", level: 1 }),
+    ).toBeVisible();
+    await zrzut(page, "sport-cwiczenie", projekt);
+
+    // Kalendarz główny z podglądem treningów (tydzień z treningiem sprzed 2 dni)
+    await page.goto(`/kalendarz?widok=tydzien&data=${przesunDate(dzis, -2)}`);
+    await expect(
+      page.getByRole("link", { name: /Push/ }).first(),
+    ).toBeVisible();
+    await zrzut(page, "kalendarz-sport", projekt);
   });
 });

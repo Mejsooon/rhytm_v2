@@ -24,8 +24,6 @@ const pusty: ProfileRow = {
   timezone: null,
   user_id: "u1",
   week_start: null,
-  // Domyślne z bazy: rodzaj 'km', bez liczby treningów
-  weekly_goal_type: "km",
   workouts_goal_on: true,
   km_goal_on: true,
   weekly_km_goal: null,

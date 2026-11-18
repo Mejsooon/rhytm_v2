@@ -5,6 +5,11 @@
 import Link from "next/link";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
+import {
+  SPORT_COLOR,
+  sportItemHref,
+  type SportItem,
+} from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import type { CategoryRow } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
@@ -17,6 +22,7 @@ export function MonthGrid({
   days,
   month0,
   occurrences,
+  sport = [],
   categories,
   today,
   clock,
@@ -31,6 +37,8 @@ export function MonthGrid({
   month0: number;
   // Tylko widoczne wystąpienia (bez ukrytych kategorii), z datą, na której mają stać w siatce
   occurrences: Occurrence[];
+  // Podgląd treningów (tylko do odczytu): klik prowadzi na /sport
+  sport?: SportItem[];
   categories: CategoryRow[];
   today: IsoDate;
   clock: "24" | "12";
@@ -42,12 +50,23 @@ export function MonthGrid({
   // Klik w „+N więcej” (przejście do widoku dnia)
   onMoreClick?: () => void;
 }) {
-  // Wystąpienia pogrupowane po dniu (kolejność z expandOccurrences: godzina rosnąco)
-  const poDniach = new Map<IsoDate, Occurrence[]>();
+  // Wpisy pogrupowane po dniu: bloki i treningi razem, godzina rosnąco
+  type Wpis =
+    | { typ: "blok"; o: Occurrence; startMin: number }
+    | { typ: "sport"; i: SportItem; startMin: number };
+  const poDniach = new Map<IsoDate, Wpis[]>();
   for (const o of occurrences) {
     const lista = poDniach.get(o.date) ?? [];
-    lista.push(o);
+    lista.push({ typ: "blok", o, startMin: o.startMin });
     poDniach.set(o.date, lista);
+  }
+  for (const i of sport) {
+    const lista = poDniach.get(i.date) ?? [];
+    lista.push({ typ: "sport", i, startMin: i.startMin });
+    poDniach.set(i.date, lista);
+  }
+  for (const lista of poDniach.values()) {
+    lista.sort((a, b) => a.startMin - b.startMin);
   }
   const koloryKategorii = new Map(categories.map((k) => [k.id, k.color]));
 
@@ -112,7 +131,31 @@ export function MonthGrid({
                 >
                   <span aria-hidden="true">+</span>
                 </button>
-                {wpisy.slice(0, MAX_WPISOW).map((o) => {
+                {wpisy.slice(0, MAX_WPISOW).map((wpis) => {
+                  if (wpis.typ === "sport") {
+                    const i = wpis.i;
+                    // Plan: przerywana ramka; wykonany: tło w kolorze Sportu i lewy pasek
+                    return (
+                      <Link
+                        key={i.key}
+                        href={sportItemHref(i)}
+                        data-planned={i.planned || undefined}
+                        title={`${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)} ${i.title}`}
+                        style={
+                          i.planned
+                            ? { border: `1px dashed ${SPORT_COLOR}` }
+                            : {
+                                backgroundColor: `${SPORT_COLOR}14`,
+                                borderLeft: `2px solid ${SPORT_COLOR}`,
+                              }
+                        }
+                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                      >
+                        {i.title}
+                      </Link>
+                    );
+                  }
+                  const o = wpis.o;
                   const kolor =
                     (o.categoryId && koloryKategorii.get(o.categoryId)) || null;
                   // Wg makiety: z kategorią tło w kolorze (alfa 14) i lewy pasek 2 px, bez kategorii kreskowana ramka

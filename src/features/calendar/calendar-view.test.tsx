@@ -45,6 +45,7 @@ vi.mock("./mobile/m-calendar-month", () => ({ MCalendarMonth: () => null }));
 
 import { CalendarView } from "./calendar-view";
 import type { CalendarData } from "./load-calendar";
+import { planZSzablonu, trening } from "./mobile/fixtures";
 
 function blok(id: string, title: string, categoryId: string) {
   return {
@@ -91,6 +92,7 @@ function dane(): CalendarData {
       },
     ],
     profile: { timezone: "Europe/Warsaw", weekStart: "mon", clock: "24" },
+    sport: [],
   };
 }
 
@@ -983,5 +985,80 @@ describe("CalendarView — miesiąc", () => {
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("CalendarView — podgląd treningów", () => {
+  // Dane z systemową kategorią „Sport” (ukrytą albo nie) i dwoma treningami tygodnia
+  function zeSportem(hidden: boolean | null): CalendarData {
+    const d = dane();
+    if (hidden !== null) {
+      d.categories.push({
+        id: "c-sport",
+        name: "Sport",
+        color: "#c2410c",
+        hidden,
+        is_system: true,
+        position: 3,
+        user_id: "u1",
+        created_at: null,
+      });
+    }
+    d.sport = [trening(), planZSzablonu()];
+    return d;
+  }
+
+  it("tydzień i miesiąc pokazują bieg i plan z szablonu z linkiem do /sport", () => {
+    const { unmount } = wyrenderuj(zeSportem(false));
+    expect(screen.getByRole("link", { name: /Spokojny/ })).toHaveAttribute(
+      "href",
+      "/sport?miesiac=2026-11&wybrany=s:s1",
+    );
+    expect(screen.getByRole("link", { name: /Push/ })).toHaveAttribute(
+      "data-planned",
+      "true",
+    );
+    unmount();
+    render(
+      <CalendarView
+        view="miesiac"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={zeSportem(false)}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Spokojny" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Push" })).toBeInTheDocument();
+    // Treningi liczą się do wpisów miesiąca (2 bloki + 2 treningi)
+    expect(screen.getByText("4 wpisy widoczne")).toBeInTheDocument();
+  });
+
+  it("ukryta kategoria „Sport” chowa podgląd, a odhaczenie jej w menu chowa go od razu", async () => {
+    setCategoryHidden.mockResolvedValue({ ok: true });
+    const { unmount } = wyrenderuj(zeSportem(true));
+    expect(
+      screen.queryByRole("link", { name: /Spokojny/ }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    wyrenderuj(zeSportem(false));
+    expect(screen.getByRole("link", { name: /Spokojny/ })).toBeInTheDocument();
+    await userEvent.click(await poleKategorii("Sport"));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("link", { name: /Spokojny/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(setCategoryHidden).toHaveBeenCalledWith({
+      id: "c-sport",
+      hidden: true,
+    });
+  });
+
+  it("bez kategorii „Sport” podgląd i tak jest widoczny", () => {
+    wyrenderuj(zeSportem(null));
+    expect(screen.getByRole("link", { name: /Spokojny/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Push/ })).toBeInTheDocument();
   });
 });

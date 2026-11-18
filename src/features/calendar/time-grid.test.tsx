@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRow } from "@/features/tasks/model";
 import type { CategoryRow } from "./load-calendar";
+import { planZSzablonu, trening } from "./mobile/fixtures";
 import type { Occurrence } from "./occurrences";
 import { TimeGrid } from "./time-grid";
 
@@ -444,5 +445,81 @@ describe("TimeGrid", () => {
     expect(screen.getByTestId("uchwyt-b1:2026-11-17")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
     expect(onBlockClick).toHaveBeenCalled();
+  });
+
+  describe("podgląd treningów", () => {
+    it("bieg wykonany jest pełny w kolorze Sportu, plan z szablonu ma przerywaną ramkę", () => {
+      wyrenderuj({ sport: [trening(), planZSzablonu()] });
+      const bieg = screen.getByRole("link", { name: /Spokojny/ });
+      expect(bieg.style.borderLeft).toBe("3px solid rgb(194, 65, 12)");
+      expect(bieg).not.toHaveAttribute("data-planned");
+      const plan = screen.getByRole("link", { name: /Push/ });
+      expect(plan.style.borderLeft).toBe("3px dashed rgb(194, 65, 12)");
+      expect(plan).toHaveAttribute("data-planned", "true");
+      expect(plan).toHaveTextContent("18:30–20:00");
+      // 18:30 w tygodniu (48 px / h) i 1,5 h
+      const pole = screen.getByTestId("sport-t:t1:2026-11-19");
+      expect(pole.style.top).toBe("888px");
+      expect(pole.style.height).toBe("72px");
+    });
+
+    it("klik prowadzi do dymku treningu na /sport", () => {
+      wyrenderuj({ sport: [planZSzablonu()] });
+      expect(screen.getByRole("link", { name: /Push/ })).toHaveAttribute(
+        "href",
+        "/sport?miesiac=2026-11&wybrany=t:t1:2026-11-19",
+      );
+    });
+
+    it("trening nie otwiera „Nowy wpis” i nie da się go przeciągnąć", () => {
+      const onBlockDrag = vi.fn();
+      const onRangeDrag = vi.fn();
+      const { onSlotClick } = wyrenderuj({
+        sport: [trening()],
+        onBlockDrag,
+        onRangeDrag,
+      });
+      const przewijanie = screen.getByTestId("przewijanie");
+      przewijanie.getBoundingClientRect = () => new DOMRect(0, 0, 800, 2000);
+      const link = screen.getByRole("link", { name: /Spokojny/ });
+      fireEvent.pointerDown(link, {
+        clientX: 10,
+        clientY: 340,
+        button: 0,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(link, {
+        buttons: 1,
+        clientX: 10,
+        clientY: 480,
+        pointerId: 1,
+      });
+      expect(
+        screen.queryByTestId("podglad-przeciagania"),
+      ).not.toBeInTheDocument();
+      fireEvent.pointerUp(link, { clientX: 10, clientY: 480, pointerId: 1 });
+      expect(onBlockDrag).not.toHaveBeenCalled();
+      expect(onRangeDrag).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("uchwyt-s:s1")).not.toBeInTheDocument();
+      // jsdom nie przechodzi na inny dokument: blokujemy domyślną nawigację linku
+      link.addEventListener("click", (e) => e.preventDefault());
+      fireEvent.click(link);
+      expect(onSlotClick).not.toHaveBeenCalled();
+    });
+
+    it("dzień z samym treningiem nie pokazuje „Brak bloków”", () => {
+      wyrenderuj({
+        days: ["2026-11-17"],
+        variant: "day",
+        totalCount: 0,
+        sport: [trening()],
+      });
+      expect(
+        screen.queryByText(/Brak bloków w tym dniu\./),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Spokojny/ })).toHaveTextContent(
+        "07:00–07:58 · Sport",
+      );
+    });
   });
 });

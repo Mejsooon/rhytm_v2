@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { buildMonthGrid } from "@/components/controls/calendar-math";
 import type { CategoryRow } from "./load-calendar";
+import { planZSzablonu, trening } from "./mobile/fixtures";
 import { MonthGrid } from "./month-grid";
 import type { Occurrence } from "./occurrences";
 
@@ -174,5 +175,53 @@ describe("MonthGrid", () => {
     expect(screen.getByTestId("numer-2026-11-10").className).not.toContain(
       "text-[#a3a3a3]",
     );
+  });
+
+  describe("podgląd treningów", () => {
+    it("bieg wykonany jest pełny, plan z szablonu przerywany; klik prowadzi na /sport", async () => {
+      const { onDayClick, onEntryClick } = wyrenderuj([], {
+        sport: [trening(), planZSzablonu()],
+      });
+      const bieg = within(screen.getByTestId("komorka-2026-11-17")).getByRole(
+        "link",
+        { name: "Spokojny" },
+      );
+      expect(bieg.style.borderLeft).toBe("2px solid rgb(194, 65, 12)");
+      expect(bieg).toHaveAttribute(
+        "href",
+        "/sport?miesiac=2026-11&wybrany=s:s1",
+      );
+      const plan = within(screen.getByTestId("komorka-2026-11-19")).getByRole(
+        "link",
+        { name: "Push" },
+      );
+      expect(plan.style.border).toBe("1px dashed rgb(194, 65, 12)");
+      expect(plan).toHaveAttribute("data-planned", "true");
+      // Klik w trening nie otwiera „Nowy wpis” ani dymku bloku
+      // jsdom nie przechodzi na inny dokument: blokujemy domyślną nawigację linku
+      plan.addEventListener("click", (e) => e.preventDefault());
+      fireEvent.click(plan);
+      expect(onDayClick).not.toHaveBeenCalled();
+      expect(onEntryClick).not.toHaveBeenCalled();
+    });
+
+    it("trening liczy się do limitu 3 wpisów i stoi wg godziny", () => {
+      wyrenderuj(
+        [
+          wystapienie("a", "2026-11-17", 360),
+          wystapienie("b", "2026-11-17", 480),
+          wystapienie("c", "2026-11-17", 600),
+        ],
+        { sport: [trening()] },
+      );
+      const komorka = within(screen.getByTestId("komorka-2026-11-17"));
+      // 07:00 trening wchodzi między 06:00 a 08:00, ostatni blok trafia do „+1 więcej”
+      expect(
+        komorka.getAllByRole("button").map((b) => b.textContent),
+      ).toContain("Wpis a");
+      expect(komorka.getByRole("link", { name: "Spokojny" })).toBeVisible();
+      expect(komorka.queryByText("Wpis c")).not.toBeInTheDocument();
+      expect(komorka.getByText("+1 więcej")).toBeInTheDocument();
+    });
   });
 });

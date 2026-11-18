@@ -8,8 +8,9 @@ const DZIEN_DO = 20 * 60;
 
 // Nakładające się bloki dzielą szerokość: każdy dostaje kolumnę `col` z `cols` kolumn grupy.
 // Grupa = ciąg bloków, z których każdy zaczyna się przed końcem poprzednich.
+// Układa też podgląd treningów (wystarczy klucz, start i czas trwania).
 export function layoutDay(
-  items: Occurrence[],
+  items: Pick<Occurrence, "key" | "startMin" | "durationMin">[],
 ): { key: string; col: number; cols: number }[] {
   const posortowane = [...items].sort(
     (a, b) => a.startMin - b.startMin || b.durationMin - a.durationMin,

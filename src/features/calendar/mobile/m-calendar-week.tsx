@@ -6,6 +6,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
+import {
+  SPORT_COLOR,
+  sportItemHref,
+  type SportItem,
+} from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import type { CategoryRow } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
@@ -18,6 +23,7 @@ export function MCalendarWeek({
   today,
   nowMinutes,
   occurrences,
+  sport = [],
   categories,
   clock,
   onAdd,
@@ -30,6 +36,8 @@ export function MCalendarWeek({
   today: IsoDate;
   nowMinutes: number;
   occurrences: Occurrence[];
+  // Podgląd treningów (tylko do odczytu): stuknięcie prowadzi na /sport
+  sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
   onAdd: (date: IsoDate, startMin: number) => void;
@@ -47,6 +55,20 @@ export function MCalendarWeek({
         const [, m, d] = dzien.split("-").map(Number);
         const nazwa = `${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`;
         const dzienne = occurrences.filter((o) => o.date === dzien);
+        const treningi = sport.filter((i) => i.date === dzien);
+        // Bloki i treningi dnia razem, godzina rosnąco
+        const wpisy = [
+          ...dzienne.map((o) => ({
+            typ: "blok" as const,
+            o,
+            startMin: o.startMin,
+          })),
+          ...treningi.map((i) => ({
+            typ: "sport" as const,
+            i,
+            startMin: i.startMin,
+          })),
+        ].sort((a, b) => a.startMin - b.startMin);
         return (
           <section key={dzien} aria-label={nazwa} className="flex gap-3">
             <Link
@@ -62,12 +84,43 @@ export function MCalendarWeek({
               <span className="font-mono text-lg font-medium">{d}</span>
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-              {dzienne.length === 0 && (
+              {dzienne.length === 0 && treningi.length === 0 && (
                 <span className="flex min-h-10 items-center text-sm text-[#6b6b6b]">
                   Brak bloków
                 </span>
               )}
-              {dzienne.map((o) => {
+              {wpisy.map((wpis) => {
+                if (wpis.typ === "sport") {
+                  const i = wpis.i;
+                  // Plan ma przerywaną ramkę
+                  return (
+                    <Link
+                      key={i.key}
+                      href={sportItemHref(i)}
+                      data-planned={i.planned || undefined}
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                      style={{
+                        background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                        border: i.planned
+                          ? `1px dashed ${SPORT_COLOR}`
+                          : undefined,
+                        borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                      }}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {i.title}
+                      </span>
+                      <span className="font-mono text-[11px] text-[#555555]">
+                        {formatClockTime(
+                          Math.floor(i.startMin / 60),
+                          i.startMin % 60,
+                          clock,
+                        )}
+                      </span>
+                    </Link>
+                  );
+                }
+                const o = wpis.o;
                 const kolor =
                   categories.find((k) => k.id === o.categoryId)?.color ??
                   KOLOR_BRAK;

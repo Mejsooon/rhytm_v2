@@ -36,4 +36,15 @@ describe("Checkbox", () => {
       screen.getByRole("checkbox", { name: "Zaznacz" }),
     ).toBeInTheDocument();
   });
+
+  it("disabled: kwadrat i etykieta nie wołają onChange", async () => {
+    const onChange = vi.fn();
+    render(
+      <Checkbox checked={false} onChange={onChange} label="Zgoda" disabled />,
+    );
+    expect(screen.getByRole("checkbox", { name: "Zgoda" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByText("Zgoda"));
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

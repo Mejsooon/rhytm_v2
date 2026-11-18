@@ -25,6 +25,7 @@ function dane(hidden = false): CalendarData {
       },
     ],
     profile: { timezone: "Europe/Warsaw", weekStart: "mon", clock: "24" },
+    sport: [],
   };
 }
 

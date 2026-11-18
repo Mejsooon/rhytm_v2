@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { kategoria, wystapienie } from "./fixtures";
+import { kategoria, trening, wystapienie } from "./fixtures";
 import { MCalendarDay } from "./m-calendar-day";
 
 const kategorie = [kategoria("c1", "Studia", "#0070f3")];
@@ -216,5 +216,33 @@ describe("MCalendarDay", () => {
   it("wysoki blok nie dostaje dodatkowego obszaru dotyku", () => {
     wyrenderuj();
     expect(screen.queryByTestId("obszar-dotyku")).toBeNull();
+  });
+});
+
+describe("MCalendarDay — podgląd treningów", () => {
+  it("trening dnia to link do /sport, plan przerywany; dzień z treningiem ma kropkę", () => {
+    wyrenderuj({
+      sport: [
+        trening({ date: "2026-11-18" }),
+        trening({
+          key: "t:t1:2026-11-18",
+          date: "2026-11-18",
+          startMin: 1110,
+          durationMin: 90,
+          title: "Push",
+          planned: true,
+        }),
+        trening({ key: "s:s9", date: "2026-11-21" }),
+      ],
+    });
+    const bieg = screen.getByRole("link", { name: /Spokojny/ });
+    expect(bieg).toHaveAttribute("href", "/sport?miesiac=2026-11&wybrany=s:s1");
+    expect(bieg.style.borderLeft).toBe("3px solid rgb(194, 65, 12)");
+    const plan = screen.getByRole("link", { name: /Push/ });
+    expect(plan).toHaveAttribute("data-planned", "true");
+    expect(plan).toHaveTextContent("18:30–20:00 · Sport");
+    expect(screen.getByTestId("kropka-2026-11-21")).toBeInTheDocument();
+    // Fokus z klawiatury widoczny jak na webie
+    expect(bieg).toHaveClass("focus-visible:ring-2");
   });
 });

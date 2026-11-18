@@ -45,3 +45,11 @@ describe("firstSteps, liczniki nawyków i snu", () => {
     expect(wynik.doneCount).toBe(2);
   });
 });
+
+describe("firstSteps, licznik treningów", () => {
+  it("zapisany trening (sesja sportu) oznacza krok „Zapisz trening”", () => {
+    const wynik = firstSteps({ ...zera, workouts: 1 });
+    expect(wynik.steps.map((s) => s.done)).toEqual([false, false, true, false]);
+    expect(wynik.doneCount).toBe(1);
+  });
+});

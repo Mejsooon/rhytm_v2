@@ -85,3 +85,21 @@
     font-family: var(--font-geist-sans), system-ui, sans-serif;
   }
 }
+
+/* Animacje wykresów z makiet (Sport.dc.html: .rh-line, dymek wykresu) */
+@keyframes rh-draw {
+  from {
+    stroke-dashoffset: 600;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes rh-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
