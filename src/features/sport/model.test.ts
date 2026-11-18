@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { EXERCISE_LIBRARY, searchExercises } from "./library";
 import {
   epley1rm,
+  kgVsLast,
+  parseKgInput,
+  parseRepsInput,
   firstReps,
   formatDuration,
   formatKg,
@@ -525,5 +528,101 @@ describe("parseDuration i parseKm", () => {
     expect(parseKm("8")).toBe(8);
     expect(parseKm("-1")).toBeNull();
     expect(parseKm("x")).toBeNull();
+  });
+});
+
+describe("pola treningu siłowego", () => {
+  it("parseKgInput: przecinek, kropka, puste i „mc” to masa ciała, zły zapis → undefined", () => {
+    expect(parseKgInput("72,5")).toBe(72.5);
+    expect(parseKgInput(" 70.25 ")).toBe(70.25);
+    expect(parseKgInput("0")).toBe(0);
+    expect(parseKgInput("")).toBeNull();
+    expect(parseKgInput("MC")).toBeNull();
+    expect(parseKgInput("1000,5")).toBeUndefined();
+    expect(parseKgInput("7,555")).toBeUndefined();
+    expect(parseKgInput("abc")).toBeUndefined();
+    expect(parseKgInput("-5")).toBeUndefined();
+  });
+
+  it("parseRepsInput: liczby całkowite 0–999, puste → null, zły zapis → undefined", () => {
+    expect(parseRepsInput("8")).toBe(8);
+    expect(parseRepsInput(" 12 ")).toBe(12);
+    expect(parseRepsInput("")).toBeNull();
+    expect(parseRepsInput("1000")).toBeUndefined();
+    expect(parseRepsInput("8,5")).toBeUndefined();
+    expect(parseRepsInput("x")).toBeUndefined();
+  });
+});
+
+describe("kgVsLast", () => {
+  const historia = [
+    {
+      sessionId: "s1",
+      startLocal: "2026-11-03T10:00:00",
+      sets: [set({ id: "a1", weight_kg: 65 })],
+    },
+    {
+      sessionId: "s2",
+      startLocal: "2026-11-10T10:00:00",
+      sets: [
+        set({ id: "b1", weight_kg: 70 }),
+        set({ id: "b2", weight_kg: 75, done: false, set_no: 2 }),
+      ],
+    },
+    {
+      sessionId: "s3",
+      startLocal: "2026-11-17T10:00:00",
+      sets: [
+        set({ id: "c1", weight_kg: 70 }),
+        set({ id: "c2", weight_kg: 72.5, set_no: 2 }),
+        set({ id: "c3", weight_kg: 80, done: false, set_no: 3 }),
+      ],
+    },
+  ];
+
+  it("maks. zrobionej serii teraz − maks. w poprzedniej sesji z ćwiczeniem", () => {
+    expect(kgVsLast(historia, "s3", "e1")).toBe(2.5);
+    expect(kgVsLast(historia, "s2", "e1")).toBe(5);
+  });
+
+  it("pierwsza sesja, brak zrobionych serii z ciężarem albo inne ćwiczenie → null", () => {
+    expect(kgVsLast(historia, "s1", "e1")).toBeNull();
+    expect(kgVsLast(historia, "s3", "e2")).toBeNull();
+    expect(
+      kgVsLast(
+        [
+          historia[0],
+          {
+            sessionId: "s4",
+            startLocal: "2026-11-20T10:00:00",
+            sets: [set({ id: "d1", weight_kg: null })],
+          },
+        ],
+        "s4",
+        "e1",
+      ),
+    ).toBeNull();
+  });
+
+  it("poprzednia sesja bez zrobionych serii z ciężarem jest pomijana", () => {
+    expect(
+      kgVsLast(
+        [
+          historia[0],
+          {
+            sessionId: "s2",
+            startLocal: "2026-11-10T10:00:00",
+            sets: [set({ id: "b1", weight_kg: 90, done: false })],
+          },
+          {
+            sessionId: "s3",
+            startLocal: "2026-11-17T10:00:00",
+            sets: [set({ id: "c1", weight_kg: 62.5 })],
+          },
+        ],
+        "s3",
+        "e1",
+      ),
+    ).toBe(-2.5);
   });
 });

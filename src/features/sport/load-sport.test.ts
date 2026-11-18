@@ -318,6 +318,27 @@ describe("loadWorkout", () => {
     expect(d?.session.id).toBe(SILA);
     expect(d?.history.map((h) => h.sessionId)).toEqual([STARA, SILA]);
     expect(d?.exercises).toHaveLength(2);
+    expect(d?.templateName).toBeNull();
+  });
+
+  it("trening z szablonu ma nazwę szablonu", async () => {
+    tables.sport_sessions = [
+      fakeTable({ single: { ...sesjaSilowa, template_id: SZABLON } }),
+      fakeTable({ data: [] }),
+    ];
+    tables.workout_templates = fakeTable({ single: { name: "Push" } });
+    const d = await loadWorkout(klient(tables), "u1", SILA);
+    expect(d?.templateName).toBe("Push");
+  });
+
+  it("szablon usunięty w międzyczasie → templateName null", async () => {
+    tables.sport_sessions = [
+      fakeTable({ single: { ...sesjaSilowa, template_id: SZABLON } }),
+      fakeTable({ data: [] }),
+    ];
+    tables.workout_templates = fakeTable({ single: null });
+    const d = await loadWorkout(klient(tables), "u1", SILA);
+    expect(d?.templateName).toBeNull();
   });
 });
 

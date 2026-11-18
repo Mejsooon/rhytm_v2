@@ -60,6 +60,7 @@ export type WorkoutData = {
   today: IsoDate;
   profile: SportProfile;
   session: SessionRow;
+  templateName: string | null; // „z szablonu „…”” — szablon mógł zmienić nazwę albo zniknąć
   sets: GymSetRow[]; // rosnąco po exercise_position, set_no
   exercises: ExerciseRow[]; // wszystkie ćwiczenia użytkownika (nazwy + dymek wyszukiwania)
   history: SessionSets[]; // sesje z seriami ćwiczeń tego treningu (łącznie z nim)
@@ -402,10 +403,23 @@ export async function loadWorkout(
     ...new Set(sets.map((s) => s.exercise_id)),
   ]);
 
+  let templateName: string | null = null;
+  if (sesja.template_id) {
+    const { data: szablon, error: bladSzablonu } = await supabase
+      .from("workout_templates")
+      .select("name")
+      .eq("user_id", userId)
+      .eq("id", sesja.template_id)
+      .maybeSingle();
+    if (bladSzablonu) throw new Error(bladSzablonu.message);
+    templateName = szablon?.name ?? null;
+  }
+
   return {
     today: todayIso(profile.timezone),
     profile,
     session: sesja as SessionRow,
+    templateName,
     sets,
     exercises: (cwiczeniaRes.data ?? []) as ExerciseRow[],
     history,

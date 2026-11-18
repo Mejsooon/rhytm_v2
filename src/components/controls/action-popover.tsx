@@ -12,6 +12,7 @@ export function ActionPopover({
   width,
   align = "start",
   side = "bottom",
+  ariaLabel,
   children,
 }: {
   trigger: React.ReactNode;
@@ -20,6 +21,8 @@ export function ActionPopover({
   width?: number;
   align?: "start" | "end";
   side?: "top" | "bottom";
+  // Nazwa dymku (role="dialog") dla czytników ekranu, np. „Dodaj ćwiczenie”
+  ariaLabel?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -29,6 +32,7 @@ export function ActionPopover({
         <Popover.Content
           align={align}
           side={side}
+          aria-label={ariaLabel}
           sideOffset={6}
           avoidCollisions
           collisionPadding={8}

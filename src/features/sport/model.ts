@@ -168,6 +168,57 @@ export function recordSetIds(
   return wynik;
 }
 
+// „+2,5 kg vs ostatnio”: maks. ciężar zrobionych serii ćwiczenia w sesji sessionId − to samo
+// w ostatniej wcześniejszej (po startLocal) sesji z zrobioną serią z ciężarem tego ćwiczenia.
+// null, gdy w jednej z nich nie ma zrobionej serii z ciężarem.
+export function kgVsLast(
+  history: { sessionId: string; startLocal: string; sets: GymSetRow[] }[],
+  sessionId: string,
+  exerciseId: string,
+): number | null {
+  const maksimum = (sets: GymSetRow[]) => {
+    let max: number | null = null;
+    for (const s of sets) {
+      if (s.exercise_id !== exerciseId || !s.done || s.weight_kg === null)
+        continue;
+      if (max === null || s.weight_kg > max) max = s.weight_kg;
+    }
+    return max;
+  };
+
+  const biezaca = history.find((h) => h.sessionId === sessionId);
+  if (!biezaca) return null;
+  const teraz = maksimum(biezaca.sets);
+  if (teraz === null) return null;
+
+  let poprzednia: { startLocal: string; max: number } | null = null;
+  for (const h of history) {
+    if (h.startLocal >= biezaca.startLocal) continue;
+    const max = maksimum(h.sets);
+    if (max === null) continue;
+    if (poprzednia === null || h.startLocal > poprzednia.startLocal)
+      poprzednia = { startLocal: h.startLocal, max };
+  }
+  return poprzednia === null ? null : teraz - poprzednia.max;
+}
+
+// Pole „kg” w treningu: "72,5" / "72.5" -> 72.5; puste albo „mc” -> null (masa ciała);
+// zły zapis albo poza 0–1000 (do 0,01) -> undefined
+export function parseKgInput(text: string): number | null | undefined {
+  const t = text.trim().replace(",", ".");
+  if (t === "" || t.toLowerCase() === "mc") return null;
+  if (!/^\d{1,4}(\.\d{1,2})?$/.test(t)) return undefined;
+  const kg = Number(t);
+  return kg <= 1000 ? kg : undefined;
+}
+
+// Pole „powt.” w treningu: liczba całkowita 0–999; puste -> null; zły zapis -> undefined
+export function parseRepsInput(text: string): number | null | undefined {
+  const t = text.trim();
+  if (t === "") return null;
+  return /^\d{1,3}$/.test(t) ? Number(t) : undefined;
+}
+
 // "18:30:00" albo "18:30" -> minuty od północy
 const minutyZGodziny = (godzina: string) =>
   Number(godzina.slice(0, 2)) * 60 + Number(godzina.slice(3, 5));
