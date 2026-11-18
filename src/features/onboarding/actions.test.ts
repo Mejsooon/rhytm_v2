@@ -40,7 +40,9 @@ describe("saveOnboardingStep", () => {
     from.mockReturnValue({ update, upsert });
     update.mockReturnValue({ eq });
     // eq zwraca obiekt, który jest jednocześnie obietnicą (zapis pól) i ma .lt (postęp)
-    eq.mockImplementation(() => Object.assign(Promise.resolve({ error: null }), { lt }));
+    eq.mockImplementation(() =>
+      Object.assign(Promise.resolve({ error: null }), { lt }),
+    );
     lt.mockResolvedValue({ error: null });
     upsert.mockResolvedValue({ error: null });
   });
@@ -61,10 +63,16 @@ describe("saveOnboardingStep", () => {
   });
 
   it("krok 2 zapisuje przycięte pola dla zalogowanego i podnosi postęp", async () => {
-    const wynik = await saveOnboardingStep(2, { roles: ["student"], study_field: " Cyber " });
+    const wynik = await saveOnboardingStep(2, {
+      roles: ["student"],
+      study_field: " Cyber ",
+    });
     expect(wynik).toEqual({ ok: true });
     expect(from).toHaveBeenCalledWith("profiles");
-    expect(update).toHaveBeenNthCalledWith(1, { roles: ["student"], study_field: "Cyber" });
+    expect(update).toHaveBeenNthCalledWith(1, {
+      roles: ["student"],
+      study_field: "Cyber",
+    });
     expect(eq).toHaveBeenNthCalledWith(1, "user_id", "u1");
     // postęp: onboarding_step = 3, tylko gdy obecny < 3 (bez cofania)
     expect(update).toHaveBeenNthCalledWith(2, { onboarding_step: 3 });
@@ -98,22 +106,33 @@ describe("saveOnboardingStep", () => {
   });
 
   it("krok 1 z avatar_path z cudzego folderu → ok: false", async () => {
-    const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: "u2/avatar.png" });
+    const wynik = await saveOnboardingStep(1, {
+      ...krok1,
+      avatar_path: "u2/avatar.png",
+    });
     expect(wynik.ok).toBe(false);
     expect(update).not.toHaveBeenCalled();
   });
 
-  it.each(["u1/../u2/a.png", "u1/x/avatar.png", "u1/avatar.gif", "u1/avatar.png/x"])(
-    "krok 1 z niedozwolonym avatar_path %s → ok: false",
-    async (sciezka) => {
-      const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: sciezka });
-      expect(wynik.ok).toBe(false);
-      expect(update).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    "u1/../u2/a.png",
+    "u1/x/avatar.png",
+    "u1/avatar.gif",
+    "u1/avatar.png/x",
+  ])("krok 1 z niedozwolonym avatar_path %s → ok: false", async (sciezka) => {
+    const wynik = await saveOnboardingStep(1, {
+      ...krok1,
+      avatar_path: sciezka,
+    });
+    expect(wynik.ok).toBe(false);
+    expect(update).not.toHaveBeenCalled();
+  });
 
   it("krok 1 z własnym avatar_path → zapis", async () => {
-    const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: "u1/avatar.png" });
+    const wynik = await saveOnboardingStep(1, {
+      ...krok1,
+      avatar_path: "u1/avatar.png",
+    });
     expect(wynik).toEqual({ ok: true });
     expect(update).toHaveBeenNthCalledWith(1, {
       display_name: "Ala",
@@ -125,8 +144,16 @@ describe("saveOnboardingStep", () => {
   });
 
   it("krok 6 upsertuje notification_settings (before → 10, wyłączone → null)", async () => {
-    const ustawienia = { push_enabled: true, before: true, renew: false, weekly: true, habits: false };
-    await expect(saveOnboardingStep(6, ustawienia)).resolves.toEqual({ ok: true });
+    const ustawienia = {
+      push_enabled: true,
+      before: true,
+      renew: false,
+      weekly: true,
+      habits: false,
+    };
+    await expect(saveOnboardingStep(6, ustawienia)).resolves.toEqual({
+      ok: true,
+    });
     expect(from).toHaveBeenCalledWith("notification_settings");
     expect(upsert).toHaveBeenLastCalledWith(
       {
@@ -149,7 +176,9 @@ describe("saveOnboardingStep", () => {
   });
 
   it("błąd zapisu → komunikat", async () => {
-    eq.mockImplementationOnce(() => Object.assign(Promise.resolve({ error: { message: "boom" } }), { lt }));
+    eq.mockImplementationOnce(() =>
+      Object.assign(Promise.resolve({ error: { message: "boom" } }), { lt }),
+    );
     const wynik = await saveOnboardingStep(2, { roles: [], study_field: "" });
     expect(wynik).toEqual({ ok: false, message: BLAD });
   });
@@ -162,7 +191,9 @@ describe("saveOnboardingStep", () => {
 
   it("bez sesji → /logowanie, bez zapisu", async () => {
     getUser.mockResolvedValue({ data: { user: null } });
-    await expect(saveOnboardingStep(2, { roles: [], study_field: "" })).rejects.toThrow("REDIRECT:/logowanie");
+    await expect(
+      saveOnboardingStep(2, { roles: [], study_field: "" }),
+    ).rejects.toThrow("REDIRECT:/logowanie");
     expect(update).not.toHaveBeenCalled();
   });
 });
@@ -187,12 +218,18 @@ describe("completeOnboarding", () => {
 
   it("błąd RPC → komunikat, bez przekierowania", async () => {
     rpc.mockResolvedValue({ error: { message: "boom" } });
-    await expect(completeOnboarding()).resolves.toEqual({ ok: false, message: BLAD });
+    await expect(completeOnboarding()).resolves.toEqual({
+      ok: false,
+      message: BLAD,
+    });
   });
 
   it("błąd odczytu ról → komunikat, bez RPC", async () => {
     maybeSingle.mockResolvedValue({ data: null, error: { message: "boom" } });
-    await expect(completeOnboarding()).resolves.toEqual({ ok: false, message: BLAD });
+    await expect(completeOnboarding()).resolves.toEqual({
+      ok: false,
+      message: BLAD,
+    });
     expect(rpc).not.toHaveBeenCalled();
   });
 

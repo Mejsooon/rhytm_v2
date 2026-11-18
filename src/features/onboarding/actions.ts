@@ -43,14 +43,25 @@ export async function saveOnboardingStep(
   const schema = onboardingStepSchemas[step];
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Sprawdź dane i spróbuj ponownie." };
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ?? "Sprawdź dane i spróbuj ponownie.",
+    };
   }
 
   let zapis: { error: unknown };
   if (step === 1) {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[1]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[1]["parse"]
+    >;
     // Avatar to dokładnie plik {user_id}/avatar.{ext} (bez podfolderów i "..")
-    if (d.avatar_path !== null && !new RegExp(`^${user.id}/avatar\\.(png|jpg|jpeg|webp)$`).test(d.avatar_path)) {
+    if (
+      d.avatar_path !== null &&
+      !new RegExp(`^${user.id}/avatar\\.(png|jpg|jpeg|webp)$`).test(
+        d.avatar_path,
+      )
+    ) {
       return { ok: false, message: "Nieprawidłowe zdjęcie profilowe." };
     }
     zapis = await supabase
@@ -64,13 +75,17 @@ export async function saveOnboardingStep(
       })
       .eq("user_id", user.id);
   } else if (step === 2) {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[2]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[2]["parse"]
+    >;
     zapis = await supabase
       .from("profiles")
       .update({ roles: d.roles, study_field: d.study_field })
       .eq("user_id", user.id);
   } else if (step === 3) {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[3]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[3]["parse"]
+    >;
     zapis = await supabase
       .from("profiles")
       .update({
@@ -82,19 +97,28 @@ export async function saveOnboardingStep(
       })
       .eq("user_id", user.id);
   } else if (step === 4) {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[4]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[4]["parse"]
+    >;
     zapis = await supabase
       .from("profiles")
-      .update({ referral_source: d.referral_source, referral_other: d.referral_other })
+      .update({
+        referral_source: d.referral_source,
+        referral_other: d.referral_other,
+      })
       .eq("user_id", user.id);
   } else if (step === 5) {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[5]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[5]["parse"]
+    >;
     zapis = await supabase
       .from("profiles")
       .update({ pending_pages: d.pending_pages })
       .eq("user_id", user.id);
   } else {
-    const d = parsed.data as ReturnType<typeof onboardingStepSchemas[6]["parse"]>;
+    const d = parsed.data as ReturnType<
+      (typeof onboardingStepSchemas)[6]["parse"]
+    >;
     zapis = await supabase.from("notification_settings").upsert(
       {
         user_id: user.id,
@@ -127,7 +151,10 @@ export async function saveOnboardingStep(
 
 // Kończy onboarding: tworzy kategorie z ról i ustawia onboarded_at (RPC), potem przenosi do aplikacji.
 // redirect rzuca wyjątek, więc stoi poza try/catch; błąd zostaje na ekranie.
-export async function completeOnboarding(): Promise<{ ok: false; message: string }> {
+export async function completeOnboarding(): Promise<{
+  ok: false;
+  message: string;
+}> {
   const supabase = await createClient();
   const {
     data: { user },

@@ -22,7 +22,13 @@ const start: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 function Probe({ initial }: { initial: OnboardingDraft }) {
@@ -45,7 +51,9 @@ describe("StepRoles", () => {
     expect(screen.getByText("W kalendarzu: Studia, Sport")).toBeInTheDocument();
     const web = within(screen.getByTestId("roles-web"));
     await userEvent.click(web.getByRole("button", { name: /Student/ }));
-    await userEvent.click(web.getByRole("button", { name: /Trenuję regularnie/ }));
+    await userEvent.click(
+      web.getByRole("button", { name: /Trenuję regularnie/ }),
+    );
     expect(screen.getByText("W kalendarzu: Dom")).toBeInTheDocument();
   });
 

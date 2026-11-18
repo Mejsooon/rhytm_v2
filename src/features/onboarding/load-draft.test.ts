@@ -42,7 +42,7 @@ describe("loadDraft", () => {
       clock: "24",
       roles: [],
       studyField: "",
-      goals: [],
+      goals: ["plan", "sport", "habits"],
       goalType: "workouts",
       weeklyWorkouts: 3,
       weeklyKm: 25,
@@ -50,30 +50,65 @@ describe("loadDraft", () => {
       source: null,
       sourceOther: "",
       pages: null,
-      notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+      notify: {
+        perm: false,
+        before: true,
+        renew: true,
+        weekly: true,
+        habits: false,
+      },
     });
   });
 
   it("przed zapisem kroku 3 rodzaj celu to treningi, mimo domyślnego 'km' w bazie", () => {
-    expect(loadDraft({ ...pusty, onboarding_step: 3 }, null).goalType).toBe("workouts");
+    expect(loadDraft({ ...pusty, onboarding_step: 3 }, null).goalType).toBe(
+      "workouts",
+    );
   });
 
   it("po zapisie kroku 3 rodzaj celu i obie liczby z profilu", () => {
     const km = loadDraft(
-      { ...pusty, onboarding_step: 4, weekly_goal_type: "km", weekly_km_goal: 40, weekly_workouts_goal: 5 },
+      {
+        ...pusty,
+        onboarding_step: 4,
+        weekly_goal_type: "km",
+        weekly_km_goal: 40,
+        weekly_workouts_goal: 5,
+      },
       null,
     );
-    expect(km).toMatchObject({ goalType: "km", weeklyKm: 40, weeklyWorkouts: 5 });
-    const treningi = loadDraft({ ...pusty, onboarding_step: 7, weekly_goal_type: "workouts", weekly_workouts_goal: 4 }, null);
-    expect(treningi).toMatchObject({ goalType: "workouts", weeklyWorkouts: 4, weeklyKm: 25 });
+    expect(km).toMatchObject({
+      goalType: "km",
+      weeklyKm: 40,
+      weeklyWorkouts: 5,
+    });
+    const treningi = loadDraft(
+      {
+        ...pusty,
+        onboarding_step: 7,
+        weekly_goal_type: "workouts",
+        weekly_workouts_goal: 4,
+      },
+      null,
+    );
+    expect(treningi).toMatchObject({
+      goalType: "workouts",
+      weeklyWorkouts: 4,
+      weeklyKm: 25,
+    });
   });
 
   it("brak strefy w profilu → wykryta strefa", () => {
-    expect(loadDraft(pusty, null, "Asia/Kolkata").timezone).toBe("Asia/Kolkata");
+    expect(loadDraft(pusty, null, "Asia/Kolkata").timezone).toBe(
+      "Asia/Kolkata",
+    );
   });
 
   it("strefa z profilu ma pierwszeństwo przed wykrytą", () => {
-    expect(loadDraft({ ...pusty, timezone: "Europe/Berlin" }, null, "Asia/Kolkata").timezone).toBe("Europe/Berlin");
+    expect(
+      loadDraft({ ...pusty, timezone: "Europe/Berlin" }, null, "Asia/Kolkata")
+        .timezone,
+    ).toBe("Europe/Berlin");
   });
 
   it("pending_pages: [] zostaje [] (nie null)", () => {
@@ -86,7 +121,7 @@ describe("loadDraft", () => {
         ...pusty,
         display_name: "Ala",
         roles: ["student"],
-        goals: ["plan"],
+        goals: ["books", "plan"],
         weekly_km_goal: 40,
         sleep_goal_min: 450,
         referral_source: "other",
@@ -107,7 +142,8 @@ describe("loadDraft", () => {
     expect(draft).toMatchObject({
       name: "Ala",
       roles: ["student"],
-      goals: ["plan"],
+      // Cele bazowe zawsze z przodu, bez duplikatów
+      goals: ["plan", "sport", "habits", "books"],
       weeklyKm: 40,
       sleepGoalMin: 450,
       source: "other",
@@ -115,7 +151,13 @@ describe("loadDraft", () => {
       weekStart: "sun",
       clock: "12",
       pages: ["Books"],
-      notify: { perm: true, before: false, renew: false, weekly: true, habits: true },
+      notify: {
+        perm: true,
+        before: false,
+        renew: false,
+        weekly: true,
+        habits: true,
+      },
     });
   });
 });

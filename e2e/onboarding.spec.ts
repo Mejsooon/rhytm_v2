@@ -48,10 +48,10 @@ test.describe("onboarding", () => {
     }
     await dalej(page).click();
 
-    // Krok 3: cele; „Treningi” pokazują „Cel treningowy” (domyślnie 3 treningi / tydz.)
+    // Krok 3: cele; „Treningi” to cel bazowy (zawsze włączony), więc „Cel treningowy” jest od razu (3 treningi / tydz.)
     await expect(page).toHaveURL(/\/onboarding\/3$/);
     await page.getByRole("button", { name: /^Subskrypcje/ }).click();
-    await page.getByRole("button", { name: /^Treningi/ }).click();
+    await expect(page.getByRole("button", { name: /^Treningi/ })).toHaveAttribute("aria-disabled", "true");
     await expect(page.getByRole("radio", { name: "Treningi / tydz." })).toHaveAttribute("aria-checked", "true");
     // Telefon: licznik −/+; web: jedno pole liczby
     const licznik = page.getByRole("group", { name: "Treningi w tygodniu" });

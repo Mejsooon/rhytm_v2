@@ -24,9 +24,14 @@ export function StepPages({
   const polecane = recommendedPages(draft.goals);
 
   function przelacz(key: PageKey) {
-    const nowe = wybrane.includes(key) ? wybrane.filter((k) => k !== key) : [...wybrane, key];
+    const nowe = wybrane.includes(key)
+      ? wybrane.filter((k) => k !== key)
+      : [...wybrane, key];
     // Kolejność jak w sidebarze (PAGE_TEMPLATES)
-    onChange({ ...draft, pages: PAGE_TEMPLATES.map((t) => t.key).filter((k) => nowe.includes(k)) });
+    onChange({
+      ...draft,
+      pages: PAGE_TEMPLATES.map((t) => t.key).filter((k) => nowe.includes(k)),
+    });
   }
 
   return (
@@ -60,7 +65,8 @@ export function StepPages({
               onClick={() => przelacz(strona.key)}
               className={cn(
                 "box-border flex w-full cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#15803d]",
-                wlaczona && "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
+                wlaczona &&
+                  "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
               )}
             >
               <span
@@ -76,11 +82,17 @@ export function StepPages({
                 <span className="flex items-center gap-2">
                   <span className="font-medium">{strona.name}</span>
                   {polecane.includes(strona.key) && (
-                    <span className="text-xs text-[#15803d]">z Twoich celów</span>
+                    <span className="text-xs text-[#15803d]">
+                      z Twoich celów
+                    </span>
                   )}
                 </span>
-                <span className="text-[13px] text-[#737373]">{strona.desc}</span>
-                <span className="font-mono text-[11px] text-[#a3a3a3]">{strona.fields}</span>
+                <span className="text-[13px] text-[#737373]">
+                  {strona.desc}
+                </span>
+                <span className="font-mono text-[11px] text-[#a3a3a3]">
+                  {strona.fields}
+                </span>
               </span>
             </button>
           );
@@ -123,8 +135,12 @@ export function StepPages({
                     <StatusBadge tone="green">z Twoich celów</StatusBadge>
                   )}
                 </span>
-                <span className="text-[13px] text-[#666666]">{strona.desc}</span>
-                <span className="font-mono text-[11px] text-[#6b6b6b]">{strona.fields}</span>
+                <span className="text-[13px] text-[#666666]">
+                  {strona.desc}
+                </span>
+                <span className="font-mono text-[11px] text-[#6b6b6b]">
+                  {strona.fields}
+                </span>
               </span>
             </button>
           );
@@ -132,10 +148,12 @@ export function StepPages({
       </div>
 
       <p className="m-0 text-[13px] text-[#737373] max-[799px]:hidden">
-        Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona” w sidebarze
+        Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona”
+        w sidebarze
       </p>
       <p className="m-0 text-xs leading-normal text-[#666666] min-[800px]:hidden">
-        Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona”.
+        Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa
+        strona”.
       </p>
     </>
   );

@@ -22,7 +22,10 @@ function Wyloguj({ className }: { className?: string }) {
     <form action={signOut}>
       <button
         type="submit"
-        className={cn("cursor-pointer border-0 bg-transparent text-[#525252] hover:text-[#171717]", className)}
+        className={cn(
+          "cursor-pointer border-0 bg-transparent text-[#525252] hover:text-[#171717]",
+          className,
+        )}
       >
         Wyloguj
       </button>
@@ -68,7 +71,10 @@ export function OnboardingWizard({
   const widocznyAvatar = podglad ?? avatarUrl;
   // Stan „w trakcie zapisu” i błąd są przypisane do kroku, więc po przejściu dalej same wygasają
   const [pendingStep, setPendingStep] = React.useState<Step | null>(null);
-  const [error, setError] = React.useState<{ step: Step; message: string } | null>(null);
+  const [error, setError] = React.useState<{
+    step: Step;
+    message: string;
+  } | null>(null);
   // Strażnik dla dwóch synchronicznych kliknięć (stan nie zdąży się zaktualizować)
   const wToku = React.useRef(false);
 
@@ -101,8 +107,14 @@ export function OnboardingWizard({
 
   // Nowe propsy z serwera (inny krok albo świeży szkic po powrocie na zachowaną trasę):
   // bierzemy szkic z serwera i zdejmujemy blokadę zapisu oraz błąd
-  const [poprzedniePropsy, setPoprzedniePropsy] = React.useState({ step, initialDraft });
-  if (poprzedniePropsy.step !== step || poprzedniePropsy.initialDraft !== initialDraft) {
+  const [poprzedniePropsy, setPoprzedniePropsy] = React.useState({
+    step,
+    initialDraft,
+  });
+  if (
+    poprzedniePropsy.step !== step ||
+    poprzedniePropsy.initialDraft !== initialDraft
+  ) {
     setPoprzedniePropsy({ step, initialDraft });
     setDraft(initialDraft);
     setPendingStep(null);
@@ -131,14 +143,19 @@ export function OnboardingWizard({
       return;
     }
     void wykonaj(
-      () => saveOnboardingStep(step as 1 | 2 | 3 | 4 | 5 | 6, stepPayload(step as 1 | 2 | 3 | 4 | 5 | 6, draft)),
+      () =>
+        saveOnboardingStep(
+          step as 1 | 2 | 3 | 4 | 5 | 6,
+          stepPayload(step as 1 | 2 | 3 | 4 | 5 | 6, draft),
+        ),
       `/onboarding/${step + 1}`,
     );
   }
 
   function pomin() {
     void wykonaj(
-      () => saveOnboardingStep(4, { referral_source: null, referral_other: null }),
+      () =>
+        saveOnboardingStep(4, { referral_source: null, referral_other: null }),
       "/onboarding/5",
     );
   }
@@ -155,7 +172,9 @@ export function OnboardingWizard({
       {/* Nagłówek web */}
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
         <RhytmLogo size={24} withWordmark />
-        <span className="ml-auto font-mono text-xs text-[#737373]">Krok {step} z 7</span>
+        <span className="ml-auto font-mono text-xs text-[#737373]">
+          Krok {step} z 7
+        </span>
         <Wyloguj className="ml-4 p-0 text-[13px]" />
       </header>
 
@@ -169,7 +188,11 @@ export function OnboardingWizard({
             disabled={pending}
             className="inline-flex size-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] hover:bg-[#f5f5f5]"
           >
-            <ChevronLeft aria-hidden="true" className="size-[22px]" strokeWidth={2} />
+            <ChevronLeft
+              aria-hidden="true"
+              className="size-[22px]"
+              strokeWidth={2}
+            />
           </button>
         ) : (
           <span className="flex items-center px-2">
@@ -196,7 +219,10 @@ export function OnboardingWizard({
             {KROKI.map((k) => (
               <span
                 key={k}
-                className={cn("h-1 rounded-sm", k <= step ? "bg-[#171717]" : "bg-[#e5e5e5]")}
+                className={cn(
+                  "h-1 rounded-sm",
+                  k <= step ? "bg-[#171717]" : "bg-[#e5e5e5]",
+                )}
               />
             ))}
           </div>
@@ -259,7 +285,12 @@ export function OnboardingWizard({
             </div>
 
             <div className="relative overflow-hidden border-l border-[#eaeaea] bg-[#f4f4f5] max-[1100px]:hidden">
-              <LivePreview draft={draft} step={step} avatarUrl={widocznyAvatar} now={now} />
+              <LivePreview
+                draft={draft}
+                step={step}
+                avatarUrl={widocznyAvatar}
+                now={now}
+              />
             </div>
           </div>
         </div>

@@ -9,8 +9,13 @@ import { REMINDERS, type OnboardingDraft } from "../model";
 import { StepHeader } from "./step-header";
 
 // Prosi przeglądarkę o zgodę na powiadomienia; brak API albo wyjątek nie przerywają kreatora
-export async function requestBrowserPermission(): Promise<"granted" | "denied" | "unsupported"> {
-  if (typeof window === "undefined" || typeof window.Notification === "undefined") {
+export async function requestBrowserPermission(): Promise<
+  "granted" | "denied" | "unsupported"
+> {
+  if (
+    typeof window === "undefined" ||
+    typeof window.Notification === "undefined"
+  ) {
     return "unsupported";
   }
   try {
@@ -74,9 +79,16 @@ export function StepNotify({
         />
       </div>
 
-      <div data-testid="notify-web" className="flex flex-col gap-5 max-[799px]:hidden">
+      <div
+        data-testid="notify-web"
+        className="flex flex-col gap-5 max-[799px]:hidden"
+      >
         <div className="flex items-center gap-3 rounded-[10px] border border-[#e0e0e0] p-3.5">
-          <Bell aria-hidden="true" className="size-[18px] flex-none text-[#525252]" strokeWidth={1.5} />
+          <Bell
+            aria-hidden="true"
+            className="size-[18px] flex-none text-[#525252]"
+            strokeWidth={1.5}
+          />
           <span className="flex flex-1 flex-col gap-0.5">
             <span className="font-medium">Powiadomienia w przeglądarce</span>
             <span className="text-[13px] text-[#737373]">{tekstWeb}</span>
@@ -84,15 +96,27 @@ export function StepNotify({
           {notify.perm ? (
             <>
               <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#15803d]">
-                <Check aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5"
+                  strokeWidth={1.5}
+                />
                 Włączone
               </span>
-              <Button variant="secondary" onClick={cofnij} className="ml-1 h-8 px-3 py-0 text-[13px]">
+              <Button
+                variant="secondary"
+                onClick={cofnij}
+                className="ml-1 h-8 px-3 py-0 text-[13px]"
+              >
                 Anuluj
               </Button>
             </>
           ) : (
-            <Button variant="primary" onClick={() => void zezwol()} className="h-9 py-0">
+            <Button
+              variant="primary"
+              onClick={() => void zezwol()}
+              className="h-9 py-0"
+            >
               Zezwól
             </Button>
           )}
@@ -111,24 +135,38 @@ export function StepNotify({
               <Switch
                 checked={notify[r.key]}
                 ariaLabel={r.title}
-                onChange={(v) => onChange({ ...draft, notify: { ...notify, [r.key]: v } })}
+                onChange={(v) =>
+                  onChange({ ...draft, notify: { ...notify, [r.key]: v } })
+                }
               />
             </div>
           ))}
         </div>
 
         <div className="flex items-start gap-2 rounded-lg bg-[#fafafa] px-3 py-2.5 text-[13px] text-[#525252]">
-          <Smartphone aria-hidden="true" className="size-4 flex-none text-[#737373]" strokeWidth={1.5} />
+          <Smartphone
+            aria-hidden="true"
+            className="size-4 flex-none text-[#737373]"
+            strokeWidth={1.5}
+          />
           <span>
-            Na telefonie dodaj rhytm do ekranu głównego, żeby dostawać push także przy zamkniętej karcie
+            Na telefonie dodaj rhytm do ekranu głównego, żeby dostawać push
+            także przy zamkniętej karcie
           </span>
         </div>
       </div>
 
-      <div data-testid="notify-phone" className="flex flex-col gap-4 min-[800px]:hidden">
+      <div
+        data-testid="notify-phone"
+        className="flex flex-col gap-4 min-[800px]:hidden"
+      >
         <div className="flex items-center gap-3 rounded-xl border border-[#eaeaea] bg-white p-3.5">
           <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-[#f5f5f5]">
-            <Bell aria-hidden="true" className="size-[19px] text-[#404040]" strokeWidth={2} />
+            <Bell
+              aria-hidden="true"
+              className="size-[19px] text-[#404040]"
+              strokeWidth={2}
+            />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-medium">Powiadomienia</span>
@@ -146,7 +184,11 @@ export function StepNotify({
               </button>
             </span>
           ) : (
-            <Button variant="primary" onClick={() => void zezwol()} className="h-11 w-auto px-3.5 py-0">
+            <Button
+              variant="primary"
+              onClick={() => void zezwol()}
+              className="h-11 w-auto px-3.5 py-0"
+            >
               Zezwól
             </Button>
           )}
@@ -164,19 +206,24 @@ export function StepNotify({
             >
               <span className="min-w-0 flex-1">
                 <span className="block">{r.title}</span>
-                <span className="font-mono text-xs text-[#6b6b6b]">{r.when}</span>
+                <span className="font-mono text-xs text-[#6b6b6b]">
+                  {r.when}
+                </span>
               </span>
               <Switch
                 checked={notify[r.key]}
                 ariaLabel={r.title}
-                onChange={(v) => onChange({ ...draft, notify: { ...notify, [r.key]: v } })}
+                onChange={(v) =>
+                  onChange({ ...draft, notify: { ...notify, [r.key]: v } })
+                }
               />
             </div>
           ))}
         </div>
 
         <p className="m-0 text-xs leading-normal text-[#666666]">
-          Dodaj rhytm do ekranu głównego, żeby dostawać push także przy zamkniętej aplikacji.
+          Dodaj rhytm do ekranu głównego, żeby dostawać push także przy
+          zamkniętej aplikacji.
         </p>
       </div>
     </>

@@ -29,6 +29,8 @@ a{color:#171717}a:hover{color:#15803d}
 .opt[aria-pressed="true"]{border-color:#171717;box-shadow:inset 0 0 0 1px #171717}
 .box{width:18px;height:18px;border-radius:5px;border:1px solid #d4d4d4;display:grid;place-items:center;flex:none;margin-top:1px;box-sizing:border-box}
 .opt[aria-pressed="true"] .box{background:#171717;border-color:#171717;color:#ffffff}
+.opt[aria-disabled="true"],.opt[aria-disabled="true"]:hover{cursor:default;background:#fafafa;border-color:#e0e0e0;box-shadow:none}
+.opt[aria-disabled="true"] .box{background:#f4f4f5;border-color:#e0e0e0;color:#737373}
 .sw{width:36px;height:20px;border-radius:10px;border:0;padding:2px;background:#d4d4d4;cursor:pointer;display:flex;flex:none;transition:background-color 150ms cubic-bezier(0.22,1,0.36,1)}
 .sw span{width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:transform 150ms cubic-bezier(0.22,1,0.36,1)}
 .sw[aria-checked="true"]{background:#15803d}
@@ -55,8 +57,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
               <p style="margin: 8px 0 0; color: #525252">Na tej podstawie przygotujemy startowe strony i cele</p>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
-              <sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="opt" aria-pressed="{{g.on}}" onClick="{{g.toggle}}"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg></span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{g.title}}</span><span style="font-size: 13px; color: #737373">{{g.desc}}</span></span></button></sc-for>
+              <sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="opt" aria-pressed="{{g.on}}" aria-disabled="{{g.locked}}" title="{{g.tip}}" onClick="{{g.toggle}}"><span class="box"><sc-if value="{{g.isLocked}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if><sc-if value="{{g.isFree}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg></sc-if></span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{g.title}}</span><span style="font-size: 13px; color: #737373">{{g.desc}}</span></span></button></sc-for>
             </div>
+            <p style="margin: -8px 0 0; font-size: 13px; color: #737373">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
               <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="fld" style="grid-column: 1 / -1"><span>Cel treningowy</span><div style="display: flex; gap: 8px; align-items: center"><div class="seg" role="group" aria-label="Rodzaj celu treningowego" style="flex: none"><button type="button" aria-pressed="{{gTr}}" onClick="{{setTr}}" style="padding: 0 12px; white-space: nowrap">Treningi / tydz.</button><button type="button" aria-pressed="{{gKm}}" onClick="{{setKm}}" style="padding: 0 12px; white-space: nowrap">Km / tydz.</button></div><input class="inp mono" type="text" inputMode="numeric" value="{{goalVal}}" onChange="{{onGoal}}" aria-label="{{goalLbl}}" style="flex: 1; min-width: 0"></div></div></sc-if>
               <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><label class="fld">Cel snu<input class="inp mono" type="text" value="{{sleep}}" onChange="{{onSleep}}"></label></sc-if>
@@ -157,9 +160,10 @@ class Component extends DCLogic {
 const v = (e) => (e && e.target ? e.target.value : e);
     const GO = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['pass', 'Hasła', 'Szyfrowany sejf', 'Passwords'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
     const G = S.goals || {};
-    const goals = GO.map((g) => { const on = !!G[g[0]]; return { title: g[1], desc: g[2], on: on ? 'true' : 'false',
-      toggle: () => { const ng = Object.assign({}, G, { [g[0]]: !on }); const np = Object.assign({}, S.pages); if (g[3]) np[g[3]] = !on; this.setState({ goals: ng, pages: np }); } }; });
-    return { pv, goals, showKm: !!G.sport, showSleep: !!G.habits, gTr: (S.goalType || 'tr') === 'tr' ? 'true' : 'false', gKm: S.goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }), goalVal: S.goalType === 'km' ? (S.km || '25') : (S.tr || '3'), goalLbl: S.goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', onGoal: (e) => this.setState(S.goalType === 'km' ? { km: v(e) } : { tr: v(e) }), sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
+    const LOCKED = { plan: true, sport: true, habits: true };
+    const goals = GO.map((g) => { const lk = !!LOCKED[g[0]]; const on = lk || !!G[g[0]]; return { title: g[1], desc: g[2], on: on ? 'true' : 'false', locked: lk ? 'true' : 'false', isLocked: lk, isFree: !lk, tip: lk ? 'Zawsze włączone' : '',
+      toggle: () => { if (lk) return; const ng = Object.assign({}, G, { [g[0]]: !on }); const np = Object.assign({}, S.pages); if (g[3]) np[g[3]] = !on; this.setState({ goals: ng, pages: np }); } }; });
+    return { pv, goals, showKm: true, showSleep: true, gTr: (S.goalType || 'tr') === 'tr' ? 'true' : 'false', gKm: S.goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }), goalVal: S.goalType === 'km' ? (S.km || '25') : (S.tr || '3'), goalLbl: S.goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', onGoal: (e) => this.setState(S.goalType === 'km' ? { km: v(e) } : { tr: v(e) }), sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
   }
 }
 </script>

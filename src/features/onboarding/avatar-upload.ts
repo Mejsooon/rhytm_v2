@@ -11,7 +11,8 @@ const ROZSZERZENIA: Record<string, "png" | "jpg" | "webp"> = {
 
 // null = plik OK, w przeciwnym razie komunikat dla użytkownika
 export function validateAvatarFile(file: File): string | null {
-  if (!(file.type in ROZSZERZENIA)) return "Wybierz zdjęcie PNG, JPG albo WebP.";
+  if (!(file.type in ROZSZERZENIA))
+    return "Wybierz zdjęcie PNG, JPG albo WebP.";
   if (file.size > MAKS_BAJTOW) return "Plik jest za duży (maks. 2 MB).";
   return null;
 }

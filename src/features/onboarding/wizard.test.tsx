@@ -33,7 +33,13 @@ const draft: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 function pokaz(step: number, d: OnboardingDraft = draft) {
@@ -96,19 +102,32 @@ describe("OnboardingWizard", () => {
   });
 
   it("błąd akcji: komunikat w role=alert, bez przejścia", async () => {
-    saveOnboardingStep.mockResolvedValue({ ok: false, message: "Nie udało się zapisać." });
+    saveOnboardingStep.mockResolvedValue({
+      ok: false,
+      message: "Nie udało się zapisać.",
+    });
     const stopka = pokaz(2);
     await userEvent.click(stopka.getByRole("button", { name: "Dalej" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się zapisać.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Nie udało się zapisać.",
+    );
     expect(push).not.toHaveBeenCalled();
     expect(stopka.getByRole("button", { name: "Dalej" })).toBeEnabled();
   });
 
   it("„Pomiń” tylko na kroku 4 i zapisuje null-e", async () => {
     const { unmount } = render(
-      <OnboardingWizard step={3} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />,
+      <OnboardingWizard
+        step={3}
+        initialDraft={draft}
+        avatarUrl={null}
+        now={NOW}
+        userId="u1"
+      />,
     );
-    expect(screen.queryByRole("button", { name: "Pomiń" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Pomiń" }),
+    ).not.toBeInTheDocument();
     unmount();
     const stopka = pokaz(4);
     await userEvent.click(stopka.getByRole("button", { name: "Pomiń" }));
@@ -122,8 +141,12 @@ describe("OnboardingWizard", () => {
   it("krok 7: „Przejdź do Dziś” zamiast „Dalej”, woła completeOnboarding", async () => {
     completeOnboarding.mockResolvedValue({ ok: false, message: "Błąd końca." });
     const stopka = pokaz(7);
-    expect(stopka.queryByRole("button", { name: "Dalej" })).not.toBeInTheDocument();
-    await userEvent.click(stopka.getByRole("button", { name: "Przejdź do Dziś" }));
+    expect(
+      stopka.queryByRole("button", { name: "Dalej" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+      stopka.getByRole("button", { name: "Przejdź do Dziś" }),
+    );
     expect(completeOnboarding).toHaveBeenCalledTimes(1);
     expect(saveOnboardingStep).not.toHaveBeenCalled();
     expect(await screen.findByRole("alert")).toHaveTextContent("Błąd końca.");
@@ -148,7 +171,8 @@ describe("OnboardingWizard", () => {
     const stopka = pokaz(3);
     await userEvent.click(stopka.getByRole("button", { name: "Dalej" }));
     expect(stopka.getByRole("button", { name: "Wstecz" })).toBeDisabled();
-    for (const b of screen.getAllByRole("button", { name: "Wstecz" })) expect(b).toBeDisabled();
+    for (const b of screen.getAllByRole("button", { name: "Wstecz" }))
+      expect(b).toBeDisabled();
   });
 
   it("„Wstecz” na kroku 1 jest nieaktywne", () => {
@@ -159,13 +183,21 @@ describe("OnboardingWizard", () => {
   it("telefon: nagłówek ma „Wstecz” od kroku 2, a „Wyloguj” jest zawsze", async () => {
     pokaz(2);
     expect(screen.getAllByRole("button", { name: "Wstecz" }).length).toBe(2);
-    expect(screen.getAllByRole("button", { name: "Wyloguj" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: "Wyloguj" }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("po ukryciu i przywróceniu trasy (Activity) przyciski nie zostają zablokowane", async () => {
     const wizard = (mode: "visible" | "hidden") => (
       <Activity mode={mode}>
-        <OnboardingWizard step={3} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />
+        <OnboardingWizard
+          step={3}
+          initialDraft={draft}
+          avatarUrl={null}
+          now={NOW}
+          userId="u1"
+        />
       </Activity>
     );
     const { rerender } = render(wizard("visible"));
@@ -184,9 +216,17 @@ describe("OnboardingWizard", () => {
 
   it("nowy initialDraft z serwera zastępuje lokalny szkic", () => {
     const { rerender } = render(
-      <OnboardingWizard step={1} initialDraft={draft} avatarUrl={null} now={NOW} userId="u1" />,
+      <OnboardingWizard
+        step={1}
+        initialDraft={draft}
+        avatarUrl={null}
+        now={NOW}
+        userId="u1"
+      />,
     );
-    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue("Mejson");
+    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue(
+      "Mejson",
+    );
     rerender(
       <OnboardingWizard
         step={1}
@@ -196,6 +236,8 @@ describe("OnboardingWizard", () => {
         userId="u1"
       />,
     );
-    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue("Ola");
+    expect(screen.getAllByLabelText("Imię lub pseudonim")[0]).toHaveValue(
+      "Ola",
+    );
   });
 });
