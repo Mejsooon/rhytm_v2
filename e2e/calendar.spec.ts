@@ -16,6 +16,9 @@ const TYDZIEN = `/kalendarz?widok=tydzien&data=${WTOREK}`;
 // Blok w siatce (web) albo na osi (telefon) po fragmencie tytułu
 const blok = (page: Page, tytul: string) => page.getByRole("button", { name: new RegExp(tytul) });
 
+// Przycisk „Kategorie N/M” w pasku (web); menu z polami wyboru kategorii
+const przyciskKategorii = (page: Page) => page.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ });
+
 test.describe("kalendarz (web)", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
@@ -123,7 +126,7 @@ test.describe("kalendarz (web)", () => {
     await expect(dymek.getByText("Zadanie z pierwszego tygodnia")).toBeVisible();
   });
 
-  test("ukrycie kategorii chowa bloki i zostaje po odświeżeniu; „+ Kategoria” dodaje chip", async ({ page }, info) => {
+  test("ukrycie kategorii w menu „Kategorie” chowa bloki i zostaje po odświeżeniu; „+ Kategoria” dodaje kategorię", async ({ page }, info) => {
     const { userId, kategorie } = await zalozKontoKalendarza(page, info.project.name);
     await zasiejBlok(userId, { title: "Matematyka", date: WTOREK, startMin: 600, categoryId: kategorie["Nauka"] });
     await zasiejBlok(userId, { title: "Bieg", date: SRODA, startMin: 420, categoryId: kategorie["Sport"] });
@@ -132,29 +135,54 @@ test.describe("kalendarz (web)", () => {
     await expect(blok(page, "Matematyka")).toBeVisible();
     await expect(blok(page, "Bieg")).toBeVisible();
 
-    const nauka = page.getByRole("button", { name: /^Nauka/ });
-    await expect(nauka).toHaveAttribute("aria-pressed", "true");
+    await przyciskKategorii(page).click();
+    const nauka = page.getByRole("menuitemcheckbox", { name: /Nauka/ });
+    await expect(nauka).toHaveAttribute("aria-checked", "true");
     const zapis = poZapisie(page);
     await nauka.click();
-    await expect(nauka).toHaveAttribute("aria-pressed", "false");
+    await expect(nauka).toHaveAttribute("aria-checked", "false");
     await expect(blok(page, "Matematyka")).toHaveCount(0);
-    await expect(blok(page, "Bieg")).toBeVisible();
     await zapis;
+    // Esc zamyka menu
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toBeHidden();
+    await expect(blok(page, "Bieg")).toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole("button", { name: /^Nauka/ })).toHaveAttribute("aria-pressed", "false");
+    await przyciskKategorii(page).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /Nauka/ })).toHaveAttribute("aria-checked", "false");
+    await page.keyboard.press("Escape");
     await expect(blok(page, "Matematyka")).toHaveCount(0);
     await expect(blok(page, "Bieg")).toBeVisible();
 
-    // Nowa kategoria od razu jest w filtrach
-    await page.getByRole("button", { name: "+ Kategoria" }).click();
+    // Nowa kategoria od razu jest w menu
+    await przyciskKategorii(page).click();
+    await page.getByRole("menuitem", { name: "+ Kategoria" }).click();
     const okno = page.getByRole("dialog", { name: "Nowa kategoria" });
     await okno.getByLabel("Nazwa").fill("Siłownia");
     await okno.getByRole("button", { name: "Dodaj kategorię" }).click();
     await expect(okno).toBeHidden();
-    await expect(page.getByRole("button", { name: /^Siłownia/ })).toHaveAttribute("aria-pressed", "true");
+    await przyciskKategorii(page).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /Siłownia/ })).toHaveAttribute("aria-checked", "true");
+    await page.keyboard.press("Escape");
     await page.reload();
-    await expect(page.getByRole("button", { name: /^Siłownia/ })).toBeVisible();
+    await przyciskKategorii(page).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /Siłownia/ })).toBeVisible();
+  });
+
+  test("kalendarz wypełnia okno: strona się nie przewija, przewija się tylko siatka", async ({ page }, info) => {
+    await zalozKontoKalendarza(page, info.project.name);
+    await page.goto(TYDZIEN);
+    const siatka = page.getByTestId("przewijanie");
+    await expect(siatka).toBeVisible();
+    expect(await page.evaluate(() => document.scrollingElement!.scrollHeight <= window.innerHeight)).toBe(true);
+    const ramka = (await siatka.boundingBox())!;
+    expect(Math.round(ramka.y + ramka.height)).toBe(page.viewportSize()!.height);
+    // Siatka startuje przewinięta (06:00), a nagłówek dni zostaje u góry
+    expect(await siatka.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    const naglowek = (await page.getByTestId(`naglowek-${WTOREK}`).boundingBox())!;
+    expect(naglowek.y).toBeGreaterThanOrEqual(ramka.y - 1);
+    expect(naglowek.y).toBeLessThan(ramka.y + 10);
   });
 
   test("przeciągnięcie bloku jednorazowego o godzinę zmienia jego start", async ({ page }, info) => {
@@ -194,7 +222,7 @@ test.describe("kalendarz (web)", () => {
     await expect(page.getByText("2 wpisy widoczne")).toBeVisible();
 
     await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
-    await expect(page.getByRole("heading", { level: 2, name: "Wtorek, 12 stycznia" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Wtorek, 12 stycznia" })).toBeVisible();
     await expect(page.getByText("1 z 1 bloków")).toBeVisible();
     await expect(blok(page, "Matematyka")).toBeVisible();
     await expect(page.getByText("styczeń 2027", { exact: true })).toBeVisible();
@@ -204,7 +232,7 @@ test.describe("kalendarz (web)", () => {
     // Mini kalendarz przenosi na inny dzień
     await page.getByRole("button", { name: "13 stycznia" }).click();
     await expect(page).toHaveURL(new RegExp(`data=${SRODA}`));
-    await expect(page.getByRole("heading", { level: 2, name: "Środa, 13 stycznia" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Środa, 13 stycznia" })).toBeVisible();
   });
 });
 
@@ -240,5 +268,31 @@ test.describe("kalendarz (telefon)", () => {
     // Kropka jest w komórce 12 stycznia
     await expect(page.getByRole("button", { name: "12 stycznia" }).getByTestId("kropka-kategorii")).toHaveCount(1);
     await expect(page.getByRole("button", { name: /Fizyka/ })).toBeVisible();
+  });
+
+  test("ikona „Kategorie” otwiera arkusz; przełącznik chowa blok z osi dnia", async ({ page }, info) => {
+    const { userId, kategorie } = await zalozKontoKalendarza(page, info.project.name);
+    await zasiejBlok(userId, { title: "Matematyka", date: WTOREK, startMin: 600, categoryId: kategorie["Nauka"] });
+    await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
+    await expect(blok(page, "Matematyka")).toBeVisible();
+
+    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
+    const arkusz = page.getByRole("dialog", { name: "Kategorie" });
+    const przelacznik = arkusz.getByRole("switch", { name: "Pokaż kategorię Nauka" });
+    await expect(przelacznik).toHaveAttribute("aria-checked", "true");
+    const zapis = poZapisie(page);
+    await przelacznik.click();
+    await expect(przelacznik).toHaveAttribute("aria-checked", "false");
+    await zapis;
+    await arkusz.getByRole("button", { name: "Zamknij" }).click();
+    await expect(arkusz).toBeHidden();
+    await expect(blok(page, "Matematyka")).toHaveCount(0);
+
+    // Oś dnia wypełnia ekran: kończy się nad dolnym paskiem, strona się nie przewija
+    const os = (await page.getByTestId("m-os-dnia").boundingBox())!;
+    const pasek = (await page.getByRole("navigation", { name: "Moduły" }).boundingBox())!;
+    expect(Math.round(os.y + os.height)).toBeLessThanOrEqual(Math.round(pasek.y) + 1);
+    expect(Math.round(pasek.y + pasek.height)).toBe(844);
+    expect(await page.evaluate(() => document.scrollingElement!.scrollHeight <= window.innerHeight)).toBe(true);
   });
 });

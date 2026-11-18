@@ -1,8 +1,10 @@
 "use client";
 
-// Dzień na telefonie wg MCalendarDay.dc.html: pasek tygodnia z kropkami, tytuł dnia, oś całej doby
+// Dzień na telefonie wg MCalendarDayFull.dc.html: pasek tygodnia z kropkami, wiersz z datą, oś całej doby
 // (56 px na godzinę, start przewinięty do 07:00 albo do trwającego bloku), linia „teraz”,
 // stuknięcie pustego miejsca i pływający „+” dodają blok.
+// Pasek tygodnia i wiersz z datą stoją w miejscu; oś wypełnia resztę ekranu do dolnego paska
+// (flex) i tylko ona się przewija.
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -72,11 +74,11 @@ export function MCalendarDay({
   const startPlusa = date === today ? Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60) : 540;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div
         role="group"
         aria-label="Dzień tygodnia"
-        className="grid grid-cols-7 gap-1 border-b border-[#eaeaea] pb-2.5"
+        className="grid flex-none grid-cols-7 gap-1 px-3 pt-0.5 pb-2"
       >
         {dniTygodnia.map((dzien) => {
           const numer = weekdayOf(dzien);
@@ -89,7 +91,7 @@ export function MCalendarDay({
               href={`/kalendarz?widok=dzien&data=${dzien}`}
               aria-label={`${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`}
               aria-current={wybrany ? "date" : undefined}
-              className={`flex h-[62px] flex-col items-center gap-0.5 rounded-xl py-1.5 ${
+              className={`flex h-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 ${
                 wybrany
                   ? "bg-[#171717] text-white"
                   : dzien === today
@@ -112,14 +114,20 @@ export function MCalendarDay({
         })}
       </div>
 
-      <div className="pt-3.5 pb-2.5 pl-12 text-[13px] text-[#666666]">{`${tytul} · ${liczba} ${slowoBlok}`}</div>
+      <div
+        data-testid="m-wiersz-daty"
+        className="flex flex-none items-center gap-2 border-t border-b border-t-[#f0f0f0] border-b-[#eaeaea] px-4 py-1.5 text-[13px] text-[#666666]"
+      >
+        <span>{tytul}</span>
+        <span aria-hidden="true">·</span>
+        <span>{`${liczba} ${slowoBlok}`}</span>
+      </div>
 
       <div
         ref={osRef}
         data-testid="m-os-dnia"
-        // 440 px to wysokość reszty ekranu nad osią (nagłówek, segment, filtry, pasek tygodnia, tytuł)
-        // i pod nią (dolny pasek 84 px); przybliżenie, oś ma też min. 300 px
-        className="h-[calc(100dvh-440px)] min-h-[300px] overflow-y-auto pt-2 pb-24"
+        // Wypełnia resztę ekranu; dolny odstęp 96 px, żeby pływający „+” nie zasłaniał ostatniej godziny
+        className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5 pb-24"
       >
         <div className="relative" style={{ height: 24 * WYSOKOSC_GODZINY }}>
           {Array.from({ length: 24 }, (_, godzina) => (
@@ -157,8 +165,8 @@ export function MCalendarDay({
             const czas = Math.min(o.durationMin, 1440 - o.startMin);
             const koniec = o.startMin + czas;
             const godziny = `${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
-            // Bloki krótsze niż 45 min: tytuł i godziny w jednej linii
-            const kompakt = czas < 45;
+            // Bloki krótsze niż godzina: tytuł i godziny w jednej linii, wyśrodkowane w pionie
+            const kompakt = czas < 60;
             const wysokosc = (czas / 60) * WYSOKOSC_GODZINY - 4;
             // Niski blok zachowuje wygląd, ale pole dotyku ma co najmniej 44 px (przezroczysty obszar
             // wystający poza blok; przy sąsiadach wygrywa blok późniejszy w DOM)
@@ -186,16 +194,24 @@ export function MCalendarDay({
                     style={{ top: -zapas, bottom: -zapas }}
                   />
                 )}
-                <span
-                  className={`flex h-full overflow-hidden ${
-                    kompakt ? "items-center gap-2" : "flex-col gap-px py-1.5"
-                  }`}
-                >
-                  <span className="min-w-0 truncate text-sm font-semibold">{o.title}</span>
-                  <span className="truncate font-mono text-[11px] text-[#555555]">
-                    {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
+                {kompakt ? (
+                  // Krótki blok: tytuł ucina się wielokropkiem, godziny zostają w całości
+                  <span data-testid="blok-jedna-linia" className="flex h-full items-center gap-2 overflow-hidden">
+                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
+                      {o.title}
+                    </span>
+                    <span className="flex-none font-mono text-[11px] leading-4 whitespace-nowrap text-[#555555]">
+                      {godziny}
+                    </span>
                   </span>
-                </span>
+                ) : (
+                  <span className="flex h-full flex-col gap-0.5 overflow-hidden py-1.5">
+                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold">{o.title}</span>
+                    <span className="truncate font-mono text-[11px] leading-4 text-[#555555]">
+                      {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
+                    </span>
+                  </span>
+                )}
               </button>
             );
           })}
@@ -217,7 +233,8 @@ export function MCalendarDay({
         type="button"
         aria-label="Dodaj blok"
         onClick={() => onAdd(date, startPlusa)}
-        className="fixed right-4 bottom-[100px] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
+        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       >
         <Plus size={26} aria-hidden="true" />
       </button>

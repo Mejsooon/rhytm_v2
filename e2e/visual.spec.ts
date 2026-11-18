@@ -147,7 +147,8 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "kalendarz-okno-nowy-blok", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();
 
-      await page.getByRole("button", { name: "+ Kategoria" }).click();
+      await page.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ }).click();
+      await page.getByRole("menuitem", { name: "+ Kategoria" }).click();
       await expect(page.getByRole("dialog", { name: "Nowa kategoria" })).toBeVisible();
       await zrzut(page, "kalendarz-okno-kategorii", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();

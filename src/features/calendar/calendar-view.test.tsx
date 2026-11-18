@@ -69,45 +69,56 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+// Przycisk „Kategorie N/M” na webie (na telefonie jest ikona o nazwie „Kategorie”).
+// `hidden`: przy otwartym menu reszta strony ma aria-hidden (menu modalne)
+const przyciskKategorii = () => screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/, hidden: true });
+
+// Otwiera menu „Kategorie” i zwraca pole wyboru kategorii o tej nazwie
+async function poleKategorii(nazwa: string) {
+  if (!screen.queryByRole("menu")) await userEvent.click(przyciskKategorii());
+  return screen.findByRole("menuitemcheckbox", { name: new RegExp(nazwa) });
+}
+
 describe("CalendarView", () => {
-  it("liczy wystąpienia kategorii w widoku", () => {
+  it("przycisk „Kategorie” liczy widoczne kategorie", () => {
     wyrenderuj();
-    expect(screen.getByRole("button", { name: /Studia/ })).toHaveTextContent("1");
-    expect(screen.getByRole("button", { name: /Dom/ })).toHaveTextContent("1");
+    expect(przyciskKategorii()).toHaveTextContent("2/2");
     expect(screen.getByText("Algebra")).toBeInTheDocument();
+    // Dawny rząd chipów („POKAŻ”) zniknął
+    expect(screen.queryByText("Pokaż")).not.toBeInTheDocument();
   });
 
-  it("klik w chip ukrywa kategorię od razu i woła setCategoryHidden", async () => {
+  it("odhaczenie kategorii w menu ukrywa ją od razu i woła setCategoryHidden", async () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
+    await userEvent.click(await poleKategorii("Dom"));
     expect(setCategoryHidden).toHaveBeenCalledWith({ id: "c2", hidden: true });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: /Dom/ }).className).toContain("border-dashed"),
-    );
+    await waitFor(() => expect(screen.getByRole("menuitemcheckbox", { name: /Dom/ })).toHaveAttribute("aria-checked", "false"));
+    expect(przyciskKategorii()).toHaveTextContent("1/2");
     expect(screen.queryByText("Sprzątanie")).not.toBeInTheDocument();
     expect(screen.getByText("Algebra")).toBeInTheDocument();
   });
 
-  it("błąd akcji przywraca chip i blok oraz pokazuje toast", async () => {
+  it("błąd akcji przywraca kategorię i blok oraz pokazuje toast", async () => {
     setCategoryHidden.mockResolvedValue({ ok: false, message: "x" });
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
+    await userEvent.click(await poleKategorii("Dom"));
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."),
     );
-    expect(screen.getByRole("button", { name: /Dom/ }).className).not.toContain("border-dashed");
+    expect(screen.getByRole("menuitemcheckbox", { name: /Dom/ })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByText("Sprzątanie")).toBeInTheDocument();
   });
 
   it("nowe dane z serwera zastępują stan klienta", async () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     const { rerender } = wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
+    await userEvent.click(await poleKategorii("Dom"));
     rerender(
       <CalendarView view="tydzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />,
     );
-    expect(screen.getByRole("button", { name: /Dom/ }).className).not.toContain("border-dashed");
+    expect(screen.getByRole("menuitemcheckbox", { name: /Dom/ })).toHaveAttribute("aria-checked", "true");
+    expect(przyciskKategorii()).toHaveTextContent("2/2");
   });
 
   it("klik w blok otwiera dymek, ponowny klik i Esc go zamykają", async () => {
@@ -126,9 +137,10 @@ describe("CalendarView", () => {
     wyrenderuj();
     await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Studia/ }));
+    await userEvent.click(await poleKategorii("Studia"));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    await userEvent.click(screen.getByRole("button", { name: /Studia/ }));
+    await userEvent.click(await poleKategorii("Studia"));
+    await userEvent.keyboard("{Escape}");
     await screen.findByRole("button", { name: /^Algebra/ });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -176,15 +188,17 @@ describe("CalendarView", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("„+ Kategoria” otwiera okno kategorii; po dodaniu chip pojawia się w filtrach", async () => {
+  it("„+ Kategoria” w menu otwiera okno kategorii; po dodaniu kategoria jest w menu", async () => {
     createCategory.mockResolvedValue({ ok: true, id: "c9" });
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: "+ Kategoria" }));
+    await userEvent.click(przyciskKategorii());
+    await userEvent.click(await screen.findByRole("menuitem", { name: "+ Kategoria" }));
     await userEvent.type(await screen.findByLabelText("Nazwa"), "Języki");
     await userEvent.click(screen.getByRole("button", { name: "Dodaj kategorię" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(createCategory).toHaveBeenCalledWith(expect.objectContaining({ name: "Języki" }));
-    expect(screen.getByRole("button", { name: /Języki/ })).toBeInTheDocument();
+    expect(przyciskKategorii()).toHaveTextContent("3/3");
+    expect(await poleKategorii("Języki")).toHaveAttribute("aria-checked", "true");
   });
 
   it("„Edytuj” w dymku otwiera okno bloku z danymi wystąpienia", async () => {
@@ -619,7 +633,8 @@ describe("CalendarView — miesiąc", () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     miesiac();
     expect(screen.getByText("2 wpisy widoczne")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Dom/ }));
+    // Miesiąc ma ten sam cienki pasek z przyciskiem „Kategorie”
+    await userEvent.click(await poleKategorii("Dom"));
     await waitFor(() => expect(screen.getByText("1 wpis widoczny")).toBeInTheDocument());
     expect(screen.queryByText(/Sprzątanie/)).not.toBeInTheDocument();
   });

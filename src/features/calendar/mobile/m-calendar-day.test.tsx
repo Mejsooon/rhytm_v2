@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -47,7 +47,7 @@ describe("MCalendarDay", () => {
 
   it("tytuł dnia z liczbą bloków", () => {
     wyrenderuj();
-    expect(screen.getByText("Środa, 18 listopada · 1 blok")).toBeInTheDocument();
+    expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(/^Środa, 18 listopada\s*·\s*1 blok$/);
   });
 
   it("liczba bloków odmienia się po polsku (2–4 bloki, 12–14 i 5+ bloków, 22–24 bloki)", () => {
@@ -61,7 +61,7 @@ describe("MCalendarDay", () => {
     ];
     for (const [n, slowo] of oczekiwane) {
       const { unmount } = wyrenderuj({ occurrences: dzien(n) });
-      expect(screen.getByText(`Środa, 18 listopada · ${n} ${slowo}`)).toBeInTheDocument();
+      expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(new RegExp(`^Środa, 18 listopada\\s*·\\s*${n} ${slowo}$`));
       unmount();
     }
   });
@@ -70,6 +70,39 @@ describe("MCalendarDay", () => {
     const { container } = wyrenderuj();
     expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent("10:00–12:00 · Studia");
     expect(container.querySelector("[data-occurrence-key]")).toBeNull();
+  });
+
+  it("blok krótszy niż godzina: tytuł i godziny w jednej linii, wyśrodkowane, tytuł z wielokropkiem", () => {
+    wyrenderuj({
+      occurrences: [
+        wystapienie("k1:2026-11-18", "2026-11-18", 480, 45, "Bardzo długi tytuł porannej rutyny", "c1"),
+        wystapienie("k2:2026-11-18", "2026-11-18", 600, 60, "Godzina", "c1"),
+      ],
+    });
+    const krotki = screen.getByRole("button", { name: /Bardzo długi/ });
+    const linia = within(krotki).getByTestId("blok-jedna-linia");
+    expect(linia.className).toContain("items-center");
+    expect(linia.className).not.toContain("flex-col");
+    const [tytul, godziny] = Array.from(linia.children) as HTMLElement[];
+    expect(tytul).toHaveTextContent("Bardzo długi tytuł porannej rutyny");
+    expect(tytul.className).toContain("truncate");
+    expect(tytul.className).toContain("whitespace-nowrap");
+    // Krótki blok pokazuje same godziny (bez kategorii), które się nie ucinają
+    expect(godziny).toHaveTextContent(/^08:00–08:45$/);
+    expect(godziny.className).toContain("flex-none");
+    // Pełna godzina ma już dwie linie z kategorią
+    const godzinny = screen.getByRole("button", { name: /Godzina/ });
+    expect(within(godzinny).queryByTestId("blok-jedna-linia")).toBeNull();
+    expect(godzinny).toHaveTextContent("10:00–11:00 · Studia");
+  });
+
+  it("oś wypełnia resztę ekranu przez flex, bez sztywnej wysokości", () => {
+    wyrenderuj();
+    const os = screen.getByTestId("m-os-dnia");
+    expect(os.className).toContain("flex-1");
+    expect(os.className).toContain("min-h-0");
+    expect(os.className).toContain("overflow-y-auto");
+    expect(os.className).not.toMatch(/100dvh|440px/);
   });
 
   it("blok stoi na 56 px na godzinę", () => {

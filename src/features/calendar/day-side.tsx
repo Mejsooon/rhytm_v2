@@ -1,6 +1,7 @@
 "use client";
 
-// Prawa kolumna widoku dnia wg CalendarDay.dc.html: mini kalendarz i karta „Dzień w liczbach”.
+// Prawa kolumna widoku dnia wg CalendarNotionDay.dc.html: mini kalendarz i karta „Dzień w liczbach”.
+// Stała szerokość 280 px obok siatki; stoi w miejscu i przewija się sama, gdy brakuje wysokości.
 import { useState } from "react";
 
 import {
@@ -69,7 +70,7 @@ export function DaySide({
   };
 
   return (
-    <aside className="flex min-w-0 flex-[1_1_260px] flex-col gap-4">
+    <aside className="flex w-[280px] flex-none flex-col gap-4 overflow-y-auto border-l border-[#eaeaea] bg-white p-4">
       <section className="rounded-lg border border-[#eaeaea] bg-white p-3.5">
         <div className="mb-2 flex items-center justify-between">
           <span className="font-semibold">

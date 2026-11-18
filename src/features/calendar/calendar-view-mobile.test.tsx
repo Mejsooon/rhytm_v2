@@ -2,7 +2,8 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/features/categories/actions", () => ({ setCategoryHidden: vi.fn(), createCategory: vi.fn() }));
+const { setCategoryHidden } = vi.hoisted(() => ({ setCategoryHidden: vi.fn() }));
+vi.mock("@/features/categories/actions", () => ({ setCategoryHidden, createCategory: vi.fn() }));
 vi.mock("./actions", () => ({ createBlock: vi.fn(), changeOccurrence: vi.fn() }));
 vi.mock("@/features/tasks/actions", () => ({
   addTask: vi.fn(),
@@ -91,6 +92,35 @@ describe("CalendarView na telefonie", () => {
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Zapisz blok" })).toBeInTheDocument();
     expect(within(okno).getByText("Czas trwania: 1 h")).toBeInTheDocument();
+  });
+
+  it("ikona „Kategorie” otwiera arkusz; przełącznik ukrywa kategorię tą samą akcją co web", async () => {
+    setCategoryHidden.mockResolvedValue({ ok: true });
+    render(<CalendarView view="dzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
+    const arkusz = await screen.findByRole("dialog", { name: "Kategorie" });
+    await userEvent.click(within(arkusz).getByRole("switch", { name: "Pokaż kategorię Studia" }));
+    expect(setCategoryHidden).toHaveBeenCalledWith({ id: "c1", hidden: true });
+    expect(within(arkusz).getByRole("switch", { name: "Pokaż kategorię Studia" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("„+ Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
+    render(<CalendarView view="dzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
+    await userEvent.click(await screen.findByRole("button", { name: "+ Kategoria" }));
+    expect(await screen.findByRole("dialog", { name: "Nowa kategoria" })).toBeInTheDocument();
+  });
+
+  it("nagłówek telefonu bez „+”; dzień wypełnia ekran nad dolnym paskiem", () => {
+    const { container } = render(
+      <CalendarView view="dzien" date="2026-11-18" today="2026-11-17" nowMinutes={600} data={dane()} />,
+    );
+    // Jedyny przycisk nowego bloku to „Nowy blok” na webie; telefon ma pływający „Dodaj blok”
+    expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Dodaj blok" })).toBeInTheDocument();
+    expect((container.firstElementChild as HTMLElement).className).toContain(
+      "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]",
+    );
   });
 
   it("telefon: „Edytuj” w szczegółach bloku otwiera arkusz edycji", async () => {
