@@ -87,12 +87,11 @@ const ROZMIAR_STRONY = 1000;
 async function loadChecks(
   supabase: SupabaseClient<Database>,
   userId: string,
-  filtr: { from?: IsoDate; habitId?: string },
+  filtr: { habitId?: string },
 ): Promise<Array<{ habitId: string; date: IsoDate }>> {
   const wynik: Array<{ habitId: string; date: IsoDate }> = [];
   for (let od = 0; ; od += ROZMIAR_STRONY) {
     let zapytanie = supabase.from("habit_checks").select("habit_id, date").eq("user_id", userId);
-    if (filtr.from) zapytanie = zapytanie.gte("date", filtr.from);
     if (filtr.habitId) zapytanie = zapytanie.eq("habit_id", filtr.habitId);
     // Stabilna kolejność, żeby strony się nie zachodziły
     const { data, error } = await zapytanie
@@ -106,17 +105,13 @@ async function loadChecks(
   return wynik;
 }
 
-// Lista nawyków z odhaczeniami z ostatnich 13 miesięcy + 31 dni i snem z 60 dni
+// Lista nawyków z odhaczeniami z całej historii i snem z 60 dni.
+// Pełna historia odhaczeń jest potrzebna, żeby serie na liście zgadzały się ze stroną szczegółów.
 export async function loadHabitsPage(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<HabitsPageData> {
   const profil = await loadProfile(supabase, userId);
-
-  // 13 miesięcy wstecz (UTC, bez DST) i jeszcze 31 dni zapasu na początek siatki
-  const [r, m, d] = profil.today.split("-").map(Number);
-  const trzynascieMiesiecy = new Date(Date.UTC(r, m - 1 - 13, d)).toISOString().slice(0, 10);
-  const odOdhaczen = addDays(trzynascieMiesiecy, -31);
   const odSnu = addDays(profil.today, -60);
 
   const [nawykiRes, wersjeRes, odhaczenia, senRes] = await Promise.all([
@@ -127,7 +122,7 @@ export async function loadHabitsPage(
       .order("created_at", { ascending: true })
       .order("id", { ascending: true }),
     supabase.from("habit_schedules").select("*").eq("user_id", userId).order("valid_from", { ascending: true }),
-    loadChecks(supabase, userId, { from: odOdhaczen }),
+    loadChecks(supabase, userId, {}),
     supabase.from("sleep_logs").select("*").eq("user_id", userId).gte("date", odSnu).order("date", { ascending: true }),
   ]);
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pustą listę

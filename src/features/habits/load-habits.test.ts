@@ -59,13 +59,14 @@ describe("loadHabitsPage", () => {
     ]);
   });
 
-  it("okna dat: odhaczenia 13 miesięcy + 31 dni, sen 60 dni", async () => {
+  it("okna dat: odhaczenia z całej historii (serie jak na stronie szczegółów), sen 60 dni", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-18T10:00:00Z"));
     const t = tabele();
     await loadHabitsPage(klient(t), "u1");
     vi.useRealTimers();
-    expect(t.habit_checks.gte).toHaveBeenCalledWith("date", "2025-09-17");
+    expect(t.habit_checks.gte).not.toHaveBeenCalled();
+    expect(t.habit_checks.eq).toHaveBeenCalledWith("user_id", "u1");
     expect(t.sleep_logs.gte).toHaveBeenCalledWith("date", "2026-09-19");
   });
 
