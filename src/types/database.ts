@@ -139,6 +139,7 @@ export type Database = {
       };
       exercises: {
         Row: {
+          bodyweight: boolean;
           created_at: string | null;
           id: string;
           muscle_group: string | null;
@@ -146,6 +147,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          bodyweight?: boolean;
           created_at?: string | null;
           id?: string;
           muscle_group?: string | null;
@@ -153,6 +155,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          bodyweight?: boolean;
           created_at?: string | null;
           id?: string;
           muscle_group?: string | null;

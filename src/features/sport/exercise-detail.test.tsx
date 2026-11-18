@@ -2,13 +2,17 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refresh, renameExercise } = vi.hoisted(() => ({
-  refresh: vi.fn(),
-  renameExercise: vi.fn(),
-}));
+const { refresh, renameExercise, setExerciseBodyweight, toastError } =
+  vi.hoisted(() => ({
+    refresh: vi.fn(),
+    renameExercise: vi.fn(),
+    setExerciseBodyweight: vi.fn(),
+    toastError: vi.fn(),
+  }));
 const router = { refresh };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-vi.mock("./actions", () => ({ renameExercise }));
+vi.mock("./actions", () => ({ renameExercise, setExerciseBodyweight }));
+vi.mock("sonner", () => ({ toast: { error: toastError } }));
 
 import { ExerciseDetail } from "./exercise-detail";
 import type { ExerciseData, SessionSets } from "./load-sport";
@@ -49,6 +53,7 @@ function dane(zmiany: Partial<ExerciseData> = {}): ExerciseData {
       name: "Wyciskanie na ławce",
       muscle_group: "Klatka",
       created_at: null,
+      bodyweight: false,
     },
     history: [
       sesja("sa", "2026-09-10", [
@@ -77,6 +82,7 @@ const kafelek = (etykieta: string) =>
 beforeEach(() => {
   vi.clearAllMocks();
   renameExercise.mockResolvedValue({ ok: true });
+  setExerciseBodyweight.mockResolvedValue({ ok: true });
 });
 
 describe("ExerciseDetail", () => {
@@ -293,5 +299,108 @@ describe("ExerciseDetail", () => {
     await user.type(pole, "x{Enter}{Enter}");
     expect(renameExercise).toHaveBeenCalledTimes(1);
     koniec({ ok: true });
+  });
+});
+
+describe("ExerciseDetail — „Z masą ciała”", () => {
+  // Pompki z masą ciała przy wadze 72: A mc×12 (1RM 101) · B mc + 5×10 (77 → 102,5, REKORD)
+  const zMasaCiala = (weightKg: number | null = 72): ExerciseData => {
+    const d = dane({
+      history: [
+        sesja("sa", "2026-11-05", [
+          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, null, 12, true),
+        ]),
+        sesja("sb", "2026-11-12", [
+          seriaTreningu("b1", "sb", WYCISKANIE, 1, 1, 5, 10, true),
+        ]),
+      ],
+    });
+    return {
+      ...d,
+      profile: { ...d.profile, weightKg },
+      exercise: { ...d.exercise, bodyweight: true },
+    };
+  };
+
+  it("przełącznik pokazuje flagę ćwiczenia", () => {
+    render(<ExerciseDetail data={dane()} />);
+    expect(
+      screen.getByRole("switch", { name: "Z masą ciała" }),
+    ).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("kafelki i historia liczą wagę z profilu + dociążenie", () => {
+    render(<ExerciseDetail data={zMasaCiala()} />);
+    expect(
+      screen.getByRole("switch", { name: "Z masą ciała" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(kafelek("Szac. 1RM")).toHaveTextContent("102,5 kg");
+    expect(kafelek("Najcięższa seria")).toHaveTextContent("mc + 5 × 10");
+    expect(kafelek("Najwięcej powt.")).toHaveTextContent("mc × 12");
+    const tabela = screen.getByRole("table");
+    expect(within(tabela).getByText("mc + 5 × 10")).toBeInTheDocument();
+    expect(within(tabela).getByText("101,0 kg")).toBeInTheDocument();
+    expect(within(tabela).getAllByText("REKORD")).toHaveLength(1);
+  });
+
+  it("bez wagi w profilu: brak 1RM i REKORDU, serie jako „mc”", () => {
+    render(<ExerciseDetail data={zMasaCiala(null)} />);
+    expect(kafelek("Szac. 1RM")).toHaveTextContent("—");
+    expect(screen.queryByText("REKORD")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table")).getByText("mc + 5 × 10"),
+    ).toBeInTheDocument();
+  });
+
+  it("włączenie zmienia się od razu i zapisuje flagę", async () => {
+    render(<ExerciseDetail data={dane()} />);
+    const sw = screen.getByRole("switch", { name: "Z masą ciała" });
+    await userEvent.click(sw);
+    expect(sw).toHaveAttribute("aria-checked", "true");
+    expect(setExerciseBodyweight).toHaveBeenCalledWith(WYCISKANIE, true);
+    expect(refresh).toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("błąd zapisu cofa przełącznik i pokazuje toast", async () => {
+    setExerciseBodyweight.mockResolvedValue({
+      ok: false,
+      message: "Nie znaleziono ćwiczenia.",
+    });
+    render(<ExerciseDetail data={dane()} />);
+    const sw = screen.getByRole("switch", { name: "Z masą ciała" });
+    await userEvent.click(sw);
+    expect(sw).toHaveAttribute("aria-checked", "false");
+    expect(toastError).toHaveBeenCalledWith(
+      "Nie udało się zapisać. Spróbuj ponownie.",
+    );
+  });
+
+  it("wyjątek akcji też cofa przełącznik", async () => {
+    setExerciseBodyweight.mockRejectedValue(new Error("sieć"));
+    render(<ExerciseDetail data={zMasaCiala()} />);
+    const sw = screen.getByRole("switch", { name: "Z masą ciała" });
+    await userEvent.click(sw);
+    expect(setExerciseBodyweight).toHaveBeenCalledWith(WYCISKANIE, false);
+    expect(sw).toHaveAttribute("aria-checked", "true");
+    expect(toastError).toHaveBeenCalled();
+  });
+
+  it("drugie kliknięcie w trakcie zapisu jest ignorowane, a klik w napis też przełącza", async () => {
+    let zakoncz: (v: { ok: true }) => void = () => {};
+    setExerciseBodyweight.mockImplementationOnce(
+      () => new Promise((r) => (zakoncz = r)),
+    );
+    render(<ExerciseDetail data={dane()} />);
+    const sw = screen.getByRole("switch", { name: "Z masą ciała" });
+    await userEvent.click(sw);
+    await userEvent.click(sw);
+    expect(setExerciseBodyweight).toHaveBeenCalledTimes(1);
+    expect(sw).toHaveAttribute("aria-checked", "true");
+    zakoncz({ ok: true });
+    await screen.findByRole("switch", { name: "Z masą ciała" });
+    setExerciseBodyweight.mockResolvedValue({ ok: true });
+    await userEvent.click(screen.getByText("Z masą ciała"));
+    expect(setExerciseBodyweight).toHaveBeenLastCalledWith(WYCISKANIE, false);
   });
 });

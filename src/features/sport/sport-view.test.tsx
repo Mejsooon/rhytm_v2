@@ -56,6 +56,14 @@ describe("SportView", () => {
       "href",
       "/sport?miesiac=2026-11",
     );
+    // „Szablony” przed „+ Trening siłowy”
+    const szablony = screen.getByRole("link", { name: "Szablony" });
+    expect(szablony).toHaveAttribute("href", "/sport/szablony");
+    expect(
+      szablony.compareDocumentPosition(
+        screen.getByRole("button", { name: "+ Trening siłowy" }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       screen.getByRole("radiogroup", { name: "Aktywność" }),
     ).toBeInTheDocument();

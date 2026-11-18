@@ -2,7 +2,7 @@
 
 // Ekran „Sport” na telefonie wg MSport.dc.html: nagłówek z numerem tygodnia i „+”, segment Tydzień / Miesiąc,
 // karta „Bieganie” (km / cel z paskiem tylko przy włączonym celu km), wykres km ze stuknięciem słupka,
-// przyciski „Bieg” i „Trening” oraz lista „Ostatnie”. „Trening” otwiera te same opcje co „+ Trening siłowy”
+// przyciski „Bieg”, „Trening” i „Szablony” oraz lista „Ostatnie”. „Trening” otwiera te same opcje co „+ Trening siłowy”
 // na webie (Ruling): „Pusty trening”, szablony („Z szablonu”) i „Szablony treningów…”.
 // *[Claude]* „Miesiąc” = 4 ostatnie tygodnie (ostatni = bieżący, jak w makiecie „t. 43–46”), cel = 4 × cel tygodnia.
 // *[Claude]* Nad „Ostatnie” lista „Zaplanowane” (tylko gdy coś jest): plany biegów, niedokończone treningi
@@ -443,6 +443,28 @@ export function MSport({
               </Link>
             </div>
           </ActionPopover>
+          <Link
+            href="/sport/szablony"
+            className={cn(
+              PRZYCISK,
+              "col-span-2 border-[#e0e0e0] bg-white text-[#171717] no-underline hover:bg-[#fafafa] hover:text-[#171717]",
+            )}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16M4 12h16M4 18h10" />
+            </svg>
+            Szablony
+          </Link>
         </div>
 
         {zaplanowane.length > 0 && (

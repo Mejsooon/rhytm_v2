@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { GymSessionInput } from "./actions";
 import type { SessionSets, TemplateWithItems } from "./load-sport";
 import {
+  effectiveKg,
   formatDuration,
   formatKg,
   formatKm,
@@ -24,8 +25,7 @@ import {
 
 // Okno biegu (Task 5): edycja sesji albo nowy bieg w danym dniu i godzinie
 export type RunRequest =
-  | { sessionId: string }
-  | { date: IsoDate; start: string };
+  { sessionId: string } | { date: IsoDate; start: string };
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const ODZNAKA_BIEGU = "border border-[#fed7aa] bg-[#fff4ed] text-[#c2410c]";
@@ -39,6 +39,7 @@ export function ItemPopover({
   templates,
   exercises,
   setsHistory,
+  profileWeight,
   onClose,
   onOpenRun,
   onStartGym,
@@ -51,6 +52,8 @@ export function ItemPopover({
   templates: TemplateWithItems[];
   exercises: ExerciseRow[];
   setsHistory: SessionSets[];
+  // Waga z profilu: ćwiczenia z masą ciała liczą wagę + dociążenie
+  profileWeight: number | null;
   onClose: () => void;
   onOpenRun: (req: RunRequest) => void;
   onStartGym: (input: GymSessionInput) => void;
@@ -140,17 +143,30 @@ export function ItemPopover({
     lista = lista.slice(0, 4);
   } else {
     // Trening wykonany: objętość, serie zrobione / wszystkie, rekordy i najlepsza seria każdego ćwiczenia
+    // Ćwiczenia z masą ciała (kg serii to dociążenie)
+    const zMasaCiala = new Set(
+      exercises.filter((e) => e.bodyweight).map((e) => e.id),
+    );
     let objetosc = 0;
     let zrobione = 0;
     for (const s of serieSesji) {
       if (!s.done) continue;
       zrobione += 1;
-      if (s.weight_kg !== null && s.reps !== null)
-        objetosc += s.weight_kg * s.reps;
+      const ef = effectiveKg(
+        s.weight_kg,
+        zMasaCiala.has(s.exercise_id),
+        profileWeight,
+      );
+      if (ef !== null && s.reps !== null) objetosc += ef * s.reps;
     }
     let rekordy = 0;
     for (const id of idCwiczen) {
-      const rekordoweSerie = recordSetIds(setsHistory, id);
+      const rekordoweSerie = recordSetIds(
+        setsHistory,
+        id,
+        zMasaCiala.has(id),
+        profileWeight,
+      );
       for (const s of serieSesji) if (rekordoweSerie.has(s.id)) rekordy += 1;
     }
     statystyki = [
@@ -166,13 +182,16 @@ export function ItemPopover({
     ];
     lista = idCwiczen.slice(0, 5).map((id) => {
       // Najlepsza seria: najcięższa zrobiona (przy remisie więcej powtórzeń); bez ciężaru — najwięcej powtórzeń
+      // (ćwiczenie z masą ciała porównuje wagę z profilu + dociążenie, a pokazuje „mc + 5 × 10”)
+      const bw = zMasaCiala.has(id);
+      const ef = (kg: number | null) => effectiveKg(kg, bw, profileWeight) ?? 0;
       let najlepsza: (typeof serieSesji)[number] | null = null;
       for (const s of serieSesji) {
         if (s.exercise_id !== id || !s.done || s.reps === null) continue;
         if (
           najlepsza === null ||
-          (s.weight_kg ?? 0) > (najlepsza.weight_kg ?? 0) ||
-          ((s.weight_kg ?? 0) === (najlepsza.weight_kg ?? 0) &&
+          ef(s.weight_kg) > ef(najlepsza.weight_kg) ||
+          (ef(s.weight_kg) === ef(najlepsza.weight_kg) &&
             s.reps > (najlepsza.reps ?? 0))
         ) {
           najlepsza = s;
@@ -181,7 +200,7 @@ export function ItemPopover({
       return {
         n: nazwyCwiczen.get(id) ?? "",
         v: najlepsza
-          ? `${formatKg(najlepsza.weight_kg)} × ${najlepsza.reps}`
+          ? `${formatKg(najlepsza.weight_kg, bw)} × ${najlepsza.reps}`
           : "—",
       };
     });

@@ -31,6 +31,7 @@ import {
   saveRun,
   saveSessionAsTemplate,
   saveTemplate,
+  setExerciseBodyweight,
   skipTemplateOccurrence,
   updateSet,
 } from "./actions";
@@ -117,6 +118,7 @@ describe("bez sesji", () => {
     ["deleteTemplate", () => deleteTemplate(SZABLON)],
     ["saveSessionAsTemplate", () => saveSessionAsTemplate(SESJA, "Push")],
     ["renameExercise", () => renameExercise(PRZYSIAD, "Przysiad")],
+    ["setExerciseBodyweight", () => setExerciseBodyweight(PRZYSIAD, true)],
   ])("%s przekierowuje na /logowanie", async (_nazwa, akcja) => {
     getUser.mockResolvedValue({ data: { user: null } });
     await expect(akcja()).rejects.toThrow("REDIRECT:/logowanie");
@@ -460,6 +462,29 @@ describe("addExercise", () => {
       user_id: "u1",
       name: "martwy ciąg",
       muscle_group: "plecy",
+      bodyweight: false,
+    });
+  });
+
+  it("nowe ćwiczenie z masą ciała z biblioteki dostaje flagę bodyweight", async () => {
+    tables.exercises = fakeTable({ data: [], single: { id: MARTWY } });
+    await addExercise(SESJA, "Dipy");
+    expect((tables.exercises as Fake).insert).toHaveBeenCalledWith({
+      user_id: "u1",
+      name: "Dipy",
+      muscle_group: "triceps",
+      bodyweight: true,
+    });
+  });
+
+  it("nowe ćwiczenie spoza biblioteki nie jest z masą ciała", async () => {
+    tables.exercises = fakeTable({ data: [], single: { id: MARTWY } });
+    await addExercise(SESJA, "Muscle-up");
+    expect((tables.exercises as Fake).insert).toHaveBeenCalledWith({
+      user_id: "u1",
+      name: "Muscle-up",
+      muscle_group: null,
+      bodyweight: false,
     });
   });
 
@@ -889,6 +914,42 @@ describe("renameExercise", () => {
       name: "Przysiad tylny",
     });
     expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
+  });
+});
+
+describe("setExerciseBodyweight", () => {
+  it("zapisuje flagę własnego ćwiczenia i odświeża widoki sportu", async () => {
+    tables.exercises = fakeTable({ data: [{ id: PRZYSIAD }] });
+    const w = await setExerciseBodyweight(PRZYSIAD, true);
+    expect(w).toEqual({ ok: true });
+    expect((tables.exercises as Fake).update).toHaveBeenCalledWith({
+      bodyweight: true,
+    });
+    expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("id", PRZYSIAD);
+    expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(revalidatePath).toHaveBeenCalledWith("/sport");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      "/sport/cwiczenia/[id]",
+      "page",
+    );
+  });
+
+  it("cudze albo nieistniejące ćwiczenie → błąd", async () => {
+    tables.exercises = fakeTable({ data: [] });
+    const w = await setExerciseBodyweight(PRZYSIAD, false);
+    expect(w).toEqual({ ok: false, message: "Nie znaleziono ćwiczenia." });
+  });
+
+  it("zły identyfikator albo błąd bazy → „Nie udało się zapisać”", async () => {
+    expect(await setExerciseBodyweight("x", true)).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
+    tables.exercises = fakeTable({ error: { code: "500", message: "x" } });
+    expect(await setExerciseBodyweight(PRZYSIAD, true)).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
   });
 });
 

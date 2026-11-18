@@ -23,6 +23,7 @@ import { ExercisePicker } from "./exercise-picker";
 import { MGym } from "./mobile/m-gym";
 import type { WorkoutData } from "./load-sport";
 import {
+  effectiveKg,
   epley1rm,
   formatKg,
   formatVolume,
@@ -202,18 +203,31 @@ export function GymLog({ data }: { data: WorkoutData }) {
           {sklep.exercises.map((cwiczenie) => {
             const tymczasowe = isTempId(cwiczenie.id);
             const naglowekId = `cwiczenie-${cwiczenie.id}`;
-            const rekordowe = recordSetIds(historia, cwiczenie.id);
+            const zMasaCiala = cwiczenie.bodyweight;
+            const rekordowe = recordSetIds(
+              historia,
+              cwiczenie.id,
+              zMasaCiala,
+              profile.weightKg,
+            );
 
-            // 1RM (Epley) z zrobionych serii z ciężarem i powt. ≥ 1
+            // 1RM (Epley) z zrobionych serii z (efektywnym) ciężarem i powt. ≥ 1
             let najlepszy: number | null = null;
             for (const s of cwiczenie.sets) {
-              if (!s.done || s.weight_kg === null || s.reps === null) continue;
+              const kg = effectiveKg(s.weight_kg, zMasaCiala, profile.weightKg);
+              if (!s.done || kg === null || s.reps === null) continue;
               if (s.reps < 1) continue;
-              const v = epley1rm(s.weight_kg, s.reps);
+              const v = epley1rm(kg, s.reps);
               if (najlepszy === null || v > najlepszy) najlepszy = v;
             }
             // „+2,5 kg vs ostatnio” — bez dopisku przy braku poprzedniej sesji albo bez różnicy
-            const roznica = kgVsLast(historia, session.id, cwiczenie.id);
+            const roznica = kgVsLast(
+              historia,
+              session.id,
+              cwiczenie.id,
+              zMasaCiala,
+              profile.weightKg,
+            );
             const zaokraglona =
               roznica === null ? 0 : Math.round(roznica * 100) / 100;
             const linia1rm = `1RM ${najlepszy === null ? "—" : `${formatKg(najlepszy)} kg`}${zaokraglona !== 0 ? ` · ${zaokraglona > 0 ? "+" : "−"}${formatKg(Math.abs(zaokraglona))} kg vs ostatnio` : ""}`;
@@ -244,7 +258,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                 </div>
                 <div className="grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 border-b border-[#f0f0f0] py-1 font-mono text-[11px] text-[#6b6b6b]">
                   <span>seria</span>
-                  <span>kg</span>
+                  <span>{zMasaCiala ? "kg (mc + dociążenie)" : "kg"}</span>
                   <span>powt.</span>
                   <span>✓</span>
                 </div>
@@ -259,25 +273,58 @@ export function GymLog({ data }: { data: WorkoutData }) {
                       className={`group grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px_28px] items-center gap-2 py-1.5 font-mono ${s.done ? "text-[#6b6b6b]" : ""}`}
                     >
                       <span>{j + 1}</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="kg"
-                        aria-label={`${etykieta} — ciężar`}
-                        disabled={zablokowana}
-                        value={
-                          szkic?.kg ??
-                          (s.weight_kg === null ? "" : formatKg(s.weight_kg))
-                        }
-                        onChange={(e) =>
-                          sklep.setDraft(s.id, "kg", e.target.value)
-                        }
-                        onBlur={() => void sklep.commitDraft(s.id, "kg")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") e.currentTarget.blur();
-                        }}
-                        className={POLE}
-                      />
+                      {zMasaCiala ? (
+                        // Masa ciała z profilu + pole dociążenia (puste = bez dociążenia)
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span
+                            title="Masa ciała z profilu"
+                            className="flex-none rounded border border-[#e0e0e0] bg-[#fafafa] px-1.5 py-[3px] text-[11px] text-[#404040]"
+                          >
+                            mc
+                          </span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="+ kg"
+                            aria-label={`${etykieta} — dociążenie (kg)`}
+                            disabled={zablokowana}
+                            value={
+                              szkic?.kg ??
+                              (s.weight_kg === null || s.weight_kg === 0
+                                ? ""
+                                : formatKg(s.weight_kg))
+                            }
+                            onChange={(e) =>
+                              sklep.setDraft(s.id, "kg", e.target.value)
+                            }
+                            onBlur={() => void sklep.commitDraft(s.id, "kg")}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") e.currentTarget.blur();
+                            }}
+                            className={`${POLE} min-w-0`}
+                          />
+                        </span>
+                      ) : (
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="kg"
+                          aria-label={`${etykieta} — ciężar`}
+                          disabled={zablokowana}
+                          value={
+                            szkic?.kg ??
+                            (s.weight_kg === null ? "" : formatKg(s.weight_kg))
+                          }
+                          onChange={(e) =>
+                            sklep.setDraft(s.id, "kg", e.target.value)
+                          }
+                          onBlur={() => void sklep.commitDraft(s.id, "kg")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                          }}
+                          className={POLE}
+                        />
+                      )}
                       <div className="relative">
                         <input
                           type="text"
@@ -322,6 +369,24 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     </div>
                   );
                 })}
+                {zMasaCiala && (
+                  <div className="pt-1.5 font-mono text-[11px] text-[#6b6b6b]">
+                    {profile.weightKg !== null ? (
+                      `mc = masa ciała ${formatKg(profile.weightKg)} kg z profilu · „+ kg” to dociążenie (opcjonalnie)`
+                    ) : (
+                      <>
+                        Uzupełnij wagę w profilu (
+                        <Link
+                          href="/ustawienia/ogolne"
+                          className="text-[#171717] underline"
+                        >
+                          Ustawienia → Profil
+                        </Link>
+                        ), żeby liczyć objętość i rekordy.
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <button
                     type="button"

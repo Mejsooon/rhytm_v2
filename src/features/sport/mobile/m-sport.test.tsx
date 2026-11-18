@@ -200,6 +200,13 @@ describe("MSport", () => {
     expect(within(wykres()).getByText("stuknij słupek")).toBeInTheDocument();
   });
 
+  it("„Szablony” pod „Bieg” / „Trening” na całą szerokość prowadzi do listy szablonów", () => {
+    pokaz();
+    const szablony = screen.getByRole("link", { name: "Szablony" });
+    expect(szablony).toHaveAttribute("href", "/sport/szablony");
+    expect(szablony).toHaveClass("col-span-2", "h-12");
+  });
+
   it("„Bieg” otwiera nowy bieg", async () => {
     pokaz();
     await userEvent.click(screen.getByRole("button", { name: "Bieg" }));

@@ -38,7 +38,7 @@ vi.mock("../actions", () => ({
 }));
 
 import { GymLog } from "../gym-log";
-import { daneTreningu, SESJA } from "../gym-test-data";
+import { daneTreningu, daneZMasaCiala, SESJA } from "../gym-test-data";
 
 const WYC = "Wyciskanie na ławce";
 // Oba drzewa są w DOM (przełącza je CSS); tu sprawdzamy telefon
@@ -224,5 +224,37 @@ describe("MGym", () => {
     expect(within(telefon()).getByTestId("m-serie")).toHaveTextContent(
       "3/6 serii · 1:02:00",
     );
+  });
+});
+
+describe("MGym — ćwiczenie z masą ciała", () => {
+  const POMPKI_NAZWA = "Pompki na poręczach";
+
+  it("kolumna kg: „mc” albo „mc + 5”, pole dociążenia ≥ 44 px", () => {
+    render(<GymLog data={daneZMasaCiala()} />);
+    const k = karta(POMPKI_NAZWA);
+    const s1 = within(k).getByRole("textbox", {
+      name: `${POMPKI_NAZWA}, seria 1 — dociążenie (kg)`,
+    });
+    const s2 = within(k).getByRole("textbox", {
+      name: `${POMPKI_NAZWA}, seria 2 — dociążenie (kg)`,
+    });
+    expect(s1).toHaveValue("");
+    expect(s1).toHaveAttribute("placeholder", "+ kg");
+    expect(s1).toHaveClass("h-11");
+    expect(s1.parentElement).toHaveTextContent("mc");
+    expect(s2).toHaveValue("5");
+    expect(s2.parentElement?.textContent).toBe("mc + ");
+  });
+
+  it("wpisane dociążenie zapisuje się po wyjściu z pola", async () => {
+    render(<GymLog data={daneZMasaCiala()} />);
+    const pole = within(karta(POMPKI_NAZWA)).getByRole("textbox", {
+      name: `${POMPKI_NAZWA}, seria 1 — dociążenie (kg)`,
+    });
+    await userEvent.type(pole, "2,5");
+    expect(pole.parentElement).toHaveTextContent("mc +");
+    await userEvent.tab();
+    expect(updateSet).toHaveBeenCalledWith("p1", { weight_kg: 2.5 });
   });
 });

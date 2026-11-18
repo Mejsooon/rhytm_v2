@@ -163,6 +163,7 @@ export function daneSportu(
         name: "Pompki na poręczach",
         muscle_group: "Klatka",
         created_at: null,
+        bodyweight: false,
       },
       {
         id: WYCISKANIE,
@@ -170,6 +171,7 @@ export function daneSportu(
         name: "Wyciskanie na ławce",
         muscle_group: "Klatka",
         created_at: null,
+        bodyweight: false,
       },
     ],
     setsHistory: [

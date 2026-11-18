@@ -125,6 +125,7 @@ export function MGym({
             data.history,
             session.id,
             cwiczenie.id,
+            cwiczenie.bodyweight,
           );
           return (
             <section
@@ -169,25 +170,63 @@ export function MGym({
                     <span className="font-mono text-[13px] text-[#6b6b6b]">
                       {j + 1}
                     </span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="mc"
-                      aria-label={`${etykieta} — ciężar`}
-                      disabled={zablokowana}
-                      value={
-                        szkic?.kg ??
-                        (s.weight_kg === null ? "" : formatKg(s.weight_kg))
-                      }
-                      onChange={(e) =>
-                        store.setDraft(s.id, "kg", e.target.value)
-                      }
-                      onBlur={() => void store.commitDraft(s.id, "kg")}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") e.currentTarget.blur();
-                      }}
-                      className={POLE}
-                    />
+                    {cwiczenie.bodyweight ? (
+                      // Masa ciała: „mc” albo „mc + 5”; pole to dociążenie (puste = bez dociążenia)
+                      <span className="flex min-w-0 items-center font-mono text-base text-[#171717]">
+                        <span
+                          title="Masa ciała z profilu"
+                          className="flex-none whitespace-pre"
+                        >
+                          {(szkic?.kg ??
+                            (s.weight_kg === null || s.weight_kg === 0
+                              ? ""
+                              : formatKg(s.weight_kg))) === ""
+                            ? "mc"
+                            : "mc + "}
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="+ kg"
+                          aria-label={`${etykieta} — dociążenie (kg)`}
+                          disabled={zablokowana}
+                          value={
+                            szkic?.kg ??
+                            (s.weight_kg === null || s.weight_kg === 0
+                              ? ""
+                              : formatKg(s.weight_kg))
+                          }
+                          onChange={(e) =>
+                            store.setDraft(s.id, "kg", e.target.value)
+                          }
+                          onBlur={() => void store.commitDraft(s.id, "kg")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                          }}
+                          className={POLE}
+                        />
+                      </span>
+                    ) : (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="mc"
+                        aria-label={`${etykieta} — ciężar`}
+                        disabled={zablokowana}
+                        value={
+                          szkic?.kg ??
+                          (s.weight_kg === null ? "" : formatKg(s.weight_kg))
+                        }
+                        onChange={(e) =>
+                          store.setDraft(s.id, "kg", e.target.value)
+                        }
+                        onBlur={() => void store.commitDraft(s.id, "kg")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                        }}
+                        className={POLE}
+                      />
+                    )}
                     <input
                       type="text"
                       inputMode="numeric"

@@ -76,7 +76,7 @@ a.btnp,a.btnp:hover{color:#ffffff}
 class Component extends DCLogic {
   renderVals() {
     const S = this.state || {};
-    const BASE = [['Wyciskanie leżąc', 'ost. 3×8 · 60 kg', [[60, 8], [60, 8], [62.5, 6]]], ['Wyciskanie hantli nad głowę', 'ost. 3×10 · 16 kg', [[16, 10], [16, 10], [16, 9]]], ['Pompki na poręczach', 'ost. 3×12', [[0, 12], [0, 12], [0, 10]]]];
+    const BASE = [['Wyciskanie leżąc', 'ost. 3×8 · 60 kg', [[60, 8], [60, 8], [62.5, 6]]], ['Wyciskanie hantli nad głowę', 'ost. 3×10 · 16 kg', [[16, 10], [16, 10], [16, 9]]], ['Pompki na poręczach', 'ost. 3×12 · mc', [[0, 12], [0, 12], [5, 10]], true]];
     const extra = S.extra || [0, 0, 0];
     const done = S.done || { '0-0': true, '0-1': true };
     let all = 0, dn = 0;
@@ -84,7 +84,7 @@ class Component extends DCLogic {
       const sets = e[2].concat(Array(extra[ei]).fill(e[2][e[2].length - 1]));
       return { t: e[0], prev: e[1], add: () => this.setState({ extra: extra.map((x, j) => (j === ei ? x + 1 : x)) }),
         sets: sets.map((s, si) => { const k = ei + '-' + si; const on = !!done[k]; all++; if (on) dn++;
-          return { n: si + 1, kg: s[0] ? String(s[0]).replace('.', ',') : 'BW', reps: s[1], on: on ? 'true' : 'false', label: e[0] + ', seria ' + (si + 1),
+          return { n: si + 1, kg: e[3] ? (s[0] ? 'mc + ' + String(s[0]).replace('.', ',') : 'mc') : String(s[0]).replace('.', ','), reps: s[1], on: on ? 'true' : 'false', label: e[0] + ', seria ' + (si + 1),
             rowS: 'display:grid;grid-template-columns:36px 1fr 1fr 44px;gap:8px;align-items:center;min-height:48px;padding:0 14px;' + (on ? 'background:#f7fbf8' : ''),
             toggle: () => this.setState({ done: Object.assign({}, done, { [k]: !on }) }) }; }) };
     });

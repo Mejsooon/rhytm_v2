@@ -1,24 +1,32 @@
 "use client";
 
-// Szczegóły ćwiczenia (ExerciseDetail.dc.html): ścieżka „Sport / Ćwiczenia / nazwa” z „Zmień nazwę”,
+// Szczegóły ćwiczenia (ExerciseDetail.dc.html): ścieżka „Sport / Ćwiczenia / nazwa” z „Z masą ciała” i „Zmień nazwę”,
 // cztery kafelki (szac. 1RM, najcięższa seria, najwięcej powt., zmiana 8 tyg.), wykres 1RM
 // z przełącznikiem 3 mies. / 8 tyg. i historia sesji z plakietką REKORD.
 // Jedno drzewo dla webu i telefonu — kafelki i tabela same się zwężają (tabela przewija się w poziomie).
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   Button,
   FormDialog,
   MonoLabel,
   Segment,
+  Switch,
   TextField,
 } from "@/components/controls";
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
-import { renameExercise } from "./actions";
+import { renameExercise, setExerciseBodyweight } from "./actions";
 import type { ExerciseData } from "./load-sport";
-import { epley1rm, formatKg, plPlural, recordSetIds } from "./model";
+import {
+  effectiveKg,
+  epley1rm,
+  formatKg,
+  plPlural,
+  recordSetIds,
+} from "./model";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
@@ -47,12 +55,29 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
   const [blad, setBlad] = useState<string | null>(null);
   const [zapisuje, setZapisuje] = useState(false);
 
-  const rekordowe = recordSetIds(history, exercise.id);
+  // „Z masą ciała” optymistycznie: przełącznik zmienia się od razu, błąd go cofa.
+  // Nowe dane z serwera (inna wartość flagi) stają się nowym stanem (wzór z use-gym-store).
+  const [zMasaCiala, setZMasaCiala] = useState(exercise.bodyweight);
+  const zapisujeMase = useRef(false);
+  const [flagaSerwera, setFlagaSerwera] = useState(exercise.bodyweight);
+  if (flagaSerwera !== exercise.bodyweight) {
+    setFlagaSerwera(exercise.bodyweight);
+    setZMasaCiala(exercise.bodyweight);
+  }
+  const wagaProfilu = data.profile.weightKg;
 
-  // Jedno przejście po seriach: kafelki + najlepsza seria i 1RM każdej sesji
+  const rekordowe = recordSetIds(history, exercise.id, zMasaCiala, wagaProfilu);
+
+  // Jedno przejście po seriach: kafelki + najlepsza seria i 1RM każdej sesji.
+  // Porównujemy efektywny ciężar (masa ciała: waga z profilu + dociążenie), a pokazujemy
+  // wpisany („mc + 5 × 10” przy masie ciała).
   let najlepszy1rm: number | null = null;
-  let najciezsza: { kg: number; reps: number } | null = null;
-  let najwiecejPowt: { kg: number | null; reps: number } | null = null;
+  let najciezsza: { kg: number | null; ef: number; reps: number } | null = null;
+  let najwiecejPowt: {
+    kg: number | null;
+    ef: number | null;
+    reps: number;
+  } | null = null;
   const sesje: Sesja[] = [];
   for (const h of history) {
     let v: number | null = null;
@@ -62,26 +87,26 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
       if (s.exercise_id !== exercise.id || !s.done) continue;
       if (rekordowe.has(s.id)) rekord = true;
       if (s.reps === null || s.reps < 1) continue;
+      const ef = effectiveKg(s.weight_kg, zMasaCiala, wagaProfilu);
       if (
         najwiecejPowt === null ||
         s.reps > najwiecejPowt.reps ||
-        (s.reps === najwiecejPowt.reps &&
-          (s.weight_kg ?? 0) > (najwiecejPowt.kg ?? 0))
+        (s.reps === najwiecejPowt.reps && (ef ?? 0) > (najwiecejPowt.ef ?? 0))
       )
-        najwiecejPowt = { kg: s.weight_kg, reps: s.reps };
-      if (s.weight_kg === null) {
-        // Seria z masą ciała liczy się do historii tylko, gdy sesja nie ma serii z ciężarem
+        najwiecejPowt = { kg: s.weight_kg, ef, reps: s.reps };
+      if (ef === null) {
+        // Seria bez ciężaru liczy się do historii tylko, gdy sesja nie ma serii z ciężarem
         if (v === null && (seria === null || s.reps > seria.reps))
-          seria = { kg: null, reps: s.reps };
+          seria = { kg: s.weight_kg, reps: s.reps };
         continue;
       }
       if (
         najciezsza === null ||
-        s.weight_kg > najciezsza.kg ||
-        (s.weight_kg === najciezsza.kg && s.reps > najciezsza.reps)
+        ef > najciezsza.ef ||
+        (ef === najciezsza.ef && s.reps > najciezsza.reps)
       )
-        najciezsza = { kg: s.weight_kg, reps: s.reps };
-      const e = epley1rm(s.weight_kg, s.reps);
+        najciezsza = { kg: s.weight_kg, ef, reps: s.reps };
+      const e = epley1rm(ef, s.reps);
       if (v === null || e > v) {
         v = e;
         seria = { kg: s.weight_kg, reps: s.reps };
@@ -94,7 +119,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
       id: h.sessionId,
       dzien: h.startLocal.slice(0, 10),
       v,
-      seria: `${formatKg(seria.kg)} × ${seria.reps}`,
+      seria: `${formatKg(seria.kg, zMasaCiala)} × ${seria.reps}`,
       rekord,
     });
   }
@@ -133,6 +158,27 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
     return `${DNI[weekdayOf(dzien)]} ${dd}.${mm}${rok === rokDzis ? "" : `.${rok}`}`;
   };
 
+  async function przelaczMaseCiala(nowa: boolean) {
+    // Kolejne kliknięcia w trakcie zapisu ignorujemy, żeby cofnięcie po błędzie nie trafiło w zły stan
+    if (zapisujeMase.current) return;
+    zapisujeMase.current = true;
+    setZMasaCiala(nowa);
+    let ok = false;
+    try {
+      const wynik = await setExerciseBodyweight(exercise.id, nowa);
+      ok = wynik.ok;
+    } catch {
+      ok = false;
+    }
+    zapisujeMase.current = false;
+    if (ok) {
+      router.refresh();
+      return;
+    }
+    setZMasaCiala(!nowa);
+    toast.error(BLAD_ZAPISU);
+  }
+
   async function zapisz() {
     setZapisuje(true);
     setBlad(null);
@@ -170,17 +216,35 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           <span className="text-[#b0b0b0]">/</span>{" "}
           <span className="text-[#171717]">{exercise.name}</span>
         </div>
-        <Button
-          size="sm"
-          className="max-[799px]:h-11"
-          onClick={() => {
-            setNazwa(exercise.name);
-            setBlad(null);
-            setDialogOtwarty(true);
-          }}
-        >
-          Zmień nazwę
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Etykieta obok przełącznika; na telefonie pole stuknięcia ≥ 44 px */}
+          <div className="flex items-center gap-2 text-[13px] text-[#404040] max-[799px]:min-h-11">
+            <Switch
+              checked={zMasaCiala}
+              onChange={(v) => void przelaczMaseCiala(v)}
+              ariaLabel="Z masą ciała"
+            />
+            {/* Klik w napis też przełącza, jak <label> w makiecie */}
+            <span
+              aria-hidden="true"
+              className="cursor-pointer select-none"
+              onClick={() => void przelaczMaseCiala(!zMasaCiala)}
+            >
+              Z masą ciała
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="max-[799px]:h-11"
+            onClick={() => {
+              setNazwa(exercise.name);
+              setBlad(null);
+              setDialogOtwarty(true);
+            }}
+          >
+            Zmień nazwę
+          </Button>
+        </div>
       </header>
 
       <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
@@ -212,7 +276,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             <div className="mt-2 font-mono text-[26px]">
               {najciezsza === null
                 ? "—"
-                : `${formatKg(najciezsza.kg)} × ${najciezsza.reps}`}
+                : `${formatKg(najciezsza.kg, zMasaCiala)} × ${najciezsza.reps}`}
             </div>
           </div>
           <div className="bg-white px-[18px] py-4">
@@ -220,7 +284,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             <div className="mt-2 font-mono text-[26px]">
               {najwiecejPowt === null
                 ? "—"
-                : `${formatKg(najwiecejPowt.kg)} × ${najwiecejPowt.reps}`}
+                : `${formatKg(najwiecejPowt.kg, zMasaCiala)} × ${najwiecejPowt.reps}`}
             </div>
           </div>
           <div className="bg-white px-[18px] py-4">

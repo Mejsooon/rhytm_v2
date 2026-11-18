@@ -58,10 +58,11 @@ a{color:#171717}a:hover{color:#000000}
             <a href="ExerciseDetail.dc.html" style="font-weight: 600; text-decoration: none">{{e.name}}</a>
             <span class="mono" style="font-size: 12px; color: #6b6b6b">1RM {{e.best}} · {{e.note}}</span>
           </div>
-          <div class="mono" style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; font-size: 11px; color: #6b6b6b; padding: 4px 0; border-bottom: 1px solid #f0f0f0"><span>seria</span><span>kg</span><span>powt.</span><span>✓</span></div>
+          <div class="mono" style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; font-size: 11px; color: #6b6b6b; padding: 4px 0; border-bottom: 1px solid #f0f0f0"><span>seria</span><span>{{e.kgHead}}</span><span>powt.</span><span>✓</span></div>
           <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
-            <div class="mono set-row" style="{{s.rowS}}"><span>{{s.n}}</span><input class="inp" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="kg" aria-label="{{s.kgLabel}}" style="padding: 5px 8px"><input class="inp" type="text" inputMode="numeric" value="{{s.reps}}" onChange="{{s.onReps}}" placeholder="powt." aria-label="{{s.repsLabel}}" style="padding: 5px 8px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="{{s.doneLabel}}" style="accent-color: #15803d; width: 18px; height: 18px"><button type="button" class="set-del" aria-label="{{s.delLabel}}" onClick="{{s.del}}" style="background: none; border: 0; color: #8a8a8a; cursor: pointer; padding: 4px; font: inherit">✕</button></div>
+            <div class="mono set-row" style="{{s.rowS}}"><span>{{s.n}}</span><sc-if value="{{s.isKg}}" hint-placeholder-val="{{true}}"><input class="inp" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="kg" aria-label="{{s.kgLabel}}" style="padding: 5px 8px"></sc-if><sc-if value="{{s.isBw}}" hint-placeholder-val="{{false}}"><span style="display: flex; align-items: center; gap: 6px; min-width: 0"><span title="Masa ciała z profilu" style="flex: none; font-size: 11px; border: 1px solid #e0e0e0; background: #fafafa; color: #404040; border-radius: 4px; padding: 3px 6px">mc</span><input class="inp" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="+ kg" aria-label="{{s.addLabel}}" style="padding: 5px 8px; min-width: 0"></span></sc-if><input class="inp" type="text" inputMode="numeric" value="{{s.reps}}" onChange="{{s.onReps}}" placeholder="powt." aria-label="{{s.repsLabel}}" style="padding: 5px 8px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="{{s.doneLabel}}" style="accent-color: #15803d; width: 18px; height: 18px"><button type="button" class="set-del" aria-label="{{s.delLabel}}" onClick="{{s.del}}" style="background: none; border: 0; color: #8a8a8a; cursor: pointer; padding: 4px; font: inherit">✕</button></div>
           </sc-for>
+          <sc-if value="{{e.bw}}" hint-placeholder-val="{{false}}"><div class="mono" style="font-size: 11px; color: #6b6b6b; padding-top: 6px">mc = masa ciała {{bwKg}} kg z profilu · „+ kg” to dociążenie (opcjonalnie)</div></sc-if>
           <div style="display: flex; justify-content: space-between; align-items: center"><button type="button" class="addset" onClick="{{e.addSet}}">+ Seria</button><button type="button" class="addset" onClick="{{e.remove}}" style="color: #b91c1c; margin: 6px -8px 0 0">Usuń ćwiczenie</button></div>
         </section>
       </sc-for>
@@ -91,7 +92,7 @@ class Component extends DCLogic {
     const SEED = [
       { id: 'e1', name: 'Wyciskanie na ławce', best: '82,5 kg', note: '+2,5 kg vs ostatnio', sets: [mkSet('70', '6', 1), mkSet('70', '6', 1), mkSet('72,5', '5', 1), mkSet('72,5', '4')] },
       { id: 'e2', name: 'Wyciskanie hantli skos', best: '34 kg', note: 'jak ostatnio', sets: [mkSet('26', '10', 1), mkSet('26', '10', 1), mkSet('26', '9')] },
-      { id: 'e3', name: 'Pompki na poręczach', best: '—', note: 'masa ciała', sets: [mkSet('MC', '12'), mkSet('MC', '10'), mkSet('MC', '9')] },
+      { id: 'e3', name: 'Pompki na poręczach', bw: true, best: '94,5 kg', note: 'masa ciała', sets: [mkSet('', '12', 1), mkSet('', '10'), mkSet('5', '8')] },
       { id: 'e4', name: 'Wznosy bokiem', best: '—', note: '', sets: [mkSet('10', '15'), mkSet('10', '14'), mkSet('10', '12')] }
     ];
     const EX = S.ex || SEED;
@@ -99,16 +100,19 @@ class Component extends DCLogic {
     const save = (ex, extra) => this.setState(Object.assign({ ex }, extra || {}));
     const updE = (id, fn) => save(EX.map((e) => (e.id === id ? fn(e) : e)));
     const updS = (eid, sid, patch) => updE(eid, (e) => Object.assign({}, e, { sets: e.sets.map((s) => (s.id === sid ? Object.assign({}, s, patch) : s)) }));
+    // Masa ciała z profilu (dane przykładowe); ćwiczenia z masą ciała liczą mc + dociążenie
+    const BW = 72;
+    const BW_LIB = ['podciąganie', 'pompki', 'pompki na poręczach', 'dipy', 'plank'];
     const num = (v) => { const x = parseFloat(String(v || '').replace(',', '.')); return isNaN(x) ? 0 : x; };
     let vol = 0, cnt = 0, all = 0;
     const items = EX.map((e) => ({
-      name: e.name, best: e.best, note: e.note || 'nowe',
+      name: e.name, best: e.best, note: e.note || 'nowe', bw: !!e.bw, kgHead: e.bw ? 'kg (mc + dociążenie)' : 'kg',
       addSet: () => updE(e.id, (x) => { const last = x.sets[x.sets.length - 1]; return Object.assign({}, x, { sets: x.sets.concat([{ id: nid(), kg: last ? last.kg : '', reps: last ? last.reps : '', d: false }]) }); }),
       remove: () => save(EX.filter((x) => x.id !== e.id)),
       sets: e.sets.map((s, j) => {
-        all++; if (s.d) { cnt++; vol += num(s.kg) * num(s.reps); }
+        all++; if (s.d) { cnt++; vol += ((e.bw ? BW : 0) + num(s.kg)) * num(s.reps); }
         const lbl = e.name + ', seria ' + (j + 1);
-        return { n: String(j + 1), kg: s.kg, reps: s.reps, d: s.d,
+        return { n: String(j + 1), kg: s.kg, reps: s.reps, d: s.d, isKg: !e.bw, isBw: !!e.bw, addLabel: lbl + ' — dociążenie (kg)',
           kgLabel: lbl + ' — ciężar', repsLabel: lbl + ' — powtórzenia', doneLabel: lbl + ' zrobiona', delLabel: 'Usuń ' + lbl,
           onKg: (ev) => updS(e.id, s.id, { kg: ev.target.value }),
           onReps: (ev) => updS(e.id, s.id, { reps: ev.target.value }),
@@ -121,11 +125,11 @@ class Component extends DCLogic {
     const q = S.q || '';
     const ql = q.trim().toLowerCase();
     const have = EX.map((e) => e.name.toLowerCase());
-    const addEx = (name) => save(EX.concat([{ id: nid(), name, best: '—', note: 'nowe', sets: [{ id: nid() + 'a', kg: '', reps: '', d: false }, { id: nid() + 'b', kg: '', reps: '', d: false }, { id: nid() + 'c', kg: '', reps: '', d: false }] }]), { pick: false, q: '' });
+    const addEx = (name) => save(EX.concat([{ id: nid(), name, bw: BW_LIB.indexOf(name.toLowerCase()) >= 0, best: '—', note: 'nowe', sets: [{ id: nid() + 'a', kg: '', reps: '', d: false }, { id: nid() + 'b', kg: '', reps: '', d: false }, { id: nid() + 'c', kg: '', reps: '', d: false }] }]), { pick: false, q: '' });
     const lib = LIB.filter((l) => have.indexOf(l[0].toLowerCase()) < 0 && (!ql || (l[0] + ' ' + l[1]).toLowerCase().indexOf(ql) >= 0));
     const pickOpen = !!S.pick;
     return {
-      items, vol: Math.round(vol).toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all,
+      items, bwKg: String(BW), vol: Math.round(vol).toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all,
       pickOpen, pickExp: pickOpen ? 'true' : 'false',
       togglePicker: () => this.setState({ pick: !pickOpen, q: '' }),
       q, onQ: (ev) => this.setState({ q: ev.target.value }),
