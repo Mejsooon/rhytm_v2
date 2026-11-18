@@ -48,7 +48,7 @@ create table public.runs (
   difficulty smallint check (difficulty between 1 and 10),
   -- Waga z chwili biegu (do liczenia kcal po zmianie wagi w profilu).
   weight_kg_snapshot numeric(5, 1),
-  kcal integer
+  kcal integer check (kcal >= 0)
 );
 
 -- Polityki RLS i kaskada z auth.users po user_id

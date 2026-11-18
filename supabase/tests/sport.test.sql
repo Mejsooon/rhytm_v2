@@ -1,5 +1,5 @@
 begin;
-select plan(82);
+select plan(83);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -242,6 +242,10 @@ select throws_ok(
   $$insert into public.runs (session_id, user_id, distance_km)
     values ('a1000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 0)$$,
   '23514', null, 'dystans 0 odrzucony');
+select throws_ok(
+  $$insert into public.runs (session_id, user_id, kcal)
+    values ('a1000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', -1)$$,
+  '23514', null, 'ujemne kcal odrzucone');
 select throws_ok(
   $$insert into public.gym_sets (user_id, session_id, exercise_id, exercise_position, set_no, reps)
     values ('00000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-00000000000a', 'e0000000-0000-0000-0000-00000000000a', 1, 2, 1000)$$,

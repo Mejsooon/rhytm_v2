@@ -21,7 +21,7 @@ select lives_ok(
 );
 select is(
   (select weekly_workouts_goal from public.profiles where user_id = '00000000-0000-0000-0000-00000000000a'),
-  3,
+  3::smallint,
   'cel treningowy zapisany'
 );
 select throws_ok(
