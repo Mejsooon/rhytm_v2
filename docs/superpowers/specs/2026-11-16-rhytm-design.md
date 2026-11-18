@@ -427,7 +427,7 @@ Nowy użytkownik trafia potem na **Dziś w stanie pustym** (`EmptyToday.dc.html`
 **Zasady:**
 - % dnia = (zrobione zaplanowane na ten dzień + odhaczone nawyki X/tydz.) / (zaplanowane na ten dzień + odhaczone nawyki X/tydz.). Nawyki X/tydz. mogą tylko podnieść wynik.
 - Seria nawyków X/tydz. jest liczona w tygodniach.
-- Zarchiwizowany nawyk znika z listy, a jego historia zostaje.
+- Usunięcie nawyku jest trwałe (z potwierdzeniem) i usuwa jego historię.
 
 ### 6.7 Sport
 

@@ -121,7 +121,7 @@
 **Makiety:** Habits, HabitDetail, HabitDialog, SleepDialog · MHabits, MHabitDetail, MHabitNew, MSleep.
 
 **Lista odbiorcza**
-- [x] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia. (e2e: habits.spec.ts nowy nawyk i zmiana na „Wybrane dni”; unit: model.test.ts, habit-dialog.test.tsx, habit-week-grid.test.tsx, actions.test.ts; db: habits_sleep.test.sql)
+- [x] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia. (e2e: habits.spec.ts nowy nawyk i zmiana na „Wybrane dni”; unit: model.test.ts, habit-dialog.test.tsx, habit-week-grid.test.tsx, habits/actions.test.ts; db: habits_sleep.test.sql)
 - [x] Kafelki: Nawyki dziś, Ostatnie 30 dni z porównaniem, Najdłuższa seria, Śr. sen 14 dni. (e2e: „1/1” po odhaczeniu; unit: habit-tiles.test.tsx, model.test.ts, sleep.test.ts; zrzut)
 - [x] Heatmapa: Miesiąc (‹ › do 12 mies., strzałki nieaktywne na granicy) / 3 / 6 mies. / Rok; dymek „data · x z y nawyków”; dni bez planu szare. (unit: habit-heatmap.test.tsx, habit-month.test.tsx, habits-view-mobile.test.tsx; zrzut)
 - [x] Sen: 14 / 30 dni, wykres z linią celu, dymek słupka, ostatnia noc. (e2e: „Ostatnia noc” 7:30, słupek na telefonie; unit: sleep-card.test.tsx, sleep.test.ts; zrzut)

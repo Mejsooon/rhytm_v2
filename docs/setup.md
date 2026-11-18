@@ -167,7 +167,7 @@ Migracja `20261118000001_calendar.sql` dodaje tabele `blocks`, `block_exceptions
 pnpm exec supabase db push --remote
 ```
 
-Migracja `20261118120000_habits_sleep.sql` dodaje tabele `habits`, `habit_schedules`, `habit_checks`, `habit_notes` i `sleep_logs` wraz z zabezpieczeniami (RLS i uprawnienia). Vercel wdraża nową wersję zaraz po scaleniu, a `/nawyki` i licznik pierwszych kroków na `/dzis` czytają te tabele, więc migracja musi trafić do bazy w chmurze **przed** merge'em. Inaczej `/nawyki` i `/dzis` zwrócą błąd zapytania do nieistniejących tabel.
+Migracja `20261118120000_habits_sleep.sql` dodaje tabele `habits`, `habit_schedules`, `habit_checks`, `habit_notes` i `sleep_logs` wraz z zabezpieczeniami (RLS i uprawnienia). Vercel wdraża nową wersję zaraz po scaleniu, a `/nawyki` i licznik pierwszych kroków na `/dzis` czytają te tabele, więc migracja musi trafić do bazy w chmurze **przed** merge'em. Inaczej `/nawyki` zwróci błąd zapytania do nieistniejących tabel, a `/dzis` nie pokaże błędu, tylko po cichu wyświetli zera w licznikach nawyków i snu.
 
 ---
 
