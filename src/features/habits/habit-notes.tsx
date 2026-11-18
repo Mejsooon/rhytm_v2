@@ -55,7 +55,7 @@ export function HabitNotes({
         <input
           type="text"
           value={tekst}
-          disabled={pending}
+          readOnly={pending}
           placeholder="Dodaj notatkę"
           aria-label="Dodaj notatkę"
           onChange={(e) => setTekst(e.target.value)}

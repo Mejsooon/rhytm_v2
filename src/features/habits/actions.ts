@@ -193,7 +193,9 @@ export async function deleteHabit(id: string): Promise<ActionResult> {
   if (error) return { ok: false, message: BLAD_ZAPISU };
   if (!usuniete || usuniete.length === 0) return { ok: false, message: BRAK_NAWYKU };
 
-  revalidateHabits();
+  // Bez /nawyki/[id]: odświeżona trasa usuniętego nawyku dałaby mignięcie 404 przed przejściem na listę
+  revalidatePath("/nawyki");
+  revalidatePath("/dzis");
   return { ok: true };
 }
 

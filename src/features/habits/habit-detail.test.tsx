@@ -164,4 +164,17 @@ describe("HabitDetail", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Notatka może mieć maksymalnie 500 znaków.");
     expect(pole).toHaveValue("   x");
   });
+
+  it("podwójny Enter w trakcie zapisu woła addHabitNote raz", async () => {
+    let zakoncz: (w: { ok: true }) => void = () => {};
+    addHabitNote.mockReturnValue(new Promise((r) => (zakoncz = r)));
+    render(<HabitDetail data={dane()} />);
+    const pole = screen.getByPlaceholderText("Dodaj notatkę");
+    await userEvent.type(pole, "Raz{Enter}{Enter}");
+    expect(addHabitNote).toHaveBeenCalledTimes(1);
+    expect(pole).toHaveFocus();
+    zakoncz({ ok: true });
+    await waitFor(() => expect(pole).toHaveValue(""));
+    expect(pole).toHaveFocus();
+  });
 });

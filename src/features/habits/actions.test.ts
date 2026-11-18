@@ -251,6 +251,7 @@ describe("deleteHabit", () => {
     expect(tables.habits.delete).toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/nawyki");
     expect(revalidatePath).toHaveBeenCalledWith("/dzis");
+    expect(revalidatePath).not.toHaveBeenCalledWith("/nawyki/[id]", "page");
   });
 
   it("0 usuniętych wierszy → ok: false", async () => {

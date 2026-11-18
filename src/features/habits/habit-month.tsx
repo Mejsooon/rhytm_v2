@@ -24,10 +24,16 @@ const STYLE_STANU: Record<StanDnia, string> = {
 const OPIS_STANU: Record<StanDnia, string> = {
   zrobione: "zrobione",
   pominiete: "pominięte",
-  szare: "dzień bez nawyku",
-  neutralne: "",
-  przyszlosc: "",
+  szare: "bez nawyku",
+  neutralne: "niezrobione",
+  przyszlosc: "zaplanowane",
 };
+
+// '2026-11-02' → „2 listopada 2026”
+const MIESIACE_DOPELNIACZ = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia"];
+function dataSlownie(date: IsoDate): string {
+  return `${Number(date.slice(8))} ${MIESIACE_DOPELNIACZ[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}`;
+}
 
 // '2026-11' → numer miesiąca do porównań i przesuwania
 function przesunMiesiac(miesiac: string, o: number): string {
@@ -118,7 +124,7 @@ export function HabitMonth({
               key={k.date}
               data-day={k.date}
               data-state={stan}
-              aria-label={OPIS_STANU[stan] ? `${k.date} · ${OPIS_STANU[stan]}` : k.date}
+              aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
               className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${STYLE_STANU[stan]}`}
             >
               {Number(k.date.slice(8))}

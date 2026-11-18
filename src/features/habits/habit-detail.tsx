@@ -108,6 +108,8 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
         <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-6">
           <div className="flex min-w-0 flex-col gap-6">
             <HabitMonth
+              // Klucz resetuje widok po przejściu północy na nowy miesiąc
+              key={data.today.slice(0, 7)}
               habit={habit}
               checks={dniOdhaczone}
               today={data.today}
