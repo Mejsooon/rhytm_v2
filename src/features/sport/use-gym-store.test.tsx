@@ -91,8 +91,42 @@ describe("useGymStore", () => {
     expect(result.current.doneCount).toBe(5);
 
     await act(async () => zakoncz({ ok: true }));
-    // Zmiana zakończona po nowych danych nie wchodzi do bazy (jej odświeżenie przyjdzie osobno)
+    // Zmiana potwierdzona po nowych danych zostaje nałożona (bez mignięcia starą wartością)…
+    expect(result.current.doneCount).toBe(5);
+
+    // …aż do następnych danych z serwera (odświeżenie po tej akcji już ją zawiera)
+    const bezW4 = daneTreningu().sets.concat(
+      seriaTreningu("w5", SESJA, WYCISKANIE, 1, 5, 72.5, 3, true),
+    );
+    dane = daneTreningu({ sets: bezW4 });
+    rerender();
     expect(result.current.doneCount).toBe(4);
+  });
+
+  it("potwierdzona „+ Seria” po nowych danych nie dubluje serii z serwera", async () => {
+    let zakoncz!: (v: { ok: true; id: string }) => void;
+    addSet.mockReturnValue(new Promise((r) => (zakoncz = r)));
+    let dane: WorkoutData = daneTreningu();
+    const { result, rerender } = renderHook(() => useGymStore(dane));
+    act(() => {
+      void result.current.addSet(WYCISKANIE);
+    });
+    // Odświeżenie po akcji przychodzi przed jej wynikiem i ma już serię w5
+    dane = daneTreningu({
+      sets: [
+        ...daneTreningu().sets,
+        seriaTreningu("w5", SESJA, WYCISKANIE, 1, 5, 72.5, 4, false),
+      ],
+    });
+    rerender();
+    await act(async () => zakoncz({ ok: true, id: "w5" }));
+    expect(serieWyciskania(result).map((s) => s.id)).toEqual([
+      "w1",
+      "w2",
+      "w3",
+      "w4",
+      "w5",
+    ]);
   });
 
   it("„+ Seria”: tymczasowa seria dostaje id z serwera", async () => {

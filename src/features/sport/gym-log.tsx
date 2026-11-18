@@ -77,11 +77,17 @@ export function GymLog({ data }: { data: WorkoutData }) {
       ];
 
   async function zakoncz() {
+    const powrot = `/sport?miesiac=${session.start_local.slice(0, 7)}`;
+    // Trening już zakończony: tylko powrót, bez nadpisywania end_local
+    if (session.completed) {
+      router.push(powrot);
+      return;
+    }
     setKonczy(true);
     try {
       const wynik = await finishWorkout(session.id);
       if (wynik.ok) {
-        router.push(`/sport?miesiac=${session.start_local.slice(0, 7)}`);
+        router.push(powrot);
         return;
       }
       toast.error(wynik.message);
@@ -284,6 +290,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                       <Checkbox
                         checked={s.done}
                         ariaLabel={`${etykieta} zrobiona`}
+                        disabled={zablokowana}
                         onChange={() => void sklep.toggleDone(s.id)}
                       />
                       <button

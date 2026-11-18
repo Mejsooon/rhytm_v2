@@ -176,6 +176,21 @@ describe("GymLog — serie", () => {
     expect(licznik()).toHaveTextContent("3 / 7");
   });
 
+  it("seria jeszcze niezapisana ma zablokowane pola, ✓ i ✕", async () => {
+    addSet.mockReturnValue(new Promise(() => {}));
+    render(<GymLog data={daneTreningu()} />);
+    await userEvent.click(
+      within(karta(WYC)).getByRole("button", { name: "+ Seria" }),
+    );
+    expect(screen.getByLabelText(`${WYC}, seria 5 — ciężar`)).toBeDisabled();
+    expect(
+      screen.getByRole("checkbox", { name: `${WYC}, seria 5 zrobiona` }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: `Usuń ${WYC}, seria 5` }),
+    ).toBeDisabled();
+  });
+
   it("✕ usuwa serię", async () => {
     render(<GymLog data={daneTreningu()} />);
     await userEvent.click(
@@ -394,6 +409,21 @@ describe("GymLog — zakończenie i szablon", () => {
       screen.getByRole("button", { name: "Zakończ trening" }),
     );
     expect(finishWorkout).toHaveBeenCalledWith(SESJA);
+    expect(push).toHaveBeenCalledWith("/sport?miesiac=2026-11");
+  });
+
+  it("trening już zakończony: „Zakończ trening” tylko wraca, bez akcji", async () => {
+    const d = daneTreningu();
+    d.session = {
+      ...d.session,
+      completed: true,
+      end_local: "2026-11-19T16:20:00",
+    };
+    render(<GymLog data={d} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Zakończ trening" }),
+    );
+    expect(finishWorkout).not.toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith("/sport?miesiac=2026-11");
   });
 

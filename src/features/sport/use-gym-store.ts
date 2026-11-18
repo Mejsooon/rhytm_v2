@@ -45,8 +45,15 @@ type Operacja =
       sessionId: string;
     };
 
-// zrodlo = dane serwera, przy których zmiana powstała (żeby nie wchłonąć jej drugi raz do nowej bazy)
-type Zmiana = { id: number; op: Operacja; zrodlo: WorkoutData };
+// zrodlo = dane serwera, przy których zmiana powstała (żeby nie wchłonąć jej drugi raz do nowej bazy);
+// potwierdzona = serwer zapisał zmianę, ale w międzyczasie przyszły nowe dane — zmiana zostaje nałożona
+// aż do kolejnych danych (odświeżenia po tej akcji), żeby ekran nie mignął starą wartością
+type Zmiana = {
+  id: number;
+  op: Operacja;
+  zrodlo: WorkoutData;
+  potwierdzona: boolean;
+};
 
 type Baza = { sets: GymSetRow[]; names: Map<string, string> };
 
@@ -98,7 +105,8 @@ function nalozOperacje(b: Baza, op: Operacja): Baza {
         if (s.exercise_id !== op.exerciseId) continue;
         if (ostatnia === null || s.set_no > ostatnia.set_no) ostatnia = s;
       }
-      if (ostatnia === null) return b;
+      // Nowe dane mogą już mieć tę serię (potwierdzona zmiana nałożona do kolejnych danych)
+      if (ostatnia === null || b.sets.some((s) => s.id === op.setId)) return b;
       const nowa = {
         ...ostatnia,
         id: op.setId,
@@ -160,10 +168,15 @@ export function useGymStore(data: WorkoutData) {
 
   // Nowe dane z serwera (inna tożsamość obiektu) stają się bazą — Next 16 (Activity) trzyma ukrytą
   // trasę w pamięci i nie montuje jej od nowa. Zmiany w toku i szkice pól zostają nałożone na nową bazę;
-  // zmiany już potwierdzone przepadają razem ze starą bazą, bo serwer zapisał je przed odświeżeniem.
+  // zmiany już potwierdzone przepadają (razem ze starą bazą albo z listy), bo nowe dane przyszły po ich zapisie.
   let biezacy = stan;
   if (stan.zrodlo !== data) {
-    biezacy = { ...stan, zrodlo: data, baza: bazaZ(data) };
+    biezacy = {
+      ...stan,
+      zrodlo: data,
+      baza: bazaZ(data),
+      oczekujace: stan.oczekujace.filter((z) => !z.potwierdzona),
+    };
     setStan(biezacy);
   }
 
@@ -223,7 +236,7 @@ export function useGymStore(data: WorkoutData) {
       return {
         ...s,
         szkice,
-        oczekujace: [...s.oczekujace, { id, op, zrodlo }],
+        oczekujace: [...s.oczekujace, { id, op, zrodlo, potwierdzona: false }],
       };
     });
 
@@ -236,13 +249,24 @@ export function useGymStore(data: WorkoutData) {
 
     setStan((s) => {
       const reszta = s.oczekujace.filter((o) => o.id !== id);
-      return wynik.ok && s.zrodlo === zrodlo
-        ? {
-            ...s,
-            baza: nalozOperacje(s.baza, potwierdzona(wynik)),
-            oczekujace: reszta,
-          }
-        : { ...s, oczekujace: reszta };
+      // Błąd: zmiana znika (cofnięcie)
+      if (!wynik.ok) return { ...s, oczekujace: reszta };
+      // Sukces przy tych samych danych serwera: zmiana wchodzi do bazy
+      if (s.zrodlo === zrodlo)
+        return {
+          ...s,
+          baza: nalozOperacje(s.baza, potwierdzona(wynik)),
+          oczekujace: reszta,
+        };
+      // Sukces po nowych danych: zostaje nałożona (z id z serwera) do następnych danych
+      return {
+        ...s,
+        oczekujace: s.oczekujace.map((o) =>
+          o.id === id
+            ? { ...o, op: potwierdzona(wynik), potwierdzona: true }
+            : o,
+        ),
+      };
     });
     if (!wynik.ok) toast.error(BLAD_ZAPISU);
   }
