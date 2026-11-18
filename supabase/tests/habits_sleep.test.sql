@@ -1,5 +1,5 @@
 begin;
-select plan(51);
+select plan(57);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -107,16 +107,33 @@ select is((select count(*) from public.sleep_logs where user_id = '00000000-0000
   0::bigint, 'B nie widzi wierszy A w sleep_logs');
 
 -- B próbuje zmienić i usunąć wiersze A (RLS po cichu je pomija).
-update public.habits set user_id = '00000000-0000-0000-0000-00000000000b' where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.habits set user_id = '00000000-0000-0000-0000-00000000000b', name = 'Przejęty' where user_id = '00000000-0000-0000-0000-00000000000a';
 delete from public.habits where user_id = '00000000-0000-0000-0000-00000000000a';
-update public.habit_schedules set user_id = '00000000-0000-0000-0000-00000000000b' where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.habit_schedules set user_id = '00000000-0000-0000-0000-00000000000b', schedule_type = 'weekdays', weekdays = '{1}' where user_id = '00000000-0000-0000-0000-00000000000a';
 delete from public.habit_schedules where user_id = '00000000-0000-0000-0000-00000000000a';
-update public.habit_checks set user_id = '00000000-0000-0000-0000-00000000000b' where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.habit_checks set user_id = '00000000-0000-0000-0000-00000000000b', date = '2026-01-01' where user_id = '00000000-0000-0000-0000-00000000000a';
 delete from public.habit_checks where user_id = '00000000-0000-0000-0000-00000000000a';
-update public.habit_notes set user_id = '00000000-0000-0000-0000-00000000000b' where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.habit_notes set user_id = '00000000-0000-0000-0000-00000000000b', text = 'Przejęta' where user_id = '00000000-0000-0000-0000-00000000000a';
 delete from public.habit_notes where user_id = '00000000-0000-0000-0000-00000000000a';
-update public.sleep_logs set user_id = '00000000-0000-0000-0000-00000000000b' where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.sleep_logs set user_id = '00000000-0000-0000-0000-00000000000b', slept_at = '01:00' where user_id = '00000000-0000-0000-0000-00000000000a';
 delete from public.sleep_logs where user_id = '00000000-0000-0000-0000-00000000000a';
+
+-- B nie przeniesie własnych wierszy pod nawyk A ani nie przepisze ich na użytkownika A (with check w UPDATE).
+select throws_ok(
+  $$update public.habit_checks set habit_id = 'a0000000-0000-0000-0000-00000000000a' where habit_id = 'b0000000-0000-0000-0000-00000000000b'$$,
+  '42501', null, 'B nie przeniesie odhaczenia pod nawyk A');
+select throws_ok(
+  $$update public.habit_notes set habit_id = 'a0000000-0000-0000-0000-00000000000a' where habit_id = 'b0000000-0000-0000-0000-00000000000b'$$,
+  '42501', null, 'B nie przeniesie notatki pod nawyk A');
+select throws_ok(
+  $$update public.habit_schedules set habit_id = 'a0000000-0000-0000-0000-00000000000a' where habit_id = 'b0000000-0000-0000-0000-00000000000b'$$,
+  '42501', null, 'B nie przeniesie wersji harmonogramu pod nawyk A');
+select throws_ok(
+  $$update public.habits set user_id = '00000000-0000-0000-0000-00000000000a' where id = 'b0000000-0000-0000-0000-00000000000b'$$,
+  '42501', null, 'B nie przepisze własnego nawyku na A');
+select throws_ok(
+  $$update public.habit_notes set user_id = '00000000-0000-0000-0000-00000000000a' where habit_id = 'b0000000-0000-0000-0000-00000000000b'$$,
+  '42501', null, 'B nie przepisze własnej notatki na A');
 
 -- B nie wstawi wierszy podpiętych pod nawyk A.
 select throws_ok(
@@ -135,17 +152,17 @@ select throws_ok(
 -- Od teraz jako zalogowany A.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
 
--- Wiersze A przetrwały próby B.
-select is((select count(*) from public.habits where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1::bigint, 'wiersz A w habits nietknięty przez B');
-select is((select count(*) from public.habit_schedules where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1::bigint, 'wiersz A w habit_schedules nietknięty przez B');
-select is((select count(*) from public.habit_checks where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1::bigint, 'wiersz A w habit_checks nietknięty przez B');
-select is((select count(*) from public.habit_notes where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1::bigint, 'wiersz A w habit_notes nietknięty przez B');
-select is((select count(*) from public.sleep_logs where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1::bigint, 'wiersz A w sleep_logs nietknięty przez B');
+-- Wiersze A przetrwały próby B z niezmienioną zawartością.
+select is((select name || '|' || user_id from public.habits where id = 'a0000000-0000-0000-0000-00000000000a'),
+  'Nawyk A|00000000-0000-0000-0000-00000000000a', 'nawyk A bez zmian');
+select is((select schedule_type || '|' || weekdays::text || '|' || valid_from || '|' || user_id from public.habit_schedules where habit_id = 'a0000000-0000-0000-0000-00000000000a'),
+  'daily|{}|2026-11-01|00000000-0000-0000-0000-00000000000a', 'wersja harmonogramu A bez zmian');
+select is((select date || '|' || user_id from public.habit_checks where habit_id = 'a0000000-0000-0000-0000-00000000000a'),
+  '2026-11-17|00000000-0000-0000-0000-00000000000a', 'odhaczenie A bez zmian');
+select is((select text || '|' || date || '|' || user_id from public.habit_notes where habit_id = 'a0000000-0000-0000-0000-00000000000a'),
+  'Notatka A|2026-11-17|00000000-0000-0000-0000-00000000000a', 'notatka A bez zmian');
+select is((select slept_at || '|' || woke_at || '|' || user_id from public.sleep_logs where date = '2026-11-17' and user_id = '00000000-0000-0000-0000-00000000000a'),
+  '23:00:00|07:00:00|00000000-0000-0000-0000-00000000000a', 'sen A bez zmian');
 
 select is((select count(*) from public.habits), 1::bigint, 'A widzi tylko swój nawyk');
 
@@ -162,6 +179,10 @@ select throws_ok(
   $$insert into public.habit_schedules (habit_id, user_id, valid_from, schedule_type, weekdays)
     values ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-11-18', 'weekdays', '{}')$$,
   '23514', null, 'weekdays z pustą listą dni odrzucone');
+select throws_ok(
+  $$insert into public.habit_schedules (habit_id, user_id, valid_from, schedule_type, weekdays)
+    values ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-11-20', 'daily', '{1,2}')$$,
+  '23514', null, 'daily z niepustymi weekdays odrzucone');
 select throws_ok(
   $$insert into public.habit_schedules (habit_id, user_id, valid_from, schedule_type, times_per_week)
     values ('a0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '2026-11-19', 'times_per_week', 8)$$,

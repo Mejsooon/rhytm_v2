@@ -21,10 +21,12 @@ create table public.habit_schedules (
   weekdays smallint[] not null default '{}',
   times_per_week smallint,
   primary key (habit_id, valid_from),
-  -- Dni tygodnia: 1 = pn … 7 = nd; wymagane niepuste tylko przy 'weekdays'.
+  -- Dni tygodnia: 1 = pn … 7 = nd; przy 'weekdays' niepuste i w 1..7, w pozostałych typach puste.
   constraint habit_schedules_weekdays_check check (
-    schedule_type <> 'weekdays'
-    or (cardinality(weekdays) > 0 and weekdays <@ array[1, 2, 3, 4, 5, 6, 7]::smallint[])
+    (schedule_type = 'weekdays'
+      and cardinality(weekdays) > 0
+      and weekdays <@ array[1, 2, 3, 4, 5, 6, 7]::smallint[])
+    or (schedule_type <> 'weekdays' and cardinality(weekdays) = 0)
   ),
   -- Liczba razy w tygodniu: 1..7 przy 'times_per_week', w pozostałych typach null.
   constraint habit_schedules_times_per_week_check check (
