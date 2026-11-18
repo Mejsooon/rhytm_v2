@@ -80,6 +80,13 @@ export function formatKg(kg: number | null): string {
   return String(kg).replace(".", ",");
 }
 
+// Objętość: 5640 -> "5 640", 652.5 -> "652,5" (do 0,1; odstęp tysięcy jak w makietach)
+export function formatVolume(kg: number): string {
+  const [calosc, ulamek] = String(Math.round(kg * 10) / 10).split(".");
+  const zOdstepami = calosc.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return ulamek ? `${zOdstepami},${ulamek}` : zOdstepami;
+}
+
 // ACSM: VO2 = 3,5 + 0,2 × prędkość [m/min]; kcal = VO2 × waga × minuty / 1000 × 5
 export function runKcal(
   distanceKm: number,

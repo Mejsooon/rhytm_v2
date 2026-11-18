@@ -7,6 +7,7 @@ import {
   formatKg,
   formatKm,
   formatPace,
+  formatVolume,
   monthGrid,
   paceSPerKm,
   recordSetIds,
@@ -47,6 +48,13 @@ describe("tempo i formatowanie", () => {
     expect(formatKm(8)).toBe("8,0");
     expect(formatKg(72.5)).toBe("72,5");
     expect(formatKg(null)).toBe("mc");
+  });
+
+  it("formatuje objętość z odstępem tysięcy i przecinkiem", () => {
+    expect(formatVolume(5640)).toBe("5 640");
+    expect(formatVolume(652.5)).toBe("652,5");
+    expect(formatVolume(12345.25)).toBe("12 345,3");
+    expect(formatVolume(0)).toBe("0");
   });
 });
 
