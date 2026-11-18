@@ -50,7 +50,8 @@ async function Ogolne() {
           // Konta sprzed celu treningowego mają rodzaj 'km' i brak liczby treningów (wtedy 3)
           goalType: profil?.weekly_goal_type === "workouts" ? "workouts" : "km",
           tr: profil?.weekly_workouts_goal != null ? String(profil.weekly_workouts_goal) : "3",
-          km: profil?.weekly_km_goal != null ? String(profil.weekly_km_goal) : "25",
+          // Ułamek kilometrów z polskim przecinkiem (22.5 -> "22,5")
+          km: profil?.weekly_km_goal != null ? String(profil.weekly_km_goal).replace(".", ",") : "25",
           cur: waluta === "EUR" || waluta === "USD" || waluta === "GBP" ? waluta : "PLN",
           week: profil?.week_start === "sun" ? "sun" : "mon",
         }}

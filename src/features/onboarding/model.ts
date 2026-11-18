@@ -216,9 +216,14 @@ export function goalInRange(type: GoalType, value: number): boolean {
   return Number.isFinite(value) && value >= 1 && value <= 300;
 }
 
+// Kilometry z polskim przecinkiem: 22.5 -> "22,5"
+export function formatKm(km: number): string {
+  return String(km).replace(".", ",");
+}
+
 // 1 -> "1 trening / tydz.", 3 -> "3 treningi / tydz.", 5 -> "5 treningów / tydz.", 25 km -> "25 km / tydz."
 export function formatWeeklyGoal(type: GoalType, value: number): string {
-  if (type === "km") return `${value} km / tydz.`;
+  if (type === "km") return `${formatKm(value)} km / tydz.`;
   const jednosci = value % 10;
   const dziesiatki = value % 100;
   let slowo = "treningów";

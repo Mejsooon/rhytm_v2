@@ -5,6 +5,7 @@ import { Segment, Stepper, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import {
   GOALS,
+  formatKm,
   formatSleep,
   goalInRange,
   stepKm,
@@ -44,7 +45,7 @@ export function StepGoals({
       : "Podaj liczbę 1–14.";
   // Tekst wpisany w pole web (null = pokazujemy liczbę ze szkicu)
   const [tekstCelu, setTekstCelu] = React.useState<string | null>(null);
-  const poleCelu = tekstCelu ?? (Number.isFinite(wartosc) ? String(wartosc) : "");
+  const poleCelu = tekstCelu ?? (Number.isFinite(wartosc) ? formatKm(wartosc) : "");
 
   return (
     <>
@@ -139,7 +140,7 @@ export function StepGoals({
               <span>{etykietaCelu}</span>
               <Stepper
                 ariaLabel={etykietaCelu}
-                value={naKm ? `${draft.weeklyKm} km` : String(draft.weeklyWorkouts)}
+                value={naKm ? `${formatKm(draft.weeklyKm)} km` : String(draft.weeklyWorkouts)}
                 onDec={() => {
                   setTekstCelu(null);
                   onChange(

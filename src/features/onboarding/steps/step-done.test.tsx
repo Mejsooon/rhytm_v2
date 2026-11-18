@@ -65,6 +65,8 @@ describe("StepDone", () => {
     expect(within(screen.getByTestId("done-phone")).getByText("4 treningi / tydz.")).toBeInTheDocument();
     rerender(<StepDone draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 7 }} now={NOW} />);
     expect(within(screen.getByTestId("done-web")).getByText("7 treningów / tydz.")).toBeInTheDocument();
+    rerender(<StepDone draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 22.5 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-phone")).getByText("22,5 km / tydz.")).toBeInTheDocument();
     rerender(<StepDone draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 25 }} now={NOW} />);
     expect(within(screen.getByTestId("done-web")).getByText("25 km / tydz.")).toBeInTheDocument();
     await userEvent.click(within(screen.getByTestId("done-web")).getByRole("button", { name: "Zmień: Cel treningowy" }));

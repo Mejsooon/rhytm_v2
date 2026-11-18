@@ -106,11 +106,17 @@ describe("StepGoals", () => {
     await userEvent.clear(pole);
     await userEvent.type(pole, "22,5");
     expect(screen.queryByText("Podaj liczbę 1–300.")).not.toBeInTheDocument();
-    expect(screen.getByText("22.5 km")).toBeInTheDocument();
+    expect(screen.getByText("22,5 km")).toBeInTheDocument();
     unmount();
     render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 42 }} />);
     await userEvent.click(screen.getByRole("button", { name: "Zwiększ Kilometry w tygodniu" }));
     expect(screen.getByText("45 km")).toBeInTheDocument();
+  });
+
+  it("zapisane 22.5 km: licznik i pole web z przecinkiem", () => {
+    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 22.5 }} />);
+    expect(screen.getByText("22,5 km")).toBeInTheDocument();
+    expect(screen.getByLabelText("Kilometry w tygodniu", { selector: "input" })).toHaveValue("22,5");
   });
 
   it("licznik przy 200 km z pola web: „−” wraca do 150 km", async () => {

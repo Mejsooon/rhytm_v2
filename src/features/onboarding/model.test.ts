@@ -5,6 +5,7 @@ import {
   canContinue,
   categoriesForRoles,
   effectivePages,
+  formatKm,
   formatSleep,
   formatWeeklyGoal,
   goalInRange,
@@ -167,8 +168,13 @@ describe("cel treningowy", () => {
     expect(formatWeeklyGoal("workouts", 12)).toBe("12 treningów / tydz.");
     expect(formatWeeklyGoal("workouts", 14)).toBe("14 treningów / tydz.");
   });
+  it("formatKm: ułamek z polskim przecinkiem", () => {
+    expect(formatKm(22.5)).toBe("22,5");
+    expect(formatKm(40)).toBe("40");
+  });
   it("formatWeeklyGoal: kilometry", () => {
     expect(formatWeeklyGoal("km", 25)).toBe("25 km / tydz.");
+    expect(formatWeeklyGoal("km", 22.5)).toBe("22,5 km / tydz.");
   });
 });
 
