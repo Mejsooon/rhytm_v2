@@ -66,9 +66,23 @@ describe("HabitHeatmap", () => {
     expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
 
     const bezPlanu = screen.getByLabelText("01.11.2026 · brak zaplanowanych");
-    expect(bezPlanu.className).toContain("bg-[#f0f0f0]");
+    expect(bezPlanu.className).toContain("bg-[#fafafa]");
     fireEvent.mouseEnter(bezPlanu);
     expect(screen.getByRole("tooltip")).toHaveTextContent("01.11.2026 · brak zaplanowanych");
+  });
+
+  it("dzień bez planu wygląda inaczej niż dzień z planem i 0%", async () => {
+    // a, b, c codziennie od 10.11; 16.11: nic nie odhaczone (0%), 09.11: przed startem (bez planu)
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
+    const bezPlanu = screen.getByLabelText("09.11.2026 · brak zaplanowanych");
+    const zero = screen.getByLabelText("16.11.2026 · 0 z 3 nawyków");
+    expect(bezPlanu.className).toContain("bg-[#fafafa]");
+    expect(bezPlanu.className).toContain("border-dashed");
+    expect(bezPlanu.className).toContain("border-[#d4d4d4]");
+    expect(zero.className).toContain("bg-[#f0f0f0]");
+    expect(zero.className).not.toContain("border-dashed");
+    expect(bezPlanu.className).not.toBe(zero.className);
   });
 
   it("komórka dostaje fokus z klawiatury i wtedy pokazuje dymek", async () => {

@@ -248,6 +248,8 @@ export function MHabits({
               <div className="grid grid-cols-7 gap-[5px]">
                 {tygodnie.flat().map((komorka) => {
                   const przyszlosc = komorka.date > today;
+                  // Dzień bez planu: jaśniejsze tło i przerywana ramka, żeby nie mylił się z 0%
+                  const bezPlanu = !przyszlosc && komorka.percent === null;
                   // Kolor z % dnia: 0 → najjaśniejszy, 100% → najciemniejszy
                   let tlo = ODCIENIE[0];
                   if (komorka.percent !== null && komorka.percent > 0) {
@@ -278,10 +280,14 @@ export function MHabits({
                       // Pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px)
                       className={cn(
                         "relative box-border aspect-square cursor-pointer rounded-md p-0 outline-none after:absolute after:-inset-0.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717] disabled:cursor-default",
-                        przyszlosc ? "border border-dashed border-[#e0e0e0]" : "border-0",
+                        przyszlosc
+                          ? "border border-dashed border-[#e0e0e0]"
+                          : bezPlanu
+                            ? "border border-dashed border-[#d4d4d4]"
+                            : "border-0",
                         dzien === komorka.date && "border-2 border-solid border-[#171717]",
                       )}
-                      style={{ background: przyszlosc ? "#ffffff" : tlo }}
+                      style={{ background: przyszlosc ? "#ffffff" : bezPlanu ? "#fafafa" : tlo }}
                     />
                   );
                 })}

@@ -16,14 +16,20 @@ const MIESIACE_KROTKO = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie",
 const MAKS_WSTECZ = 12; // miesięcy
 
 // Kolor komórki i treść dymka; przyszłość bez dymka.
-// Progi z makiety: 0% → najjaśniejszy, ≤ 40% → 1, ≤ 80% → 2, powyżej → najciemniejszy
+// Progi z makiety: 0% → najjaśniejszy, ≤ 40% → 1, ≤ 80% → 2, powyżej → najciemniejszy.
+// Dzień bez planu ma własny wygląd (jaśniejsze tło i przerywana ramka), żeby nie mylił się z 0%
 function wyglad(cell: DayCell, today: IsoDate): { kolor: string; data: string; tekst: string | null; szary: boolean } {
   const data = formatDatePl(cell.date);
   if (cell.date > today) {
     return { kolor: "border border-dashed border-[#e0e0e0] bg-white text-[#a3a3a3]", data, tekst: null, szary: false };
   }
   if (cell.percent === null) {
-    return { kolor: "bg-[#f0f0f0] text-[#404040]", data, tekst: "brak zaplanowanych", szary: true };
+    return {
+      kolor: "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#404040]",
+      data,
+      tekst: "brak zaplanowanych",
+      szary: true,
+    };
   }
   const kolor =
     cell.percent === 0

@@ -147,6 +147,18 @@ describe("MHabits — zakładka Nawyki", () => {
     expect(screen.getByText("26.10.2026 · brak zaplanowanych")).toBeInTheDocument();
   });
 
+  it("heatmapa: dzień bez planu ma przerywaną ramkę i inne tło niż 0%", () => {
+    wyrenderuj();
+    // 26.10 — przed startem nawyków (bez planu); pn 02.11 — Woda i Rozciąganie zaplanowane, nic nie odhaczone (0%)
+    const bezPlanu = screen.getByRole("button", { name: "26.10.2026 · brak zaplanowanych" });
+    const zero = screen.getByRole("button", { name: "02.11.2026 · 0 z 2 nawyków" });
+    expect(bezPlanu.style.background).toBe("rgb(250, 250, 250)");
+    expect(bezPlanu.className).toContain("border-dashed");
+    expect(bezPlanu.className).toContain("border-[#d4d4d4]");
+    expect(zero.style.background).toBe("rgb(240, 240, 240)");
+    expect(zero.className).not.toContain("border-dashed");
+  });
+
   it("bez nawyków: stan pusty z przyciskiem dodania", async () => {
     const d = dane();
     d.habits = [];
