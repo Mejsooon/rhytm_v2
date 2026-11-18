@@ -212,6 +212,7 @@ describe("sessionItems", () => {
     template_id: null,
     template_date: null,
     note: null,
+    difficulty: null,
     created_at: null,
     ...o,
   });
@@ -264,6 +265,17 @@ describe("sessionItems", () => {
       [],
     );
     expect(items[0]).toMatchObject({ planned: false, durationMin: 75 });
+  });
+  it("trudność: bieg z runs, trening siłowy z sesji", () => {
+    const items = sessionItems(
+      [
+        sesja({ difficulty: 9 }),
+        sesja({ id: "s3", type: "gym", completed: true, difficulty: 7 }),
+      ],
+      [bieg({ difficulty: 4 })],
+    );
+    expect(items[0].difficulty).toBe(4);
+    expect(items[1].difficulty).toBe(7);
   });
 });
 

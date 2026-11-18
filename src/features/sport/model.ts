@@ -241,7 +241,8 @@ export function sessionItems(
       distanceKm: bieg ? bieg.distance_km : null,
       durationS: bieg ? bieg.duration_s : null,
       kcal: bieg ? bieg.kcal : null,
-      difficulty: bieg ? bieg.difficulty : null,
+      difficulty:
+        kind === "run" ? (bieg ? bieg.difficulty : null) : s.difficulty,
       runKind: bieg ? (bieg.kind as RunKind) : null,
       note: s.note,
     };

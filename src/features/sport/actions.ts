@@ -706,7 +706,7 @@ export async function removeExercise(
 }
 
 // „Zakończ trening”: wykonany, koniec = teraz w strefie profilu.
-// Trudność jest walidowana, ale nie ma jeszcze kolumny na trudność treningu siłowego (zob. raport Task 3).
+// Trudność (1–10) trafia do sport_sessions.difficulty; bez parametru zostaje dotychczasowa.
 export async function finishWorkout(
   id: string,
   difficulty?: number | null,
@@ -749,6 +749,7 @@ export async function finishWorkout(
     .update({
       completed: true,
       end_local: koniec > sesja.start_local.slice(0, 19) ? koniec : null,
+      ...(difficulty !== undefined ? { difficulty } : {}),
     })
     .eq("id", id)
     .eq("user_id", user.id)

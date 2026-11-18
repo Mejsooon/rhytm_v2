@@ -468,6 +468,26 @@ describe("finishWorkout", () => {
     });
   });
 
+  it("zapisuje trudność", async () => {
+    tables.sport_sessions = fakeTable({
+      data: [{ id: SESJA }],
+      single: { id: SESJA, start_local: "2026-11-18T09:30:00" },
+    });
+    const w = await finishWorkout(SESJA, 7);
+    expect(w).toEqual({ ok: true });
+    expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
+      completed: true,
+      end_local: "2026-11-18T11:00:00",
+      difficulty: 7,
+    });
+  });
+
+  it("trudność spoza 1–10 → błąd, bez zapisu", async () => {
+    const w = await finishWorkout(SESJA, 11);
+    expect(w.ok).toBe(false);
+    expect((tables.sport_sessions as Fake).update).not.toHaveBeenCalled();
+  });
+
   it("start w przyszłości → bez end_local", async () => {
     tables.sport_sessions = fakeTable({
       data: [{ id: SESJA }],

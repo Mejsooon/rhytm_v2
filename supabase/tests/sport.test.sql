@@ -1,5 +1,5 @@
 begin;
-select plan(83);
+select plan(85);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -238,6 +238,14 @@ select throws_ok(
   $$insert into public.sport_sessions (user_id, type, title, start_local, end_local)
     values ('00000000-0000-0000-0000-00000000000a', 'run', 'Koniec przed startem', '2026-11-21 10:00', '2026-11-21 09:00')$$,
   '23514', null, 'end_local przed start_local odrzucone');
+select throws_ok(
+  $$insert into public.sport_sessions (user_id, type, title, start_local, difficulty)
+    values ('00000000-0000-0000-0000-00000000000a', 'gym', 'Za lekko', '2026-11-21 10:00', 0)$$,
+  '23514', null, 'trudność sesji 0 odrzucona');
+select throws_ok(
+  $$insert into public.sport_sessions (user_id, type, title, start_local, difficulty)
+    values ('00000000-0000-0000-0000-00000000000a', 'gym', 'Za ciężko', '2026-11-21 10:00', 11)$$,
+  '23514', null, 'trudność sesji 11 odrzucona');
 select throws_ok(
   $$insert into public.runs (session_id, user_id, distance_km)
     values ('a1000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 0)$$,

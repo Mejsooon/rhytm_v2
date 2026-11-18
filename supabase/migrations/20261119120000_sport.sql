@@ -28,6 +28,8 @@ create table public.sport_sessions (
   note text check (length(note) <= 1000),
   completed boolean not null default false,
   show_in_calendar boolean not null default true,
+  -- Trudność treningu siłowego (bieg ma własną w runs.difficulty).
+  difficulty smallint check (difficulty between 1 and 10),
   -- Sesja wygenerowana z szablonu na dany dzień; usunięcie szablonu zostawia sesję.
   template_id uuid references public.workout_templates (id) on delete set null,
   template_date date,
