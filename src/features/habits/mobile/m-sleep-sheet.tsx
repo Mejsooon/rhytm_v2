@@ -25,7 +25,8 @@ const DOMYSLNE_ZASNIECIE = "23:00";
 const DOMYSLNA_POBUDKA = "07:00";
 const KROK = 15; // min
 
-const ETYKIETA = "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+const ETYKIETA =
+  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
 const NAGLOWEK_PRZYCISK =
   "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
 const PRZYCISK_KROKU =
@@ -48,9 +49,13 @@ export function MSleepSheet({
   onDone: () => void;
 }) {
   const existing = logs.find((l) => l.date === date);
-  const [sleptAt, setSleptAt] = useState(existing?.sleptAt ?? DOMYSLNE_ZASNIECIE);
+  const [sleptAt, setSleptAt] = useState(
+    existing?.sleptAt ?? DOMYSLNE_ZASNIECIE,
+  );
   const [wokeAt, setWokeAt] = useState(existing?.wokeAt ?? DOMYSLNA_POBUDKA);
-  const [feeling, setFeeling] = useState<number | null>(existing?.feeling ?? null);
+  const [feeling, setFeeling] = useState<number | null>(
+    existing?.feeling ?? null,
+  );
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
   const [note, setNote] = useState(existing?.note ?? "");
   const [pending, setPending] = useState(false);
@@ -99,13 +104,28 @@ export function MSleepSheet({
 
   // Dwa wiersze godzin: Zasnąłem i Wstałem
   const wiersze = [
-    { nazwa: "Zasnąłem", testId: "zasniecie", wartosc: sleptAt, zmien: setSleptAt, Ikona: Moon },
-    { nazwa: "Wstałem", testId: "pobudka", wartosc: wokeAt, zmien: setWokeAt, Ikona: Sun },
+    {
+      nazwa: "Zasnąłem",
+      testId: "zasniecie",
+      wartosc: sleptAt,
+      zmien: setSleptAt,
+      Ikona: Moon,
+    },
+    {
+      nazwa: "Wstałem",
+      testId: "pobudka",
+      wartosc: wokeAt,
+      zmien: setWokeAt,
+      Ikona: Sun,
+    },
   ];
 
   return (
     // W trakcie zapisu arkusz się nie zamyka (Esc)
-    <Dialog.Root open onOpenChange={(otwarte) => !otwarte && !pending && onDone()}>
+    <Dialog.Root
+      open
+      onOpenChange={(otwarte) => !otwarte && !pending && onDone()}
+    >
       <Dialog.Portal>
         <Dialog.Content
           aria-describedby={undefined}
@@ -116,16 +136,24 @@ export function MSleepSheet({
               type="button"
               disabled={pending}
               onClick={onDone}
-              className={cn(NAGLOWEK_PRZYCISK, "text-[#666666] disabled:cursor-default disabled:opacity-50")}
+              className={cn(
+                NAGLOWEK_PRZYCISK,
+                "text-[#666666] disabled:cursor-default disabled:opacity-50",
+              )}
             >
               Anuluj
             </button>
-            <Dialog.Title className="m-0 flex-1 text-center text-[15px] font-semibold">Wpis snu</Dialog.Title>
+            <Dialog.Title className="m-0 flex-1 text-center text-[15px] font-semibold">
+              Wpis snu
+            </Dialog.Title>
             <button
               type="button"
               disabled={!mozeZapisac}
               onClick={zapisz}
-              className={cn(NAGLOWEK_PRZYCISK, "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]")}
+              className={cn(
+                NAGLOWEK_PRZYCISK,
+                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+              )}
             >
               Zapisz
             </button>
@@ -149,7 +177,9 @@ export function MSleepSheet({
                   Godziny zaśnięcia i pobudki muszą się różnić.
                 </p>
               ) : (
-                <div className="text-[13px] text-[#666666]">{goalText(minuty, goalMin).phone}</div>
+                <div className="text-[13px] text-[#666666]">
+                  {goalText(minuty, goalMin).phone}
+                </div>
               )}
             </div>
 
@@ -161,7 +191,11 @@ export function MSleepSheet({
                     key={nazwa}
                     className="flex min-h-16 items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0"
                   >
-                    <Ikona size={20} aria-hidden="true" className="flex-none text-[#666666]" />
+                    <Ikona
+                      size={20}
+                      aria-hidden="true"
+                      className="flex-none text-[#666666]"
+                    />
                     <span className="flex-1">{nazwa}</span>
                     <button
                       type="button"
@@ -172,7 +206,10 @@ export function MSleepSheet({
                     >
                       −
                     </button>
-                    <span data-testid={testId} className="min-w-[60px] text-center font-mono text-lg">
+                    <span
+                      data-testid={testId}
+                      className="min-w-[60px] text-center font-mono text-lg"
+                    >
                       {formatClockTime(g, m, clock)}
                     </span>
                     <button
@@ -191,7 +228,11 @@ export function MSleepSheet({
 
             <div className="flex flex-col gap-2">
               <span className={ETYKIETA}>Jak się wyspałeś?</span>
-              <div role="radiogroup" aria-label="Jak się wyspałeś?" className="grid grid-cols-5 gap-1.5">
+              <div
+                role="radiogroup"
+                aria-label="Jak się wyspałeś?"
+                className="grid grid-cols-5 gap-1.5"
+              >
                 {SAMOPOCZUCIE.map((etykieta, i) => {
                   const wartosc = i + 1;
                   const wybrane = feeling === wartosc;
@@ -228,7 +269,13 @@ export function MSleepSheet({
                     key={tag}
                     selected={tags.includes(tag)}
                     disabled={pending}
-                    onClick={() => setTags((t) => (t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag]))}
+                    onClick={() =>
+                      setTags((t) =>
+                        t.includes(tag)
+                          ? t.filter((x) => x !== tag)
+                          : [...t, tag],
+                      )
+                    }
                   >
                     {tag}
                   </Chip>

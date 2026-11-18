@@ -8,7 +8,11 @@ export const metadata: Metadata = { title: "Logowanie — rhytm" };
 
 // searchParams to dane żądania — czytamy je w osobnym komponencie pod Suspense.
 // Fallback to null, a nie drugi formularz: inaczej w HTML są dwie kopie formularza (duplikat pól i przycisków).
-async function Formularz({ searchParams }: { searchParams: PageProps<"/logowanie">["searchParams"] }) {
+async function Formularz({
+  searchParams,
+}: {
+  searchParams: PageProps<"/logowanie">["searchParams"];
+}) {
   const { blad } = await searchParams;
   return <LoginForm oauthError={blad === "oauth"} />;
 }

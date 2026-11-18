@@ -6,8 +6,15 @@
 import * as React from "react";
 
 import { Button, FormDialog } from "@/components/controls";
-import { deleteCategory, moveCategory, setCategoryHidden } from "@/features/categories/actions";
-import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import {
+  deleteCategory,
+  moveCategory,
+  setCategoryHidden,
+} from "@/features/categories/actions";
+import {
+  CategoryDialog,
+  type NewCategory,
+} from "@/features/categories/category-dialog";
 import { cn } from "@/lib/utils";
 
 export type SettingsCategory = {
@@ -23,7 +30,11 @@ export type SettingsCategory = {
 const PRZYCISK =
   "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
-export function CategoriesCard({ categories }: { categories: SettingsCategory[] }) {
+export function CategoriesCard({
+  categories,
+}: {
+  categories: SettingsCategory[];
+}) {
   const [lista, setLista] = React.useState(categories);
   // Next 16 zachowuje stan trasy (Activity), więc po nowych danych z serwera stan lokalny trzeba zsynchronizować
   const [poprzednie, setPoprzednie] = React.useState(categories);
@@ -56,7 +67,10 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
     try {
       wynik = await moveCategory({ id, dir });
     } catch {
-      wynik = { ok: false as const, message: "Nie udało się zapisać. Spróbuj ponownie." };
+      wynik = {
+        ok: false as const,
+        message: "Nie udało się zapisać. Spróbuj ponownie.",
+      };
     }
     if (!wynik.ok) {
       setLista(przed);
@@ -68,12 +82,17 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
   async function przelaczUkrycie(k: SettingsCategory) {
     const przed = lista;
     setBlad("");
-    setLista(przed.map((x) => (x.id === k.id ? { ...x, hidden: !k.hidden } : x)));
+    setLista(
+      przed.map((x) => (x.id === k.id ? { ...x, hidden: !k.hidden } : x)),
+    );
     let wynik;
     try {
       wynik = await setCategoryHidden({ id: k.id, hidden: !k.hidden });
     } catch {
-      wynik = { ok: false as const, message: "Nie udało się zapisać. Spróbuj ponownie." };
+      wynik = {
+        ok: false as const,
+        message: "Nie udało się zapisać. Spróbuj ponownie.",
+      };
     }
     if (!wynik.ok) {
       setLista(przed);
@@ -90,7 +109,10 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
     try {
       wynik = await deleteCategory({ id: k.id });
     } catch {
-      wynik = { ok: false as const, message: "Nie udało się zapisać. Spróbuj ponownie." };
+      wynik = {
+        ok: false as const,
+        message: "Nie udało się zapisać. Spróbuj ponownie.",
+      };
     }
     setUsuwa(false);
     if (!wynik.ok) {
@@ -104,7 +126,11 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
   function zapisano(zapisana: NewCategory) {
     setLista((l) =>
       l.some((k) => k.id === zapisana.id)
-        ? l.map((k) => (k.id === zapisana.id ? { ...k, name: zapisana.name, color: zapisana.color } : k))
+        ? l.map((k) =>
+            k.id === zapisana.id
+              ? { ...k, name: zapisana.name, color: zapisana.color }
+              : k,
+          )
         : [
             ...l,
             {
@@ -122,7 +148,9 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
     <section className="rounded-lg border border-[#eaeaea] bg-white">
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Kategorie kalendarza</h2>
-        <p className="mt-1 mb-4 text-[#666666]">Kolory i kolejność kategorii w kalendarzu.</p>
+        <p className="mt-1 mb-4 text-[#666666]">
+          Kolory i kolejność kategorii w kalendarzu.
+        </p>
 
         <ul className="m-0 flex list-none flex-col p-0">
           {lista.map((k, i) => (
@@ -131,8 +159,17 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
               aria-label={k.name}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#f0f0f0] py-2 first:border-t-0 max-[799px]:py-2.5"
             >
-              <span aria-hidden="true" className="size-2.5 flex-none rounded-full" style={{ background: k.color }} />
-              <span className={cn("flex min-w-0 flex-1 items-center gap-2", k.hidden && "opacity-50")}>
+              <span
+                aria-hidden="true"
+                className="size-2.5 flex-none rounded-full"
+                style={{ background: k.color }}
+              />
+              <span
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2",
+                  k.hidden && "opacity-50",
+                )}
+              >
                 {k.is_system ? (
                   <span className="truncate font-medium">{k.name}</span>
                 ) : (
@@ -153,20 +190,34 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
 
               <span className="flex flex-none items-center gap-1.5 max-[799px]:w-full max-[799px]:justify-end max-[799px]:pb-[5px]">
                 {i > 0 ? (
-                  <button type="button" aria-label="W górę" className={cn(PRZYCISK, "w-9 px-0")} onClick={() => przesun(k.id, -1)}>
+                  <button
+                    type="button"
+                    aria-label="W górę"
+                    className={cn(PRZYCISK, "w-9 px-0")}
+                    onClick={() => przesun(k.id, -1)}
+                  >
                     ↑
                   </button>
                 ) : (
                   <span aria-hidden="true" className="w-9" />
                 )}
                 {i < lista.length - 1 ? (
-                  <button type="button" aria-label="W dół" className={cn(PRZYCISK, "w-9 px-0")} onClick={() => przesun(k.id, 1)}>
+                  <button
+                    type="button"
+                    aria-label="W dół"
+                    className={cn(PRZYCISK, "w-9 px-0")}
+                    onClick={() => przesun(k.id, 1)}
+                  >
                     ↓
                   </button>
                 ) : (
                   <span aria-hidden="true" className="w-9" />
                 )}
-                <button type="button" className={PRZYCISK} onClick={() => przelaczUkrycie(k)}>
+                <button
+                  type="button"
+                  className={PRZYCISK}
+                  onClick={() => przelaczUkrycie(k)}
+                >
                   {k.hidden ? "Pokaż" : "Ukryj"}
                 </button>
                 {!k.is_system && (
@@ -194,8 +245,13 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
       </div>
 
       <div className="flex items-center justify-between gap-2.5 rounded-b-lg border-t border-[#eaeaea] bg-[#fafafa] px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
-        <span className="text-[13px] text-[#666666]">Ukryte kategorie znikają z kalendarza, ale zostają tutaj.</span>
-        <Button onClick={() => setDialog({ typ: "nowa" })} className="max-[799px]:h-12">
+        <span className="text-[13px] text-[#666666]">
+          Ukryte kategorie znikają z kalendarza, ale zostają tutaj.
+        </span>
+        <Button
+          onClick={() => setDialog({ typ: "nowa" })}
+          className="max-[799px]:h-12"
+        >
           + Kategoria
         </Button>
       </div>
@@ -224,13 +280,19 @@ export function CategoriesCard({ categories }: { categories: SettingsCategory[] 
                 </p>
               )}
               <Button onClick={() => setDialog(null)}>Anuluj</Button>
-              <Button variant="destructive" disabled={usuwa} onClick={() => usun(dialog.category)}>
+              <Button
+                variant="destructive"
+                disabled={usuwa}
+                onClick={() => usun(dialog.category)}
+              >
                 Usuń
               </Button>
             </>
           }
         >
-          <p className="m-0 text-[13px] text-[#666666]">Bloki zostaną bez kategorii.</p>
+          <p className="m-0 text-[13px] text-[#666666]">
+            Bloki zostaną bez kategorii.
+          </p>
         </FormDialog>
       )}
     </section>

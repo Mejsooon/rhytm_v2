@@ -7,7 +7,15 @@ import { Button } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { viewRange, weekdayOf } from "@/features/calendar/view-range";
 import { cn } from "@/lib/utils";
-import { canCheck, currentStreak, isPlanned, scheduleOn, weekProgress, type Checks, type Habit } from "./model";
+import {
+  canCheck,
+  currentStreak,
+  isPlanned,
+  scheduleOn,
+  weekProgress,
+  type Checks,
+  type Habit,
+} from "./model";
 import { describeSchedule, streakLabel } from "./text";
 
 // Skróty dni: indeks 0 = pn … 6 = nd
@@ -50,7 +58,9 @@ export function HabitWeekGrid({
       {habits.length === 0 ? (
         // Stan pusty w stylu makiet
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-12 text-center">
-          <p className="m-0 text-sm text-[#666666]">Nie masz jeszcze nawyków.</p>
+          <p className="m-0 text-sm text-[#666666]">
+            Nie masz jeszcze nawyków.
+          </p>
           <Button variant="primary" size="sm" onClick={onNewHabit}>
             Dodaj pierwszy nawyk
           </Button>
@@ -73,7 +83,10 @@ export function HabitWeekGrid({
             const dzisAktywny = canCheck(habit, today, today) || odhaczoneDzis;
 
             return (
-              <li key={habit.id} className="flex items-center gap-3.5 border-b border-[#f0f0f0] px-4 py-3.5">
+              <li
+                key={habit.id}
+                className="flex items-center gap-3.5 border-b border-[#f0f0f0] px-4 py-3.5"
+              >
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/nawyki/${habit.id}`}
@@ -81,7 +94,9 @@ export function HabitWeekGrid({
                   >
                     {habit.name}
                   </Link>
-                  <div className="mt-[3px] font-mono text-[11px] text-[#6b6b6b]">{opis}</div>
+                  <div className="mt-[3px] font-mono text-[11px] text-[#6b6b6b]">
+                    {opis}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-[repeat(7,24px)] gap-1.5">
@@ -92,19 +107,28 @@ export function HabitWeekGrid({
                     const nazwa = `${habit.name} · ${dd}.${mm}`;
 
                     // weekdays, dzień poza planem, bez odhaczenia: „–”, nie przycisk
-                    if (v !== null && v.type === "weekdays" && !isPlanned(habit, d) && !odhaczone) {
+                    if (
+                      v !== null &&
+                      v.type === "weekdays" &&
+                      !isPlanned(habit, d) &&
+                      !odhaczone
+                    ) {
                       return (
                         <span
                           key={d}
                           title={`${dd}.${mm} · nie dotyczy`}
-                          className={cn(KOMORKA, "flex items-center justify-center text-xs text-[#6b6b6b]")}
+                          className={cn(
+                            KOMORKA,
+                            "flex items-center justify-center text-xs text-[#6b6b6b]",
+                          )}
                         >
                           –
                         </span>
                       );
                     }
 
-                    const aktywna = d <= today && (canCheck(habit, d, today) || odhaczone);
+                    const aktywna =
+                      d <= today && (canCheck(habit, d, today) || odhaczone);
                     return (
                       <button
                         key={d}
@@ -129,7 +153,11 @@ export function HabitWeekGrid({
 
                 <button
                   type="button"
-                  aria-label={odhaczoneDzis ? `Cofnij odhaczenie: ${habit.name}` : `Odhacz dziś: ${habit.name}`}
+                  aria-label={
+                    odhaczoneDzis
+                      ? `Cofnij odhaczenie: ${habit.name}`
+                      : `Odhacz dziś: ${habit.name}`
+                  }
                   aria-pressed={odhaczoneDzis}
                   disabled={!dzisAktywny}
                   onClick={() => onToggle(habit.id, today)}

@@ -22,12 +22,17 @@ async function Krok({ params }: { params: Promise<{ krok: string }> }) {
 
   const [{ data: profil }, { data: powiadomienia }] = await Promise.all([
     supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("notification_settings").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("notification_settings")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
   if (!profil) redirect("/onboarding");
 
   // Nie wolno przeskoczyć kroków, których użytkownik jeszcze nie zapisał
-  if (step > profil.onboarding_step) redirect(`/onboarding/${profil.onboarding_step}`);
+  if (step > profil.onboarding_step)
+    redirect(`/onboarding/${profil.onboarding_step}`);
 
   const avatarUrl = await getAvatarUrl(supabase, profil.avatar_path);
 
@@ -43,7 +48,11 @@ async function Krok({ params }: { params: Promise<{ krok: string }> }) {
   );
 }
 
-export default function KrokPage({ params }: { params: Promise<{ krok: string }> }) {
+export default function KrokPage({
+  params,
+}: {
+  params: Promise<{ krok: string }>;
+}) {
   return (
     <Suspense fallback={null}>
       <Krok params={params} />

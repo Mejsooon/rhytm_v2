@@ -12,25 +12,67 @@ function klient(tables: Record<string, ReturnType<typeof fakeTable>>) {
 function tabele() {
   return {
     profiles: fakeTable({
-      single: { timezone: "Europe/Warsaw", week_start: "sun", clock: "12", sleep_goal_min: 450 },
+      single: {
+        timezone: "Europe/Warsaw",
+        week_start: "sun",
+        clock: "12",
+        sleep_goal_min: 450,
+      },
     }),
     habits: fakeTable({
       data: [
-        { id: NAWYK, name: "Czytanie", remind_at: "07:30:00", show_on_today: true, created_at: "2026-10-01T10:00:00Z" },
+        {
+          id: NAWYK,
+          name: "Czytanie",
+          remind_at: "07:30:00",
+          show_on_today: true,
+          created_at: "2026-10-01T10:00:00Z",
+        },
       ],
-      single: { id: NAWYK, name: "Czytanie", remind_at: "07:30:00", show_on_today: true, created_at: "2026-10-01T10:00:00Z" },
+      single: {
+        id: NAWYK,
+        name: "Czytanie",
+        remind_at: "07:30:00",
+        show_on_today: true,
+        created_at: "2026-10-01T10:00:00Z",
+      },
     }),
     // celowo w złej kolejności
     habit_schedules: fakeTable({
       data: [
-        { habit_id: NAWYK, valid_from: "2026-11-10", schedule_type: "weekdays", weekdays: [1, 3], times_per_week: null },
-        { habit_id: NAWYK, valid_from: "2026-10-01", schedule_type: "daily", weekdays: [], times_per_week: null },
+        {
+          habit_id: NAWYK,
+          valid_from: "2026-11-10",
+          schedule_type: "weekdays",
+          weekdays: [1, 3],
+          times_per_week: null,
+        },
+        {
+          habit_id: NAWYK,
+          valid_from: "2026-10-01",
+          schedule_type: "daily",
+          weekdays: [],
+          times_per_week: null,
+        },
       ],
     }),
-    habit_checks: fakeTable({ data: [{ habit_id: NAWYK, date: "2026-11-17" }] }),
-    habit_notes: fakeTable({ data: [{ id: "n1", date: "2026-11-17", text: "Dobrze poszło" }] }),
+    habit_checks: fakeTable({
+      data: [{ habit_id: NAWYK, date: "2026-11-17" }],
+    }),
+    habit_notes: fakeTable({
+      data: [{ id: "n1", date: "2026-11-17", text: "Dobrze poszło" }],
+    }),
     sleep_logs: fakeTable({
-      data: [{ date: "2026-11-18", slept_at: "23:30:00", woke_at: "07:00:00", feeling: 4, tags: ["Stres"], note: null }],
+      data: [
+        {
+          date: "2026-11-18",
+          slept_at: "23:30:00",
+          woke_at: "07:00:00",
+          feeling: 4,
+          tags: ["Stres"],
+          note: null,
+        },
+      ],
     }),
   };
 }
@@ -48,14 +90,36 @@ describe("loadHabitsPage", () => {
     expect(w.clock).toBe("12");
     expect(w.sleepGoalMin).toBe(450);
     expect(w.habits).toHaveLength(1);
-    expect(w.habits[0]).toMatchObject({ id: NAWYK, name: "Czytanie", remindAt: "07:30", showOnToday: true });
+    expect(w.habits[0]).toMatchObject({
+      id: NAWYK,
+      name: "Czytanie",
+      remindAt: "07:30",
+      showOnToday: true,
+    });
     expect(w.habits[0].schedules).toEqual([
-      { validFrom: "2026-10-01", type: "daily", weekdays: [], timesPerWeek: null },
-      { validFrom: "2026-11-10", type: "weekdays", weekdays: [1, 3], timesPerWeek: null },
+      {
+        validFrom: "2026-10-01",
+        type: "daily",
+        weekdays: [],
+        timesPerWeek: null,
+      },
+      {
+        validFrom: "2026-11-10",
+        type: "weekdays",
+        weekdays: [1, 3],
+        timesPerWeek: null,
+      },
     ]);
     expect(w.checks).toEqual([{ habitId: NAWYK, date: "2026-11-17" }]);
     expect(w.sleepLogs).toEqual([
-      { date: "2026-11-18", sleptAt: "23:30", wokeAt: "07:00", feeling: 4, tags: ["Stres"], note: null },
+      {
+        date: "2026-11-18",
+        sleptAt: "23:30",
+        wokeAt: "07:00",
+        feeling: 4,
+        tags: ["Stres"],
+        note: null,
+      },
     ]);
   });
 
@@ -72,8 +136,13 @@ describe("loadHabitsPage", () => {
 
   it("scala odhaczenia z dwóch stron (po 1000 wierszy)", async () => {
     const t = tabele();
-    const strona1 = Array.from({ length: 1000 }, (_, i) => ({ habit_id: NAWYK, date: `d${i}` }));
-    t.habit_checks = fakeTable({ pages: [strona1, [{ habit_id: NAWYK, date: "d1000" }]] });
+    const strona1 = Array.from({ length: 1000 }, (_, i) => ({
+      habit_id: NAWYK,
+      date: `d${i}`,
+    }));
+    t.habit_checks = fakeTable({
+      pages: [strona1, [{ habit_id: NAWYK, date: "d1000" }]],
+    });
     const w = await loadHabitsPage(klient(t), "u1");
     expect(w.checks).toHaveLength(1001);
     expect(t.habit_checks.range).toHaveBeenNthCalledWith(1, 0, 999);
@@ -109,12 +178,17 @@ describe("loadHabitDetail", () => {
   it("zwraca nawyk z notatkami", async () => {
     const w = await loadHabitDetail(klient(tabele()), "u1", NAWYK);
     expect(w?.habits).toHaveLength(1);
-    expect(w?.notes).toEqual([{ id: "n1", date: "2026-11-17", text: "Dobrze poszło" }]);
+    expect(w?.notes).toEqual([
+      { id: "n1", date: "2026-11-17", text: "Dobrze poszło" },
+    ]);
   });
 
   it("odhaczenia szczegółów też są stronicowane", async () => {
     const t = tabele();
-    const strona1 = Array.from({ length: 1000 }, (_, i) => ({ habit_id: NAWYK, date: `d${i}` }));
+    const strona1 = Array.from({ length: 1000 }, (_, i) => ({
+      habit_id: NAWYK,
+      date: `d${i}`,
+    }));
     t.habit_checks = fakeTable({ pages: [strona1, []] });
     const w = await loadHabitDetail(klient(t), "u1", NAWYK);
     expect(w?.checks).toHaveLength(1000);
@@ -125,6 +199,8 @@ describe("loadHabitDetail", () => {
     const t = tabele();
     t.habits = fakeTable({ single: null });
     expect(await loadHabitDetail(klient(t), "u1", NAWYK)).toBeNull();
-    expect(await loadHabitDetail(klient(tabele()), "u1", "nie-uuid")).toBeNull();
+    expect(
+      await loadHabitDetail(klient(tabele()), "u1", "nie-uuid"),
+    ).toBeNull();
   });
 });

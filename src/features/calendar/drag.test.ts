@@ -13,7 +13,9 @@ describe("snapMinutes", () => {
 
 describe("dragResult — tworzenie", () => {
   it("zakres od 600 do 640 obejmuje ostatni skok: 600–645", () => {
-    expect(dragResult("create", { date: D, min: 600 }, { date: D, min: 640 })).toEqual({
+    expect(
+      dragResult("create", { date: D, min: 600 }, { date: D, min: 640 }),
+    ).toEqual({
       date: D,
       startMin: 600,
       durationMin: 45,
@@ -21,7 +23,9 @@ describe("dragResult — tworzenie", () => {
   });
 
   it("przeciągnięcie w górę (640 → 600) daje ten sam zakres 600–645", () => {
-    expect(dragResult("create", { date: D, min: 640 }, { date: D, min: 600 })).toEqual({
+    expect(
+      dragResult("create", { date: D, min: 640 }, { date: D, min: 600 }),
+    ).toEqual({
       date: D,
       startMin: 600,
       durationMin: 45,
@@ -29,7 +33,9 @@ describe("dragResult — tworzenie", () => {
   });
 
   it("bez ruchu daje minimum 15 minut", () => {
-    expect(dragResult("create", { date: D, min: 600 }, { date: D, min: 601 })).toEqual({
+    expect(
+      dragResult("create", { date: D, min: 600 }, { date: D, min: 601 }),
+    ).toEqual({
       date: D,
       startMin: 600,
       durationMin: 15,
@@ -37,7 +43,11 @@ describe("dragResult — tworzenie", () => {
   });
 
   it("nie wychodzi poza 24:00", () => {
-    const wynik = dragResult("create", { date: D, min: 1400 }, { date: D, min: 1440 });
+    const wynik = dragResult(
+      "create",
+      { date: D, min: 1400 },
+      { date: D, min: 1440 },
+    );
     expect(wynik).toEqual({ date: D, startMin: 1395, durationMin: 45 });
   });
 });
@@ -88,7 +98,9 @@ describe("dragResult — przesuwanie", () => {
   });
 
   it("bez oryginału zwraca null", () => {
-    expect(dragResult("move", { date: D, min: 500 }, { date: D, min: 560 })).toBeNull();
+    expect(
+      dragResult("move", { date: D, min: 500 }, { date: D, min: 560 }),
+    ).toBeNull();
   });
 });
 

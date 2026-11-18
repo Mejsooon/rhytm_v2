@@ -13,7 +13,16 @@ function dane(hidden = false): CalendarData {
     exceptions: [],
     tasks: [],
     categories: [
-      { id: "c1", name: "Studia", color: "#0070f3", hidden, is_system: false, position: 1, user_id: "u1", created_at: null },
+      {
+        id: "c1",
+        name: "Studia",
+        color: "#0070f3",
+        hidden,
+        is_system: false,
+        position: 1,
+        user_id: "u1",
+        created_at: null,
+      },
     ],
     profile: { timezone: "Europe/Warsaw", weekStart: "mon", clock: "24" },
   };
@@ -61,7 +70,9 @@ describe("useCalendarStore", () => {
     });
     expect(result.current.data.categories[0].hidden).toBe(false);
     expect(result.current.pending).toBe(0);
-    expect(toastError).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+    expect(toastError).toHaveBeenCalledWith(
+      "Nie udało się zapisać. Spróbuj ponownie.",
+    );
   });
 
   it("wyjątek rzucony przez akcję też cofa zmianę", async () => {
@@ -87,10 +98,14 @@ describe("useCalendarStore", () => {
         ],
       };
     };
-    const ukryjId = (id: string) => (d: CalendarData): CalendarData => ({
-      ...d,
-      categories: d.categories.map((c) => (c.id === id ? { ...c, hidden: true } : c)),
-    });
+    const ukryjId =
+      (id: string) =>
+      (d: CalendarData): CalendarData => ({
+        ...d,
+        categories: d.categories.map((c) =>
+          c.id === id ? { ...c, hidden: true } : c,
+        ),
+      });
     let wejscie = dwie(false);
     const { result, rerender } = renderHook(() => useCalendarStore(wejscie));
     let koniec1!: (v: { ok: true }) => void;
@@ -98,8 +113,14 @@ describe("useCalendarStore", () => {
     let p1!: Promise<boolean>;
     let p2!: Promise<boolean>;
     act(() => {
-      p1 = result.current.applyOptimistic(ukryjId("c1"), () => new Promise((r) => (koniec1 = r)));
-      p2 = result.current.applyOptimistic(ukryjId("c2"), () => new Promise((r) => (koniec2 = r)));
+      p1 = result.current.applyOptimistic(
+        ukryjId("c1"),
+        () => new Promise((r) => (koniec1 = r)),
+      );
+      p2 = result.current.applyOptimistic(
+        ukryjId("c2"),
+        () => new Promise((r) => (koniec2 = r)),
+      );
     });
     expect(result.current.pending).toBe(2);
 
@@ -122,7 +143,10 @@ describe("useCalendarStore", () => {
     expect(result.current.pending).toBe(0);
 
     // Odświeżenie wywołane przez tę akcję przynosi dane z obiema zmianami
-    wejscie = { ...dwie(true), categories: dwie(true).categories.map((c) => ({ ...c, hidden: true })) };
+    wejscie = {
+      ...dwie(true),
+      categories: dwie(true).categories.map((c) => ({ ...c, hidden: true })),
+    };
     rerender();
     expect(result.current.data.categories[1].hidden).toBe(true);
   });
@@ -133,7 +157,10 @@ describe("useCalendarStore", () => {
     let blad!: (v: { ok: false; message: string }) => void;
     let p!: Promise<boolean>;
     act(() => {
-      p = result.current.applyOptimistic(ukryj, () => new Promise((r) => (blad = r)));
+      p = result.current.applyOptimistic(
+        ukryj,
+        () => new Promise((r) => (blad = r)),
+      );
     });
     wejscie = dane(false); // nowa tożsamość
     rerender();

@@ -78,7 +78,7 @@ a{color:#171717}a:hover{color:#000000}
             <p style="margin: 4px 0 16px; color: #666666">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p>
             <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
               <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Cel snu<span style="display: flex; gap: 6px"><button type="button" class="btn" aria-label="Krócej" onClick="{{sleepM}}" style="padding: 7px 11px">−</button><input class="inp mono" type="text" value="{{g.sleep}}" readonly aria-label="Cel snu" style="text-align: center"><button type="button" class="btn" aria-label="Dłużej" onClick="{{sleepP}}" style="padding: 7px 11px">+</button></span></label>
-              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Cel treningowy</span><span style="display: flex; gap: 6px"><span role="group" aria-label="Rodzaj celu treningowego" style="display: flex; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; flex: none"><button type="button" aria-pressed="{{goal.tr}}" onClick="{{goal.setTr}}" style="{{goal.trS}}">Treningi</button><button type="button" aria-pressed="{{goal.km}}" onClick="{{goal.setKm}}" style="{{goal.kmS}}">Km</button></span><input class="inp mono" type="text" inputMode="numeric" value="{{goal.val}}" onChange="{{goal.on}}" aria-label="{{goal.lbl}}" style="min-width: 0"></span><span class="mono" style="font-size: 12px; font-weight: 400; color: #6b6b6b">{{goal.hint}}</span><sc-if value="{{goalErr}}" hint-placeholder-val="{{false}}"><span class="err">{{goal.err}}</span></sc-if></div>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Cele treningowe</span><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 8px"><button type="button" role="checkbox" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}" style="{{t.boxS}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></button><span style="flex: 1; min-width: 0; font-weight: 400">{{t.lbl}}</span><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><input class="inp mono" type="text" inputMode="numeric" value="{{t.val}}" onChange="{{t.onVal}}" aria-label="{{t.lbl}}" style="width: 72px; text-align: right"></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><span class="mono" style="width: 72px; text-align: right; font-size: 12px; font-weight: 400; color: #a3a3a3">wył.</span></sc-if></span></sc-for><sc-if value="{{goalErr}}" hint-placeholder-val="{{false}}"><span class="err">{{goalErrTxt}}</span></sc-if></div>
               <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Waluta stron</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.cur.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.cur.exp}}" aria-label="Waluta stron"><span>{{dd.cur.txt}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{dd.cur.sub}}</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.cur.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Waluta stron"><sc-for list="{{dd.cur.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="mono" style="font-size: 12px; color: #6b6b6b">{{o.sub}}</span></span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
               <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500"><span>Tydzień zaczyna się w</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.week.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.week.exp}}" aria-label="Początek tygodnia"><span>{{dd.week.txt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dd.week.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Początek tygodnia"><sc-for list="{{dd.week.opts}}" as="o" hint-placeholder-count="2"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><span style="color: #15803d">{{o.check}}</span></button></sc-for></div></sc-if></span></label>
             </div>
@@ -116,15 +116,19 @@ class Component extends DCLogic {
     const S = this.state || {};
     const P0 = S.pSaved || { name: 'Mejson', tz: 'Europe/Warsaw', kg: '', cm: '' };
     const P = S.p || P0;
-    const G0 = S.gSaved || { sleep: 480, goalType: 'tr', tr: '3', km: '25', cur: 'PLN', week: 'pn' };
+    const G0 = S.gSaved || { sleep: 480, trOn: true, kmOn: true, tr: '3', km: '25', cur: 'PLN', week: 'pn' };
     const G = S.g || G0;
     const same = (a, b) => Object.keys(a).every((k) => String(a[k]) === String(b[k]));
     const n = (v) => parseFloat(String(v || '').replace(',', '.'));
     const kgErr = P.kg !== '' && !(n(P.kg) >= 30 && n(P.kg) <= 250);
     const cmErr = P.cm !== '' && !(n(P.cm) >= 120 && n(P.cm) <= 230);
     const nameErr = !String(P.name).trim();
-    // Cel treningowy: liczba treningów (1–14) albo kilometrów (1–300) w tygodniu
-    const goalErr = G.goalType === 'km' ? !(n(G.km) >= 1 && n(G.km) <= 300) : !(n(G.tr) >= 1 && n(G.tr) <= 14 && Number.isInteger(n(G.tr)));
+    // Cele treningowe: co najmniej jeden włączony; treningi 1–14 (całe), km 1–300
+    const trErr = G.trOn && !(n(G.tr) >= 1 && n(G.tr) <= 14 && Number.isInteger(n(G.tr)));
+    const kmErr = G.kmOn && !(n(G.km) >= 1 && n(G.km) <= 300);
+    const noGoal = !G.trOn && !G.kmOn;
+    const goalErr = noGoal || trErr || kmErr;
+    const goalErrTxt = noGoal ? 'Włącz co najmniej jeden cel.' : trErr ? 'Treningi: podaj liczbę 1–14.' : 'Kilometry: podaj liczbę 1–300.';
     const pDirty = !same(P, P0), gDirty = !same(G, G0);
     const pOk = pDirty && !kgErr && !cmErr && !nameErr, gOk = gDirty && !goalErr;
     const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
@@ -168,20 +172,14 @@ class Component extends DCLogic {
       pReset: () => this.setState({ p: null, pMsg: '' }),
       pMsg: S.pMsg || (pDirty ? 'Masz niezapisane zmiany.' : 'Waga i wzrost są opcjonalne.'), pMsgS: S.pMsg ? green : grey,
       g: Object.assign({}, G, { sleep: hm(G.sleep) }), onG, goalErr, gDirty,
-      goal: (() => {
-        const km = G.goalType === 'km';
-        const on = 'border:0;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer;background:#f0f0f0;color:#171717;font-weight:500';
-        const off = 'border:0;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer;background:#ffffff;color:#666666';
-        return {
-          tr: km ? 'false' : 'true', km: km ? 'true' : 'false', trS: km ? off : on, kmS: (km ? on : off) + ';border-left:1px solid #e0e0e0',
-          setTr: () => this.setState({ g: Object.assign({}, G, { goalType: 'tr' }), gMsg: '' }),
-          setKm: () => this.setState({ g: Object.assign({}, G, { goalType: 'km' }), gMsg: '' }),
-          val: km ? G.km : G.tr, lbl: km ? 'Kilometry w tygodniu' : 'Treningi w tygodniu',
-          hint: km ? 'km w tygodniu' : 'treningów w tygodniu',
-          err: km ? 'Podaj liczbę 1–300.' : 'Podaj liczbę 1–14.',
-          on: (e) => this.setState({ g: Object.assign({}, G, km ? { km: e.target.value } : { tr: e.target.value }), gMsg: '' })
-        };
-      })(),
+      goalErrTxt,
+      tg: [['tr', 'Treningi w tygodniu'], ['km', 'Kilometry biegu w tygodniu']].map((t) => {
+        const on = !!G[t[0] + 'On'];
+        return { lbl: t[1], on: on ? 'true' : 'false', isOn: on, off: !on, val: G[t[0]],
+          boxS: 'width:18px;height:18px;flex:none;border-radius:5px;display:grid;place-items:center;padding:0;cursor:pointer;border:1px solid ' + (on ? '#171717' : '#d4d4d4') + ';background:' + (on ? '#171717' : '#ffffff') + ';color:' + (on ? '#ffffff' : 'transparent'),
+          toggle: () => this.setState({ g: Object.assign({}, G, { [t[0] + 'On']: !on }), gMsg: '' }),
+          onVal: (e) => this.setState({ g: Object.assign({}, G, { [t[0]]: e.target.value }), gMsg: '' }) };
+      }),
       sleepM: () => this.setState({ g: Object.assign({}, G, { sleep: Math.max(300, G.sleep - 15) }), gMsg: '' }),
       sleepP: () => this.setState({ g: Object.assign({}, G, { sleep: Math.min(660, G.sleep + 15) }), gMsg: '' }),
       gDis: gOk ? 'false' : 'true',

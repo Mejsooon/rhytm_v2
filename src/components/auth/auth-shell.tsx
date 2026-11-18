@@ -45,7 +45,9 @@ export function AuthShell({
             {headerAction.label}
           </Link>
         )}
-        {headerNote && <span className="font-mono text-xs text-[#6b6b6b]">{headerNote}</span>}
+        {headerNote && (
+          <span className="font-mono text-xs text-[#6b6b6b]">{headerNote}</span>
+        )}
       </header>
 
       {phoneBack && (
@@ -55,7 +57,11 @@ export function AuthShell({
             aria-label="Wstecz"
             className="inline-flex size-11 items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
           >
-            <ChevronLeft aria-hidden="true" className="size-[22px]" strokeWidth={2} />
+            <ChevronLeft
+              aria-hidden="true"
+              className="size-[22px]"
+              strokeWidth={2}
+            />
           </Link>
         </header>
       )}
@@ -70,7 +76,12 @@ export function AuthShell({
             phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
           )}
         >
-          {!phoneBack && <RhytmLogo size={48} className="mb-3.5 justify-center min-[800px]:hidden" />}
+          {!phoneBack && (
+            <RhytmLogo
+              size={48}
+              className="mb-3.5 justify-center min-[800px]:hidden"
+            />
+          )}
           {children}
         </div>
       </main>

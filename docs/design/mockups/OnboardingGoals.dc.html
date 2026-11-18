@@ -31,6 +31,10 @@ a{color:#171717}a:hover{color:#15803d}
 .opt[aria-pressed="true"] .box{background:#171717;border-color:#171717;color:#ffffff}
 .opt[aria-disabled="true"],.opt[aria-disabled="true"]:hover{cursor:default;background:#fafafa;border-color:#e0e0e0;box-shadow:none}
 .opt[aria-disabled="true"] .box{background:#f4f4f5;border-color:#e0e0e0;color:#737373}
+.chk{display:inline-flex;align-items:center;gap:8px;padding:0;border:0;background:none;font:inherit;font-weight:500;color:#171717;cursor:pointer;text-align:left}
+.chk[aria-checked="true"] .box{background:#171717;border-color:#171717;color:#ffffff}
+.chk[aria-checked="false"] .box{color:transparent}
+.inp:disabled{background:#fafafa;color:#a3a3a3}
 .sw{width:36px;height:20px;border-radius:10px;border:0;padding:2px;background:#d4d4d4;cursor:pointer;display:flex;flex:none;transition:background-color 150ms cubic-bezier(0.22,1,0.36,1)}
 .sw span{width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:transform 150ms cubic-bezier(0.22,1,0.36,1)}
 .sw[aria-checked="true"]{background:#15803d}
@@ -61,7 +65,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
             </div>
             <p style="margin: -8px 0 0; font-size: 13px; color: #737373">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-              <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="fld" style="grid-column: 1 / -1"><span>Cel treningowy</span><div style="display: flex; gap: 8px; align-items: center"><div class="seg" role="group" aria-label="Rodzaj celu treningowego" style="flex: none"><button type="button" aria-pressed="{{gTr}}" onClick="{{setTr}}" style="padding: 0 12px; white-space: nowrap">Treningi / tydz.</button><button type="button" aria-pressed="{{gKm}}" onClick="{{setKm}}" style="padding: 0 12px; white-space: nowrap">Km / tydz.</button></div><input class="inp mono" type="text" inputMode="numeric" value="{{goalVal}}" onChange="{{onGoal}}" aria-label="{{goalLbl}}" style="flex: 1; min-width: 0"></div></div></sc-if>
+              <div class="fld" style="grid-column: 1 / -1"><span>Cele treningowe <span class="hint">· włącz jeden albo oba</span></span><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px"><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><div style="display: flex; flex-direction: column; gap: 8px"><button type="button" class="chk" role="checkbox" aria-checked="{{t.on}}" onClick="{{t.toggle}}"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg></span>{{t.lbl}}</button><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><input class="inp mono" type="text" inputMode="numeric" value="{{t.val}}" onChange="{{t.onVal}}" aria-label="{{t.lbl}}"></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><input class="inp mono" type="text" value="—" aria-label="{{t.lbl}}" disabled></sc-if></div></sc-for></div><sc-if value="{{noGoal}}" hint-placeholder-val="{{false}}"><span style="font-weight: 400; color: #b91c1c">Włącz co najmniej jeden cel.</span></sc-if></div>
               <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><label class="fld">Cel snu<input class="inp mono" type="text" value="{{sleep}}" onChange="{{onSleep}}"></label></sc-if>
             </div>
           </div>
@@ -115,7 +119,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, goalType: 'tr', tr: '3', km: '25', sleep: '8 h' }; }
+  constructor(p) { super(p); this.state = { goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, trOn: true, kmOn: true, tr: '3', km: '25', sleep: '8 h' }; }
   renderVals() {
 
     const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo',
@@ -163,7 +167,11 @@ const v = (e) => (e && e.target ? e.target.value : e);
     const LOCKED = { plan: true, sport: true, habits: true };
     const goals = GO.map((g) => { const lk = !!LOCKED[g[0]]; const on = lk || !!G[g[0]]; return { title: g[1], desc: g[2], on: on ? 'true' : 'false', locked: lk ? 'true' : 'false', isLocked: lk, isFree: !lk, tip: lk ? 'Zawsze włączone' : '',
       toggle: () => { if (lk) return; const ng = Object.assign({}, G, { [g[0]]: !on }); const np = Object.assign({}, S.pages); if (g[3]) np[g[3]] = !on; this.setState({ goals: ng, pages: np }); } }; });
-    return { pv, goals, showKm: true, showSleep: true, gTr: (S.goalType || 'tr') === 'tr' ? 'true' : 'false', gKm: S.goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }), goalVal: S.goalType === 'km' ? (S.km || '25') : (S.tr || '3'), goalLbl: S.goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', onGoal: (e) => this.setState(S.goalType === 'km' ? { km: v(e) } : { tr: v(e) }), sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
+    const TG = [['tr', 'Treningi w tygodniu', '3'], ['km', 'Kilometry biegu w tygodniu', '25']];
+    const on = { tr: S.trOn !== false, km: S.kmOn !== false };
+    const tg = TG.map((t) => ({ lbl: t[1], on: on[t[0]] ? 'true' : 'false', off: !on[t[0]], isOn: on[t[0]], val: S[t[0]] || t[2],
+      toggle: () => this.setState({ [t[0] + 'On']: !on[t[0]] }), onVal: (e) => this.setState({ [t[0]]: v(e) }) }));
+    return { pv, goals, tg, noGoal: !on.tr && !on.km, showSleep: true, sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
   }
 }
 </script>

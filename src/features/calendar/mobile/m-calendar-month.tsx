@@ -43,7 +43,9 @@ export function MCalendarMonth({
   }
 
   const miesiac0 = Number(date.slice(5, 7)) - 1;
-  const rzedy = Array.from({ length: 6 }, (_, i) => days.slice(i * 7, i * 7 + 7)).filter((rzad) =>
+  const rzedy = Array.from({ length: 6 }, (_, i) =>
+    days.slice(i * 7, i * 7 + 7),
+  ).filter((rzad) =>
     rzad.some((dzien) => Number(dzien.slice(5, 7)) - 1 === miesiac0),
   );
   const wybraneBloki = occurrences.filter((o) => o.date === wybrany);
@@ -63,7 +65,9 @@ export function MCalendarMonth({
             const [, m, d] = dzien.split("-").map(Number);
             if (m - 1 !== miesiac0) {
               // Dzień sąsiedniego miesiąca: puste miejsce jak w makiecie
-              return <span key={dzien} aria-hidden="true" className="h-[46px]" />;
+              return (
+                <span key={dzien} aria-hidden="true" className="h-[46px]" />
+              );
             }
             const aktywny = dzien === wybrany;
             // Kategorie dnia bez powtórzeń, w kolejności bloków; bez kategorii to osobny „kolor”
@@ -71,7 +75,11 @@ export function MCalendarMonth({
               ...new Set(
                 occurrences
                   .filter((o) => o.date === dzien)
-                  .map((o) => categories.find((k) => k.id === o.categoryId)?.color ?? KOLOR_BRAK),
+                  .map(
+                    (o) =>
+                      categories.find((k) => k.id === o.categoryId)?.color ??
+                      KOLOR_BRAK,
+                  ),
               ),
             ].slice(0, 3);
             return (
@@ -82,7 +90,11 @@ export function MCalendarMonth({
                 aria-pressed={aktywny}
                 onClick={() => setWybrany(dzien)}
                 className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] ${
-                  aktywny ? "bg-[#171717]" : dzien === today ? "bg-[#f0f0f0]" : "bg-transparent"
+                  aktywny
+                    ? "bg-[#171717]"
+                    : dzien === today
+                      ? "bg-[#f0f0f0]"
+                      : "bg-transparent"
                 }`}
               >
                 <span
@@ -117,19 +129,29 @@ export function MCalendarMonth({
           </Link>
         </div>
         {wybraneBloki.map((o) => {
-          const kolor = categories.find((k) => k.id === o.categoryId)?.color ?? KOLOR_BRAK;
+          const kolor =
+            categories.find((k) => k.id === o.categoryId)?.color ?? KOLOR_BRAK;
           return (
             <button
               key={o.key}
               type="button"
               onClick={() => onBlockClick(o.key)}
               className="flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-[10px] px-3 text-left text-[#171717]"
-              style={{ background: `${kolor}14`, borderLeft: `3px solid ${kolor}` }}
+              style={{
+                background: `${kolor}14`,
+                borderLeft: `3px solid ${kolor}`,
+              }}
             >
               <span className="w-[42px] font-mono text-xs text-[#555555]">
-                {formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}
+                {formatClockTime(
+                  Math.floor(o.startMin / 60),
+                  o.startMin % 60,
+                  clock,
+                )}
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{o.title}</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {o.title}
+              </span>
             </button>
           );
         })}

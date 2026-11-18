@@ -19,13 +19,19 @@ const sen = {
 
 describe("habitInputSchema", () => {
   it("odrzuca pustą nazwę", () => {
-    expect(habitInputSchema.safeParse({ ...nawyk, name: "   " }).success).toBe(false);
+    expect(habitInputSchema.safeParse({ ...nawyk, name: "   " }).success).toBe(
+      false,
+    );
   });
 
   it("odrzuca times_per_week 0 i 8, przyjmuje 1 i 7", () => {
     const wersja = (n: number) => ({
       ...nawyk,
-      schedule: { type: "times_per_week" as const, weekdays: [], timesPerWeek: n },
+      schedule: {
+        type: "times_per_week" as const,
+        weekdays: [],
+        timesPerWeek: n,
+      },
     });
     expect(habitInputSchema.safeParse(wersja(0)).success).toBe(false);
     expect(habitInputSchema.safeParse(wersja(8)).success).toBe(false);
@@ -36,7 +42,11 @@ describe("habitInputSchema", () => {
   it("odrzuca weekdays bez dni i z dniem spoza 1..7", () => {
     const wersja = (dni: number[]) => ({
       ...nawyk,
-      schedule: { type: "weekdays" as const, weekdays: dni, timesPerWeek: null },
+      schedule: {
+        type: "weekdays" as const,
+        weekdays: dni,
+        timesPerWeek: null,
+      },
     });
     expect(habitInputSchema.safeParse(wersja([])).success).toBe(false);
     expect(habitInputSchema.safeParse(wersja([0, 1])).success).toBe(false);
@@ -46,9 +56,17 @@ describe("habitInputSchema", () => {
   it("weekdays z 7 dniami zapisuje jako daily, a dni sortuje i usuwa duplikaty", () => {
     const siedem = habitInputSchema.parse({
       ...nawyk,
-      schedule: { type: "weekdays", weekdays: [7, 6, 5, 4, 3, 2, 1], timesPerWeek: null },
+      schedule: {
+        type: "weekdays",
+        weekdays: [7, 6, 5, 4, 3, 2, 1],
+        timesPerWeek: null,
+      },
     });
-    expect(siedem.schedule).toEqual({ type: "daily", weekdays: [], timesPerWeek: null });
+    expect(siedem.schedule).toEqual({
+      type: "daily",
+      weekdays: [],
+      timesPerWeek: null,
+    });
 
     const kilka = habitInputSchema.parse({
       ...nawyk,
@@ -62,12 +80,20 @@ describe("habitInputSchema", () => {
       ...nawyk,
       schedule: { type: "daily", weekdays: [1, 2], timesPerWeek: 3 },
     });
-    expect(w.schedule).toEqual({ type: "daily", weekdays: [], timesPerWeek: null });
+    expect(w.schedule).toEqual({
+      type: "daily",
+      weekdays: [],
+      timesPerWeek: null,
+    });
   });
 
   it("sprawdza format godziny przypomnienia", () => {
-    expect(habitInputSchema.safeParse({ ...nawyk, remindAt: "07:30" }).success).toBe(true);
-    expect(habitInputSchema.safeParse({ ...nawyk, remindAt: "25:00" }).success).toBe(false);
+    expect(
+      habitInputSchema.safeParse({ ...nawyk, remindAt: "07:30" }).success,
+    ).toBe(true);
+    expect(
+      habitInputSchema.safeParse({ ...nawyk, remindAt: "25:00" }).success,
+    ).toBe(false);
   });
 });
 
@@ -77,20 +103,34 @@ describe("sleepInputSchema", () => {
   });
 
   it("odrzuca nieznany tag, przyjmuje wszystkie 5 stałych", () => {
-    expect(sleepInputSchema.safeParse({ ...sen, tags: ["Pizza"] }).success).toBe(false);
-    expect(sleepInputSchema.safeParse({ ...sen, tags: [...SLEEP_TAGS] }).success).toBe(true);
+    expect(
+      sleepInputSchema.safeParse({ ...sen, tags: ["Pizza"] }).success,
+    ).toBe(false);
+    expect(
+      sleepInputSchema.safeParse({ ...sen, tags: [...SLEEP_TAGS] }).success,
+    ).toBe(true);
     expect(SLEEP_TAGS).toHaveLength(5);
   });
 
   it("odrzuca równe godziny z właściwym komunikatem", () => {
-    const w = sleepInputSchema.safeParse({ ...sen, sleptAt: "07:00", wokeAt: "07:00" });
+    const w = sleepInputSchema.safeParse({
+      ...sen,
+      sleptAt: "07:00",
+      wokeAt: "07:00",
+    });
     expect(w.success).toBe(false);
-    expect(w.error?.issues[0]?.message).toBe("Godziny zaśnięcia i pobudki muszą się różnić.");
+    expect(w.error?.issues[0]?.message).toBe(
+      "Godziny zaśnięcia i pobudki muszą się różnić.",
+    );
   });
 
   it("odrzuca ocenę poza 1..5 i zbyt długą notatkę", () => {
-    expect(sleepInputSchema.safeParse({ ...sen, feeling: 6 }).success).toBe(false);
-    expect(sleepInputSchema.safeParse({ ...sen, note: "x".repeat(1001) }).success).toBe(false);
+    expect(sleepInputSchema.safeParse({ ...sen, feeling: 6 }).success).toBe(
+      false,
+    );
+    expect(
+      sleepInputSchema.safeParse({ ...sen, note: "x".repeat(1001) }).success,
+    ).toBe(false);
   });
 
   it("pustą notatkę zamienia na null", () => {

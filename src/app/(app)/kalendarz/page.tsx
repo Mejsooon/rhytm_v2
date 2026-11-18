@@ -29,9 +29,16 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   const dzis = todayIso(profil.timezone);
   const parametry = await searchParams;
   const { view, date } = parseCalendarParams(parametry, dzis);
-  const jawnyWidok = parametry.widok === "dzien" || parametry.widok === "tydzien" || parametry.widok === "miesiac";
+  const jawnyWidok =
+    parametry.widok === "dzien" ||
+    parametry.widok === "tydzien" ||
+    parametry.widok === "miesiac";
   // Dzień na telefonie pokazuje pasek tygodnia z kropkami, więc dane obejmują cały tydzień
-  const zakres = viewRange(view === "dzien" ? "tydzien" : view, date, profil.weekStart);
+  const zakres = viewRange(
+    view === "dzien" ? "tydzien" : view,
+    date,
+    profil.weekStart,
+  );
   const dane = await loadCalendar(supabase, user.id, zakres, profil);
 
   return (
@@ -46,7 +53,11 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   );
 }
 
-export default function KalendarzPage({ searchParams }: { searchParams: Parametry }) {
+export default function KalendarzPage({
+  searchParams,
+}: {
+  searchParams: Parametry;
+}) {
   return (
     <Suspense fallback={<ModuleHeader title="Kalendarz" />}>
       <Kalendarz searchParams={searchParams} />

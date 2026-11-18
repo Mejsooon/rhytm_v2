@@ -13,22 +13,45 @@ export const SLEEP_TAGS = [
   "Stres",
 ] as const;
 
-const godzina = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Podaj godzinę w formacie GG:MM.");
+const godzina = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Podaj godzinę w formacie GG:MM.");
 
 export const habitInputSchema = z.object({
-  name: z.string().trim().min(1, "Podaj nazwę nawyku.").max(80, "Nazwa może mieć maksymalnie 80 znaków."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Podaj nazwę nawyku.")
+    .max(80, "Nazwa może mieć maksymalnie 80 znaków."),
   schedule: z
     .object({
       type: z.enum(["daily", "weekdays", "times_per_week"]),
-      weekdays: z.array(z.number().int().min(1, "Nieprawidłowy dzień tygodnia.").max(7, "Nieprawidłowy dzień tygodnia.")),
+      weekdays: z.array(
+        z
+          .number()
+          .int()
+          .min(1, "Nieprawidłowy dzień tygodnia.")
+          .max(7, "Nieprawidłowy dzień tygodnia."),
+      ),
       timesPerWeek: z.number().int().nullable(),
     })
     .superRefine((s, ctx) => {
       if (s.type === "weekdays" && s.weekdays.length === 0) {
-        ctx.addIssue({ code: "custom", message: "Wybierz przynajmniej jeden dzień.", path: ["weekdays"] });
+        ctx.addIssue({
+          code: "custom",
+          message: "Wybierz przynajmniej jeden dzień.",
+          path: ["weekdays"],
+        });
       }
-      if (s.type === "times_per_week" && (s.timesPerWeek === null || s.timesPerWeek < 1 || s.timesPerWeek > 7)) {
-        ctx.addIssue({ code: "custom", message: "Podaj od 1 do 7 razy w tygodniu.", path: ["timesPerWeek"] });
+      if (
+        s.type === "times_per_week" &&
+        (s.timesPerWeek === null || s.timesPerWeek < 1 || s.timesPerWeek > 7)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Podaj od 1 do 7 razy w tygodniu.",
+          path: ["timesPerWeek"],
+        });
       }
     })
     // Normalizacja do postaci zgodnej z checkami w bazie: dni tylko przy weekdays, X tylko przy times_per_week,
@@ -36,13 +59,26 @@ export const habitInputSchema = z.object({
     .transform((s) => {
       if (s.type === "weekdays") {
         const dni = [...new Set(s.weekdays)].sort((a, b) => a - b);
-        if (dni.length === 7) return { type: "daily" as const, weekdays: [] as number[], timesPerWeek: null };
+        if (dni.length === 7)
+          return {
+            type: "daily" as const,
+            weekdays: [] as number[],
+            timesPerWeek: null,
+          };
         return { type: "weekdays" as const, weekdays: dni, timesPerWeek: null };
       }
       if (s.type === "times_per_week") {
-        return { type: "times_per_week" as const, weekdays: [] as number[], timesPerWeek: s.timesPerWeek };
+        return {
+          type: "times_per_week" as const,
+          weekdays: [] as number[],
+          timesPerWeek: s.timesPerWeek,
+        };
       }
-      return { type: "daily" as const, weekdays: [] as number[], timesPerWeek: null };
+      return {
+        type: "daily" as const,
+        weekdays: [] as number[],
+        timesPerWeek: null,
+      };
     }),
   remindAt: godzina.nullable(),
   showOnToday: z.boolean(),
@@ -53,8 +89,18 @@ export const sleepInputSchema = z
     date: isoDateSchema,
     sleptAt: godzina,
     wokeAt: godzina,
-    feeling: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).nullable(),
-    tags: z.array(z.enum(SLEEP_TAGS, { error: "Nieznany tag." })).transform((t) => [...new Set(t)]),
+    feeling: z
+      .union([
+        z.literal(1),
+        z.literal(2),
+        z.literal(3),
+        z.literal(4),
+        z.literal(5),
+      ])
+      .nullable(),
+    tags: z
+      .array(z.enum(SLEEP_TAGS, { error: "Nieznany tag." }))
+      .transform((t) => [...new Set(t)]),
     note: z
       .string()
       .max(1000, "Notatka może mieć maksymalnie 1000 znaków.")

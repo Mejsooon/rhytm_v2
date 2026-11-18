@@ -28,7 +28,9 @@ function Wrapper({ onChange }: { onChange?: (v: string) => void }) {
 describe("Dropdown", () => {
   it("klik otwiera listbox; wybrana opcja ma aria-selected i znak ✓", async () => {
     render(<Wrapper />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     const wybrana = screen.getByRole("option", { name: /Europa\/Warszawa/ });
     expect(wybrana).toHaveAttribute("aria-selected", "true");
@@ -42,7 +44,9 @@ describe("Dropdown", () => {
   it("klik opcji woła onChange i zamyka listę", async () => {
     const onChange = vi.fn();
     render(<Wrapper onChange={onChange} />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     await userEvent.click(screen.getByRole("option", { name: "UTC" }));
     expect(onChange).toHaveBeenCalledWith("utc");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
@@ -51,7 +55,9 @@ describe("Dropdown", () => {
   it("ArrowDown + Enter wybiera następną opcję", async () => {
     const onChange = vi.fn();
     render(<Wrapper onChange={onChange} />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     await userEvent.keyboard("{ArrowDown}{Enter}");
     expect(onChange).toHaveBeenCalledWith("utc");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
@@ -60,7 +66,9 @@ describe("Dropdown", () => {
   it("Escape zamyka bez onChange", async () => {
     const onChange = vi.fn();
     render(<Wrapper onChange={onChange} />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
@@ -68,14 +76,18 @@ describe("Dropdown", () => {
 
   it("klik poza zamyka listę", async () => {
     render(<Wrapper />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     await userEvent.click(document.body);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("renderuje hint i plakietkę", async () => {
     render(<Wrapper />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     expect(screen.getByText("UTC+01:00")).toBeInTheDocument();
     expect(screen.getByText("Nowe")).toBeInTheDocument();
   });
@@ -86,7 +98,9 @@ describe("Dropdown", () => {
         <Wrapper />
       </div>,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
     const lista = screen.getByRole("listbox");
     expect(screen.getByTestId("rodzic")).not.toContainElement(lista);
     expect(lista).toBeVisible();

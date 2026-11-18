@@ -11,4 +11,6 @@ export const CATEGORY_COLORS = [
 ] as const;
 
 // Same wartości hex — do walidacji koloru w akcjach
-export const CATEGORY_COLOR_VALUES: string[] = CATEGORY_COLORS.map((c) => c.hex);
+export const CATEGORY_COLOR_VALUES: string[] = CATEGORY_COLORS.map(
+  (c) => c.hex,
+);

@@ -32,7 +32,12 @@ export function TurnstileWidget({
       <Turnstile
         ref={ref}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? KLUCZ_TESTOWY}
-        options={{ appearance: "interaction-only", size: "flexible", theme: "light", language: "pl" }}
+        options={{
+          appearance: "interaction-only",
+          size: "flexible",
+          theme: "light",
+          language: "pl",
+        }}
       />
     </div>
   );

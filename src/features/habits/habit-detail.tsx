@@ -14,7 +14,14 @@ import { HabitMonth } from "./habit-month";
 import { HabitNotes } from "./habit-notes";
 import type { HabitDetailData } from "./load-habits";
 import { MHabitDetail } from "./mobile/m-habit-detail";
-import { currentStreak, longestStreak, scheduleOn, successRate30, totalChecks, type Checks } from "./model";
+import {
+  currentStreak,
+  longestStreak,
+  scheduleOn,
+  successRate30,
+  totalChecks,
+  type Checks,
+} from "./model";
 import { describeSchedule, streakLabel } from "./text";
 
 // „12 dni” → wartość „12” i jednostka „dni” (jednostka mniejszą czcionką jak „razy” w makiecie)
@@ -28,11 +35,17 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   const [edycja, setEdycja] = useState(false);
   const [usuwanie, setUsuwanie] = useState(false);
 
-  const dniOdhaczone = new Set(data.checks.filter((c) => c.habitId === habit.id).map((c) => c.date));
+  const dniOdhaczone = new Set(
+    data.checks.filter((c) => c.habitId === habit.id).map((c) => c.date),
+  );
   const checks: Checks = new Map([[habit.id, dniOdhaczone]]);
 
-  const seria = wartoscSerii(currentStreak(habit, checks, data.today, data.weekStart));
-  const najdluzsza = wartoscSerii(longestStreak(habit, checks, data.today, data.weekStart));
+  const seria = wartoscSerii(
+    currentStreak(habit, checks, data.today, data.weekStart),
+  );
+  const najdluzsza = wartoscSerii(
+    longestStreak(habit, checks, data.today, data.weekStart),
+  );
   const skutecznosc = successRate30(habit, checks, data.today);
   const lacznie = totalChecks(habit.id, checks);
 
@@ -49,20 +62,34 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
 
   const kafelki = [
     { etykieta: "Seria", wartosc: seria.wartosc, jednostka: seria.jednostka },
-    { etykieta: "Najdłuższa seria", wartosc: najdluzsza.wartosc, jednostka: najdluzsza.jednostka },
-    { etykieta: "30 dni", wartosc: skutecznosc === null ? "—" : `${skutecznosc}%`, jednostka: "" },
+    {
+      etykieta: "Najdłuższa seria",
+      wartosc: najdluzsza.wartosc,
+      jednostka: najdluzsza.jednostka,
+    },
+    {
+      etykieta: "30 dni",
+      wartosc: skutecznosc === null ? "—" : `${skutecznosc}%`,
+      jednostka: "",
+    },
     { etykieta: "Łącznie", wartosc: String(lacznie), jednostka: "razy" },
   ];
 
   // Historia: od najnowszej; zakres kończy się dzień przed początkiem następnej wersji
-  const historia = [...habit.schedules].reverse().map((wersja, i, wszystkie) => {
-    const nastepna = i === 0 ? null : wszystkie[i - 1];
-    let zakres = `od ${formatDatePl(wersja.validFrom)}`;
-    if (nastepna) {
-      zakres = `${formatDatePl(wersja.validFrom).slice(0, 5)} – ${formatDatePl(addDays(nastepna.validFrom, -1))}`;
-    }
-    return { klucz: wersja.validFrom, zakres, opis: describeSchedule(wersja) };
-  });
+  const historia = [...habit.schedules]
+    .reverse()
+    .map((wersja, i, wszystkie) => {
+      const nastepna = i === 0 ? null : wszystkie[i - 1];
+      let zakres = `od ${formatDatePl(wersja.validFrom)}`;
+      if (nastepna) {
+        zakres = `${formatDatePl(wersja.validFrom).slice(0, 5)} – ${formatDatePl(addDays(nastepna.validFrom, -1))}`;
+      }
+      return {
+        klucz: wersja.validFrom,
+        zakres,
+        opis: describeSchedule(wersja),
+      };
+    });
 
   // Oba układy są w DOM; przełącza je wyłącznie CSS (800 px). Telefon ma własne okna edycji i usuwania.
   return (
@@ -70,17 +97,36 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
       <div data-testid="m-nawyk" className="min-[800px]:hidden">
         <MHabitDetail data={data} />
       </div>
-      <div data-testid="web-nawyk" className="flex min-w-0 flex-col max-[799px]:hidden">
+      <div
+        data-testid="web-nawyk"
+        className="flex min-w-0 flex-col max-[799px]:hidden"
+      >
         <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
           <div className="font-mono text-[13px] text-[#666666]">
-            <Link href="/nawyki" className="text-[#666666] no-underline hover:text-[#171717]">
+            <Link
+              href="/nawyki"
+              className="text-[#666666] no-underline hover:text-[#171717]"
+            >
               Nawyki i sen
             </Link>{" "}
-            <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{habit.name}</span>
+            <span className="text-[#b0b0b0]">/</span>{" "}
+            <span className="text-[#171717]">{habit.name}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" className="border-[#fecaca] text-[#b91c1c] hover:text-[#b91c1c]" onClick={() => setUsuwanie(true)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <Button
+              size="sm"
+              className="border-[#fecaca] text-[#b91c1c] hover:text-[#b91c1c]"
+              onClick={() => setUsuwanie(true)}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
                 <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
               </svg>
               Usuń
@@ -93,17 +139,27 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
 
         <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7">
           <div>
-            <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{habit.name}</h1>
-            <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">{podtytul}</p>
+            <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
+              {habit.name}
+            </h1>
+            <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">
+              {podtytul}
+            </p>
           </div>
 
           <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
             {kafelki.map((k) => (
               <div key={k.etykieta} className="bg-white px-[18px] py-4">
-                <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">{k.etykieta}</div>
+                <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+                  {k.etykieta}
+                </div>
                 <div className="mt-2 font-mono text-[26px]">
                   {k.wartosc}
-                  {k.jednostka && <span className="ml-1 text-sm text-[#666666]">{k.jednostka}</span>}
+                  {k.jednostka && (
+                    <span className="ml-1 text-sm text-[#666666]">
+                      {k.jednostka}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -125,11 +181,18 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
 
             <section className="rounded-lg border border-[#eaeaea] bg-white">
               <div className="border-b border-[#eaeaea] px-4 py-3.5">
-                <h2 className="m-0 text-[15px] font-semibold">Historia harmonogramu</h2>
+                <h2 className="m-0 text-[15px] font-semibold">
+                  Historia harmonogramu
+                </h2>
               </div>
               {historia.map((w) => (
-                <div key={w.klucz} className="border-b border-[#f0f0f0] px-4 py-3 last:border-b-0">
-                  <div className="font-mono text-xs text-[#6b6b6b]">{w.zakres}</div>
+                <div
+                  key={w.klucz}
+                  className="border-b border-[#f0f0f0] px-4 py-3 last:border-b-0"
+                >
+                  <div className="font-mono text-xs text-[#6b6b6b]">
+                    {w.zakres}
+                  </div>
                   <div className="mt-0.5">{w.opis}</div>
                 </div>
               ))}
@@ -148,7 +211,12 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
           clock={data.clock}
           today={data.today}
         />
-        <DeleteHabitDialog habitId={habit.id} name={habit.name} open={usuwanie} onOpenChange={setUsuwanie} />
+        <DeleteHabitDialog
+          habitId={habit.id}
+          name={habit.name}
+          open={usuwanie}
+          onOpenChange={setUsuwanie}
+        />
       </div>
     </>
   );

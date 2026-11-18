@@ -1,10 +1,22 @@
-import { Activity, Calendar, Sun, SquareCheck, Table, type LucideIcon } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  Sun,
+  SquareCheck,
+  Table,
+  type LucideIcon,
+} from "lucide-react";
 
 export type ModuleKey = "dzis" | "kalendarz" | "sport" | "nawyki";
 export type TabKey = ModuleKey | "strony";
 
 // Moduły w sidebarze (web) — ikony i etykiety z Sidebar.dc.html
-export const NAV_MODULES: { key: ModuleKey; label: string; href: string; icon: LucideIcon }[] = [
+export const NAV_MODULES: {
+  key: ModuleKey;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}[] = [
   { key: "dzis", label: "Dziś", href: "/dzis", icon: Sun },
   { key: "kalendarz", label: "Kalendarz", href: "/kalendarz", icon: Calendar },
   { key: "sport", label: "Sport", href: "/sport", icon: Activity },
@@ -12,7 +24,12 @@ export const NAV_MODULES: { key: ModuleKey; label: string; href: string; icon: L
 ];
 
 // Pozycje dolnego paska (telefon) — etykiety i ikony z MTabBar.dc.html
-export const TAB_ITEMS: { key: TabKey; label: string; href: string; icon: LucideIcon }[] = [
+export const TAB_ITEMS: {
+  key: TabKey;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}[] = [
   { key: "dzis", label: "Dziś", href: "/dzis", icon: Sun },
   { key: "kalendarz", label: "Kalendarz", href: "/kalendarz", icon: Calendar },
   { key: "sport", label: "Sport", href: "/sport", icon: Activity },

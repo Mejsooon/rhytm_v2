@@ -10,19 +10,33 @@ export const metadata: Metadata = { title: "E-mail potwierdzony — rhytm" };
 // Stan „E-mail potwierdzony” (EmailConfirmed.dc.html). Statyczny — do /onboarding prowadzi zwykły link.
 export default function PotwierdzonoPage() {
   return (
-    <AuthShell headerAction={{ href: "/logowanie", label: "Zaloguj się" }} width={362}>
+    <AuthShell
+      headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+      width={362}
+    >
       <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
         <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
-          <Check aria-hidden="true" className="size-5 text-[#15803d]" strokeWidth={2} />
+          <Check
+            aria-hidden="true"
+            className="size-5 text-[#15803d]"
+            strokeWidth={2}
+          />
         </span>
         <h1 className="m-0 text-[22px] font-semibold">E-mail potwierdzony</h1>
         <p className="m-0 leading-normal text-[#666666]">
-          Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około minuty.
+          Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około
+          minuty.
         </p>
-        <Button asChild variant="primary" className="w-full leading-[1.21] max-[799px]:text-[15px]">
+        <Button
+          asChild
+          variant="primary"
+          className="w-full leading-[1.21] max-[799px]:text-[15px]"
+        >
           <Link href="/onboarding">Dalej</Link>
         </Button>
-        <p className="m-0 font-mono text-[11px] text-[#6b6b6b]">Link był jednorazowy i już wygasł.</p>
+        <p className="m-0 font-mono text-[11px] text-[#6b6b6b]">
+          Link był jednorazowy i już wygasł.
+        </p>
       </div>
     </AuthShell>
   );

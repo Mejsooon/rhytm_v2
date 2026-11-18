@@ -10,13 +10,26 @@ import type { SleepLog } from "../sleep";
 import { MSleepSheet } from "./m-sleep-sheet";
 
 const LOGI: SleepLog[] = [
-  { date: "2026-11-16", sleptAt: "23:48", wokeAt: "07:00", feeling: 4, tags: ["Trening"], note: "dobrze" },
+  {
+    date: "2026-11-16",
+    sleptAt: "23:48",
+    wokeAt: "07:00",
+    feeling: 4,
+    tags: ["Trening"],
+    note: "dobrze",
+  },
 ];
 
 function wyrenderuj(opcje: { date?: IsoDate; clock?: "24" | "12" } = {}) {
   const onDone = vi.fn();
   render(
-    <MSleepSheet date={opcje.date ?? "2026-11-15"} logs={LOGI} goalMin={450} clock={opcje.clock ?? "24"} onDone={onDone} />,
+    <MSleepSheet
+      date={opcje.date ?? "2026-11-15"}
+      logs={LOGI}
+      goalMin={450}
+      clock={opcje.clock ?? "24"}
+      onDone={onDone}
+    />,
   );
   return { onDone, okno: screen.getByRole("dialog", { name: "Wpis snu" }) };
 }
@@ -26,7 +39,9 @@ beforeEach(() => vi.clearAllMocks());
 describe("MSleepSheet", () => {
   it("nagłówek, tytuł nocy i domyślne 23:00 → 07:00", () => {
     const { okno } = wyrenderuj();
-    expect(within(okno).getByRole("button", { name: "Anuluj" })).toBeInTheDocument();
+    expect(
+      within(okno).getByRole("button", { name: "Anuluj" }),
+    ).toBeInTheDocument();
     expect(within(okno).getByRole("button", { name: "Zapisz" })).toBeEnabled();
     expect(within(okno).getByText("Noc 14 → 15 listopada")).toBeInTheDocument();
     expect(within(okno).getByTestId("zasniecie")).toHaveTextContent("23:00");
@@ -37,16 +52,26 @@ describe("MSleepSheet", () => {
 
   it("−/+ co 15 min, z przejściem przez północ", async () => {
     const { okno } = wyrenderuj();
-    const pozniej = within(okno).getByRole("button", { name: "Zasnąłem później" });
+    const pozniej = within(okno).getByRole("button", {
+      name: "Zasnąłem później",
+    });
     for (let i = 0; i < 5; i++) await userEvent.click(pozniej);
     // 23:00 + 75 min = 00:15
     expect(within(okno).getByTestId("zasniecie")).toHaveTextContent("00:15");
     expect(within(okno).getByText("6:45")).toBeInTheDocument();
-    expect(within(okno).getByText("Brakuje 45 min do celu 7:30")).toBeInTheDocument();
-    await userEvent.click(within(okno).getByRole("button", { name: "Wstałem wcześniej" }));
+    expect(
+      within(okno).getByText("Brakuje 45 min do celu 7:30"),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      within(okno).getByRole("button", { name: "Wstałem wcześniej" }),
+    );
     expect(within(okno).getByTestId("pobudka")).toHaveTextContent("06:45");
-    await userEvent.click(within(okno).getByRole("button", { name: "Zasnąłem wcześniej" }));
-    await userEvent.click(within(okno).getByRole("button", { name: "Zasnąłem wcześniej" }));
+    await userEvent.click(
+      within(okno).getByRole("button", { name: "Zasnąłem wcześniej" }),
+    );
+    await userEvent.click(
+      within(okno).getByRole("button", { name: "Zasnąłem wcześniej" }),
+    );
     expect(within(okno).getByTestId("zasniecie")).toHaveTextContent("23:45");
   });
 
@@ -55,26 +80,41 @@ describe("MSleepSheet", () => {
     expect(within(okno).getByText("Noc 15 → 16 listopada")).toBeInTheDocument();
     expect(within(okno).getByTestId("zasniecie")).toHaveTextContent("23:48");
     expect(within(okno).getByText("7:12")).toBeInTheDocument();
-    expect(within(okno).getByText("Brakuje 18 min do celu 7:30")).toBeInTheDocument();
-    expect(within(okno).getByRole("radio", { name: "Jakość 4 — Dobrze" })).toHaveAttribute("aria-checked", "true");
-    expect(within(okno).getByRole("button", { name: "Trening" })).toHaveAttribute("aria-pressed", "true");
-    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toHaveValue("dobrze");
+    expect(
+      within(okno).getByText("Brakuje 18 min do celu 7:30"),
+    ).toBeInTheDocument();
+    expect(
+      within(okno).getByRole("radio", { name: "Jakość 4 — Dobrze" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      within(okno).getByRole("button", { name: "Trening" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toHaveValue(
+      "dobrze",
+    );
   });
 
   it("„Jak się wyspałeś?” 1–5 z etykietami, tagi i notatka trafiają do zapisu", async () => {
     saveSleepLog.mockResolvedValue({ ok: true });
     const { okno, onDone } = wyrenderuj();
-    const skala = within(okno).getByRole("radiogroup", { name: "Jak się wyspałeś?" });
-    expect(within(skala).getAllByRole("radio").map((r) => r.textContent)).toEqual([
-      "1Źle",
-      "2Słabo",
-      "3OK",
-      "4Dobrze",
-      "5Super",
-    ]);
-    await userEvent.click(within(okno).getByRole("radio", { name: "Jakość 5 — Super" }));
-    await userEvent.click(within(okno).getByRole("button", { name: "Kawa po 16" }));
-    await userEvent.type(within(okno).getByRole("textbox", { name: "Notatka" }), "późno");
+    const skala = within(okno).getByRole("radiogroup", {
+      name: "Jak się wyspałeś?",
+    });
+    expect(
+      within(skala)
+        .getAllByRole("radio")
+        .map((r) => r.textContent),
+    ).toEqual(["1Źle", "2Słabo", "3OK", "4Dobrze", "5Super"]);
+    await userEvent.click(
+      within(okno).getByRole("radio", { name: "Jakość 5 — Super" }),
+    );
+    await userEvent.click(
+      within(okno).getByRole("button", { name: "Kawa po 16" }),
+    );
+    await userEvent.type(
+      within(okno).getByRole("textbox", { name: "Notatka" }),
+      "późno",
+    );
     await userEvent.click(within(okno).getByRole("button", { name: "Zapisz" }));
     expect(saveSleepLog).toHaveBeenCalledWith({
       date: "2026-11-15",
@@ -90,9 +130,13 @@ describe("MSleepSheet", () => {
   it("równe godziny: brak czasu i Zapisz nieaktywne", async () => {
     const { okno } = wyrenderuj();
     // 07:00 → 23:00 to 64 kroki po 15 min w przód
-    const pozniej = within(okno).getByRole("button", { name: "Wstałem później" });
+    const pozniej = within(okno).getByRole("button", {
+      name: "Wstałem później",
+    });
     for (let i = 0; i < 64; i++) await userEvent.click(pozniej);
-    expect(within(okno).getByText("Godziny zaśnięcia i pobudki muszą się różnić.")).toBeInTheDocument();
+    expect(
+      within(okno).getByText("Godziny zaśnięcia i pobudki muszą się różnić."),
+    ).toBeInTheDocument();
     expect(within(okno).getByRole("button", { name: "Zapisz" })).toBeDisabled();
   });
 
@@ -105,16 +149,30 @@ describe("MSleepSheet", () => {
     await userEvent.keyboard("{Escape}");
     expect(onDone).not.toHaveBeenCalled();
     // Pola też są zablokowane na czas zapisu
-    for (const nazwa of ["Zasnąłem wcześniej", "Zasnąłem później", "Wstałem wcześniej", "Wstałem później", "Trening"]) {
+    for (const nazwa of [
+      "Zasnąłem wcześniej",
+      "Zasnąłem później",
+      "Wstałem wcześniej",
+      "Wstałem później",
+      "Trening",
+    ]) {
       expect(within(okno).getByRole("button", { name: nazwa })).toBeDisabled();
     }
-    expect(within(okno).getByRole("radio", { name: "Jakość 3 — OK" })).toBeDisabled();
-    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toBeDisabled();
+    expect(
+      within(okno).getByRole("radio", { name: "Jakość 3 — OK" }),
+    ).toBeDisabled();
+    expect(
+      within(okno).getByRole("textbox", { name: "Notatka" }),
+    ).toBeDisabled();
     await act(async () => zakoncz({ ok: false, message: "Błąd" }));
     expect(within(okno).getByRole("alert")).toHaveTextContent("Błąd");
     // Po błędzie pola wracają
-    expect(within(okno).getByRole("button", { name: "Zasnąłem później" })).toBeEnabled();
-    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toBeEnabled();
+    expect(
+      within(okno).getByRole("button", { name: "Zasnąłem później" }),
+    ).toBeEnabled();
+    expect(
+      within(okno).getByRole("textbox", { name: "Notatka" }),
+    ).toBeEnabled();
   });
 
   it("zegar 12 h", () => {

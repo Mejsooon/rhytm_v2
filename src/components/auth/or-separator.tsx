@@ -1,7 +1,13 @@
 import { cn } from "@/lib/utils";
 
 // Linia z napisem pośrodku („lub e-mailem” / „lub”)
-export function OrSeparator({ label, className }: { label: string; className?: string }) {
+export function OrSeparator({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
   return (
     <div
       className={cn(

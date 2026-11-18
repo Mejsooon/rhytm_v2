@@ -5,7 +5,13 @@ import { WordConfirm } from "./word-confirm";
 
 function ustaw(onConfirm = vi.fn()) {
   render(
-    <WordConfirm word="RESETUJ" label="Wpisz RESETUJ, żeby potwierdzić" confirmLabel="Zresetuj sejf" destructive onConfirm={onConfirm} />,
+    <WordConfirm
+      word="RESETUJ"
+      label="Wpisz RESETUJ, żeby potwierdzić"
+      confirmLabel="Zresetuj sejf"
+      destructive
+      onConfirm={onConfirm}
+    />,
   );
   return onConfirm;
 }

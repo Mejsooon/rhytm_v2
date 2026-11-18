@@ -34,9 +34,12 @@ export async function loadOccurrence(
   const od = nowyDzien < date ? nowyDzien : date;
   const doDnia = nowyDzien > date ? nowyDzien : date;
 
-  const wystapienie = expandOccurrences([block], listaWyjatkow, od, doDnia).find(
-    (o) => o.key === `${blockId}:${date}`,
-  );
+  const wystapienie = expandOccurrences(
+    [block],
+    listaWyjatkow,
+    od,
+    doDnia,
+  ).find((o) => o.key === `${blockId}:${date}`);
   if (!wystapienie) return null; // data poza serią albo wystąpienie odwołane
 
   return { block, occurrence: wystapienie };

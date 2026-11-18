@@ -4,7 +4,9 @@ export default function SportPage() {
   return (
     <>
       <ModuleHeader title="Sport" />
-      <EmptyModule>Tu pojawi się sport. Moduł powstanie w kolejnych etapach.</EmptyModule>
+      <EmptyModule>
+        Tu pojawi się sport. Moduł powstanie w kolejnych etapach.
+      </EmptyModule>
     </>
   );
 }

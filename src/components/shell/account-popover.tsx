@@ -7,14 +7,20 @@ import { ActionPopover } from "@/components/controls";
 import { signOut } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 
-export type SidebarUser = { displayName: string; email: string; avatarUrl: string | null };
+export type SidebarUser = {
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+};
 
 // Blok użytkownika na dole sidebara + dymek konta nad nim (Sidebar.dc.html).
 // Ustawienia mają własną pozycję w sidebarze, więc w dymku jest tylko „Wyloguj się”.
 export function AccountPopover({ user }: { user: SidebarUser }) {
   const [open, setOpen] = React.useState(false);
   // Inicjał: pierwsza litera nazwy, wielka (Array.from — bezpieczne dla znaków poza BMP)
-  const inicjal = (Array.from(user.displayName.trim())[0] ?? "?").toLocaleUpperCase("pl");
+  const inicjal = (
+    Array.from(user.displayName.trim())[0] ?? "?"
+  ).toLocaleUpperCase("pl");
 
   return (
     <ActionPopover
@@ -34,14 +40,20 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           <span className="flex size-[26px] flex-none items-center justify-center overflow-hidden rounded-full border border-[#e0e0e0] bg-[#f0f0f0] text-xs font-medium">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- mały awatar z zewnętrznego URL
-              <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="size-full object-cover"
+              />
             ) : (
               inicjal
             )}
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="font-medium">{user.displayName}</span>
-            <span className="truncate text-xs text-[#666666]">{user.email}</span>
+            <span className="truncate text-xs text-[#666666]">
+              {user.email}
+            </span>
           </span>
           <ChevronsUpDown size={14} stroke="#666666" aria-hidden="true" />
         </button>

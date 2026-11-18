@@ -10,7 +10,13 @@ import { useRef, useState } from "react";
 import { BellIcon, PlusIcon, XIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
 
-import { Chip, DatePicker, Segment, Stepper, Switch } from "@/components/controls";
+import {
+  Chip,
+  DatePicker,
+  Segment,
+  Stepper,
+  Switch,
+} from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { addTask, deleteTask } from "@/features/tasks/actions";
 import type { TaskRow } from "@/features/tasks/model";
@@ -46,7 +52,10 @@ const OPCJE_POWTARZANIA: { value: Powtarzanie; label: string }[] = [
 const PREFIKS_TYMCZASOWY = "tmp-";
 const KOLOR_BRAK = "#a3a3a3";
 
-type ApplyOptimistic = (zmiana: CalendarChange, akcja: () => Promise<ActionResult>) => Promise<boolean>;
+type ApplyOptimistic = (
+  zmiana: CalendarChange,
+  akcja: () => Promise<ActionResult>,
+) => Promise<boolean>;
 
 export function MBlockSheet({
   mode,
@@ -103,7 +112,9 @@ export function MBlockSheet({
       ? null
       : {
           freq: rep,
-          ...(rep === "custom" ? { byWeekday: [...dni].sort((a, b) => a - b) } : {}),
+          ...(rep === "custom"
+            ? { byWeekday: [...dni].sort((a, b) => a - b) }
+            : {}),
           ...(until ? { until } : {}),
         };
 
@@ -113,7 +124,10 @@ export function MBlockSheet({
   // Czas trwania na żywo: „1 h 30 min”, „1 h”, „45 min”
   const godzin = Math.floor(durationMin / 60);
   const minut = durationMin % 60;
-  const czasTrwania = [godzin > 0 ? `${godzin} h` : "", minut > 0 ? `${minut} min` : ""]
+  const czasTrwania = [
+    godzin > 0 ? `${godzin} h` : "",
+    minut > 0 ? `${minut} min` : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -121,21 +135,38 @@ export function MBlockSheet({
   const zadaniaWystapienia =
     mode === "edit"
       ? tasks
-          .filter((t) => t.block_id === initial.blockId && t.occurrence_date === dataOryginalna)
+          .filter(
+            (t) =>
+              t.block_id === initial.blockId &&
+              t.occurrence_date === dataOryginalna,
+          )
           .sort((a, b) => a.position - b.position)
       : [];
   // Wiersze zadań: w edycji z id zadania (usuwanie po id), w tworzeniu z indeksem na liście
   const wierszeZadan =
     mode === "edit"
-      ? zadaniaWystapienia.map((t) => ({ klucz: t.id, tytul: t.title, tymczasowe: t.id.startsWith(PREFIKS_TYMCZASOWY) }))
-      : nowe.map((tytul, i) => ({ klucz: `nowe-${i}-${tytul}`, tytul, tymczasowe: false }));
+      ? zadaniaWystapienia.map((t) => ({
+          klucz: t.id,
+          tytul: t.title,
+          tymczasowe: t.id.startsWith(PREFIKS_TYMCZASOWY),
+        }))
+      : nowe.map((tytul, i) => ({
+          klucz: `nowe-${i}-${tytul}`,
+          tytul,
+          tymczasowe: false,
+        }));
   // Edycja bez zapisu optymistycznego nie ma jak zapisać zadań, więc pole jest wyłączone
   const zadaniaWylaczone = mode === "edit" && !applyOptimistic;
 
   const bladPol =
-    rep !== "none" && until && until < date ? "Koniec powtarzania nie może być przed początkiem." : "";
+    rep !== "none" && until && until < date
+      ? "Koniec powtarzania nie może być przed początkiem."
+      : "";
   const mozeZapisac =
-    title.trim() !== "" && bladPol === "" && !(rep === "custom" && dni.length === 0) && !pending;
+    title.trim() !== "" &&
+    bladPol === "" &&
+    !(rep === "custom" && dni.length === 0) &&
+    !pending;
 
   // Edycja bloku cyklicznego: „tylko to wystąpienie” nie przechowuje kategorii ani powtarzania
   // (notatki i przypomnienia też, ale notatki arkusz nie zmienia)
@@ -145,7 +176,9 @@ export function MBlockSheet({
     until !== until0 ||
     (rep === "custom" && [...dni].sort().join() !== [...dni0].sort().join());
   const seriaTylko =
-    categoryId !== initial.categoryId || remind !== initial.remind || zmienionePowtarzanie;
+    categoryId !== initial.categoryId ||
+    remind !== initial.remind ||
+    zmienionePowtarzanie;
 
   function dodajZadanie() {
     const tytul = szkic.trim();
@@ -171,7 +204,12 @@ export function MBlockSheet({
     };
     void applyOptimistic!(
       (d) => ({ ...d, tasks: [...d.tasks, tymczasowe] }),
-      () => addTask({ blockId: initial.blockId ?? "", date: dataOryginalna, title: tytul }),
+      () =>
+        addTask({
+          blockId: initial.blockId ?? "",
+          date: dataOryginalna,
+          title: tytul,
+        }),
     );
   }
 
@@ -263,7 +301,9 @@ export function MBlockSheet({
 
   if (krok === "zakres" && initial.recurrence) {
     const przesuniete =
-      date !== initial.date || startMin !== initial.startMin || durationMin !== initial.durationMin;
+      date !== initial.date ||
+      startMin !== initial.startMin ||
+      durationMin !== initial.durationMin;
     const godziny = (od: number, doMin: number) =>
       `${formatClockTime(Math.floor(od / 60), od % 60, clock)}–${formatClockTime(Math.floor(doMin / 60), doMin % 60, clock)}`;
     return (
@@ -276,9 +316,14 @@ export function MBlockSheet({
           .filter(Boolean)
           .join(" · ")}
         date={dataOryginalna}
-        timeLabel={godziny(initial.startMin, initial.startMin + initial.durationMin)}
+        timeLabel={godziny(
+          initial.startMin,
+          initial.startMin + initial.durationMin,
+        )}
         disableThis={
-          seriaTylko ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii." : undefined
+          seriaTylko
+            ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii."
+            : undefined
         }
         // Inny dzień: seria codzienna i dni robocze tylko „Tylko to”; inne serie „To i następne”
         // tylko na pierwszym wystąpieniu (zasady jak w planScopeChange)
@@ -306,13 +351,16 @@ export function MBlockSheet({
 
   const NAGLOWEK_PRZYCISK =
     "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
-  const ETYKIETA = "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  const ETYKIETA =
+    "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
   const WIERSZ =
     "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0";
 
   return (
-    <Dialog.Root open // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
-    onOpenChange={(otwarte) => !otwarte && !pending && onDone()}>
+    <Dialog.Root
+      open // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
+      onOpenChange={(otwarte) => !otwarte && !pending && onDone()}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
@@ -320,7 +368,10 @@ export function MBlockSheet({
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] min-h-[60%] flex-col rounded-t-[18px] bg-white text-[15px] text-[#171717] shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
         >
           {/* Uchwyt arkusza */}
-          <div aria-hidden="true" className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]" />
+          <div
+            aria-hidden="true"
+            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]"
+          />
           <div className="flex flex-none items-center border-b border-[#f0f0f0] px-2 py-0.5">
             <button
               type="button"
@@ -339,7 +390,10 @@ export function MBlockSheet({
               aria-label="Zapisz blok"
               disabled={!mozeZapisac}
               onClick={zapisz}
-              className={cn(NAGLOWEK_PRZYCISK, "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]")}
+              className={cn(
+                NAGLOWEK_PRZYCISK,
+                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+              )}
             >
               Zapisz
             </button>
@@ -382,7 +436,9 @@ export function MBlockSheet({
                     dotColor={k.color || KOLOR_BRAK}
                     selected={categoryId === k.id}
                     // Ponowne stuknięcie zdejmuje wybór (blok bez kategorii)
-                    onClick={() => setCategoryId((c) => (c === k.id ? null : k.id))}
+                    onClick={() =>
+                      setCategoryId((c) => (c === k.id ? null : k.id))
+                    }
                   >
                     {k.name}
                   </Chip>
@@ -405,32 +461,51 @@ export function MBlockSheet({
                 <span className="flex-1">Od</span>
                 <Stepper
                   ariaLabel="Od"
-                  value={formatClockTime(Math.floor(startMin / 60), startMin % 60, clock)}
+                  value={formatClockTime(
+                    Math.floor(startMin / 60),
+                    startMin % 60,
+                    clock,
+                  )}
                   decDisabled={startMin <= 0}
                   incDisabled={startMin >= endMin - 15}
                   onDec={() => setStartMin((s) => Math.max(0, s - 15))}
-                  onInc={() => setStartMin((s) => Math.min(endMin - 15, s + 15))}
+                  onInc={() =>
+                    setStartMin((s) => Math.min(endMin - 15, s + 15))
+                  }
                 />
               </div>
               <div className={WIERSZ}>
                 <span className="flex-1">Do</span>
                 <Stepper
                   ariaLabel="Do"
-                  value={formatClockTime(Math.floor(endMin / 60), endMin % 60, clock)}
+                  value={formatClockTime(
+                    Math.floor(endMin / 60),
+                    endMin % 60,
+                    clock,
+                  )}
                   decDisabled={endMin <= startMin + 15}
                   incDisabled={endMin >= 1440}
-                  onDec={() => setEndMin((k) => Math.max(startMin + 15, k - 15))}
+                  onDec={() =>
+                    setEndMin((k) => Math.max(startMin + 15, k - 15))
+                  }
                   onInc={() => setEndMin((k) => Math.min(1440, k + 15))}
                 />
               </div>
               <div className={cn(WIERSZ, "min-h-10")}>
-                <span className="font-mono text-xs text-[#6b6b6b]">Czas trwania: {czasTrwania}</span>
+                <span className="font-mono text-xs text-[#6b6b6b]">
+                  Czas trwania: {czasTrwania}
+                </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <span className={ETYKIETA}>Powtarzanie</span>
-              <Segment ariaLabel="Powtarzanie" value={rep} onChange={setRep} options={OPCJE_POWTARZANIA} />
+              <Segment
+                ariaLabel="Powtarzanie"
+                value={rep}
+                onChange={setRep}
+                options={OPCJE_POWTARZANIA}
+              />
               {rep === "custom" && (
                 <div className="flex items-center justify-between gap-1">
                   {DNI_SKROT.slice(1).map((nazwa, i) => {
@@ -443,7 +518,11 @@ export function MBlockSheet({
                         aria-pressed={wybrany}
                         aria-label={`Dzień ${nazwa}`}
                         onClick={() =>
-                          setDni((d) => (d.includes(numer) ? d.filter((n) => n !== numer) : [...d, numer]))
+                          setDni((d) =>
+                            d.includes(numer)
+                              ? d.filter((n) => n !== numer)
+                              : [...d, numer],
+                          )
                         }
                         className={cn(
                           "size-11 cursor-pointer rounded-[10px] border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
@@ -475,16 +554,23 @@ export function MBlockSheet({
                 </div>
               )}
               {rep !== "none" && (
-                <span className="font-mono text-xs text-[#6b6b6b]">{describeRecurrence(recurrence, date)}</span>
+                <span className="font-mono text-xs text-[#6b6b6b]">
+                  {describeRecurrence(recurrence, date)}
+                </span>
               )}
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className={ETYKIETA}>Zadania w bloku · {wierszeZadan.length}</span>
+              <span className={ETYKIETA}>
+                Zadania w bloku · {wierszeZadan.length}
+              </span>
               <div className="rounded-xl border border-[#eaeaea] bg-white">
                 {wierszeZadan.map(({ klucz, tytul, tymczasowe }, i) => (
                   <div key={klucz} className={WIERSZ}>
-                    <span aria-hidden="true" className="size-5 flex-none rounded-md border-[1.5px] border-[#cfcfcf]" />
+                    <span
+                      aria-hidden="true"
+                      className="size-5 flex-none rounded-md border-[1.5px] border-[#cfcfcf]"
+                    />
                     <span className="min-w-0 flex-1 break-words">{tytul}</span>
                     <button
                       type="button"
@@ -530,9 +616,16 @@ export function MBlockSheet({
 
             <div className="rounded-xl border border-[#eaeaea] bg-white">
               <div className={WIERSZ}>
-                <BellIcon aria-hidden="true" className="size-[18px] flex-none text-[#666666]" />
+                <BellIcon
+                  aria-hidden="true"
+                  className="size-[18px] flex-none text-[#666666]"
+                />
                 <span className="flex-1">Przypomnij 10 min wcześniej</span>
-                <Switch checked={remind} onChange={setRemind} ariaLabel="Przypomnienie" />
+                <Switch
+                  checked={remind}
+                  onChange={setRemind}
+                  ariaLabel="Przypomnienie"
+                />
               </div>
             </div>
           </div>

@@ -36,7 +36,8 @@ async function Powloka({
     .maybeSingle();
 
   const email = user.email ?? "";
-  const displayName = profil?.display_name?.trim() || email.split("@")[0] || "Konto";
+  const displayName =
+    profil?.display_name?.trim() || email.split("@")[0] || "Konto";
 
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
 
@@ -44,7 +45,9 @@ async function Powloka({
     <>
       <AppSidebar user={{ displayName, email, avatarUrl }} />
       {/* Telefon: odstęp na dolny pasek i boczne wcięcia ekranu (notch w poziomie) */}
-      <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">
+        {children}
+      </main>
       <TabBar />
     </>
   );

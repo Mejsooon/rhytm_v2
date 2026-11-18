@@ -6,7 +6,12 @@ import { redirect } from "next/navigation";
 import { isPasswordPwned } from "@/lib/auth/hibp";
 import { pathAfterLogin } from "@/lib/auth/next-path";
 import { RECOVERY_COOKIE, znacznikResetuPasuje } from "@/lib/auth/recovery";
-import { newPasswordSchema, resetRequestSchema, signInSchema, signUpSchema } from "@/lib/auth/schemas";
+import {
+  newPasswordSchema,
+  resetRequestSchema,
+  signInSchema,
+  signUpSchema,
+} from "@/lib/auth/schemas";
 import { verifyTurnstile } from "@/lib/auth/turnstile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +26,10 @@ export type AuthFormState = {
 // Jeden komunikat dla każdego błędu logowania — nie zdradzamy, czy konto istnieje
 const BLAD_LOGOWANIA = "Nieprawidłowy e-mail lub hasło";
 
-export async function signIn(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+export async function signIn(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   // 1. Walidacja formatu (zod)
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
@@ -33,9 +41,13 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
 
   // 2. Turnstile — token dodaje widżet jako ukryte pole cf-turnstile-response
   const naglowki = await headers();
-  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const ip =
+    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
   const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(typeof token === "string" ? token : null, ip);
+  const botOk = await verifyTurnstile(
+    typeof token === "string" ? token : null,
+    ip,
+  );
   if (!botOk) {
     return { status: "error", message: "Potwierdź, że nie jesteś botem" };
   }
@@ -60,14 +72,24 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
 // Adres aplikacji do linków zwrotnych. Źródłem jest NEXT_PUBLIC_SITE_URL (nagłówek Host może podszyć atakujący).
 // Nagłówki są tylko zapasem w dev/CI, gdy zmienna nie jest ustawiona; w produkcji jej brak to błąd konfiguracji.
 async function originZNaglowkow(): Promise<string> {
-  const zKonfiguracji = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  const zKonfiguracji = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(
+    /\/+$/,
+    "",
+  );
   if (zKonfiguracji) return zKonfiguracji;
   if (process.env.NODE_ENV === "production") {
-    throw new Error("Brak NEXT_PUBLIC_SITE_URL — ustaw adres aplikacji w zmiennych środowiskowych");
+    throw new Error(
+      "Brak NEXT_PUBLIC_SITE_URL — ustaw adres aplikacji w zmiennych środowiskowych",
+    );
   }
   const naglowki = await headers();
-  const host = naglowki.get("x-forwarded-host") ?? naglowki.get("host") ?? "localhost:3000";
-  const proto = naglowki.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const host =
+    naglowki.get("x-forwarded-host") ??
+    naglowki.get("host") ??
+    "localhost:3000";
+  const proto =
+    naglowki.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") ? "http" : "https");
   return `${proto}://${host}`;
 }
 
@@ -88,7 +110,10 @@ export async function signInWithGoogle(): Promise<never> {
 
 // Rejestracja: zod → Turnstile → HIBP → Supabase.
 // Sukces i „użytkownik już istnieje” dają TEN SAM stan, żeby nie zdradzać, czy e-mail ma konto.
-export async function signUp(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+export async function signUp(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   // 1. Walidacja (zod); błędy pól zwracamy do formularza
   const parsed = signUpSchema.safeParse({
     displayName: formData.get("displayName"),
@@ -107,16 +132,23 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
 
   // 2. Turnstile
   const naglowki = await headers();
-  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const ip =
+    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
   const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(typeof token === "string" ? token : null, ip);
+  const botOk = await verifyTurnstile(
+    typeof token === "string" ? token : null,
+    ip,
+  );
   if (!botOk) {
     return { status: "error", message: "Potwierdź, że nie jesteś botem" };
   }
 
   // 3. Hasło nie może być w wyciekach (serwer sprawdza zawsze, niezależnie od reguły na żywo)
   if (await isPasswordPwned(parsed.data.password)) {
-    return { status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." };
+    return {
+      status: "error",
+      message: "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
+    };
   }
 
   // 4. Konto w Supabase; link potwierdzający wraca na /auth/confirm
@@ -130,9 +162,14 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
       emailRedirectTo: `${origin}/auth/confirm`,
     },
   });
-  const juzIstnieje = error?.code === "user_already_exists" || /already registered/i.test(error?.message ?? "");
+  const juzIstnieje =
+    error?.code === "user_already_exists" ||
+    /already registered/i.test(error?.message ?? "");
   if (error && !juzIstnieje) {
-    return { status: "error", message: "Nie udało się założyć konta. Spróbuj ponownie." };
+    return {
+      status: "error",
+      message: "Nie udało się założyć konta. Spróbuj ponownie.",
+    };
   }
   return { status: "success", email: parsed.data.email };
 }
@@ -150,18 +187,29 @@ async function sprawdzPonowneWyslanie(
 ): Promise<{ blad: AuthFormState } | { email: string }> {
   const parsed = resetRequestSchema.safeParse({ email });
   if (!parsed.success) {
-    return { blad: { status: "error", fieldErrors: { email: "Podaj poprawny e-mail" } } };
+    return {
+      blad: {
+        status: "error",
+        fieldErrors: { email: "Podaj poprawny e-mail" },
+      },
+    };
   }
   const naglowki = await headers();
-  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const ip =
+    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
   if (!(await verifyTurnstile(turnstileToken, ip))) {
-    return { blad: { status: "error", message: "Potwierdź, że nie jesteś botem" } };
+    return {
+      blad: { status: "error", message: "Potwierdź, że nie jesteś botem" },
+    };
   }
   return { email: parsed.data.email };
 }
 
 // Ponowne wysłanie linku potwierdzającego. Po przejściu kontroli zawsze „sukces” — nie zdradzamy stanu konta.
-export async function resendConfirmation(email: string, turnstileToken: string | null): Promise<AuthFormState> {
+export async function resendConfirmation(
+  email: string,
+  turnstileToken: string | null,
+): Promise<AuthFormState> {
   const kontrola = await sprawdzPonowneWyslanie(email, turnstileToken);
   if ("blad" in kontrola) return kontrola.blad;
 
@@ -176,16 +224,28 @@ export async function resendConfirmation(email: string, turnstileToken: string |
 }
 
 // Prośba o reset hasła: zod → Turnstile → Supabase. Zawsze ten sam sukces, niezależnie od tego, czy konto istnieje.
-export async function requestPasswordReset(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+export async function requestPasswordReset(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   const parsed = resetRequestSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
-    return { status: "error", fieldErrors: { email: parsed.error.issues[0]?.message ?? "Podaj poprawny e-mail" } };
+    return {
+      status: "error",
+      fieldErrors: {
+        email: parsed.error.issues[0]?.message ?? "Podaj poprawny e-mail",
+      },
+    };
   }
 
   const naglowki = await headers();
-  const ip = naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const ip =
+    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
   const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(typeof token === "string" ? token : null, ip);
+  const botOk = await verifyTurnstile(
+    typeof token === "string" ? token : null,
+    ip,
+  );
   if (!botOk) {
     return { status: "error", message: "Potwierdź, że nie jesteś botem" };
   }
@@ -193,7 +253,9 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
   // Błąd Supabase (np. brak konta, limit) celowo ignorujemy — odpowiedź dla użytkownika jest zawsze taka sama
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${origin}/auth/confirm` });
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${origin}/auth/confirm`,
+  });
   return { status: "success", email: parsed.data.email };
 }
 
@@ -201,14 +263,20 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
 // (ustawia je tylko /auth/confirm po udanym recovery; HMAC, ten sam użytkownik, najwyżej 15 minut) —
 // samo bycie zalogowanym nie pozwala zmienić hasła bez starego.
 // Po zmianie wylogowujemy pozostałe urządzenia, a bieżące przechodzi do aplikacji.
-export async function updatePassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+export async function updatePassword(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   // Sesję i znacznik sprawdzamy przed jakimkolwiek zapytaniem do HIBP
   const ciasteczka = await cookies();
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user || !znacznikResetuPasuje(ciasteczka.get(RECOVERY_COOKIE)?.value, user.id)) {
+  if (
+    !user ||
+    !znacznikResetuPasuje(ciasteczka.get(RECOVERY_COOKIE)?.value, user.id)
+  ) {
     return { status: "error", message: "Link wygasł. Poproś o nowy." };
   }
 
@@ -226,12 +294,20 @@ export async function updatePassword(_prev: AuthFormState, formData: FormData): 
   }
 
   if (await isPasswordPwned(parsed.data.password)) {
-    return { status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." };
+    return {
+      status: "error",
+      message: "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
+    };
   }
 
-  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
   if (error) {
-    return { status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." };
+    return {
+      status: "error",
+      message: "Nie udało się zmienić hasła. Spróbuj ponownie.",
+    };
   }
   await supabase.auth.signOut({ scope: "others" });
   // Znacznik jest jednorazowy
@@ -254,7 +330,9 @@ export async function resendLink(
 
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(kontrola.email, { redirectTo: `${origin}/auth/confirm` });
+  await supabase.auth.resetPasswordForEmail(kontrola.email, {
+    redirectTo: `${origin}/auth/confirm`,
+  });
   return { status: "success", email: kontrola.email };
 }
 

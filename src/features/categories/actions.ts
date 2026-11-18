@@ -30,9 +30,14 @@ export async function createCategory(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  const parsed = z.object({ name: nazwaSchema, color: kolorSchema }).safeParse(input);
+  const parsed = z
+    .object({ name: nazwaSchema, color: kolorSchema })
+    .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
 
   // Nowa kategoria ląduje na końcu listy
@@ -75,10 +80,17 @@ export async function updateCategory(input: {
   if (!user) redirect("/logowanie");
 
   const parsed = z
-    .object({ id: idSchema, name: nazwaSchema.optional(), color: kolorSchema.optional() })
+    .object({
+      id: idSchema,
+      name: nazwaSchema.optional(),
+      color: kolorSchema.optional(),
+    })
     .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
   const dane = parsed.data;
 
@@ -100,7 +112,8 @@ export async function updateCategory(input: {
     .update(zmiany)
     .eq("id", dane.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   revalidatePath("/ustawienia/kategorie");
@@ -118,7 +131,9 @@ export async function setCategoryHidden(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  const parsed = z.object({ id: idSchema, hidden: z.boolean() }).safeParse(input);
+  const parsed = z
+    .object({ id: idSchema, hidden: z.boolean() })
+    .safeParse(input);
   if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
 
   const { data, error } = await supabase
@@ -126,7 +141,8 @@ export async function setCategoryHidden(input: {
     .update({ hidden: parsed.data.hidden })
     .eq("id", parsed.data.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   revalidatePath("/ustawienia/kategorie");
@@ -162,7 +178,9 @@ export async function moveCategory(input: {
 }
 
 // Usuwanie tylko kategorii własnych (bloki tracą kategorię przez ON DELETE SET NULL)
-export async function deleteCategory(input: { id: string }): Promise<ActionResult> {
+export async function deleteCategory(input: {
+  id: string;
+}): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -186,7 +204,8 @@ export async function deleteCategory(input: { id: string }): Promise<ActionResul
     .delete()
     .eq("id", parsed.data.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   revalidatePath("/ustawienia/kategorie");

@@ -22,7 +22,9 @@ describe("useCardForm", () => {
   });
 
   it("dirty porównuje String() pól (liczba i tekst to to samo)", () => {
-    const { result } = renderHook(() => useCardForm({ sleep: 480 as number | string }));
+    const { result } = renderHook(() =>
+      useCardForm({ sleep: 480 as number | string }),
+    );
     act(() => result.current.set({ sleep: "480" }));
     expect(result.current.dirty).toBe(false);
   });
@@ -48,7 +50,9 @@ describe("useCardForm", () => {
   });
 
   it("nowe zapisane z serwera (Activity) → nowa baza; bez zmian także nowe wartości", () => {
-    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), {
+      initialProps: { saved: zapisane },
+    });
     rerender({ saved: { name: "Ola", kg: "70" } });
     expect(result.current.saved).toEqual({ name: "Ola", kg: "70" });
     expect(result.current.value).toEqual({ name: "Ola", kg: "70" });
@@ -56,7 +60,9 @@ describe("useCardForm", () => {
   });
 
   it("nowe zapisane przy niezapisanych zmianach → baza się zmienia, zmiany zostają", () => {
-    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), {
+      initialProps: { saved: zapisane },
+    });
     act(() => result.current.set({ kg: "80" }));
     rerender({ saved: { name: "Ola", kg: "" } });
     expect(result.current.saved).toEqual({ name: "Ola", kg: "" });
@@ -65,7 +71,9 @@ describe("useCardForm", () => {
   });
 
   it("ten sam obiekt z nowymi referencjami nie kasuje zmian", () => {
-    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), {
+      initialProps: { saved: zapisane },
+    });
     act(() => result.current.set({ kg: "80" }));
     rerender({ saved: { ...zapisane } });
     expect(result.current.value).toEqual({ name: "Ala", kg: "80" });

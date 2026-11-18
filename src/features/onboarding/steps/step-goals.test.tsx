@@ -15,7 +15,8 @@ const start: OnboardingDraft = {
   roles: [],
   studyField: "",
   goals: ["sport", "habits"],
-  goalType: "workouts",
+  workoutsOn: true,
+  kmOn: false,
   weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
@@ -37,38 +38,73 @@ function Probe({ initial }: { initial: OnboardingDraft }) {
 }
 
 describe("StepGoals", () => {
-  it("„Cel treningowy”: domyślnie 3 treningi / tydz., licznik i pole web", () => {
+  it("„Cele treningowe”: treningi włączone z licznikiem i polem, km wyłączone", () => {
     render(<Probe initial={start} />);
-    expect(screen.getByText("Cel treningowy")).toBeInTheDocument();
+    expect(screen.getByText(/^Cele treningowe/)).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: "Treningi / tydz." }),
+      screen.getByRole("checkbox", { name: "Treningi w tygodniu" }),
     ).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("radio", { name: "Km / tydz." })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
+    expect(
+      screen.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
+    ).toHaveAttribute("aria-checked", "false");
     expect(
       screen.getByRole("group", { name: "Treningi w tygodniu" }),
     ).toHaveTextContent("3");
     expect(
       screen.getByLabelText("Treningi w tygodniu", { selector: "input" }),
     ).toHaveValue("3");
+    // Wyłączony cel: nieaktywne pole web „—” i „wyłączony” na telefonie
+    expect(
+      screen.getByLabelText("Kilometry biegu w tygodniu", {
+        selector: "input",
+      }),
+    ).toBeDisabled();
+    expect(screen.getByText("wyłączony")).toBeInTheDocument();
     expect(screen.getByText("8:00")).toBeInTheDocument();
   });
 
-  it("zmiana na km pokazuje „25 km”, a powrót zostawia liczbę treningów", async () => {
+  it("oba cele naraz: włączenie km pokazuje „25 km” obok treningów", async () => {
     render(<Probe initial={{ ...start, weeklyWorkouts: 5 }} />);
-    await userEvent.click(screen.getByRole("radio", { name: "Km / tydz." }));
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
+    );
     expect(screen.getByText("25 km")).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Kilometry w tygodniu", { selector: "input" }),
+      screen.getByLabelText("Kilometry biegu w tygodniu", {
+        selector: "input",
+      }),
     ).toHaveValue("25");
-    await userEvent.click(
-      screen.getByRole("radio", { name: "Treningi / tydz." }),
-    );
     expect(
       screen.getByRole("group", { name: "Treningi w tygodniu" }),
     ).toHaveTextContent("5");
+  });
+
+  it("wyłączenie obu celów pokazuje „Włącz co najmniej jeden cel.”", async () => {
+    render(<Probe initial={start} />);
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Treningi w tygodniu" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Włącz co najmniej jeden cel.",
+    );
+  });
+
+  it("wyłączenie celu ze złą liczbą przywraca domyślną", async () => {
+    render(<Probe initial={{ ...start, kmOn: true }} />);
+    const pole = screen.getByLabelText("Treningi w tygodniu", {
+      selector: "input",
+    });
+    await userEvent.clear(pole);
+    await userEvent.type(pole, "20");
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Treningi w tygodniu" }),
+    );
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Treningi w tygodniu" }),
+    );
+    expect(
+      screen.getByLabelText("Treningi w tygodniu", { selector: "input" }),
+    ).toHaveValue("3");
   });
 
   it("cele bazowe są zablokowane i zawsze zaznaczone", async () => {
@@ -80,7 +116,7 @@ describe("StepGoals", () => {
       await userEvent.click(karta);
       expect(karta).toHaveAttribute("aria-pressed", "true");
     }
-    expect(screen.getByText("Cel treningowy")).toBeInTheDocument();
+    expect(screen.getByText(/^Cele treningowe/)).toBeInTheDocument();
     expect(screen.getByText("Cel snu")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -119,16 +155,24 @@ describe("StepGoals", () => {
       screen.getByRole("button", { name: "Zwiększ Treningi w tygodniu" }),
     ).toBeDisabled();
     unmount();
-    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 150 }} />);
+    render(
+      <Probe
+        initial={{ ...start, workoutsOn: false, kmOn: true, weeklyKm: 150 }}
+      />,
+    );
     expect(
-      screen.getByRole("button", { name: "Zwiększ Kilometry w tygodniu" }),
+      screen.getByRole("button", {
+        name: "Zwiększ Kilometry biegu w tygodniu",
+      }),
     ).toBeDisabled();
   });
 
   it("„+” zwiększa km o 5, a cel snu o 15 min", async () => {
-    render(<Probe initial={{ ...start, goalType: "km" }} />);
+    render(<Probe initial={{ ...start, workoutsOn: false, kmOn: true }} />);
     await userEvent.click(
-      screen.getByRole("button", { name: "Zwiększ Kilometry w tygodniu" }),
+      screen.getByRole("button", {
+        name: "Zwiększ Kilometry biegu w tygodniu",
+      }),
     );
     expect(screen.getByText("30 km")).toBeInTheDocument();
     await userEvent.click(
@@ -154,8 +198,8 @@ describe("StepGoals", () => {
   });
 
   it("pole web: km spoza 1–300 pokazuje błąd", async () => {
-    render(<Probe initial={{ ...start, goalType: "km" }} />);
-    const pole = screen.getByLabelText("Kilometry w tygodniu", {
+    render(<Probe initial={{ ...start, workoutsOn: false, kmOn: true }} />);
+    const pole = screen.getByLabelText("Kilometry biegu w tygodniu", {
       selector: "input",
     });
     await userEvent.clear(pole);
@@ -165,9 +209,9 @@ describe("StepGoals", () => {
 
   it("pole web: km „22,5” jest poprawne, a licznik z 42 km idzie do 45 km", async () => {
     const { unmount } = render(
-      <Probe initial={{ ...start, goalType: "km" }} />,
+      <Probe initial={{ ...start, workoutsOn: false, kmOn: true }} />,
     );
-    const pole = screen.getByLabelText("Kilometry w tygodniu", {
+    const pole = screen.getByLabelText("Kilometry biegu w tygodniu", {
       selector: "input",
     });
     await userEvent.clear(pole);
@@ -175,25 +219,43 @@ describe("StepGoals", () => {
     expect(screen.queryByText("Podaj liczbę 1–300.")).not.toBeInTheDocument();
     expect(screen.getByText("22,5 km")).toBeInTheDocument();
     unmount();
-    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 42 }} />);
+    render(
+      <Probe
+        initial={{ ...start, workoutsOn: false, kmOn: true, weeklyKm: 42 }}
+      />,
+    );
     await userEvent.click(
-      screen.getByRole("button", { name: "Zwiększ Kilometry w tygodniu" }),
+      screen.getByRole("button", {
+        name: "Zwiększ Kilometry biegu w tygodniu",
+      }),
     );
     expect(screen.getByText("45 km")).toBeInTheDocument();
   });
 
   it("zapisane 22.5 km: licznik i pole web z przecinkiem", () => {
-    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 22.5 }} />);
+    render(
+      <Probe
+        initial={{ ...start, workoutsOn: false, kmOn: true, weeklyKm: 22.5 }}
+      />,
+    );
     expect(screen.getByText("22,5 km")).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Kilometry w tygodniu", { selector: "input" }),
+      screen.getByLabelText("Kilometry biegu w tygodniu", {
+        selector: "input",
+      }),
     ).toHaveValue("22,5");
   });
 
   it("licznik przy 200 km z pola web: „−” wraca do 150 km", async () => {
-    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 200 }} />);
+    render(
+      <Probe
+        initial={{ ...start, workoutsOn: false, kmOn: true, weeklyKm: 200 }}
+      />,
+    );
     await userEvent.click(
-      screen.getByRole("button", { name: "Zmniejsz Kilometry w tygodniu" }),
+      screen.getByRole("button", {
+        name: "Zmniejsz Kilometry biegu w tygodniu",
+      }),
     );
     expect(screen.getByText("150 km")).toBeInTheDocument();
   });

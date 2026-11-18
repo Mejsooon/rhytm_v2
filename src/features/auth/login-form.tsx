@@ -21,7 +21,12 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
   // E-mail trzymamy w stanie, bo React czyści pola formularza po wysłaniu akcji
   const [email, setEmail] = useState("");
 
-  const blad = state.status === "error" ? state.message : oauthError ? "Nie udało się zalogować przez Google" : undefined;
+  const blad =
+    state.status === "error"
+      ? state.message
+      : oauthError
+        ? "Nie udało się zalogować przez Google"
+        : undefined;
 
   return (
     // Kontener z kolejnością bloków: `order-*` (web) i `max-[799px]:order-*` (telefon).
@@ -46,8 +51,14 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
         <GoogleButton />
       </form>
 
-      <OrSeparator label="lub e-mailem" className="order-3 max-[799px]:hidden" />
-      <OrSeparator label="lub" className="order-3 min-[800px]:hidden max-[799px]:order-6 max-[799px]:mt-3.5" />
+      <OrSeparator
+        label="lub e-mailem"
+        className="order-3 max-[799px]:hidden"
+      />
+      <OrSeparator
+        label="lub"
+        className="order-3 min-[800px]:hidden max-[799px]:order-6 max-[799px]:mt-3.5"
+      />
 
       <form
         action={formAction}
@@ -87,7 +98,12 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
               {blad}
             </p>
           )}
-          <Button type="submit" variant="primary" disabled={pending} className="w-full leading-[1.21] max-[799px]:text-[15px]">
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={pending}
+            className="w-full leading-[1.21] max-[799px]:text-[15px]"
+          >
             Zaloguj się
           </Button>
         </div>
@@ -96,13 +112,19 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
       <p className="order-8 m-0 text-center text-[13px] text-[#666666] max-[799px]:mt-auto max-[799px]:text-sm">
         <span className="max-[799px]:hidden">
           Nie masz konta?{" "}
-          <Link href="/rejestracja" className="text-[#171717] underline hover:text-black">
+          <Link
+            href="/rejestracja"
+            className="text-[#171717] underline hover:text-black"
+          >
             Zarejestruj się
           </Link>
         </span>
         <span className="min-[800px]:hidden">
           Nie masz konta?{" "}
-          <Link href="/rejestracja" className="font-semibold text-[#171717] no-underline">
+          <Link
+            href="/rejestracja"
+            className="font-semibold text-[#171717] no-underline"
+          >
             Załóż konto
           </Link>
         </span>

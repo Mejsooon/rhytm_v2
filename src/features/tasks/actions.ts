@@ -7,13 +7,16 @@ import { z } from "zod";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
-import { idSchema, isoDateSchema, zadanieTytul } from "@/features/calendar/schemas";
+import {
+  idSchema,
+  isoDateSchema,
+  zadanieTytul,
+} from "@/features/calendar/schemas";
 import { loadOccurrence } from "@/features/calendar/load-occurrence";
 import { pinTask, unpinTask as unpinTaskFields } from "./model";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const NIE_ZNALEZIONO = "Nie znaleziono wystąpienia bloku.";
-
 
 // Dodaje zadanie do wystąpienia bloku. `date` to oryginalna data wystąpienia.
 export async function addTask(input: {
@@ -31,7 +34,10 @@ export async function addTask(input: {
     .object({ blockId: idSchema, date: isoDateSchema, title: zadanieTytul })
     .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
   const dane = parsed.data;
 
@@ -78,7 +84,8 @@ export async function toggleTask(input: {
     })
     .eq("id", parsed.data.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -94,9 +101,14 @@ export async function renameTask(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  const parsed = z.object({ id: idSchema, title: zadanieTytul }).safeParse(input);
+  const parsed = z
+    .object({ id: idSchema, title: zadanieTytul })
+    .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
 
   const { data, error } = await supabase
@@ -104,7 +116,8 @@ export async function renameTask(input: {
     .update({ title: parsed.data.title })
     .eq("id", parsed.data.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -125,7 +138,8 @@ export async function deleteTask(input: { id: string }): Promise<ActionResult> {
     .delete()
     .eq("id", parsed.data.id)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -146,7 +160,10 @@ export async function createStandaloneTask(input: {
     .object({ title: zadanieTytul, dueDate: isoDateSchema.nullable() })
     .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
 
   const { data, error } = await supabase
@@ -199,7 +216,8 @@ export async function pinTaskToOccurrence(input: {
     .update(pinTask(zadanie, wczytane.occurrence))
     .eq("id", dane.taskId)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };
@@ -230,7 +248,8 @@ export async function unpinTask(input: {
     .update(unpinTaskFields(zadanie))
     .eq("id", parsed.data.taskId)
     .select("id");
-  if (error || !data || data.length === 0) return { ok: false, message: BLAD_ZAPISU };
+  if (error || !data || data.length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
 
   revalidatePath("/kalendarz");
   return { ok: true };

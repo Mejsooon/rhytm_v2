@@ -97,7 +97,7 @@ a.btnp,a.btnp:hover{color:#ffffff}
       <div><h1 class="h1" style="font-size: 26px">Co chcesz ogarnąć w rhytm?</h1><p class="sub" style="margin: 6px 0 0">Na tej podstawie przygotujemy startowe strony i cele.</p></div>
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" role="checkbox" aria-checked="{{g.on}}" aria-disabled="{{g.locked}}" onClick="{{g.pick}}" style="{{g.s}}"><span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="font-weight: 500">{{g.t}}</span><span class="cb" aria-hidden="true" style="{{g.cbS}}"><sc-if value="{{g.isLocked}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if><sc-if value="{{g.isFree}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if></span></span><span class="sub" style="font-size: 12px">{{g.d}}</span></button></sc-for></div>
       <p class="sub" style="margin: -4px 0 0; font-size: 13px">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
-      <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px"><span class="lbl">Cel treningowy</span><nav class="seg" role="group" aria-label="Rodzaj celu treningowego"><button type="button" class="sg" aria-pressed="{{gTr}}" onClick="{{setTr}}">Treningi / tydz.</button><button type="button" class="sg" aria-pressed="{{gKm}}" onClick="{{setKm}}">Km / tydz.</button></nav><div style="display: flex; align-items: center; min-height: 44px"><span style="flex: 1">{{goalLbl}}</span><button type="button" class="ib" aria-label="{{goalMinus}}" onClick="{{goalM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 64px; text-align: center; font-size: 17px">{{goalTxt}}</span><button type="button" class="ib" aria-label="{{goalPlus}}" onClick="{{goalP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
+      <div class="card" style="padding: 12px 14px 4px; display: flex; flex-direction: column"><span class="lbl">Cele treningowe · jeden albo oba</span><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><div style="{{t.rowS}}"><button type="button" class="cb" role="checkbox" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></button><span style="flex: 1; min-width: 0">{{t.lbl}}</span><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><button type="button" class="ib" aria-label="{{t.minus}}" onClick="{{t.m}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 64px; text-align: center; font-size: 17px">{{t.txt}}</span><button type="button" class="ib" aria-label="{{t.plus}}" onClick="{{t.p}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><span class="mono" style="color: #a3a3a3; font-size: 13px">wyłączony</span></sc-if></div></sc-for><sc-if value="{{noGoal}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #b91c1c; padding-bottom: 10px">Włącz co najmniej jeden cel.</span></sc-if></div>
       <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><div class="card"><div class="row"><span style="flex: 1">Cel snu</span><button type="button" class="ib" aria-label="Krócej" onClick="{{slM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{sleep}}</span><button type="button" class="ib" aria-label="Dłużej" onClick="{{slP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
     </sc-if>
 
@@ -156,7 +156,7 @@ class Component extends DCLogic {
     const P = S.pages;
     const src = S.src || null;
     const N = S.notify || { perm: false, before: true, renew: true, weekly: true, habits: false };
-    const km = S.km ?? 25, tr = S.tr ?? 3, goalType = S.goalType || 'tr', sleep = S.sleep ?? 480;
+    const km = S.km ?? 25, tr = S.tr ?? 3, trOn = S.trOn !== false, kmOn = S.kmOn !== false, sleep = S.sleep ?? 480;
     const go = (n) => this.setState({ step: n, tzOpen: false });
     const sel = (on) => 'border-color:' + (on ? '#15803d' : '#cfcfcf') + ';background:' + (on ? '#15803d' : '#ffffff');
     const TZ = [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00']];
@@ -198,11 +198,13 @@ class Component extends DCLogic {
         cbS: (lk ? 'border-color:#e0e0e0;background:#f4f4f5' : sel(on)) + ';width:20px;height:20px;flex-basis:20px;border-radius:6px',
         s: 'display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:76px;padding:12px;border-radius:12px;font:inherit;color:#171717;text-align:left;cursor:' + (lk ? 'default' : 'pointer') + ';border:1px solid ' + (lk ? '#e0e0e0' : on ? '#15803d' : '#e0e0e0') + ';background:' + (lk ? '#fafafa' : on ? '#f7fbf8' : '#ffffff'),
         pick: () => { if (lk) return; this.setState({ goals: Object.assign({}, G, { [g[0]]: !on }), pages: null }); } }; }),
-      showKm: true, showSleep: true, km, sleep: hm(sleep),
-      gTr: goalType === 'tr' ? 'true' : 'false', gKm: goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }),
-      goalLbl: goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', goalTxt: goalType === 'km' ? km + ' km' : String(tr),
-      goalMinus: goalType === 'km' ? 'Mniej kilometrów' : 'Mniej treningów', goalPlus: goalType === 'km' ? 'Więcej kilometrów' : 'Więcej treningów',
-      goalM: () => this.setState(goalType === 'km' ? { km: Math.max(5, km - 5) } : { tr: Math.max(1, tr - 1) }), goalP: () => this.setState(goalType === 'km' ? { km: Math.min(150, km + 5) } : { tr: Math.min(14, tr + 1) }),
+      showSleep: true, km, sleep: hm(sleep),
+      tg: [
+        { k: 'tr', lbl: 'Treningi w tygodniu', on: trOn, txt: String(tr), minus: 'Mniej treningów', plus: 'Więcej treningów', m: () => this.setState({ tr: Math.max(1, tr - 1) }), p: () => this.setState({ tr: Math.min(14, tr + 1) }) },
+        { k: 'km', lbl: 'Kilometry biegu w tygodniu', on: kmOn, txt: km + ' km', minus: 'Mniej kilometrów', plus: 'Więcej kilometrów', m: () => this.setState({ km: Math.max(5, km - 5) }), p: () => this.setState({ km: Math.min(150, km + 5) }) }
+      ].map((t, ix) => Object.assign({}, t, { on: t.on ? 'true' : 'false', isOn: t.on, off: !t.on, toggle: () => this.setState({ [t.k + 'On']: !t.on }),
+        rowS: 'display:flex;align-items:center;gap:12px;min-height:56px;' + (ix ? 'border-top:1px solid #f0f0f0' : '') })),
+      noGoal: !trOn && !kmOn,
       slM: () => this.setState({ sleep: Math.max(300, sleep - 15) }), slP: () => this.setState({ sleep: Math.min(660, sleep + 15) }),
       srcs: SRC.map((x) => ({ t: x, p: x === src ? 'true' : 'false', pick: () => this.setState({ src: x }) })),
       isOther: src === 'Inne', other: S.other || '', onOther: (e) => this.setState({ other: e.target.value }),
@@ -218,8 +220,8 @@ class Component extends DCLogic {
       summary: [
         { k: 'Profil', v: nm + ' · ' + tzCur[1] + ' · tydzień od ' + (week === 'pn' ? 'pn' : 'nd'), go: () => go(1) },
         { k: 'Kategorie', v: cats.join(', '), go: () => go(2) },
-        // Cel treningowy tylko, gdy w kroku 3 zaznaczono „Treningi”
-        ...(G.sport ? [{ k: 'Cel treningowy', v: goalType === 'km' ? String(km).replace('.', ',') + ' km / tydz.' : tr + ' ' + (tr === 1 ? 'trening' : (tr % 10 >= 2 && tr % 10 <= 4 && (tr % 100 < 12 || tr % 100 > 14)) ? 'treningi' : 'treningów') + ' / tydz.', go: () => go(3) }] : []),
+        // Cele treningowe: włączone (jeden albo oba)
+        { k: 'Cele treningowe', v: [trOn ? tr + ' ' + (tr === 1 ? 'trening' : (tr % 10 >= 2 && tr % 10 <= 4 && (tr % 100 < 12 || tr % 100 > 14)) ? 'treningi' : 'treningów') + ' / tydz.' : '', kmOn ? String(km).replace('.', ',') + ' km / tydz.' : ''].filter(Boolean).join(' · '), go: () => go(3) },
         { k: 'Strony', v: pagesSel.join(', ') || 'brak', go: () => go(5) },
         { k: 'Przypomnienia', v: remOn + ' z 4 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
       ]

@@ -18,7 +18,8 @@ const draft: OnboardingDraft = {
   roles: ["student"],
   studyField: "",
   goals: ["proj"],
-  goalType: "workouts",
+  workoutsOn: true,
+  kmOn: false,
   weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
@@ -74,7 +75,7 @@ describe("StepDone", () => {
     expect(push).toHaveBeenCalledWith("/onboarding/1");
   });
 
-  it("wiersz „Cel treningowy” z odmianą i „Zmień” do kroku 3", async () => {
+  it("wiersz „Cele treningowe” z odmianą, oba cele i „Zmień” do kroku 3", async () => {
     const { rerender } = render(
       <StepDone
         draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 1 }}
@@ -104,7 +105,13 @@ describe("StepDone", () => {
     ).toBeInTheDocument();
     rerender(
       <StepDone
-        draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 22.5 }}
+        draft={{
+          ...draft,
+          goals: ["sport"],
+          workoutsOn: false,
+          kmOn: true,
+          weeklyKm: 22.5,
+        }}
         now={NOW}
       />,
     );
@@ -113,16 +120,40 @@ describe("StepDone", () => {
     ).toBeInTheDocument();
     rerender(
       <StepDone
-        draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 25 }}
+        draft={{
+          ...draft,
+          goals: ["sport"],
+          workoutsOn: false,
+          kmOn: true,
+          weeklyKm: 25,
+        }}
         now={NOW}
       />,
     );
     expect(
       within(screen.getByTestId("done-web")).getByText("25 km / tydz."),
     ).toBeInTheDocument();
+    rerender(
+      <StepDone
+        draft={{
+          ...draft,
+          goals: ["sport"],
+          workoutsOn: true,
+          kmOn: true,
+          weeklyWorkouts: 3,
+          weeklyKm: 25,
+        }}
+        now={NOW}
+      />,
+    );
+    expect(
+      within(screen.getByTestId("done-web")).getByText(
+        "3 treningi / tydz. · 25 km / tydz.",
+      ),
+    ).toBeInTheDocument();
     await userEvent.click(
       within(screen.getByTestId("done-web")).getByRole("button", {
-        name: "Zmień: Cel treningowy",
+        name: "Zmień: Cele treningowe",
       }),
     );
     expect(push).toHaveBeenCalledWith("/onboarding/3");

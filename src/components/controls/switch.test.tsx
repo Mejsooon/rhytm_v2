@@ -6,7 +6,9 @@ import { Switch } from "./switch";
 describe("Switch", () => {
   it("klik i Spacja przełączają; aria-checked odzwierciedla stan", async () => {
     const onChange = vi.fn();
-    const { rerender } = render(<Switch checked={false} onChange={onChange} ariaLabel="Powiadomienia" />);
+    const { rerender } = render(
+      <Switch checked={false} onChange={onChange} ariaLabel="Powiadomienia" />,
+    );
     const sw = screen.getByRole("switch", { name: "Powiadomienia" });
     expect(sw).toHaveAttribute("aria-checked", "false");
     await userEvent.click(sw);
@@ -20,7 +22,9 @@ describe("Switch", () => {
 
   it("disabled nie woła onChange", async () => {
     const onChange = vi.fn();
-    render(<Switch checked={false} disabled onChange={onChange} ariaLabel="X" />);
+    render(
+      <Switch checked={false} disabled onChange={onChange} ariaLabel="X" />,
+    );
     await userEvent.click(screen.getByRole("switch"));
     expect(onChange).not.toHaveBeenCalled();
   });

@@ -74,9 +74,13 @@ function SleepForm({
 }: Omit<Parameters<typeof SleepDialog>[0], "open">) {
   const existing = logs.find((l) => l.date === dataStartowa);
   const [date, setDate] = useState(dataStartowa);
-  const [sleptAt, setSleptAt] = useState(existing?.sleptAt ?? DOMYSLNE_ZASNIECIE);
+  const [sleptAt, setSleptAt] = useState(
+    existing?.sleptAt ?? DOMYSLNE_ZASNIECIE,
+  );
   const [wokeAt, setWokeAt] = useState(existing?.wokeAt ?? DOMYSLNA_POBUDKA);
-  const [feeling, setFeeling] = useState<number | null>(existing?.feeling ?? null);
+  const [feeling, setFeeling] = useState<number | null>(
+    existing?.feeling ?? null,
+  );
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
   const [note, setNote] = useState(existing?.note ?? "");
   // Czy pola pochodzą z zapisanego wpisu (wtedy przejście na pusty dzień czyści je do domyślnych)
@@ -111,7 +115,10 @@ function SleepForm({
 
   const minuty = sleepMinutes(sleptAt, wokeAt);
   const mozeZapisac = minuty !== null && !pending;
-  const procent = minuty !== null && goalMin > 0 ? Math.min(100, Math.round((minuty / goalMin) * 100)) : 0;
+  const procent =
+    minuty !== null && goalMin > 0
+      ? Math.min(100, Math.round((minuty / goalMin) * 100))
+      : 0;
 
   // Zamknięcie (Esc, tło, ✕) jest blokowane na czas zapisu
   function zmienOtwarcie(otwarte: boolean) {
@@ -186,11 +193,21 @@ function SleepForm({
         </div>
         <div className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
           Zasnąłem
-          <TimePicker clock={clock} ariaLabel="Zasnąłem" value={sleptAt} onChange={setSleptAt} />
+          <TimePicker
+            clock={clock}
+            ariaLabel="Zasnąłem"
+            value={sleptAt}
+            onChange={setSleptAt}
+          />
         </div>
         <div className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
           Wstałem
-          <TimePicker clock={clock} ariaLabel="Wstałem" value={wokeAt} onChange={setWokeAt} />
+          <TimePicker
+            clock={clock}
+            ariaLabel="Wstałem"
+            value={wokeAt}
+            onChange={setWokeAt}
+          />
         </div>
       </div>
 
@@ -198,7 +215,9 @@ function SleepForm({
       <div className="flex items-center gap-3.5 rounded-lg border border-[#eaeaea] bg-[#fafafa] px-3.5 py-3">
         <div>
           <MonoLabel className="block">Czas snu</MonoLabel>
-          <div className="mt-1 font-mono text-[22px]">{minuty === null ? "—" : formatDuration(minuty)}</div>
+          <div className="mt-1 font-mono text-[22px]">
+            {minuty === null ? "—" : formatDuration(minuty)}
+          </div>
         </div>
         <div className="min-w-0 flex-1">
           {minuty === null ? (
@@ -209,10 +228,15 @@ function SleepForm({
             <>
               {goalMin > 0 && (
                 <div className="h-1.5 rounded-[3px] bg-[#eaeaea]">
-                  <div className="h-1.5 rounded-[3px] bg-[#171717]" style={{ width: `${procent}%` }} />
+                  <div
+                    className="h-1.5 rounded-[3px] bg-[#171717]"
+                    style={{ width: `${procent}%` }}
+                  />
                 </div>
               )}
-              <div className="mt-1.5 font-mono text-[11px] text-[#6b6b6b]">{goalText(minuty, goalMin).web}</div>
+              <div className="mt-1.5 font-mono text-[11px] text-[#6b6b6b]">
+                {goalText(minuty, goalMin).web}
+              </div>
             </>
           )}
         </div>
@@ -220,7 +244,11 @@ function SleepForm({
 
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Samopoczucie
-        <div role="radiogroup" aria-label="Samopoczucie" className="flex gap-1.5 font-normal">
+        <div
+          role="radiogroup"
+          aria-label="Samopoczucie"
+          className="flex gap-1.5 font-normal"
+        >
           {SAMOPOCZUCIE.map((etykieta, i) => {
             const wartosc = i + 1;
             const wybrane = feeling === wartosc;
@@ -240,7 +268,9 @@ function SleepForm({
                 )}
               >
                 <span className="font-mono text-sm">{wartosc}</span>
-                <span className={wybrane ? "text-white/80" : "text-[#6b6b6b]"}>{etykieta}</span>
+                <span className={wybrane ? "text-white/80" : "text-[#6b6b6b]"}>
+                  {etykieta}
+                </span>
               </button>
             );
           })}
@@ -254,7 +284,11 @@ function SleepForm({
             <Chip
               key={tag}
               selected={tags.includes(tag)}
-              onClick={() => setTags((t) => (t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag]))}
+              onClick={() =>
+                setTags((t) =>
+                  t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag],
+                )
+              }
             >
               {tag}
             </Chip>
@@ -265,7 +299,10 @@ function SleepForm({
       <TextField
         label={
           <>
-            Notatka <span className="text-xs font-normal text-[#6b6b6b]">opcjonalnie</span>
+            Notatka{" "}
+            <span className="text-xs font-normal text-[#6b6b6b]">
+              opcjonalnie
+            </span>
           </>
         }
         value={note}

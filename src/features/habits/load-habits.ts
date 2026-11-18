@@ -30,7 +30,10 @@ export type HabitDetailData = HabitsPageData & {
 const DOMYSLNY_CEL_SNU_MIN = 480;
 
 // Wiersze nawyków + wersji harmonogramu → Habit; wersje zawsze rosnąco po validFrom (model na tym polega)
-export function mapHabits(habitRows: HabitRow[], scheduleRows: ScheduleRow[]): Habit[] {
+export function mapHabits(
+  habitRows: HabitRow[],
+  scheduleRows: ScheduleRow[],
+): Habit[] {
   return habitRows.map((h) => {
     const schedules: ScheduleVersion[] = scheduleRows
       .filter((s) => s.habit_id === h.id)
@@ -40,7 +43,9 @@ export function mapHabits(habitRows: HabitRow[], scheduleRows: ScheduleRow[]): H
         weekdays: s.weekdays ?? [],
         timesPerWeek: s.times_per_week,
       }))
-      .sort((a, b) => (a.validFrom < b.validFrom ? -1 : a.validFrom > b.validFrom ? 1 : 0));
+      .sort((a, b) =>
+        a.validFrom < b.validFrom ? -1 : a.validFrom > b.validFrom ? 1 : 0,
+      );
     return {
       id: h.id,
       name: h.name,
@@ -91,7 +96,10 @@ async function loadChecks(
 ): Promise<Array<{ habitId: string; date: IsoDate }>> {
   const wynik: Array<{ habitId: string; date: IsoDate }> = [];
   for (let od = 0; ; od += ROZMIAR_STRONY) {
-    let zapytanie = supabase.from("habit_checks").select("habit_id, date").eq("user_id", userId);
+    let zapytanie = supabase
+      .from("habit_checks")
+      .select("habit_id, date")
+      .eq("user_id", userId);
     if (filtr.habitId) zapytanie = zapytanie.eq("habit_id", filtr.habitId);
     // Stabilna kolejność, żeby strony się nie zachodziły
     const { data, error } = await zapytanie
@@ -99,7 +107,8 @@ async function loadChecks(
       .order("habit_id", { ascending: true })
       .range(od, od + ROZMIAR_STRONY - 1);
     if (error) throw new Error(error.message);
-    for (const c of data ?? []) wynik.push({ habitId: c.habit_id, date: c.date });
+    for (const c of data ?? [])
+      wynik.push({ habitId: c.habit_id, date: c.date });
     if ((data ?? []).length < ROZMIAR_STRONY) break;
   }
   return wynik;
@@ -121,9 +130,18 @@ export async function loadHabitsPage(
       .eq("user_id", userId)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true }),
-    supabase.from("habit_schedules").select("*").eq("user_id", userId).order("valid_from", { ascending: true }),
+    supabase
+      .from("habit_schedules")
+      .select("*")
+      .eq("user_id", userId)
+      .order("valid_from", { ascending: true }),
     loadChecks(supabase, userId, {}),
-    supabase.from("sleep_logs").select("*").eq("user_id", userId).gte("date", odSnu).order("date", { ascending: true }),
+    supabase
+      .from("sleep_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", odSnu)
+      .order("date", { ascending: true }),
   ]);
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pustą listę
   for (const wynik of [nawykiRes, wersjeRes, senRes]) {
@@ -132,7 +150,10 @@ export async function loadHabitsPage(
 
   return {
     ...profil,
-    habits: mapHabits((nawykiRes.data ?? []) as HabitRow[], (wersjeRes.data ?? []) as ScheduleRow[]),
+    habits: mapHabits(
+      (nawykiRes.data ?? []) as HabitRow[],
+      (wersjeRes.data ?? []) as ScheduleRow[],
+    ),
     checks: odhaczenia,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
   };
@@ -160,7 +181,12 @@ export async function loadHabitDetail(
   if (!nawyk) return null;
 
   const [wersjeRes, odhaczenia, notatkiRes, senRes] = await Promise.all([
-    supabase.from("habit_schedules").select("*").eq("user_id", userId).eq("habit_id", habitId).order("valid_from", { ascending: true }),
+    supabase
+      .from("habit_schedules")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("habit_id", habitId)
+      .order("valid_from", { ascending: true }),
     loadChecks(supabase, userId, { habitId }),
     supabase
       .from("habit_notes")
@@ -169,7 +195,12 @@ export async function loadHabitDetail(
       .eq("habit_id", habitId)
       .order("date", { ascending: false })
       .order("created_at", { ascending: false }),
-    supabase.from("sleep_logs").select("*").eq("user_id", userId).gte("date", odSnu).order("date", { ascending: true }),
+    supabase
+      .from("sleep_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", odSnu)
+      .order("date", { ascending: true }),
   ]);
   for (const wynik of [wersjeRes, notatkiRes, senRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
@@ -177,9 +208,16 @@ export async function loadHabitDetail(
 
   return {
     ...profil,
-    habits: mapHabits([nawyk as HabitRow], (wersjeRes.data ?? []) as ScheduleRow[]),
+    habits: mapHabits(
+      [nawyk as HabitRow],
+      (wersjeRes.data ?? []) as ScheduleRow[],
+    ),
     checks: odhaczenia,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
-    notes: (notatkiRes.data ?? []).map((n) => ({ id: n.id, date: n.date, text: n.text })),
+    notes: (notatkiRes.data ?? []).map((n) => ({
+      id: n.id,
+      date: n.date,
+      text: n.text,
+    })),
   };
 }

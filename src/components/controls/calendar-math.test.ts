@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthGrid, formatDatePl, monthTitlePl, todayIso } from "./calendar-math";
+import {
+  buildMonthGrid,
+  formatDatePl,
+  monthTitlePl,
+  todayIso,
+} from "./calendar-math";
 
 describe("calendar-math", () => {
   it("siatka listopada 2026 zaczyna się od poniedziałku", () => {
@@ -10,12 +15,19 @@ describe("calendar-math", () => {
   });
 
   it("tydzień od niedzieli", () => {
-    expect(buildMonthGrid(2026, 10, "sun")[0]).toEqual({ date: "2026-11-01", inMonth: true });
+    expect(buildMonthGrid(2026, 10, "sun")[0]).toEqual({
+      date: "2026-11-01",
+      inMonth: true,
+    });
   });
 
   it("liczba dni lutego, także w roku przestępnym", () => {
-    expect(buildMonthGrid(2027, 1, "mon").filter((c) => c.inMonth)).toHaveLength(28);
-    expect(buildMonthGrid(2028, 1, "mon").filter((c) => c.inMonth)).toHaveLength(29);
+    expect(
+      buildMonthGrid(2027, 1, "mon").filter((c) => c.inMonth),
+    ).toHaveLength(28);
+    expect(
+      buildMonthGrid(2028, 1, "mon").filter((c) => c.inMonth),
+    ).toHaveLength(29);
   });
 
   it("formatuje daty i tytuły miesięcy po polsku", () => {

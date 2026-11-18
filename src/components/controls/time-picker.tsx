@@ -7,10 +7,14 @@ import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
 import { ActionPopover } from "./action-popover";
 
-const GODZINY = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const GODZINY = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
 // Tryb 12 h: siatka 1–12 (bez zera przed jedynką, jak na zegarze)
 const GODZINY_12 = Array.from({ length: 12 }, (_, i) => String(i + 1));
-const MINUTY = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
+const MINUTY = Array.from({ length: 12 }, (_, i) =>
+  String(i * 5).padStart(2, "0"),
+);
 
 const KOMORKA =
   "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-[#171717] hover:bg-[#f5f5f5] aria-pressed:bg-[#171717] aria-pressed:text-white";
@@ -64,8 +68,13 @@ export function TimePicker({
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >
-          {wTrybie12 ? formatClockTime(godzinaLiczba, Number(minuta), "12") : value}
-          <ChevronDownIcon aria-hidden="true" className="size-3 flex-none text-[#666666]" />
+          {wTrybie12
+            ? formatClockTime(godzinaLiczba, Number(minuta), "12")
+            : value}
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-3 flex-none text-[#666666]"
+          />
         </button>
       }
     >
@@ -81,7 +90,9 @@ export function TimePicker({
                   key={g}
                   type="button"
                   aria-pressed={Number(g) === (godzinaLiczba % 12 || 12)}
-                  onClick={() => onChange(`${zGodziny12(Number(g), pm)}:${minuta}`)}
+                  onClick={() =>
+                    onChange(`${zGodziny12(Number(g), pm)}:${minuta}`)
+                  }
                   className={KOMORKA}
                 >
                   {g}
@@ -96,7 +107,9 @@ export function TimePicker({
                   aria-pressed={pm === popoludnie}
                   // Zmiana AM/PM przesuwa godzinę o 12 h, minuty zostają
                   onClick={() =>
-                    onChange(`${zGodziny12(godzinaLiczba % 12 || 12, popoludnie)}:${minuta}`)
+                    onChange(
+                      `${zGodziny12(godzinaLiczba % 12 || 12, popoludnie)}:${minuta}`,
+                    )
                   }
                   className={KOMORKA}
                 >

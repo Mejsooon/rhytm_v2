@@ -3,7 +3,10 @@
 import * as React from "react";
 
 import { Button } from "@/components/controls";
-import { uploadAvatar, validateAvatarFile } from "@/features/onboarding/avatar-upload";
+import {
+  uploadAvatar,
+  validateAvatarFile,
+} from "@/features/onboarding/avatar-upload";
 import { removeAvatar, saveAvatar } from "./actions";
 
 // Wiersz „Zdjęcie profilowe” u góry karty Profil (Settings.dc.html / MSettings.dc.html).
@@ -34,7 +37,9 @@ export function AvatarRow({
 
   const zrodlo = usunieto ? podglad : (podglad ?? avatarUrl);
   const maZdjecie = Boolean(zrodlo);
-  const inicjal = (Array.from(displayName.trim())[0] ?? "?").toLocaleUpperCase("pl");
+  const inicjal = (Array.from(displayName.trim())[0] ?? "?").toLocaleUpperCase(
+    "pl",
+  );
 
   async function wybierzPlik(e: React.ChangeEvent<HTMLInputElement>) {
     const plik = e.target.files?.[0];
@@ -96,7 +101,11 @@ export function AvatarRow({
     <div className="mb-4 flex flex-wrap items-center gap-3.5 border-b border-[#f0f0f0] pb-4">
       {zrodlo ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={zrodlo} alt="" className="size-14 flex-none rounded-full object-cover" />
+        <img
+          src={zrodlo}
+          alt=""
+          className="size-14 flex-none rounded-full object-cover"
+        />
       ) : (
         <span
           aria-hidden="true"
@@ -115,13 +124,20 @@ export function AvatarRow({
           <span className="text-[13px] text-[#15803d]">Zapisano ✓</span>
         ) : (
           <span className="text-[13px] text-[#666666]">
-            {maZdjecie ? "PNG, JPG albo WebP, do 2 MB" : "Bez zdjęcia pokażemy inicjały"}
+            {maZdjecie
+              ? "PNG, JPG albo WebP, do 2 MB"
+              : "Bez zdjęcia pokażemy inicjały"}
           </span>
         )}
       </span>
       <span className="flex gap-2">
         {maZdjecie && (
-          <Button size="sm" className="max-[799px]:h-11 max-[799px]:px-3.5" disabled={pracuje} onClick={usun}>
+          <Button
+            size="sm"
+            className="max-[799px]:h-11 max-[799px]:px-3.5"
+            disabled={pracuje}
+            onClick={usun}
+          >
             Usuń
           </Button>
         )}

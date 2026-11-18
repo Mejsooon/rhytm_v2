@@ -1,10 +1,17 @@
 // Rząd czterech kafelków z liczbami (Habits.dc.html, „RZĄD 1”)
 import type { IsoDate } from "@/components/controls/calendar-math";
-import { dayStats, last30Comparison, longestStreak, type Checks, type Habit } from "./model";
+import {
+  dayStats,
+  last30Comparison,
+  longestStreak,
+  type Checks,
+  type Habit,
+} from "./model";
 import { sleepStats, type SleepLog } from "./sleep";
 import { formatDuration, streakLabel } from "./text";
 
-const ETYKIETA = "font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]";
+const ETYKIETA =
+  "font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]";
 const LICZBA = "mt-2 font-mono text-[26px]";
 const POD_LICZBA = "mt-2 font-mono text-xs text-[#6b6b6b]";
 const JEDNOSTKA = "text-sm text-[#666666]";
@@ -26,7 +33,8 @@ export function HabitTiles({
 }) {
   // Nawyki dziś: zrobione / zaplanowane (X/tydz. liczy się dopiero po odhaczeniu)
   const dzis = dayStats(habits, checks, today, today);
-  const pasek = dzis.planned === 0 ? 0 : Math.round((dzis.done / dzis.planned) * 100);
+  const pasek =
+    dzis.planned === 0 ? 0 : Math.round((dzis.done / dzis.planned) * 100);
 
   // Ostatnie 30 dni i różnica w punktach procentowych (minus typograficzny „−”, zero bez znaku)
   const trzydziesci = last30Comparison(habits, checks, today);
@@ -39,7 +47,9 @@ export function HabitTiles({
     const seria = longestStreak(habit, checks, today, weekStart);
     const dni = seria.unit === "weeks" ? seria.value * 7 : seria.value;
     const lepsza =
-      rekord === null || dni > rekord.dni || (dni === rekord.dni && habit.name.localeCompare(rekord.name, "pl") < 0);
+      rekord === null ||
+      dni > rekord.dni ||
+      (dni === rekord.dni && habit.name.localeCompare(rekord.name, "pl") < 0);
     if (lepsza) rekord = { name: habit.name, dni, label: streakLabel(seria) };
   }
 
@@ -61,7 +71,9 @@ export function HabitTiles({
 
       <div className="bg-white px-[18px] py-4">
         <div className={ETYKIETA}>Ostatnie 30 dni</div>
-        <div className={LICZBA}>{trzydziesci.percent === null ? "—" : `${trzydziesci.percent}%`}</div>
+        <div className={LICZBA}>
+          {trzydziesci.percent === null ? "—" : `${trzydziesci.percent}%`}
+        </div>
         {roznica !== null && (
           <div className={POD_LICZBA}>
             {`${roznica < 0 ? "−" : roznica > 0 ? "+" : ""}${Math.abs(roznica)} pkt vs poprzednie 30`}
@@ -93,7 +105,9 @@ export function HabitTiles({
           <>
             <div className={LICZBA}>
               <span>{formatDuration(sen.avg)}</span>{" "}
-              <span className={JEDNOSTKA}>/ {formatDuration(sleepGoalMin)}</span>
+              <span className={JEDNOSTKA}>
+                / {formatDuration(sleepGoalMin)}
+              </span>
             </div>
             <div className={POD_LICZBA}>{sen.metGoal} z 14 nocy ≥ cel</div>
           </>

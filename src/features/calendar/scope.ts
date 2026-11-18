@@ -55,22 +55,31 @@ function patchCalejSerii(
   block: BlockRow,
   dataWidoczna: IsoDate,
   patch: BlockPatch,
-): { kind: "updateBlock"; patch: BlockPatch } | { kind: "reject"; message: string } {
+):
+  | { kind: "updateBlock"; patch: BlockPatch }
+  | { kind: "reject"; message: string } {
   const { date, ...reszta } = patch;
-  if (date === undefined || date === dataWidoczna) return { kind: "updateBlock", patch: reszta };
+  if (date === undefined || date === dataWidoczna)
+    return { kind: "updateBlock", patch: reszta };
 
   // Liczy się powtarzanie po zmianie (jeśli patch je zmienia)
-  const rec = patch.recurrence !== undefined ? patch.recurrence : (block.recurrence as Recurrence | null);
+  const rec =
+    patch.recurrence !== undefined
+      ? patch.recurrence
+      : (block.recurrence as Recurrence | null);
   if (rec === null) return { kind: "updateBlock", patch: { ...reszta, date } };
   if (rec.freq === "daily" || rec.freq === "weekdays") {
     return { kind: "reject", message: ZMIANA_DNIA_TYLKO_TYGODNIOWA };
   }
 
   const dni = Math.round(
-    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${dataWidoczna}T00:00:00Z`)) / 86_400_000,
+    (Date.parse(`${date}T00:00:00Z`) -
+      Date.parse(`${dataWidoczna}T00:00:00Z`)) /
+      86_400_000,
   );
   const nowyStart = addDays(block.start_local.slice(0, 10), dni);
-  if (rec.freq === "weekly") return { kind: "updateBlock", patch: { ...reszta, date: nowyStart } };
+  if (rec.freq === "weekly")
+    return { kind: "updateBlock", patch: { ...reszta, date: nowyStart } };
 
   // Własne: dni tygodnia obracamy tylko, gdy użytkownik sam ich nie zmienił w tym patchu
   if (patch.recurrence !== undefined) {
@@ -82,7 +91,11 @@ function patchCalejSerii(
     .sort((a, b) => a - b);
   return {
     kind: "updateBlock",
-    patch: { ...reszta, date: nowyStart, recurrence: { ...rec, byWeekday: obrocone } },
+    patch: {
+      ...reszta,
+      date: nowyStart,
+      recurrence: { ...rec, byWeekday: obrocone },
+    },
   };
 }
 

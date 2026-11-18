@@ -15,8 +15,18 @@ import { dayNumbers } from "./day-layout";
 import type { Occurrence } from "./occurrences";
 
 const MIESIACE_DOPELNIACZ = [
-  "stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca",
-  "lipca", "sierpnia", "września", "października", "listopada", "grudnia",
+  "stycznia",
+  "lutego",
+  "marca",
+  "kwietnia",
+  "maja",
+  "czerwca",
+  "lipca",
+  "sierpnia",
+  "września",
+  "października",
+  "listopada",
+  "grudnia",
 ];
 const DNI_PN = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
@@ -38,18 +48,27 @@ export function DaySide({
 }) {
   // Miesiąc mini kalendarza podąża za wybranym dniem, ale strzałki mogą go przesunąć
   const [rok, miesiac] = date.split("-").map(Number);
-  const [pokazany, setPokazany] = useState({ rok, miesiac0: miesiac - 1, dla: date });
+  const [pokazany, setPokazany] = useState({
+    rok,
+    miesiac0: miesiac - 1,
+    dla: date,
+  });
   if (pokazany.dla !== date) {
     setPokazany({ rok, miesiac0: miesiac - 1, dla: date });
   }
 
   function przesun(o: number) {
     const d = new Date(Date.UTC(pokazany.rok, pokazany.miesiac0 + o, 1));
-    setPokazany({ rok: d.getUTCFullYear(), miesiac0: d.getUTCMonth(), dla: date });
+    setPokazany({
+      rok: d.getUTCFullYear(),
+      miesiac0: d.getUTCMonth(),
+      dla: date,
+    });
   }
 
   const komorki = buildMonthGrid(pokazany.rok, pokazany.miesiac0, weekStart);
-  const naglowki = weekStart === "mon" ? DNI_PN : [DNI_PN[6], ...DNI_PN.slice(0, 6)];
+  const naglowki =
+    weekStart === "mon" ? DNI_PN : [DNI_PN[6], ...DNI_PN.slice(0, 6)];
 
   // Zadania przypięte do wystąpień tego dnia (po oryginalnej dacie z klucza)
   const zadaniaDnia = tasks.filter((t) =>
@@ -105,7 +124,8 @@ export function DaySide({
             const [, m, d] = k.date.split("-").map(Number);
             let styl = "bg-transparent text-[#a3a3a3]";
             if (k.date === date) styl = "bg-[#171717] font-semibold text-white";
-            else if (k.date === today) styl = "bg-[#f0faf4] font-semibold text-[#15803d]";
+            else if (k.date === today)
+              styl = "bg-[#f0faf4] font-semibold text-[#15803d]";
             else if (k.inMonth) styl = "bg-transparent text-[#171717]";
             return (
               <button

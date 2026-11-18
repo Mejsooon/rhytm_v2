@@ -9,7 +9,11 @@ const DOBA = 1440;
 export type DragKind = "create" | "move" | "resize";
 // Punkt gestu: dzień kolumny i minuta od północy (może być ułamkowa)
 export type DragPoint = { date: IsoDate; min: number };
-export type DragResult = { date: IsoDate; startMin: number; durationMin: number };
+export type DragResult = {
+  date: IsoDate;
+  startMin: number;
+  durationMin: number;
+};
 
 // 487 → 480, 488 → 495
 export function snapMinutes(rawMin: number): number {
@@ -47,7 +51,12 @@ export function dragResult(
   }
 
   // resize: rusza tylko koniec
-  const koniec = snapMinutes(original.startMin + original.durationMin + (current.min - start.min));
-  const durationMin = Math.min(Math.max(koniec - original.startMin, KROK), DOBA - original.startMin);
+  const koniec = snapMinutes(
+    original.startMin + original.durationMin + (current.min - start.min),
+  );
+  const durationMin = Math.min(
+    Math.max(koniec - original.startMin, KROK),
+    DOBA - original.startMin,
+  );
   return { date: start.date, startMin: original.startMin, durationMin };
 }

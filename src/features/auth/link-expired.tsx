@@ -19,11 +19,16 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   return (
     <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
       <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
-        <CircleAlert aria-hidden="true" className="size-5 text-[#b91c1c]" strokeWidth={2} />
+        <CircleAlert
+          aria-hidden="true"
+          className="size-5 text-[#b91c1c]"
+          strokeWidth={2}
+        />
       </span>
       <h1 className="m-0 text-[22px] font-semibold">Link wygasł</h1>
       <p className="m-0 leading-normal text-[#666666]">
-        Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój adres.
+        Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
+        adres.
       </p>
       {wyslano ? (
         <p role="status" className="m-0 leading-normal text-[#666666]">
@@ -38,20 +43,37 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
             const email = String(dane.get("email") ?? "");
             const token = dane.get("cf-turnstile-response");
             startTransition(async () => {
-              const odpowiedz = await resendLink(type, email, typeof token === "string" ? token : null);
+              const odpowiedz = await resendLink(
+                type,
+                email,
+                typeof token === "string" ? token : null,
+              );
               setWynik(odpowiedz);
               if (odpowiedz.status === "success") setWyslano(true);
             });
           }}
         >
-          <TextField label="E-mail" name="email" type="email" autoComplete="email" placeholder="ty@example.com" required className="leading-[1.21]" error={wynik.fieldErrors?.email} />
+          <TextField
+            label="E-mail"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="ty@example.com"
+            required
+            className="leading-[1.21]"
+            error={wynik.fieldErrors?.email}
+          />
           <TurnstileWidget resetKey={wynik} />
           {wynik.status === "error" && wynik.message && (
             <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
               {wynik.message}
             </p>
           )}
-          <Button type="submit" disabled={pending} className="w-full leading-[1.21] max-[799px]:text-[15px]">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="w-full leading-[1.21] max-[799px]:text-[15px]"
+          >
             Wyślij nowy link
           </Button>
         </form>

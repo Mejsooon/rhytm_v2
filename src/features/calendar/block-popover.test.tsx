@@ -2,14 +2,21 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addTask, toggleTask, deleteTask, unpinTask, toastError } = vi.hoisted(() => ({
-  addTask: vi.fn(),
-  toggleTask: vi.fn(),
-  deleteTask: vi.fn(),
-  unpinTask: vi.fn(),
-  toastError: vi.fn(),
+const { addTask, toggleTask, deleteTask, unpinTask, toastError } = vi.hoisted(
+  () => ({
+    addTask: vi.fn(),
+    toggleTask: vi.fn(),
+    deleteTask: vi.fn(),
+    unpinTask: vi.fn(),
+    toastError: vi.fn(),
+  }),
+);
+vi.mock("@/features/tasks/actions", () => ({
+  addTask,
+  toggleTask,
+  deleteTask,
+  unpinTask,
 }));
-vi.mock("@/features/tasks/actions", () => ({ addTask, toggleTask, deleteTask, unpinTask }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 
 import type { TaskRow } from "@/features/tasks/model";
@@ -54,9 +61,22 @@ function wystapienie(nadpisz: Partial<Occurrence> = {}): Occurrence {
 const dane: CalendarData = {
   blocks: [],
   exceptions: [],
-  tasks: [zadanie("t1", "Migracja", true), zadanie("t2", "Szablony", false), zadanie("t3", "Testy RLS", false)],
+  tasks: [
+    zadanie("t1", "Migracja", true),
+    zadanie("t2", "Szablony", false),
+    zadanie("t3", "Testy RLS", false),
+  ],
   categories: [
-    { id: "c1", name: "Projekty", color: "#15803d", hidden: false, is_system: false, position: 1, user_id: "u1", created_at: null },
+    {
+      id: "c1",
+      name: "Projekty",
+      color: "#15803d",
+      hidden: false,
+      is_system: false,
+      position: 1,
+      user_id: "u1",
+      created_at: null,
+    },
   ],
   profile: { timezone: "Europe/Warsaw", weekStart: "mon", clock: "24" },
 };
@@ -110,7 +130,10 @@ describe("BlockPopover", () => {
     expect(screen.getByText("rhytm — kod")).toBeInTheDocument();
     expect(screen.getByText(/10:00–12:30/)).toBeInTheDocument();
     expect(screen.getByText("1 z 3")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "33");
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "33",
+    );
   });
 
   it("odhaczenie od razu zmienia licznik i woła toggleTask", async () => {
@@ -145,15 +168,23 @@ describe("BlockPopover", () => {
 
   it("pusty tekst nie wywołuje akcji", async () => {
     wyrenderuj();
-    await userEvent.type(screen.getByRole("textbox", { name: "Nowe zadanie" }), "   {Enter}");
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Nowe zadanie" }),
+      "   {Enter}",
+    );
     expect(addTask).not.toHaveBeenCalled();
   });
 
   it("błąd dodania cofa zadanie i pokazuje toast", async () => {
     addTask.mockResolvedValue({ ok: false, message: "x" });
     wyrenderuj();
-    await userEvent.type(screen.getByRole("textbox", { name: "Nowe zadanie" }), "Kupić mleko{Enter}");
-    await waitFor(() => expect(screen.queryByText("Kupić mleko")).not.toBeInTheDocument());
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Nowe zadanie" }),
+      "Kupić mleko{Enter}",
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("Kupić mleko")).not.toBeInTheDocument(),
+    );
     expect(screen.getByText("1 z 3")).toBeInTheDocument();
     expect(toastError).toHaveBeenCalled();
   });
@@ -161,8 +192,12 @@ describe("BlockPopover", () => {
   it("błąd usunięcia przywraca zadanie i pokazuje toast", async () => {
     deleteTask.mockResolvedValue({ ok: false, message: "x" });
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: "Usuń zadanie Szablony" }));
-    await waitFor(() => expect(screen.getByText("Szablony")).toBeInTheDocument());
+    await userEvent.click(
+      screen.getByRole("button", { name: "Usuń zadanie Szablony" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Szablony")).toBeInTheDocument(),
+    );
     expect(toastError).toHaveBeenCalled();
   });
 
@@ -175,12 +210,18 @@ describe("BlockPopover", () => {
 
   it("× usuwa zadanie, a Odepnij je odpina", async () => {
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: "Usuń zadanie Szablony" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Usuń zadanie Szablony" }),
+    );
     expect(screen.queryByText("Szablony")).not.toBeInTheDocument();
     expect(deleteTask).toHaveBeenCalledWith({ id: "t2" });
 
-    await userEvent.click(screen.getByRole("button", { name: "Opcje zadania Testy RLS" }));
-    await userEvent.click(screen.getByRole("button", { name: "Odepnij zadanie Testy RLS" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Opcje zadania Testy RLS" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Odepnij zadanie Testy RLS" }),
+    );
     expect(screen.queryByText("Testy RLS")).not.toBeInTheDocument();
     expect(unpinTask).toHaveBeenCalledWith({ taskId: "t3" });
   });
@@ -189,7 +230,10 @@ describe("BlockPopover", () => {
     const onDelete = vi.fn();
     const onEdit = vi.fn();
     wyrenderuj({
-      occurrence: wystapienie({ recurring: true, recurrence: { freq: "weekly" } }),
+      occurrence: wystapienie({
+        recurring: true,
+        recurrence: { freq: "weekly" },
+      }),
       onDelete,
       onEdit,
     });

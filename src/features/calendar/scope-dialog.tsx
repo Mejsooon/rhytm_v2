@@ -45,7 +45,9 @@ export function ScopeDialog({
   const [wybrany, setWybrany] = useState<Scope>(
     !disableThis ? "this" : !disableFollowing ? "following" : "all",
   );
-  const wszystkieWylaczone = Boolean(disableThis && disableFollowing && disableAll);
+  const wszystkieWylaczone = Boolean(
+    disableThis && disableFollowing && disableAll,
+  );
 
   // „wt 17.11” z daty i dnia tygodnia
   const [, miesiac, dzien] = date.split("-");
@@ -53,7 +55,12 @@ export function ScopeDialog({
   const dzienTygodnia = dniTygodnia[new Date(`${date}T12:00:00Z`).getUTCDay()];
   const krotko = `${Number(dzien)}.${miesiac}`;
 
-  const opcje: { value: Scope; tytul: string; opis: string; wylaczona: boolean }[] = [
+  const opcje: {
+    value: Scope;
+    tytul: string;
+    opis: string;
+    wylaczona: boolean;
+  }[] = [
     {
       value: "this",
       tytul: "Tylko to wystąpienie",
@@ -79,7 +86,9 @@ export function ScopeDialog({
       open
       onOpenChange={(otwarte) => !otwarte && onCancel()}
       title={
-        intent === "delete" ? "Usuwasz blok, który się powtarza" : "Zmieniasz blok, który się powtarza"
+        intent === "delete"
+          ? "Usuwasz blok, który się powtarza"
+          : "Zmieniasz blok, który się powtarza"
       }
       description={subtitle}
       footer={
@@ -100,14 +109,20 @@ export function ScopeDialog({
         </>
       }
     >
-      <div role="radiogroup" aria-label="Zakres zmiany" className="flex flex-col gap-2">
+      <div
+        role="radiogroup"
+        aria-label="Zakres zmiany"
+        className="flex flex-col gap-2"
+      >
         {opcje.map((o) => (
           <label
             key={o.value}
             className={cn(
               "flex items-start gap-3 rounded-lg border px-3.5 py-3 max-[799px]:min-h-11",
               o.wylaczona ? "cursor-not-allowed opacity-50" : "cursor-pointer",
-              wybrany === o.value ? "border-[#171717] bg-[#fafafa]" : "border-[#e0e0e0] bg-white",
+              wybrany === o.value
+                ? "border-[#171717] bg-[#fafafa]"
+                : "border-[#e0e0e0] bg-white",
             )}
           >
             <input
@@ -126,7 +141,9 @@ export function ScopeDialog({
         ))}
       </div>
       {/* Podpowiedzi bez powtórzeń (ta sama może dotyczyć dwóch opcji) */}
-      {[...new Set([disableThis, disableFollowing, disableAll].filter(Boolean))].map((p) => (
+      {[
+        ...new Set([disableThis, disableFollowing, disableAll].filter(Boolean)),
+      ].map((p) => (
         <p key={p} className="m-0 text-xs text-[#6b6b6b]">
           {p}
         </p>

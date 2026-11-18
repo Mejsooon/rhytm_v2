@@ -15,7 +15,13 @@ import { layoutDay, nowLine } from "../day-layout";
 import type { CategoryRow } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
 import { viewRange, weekdayOf } from "../view-range";
-import { DNI_PELNE, DNI_SKROT, KOLOR_BRAK, MIESIACE_DOP, WYSOKOSC_GODZINY } from "./pl";
+import {
+  DNI_PELNE,
+  DNI_SKROT,
+  KOLOR_BRAK,
+  MIESIACE_DOP,
+  WYSOKOSC_GODZINY,
+} from "./pl";
 
 export function MCalendarDay({
   date,
@@ -53,7 +59,9 @@ export function MCalendarDay({
   const slowoBlok =
     liczba === 1
       ? "blok"
-      : liczba % 10 >= 2 && liczba % 10 <= 4 && (liczba % 100 < 12 || liczba % 100 > 14)
+      : liczba % 10 >= 2 &&
+          liczba % 10 <= 4 &&
+          (liczba % 100 < 12 || liczba % 100 > 14)
         ? "bloki"
         : "bloków";
 
@@ -62,16 +70,25 @@ export function MCalendarDay({
     const os = osRef.current;
     if (!os) return;
     const trwajacy =
-      linia === null ? undefined : dnia.find((o) => o.startMin <= linia && linia < o.startMin + o.durationMin);
+      linia === null
+        ? undefined
+        : dnia.find(
+            (o) => o.startMin <= linia && linia < o.startMin + o.durationMin,
+          );
     os.scrollTop = trwajacy
-      ? Math.round((trwajacy.startMin / 60) * WYSOKOSC_GODZINY - WYSOKOSC_GODZINY / 2)
+      ? Math.round(
+          (trwajacy.startMin / 60) * WYSOKOSC_GODZINY - WYSOKOSC_GODZINY / 2,
+        )
       : 7 * WYSOKOSC_GODZINY;
     // Tylko przy wejściu na dzień: późniejsze zmiany danych nie mogą odsuwać przewiniętej osi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
   // Domyślna godzina „+”: dziś najbliższa pełna godzina, inny dzień 09:00
-  const startPlusa = date === today ? Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60) : 540;
+  const startPlusa =
+    date === today
+      ? Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60)
+      : 540;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -150,7 +167,8 @@ export function MCalendarDay({
             className="absolute top-0 right-0 bottom-0 left-12 cursor-pointer"
             onClick={(e) => {
               const gora = e.currentTarget.getBoundingClientRect().top;
-              const minuty = Math.floor(((e.clientY - gora) / WYSOKOSC_GODZINY) * 2) * 30;
+              const minuty =
+                Math.floor(((e.clientY - gora) / WYSOKOSC_GODZINY) * 2) * 30;
               onAdd(date, Math.min(Math.max(minuty, 0), 23 * 60 + 30));
             }}
           />
@@ -196,7 +214,10 @@ export function MCalendarDay({
                 )}
                 {kompakt ? (
                   // Krótki blok: tytuł ucina się wielokropkiem, godziny zostają w całości
-                  <span data-testid="blok-jedna-linia" className="flex h-full items-center gap-2 overflow-hidden">
+                  <span
+                    data-testid="blok-jedna-linia"
+                    className="flex h-full items-center gap-2 overflow-hidden"
+                  >
                     <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
                       {o.title}
                     </span>
@@ -206,7 +227,9 @@ export function MCalendarDay({
                   </span>
                 ) : (
                   <span className="flex h-full flex-col gap-0.5 overflow-hidden py-1.5">
-                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold">{o.title}</span>
+                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold">
+                      {o.title}
+                    </span>
                     <span className="truncate font-mono text-[11px] leading-4 text-[#555555]">
                       {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
                     </span>

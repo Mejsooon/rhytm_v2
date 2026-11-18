@@ -11,7 +11,10 @@ import { useRouter } from "next/navigation";
 import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
 import { FormDialog } from "@/components/controls/form-dialog";
-import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import {
+  CategoryDialog,
+  type NewCategory,
+} from "@/features/categories/category-dialog";
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
@@ -20,7 +23,11 @@ import { CalendarHeader } from "./calendar-header";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
-import { minutesNow, type CalendarData, type CategoryRow } from "./load-calendar";
+import {
+  minutesNow,
+  type CalendarData,
+  type CategoryRow,
+} from "./load-calendar";
 import { MBlockSheet } from "./mobile/m-block-sheet";
 import { MCalendarDay } from "./mobile/m-calendar-day";
 import { MCalendarMonth } from "./mobile/m-calendar-month";
@@ -51,7 +58,12 @@ function godzina(minuty: number): string {
 type Okno =
   | { typ: "wpis"; date: IsoDate; startMin: number }
   // `tel`: otwarte na telefonie, więc zamiast BlockDialog pokazuje się arkusz MBlockSheet
-  | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial; tel?: boolean }
+  | {
+      typ: "blok";
+      mode: "create" | "edit";
+      initial: BlockDialogInitial;
+      tel?: boolean;
+    }
   | { typ: "kategoria" }
   | { typ: "usun"; occurrence: Occurrence }
   // Przeciągnięty blok cykliczny czeka na wybór zakresu zmiany
@@ -80,7 +92,10 @@ export function CalendarView({
 
   // Zegar: start z wartości serwera (bez rozjazdu hydracji), potem co minutę w strefie profilu.
   // Po północy „dziś” przechodzi na nowy dzień. Nowe wartości z serwera zastępują zegar.
-  const [zegar, setZegar] = useState({ today: dzisSerwera, nowMinutes: terazSerwera });
+  const [zegar, setZegar] = useState({
+    today: dzisSerwera,
+    nowMinutes: terazSerwera,
+  });
   const [zegarDla, setZegarDla] = useState(`${dzisSerwera}|${terazSerwera}`);
   if (zegarDla !== `${dzisSerwera}|${terazSerwera}`) {
     setZegarDla(`${dzisSerwera}|${terazSerwera}`);
@@ -94,11 +109,15 @@ export function CalendarView({
     return () => window.clearInterval(id);
   }, [strefa]);
   const { today, nowMinutes } = zegar;
-  const zakres = useMemo(() => viewRange(view, date, weekStart), [view, date, weekStart]);
+  const zakres = useMemo(
+    () => viewRange(view, date, weekStart),
+    [view, date, weekStart],
+  );
   // Widok telefonu; dzień potrzebuje całego tygodnia (pasek z kropkami), więc dane obejmują tydzień
   const widokTel: CalendarView = hasExplicitView ? view : "dzien";
   const zakresTel = useMemo(
-    () => viewRange(widokTel === "dzien" ? "tydzien" : widokTel, date, weekStart),
+    () =>
+      viewRange(widokTel === "dzien" ? "tydzien" : widokTel, date, weekStart),
     [widokTel, date, weekStart],
   );
 
@@ -110,7 +129,9 @@ export function CalendarView({
   const [okno, setOkno] = useState<Okno | null>(null);
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
   // Miejsce, w którym blok stoi po puszczeniu, zanim zapis się skończy (albo „Anuluj” go cofnie)
-  const [podgladBloku, setPodgladBloku] = useState<({ key: string } & DragResult) | null>(null);
+  const [podgladBloku, setPodgladBloku] = useState<
+    ({ key: string } & DragResult) | null
+  >(null);
   // Nowe dane serwera (np. po podziale serii) zastępują podgląd (stan ustawiany w renderze)
   const [daneDla, setDaneDla] = useState(daneSerwera);
   if (daneDla !== daneSerwera) {
@@ -127,22 +148,37 @@ export function CalendarView({
   }
 
   const wystapienia = useMemo(
-    () => expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
+    () =>
+      expandOccurrences(data.blocks, data.exceptions, zakres.from, zakres.to),
     [data.blocks, data.exceptions, zakres.from, zakres.to],
   );
 
   // Ten sam zakres co web (np. tydzień z jawnym widokiem): bez drugiego rozwijania bloków
-  const tenSamZakres = zakresTel.from === zakres.from && zakresTel.to === zakres.to;
+  const tenSamZakres =
+    zakresTel.from === zakres.from && zakresTel.to === zakres.to;
   const wystapieniaTelOsobne = useMemo(
     () =>
-      tenSamZakres ? [] : expandOccurrences(data.blocks, data.exceptions, zakresTel.from, zakresTel.to),
+      tenSamZakres
+        ? []
+        : expandOccurrences(
+            data.blocks,
+            data.exceptions,
+            zakresTel.from,
+            zakresTel.to,
+          ),
     [tenSamZakres, data.blocks, data.exceptions, zakresTel.from, zakresTel.to],
   );
   const wystapieniaTel = tenSamZakres ? wystapienia : wystapieniaTelOsobne;
 
-  const ukryte = new Set(data.categories.filter((k) => k.hidden).map((k) => k.id));
-  const widoczne = wystapienia.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
-  const widoczneTel = wystapieniaTel.filter((o) => !o.categoryId || !ukryte.has(o.categoryId));
+  const ukryte = new Set(
+    data.categories.filter((k) => k.hidden).map((k) => k.id),
+  );
+  const widoczne = wystapienia.filter(
+    (o) => !o.categoryId || !ukryte.has(o.categoryId),
+  );
+  const widoczneTel = wystapieniaTel.filter(
+    (o) => !o.categoryId || !ukryte.has(o.categoryId),
+  );
 
   // Ukrycie od razu znika z widoku; błąd zapisu cofa zmianę i pokazuje toast (w store)
   function przelaczKategorie(kategoria: CategoryRow) {
@@ -176,7 +212,8 @@ export function CalendarView({
                   color: nowa.color,
                   hidden: false,
                   is_system: false,
-                  position: Math.max(0, ...d.categories.map((k) => k.position)) + 1,
+                  position:
+                    Math.max(0, ...d.categories.map((k) => k.position)) + 1,
                   user_id: d.categories[0]?.user_id ?? "",
                   created_at: null,
                 },
@@ -209,18 +246,25 @@ export function CalendarView({
   }
 
   // Zapis przesunięcia/rozciągnięcia: blok od razu stoi na nowym miejscu, błąd cofa i daje toast
-  function zapiszPrzeciagniecie(o: Occurrence, zakres: Scope, wynik: DragResult) {
+  function zapiszPrzeciagniecie(
+    o: Occurrence,
+    zakres: Scope,
+    wynik: DragResult,
+  ) {
     // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
     const dataOryginalna = o.key.slice(o.blockId.length + 1);
     const patch: BlockPatch = {};
     if (wynik.date !== o.date) patch.date = wynik.date;
     if (wynik.startMin !== o.startMin) patch.startMin = wynik.startMin;
-    if (wynik.durationMin !== o.durationMin) patch.durationMin = wynik.durationMin;
+    if (wynik.durationMin !== o.durationMin)
+      patch.durationMin = wynik.durationMin;
 
     // Optymistyczna zmiana z tego samego planu, który wykona akcja; podział serii
     // zostaje do odświeżenia danych (do tego czasu blok trzyma podgląd)
     const blok = data.blocks.find((b) => b.id === o.blockId);
-    const plan = blok ? planScopeChange({ block: blok, occurrence: o, scope: zakres, patch }) : null;
+    const plan = blok
+      ? planScopeChange({ block: blok, occurrence: o, scope: zakres, patch })
+      : null;
     const zmiana: CalendarChange = (d) => {
       if (plan?.kind === "updateBlock") {
         const p = plan.patch;
@@ -232,11 +276,14 @@ export function CalendarView({
               : {
                   ...b,
                   start_local: `${p.date ?? b.start_local.slice(0, 10)}T${
-                    p.startMin === undefined ? b.start_local.slice(11, 19) : `${godzina(p.startMin)}:00`
+                    p.startMin === undefined
+                      ? b.start_local.slice(11, 19)
+                      : `${godzina(p.startMin)}:00`
                   }`,
                   duration_min: p.durationMin ?? b.duration_min,
                   // Seria własna przesunięta na inny dzień ma obrócone dni tygodnia
-                  recurrence: p.recurrence === undefined ? b.recurrence : p.recurrence,
+                  recurrence:
+                    p.recurrence === undefined ? b.recurrence : p.recurrence,
                 },
           ),
         };
@@ -246,7 +293,11 @@ export function CalendarView({
           ...d,
           exceptions: [
             ...d.exceptions.filter(
-              (w) => !(w.block_id === plan.row.block_id && w.occurrence_date === plan.row.occurrence_date),
+              (w) =>
+                !(
+                  w.block_id === plan.row.block_id &&
+                  w.occurrence_date === plan.row.occurrence_date
+                ),
             ),
             plan.row,
           ],
@@ -256,7 +307,12 @@ export function CalendarView({
     };
 
     void applyOptimistic(zmiana, () =>
-      changeOccurrence({ blockId: o.blockId, date: dataOryginalna, scope: zakres, patch }),
+      changeOccurrence({
+        blockId: o.blockId,
+        date: dataOryginalna,
+        scope: zakres,
+        patch,
+      }),
     ).then((udane) => {
       // Podział serii nie ma zmiany optymistycznej: podgląd zostaje do nowych danych serwera
       if (!udane || plan?.kind !== "split") setPodgladBloku(null);
@@ -267,7 +323,12 @@ export function CalendarView({
   // cykliczny najpierw pyta o zakres (podgląd zostaje na nowym miejscu)
   function przeciagnietyBlok(o: Occurrence, wynik: DragResult) {
     setWybrany(null);
-    if (wynik.date === o.date && wynik.startMin === o.startMin && wynik.durationMin === o.durationMin) return;
+    if (
+      wynik.date === o.date &&
+      wynik.startMin === o.startMin &&
+      wynik.durationMin === o.durationMin
+    )
+      return;
     if (!o.recurring) {
       // Otwarty dymek „Nowy wpis” zamyka się razem z ruchem
       setOkno((w) => (w?.typ === "wpis" ? null : w));
@@ -303,7 +364,9 @@ export function CalendarView({
   // Wystąpienie zniknęło (ukryta kategoria, usunięty blok): wybór się czyści,
   // więc dymek nie wraca po ponownym pokazaniu kategorii
   if (wybrany && !wybraneWystapienie) setWybrany(null);
-  const wybraneTel = wybranyTel ? widoczneTel.find((o) => o.key === wybranyTel) : undefined;
+  const wybraneTel = wybranyTel
+    ? widoczneTel.find((o) => o.key === wybranyTel)
+    : undefined;
   if (wybranyTel && !wybraneTel) setWybranyTel(null);
 
   // Edycja i usuwanie bloku: wspólne dla dymku (web) i arkusza (telefon)
@@ -360,12 +423,16 @@ export function CalendarView({
   }
 
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
-  const wpisyMiesiaca = widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length;
+  const wpisyMiesiaca = widoczne.filter(
+    (o) => o.date.slice(0, 7) === date.slice(0, 7),
+  ).length;
   // Odmiana: 1 wpis widoczny; 2–4, 22–24… wpisy widoczne (ale 12–14 wpisów); reszta wpisów widocznych
   const napisWpisow =
     wpisyMiesiaca === 1
       ? "1 wpis widoczny"
-      : wpisyMiesiaca % 10 >= 2 && wpisyMiesiaca % 10 <= 4 && (wpisyMiesiaca % 100 < 12 || wpisyMiesiaca % 100 > 14)
+      : wpisyMiesiaca % 10 >= 2 &&
+          wpisyMiesiaca % 10 <= 4 &&
+          (wpisyMiesiaca % 100 < 12 || wpisyMiesiaca % 100 > 14)
         ? `${wpisyMiesiaca} wpisy widoczne`
         : `${wpisyMiesiaca} wpisów widocznych`;
   // Widok dnia: „N z M bloków” (M liczy też ukryte kategorie)
@@ -407,7 +474,9 @@ export function CalendarView({
     <>
       <div
         className={`flex min-h-0 flex-col min-[800px]:h-dvh ${
-          widokTel === "dzien" ? "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]" : ""
+          widokTel === "dzien"
+            ? "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]"
+            : ""
         }`}
       >
         <CalendarHeader
@@ -416,7 +485,13 @@ export function CalendarView({
           date={date}
           today={today}
           weekStart={weekStart}
-          subtitle={view === "miesiac" ? napisWpisow : view === "dzien" ? napisBlokow : undefined}
+          subtitle={
+            view === "miesiac"
+              ? napisWpisow
+              : view === "dzien"
+                ? napisBlokow
+                : undefined
+          }
           categories={data.categories}
           onToggleCategory={przelaczKategorie}
           onAddCategory={() => setOkno({ typ: "kategoria" })}
@@ -430,7 +505,10 @@ export function CalendarView({
                 title: "",
                 categoryId: null,
                 date: view === "dzien" ? date : today,
-                startMin: Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60),
+                startMin: Math.min(
+                  (Math.floor(nowMinutes / 60) + 1) * 60,
+                  23 * 60,
+                ),
                 durationMin: 60,
                 recurrence: null,
                 note: "",
@@ -439,7 +517,11 @@ export function CalendarView({
             });
           }}
         />
-        {view === "tydzien" && <div className="flex min-h-0 flex-1 flex-col max-[799px]:hidden">{siatka}</div>}
+        {view === "tydzien" && (
+          <div className="flex min-h-0 flex-1 flex-col max-[799px]:hidden">
+            {siatka}
+          </div>
+        )}
         {view === "dzien" && (
           <div className="flex min-h-0 flex-1 max-[799px]:hidden">
             {siatka}
@@ -449,7 +531,9 @@ export function CalendarView({
               weekStart={weekStart}
               occurrences={widoczne.filter((o) => o.date === date)}
               tasks={data.tasks}
-              onPick={(dzien) => router.push(`/kalendarz?widok=dzien&data=${dzien}`)}
+              onPick={(dzien) =>
+                router.push(`/kalendarz?widok=dzien&data=${dzien}`)
+              }
             />
           </div>
         )}
@@ -480,7 +564,9 @@ export function CalendarView({
                   setWybrany(null);
                   setKotwicaWpisu(kotwica);
                   setOkno((o) =>
-                    o?.typ === "wpis" && o.date === dzien ? null : { typ: "wpis", date: dzien, startMin: 540 },
+                    o?.typ === "wpis" && o.date === dzien
+                      ? null
+                      : { typ: "wpis", date: dzien, startMin: 540 },
                   );
                 }}
               />
@@ -537,7 +623,9 @@ export function CalendarView({
         <BlockPopover
           occurrence={wybraneWystapienie}
           tasks={data.tasks}
-          category={data.categories.find((k) => k.id === wybraneWystapienie.categoryId)}
+          category={data.categories.find(
+            (k) => k.id === wybraneWystapienie.categoryId,
+          )}
           clock={data.profile.clock}
           align={wyrownanie(wybraneWystapienie.date)}
           applyOptimistic={applyOptimistic}
@@ -548,11 +636,17 @@ export function CalendarView({
       )}
       {wybraneTel && (
         // Telefon: szczegóły bloku w dolnym arkuszu (FormDialog), nie w dymku przy bloku
-        <FormDialog open onOpenChange={(otwarte) => !otwarte && setWybranyTel(null)} title="Szczegóły bloku">
+        <FormDialog
+          open
+          onOpenChange={(otwarte) => !otwarte && setWybranyTel(null)}
+          title="Szczegóły bloku"
+        >
           <BlockDetails
             occurrence={wybraneTel}
             tasks={data.tasks}
-            category={data.categories.find((k) => k.id === wybraneTel.categoryId)}
+            category={data.categories.find(
+              (k) => k.id === wybraneTel.categoryId,
+            )}
             clock={data.profile.clock}
             applyOptimistic={applyOptimistic}
             onEdit={() => edytuj(wybraneTel, true)}
@@ -629,7 +723,9 @@ export function CalendarView({
         <ScopeDialog
           subtitle={[
             `„${okno.occurrence.title}”`,
-            okno.occurrence.recurrence ? recurrenceBadge(okno.occurrence.recurrence).slice(2) : null,
+            okno.occurrence.recurrence
+              ? recurrenceBadge(okno.occurrence.recurrence).slice(2)
+              : null,
             `przesunięcie na ${formatClockTime(Math.floor(okno.wynik.startMin / 60), okno.wynik.startMin % 60, data.profile.clock)}–${formatClockTime(Math.floor((okno.wynik.startMin + okno.wynik.durationMin) / 60), (okno.wynik.startMin + okno.wynik.durationMin) % 60, data.profile.clock)}`,
           ]
             .filter(Boolean)
@@ -641,7 +737,8 @@ export function CalendarView({
           disableFollowing={
             okno.wynik.date === okno.occurrence.date
               ? undefined
-              : okno.occurrence.recurrence?.freq === "daily" || okno.occurrence.recurrence?.freq === "weekdays"
+              : okno.occurrence.recurrence?.freq === "daily" ||
+                  okno.occurrence.recurrence?.freq === "weekdays"
                 ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
                 : !pierwszeWystapienie(okno.occurrence)
                   ? ZMIANA_DNIA_NIE_DLA_NASTEPNYCH
@@ -649,7 +746,8 @@ export function CalendarView({
           }
           disableAll={
             okno.wynik.date !== okno.occurrence.date &&
-            (okno.occurrence.recurrence?.freq === "daily" || okno.occurrence.recurrence?.freq === "weekdays")
+            (okno.occurrence.recurrence?.freq === "daily" ||
+              okno.occurrence.recurrence?.freq === "weekdays")
               ? ZMIANA_DNIA_TYLKO_TYGODNIOWA
               : undefined
           }

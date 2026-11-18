@@ -26,13 +26,19 @@ describe("GET /auth/confirm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("RECOVERY_COOKIE_SECRET", "sekret-testowy");
-    verifyOtp.mockResolvedValue({ data: { user: { id: "u1" }, session: {} }, error: null });
+    verifyOtp.mockResolvedValue({
+      data: { user: { id: "u1" }, session: {} },
+      error: null,
+    });
   });
   afterEach(() => vi.unstubAllEnvs());
 
   it("signup → verifyOtp i 307 na /potwierdzono", async () => {
     const res = await GET(zadanie("?token_hash=abc&type=signup"));
-    expect(verifyOtp).toHaveBeenCalledWith({ type: "signup", token_hash: "abc" });
+    expect(verifyOtp).toHaveBeenCalledWith({
+      type: "signup",
+      token_hash: "abc",
+    });
     expect(res.status).toBe(307);
     expect(cel(res)).toBe("/potwierdzono");
   });
@@ -69,10 +75,16 @@ describe("GET /auth/confirm", () => {
   it("ciasteczka nie ma dla signup, po błędzie recovery ani bez użytkownika w wyniku", async () => {
     const ok = await GET(zadanie("?token_hash=abc&type=signup"));
     expect(ok.cookies.get("rhytm_recovery")).toBeUndefined();
-    verifyOtp.mockResolvedValue({ data: { user: null, session: null }, error: { message: "expired" } });
+    verifyOtp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: "expired" },
+    });
     const zle = await GET(zadanie("?token_hash=abc&type=recovery"));
     expect(zle.cookies.get("rhytm_recovery")).toBeUndefined();
-    verifyOtp.mockResolvedValue({ data: { user: null, session: null }, error: null });
+    verifyOtp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: null,
+    });
     const bezUzytkownika = await GET(zadanie("?token_hash=abc&type=recovery"));
     expect(bezUzytkownika.cookies.get("rhytm_recovery")).toBeUndefined();
     expect(cel(bezUzytkownika)).toBe("/link-wygasl?type=recovery");

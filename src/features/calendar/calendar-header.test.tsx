@@ -27,22 +27,24 @@ function wyrenderuj(over: Partial<Parameters<typeof CalendarHeader>[0]> = {}) {
 describe("CalendarHeader", () => {
   it("pokazuje tytuł miesiąca i etykietę tygodnia", () => {
     wyrenderuj();
-    expect(screen.getByRole("heading", { name: "Listopad 2026" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Listopad 2026" }),
+    ).toBeInTheDocument();
     // Numer tygodnia w pasku web (obok tytułu h1), nie w nagłówku telefonu
-    const pasekWeb = screen.getByRole("heading", { level: 1 }).closest("header")!;
+    const pasekWeb = screen
+      .getByRole("heading", { level: 1 })
+      .closest("header")!;
     expect(within(pasekWeb).getByText("tydz. 47")).toBeInTheDocument();
   });
 
   it("strzałki i Dziś to linki zmieniające datę", () => {
     wyrenderuj();
-    expect(screen.getByRole("link", { name: "Następny tydzień" })).toHaveAttribute(
-      "href",
-      "/kalendarz?widok=tydzien&data=2026-11-25",
-    );
-    expect(screen.getByRole("link", { name: "Poprzedni tydzień" })).toHaveAttribute(
-      "href",
-      "/kalendarz?widok=tydzien&data=2026-11-11",
-    );
+    expect(
+      screen.getByRole("link", { name: "Następny tydzień" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=tydzien&data=2026-11-25");
+    expect(
+      screen.getByRole("link", { name: "Poprzedni tydzień" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=tydzien&data=2026-11-11");
     expect(screen.getByRole("link", { name: "Dziś" })).toHaveAttribute(
       "href",
       "/kalendarz?widok=tydzien&data=2026-11-17",
@@ -57,38 +59,48 @@ describe("CalendarHeader", () => {
 
   it("widok dnia: tytuł z dniem tygodnia i podtytuł „N z M bloków”", () => {
     wyrenderuj({ view: "dzien", date: "2026-11-17", subtitle: "2 z 5 bloków" });
-    expect(screen.getByRole("heading", { level: 1, name: "Wtorek, 17 listopada" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Wtorek, 17 listopada" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("2 z 5 bloków")).toBeInTheDocument();
   });
 
   it("widok miesiąca: tytuł miesiąca i podtytuł z liczbą wpisów", () => {
     wyrenderuj({ view: "miesiac", subtitle: "3 wpisy widoczne" });
-    expect(screen.getByRole("heading", { level: 1, name: "Listopad 2026" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Listopad 2026" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("3 wpisy widoczne")).toBeInTheDocument();
   });
 
   it("jeden pasek: bez okruszków i bez rzędu chipów; jest przycisk „Kategorie”", () => {
     wyrenderuj();
     expect(screen.queryByText("Pokaż")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ }),
+    ).toBeInTheDocument();
     // Telefon: ikona „Kategorie”, bez „+” w nagłówku (nowy blok dodaje pływający przycisk)
-    expect(screen.getByRole("button", { name: "Kategorie" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Kategorie" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(
+      1,
+    );
   });
 
   it("tydzień od niedzieli: etykieta i strzałki", () => {
     wyrenderuj({ weekStart: "sun" }); // 15–21.11, środa 18.11 w tygodniu 47
     // Numer tygodnia w pasku web (obok tytułu h1), nie w nagłówku telefonu
-    const pasekWeb = screen.getByRole("heading", { level: 1 }).closest("header")!;
+    const pasekWeb = screen
+      .getByRole("heading", { level: 1 })
+      .closest("header")!;
     expect(within(pasekWeb).getByText("tydz. 47")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Następny tydzień" })).toHaveAttribute(
-      "href",
-      "/kalendarz?widok=tydzien&data=2026-11-25",
-    );
-    expect(screen.getByRole("link", { name: "Poprzedni tydzień" })).toHaveAttribute(
-      "href",
-      "/kalendarz?widok=tydzien&data=2026-11-11",
-    );
+    expect(
+      screen.getByRole("link", { name: "Następny tydzień" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=tydzien&data=2026-11-25");
+    expect(
+      screen.getByRole("link", { name: "Poprzedni tydzień" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=tydzien&data=2026-11-11");
   });
 
   it("Nowy blok woła callback", async () => {
@@ -99,9 +111,15 @@ describe("CalendarHeader", () => {
 
   it("telefon bierze mobileView: segment i strzałki działają na dniach", async () => {
     wyrenderuj({ mobileView: "dzien" });
-    const segmenty = screen.getAllByRole("radiogroup", { name: "Widok kalendarza" });
-    expect(segmenty[1].querySelector('[aria-checked="true"]')).toHaveTextContent("Dzień");
-    await userEvent.click(screen.getByRole("button", { name: "Następny dzień" }));
+    const segmenty = screen.getAllByRole("radiogroup", {
+      name: "Widok kalendarza",
+    });
+    expect(
+      segmenty[1].querySelector('[aria-checked="true"]'),
+    ).toHaveTextContent("Dzień");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Następny dzień" }),
+    );
     expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-19");
   });
 });

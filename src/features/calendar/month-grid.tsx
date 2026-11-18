@@ -85,7 +85,11 @@ export function MonthGrid({
                 data-day={dzien}
                 // Klik w pustą część komórki (wpisy i linki obsługują się same)
                 onClick={(e) => {
-                  if (e.target instanceof Element && e.target.closest("button, a")) return;
+                  if (
+                    e.target instanceof Element &&
+                    e.target.closest("button, a")
+                  )
+                    return;
                   onDayClick(dzien, e.currentTarget);
                 }}
                 className={`group relative min-h-28 cursor-pointer px-2 py-1.5 ${i >= 7 ? "border-t border-[#eaeaea]" : ""} ${i % 7 > 0 ? "border-l border-[#eaeaea]" : ""} ${!wMiesiacu || weekend ? "bg-[#fafafa]" : ""} ${activeDay === dzien ? "ring-2 ring-[#171717] ring-inset" : ""}`}
@@ -100,7 +104,8 @@ export function MonthGrid({
                   type="button"
                   aria-label={`Nowy wpis ${kiedy}`}
                   onClick={(e) => {
-                    const komorka = e.currentTarget.closest<HTMLElement>("[data-day]");
+                    const komorka =
+                      e.currentTarget.closest<HTMLElement>("[data-day]");
                     if (komorka) onDayClick(dzien, komorka);
                   }}
                   className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-[#666666] opacity-0 outline-none group-hover:bg-[#f0f0f0] group-hover:opacity-100 focus-visible:bg-[#f0f0f0] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#171717]/20"
@@ -108,7 +113,8 @@ export function MonthGrid({
                   <span aria-hidden="true">+</span>
                 </button>
                 {wpisy.slice(0, MAX_WPISOW).map((o) => {
-                  const kolor = (o.categoryId && koloryKategorii.get(o.categoryId)) || null;
+                  const kolor =
+                    (o.categoryId && koloryKategorii.get(o.categoryId)) || null;
                   // Wg makiety: z kategorią tło w kolorze (alfa 14) i lewy pasek 2 px, bez kategorii kreskowana ramka
                   const wyglad = kolor
                     ? "border-l-2"
@@ -121,7 +127,14 @@ export function MonthGrid({
                       aria-expanded={activeEntryKey === o.key}
                       title={`${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)} ${o.title}`}
                       onClick={(e) => onEntryClick(o.key, e.currentTarget)}
-                      style={kolor ? { backgroundColor: `${kolor}14`, borderLeftColor: kolor } : undefined}
+                      style={
+                        kolor
+                          ? {
+                              backgroundColor: `${kolor}14`,
+                              borderLeftColor: kolor,
+                            }
+                          : undefined
+                      }
                       className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30 ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-[#171717]" : ""}`}
                     >
                       {o.title}

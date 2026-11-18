@@ -35,12 +35,16 @@ export function ModuleHeader({
           {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
           <h1 className="inline text-[#171717]">{title}</h1>
         </div>
-        {webAction && <div className="ml-auto flex items-center gap-2">{webAction}</div>}
+        {webAction && (
+          <div className="ml-auto flex items-center gap-2">{webAction}</div>
+        )}
       </header>
       <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">
         <div className="min-w-0 flex-1">
           {phoneLabel && <MonoLabel className="block">{phoneLabel}</MonoLabel>}
-          <h1 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">{phoneTitle ?? title}</h1>
+          <h1 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">
+            {phoneTitle ?? title}
+          </h1>
         </div>
         {phoneSettingsLink && (
           <Link

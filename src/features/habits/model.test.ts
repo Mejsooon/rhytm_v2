@@ -310,21 +310,49 @@ describe("serie", () => {
     // 3×/tydz. od 01.11, od śr 18.11 2×/tydz.; odhaczone 16.11 i 18.11.
     // Tydzień 16–22.11 ma na końcu wersję 2×/tydz., więc 2 odhaczenia go spełniają
     // (tak samo jak pokazuje weekProgress w trakcie tego tygodnia).
-    const h = nawyk("t", [razyWTyg("2026-11-01", 3), razyWTyg("2026-11-18", 2)]);
-    const checks: Checks = new Map([["t", new Set(["2026-11-16", "2026-11-18"])]]);
-    expect(weekProgress(h, checks, "2026-11-18", "mon")).toEqual({ done: 2, target: 2 });
-    expect(currentStreak(h, checks, "2026-11-18", "mon")).toEqual({ value: 1, unit: "weeks" });
+    const h = nawyk("t", [
+      razyWTyg("2026-11-01", 3),
+      razyWTyg("2026-11-18", 2),
+    ]);
+    const checks: Checks = new Map([
+      ["t", new Set(["2026-11-16", "2026-11-18"])],
+    ]);
+    expect(weekProgress(h, checks, "2026-11-18", "mon")).toEqual({
+      done: 2,
+      target: 2,
+    });
+    expect(currentStreak(h, checks, "2026-11-18", "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
     // pn 23.11: bieżący tydzień jeszcze pusty, poprzedni spełniony
-    expect(currentStreak(h, checks, "2026-11-23", "mon")).toEqual({ value: 1, unit: "weeks" });
-    expect(longestStreak(h, checks, "2026-11-23", "mon")).toEqual({ value: 1, unit: "weeks" });
+    expect(currentStreak(h, checks, "2026-11-23", "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
+    expect(longestStreak(h, checks, "2026-11-23", "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
   });
 
   it("X/tydz. podniesiony w środku tygodnia: liczy się nowy, wyższy cel", () => {
     // 2×/tydz. od 01.11, od śr 11.11 3×/tydz.; tydzień 9–15.11 ma tylko 2 odhaczenia
-    const h = nawyk("t", [razyWTyg("2026-11-01", 2), razyWTyg("2026-11-11", 3)]);
-    const checks: Checks = new Map([["t", new Set(["2026-11-03", "2026-11-05", "2026-11-09", "2026-11-10"])]]);
-    expect(currentStreak(h, checks, DZIS, "mon")).toEqual({ value: 0, unit: "weeks" });
-    expect(longestStreak(h, checks, DZIS, "mon")).toEqual({ value: 1, unit: "weeks" });
+    const h = nawyk("t", [
+      razyWTyg("2026-11-01", 2),
+      razyWTyg("2026-11-11", 3),
+    ]);
+    const checks: Checks = new Map([
+      ["t", new Set(["2026-11-03", "2026-11-05", "2026-11-09", "2026-11-10"])],
+    ]);
+    expect(currentStreak(h, checks, DZIS, "mon")).toEqual({
+      value: 0,
+      unit: "weeks",
+    });
+    expect(longestStreak(h, checks, DZIS, "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
   });
 
   it("nawyk jeszcze nie obowiązuje: seria 0", () => {
@@ -376,11 +404,19 @@ describe("successRate30 / last30Comparison", () => {
     // codziennie od 26.10 (20 dni), od 15.11 3×/tydz. → okno 15–17.11 = 3 dni
     // oczekiwane 3 × 3 / 7 ≈ 1,29; jedno odhaczenie → 78
     const h = nawyk("t", [codziennie("2026-10-26"), razyWTyg("2026-11-15", 3)]);
-    const checks: Checks = new Map([["t", new Set([...dni("2026-10-26", 20), "2026-11-16"])]]);
+    const checks: Checks = new Map([
+      ["t", new Set([...dni("2026-10-26", 20), "2026-11-16"])],
+    ]);
     expect(successRate30(h, checks, DZIS)).toBe(78);
     // dwie kolejne wersje X/tydz. to jeden ciąg: okno od 11.11 (7 dni), oczekiwane 4 × 7 / 7 = 4
-    const h2 = nawyk("t", [codziennie("2026-10-26"), razyWTyg("2026-11-11", 2), razyWTyg("2026-11-15", 4)]);
-    const checks2: Checks = new Map([["t", new Set(["2026-11-12", "2026-11-16"])]]);
+    const h2 = nawyk("t", [
+      codziennie("2026-10-26"),
+      razyWTyg("2026-11-11", 2),
+      razyWTyg("2026-11-15", 4),
+    ]);
+    const checks2: Checks = new Map([
+      ["t", new Set(["2026-11-12", "2026-11-16"])],
+    ]);
     expect(successRate30(h2, checks2, DZIS)).toBe(50);
   });
 

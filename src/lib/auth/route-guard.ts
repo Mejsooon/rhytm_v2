@@ -1,7 +1,13 @@
 // Czysta logika przekierowań wywoływana z proxy. Zwraca docelową ścieżkę albo null (przepuść).
 
 const EKRANY_KONTA = ["/logowanie", "/rejestracja", "/reset-hasla"];
-const PUBLICZNE = ["/nowe-haslo", "/potwierdzono", "/link-wygasl", "/regulamin", "/prywatnosc"];
+const PUBLICZNE = [
+  "/nowe-haslo",
+  "/potwierdzono",
+  "/link-wygasl",
+  "/regulamin",
+  "/prywatnosc",
+];
 const PUBLICZNE_PREFIKSY = ["/auth/", "/dev/"];
 const ZAWSZE_PRZEPUSZCZANE_PREFIKSY = ["/icons/", "/_next/"];
 
@@ -12,7 +18,8 @@ export function resolveRoute(input: {
   isOnboarded: boolean | null;
 }): { redirect: string } | null {
   const { pathname, isLoggedIn, isOnboarded } = input;
-  const domyslnaDlaZalogowanego = isOnboarded === false ? "/onboarding" : "/dzis";
+  const domyslnaDlaZalogowanego =
+    isOnboarded === false ? "/onboarding" : "/dzis";
 
   // Zasoby statyczne — nigdy nie przekierowujemy
   if (

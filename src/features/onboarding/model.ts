@@ -169,8 +169,9 @@ export type OnboardingDraft = {
   roles: RoleKey[];
   studyField: string;
   goals: GoalKey[];
-  goalType: GoalType;
-  // Obie liczby zostają w szkicu, żeby zmiana rodzaju nie kasowała drugiej
+  // Dwa niezależne cele treningowe (co najmniej jeden włączony); liczby zostają w szkicu po wyłączeniu
+  workoutsOn: boolean;
+  kmOn: boolean;
   weeklyWorkouts: number;
   weeklyKm: number;
   sleepGoalMin: number;
@@ -290,11 +291,13 @@ export function formatSleep(min: number): string {
 
 export function canContinue(step: number, draft: OnboardingDraft): boolean {
   if (step === 1) return draft.name.trim() !== "";
-  // Krok 3: pole celu jest zawsze widoczne; sprawdzamy liczbę wybranego rodzaju
+  // Krok 3: co najmniej jeden cel treningowy, a każdy włączony ma poprawną liczbę
   if (step === 3) {
-    const wartosc =
-      draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
-    return goalInRange(draft.goalType, wartosc);
+    if (!draft.workoutsOn && !draft.kmOn) return false;
+    if (draft.workoutsOn && !goalInRange("workouts", draft.weeklyWorkouts))
+      return false;
+    if (draft.kmOn && !goalInRange("km", draft.weeklyKm)) return false;
+    return true;
   }
   return true;
 }
@@ -305,7 +308,7 @@ export function buildSummary(
   variant: "web" | "mobile",
   tzCity: string,
 ): {
-  key: "Profil" | "Kategorie" | "Cel treningowy" | "Strony" | "Przypomnienia";
+  key: "Profil" | "Kategorie" | "Cele treningowe" | "Strony" | "Przypomnienia";
   value: string;
   step: 1 | 2 | 3 | 5 | 6;
 }[] {
@@ -335,14 +338,12 @@ export function buildSummary(
     { key: "Profil", value: profil, step: 1 },
     { key: "Kategorie", value: kategorie, step: 2 },
   ];
-  // Cel treningowy zawsze („Treningi” to cel bazowy)
-  const wartoscCelu =
-    draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
-  wiersze.push({
-    key: "Cel treningowy",
-    value: formatWeeklyGoal(draft.goalType, wartoscCelu),
-    step: 3,
-  });
+  // Cele treningowe: włączone, np. „3 treningi / tydz. · 25 km / tydz.”
+  const cele: string[] = [];
+  if (draft.workoutsOn)
+    cele.push(formatWeeklyGoal("workouts", draft.weeklyWorkouts));
+  if (draft.kmOn) cele.push(formatWeeklyGoal("km", draft.weeklyKm));
+  wiersze.push({ key: "Cele treningowe", value: cele.join(" · "), step: 3 });
   wiersze.push({ key: "Strony", value: strony, step: 5 });
   wiersze.push({ key: "Przypomnienia", value: przypomnienia, step: 6 });
   return wiersze;
@@ -365,10 +366,11 @@ export function stepPayload(
     case 2:
       return { roles: draft.roles, study_field: draft.studyField };
     case 3:
-      // Zapisujemy rodzaj i obie liczby; zła (np. ukryta po zmianie rodzaju) wraca do wartości domyślnej
+      // Zapisujemy oba przełączniki i obie liczby; zła liczba wyłączonego celu wraca do wartości domyślnej
       return {
         goals: draft.goals,
-        weekly_goal_type: draft.goalType,
+        workouts_goal_on: draft.workoutsOn,
+        km_goal_on: draft.kmOn,
         weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts)
           ? draft.weeklyWorkouts
           : 3,

@@ -26,6 +26,8 @@ const pusty: ProfileRow = {
   week_start: null,
   // Domyślne z bazy: rodzaj 'km', bez liczby treningów
   weekly_goal_type: "km",
+  workouts_goal_on: true,
+  km_goal_on: true,
   weekly_km_goal: null,
   weekly_workouts_goal: null,
   weight_kg: null,
@@ -43,7 +45,8 @@ describe("loadDraft", () => {
       roles: [],
       studyField: "",
       goals: ["plan", "sport", "habits"],
-      goalType: "workouts",
+      workoutsOn: true,
+      kmOn: true,
       weeklyWorkouts: 3,
       weeklyKm: 25,
       sleepGoalMin: 480,
@@ -60,39 +63,27 @@ describe("loadDraft", () => {
     });
   });
 
-  it("przed zapisem kroku 3 rodzaj celu to treningi, mimo domyślnego 'km' w bazie", () => {
-    expect(loadDraft({ ...pusty, onboarding_step: 3 }, null).goalType).toBe(
-      "workouts",
-    );
-  });
-
-  it("po zapisie kroku 3 rodzaj celu i obie liczby z profilu", () => {
+  it("przełączniki celów i obie liczby z profilu", () => {
     const km = loadDraft(
       {
         ...pusty,
-        onboarding_step: 4,
-        weekly_goal_type: "km",
+        workouts_goal_on: false,
+        km_goal_on: true,
         weekly_km_goal: 40,
         weekly_workouts_goal: 5,
       },
       null,
     );
     expect(km).toMatchObject({
-      goalType: "km",
+      workoutsOn: false,
+      kmOn: true,
       weeklyKm: 40,
       weeklyWorkouts: 5,
     });
-    const treningi = loadDraft(
-      {
-        ...pusty,
-        onboarding_step: 7,
-        weekly_goal_type: "workouts",
-        weekly_workouts_goal: 4,
-      },
-      null,
-    );
-    expect(treningi).toMatchObject({
-      goalType: "workouts",
+    const oba = loadDraft({ ...pusty, weekly_workouts_goal: 4 }, null);
+    expect(oba).toMatchObject({
+      workoutsOn: true,
+      kmOn: true,
       weeklyWorkouts: 4,
       weeklyKm: 25,
     });

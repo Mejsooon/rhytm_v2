@@ -90,7 +90,8 @@ export async function saveOnboardingStep(
       .from("profiles")
       .update({
         goals: d.goals,
-        weekly_goal_type: d.weekly_goal_type,
+        workouts_goal_on: d.workouts_goal_on,
+        km_goal_on: d.km_goal_on,
         weekly_workouts_goal: d.weekly_workouts_goal,
         weekly_km_goal: d.weekly_km_goal,
         sleep_goal_min: d.sleep_goal_min,

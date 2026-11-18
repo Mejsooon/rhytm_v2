@@ -29,14 +29,20 @@ export function SleepCard({
 }) {
   const [zakres, setZakres] = useState<"14" | "30">("14");
   // Słupek pod myszą albo z fokusem: indeks i element (do pozycji dymka)
-  const [najechany, setNajechany] = useState<{ k: number; el: HTMLElement } | null>(null);
+  const [najechany, setNajechany] = useState<{
+    k: number;
+    el: HTMLElement;
+  } | null>(null);
 
   // Ostatnia noc = wpis z najpóźniejszą datą (nie z przyszłości)
   let ostatnia: SleepLog | null = null;
   for (const log of sleepLogs) {
-    if (log.date <= today && (ostatnia === null || log.date > ostatnia.date)) ostatnia = log;
+    if (log.date <= today && (ostatnia === null || log.date > ostatnia.date))
+      ostatnia = log;
   }
-  const minutyOstatniej = ostatnia ? sleepMinutes(ostatnia.sleptAt, ostatnia.wokeAt) : null;
+  const minutyOstatniej = ostatnia
+    ? sleepMinutes(ostatnia.sleptAt, ostatnia.wokeAt)
+    : null;
   // „23:48 → 07:00” w formacie zegara z profilu
   let godziny = "";
   if (ostatnia) {
@@ -45,12 +51,19 @@ export function SleepCard({
     godziny = `${formatClockTime(hs, ms, clock)} → ${formatClockTime(hw, mw, clock)}`;
   }
 
-  const { bars } = sleepStats(sleepLogs, today, zakres === "14" ? 14 : 30, goalMin);
+  const { bars } = sleepStats(
+    sleepLogs,
+    today,
+    zakres === "14" ? 14 : 30,
+    goalMin,
+  );
   // Skala jak w makiecie: cel 8 h na 8/9 wysokości, chyba że któraś noc była dłuższa
   let skala = (goalMin * 9) / 8;
-  for (const b of bars) if (b.minutes !== null && b.minutes > skala) skala = b.minutes;
+  for (const b of bars)
+    if (b.minutes !== null && b.minutes > skala) skala = b.minutes;
   const liniaCelu = Math.round((goalMin / skala) * WYSOKOSC);
-  const celTekst = goalMin % 60 === 0 ? `${goalMin / 60}` : formatDuration(goalMin);
+  const celTekst =
+    goalMin % 60 === 0 ? `${goalMin / 60}` : formatDuration(goalMin);
 
   // '2026-11-17' → '17.11'
   const krotko = (d: IsoDate) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
@@ -98,11 +111,17 @@ export function SleepCard({
             )}
           >
             <MonoLabel className="block">Ostatnia noc</MonoLabel>
-            {ostatnia && onOpenLast && <span className="sr-only">Edytuj ostatnią noc</span>}
+            {ostatnia && onOpenLast && (
+              <span className="sr-only">Edytuj ostatnią noc</span>
+            )}
             <div className="mt-1.5 font-mono text-xl">
               {minutyOstatniej === null ? "—" : formatDuration(minutyOstatniej)}
             </div>
-            {ostatnia && <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">{godziny}</div>}
+            {ostatnia && (
+              <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">
+                {godziny}
+              </div>
+            )}
           </div>
           {ostatnia?.feeling != null && (
             <div>
@@ -134,7 +153,10 @@ export function SleepCard({
 
           {bars.map((b, k) => {
             const opis = `${krotko(b.date)} · ${b.minutes === null ? "brak wpisu" : formatDuration(b.minutes)}`;
-            const wysokosc = b.minutes === null ? 0 : Math.round((b.minutes / skala) * WYSOKOSC);
+            const wysokosc =
+              b.minutes === null
+                ? 0
+                : Math.round((b.minutes / skala) * WYSOKOSC);
             return (
               <div
                 key={b.date}

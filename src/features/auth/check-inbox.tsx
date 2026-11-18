@@ -56,7 +56,11 @@ export function CheckInbox({
       if (wynik.status === "success") {
         setPozostalo(cooldownSeconds);
       } else {
-        setBlad(wynik.message ?? wynik.fieldErrors?.email ?? "Nie udało się wysłać. Spróbuj ponownie.");
+        setBlad(
+          wynik.message ??
+            wynik.fieldErrors?.email ??
+            "Nie udało się wysłać. Spróbuj ponownie.",
+        );
       }
     } catch {
       setBlad("Nie udało się wysłać. Spróbuj ponownie.");
@@ -83,27 +87,63 @@ export function CheckInbox({
         </span>
       ) : (
         <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
-          <Mail aria-hidden="true" className="size-5 text-[#171717]" strokeWidth={2} />
+          <Mail
+            aria-hidden="true"
+            className="size-5 text-[#171717]"
+            strokeWidth={2}
+          />
         </span>
       )}
-      <div className={reset ? "flex flex-col items-center gap-4 max-[799px]:gap-3.5" : "contents"}>
-        <h1 className={reset ? "m-0 text-xl font-semibold max-[799px]:text-2xl max-[799px]:tracking-[-0.02em]" : "m-0 text-xl font-semibold"}>
+      <div
+        className={
+          reset
+            ? "flex flex-col items-center gap-4 max-[799px]:gap-3.5"
+            : "contents"
+        }
+      >
+        <h1
+          className={
+            reset
+              ? "m-0 text-xl font-semibold max-[799px]:text-2xl max-[799px]:tracking-[-0.02em]"
+              : "m-0 text-xl font-semibold"
+          }
+        >
           Sprawdź skrzynkę
         </h1>
-        <p className={reset ? "m-0 leading-normal text-[#666666] max-[799px]:max-w-[280px] max-[799px]:text-[13px] max-[799px]:leading-normal" : "m-0 leading-normal text-[#666666]"}>
-          {description ?? "Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie."}
+        <p
+          className={
+            reset
+              ? "m-0 leading-normal text-[#666666] max-[799px]:max-w-[280px] max-[799px]:text-[13px] max-[799px]:leading-normal"
+              : "m-0 leading-normal text-[#666666]"
+          }
+        >
+          {description ??
+            "Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie."}
         </p>
       </div>
       {before}
-      <form onSubmit={ponownie} className={reset ? "flex flex-col items-center max-[799px]:w-full" : "flex flex-col items-center"}>
+      <form
+        onSubmit={ponownie}
+        className={
+          reset
+            ? "flex flex-col items-center max-[799px]:w-full"
+            : "flex flex-col items-center"
+        }
+      >
         <TurnstileWidget resetKey={odnowienia} />
         <Button
           type="submit"
           disabled={pozostalo > 0 || wysylanie}
-          className={reset ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0" : "px-3 py-2 font-normal"}
+          className={
+            reset
+              ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0"
+              : "px-3 py-2 font-normal"
+          }
         >
           Wyślij ponownie
-          {pozostalo > 0 && <span className="font-mono text-[#6b6b6b]">{licznik}</span>}
+          {pozostalo > 0 && (
+            <span className="font-mono text-[#6b6b6b]">{licznik}</span>
+          )}
         </Button>
         {blad && (
           <p role="alert" className="m-0 mt-2 text-[13px] text-[#b91c1c]">

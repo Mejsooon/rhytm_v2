@@ -11,20 +11,29 @@ import { DeleteHabitDialog } from "../delete-habit-dialog";
 import { HabitMonth } from "../habit-month";
 import { HabitNotes } from "../habit-notes";
 import type { HabitDetailData } from "../load-habits";
-import { currentStreak, longestStreak, scheduleOn, successRate30, type Checks } from "../model";
+import {
+  currentStreak,
+  longestStreak,
+  scheduleOn,
+  successRate30,
+  type Checks,
+} from "../model";
 import { describeSchedule, streakLabel } from "../text";
 import { MHabitSheet } from "./m-habit-sheet";
 
 const PRZYCISK_IKONY =
   "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20";
-const ETYKIETA = "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+const ETYKIETA =
+  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
 
 export function MHabitDetail({ data }: { data: HabitDetailData }) {
   const habit = data.habits[0];
   const [edycja, setEdycja] = useState(false);
   const [usuwanie, setUsuwanie] = useState(false);
 
-  const dniOdhaczone = new Set(data.checks.filter((c) => c.habitId === habit.id).map((c) => c.date));
+  const dniOdhaczone = new Set(
+    data.checks.filter((c) => c.habitId === habit.id).map((c) => c.date),
+  );
   const checks: Checks = new Map([[habit.id, dniOdhaczone]]);
 
   // Podtytuł jak w makiecie: „Codziennie · 20:00 przypomnienie” (dni z wielkiej litery jak na liście)
@@ -41,13 +50,29 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
   }
 
   // „12 dni” → liczba duża, jednostka mała (jak na webie)
-  const seria = streakLabel(currentStreak(habit, checks, data.today, data.weekStart)).split(" ");
-  const rekord = streakLabel(longestStreak(habit, checks, data.today, data.weekStart)).split(" ");
+  const seria = streakLabel(
+    currentStreak(habit, checks, data.today, data.weekStart),
+  ).split(" ");
+  const rekord = streakLabel(
+    longestStreak(habit, checks, data.today, data.weekStart),
+  ).split(" ");
   const skutecznosc = successRate30(habit, checks, data.today);
   const kafelki = [
-    { etykieta: "Seria", wartosc: seria[0], jednostka: seria.slice(1).join(" ") },
-    { etykieta: "Rekord", wartosc: rekord[0], jednostka: rekord.slice(1).join(" ") },
-    { etykieta: "Skuteczn.", wartosc: skutecznosc === null ? "—" : `${skutecznosc}%`, jednostka: "" },
+    {
+      etykieta: "Seria",
+      wartosc: seria[0],
+      jednostka: seria.slice(1).join(" "),
+    },
+    {
+      etykieta: "Rekord",
+      wartosc: rekord[0],
+      jednostka: rekord.slice(1).join(" "),
+    },
+    {
+      etykieta: "Skuteczn.",
+      wartosc: skutecznosc === null ? "—" : `${skutecznosc}%`,
+      jednostka: "",
+    },
   ];
 
   // Najwcześniejszy miesiąc kalendarza: bieżący − 5 (HabitMonth i tak nie cofnie się przed start nawyku)
@@ -62,7 +87,12 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
           <ChevronLeft size={22} aria-hidden="true" />
         </Link>
         <div className="flex-1" />
-        <button type="button" aria-label="Edytuj" onClick={() => setEdycja(true)} className={PRZYCISK_IKONY}>
+        <button
+          type="button"
+          aria-label="Edytuj"
+          onClick={() => setEdycja(true)}
+          className={PRZYCISK_IKONY}
+        >
           <Pencil size={19} aria-hidden="true" />
         </button>
       </header>
@@ -70,7 +100,9 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
       <div className="flex flex-col gap-4 px-4 pb-6">
         <div>
           <div className={ETYKIETA}>{podtytul}</div>
-          <h1 className="m-0 mt-1 text-[28px] font-semibold tracking-[-0.02em] break-words">{habit.name}</h1>
+          <h1 className="m-0 mt-1 text-[28px] font-semibold tracking-[-0.02em] break-words">
+            {habit.name}
+          </h1>
         </div>
 
         <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[#eaeaea] bg-[#eaeaea]">
@@ -79,7 +111,11 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
               <div className={ETYKIETA}>{k.etykieta}</div>
               <div className="mt-1 font-mono text-[22px] font-medium">
                 {k.wartosc}
-                {k.jednostka && <span className="ml-1 text-sm text-[#6b6b6b]">{k.jednostka}</span>}
+                {k.jednostka && (
+                  <span className="ml-1 text-sm text-[#6b6b6b]">
+                    {k.jednostka}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -118,7 +154,12 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
           onDone={() => setEdycja(false)}
         />
       )}
-      <DeleteHabitDialog habitId={habit.id} name={habit.name} open={usuwanie} onOpenChange={setUsuwanie} />
+      <DeleteHabitDialog
+        habitId={habit.id}
+        name={habit.name}
+        open={usuwanie}
+        onOpenChange={setUsuwanie}
+      />
     </div>
   );
 }

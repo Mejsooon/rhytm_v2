@@ -5,7 +5,13 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ActionPopover } from "./action-popover";
-import { buildMonthGrid, formatDatePl, monthTitlePl, todayIso, type IsoDate } from "./calendar-math";
+import {
+  buildMonthGrid,
+  formatDatePl,
+  monthTitlePl,
+  todayIso,
+  type IsoDate,
+} from "./calendar-math";
 
 const DNI_PN = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 const DNI_ND = ["nd", "pn", "wt", "śr", "cz", "pt", "sb"];
@@ -61,9 +67,12 @@ export function DatePicker({
     setOpen(false);
   }
 
-  const siatka = open ? buildMonthGrid(widok.rok, widok.miesiac, weekStart) : [];
+  const siatka = open
+    ? buildMonthGrid(widok.rok, widok.miesiac, weekStart)
+    : [];
   // „Dziś” jest blokowane, gdy dzisiejszy dzień leży poza zakresem min–max
-  const dzisPozaZakresem = (min !== undefined && dzis < min) || (max !== undefined && dzis > max);
+  const dzisPozaZakresem =
+    (min !== undefined && dzis < min) || (max !== undefined && dzis > max);
 
   return (
     <ActionPopover
@@ -85,7 +94,10 @@ export function DatePicker({
           ) : (
             <span className="text-[#a3a3a3]">{placeholder}</span>
           )}
-          <ChevronDownIcon aria-hidden="true" className="size-3 flex-none text-[#666666]" />
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-3 flex-none text-[#666666]"
+          />
         </button>
       }
     >
@@ -98,7 +110,9 @@ export function DatePicker({
         >
           ‹
         </button>
-        <span className="text-[13px] font-semibold">{monthTitlePl(widok.rok, widok.miesiac)}</span>
+        <span className="text-[13px] font-semibold">
+          {monthTitlePl(widok.rok, widok.miesiac)}
+        </span>
         <button
           type="button"
           aria-label="Następny miesiąc"
@@ -119,7 +133,10 @@ export function DatePicker({
             key={c.date}
             type="button"
             aria-pressed={c.date === value}
-            disabled={(min !== undefined && c.date < min) || (max !== undefined && c.date > max)}
+            disabled={
+              (min !== undefined && c.date < min) ||
+              (max !== undefined && c.date > max)
+            }
             onClick={() => wybierz(c.date)}
             className={cn(
               "disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent",

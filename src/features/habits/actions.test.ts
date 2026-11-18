@@ -66,7 +66,13 @@ beforeEach(() => {
     profiles: fakeTable({ single: { timezone: "Europe/Warsaw" } }),
     habits: fakeTable({
       data: [{ id: NAWYK }],
-      single: { id: NAWYK, name: "Czytanie", remind_at: null, show_on_today: true, created_at: null },
+      single: {
+        id: NAWYK,
+        name: "Czytanie",
+        remind_at: null,
+        show_on_today: true,
+        created_at: null,
+      },
     }),
     habit_schedules: fakeTable({ data: [wersjaDaily] }),
     habit_checks: fakeTable(),
@@ -112,7 +118,11 @@ describe("createHabit", () => {
     tables.habits = fakeTable({ single: { id: NAWYK } });
     await createHabit({
       ...wejscie,
-      schedule: { type: "weekdays", weekdays: [1, 2, 3, 4, 5, 6, 7], timesPerWeek: null },
+      schedule: {
+        type: "weekdays",
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+        timesPerWeek: null,
+      },
     });
     expect(tables.habit_schedules.insert).toHaveBeenCalledWith(
       expect.objectContaining({ schedule_type: "daily", weekdays: [] }),
@@ -156,14 +166,21 @@ describe("strefa czasowa", () => {
   });
 
   it("setHabitCheck przyjmuje dzień, który w UTC jest jeszcze jutrem", async () => {
-    tables.habit_schedules = fakeTable({ data: [{ ...wersjaDaily, valid_from: "2026-10-01" }] });
-    expect(await setHabitCheck(NAWYK, "2026-11-19", true)).toEqual({ ok: true });
+    tables.habit_schedules = fakeTable({
+      data: [{ ...wersjaDaily, valid_from: "2026-10-01" }],
+    });
+    expect(await setHabitCheck(NAWYK, "2026-11-19", true)).toEqual({
+      ok: true,
+    });
   });
 });
 
 describe("updateHabit", () => {
   it("zmiana samej nazwy nie wstawia wersji", async () => {
-    const w = await updateHabit(NAWYK, { ...wejscie, name: "Czytanie książek" });
+    const w = await updateHabit(NAWYK, {
+      ...wejscie,
+      name: "Czytanie książek",
+    });
     expect(w).toEqual({ ok: true });
     expect(tables.habits.update).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Czytanie książek" }),
@@ -199,28 +216,40 @@ describe("updateHabit", () => {
   it("„Wybrane dni” z 7 dniami przy obowiązującym daily nie tworzy wersji", async () => {
     await updateHabit(NAWYK, {
       ...wejscie,
-      schedule: { type: "weekdays", weekdays: [1, 2, 3, 4, 5, 6, 7], timesPerWeek: null },
+      schedule: {
+        type: "weekdays",
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+        timesPerWeek: null,
+      },
     });
     expect(tables.habit_schedules.upsert).not.toHaveBeenCalled();
   });
 
   it("zmiana samego X tworzy wersję", async () => {
     tables.habit_schedules = fakeTable({
-      data: [{ ...wersjaDaily, schedule_type: "times_per_week", times_per_week: 3 }],
+      data: [
+        { ...wersjaDaily, schedule_type: "times_per_week", times_per_week: 3 },
+      ],
     });
     await updateHabit(NAWYK, {
       ...wejscie,
       schedule: { type: "times_per_week", weekdays: [], timesPerWeek: 4 },
     });
     expect(tables.habit_schedules.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ schedule_type: "times_per_week", times_per_week: 4, valid_from: "2026-11-18" }),
+      expect.objectContaining({
+        schedule_type: "times_per_week",
+        times_per_week: 4,
+        valid_from: "2026-11-18",
+      }),
       { onConflict: "habit_id,valid_from" },
     );
   });
 
   it("niezmienione X nie tworzy wersji", async () => {
     tables.habit_schedules = fakeTable({
-      data: [{ ...wersjaDaily, schedule_type: "times_per_week", times_per_week: 3 }],
+      data: [
+        { ...wersjaDaily, schedule_type: "times_per_week", times_per_week: 3 },
+      ],
     });
     await updateHabit(NAWYK, {
       ...wejscie,
@@ -242,7 +271,12 @@ describe("updateHabit", () => {
     tables.habit_schedules = fakeTable({
       data: [
         wersjaDaily,
-        { ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] },
+        {
+          ...wersjaDaily,
+          valid_from: "2026-11-18",
+          schedule_type: "weekdays",
+          weekdays: [1, 3],
+        },
       ],
     });
     const w = await updateHabit(NAWYK, wejscie);
@@ -250,17 +284,30 @@ describe("updateHabit", () => {
     expect(tables.habit_schedules.upsert).not.toHaveBeenCalled();
     expect(tables.habit_schedules.delete).toHaveBeenCalledTimes(1);
     expect(tables.habit_schedules.eq).toHaveBeenCalledWith("habit_id", NAWYK);
-    expect(tables.habit_schedules.eq).toHaveBeenCalledWith("valid_from", "2026-11-18");
+    expect(tables.habit_schedules.eq).toHaveBeenCalledWith(
+      "valid_from",
+      "2026-11-18",
+    );
   });
 
   it("nawyk utworzony dziś: zmiana nadpisuje dzisiejszą wersję (nie ma czego przywracać)", async () => {
     tables.habit_schedules = fakeTable({
-      data: [{ ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] }],
+      data: [
+        {
+          ...wersjaDaily,
+          valid_from: "2026-11-18",
+          schedule_type: "weekdays",
+          weekdays: [1, 3],
+        },
+      ],
     });
     await updateHabit(NAWYK, wejscie);
     expect(tables.habit_schedules.delete).not.toHaveBeenCalled();
     expect(tables.habit_schedules.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ valid_from: "2026-11-18", schedule_type: "daily" }),
+      expect.objectContaining({
+        valid_from: "2026-11-18",
+        schedule_type: "daily",
+      }),
       { onConflict: "habit_id,valid_from" },
     );
   });
@@ -269,14 +316,22 @@ describe("updateHabit", () => {
     tables.habit_schedules = fakeTable({
       data: [
         wersjaDaily,
-        { ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] },
+        {
+          ...wersjaDaily,
+          valid_from: "2026-11-18",
+          schedule_type: "weekdays",
+          weekdays: [1, 3],
+        },
       ],
     });
     // pierwsze zapytanie (lista wersji) się udaje, usunięcie zwraca błąd
     tables.habit_schedules.delete = vi.fn(() => ({
       eq: () => ({ eq: () => Promise.resolve({ error: { message: "x" } }) }),
     }));
-    expect(await updateHabit(NAWYK, wejscie)).toEqual({ ok: false, message: BLAD });
+    expect(await updateHabit(NAWYK, wejscie)).toEqual({
+      ok: false,
+      message: BLAD,
+    });
   });
 
   it("nieistniejący nawyk (0 zmienionych wierszy) → ok: false", async () => {
@@ -355,19 +410,27 @@ describe("setHabitCheck", () => {
 
   it("cudzy albo nieistniejący nawyk → ok: false", async () => {
     tables.habits = fakeTable({ single: null });
-    expect(await setHabitCheck(NAWYK, "2026-11-17", true)).toEqual({ ok: false, message: BRAK });
+    expect(await setHabitCheck(NAWYK, "2026-11-17", true)).toEqual({
+      ok: false,
+      message: BRAK,
+    });
   });
 
   it("błąd bazy przy wczytaniu nawyku to ogólny błąd zapisu", async () => {
     tables.habits = fakeTable({ error: { message: "x" } });
-    expect(await setHabitCheck(NAWYK, "2026-11-17", true)).toEqual({ ok: false, message: BLAD });
+    expect(await setHabitCheck(NAWYK, "2026-11-17", true)).toEqual({
+      ok: false,
+      message: BLAD,
+    });
   });
 
   it("odznaczenie dnia niezaplanowanego (osierocone odhaczenie) jest dozwolone", async () => {
     tables.habit_schedules = fakeTable({
       data: [{ ...wersjaDaily, schedule_type: "weekdays", weekdays: [1] }],
     });
-    expect(await setHabitCheck(NAWYK, "2026-11-17", false)).toEqual({ ok: true });
+    expect(await setHabitCheck(NAWYK, "2026-11-17", false)).toEqual({
+      ok: true,
+    });
     expect(tables.habit_checks.delete).toHaveBeenCalled();
   });
 
@@ -394,7 +457,10 @@ describe("addHabitNote", () => {
 
   it("cudzy nawyk → „Nie znaleziono nawyku.”", async () => {
     tables.habits = fakeTable({ single: null });
-    expect(await addHabitNote(NAWYK, "x")).toEqual({ ok: false, message: BRAK });
+    expect(await addHabitNote(NAWYK, "x")).toEqual({
+      ok: false,
+      message: BRAK,
+    });
   });
 
   it("pusta notatka → ok: false", async () => {
@@ -406,7 +472,9 @@ describe("addHabitNote", () => {
 describe("saveSleepLog", () => {
   it("dwa razy z tą samą datą robi upsert na user_id,date, nie insert", async () => {
     expect(await saveSleepLog(sen)).toEqual({ ok: true });
-    expect(await saveSleepLog({ ...sen, wokeAt: "07:30" })).toEqual({ ok: true });
+    expect(await saveSleepLog({ ...sen, wokeAt: "07:30" })).toEqual({
+      ok: true,
+    });
     expect(tables.sleep_logs.insert).not.toHaveBeenCalled();
     expect(tables.sleep_logs.upsert).toHaveBeenCalledTimes(2);
     const [wiersz, opcje] = tables.sleep_logs.upsert.mock.calls[0];
@@ -426,7 +494,10 @@ describe("saveSleepLog", () => {
 
   it("data z przyszłości → komunikat, bez upsert", async () => {
     const w = await saveSleepLog({ ...sen, date: "2026-11-19" });
-    expect(w).toEqual({ ok: false, message: "Nie można zapisać snu z przyszłości." });
+    expect(w).toEqual({
+      ok: false,
+      message: "Nie można zapisać snu z przyszłości.",
+    });
     expect(tables.sleep_logs.upsert).not.toHaveBeenCalled();
   });
 
@@ -444,7 +515,10 @@ describe("saveSleepLog", () => {
 
   it("równe godziny → komunikat, bez upsert", async () => {
     const w = await saveSleepLog({ ...sen, wokeAt: "23:30" });
-    expect(w).toEqual({ ok: false, message: "Godziny zaśnięcia i pobudki muszą się różnić." });
+    expect(w).toEqual({
+      ok: false,
+      message: "Godziny zaśnięcia i pobudki muszą się różnić.",
+    });
     expect(tables.sleep_logs.upsert).not.toHaveBeenCalled();
   });
 

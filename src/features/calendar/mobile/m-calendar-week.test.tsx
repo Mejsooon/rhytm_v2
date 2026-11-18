@@ -5,13 +5,23 @@ import { describe, expect, it, vi } from "vitest";
 import { kategoria, wystapienie } from "./fixtures";
 import { MCalendarWeek } from "./m-calendar-week";
 
-const dni = ["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"];
+const dni = [
+  "2026-11-16",
+  "2026-11-17",
+  "2026-11-18",
+  "2026-11-19",
+  "2026-11-20",
+  "2026-11-21",
+  "2026-11-22",
+];
 const wystapienia = [
   wystapienie("b2:2026-11-18", "2026-11-18", 480, 30, "Rutyna", null),
   wystapienie("b1:2026-11-18", "2026-11-18", 600, 120, "Algebra", "c1"),
 ];
 
-function wyrenderuj(over: Partial<React.ComponentProps<typeof MCalendarWeek>> = {}) {
+function wyrenderuj(
+  over: Partial<React.ComponentProps<typeof MCalendarWeek>> = {},
+) {
   return render(
     <MCalendarWeek
       days={dni}
@@ -34,7 +44,10 @@ describe("MCalendarWeek", () => {
     expect(screen.getAllByRole("link", { name: /listopada$/ })).toHaveLength(7);
     const dzis = screen.getByRole("link", { name: "Wtorek 17 listopada" });
     expect(dzis.className).toContain("bg-[#171717]");
-    expect(dzis).toHaveAttribute("href", "/kalendarz?widok=dzien&data=2026-11-17");
+    expect(dzis).toHaveAttribute(
+      "href",
+      "/kalendarz?widok=dzien&data=2026-11-17",
+    );
   });
 
   it("dzień listuje bloki z godzinami", () => {
@@ -49,7 +62,9 @@ describe("MCalendarWeek", () => {
 
   it("pusty dzień mówi „Brak bloków”", () => {
     wyrenderuj();
-    const sekcja = screen.getByRole("region", { name: "Czwartek 19 listopada" });
+    const sekcja = screen.getByRole("region", {
+      name: "Czwartek 19 listopada",
+    });
     expect(within(sekcja).getByText("Brak bloków")).toBeInTheDocument();
   });
 

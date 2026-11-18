@@ -15,7 +15,13 @@ import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { CategoryFilters, CategorySheet } from "./category-filters";
 import type { CategoryRow } from "./load-calendar";
 import { DNI_PELNE, MIESIACE_DOP } from "./mobile/pl";
-import { isoWeekNumber, shiftDate, viewRange, weekdayOf, type CalendarView } from "./view-range";
+import {
+  isoWeekNumber,
+  shiftDate,
+  viewRange,
+  weekdayOf,
+  type CalendarView,
+} from "./view-range";
 
 const OPCJE_WIDOKU: { value: CalendarView; label: string }[] = [
   { value: "dzien", label: "Dzień" },
@@ -63,7 +69,8 @@ export function CalendarHeader({
   const router = useRouter();
   const [rok, miesiac, numerDnia] = date.split("-").map(Number);
   const nazwaMiesiaca = MIESIACE[miesiac - 1];
-  const miesiacWielka = nazwaMiesiaca.charAt(0).toUpperCase() + nazwaMiesiaca.slice(1);
+  const miesiacWielka =
+    nazwaMiesiaca.charAt(0).toUpperCase() + nazwaMiesiaca.slice(1);
 
   // Tytuł web: dzień „Wtorek, 17 listopada”, tydzień i miesiąc „Listopad 2026”
   const tytul =
@@ -72,7 +79,9 @@ export function CalendarHeader({
       : `${miesiacWielka} ${rok}`;
   // Numer ISO tygodnia liczymy ze środka tygodnia (przy tygodniu od niedzieli niedziela należy do poprzedniego)
   const podtytul =
-    view === "tydzien" ? `tydz. ${isoWeekNumber(viewRange("tydzien", date, weekStart).days[3])}` : subtitle;
+    view === "tydzien"
+      ? `tydz. ${isoWeekNumber(viewRange("tydzien", date, weekStart).days[3])}`
+      : subtitle;
 
   const segment = (wartosc: CalendarView) => (
     <Segment
@@ -88,7 +97,10 @@ export function CalendarHeader({
       <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-[#eaeaea] px-4 py-2.5 max-[799px]:hidden">
         <div className="flex items-center gap-1.5">
           <Button asChild size="sm" className="px-2 py-[5px] text-[13px]">
-            <Link href={adres(view, shiftDate(view, date, -1))} aria-label={`Poprzedni ${OKRES[view]}`}>
+            <Link
+              href={adres(view, shiftDate(view, date, -1))}
+              aria-label={`Poprzedni ${OKRES[view]}`}
+            >
               ‹
             </Link>
           </Button>
@@ -96,17 +108,31 @@ export function CalendarHeader({
             <Link href={adres(view, today)}>Dziś</Link>
           </Button>
           <Button asChild size="sm" className="px-2 py-[5px] text-[13px]">
-            <Link href={adres(view, shiftDate(view, date, 1))} aria-label={`Następny ${OKRES[view]}`}>
+            <Link
+              href={adres(view, shiftDate(view, date, 1))}
+              aria-label={`Następny ${OKRES[view]}`}
+            >
               ›
             </Link>
           </Button>
           <h1 className="ml-2 text-base font-semibold">{tytul}</h1>
-          {podtytul && <span className="font-mono text-xs text-[#6b6b6b]">{podtytul}</span>}
+          {podtytul && (
+            <span className="font-mono text-xs text-[#6b6b6b]">{podtytul}</span>
+          )}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <CategoryFilters categories={categories} onToggle={onToggleCategory} onAdd={onAddCategory} />
+          <CategoryFilters
+            categories={categories}
+            onToggle={onToggleCategory}
+            onAdd={onAddCategory}
+          />
           {segment(view)}
-          <Button variant="primary" size="sm" className="text-[13px]" onClick={onNewBlock}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="text-[13px]"
+            onClick={onNewBlock}
+          >
             Nowy blok
           </Button>
         </div>
@@ -115,14 +141,26 @@ export function CalendarHeader({
       <div className="flex-none min-[800px]:hidden">
         <header className="flex min-h-[52px] items-center gap-0.5 pt-2 pr-2 pb-1 pl-4">
           <div className="flex min-w-0 flex-1 items-baseline gap-2">
-            <h2 className="text-[22px] font-semibold tracking-[-0.02em]">{miesiacWielka}</h2>
-            <MonoLabel>{mobileView === "miesiac" ? `${rok}` : `tydz. ${isoWeekNumber(date)}`}</MonoLabel>
+            <h2 className="text-[22px] font-semibold tracking-[-0.02em]">
+              {miesiacWielka}
+            </h2>
+            <MonoLabel>
+              {mobileView === "miesiac"
+                ? `${rok}`
+                : `tydz. ${isoWeekNumber(date)}`}
+            </MonoLabel>
           </div>
-          <CategorySheet categories={categories} onToggle={onToggleCategory} onAdd={onAddCategory} />
+          <CategorySheet
+            categories={categories}
+            onToggle={onToggleCategory}
+            onAdd={onAddCategory}
+          />
           <button
             type="button"
             aria-label={`Poprzedni ${OKRES[mobileView]}`}
-            onClick={() => router.push(adres(mobileView, shiftDate(mobileView, date, -1)))}
+            onClick={() =>
+              router.push(adres(mobileView, shiftDate(mobileView, date, -1)))
+            }
             className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
           >
             <ChevronLeft size={22} aria-hidden="true" />
@@ -130,7 +168,9 @@ export function CalendarHeader({
           <button
             type="button"
             aria-label={`Następny ${OKRES[mobileView]}`}
-            onClick={() => router.push(adres(mobileView, shiftDate(mobileView, date, 1)))}
+            onClick={() =>
+              router.push(adres(mobileView, shiftDate(mobileView, date, 1)))
+            }
             className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
           >
             <ChevronRight size={22} aria-hidden="true" />

@@ -22,12 +22,19 @@ async function Nawyki({ searchParams }: { searchParams: Parametry }) {
   const parametry = await searchParams;
   // ?tab=sen — zakładka Sen na telefonie; ?nowy=nawyk|sen — okno do otwarcia od razu (Task 5)
   const zakladka = parametry.tab === "sen" ? "sen" : null;
-  const nowy = parametry.nowy === "nawyk" || parametry.nowy === "sen" ? parametry.nowy : null;
+  const nowy =
+    parametry.nowy === "nawyk" || parametry.nowy === "sen"
+      ? parametry.nowy
+      : null;
 
   return <HabitsView data={dane} initialTab={zakladka} openOnLoad={nowy} />;
 }
 
-export default function NawykiPage({ searchParams }: { searchParams: Parametry }) {
+export default function NawykiPage({
+  searchParams,
+}: {
+  searchParams: Parametry;
+}) {
   return (
     <Suspense fallback={<ModuleHeader title="Nawyki i sen" />}>
       <Nawyki searchParams={searchParams} />

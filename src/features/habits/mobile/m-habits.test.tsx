@@ -21,7 +21,14 @@ function dane(): HabitsPageData {
         remindAt: null,
         showOnToday: true,
         createdAt: "",
-        schedules: [{ validFrom: "2026-11-01", type: "daily", weekdays: [], timesPerWeek: null }],
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
       },
       {
         id: "h2",
@@ -29,7 +36,14 @@ function dane(): HabitsPageData {
         remindAt: null,
         showOnToday: true,
         createdAt: "",
-        schedules: [{ validFrom: "2026-11-01", type: "weekdays", weekdays: [1, 3, 5], timesPerWeek: null }],
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "weekdays",
+            weekdays: [1, 3, 5],
+            timesPerWeek: null,
+          },
+        ],
       },
       {
         id: "h3",
@@ -37,13 +51,34 @@ function dane(): HabitsPageData {
         remindAt: null,
         showOnToday: true,
         createdAt: "",
-        schedules: [{ validFrom: "2026-11-01", type: "times_per_week", weekdays: [], timesPerWeek: 4 }],
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "times_per_week",
+            weekdays: [],
+            timesPerWeek: 4,
+          },
+        ],
       },
     ],
     checks: [],
     sleepLogs: [
-      { date: "2026-11-16", sleptAt: "22:30", wokeAt: "06:30", feeling: 3, tags: [], note: null },
-      { date: "2026-11-17", sleptAt: "23:48", wokeAt: "07:00", feeling: 4, tags: [], note: null },
+      {
+        date: "2026-11-16",
+        sleptAt: "22:30",
+        wokeAt: "06:30",
+        feeling: 3,
+        tags: [],
+        note: null,
+      },
+      {
+        date: "2026-11-17",
+        sleptAt: "23:48",
+        wokeAt: "07:00",
+        feeling: 4,
+        tags: [],
+        note: null,
+      },
     ],
   };
 }
@@ -51,12 +86,27 @@ function dane(): HabitsPageData {
 // Woda: 13–17.11 (seria 5 dni); Angielski: dziś
 function odhaczenia(): Checks {
   return new Map([
-    ["h1", new Set<IsoDate>(["2026-11-13", "2026-11-14", "2026-11-15", "2026-11-16", "2026-11-17"])],
+    [
+      "h1",
+      new Set<IsoDate>([
+        "2026-11-13",
+        "2026-11-14",
+        "2026-11-15",
+        "2026-11-16",
+        "2026-11-17",
+      ]),
+    ],
     ["h3", new Set<IsoDate>(["2026-11-17"])],
   ]);
 }
 
-function wyrenderuj(opcje: { initialTab?: "sen" | null; checks?: Checks; data?: HabitsPageData } = {}) {
+function wyrenderuj(
+  opcje: {
+    initialTab?: "sen" | null;
+    checks?: Checks;
+    data?: HabitsPageData;
+  } = {},
+) {
   const onToggle = vi.fn();
   const onNewHabit = vi.fn();
   const onNewSleep = vi.fn();
@@ -77,7 +127,9 @@ describe("MHabits — zakładka Nawyki", () => {
   it("nagłówek z datą, tytułem i „+” nowego nawyku", async () => {
     const { onNewHabit } = wyrenderuj();
     expect(screen.getByText("Wtorek · 17 listopada")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "Nawyki i sen" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Nawyki i sen" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Nowy nawyk" }));
     expect(onNewHabit).toHaveBeenCalled();
   });
@@ -85,20 +137,29 @@ describe("MHabits — zakładka Nawyki", () => {
   it("segment Nawyki / Sen, domyślnie Nawyki", () => {
     wyrenderuj();
     const segment = screen.getByRole("radiogroup", { name: "Widok" });
-    expect(within(segment).getByRole("radio", { name: "Nawyki" })).toHaveAttribute("aria-checked", "true");
-    expect(within(segment).getByRole("radio", { name: "Sen" })).toHaveAttribute("aria-checked", "false");
+    expect(
+      within(segment).getByRole("radio", { name: "Nawyki" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(within(segment).getByRole("radio", { name: "Sen" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
   });
 
   it("pierścień „x z y zrobione dziś” z dayStats (X/tydz. liczy się po odhaczeniu)", () => {
     wyrenderuj();
     // Wtorek: Woda zaplanowana i zrobiona, Rozciąganie niezaplanowane, Angielski odhaczony → 2 z 2
     expect(screen.getByText("2 z 2 zrobione dziś")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "2 z 2 nawyków" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "2 z 2 nawyków" }),
+    ).toBeInTheDocument();
   });
 
   it("„Najdłuższa seria: {nazwa} · N dni”", () => {
     wyrenderuj();
-    expect(screen.getByText("Najdłuższa seria: Woda 2 l · 5 dni")).toBeInTheDocument();
+    expect(
+      screen.getByText("Najdłuższa seria: Woda 2 l · 5 dni"),
+    ).toBeInTheDocument();
   });
 
   it("lista: duży checkbox ≥ 44 px, harmonogram i seria, nazwa prowadzi do szczegółów", () => {
@@ -109,13 +170,21 @@ describe("MHabits — zakładka Nawyki", () => {
     expect(woda.className).toContain("after:-inset-2");
     expect(screen.getByText("Codziennie · seria 5 dni")).toBeInTheDocument();
     expect(screen.getByText("Pn, Śr, Pt · seria 0 dni")).toBeInTheDocument();
-    expect(screen.getByText("4× w tygodniu · seria 0 tyg.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Woda 2 l/ })).toHaveAttribute("href", "/nawyki/h1");
+    expect(
+      screen.getByText("4× w tygodniu · seria 0 tyg."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Woda 2 l/ })).toHaveAttribute(
+      "href",
+      "/nawyki/h1",
+    );
   });
 
   it("stuknięcie checkboxa odhacza dziś; X/tydz. też ma dzisiejsze odhaczenie", async () => {
     const { onToggle } = wyrenderuj();
-    expect(screen.getByRole("checkbox", { name: "Angielski" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("checkbox", { name: "Angielski" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     await userEvent.click(screen.getByRole("checkbox", { name: "Woda 2 l" }));
     expect(onToggle).toHaveBeenCalledWith("h1", "2026-11-17");
   });
@@ -130,11 +199,15 @@ describe("MHabits — zakładka Nawyki", () => {
 
   it("heatmapa 4 tygodni: podpowiedź, stuknięcie pokazuje „{data} · x z y nawyków”", async () => {
     wyrenderuj();
-    expect(screen.getByRole("heading", { name: "Ostatnie 4 tygodnie" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Ostatnie 4 tygodnie" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("stuknij dzień")).toBeInTheDocument();
     // 4 tygodnie po 7 dni
     expect(document.querySelectorAll("[data-heat-day]")).toHaveLength(28);
-    await userEvent.click(screen.getByRole("button", { name: "16.11.2026 · 1 z 2 nawyków" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "16.11.2026 · 1 z 2 nawyków" }),
+    );
     expect(screen.getByText("16.11.2026 · 1 z 2 nawyków")).toBeInTheDocument();
     expect(screen.getByText("mniej")).toBeInTheDocument();
     expect(screen.getByText("więcej")).toBeInTheDocument();
@@ -143,15 +216,23 @@ describe("MHabits — zakładka Nawyki", () => {
   it("dzień bez planu: „· brak zaplanowanych”", async () => {
     wyrenderuj();
     // 26.10 — przed startem nawyków
-    await userEvent.click(screen.getByRole("button", { name: "26.10.2026 · brak zaplanowanych" }));
-    expect(screen.getByText("26.10.2026 · brak zaplanowanych")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "26.10.2026 · brak zaplanowanych" }),
+    );
+    expect(
+      screen.getByText("26.10.2026 · brak zaplanowanych"),
+    ).toBeInTheDocument();
   });
 
   it("heatmapa: dzień bez planu ma przerywaną ramkę i inne tło niż 0%", () => {
     wyrenderuj();
     // 26.10 — przed startem nawyków (bez planu); pn 02.11 — Woda i Rozciąganie zaplanowane, nic nie odhaczone (0%)
-    const bezPlanu = screen.getByRole("button", { name: "26.10.2026 · brak zaplanowanych" });
-    const zero = screen.getByRole("button", { name: "02.11.2026 · 0 z 2 nawyków" });
+    const bezPlanu = screen.getByRole("button", {
+      name: "26.10.2026 · brak zaplanowanych",
+    });
+    const zero = screen.getByRole("button", {
+      name: "02.11.2026 · 0 z 2 nawyków",
+    });
     expect(bezPlanu.style.background).toBe("rgb(250, 250, 250)");
     expect(bezPlanu.className).toContain("border-dashed");
     expect(bezPlanu.className).toContain("border-[#d4d4d4]");
@@ -164,7 +245,9 @@ describe("MHabits — zakładka Nawyki", () => {
     d.habits = [];
     const { onNewHabit } = wyrenderuj({ data: d, checks: new Map() });
     expect(screen.getByText("Nie masz jeszcze nawyków.")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj pierwszy nawyk" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj pierwszy nawyk" }),
+    );
     expect(onNewHabit).toHaveBeenCalled();
   });
 });
@@ -172,7 +255,10 @@ describe("MHabits — zakładka Nawyki", () => {
 describe("MHabits — zakładka Sen", () => {
   it("?tab=sen startuje na zakładce Sen", () => {
     wyrenderuj({ initialTab: "sen" });
-    expect(screen.getByRole("radio", { name: "Sen" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Sen" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     expect(screen.queryByText("Ostatnie 4 tygodnie")).not.toBeInTheDocument();
   });
 
@@ -196,28 +282,40 @@ describe("MHabits — zakładka Sen", () => {
 
   it("wykres 14/30: podpowiedź, stuknięcie słupka pokazuje szczegóły", async () => {
     wyrenderuj({ initialTab: "sen" });
-    expect(screen.getByText("Stuknij słupek, żeby zobaczyć szczegóły")).toBeInTheDocument();
+    expect(
+      screen.getByText("Stuknij słupek, żeby zobaczyć szczegóły"),
+    ).toBeInTheDocument();
     expect(document.querySelectorAll("[data-sleep-bar]")).toHaveLength(14);
-    await userEvent.click(screen.getByRole("button", { name: "16.11 · 8:00 h" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "16.11 · 8:00 h" }),
+    );
     expect(screen.getByText("16.11 · 8:00 h")).toBeInTheDocument();
-    expect(screen.queryByText("Stuknij słupek, żeby zobaczyć szczegóły")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Stuknij słupek, żeby zobaczyć szczegóły"),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("radio", { name: "30 dni" }));
     expect(document.querySelectorAll("[data-sleep-bar]")).toHaveLength(30);
     expect(screen.getByText("Średnio 30 dni")).toBeInTheDocument();
     // Zmiana zakresu czyści wybór
-    expect(screen.getByText("Stuknij słupek, żeby zobaczyć szczegóły")).toBeInTheDocument();
+    expect(
+      screen.getByText("Stuknij słupek, żeby zobaczyć szczegóły"),
+    ).toBeInTheDocument();
   });
 
   it("słupek bez wpisu: „brak wpisu”", async () => {
     wyrenderuj({ initialTab: "sen" });
-    await userEvent.click(screen.getByRole("button", { name: "10.11 · brak wpisu" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "10.11 · brak wpisu" }),
+    );
     expect(screen.getByText("10.11 · brak wpisu")).toBeInTheDocument();
   });
 
   it("„Dodaj wpis snu” otwiera arkusz na dziś", async () => {
     const { onNewSleep } = wyrenderuj({ initialTab: "sen" });
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj wpis snu" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj wpis snu" }),
+    );
     expect(onNewSleep).toHaveBeenCalledWith("2026-11-17");
   });
 

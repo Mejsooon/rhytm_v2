@@ -10,7 +10,9 @@ export const isoDateSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Nieprawidłowa data.")
   .refine((d) => {
     const data = new Date(`${d}T00:00:00Z`);
-    return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === d;
+    return (
+      !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === d
+    );
   }, "Nieprawidłowa data.");
 
 export const recurrenceSchema = z
@@ -20,7 +22,9 @@ export const recurrenceSchema = z
     until: isoDateSchema.optional(),
   })
   .refine(
-    (r) => r.freq !== "custom" || (r.byWeekday !== undefined && r.byWeekday.length > 0),
+    (r) =>
+      r.freq !== "custom" ||
+      (r.byWeekday !== undefined && r.byWeekday.length > 0),
     { message: "Wybierz przynajmniej jeden dzień tygodnia." },
   );
 
@@ -64,10 +68,13 @@ export const createBlockSchema = z
     message: "Blok nie może przechodzić przez północ.",
     path: ["durationMin"],
   })
-  .refine((b) => b.recurrence?.until === undefined || b.recurrence.until >= b.date, {
-    message: "Koniec powtarzania nie może być przed początkiem.",
-    path: ["recurrence"],
-  });
+  .refine(
+    (b) => b.recurrence?.until === undefined || b.recurrence.until >= b.date,
+    {
+      message: "Koniec powtarzania nie może być przed początkiem.",
+      path: ["recurrence"],
+    },
+  );
 
 export const blockPatchSchema = z.object({
   title: tytul.optional(),

@@ -22,7 +22,9 @@ const wystapienia = [
   wystapienie("f:2026-11-12", "2026-11-12", 600, 90, "Siłownia", "c3"),
 ];
 
-function wyrenderuj(over: Partial<React.ComponentProps<typeof MCalendarMonth>> = {}) {
+function wyrenderuj(
+  over: Partial<React.ComponentProps<typeof MCalendarMonth>> = {},
+) {
   return render(
     <MCalendarMonth
       days={dni}
@@ -47,24 +49,40 @@ describe("MCalendarMonth", () => {
 
   it("dzień bez bloków nie ma kropek", () => {
     wyrenderuj();
-    expect(within(screen.getByRole("button", { name: "11 listopada" })).queryAllByTestId("kropka-kategorii")).toHaveLength(0);
+    expect(
+      within(
+        screen.getByRole("button", { name: "11 listopada" }),
+      ).queryAllByTestId("kropka-kategorii"),
+    ).toHaveLength(0);
   });
 
   it("wybrany dzień jest czarny i pokazuje swoje bloki pod siatką", () => {
     wyrenderuj();
-    expect(screen.getByRole("button", { name: "12 listopada" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "12 listopada" }).className).toContain("bg-[#171717]");
-    expect(screen.getByRole("heading", { name: "12 listopada" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Siłownia/ })).toHaveTextContent("10:00");
+    expect(
+      screen.getByRole("button", { name: "12 listopada" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "12 listopada" }).className,
+    ).toContain("bg-[#171717]");
+    expect(
+      screen.getByRole("heading", { name: "12 listopada" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Siłownia/ })).toHaveTextContent(
+      "10:00",
+    );
   });
 
   it("wybór dnia zmienia listę, a pusty dzień mówi „Brak bloków — dodaj”", async () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
     await userEvent.click(screen.getByRole("button", { name: "10 listopada" }));
-    expect(screen.getAllByRole("button", { name: /^\d\d:\d\d[A-E]$/ })).toHaveLength(5);
+    expect(
+      screen.getAllByRole("button", { name: /^\d\d:\d\d[A-E]$/ }),
+    ).toHaveLength(5);
     await userEvent.click(screen.getByRole("button", { name: "11 listopada" }));
-    await userEvent.click(screen.getByRole("button", { name: "Brak bloków — dodaj" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Brak bloków — dodaj" }),
+    );
     expect(onAdd).toHaveBeenCalledWith("2026-11-11", 540);
   });
 

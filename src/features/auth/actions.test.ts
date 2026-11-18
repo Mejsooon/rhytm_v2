@@ -1,6 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { signInWithPassword, signUpMock, resendMock, resetForEmail, getUser, updateUser, signOutMock, cookieGet, cookieDelete, isPasswordPwned, maybeSingle, verifyTurnstile } = vi.hoisted(() => ({
+const {
+  signInWithPassword,
+  signUpMock,
+  resendMock,
+  resetForEmail,
+  getUser,
+  updateUser,
+  signOutMock,
+  cookieGet,
+  cookieDelete,
+  isPasswordPwned,
+  maybeSingle,
+  verifyTurnstile,
+} = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUpMock: vi.fn(),
   resendMock: vi.fn(),
@@ -32,7 +45,11 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/auth/turnstile", () => ({ verifyTurnstile }));
 vi.mock("@/lib/auth/hibp", () => ({ isPasswordPwned }));
 vi.mock("next/headers", () => ({
-  headers: async () => new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8", host: "localhost:3000" }),
+  headers: async () =>
+    new Headers({
+      "x-forwarded-for": "1.2.3.4, 5.6.7.8",
+      host: "localhost:3000",
+    }),
   cookies: async () => ({ get: cookieGet, delete: cookieDelete }),
 }));
 // redirect w Next rzuca wyjątek — odwzorowujemy to, żeby sprawdzić cel
@@ -44,7 +61,15 @@ vi.mock("next/navigation", () => ({
 
 import { utworzZnacznikResetu } from "@/lib/auth/recovery";
 
-import { checkPasswordLeak, requestPasswordReset, resendConfirmation, resendLink, signIn, signUp, updatePassword } from "./actions";
+import {
+  checkPasswordLeak,
+  requestPasswordReset,
+  resendConfirmation,
+  resendLink,
+  signIn,
+  signUp,
+  updatePassword,
+} from "./actions";
 
 function formularz(dane: Record<string, string>) {
   const fd = new FormData();
@@ -52,7 +77,11 @@ function formularz(dane: Record<string, string>) {
   return fd;
 }
 
-const poprawne = { email: "a@b.pl", password: "haslo12345", "cf-turnstile-response": "tok" };
+const poprawne = {
+  email: "a@b.pl",
+  password: "haslo12345",
+  "cf-turnstile-response": "tok",
+};
 
 describe("signIn", () => {
   beforeEach(() => {
@@ -62,36 +91,63 @@ describe("signIn", () => {
   it("błąd Turnstile → „Potwierdź, że nie jesteś botem” (bez próby logowania)", async () => {
     verifyTurnstile.mockResolvedValue(false);
     const wynik = await signIn({ status: "idle" }, formularz(poprawne));
-    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Potwierdź, że nie jesteś botem",
+    });
     expect(verifyTurnstile).toHaveBeenCalledWith("tok", "1.2.3.4");
     expect(signInWithPassword).not.toHaveBeenCalled();
   });
 
   it("błąd autoryzacji → „Nieprawidłowy e-mail lub hasło”", async () => {
     verifyTurnstile.mockResolvedValue(true);
-    signInWithPassword.mockResolvedValue({ data: { user: null }, error: { message: "Invalid login" } });
+    signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Invalid login" },
+    });
     const wynik = await signIn({ status: "idle" }, formularz(poprawne));
-    expect(wynik).toEqual({ status: "error", message: "Nieprawidłowy e-mail lub hasło" });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Nieprawidłowy e-mail lub hasło",
+    });
   });
 
   it("zły format e-maila → ten sam ogólny komunikat", async () => {
-    const wynik = await signIn({ status: "idle" }, formularz({ ...poprawne, email: "nie-email" }));
-    expect(wynik).toEqual({ status: "error", message: "Nieprawidłowy e-mail lub hasło" });
+    const wynik = await signIn(
+      { status: "idle" },
+      formularz({ ...poprawne, email: "nie-email" }),
+    );
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Nieprawidłowy e-mail lub hasło",
+    });
     expect(verifyTurnstile).not.toHaveBeenCalled();
   });
 
   it("sukces z ukończonym onboardingiem → przekierowanie na /dzis", async () => {
     verifyTurnstile.mockResolvedValue(true);
-    signInWithPassword.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
-    maybeSingle.mockResolvedValue({ data: { onboarded_at: "2026-11-16T10:00:00Z" } });
-    await expect(signIn({ status: "idle" }, formularz(poprawne))).rejects.toThrow("REDIRECT:/dzis");
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    maybeSingle.mockResolvedValue({
+      data: { onboarded_at: "2026-11-16T10:00:00Z" },
+    });
+    await expect(
+      signIn({ status: "idle" }, formularz(poprawne)),
+    ).rejects.toThrow("REDIRECT:/dzis");
   });
 
   it("sukces bez onboardingu → /onboarding", async () => {
     verifyTurnstile.mockResolvedValue(true);
-    signInWithPassword.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
     maybeSingle.mockResolvedValue({ data: null });
-    await expect(signIn({ status: "idle" }, formularz(poprawne))).rejects.toThrow("REDIRECT:/onboarding");
+    await expect(
+      signIn({ status: "idle" }, formularz(poprawne)),
+    ).rejects.toThrow("REDIRECT:/onboarding");
   });
 });
 
@@ -123,7 +179,10 @@ describe("signUp", () => {
   it("błąd Turnstile → „Potwierdź, że nie jesteś botem”", async () => {
     verifyTurnstile.mockResolvedValue(false);
     const wynik = await signUp({ status: "idle" }, formularz(rejestracja));
-    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Potwierdź, że nie jesteś botem",
+    });
     expect(signUpMock).not.toHaveBeenCalled();
   });
 
@@ -140,21 +199,36 @@ describe("signUp", () => {
     expect(signUpMock).toHaveBeenCalledWith({
       email: "ala@przyklad.pl",
       password: "rytm2026dobre",
-      options: { data: { display_name: "Ala" }, emailRedirectTo: "http://localhost:3000/auth/confirm" },
+      options: {
+        data: { display_name: "Ala" },
+        emailRedirectTo: "http://localhost:3000/auth/confirm",
+      },
     });
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
 
   it("istniejący użytkownik (błąd) daje ten sam stan sukcesu", async () => {
-    signUpMock.mockResolvedValue({ data: { user: null }, error: { code: "user_already_exists", message: "User already registered" } });
+    signUpMock.mockResolvedValue({
+      data: { user: null },
+      error: {
+        code: "user_already_exists",
+        message: "User already registered",
+      },
+    });
     const wynik = await signUp({ status: "idle" }, formularz(rejestracja));
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
 
   it("inny błąd Supabase → ogólny komunikat", async () => {
-    signUpMock.mockResolvedValue({ data: { user: null }, error: { code: "unexpected_failure", message: "boom" } });
+    signUpMock.mockResolvedValue({
+      data: { user: null },
+      error: { code: "unexpected_failure", message: "boom" },
+    });
     const wynik = await signUp({ status: "idle" }, formularz(rejestracja));
-    expect(wynik).toEqual({ status: "error", message: "Nie udało się założyć konta. Spróbuj ponownie." });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Nie udało się założyć konta. Spróbuj ponownie.",
+    });
   });
 });
 
@@ -182,7 +256,10 @@ describe("resendConfirmation", () => {
   it("błąd Turnstile → „Potwierdź, że nie jesteś botem”, bez wysyłki", async () => {
     verifyTurnstile.mockResolvedValue(false);
     const wynik = await resendConfirmation("ala@przyklad.pl", null);
-    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Potwierdź, że nie jesteś botem",
+    });
     expect(verifyTurnstile).toHaveBeenCalledWith(null, "1.2.3.4");
     expect(resendMock).not.toHaveBeenCalled();
   });
@@ -200,7 +277,9 @@ describe("resendConfirmation", () => {
 
   it("błąd Supabase nie zdradza stanu konta — też sukces", async () => {
     resendMock.mockResolvedValue({ error: { message: "x" } });
-    expect((await resendConfirmation("ala@przyklad.pl", "tok")).status).toBe("success");
+    expect((await resendConfirmation("ala@przyklad.pl", "tok")).status).toBe(
+      "success",
+    );
   });
 });
 
@@ -215,19 +294,25 @@ describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
   it("używa NEXT_PUBLIC_SITE_URL (bez końcowego ukośnika), ignorując nagłówki", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://rhytm.app/");
     await resendConfirmation("a@b.pl", "tok");
-    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("https://rhytm.app/auth/confirm");
+    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe(
+      "https://rhytm.app/auth/confirm",
+    );
   });
 
   it("bez zmiennej poza produkcją — zapas z nagłówków", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     await resendConfirmation("a@b.pl", "tok");
-    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe("http://localhost:3000/auth/confirm");
+    expect(resendMock.mock.calls[0][0].options.emailRedirectTo).toBe(
+      "http://localhost:3000/auth/confirm",
+    );
   });
 
   it("w produkcji bez zmiennej — czytelny błąd, bez wysyłki", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     vi.stubEnv("NODE_ENV", "production");
-    await expect(resendConfirmation("a@b.pl", "tok")).rejects.toThrow("NEXT_PUBLIC_SITE_URL");
+    await expect(resendConfirmation("a@b.pl", "tok")).rejects.toThrow(
+      "NEXT_PUBLIC_SITE_URL",
+    );
     expect(resendMock).not.toHaveBeenCalled();
   });
 });
@@ -240,26 +325,43 @@ describe("requestPasswordReset", () => {
   });
 
   it("wysyła link i zwraca sukces z e-mailem", async () => {
-    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: " Ala@Przyklad.pl ", "cf-turnstile-response": "tok" }));
-    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", { redirectTo: "http://localhost:3000/auth/confirm" });
+    const wynik = await requestPasswordReset(
+      { status: "idle" },
+      formularz({ email: " Ala@Przyklad.pl ", "cf-turnstile-response": "tok" }),
+    );
+    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", {
+      redirectTo: "http://localhost:3000/auth/confirm",
+    });
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
 
   it("błąd Supabase (np. brak konta) daje ten sam sukces", async () => {
     resetForEmail.mockResolvedValue({ error: { message: "User not found" } });
-    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "ala@przyklad.pl", "cf-turnstile-response": "tok" }));
+    const wynik = await requestPasswordReset(
+      { status: "idle" },
+      formularz({ email: "ala@przyklad.pl", "cf-turnstile-response": "tok" }),
+    );
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
 
   it("błąd Turnstile → komunikat, bez wysyłki", async () => {
     verifyTurnstile.mockResolvedValue(false);
-    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "ala@przyklad.pl" }));
-    expect(wynik).toEqual({ status: "error", message: "Potwierdź, że nie jesteś botem" });
+    const wynik = await requestPasswordReset(
+      { status: "idle" },
+      formularz({ email: "ala@przyklad.pl" }),
+    );
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Potwierdź, że nie jesteś botem",
+    });
     expect(resetForEmail).not.toHaveBeenCalled();
   });
 
   it("zły format e-maila → błąd pola", async () => {
-    const wynik = await requestPasswordReset({ status: "idle" }, formularz({ email: "nie-email", "cf-turnstile-response": "tok" }));
+    const wynik = await requestPasswordReset(
+      { status: "idle" },
+      formularz({ email: "nie-email", "cf-turnstile-response": "tok" }),
+    );
     expect(wynik.status).toBe("error");
     expect(wynik.fieldErrors?.email).toBeTruthy();
     expect(resetForEmail).not.toHaveBeenCalled();
@@ -275,7 +377,10 @@ describe("updatePassword", () => {
     vi.stubEnv("RECOVERY_COOKIE_SECRET", "sekret-testowy");
     getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
     // Podpisany znacznik z /auth/confirm dla u1
-    cookieGet.mockReturnValue({ name: "rhytm_recovery", value: utworzZnacznikResetu("u1") });
+    cookieGet.mockReturnValue({
+      name: "rhytm_recovery",
+      value: utworzZnacznikResetu("u1"),
+    });
     isPasswordPwned.mockResolvedValue(false);
     updateUser.mockResolvedValue({ error: null });
     signOutMock.mockResolvedValue({ error: null });
@@ -283,7 +388,9 @@ describe("updatePassword", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it("sukces → updateUser, signOut(others), znacznik skasowany (jednorazowy), redirect na /dzis", async () => {
-    await expect(updatePassword({ status: "idle" }, formularz(dane))).rejects.toThrow("REDIRECT:/dzis");
+    await expect(
+      updatePassword({ status: "idle" }, formularz(dane)),
+    ).rejects.toThrow("REDIRECT:/dzis");
     expect(updateUser).toHaveBeenCalledWith({ password: "rytm2026dobre" });
     expect(signOutMock).toHaveBeenCalledWith({ scope: "others" });
     expect(cookieDelete).toHaveBeenCalledWith("rhytm_recovery");
@@ -291,38 +398,57 @@ describe("updatePassword", () => {
 
   it("bez ciasteczka → „Link wygasł”, bez HIBP i zmiany", async () => {
     cookieGet.mockReturnValue(undefined);
-    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(WYGASL);
+    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(
+      WYGASL,
+    );
     expect(isPasswordPwned).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("podrobione ciasteczko „1” (stary format) → „Link wygasł”, bez HIBP", async () => {
     cookieGet.mockReturnValue({ name: "rhytm_recovery", value: "1" });
-    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(WYGASL);
+    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(
+      WYGASL,
+    );
     expect(isPasswordPwned).not.toHaveBeenCalled();
   });
 
   it("znacznik innego użytkownika → „Link wygasł”", async () => {
-    cookieGet.mockReturnValue({ name: "rhytm_recovery", value: utworzZnacznikResetu("u2") });
-    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(WYGASL);
+    cookieGet.mockReturnValue({
+      name: "rhytm_recovery",
+      value: utworzZnacznikResetu("u2"),
+    });
+    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(
+      WYGASL,
+    );
     expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("wygasły znacznik (sprzed 16 minut) → „Link wygasł”", async () => {
-    cookieGet.mockReturnValue({ name: "rhytm_recovery", value: utworzZnacznikResetu("u1", Date.now() - 16 * 60_000) });
-    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(WYGASL);
+    cookieGet.mockReturnValue({
+      name: "rhytm_recovery",
+      value: utworzZnacznikResetu("u1", Date.now() - 16 * 60_000),
+    });
+    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(
+      WYGASL,
+    );
     expect(isPasswordPwned).not.toHaveBeenCalled();
   });
 
   it("brak sesji → „Link wygasł”, bez HIBP i zmiany", async () => {
     getUser.mockResolvedValue({ data: { user: null } });
-    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(WYGASL);
+    expect(await updatePassword({ status: "idle" }, formularz(dane))).toEqual(
+      WYGASL,
+    );
     expect(isPasswordPwned).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("niezgodne hasła → błąd pola confirm", async () => {
-    const wynik = await updatePassword({ status: "idle" }, formularz({ password: "rytm2026dobre", confirm: "inne" }));
+    const wynik = await updatePassword(
+      { status: "idle" },
+      formularz({ password: "rytm2026dobre", confirm: "inne" }),
+    );
     expect(wynik.fieldErrors?.confirm).toBe("Hasła nie są takie same");
     expect(updateUser).not.toHaveBeenCalled();
   });
@@ -330,14 +456,20 @@ describe("updatePassword", () => {
   it("hasło z wycieku → komunikat, bez zmiany", async () => {
     isPasswordPwned.mockResolvedValue(true);
     const wynik = await updatePassword({ status: "idle" }, formularz(dane));
-    expect(wynik).toEqual({ status: "error", message: "To hasło wystąpiło w wyciekach danych. Wybierz inne." });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
+    });
     expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("błąd updateUser → ogólny komunikat, bez wylogowania innych sesji i bez kasowania znacznika", async () => {
     updateUser.mockResolvedValue({ error: { message: "boom" } });
     const wynik = await updatePassword({ status: "idle" }, formularz(dane));
-    expect(wynik).toEqual({ status: "error", message: "Nie udało się zmienić hasła. Spróbuj ponownie." });
+    expect(wynik).toEqual({
+      status: "error",
+      message: "Nie udało się zmienić hasła. Spróbuj ponownie.",
+    });
     expect(signOutMock).not.toHaveBeenCalled();
     expect(cookieDelete).not.toHaveBeenCalled();
   });
@@ -364,12 +496,16 @@ describe("resendLink", () => {
   it("recovery → resetPasswordForEmail, zawsze sukces", async () => {
     resetForEmail.mockResolvedValue({ error: { message: "x" } });
     const wynik = await resendLink("recovery", "ala@przyklad.pl", "tok");
-    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", { redirectTo: "http://localhost:3000/auth/confirm" });
+    expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", {
+      redirectTo: "http://localhost:3000/auth/confirm",
+    });
     expect(wynik.status).toBe("success");
   });
 
   it("recovery: zły e-mail → błąd pola, błąd Turnstile → komunikat; w obu bez wysyłki", async () => {
-    expect((await resendLink("recovery", "zle", "tok")).fieldErrors?.email).toBe("Podaj poprawny e-mail");
+    expect(
+      (await resendLink("recovery", "zle", "tok")).fieldErrors?.email,
+    ).toBe("Podaj poprawny e-mail");
     verifyTurnstile.mockResolvedValue(false);
     expect(await resendLink("recovery", "ala@przyklad.pl", null)).toEqual({
       status: "error",

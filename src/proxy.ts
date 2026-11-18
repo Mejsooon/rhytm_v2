@@ -6,7 +6,10 @@ import { updateSession } from "@/lib/supabase/proxy-session";
 // Proxy (Next 16, dawniej middleware): odświeża sesję Supabase i stosuje przekierowania.
 export async function proxy(request: NextRequest) {
   // Bez konfiguracji Supabase (np. lokalny build) nie ma czego odświeżać — przepuszczamy.
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  ) {
     return NextResponse.next();
   }
 
@@ -35,7 +38,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Przekierowanie musi nieść ciasteczka sesji ustawione przez updateSession i ich nagłówki no-cache
-  const redirect = NextResponse.redirect(new URL(decyzja.redirect, request.url));
+  const redirect = NextResponse.redirect(
+    new URL(decyzja.redirect, request.url),
+  );
   response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
   for (const naglowek of ["Cache-Control", "Expires", "Pragma"]) {
     const wartosc = response.headers.get(naglowek);

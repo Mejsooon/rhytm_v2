@@ -16,18 +16,25 @@ export default function NotFound() {
       </header>
       <div className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="flex max-w-[440px] flex-col items-center gap-3.5 text-center">
-          <span className="font-mono text-[64px] font-medium tracking-[-0.04em]">404</span>
+          <span className="font-mono text-[64px] font-medium tracking-[-0.04em]">
+            404
+          </span>
           <h1 className="m-0 text-xl font-semibold">Tej strony nie ma</h1>
           <p className="m-0 leading-normal text-[#666666]">
-            Mogła zostać usunięta albo link jest niepełny. Strony usunięte w ciągu 30 dni możesz
-            przywrócić z kosza.
+            Mogła zostać usunięta albo link jest niepełny. Strony usunięte w
+            ciągu 30 dni możesz przywrócić z kosza.
           </p>
           <div className="flex gap-2">
             <Button asChild variant="primary" size="sm">
               <Link href="/dzis">Wróć do Dziś</Link>
             </Button>
             {/* Wyszukiwarka ⌘K dojdzie w kolejnych etapach */}
-            <Button variant="secondary" size="sm" aria-disabled="true" className="cursor-default">
+            <Button
+              variant="secondary"
+              size="sm"
+              aria-disabled="true"
+              className="cursor-default"
+            >
               Szukaj
               <span className="rounded border border-[#e0e0e0] bg-white px-[5px] font-mono text-[11px] font-normal text-[#404040]">
                 ⌘K

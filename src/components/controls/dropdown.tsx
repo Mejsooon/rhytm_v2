@@ -41,7 +41,12 @@ export function Dropdown<T extends string>({
   function zmienOtwarcie(nowe: boolean) {
     if (nowe) {
       // Aktywna na starcie: wybrana opcja (albo pierwsza)
-      setAktywny(Math.max(0, options.findIndex((o) => o.value === value)));
+      setAktywny(
+        Math.max(
+          0,
+          options.findIndex((o) => o.value === value),
+        ),
+      );
     }
     setOpen(nowe);
   }
@@ -85,14 +90,19 @@ export function Dropdown<T extends string>({
         >
           {wybrana ? (
             wybrana.badge ? (
-              <StatusBadge tone={wybrana.badge.tone}>{wybrana.badge.label}</StatusBadge>
+              <StatusBadge tone={wybrana.badge.tone}>
+                {wybrana.badge.label}
+              </StatusBadge>
             ) : (
               <span>{wybrana.label}</span>
             )
           ) : (
             <span className="text-[#a3a3a3]">{placeholder}</span>
           )}
-          <ChevronDownIcon aria-hidden="true" className="size-3 flex-none text-[#666666]" />
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-3 flex-none text-[#666666]"
+          />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -135,7 +145,9 @@ export function Dropdown<T extends string>({
                   )}
                 >
                   {opcja.badge ? (
-                    <StatusBadge tone={opcja.badge.tone}>{opcja.badge.label}</StatusBadge>
+                    <StatusBadge tone={opcja.badge.tone}>
+                      {opcja.badge.label}
+                    </StatusBadge>
                   ) : (
                     <span>{opcja.label}</span>
                   )}

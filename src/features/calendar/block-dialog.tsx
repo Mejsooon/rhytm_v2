@@ -18,7 +18,10 @@ import {
   TimePicker,
 } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
-import { CategoryDialog, type NewCategory } from "@/features/categories/category-dialog";
+import {
+  CategoryDialog,
+  type NewCategory,
+} from "@/features/categories/category-dialog";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
@@ -92,7 +95,9 @@ export function BlockDialog({
   onSaved: () => void;
   onCancel: () => void;
 }) {
-  const [krok, setKrok] = useState<"formularz" | "zakres" | "kategoria">("formularz");
+  const [krok, setKrok] = useState<"formularz" | "zakres" | "kategoria">(
+    "formularz",
+  );
   const [title, setTitle] = useState(initial.title);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
   const [date, setDate] = useState(initial.date);
@@ -120,21 +125,30 @@ export function BlockDialog({
       ? null
       : {
           freq: rep,
-          ...(rep === "custom" ? { byWeekday: [...dni].sort((a, b) => a - b) } : {}),
+          ...(rep === "custom"
+            ? { byWeekday: [...dni].sort((a, b) => a - b) }
+            : {}),
           ...(until ? { until } : {}),
         };
 
   // Kategorie do wyboru: bez systemowych, plus dopiero co dodane
   const wybor = [
-    ...categories.filter((k) => !k.is_system).map((k) => ({ id: k.id, name: k.name, color: k.color })),
+    ...categories
+      .filter((k) => !k.is_system)
+      .map((k) => ({ id: k.id, name: k.name, color: k.color })),
     ...dodane.filter((d) => !categories.some((k) => k.id === d.id)),
   ];
 
   let bladPol = "";
-  if (durationMin < 15) bladPol = "Koniec musi być co najmniej 15 minut po początku.";
-  else if (until && until < date) bladPol = "Koniec powtarzania nie może być przed początkiem.";
+  if (durationMin < 15)
+    bladPol = "Koniec musi być co najmniej 15 minut po początku.";
+  else if (until && until < date)
+    bladPol = "Koniec powtarzania nie może być przed początkiem.";
   const mozeZapisac =
-    title.trim() !== "" && bladPol === "" && !(rep === "custom" && dni.length === 0) && !pending;
+    title.trim() !== "" &&
+    bladPol === "" &&
+    !(rep === "custom" && dni.length === 0) &&
+    !pending;
 
   // Edycja bloku cyklicznego: które pola zmieniono (wyjątek „tylko to wystąpienie” nie przechowuje
   // kategorii, notatki, przypomnienia ani powtarzania)
@@ -240,7 +254,9 @@ export function BlockDialog({
 
   if (krok === "zakres" && initial.recurrence) {
     const przesuniete =
-      date !== initial.date || startMin !== initial.startMin || durationMin !== initial.durationMin;
+      date !== initial.date ||
+      startMin !== initial.startMin ||
+      durationMin !== initial.durationMin;
     return (
       <ScopeDialog
         subtitle={[
@@ -255,7 +271,9 @@ export function BlockDialog({
         date={initial.occurrenceDate ?? initial.date}
         timeLabel={`${formatClockTime(Math.floor(initial.startMin / 60), initial.startMin % 60, clock)}–${formatClockTime(Math.floor((initial.startMin + initial.durationMin) / 60), (initial.startMin + initial.durationMin) % 60, clock)}`}
         disableThis={
-          seriaTylko ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii." : undefined
+          seriaTylko
+            ? "Kategoria, notatka i przypomnienie zmieniają się dla całej serii."
+            : undefined
         }
         // Inny dzień: seria codzienna i dni robocze tylko „Tylko to”; inne serie „To i następne”
         // tylko na pierwszym wystąpieniu (zasady jak w planScopeChange)
@@ -287,7 +305,11 @@ export function BlockDialog({
       wide
       onOpenChange={(otwarte) => !otwarte && onCancel()}
       title={mode === "create" ? "Nowy blok" : "Edytuj blok"}
-      description={mode === "create" ? "Zadania dodasz po zapisaniu, w dymku bloku." : undefined}
+      description={
+        mode === "create"
+          ? "Zadania dodasz po zapisaniu, w dymku bloku."
+          : undefined
+      }
       footer={
         <>
           {blad && (
@@ -385,7 +407,10 @@ export function BlockDialog({
             {DNI.map((nazwa, i) => {
               const numer = i + 1;
               // Co tydzień: dzień wynika z daty (tylko podgląd); własne: dni do wyboru
-              const wybrany = rep === "weekly" ? weekdayOf(date) === numer : dni.includes(numer);
+              const wybrany =
+                rep === "weekly"
+                  ? weekdayOf(date) === numer
+                  : dni.includes(numer);
               return (
                 <button
                   key={nazwa}
@@ -393,7 +418,11 @@ export function BlockDialog({
                   aria-pressed={wybrany}
                   disabled={rep === "weekly"}
                   onClick={() =>
-                    setDni((d) => (d.includes(numer) ? d.filter((n) => n !== numer) : [...d, numer]))
+                    setDni((d) =>
+                      d.includes(numer)
+                        ? d.filter((n) => n !== numer)
+                        : [...d, numer],
+                    )
                   }
                   className={cn(
                     "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default max-[799px]:size-11",
@@ -428,7 +457,10 @@ export function BlockDialog({
 
       <label className="flex flex-col gap-1.5 text-[13px] font-medium">
         <span>
-          Notatka <span className="text-xs font-normal text-[#6b6b6b]">opcjonalnie</span>
+          Notatka{" "}
+          <span className="text-xs font-normal text-[#6b6b6b]">
+            opcjonalnie
+          </span>
         </span>
         <textarea
           rows={2}
@@ -440,9 +472,16 @@ export function BlockDialog({
       </label>
 
       <div className="flex items-center gap-2.5 text-[13px] max-[799px]:min-h-11">
-        <BellIcon aria-hidden="true" className="size-[18px] flex-none text-[#666666]" />
+        <BellIcon
+          aria-hidden="true"
+          className="size-[18px] flex-none text-[#666666]"
+        />
         <span className="flex-1">Przypomnij 10 min wcześniej</span>
-        <Switch checked={remind} onChange={setRemind} ariaLabel="Przypomnienie" />
+        <Switch
+          checked={remind}
+          onChange={setRemind}
+          ariaLabel="Przypomnienie"
+        />
       </div>
     </FormDialog>
   );

@@ -6,7 +6,11 @@ import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
-import { SETTINGS_TABS, SettingsTabs, type SettingsTabSlug } from "@/features/settings/settings-tabs";
+import {
+  SETTINGS_TABS,
+  SettingsTabs,
+  type SettingsTabSlug,
+} from "@/features/settings/settings-tabs";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +26,9 @@ async function Ogolne() {
 
   const { data: profil } = await supabase
     .from("profiles")
-    .select("display_name, avatar_path, timezone, weight_kg, height_cm, sleep_goal_min, weekly_goal_type, weekly_workouts_goal, weekly_km_goal, currency, week_start")
+    .select(
+      "display_name, avatar_path, timezone, weight_kg, height_cm, sleep_goal_min, workouts_goal_on, km_goal_on, weekly_workouts_goal, weekly_km_goal, currency, week_start",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -47,12 +53,22 @@ async function Ogolne() {
       <GoalsCard
         saved={{
           sleep: profil?.sleep_goal_min ?? 480,
-          // Konta sprzed celu treningowego mają rodzaj 'km' i brak liczby treningów (wtedy 3)
-          goalType: profil?.weekly_goal_type === "workouts" ? "workouts" : "km",
-          tr: profil?.weekly_workouts_goal != null ? String(profil.weekly_workouts_goal) : "3",
+          // Brak liczby treningów (konta sprzed celu treningowego) = 3
+          trOn: profil?.workouts_goal_on ?? true,
+          kmOn: profil?.km_goal_on ?? true,
+          tr:
+            profil?.weekly_workouts_goal != null
+              ? String(profil.weekly_workouts_goal)
+              : "3",
           // Ułamek kilometrów z polskim przecinkiem (22.5 -> "22,5")
-          km: profil?.weekly_km_goal != null ? String(profil.weekly_km_goal).replace(".", ",") : "25",
-          cur: waluta === "EUR" || waluta === "USD" || waluta === "GBP" ? waluta : "PLN",
+          km:
+            profil?.weekly_km_goal != null
+              ? String(profil.weekly_km_goal).replace(".", ",")
+              : "25",
+          cur:
+            waluta === "EUR" || waluta === "USD" || waluta === "GBP"
+              ? waluta
+              : "PLN",
           week: profil?.week_start === "sun" ? "sun" : "mon",
         }}
       />
@@ -77,18 +93,28 @@ async function Kategorie() {
   return <CategoriesCard categories={data ?? []} />;
 }
 
-export default async function ZakladkaPage({ params }: { params: Promise<{ zakladka: string }> }) {
+export default async function ZakladkaPage({
+  params,
+}: {
+  params: Promise<{ zakladka: string }>;
+}) {
   const { zakladka } = await params;
   const tab = SETTINGS_TABS.find((t) => t.slug === zakladka);
   if (!tab) notFound();
 
   return (
     <>
-      <ModuleHeader title={tab.label} webParent="Ustawienia" phoneTitle="Ustawienia" />
+      <ModuleHeader
+        title={tab.label}
+        webParent="Ustawienia"
+        phoneTitle="Ustawienia"
+      />
       <div className="flex w-full max-w-[1100px] items-start gap-8 px-6 py-7 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:gap-4 max-[799px]:py-2">
         <SettingsTabs active={tab.slug as SettingsTabSlug} />
         <div className="flex min-w-0 flex-1 flex-col gap-6 max-[799px]:w-full max-[799px]:gap-4">
-          <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">{tab.label}</h2>
+          <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">
+            {tab.label}
+          </h2>
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
               <Ogolne />

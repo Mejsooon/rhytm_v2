@@ -79,10 +79,11 @@ describe("saveOnboardingStep", () => {
     expect(lt).toHaveBeenCalledWith("onboarding_step", 3);
   });
 
-  it("krok 3 zapisuje rodzaj celu i obie liczby", async () => {
+  it("krok 3 zapisuje przełączniki celów i obie liczby", async () => {
     const krok3 = {
       goals: ["sport"],
-      weekly_goal_type: "workouts",
+      workouts_goal_on: true,
+      km_goal_on: true,
       weekly_workouts_goal: 4,
       weekly_km_goal: 25,
       sleep_goal_min: 480,
@@ -96,12 +97,29 @@ describe("saveOnboardingStep", () => {
   it("krok 3 z 15 treningami → komunikat, bez zapisu", async () => {
     const wynik = await saveOnboardingStep(3, {
       goals: ["sport"],
-      weekly_goal_type: "workouts",
+      workouts_goal_on: true,
+      km_goal_on: false,
       weekly_workouts_goal: 15,
       weekly_km_goal: 25,
       sleep_goal_min: 480,
     });
     expect(wynik).toEqual({ ok: false, message: "Podaj liczbę 1–14." });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("krok 3 z oboma celami wyłączonymi → komunikat, bez zapisu", async () => {
+    const wynik = await saveOnboardingStep(3, {
+      goals: ["sport"],
+      workouts_goal_on: false,
+      km_goal_on: false,
+      weekly_workouts_goal: 3,
+      weekly_km_goal: 25,
+      sleep_goal_min: 480,
+    });
+    expect(wynik).toEqual({
+      ok: false,
+      message: "Włącz co najmniej jeden cel.",
+    });
     expect(update).not.toHaveBeenCalled();
   });
 

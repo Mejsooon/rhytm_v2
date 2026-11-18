@@ -68,7 +68,10 @@ export function TimeGrid({
   const kolumny = `${szerokoscEtykiet}px repeat(${days.length}, minmax(0, 1fr))`;
   const przewijanie = useRef<HTMLDivElement>(null);
   // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
-  const [duchMyszy, setDuchMyszy] = useState<{ date: IsoDate; startMin: number } | null>(null);
+  const [duchMyszy, setDuchMyszy] = useState<{
+    date: IsoDate;
+    startMin: number;
+  } | null>(null);
   // Przeciąganie wskaźnikiem: podgląd zakresu/przesunięcia (logika w use-grid-drag.ts)
   const { podglad, zacznij, tlumKlik } = useGridDrag({
     korzen: przewijanie,
@@ -85,7 +88,8 @@ export function TimeGrid({
         o.startMin <= nowMinutes &&
         nowMinutes < o.startMin + o.durationMin,
     );
-    const odMinuty = trwajacy && days.includes(today) ? trwajacy.startMin : 6 * 60;
+    const odMinuty =
+      trwajacy && days.includes(today) ? trwajacy.startMin : 6 * 60;
     if (przewijanie.current) {
       przewijanie.current.scrollTop = (odMinuty / 60) * wysokoscGodziny;
     }
@@ -100,7 +104,8 @@ export function TimeGrid({
       Math.min(
         47,
         Math.floor(
-          (e.clientY - e.currentTarget.getBoundingClientRect().top) / (wysokoscGodziny / 2),
+          (e.clientY - e.currentTarget.getBoundingClientRect().top) /
+            (wysokoscGodziny / 2),
         ),
       ),
     );
@@ -119,7 +124,14 @@ export function TimeGrid({
       // Kursor całej siatki podczas gestu
       style={
         podglad
-          ? { cursor: podglad.kind === "resize" ? "ns-resize" : podglad.kind === "move" ? "grabbing" : "crosshair" }
+          ? {
+              cursor:
+                podglad.kind === "resize"
+                  ? "ns-resize"
+                  : podglad.kind === "move"
+                    ? "grabbing"
+                    : "crosshair",
+            }
           : undefined
       }
     >
@@ -156,14 +168,20 @@ export function TimeGrid({
                 })}
               </div>
               {/* Wiersz „cały dzień” — w Etapie 2 pusty (odnowienia subskrypcji dojdą później) */}
-              <div className="grid border-t border-[#f0f0f0]" style={{ gridTemplateColumns: kolumny }}>
+              <div
+                className="grid border-t border-[#f0f0f0]"
+                style={{ gridTemplateColumns: kolumny }}
+              >
                 <div className="p-1.5 text-right font-mono text-[10px] leading-tight text-[#6b6b6b]">
                   cały
                   <br />
                   dzień
                 </div>
                 {days.map((dzien) => (
-                  <div key={dzien} className="min-h-[26px] border-l border-[#eaeaea] p-1" />
+                  <div
+                    key={dzien}
+                    className="min-h-[26px] border-l border-[#eaeaea] p-1"
+                  />
                 ))}
               </div>
             </>
@@ -245,21 +263,38 @@ export function TimeGrid({
                 onClickCapture={tlumKlik}
                 onPointerDown={(e) => {
                   // Przeciąganie po pustym miejscu tworzy zakres; bloki i przyciski mają własne gesty
-                  if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) return;
+                  if (
+                    (e.target as HTMLElement).closest(
+                      "button,a,[role=dialog],[data-uchwyt]",
+                    )
+                  )
+                    return;
                   zacznij(e, "create");
                 }}
                 onClick={(e) => {
                   // Klik w blok i w ramkę pustego dnia obsługują własne przyciski
-                  if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) return;
+                  if (
+                    (e.target as HTMLElement).closest(
+                      "button,a,[role=dialog],[data-uchwyt]",
+                    )
+                  )
+                    return;
                   onSlotClick(dzien, polgodzinaZ(e) * 30);
                 }}
                 onMouseMove={(e) => {
-                  if ((e.target as HTMLElement).closest("button,a,[role=dialog],[data-uchwyt]")) {
+                  if (
+                    (e.target as HTMLElement).closest(
+                      "button,a,[role=dialog],[data-uchwyt]",
+                    )
+                  ) {
                     if (duchMyszy) setDuchMyszy(null);
                     return;
                   }
                   const startMin = polgodzinaZ(e) * 30;
-                  if (duchMyszy?.date !== dzien || duchMyszy.startMin !== startMin) {
+                  if (
+                    duchMyszy?.date !== dzien ||
+                    duchMyszy.startMin !== startMin
+                  ) {
                     setDuchMyszy({ date: dzien, startMin });
                   }
                 }}
@@ -300,16 +335,23 @@ export function TimeGrid({
                     const pozycja = uklad.find((u) => u.key === o.key);
                     const kolumna = pozycja?.col ?? 0;
                     const kolumn = pozycja?.cols ?? 1;
-                    const kategoria = categories.find((k) => k.id === o.categoryId);
+                    const kategoria = categories.find(
+                      (k) => k.id === o.categoryId,
+                    );
                     const kolor = kategoria?.color ?? KOLOR_BRAK;
                     // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
                     const dataOryginalna = o.key.slice(o.blockId.length + 1);
-                    const postep = occurrenceProgress(tasks, o.blockId, dataOryginalna);
+                    const postep = occurrenceProgress(
+                      tasks,
+                      o.blockId,
+                      dataOryginalna,
+                    );
                     // Blok nie wychodzi poza dolną krawędź siatki
                     const czas = Math.min(o.durationMin, 1440 - o.startMin);
                     const koniec = o.startMin + czas;
                     const godzinyBloku = `${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
-                    const licznik = postep.total > 0 ? `${postep.done}/${postep.total}` : "";
+                    const licznik =
+                      postep.total > 0 ? `${postep.done}/${postep.total}` : "";
                     const cykliczny = o.recurring ? "↻" : "";
                     // Jedna linia bez pionowych odstępów: w tygodniu bloki krótsze niż godzina
                     // (dwie linie nie mieszczą się w 48 px), w dniu krótsze niż 45 min
@@ -331,7 +373,9 @@ export function TimeGrid({
                           data-occurrence-key={o.key}
                           onClick={(e) => onBlockClick(o.key, e.currentTarget)}
                           // Przeciągnięcie przesuwa blok; ruch poniżej 4 px zostaje zwykłym klikiem
-                          onPointerDown={(e) => zacznij(e, "move", { occurrence: o })}
+                          onPointerDown={(e) =>
+                            zacznij(e, "move", { occurrence: o })
+                          }
                           title={`${o.title} ${godzinyBloku}`}
                           className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                           style={{
@@ -339,7 +383,9 @@ export function TimeGrid({
                             border: `1px solid ${kolor}40`,
                             borderLeft: `3px solid ${kolor}`,
                             // Kompakt: bez górnej i dolnej ramki, żeby linia 11 px się zmieściła
-                            ...(kompakt ? { borderTopWidth: 0, borderBottomWidth: 0 } : {}),
+                            ...(kompakt
+                              ? { borderTopWidth: 0, borderBottomWidth: 0 }
+                              : {}),
                           }}
                         >
                           {kompakt ? (
@@ -352,7 +398,9 @@ export function TimeGrid({
                                 {o.title}
                               </span>
                               <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-[#404040]">
-                                {[godzinyBloku, licznik, cykliczny].filter(Boolean).join(" · ")}
+                                {[godzinyBloku, licznik, cykliczny]
+                                  .filter(Boolean)
+                                  .join(" · ")}
                               </span>
                             </>
                           ) : (
@@ -362,7 +410,9 @@ export function TimeGrid({
                                 {`${godzinyBloku} · ${kategoria?.name ?? "Bez kategorii"}`}
                               </span>
                               {cykliczny && (
-                                <span className="font-mono text-[11px] text-[#404040]">{cykliczny}</span>
+                                <span className="font-mono text-[11px] text-[#404040]">
+                                  {cykliczny}
+                                </span>
                               )}
                               <span className="ml-auto font-mono text-[11px] text-[#404040]">
                                 {licznik}
@@ -372,33 +422,38 @@ export function TimeGrid({
                         </button>
                         {/* Dolny uchwyt rozciągania (tylko bloki ≥ 30 min, krótsze da się kliknąć i chwycić); klawiatura korzysta z edycji w dymku */}
                         {czas >= 30 && (
-                        <div
-                          data-testid={`uchwyt-${o.key}`}
-                          data-uchwyt
-                          aria-hidden="true"
-                          onPointerDown={(e) => zacznij(e, "resize", { occurrence: o })}
-                          className="absolute right-1 bottom-0 left-1 h-1.5 cursor-ns-resize"
-                        />
+                          <div
+                            data-testid={`uchwyt-${o.key}`}
+                            data-uchwyt
+                            aria-hidden="true"
+                            onPointerDown={(e) =>
+                              zacznij(e, "resize", { occurrence: o })
+                            }
+                            className="absolute right-1 bottom-0 left-1 h-1.5 cursor-ns-resize"
+                          />
                         )}
                       </div>
                     );
                   })}
                 </div>
 
-                {variant === "day" && dnia.length === 0 && (totalCount ?? 0) === 0 && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-[#e0e0e0] bg-white p-6 text-center text-[#666666]">
-                    Brak bloków w tym dniu.{" "}
-                    <button
-                      type="button"
-                      onClick={() => onSlotClick(dzien, 8 * 60)}
-                      className="cursor-pointer text-[#171717] underline hover:text-black"
+                {variant === "day" &&
+                  dnia.length === 0 &&
+                  (totalCount ?? 0) === 0 && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-[#e0e0e0] bg-white p-6 text-center text-[#666666]"
                     >
-                      Dodaj blok
-                    </button>
-                  </div>
-                )}
+                      Brak bloków w tym dniu.{" "}
+                      <button
+                        type="button"
+                        onClick={() => onSlotClick(dzien, 8 * 60)}
+                        className="cursor-pointer text-[#171717] underline hover:text-black"
+                      >
+                        Dodaj blok
+                      </button>
+                    </div>
+                  )}
 
                 {linia !== null && (
                   <>
@@ -412,7 +467,11 @@ export function TimeGrid({
                         className="pointer-events-none absolute -left-[58px] rounded bg-[#b91c1c] px-1 py-px font-mono text-[10px] text-white"
                         style={{ top: (linia / 60) * wysokoscGodziny - 9 }}
                       >
-                        {formatClockTime(Math.floor(linia / 60), linia % 60, clock)}
+                        {formatClockTime(
+                          Math.floor(linia / 60),
+                          linia % 60,
+                          clock,
+                        )}
                       </span>
                     )}
                   </>

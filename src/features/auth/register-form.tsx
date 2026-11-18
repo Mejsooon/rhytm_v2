@@ -11,9 +11,18 @@ import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { Button } from "@/components/controls/button";
 import { Checkbox } from "@/components/controls/checkbox";
 import { TextField } from "@/components/controls/field";
-import { checkPasswordRules, passwordStrength } from "@/lib/auth/password-rules";
+import {
+  checkPasswordRules,
+  passwordStrength,
+} from "@/lib/auth/password-rules";
 
-import { checkPasswordLeak, resendConfirmation, signInWithGoogle, signUp, type AuthFormState } from "./actions";
+import {
+  checkPasswordLeak,
+  resendConfirmation,
+  signInWithGoogle,
+  signUp,
+  type AuthFormState,
+} from "./actions";
 import { CheckInbox } from "./check-inbox";
 import { PasswordRulesList, type LeakStatus } from "./password-rules-list";
 import { PhoneStrengthBar, StrengthBar } from "./strength-bar";
@@ -78,7 +87,8 @@ export function RegisterForm() {
   }
 
   const reguly = checkPasswordRules(password);
-  const gotowe = tos && reguly.minLength && reguly.lettersAndDigits && leak !== "leaked";
+  const gotowe =
+    tos && reguly.minLength && reguly.lettersAndDigits && leak !== "leaked";
   const silaHasla = passwordStrength(password, leak === "ok");
 
   return (
@@ -86,19 +96,31 @@ export function RegisterForm() {
     // Na telefonie (MRegister.dc.html) nie ma przycisku Google ani separatora.
     <div className="flex flex-1 flex-col gap-4 max-[799px]:gap-5">
       <div className="order-1">
-        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">Załóż konto</h1>
+        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
+          Załóż konto
+        </h1>
         <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:text-[13px]">
-          <span className="max-[799px]:hidden">Wyślemy link, żeby potwierdzić Twój e-mail.</span>
-          <span className="min-[800px]:hidden">Kalendarz, nawyki, sport i strony w jednym miejscu.</span>
+          <span className="max-[799px]:hidden">
+            Wyślemy link, żeby potwierdzić Twój e-mail.
+          </span>
+          <span className="min-[800px]:hidden">
+            Kalendarz, nawyki, sport i strony w jednym miejscu.
+          </span>
         </p>
       </div>
 
       <form action={signInWithGoogle} className="order-2 max-[799px]:hidden">
         <GoogleButton webLabel="Kontynuuj z Google" />
       </form>
-      <OrSeparator label="lub e-mailem" className="order-3 max-[799px]:hidden" />
+      <OrSeparator
+        label="lub e-mailem"
+        className="order-3 max-[799px]:hidden"
+      />
 
-      <form action={formAction} className="order-4 flex flex-col gap-4 max-[799px]:gap-5">
+      <form
+        action={formAction}
+        className="order-4 flex flex-col gap-4 max-[799px]:gap-5"
+      >
         <TextField
           label={
             <>
@@ -151,7 +173,11 @@ export function RegisterForm() {
               To hasło wyciekło w innym serwisie. Wybierz inne.
             </p>
           )}
-          <PasswordRulesList password={password} leak={leak} className="mt-2.5 max-[799px]:hidden" />
+          <PasswordRulesList
+            password={password}
+            leak={leak}
+            className="mt-2.5 max-[799px]:hidden"
+          />
         </div>
 
         {/* Własny checkbox nie jest natywnym polem — jego stan przekazujemy ukrytym inputem */}
@@ -179,7 +205,8 @@ export function RegisterForm() {
         <TurnstileWidget resetKey={state} />
 
         <div className="flex flex-col gap-4 max-[799px]:gap-3.5">
-          {(state.status === "error" && state.message) || state.fieldErrors?.tos ? (
+          {(state.status === "error" && state.message) ||
+          state.fieldErrors?.tos ? (
             <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
               {state.message ?? state.fieldErrors?.tos}
             </p>
@@ -190,7 +217,10 @@ export function RegisterForm() {
 
       <p className="order-5 m-0 text-center text-[13px] text-[#666666] max-[799px]:text-sm">
         Masz już konto?{" "}
-        <Link href="/logowanie" className="text-[#171717] underline hover:text-black max-[799px]:font-semibold max-[799px]:no-underline">
+        <Link
+          href="/logowanie"
+          className="text-[#171717] underline hover:text-black max-[799px]:font-semibold max-[799px]:no-underline"
+        >
           Zaloguj się
         </Link>
       </p>

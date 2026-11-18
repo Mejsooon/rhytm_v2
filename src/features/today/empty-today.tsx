@@ -2,7 +2,13 @@ import { Button } from "@/components/controls";
 import type { FirstStep } from "./first-steps";
 
 // Pusty ekran Dziś (EmptyToday.dc.html web, MToday.dc.html karty telefonu): jedna kolumna, te same karty.
-export function EmptyToday({ name, steps }: { name: string; steps: { steps: FirstStep[]; doneCount: number } }) {
+export function EmptyToday({
+  name,
+  steps,
+}: {
+  name: string;
+  steps: { steps: FirstStep[]; doneCount: number };
+}) {
   const { steps: lista, doneCount } = steps;
   return (
     <div className="flex w-full max-w-[900px] flex-col gap-6 px-6 py-7 max-[799px]:gap-4 max-[799px]:px-4 max-[799px]:pt-3 max-[799px]:pb-6">
@@ -17,11 +23,18 @@ export function EmptyToday({ name, steps }: { name: string; steps: { steps: Firs
 
       <section className="overflow-hidden rounded-lg border border-[#eaeaea] bg-white max-[799px]:rounded-xl">
         <div className="flex items-center justify-between border-b border-[#eaeaea] px-4 py-3.5">
-          <h3 className="m-0 text-[15px] font-semibold max-[799px]:text-[17px]">Pierwsze kroki</h3>
-          <span className="font-mono text-xs text-[#666666]">{doneCount} / 4</span>
+          <h3 className="m-0 text-[15px] font-semibold max-[799px]:text-[17px]">
+            Pierwsze kroki
+          </h3>
+          <span className="font-mono text-xs text-[#666666]">
+            {doneCount} / 4
+          </span>
         </div>
         <div className="h-1 bg-[#f0f0f0]">
-          <div className="h-1 bg-[#15803d]" style={{ width: `${(doneCount / 4) * 100}%` }} />
+          <div
+            className="h-1 bg-[#15803d]"
+            style={{ width: `${(doneCount / 4) * 100}%` }}
+          />
         </div>
         {lista.map((krok) => (
           <a
@@ -52,7 +65,9 @@ export function EmptyToday({ name, steps }: { name: string; steps: { steps: Firs
               >
                 {krok.title}
               </span>
-              {krok.hint && <span className="text-[13px] text-[#666666]">{krok.hint}</span>}
+              {krok.hint && (
+                <span className="text-[13px] text-[#666666]">{krok.hint}</span>
+              )}
             </span>
             {!krok.done && (
               <span className="inline-flex items-center rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] text-sm text-[#171717] max-[799px]:min-h-11">
@@ -68,7 +83,11 @@ export function EmptyToday({ name, steps }: { name: string; steps: { steps: Firs
         <p className="m-0 max-w-[380px] text-[#666666]">
           Bloki z kalendarza na dziś pojawią się tutaj jako oś czasu.
         </p>
-        <Button asChild variant="secondary" className="mt-1.5 max-[799px]:w-full">
+        <Button
+          asChild
+          variant="secondary"
+          className="mt-1.5 max-[799px]:w-full"
+        >
           <a href="/kalendarz">+ Nowy blok</a>
         </Button>
       </section>

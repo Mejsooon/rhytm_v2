@@ -4,14 +4,30 @@ import { vi } from "vitest";
 
 // `single` to wynik dla .single()/.maybeSingle() (gdy brak — bierzemy `data`).
 export function fakeTable(
-  result: { data?: unknown; error?: unknown; single?: unknown; pages?: unknown[][] } = {},
+  result: {
+    data?: unknown;
+    error?: unknown;
+    single?: unknown;
+    pages?: unknown[][];
+  } = {},
 ) {
   const wynik = { data: null, error: null, ...result };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- atrapa na potrzeby testów
   const zapytanie: any = {};
   for (const metoda of [
-    "select", "insert", "update", "upsert", "delete",
-    "eq", "in", "gte", "lte", "lt", "or", "order", "limit",
+    "select",
+    "insert",
+    "update",
+    "upsert",
+    "delete",
+    "eq",
+    "in",
+    "gte",
+    "lte",
+    "lt",
+    "or",
+    "order",
+    "limit",
   ]) {
     zapytanie[metoda] = vi.fn(() => zapytanie);
   }
@@ -29,12 +45,20 @@ export function fakeTable(
       return zapytanie;
     });
   }
-  zapytanie.then = (ok: (v: unknown) => unknown, blad?: (e: unknown) => unknown) => {
+  zapytanie.then = (
+    ok: (v: unknown) => unknown,
+    blad?: (e: unknown) => unknown,
+  ) => {
     const gotowy =
-      pojedynczy && result.single !== undefined ? { ...wynik, data: result.single } : wynik;
+      pojedynczy && result.single !== undefined
+        ? { ...wynik, data: result.single }
+        : wynik;
     pojedynczy = false;
     if (result.pages && strona >= 0) {
-      return Promise.resolve({ ...wynik, data: result.pages[strona] ?? [] }).then(ok, blad);
+      return Promise.resolve({
+        ...wynik,
+        data: result.pages[strona] ?? [],
+      }).then(ok, blad);
     }
     return Promise.resolve(gotowy).then(ok, blad);
   };

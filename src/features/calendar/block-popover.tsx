@@ -5,8 +5,17 @@
 // Radix Popover zakotwiczony przy klikniętym bloku.
 import { useEffect, useRef, useState } from "react";
 
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { addTask, deleteTask, toggleTask, unpinTask } from "@/features/tasks/actions";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  addTask,
+  deleteTask,
+  toggleTask,
+  unpinTask,
+} from "@/features/tasks/actions";
 import {
   occurrenceProgress,
   unpinTask as unpinTaskFields,
@@ -58,7 +67,9 @@ export function BlockDetails({
   // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
   const dataOryginalna = o.key.slice(o.blockId.length + 1);
   const zadania = tasks
-    .filter((t) => t.block_id === o.blockId && t.occurrence_date === dataOryginalna)
+    .filter(
+      (t) => t.block_id === o.blockId && t.occurrence_date === dataOryginalna,
+    )
     .sort((a, b) => a.position - b.position);
   const { done, total } = occurrenceProgress(tasks, o.blockId, dataOryginalna);
   const procent = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -74,7 +85,9 @@ export function BlockDetails({
     void applyOptimistic(
       (d) => ({
         ...d,
-        tasks: d.tasks.map((t) => (t.id === zadanie.id ? { ...t, done: wykonane } : t)),
+        tasks: d.tasks.map((t) =>
+          t.id === zadanie.id ? { ...t, done: wykonane } : t,
+        ),
       }),
       () => toggleTask({ id: zadanie.id, done: wykonane }),
     );
@@ -136,7 +149,9 @@ export function BlockDetails({
             />
             {category?.name ?? "Bez kategorii"}
           </span>
-          <span className="text-base leading-[1.3] font-semibold break-words">{o.title}</span>
+          <span className="text-base leading-[1.3] font-semibold break-words">
+            {o.title}
+          </span>
           <span className="font-mono text-xs text-[#666666]">{kiedy}</span>
         </div>
         <button
@@ -151,7 +166,9 @@ export function BlockDetails({
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">Zadania</span>
+          <span className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+            Zadania
+          </span>
           <span className="font-mono text-xs text-[#666666]">{`${done} z ${total}`}</span>
         </div>
         <div
@@ -162,15 +179,23 @@ export function BlockDetails({
           aria-valuenow={procent}
           className="h-1 rounded-sm bg-[#f0f0f0]"
         >
-          <div className="h-1 rounded-sm bg-[#15803d]" style={{ width: `${procent}%` }} />
+          <div
+            className="h-1 rounded-sm bg-[#15803d]"
+            style={{ width: `${procent}%` }}
+          />
         </div>
         {total === 0 && (
-          <span className="py-1.5 text-[13px] text-[#6b6b6b]">Brak zadań w tym bloku.</span>
+          <span className="py-1.5 text-[13px] text-[#6b6b6b]">
+            Brak zadań w tym bloku.
+          </span>
         )}
         {zadania.map((t) => {
           const tymczasowe = t.id.startsWith(PREFIKS_TYMCZASOWY);
           return (
-            <div key={t.id} className="flex min-h-8 items-center gap-1 max-[799px]:min-h-11">
+            <div
+              key={t.id}
+              className="flex min-h-8 items-center gap-1 max-[799px]:min-h-11"
+            >
               <label
                 className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-[13px] ${
                   t.done ? "text-[#6b6b6b] line-through" : "text-[#171717]"
@@ -200,7 +225,9 @@ export function BlockDetails({
                 aria-label={`Opcje zadania ${t.title}`}
                 aria-expanded={otwarteMenu === t.id}
                 disabled={tymczasowe}
-                onClick={() => setOtwarteMenu(otwarteMenu === t.id ? null : t.id)}
+                onClick={() =>
+                  setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
+                }
                 className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] max-[799px]:size-11"
               >
                 ⋯
@@ -241,8 +268,12 @@ export function BlockDetails({
 
       {o.note && (
         <div className="border-t border-[#f0f0f0] pt-2.5">
-          <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">Notatka</div>
-          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-[#404040]">{o.note}</p>
+          <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+            Notatka
+          </div>
+          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-[#404040]">
+            {o.note}
+          </p>
         </div>
       )}
 
@@ -301,7 +332,8 @@ export function BlockPopover({
         collisionPadding={12}
         onInteractOutside={(e) => {
           // Klik w ten sam blok zamyka dymek (przełącza go onBlockClick), nie otwiera od nowa
-          if (e.target instanceof Node && anchor.contains(e.target)) e.preventDefault();
+          if (e.target instanceof Node && anchor.contains(e.target))
+            e.preventDefault();
         }}
         onCloseAutoFocus={(e) => {
           e.preventDefault();

@@ -14,7 +14,14 @@ function codzienny(id: string): Habit {
     remindAt: null,
     showOnToday: true,
     createdAt: "",
-    schedules: [{ validFrom: "2026-11-10", type: "daily", weekdays: [], timesPerWeek: null }],
+    schedules: [
+      {
+        validFrom: "2026-11-10",
+        type: "daily",
+        weekdays: [],
+        timesPerWeek: null,
+      },
+    ],
   };
 }
 
@@ -25,13 +32,23 @@ const CHECKS: Checks = new Map([
 ]);
 
 function wyrenderuj() {
-  render(<HabitHeatmap habits={NAWYKI} checks={CHECKS} today={DZIS} weekStart="mon" />);
+  render(
+    <HabitHeatmap
+      habits={NAWYKI}
+      checks={CHECKS}
+      today={DZIS}
+      weekStart="mon"
+    />,
+  );
 }
 
 describe("HabitHeatmap", () => {
   it("domyślnie rok: 52 kolumny tygodni", () => {
     wyrenderuj();
-    expect(screen.getByRole("radio", { name: "Rok" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Rok" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     expect(document.querySelectorAll("[data-heat-cell]")).toHaveLength(52 * 7);
   });
 
@@ -61,14 +78,18 @@ describe("HabitHeatmap", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
     const dzis = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
     fireEvent.mouseEnter(dzis);
-    expect(screen.getByRole("tooltip")).toHaveTextContent("17.11.2026 · 2 z 3 nawyków");
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "17.11.2026 · 2 z 3 nawyków",
+    );
     // Dymek w portalu na <body> — karta z overflow go nie przytnie
     expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
 
     const bezPlanu = screen.getByLabelText("01.11.2026 · brak zaplanowanych");
     expect(bezPlanu.className).toContain("bg-[#fafafa]");
     fireEvent.mouseEnter(bezPlanu);
-    expect(screen.getByRole("tooltip")).toHaveTextContent("01.11.2026 · brak zaplanowanych");
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "01.11.2026 · brak zaplanowanych",
+    );
   });
 
   it("dzień bez planu wygląda inaczej niż dzień z planem i 0%", async () => {
@@ -91,7 +112,9 @@ describe("HabitHeatmap", () => {
     const dzis = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
     expect(dzis).toHaveAttribute("tabindex", "0");
     act(() => dzis.focus());
-    expect(screen.getByRole("tooltip")).toHaveTextContent("17.11.2026 · 2 z 3 nawyków");
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "17.11.2026 · 2 z 3 nawyków",
+    );
     act(() => dzis.blur());
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });

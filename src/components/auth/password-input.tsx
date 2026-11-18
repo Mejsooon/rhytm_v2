@@ -74,9 +74,15 @@ export function PasswordInput({
           className="absolute top-1 right-1 flex cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.5 text-[#666666] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:top-0.5 max-[799px]:right-0.5 max-[799px]:size-11 max-[799px]:rounded-[10px] max-[799px]:p-0"
         >
           {shown ? (
-            <EyeOff aria-hidden="true" className="size-4 max-[799px]:size-[18px]" />
+            <EyeOff
+              aria-hidden="true"
+              className="size-4 max-[799px]:size-[18px]"
+            />
           ) : (
-            <Eye aria-hidden="true" className="size-4 max-[799px]:size-[18px]" />
+            <Eye
+              aria-hidden="true"
+              className="size-4 max-[799px]:size-[18px]"
+            />
           )}
         </button>
       </div>

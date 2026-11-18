@@ -6,7 +6,12 @@ import { DatePicker } from "./date-picker";
 function ustaw(value: string | null = "2026-11-20") {
   const onChange = vi.fn();
   render(
-    <DatePicker value={value} onChange={onChange} today="2026-11-16" ariaLabel="Termin" />,
+    <DatePicker
+      value={value}
+      onChange={onChange}
+      today="2026-11-16"
+      ariaLabel="Termin"
+    />,
   );
   return onChange;
 }
@@ -14,12 +19,16 @@ function ustaw(value: string | null = "2026-11-20") {
 describe("DatePicker", () => {
   it("pokazuje datę albo placeholder", () => {
     ustaw();
-    expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent("20.11.2026");
+    expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent(
+      "20.11.2026",
+    );
   });
 
   it("bez wartości pokazuje placeholder", () => {
     ustaw(null);
-    expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent("Wybierz datę");
+    expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent(
+      "Wybierz datę",
+    );
   });
 
   it("nawigacja między miesiącami, także przez granicę roku", async () => {
@@ -60,16 +69,32 @@ describe("DatePicker", () => {
     const u = userEvent.setup();
     ustaw();
     await u.click(screen.getByRole("button", { name: "Termin" }));
-    expect(screen.getByRole("button", { name: "16" })).toHaveClass("border-[#d4d4d4]");
-    expect(screen.getByRole("button", { name: "20" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "16" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "16" })).toHaveClass(
+      "border-[#d4d4d4]",
+    );
+    expect(screen.getByRole("button", { name: "20" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "16" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });
 
 describe("DatePicker — max", () => {
   it("dni po max są zablokowane, wcześniejsze dostępne", async () => {
     const u = userEvent.setup();
-    render(<DatePicker value="2026-11-16" onChange={vi.fn()} today="2026-11-16" max="2026-11-16" ariaLabel="Termin" />);
+    render(
+      <DatePicker
+        value="2026-11-16"
+        onChange={vi.fn()}
+        today="2026-11-16"
+        max="2026-11-16"
+        ariaLabel="Termin"
+      />,
+    );
     await u.click(screen.getByRole("button", { name: "Termin" }));
     expect(screen.getByRole("button", { name: "17" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "15" })).toBeEnabled();
@@ -79,7 +104,15 @@ describe("DatePicker — max", () => {
 describe("DatePicker — min", () => {
   it("dni przed min są zablokowane, późniejsze dostępne", async () => {
     const u = userEvent.setup();
-    render(<DatePicker value="2026-11-16" onChange={vi.fn()} today="2026-11-16" min="2026-11-10" ariaLabel="Termin" />);
+    render(
+      <DatePicker
+        value="2026-11-16"
+        onChange={vi.fn()}
+        today="2026-11-16"
+        min="2026-11-10"
+        ariaLabel="Termin"
+      />,
+    );
     await u.click(screen.getByRole("button", { name: "Termin" }));
     expect(screen.getByRole("button", { name: "9" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "10" })).toBeEnabled();
@@ -90,7 +123,14 @@ describe("DatePicker — min", () => {
     const u = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DatePicker value="2026-11-12" onChange={onChange} today="2026-11-16" min="2026-11-10" max="2026-11-14" ariaLabel="Termin" />,
+      <DatePicker
+        value="2026-11-12"
+        onChange={onChange}
+        today="2026-11-16"
+        min="2026-11-10"
+        max="2026-11-14"
+        ariaLabel="Termin"
+      />,
     );
     await u.click(screen.getByRole("button", { name: "Termin" }));
     expect(screen.getByRole("button", { name: "9" })).toBeDisabled();

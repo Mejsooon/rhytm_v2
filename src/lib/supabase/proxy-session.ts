@@ -21,13 +21,17 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet, headers) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );
           Object.assign(naglowkiBezCache, headers);
-          Object.entries(naglowkiBezCache).forEach(([klucz, wartosc]) => response.headers.set(klucz, wartosc));
+          Object.entries(naglowkiBezCache).forEach(([klucz, wartosc]) =>
+            response.headers.set(klucz, wartosc),
+          );
         },
       },
     },

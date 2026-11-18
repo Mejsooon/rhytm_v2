@@ -43,7 +43,9 @@ export function FormDialog({
                 {title}
               </Dialog.Title>
               {description && (
-                <p className="m-0 mt-1 text-[13px] text-[#666666] max-[799px]:hidden">{description}</p>
+                <p className="m-0 mt-1 text-[13px] text-[#666666] max-[799px]:hidden">
+                  {description}
+                </p>
               )}
             </div>
             <Dialog.Close

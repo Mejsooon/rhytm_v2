@@ -25,7 +25,9 @@ function wyrenderuj(startMin = 600, clock: "24" | "12" = "24") {
 describe("NewEntryPopover", () => {
   it("pokazuje dzień i godzinę slotu", () => {
     wyrenderuj();
-    expect(screen.getByRole("dialog", { name: "Nowy wpis" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy wpis" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("wt 17.11 · 10:00")).toBeInTheDocument();
   });
 

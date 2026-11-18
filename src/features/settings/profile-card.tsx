@@ -9,7 +9,12 @@ import { AvatarRow } from "./avatar-row";
 import { CardFooter } from "./card-footer";
 import { useCardForm } from "./use-card-form";
 
-export type ProfileValues = { name: string; tz: string; kg: string; cm: string };
+export type ProfileValues = {
+  name: string;
+  tz: string;
+  kg: string;
+  cm: string;
+};
 
 // Karta „Profil” (Settings.dc.html): błędy pól na żywo, Zapisz tylko przy zmianach i bez błędów
 export function ProfileCard({
@@ -26,7 +31,9 @@ export function ProfileCard({
   const form = useCardForm(saved);
   const { value } = form;
   const [saving, setSaving] = React.useState(false);
-  const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
+  const [serverErrors, setServerErrors] = React.useState<
+    Record<string, string>
+  >({});
 
   // Błędy na żywo z tego samego schematu co na serwerze
   const wynik = profileSchema.safeParse({
@@ -75,9 +82,15 @@ export function ProfileCard({
     <section className="rounded-lg border border-[#eaeaea] bg-white">
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Profil</h2>
-        <p className="mt-1 mb-4 text-[#666666]">Waga i wzrost służą do liczenia kcal biegów.</p>
+        <p className="mt-1 mb-4 text-[#666666]">
+          Waga i wzrost służą do liczenia kcal biegów.
+        </p>
         {/* Zdjęcie zapisuje się od razu, niezależnie od „Zapisz” poniżej; inicjał z zapisanej nazwy */}
-        <AvatarRow userId={userId} avatarUrl={avatarUrl} displayName={saved.name} />
+        <AvatarRow
+          userId={userId}
+          avatarUrl={avatarUrl}
+          displayName={saved.name}
+        />
         <div className="grid grid-cols-2 gap-3.5 max-[799px]:grid-cols-1">
           <TextField
             label="Wyświetlana nazwa"
@@ -92,7 +105,11 @@ export function ProfileCard({
               ariaLabel="Strefa czasowa"
               value={value.tz}
               onChange={(tz) => zmien({ tz })}
-              options={timezones.map((t) => ({ value: t.value, label: t.city, hint: t.offset }))}
+              options={timezones.map((t) => ({
+                value: t.value,
+                label: t.city,
+                hint: t.offset,
+              }))}
             />
           </div>
           <TextField

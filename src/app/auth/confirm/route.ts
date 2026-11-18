@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { RECOVERY_COOKIE, RECOVERY_TTL_S, utworzZnacznikResetu } from "@/lib/auth/recovery";
+import {
+  RECOVERY_COOKIE,
+  RECOVERY_TTL_S,
+  utworzZnacznikResetu,
+} from "@/lib/auth/recovery";
 import { createClient } from "@/lib/supabase/server";
 
 // Dozwolone typy linków z maili — tylko one trafiają do verifyOtp (żadnych dowolnych wartości z adresu)
@@ -21,11 +25,19 @@ export async function GET(request: NextRequest) {
   const typ = TYPY.find((t) => t === searchParams.get("type"));
 
   // Błąd: ekran „Link wygasł”; ponowne wysłanie obsługuje tylko signup i recovery
-  const blad = NextResponse.redirect(new URL(`/link-wygasl?type=${typ === "recovery" ? "recovery" : "signup"}`, origin));
+  const blad = NextResponse.redirect(
+    new URL(
+      `/link-wygasl?type=${typ === "recovery" ? "recovery" : "signup"}`,
+      origin,
+    ),
+  );
   if (!tokenHash || !typ) return blad;
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.verifyOtp({ type: typ, token_hash: tokenHash });
+  const { data, error } = await supabase.auth.verifyOtp({
+    type: typ,
+    token_hash: tokenHash,
+  });
   if (error) return blad;
 
   if (typ !== "recovery") {
