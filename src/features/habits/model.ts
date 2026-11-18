@@ -142,9 +142,11 @@ export function currentStreak(
     ;
     start = addDays(start, -7)
   ) {
+    // koniec tygodnia; w bieżącym tygodniu to dziś
     const koniec = addDays(start, 6) > today ? today : addDays(start, 6);
-    // wersja z początku tygodnia; gdy nawyk ruszył w środku tygodnia — ta z jego końca
-    const v = scheduleOn(habit, start) ?? scheduleOn(habit, koniec);
+    // tydzień oceniamy wersją z jego końca (w bieżącym — dzisiejszą, tą samą co weekProgress);
+    // wersja z początku tygodnia tylko wtedy, gdy na końcu żadnej nie ma
+    const v = scheduleOn(habit, koniec) ?? scheduleOn(habit, start);
     if (v === null || v.type !== "times_per_week") break; // inny typ przerywa serię
     let ile = 0;
     for (let d = start; d <= koniec; d = addDays(d, 1)) {
@@ -202,7 +204,8 @@ export function longestStreak(
     start = addDays(start, 7)
   ) {
     const koniec = addDays(start, 6) > today ? today : addDays(start, 6);
-    const v = scheduleOn(habit, start) ?? scheduleOn(habit, koniec);
+    // ta sama zasada co w currentStreak: wersja z końca tygodnia
+    const v = scheduleOn(habit, koniec) ?? scheduleOn(habit, start);
     if (v === null || v.type !== "times_per_week") {
       seria = 0;
       continue;
@@ -234,14 +237,22 @@ export function successRate30(
   if (dzisiejsza.type === "times_per_week") {
     const naTydzien = dzisiejsza.timesPerWeek ?? 0;
     if (naTydzien === 0) return null;
-    // D = dni od pierwszego validFrom do dziś włącznie, najwyżej 30
-    // (młody nawyk nie jest karany za dni, w których jeszcze nie istniał)
-    const pierwszyDzien = habit.schedules[0].validFrom;
+    // Początek bieżącego ciągu wersji X/tydz.: cofamy się od dzisiejszej wersji,
+    // dopóki poprzednia też jest X/tydz. (wersje są rosnąco po validFrom)
+    let poczatekCiagu = dzisiejsza.validFrom;
+    for (let i = habit.schedules.length - 1; i >= 0; i--) {
+      const w = habit.schedules[i];
+      if (w.validFrom > dzisiejsza.validFrom) continue; // wersje z przyszłości pomijamy
+      if (w.type !== "times_per_week") break;
+      poczatekCiagu = w.validFrom;
+    }
+    // D = dni od początku ciągu do dziś włącznie, najwyżej 30
+    // (nie karzemy za dni, gdy nawyk nie istniał albo miał inny typ harmonogramu)
     let dniOkna = 0;
     let ile = 0;
     for (let i = 0; i < 30; i++) {
       const d = addDays(today, -i);
-      if (d < pierwszyDzien) break;
+      if (d < poczatekCiagu) break;
       dniOkna++;
       if (odhaczone.has(d)) ile++;
     }
