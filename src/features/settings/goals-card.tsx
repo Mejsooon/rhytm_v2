@@ -2,14 +2,18 @@
 
 import * as React from "react";
 
-import { Dropdown, Stepper, TextField } from "@/components/controls";
+import { Dropdown, Segment, Stepper, TextField } from "@/components/controls";
 import { goalsSchema, parseDecimal } from "@/features/profile/schemas";
+import { cn } from "@/lib/utils";
 import { saveGoals } from "./actions";
 import { CardFooter } from "./card-footer";
 import { useCardForm } from "./use-card-form";
 
 export type GoalsValues = {
   sleep: number;
+  // Cel treningowy: rodzaj i obie liczby (tekst z pól)
+  goalType: "workouts" | "km";
+  tr: string;
   km: string;
   cur: "PLN" | "EUR" | "USD" | "GBP";
   week: "mon" | "sun";
@@ -20,6 +24,11 @@ const WALUTY = [
   { value: "EUR", label: "EUR", hint: "€" },
   { value: "USD", label: "USD", hint: "$" },
   { value: "GBP", label: "GBP", hint: "£" },
+] as const;
+
+const RODZAJE_CELU = [
+  { value: "workouts", label: "Treningi" },
+  { value: "km", label: "Km" },
 ] as const;
 
 const TYDZIEN = [
@@ -38,9 +47,16 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
   const [saving, setSaving] = React.useState(false);
   const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
 
-  const wynik = goalsSchema.shape.weekly_km_goal.safeParse(value.km);
-  const kmError = wynik.success ? undefined : wynik.error.issues[0]?.message;
-  const errors = { ...serverErrors, ...(kmError ? { weekly_km_goal: kmError } : {}) };
+  const opisCeluId = React.useId();
+
+  // Sprawdzamy liczbę wybranego rodzaju; druga zawsze jest poprawna (patrz zmienRodzaj)
+  const naKm = value.goalType === "km";
+  const poleCelu = naKm ? "weekly_km_goal" : "weekly_workouts_goal";
+  const wynik = naKm
+    ? goalsSchema.shape.weekly_km_goal.safeParse(value.km)
+    : goalsSchema.shape.weekly_workouts_goal.safeParse(value.tr);
+  const bladKlienta = wynik.success ? undefined : wynik.error.issues[0]?.message;
+  const bladCelu = bladKlienta ?? serverErrors[poleCelu];
 
   const sen = `${Math.floor(value.sleep / 60)}:${String(value.sleep % 60).padStart(2, "0")}`;
 
@@ -49,11 +65,24 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
     form.set(patch);
   }
 
+  // Zmiana rodzaju: zła liczba nie może zostać ukryta, więc wraca do zapisanej
+  function zmienRodzaj(goalType: GoalsValues["goalType"]) {
+    if (wynik.success) {
+      zmien({ goalType });
+    } else if (naKm) {
+      zmien({ goalType, km: saved.km });
+    } else {
+      zmien({ goalType, tr: saved.tr });
+    }
+  }
+
   async function zapisz() {
     setSaving(true);
     try {
       const odpowiedz = await saveGoals({
         sleep_goal_min: value.sleep,
+        weekly_goal_type: value.goalType,
+        weekly_workouts_goal: parseDecimal(value.tr),
         weekly_km_goal: parseDecimal(value.km),
         currency: value.cur,
         week_start: value.week,
@@ -88,15 +117,40 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
               onInc={() => zmien({ sleep: Math.min(MAX_SNU, value.sleep + 15) })}
             />
           </div>
-          <TextField
-            label="Tygodniowy cel km"
-            type="text"
-            inputMode="numeric"
-            className="font-mono"
-            value={value.km}
-            error={errors.weekly_km_goal}
-            onChange={(e) => zmien({ km: e.target.value })}
-          />
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium">Cel treningowy</span>
+            <div className="flex items-center gap-1.5">
+              <div className="flex-none">
+                <Segment
+                  ariaLabel="Rodzaj celu treningowego"
+                  value={value.goalType}
+                  options={[...RODZAJE_CELU]}
+                  onChange={zmienRodzaj}
+                />
+              </div>
+              {/* Etykieta pola tylko dla czytników ekranu; podpowiedź i błąd są pod całym wierszem jak w makiecie */}
+              <div className="min-w-0 flex-1 [&_label]:sr-only">
+                <TextField
+                  label={naKm ? "Kilometry w tygodniu" : "Treningi w tygodniu"}
+                  type="text"
+                  inputMode="numeric"
+                  className={cn("font-mono", bladCelu && "border-[#b91c1c]")}
+                  value={naKm ? value.km : value.tr}
+                  aria-invalid={bladCelu ? true : undefined}
+                  aria-describedby={bladCelu ? `${opisCeluId} ${opisCeluId}-blad` : opisCeluId}
+                  onChange={(e) => zmien(naKm ? { km: e.target.value } : { tr: e.target.value })}
+                />
+              </div>
+            </div>
+            <span id={opisCeluId} className="font-mono text-xs text-[#6b6b6b]">
+              {naKm ? "km w tygodniu" : "treningów w tygodniu"}
+            </span>
+            {bladCelu && (
+              <p id={`${opisCeluId}-blad`} className="m-0 text-xs text-[#b91c1c]">
+                {bladCelu}
+              </p>
+            )}
+          </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium">Waluta stron</span>
             <Dropdown
@@ -126,7 +180,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
         }}
         formError={serverErrors.form}
         dirty={form.dirty}
-        canSave={form.dirty && !kmError}
+        canSave={form.dirty && !bladKlienta}
         saving={saving}
         onReset={() => {
           setServerErrors({});

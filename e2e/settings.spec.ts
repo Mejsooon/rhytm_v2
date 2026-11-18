@@ -53,6 +53,26 @@ test.describe("ustawienia ogólne", () => {
       page.locator("section", { has: page.getByRole("heading", { name: "Cele", exact: true }) }).getByText("8:15", { exact: true }),
     ).toBeVisible();
 
+    // Cel treningowy: konto z km (30) → Treningi 5 → zapis; km zostaje zapisane obok
+    const cele2 = page.locator("section", { has: page.getByRole("heading", { name: "Cele", exact: true }) });
+    await expect(cele2.getByRole("radio", { name: "Km", exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(cele2.getByLabel("Kilometry w tygodniu")).toHaveValue("30");
+    await cele2.getByRole("radio", { name: "Treningi", exact: true }).click();
+    await expect(cele2.getByText("treningów w tygodniu")).toBeVisible();
+    await cele2.getByLabel("Treningi w tygodniu").fill("15");
+    await expect(cele2.getByText("Podaj liczbę 1–14.")).toBeVisible();
+    await expect(cele2.getByRole("button", { name: "Zapisz" })).toBeDisabled();
+    await cele2.getByLabel("Treningi w tygodniu").fill("5");
+    await cele2.getByRole("button", { name: "Zapisz" }).click();
+    await expect(cele2.getByText(/Zapisano ✓/)).toBeVisible();
+
+    await page.reload();
+    const cele3 = page.locator("section", { has: page.getByRole("heading", { name: "Cele", exact: true }) });
+    await expect(cele3.getByRole("radio", { name: "Treningi", exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(cele3.getByLabel("Treningi w tygodniu")).toHaveValue("5");
+    await cele3.getByRole("radio", { name: "Km", exact: true }).click();
+    await expect(cele3.getByLabel("Kilometry w tygodniu")).toHaveValue("30");
+
     // Waga poza zakresem: błąd i nieaktywny „Zapisz”
     const profil2 = page.locator("section", { has: page.getByRole("heading", { name: "Profil", exact: true }) });
     await profil2.getByLabel("Waga (kg)").fill("20");

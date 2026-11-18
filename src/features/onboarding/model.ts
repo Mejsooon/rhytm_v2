@@ -27,6 +27,8 @@ export type SourceKey =
   | "ai"
   | "other";
 export type ReminderKey = "before" | "renew" | "weekly" | "habits";
+// Rodzaj celu treningowego: liczba treningów albo kilometrów w tygodniu
+export type GoalType = "workouts" | "km";
 
 // OnboardingRole
 export const ROLES: { key: RoleKey; title: string; desc: string }[] = [
@@ -131,6 +133,9 @@ export type OnboardingDraft = {
   roles: RoleKey[];
   studyField: string;
   goals: GoalKey[];
+  goalType: GoalType;
+  // Obie liczby zostają w szkicu, żeby zmiana rodzaju nie kasowała drugiej
+  weeklyWorkouts: number;
   weeklyKm: number;
   sleepGoalMin: number;
   source: SourceKey | null;
@@ -192,9 +197,34 @@ export function toggleGoal(
   return { ...draft, goals, pages };
 }
 
-// Licznik kilometrów: co 5, zakres 5–150
+// Licznik kilometrów: co 5, zakres 5–150 (nieliczba z pola web wraca do 25)
 export function stepKm(km: number, dir: -1 | 1): number {
+  if (!Number.isFinite(km)) return 25;
   return Math.min(150, Math.max(5, km + dir * 5));
+}
+
+// Licznik treningów: co 1, zakres 1–14 (nieliczba z pola web wraca do 3)
+export function stepWorkouts(n: number, dir: -1 | 1): number {
+  if (!Number.isFinite(n)) return 3;
+  return Math.min(14, Math.max(1, n + dir));
+}
+
+// Poprawny cel: treningi całe 1–14, kilometry całe 1–300 (jak w schemacie kroku 3)
+export function goalInRange(type: GoalType, value: number): boolean {
+  if (!Number.isInteger(value)) return false;
+  if (type === "workouts") return value >= 1 && value <= 14;
+  return value >= 1 && value <= 300;
+}
+
+// 1 -> "1 trening / tydz.", 3 -> "3 treningi / tydz.", 5 -> "5 treningów / tydz.", 25 km -> "25 km / tydz."
+export function formatWeeklyGoal(type: GoalType, value: number): string {
+  if (type === "km") return `${value} km / tydz.`;
+  const jednosci = value % 10;
+  const dziesiatki = value % 100;
+  let slowo = "treningów";
+  if (value === 1) slowo = "trening";
+  else if (jednosci >= 2 && jednosci <= 4 && (dziesiatki < 12 || dziesiatki > 14)) slowo = "treningi";
+  return `${value} ${slowo} / tydz.`;
 }
 
 // Cel snu w minutach: co 15, zakres 300–660
@@ -210,6 +240,11 @@ export function formatSleep(min: number): string {
 
 export function canContinue(step: number, draft: OnboardingDraft): boolean {
   if (step === 1) return draft.name.trim() !== "";
+  // Krok 3: pole celu widać tylko przy „Treningi”; sprawdzamy liczbę wybranego rodzaju
+  if (step === 3 && draft.goals.includes("sport")) {
+    const wartosc = draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
+    return goalInRange(draft.goalType, wartosc);
+  }
   return true;
 }
 
@@ -219,9 +254,9 @@ export function buildSummary(
   variant: "web" | "mobile",
   tzCity: string,
 ): {
-  key: "Profil" | "Kategorie" | "Strony" | "Przypomnienia";
+  key: "Profil" | "Kategorie" | "Cel treningowy" | "Strony" | "Przypomnienia";
   value: string;
-  step: 1 | 2 | 5 | 6;
+  step: 1 | 2 | 3 | 5 | 6;
 }[] {
   const nazwa = draft.name.trim() || "Ty";
   const kategorie = categoriesForRoles(draft.roles)
@@ -244,12 +279,18 @@ export function buildSummary(
       `${wlaczone} z 4 włączone` + (draft.notify.perm ? "" : " · bez zgody na push");
   }
 
-  return [
+  const wiersze: ReturnType<typeof buildSummary> = [
     { key: "Profil", value: profil, step: 1 },
     { key: "Kategorie", value: kategorie, step: 2 },
-    { key: "Strony", value: strony, step: 5 },
-    { key: "Przypomnienia", value: przypomnienia, step: 6 },
   ];
+  // Cel treningowy tylko, gdy wybrano cel „Treningi”
+  if (draft.goals.includes("sport")) {
+    const wartosc = draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
+    wiersze.push({ key: "Cel treningowy", value: formatWeeklyGoal(draft.goalType, wartosc), step: 3 });
+  }
+  wiersze.push({ key: "Strony", value: strony, step: 5 });
+  wiersze.push({ key: "Przypomnienia", value: przypomnienia, step: 6 });
+  return wiersze;
 }
 
 // Szkic -> payload kroku w kluczach schematów z src/features/profile/schemas.ts (kroki 1–6)
@@ -266,9 +307,12 @@ export function stepPayload(step: 1 | 2 | 3 | 4 | 5 | 6, draft: OnboardingDraft)
     case 2:
       return { roles: draft.roles, study_field: draft.studyField };
     case 3:
+      // Zapisujemy rodzaj i obie liczby; zła (np. ukryta po zmianie rodzaju) wraca do wartości domyślnej
       return {
         goals: draft.goals,
-        weekly_km_goal: draft.weeklyKm,
+        weekly_goal_type: draft.goalType,
+        weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts) ? draft.weeklyWorkouts : 3,
+        weekly_km_goal: goalInRange("km", draft.weeklyKm) ? draft.weeklyKm : 25,
         sleep_goal_min: draft.sleepGoalMin,
       };
     case 4:

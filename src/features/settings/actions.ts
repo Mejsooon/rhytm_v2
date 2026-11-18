@@ -47,8 +47,11 @@ export async function saveProfile(input: {
   return { ok: true };
 }
 
+// Cel treningowy: zapisujemy rodzaj i obie liczby (zmiana rodzaju nie kasuje drugiej)
 export async function saveGoals(input: {
   sleep_goal_min: number | string;
+  weekly_goal_type: string;
+  weekly_workouts_goal: number | string | null;
   weekly_km_goal: number | string | null;
   currency: string;
   week_start: string;
@@ -59,7 +62,11 @@ export async function saveGoals(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  const parsed = goalsSchema.safeParse({ ...input, weekly_km_goal: input.weekly_km_goal ?? "" });
+  const parsed = goalsSchema.safeParse({
+    ...input,
+    weekly_workouts_goal: input.weekly_workouts_goal ?? "",
+    weekly_km_goal: input.weekly_km_goal ?? "",
+  });
   if (!parsed.success) return { ok: false, errors: bledyPol(parsed.error.issues) };
 
   const { error } = await supabase.from("profiles").update(parsed.data).eq("user_id", user.id);

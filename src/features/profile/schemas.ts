@@ -43,6 +43,15 @@ function formNumber(min: number, max: number, message: string, optional: boolean
   })
 }
 
+// Rodzaj tygodniowego celu treningowego: liczba treningów albo kilometrów
+export const weeklyGoalType = z.enum(['workouts', 'km'])
+
+// Treningi w tygodniu: tylko liczby całkowite 1–14
+const weeklyWorkouts = formNumber(1, 14, 'Podaj liczbę 1–14.', false).refine(
+  (n) => Number.isInteger(n),
+  'Podaj liczbę 1–14.',
+)
+
 export const profileSchema = z.object({
   display_name: displayName,
   timezone,
@@ -52,6 +61,9 @@ export const profileSchema = z.object({
 
 export const goalsSchema = z.object({
   sleep_goal_min: z.coerce.number().pipe(sleepGoal),
+  // Zapisujemy rodzaj i obie liczby, żeby zmiana rodzaju nie kasowała drugiej
+  weekly_goal_type: weeklyGoalType,
+  weekly_workouts_goal: weeklyWorkouts,
   weekly_km_goal: formNumber(1, 300, 'Podaj liczbę 1–300.', false),
   currency: z.enum(['PLN', 'EUR', 'USD', 'GBP']),
   week_start: weekStart,
@@ -80,12 +92,10 @@ export const onboardingStepSchemas = {
   }),
   3: z.object({
     goals: z.array(goalKey).refine(bezDuplikatow, 'Cele nie mogą się powtarzać.'),
-    weekly_km_goal: z
-      .number()
-      .int()
-      .min(5)
-      .max(150)
-      .refine((km) => km % 5 === 0, 'Kilometry co 5.'),
+    weekly_goal_type: weeklyGoalType,
+    weekly_workouts_goal: z.number().int('Podaj liczbę 1–14.').min(1, 'Podaj liczbę 1–14.').max(14, 'Podaj liczbę 1–14.'),
+    // Licznik na telefonie idzie co 5 (5–150), ale pole na webie przyjmuje każdą całą liczbę 1–300
+    weekly_km_goal: z.number().int('Podaj liczbę 1–300.').min(1, 'Podaj liczbę 1–300.').max(300, 'Podaj liczbę 1–300.'),
     sleep_goal_min: sleepGoal,
   }),
   4: z

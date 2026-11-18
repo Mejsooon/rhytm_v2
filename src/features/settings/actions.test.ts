@@ -24,7 +24,14 @@ vi.mock("next/navigation", () => ({
 import { removeAvatar, saveAvatar, saveGoals, saveProfile } from "./actions";
 
 const profil = { display_name: "  Ala  ", timezone: "Europe/Warsaw", weight_kg: 72.5, height_cm: null };
-const cele = { sleep_goal_min: 480, weekly_km_goal: 25, currency: "PLN", week_start: "mon" };
+const cele = {
+  sleep_goal_min: 480,
+  weekly_goal_type: "workouts",
+  weekly_workouts_goal: 3,
+  weekly_km_goal: 25,
+  currency: "PLN",
+  week_start: "mon",
+};
 
 describe("ustawienia: akcje", () => {
   const update = vi.fn();
@@ -74,6 +81,31 @@ describe("ustawienia: akcje", () => {
     const wynik = await saveGoals({ ...cele, weekly_km_goal: 0 });
     expect(wynik).toEqual({ ok: false, errors: { weekly_km_goal: "Podaj liczbę 1–300." } });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("saveGoals z 15 treningami → błąd pola, bez update", async () => {
+    const wynik = await saveGoals({ ...cele, weekly_workouts_goal: 15 });
+    expect(wynik).toEqual({ ok: false, errors: { weekly_workouts_goal: "Podaj liczbę 1–14." } });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("saveGoals z nieznanym rodzajem celu → błąd, bez update", async () => {
+    const wynik = await saveGoals({ ...cele, weekly_goal_type: "min" });
+    expect(wynik.ok).toBe(false);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("saveGoals z rodzajem km zapisuje rodzaj i obie liczby", async () => {
+    const wynik = await saveGoals({ ...cele, weekly_goal_type: "km", weekly_km_goal: "22,5" });
+    expect(wynik).toEqual({ ok: true });
+    expect(update).toHaveBeenCalledWith({
+      sleep_goal_min: 480,
+      weekly_goal_type: "km",
+      weekly_workouts_goal: 3,
+      weekly_km_goal: 22.5,
+      currency: "PLN",
+      week_start: "mon",
+    });
   });
 
   it("saveGoals z poprawnymi danymi → update celów", async () => {

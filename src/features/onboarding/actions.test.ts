@@ -71,6 +71,32 @@ describe("saveOnboardingStep", () => {
     expect(lt).toHaveBeenCalledWith("onboarding_step", 3);
   });
 
+  it("krok 3 zapisuje rodzaj celu i obie liczby", async () => {
+    const krok3 = {
+      goals: ["sport"],
+      weekly_goal_type: "workouts",
+      weekly_workouts_goal: 4,
+      weekly_km_goal: 25,
+      sleep_goal_min: 480,
+    };
+    const wynik = await saveOnboardingStep(3, krok3);
+    expect(wynik).toEqual({ ok: true });
+    expect(update).toHaveBeenNthCalledWith(1, krok3);
+    expect(update).toHaveBeenNthCalledWith(2, { onboarding_step: 4 });
+  });
+
+  it("krok 3 z 15 treningami → komunikat, bez zapisu", async () => {
+    const wynik = await saveOnboardingStep(3, {
+      goals: ["sport"],
+      weekly_goal_type: "workouts",
+      weekly_workouts_goal: 15,
+      weekly_km_goal: 25,
+      sleep_goal_min: 480,
+    });
+    expect(wynik).toEqual({ ok: false, message: "Podaj liczbę 1–14." });
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("krok 1 z avatar_path z cudzego folderu → ok: false", async () => {
     const wynik = await saveOnboardingStep(1, { ...krok1, avatar_path: "u2/avatar.png" });
     expect(wynik.ok).toBe(false);

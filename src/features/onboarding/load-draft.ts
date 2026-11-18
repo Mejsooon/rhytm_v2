@@ -21,6 +21,9 @@ export function loadDraft(
     roles: (profile.roles ?? []) as RoleKey[],
     studyField: profile.study_field ?? "",
     goals: (profile.goals ?? []) as GoalKey[],
+    // Przed zapisem kroku 3 baza ma domyślne 'km', ale nowy użytkownik zaczyna od treningów (3 / tydz.)
+    goalType: profile.onboarding_step > 3 && profile.weekly_goal_type === "km" ? "km" : "workouts",
+    weeklyWorkouts: profile.weekly_workouts_goal ?? 3,
     weeklyKm: profile.weekly_km_goal ?? 25,
     sleepGoalMin: profile.sleep_goal_min ?? 480,
     source: (profile.referral_source as SourceKey | null) ?? null,
