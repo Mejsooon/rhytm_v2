@@ -8,9 +8,9 @@ import { dzisWarszawa, policzNawyki, wpisySnu, zalozKontoNawykow, zasiejNawyk, z
 // Wybór godziny w dymku TimePicker: klik przycisku, godzina, minuty (zamykają dymek)
 async function ustawGodzine(page: Page, pole: string, godzina: string, minuty: string) {
   await page.getByRole("button", { name: pole, exact: true }).click();
-  // Siatki godzin (00–23) i minut (00, 05 … 55) mają wspólne etykiety, więc godzina to pierwszy trafiony przycisk, a minuty ostatni
-  await page.getByRole("button", { name: godzina, exact: true }).first().click();
-  await page.getByRole("button", { name: minuty, exact: true }).last().click();
+  // Godziny mają etykiety „23”, minuty „:30”
+  await page.getByRole("button", { name: godzina, exact: true }).click();
+  await page.getByRole("button", { name: `:${minuty}`, exact: true }).click();
 }
 
 test.describe("nawyki i sen (web)", () => {
@@ -26,7 +26,7 @@ test.describe("nawyki i sen (web)", () => {
     await page.goto("/nawyki");
     const web = page.getByTestId("web-nawyki");
 
-    await web.getByRole("button", { name: "Nowy nawyk" }).click();
+    await web.getByRole("button", { name: "Nowy nawyk", exact: true }).click();
     const okno = page.getByRole("dialog", { name: "Nowy nawyk" });
     await okno.getByLabel("Nazwa").fill("Woda 2 l");
     // Domyślny harmonogram to „Codziennie”

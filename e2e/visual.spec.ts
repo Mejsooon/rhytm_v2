@@ -208,7 +208,7 @@ test.describe("ekrany z sesją", () => {
       await expect(web.getByRole("link", { name: "Woda 2 l" })).toBeVisible();
       await zrzut(page, "nawyki", projekt);
 
-      await web.getByRole("button", { name: "Nowy nawyk" }).click();
+      await web.getByRole("button", { name: "Nowy nawyk", exact: true }).click();
       await expect(page.getByRole("dialog", { name: "Nowy nawyk" })).toBeVisible();
       await zrzut(page, "nawyki-okno-nawyku", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();
@@ -228,7 +228,7 @@ test.describe("ekrany z sesją", () => {
       await expect(m.getByRole("checkbox", { name: "Woda 2 l" })).toBeVisible();
       await zrzut(page, "nawyki", projekt);
 
-      await m.getByRole("button", { name: "Nowy nawyk" }).click();
+      await m.getByRole("button", { name: "Nowy nawyk", exact: true }).click();
       await expect(page.getByRole("dialog", { name: "Nowy nawyk" })).toBeVisible();
       await zrzut(page, "nawyki-arkusz-nawyku", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();
