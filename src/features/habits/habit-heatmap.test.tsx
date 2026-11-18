@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -62,10 +62,23 @@ describe("HabitHeatmap", () => {
     const dzis = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
     fireEvent.mouseEnter(dzis);
     expect(screen.getByRole("tooltip")).toHaveTextContent("17.11.2026 · 2 z 3 nawyków");
+    // Dymek w portalu na <body> — karta z overflow go nie przytnie
+    expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
 
     const bezPlanu = screen.getByLabelText("01.11.2026 · brak zaplanowanych");
     expect(bezPlanu.className).toContain("bg-[#f0f0f0]");
     fireEvent.mouseEnter(bezPlanu);
     expect(screen.getByRole("tooltip")).toHaveTextContent("01.11.2026 · brak zaplanowanych");
+  });
+
+  it("komórka dostaje fokus z klawiatury i wtedy pokazuje dymek", async () => {
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("radio", { name: "3 mies." }));
+    const dzis = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
+    expect(dzis).toHaveAttribute("tabindex", "0");
+    act(() => dzis.focus());
+    expect(screen.getByRole("tooltip")).toHaveTextContent("17.11.2026 · 2 z 3 nawyków");
+    act(() => dzis.blur());
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 });

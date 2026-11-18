@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -41,6 +41,7 @@ describe("SleepCard", () => {
     expect(ponizej.className).toContain("bg-[#d4d4d4]");
     fireEvent.mouseEnter(powyzej);
     expect(screen.getByRole("tooltip")).toHaveTextContent("16.11 · 8:30");
+    expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
     expect(screen.getByText("cel 8 h")).toBeInTheDocument();
   });
 
@@ -48,5 +49,13 @@ describe("SleepCard", () => {
     render(<SleepCard sleepLogs={[]} today="2026-11-17" goalMin={480} clock="24" />);
     expect(screen.getByText("—")).toBeInTheDocument();
     expect(screen.queryByText("Samopoczucie")).not.toBeInTheDocument();
+  });
+
+  it("słupek z wpisem dostaje fokus i pokazuje dymek", () => {
+    render(<SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="24" />);
+    const slupek = screen.getByLabelText("17.11 · 7:12");
+    expect(slupek).toHaveAttribute("tabindex", "0");
+    act(() => slupek.focus());
+    expect(screen.getByRole("tooltip")).toHaveTextContent("17.11 · 7:12");
   });
 });

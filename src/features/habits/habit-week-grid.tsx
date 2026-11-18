@@ -38,8 +38,8 @@ export function HabitWeekGrid({
       <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#eaeaea] px-4 py-3.5">
         <h2 className="m-0 text-[15px] font-semibold">Nawyki</h2>
         {habits.length > 0 && (
-          // Nagłówki kolumn nad siatką; margines = przycisk ✓ (34 px) + odstęp
-          <div className="mr-[50px] grid grid-cols-[repeat(7,24px)] gap-1.5 text-center font-mono text-[10px] text-[#6b6b6b]">
+          // Nagłówki kolumn nad siatką; margines = przycisk ✓ (34 px) + odstęp 14 px
+          <div className="mr-12 grid grid-cols-[repeat(7,24px)] gap-1.5 text-center font-mono text-[10px] text-[#6b6b6b]">
             {dni.map((d) => (
               <span key={d}>{SKROTY_DNI[weekdayOf(d) - 1]}</span>
             ))}
@@ -97,7 +97,7 @@ export function HabitWeekGrid({
                         <span
                           key={d}
                           title={`${dd}.${mm} · nie dotyczy`}
-                          className={cn(KOMORKA, "flex items-center justify-center text-xs text-[#a3a3a3]")}
+                          className={cn(KOMORKA, "flex items-center justify-center text-xs text-[#6b6b6b]")}
                         >
                           –
                         </span>

@@ -7,6 +7,7 @@ import { MonoLabel, Segment } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
+import { ChartTooltip } from "./chart-tooltip";
 import { sleepMinutes, sleepStats, type SleepLog } from "./sleep";
 import { formatDuration } from "./text";
 
@@ -24,7 +25,8 @@ export function SleepCard({
   clock: "24" | "12";
 }) {
   const [zakres, setZakres] = useState<"14" | "30">("14");
-  const [najechany, setNajechany] = useState<number | null>(null);
+  // Słupek pod myszą albo z fokusem: indeks i element (do pozycji dymka)
+  const [najechany, setNajechany] = useState<{ k: number; el: HTMLElement } | null>(null);
 
   // Ostatnia noc = wpis z najpóźniejszą datą (nie z przyszłości)
   let ostatnia: SleepLog | null = null;
@@ -113,30 +115,29 @@ export function SleepCard({
                 key={b.date}
                 data-sleep-bar
                 role="img"
+                // Fokus tylko na słupkach z wpisem (pusty dzień nie ma dymka)
+                tabIndex={b.minutes === null ? undefined : 0}
                 aria-label={opis}
-                onMouseEnter={() => setNajechany(k)}
+                onMouseEnter={(e) => setNajechany({ k, el: e.currentTarget })}
+                onFocus={(e) => setNajechany({ k, el: e.currentTarget })}
+                onBlur={() => setNajechany(null)}
                 className={cn(
-                  "flex-1 cursor-default rounded-t-[3px]",
+                  "flex-1 cursor-default rounded-t-[3px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
                   b.met ? "bg-[#15803d]" : "bg-[#d4d4d4]",
-                  najechany === k && "shadow-[0_0_0_2px_#171717]",
+                  najechany?.k === k && "shadow-[0_0_0_2px_#171717]",
                 )}
                 style={{ height: wysokosc }}
               />
             );
           })}
 
-          {najechany !== null && bars[najechany]?.minutes != null && (
+          {najechany !== null && bars[najechany.k]?.minutes != null && (
             // Dymek nad słupkiem: „17.11 · 7:12”
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute z-[5] -translate-x-1/2 rounded-lg bg-[#171717] px-2.5 py-2 font-mono text-xs leading-[1.4] whitespace-nowrap text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
-              style={{
-                left: `${((najechany + 0.5) / bars.length) * 100}%`,
-                bottom: Math.round(((bars[najechany].minutes ?? 0) / skala) * WYSOKOSC) + 10,
-              }}
-            >
-              {`${krotko(bars[najechany].date)} · ${formatDuration(bars[najechany].minutes ?? 0)}`}
-            </div>
+            <ChartTooltip anchor={najechany.el}>
+              <span className="font-mono">
+                {`${krotko(bars[najechany.k].date)} · ${formatDuration(bars[najechany.k].minutes ?? 0)}`}
+              </span>
+            </ChartTooltip>
           )}
         </div>
         <div className="-mt-2.5 flex justify-between font-mono text-[10px] text-[#6b6b6b]">

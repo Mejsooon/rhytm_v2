@@ -63,6 +63,10 @@ export function useHabitsStore(data: HabitsPageData) {
 
   // Nowe dane z serwera (inna tożsamość tablicy) stają się bazą — Next 16 (Activity) trzyma
   // ukrytą trasę w pamięci i nie montuje jej od nowa. Zmiany w toku zostają nałożone na nową bazę.
+  // Zmiany już zakończone (potwierdzone w starej bazie) przepadają razem z nią — to bezpieczne,
+  // bo serwer zapisał je przed odświeżeniem (revalidatePath po akcji), więc nowe dane już je zawierają.
+  // Zmiana zakończona po przyjściu nowych danych też nie trafia do bazy (zrodlo się różni),
+  // bo jej akcja sama wywołuje kolejne odświeżenie z jej wynikiem.
   let biezacy = stan;
   if (stan.zrodlo !== data.checks) {
     biezacy = {

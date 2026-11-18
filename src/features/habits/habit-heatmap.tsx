@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button, Segment } from "@/components/controls";
 import { formatDatePl, monthTitlePl, type IsoDate } from "@/components/controls/calendar-math";
 import { cn } from "@/lib/utils";
+import { ChartTooltip } from "./chart-tooltip";
 import { heatmapMonth, heatmapWeeks, type Checks, type DayCell, type Habit } from "./model";
 
 type Tryb = "miesiac" | "13" | "26" | "52";
@@ -48,7 +49,10 @@ export function HabitHeatmap({
 }) {
   const [tryb, setTryb] = useState<Tryb>("52");
   const [wstecz, setWstecz] = useState(0); // ile miesięcy przed bieżącym
-  const [najechany, setNajechany] = useState<IsoDate | null>(null);
+  // Komórka pod myszą albo z fokusem: data, element (do pozycji dymka) i jej wygląd
+  const [najechany, setNajechany] = useState<{ date: IsoDate; el: HTMLElement; w: ReturnType<typeof wyglad> } | null>(
+    null,
+  );
 
   // Kolejność dni w tygodniu od dnia z profilu
   const kolejnoscDni = weekStart === "mon" ? SKROTY_DNI : [SKROTY_DNI[6], ...SKROTY_DNI.slice(0, 6)];
@@ -66,7 +70,8 @@ export function HabitHeatmap({
     weekStart,
   );
   // heatmapMonth nie dopełnia ostatniego rzędu — dokładamy puste pola do pełnego tygodnia
-  while (komorkiMiesiaca.length % 7 !== 0) komorkiMiesiaca.push(null);
+  const siatkaMiesiaca = [...komorkiMiesiaca];
+  while (siatkaMiesiaca.length % 7 !== 0) siatkaMiesiaca.push(null);
 
   const tygodnie = tryb === "miesiac" ? [] : heatmapWeeks(habits, checks, Number(tryb) as 13 | 26 | 52, today, weekStart);
   const pierwszyDzien = tygodnie[0]?.[0]?.date ?? today;
@@ -76,22 +81,6 @@ export function HabitHeatmap({
       : `${MIESIACE_KROTKO[Number(pierwszyDzien.slice(5, 7)) - 1]} ${pierwszyDzien.slice(0, 4)} → ${
           MIESIACE_KROTKO[miesiacDzis - 1]
         } ${rokDzis}`;
-
-  // Dymek: ciemny, data pogrubiona; „brak zaplanowanych” szarym
-  const dymek = (w: ReturnType<typeof wyglad>, ponizej: boolean) =>
-    w.tekst !== null && (
-      <span
-        role="tooltip"
-        className={cn(
-          "pointer-events-none absolute left-1/2 z-[5] -translate-x-1/2 rounded-lg bg-[#171717] px-2.5 py-2 font-sans text-xs leading-[1.4] font-normal whitespace-nowrap text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]",
-          ponizej ? "top-full mt-1.5" : "bottom-full mb-1.5",
-        )}
-      >
-        <span className="font-semibold">{w.data}</span>
-        {" · "}
-        <span className={cn("font-mono text-[11px]", w.szary ? "text-[#a3a3a3]" : "text-[#d4d4d4]")}>{w.tekst}</span>
-      </span>
-    );
 
   return (
     <section className="rounded-lg border border-[#eaeaea] bg-white">
@@ -150,24 +139,26 @@ export function HabitHeatmap({
               ))}
             </div>
             <div className="grid grid-cols-[repeat(7,40px)] gap-1" onMouseLeave={() => setNajechany(null)}>
-              {komorkiMiesiaca.map((cell, i) => {
+              {siatkaMiesiaca.map((cell, i) => {
                 if (cell === null) return <span key={`pusta-${i}`} className="size-10" />;
                 const w = wyglad(cell, today);
                 return (
                   <span
                     key={cell.date}
                     role="img"
+                    tabIndex={0}
                     aria-label={w.tekst === null ? w.data : `${w.data} · ${w.tekst}`}
-                    onMouseEnter={() => setNajechany(cell.date)}
+                    onMouseEnter={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    onFocus={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    onBlur={() => setNajechany(null)}
                     className={cn(
-                      "relative box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px]",
+                      "box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
                       w.kolor,
                       cell.date === today && "font-semibold",
-                      najechany === cell.date && "shadow-[0_0_0_2px_#171717]",
+                      najechany?.date === cell.date && "shadow-[0_0_0_2px_#171717]",
                     )}
                   >
                     {Number(cell.date.slice(8, 10))}
-                    {najechany === cell.date && dymek(w, i < 7)}
                   </span>
                 );
               })}
@@ -186,27 +177,39 @@ export function HabitHeatmap({
               className="grid grid-flow-col grid-rows-[repeat(7,14px)] gap-1"
               onMouseLeave={() => setNajechany(null)}
             >
-              {tygodnie.flat().map((cell, i) => {
+              {tygodnie.flat().map((cell) => {
                 const w = wyglad(cell, today);
                 return (
                   <span
                     key={cell.date}
                     data-heat-cell
                     role="img"
+                    tabIndex={0}
                     aria-label={w.tekst === null ? w.data : `${w.data} · ${w.tekst}`}
-                    onMouseEnter={() => setNajechany(cell.date)}
+                    onMouseEnter={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    onFocus={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    onBlur={() => setNajechany(null)}
                     className={cn(
-                      "relative box-border size-3.5 cursor-default rounded-[3px]",
+                      "box-border size-3.5 cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
                       w.kolor,
-                      najechany === cell.date && "shadow-[0_0_0_2px_#171717]",
+                      najechany?.date === cell.date && "shadow-[0_0_0_2px_#171717]",
                     )}
-                  >
-                    {najechany === cell.date && dymek(w, i % 7 < 2)}
-                  </span>
+                  />
                 );
               })}
             </div>
           </div>
+        )}
+
+        {/* Dymek dnia (przyszłość go nie ma): data pogrubiona, „brak zaplanowanych” szarym */}
+        {najechany && najechany.w.tekst !== null && (
+          <ChartTooltip anchor={najechany.el}>
+            <span className="font-semibold">{najechany.w.data}</span>
+            {" · "}
+            <span className={cn("font-mono text-[11px]", najechany.w.szary ? "text-[#a3a3a3]" : "text-[#d4d4d4]")}>
+              {najechany.w.tekst}
+            </span>
+          </ChartTooltip>
         )}
 
         <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-[#6b6b6b]">

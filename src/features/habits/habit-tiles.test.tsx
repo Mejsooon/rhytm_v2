@@ -103,4 +103,38 @@ describe("HabitTiles", () => {
     expect(screen.getByText("Angielski")).toBeInTheDocument();
     expect(screen.queryByText("Zumba")).not.toBeInTheDocument();
   });
+
+  it("seria tygodniowa liczy się jako 7 dni na tydzień, ale wyświetla się w tygodniach", () => {
+    const [woda] = nawyki();
+    // Bieganie: 12 dni z rzędu (06–17.11); Angielski 2×/tydz.: 3 spełnione tygodnie = 21 dni
+    const lista: Habit[] = [
+      { ...woda, id: "b", name: "Bieganie", schedules: [{ validFrom: "2026-11-01", type: "daily", weekdays: [], timesPerWeek: null }] },
+      {
+        ...woda,
+        id: "a",
+        name: "Angielski",
+        schedules: [{ validFrom: "2026-10-26", type: "times_per_week", weekdays: [], timesPerWeek: 2 }],
+      },
+    ];
+    const bieganie = new Set<string>();
+    for (let i = 0; i < 12; i++) bieganie.add(addDays(DZIS, -i));
+    const checks: Checks = new Map([
+      ["b", bieganie],
+      ["a", new Set(["2026-10-26", "2026-10-27", "2026-11-02", "2026-11-03", "2026-11-09", "2026-11-10"])],
+    ]);
+    render(<HabitTiles habits={lista} checks={checks} today={DZIS} weekStart="mon" sleepLogs={[]} sleepGoalMin={480} />);
+    expect(screen.getByText("Angielski")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("tyg.")).toBeInTheDocument();
+  });
+
+  it("różnica 0 nie ma znaku", () => {
+    const [woda] = nawyki();
+    // codziennie od 60 dni, bez odhaczeń: 0% i 0% wcześniej
+    const lista: Habit[] = [
+      { ...woda, schedules: [{ validFrom: addDays(DZIS, -59), type: "daily", weekdays: [], timesPerWeek: null }] },
+    ];
+    render(<HabitTiles habits={lista} checks={new Map()} today={DZIS} weekStart="mon" sleepLogs={[]} sleepGoalMin={480} />);
+    expect(screen.getByText("0 pkt vs poprzednie 30")).toBeInTheDocument();
+  });
 });

@@ -28,19 +28,19 @@ export function HabitTiles({
   const dzis = dayStats(habits, checks, today, today);
   const pasek = dzis.planned === 0 ? 0 : Math.round((dzis.done / dzis.planned) * 100);
 
-  // Ostatnie 30 dni i różnica w punktach procentowych (minus typograficzny „−”)
+  // Ostatnie 30 dni i różnica w punktach procentowych (minus typograficzny „−”, zero bez znaku)
   const trzydziesci = last30Comparison(habits, checks, today);
   const roznica = trzydziesci.deltaPoints;
 
-  // Najdłuższa seria: największa wartość, przy remisie nazwa pierwsza alfabetycznie
-  let rekord: { name: string; value: number; label: string } | null = null;
+  // Najdłuższa seria: największa w dniach (tydzień serii X/tydz. = 7 dni),
+  // przy remisie nazwa pierwsza alfabetycznie; pokazujemy ją we własnej jednostce
+  let rekord: { name: string; dni: number; label: string } | null = null;
   for (const habit of habits) {
     const seria = longestStreak(habit, checks, today, weekStart);
+    const dni = seria.unit === "weeks" ? seria.value * 7 : seria.value;
     const lepsza =
-      rekord === null ||
-      seria.value > rekord.value ||
-      (seria.value === rekord.value && habit.name.localeCompare(rekord.name, "pl") < 0);
-    if (lepsza) rekord = { name: habit.name, value: seria.value, label: streakLabel(seria) };
+      rekord === null || dni > rekord.dni || (dni === rekord.dni && habit.name.localeCompare(rekord.name, "pl") < 0);
+    if (lepsza) rekord = { name: habit.name, dni, label: streakLabel(seria) };
   }
 
   // Średni sen z 14 dni (tylko noce z wpisem)
@@ -64,7 +64,7 @@ export function HabitTiles({
         <div className={LICZBA}>{trzydziesci.percent === null ? "—" : `${trzydziesci.percent}%`}</div>
         {roznica !== null && (
           <div className={POD_LICZBA}>
-            {`${roznica < 0 ? "−" : "+"}${Math.abs(roznica)} pkt vs poprzednie 30`}
+            {`${roznica < 0 ? "−" : roznica > 0 ? "+" : ""}${Math.abs(roznica)} pkt vs poprzednie 30`}
           </div>
         )}
       </div>
