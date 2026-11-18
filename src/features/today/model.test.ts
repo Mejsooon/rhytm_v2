@@ -291,6 +291,23 @@ describe("weekTiles — treningi", () => {
     });
   });
 
+  it("plan z dziś o minionej godzinie liczy się do mianownika (od dziś, nie od teraz)", () => {
+    const zRana = [
+      ...sportItems,
+      trening("rano", {
+        kind: "gym",
+        date: DZIS,
+        startMin: 7 * 60,
+        planned: true,
+        runKind: null,
+      }),
+    ];
+    expect(weekTiles(wejscie({ sportItems: zRana })).workouts).toEqual({
+      done: 2,
+      total: 5,
+    });
+  });
+
   it("z celem mianownik = max(z planu, cel)", () => {
     const w = weekTiles(
       wejscie({ sportItems, workoutsGoalOn: true, weeklyWorkoutsGoal: 5 }),
@@ -398,6 +415,49 @@ describe("dayPlan", () => {
       occurrence: null,
       sportKey: "s:plan",
       tasksTotal: 0,
+    });
+  });
+
+  it("wystąpienie przeniesione z wczoraj na dziś jest w planie, zadania z oryginalnej daty", () => {
+    const przeniesione = expandOccurrences(
+      [
+        blok({
+          id: "spotkanie",
+          title: "Spotkanie",
+          start_local: "2026-11-03T09:00:00",
+          recurrence: { freq: "weekly" }, // wtorki
+        }),
+      ],
+      [
+        {
+          block_id: "spotkanie",
+          user_id: "u1",
+          occurrence_date: "2026-11-17",
+          kind: "modified",
+          new_start_local: `${DZIS}T15:00:00`,
+          new_duration_min: 45,
+          new_title: null,
+        },
+      ],
+      DZIS,
+      DZIS,
+    );
+    const zadania = [
+      zadanie("p1", {
+        block_id: "spotkanie",
+        occurrence_date: "2026-11-17",
+        due_date: DZIS,
+        done: true,
+      }),
+    ];
+    const plan = dayPlan(przeniesione, [], zadania, [], DZIS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0]).toMatchObject({
+      key: "spotkanie:2026-11-17",
+      startMin: 900,
+      endMin: 945,
+      tasksDone: 1,
+      tasksTotal: 1,
     });
   });
 
@@ -522,6 +582,18 @@ describe("quickWhenOptions", () => {
     ]);
   });
 
+  it("o 17:30 „Dziś” to 18:00, więc bez duplikatu „Dziś 18:00”", () => {
+    expect(quickWhenOptions("block", DZIS, 17 * 60 + 30, "mon")).toEqual([
+      { label: "Dziś", date: DZIS, startMin: 18 * 60 },
+      { label: "Jutro", date: "2026-11-19", startMin: 9 * 60 },
+      { label: "Pn 23.11", date: "2026-11-23", startMin: 9 * 60 },
+    ]);
+    // o 16:59 oba chipy są potrzebne: 17:00 i 18:00
+    expect(
+      quickWhenOptions("run", DZIS, 16 * 60 + 59, "mon").map((o) => o.startMin),
+    ).toEqual([17 * 60, 18 * 60, 18 * 60, 18 * 60]);
+  });
+
   it("„Dziś 18:00” ukryte przy 18:30; bieg jutro o 18:00", () => {
     const o = quickWhenOptions("run", DZIS, 18 * 60 + 30, "mon");
     expect(o).toEqual([
@@ -576,6 +648,10 @@ describe("parseQuickRun", () => {
       distanceKm: 21.1,
       kind: "race",
     });
+    // kilka słów rodzaju: wygrywa to, które jest pierwsze w tekście
+    expect(parseQuickRun("tempo potem spokojnie").kind).toBe("tempo");
+    expect(parseQuickRun("spokojnie, potem tempo").kind).toBe("easy");
+    expect(parseQuickRun("12 km długi z interwałami").kind).toBe("long");
     // liczba bez „km” nie jest dystansem
     expect(parseQuickRun("bieg o 7")).toEqual({
       distanceKm: null,

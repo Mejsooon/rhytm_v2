@@ -112,18 +112,18 @@ export function weekTiles(input: {
     if (minuty >= input.sleepGoalMin) nocyZCelem++;
   }
 
-  // Sport: wykonane z weekStats; zaplanowane liczą się tylko od teraz do końca tygodnia
+  // Sport: wykonane z weekStats. Zaplanowane do mianownika „Treningi” liczą się od dziś
+  // (cały dzisiejszy dzień, także plan o minionej godzinie) do końca tygodnia;
+  // najbliższy bieg liczy się od teraz.
   const biegi = input.sportItems.filter((i) => i.kind === "run");
   const statystyki = weekStats(input.sportItems, weekStartDate);
   let nextRun: { date: IsoDate; startMin: number } | null = null;
   let zaplanowane = 0;
   for (const i of input.sportItems) {
-    if (!i.planned || i.date > koniec) continue;
-    const odTeraz =
-      i.date > today || (i.date === today && i.startMin >= nowMin);
-    if (!odTeraz) continue;
+    if (!i.planned || i.date > koniec || i.date < today) continue;
     zaplanowane++;
     if (i.kind !== "run") continue;
+    if (i.date === today && i.startMin < nowMin) continue;
     const wczesniej =
       nextRun === null ||
       i.date < nextRun.date ||
@@ -197,10 +197,14 @@ export function dayPlan(
 ): PlanItem[] {
   const wynik: PlanItem[] = [];
 
+  // Blok nie przechodzi przez północ (schemas.ts i actions.ts to blokują), więc nie ma
+  // „ogona” wczorajszego bloku na dziś — wystarczą wystąpienia z datą dziś, jak w siatce kalendarza.
   for (const o of occurrences) {
     if (o.date !== today) continue;
     const kat = categories.find((k) => k.id === o.categoryId) ?? null;
-    // Zadania wystąpienia są przypięte do ORYGINALNEJ daty (z klucza)
+    // Zadania wystąpienia są przypięte do ORYGINALNEJ daty. Occurrence nie ma osobnego pola
+    // na nią — jest tylko w kluczu `${blockId}:${date}` (occurrences.ts), więc bierzemy
+    // ostatnie 10 znaków, tak samo jak pinTask w tasks/model.ts. `o.date` to data po przesunięciu.
     const postep = occurrenceProgress(tasks, o.blockId, o.key.slice(-10));
     wynik.push({
       key: o.key,
@@ -335,8 +339,9 @@ export function quickWhenOptions(
     date: IsoDate | null;
     startMin: number | null;
   }[] = [dzis];
-  // „Dziś 18:00” tylko przed 18:00
-  if (nowMin < 18 * 60) {
+  // „Dziś 18:00” tylko wtedy, gdy chip „Dziś” wypada przed 18:00 (od 17:00 „Dziś” to już
+  // 18:00 albo później, więc drugi chip byłby duplikatem lub przeszłością)
+  if (dzis.date === today && pelna < 18 * 60) {
     wynik.push({ label: "Dziś 18:00", date: today, startMin: 18 * 60 });
   }
   wynik.push({ label: "Jutro", date: jutro, startMin: godzinaJutro });
@@ -358,12 +363,24 @@ export function parseQuickRun(text: string): {
   const liczba = maly.match(/(\d+(?:[.,]\d+)?)\s*km/);
   const distanceKm = liczba ? Number(liczba[1].replace(",", ".")) : null;
 
+  // Rodzaj: słowo, które w tekście występuje najwcześniej („tempo potem spokojnie” → tempo)
+  const slowa: [string, RunKind][] = [
+    ["spokojn", "easy"],
+    ["tempo", "tempo"],
+    ["interwał", "intervals"],
+    ["dług", "long"],
+    ["zawod", "race"],
+  ];
   let kind: RunKind = "easy";
-  if (maly.includes("spokojn")) kind = "easy";
-  else if (maly.includes("tempo")) kind = "tempo";
-  else if (maly.includes("interwał")) kind = "intervals";
-  else if (maly.includes("dług")) kind = "long";
-  else if (maly.includes("zawod")) kind = "race";
+  let najwczesniej = -1;
+  for (const [slowo, rodzaj] of slowa) {
+    const gdzie = maly.indexOf(slowo);
+    if (gdzie === -1) continue;
+    if (najwczesniej === -1 || gdzie < najwczesniej) {
+      najwczesniej = gdzie;
+      kind = rodzaj;
+    }
+  }
 
   return { distanceKm, kind };
 }
