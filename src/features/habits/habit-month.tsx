@@ -30,7 +30,20 @@ const OPIS_STANU: Record<StanDnia, string> = {
 };
 
 // '2026-11-02' → „2 listopada 2026”
-const MIESIACE_DOPELNIACZ = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia"];
+const MIESIACE_DOPELNIACZ = [
+  "stycznia",
+  "lutego",
+  "marca",
+  "kwietnia",
+  "maja",
+  "czerwca",
+  "lipca",
+  "sierpnia",
+  "września",
+  "października",
+  "listopada",
+  "grudnia",
+];
 function dataSlownie(date: IsoDate): string {
   return `${Number(date.slice(8))} ${MIESIACE_DOPELNIACZ[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}`;
 }
@@ -73,7 +86,10 @@ export function HabitMonth({
   const komorki = buildMonthGrid(rok, m - 1, weekStart);
   // Siatka ma stałe 6 tygodni; ostatni pusty tydzień (same dni następnego miesiąca) pomijamy
   const widoczne = komorki.slice(0, komorki[35].inMonth ? 42 : 35);
-  const naglowki = weekStart === "mon" ? SKROTY_DNI : [SKROTY_DNI[6], ...SKROTY_DNI.slice(0, 6)];
+  const naglowki =
+    weekStart === "mon"
+      ? SKROTY_DNI
+      : [SKROTY_DNI[6], ...SKROTY_DNI.slice(0, 6)];
 
   function stanDnia(date: IsoDate, wMiesiacu: boolean): StanDnia {
     if (!wMiesiacu) return "szare";
@@ -99,8 +115,12 @@ export function HabitMonth({
     if (stan === "zrobione") zrobione++;
     if (stan === "pominiete") pominiete++;
   }
-  const ostatniWMiesiacu = widoczne.filter((k) => k.inMonth).at(-1)?.date ?? today;
-  const wersjaMiesiaca = scheduleOn(habit, ostatniWMiesiacu < today ? ostatniWMiesiacu : today);
+  const ostatniWMiesiacu =
+    widoczne.filter((k) => k.inMonth).at(-1)?.date ?? today;
+  const wersjaMiesiaca = scheduleOn(
+    habit,
+    ostatniWMiesiacu < today ? ostatniWMiesiacu : today,
+  );
   const podsumowanie =
     wersjaMiesiaca?.type === "times_per_week"
       ? `${zrobione} razy w tym miesiącu`
@@ -148,7 +168,9 @@ export function HabitMonth({
               aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
               className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${
                 // Telefon: pominięte szare jak w makiecie; web zostaje przy czerwonym
-                phone && stan === "pominiete" ? "bg-[#f5f5f5] text-[#8a8a8a]" : STYLE_STANU[stan]
+                phone && stan === "pominiete"
+                  ? "bg-[#f5f5f5] text-[#8a8a8a]"
+                  : STYLE_STANU[stan]
               }`}
             >
               {Number(k.date.slice(8))}
@@ -157,7 +179,9 @@ export function HabitMonth({
         })}
       </div>
 
-      {phone && <div className="mt-2.5 text-[13px] text-[#666666]">{podsumowanie}</div>}
+      {phone && (
+        <div className="mt-2.5 text-[13px] text-[#666666]">{podsumowanie}</div>
+      )}
 
       {/* Legenda z makiety (web) */}
       {!phone && (

@@ -25,14 +25,36 @@ const STREFY = [
   { value: "nyc", label: "Ameryka/Nowy Jork", hint: "UTC−05:00" },
 ] as const;
 
-const STATUSY: { value: string; label: string; badge: { label: string; tone: BadgeTone } }[] = [
-  { value: "todo", label: "Do zrobienia", badge: { label: "Do zrobienia", tone: "gray" } },
+const STATUSY: {
+  value: string;
+  label: string;
+  badge: { label: string; tone: BadgeTone };
+}[] = [
+  {
+    value: "todo",
+    label: "Do zrobienia",
+    badge: { label: "Do zrobienia", tone: "gray" },
+  },
   { value: "wip", label: "W toku", badge: { label: "W toku", tone: "blue" } },
-  { value: "hold", label: "Wstrzymane", badge: { label: "Wstrzymane", tone: "orange" } },
-  { value: "done", label: "Zrobione", badge: { label: "Zrobione", tone: "green" } },
+  {
+    value: "hold",
+    label: "Wstrzymane",
+    badge: { label: "Wstrzymane", tone: "orange" },
+  },
+  {
+    value: "done",
+    label: "Zrobione",
+    badge: { label: "Zrobione", tone: "green" },
+  },
 ];
 
-function Sekcja({ makieta, children }: { makieta: string; children: React.ReactNode }) {
+function Sekcja({
+  makieta,
+  children,
+}: {
+  makieta: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-3 border-b border-[#eaeaea] py-6">
       <MonoLabel>{makieta}</MonoLabel>
@@ -128,7 +150,9 @@ export function ControlsDemo() {
             </>
           }
         >
-          <p className="text-[13px] text-[#666666]">Tej operacji nie da się cofnąć.</p>
+          <p className="text-[13px] text-[#666666]">
+            Tej operacji nie da się cofnąć.
+          </p>
           <Dropdown
             ariaLabel="Strefa w oknie"
             value={strefa}
@@ -154,7 +178,12 @@ export function ControlsDemo() {
       <Sekcja makieta="SettingsNotifications.dc.html — przełącznik (.sw)">
         <Switch checked={sw1} onChange={setSw1} ariaLabel="Włączony" />
         <Switch checked={sw2} onChange={setSw2} ariaLabel="Wyłączony" />
-        <Switch checked={false} onChange={() => {}} ariaLabel="Nieaktywny" disabled />
+        <Switch
+          checked={false}
+          onChange={() => {}}
+          ariaLabel="Nieaktywny"
+          disabled
+        />
       </Sekcja>
 
       <Sekcja makieta="MRegister.dc.html — checkbox (.cb)">
@@ -163,10 +192,18 @@ export function ControlsDemo() {
       </Sekcja>
 
       <Sekcja makieta="BlockDialog.dc.html — chipy">
-        <Chip dotColor="#0070f3" selected={chip === "st"} onClick={() => setChip("st")}>
+        <Chip
+          dotColor="#0070f3"
+          selected={chip === "st"}
+          onClick={() => setChip("st")}
+        >
           Studia
         </Chip>
-        <Chip dotColor="#15803d" selected={chip === "pr"} onClick={() => setChip("pr")}>
+        <Chip
+          dotColor="#15803d"
+          selected={chip === "pr"}
+          onClick={() => setChip("pr")}
+        >
           Praca
         </Chip>
         <Chip dashed onClick={() => {}}>
@@ -184,11 +221,20 @@ export function ControlsDemo() {
 
       <Sekcja makieta="Books.dc.html — wybór daty (dp)">
         <DatePicker ariaLabel="Termin" value={data} onChange={setData} />
-        <DatePicker ariaLabel="Pusta data" value={null} onChange={setData} weekStart="sun" />
+        <DatePicker
+          ariaLabel="Pusta data"
+          value={null}
+          onChange={setData}
+          weekStart="sun"
+        />
       </Sekcja>
 
       <Sekcja makieta="SettingsNotifications.dc.html — wybór godziny (.tmb / .tpop)">
-        <TimePicker ariaLabel="Godzina przypomnienia" value={godzina} onChange={setGodzina} />
+        <TimePicker
+          ariaLabel="Godzina przypomnienia"
+          value={godzina}
+          onChange={setGodzina}
+        />
       </Sekcja>
 
       <Sekcja makieta="VaultReset.dc.html — potwierdzenie słowem">

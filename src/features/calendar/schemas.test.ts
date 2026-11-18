@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { blockPatchSchema, createBlockSchema, isoDateSchema, recurrenceSchema } from "./schemas";
+import {
+  blockPatchSchema,
+  createBlockSchema,
+  isoDateSchema,
+  recurrenceSchema,
+} from "./schemas";
 
 const poprawny = {
   title: "Nauka",
@@ -14,15 +19,21 @@ const poprawny = {
 
 describe("recurrenceSchema", () => {
   it("custom bez dni tygodnia jest odrzucony", () => {
-    expect(recurrenceSchema.safeParse({ freq: "custom", byWeekday: [] }).success).toBe(false);
+    expect(
+      recurrenceSchema.safeParse({ freq: "custom", byWeekday: [] }).success,
+    ).toBe(false);
     expect(recurrenceSchema.safeParse({ freq: "custom" }).success).toBe(false);
   });
   it("custom z dniami i weekly przechodzą", () => {
-    expect(recurrenceSchema.safeParse({ freq: "custom", byWeekday: [1, 3] }).success).toBe(true);
+    expect(
+      recurrenceSchema.safeParse({ freq: "custom", byWeekday: [1, 3] }).success,
+    ).toBe(true);
     expect(recurrenceSchema.safeParse({ freq: "weekly" }).success).toBe(true);
   });
   it("dzień tygodnia spoza 1–7 jest odrzucony", () => {
-    expect(recurrenceSchema.safeParse({ freq: "custom", byWeekday: [0] }).success).toBe(false);
+    expect(
+      recurrenceSchema.safeParse({ freq: "custom", byWeekday: [0] }).success,
+    ).toBe(false);
   });
 });
 
@@ -33,10 +44,18 @@ describe("createBlockSchema", () => {
     expect(w.note).toBeNull();
   });
   it("odrzuca pusty tytuł, za krótki czas i przejście przez północ", () => {
-    expect(createBlockSchema.safeParse({ ...poprawny, title: "  " }).success).toBe(false);
-    expect(createBlockSchema.safeParse({ ...poprawny, durationMin: 10 }).success).toBe(false);
     expect(
-      createBlockSchema.safeParse({ ...poprawny, startMin: 1400, durationMin: 60 }).success,
+      createBlockSchema.safeParse({ ...poprawny, title: "  " }).success,
+    ).toBe(false);
+    expect(
+      createBlockSchema.safeParse({ ...poprawny, durationMin: 10 }).success,
+    ).toBe(false);
+    expect(
+      createBlockSchema.safeParse({
+        ...poprawny,
+        startMin: 1400,
+        durationMin: 60,
+      }).success,
     ).toBe(false);
   });
 });

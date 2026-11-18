@@ -18,7 +18,14 @@ function nawyki(): Habit[] {
       remindAt: null,
       showOnToday: true,
       createdAt: "",
-      schedules: [{ validFrom: addDays(DZIS, -42), type: "daily", weekdays: [], timesPerWeek: null }],
+      schedules: [
+        {
+          validFrom: addDays(DZIS, -42),
+          type: "daily",
+          weekdays: [],
+          timesPerWeek: null,
+        },
+      ],
     },
     {
       id: "h2",
@@ -26,7 +33,14 @@ function nawyki(): Habit[] {
       remindAt: null,
       showOnToday: true,
       createdAt: "",
-      schedules: [{ validFrom: DZIS, type: "weekdays", weekdays: [2], timesPerWeek: null }],
+      schedules: [
+        {
+          validFrom: DZIS,
+          type: "weekdays",
+          weekdays: [2],
+          timesPerWeek: null,
+        },
+      ],
     },
   ];
 }
@@ -41,9 +55,30 @@ function odhaczenia(): Checks {
 }
 
 const sen: SleepLog[] = [
-  { date: "2026-11-17", sleptAt: "23:48", wokeAt: "07:00", feeling: 4, tags: [], note: null },
-  { date: "2026-11-16", sleptAt: "23:00", wokeAt: "07:30", feeling: null, tags: [], note: null },
-  { date: "2026-11-15", sleptAt: "22:30", wokeAt: "07:00", feeling: null, tags: [], note: null },
+  {
+    date: "2026-11-17",
+    sleptAt: "23:48",
+    wokeAt: "07:00",
+    feeling: 4,
+    tags: [],
+    note: null,
+  },
+  {
+    date: "2026-11-16",
+    sleptAt: "23:00",
+    wokeAt: "07:30",
+    feeling: null,
+    tags: [],
+    note: null,
+  },
+  {
+    date: "2026-11-15",
+    sleptAt: "22:30",
+    wokeAt: "07:00",
+    feeling: null,
+    tags: [],
+    note: null,
+  },
 ];
 
 describe("HabitTiles", () => {
@@ -74,7 +109,17 @@ describe("HabitTiles", () => {
   it("bez historii nie pokazuje różnicy, a bez snu pokazuje „—”", () => {
     // nawyk młodszy niż 30 dni: poprzednie okno nie ma dni z planem
     const mlody: Habit[] = [
-      { ...nawyki()[0], schedules: [{ validFrom: addDays(DZIS, -10), type: "daily", weekdays: [], timesPerWeek: null }] },
+      {
+        ...nawyki()[0],
+        schedules: [
+          {
+            validFrom: addDays(DZIS, -10),
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
+      },
     ];
     render(
       <HabitTiles
@@ -98,7 +143,14 @@ describe("HabitTiles", () => {
       { ...woda, id: "b", name: "Angielski" },
     ];
     render(
-      <HabitTiles habits={zero} checks={new Map()} today={DZIS} weekStart="mon" sleepLogs={[]} sleepGoalMin={480} />,
+      <HabitTiles
+        habits={zero}
+        checks={new Map()}
+        today={DZIS}
+        weekStart="mon"
+        sleepLogs={[]}
+        sleepGoalMin={480}
+      />,
     );
     expect(screen.getByText("Angielski")).toBeInTheDocument();
     expect(screen.queryByText("Zumba")).not.toBeInTheDocument();
@@ -108,21 +160,59 @@ describe("HabitTiles", () => {
     const [woda] = nawyki();
     // Bieganie: 12 dni z rzędu (06–17.11); Angielski 2×/tydz.: 3 spełnione tygodnie = 21 dni
     const lista: Habit[] = [
-      { ...woda, id: "b", name: "Bieganie", schedules: [{ validFrom: "2026-11-01", type: "daily", weekdays: [], timesPerWeek: null }] },
+      {
+        ...woda,
+        id: "b",
+        name: "Bieganie",
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
+      },
       {
         ...woda,
         id: "a",
         name: "Angielski",
-        schedules: [{ validFrom: "2026-10-26", type: "times_per_week", weekdays: [], timesPerWeek: 2 }],
+        schedules: [
+          {
+            validFrom: "2026-10-26",
+            type: "times_per_week",
+            weekdays: [],
+            timesPerWeek: 2,
+          },
+        ],
       },
     ];
     const bieganie = new Set<string>();
     for (let i = 0; i < 12; i++) bieganie.add(addDays(DZIS, -i));
     const checks: Checks = new Map([
       ["b", bieganie],
-      ["a", new Set(["2026-10-26", "2026-10-27", "2026-11-02", "2026-11-03", "2026-11-09", "2026-11-10"])],
+      [
+        "a",
+        new Set([
+          "2026-10-26",
+          "2026-10-27",
+          "2026-11-02",
+          "2026-11-03",
+          "2026-11-09",
+          "2026-11-10",
+        ]),
+      ],
     ]);
-    render(<HabitTiles habits={lista} checks={checks} today={DZIS} weekStart="mon" sleepLogs={[]} sleepGoalMin={480} />);
+    render(
+      <HabitTiles
+        habits={lista}
+        checks={checks}
+        today={DZIS}
+        weekStart="mon"
+        sleepLogs={[]}
+        sleepGoalMin={480}
+      />,
+    );
     expect(screen.getByText("Angielski")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("tyg.")).toBeInTheDocument();
@@ -132,9 +222,28 @@ describe("HabitTiles", () => {
     const [woda] = nawyki();
     // codziennie od 60 dni, bez odhaczeń: 0% i 0% wcześniej
     const lista: Habit[] = [
-      { ...woda, schedules: [{ validFrom: addDays(DZIS, -59), type: "daily", weekdays: [], timesPerWeek: null }] },
+      {
+        ...woda,
+        schedules: [
+          {
+            validFrom: addDays(DZIS, -59),
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
+      },
     ];
-    render(<HabitTiles habits={lista} checks={new Map()} today={DZIS} weekStart="mon" sleepLogs={[]} sleepGoalMin={480} />);
+    render(
+      <HabitTiles
+        habits={lista}
+        checks={new Map()}
+        today={DZIS}
+        weekStart="mon"
+        sleepLogs={[]}
+        sleepGoalMin={480}
+      />,
+    );
     expect(screen.getByText("0 pkt vs poprzednie 30")).toBeInTheDocument();
   });
 });

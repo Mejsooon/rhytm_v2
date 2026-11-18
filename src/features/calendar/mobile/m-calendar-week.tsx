@@ -35,7 +35,10 @@ export function MCalendarWeek({
   onAdd: (date: IsoDate, startMin: number) => void;
   onBlockClick: (key: string) => void;
 }) {
-  const startPlusa = date === today ? Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60) : 540;
+  const startPlusa =
+    date === today
+      ? Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60)
+      : 540;
 
   return (
     <div className="flex flex-col gap-[18px] pt-2 pb-24">
@@ -50,7 +53,9 @@ export function MCalendarWeek({
               href={`/kalendarz?widok=dzien&data=${dzien}`}
               aria-label={nazwa}
               className={`flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl ${
-                dzien === today ? "bg-[#171717] text-white" : "bg-[#f5f5f5] text-[#171717]"
+                dzien === today
+                  ? "bg-[#171717] text-white"
+                  : "bg-[#f5f5f5] text-[#171717]"
               }`}
             >
               <span className="text-[11px]">{DNI_SKROT[numer]}</span>
@@ -58,21 +63,34 @@ export function MCalendarWeek({
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
               {dzienne.length === 0 && (
-                <span className="flex min-h-10 items-center text-sm text-[#6b6b6b]">Brak bloków</span>
+                <span className="flex min-h-10 items-center text-sm text-[#6b6b6b]">
+                  Brak bloków
+                </span>
               )}
               {dzienne.map((o) => {
-                const kolor = categories.find((k) => k.id === o.categoryId)?.color ?? KOLOR_BRAK;
+                const kolor =
+                  categories.find((k) => k.id === o.categoryId)?.color ??
+                  KOLOR_BRAK;
                 return (
                   <button
                     key={o.key}
                     type="button"
                     onClick={() => onBlockClick(o.key)}
                     className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-left text-[#171717]"
-                    style={{ background: `${kolor}14`, borderLeft: `3px solid ${kolor}` }}
+                    style={{
+                      background: `${kolor}14`,
+                      borderLeft: `3px solid ${kolor}`,
+                    }}
                   >
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{o.title}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {o.title}
+                    </span>
                     <span className="font-mono text-[11px] text-[#555555]">
-                      {formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}
+                      {formatClockTime(
+                        Math.floor(o.startMin / 60),
+                        o.startMin % 60,
+                        clock,
+                      )}
                     </span>
                   </button>
                 );

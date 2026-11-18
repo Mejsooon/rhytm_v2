@@ -4,10 +4,22 @@
 // Obliczenia minut są w drag.ts (czyste); tu jest tylko obsługa zdarzeń i podgląd gestu.
 // Podczas gestu oryginalny blok zostaje w drzewie (przechwycenie wskaźnika nie ginie przy
 // zmianie kolumny), a pod kursorem rysuje się osobny podgląd.
-import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type RefObject,
+} from "react";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
-import { dragResult, KROK, type DragKind, type DragPoint, type DragResult } from "./drag";
+import {
+  dragResult,
+  KROK,
+  type DragKind,
+  type DragPoint,
+  type DragResult,
+} from "./drag";
 import type { Occurrence } from "./occurrences";
 
 // Ruch krótszy niż tyle pikseli to zwykły klik, nie przeciąganie
@@ -67,7 +79,9 @@ export function useGridDrag({
 
     // Dzień kolumny i minuta pod wskaźnikiem; „poza” = wskaźnik poza przewijaną siatką
     const pozycja = (x: number, y: number): DragPoint & { poza: boolean } => {
-      const kolumny = [...panel.querySelectorAll<HTMLElement>("[data-kolumna]")];
+      const kolumny = [
+        ...panel.querySelectorAll<HTMLElement>("[data-kolumna]"),
+      ];
       const ramka = panel.getBoundingClientRect();
       // Kolumna, której lewa krawędź jest na lewo od wskaźnika (ostatnia taka)
       let kolumna = kolumny[0];
@@ -75,12 +89,20 @@ export function useGridDrag({
         if (x >= k.getBoundingClientRect().left) kolumna = k;
       }
       const gora = kolumna.getBoundingClientRect().top;
-      const min = Math.min(Math.max(((y - gora) / wysokoscGodziny) * 60, 0), 1440);
+      const min = Math.min(
+        Math.max(((y - gora) / wysokoscGodziny) * 60, 0),
+        1440,
+      );
       return {
         date: kolumna.dataset.kolumna as IsoDate,
         min,
         // Przed pierwszą kolumną jest gutter z godzinami: to też „poza siatką”
-        poza: x < kolumny[0].getBoundingClientRect().left || x < ramka.left || x > ramka.right || y < ramka.top || y > ramka.bottom,
+        poza:
+          x < kolumny[0].getBoundingClientRect().left ||
+          x < ramka.left ||
+          x > ramka.right ||
+          y < ramka.top ||
+          y > ramka.bottom,
       };
     };
 
@@ -123,13 +145,21 @@ export function useGridDrag({
         ruszono = true;
         bylRuch.current = true;
       }
-      const wynik = dragResult(kind, start, pozycja(ev.clientX, ev.clientY), oryginal);
+      const wynik = dragResult(
+        kind,
+        start,
+        pozycja(ev.clientX, ev.clientY),
+        oryginal,
+      );
       setPodglad(wynik && { ...wynik, kind, key: occurrence?.key ?? null });
     }
 
     function przyPuszczeniu(ev: globalThis.PointerEvent) {
       const biezaca = pozycja(ev.clientX, ev.clientY);
-      let wynik = ruszono && !anulowano && !biezaca.poza ? dragResult(kind, start, biezaca, oryginal) : null;
+      let wynik =
+        ruszono && !anulowano && !biezaca.poza
+          ? dragResult(kind, start, biezaca, oryginal)
+          : null;
       // Ruch bez zmiany dnia i bez pełnego kroku w pionie nie zmienia bloku (stare starty spoza siatki zostają)
       if (
         kind !== "create" &&

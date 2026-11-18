@@ -26,7 +26,14 @@ describe("getAvatarUrl", () => {
   });
 
   it("błąd lub wyjątek → null", async () => {
-    expect(await getAvatarUrl(klient({ data: null, error: { message: "x" } }).supabase, "u1/avatar.png")).toBeNull();
-    expect(await getAvatarUrl(klient(new Error("sieć")).supabase, "u1/avatar.png")).toBeNull();
+    expect(
+      await getAvatarUrl(
+        klient({ data: null, error: { message: "x" } }).supabase,
+        "u1/avatar.png",
+      ),
+    ).toBeNull();
+    expect(
+      await getAvatarUrl(klient(new Error("sieć")).supabase, "u1/avatar.png"),
+    ).toBeNull();
   });
 });

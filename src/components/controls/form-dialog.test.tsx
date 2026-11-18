@@ -8,11 +8,18 @@ describe("FormDialog", () => {
   it("tytuł jest nazwą dostępną okna; Escape woła onOpenChange(false)", async () => {
     const onOpenChange = vi.fn();
     render(
-      <FormDialog open onOpenChange={onOpenChange} title="Nowy blok" footer={<button>Zapisz</button>}>
+      <FormDialog
+        open
+        onOpenChange={onOpenChange}
+        title="Nowy blok"
+        footer={<button>Zapisz</button>}
+      >
         <p>Treść</p>
       </FormDialog>,
     );
-    expect(screen.getByRole("dialog", { name: "Nowy blok" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Treść")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zapisz" })).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
@@ -30,7 +37,13 @@ describe("FormDialog", () => {
 });
 
 describe("FormDialog z Dropdown w środku", () => {
-  function Okno({ onChange, onOpenChange }: { onChange: (v: string) => void; onOpenChange: (o: boolean) => void }) {
+  function Okno({
+    onChange,
+    onOpenChange,
+  }: {
+    onChange: (v: string) => void;
+    onOpenChange: (o: boolean) => void;
+  }) {
     return (
       <FormDialog open onOpenChange={onOpenChange} title="Nowy blok">
         <Dropdown
@@ -55,7 +68,9 @@ describe("FormDialog z Dropdown w środku", () => {
     await userEvent.click(screen.getByRole("option", { name: "UTC" }));
     expect(onChange).toHaveBeenCalledWith("utc");
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
-    expect(screen.getByRole("dialog", { name: "Nowy blok" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
   });
 
   it("ArrowDown + Enter działa w oknie, okno zostaje otwarte", async () => {

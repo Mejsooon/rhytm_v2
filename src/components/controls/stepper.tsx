@@ -20,7 +20,11 @@ export function Stepper({
   ariaLabel: string;
 }) {
   return (
-    <div role="group" aria-label={ariaLabel} className="flex items-center gap-1.5">
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className="flex items-center gap-1.5"
+    >
       <button
         type="button"
         aria-label={`Zmniejsz ${ariaLabel}`}

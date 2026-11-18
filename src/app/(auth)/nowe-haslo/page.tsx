@@ -26,7 +26,10 @@ async function Ekran() {
 
   if (!zResetu) {
     return (
-      <AuthShell headerAction={{ href: "/logowanie", label: "Zaloguj się" }} width={362}>
+      <AuthShell
+        headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+        width={362}
+      >
         <LinkExpired type="recovery" />
       </AuthShell>
     );
@@ -40,7 +43,9 @@ async function Ekran() {
 
 export default function NoweHasloPage() {
   return (
-    <Suspense fallback={<div className="min-h-dvh bg-white min-[800px]:bg-[#fafafa]" />}>
+    <Suspense
+      fallback={<div className="min-h-dvh bg-white min-[800px]:bg-[#fafafa]" />}
+    >
       <Ekran />
     </Suspense>
   );

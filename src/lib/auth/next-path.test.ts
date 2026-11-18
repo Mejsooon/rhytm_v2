@@ -11,6 +11,8 @@ describe("pathAfterLogin", () => {
   });
 
   it("ukończony onboarding → /dzis", () => {
-    expect(pathAfterLogin({ onboarded_at: "2026-11-16T10:00:00Z" })).toBe("/dzis");
+    expect(pathAfterLogin({ onboarded_at: "2026-11-16T10:00:00Z" })).toBe(
+      "/dzis",
+    );
   });
 });

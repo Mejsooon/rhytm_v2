@@ -29,7 +29,14 @@ function wystapienie(extra: Partial<Occurrence> = {}): Occurrence {
 function wyrenderuj(o: Occurrence) {
   const onDeleted = vi.fn();
   const onCancel = vi.fn();
-  render(<DeleteBlockDialog occurrence={o} clock="24" onDeleted={onDeleted} onCancel={onCancel} />);
+  render(
+    <DeleteBlockDialog
+      occurrence={o}
+      clock="24"
+      onDeleted={onDeleted}
+      onCancel={onCancel}
+    />,
+  );
   return { onDeleted, onCancel };
 }
 
@@ -39,7 +46,9 @@ describe("DeleteBlockDialog", () => {
   it("blok jednorazowy: „Usunąć blok?” i usunięcie po „Usuń”", async () => {
     changeOccurrence.mockResolvedValue({ ok: true });
     const { onDeleted } = wyrenderuj(wystapienie());
-    expect(screen.getByRole("alertdialog", { name: "Usunąć blok?" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("alertdialog", { name: "Usunąć blok?" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(changeOccurrence).toHaveBeenCalledWith({
       blockId: "b1",
@@ -51,10 +60,16 @@ describe("DeleteBlockDialog", () => {
   });
 
   it("opis z nazwą, dniem i godzinami jak w makiecie, bez przycisku ✕", () => {
-    wyrenderuj(wystapienie({ title: "Bieg 10 km", startMin: 960, durationMin: 60 }));
+    wyrenderuj(
+      wystapienie({ title: "Bieg 10 km", startMin: 960, durationMin: 60 }),
+    );
     const okno = screen.getByRole("alertdialog", { name: "Usunąć blok?" });
-    expect(okno).toHaveAccessibleDescription("„Bieg 10 km” · wt 17.11 · 16:00–17:00");
-    expect(screen.queryByRole("button", { name: "Zamknij" })).not.toBeInTheDocument();
+    expect(okno).toHaveAccessibleDescription(
+      "„Bieg 10 km” · wt 17.11 · 16:00–17:00",
+    );
+    expect(
+      screen.queryByRole("button", { name: "Zamknij" }),
+    ).not.toBeInTheDocument();
   });
 
   it("w trakcie usuwania przyciski są zablokowane, a Esc nie zamyka", async () => {
@@ -71,10 +86,15 @@ describe("DeleteBlockDialog", () => {
   });
 
   it("błąd usuwania zostaje w oknie", async () => {
-    changeOccurrence.mockResolvedValue({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    changeOccurrence.mockResolvedValue({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
     const { onDeleted } = wyrenderuj(wystapienie());
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się zapisać. Spróbuj ponownie.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Nie udało się zapisać. Spróbuj ponownie.",
+    );
     expect(onDeleted).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Usuń" })).toBeEnabled();
   });
@@ -110,10 +130,15 @@ describe("DeleteBlockDialog", () => {
   });
 
   it("błąd akcji zostaje w oknie", async () => {
-    changeOccurrence.mockResolvedValue({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    changeOccurrence.mockResolvedValue({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
     const { onDeleted } = wyrenderuj(wystapienie());
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
-    expect(await screen.findByText("Nie udało się zapisać. Spróbuj ponownie.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nie udało się zapisać. Spróbuj ponownie."),
+    ).toBeInTheDocument();
     expect(onDeleted).not.toHaveBeenCalled();
   });
 });

@@ -5,7 +5,13 @@ import { TimePicker } from "./time-picker";
 
 function ustaw() {
   const onChange = vi.fn();
-  render(<TimePicker value="12:00" onChange={onChange} ariaLabel="Godzina przypomnienia" />);
+  render(
+    <TimePicker
+      value="12:00"
+      onChange={onChange}
+      ariaLabel="Godzina przypomnienia"
+    />,
+  );
   return onChange;
 }
 
@@ -13,7 +19,9 @@ describe("TimePicker", () => {
   it("klik godziny zmienia godzinę i zostawia dymek", async () => {
     const u = userEvent.setup();
     const onChange = ustaw();
-    await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
+    await u.click(
+      screen.getByRole("button", { name: "Godzina przypomnienia" }),
+    );
     await u.click(screen.getByRole("button", { name: "09" }));
     expect(onChange).toHaveBeenCalledWith("09:00");
     expect(screen.getByText("Minuty")).toBeInTheDocument();
@@ -22,7 +30,9 @@ describe("TimePicker", () => {
   it("klik minut zmienia minuty i zamyka", async () => {
     const u = userEvent.setup();
     const onChange = ustaw();
-    await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
+    await u.click(
+      screen.getByRole("button", { name: "Godzina przypomnienia" }),
+    );
     await u.click(screen.getByRole("button", { name: ":35" }));
     expect(onChange).toHaveBeenCalledWith("12:35");
     expect(screen.queryByText("Minuty")).not.toBeInTheDocument();
@@ -31,7 +41,9 @@ describe("TimePicker", () => {
   it("Gotowe zamyka bez zmian", async () => {
     const u = userEvent.setup();
     const onChange = ustaw();
-    await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
+    await u.click(
+      screen.getByRole("button", { name: "Godzina przypomnienia" }),
+    );
     await u.click(screen.getByRole("button", { name: "Gotowe" }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByText("Minuty")).not.toBeInTheDocument();
@@ -41,23 +53,49 @@ describe("TimePicker", () => {
     const u = userEvent.setup();
     const onChange = vi.fn();
     const { rerender } = render(
-      <TimePicker value="09:00" onChange={onChange} ariaLabel="Od" clock="12" />,
+      <TimePicker
+        value="09:00"
+        onChange={onChange}
+        ariaLabel="Od"
+        clock="12"
+      />,
     );
     // Przycisk pokazuje godzinę w 12 h
     const przycisk = screen.getByRole("button", { name: "Od" });
     expect(przycisk).toHaveTextContent("9:00 AM");
     await u.click(przycisk);
-    expect(screen.queryByRole("button", { name: "13" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "00" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "13" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "00" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "12" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "AM" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "AM" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
     await u.click(screen.getByRole("button", { name: "2" }));
     expect(onChange).toHaveBeenLastCalledWith("02:00");
-    rerender(<TimePicker value="02:00" onChange={onChange} ariaLabel="Od" clock="12" />);
+    rerender(
+      <TimePicker
+        value="02:00"
+        onChange={onChange}
+        ariaLabel="Od"
+        clock="12"
+      />,
+    );
     await u.click(screen.getByRole("button", { name: "PM" }));
     expect(onChange).toHaveBeenLastCalledWith("14:00");
-    rerender(<TimePicker value="14:00" onChange={onChange} ariaLabel="Od" clock="12" />);
+    rerender(
+      <TimePicker
+        value="14:00"
+        onChange={onChange}
+        ariaLabel="Od"
+        clock="12"
+      />,
+    );
     await u.click(screen.getByRole("button", { name: ":30" }));
     expect(onChange).toHaveBeenLastCalledWith("14:30");
   });
@@ -65,7 +103,14 @@ describe("TimePicker", () => {
   it("tryb 12 h: 12 AM to 00:00, 12 PM to 12:00", async () => {
     const u = userEvent.setup();
     const onChange = vi.fn();
-    render(<TimePicker value="05:15" onChange={onChange} ariaLabel="Od" clock="12" />);
+    render(
+      <TimePicker
+        value="05:15"
+        onChange={onChange}
+        ariaLabel="Od"
+        clock="12"
+      />,
+    );
     await u.click(screen.getByRole("button", { name: "Od" }));
     await u.click(screen.getByRole("button", { name: "12" }));
     expect(onChange).toHaveBeenLastCalledWith("00:15");
@@ -77,40 +122,81 @@ describe("TimePicker", () => {
     const u = userEvent.setup();
     const onChange = vi.fn();
     const { rerender } = render(
-      <TimePicker value="23:00" onChange={onChange} ariaLabel="Do" allowEndOfDay />,
+      <TimePicker
+        value="23:00"
+        onChange={onChange}
+        ariaLabel="Do"
+        allowEndOfDay
+      />,
     );
     await u.click(screen.getByRole("button", { name: "Do" }));
     await u.click(screen.getByRole("button", { name: "24:00" }));
     expect(onChange).toHaveBeenCalledWith("24:00");
-    rerender(<TimePicker value="24:00" onChange={onChange} ariaLabel="Do" allowEndOfDay />);
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+    rerender(
+      <TimePicker
+        value="24:00"
+        onChange={onChange}
+        ariaLabel="Do"
+        allowEndOfDay
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "24:00",
+    );
   });
 
   it("bez allowEndOfDay nie ma „24:00”", async () => {
     const u = userEvent.setup();
     ustaw();
-    await u.click(screen.getByRole("button", { name: "Godzina przypomnienia" }));
-    expect(screen.queryByRole("button", { name: "24:00" })).not.toBeInTheDocument();
+    await u.click(
+      screen.getByRole("button", { name: "Godzina przypomnienia" }),
+    );
+    expect(
+      screen.queryByRole("button", { name: "24:00" }),
+    ).not.toBeInTheDocument();
   });
 
   it("allowEndOfDay w trybie 12 h: opcja i przycisk pokazują 12:00 AM, wartość to 24:00", async () => {
     const u = userEvent.setup();
     const onChange = vi.fn();
     const { rerender } = render(
-      <TimePicker value="23:00" onChange={onChange} ariaLabel="Do" clock="12" allowEndOfDay />,
+      <TimePicker
+        value="23:00"
+        onChange={onChange}
+        ariaLabel="Do"
+        clock="12"
+        allowEndOfDay
+      />,
     );
     await u.click(screen.getByRole("button", { name: "Do" }));
     await u.click(screen.getByRole("button", { name: "12:00 AM" }));
     expect(onChange).toHaveBeenCalledWith("24:00");
-    rerender(<TimePicker value="24:00" onChange={onChange} ariaLabel="Do" clock="12" allowEndOfDay />);
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("12:00 AM");
+    rerender(
+      <TimePicker
+        value="24:00"
+        onChange={onChange}
+        ariaLabel="Do"
+        clock="12"
+        allowEndOfDay
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "12:00 AM",
+    );
   });
 });
 
 describe("TimePicker — disabled", () => {
   it("wyłączony nie otwiera dymka", async () => {
     const u = userEvent.setup();
-    render(<TimePicker value="12:00" onChange={vi.fn()} ariaLabel="Godzina" disabled />);
+    render(
+      <TimePicker
+        value="12:00"
+        onChange={vi.fn()}
+        ariaLabel="Godzina"
+        disabled
+      />,
+    );
     const przycisk = screen.getByRole("button", { name: "Godzina" });
     expect(przycisk).toBeDisabled();
     await u.click(przycisk);

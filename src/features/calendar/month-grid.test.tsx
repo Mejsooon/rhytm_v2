@@ -10,10 +10,24 @@ import type { Occurrence } from "./occurrences";
 const dni = buildMonthGrid(2026, 10, "mon").map((c) => c.date);
 
 const kategorie: CategoryRow[] = [
-  { id: "c1", name: "Studia", color: "#0070f3", hidden: false, is_system: false, position: 1, user_id: "u1", created_at: null },
+  {
+    id: "c1",
+    name: "Studia",
+    color: "#0070f3",
+    hidden: false,
+    is_system: false,
+    position: 1,
+    user_id: "u1",
+    created_at: null,
+  },
 ];
 
-function wystapienie(id: string, date: string, startMin: number, nadpisz: Partial<Occurrence> = {}): Occurrence {
+function wystapienie(
+  id: string,
+  date: string,
+  startMin: number,
+  nadpisz: Partial<Occurrence> = {},
+): Occurrence {
   return {
     key: `${id}:${date}`,
     blockId: id,
@@ -31,7 +45,10 @@ function wystapienie(id: string, date: string, startMin: number, nadpisz: Partia
   };
 }
 
-function wyrenderuj(occurrences: Occurrence[], nadpisz: Partial<Parameters<typeof MonthGrid>[0]> = {}) {
+function wyrenderuj(
+  occurrences: Occurrence[],
+  nadpisz: Partial<Parameters<typeof MonthGrid>[0]> = {},
+) {
   const onDayClick = vi.fn();
   const onEntryClick = vi.fn();
   render(
@@ -53,21 +70,31 @@ function wyrenderuj(occurrences: Occurrence[], nadpisz: Partial<Parameters<typeo
 describe("MonthGrid", () => {
   it("pokazuje nagłówki dni od poniedziałku i 42 komórki", () => {
     wyrenderuj([]);
-    const naglowki = screen.getAllByTestId("nazwa-dnia").map((e) => e.textContent);
+    const naglowki = screen
+      .getAllByTestId("nazwa-dnia")
+      .map((e) => e.textContent);
     expect(naglowki).toEqual(["pon", "wt", "śr", "czw", "pt", "sob", "nd"]);
     expect(screen.getAllByTestId(/^komorka-/)).toHaveLength(42);
   });
 
   it("komórka z 5 wpisami pokazuje 3 i „+2 więcej”", () => {
-    const wpisy = [1, 2, 3, 4, 5].map((i) => wystapienie(`b${i}`, "2026-11-18", 480 + i * 60));
+    const wpisy = [1, 2, 3, 4, 5].map((i) =>
+      wystapienie(`b${i}`, "2026-11-18", 480 + i * 60),
+    );
     wyrenderuj(wpisy);
     const komorka = screen.getByTestId("komorka-2026-11-18");
-    expect(within(komorka).getAllByRole("button", { name: /Wpis/ })).toHaveLength(3);
-    expect(within(komorka).getByRole("link", { name: "+2 więcej" })).toBeInTheDocument();
+    expect(
+      within(komorka).getAllByRole("button", { name: /Wpis/ }),
+    ).toHaveLength(3);
+    expect(
+      within(komorka).getByRole("link", { name: "+2 więcej" }),
+    ).toBeInTheDocument();
   });
 
   it("„+2 więcej” prowadzi do widoku dnia", () => {
-    const wpisy = [1, 2, 3, 4, 5].map((i) => wystapienie(`b${i}`, "2026-11-18", 480 + i * 60));
+    const wpisy = [1, 2, 3, 4, 5].map((i) =>
+      wystapienie(`b${i}`, "2026-11-18", 480 + i * 60),
+    );
     wyrenderuj(wpisy);
     expect(screen.getByRole("link", { name: "+2 więcej" })).toHaveAttribute(
       "href",
@@ -76,7 +103,9 @@ describe("MonthGrid", () => {
   });
 
   it("wpis ma tytuł, klucz wystąpienia i godzinę wg zegara profilu w podpowiedzi", () => {
-    wyrenderuj([wystapienie("b1", "2026-11-18", 13 * 60 + 30)], { clock: "12" });
+    wyrenderuj([wystapienie("b1", "2026-11-18", 13 * 60 + 30)], {
+      clock: "12",
+    });
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
     expect(wpis).toHaveAttribute("data-occurrence-key", "b1:2026-11-18");
     expect(wpis).toHaveAttribute("title", "1:30 PM Wpis b1");
@@ -100,14 +129,18 @@ describe("MonthGrid", () => {
 
   it("klik w „+2 więcej” woła onMoreClick", async () => {
     const onMoreClick = vi.fn();
-    const wpisy = [1, 2, 3, 4, 5].map((i) => wystapienie(`b${i}`, "2026-11-18", 480 + i * 60));
+    const wpisy = [1, 2, 3, 4, 5].map((i) =>
+      wystapienie(`b${i}`, "2026-11-18", 480 + i * 60),
+    );
     wyrenderuj(wpisy, { onMoreClick });
     await userEvent.click(screen.getByRole("link", { name: "+2 więcej" }));
     expect(onMoreClick).toHaveBeenCalled();
   });
 
   it("klik we wpis woła onEntryClick z kluczem i elementem, nie otwiera „Nowy wpis”", async () => {
-    const { onEntryClick, onDayClick } = wyrenderuj([wystapienie("b1", "2026-11-18", 480)]);
+    const { onEntryClick, onDayClick } = wyrenderuj([
+      wystapienie("b1", "2026-11-18", 480),
+    ]);
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
     await userEvent.click(wpis);
     expect(onEntryClick).toHaveBeenCalledWith("b1:2026-11-18", wpis);
@@ -123,15 +156,23 @@ describe("MonthGrid", () => {
 
   it("przycisk „+” komórki działa z klawiatury i woła onDayClick", async () => {
     const { onDayClick } = wyrenderuj([]);
-    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis 19.11" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Nowy wpis 19.11" }),
+    );
     expect(onDayClick).toHaveBeenCalledTimes(1);
     expect(onDayClick.mock.calls[0][0]).toBe("2026-11-19");
   });
 
   it("wyróżnia dziś i szarzy dni spoza miesiąca", () => {
     wyrenderuj([]);
-    expect(screen.getByTestId("numer-2026-11-17").className).toContain("bg-[#15803d]");
-    expect(screen.getByTestId("numer-2026-10-26").className).toContain("text-[#a3a3a3]");
-    expect(screen.getByTestId("numer-2026-11-10").className).not.toContain("text-[#a3a3a3]");
+    expect(screen.getByTestId("numer-2026-11-17").className).toContain(
+      "bg-[#15803d]",
+    );
+    expect(screen.getByTestId("numer-2026-10-26").className).toContain(
+      "text-[#a3a3a3]",
+    );
+    expect(screen.getByTestId("numer-2026-11-10").className).not.toContain(
+      "text-[#a3a3a3]",
+    );
   });
 });

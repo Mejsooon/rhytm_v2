@@ -5,7 +5,15 @@
 // błąd zostaje w oknie, sukces zamyka je, a dane odświeża rewalidacja strony.
 import { useRef, useState } from "react";
 
-import { Button, FormDialog, Segment, Stepper, Switch, TextField, TimePicker } from "@/components/controls";
+import {
+  Button,
+  FormDialog,
+  Segment,
+  Stepper,
+  Switch,
+  TextField,
+  TimePicker,
+} from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
@@ -21,7 +29,15 @@ const TRYBY: { value: ScheduleType; label: string }[] = [
 
 // Numer dnia (1 = pn … 7 = nd) → skrót i pełna nazwa (do aria-label)
 const SKROTY = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
-const PELNE = ["poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela"];
+const PELNE = [
+  "poniedziałek",
+  "wtorek",
+  "środa",
+  "czwartek",
+  "piątek",
+  "sobota",
+  "niedziela",
+];
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
@@ -68,13 +84,19 @@ function HabitForm({
   today: IsoDate;
 }) {
   // Edycja: wartości z wersji obowiązującej dziś (gdy wszystkie są z przyszłości — pierwsza)
-  const wersja = habit ? (scheduleOn(habit, today) ?? habit.schedules[0] ?? null) : null;
+  const wersja = habit
+    ? (scheduleOn(habit, today) ?? habit.schedules[0] ?? null)
+    : null;
 
   const [name, setName] = useState(habit?.name ?? "");
   const [tryb, setTryb] = useState<ScheduleType>(wersja?.type ?? "daily");
-  const [dni, setDni] = useState<number[]>(wersja?.type === "weekdays" ? wersja.weekdays : []);
+  const [dni, setDni] = useState<number[]>(
+    wersja?.type === "weekdays" ? wersja.weekdays : [],
+  );
   const [razy, setRazy] = useState(wersja?.timesPerWeek ?? 3);
-  const [przypomnienie, setPrzypomnienie] = useState(habit ? habit.remindAt !== null : false);
+  const [przypomnienie, setPrzypomnienie] = useState(
+    habit ? habit.remindAt !== null : false,
+  );
   const [godzina, setGodzina] = useState(habit?.remindAt ?? "20:30");
   const [naDzis, setNaDzis] = useState(habit?.showOnToday ?? true);
   const [pending, setPending] = useState(false);
@@ -83,16 +105,19 @@ function HabitForm({
   const zapisuje = useRef(false);
 
   // Przyciski dni od pierwszego dnia tygodnia z profilu
-  const kolejnosc = weekStart === "mon" ? [1, 2, 3, 4, 5, 6, 7] : [7, 1, 2, 3, 4, 5, 6];
+  const kolejnosc =
+    weekStart === "mon" ? [1, 2, 3, 4, 5, 6, 7] : [7, 1, 2, 3, 4, 5, 6];
 
   const nazwa = name.trim();
-  const mozeZapisac = nazwa !== "" && !(tryb === "weekdays" && dni.length === 0) && !pending;
+  const mozeZapisac =
+    nazwa !== "" && !(tryb === "weekdays" && dni.length === 0) && !pending;
 
   // Zdanie pod harmonogramem (teksty z makiety)
   let podsumowanie = "Codziennie. Seria liczona w dniach.";
   if (tryb === "weekdays") {
     if (dni.length === 0) podsumowanie = "Wybierz przynajmniej jeden dzień.";
-    else if (dni.length === 7) podsumowanie = "Wszystkie dni — to to samo co „Codziennie”.";
+    else if (dni.length === 7)
+      podsumowanie = "Wszystkie dni — to to samo co „Codziennie”.";
     else
       podsumowanie = `${describeSchedule({ validFrom: today, type: "weekdays", weekdays: dni, timesPerWeek: null })}. Pozostałe dni nie psują serii.`;
   } else if (tryb === "times_per_week") {
@@ -131,7 +156,9 @@ function HabitForm({
 
     let wynik: ActionResult;
     try {
-      wynik = habit ? await updateHabit(habit.id, dane) : await createHabit(dane);
+      wynik = habit
+        ? await updateHabit(habit.id, dane)
+        : await createHabit(dane);
     } catch {
       wynik = { ok: false, message: BLAD_ZAPISU };
     }
@@ -177,7 +204,12 @@ function HabitForm({
 
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Harmonogram
-        <Segment ariaLabel="Harmonogram" value={tryb} onChange={setTryb} options={TRYBY} />
+        <Segment
+          ariaLabel="Harmonogram"
+          value={tryb}
+          onChange={setTryb}
+          options={TRYBY}
+        />
         {tryb === "weekdays" && (
           <div className="flex gap-1.5 font-normal">
             {kolejnosc.map((numer) => {
@@ -189,7 +221,11 @@ function HabitForm({
                   aria-pressed={wybrany}
                   aria-label={PELNE[numer - 1]}
                   onClick={() =>
-                    setDni((d) => (d.includes(numer) ? d.filter((n) => n !== numer) : [...d, numer]))
+                    setDni((d) =>
+                      d.includes(numer)
+                        ? d.filter((n) => n !== numer)
+                        : [...d, numer],
+                    )
                   }
                   className={cn(
                     "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
@@ -217,13 +253,19 @@ function HabitForm({
             <span className="text-xs text-[#6b6b6b]">razy w tygodniu</span>
           </div>
         )}
-        <span className="font-mono text-xs font-normal text-[#6b6b6b]">{podsumowanie}</span>
+        <span className="font-mono text-xs font-normal text-[#6b6b6b]">
+          {podsumowanie}
+        </span>
       </div>
 
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Przypomnienie
         <div className="flex flex-wrap items-center gap-2.5 font-normal">
-          <Switch checked={przypomnienie} onChange={setPrzypomnienie} ariaLabel="Przypomnienie push" />
+          <Switch
+            checked={przypomnienie}
+            onChange={setPrzypomnienie}
+            ariaLabel="Przypomnienie push"
+          />
           <span className={przypomnienie ? "" : "text-[#a3a3a3]"}>Push o</span>
           <TimePicker
             clock={clock}
@@ -238,7 +280,11 @@ function HabitForm({
 
       {/* Makieta nie ma tego pola — dodane pod przypomnieniem w tym samym stylu */}
       <div className="flex items-center gap-2.5 text-[13px]">
-        <Switch checked={naDzis} onChange={setNaDzis} ariaLabel="Pokazuj na ekranie Dziś" />
+        <Switch
+          checked={naDzis}
+          onChange={setNaDzis}
+          ariaLabel="Pokazuj na ekranie Dziś"
+        />
         <span>Pokazuj na ekranie Dziś</span>
       </div>
     </FormDialog>

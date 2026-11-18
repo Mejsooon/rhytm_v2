@@ -44,7 +44,10 @@ export async function createBlock(input: {
 
   const parsed = createBlockSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
   const dane = parsed.data;
 
@@ -125,7 +128,10 @@ export async function changeOccurrence(input: {
 
   const parsed = changeOccurrenceSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
+    };
   }
   const dane = parsed.data;
   const patch: BlockPatch = dane.patch ?? {};
@@ -152,9 +158,12 @@ export async function changeOccurrence(input: {
   // Dla "tylko to" liczy się wystąpienie, dla pozostałych zakresów — sam blok.
   if (dane.delete !== true) {
     const minutyBloku =
-      Number(block.start_local.slice(11, 13)) * 60 + Number(block.start_local.slice(14, 16));
-    const bazowyStart = dane.scope === "this" ? occurrence.startMin : minutyBloku;
-    const bazowyCzas = dane.scope === "this" ? occurrence.durationMin : block.duration_min;
+      Number(block.start_local.slice(11, 13)) * 60 +
+      Number(block.start_local.slice(14, 16));
+    const bazowyStart =
+      dane.scope === "this" ? occurrence.startMin : minutyBloku;
+    const bazowyCzas =
+      dane.scope === "this" ? occurrence.durationMin : block.duration_min;
     const wynikowyStart = patch.startMin ?? bazowyStart;
     const wynikowyCzas = patch.durationMin ?? bazowyCzas;
     if (wynikowyStart + wynikowyCzas > 1440) {
@@ -182,7 +191,9 @@ export async function changeOccurrence(input: {
 
     // Termin zadań wystąpienia idzie za wystąpieniem: przeniesione na inny dzień — nowy dzień,
     // przeniesione z powrotem — znowu oryginalny. Dzięki temu zadania są w tygodniu, w którym widać blok.
-    const nowyDzien = (plan.row.new_start_local ?? plan.row.occurrence_date).slice(0, 10);
+    const nowyDzien = (
+      plan.row.new_start_local ?? plan.row.occurrence_date
+    ).slice(0, 10);
     const { error: bladZadan } = await supabase
       .from("tasks")
       .update({ due_date: nowyDzien })
@@ -198,17 +209,29 @@ export async function changeOccurrence(input: {
       .delete()
       .eq("id", block.id)
       .select("id");
-    if (error || !usuniete || usuniete.length === 0) return { ok: false, message: BLAD_ZAPISU };
+    if (error || !usuniete || usuniete.length === 0)
+      return { ok: false, message: BLAD_ZAPISU };
   }
 
   if (plan.kind === "split") {
     // Nowe powtarzanie musi obejmować dzień, od którego dzielimy serię
     const noweRec = patch.recurrence;
-    if (!plan.delete && noweRec?.until !== undefined && noweRec.until < plan.from) {
+    if (
+      !plan.delete &&
+      noweRec?.until !== undefined &&
+      noweRec.until < plan.from
+    ) {
       return { ok: false, message: BLAD_UNTIL };
     }
-    if (!plan.delete && noweRec && normalizeSeriesStart(plan.from, noweRec) !== plan.from) {
-      return { ok: false, message: "Nowe powtarzanie musi obejmować ten dzień." };
+    if (
+      !plan.delete &&
+      noweRec &&
+      normalizeSeriesStart(plan.from, noweRec) !== plan.from
+    ) {
+      return {
+        ok: false,
+        message: "Nowe powtarzanie musi obejmować ten dzień.",
+      };
     }
     const { error } = await supabase.rpc("split_block_series", {
       p_block_id: block.id,
@@ -244,22 +267,33 @@ export async function changeOccurrence(input: {
     const p = plan.patch;
     const dataBloku = block.start_local.slice(0, 10);
     const minutyBloku =
-      Number(block.start_local.slice(11, 13)) * 60 + Number(block.start_local.slice(14, 16));
+      Number(block.start_local.slice(11, 13)) * 60 +
+      Number(block.start_local.slice(14, 16));
 
     const nowyStart = p.startMin ?? minutyBloku;
 
-    const zmiany: Database["public"]["Tables"]["blocks"]["Update"] = { updated_at: new Date().toISOString() };
+    const zmiany: Database["public"]["Tables"]["blocks"]["Update"] = {
+      updated_at: new Date().toISOString(),
+    };
     if (p.title !== undefined) zmiany.title = p.title;
     if (p.categoryId !== undefined) zmiany.category_id = p.categoryId;
     if (p.note !== undefined) zmiany.note = p.note;
     if (p.remind !== undefined) zmiany.remind = p.remind;
     if (p.durationMin !== undefined) zmiany.duration_min = p.durationMin;
-    if (p.recurrence !== undefined) zmiany.recurrence = p.recurrence as Json | null;
+    if (p.recurrence !== undefined)
+      zmiany.recurrence = p.recurrence as Json | null;
 
     // Start zmieniamy, gdy ruszył dzień, godzina albo powtarzalność
-    const rec = p.recurrence !== undefined ? p.recurrence : (block.recurrence as Recurrence | null);
+    const rec =
+      p.recurrence !== undefined
+        ? p.recurrence
+        : (block.recurrence as Recurrence | null);
     let dataStartu = dataBloku;
-    if (p.date !== undefined || p.startMin !== undefined || p.recurrence !== undefined) {
+    if (
+      p.date !== undefined ||
+      p.startMin !== undefined ||
+      p.recurrence !== undefined
+    ) {
       // Seria nie może zaczynać się w dniu, który do niej nie należy („duch” na starcie)
       dataStartu = normalizeSeriesStart(p.date ?? dataBloku, rec);
       zmiany.start_local = `${dataStartu}T${godzinaZMinut(nowyStart)}`;
@@ -284,17 +318,22 @@ export async function changeOccurrence(input: {
         .from("tasks")
         .select("id, occurrence_date")
         .eq("block_id", block.id);
-      const przypiete = (zadania ?? []).filter((z) => z.occurrence_date !== null);
+      const przypiete = (zadania ?? []).filter(
+        (z) => z.occurrence_date !== null,
+      );
       if (przypiete.length > 0) {
         const daty = przypiete.map((z) => z.occurrence_date as string).sort();
         const nowyBlok = {
           ...block,
           start_local: zmiany.start_local ?? block.start_local,
-          recurrence: zmiany.recurrence === undefined ? block.recurrence : zmiany.recurrence,
+          recurrence:
+            zmiany.recurrence === undefined
+              ? block.recurrence
+              : zmiany.recurrence,
         };
         const dniSerii = new Set(
-          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map((o) =>
-            o.key.slice(-10),
+          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map(
+            (o) => o.key.slice(-10),
           ),
         );
         const doOdpiecia = przypiete
@@ -331,11 +370,14 @@ export async function changeOccurrence(input: {
         const nowyBlok = {
           ...block,
           start_local: zmiany.start_local ?? block.start_local,
-          recurrence: zmiany.recurrence === undefined ? block.recurrence : zmiany.recurrence,
+          recurrence:
+            zmiany.recurrence === undefined
+              ? block.recurrence
+              : zmiany.recurrence,
         };
         const dniSerii = new Set(
-          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map((o) =>
-            o.key.slice(-10),
+          expandOccurrences([nowyBlok], [], daty[0], daty[daty.length - 1]).map(
+            (o) => o.key.slice(-10),
           ),
         );
         const sieroty = daty.filter((d) => !dniSerii.has(d));

@@ -30,7 +30,9 @@ describe("tokeny globals.css", () => {
   }
 
   it("--tabbar-h: 56 px treści paska + max(8 px, safe-area)", () => {
-    expect(css).toMatch(/--tabbar-h:\s*calc\(56px \+ max\(8px, env\(safe-area-inset-bottom\)\)\)/);
+    expect(css).toMatch(
+      /--tabbar-h:\s*calc\(56px \+ max\(8px, env\(safe-area-inset-bottom\)\)\)/,
+    );
   });
 
   it("nie ma ciemnego motywu", () => {

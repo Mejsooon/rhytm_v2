@@ -5,7 +5,11 @@
 import Link from "next/link";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { formatClockTime } from "@/lib/time/timezones";
 import { weekdayOf } from "./view-range";
 
@@ -51,7 +55,11 @@ export function NewEntryPopover({
         collisionPadding={12}
         // Klik w siatkę przełącza wpis w kalendarzu (onSlotClick), więc nie zamykamy go tu dwa razy
         onInteractOutside={(e) => {
-          if (e.target instanceof Node && anchor.parentElement?.contains(e.target)) e.preventDefault();
+          if (
+            e.target instanceof Node &&
+            anchor.parentElement?.contains(e.target)
+          )
+            e.preventDefault();
         }}
         className="flex w-[260px] flex-col gap-0.5 rounded-[10px] border-[#e0e0e0] p-2 text-sm shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
       >
@@ -67,7 +75,11 @@ export function NewEntryPopover({
             ✕
           </button>
         </div>
-        <button type="button" onClick={onBlock} className={`${OPCJA} cursor-pointer border-0 bg-transparent`}>
+        <button
+          type="button"
+          onClick={onBlock}
+          className={`${OPCJA} cursor-pointer border-0 bg-transparent`}
+        >
           <span
             aria-hidden="true"
             className="flex size-7 items-center justify-center rounded-md border border-[#bbe5cc] bg-[#f0fdf4] text-xs text-[#15803d]"
@@ -76,7 +88,9 @@ export function NewEntryPopover({
           </span>
           <span className="flex flex-col">
             <span className="text-[13px] font-medium">Blok</span>
-            <span className="text-xs text-[#666666]">czas na zadania, z kategorią</span>
+            <span className="text-xs text-[#666666]">
+              czas na zadania, z kategorią
+            </span>
           </span>
         </button>
         <Link href={`/sport?nowy=bieg&${parametry}`} className={OPCJA}>

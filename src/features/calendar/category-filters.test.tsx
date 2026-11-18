@@ -21,13 +21,27 @@ function kat(over: Partial<CategoryRow>): CategoryRow {
 const kategorie = [
   kat({}),
   kat({ id: "c2", name: "Dom", color: "#a16207", hidden: true, position: 2 }),
-  kat({ id: "c3", name: "Sport", color: "#c2410c", is_system: true, position: 3 }),
+  kat({
+    id: "c3",
+    name: "Sport",
+    color: "#c2410c",
+    is_system: true,
+    position: 3,
+  }),
 ];
 
 describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
   it("przycisk pokazuje widoczne/wszystkie i kropki widocznych kategorii", () => {
-    render(<CategoryFilters categories={kategorie} onToggle={() => {}} onAdd={() => {}} />);
-    const przycisk = screen.getByRole("button", { name: /^Kategorie, widoczne/ });
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+      />,
+    );
+    const przycisk = screen.getByRole("button", {
+      name: /^Kategorie, widoczne/,
+    });
     // Nazwa dostępna czytelna dla czytnika, licznik widać na przycisku
     expect(przycisk).toHaveAccessibleName("Kategorie, widoczne 2 z 3");
     expect(przycisk).toHaveTextContent("Kategorie2/3");
@@ -36,43 +50,93 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
   });
 
   it("najwyżej 4 kropki przy wielu widocznych kategoriach", () => {
-    const duzo = Array.from({ length: 6 }, (_, i) => kat({ id: `k${i}`, name: `K${i}`, position: i }));
-    render(<CategoryFilters categories={duzo} onToggle={() => {}} onAdd={() => {}} />);
-    expect(screen.getByRole("button", { name: "Kategorie, widoczne 6 z 6" })).toHaveTextContent("6/6");
+    const duzo = Array.from({ length: 6 }, (_, i) =>
+      kat({ id: `k${i}`, name: `K${i}`, position: i }),
+    );
+    render(
+      <CategoryFilters
+        categories={duzo}
+        onToggle={() => {}}
+        onAdd={() => {}}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Kategorie, widoczne 6 z 6" }),
+    ).toHaveTextContent("6/6");
     expect(screen.getByTestId("kropki-kategorii").children).toHaveLength(4);
   });
 
   it("menu ma pole wyboru przy każdej kategorii; klik woła onToggle i menu zostaje otwarte", async () => {
     const onToggle = vi.fn();
-    render(<CategoryFilters categories={kategorie} onToggle={onToggle} onAdd={() => {}} />);
-    await userEvent.click(screen.getByRole("button", { name: /^Kategorie, widoczne/ }));
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={onToggle}
+        onAdd={() => {}}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Kategorie, widoczne/ }),
+    );
     // Menu jest opisane przyciskiem (aria-labelledby z Radix): „Kategorie 2/3”
-    const menu = await screen.findByRole("menu", { name: "Kategorie, widoczne 2 z 3" });
+    const menu = await screen.findByRole("menu", {
+      name: "Kategorie, widoczne 2 z 3",
+    });
     expect(menu).toBeInTheDocument();
-    expect(screen.getByRole("menuitemcheckbox", { name: /Studia/ })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("menuitemcheckbox", { name: /Dom/ })).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("menuitemcheckbox", { name: /Sport/ })).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("menuitemcheckbox", { name: /Studia/ }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("menuitemcheckbox", { name: /Dom/ }),
+    ).toHaveAttribute("aria-checked", "false");
+    expect(
+      screen.getByRole("menuitemcheckbox", { name: /Sport/ }),
+    ).toHaveAttribute("aria-checked", "true");
 
-    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: /Dom/ }));
+    await userEvent.click(
+      screen.getByRole("menuitemcheckbox", { name: /Dom/ }),
+    );
     expect(onToggle).toHaveBeenCalledWith(kategorie[1]);
-    expect(screen.getByRole("menu", { name: "Kategorie, widoczne 2 z 3" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("menu", { name: "Kategorie, widoczne 2 z 3" }),
+    ).toBeInTheDocument();
   });
 
   it("Esc zamyka menu, a fokus wraca na przycisk", async () => {
-    render(<CategoryFilters categories={kategorie} onToggle={() => {}} onAdd={() => {}} />);
-    const przycisk = screen.getByRole("button", { name: /^Kategorie, widoczne/ });
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+      />,
+    );
+    const przycisk = screen.getByRole("button", {
+      name: /^Kategorie, widoczne/,
+    });
     await userEvent.click(przycisk);
     await screen.findByRole("menu", { name: "Kategorie, widoczne 2 z 3" });
     await userEvent.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
+    );
     expect(przycisk).toHaveFocus();
   });
 
   it("„+ Kategoria” zamyka menu i woła onAdd", async () => {
     const onAdd = vi.fn();
-    render(<CategoryFilters categories={kategorie} onToggle={() => {}} onAdd={onAdd} />);
-    await userEvent.click(screen.getByRole("button", { name: /^Kategorie, widoczne/ }));
-    await userEvent.click(await screen.findByRole("menuitem", { name: "+ Kategoria" }));
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={onAdd}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Kategorie, widoczne/ }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "+ Kategoria" }),
+    );
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
@@ -80,51 +144,99 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
 
 describe("CategorySheet (arkusz kategorii na telefonie)", () => {
   it("ikona ma etykietę i otwiera arkusz z przełącznikiem przy każdej kategorii", async () => {
-    render(<CategorySheet categories={kategorie} onToggle={() => {}} onAdd={() => {}} />);
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     const arkusz = await screen.findByRole("dialog", { name: "Kategorie" });
     expect(arkusz).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: "Pokaż kategorię Studia" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("switch", { name: "Pokaż kategorię Dom" })).toHaveAttribute("aria-checked", "false");
+    expect(
+      screen.getByRole("switch", { name: "Pokaż kategorię Studia" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("switch", { name: "Pokaż kategorię Dom" }),
+    ).toHaveAttribute("aria-checked", "false");
     expect(screen.getAllByRole("switch")).toHaveLength(3);
   });
 
   it("przełącznik woła onToggle z kategorią", async () => {
     const onToggle = vi.fn();
-    render(<CategorySheet categories={kategorie} onToggle={onToggle} onAdd={() => {}} />);
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={onToggle}
+        onAdd={() => {}}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
-    await userEvent.click(await screen.findByRole("switch", { name: "Pokaż kategorię Sport" }));
+    await userEvent.click(
+      await screen.findByRole("switch", { name: "Pokaż kategorię Sport" }),
+    );
     expect(onToggle).toHaveBeenCalledWith(kategorie[2]);
   });
 
   it("stuknięcie w cały wiersz (nazwę) przełącza kategorię; przełącznik nie woła onToggle dwa razy", async () => {
     const onToggle = vi.fn();
-    render(<CategorySheet categories={kategorie} onToggle={onToggle} onAdd={() => {}} />);
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={onToggle}
+        onAdd={() => {}}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     await userEvent.click(await screen.findByText("Dom"));
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenLastCalledWith(kategorie[1]);
-    await userEvent.click(screen.getByRole("switch", { name: "Pokaż kategorię Dom" }));
+    await userEvent.click(
+      screen.getByRole("switch", { name: "Pokaż kategorię Dom" }),
+    );
     expect(onToggle).toHaveBeenCalledTimes(2);
     // Wiersz ma co najmniej 52 px wysokości (pole dotyku)
-    expect(screen.getByTestId("wiersz-kategorii-c2").className).toContain("min-h-[52px]");
+    expect(screen.getByTestId("wiersz-kategorii-c2").className).toContain(
+      "min-h-[52px]",
+    );
   });
 
   it("„+ Kategoria” zamyka arkusz i woła onAdd", async () => {
     const onAdd = vi.fn();
-    render(<CategorySheet categories={kategorie} onToggle={() => {}} onAdd={onAdd} />);
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={onAdd}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
-    await userEvent.click(await screen.findByRole("button", { name: "+ Kategoria" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "+ Kategoria" }),
+    );
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
-    expect(screen.queryByRole("dialog", { name: "Kategorie" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Kategorie" }),
+    ).not.toBeInTheDocument();
   });
 
   it("„Zamknij” zamyka arkusz bez wołania onAdd", async () => {
     const onAdd = vi.fn();
-    render(<CategorySheet categories={kategorie} onToggle={() => {}} onAdd={onAdd} />);
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={onAdd}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Zamknij" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Zamknij" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
     expect(onAdd).not.toHaveBeenCalled();
   });
 });

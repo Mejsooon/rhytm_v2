@@ -29,7 +29,10 @@ export function CategoryDialog({
   // Domyślnie pierwszy wolny kolor (jak w makiecie, gdzie zajęte są pierwsze cztery)
   const [color, setColor] = useState(
     category?.color ??
-      (CATEGORY_COLORS.find((c) => !usedColors.includes(c.hex)) ?? CATEGORY_COLORS[0]).hex,
+      (
+        CATEGORY_COLORS.find((c) => !usedColors.includes(c.hex)) ??
+        CATEGORY_COLORS[0]
+      ).hex,
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -65,7 +68,11 @@ export function CategoryDialog({
             </p>
           )}
           <Button onClick={onCancel}>Anuluj</Button>
-          <Button variant="primary" disabled={nazwa === "" || pending} onClick={zapisz}>
+          <Button
+            variant="primary"
+            disabled={nazwa === "" || pending}
+            onClick={zapisz}
+          >
             {edycja ? "Zapisz" : "Dodaj kategorię"}
           </Button>
         </>
@@ -114,15 +121,22 @@ export function CategoryDialog({
         Podgląd
         <div className="flex items-center gap-3 font-normal">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0e0e0] bg-white px-2.5 py-1 text-xs text-[#404040]">
-            <span aria-hidden="true" className="size-2 rounded-full" style={{ background: color }} />
-            {nazwa || "Kategoria"} <span className="font-mono text-[#6b6b6b]">0</span>
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full"
+              style={{ background: color }}
+            />
+            {nazwa || "Kategoria"}{" "}
+            <span className="font-mono text-[#6b6b6b]">0</span>
           </span>
           <div
             className="flex-1 rounded-md border border-[#e0e0e0] px-2.5 py-1.5 text-[13px]"
             style={{ borderLeft: `3px solid ${color}` }}
           >
             <div className="font-medium">Angielski</div>
-            <div className="font-mono text-[11px] text-[#404040]">18:00–19:00</div>
+            <div className="font-mono text-[11px] text-[#404040]">
+              18:00–19:00
+            </div>
           </div>
         </div>
       </div>

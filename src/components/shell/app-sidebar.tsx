@@ -6,12 +6,17 @@ import { File, Plus, Search, Settings } from "lucide-react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { MonoLabel } from "@/components/controls";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AccountPopover, type SidebarUser } from "./account-popover";
 import { NAV_MODULES } from "./nav-items";
 
-const POZYCJA = "flex items-center gap-2.5 rounded-md px-2 py-[7px] no-underline transition-colors";
+const POZYCJA =
+  "flex items-center gap-2.5 rounded-md px-2 py-[7px] no-underline transition-colors";
 
 // Sidebar web (Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
 // Etapy 6+ przekażą listę stron w `pages`; teraz jest pusta i widać tylko „Nowa strona”.
@@ -23,7 +28,8 @@ export function AppSidebar({
   pages?: { id: string; title: string; icon: string }[];
 }) {
   const sciezka = usePathname();
-  const aktywna = (href: string) => sciezka === href || sciezka.startsWith(`${href}/`);
+  const aktywna = (href: string) =>
+    sciezka === href || sciezka.startsWith(`${href}/`);
   const klasaPozycji = (href: string) =>
     cn(
       POZYCJA,
@@ -51,7 +57,9 @@ export function AppSidebar({
           >
             <Search size={15} aria-hidden="true" />
             <span className="flex-1">Szukaj…</span>
-            <span className="rounded border border-[#e0e0e0] px-[5px] font-mono text-[11px]">⌘K</span>
+            <span className="rounded border border-[#e0e0e0] px-[5px] font-mono text-[11px]">
+              ⌘K
+            </span>
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">Wkrótce</TooltipContent>

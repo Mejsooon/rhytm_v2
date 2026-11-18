@@ -2,7 +2,12 @@ import { createHmac } from "node:crypto";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { RECOVERY_COOKIE, RECOVERY_TTL_S, utworzZnacznikResetu, znacznikResetuPasuje } from "./recovery";
+import {
+  RECOVERY_COOKIE,
+  RECOVERY_TTL_S,
+  utworzZnacznikResetu,
+  znacznikResetuPasuje,
+} from "./recovery";
 
 const SEKRET = "sekret-testowy-do-hmac";
 const TERAZ = Date.UTC(2026, 10, 16, 12, 0, 0);
@@ -23,7 +28,11 @@ describe("znacznik resetu hasła (HMAC)", () => {
     const [id, wygasa, podpis] = wartosc.split(".");
     expect(id).toBe(U1);
     expect(Number(wygasa)).toBe(TERAZ / 1000 + 900);
-    expect(podpis).toBe(createHmac("sha256", SEKRET).update(`${U1}.${wygasa}`).digest("base64url"));
+    expect(podpis).toBe(
+      createHmac("sha256", SEKRET)
+        .update(`${U1}.${wygasa}`)
+        .digest("base64url"),
+    );
   });
 
   it("poprawny znacznik dla tego samego użytkownika przed wygaśnięciem → true", () => {
@@ -37,13 +46,21 @@ describe("znacznik resetu hasła (HMAC)", () => {
     expect(znacznikResetuPasuje("", U1, TERAZ)).toBe(false);
     const wygasa = TERAZ / 1000 + 900;
     expect(znacznikResetuPasuje(`${U1}.${wygasa}`, U1, TERAZ)).toBe(false);
-    expect(znacznikResetuPasuje(`${U1}.${wygasa}.zlypodpis`, U1, TERAZ)).toBe(false);
+    expect(znacznikResetuPasuje(`${U1}.${wygasa}.zlypodpis`, U1, TERAZ)).toBe(
+      false,
+    );
     // Podpis innym sekretem
-    const obcy = createHmac("sha256", "inny").update(`${U1}.${wygasa}`).digest("base64url");
-    expect(znacznikResetuPasuje(`${U1}.${wygasa}.${obcy}`, U1, TERAZ)).toBe(false);
+    const obcy = createHmac("sha256", "inny")
+      .update(`${U1}.${wygasa}`)
+      .digest("base64url");
+    expect(znacznikResetuPasuje(`${U1}.${wygasa}.${obcy}`, U1, TERAZ)).toBe(
+      false,
+    );
     // Przedłużony czas wygaśnięcia przy starym podpisie
     const [, , podpis] = utworzZnacznikResetu(U1, TERAZ).split(".");
-    expect(znacznikResetuPasuje(`${U1}.${wygasa + 3600}.${podpis}`, U1, TERAZ)).toBe(false);
+    expect(
+      znacznikResetuPasuje(`${U1}.${wygasa + 3600}.${podpis}`, U1, TERAZ),
+    ).toBe(false);
   });
 
   it("znacznik innego użytkownika → false", () => {
@@ -58,7 +75,11 @@ describe("znacznik resetu hasła (HMAC)", () => {
 
   it("brak RECOVERY_COOKIE_SECRET → czytelny błąd (bez zapasowego sekretu)", () => {
     vi.stubEnv("RECOVERY_COOKIE_SECRET", "");
-    expect(() => utworzZnacznikResetu(U1, TERAZ)).toThrow(/RECOVERY_COOKIE_SECRET/);
-    expect(() => znacznikResetuPasuje("a.b.c", U1, TERAZ)).toThrow(/RECOVERY_COOKIE_SECRET/);
+    expect(() => utworzZnacznikResetu(U1, TERAZ)).toThrow(
+      /RECOVERY_COOKIE_SECRET/,
+    );
+    expect(() => znacznikResetuPasuje("a.b.c", U1, TERAZ)).toThrow(
+      /RECOVERY_COOKIE_SECRET/,
+    );
   });
 });

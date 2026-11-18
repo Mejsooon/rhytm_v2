@@ -54,7 +54,13 @@ export function HabitNotes({
               : "flex gap-3 border-b border-[#f0f0f0] px-4 py-3"
           }
         >
-          <span className={phone ? "font-mono text-[11px] text-[#6b6b6b]" : "font-mono text-xs text-[#6b6b6b]"}>
+          <span
+            className={
+              phone
+                ? "font-mono text-[11px] text-[#6b6b6b]"
+                : "font-mono text-xs text-[#6b6b6b]"
+            }
+          >
             {`${n.date.slice(8)}.${n.date.slice(5, 7)}`}
           </span>
           <span className="min-w-0 break-words">{n.text}</span>
@@ -89,7 +95,9 @@ export function HabitNotes({
     return (
       <section>
         <h2 className="m-0 mb-2 text-[17px] font-semibold">Notatki</h2>
-        <div className="rounded-xl border border-[#eaeaea] bg-white">{karta}</div>
+        <div className="rounded-xl border border-[#eaeaea] bg-white">
+          {karta}
+        </div>
       </section>
     );
   }

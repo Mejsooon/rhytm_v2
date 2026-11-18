@@ -30,13 +30,21 @@ async function Dzis() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const name = profil?.display_name?.trim() || (user.email ?? "").split("@")[0] || "Konto";
+  const name =
+    profil?.display_name?.trim() || (user.email ?? "").split("@")[0] || "Konto";
   const strefa = safeTimezone(profil?.timezone);
 
   // „Wtorek · 17 listopada”: dzień tygodnia z wielkiej litery, miesiąc w dopełniaczu, w strefie profilu
   const teraz = new Date();
-  const dzienTygodnia = new Intl.DateTimeFormat("pl-PL", { weekday: "long", timeZone: strefa }).format(teraz);
-  const dataKrotka = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", timeZone: strefa }).format(teraz);
+  const dzienTygodnia = new Intl.DateTimeFormat("pl-PL", {
+    weekday: "long",
+    timeZone: strefa,
+  }).format(teraz);
+  const dataKrotka = new Intl.DateTimeFormat("pl-PL", {
+    day: "numeric",
+    month: "long",
+    timeZone: strefa,
+  }).format(teraz);
   const etykieta = `${dzienTygodnia.charAt(0).toUpperCase()}${dzienTygodnia.slice(1)} · ${dataKrotka}`;
 
   // Liczniki pierwszych kroków: samo zliczenie wierszy (RLS ogranicza je do własnych); treningi dopiero w Etapie 4

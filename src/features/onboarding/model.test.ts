@@ -33,7 +33,8 @@ const draft: OnboardingDraft = {
   roles: ["student", "sport"],
   studyField: "Cyberbezpieczeństwo",
   goals: ["plan", "sport", "habits", "subs", "proj"],
-  goalType: "workouts",
+  workoutsOn: true,
+  kmOn: false,
   weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
@@ -189,15 +190,29 @@ describe("canContinue", () => {
     expect(canContinue(1, draft)).toBe(true);
     expect(canContinue(4, draft)).toBe(true);
   });
-  it("krok 3: zły cel wybranego rodzaju blokuje „Dalej”", () => {
+  it("krok 3: zła liczba włączonego celu albo brak celów blokuje „Dalej”", () => {
     expect(canContinue(3, draft)).toBe(true);
+    expect(canContinue(3, { ...draft, workoutsOn: false, kmOn: false })).toBe(
+      false,
+    );
+    expect(canContinue(3, { ...draft, kmOn: true, weeklyKm: 0 })).toBe(false);
     expect(canContinue(3, { ...draft, weeklyWorkouts: 15 })).toBe(false);
     expect(
-      canContinue(3, { ...draft, goalType: "km", weeklyKm: Number.NaN }),
+      canContinue(3, {
+        ...draft,
+        workoutsOn: false,
+        kmOn: true,
+        weeklyKm: Number.NaN,
+      }),
     ).toBe(false);
-    // Drugi rodzaj nie jest widoczny, więc go nie sprawdzamy
+    // Wyłączonego celu nie sprawdzamy
     expect(
-      canContinue(3, { ...draft, goalType: "km", weeklyWorkouts: 15 }),
+      canContinue(3, {
+        ...draft,
+        workoutsOn: false,
+        kmOn: true,
+        weeklyWorkouts: 15,
+      }),
     ).toBe(true);
     // Pole celu jest zawsze widoczne, nawet gdy w szkicu brak „sport”
     expect(
@@ -211,7 +226,7 @@ describe("buildSummary", () => {
     expect(buildSummary(draft, "web", "Warszawa")).toEqual([
       { key: "Profil", value: "Mejson · Europe/Warsaw", step: 1 },
       { key: "Kategorie", value: "Studia, Sport", step: 2 },
-      { key: "Cel treningowy", value: "3 treningi / tydz.", step: 3 },
+      { key: "Cele treningowe", value: "3 treningi / tydz.", step: 3 },
       { key: "Strony", value: "Subscriptions, Projects", step: 5 },
       { key: "Przypomnienia", value: "3 włączone", step: 6 },
     ]);
@@ -220,7 +235,7 @@ describe("buildSummary", () => {
     expect(buildSummary(draft, "mobile", "Warszawa")).toEqual([
       { key: "Profil", value: "Mejson · Warszawa · tydzień od pn", step: 1 },
       { key: "Kategorie", value: "Studia, Sport", step: 2 },
-      { key: "Cel treningowy", value: "3 treningi / tydz.", step: 3 },
+      { key: "Cele treningowe", value: "3 treningi / tydz.", step: 3 },
       { key: "Strony", value: "Subscriptions, Projects", step: 5 },
       {
         key: "Przypomnienia",
@@ -245,29 +260,19 @@ describe("buildSummary", () => {
     expect(s[3].value).toBe("brak");
     expect(s[4].value).toBe("3 z 4 włączone");
   });
-  it("cel w km i odmiana treningów w wierszu „Cel treningowy”", () => {
+  it("wiersz „Cele treningowe”: jeden albo oba cele, z odmianą", () => {
     const wiersz = (d: OnboardingDraft) =>
-      buildSummary(d, "web", "Warszawa").find((w) => w.key === "Cel treningowy")
-        ?.value;
-    expect(wiersz({ ...draft, goalType: "km", weeklyKm: 25 })).toBe(
-      "25 km / tydz.",
-    );
+      buildSummary(d, "web", "Warszawa").find(
+        (w) => w.key === "Cele treningowe",
+      )?.value;
+    expect(
+      wiersz({ ...draft, workoutsOn: false, kmOn: true, weeklyKm: 25 }),
+    ).toBe("25 km / tydz.");
     expect(wiersz({ ...draft, weeklyWorkouts: 1 })).toBe("1 trening / tydz.");
     expect(wiersz({ ...draft, weeklyWorkouts: 5 })).toBe("5 treningów / tydz.");
-  });
-  it("wiersz „Cel treningowy” jest zawsze (Treningi to cel bazowy)", () => {
-    const klucze = buildSummary(
-      { ...draft, goals: ["plan"] },
-      "mobile",
-      "Warszawa",
-    ).map((w) => w.key);
-    expect(klucze).toEqual([
-      "Profil",
-      "Kategorie",
-      "Cel treningowy",
-      "Strony",
-      "Przypomnienia",
-    ]);
+    expect(wiersz({ ...draft, kmOn: true, weeklyKm: 22.5 })).toBe(
+      "3 treningi / tydz. · 22,5 km / tydz.",
+    );
   });
 });
 
@@ -288,7 +293,8 @@ describe("stepPayload", () => {
     });
     expect(stepPayload(3, draft)).toEqual({
       goals: ["plan", "sport", "habits", "subs", "proj"],
-      weekly_goal_type: "workouts",
+      workouts_goal_on: true,
+      km_goal_on: false,
       weekly_workouts_goal: 3,
       weekly_km_goal: 25,
       sleep_goal_min: 480,
@@ -297,12 +303,14 @@ describe("stepPayload", () => {
     expect(
       stepPayload(3, {
         ...draft,
-        goalType: "km",
+        workoutsOn: false,
+        kmOn: true,
         weeklyKm: 42,
         weeklyWorkouts: Number.NaN,
       }),
     ).toMatchObject({
-      weekly_goal_type: "km",
+      workouts_goal_on: false,
+      km_goal_on: true,
       weekly_workouts_goal: 3,
       weekly_km_goal: 42,
     });

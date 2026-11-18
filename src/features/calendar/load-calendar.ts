@@ -108,7 +108,9 @@ export async function loadCalendar(
         .select("*")
         .eq("user_id", userId)
         .order("position", { ascending: true }),
-      profile ? Promise.resolve(profile) : loadCalendarProfile(supabase, userId),
+      profile
+        ? Promise.resolve(profile)
+        : loadCalendarProfile(supabase, userId),
     ]);
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty kalendarz
@@ -117,12 +119,18 @@ export async function loadCalendar(
   }
 
   const exceptions = (wyjatkiRes.data ?? []) as ExceptionRow[];
-  const blocks = pickBlocksForRange((blokiRes.data ?? []) as BlockRow[], from, to);
+  const blocks = pickBlocksForRange(
+    (blokiRes.data ?? []) as BlockRow[],
+    from,
+    to,
+  );
 
   // Wyjątek przenoszący wystąpienie do zakresu może należeć do bloku spoza wybranych
   const znane = new Set(blocks.map((b) => b.id));
   const brakujace = [
-    ...new Set(exceptions.map((w) => w.block_id).filter((id) => !znane.has(id))),
+    ...new Set(
+      exceptions.map((w) => w.block_id).filter((id) => !znane.has(id)),
+    ),
   ];
   if (brakujace.length > 0) {
     const { data, error } = await supabase
@@ -139,7 +147,9 @@ export async function loadCalendar(
   // (blok, oryginalna data).
   const tasks = (zadaniaRes.data ?? []) as TaskRow[];
   const spozaZakresu = exceptions.filter(
-    (w) => w.kind === "modified" && (w.occurrence_date < from || w.occurrence_date > to),
+    (w) =>
+      w.kind === "modified" &&
+      (w.occurrence_date < from || w.occurrence_date > to),
   );
   if (spozaZakresu.length > 0) {
     const { data, error } = await supabase
@@ -147,9 +157,13 @@ export async function loadCalendar(
       .select("*")
       .eq("user_id", userId)
       .in("block_id", [...new Set(spozaZakresu.map((w) => w.block_id))])
-      .in("occurrence_date", [...new Set(spozaZakresu.map((w) => w.occurrence_date))]);
+      .in("occurrence_date", [
+        ...new Set(spozaZakresu.map((w) => w.occurrence_date)),
+      ]);
     if (error) throw new Error(error.message);
-    const pary = new Set(spozaZakresu.map((w) => `${w.block_id}:${w.occurrence_date}`));
+    const pary = new Set(
+      spozaZakresu.map((w) => `${w.block_id}:${w.occurrence_date}`),
+    );
     const znaneZadania = new Set(tasks.map((t) => t.id));
     for (const zadanie of (data ?? []) as TaskRow[]) {
       if (znaneZadania.has(zadanie.id)) continue;

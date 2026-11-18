@@ -65,13 +65,19 @@ export function DeleteHabitDialog({
           <Button disabled={pending} onClick={() => onOpenChange(false)}>
             Anuluj
           </Button>
-          <Button variant="destructive" disabled={pending} onClick={() => void usun()}>
+          <Button
+            variant="destructive"
+            disabled={pending}
+            onClick={() => void usun()}
+          >
             Usuń
           </Button>
         </>
       }
     >
-      <p className="m-0 text-[13px] text-[#666666]">Historia odhaczeń i notatki zostaną usunięte.</p>
+      <p className="m-0 text-[13px] text-[#666666]">
+        Historia odhaczeń i notatki zostaną usunięte.
+      </p>
     </FormDialog>
   );
 }

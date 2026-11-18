@@ -101,8 +101,12 @@ export function DeleteBlockDialog({
             className="mx-auto h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4] min-[800px]:hidden"
           />
           <div>
-            <Dialog.Title className="m-0 text-base font-semibold">Usunąć blok?</Dialog.Title>
-            <Dialog.Description className="m-0 mt-1 text-[13px] text-[#666666]">{opis}</Dialog.Description>
+            <Dialog.Title className="m-0 text-base font-semibold">
+              Usunąć blok?
+            </Dialog.Title>
+            <Dialog.Description className="m-0 mt-1 text-[13px] text-[#666666]">
+              {opis}
+            </Dialog.Description>
           </div>
           {blad && (
             <p role="alert" className="m-0 text-xs text-[#b91c1c]">
@@ -111,14 +115,21 @@ export function DeleteBlockDialog({
           )}
           {/* Web: przyciski od razu pod opisem, bez szarego paska; telefon: dwa pełne przyciski */}
           <div className="flex justify-end gap-2 max-[799px]:flex-col-reverse">
-            <Button size="sm" className="max-[799px]:h-12" disabled={pending} onClick={onCancel}>
+            <Button
+              size="sm"
+              className="max-[799px]:h-12"
+              disabled={pending}
+              onClick={onCancel}
+            >
               Anuluj
             </Button>
             <Button
               size="sm"
               variant="destructive"
               className="max-[799px]:h-12"
-              disabled={pending} onClick={() => usun("all")}>
+              disabled={pending}
+              onClick={() => usun("all")}
+            >
               Usuń
             </Button>
           </div>

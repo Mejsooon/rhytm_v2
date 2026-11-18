@@ -4,28 +4,60 @@
 import { useState } from "react";
 
 import { Button, Segment } from "@/components/controls";
-import { formatDatePl, monthTitlePl, type IsoDate } from "@/components/controls/calendar-math";
+import {
+  formatDatePl,
+  monthTitlePl,
+  type IsoDate,
+} from "@/components/controls/calendar-math";
 import { cn } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
-import { heatmapMonth, heatmapWeeks, type Checks, type DayCell, type Habit } from "./model";
+import {
+  heatmapMonth,
+  heatmapWeeks,
+  type Checks,
+  type DayCell,
+  type Habit,
+} from "./model";
 
 type Tryb = "miesiac" | "13" | "26" | "52";
 
 const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
-const MIESIACE_KROTKO = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+const MIESIACE_KROTKO = [
+  "sty",
+  "lut",
+  "mar",
+  "kwi",
+  "maj",
+  "cze",
+  "lip",
+  "sie",
+  "wrz",
+  "paź",
+  "lis",
+  "gru",
+];
 const MAKS_WSTECZ = 12; // miesięcy
 
 // Kolor komórki i treść dymka; przyszłość bez dymka.
 // Progi z makiety: 0% → najjaśniejszy, ≤ 40% → 1, ≤ 80% → 2, powyżej → najciemniejszy.
 // Dzień bez planu ma własny wygląd (jaśniejsze tło i przerywana ramka), żeby nie mylił się z 0%
-function wyglad(cell: DayCell, today: IsoDate): { kolor: string; data: string; tekst: string | null; szary: boolean } {
+function wyglad(
+  cell: DayCell,
+  today: IsoDate,
+): { kolor: string; data: string; tekst: string | null; szary: boolean } {
   const data = formatDatePl(cell.date);
   if (cell.date > today) {
-    return { kolor: "border border-dashed border-[#e0e0e0] bg-white text-[#a3a3a3]", data, tekst: null, szary: false };
+    return {
+      kolor: "border border-dashed border-[#e0e0e0] bg-white text-[#a3a3a3]",
+      data,
+      tekst: null,
+      szary: false,
+    };
   }
   if (cell.percent === null) {
     return {
-      kolor: "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#404040]",
+      kolor:
+        "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#404040]",
       data,
       tekst: "brak zaplanowanych",
       szary: true,
@@ -39,7 +71,12 @@ function wyglad(cell: DayCell, today: IsoDate): { kolor: string; data: string; t
         : cell.percent <= 80
           ? "bg-[#4ade80] text-[#404040]"
           : "bg-[#15803d] text-white";
-  return { kolor, data, tekst: `${cell.done} z ${cell.planned} nawyków`, szary: false };
+  return {
+    kolor,
+    data,
+    tekst: `${cell.done} z ${cell.planned} nawyków`,
+    szary: false,
+  };
 }
 
 export function HabitHeatmap({
@@ -56,12 +93,17 @@ export function HabitHeatmap({
   const [tryb, setTryb] = useState<Tryb>("52");
   const [wstecz, setWstecz] = useState(0); // ile miesięcy przed bieżącym
   // Komórka pod myszą albo z fokusem: data, element (do pozycji dymka) i jej wygląd
-  const [najechany, setNajechany] = useState<{ date: IsoDate; el: HTMLElement; w: ReturnType<typeof wyglad> } | null>(
-    null,
-  );
+  const [najechany, setNajechany] = useState<{
+    date: IsoDate;
+    el: HTMLElement;
+    w: ReturnType<typeof wyglad>;
+  } | null>(null);
 
   // Kolejność dni w tygodniu od dnia z profilu
-  const kolejnoscDni = weekStart === "mon" ? SKROTY_DNI : [SKROTY_DNI[6], ...SKROTY_DNI.slice(0, 6)];
+  const kolejnoscDni =
+    weekStart === "mon"
+      ? SKROTY_DNI
+      : [SKROTY_DNI[6], ...SKROTY_DNI.slice(0, 6)];
 
   // Miesiąc: rok i miesiąc liczone na liczbach (bez stref)
   const [rokDzis, miesiacDzis] = today.split("-").map(Number);
@@ -79,7 +121,16 @@ export function HabitHeatmap({
   const siatkaMiesiaca = [...komorkiMiesiaca];
   while (siatkaMiesiaca.length % 7 !== 0) siatkaMiesiaca.push(null);
 
-  const tygodnie = tryb === "miesiac" ? [] : heatmapWeeks(habits, checks, Number(tryb) as 13 | 26 | 52, today, weekStart);
+  const tygodnie =
+    tryb === "miesiac"
+      ? []
+      : heatmapWeeks(
+          habits,
+          checks,
+          Number(tryb) as 13 | 26 | 52,
+          today,
+          weekStart,
+        );
   const pierwszyDzien = tygodnie[0]?.[0]?.date ?? today;
   const zakresTekst =
     tryb === "miesiac"
@@ -93,7 +144,9 @@ export function HabitHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#eaeaea] px-4 py-3.5">
         <div className="flex items-baseline gap-2.5">
           <h2 className="m-0 text-[15px] font-semibold">Heatmapa nawyków</h2>
-          <span className="font-mono text-xs text-[#6b6b6b]">% nawyków zrobionych danego dnia</span>
+          <span className="font-mono text-xs text-[#6b6b6b]">
+            % nawyków zrobionych danego dnia
+          </span>
         </div>
         <Segment
           ariaLabel="Zakres heatmapy"
@@ -126,7 +179,9 @@ export function HabitHeatmap({
               >
                 ‹
               </Button>
-              <span className="text-sm font-semibold">{monthTitlePl(rok, miesiac0)}</span>
+              <span className="text-sm font-semibold">
+                {monthTitlePl(rok, miesiac0)}
+              </span>
               <Button
                 size="sm"
                 aria-label="Następny miesiąc"
@@ -144,24 +199,35 @@ export function HabitHeatmap({
                 <span key={d}>{d}</span>
               ))}
             </div>
-            <div className="grid grid-cols-[repeat(7,40px)] gap-1" onMouseLeave={() => setNajechany(null)}>
+            <div
+              className="grid grid-cols-[repeat(7,40px)] gap-1"
+              onMouseLeave={() => setNajechany(null)}
+            >
               {siatkaMiesiaca.map((cell, i) => {
-                if (cell === null) return <span key={`pusta-${i}`} className="size-10" />;
+                if (cell === null)
+                  return <span key={`pusta-${i}`} className="size-10" />;
                 const w = wyglad(cell, today);
                 return (
                   <span
                     key={cell.date}
                     role="img"
                     tabIndex={0}
-                    aria-label={w.tekst === null ? w.data : `${w.data} · ${w.tekst}`}
-                    onMouseEnter={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
-                    onFocus={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    aria-label={
+                      w.tekst === null ? w.data : `${w.data} · ${w.tekst}`
+                    }
+                    onMouseEnter={(e) =>
+                      setNajechany({ date: cell.date, el: e.currentTarget, w })
+                    }
+                    onFocus={(e) =>
+                      setNajechany({ date: cell.date, el: e.currentTarget, w })
+                    }
                     onBlur={() => setNajechany(null)}
                     className={cn(
                       "box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
                       w.kolor,
                       cell.date === today && "font-semibold",
-                      najechany?.date === cell.date && "shadow-[0_0_0_2px_#171717]",
+                      najechany?.date === cell.date &&
+                        "shadow-[0_0_0_2px_#171717]",
                     )}
                   >
                     {Number(cell.date.slice(8, 10))}
@@ -191,14 +257,21 @@ export function HabitHeatmap({
                     data-heat-cell
                     role="img"
                     tabIndex={0}
-                    aria-label={w.tekst === null ? w.data : `${w.data} · ${w.tekst}`}
-                    onMouseEnter={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
-                    onFocus={(e) => setNajechany({ date: cell.date, el: e.currentTarget, w })}
+                    aria-label={
+                      w.tekst === null ? w.data : `${w.data} · ${w.tekst}`
+                    }
+                    onMouseEnter={(e) =>
+                      setNajechany({ date: cell.date, el: e.currentTarget, w })
+                    }
+                    onFocus={(e) =>
+                      setNajechany({ date: cell.date, el: e.currentTarget, w })
+                    }
                     onBlur={() => setNajechany(null)}
                     className={cn(
                       "box-border size-3.5 cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
                       w.kolor,
-                      najechany?.date === cell.date && "shadow-[0_0_0_2px_#171717]",
+                      najechany?.date === cell.date &&
+                        "shadow-[0_0_0_2px_#171717]",
                     )}
                   />
                 );
@@ -212,7 +285,12 @@ export function HabitHeatmap({
           <ChartTooltip anchor={najechany.el}>
             <span className="font-semibold">{najechany.w.data}</span>
             {" · "}
-            <span className={cn("font-mono text-[11px]", najechany.w.szary ? "text-[#a3a3a3]" : "text-[#d4d4d4]")}>
+            <span
+              className={cn(
+                "font-mono text-[11px]",
+                najechany.w.szary ? "text-[#a3a3a3]" : "text-[#d4d4d4]",
+              )}
+            >
               {najechany.w.tekst}
             </span>
           </ChartTooltip>

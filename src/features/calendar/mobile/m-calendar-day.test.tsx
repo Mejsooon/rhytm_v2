@@ -12,7 +12,9 @@ const wystapienia = [
   wystapienie("b2:2026-11-20", "2026-11-20", 540, 60, "Siłownia", null),
 ];
 
-function wyrenderuj(over: Partial<React.ComponentProps<typeof MCalendarDay>> = {}) {
+function wyrenderuj(
+  over: Partial<React.ComponentProps<typeof MCalendarDay>> = {},
+) {
   return render(
     <MCalendarDay
       date="2026-11-18"
@@ -41,41 +43,72 @@ describe("MCalendarDay", () => {
   it("dzień z paska to link do widoku dnia, wybrany ma aria-current", () => {
     wyrenderuj();
     const link = screen.getByRole("link", { name: "Piątek 20 listopada" });
-    expect(link).toHaveAttribute("href", "/kalendarz?widok=dzien&data=2026-11-20");
-    expect(screen.getByRole("link", { name: "Środa 18 listopada" })).toHaveAttribute("aria-current", "date");
+    expect(link).toHaveAttribute(
+      "href",
+      "/kalendarz?widok=dzien&data=2026-11-20",
+    );
+    expect(
+      screen.getByRole("link", { name: "Środa 18 listopada" }),
+    ).toHaveAttribute("aria-current", "date");
   });
 
   it("tytuł dnia z liczbą bloków", () => {
     wyrenderuj();
-    expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(/^Środa, 18 listopada\s*·\s*1 blok$/);
+    expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(
+      /^Środa, 18 listopada\s*·\s*1 blok$/,
+    );
   });
 
   it("liczba bloków odmienia się po polsku (2–4 bloki, 12–14 i 5+ bloków, 22–24 bloki)", () => {
     // n krótkich bloków w środę, co 30 minut
     const dzien = (n: number) =>
       Array.from({ length: n }, (_, i) =>
-        wystapienie(`x${i}:2026-11-18`, "2026-11-18", i * 30, 15, `B${i}`, null),
+        wystapienie(
+          `x${i}:2026-11-18`,
+          "2026-11-18",
+          i * 30,
+          15,
+          `B${i}`,
+          null,
+        ),
       );
     const oczekiwane: [number, string][] = [
-      [2, "bloki"], [5, "bloków"], [12, "bloków"], [14, "bloków"], [22, "bloki"], [24, "bloki"], [25, "bloków"],
+      [2, "bloki"],
+      [5, "bloków"],
+      [12, "bloków"],
+      [14, "bloków"],
+      [22, "bloki"],
+      [24, "bloki"],
+      [25, "bloków"],
     ];
     for (const [n, slowo] of oczekiwane) {
       const { unmount } = wyrenderuj({ occurrences: dzien(n) });
-      expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(new RegExp(`^Środa, 18 listopada\\s*·\\s*${n} ${slowo}$`));
+      expect(screen.getByTestId("m-wiersz-daty")).toHaveTextContent(
+        new RegExp(`^Środa, 18 listopada\\s*·\\s*${n} ${slowo}$`),
+      );
       unmount();
     }
   });
 
   it("blok pokazuje godziny i kategorię, bez data-occurrence-key", () => {
     const { container } = wyrenderuj();
-    expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent("10:00–12:00 · Studia");
+    expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent(
+      "10:00–12:00 · Studia",
+    );
     expect(container.querySelector("[data-occurrence-key]")).toBeNull();
   });
 
   it("blok krótszy niż godzina: tytuł i godziny w jednej linii, wyśrodkowane, tytuł z wielokropkiem", () => {
     wyrenderuj({
       occurrences: [
-        wystapienie("k1:2026-11-18", "2026-11-18", 480, 45, "Bardzo długi tytuł porannej rutyny", "c1"),
+        wystapienie(
+          "k1:2026-11-18",
+          "2026-11-18",
+          480,
+          45,
+          "Bardzo długi tytuł porannej rutyny",
+          "c1",
+        ),
         wystapienie("k2:2026-11-18", "2026-11-18", 600, 60, "Godzina", "c1"),
       ],
     });
@@ -122,7 +155,10 @@ describe("MCalendarDay", () => {
   it("stuknięcie pustej osi o 10:00 woła onAdd z tą godziną", () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
-    fireEvent.click(screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }), { clientY: 10 * 56 });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      { clientY: 10 * 56 },
+    );
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 600);
   });
 
@@ -135,7 +171,9 @@ describe("MCalendarDay", () => {
 
   it("linia „teraz” tylko w dzisiejszym dniu", () => {
     const { unmount } = wyrenderuj({ date: "2026-11-17", today: "2026-11-17" });
-    expect(screen.getByTestId("linia-teraz").style.top).toBe(`${(600 / 60) * 56}px`);
+    expect(screen.getByTestId("linia-teraz").style.top).toBe(
+      `${(600 / 60) * 56}px`,
+    );
     unmount();
     wyrenderuj();
     expect(screen.queryByTestId("linia-teraz")).toBeNull();
@@ -151,14 +189,21 @@ describe("MCalendarDay", () => {
       date: "2026-11-18",
       today: "2026-11-18",
       nowMinutes: 630,
-      occurrences: [wystapienia[0], wystapienie("b3:2026-11-18", "2026-11-18", 960, 60, "Bieg", null)],
+      occurrences: [
+        wystapienia[0],
+        wystapienie("b3:2026-11-18", "2026-11-18", 960, 60, "Bieg", null),
+      ],
     });
-    expect(screen.getByTestId("m-os-dnia").scrollTop).toBe(Math.round((600 / 60) * 56 - 28));
+    expect(screen.getByTestId("m-os-dnia").scrollTop).toBe(
+      Math.round((600 / 60) * 56 - 28),
+    );
   });
 
   it("niski blok (30 min) ma pole dotyku co najmniej 44 px", () => {
     wyrenderuj({
-      occurrences: [wystapienie("b9:2026-11-18", "2026-11-18", 480, 30, "Rutyna", null)],
+      occurrences: [
+        wystapienie("b9:2026-11-18", "2026-11-18", 480, 30, "Rutyna", null),
+      ],
     });
     const blok = screen.getByRole("button", { name: /Rutyna/ });
     const wysokosc = parseFloat(blok.style.height);

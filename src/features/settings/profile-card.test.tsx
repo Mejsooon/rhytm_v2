@@ -3,7 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { saveProfile } = vi.hoisted(() => ({ saveProfile: vi.fn() }));
-vi.mock("./actions", () => ({ saveProfile, saveAvatar: vi.fn(), removeAvatar: vi.fn() }));
+vi.mock("./actions", () => ({
+  saveProfile,
+  saveAvatar: vi.fn(),
+  removeAvatar: vi.fn(),
+}));
 
 import { ProfileCard } from "./profile-card";
 
@@ -24,38 +28,82 @@ describe("ProfileCard", () => {
   });
 
   it("pokazuje opis, pola i stopkę bez zmian; Zapisz nieaktywne, Cofnij ukryte", () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
-    expect(screen.getByText("Waga i wzrost służą do liczenia kcal biegów.")).toBeInTheDocument();
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
+    expect(
+      screen.getByText("Waga i wzrost służą do liczenia kcal biegów."),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Wyświetlana nazwa")).toHaveValue("Mejson");
-    expect(screen.getByLabelText("Waga (kg)")).toHaveAttribute("placeholder", "np. 75");
-    expect(screen.getByText("Waga i wzrost są opcjonalne.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Waga (kg)")).toHaveAttribute(
+      "placeholder",
+      "np. 75",
+    );
+    expect(
+      screen.getByText("Waga i wzrost są opcjonalne."),
+    ).toBeInTheDocument();
     expect(zapisz()).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Cofnij" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cofnij" }),
+    ).not.toBeInTheDocument();
   });
 
   it("ma wiersz zdjęcia profilowego, który nie rusza stanu „Zapisz”", () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     expect(screen.getByText("Zdjęcie profilowe")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Wgraj" })).toBeInTheDocument();
     expect(zapisz()).toBeDisabled();
   });
 
   it("pusta nazwa → błąd pod polem i Zapisz nieaktywne", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.clear(screen.getByLabelText("Wyświetlana nazwa"));
     expect(screen.getByText("Nazwa nie może być pusta.")).toBeInTheDocument();
     expect(zapisz()).toBeDisabled();
   });
 
   it("zła waga → błąd na żywo", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.type(screen.getByLabelText("Waga (kg)"), "20");
     expect(screen.getByText("Podaj liczbę 30–250.")).toBeInTheDocument();
     expect(zapisz()).toBeDisabled();
   });
 
   it("waga „72,5” → saveProfile z weight_kg: 72.5, potem „Zapisano ✓”", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.type(screen.getByLabelText("Waga (kg)"), "72,5");
     expect(screen.getByText("Masz niezapisane zmiany.")).toBeInTheDocument();
     await userEvent.click(zapisz());
@@ -70,7 +118,14 @@ describe("ProfileCard", () => {
   });
 
   it("ponowna zmiana po zapisie chowa „Zapisano ✓”", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.type(screen.getByLabelText("Wzrost (cm)"), "180");
     await userEvent.click(zapisz());
     await screen.findByText("Zapisano ✓");
@@ -80,23 +135,53 @@ describe("ProfileCard", () => {
   });
 
   it("„Cofnij” przywraca zapisane wartości", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.type(screen.getByLabelText("Wyświetlana nazwa"), "XYZ");
     await userEvent.click(screen.getByRole("button", { name: "Cofnij" }));
     expect(screen.getByLabelText("Wyświetlana nazwa")).toHaveValue("Mejson");
-    expect(screen.queryByRole("button", { name: "Cofnij" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cofnij" }),
+    ).not.toBeInTheDocument();
   });
 
   it("zmiana strefy włącza zapis", async () => {
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
-    await userEvent.click(screen.getByRole("button", { name: "Strefa czasowa" }));
-    await userEvent.click(await screen.findByRole("option", { name: /Berlin/ }));
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Strefa czasowa" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: /Berlin/ }),
+    );
     await waitFor(() => expect(zapisz()).toBeEnabled());
   });
 
   it("błąd z serwera pokazuje się pod polem, bez „Zapisano”", async () => {
-    saveProfile.mockResolvedValue({ ok: false, errors: { weight_kg: "Podaj liczbę 30–250." } });
-    render(<ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />);
+    saveProfile.mockResolvedValue({
+      ok: false,
+      errors: { weight_kg: "Podaj liczbę 30–250." },
+    });
+    render(
+      <ProfileCard
+        saved={zapisane}
+        timezones={strefy}
+        userId="u1"
+        avatarUrl={null}
+      />,
+    );
     await userEvent.type(screen.getByLabelText("Waga (kg)"), "70");
     await userEvent.click(zapisz());
     expect(await screen.findByText("Podaj liczbę 30–250.")).toBeInTheDocument();

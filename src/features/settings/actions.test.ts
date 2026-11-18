@@ -23,10 +23,16 @@ vi.mock("next/navigation", () => ({
 
 import { removeAvatar, saveAvatar, saveGoals, saveProfile } from "./actions";
 
-const profil = { display_name: "  Ala  ", timezone: "Europe/Warsaw", weight_kg: 72.5, height_cm: null };
+const profil = {
+  display_name: "  Ala  ",
+  timezone: "Europe/Warsaw",
+  weight_kg: 72.5,
+  height_cm: null,
+};
 const cele = {
   sleep_goal_min: 480,
-  weekly_goal_type: "workouts",
+  workouts_goal_on: true,
+  km_goal_on: true,
   weekly_workouts_goal: 3,
   weekly_km_goal: 25,
   currency: "PLN",
@@ -47,7 +53,10 @@ describe("ustawienia: akcje", () => {
 
   it("saveProfile z wagą 20 → błąd pola, bez update", async () => {
     const wynik = await saveProfile({ ...profil, weight_kg: 20 });
-    expect(wynik).toEqual({ ok: false, errors: { weight_kg: "Podaj liczbę 30–250." } });
+    expect(wynik).toEqual({
+      ok: false,
+      errors: { weight_kg: "Podaj liczbę 30–250." },
+    });
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -73,34 +82,55 @@ describe("ustawienia: akcje", () => {
   it("saveProfile: błąd bazy → ok: false z komunikatem ogólnym", async () => {
     eq.mockResolvedValue({ error: { message: "x" } });
     const wynik = await saveProfile(profil);
-    expect(wynik).toEqual({ ok: false, errors: { form: "Nie udało się zapisać. Spróbuj ponownie." } });
+    expect(wynik).toEqual({
+      ok: false,
+      errors: { form: "Nie udało się zapisać. Spróbuj ponownie." },
+    });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("saveGoals z km 0 → błąd pola, bez update", async () => {
     const wynik = await saveGoals({ ...cele, weekly_km_goal: 0 });
-    expect(wynik).toEqual({ ok: false, errors: { weekly_km_goal: "Podaj liczbę 1–300." } });
+    expect(wynik).toEqual({
+      ok: false,
+      errors: { weekly_km_goal: "Podaj liczbę 1–300." },
+    });
     expect(update).not.toHaveBeenCalled();
   });
 
   it("saveGoals z 15 treningami → błąd pola, bez update", async () => {
     const wynik = await saveGoals({ ...cele, weekly_workouts_goal: 15 });
-    expect(wynik).toEqual({ ok: false, errors: { weekly_workouts_goal: "Podaj liczbę 1–14." } });
+    expect(wynik).toEqual({
+      ok: false,
+      errors: { weekly_workouts_goal: "Podaj liczbę 1–14." },
+    });
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("saveGoals z nieznanym rodzajem celu → błąd, bez update", async () => {
-    const wynik = await saveGoals({ ...cele, weekly_goal_type: "min" });
-    expect(wynik.ok).toBe(false);
+  it("saveGoals z oboma celami wyłączonymi → błąd, bez update", async () => {
+    const wynik = await saveGoals({
+      ...cele,
+      workouts_goal_on: false,
+      km_goal_on: false,
+    });
+    expect(wynik).toEqual({
+      ok: false,
+      errors: { training_goals: "Włącz co najmniej jeden cel." },
+    });
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("saveGoals z rodzajem km zapisuje rodzaj i obie liczby", async () => {
-    const wynik = await saveGoals({ ...cele, weekly_goal_type: "km", weekly_km_goal: "22,5" });
+  it("saveGoals z samym celem km zapisuje przełączniki i obie liczby", async () => {
+    const wynik = await saveGoals({
+      ...cele,
+      workouts_goal_on: false,
+      weekly_km_goal: "22,5",
+    });
     expect(wynik).toEqual({ ok: true });
     expect(update).toHaveBeenCalledWith({
       sleep_goal_min: 480,
-      weekly_goal_type: "km",
+      workouts_goal_on: false,
+      km_goal_on: true,
       weekly_workouts_goal: 3,
       weekly_km_goal: 22.5,
       currency: "PLN",
@@ -125,15 +155,27 @@ describe("ustawienia: akcje", () => {
       from.mockReturnValue({ select, update });
       select.mockReturnValue({ eq: selectEq });
       selectEq.mockReturnValue({ maybeSingle });
-      maybeSingle.mockResolvedValue({ data: { avatar_path: null }, error: null });
+      maybeSingle.mockResolvedValue({
+        data: { avatar_path: null },
+        error: null,
+      });
       remove.mockResolvedValue({ error: null });
     });
 
     it("saveAvatar: obca ścieżka lub traversal → błąd, bez zapisu i usuwania", async () => {
-      const zle = ["u2/avatar.png", "u1/../u2/avatar.png", "u1/avatar.gif", "u1/x/avatar.png", "../u1/avatar.png"];
+      const zle = [
+        "u2/avatar.png",
+        "u1/../u2/avatar.png",
+        "u1/avatar.gif",
+        "u1/x/avatar.png",
+        "../u1/avatar.png",
+      ];
       for (const sciezka of zle) {
         const wynik = await saveAvatar(sciezka);
-        expect(wynik).toEqual({ ok: false, error: "Nie udało się wgrać zdjęcia." });
+        expect(wynik).toEqual({
+          ok: false,
+          error: "Nie udało się wgrać zdjęcia.",
+        });
       }
       expect(update).not.toHaveBeenCalled();
       expect(remove).not.toHaveBeenCalled();
@@ -149,13 +191,19 @@ describe("ustawienia: akcje", () => {
     });
 
     it("saveAvatar: to samo rozszerzenie co poprzednie → nie usuwa pliku", async () => {
-      maybeSingle.mockResolvedValue({ data: { avatar_path: "u1/avatar.png" }, error: null });
+      maybeSingle.mockResolvedValue({
+        data: { avatar_path: "u1/avatar.png" },
+        error: null,
+      });
       await saveAvatar("u1/avatar.png");
       expect(remove).not.toHaveBeenCalled();
     });
 
     it("saveAvatar: inne rozszerzenie niż poprzednie → usuwa stary plik", async () => {
-      maybeSingle.mockResolvedValue({ data: { avatar_path: "u1/avatar.png" }, error: null });
+      maybeSingle.mockResolvedValue({
+        data: { avatar_path: "u1/avatar.png" },
+        error: null,
+      });
       const wynik = await saveAvatar("u1/avatar.jpg");
       expect(wynik).toEqual({ ok: true });
       expect(remove).toHaveBeenCalledWith(["u1/avatar.png"]);
@@ -165,17 +213,25 @@ describe("ustawienia: akcje", () => {
     it("saveAvatar: błąd bazy → ok: false, bez odświeżenia", async () => {
       eq.mockResolvedValue({ error: { message: "x" } });
       const wynik = await saveAvatar("u1/avatar.png");
-      expect(wynik).toEqual({ ok: false, error: "Nie udało się wgrać zdjęcia." });
+      expect(wynik).toEqual({
+        ok: false,
+        error: "Nie udało się wgrać zdjęcia.",
+      });
       expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("saveAvatar bez sesji → przekierowanie do logowania", async () => {
       getUser.mockResolvedValue({ data: { user: null } });
-      await expect(saveAvatar("u1/avatar.png")).rejects.toThrow("REDIRECT:/logowanie");
+      await expect(saveAvatar("u1/avatar.png")).rejects.toThrow(
+        "REDIRECT:/logowanie",
+      );
     });
 
     it("removeAvatar: usuwa plik z bucketu i zeruje avatar_path", async () => {
-      maybeSingle.mockResolvedValue({ data: { avatar_path: "u1/avatar.webp" }, error: null });
+      maybeSingle.mockResolvedValue({
+        data: { avatar_path: "u1/avatar.webp" },
+        error: null,
+      });
       const wynik = await removeAvatar();
       expect(wynik).toEqual({ ok: true });
       expect(remove).toHaveBeenCalledWith(["u1/avatar.webp"]);
@@ -185,10 +241,16 @@ describe("ustawienia: akcje", () => {
     });
 
     it("removeAvatar: błąd usuwania pliku → ok: false, avatar_path bez zmian", async () => {
-      maybeSingle.mockResolvedValue({ data: { avatar_path: "u1/avatar.webp" }, error: null });
+      maybeSingle.mockResolvedValue({
+        data: { avatar_path: "u1/avatar.webp" },
+        error: null,
+      });
       remove.mockResolvedValue({ error: { message: "x" } });
       const wynik = await removeAvatar();
-      expect(wynik).toEqual({ ok: false, error: "Nie udało się usunąć zdjęcia." });
+      expect(wynik).toEqual({
+        ok: false,
+        error: "Nie udało się usunąć zdjęcia.",
+      });
       expect(update).not.toHaveBeenCalled();
     });
 

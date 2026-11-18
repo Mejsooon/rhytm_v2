@@ -71,9 +71,6 @@ export function useCalendarStore(initial: CalendarData) {
     [initial],
   );
 
-  const data = biezacy.oczekujace.reduce(
-    (d, o) => o.zmiana(d),
-    biezacy.baza,
-  );
+  const data = biezacy.oczekujace.reduce((d, o) => o.zmiana(d), biezacy.baza);
   return { data, pending: biezacy.oczekujace.length, applyOptimistic };
 }

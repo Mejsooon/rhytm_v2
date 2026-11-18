@@ -29,11 +29,19 @@ describe("Segment", () => {
   it("klik woła onChange i ustawia aria-checked", async () => {
     const onChange = vi.fn();
     render(<Wrapper onChange={onChange} />);
-    expect(screen.getByRole("radiogroup", { name: "Początek tygodnia" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radiogroup", { name: "Początek tygodnia" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: "Nd" }));
     expect(onChange).toHaveBeenCalledWith("sun");
-    expect(screen.getByRole("radio", { name: "Nd" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("radio", { name: "Pn" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("radio", { name: "Nd" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "Pn" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
   });
 
   it("strzałki zmieniają wybór", async () => {

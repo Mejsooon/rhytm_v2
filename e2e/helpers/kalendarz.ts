@@ -1,4 +1,10 @@
-import { adminClient, createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./konto";
+import {
+  adminClient,
+  createConfirmedUser,
+  logInViaForm,
+  randomPassword,
+  uniqueEmail,
+} from "./konto";
 import { expect, type Page } from "@playwright/test";
 
 // Stały tydzień testów: poniedziałek 11.01.2027, wtorek 12.01, kolejny wtorek 19.01.
@@ -22,9 +28,17 @@ export async function zalozKontoKalendarza(page: Page, projekt: string) {
   const userId = await createConfirmedUser(email, haslo);
   const { data, error } = await adminClient()
     .from("categories")
-    .insert(KATEGORIE.map((k, i) => ({ user_id: userId, name: k.name, color: k.color, position: i + 1 })))
+    .insert(
+      KATEGORIE.map((k, i) => ({
+        user_id: userId,
+        name: k.name,
+        color: k.color,
+        position: i + 1,
+      })),
+    )
     .select("id, name");
-  if (error || !data) throw new Error(`Nie udało się zasiać kategorii: ${error?.message}`);
+  if (error || !data)
+    throw new Error(`Nie udało się zasiać kategorii: ${error?.message}`);
   const kategorie = Object.fromEntries(data.map((k) => [k.name, k.id]));
 
   await logInViaForm(page, email, haslo);
@@ -41,7 +55,11 @@ export async function zasiejBlok(
     startMin: number;
     durationMin?: number;
     categoryId?: string;
-    recurrence?: { freq: "daily" | "weekdays" | "weekly" | "custom"; byWeekday?: number[]; until?: string } | null;
+    recurrence?: {
+      freq: "daily" | "weekdays" | "weekly" | "custom";
+      byWeekday?: number[];
+      until?: string;
+    } | null;
     note?: string;
   },
 ): Promise<string> {
@@ -61,15 +79,29 @@ export async function zasiejBlok(
     })
     .select("id")
     .single();
-  if (error || !data) throw new Error(`Nie udało się zasiać bloku: ${error?.message}`);
+  if (error || !data)
+    throw new Error(`Nie udało się zasiać bloku: ${error?.message}`);
   return data.id;
 }
 
 // Zadanie przypięte do wystąpienia bloku (data = oryginalna data wystąpienia)
-export async function zasiejZadanie(userId: string, blockId: string, date: string, title: string, done = false) {
+export async function zasiejZadanie(
+  userId: string,
+  blockId: string,
+  date: string,
+  title: string,
+  done = false,
+) {
   const { error } = await adminClient()
     .from("tasks")
-    .insert({ user_id: userId, title, block_id: blockId, occurrence_date: date, due_date: date, done });
+    .insert({
+      user_id: userId,
+      title,
+      block_id: blockId,
+      occurrence_date: date,
+      due_date: date,
+      done,
+    });
   if (error) throw new Error(`Nie udało się zasiać zadania: ${error.message}`);
 }
 

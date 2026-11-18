@@ -2,7 +2,14 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { replace, toastError, setHabitCheck, createHabit, updateHabit, saveSleepLog } = vi.hoisted(() => ({
+const {
+  replace,
+  toastError,
+  setHabitCheck,
+  createHabit,
+  updateHabit,
+  saveSleepLog,
+} = vi.hoisted(() => ({
   replace: vi.fn(),
   toastError: vi.fn(),
   setHabitCheck: vi.fn(),
@@ -12,7 +19,12 @@ const { replace, toastError, setHabitCheck, createHabit, updateHabit, saveSleepL
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
-vi.mock("./actions", () => ({ setHabitCheck, createHabit, updateHabit, saveSleepLog }));
+vi.mock("./actions", () => ({
+  setHabitCheck,
+  createHabit,
+  updateHabit,
+  saveSleepLog,
+}));
 // Drzewo telefonu (w DOM obok webu) ma własne testy; tu sprawdzamy web
 vi.mock("./mobile/m-habits", () => ({ MHabits: () => null }));
 
@@ -32,7 +44,14 @@ function dane(): HabitsPageData {
         remindAt: null,
         showOnToday: true,
         createdAt: "",
-        schedules: [{ validFrom: "2026-11-01", type: "daily", weekdays: [], timesPerWeek: null }],
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
       },
       {
         id: "h2",
@@ -40,7 +59,14 @@ function dane(): HabitsPageData {
         remindAt: null,
         showOnToday: true,
         createdAt: "",
-        schedules: [{ validFrom: "2026-11-01", type: "daily", weekdays: [], timesPerWeek: null }],
+        schedules: [
+          {
+            validFrom: "2026-11-01",
+            type: "daily",
+            weekdays: [],
+            timesPerWeek: null,
+          },
+        ],
       },
     ],
     checks: [{ habitId: "h1", date: "2026-11-17" }],
@@ -53,11 +79,19 @@ beforeEach(() => vi.clearAllMocks());
 describe("HabitsView", () => {
   it("nagłówek z datą i przyciskami", () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
-    expect(screen.getByRole("heading", { level: 1, name: "Nawyki i sen" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Nawyki i sen" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("wtorek · 17.11.2026")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "+ Wpis snu" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Nowy nawyk" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "+ Nowy nawyk" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "+ Wpis snu" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nowy nawyk" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "+ Nowy nawyk" }),
+    ).toBeInTheDocument();
   });
 
   it("odhaczenie dziś zmienia 1/2 na 2/2 przed odpowiedzią serwera", async () => {
@@ -66,7 +100,9 @@ describe("HabitsView", () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
     expect(screen.getByText("1/2")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /^Czytanie 20 min · 17\.11/ }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Czytanie 20 min · 17\.11/ }),
+    );
     expect(screen.getByText("2/2")).toBeInTheDocument();
     expect(setHabitCheck).toHaveBeenCalledWith("h2", "2026-11-17", true);
     await act(async () => zakoncz({ ok: true }));
@@ -76,53 +112,89 @@ describe("HabitsView", () => {
   it("błąd akcji cofa odhaczenie i woła toast", async () => {
     setHabitCheck.mockResolvedValue({ ok: false, message: "x" });
     render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
-    await userEvent.click(screen.getByRole("button", { name: "Odhacz dziś: Czytanie 20 min" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Odhacz dziś: Czytanie 20 min" }),
+    );
     expect(screen.getByText("1/2")).toBeInTheDocument();
-    expect(toastError).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+    expect(toastError).toHaveBeenCalledWith(
+      "Nie udało się zapisać. Spróbuj ponownie.",
+    );
   });
 
   it("Nowy nawyk otwiera okno nawyku, a Anuluj je zamyka", async () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
     await userEvent.click(screen.getByRole("button", { name: "Nowy nawyk" }));
-    expect(screen.getByRole("dialog", { name: "Nowy nawyk" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy nawyk" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("?nowy=nawyk otwiera okno nawyku od razu", () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />);
-    expect(screen.getByRole("dialog", { name: "Nowy nawyk" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy nawyk" }),
+    ).toBeInTheDocument();
   });
 
   it("?nowy=sen otwiera wpis snu na dziś", () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad="sen" />);
-    expect(screen.getByRole("dialog", { name: "Wpis snu" })).toBeInTheDocument();
-    expect(screen.getByText("Noc z poniedziałku na wtorek")).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Wpis snu" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Noc z poniedziałku na wtorek"),
+    ).toBeInTheDocument();
   });
 
   it("+ Wpis snu dla dnia z wpisem otwiera okno z jego wartościami", async () => {
     const d = dane();
     d.sleepLogs = [
-      { date: "2026-11-17", sleptAt: "23:48", wokeAt: "07:00", feeling: 4, tags: [], note: null },
+      {
+        date: "2026-11-17",
+        sleptAt: "23:48",
+        wokeAt: "07:00",
+        feeling: 4,
+        tags: [],
+        note: null,
+      },
     ];
     render(<HabitsView data={d} initialTab={null} openOnLoad={null} />);
     await userEvent.click(screen.getByRole("button", { name: "+ Wpis snu" }));
-    expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent("23:48");
+    expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent(
+      "23:48",
+    );
   });
 
   it("klik w „Ostatnia noc” otwiera okno edycji tego wpisu", async () => {
     const d = dane();
     d.sleepLogs = [
-      { date: "2026-11-16", sleptAt: "22:30", wokeAt: "06:30", feeling: null, tags: [], note: null },
+      {
+        date: "2026-11-16",
+        sleptAt: "22:30",
+        wokeAt: "06:30",
+        feeling: null,
+        tags: [],
+        note: null,
+      },
     ];
     render(<HabitsView data={d} initialTab={null} openOnLoad={null} />);
-    await userEvent.click(screen.getByRole("button", { name: /Edytuj ostatnią noc/ }));
-    expect(screen.getByText("Noc z niedzieli na poniedziałek")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent("22:30");
+    await userEvent.click(
+      screen.getByRole("button", { name: /Edytuj ostatnią noc/ }),
+    );
+    expect(
+      screen.getByText("Noc z niedzieli na poniedziałek"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent(
+      "22:30",
+    );
   });
 
   it("?nowy= czyści adres po otwarciu okna i zachowuje tab", () => {
-    const { unmount } = render(<HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />);
+    const { unmount } = render(
+      <HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />,
+    );
     expect(replace).toHaveBeenCalledWith("/nawyki");
     unmount();
     render(<HabitsView data={dane()} initialTab="sen" openOnLoad="sen" />);
@@ -130,10 +202,14 @@ describe("HabitsView", () => {
   });
 
   it("?nowy= pojawiające się przy działającym widoku też otwiera okno", () => {
-    const { rerender } = render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
+    const { rerender } = render(
+      <HabitsView data={dane()} initialTab={null} openOnLoad={null} />,
+    );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
     rerender(<HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />);
-    expect(screen.getByRole("dialog", { name: "Nowy nawyk" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy nawyk" }),
+    ).toBeInTheDocument();
   });
 });

@@ -21,7 +21,15 @@ import { SleepDialog } from "./sleep-dialog";
 import { useHabitsStore } from "./use-habits-store";
 
 // Indeks 0 = poniedziałek
-const DNI_TYGODNIA = ["poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela"];
+const DNI_TYGODNIA = [
+  "poniedziałek",
+  "wtorek",
+  "środa",
+  "czwartek",
+  "piątek",
+  "sobota",
+  "niedziela",
+];
 
 export function HabitsView({
   data,
@@ -40,7 +48,9 @@ export function HabitsView({
   // `tel`: otwarte na telefonie, więc zamiast okna web pokazuje się pełnoekranowy arkusz
   // (jak MBlockSheet w kalendarzu). Zawsze montowany jest tylko jeden wariant — bez dwóch pułapek fokusu.
   const [otwarteOkno, setOtwarteOkno] = useState<
-    { rodzaj: "nawyk"; tel: boolean } | { rodzaj: "sen"; date: IsoDate; tel: boolean } | null
+    | { rodzaj: "nawyk"; tel: boolean }
+    | { rodzaj: "sen"; date: IsoDate; tel: boolean }
+    | null
   >(null);
   const { replace } = useRouter();
 
@@ -50,9 +60,15 @@ export function HabitsView({
   // z serwera i pierwszy render klienta są takie same (okno jest wtedy jeszcze zamknięte).
   useEffect(() => {
     if (!openOnLoad) return;
-    const tel = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
+    const tel =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 799px)").matches;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- otwarcie okna jest reakcją na parametr adresu
-    setOtwarteOkno(openOnLoad === "nawyk" ? { rodzaj: "nawyk", tel } : { rodzaj: "sen", date: data.today, tel });
+    setOtwarteOkno(
+      openOnLoad === "nawyk"
+        ? { rodzaj: "nawyk", tel }
+        : { rodzaj: "sen", date: data.today, tel },
+    );
     replace(initialTab ? `/nawyki?tab=${initialTab}` : "/nawyki");
   }, [openOnLoad, initialTab, data.today, replace]);
   // Przyciski web otwierają okna, przyciski telefonu (tel = true) — arkusze
@@ -68,7 +84,10 @@ export function HabitsView({
   // Oba układy są w DOM; przełącza je wyłącznie CSS (800 px)
   return (
     <>
-      <div data-testid="m-nawyki" className="flex min-w-0 flex-col min-[800px]:hidden">
+      <div
+        data-testid="m-nawyki"
+        className="flex min-w-0 flex-col min-[800px]:hidden"
+      >
         <MHabits
           data={data}
           checks={checks}
@@ -78,11 +97,16 @@ export function HabitsView({
           onNewSleep={(date) => onNewSleep(date, true)}
         />
       </div>
-      <div data-testid="web-nawyki" className="flex min-w-0 flex-col max-[799px]:hidden">
+      <div
+        data-testid="web-nawyki"
+        className="flex min-w-0 flex-col max-[799px]:hidden"
+      >
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
           <div className="flex items-baseline gap-2.5">
             <h1 className="m-0 text-lg font-semibold">Nawyki i sen</h1>
-            <span className="font-mono text-xs text-[#6b6b6b]">{dataNaglowka}</span>
+            <span className="font-mono text-xs text-[#6b6b6b]">
+              {dataNaglowka}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => onNewSleep()}>
@@ -122,7 +146,12 @@ export function HabitsView({
             />
           </div>
 
-          <HabitHeatmap habits={data.habits} checks={checks} today={data.today} weekStart={data.weekStart} />
+          <HabitHeatmap
+            habits={data.habits}
+            checks={checks}
+            today={data.today}
+            weekStart={data.weekStart}
+          />
         </div>
       </div>
 

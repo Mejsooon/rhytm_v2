@@ -8,12 +8,23 @@ export type FirstStep = {
   done: boolean;
 };
 
-export function firstSteps(counts: { blocks: number; habits: number; workouts: number; sleepLogs: number }): {
+export function firstSteps(counts: {
+  blocks: number;
+  habits: number;
+  workouts: number;
+  sleepLogs: number;
+}): {
   steps: FirstStep[];
   doneCount: number;
 } {
   const steps: FirstStep[] = [
-    { key: "block", title: "Dodaj pierwszy blok w kalendarzu", hint: null, href: "/kalendarz", done: counts.blocks > 0 },
+    {
+      key: "block",
+      title: "Dodaj pierwszy blok w kalendarzu",
+      hint: null,
+      href: "/kalendarz",
+      done: counts.blocks > 0,
+    },
     {
       key: "habit",
       title: "Dodaj nawyk",
@@ -21,7 +32,13 @@ export function firstSteps(counts: { blocks: number; habits: number; workouts: n
       href: "/nawyki?nowy=nawyk",
       done: counts.habits > 0,
     },
-    { key: "workout", title: "Zapisz trening", hint: "bieg albo siłownia", href: "/sport", done: counts.workouts > 0 },
+    {
+      key: "workout",
+      title: "Zapisz trening",
+      hint: "bieg albo siłownia",
+      href: "/sport",
+      done: counts.workouts > 0,
+    },
     {
       key: "sleep",
       title: "Wpisz ostatnią noc",

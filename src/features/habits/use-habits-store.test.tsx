@@ -59,8 +59,12 @@ describe("useHabitsStore", () => {
     const d = dane();
     const { result } = renderHook(() => useHabitsStore(d));
     await act(async () => result.current.toggle("h1", "2026-11-17"));
-    expect(result.current.checks.get("h1")?.has("2026-11-17") ?? false).toBe(false);
-    expect(toastError).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+    expect(result.current.checks.get("h1")?.has("2026-11-17") ?? false).toBe(
+      false,
+    );
+    expect(toastError).toHaveBeenCalledWith(
+      "Nie udało się zapisać. Spróbuj ponownie.",
+    );
   });
 
   it("nowe dane z serwera zastępują bazę", () => {

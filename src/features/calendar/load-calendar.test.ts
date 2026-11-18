@@ -27,7 +27,10 @@ describe("pickBlocksForRange", () => {
     const wynik = pickBlocksForRange(
       [
         blok("bez-until", "2026-10-06T08:00:00", { freq: "daily" }),
-        blok("do-pazdziernika", "2026-10-06T08:00:00", { freq: "daily", until: "2026-10-31" }),
+        blok("do-pazdziernika", "2026-10-06T08:00:00", {
+          freq: "daily",
+          until: "2026-10-31",
+        }),
       ],
       LISTOPAD.from,
       LISTOPAD.to,
@@ -37,7 +40,12 @@ describe("pickBlocksForRange", () => {
 
   it("seria z until równym początkowi zakresu zostaje", () => {
     const wynik = pickBlocksForRange(
-      [blok("s", "2026-10-06T08:00:00", { freq: "daily", until: "2026-11-01" })],
+      [
+        blok("s", "2026-10-06T08:00:00", {
+          freq: "daily",
+          until: "2026-11-01",
+        }),
+      ],
       LISTOPAD.from,
       LISTOPAD.to,
     );
@@ -72,7 +80,9 @@ describe("pickBlocksForRange", () => {
 describe("minutesNow", () => {
   it("liczy minuty od północy w podanej strefie", () => {
     // 2026-11-17 11:30 UTC = 12:30 w Warszawie
-    expect(minutesNow("Europe/Warsaw", new Date("2026-11-17T11:30:00Z"))).toBe(750);
+    expect(minutesNow("Europe/Warsaw", new Date("2026-11-17T11:30:00Z"))).toBe(
+      750,
+    );
   });
 });
 
@@ -82,7 +92,11 @@ function klient(tabele: Record<string, ReturnType<typeof fakeTable>>) {
 }
 
 describe("loadCalendar", () => {
-  const profil = { timezone: "Europe/Warsaw", weekStart: "mon" as const, clock: "24" as const };
+  const profil = {
+    timezone: "Europe/Warsaw",
+    weekStart: "mon" as const,
+    clock: "24" as const,
+  };
 
   it("zwraca wybrane bloki, wyjątki, zadania, kategorie i profil", async () => {
     const wynik = await loadCalendar(
@@ -90,7 +104,10 @@ describe("loadCalendar", () => {
         blocks: fakeTable({
           data: [
             blok("bez-until", "2026-10-06T08:00:00", { freq: "daily" }),
-            blok("do-pazdziernika", "2026-10-06T08:00:00", { freq: "daily", until: "2026-10-31" }),
+            blok("do-pazdziernika", "2026-10-06T08:00:00", {
+              freq: "daily",
+              until: "2026-10-31",
+            }),
           ],
         }),
         block_exceptions: fakeTable({ data: [] }),
@@ -122,10 +139,16 @@ describe("loadCalendar", () => {
     const bloki = fakeTable({ data: [] });
     let wywolania = 0;
     const oryginalnyThen = bloki.then;
-    bloki.then = (ok: (v: unknown) => unknown, blad?: (e: unknown) => unknown) => {
+    bloki.then = (
+      ok: (v: unknown) => unknown,
+      blad?: (e: unknown) => unknown,
+    ) => {
       wywolania += 1;
       if (wywolania === 2) {
-        return Promise.resolve({ data: [przeniesiony], error: null }).then(ok, blad);
+        return Promise.resolve({ data: [przeniesiony], error: null }).then(
+          ok,
+          blad,
+        );
       }
       return oryginalnyThen(ok, blad);
     };
@@ -172,7 +195,9 @@ describe("loadCalendar", () => {
       LISTOPAD,
       profil,
     );
-    expect(bloki.or).toHaveBeenCalledWith("recurrence.not.is.null,start_local.gte.2026-11-01T00:00:00");
+    expect(bloki.or).toHaveBeenCalledWith(
+      "recurrence.not.is.null,start_local.gte.2026-11-01T00:00:00",
+    );
   });
 
   it("dociąga zadania wystąpienia przeniesionego do zakresu spoza niego (stare dane)", async () => {
@@ -187,13 +212,31 @@ describe("loadCalendar", () => {
       new_duration_min: null,
       new_title: null,
     };
-    const zadanieWZakresie = { id: "t1", block_id: "seria", occurrence_date: "2026-11-03", position: 1 };
-    const zadaniePrzeniesione = { id: "t2", block_id: "seria", occurrence_date: "2026-10-27", position: 0 };
-    const zadanieInnegoDnia = { id: "t3", block_id: "seria", occurrence_date: "2026-10-20", position: 0 };
+    const zadanieWZakresie = {
+      id: "t1",
+      block_id: "seria",
+      occurrence_date: "2026-11-03",
+      position: 1,
+    };
+    const zadaniePrzeniesione = {
+      id: "t2",
+      block_id: "seria",
+      occurrence_date: "2026-10-27",
+      position: 0,
+    };
+    const zadanieInnegoDnia = {
+      id: "t3",
+      block_id: "seria",
+      occurrence_date: "2026-10-20",
+      position: 0,
+    };
     const zadania = fakeTable({ data: [zadanieWZakresie] });
     let wywolania = 0;
     const oryginalnyThen = zadania.then;
-    zadania.then = (ok: (v: unknown) => unknown, blad?: (e: unknown) => unknown) => {
+    zadania.then = (
+      ok: (v: unknown) => unknown,
+      blad?: (e: unknown) => unknown,
+    ) => {
       wywolania += 1;
       if (wywolania === 2) {
         return Promise.resolve({

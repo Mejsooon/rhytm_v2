@@ -7,12 +7,27 @@ describe("firstSteps", () => {
   it("same zera → cztery niezrobione kroki, doneCount 0", () => {
     const wynik = firstSteps(zera);
     expect(wynik.doneCount).toBe(0);
-    expect(wynik.steps.map((s) => s.done)).toEqual([false, false, false, false]);
+    expect(wynik.steps.map((s) => s.done)).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
     expect(wynik.steps.map((s) => [s.key, s.title, s.hint, s.href])).toEqual([
       ["block", "Dodaj pierwszy blok w kalendarzu", null, "/kalendarz"],
-      ["habit", "Dodaj nawyk", "np. woda, czytanie, rozciąganie", "/nawyki?nowy=nawyk"],
+      [
+        "habit",
+        "Dodaj nawyk",
+        "np. woda, czytanie, rozciąganie",
+        "/nawyki?nowy=nawyk",
+      ],
       ["workout", "Zapisz trening", "bieg albo siłownia", "/sport"],
-      ["sleep", "Wpisz ostatnią noc", "godzina zaśnięcia i pobudki", "/nawyki?nowy=sen"],
+      [
+        "sleep",
+        "Wpisz ostatnią noc",
+        "godzina zaśnięcia i pobudki",
+        "/nawyki?nowy=sen",
+      ],
     ]);
   });
 

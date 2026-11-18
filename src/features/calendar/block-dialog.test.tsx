@@ -13,8 +13,22 @@ vi.mock("@/features/categories/actions", () => ({ createCategory }));
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
 import type { CategoryRow } from "./load-calendar";
 
-function kategoria(id: string, name: string, color: string, isSystem = false): CategoryRow {
-  return { id, name, color, hidden: false, is_system: isSystem, position: 1, user_id: "u1", created_at: null };
+function kategoria(
+  id: string,
+  name: string,
+  color: string,
+  isSystem = false,
+): CategoryRow {
+  return {
+    id,
+    name,
+    color,
+    hidden: false,
+    is_system: isSystem,
+    position: 1,
+    user_id: "u1",
+    created_at: null,
+  };
 }
 const KATEGORIE = [
   kategoria("c1", "Studia", "#0070f3"),
@@ -69,12 +83,22 @@ beforeEach(() => vi.clearAllMocks());
 describe("BlockDialog", () => {
   it("pokazuje dzień, od i do z initial; kategorie bez systemowych", () => {
     wyrenderuj();
-    expect(screen.getByRole("dialog", { name: "Nowy blok" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Dzień" })).toHaveTextContent("17.11.2026");
-    expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent("10:00");
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("11:00");
+    expect(
+      screen.getByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dzień" })).toHaveTextContent(
+      "17.11.2026",
+    );
+    expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent(
+      "10:00",
+    );
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "11:00",
+    );
     expect(screen.getByRole("button", { name: "Studia" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Sport" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Sport" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Przypomnienie" })).toBeChecked();
   });
 
@@ -91,8 +115,12 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Od" }));
     await userEvent.click(screen.getByRole("button", { name: "12" }));
     await userEvent.click(screen.getByRole("button", { name: ":00" }));
-    expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent("12:00");
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("13:30");
+    expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent(
+      "12:00",
+    );
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "13:30",
+    );
   });
 
   it("„do” nie później niż „od” blokuje zapis i pokazuje komunikat", async () => {
@@ -100,7 +128,9 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Do" }));
     await userEvent.click(screen.getByRole("button", { name: "09" }));
     await userEvent.click(screen.getByRole("button", { name: ":00" }));
-    expect(screen.getByText("Koniec musi być co najmniej 15 minut po początku.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Koniec musi być co najmniej 15 minut po początku."),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeDisabled();
   });
 
@@ -115,7 +145,10 @@ describe("BlockDialog", () => {
   });
 
   it("podsumowanie „Co tydzień” z datą końca to zdanie z makiety", () => {
-    wyrenderuj("create", { ...NOWY, recurrence: { freq: "weekly", until: "2027-01-31" } });
+    wyrenderuj("create", {
+      ...NOWY,
+      recurrence: { freq: "weekly", until: "2027-01-31" },
+    });
     expect(
       screen.getByText(
         "Co tydzień we wtorki, do 31.01.2027. Każde powtórzenie ma własną, pustą listę zadań.",
@@ -136,7 +169,9 @@ describe("BlockDialog", () => {
     await userEvent.type(screen.getByLabelText("Tytuł"), "  Algebra ");
     await userEvent.click(screen.getByRole("button", { name: "Studia" }));
     await userEvent.type(screen.getByLabelText(/Notatka/), "Rozdział 3");
-    await userEvent.click(screen.getByRole("switch", { name: "Przypomnienie" }));
+    await userEvent.click(
+      screen.getByRole("switch", { name: "Przypomnienie" }),
+    );
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     expect(createBlock).toHaveBeenCalledWith({
       title: "Algebra",
@@ -152,10 +187,15 @@ describe("BlockDialog", () => {
   });
 
   it("błąd akcji pokazuje komunikat i nie zamyka okna", async () => {
-    createBlock.mockResolvedValue({ ok: false, message: "Nowe powtarzanie musi obejmować ten dzień." });
+    createBlock.mockResolvedValue({
+      ok: false,
+      message: "Nowe powtarzanie musi obejmować ten dzień.",
+    });
     const { onSaved } = wyrenderuj("create", { ...NOWY, title: "X" });
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
-    expect(await screen.findByText("Nowe powtarzanie musi obejmować ten dzień.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nowe powtarzanie musi obejmować ten dzień."),
+    ).toBeInTheDocument();
     expect(onSaved).not.toHaveBeenCalled();
   });
 
@@ -164,33 +204,52 @@ describe("BlockDialog", () => {
     wyrenderuj();
     await userEvent.type(screen.getByLabelText("Tytuł"), "Hiszpański");
     await userEvent.click(screen.getByRole("button", { name: "+ Nowa" }));
-    expect(screen.getByRole("dialog", { name: "Nowa kategoria" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Nowa kategoria" }),
+    ).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Nazwa"), "Języki");
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj kategorię" }));
-    expect(await screen.findByRole("dialog", { name: "Nowy blok" })).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj kategorię" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Tytuł")).toHaveValue("Hiszpański");
-    expect(screen.getByRole("button", { name: "Języki" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Języki" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("Anuluj w oknie kategorii wraca do okna bloku", async () => {
     wyrenderuj("create", { ...NOWY, title: "Zostaje" });
     await userEvent.click(screen.getByRole("button", { name: "+ Nowa" }));
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
-    expect(await screen.findByRole("dialog", { name: "Nowy blok" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Tytuł")).toHaveValue("Zostaje");
   });
 
   it("edycja bloku cyklicznego: „Zapisz blok” otwiera zakres; „To i następne” woła changeOccurrence", async () => {
     changeOccurrence.mockResolvedValue({ ok: true });
     const { onSaved } = wyrenderuj("edit", CYKLICZNY);
-    expect(screen.getByRole("dialog", { name: "Edytuj blok" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Edytuj blok" }),
+    ).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText("Tytuł"));
     await userEvent.type(screen.getByLabelText("Tytuł"), "rhytm — UI");
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     expect(changeOccurrence).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog", { name: "Zmieniasz blok, który się powtarza" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", {
+        name: "Zmieniasz blok, który się powtarza",
+      }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText(/To i następne/));
-    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Zapisz zmianę" }),
+    );
     expect(changeOccurrence).toHaveBeenCalledWith({
       blockId: "b1",
       date: "2026-11-17",
@@ -205,7 +264,9 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(changeOccurrence).not.toHaveBeenCalled();
-    expect(await screen.findByRole("dialog", { name: "Edytuj blok" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "Edytuj blok" }),
+    ).toBeInTheDocument();
   });
 
   it("zmiana kategorii, notatki lub przypomnienia wyłącza „Tylko to wystąpienie”", async () => {
@@ -214,7 +275,9 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     expect(screen.getByLabelText(/Tylko to wystąpienie/)).toBeDisabled();
     expect(
-      screen.getByText("Kategoria, notatka i przypomnienie zmieniają się dla całej serii."),
+      screen.getByText(
+        "Kategoria, notatka i przypomnienie zmieniają się dla całej serii.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -254,8 +317,15 @@ describe("BlockDialog", () => {
 
   it("blok 23:00–24:00 pokazuje „Do” 24:00 i zapisuje 60 minut", async () => {
     createBlock.mockResolvedValue({ ok: true });
-    wyrenderuj("create", { ...NOWY, title: "Noc", startMin: 23 * 60, durationMin: 60 });
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+    wyrenderuj("create", {
+      ...NOWY,
+      title: "Noc",
+      startMin: 23 * 60,
+      durationMin: 60,
+    });
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "24:00",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     expect(createBlock).toHaveBeenCalledWith(
       expect.objectContaining({ startMin: 1380, durationMin: 60 }),
@@ -263,8 +333,17 @@ describe("BlockDialog", () => {
   });
 
   it("edycja bloku 23:00–24:00 pokazuje 24:00", () => {
-    wyrenderuj("edit", { ...NOWY, title: "Noc", startMin: 1380, durationMin: 60, blockId: "b3", occurrenceDate: "2026-11-17" });
-    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("24:00");
+    wyrenderuj("edit", {
+      ...NOWY,
+      title: "Noc",
+      startMin: 1380,
+      durationMin: 60,
+      blockId: "b3",
+      occurrenceDate: "2026-11-17",
+    });
+    expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent(
+      "24:00",
+    );
   });
 
   it("zmiana dnia + „Wszystkie wystąpienia” przekazuje nową datę w patchu", async () => {
@@ -274,7 +353,9 @@ describe("BlockDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "18" }));
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
     await userEvent.click(screen.getByLabelText(/Wszystkie wystąpienia/));
-    await userEvent.click(screen.getByRole("button", { name: "Zapisz zmianę" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Zapisz zmianę" }),
+    );
     expect(changeOccurrence).toHaveBeenCalledWith(
       expect.objectContaining({
         scope: "all",
@@ -302,7 +383,9 @@ describe("BlockDialog", () => {
     expect(screen.getByLabelText(/To i następne/)).toBeDisabled();
     expect(screen.getByLabelText(/Tylko to wystąpienie/)).toBeEnabled();
     expect(
-      screen.getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii."),
+      screen.getByText(
+        "Zmiana dnia działa dla tego wystąpienia albo dla całej serii.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -314,7 +397,11 @@ describe("BlockDialog", () => {
     expect(screen.getByLabelText(/To i następne/)).toBeEnabled();
   });
   it("zmiana dnia w serii codziennej wyłącza „To i następne” i „Wszystkie” z podpowiedzią", async () => {
-    wyrenderuj("edit", { ...CYKLICZNY, recurrence: { freq: "daily" }, firstOccurrence: true });
+    wyrenderuj("edit", {
+      ...CYKLICZNY,
+      recurrence: { freq: "daily" },
+      firstOccurrence: true,
+    });
     await userEvent.click(screen.getByRole("button", { name: "Dzień" }));
     await userEvent.click(screen.getByRole("button", { name: "18" }));
     await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
@@ -322,7 +409,9 @@ describe("BlockDialog", () => {
     expect(screen.getByLabelText(/To i następne/)).toBeDisabled();
     expect(screen.getByLabelText(/Wszystkie wystąpienia/)).toBeDisabled();
     expect(
-      screen.getByText("Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej."),
+      screen.getByText(
+        "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.",
+      ),
     ).toBeInTheDocument();
   });
 });

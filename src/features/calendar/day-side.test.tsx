@@ -6,7 +6,11 @@ import type { TaskRow } from "@/features/tasks/model";
 import type { Occurrence } from "./occurrences";
 import { DaySide } from "./day-side";
 
-function wystapienie(blockId: string, startMin: number, durationMin: number): Occurrence {
+function wystapienie(
+  blockId: string,
+  startMin: number,
+  durationMin: number,
+): Occurrence {
   return {
     key: `${blockId}:2026-11-17`,
     blockId,
@@ -57,8 +61,12 @@ describe("DaySide", () => {
   it("mini kalendarz: tytuł miesiąca, dziś zielony, wybrany czarny", () => {
     wyrenderuj();
     expect(screen.getByText("listopad 2026")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "17 listopada" }).className).toContain("text-[#15803d]");
-    expect(screen.getByRole("button", { name: "18 listopada" }).className).toContain("bg-[#171717]");
+    expect(
+      screen.getByRole("button", { name: "17 listopada" }).className,
+    ).toContain("text-[#15803d]");
+    expect(
+      screen.getByRole("button", { name: "18 listopada" }).className,
+    ).toContain("bg-[#171717]");
   });
 
   it("klik dnia woła onPick z datą", async () => {
@@ -69,17 +77,26 @@ describe("DaySide", () => {
 
   it("strzałki zmieniają miesiąc", async () => {
     wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: "Następny miesiąc" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Następny miesiąc" }),
+    );
     expect(screen.getByText("grudzień 2026")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Poprzedni miesiąc" }));
-    await userEvent.click(screen.getByRole("button", { name: "Poprzedni miesiąc" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Poprzedni miesiąc" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Poprzedni miesiąc" }),
+    );
     expect(screen.getByText("październik 2026")).toBeInTheDocument();
   });
 
   it("„Dzień w liczbach”: zaplanowane, wolne (8–20) i zadania z dayNumbers", () => {
     wyrenderuj({
       date: "2026-11-17",
-      occurrences: [wystapienie("a", 8 * 60, 150), wystapienie("b", 18 * 60 + 30, 90)],
+      occurrences: [
+        wystapienie("a", 8 * 60, 150),
+        wystapienie("b", 18 * 60 + 30, 90),
+      ],
       tasks: [
         zadanie("t1", "a", true),
         zadanie("t2", "a", false),
@@ -96,7 +113,10 @@ describe("DaySide", () => {
   });
 
   it("format godzin z połówką: 2 h 30 min", () => {
-    wyrenderuj({ date: "2026-11-17", occurrences: [wystapienie("a", 8 * 60, 150)] });
+    wyrenderuj({
+      date: "2026-11-17",
+      occurrences: [wystapienie("a", 8 * 60, 150)],
+    });
     expect(screen.getByText("2 h 30 min")).toBeInTheDocument();
     expect(screen.getByText("9 h 30 min")).toBeInTheDocument();
   });

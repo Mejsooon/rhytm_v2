@@ -5,8 +5,14 @@ import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 export default function StronyPage() {
   return (
     <>
-      <ModuleHeader title="Strony" phoneLabel="Twoje tabele i notatki" phoneSettingsLink />
-      <EmptyModule>Nie masz jeszcze żadnych stron. Strony powstaną w kolejnych etapach.</EmptyModule>
+      <ModuleHeader
+        title="Strony"
+        phoneLabel="Twoje tabele i notatki"
+        phoneSettingsLink
+      />
+      <EmptyModule>
+        Nie masz jeszcze żadnych stron. Strony powstaną w kolejnych etapach.
+      </EmptyModule>
     </>
   );
 }

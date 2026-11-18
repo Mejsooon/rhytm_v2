@@ -27,7 +27,8 @@ export function buildMonthGrid(
 ): { date: IsoDate; inMonth: boolean }[] {
   // Dzień tygodnia 1. dnia miesiąca: 0 = niedziela
   const dzienTygodnia = new Date(Date.UTC(year, month0, 1)).getUTCDay();
-  const przesuniecie = weekStart === "mon" ? (dzienTygodnia + 6) % 7 : dzienTygodnia;
+  const przesuniecie =
+    weekStart === "mon" ? (dzienTygodnia + 6) % 7 : dzienTygodnia;
 
   const komorki: { date: IsoDate; inMonth: boolean }[] = [];
   for (let i = 0; i < 42; i++) {
@@ -35,7 +36,7 @@ export function buildMonthGrid(
     const d = new Date(Date.UTC(year, month0, 1 - przesuniecie + i));
     komorki.push({
       date: `${d.getUTCFullYear()}-${dwie(d.getUTCMonth() + 1)}-${dwie(d.getUTCDate())}`,
-      inMonth: d.getUTCMonth() === (((month0 % 12) + 12) % 12),
+      inMonth: d.getUTCMonth() === ((month0 % 12) + 12) % 12,
     });
   }
   return komorki;
