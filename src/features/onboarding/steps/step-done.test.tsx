@@ -18,6 +18,8 @@ const draft: OnboardingDraft = {
   roles: ["student"],
   studyField: "",
   goals: ["proj"],
+  goalType: "workouts",
+  weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
   source: null,
@@ -54,5 +56,20 @@ describe("StepDone", () => {
       within(screen.getByTestId("done-phone")).getByRole("button", { name: "Zmień: Profil" }),
     );
     expect(push).toHaveBeenCalledWith("/onboarding/1");
+  });
+
+  it("wiersz „Cel treningowy” z odmianą i „Zmień” do kroku 3", async () => {
+    const { rerender } = render(<StepDone draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 1 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-web")).getByText("1 trening / tydz.")).toBeInTheDocument();
+    rerender(<StepDone draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 4 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-phone")).getByText("4 treningi / tydz.")).toBeInTheDocument();
+    rerender(<StepDone draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 7 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-web")).getByText("7 treningów / tydz.")).toBeInTheDocument();
+    rerender(<StepDone draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 22.5 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-phone")).getByText("22,5 km / tydz.")).toBeInTheDocument();
+    rerender(<StepDone draft={{ ...draft, goals: ["sport"], goalType: "km", weeklyKm: 25 }} now={NOW} />);
+    expect(within(screen.getByTestId("done-web")).getByText("25 km / tydz.")).toBeInTheDocument();
+    await userEvent.click(within(screen.getByTestId("done-web")).getByRole("button", { name: "Zmień: Cel treningowy" }));
+    expect(push).toHaveBeenCalledWith("/onboarding/3");
   });
 });

@@ -58,7 +58,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
               <sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="opt" aria-pressed="{{g.on}}" onClick="{{g.toggle}}"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg></span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{g.title}}</span><span style="font-size: 13px; color: #737373">{{g.desc}}</span></span></button></sc-for>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-              <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><label class="fld">Kilometry w tygodniu<input class="inp mono" type="text" value="{{km}}" onChange="{{onKm}}"></label></sc-if>
+              <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="fld" style="grid-column: 1 / -1"><span>Cel treningowy</span><div style="display: flex; gap: 8px; align-items: center"><div class="seg" role="group" aria-label="Rodzaj celu treningowego" style="flex: none"><button type="button" aria-pressed="{{gTr}}" onClick="{{setTr}}" style="padding: 0 12px; white-space: nowrap">Treningi / tydz.</button><button type="button" aria-pressed="{{gKm}}" onClick="{{setKm}}" style="padding: 0 12px; white-space: nowrap">Km / tydz.</button></div><input class="inp mono" type="text" inputMode="numeric" value="{{goalVal}}" onChange="{{onGoal}}" aria-label="{{goalLbl}}" style="flex: 1; min-width: 0"></div></div></sc-if>
               <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><label class="fld">Cel snu<input class="inp mono" type="text" value="{{sleep}}" onChange="{{onSleep}}"></label></sc-if>
             </div>
           </div>
@@ -112,7 +112,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, km: '25', sleep: '8 h' }; }
+  constructor(p) { super(p); this.state = { goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, goalType: 'tr', tr: '3', km: '25', sleep: '8 h' }; }
   renderVals() {
 
     const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo',
@@ -159,7 +159,7 @@ const v = (e) => (e && e.target ? e.target.value : e);
     const G = S.goals || {};
     const goals = GO.map((g) => { const on = !!G[g[0]]; return { title: g[1], desc: g[2], on: on ? 'true' : 'false',
       toggle: () => { const ng = Object.assign({}, G, { [g[0]]: !on }); const np = Object.assign({}, S.pages); if (g[3]) np[g[3]] = !on; this.setState({ goals: ng, pages: np }); } }; });
-    return { pv, goals, showKm: !!G.sport, showSleep: !!G.habits, km: S.km || '25', sleep: S.sleep || '8 h', onKm: (e) => this.setState({ km: v(e) }), onSleep: (e) => this.setState({ sleep: v(e) }) };
+    return { pv, goals, showKm: !!G.sport, showSleep: !!G.habits, gTr: (S.goalType || 'tr') === 'tr' ? 'true' : 'false', gKm: S.goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }), goalVal: S.goalType === 'km' ? (S.km || '25') : (S.tr || '3'), goalLbl: S.goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', onGoal: (e) => this.setState(S.goalType === 'km' ? { km: v(e) } : { tr: v(e) }), sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
   }
 }
 </script>

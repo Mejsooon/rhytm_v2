@@ -21,6 +21,8 @@ const draft: OnboardingDraft = {
   roles: [],
   studyField: "",
   goals: [],
+  goalType: "workouts",
+  weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
   source: null,

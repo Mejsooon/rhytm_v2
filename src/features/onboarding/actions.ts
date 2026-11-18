@@ -73,7 +73,13 @@ export async function saveOnboardingStep(
     const d = parsed.data as ReturnType<typeof onboardingStepSchemas[3]["parse"]>;
     zapis = await supabase
       .from("profiles")
-      .update({ goals: d.goals, weekly_km_goal: d.weekly_km_goal, sleep_goal_min: d.sleep_goal_min })
+      .update({
+        goals: d.goals,
+        weekly_goal_type: d.weekly_goal_type,
+        weekly_workouts_goal: d.weekly_workouts_goal,
+        weekly_km_goal: d.weekly_km_goal,
+        sleep_goal_min: d.sleep_goal_min,
+      })
       .eq("user_id", user.id);
   } else if (step === 4) {
     const d = parsed.data as ReturnType<typeof onboardingStepSchemas[4]["parse"]>;

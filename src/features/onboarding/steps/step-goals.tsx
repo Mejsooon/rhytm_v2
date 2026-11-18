@@ -1,9 +1,27 @@
 import { Check } from "lucide-react";
+import * as React from "react";
 
-import { Stepper } from "@/components/controls";
+import { Segment, Stepper, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import { GOALS, formatSleep, stepKm, stepSleep, toggleGoal, type OnboardingDraft } from "../model";
+import {
+  GOALS,
+  formatKm,
+  formatSleep,
+  goalInRange,
+  stepKm,
+  stepSleep,
+  stepWorkouts,
+  toggleGoal,
+  type GoalType,
+  type OnboardingDraft,
+} from "../model";
+
 import { StepHeader } from "./step-header";
+
+const RODZAJE_CELU: { value: GoalType; label: string }[] = [
+  { value: "workouts", label: "Treningi / tydz." },
+  { value: "km", label: "Km / tydz." },
+];
 
 // Krok 3: cele (OnboardingGoals + MOnboarding). Web: karty z polem po lewej, telefon: kafelki 2×N z polem po prawej.
 export function StepGoals({
@@ -13,8 +31,21 @@ export function StepGoals({
   draft: OnboardingDraft;
   onChange: (next: OnboardingDraft) => void;
 }) {
-  const pokazKm = draft.goals.includes("sport");
+  const pokazCel = draft.goals.includes("sport");
   const pokazSen = draft.goals.includes("habits");
+
+  // Cel treningowy: liczba wybranego rodzaju (druga zostaje w szkicu)
+  const naKm = draft.goalType === "km";
+  const wartosc = naKm ? draft.weeklyKm : draft.weeklyWorkouts;
+  const etykietaCelu = naKm ? "Kilometry w tygodniu" : "Treningi w tygodniu";
+  const bladCelu = goalInRange(draft.goalType, wartosc)
+    ? undefined
+    : naKm
+      ? "Podaj liczbę 1–300."
+      : "Podaj liczbę 1–14.";
+  // Tekst wpisany w pole web (null = pokazujemy liczbę ze szkicu)
+  const [tekstCelu, setTekstCelu] = React.useState<string | null>(null);
+  const poleCelu = tekstCelu ?? (Number.isFinite(wartosc) ? formatKm(wartosc) : "");
 
   return (
     <>
@@ -70,17 +101,67 @@ export function StepGoals({
         })}
       </div>
 
-      {pokazKm && (
-        <div className="flex items-center justify-between gap-3 text-[13px] font-medium max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-[#e0e0e0] max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
-          <span>Kilometry w tygodniu</span>
-          <Stepper
-            ariaLabel="Kilometry w tygodniu"
-            value={`${draft.weeklyKm} km`}
-            onDec={() => onChange({ ...draft, weeklyKm: stepKm(draft.weeklyKm, -1) })}
-            onInc={() => onChange({ ...draft, weeklyKm: stepKm(draft.weeklyKm, 1) })}
-            decDisabled={draft.weeklyKm <= 5}
-            incDisabled={draft.weeklyKm >= 150}
-          />
+      {pokazCel && (
+        <div className="flex flex-col gap-1.5 text-[13px] font-medium max-[799px]:gap-2.5 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-[#eaeaea] max-[799px]:px-3.5 max-[799px]:py-3 max-[799px]:text-sm">
+          {/* Telefon: etykieta mono jak .lbl w MOnboarding */}
+          <span className="max-[799px]:font-mono max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-[#6b6b6b] max-[799px]:uppercase">
+            Cel treningowy
+          </span>
+          <div className="flex items-start gap-2 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:gap-2.5">
+            <Segment
+              ariaLabel="Rodzaj celu treningowego"
+              value={draft.goalType}
+              options={RODZAJE_CELU}
+              onChange={(goalType) => {
+                setTekstCelu(null);
+                onChange({ ...draft, goalType });
+              }}
+            />
+            {/* Web: jedno pole liczby (etykieta tylko dla czytników ekranu) */}
+            <div className="min-w-0 flex-1 max-[799px]:hidden [&_label]:sr-only">
+              <TextField
+                label={etykietaCelu}
+                type="text"
+                inputMode="numeric"
+                className="font-mono"
+                value={poleCelu}
+                error={bladCelu}
+                onChange={(e) => {
+                  const tekst = e.target.value;
+                  setTekstCelu(tekst);
+                  // Pusty tekst lub nieliczba → NaN, wtedy „Dalej” jest nieaktywne
+                  const liczba = tekst.trim() === "" ? Number.NaN : Number(tekst.trim().replace(",", "."));
+                  onChange(naKm ? { ...draft, weeklyKm: liczba } : { ...draft, weeklyWorkouts: liczba });
+                }}
+              />
+            </div>
+            {/* Telefon: licznik −/+ (treningi co 1 w 1–14, km co 5 w 5–150) */}
+            <div className="flex min-h-11 items-center justify-between gap-3 min-[800px]:hidden">
+              <span>{etykietaCelu}</span>
+              <Stepper
+                ariaLabel={etykietaCelu}
+                value={naKm ? `${formatKm(draft.weeklyKm)} km` : String(draft.weeklyWorkouts)}
+                onDec={() => {
+                  setTekstCelu(null);
+                  onChange(
+                    naKm
+                      ? { ...draft, weeklyKm: stepKm(draft.weeklyKm, -1) }
+                      : { ...draft, weeklyWorkouts: stepWorkouts(draft.weeklyWorkouts, -1) },
+                  );
+                }}
+                onInc={() => {
+                  setTekstCelu(null);
+                  onChange(
+                    naKm
+                      ? { ...draft, weeklyKm: stepKm(draft.weeklyKm, 1) }
+                      : { ...draft, weeklyWorkouts: stepWorkouts(draft.weeklyWorkouts, 1) },
+                  );
+                }}
+                decDisabled={naKm ? draft.weeklyKm <= 5 : draft.weeklyWorkouts <= 1}
+                incDisabled={naKm ? draft.weeklyKm >= 150 : draft.weeklyWorkouts >= 14}
+              />
+            </div>
+          </div>
         </div>
       )}
       {pokazSen && (

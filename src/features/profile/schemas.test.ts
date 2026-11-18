@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { goalsSchema, onboardingStepSchemas, parseDecimal, profileSchema } from './schemas'
 
 const poprawnyProfil = { display_name: ' Mejson ', timezone: 'Europe/Warsaw', weight_kg: '72,5', height_cm: '' }
-const poprawneCele = { sleep_goal_min: '480', weekly_km_goal: '40', currency: 'PLN', week_start: 'mon' }
+const poprawneCele = {
+  sleep_goal_min: '480',
+  weekly_goal_type: 'workouts',
+  weekly_workouts_goal: '3',
+  weekly_km_goal: '40',
+  currency: 'PLN',
+  week_start: 'mon',
+}
 
 function komunikaty(wynik: { success: boolean; error?: { issues: { message: string }[] } }) {
   return wynik.success ? [] : wynik.error!.issues.map((i) => i.message)
@@ -54,6 +61,8 @@ describe('goalsSchema', () => {
   it('przyjmuje poprawne cele ze stringów formularza', () => {
     expect(goalsSchema.parse(poprawneCele)).toEqual({
       sleep_goal_min: 480,
+      weekly_goal_type: 'workouts',
+      weekly_workouts_goal: 3,
       weekly_km_goal: 40,
       currency: 'PLN',
       week_start: 'mon',
@@ -62,6 +71,19 @@ describe('goalsSchema', () => {
   it('odrzuca tygodniowy cel km poza 1–300', () => {
     expect(komunikaty(goalsSchema.safeParse({ ...poprawneCele, weekly_km_goal: '0' }))).toContain('Podaj liczbę 1–300.')
     expect(komunikaty(goalsSchema.safeParse({ ...poprawneCele, weekly_km_goal: '301' }))).toContain('Podaj liczbę 1–300.')
+  })
+  it('odrzuca treningi poza 1–14 i ułamki', () => {
+    for (const zle of ['0', '15', '2,5', '', 'abc']) {
+      expect(komunikaty(goalsSchema.safeParse({ ...poprawneCele, weekly_workouts_goal: zle }))).toEqual(['Podaj liczbę 1–14.'])
+    }
+    expect(goalsSchema.parse({ ...poprawneCele, weekly_workouts_goal: 14 }).weekly_workouts_goal).toBe(14)
+  })
+  it('przyjmuje rodzaj celu km z ułamkiem kilometrów', () => {
+    const wynik = goalsSchema.parse({ ...poprawneCele, weekly_goal_type: 'km', weekly_km_goal: '22,5' })
+    expect(wynik).toMatchObject({ weekly_goal_type: 'km', weekly_km_goal: 22.5, weekly_workouts_goal: 3 })
+  })
+  it('odrzuca nieznany rodzaj celu', () => {
+    expect(goalsSchema.safeParse({ ...poprawneCele, weekly_goal_type: 'min' }).success).toBe(false)
   })
   it('odrzuca sen niebędący wielokrotnością 15 lub poza zakresem', () => {
     expect(goalsSchema.safeParse({ ...poprawneCele, sleep_goal_min: 310 }).success).toBe(false)
@@ -98,17 +120,27 @@ describe('onboardingStepSchemas', () => {
     expect(onboardingStepSchemas[2].parse({ roles: ['student'], study_field: '  ' }).study_field).toBeNull()
     expect(onboardingStepSchemas[2].safeParse({ roles: [], study_field: 'a'.repeat(81) }).success).toBe(false)
   })
-  it('krok 3: odrzuca 152 km, przyjmuje wielokrotność 5', () => {
-    const baza = { goals: ['plan'], sleep_goal_min: 480 }
-    expect(onboardingStepSchemas[3].safeParse({ ...baza, weekly_km_goal: 152 }).success).toBe(false)
-    expect(onboardingStepSchemas[3].safeParse({ ...baza, weekly_km_goal: 42 }).success).toBe(false)
-    expect(onboardingStepSchemas[3].safeParse({ ...baza, weekly_km_goal: 155 }).success).toBe(false)
-    expect(onboardingStepSchemas[3].safeParse({ ...baza, weekly_km_goal: 40 }).success).toBe(true)
+  const krok3 = { goals: ['plan'], weekly_goal_type: 'workouts', weekly_workouts_goal: 3, weekly_km_goal: 25, sleep_goal_min: 480 }
+  it('krok 3: treningi tylko całe 1–14', () => {
+    expect(onboardingStepSchemas[3].safeParse(krok3).success).toBe(true)
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_workouts_goal: 14 }).success).toBe(true)
+    for (const zle of [0, 15, 2.5]) {
+      const wynik = onboardingStepSchemas[3].safeParse({ ...krok3, weekly_workouts_goal: zle })
+      expect(komunikaty(wynik)).toEqual(['Podaj liczbę 1–14.'])
+    }
   })
-  it('krok 3: odrzuca nieznany cel', () => {
-    expect(
-      onboardingStepSchemas[3].safeParse({ goals: ['nope'], weekly_km_goal: 40, sleep_goal_min: 480 }).success,
-    ).toBe(false)
+  it('krok 3: kilometry 1–300, także ułamki jak w ustawieniach', () => {
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 42 }).success).toBe(true)
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 22.5 }).success).toBe(true)
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 300 }).success).toBe(true)
+    for (const zle of [0, 301, 0.5]) {
+      const wynik = onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: zle })
+      expect(komunikaty(wynik)).toEqual(['Podaj liczbę 1–300.'])
+    }
+  })
+  it('krok 3: odrzuca nieznany rodzaj celu i nieznany cel', () => {
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_goal_type: 'min' }).success).toBe(false)
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, goals: ['nope'] }).success).toBe(false)
   })
   it('krok 4: referral_other zostaje tylko dla "other"', () => {
     const inny = onboardingStepSchemas[4].parse({ referral_source: 'friend', referral_other: 'x' })

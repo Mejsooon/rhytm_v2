@@ -96,7 +96,7 @@ a.btnp,a.btnp:hover{color:#ffffff}
     <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
       <div><h1 class="h1" style="font-size: 26px">Co chcesz ogarnąć w rhytm?</h1><p class="sub" style="margin: 6px 0 0">Na tej podstawie przygotujemy startowe strony i cele.</p></div>
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" role="checkbox" aria-checked="{{g.on}}" onClick="{{g.pick}}" style="{{g.s}}"><span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="font-weight: 500">{{g.t}}</span><span class="cb" aria-hidden="true" style="{{g.cbS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span></span><span class="sub" style="font-size: 12px">{{g.d}}</span></button></sc-for></div>
-      <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="card"><div class="row"><span style="flex: 1">Kilometry w tygodniu</span><button type="button" class="ib" aria-label="Mniej kilometrów" onClick="{{kmM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{km}} km</span><button type="button" class="ib" aria-label="Więcej kilometrów" onClick="{{kmP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
+      <sc-if value="{{showKm}}" hint-placeholder-val="{{true}}"><div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px"><span class="lbl">Cel treningowy</span><nav class="seg" role="group" aria-label="Rodzaj celu treningowego"><button type="button" class="sg" aria-pressed="{{gTr}}" onClick="{{setTr}}">Treningi / tydz.</button><button type="button" class="sg" aria-pressed="{{gKm}}" onClick="{{setKm}}">Km / tydz.</button></nav><div style="display: flex; align-items: center; min-height: 44px"><span style="flex: 1">{{goalLbl}}</span><button type="button" class="ib" aria-label="{{goalMinus}}" onClick="{{goalM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 64px; text-align: center; font-size: 17px">{{goalTxt}}</span><button type="button" class="ib" aria-label="{{goalPlus}}" onClick="{{goalP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
       <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><div class="card"><div class="row"><span style="flex: 1">Cel snu</span><button type="button" class="ib" aria-label="Krócej" onClick="{{slM}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">−</button><span class="mono" style="width: 56px; text-align: center; font-size: 17px">{{sleep}}</span><button type="button" class="ib" aria-label="Dłużej" onClick="{{slP}}" style="width: 36px; height: 36px; border: 1px solid #e0e0e0">+</button></div></div></sc-if>
     </sc-if>
 
@@ -155,7 +155,7 @@ class Component extends DCLogic {
     const P = S.pages;
     const src = S.src || null;
     const N = S.notify || { perm: false, before: true, renew: true, weekly: true, habits: false };
-    const km = S.km ?? 25, sleep = S.sleep ?? 480;
+    const km = S.km ?? 25, tr = S.tr ?? 3, goalType = S.goalType || 'tr', sleep = S.sleep ?? 480;
     const go = (n) => this.setState({ step: n, tzOpen: false });
     const sel = (on) => 'border-color:' + (on ? '#15803d' : '#cfcfcf') + ';background:' + (on ? '#15803d' : '#ffffff');
     const TZ = [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00']];
@@ -197,7 +197,10 @@ class Component extends DCLogic {
         s: 'display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:76px;padding:12px;border-radius:12px;font:inherit;color:#171717;cursor:pointer;text-align:left;border:1px solid ' + (on ? '#15803d' : '#e0e0e0') + ';background:' + (on ? '#f7fbf8' : '#ffffff'),
         pick: () => this.setState({ goals: Object.assign({}, G, { [g[0]]: !on }), pages: null }) }; }),
       showKm: !!G.sport, showSleep: !!G.habits, km, sleep: hm(sleep),
-      kmM: () => this.setState({ km: Math.max(5, km - 5) }), kmP: () => this.setState({ km: Math.min(150, km + 5) }),
+      gTr: goalType === 'tr' ? 'true' : 'false', gKm: goalType === 'km' ? 'true' : 'false', setTr: () => this.setState({ goalType: 'tr' }), setKm: () => this.setState({ goalType: 'km' }),
+      goalLbl: goalType === 'km' ? 'Kilometry w tygodniu' : 'Treningi w tygodniu', goalTxt: goalType === 'km' ? km + ' km' : String(tr),
+      goalMinus: goalType === 'km' ? 'Mniej kilometrów' : 'Mniej treningów', goalPlus: goalType === 'km' ? 'Więcej kilometrów' : 'Więcej treningów',
+      goalM: () => this.setState(goalType === 'km' ? { km: Math.max(5, km - 5) } : { tr: Math.max(1, tr - 1) }), goalP: () => this.setState(goalType === 'km' ? { km: Math.min(150, km + 5) } : { tr: Math.min(14, tr + 1) }),
       slM: () => this.setState({ sleep: Math.max(300, sleep - 15) }), slP: () => this.setState({ sleep: Math.min(660, sleep + 15) }),
       srcs: SRC.map((x) => ({ t: x, p: x === src ? 'true' : 'false', pick: () => this.setState({ src: x }) })),
       isOther: src === 'Inne', other: S.other || '', onOther: (e) => this.setState({ other: e.target.value }),
