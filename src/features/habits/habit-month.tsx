@@ -49,7 +49,7 @@ export function HabitMonth({
   weekStart,
   minMonth,
   maxMonth,
-  summary = false,
+  phone = false,
 }: {
   habit: Habit;
   checks: Set<IsoDate>;
@@ -59,8 +59,9 @@ export function HabitMonth({
   minMonth?: string;
   // Najpóźniejszy miesiąc 'YYYY-MM' — zwykle bieżący
   maxMonth: string;
-  // Telefon (MHabitDetail.dc.html): zamiast legendy „N z M dni zaliczone” dla pokazanego miesiąca
-  summary?: boolean;
+  // Wariant telefonu (MHabitDetail.dc.html): pominięte dni szare zamiast czerwonych,
+  // a zamiast legendy podsumowanie pokazanego miesiąca
+  phone?: boolean;
 }) {
   const [miesiac, setMiesiac] = useState(maxMonth);
 
@@ -88,7 +89,9 @@ export function HabitMonth({
     return "pominiete";
   }
 
-  // Zaliczone = zrobione / (zrobione + pominięte) w dniach tego miesiąca (pominięte są tylko do wczoraj)
+  // Podsumowanie (telefon): codziennie / dni tygodnia → zrobione z (zrobione + pominięte), pominięte tylko do wczoraj;
+  // X/tydz. nie ma pominiętych dni, więc liczymy odhaczenia: „N razy w tym miesiącu”.
+  // Typ bierzemy z wersji obowiązującej ostatniego pokazanego dnia (koniec miesiąca, a w bieżącym — dziś).
   let zrobione = 0;
   let pominiete = 0;
   for (const k of widoczne) {
@@ -96,6 +99,12 @@ export function HabitMonth({
     if (stan === "zrobione") zrobione++;
     if (stan === "pominiete") pominiete++;
   }
+  const ostatniWMiesiacu = widoczne.filter((k) => k.inMonth).at(-1)?.date ?? today;
+  const wersjaMiesiaca = scheduleOn(habit, ostatniWMiesiacu < today ? ostatniWMiesiacu : today);
+  const podsumowanie =
+    wersjaMiesiaca?.type === "times_per_week"
+      ? `${zrobione} razy w tym miesiącu`
+      : `${zrobione} z ${zrobione + pominiete} dni zaliczone`;
 
   return (
     <section className="rounded-lg border border-[#eaeaea] bg-white p-4">
@@ -137,7 +146,10 @@ export function HabitMonth({
               data-day={k.date}
               data-state={stan}
               aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
-              className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${STYLE_STANU[stan]}`}
+              className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${
+                // Telefon: pominięte szare jak w makiecie; web zostaje przy czerwonym
+                phone && stan === "pominiete" ? "bg-[#f5f5f5] text-[#8a8a8a]" : STYLE_STANU[stan]
+              }`}
             >
               {Number(k.date.slice(8))}
             </span>
@@ -145,12 +157,10 @@ export function HabitMonth({
         })}
       </div>
 
-      {summary && (
-        <div className="mt-2.5 text-[13px] text-[#666666]">{`${zrobione} z ${zrobione + pominiete} dni zaliczone`}</div>
-      )}
+      {phone && <div className="mt-2.5 text-[13px] text-[#666666]">{podsumowanie}</div>}
 
       {/* Legenda z makiety (web) */}
-      {!summary && (
+      {!phone && (
         <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-[#666666]">
           <span>
             <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#15803d]" />

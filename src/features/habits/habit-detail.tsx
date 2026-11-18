@@ -67,10 +67,10 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   // Oba układy są w DOM; przełącza je wyłącznie CSS (800 px). Telefon ma własne okna edycji i usuwania.
   return (
     <>
-      <div className="min-[800px]:hidden">
+      <div data-testid="m-nawyk" className="min-[800px]:hidden">
         <MHabitDetail data={data} />
       </div>
-      <div className="flex min-w-0 flex-col max-[799px]:hidden">
+      <div data-testid="web-nawyk" className="flex min-w-0 flex-col max-[799px]:hidden">
         <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
           <div className="font-mono text-[13px] text-[#666666]">
             <Link href="/nawyki" className="text-[#666666] no-underline hover:text-[#171717]">

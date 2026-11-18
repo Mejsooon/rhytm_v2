@@ -9,9 +9,12 @@ import { addHabitNote } from "./actions";
 export function HabitNotes({
   habitId,
   notes,
+  phone = false,
 }: {
   habitId: string;
   notes: { id: string; date: IsoDate; text: string }[];
+  // Telefon (MHabitDetail.dc.html): nagłówek nad kartą, data nad treścią notatki
+  phone?: boolean;
 }) {
   const [tekst, setTekst] = useState("");
   const [pending, setPending] = useState(false);
@@ -40,18 +43,24 @@ export function HabitNotes({
     }
   }
 
-  return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
-      <div className="border-b border-[#eaeaea] px-4 py-3.5">
-        <h2 className="m-0 text-[15px] font-semibold">Notatki</h2>
-      </div>
+  const karta = (
+    <>
       {notes.map((n) => (
-        <div key={n.id} className="flex gap-3 border-b border-[#f0f0f0] px-4 py-3">
-          <span className="font-mono text-xs text-[#6b6b6b]">{`${n.date.slice(8)}.${n.date.slice(5, 7)}`}</span>
+        <div
+          key={n.id}
+          className={
+            phone
+              ? "flex flex-col gap-0.5 border-b border-[#f0f0f0] px-3.5 py-3"
+              : "flex gap-3 border-b border-[#f0f0f0] px-4 py-3"
+          }
+        >
+          <span className={phone ? "font-mono text-[11px] text-[#6b6b6b]" : "font-mono text-xs text-[#6b6b6b]"}>
+            {`${n.date.slice(8)}.${n.date.slice(5, 7)}`}
+          </span>
           <span className="min-w-0 break-words">{n.text}</span>
         </div>
       ))}
-      <div className="px-4 py-3">
+      <div className={phone ? "px-3.5 py-3" : "px-4 py-3"}>
         <input
           type="text"
           value={tekst}
@@ -73,6 +82,23 @@ export function HabitNotes({
           </p>
         )}
       </div>
+    </>
+  );
+
+  if (phone) {
+    return (
+      <section>
+        <h2 className="m-0 mb-2 text-[17px] font-semibold">Notatki</h2>
+        <div className="rounded-xl border border-[#eaeaea] bg-white">{karta}</div>
+      </section>
+    );
+  }
+  return (
+    <section className="rounded-lg border border-[#eaeaea] bg-white">
+      <div className="border-b border-[#eaeaea] px-4 py-3.5">
+        <h2 className="m-0 text-[15px] font-semibold">Notatki</h2>
+      </div>
+      {karta}
     </section>
   );
 }

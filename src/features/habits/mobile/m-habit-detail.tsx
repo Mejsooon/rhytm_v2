@@ -94,10 +94,10 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
           weekStart={data.weekStart}
           minMonth={minMonth}
           maxMonth={data.today.slice(0, 7)}
-          summary
+          phone
         />
 
-        <HabitNotes habitId={habit.id} notes={data.notes} />
+        <HabitNotes habitId={habit.id} notes={data.notes} phone />
 
         <button
           type="button"

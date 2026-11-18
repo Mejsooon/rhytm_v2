@@ -91,10 +91,33 @@ describe("MHabitDetail", () => {
     expect(wstecz).toBeDisabled();
   });
 
-  it("Notatki", () => {
+  it("pominięte dni są szare jak w makiecie (nie czerwone jak na webie)", () => {
     render(<MHabitDetail data={dane()} />);
-    expect(screen.getByRole("heading", { name: "Notatki" })).toBeInTheDocument();
-    expect(screen.getByText("Butelka 1 l na biurku pomaga.")).toBeInTheDocument();
+    const pominiety = document.querySelector('[data-day="2026-11-04"]') as HTMLElement;
+    expect(pominiety).toHaveAttribute("data-state", "pominiete");
+    expect(pominiety.className).toContain("bg-[#f5f5f5]");
+    expect(pominiety.className).toContain("text-[#8a8a8a]");
+    expect(pominiety.className).not.toContain("bg-[#fee2e2]");
+    // Bez webowej legendy
+    expect(screen.queryByText("szare: dzień bez nawyku")).not.toBeInTheDocument();
+  });
+
+  it("X/tydz.: „N razy w tym miesiącu” zamiast dni zaliczonych", () => {
+    const d = dane();
+    d.habits[0].schedules = [{ validFrom: "2026-03-01", type: "times_per_week", weekdays: [], timesPerWeek: 3 }];
+    render(<MHabitDetail data={d} />);
+    expect(screen.getByText("15 razy w tym miesiącu")).toBeInTheDocument();
+    expect(screen.queryByText(/dni zaliczone/)).not.toBeInTheDocument();
+  });
+
+  it("Notatki: nagłówek nad kartą, notatka z datą", () => {
+    render(<MHabitDetail data={dane()} />);
+    const naglowek = screen.getByRole("heading", { name: "Notatki" });
+    const notatka = screen.getByText("Butelka 1 l na biurku pomaga.");
+    // Nagłówek jest poza kartą z notatkami
+    expect(naglowek.nextElementSibling).toContainElement(notatka);
+    expect(naglowek.parentElement?.className ?? "").not.toContain("border");
+    expect(screen.getByText("12.11")).toBeInTheDocument();
   });
 
   it("„Usuń nawyk” pyta tak samo jak web i usuwa", async () => {

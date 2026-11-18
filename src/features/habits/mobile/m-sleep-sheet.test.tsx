@@ -104,8 +104,17 @@ describe("MSleepSheet", () => {
     expect(within(okno).getByRole("button", { name: "Anuluj" })).toBeDisabled();
     await userEvent.keyboard("{Escape}");
     expect(onDone).not.toHaveBeenCalled();
+    // Pola też są zablokowane na czas zapisu
+    for (const nazwa of ["Zasnąłem wcześniej", "Zasnąłem później", "Wstałem wcześniej", "Wstałem później", "Trening"]) {
+      expect(within(okno).getByRole("button", { name: nazwa })).toBeDisabled();
+    }
+    expect(within(okno).getByRole("radio", { name: "Jakość 3 — OK" })).toBeDisabled();
+    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toBeDisabled();
     await act(async () => zakoncz({ ok: false, message: "Błąd" }));
     expect(within(okno).getByRole("alert")).toHaveTextContent("Błąd");
+    // Po błędzie pola wracają
+    expect(within(okno).getByRole("button", { name: "Zasnąłem później" })).toBeEnabled();
+    expect(within(okno).getByRole("textbox", { name: "Notatka" })).toBeEnabled();
   });
 
   it("zegar 12 h", () => {

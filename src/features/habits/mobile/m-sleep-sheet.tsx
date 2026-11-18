@@ -4,7 +4,7 @@
 // Makieta nie ma wyboru daty: arkusz zapisuje noc dla podanej daty pobudki,
 // a gdy ten dzień ma już wpis — edytuje go. Godziny −/+ co 15 min, z przejściem przez północ.
 // Zasady zapisu jak w SleepDialog (web, bliźniacza logika w sleep-dialog.tsx): ta sama akcja i ładunek.
-// Zapis nieoptymistyczny: w trakcie zapisu Anuluj i Esc są zablokowane, błąd zostaje w arkuszu.
+// Zapis nieoptymistyczny: w trakcie zapisu Anuluj, Esc i wszystkie pola są zablokowane, błąd zostaje w arkuszu.
 import { useRef, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Dialog } from "radix-ui";
@@ -29,7 +29,7 @@ const ETYKIETA = "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercas
 const NAGLOWEK_PRZYCISK =
   "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
 const PRZYCISK_KROKU =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-[#e0e0e0] bg-white p-0 text-lg text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-[#e0e0e0] bg-white p-0 text-lg text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50";
 
 export function MSleepSheet({
   date,
@@ -166,6 +166,7 @@ export function MSleepSheet({
                     <button
                       type="button"
                       aria-label={`${nazwa} wcześniej`}
+                      disabled={pending}
                       onClick={() => zmien(przesun(wartosc, -KROK))}
                       className={PRZYCISK_KROKU}
                     >
@@ -177,6 +178,7 @@ export function MSleepSheet({
                     <button
                       type="button"
                       aria-label={`${nazwa} później`}
+                      disabled={pending}
                       onClick={() => zmien(przesun(wartosc, KROK))}
                       className={PRZYCISK_KROKU}
                     >
@@ -200,10 +202,11 @@ export function MSleepSheet({
                       role="radio"
                       aria-checked={wybrane}
                       aria-label={`Jakość ${wartosc} — ${etykieta}`}
+                      disabled={pending}
                       // Ponowne stuknięcie wybranej wartości czyści samopoczucie (jak na webie)
                       onClick={() => setFeeling(wybrane ? null : wartosc)}
                       className={cn(
-                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50",
                         wybrane
                           ? "border-[#15803d] bg-[#f0faf4] text-[#15803d]"
                           : "border-[#e0e0e0] bg-white text-[#404040]",
@@ -224,6 +227,7 @@ export function MSleepSheet({
                   <Chip
                     key={tag}
                     selected={tags.includes(tag)}
+                    disabled={pending}
                     onClick={() => setTags((t) => (t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag]))}
                   >
                     {tag}
@@ -238,9 +242,10 @@ export function MSleepSheet({
                 rows={3}
                 value={note}
                 maxLength={1000}
+                disabled={pending}
                 placeholder="Opcjonalnie"
                 onChange={(e) => setNote(e.target.value)}
-                className="box-border h-[88px] w-full resize-none rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-[15px] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+                className="box-border h-[88px] w-full resize-none rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-[15px] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] disabled:opacity-60"
               />
             </label>
           </div>
