@@ -76,12 +76,6 @@ describe("HabitDialog", () => {
     expect(screen.getByText("Wszystkie dni — to to samo co „Codziennie”.")).toBeInTheDocument();
   });
 
-  it("przyciski dni zaczynają od week_start", () => {
-    wyrenderuj(undefined, "sun");
-    // bez przełączenia na Wybrane dni przyciski nie istnieją
-    expect(screen.queryByRole("button", { name: "niedziela" })).not.toBeInTheDocument();
-  });
-
   it("przyciski dni zaczynają od niedzieli przy week_start = sun", async () => {
     const u = userEvent.setup();
     wyrenderuj(undefined, "sun");
@@ -193,5 +187,35 @@ describe("HabitDialog", () => {
         showOnToday: false,
       }),
     );
+  });
+
+  it("tryb edycji bez przypomnienia: przełącznik wyłączony, remindAt = null, bez createHabit", async () => {
+    const u = userEvent.setup();
+    updateHabit.mockResolvedValue({ ok: true });
+    wyrenderuj({ ...NAWYK, remindAt: null });
+    expect(screen.getByRole("switch", { name: "Przypomnienie push" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("button", { name: "Godzina przypomnienia" })).toBeDisabled();
+    await u.click(screen.getByRole("button", { name: "Zapisz" }));
+    await waitFor(() => expect(updateHabit).toHaveBeenCalledWith("h1", expect.objectContaining({ remindAt: null })));
+    expect(createHabit).not.toHaveBeenCalled();
+  });
+
+  it("ponowne otwarcie dla innego nawyku pokazuje jego wartości", () => {
+    const inny: Habit = {
+      id: "h2",
+      name: "Czytanie",
+      remindAt: null,
+      showOnToday: true,
+      createdAt: "",
+      schedules: [{ validFrom: "2026-11-01", type: "times_per_week", weekdays: [], timesPerWeek: 5 }],
+    };
+    const props = { onOpenChange: vi.fn(), weekStart: "mon" as const, clock: "24" as const, today: "2026-11-17" as const };
+    const { rerender } = render(<HabitDialog open habit={NAWYK} {...props} />);
+    expect(screen.getByLabelText("Nazwa")).toHaveValue("Rozciąganie");
+    rerender(<HabitDialog open={false} habit={NAWYK} {...props} />);
+    rerender(<HabitDialog open habit={inny} {...props} />);
+    expect(screen.getByLabelText("Nazwa")).toHaveValue("Czytanie");
+    expect(screen.getByRole("radio", { name: "X razy w tygodniu" })).toBeChecked();
+    expect(screen.getByText("5× w tygodniu, dowolne dni. Seria liczona w tygodniach.")).toBeInTheDocument();
   });
 });

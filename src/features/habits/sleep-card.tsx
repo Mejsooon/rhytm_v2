@@ -81,7 +81,6 @@ export function SleepCard({
               ? {
                   role: "button",
                   tabIndex: 0,
-                  "aria-label": "Edytuj ostatnią noc",
                   onClick: () => onOpenLast(ostatnia),
                   onKeyDown: (e: KeyboardEvent) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -99,6 +98,7 @@ export function SleepCard({
             )}
           >
             <MonoLabel className="block">Ostatnia noc</MonoLabel>
+            {ostatnia && onOpenLast && <span className="sr-only">Edytuj ostatnią noc</span>}
             <div className="mt-1.5 font-mono text-xl">
               {minutyOstatniej === null ? "—" : formatDuration(minutyOstatniej)}
             </div>

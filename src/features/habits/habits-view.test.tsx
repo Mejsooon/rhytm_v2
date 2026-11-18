@@ -2,13 +2,15 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { toastError, setHabitCheck, createHabit, updateHabit, saveSleepLog } = vi.hoisted(() => ({
+const { replace, toastError, setHabitCheck, createHabit, updateHabit, saveSleepLog } = vi.hoisted(() => ({
+  replace: vi.fn(),
   toastError: vi.fn(),
   setHabitCheck: vi.fn(),
   createHabit: vi.fn(),
   updateHabit: vi.fn(),
   saveSleepLog: vi.fn(),
 }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("./actions", () => ({ setHabitCheck, createHabit, updateHabit, saveSleepLog }));
 
@@ -92,7 +94,8 @@ describe("HabitsView", () => {
 
   it("?nowy=sen otwiera wpis snu na dziś", () => {
     render(<HabitsView data={dane()} initialTab={null} openOnLoad="sen" />);
-    expect(screen.getByRole("dialog", { name: "Noc z poniedziałku na wtorek" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Wpis snu" })).toBeInTheDocument();
+    expect(screen.getByText("Noc z poniedziałku na wtorek")).toBeInTheDocument();
   });
 
   it("+ Wpis snu dla dnia z wpisem otwiera okno z jego wartościami", async () => {
@@ -111,8 +114,24 @@ describe("HabitsView", () => {
       { date: "2026-11-16", sleptAt: "22:30", wokeAt: "06:30", feeling: null, tags: [], note: null },
     ];
     render(<HabitsView data={d} initialTab={null} openOnLoad={null} />);
-    await userEvent.click(screen.getByRole("button", { name: "Edytuj ostatnią noc" }));
-    expect(screen.getByRole("dialog", { name: "Noc z niedzieli na poniedziałek" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Edytuj ostatnią noc/ }));
+    expect(screen.getByText("Noc z niedzieli na poniedziałek")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent("22:30");
+  });
+
+  it("?nowy= czyści adres po otwarciu okna i zachowuje tab", () => {
+    const { unmount } = render(<HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />);
+    expect(replace).toHaveBeenCalledWith("/nawyki");
+    unmount();
+    render(<HabitsView data={dane()} initialTab="sen" openOnLoad="sen" />);
+    expect(replace).toHaveBeenLastCalledWith("/nawyki?tab=sen");
+  });
+
+  it("?nowy= pojawiające się przy działającym widoku też otwiera okno", () => {
+    const { rerender } = render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+    rerender(<HabitsView data={dane()} initialTab={null} openOnLoad="nawyk" />);
+    expect(screen.getByRole("dialog", { name: "Nowy nawyk" })).toBeInTheDocument();
   });
 });

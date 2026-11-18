@@ -1,7 +1,8 @@
 "use client";
 
 // Ekran „Nawyki i sen” na komputerze (Habits.dc.html): nagłówek, kafelki, karta Nawyki + karta Sen, heatmapa.
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
@@ -21,6 +22,7 @@ const DNI_TYGODNIA = ["poniedziałek", "wtorek", "środa", "czwartek", "piątek"
 
 export function HabitsView({
   data,
+  initialTab,
   openOnLoad,
 }: {
   data: HabitsPageData;
@@ -32,13 +34,17 @@ export function HabitsView({
   const { checks, toggle } = useHabitsStore(data);
 
   // Otwarte okno: nowy nawyk albo wpis snu z datą pobudki (okno samo znajdzie wpis z tego dnia)
-  const [otwarteOkno, setOtwarteOkno] = useState<{ rodzaj: "nawyk" } | { rodzaj: "sen"; date: IsoDate } | null>(
-    openOnLoad === "nawyk"
-      ? { rodzaj: "nawyk" }
-      : openOnLoad === "sen"
-        ? { rodzaj: "sen", date: data.today }
-        : null,
-  );
+  const [otwarteOkno, setOtwarteOkno] = useState<{ rodzaj: "nawyk" } | { rodzaj: "sen"; date: IsoDate } | null>(null);
+  const { replace } = useRouter();
+
+  // ?nowy=nawyk|sen: otwieramy okno (także gdy widok już działa), a potem czyścimy adres,
+  // żeby odświeżenie ani „wstecz” nie otwierały go drugi raz; pozostałe parametry (tab) zostają
+  useEffect(() => {
+    if (!openOnLoad) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- otwarcie okna jest reakcją na parametr adresu
+    setOtwarteOkno(openOnLoad === "nawyk" ? { rodzaj: "nawyk" } : { rodzaj: "sen", date: data.today });
+    replace(initialTab ? `/nawyki?tab=${initialTab}` : "/nawyki");
+  }, [openOnLoad, initialTab, data.today, replace]);
   const onNewHabit = () => setOtwarteOkno({ rodzaj: "nawyk" });
   const onNewSleep = (date?: IsoDate) => setOtwarteOkno({ rodzaj: "sen", date: date ?? data.today });
   const zamknijOkno = (otwarte: boolean) => {
@@ -111,7 +117,6 @@ export function HabitsView({
           open
           onOpenChange={zamknijOkno}
           date={otwarteOkno.date}
-          existing={data.sleepLogs.find((l) => l.date === otwarteOkno.date)}
           logs={data.sleepLogs}
           goalMin={data.sleepGoalMin}
           clock={data.clock}

@@ -31,7 +31,6 @@ export function SleepDialog({
   open,
   onOpenChange,
   date,
-  existing,
   logs,
   goalMin,
   clock,
@@ -41,9 +40,7 @@ export function SleepDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   date: IsoDate;
-  // Wpis z tego dnia (gdy już istnieje) — okno startuje z jego wartościami
-  existing?: SleepLog;
-  // Wszystkie znane wpisy: po zmianie daty pobudki okno ładuje wpis z nowego dnia
+  // Wszystkie znane wpisy: okno startuje z wpisem z tego dnia (jeśli jest), a po zmianie daty ładuje wpis z nowego dnia
   logs: SleepLog[];
   goalMin: number;
   clock: "24" | "12";
@@ -56,7 +53,6 @@ export function SleepDialog({
     <SleepForm
       onOpenChange={onOpenChange}
       date={date}
-      existing={existing}
       logs={logs}
       goalMin={goalMin}
       clock={clock}
@@ -69,13 +65,13 @@ export function SleepDialog({
 function SleepForm({
   onOpenChange,
   date: dataStartowa,
-  existing,
   logs,
   goalMin,
   clock,
   weekStart,
   today,
 }: Omit<Parameters<typeof SleepDialog>[0], "open">) {
+  const existing = logs.find((l) => l.date === dataStartowa);
   const [date, setDate] = useState(dataStartowa);
   const [sleptAt, setSleptAt] = useState(existing?.sleptAt ?? DOMYSLNE_ZASNIECIE);
   const [wokeAt, setWokeAt] = useState(existing?.wokeAt ?? DOMYSLNA_POBUDKA);
@@ -140,11 +136,11 @@ function SleepForm({
       });
     } catch {
       wynik = { ok: false, message: BLAD_ZAPISU };
-    } finally {
-      zapisuje.current = false;
-      setPending(false);
     }
     if (!wynik.ok) {
+      // Po błędzie odblokowujemy okno; po sukcesie zostaje zablokowane aż do zamknięcia (bez mignięcia przycisków)
+      zapisuje.current = false;
+      setPending(false);
       setBlad(wynik.message);
       return;
     }
@@ -155,7 +151,8 @@ function SleepForm({
     <FormDialog
       open
       onOpenChange={zmienOtwarcie}
-      title={nightTitle(date).web}
+      title="Wpis snu"
+      description={nightTitle(date).web}
       footer={
         <>
           {blad && (

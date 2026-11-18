@@ -134,11 +134,11 @@ function HabitForm({
       wynik = habit ? await updateHabit(habit.id, dane) : await createHabit(dane);
     } catch {
       wynik = { ok: false, message: BLAD_ZAPISU };
-    } finally {
-      zapisuje.current = false;
-      setPending(false);
     }
     if (!wynik.ok) {
+      // Po błędzie odblokowujemy okno; po sukcesie zostaje zablokowane aż do zamknięcia (bez mignięcia przycisków)
+      zapisuje.current = false;
+      setPending(false);
       setBlad(wynik.message);
       return;
     }

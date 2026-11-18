@@ -14,13 +14,14 @@ const LOGI: SleepLog[] = [
 ];
 
 function wyrenderuj(opcje: { date?: string; existing?: SleepLog; clock?: "24" | "12" } = {}) {
+  // existing wskazuje dzień wpisu — okno samo znajduje go w logs
+
   const onOpenChange = vi.fn();
   render(
     <SleepDialog
       open
       onOpenChange={onOpenChange}
-      date={(opcje.date ?? "2026-11-17") as `${number}-${number}-${number}`}
-      existing={opcje.existing}
+      date={(opcje.existing?.date ?? opcje.date ?? "2026-11-17") as `${number}-${number}-${number}`}
       logs={LOGI}
       goalMin={480}
       clock={opcje.clock ?? "24"}
@@ -36,7 +37,8 @@ beforeEach(() => vi.clearAllMocks());
 describe("SleepDialog", () => {
   it("tytuł z nocy i domyślne 23:00 → 07:00 dla nowego wpisu", () => {
     wyrenderuj({ date: "2026-11-15" });
-    expect(screen.getByRole("dialog", { name: "Noc z soboty na niedzielę" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Wpis snu" })).toBeInTheDocument();
+    expect(screen.getByText("Noc z soboty na niedzielę")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent("23:00");
     expect(screen.getByRole("button", { name: "Wstałem" })).toHaveTextContent("07:00");
     expect(screen.getByText("8:00")).toBeInTheDocument();
@@ -64,7 +66,18 @@ describe("SleepDialog", () => {
     expect(screen.getByRole("radio", { name: /Super/ })).toBeChecked();
     expect(screen.getByRole("button", { name: "Trening" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByLabelText(/Notatka/)).toHaveValue("dobrze");
-    expect(screen.getByRole("dialog", { name: "Noc z niedzieli na poniedziałek" })).toBeInTheDocument();
+    expect(screen.getByText("Noc z niedzieli na poniedziałek")).toBeInTheDocument();
+  });
+
+  it("zmiana daty z dnia z wpisem na dzień bez wpisu przywraca domyślne 23:00 → 07:00", async () => {
+    const u = userEvent.setup();
+    wyrenderuj({ existing: LOGI[1] });
+    await u.click(screen.getByRole("radio", { name: /Dobrze/ }));
+    await u.click(screen.getByRole("button", { name: "Data pobudki" }));
+    await u.click(screen.getByRole("button", { name: "15" }));
+    expect(screen.getByRole("button", { name: "Zasnąłem" })).toHaveTextContent("23:00");
+    expect(screen.getByRole("button", { name: "Wstałem" })).toHaveTextContent("07:00");
+    expect(screen.getByRole("radiogroup", { name: "Samopoczucie" }).querySelector("[aria-checked=true]")).toBeNull();
   });
 
   it("dni z przyszłości są zablokowane w kalendarzu", async () => {
