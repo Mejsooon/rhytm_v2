@@ -15,11 +15,12 @@ import {
   type OnboardingDraft,
 } from "../model";
 
+import { StepHeader } from "./step-header";
+
 const RODZAJE_CELU: { value: GoalType; label: string }[] = [
   { value: "workouts", label: "Treningi / tydz." },
   { value: "km", label: "Km / tydz." },
 ];
-import { StepHeader } from "./step-header";
 
 // Krok 3: cele (OnboardingGoals + MOnboarding). Web: karty z polem po lewej, telefon: kafelki 2×N z polem po prawej.
 export function StepGoals({

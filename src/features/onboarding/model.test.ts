@@ -118,6 +118,13 @@ describe("kroki liczników", () => {
     expect(stepKm(150, 1)).toBe(150);
     expect(stepKm(25, 1)).toBe(30);
   });
+  it("stepKm: najpierw wyrównuje do siatki co 5 (np. liczba z pola web)", () => {
+    expect(stepKm(42, 1)).toBe(45);
+    expect(stepKm(42, -1)).toBe(35);
+    expect(stepKm(22.5, 1)).toBe(30);
+    expect(stepKm(200, -1)).toBe(150);
+    expect(stepKm(2, 1)).toBe(5);
+  });
   it("stepWorkouts: co 1, zakres 1–14", () => {
     expect(stepWorkouts(1, -1)).toBe(1);
     expect(stepWorkouts(14, 1)).toBe(14);
@@ -138,7 +145,7 @@ describe("kroki liczników", () => {
 });
 
 describe("cel treningowy", () => {
-  it("goalInRange: treningi całe 1–14, km całe 1–300", () => {
+  it("goalInRange: treningi całe 1–14, km 1–300 (także ułamki)", () => {
     expect(goalInRange("workouts", 1)).toBe(true);
     expect(goalInRange("workouts", 14)).toBe(true);
     expect(goalInRange("workouts", 0)).toBe(false);
@@ -146,6 +153,7 @@ describe("cel treningowy", () => {
     expect(goalInRange("workouts", 2.5)).toBe(false);
     expect(goalInRange("workouts", Number.NaN)).toBe(false);
     expect(goalInRange("km", 42)).toBe(true);
+    expect(goalInRange("km", 22.5)).toBe(true);
     expect(goalInRange("km", 300)).toBe(true);
     expect(goalInRange("km", 301)).toBe(false);
     expect(goalInRange("km", 0)).toBe(false);

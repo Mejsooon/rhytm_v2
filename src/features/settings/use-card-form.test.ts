@@ -46,4 +46,28 @@ describe("useCardForm", () => {
     expect(result.current.message).toBe("dirty");
     expect(result.current.dirty).toBe(true);
   });
+
+  it("nowe zapisane z serwera (Activity) → nowa baza; bez zmian także nowe wartości", () => {
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    rerender({ saved: { name: "Ola", kg: "70" } });
+    expect(result.current.saved).toEqual({ name: "Ola", kg: "70" });
+    expect(result.current.value).toEqual({ name: "Ola", kg: "70" });
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it("nowe zapisane przy niezapisanych zmianach → baza się zmienia, zmiany zostają", () => {
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    act(() => result.current.set({ kg: "80" }));
+    rerender({ saved: { name: "Ola", kg: "" } });
+    expect(result.current.saved).toEqual({ name: "Ola", kg: "" });
+    expect(result.current.value).toEqual({ name: "Ala", kg: "80" });
+    expect(result.current.dirty).toBe(true);
+  });
+
+  it("ten sam obiekt z nowymi referencjami nie kasuje zmian", () => {
+    const { result, rerender } = renderHook(({ saved }) => useCardForm(saved), { initialProps: { saved: zapisane } });
+    act(() => result.current.set({ kg: "80" }));
+    rerender({ saved: { ...zapisane } });
+    expect(result.current.value).toEqual({ name: "Ala", kg: "80" });
+  });
 });

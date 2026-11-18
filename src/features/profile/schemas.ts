@@ -94,8 +94,8 @@ export const onboardingStepSchemas = {
     goals: z.array(goalKey).refine(bezDuplikatow, 'Cele nie mogą się powtarzać.'),
     weekly_goal_type: weeklyGoalType,
     weekly_workouts_goal: z.number().int('Podaj liczbę 1–14.').min(1, 'Podaj liczbę 1–14.').max(14, 'Podaj liczbę 1–14.'),
-    // Licznik na telefonie idzie co 5 (5–150), ale pole na webie przyjmuje każdą całą liczbę 1–300
-    weekly_km_goal: z.number().int('Podaj liczbę 1–300.').min(1, 'Podaj liczbę 1–300.').max(300, 'Podaj liczbę 1–300.'),
+    // Licznik na telefonie idzie co 5 (5–150), ale pole na webie przyjmuje każdą liczbę 1–300 (też ułamki, jak w ustawieniach)
+    weekly_km_goal: z.number().min(1, 'Podaj liczbę 1–300.').max(300, 'Podaj liczbę 1–300.'),
     sleep_goal_min: sleepGoal,
   }),
   4: z

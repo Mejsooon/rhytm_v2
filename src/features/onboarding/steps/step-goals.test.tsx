@@ -100,6 +100,25 @@ describe("StepGoals", () => {
     expect(screen.getByText("Podaj liczbę 1–300.")).toBeInTheDocument();
   });
 
+  it("pole web: km „22,5” jest poprawne, a licznik z 42 km idzie do 45 km", async () => {
+    const { unmount } = render(<Probe initial={{ ...start, goalType: "km" }} />);
+    const pole = screen.getByLabelText("Kilometry w tygodniu", { selector: "input" });
+    await userEvent.clear(pole);
+    await userEvent.type(pole, "22,5");
+    expect(screen.queryByText("Podaj liczbę 1–300.")).not.toBeInTheDocument();
+    expect(screen.getByText("22.5 km")).toBeInTheDocument();
+    unmount();
+    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 42 }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Zwiększ Kilometry w tygodniu" }));
+    expect(screen.getByText("45 km")).toBeInTheDocument();
+  });
+
+  it("licznik przy 200 km z pola web: „−” wraca do 150 km", async () => {
+    render(<Probe initial={{ ...start, goalType: "km", weeklyKm: 200 }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Zmniejsz Kilometry w tygodniu" }));
+    expect(screen.getByText("150 km")).toBeInTheDocument();
+  });
+
   it("wybór celu z stroną włącza stronę w szkicu", async () => {
     render(<Probe initial={start} />);
     await userEvent.click(screen.getByRole("button", { name: /Subskrypcje/ }));

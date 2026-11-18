@@ -197,10 +197,11 @@ export function toggleGoal(
   return { ...draft, goals, pages };
 }
 
-// Licznik kilometrów: co 5, zakres 5–150 (nieliczba z pola web wraca do 25)
+// Licznik kilometrów: co 5, zakres 5–150 (nieliczba z pola web wraca do 25).
+// Liczbę z pola web (np. 42 albo 200) najpierw wyrównujemy do siatki co 5: 42 + → 45, 200 − → 150.
 export function stepKm(km: number, dir: -1 | 1): number {
   if (!Number.isFinite(km)) return 25;
-  return Math.min(150, Math.max(5, km + dir * 5));
+  return Math.min(150, Math.max(5, Math.round(km / 5) * 5 + dir * 5));
 }
 
 // Licznik treningów: co 1, zakres 1–14 (nieliczba z pola web wraca do 3)
@@ -209,11 +210,10 @@ export function stepWorkouts(n: number, dir: -1 | 1): number {
   return Math.min(14, Math.max(1, n + dir));
 }
 
-// Poprawny cel: treningi całe 1–14, kilometry całe 1–300 (jak w schemacie kroku 3)
+// Poprawny cel: treningi całe 1–14, kilometry 1–300 (też ułamki; jak w schemacie kroku 3)
 export function goalInRange(type: GoalType, value: number): boolean {
-  if (!Number.isInteger(value)) return false;
-  if (type === "workouts") return value >= 1 && value <= 14;
-  return value >= 1 && value <= 300;
+  if (type === "workouts") return Number.isInteger(value) && value >= 1 && value <= 14;
+  return Number.isFinite(value) && value >= 1 && value <= 300;
 }
 
 // 1 -> "1 trening / tydz.", 3 -> "3 treningi / tydz.", 5 -> "5 treningów / tydz.", 25 km -> "25 km / tydz."

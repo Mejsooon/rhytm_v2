@@ -129,10 +129,11 @@ describe('onboardingStepSchemas', () => {
       expect(komunikaty(wynik)).toEqual(['Podaj liczbę 1–14.'])
     }
   })
-  it('krok 3: kilometry całe 1–300 (pole web przyjmuje dowolną liczbę)', () => {
+  it('krok 3: kilometry 1–300, także ułamki jak w ustawieniach', () => {
     expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 42 }).success).toBe(true)
+    expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 22.5 }).success).toBe(true)
     expect(onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: 300 }).success).toBe(true)
-    for (const zle of [0, 301, 2.5]) {
+    for (const zle of [0, 301, 0.5]) {
       const wynik = onboardingStepSchemas[3].safeParse({ ...krok3, weekly_km_goal: zle })
       expect(komunikaty(wynik)).toEqual(['Podaj liczbę 1–300.'])
     }

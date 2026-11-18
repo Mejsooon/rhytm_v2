@@ -82,6 +82,20 @@ describe("GoalsCard", () => {
     expect(screen.getByLabelText("Treningi w tygodniu")).toHaveValue("3");
   });
 
+  it("po zapisie zła liczba przy zmianie rodzaju wraca do nowo zapisanej, nie do propsa", async () => {
+    render(<GoalsCard saved={zapisane} />);
+    const pole = screen.getByLabelText("Treningi w tygodniu");
+    await userEvent.clear(pole);
+    await userEvent.type(pole, "5");
+    await userEvent.click(zapisz());
+    await screen.findByText("Zapisano ✓ — cele zaktualizowane na ekranie Dziś");
+    await userEvent.clear(screen.getByLabelText("Treningi w tygodniu"));
+    await userEvent.type(screen.getByLabelText("Treningi w tygodniu"), "20");
+    await userEvent.click(screen.getByRole("radio", { name: "Km" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Treningi" }));
+    expect(screen.getByLabelText("Treningi w tygodniu")).toHaveValue("5");
+  });
+
   it("zapis po zmianie na Km wysyła rodzaj i obie liczby", async () => {
     render(<GoalsCard saved={zapisane} />);
     await userEvent.click(screen.getByRole("radio", { name: "Km" }));

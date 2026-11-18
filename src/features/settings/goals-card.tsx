@@ -65,14 +65,14 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
     form.set(patch);
   }
 
-  // Zmiana rodzaju: zła liczba nie może zostać ukryta, więc wraca do zapisanej
+  // Zmiana rodzaju: zła liczba nie może zostać ukryta, więc wraca do bieżącej zapisanej bazy formularza
   function zmienRodzaj(goalType: GoalsValues["goalType"]) {
     if (wynik.success) {
       zmien({ goalType });
     } else if (naKm) {
-      zmien({ goalType, km: saved.km });
+      zmien({ goalType, km: form.saved.km });
     } else {
-      zmien({ goalType, tr: saved.tr });
+      zmien({ goalType, tr: form.saved.tr });
     }
   }
 
