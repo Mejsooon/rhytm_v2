@@ -6,6 +6,7 @@ import {
 } from "@/components/controls/calendar-math";
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
 import type { Database } from "@/types/database";
+import type { RunInput } from "./actions";
 
 export type { IsoDate };
 
@@ -114,6 +115,49 @@ export function runKcal(
   const predkosc = (distanceKm * 1000) / minuty;
   const vo2 = 3.5 + 0.2 * predkosc;
   return Math.round(((vo2 * weightKg * minuty) / 1000) * 5);
+}
+
+// Formularz biegu (RunDialog na webie i MRunNew na telefonie) → ładunek saveRun albo błędy pól.
+// Puste pole to null (bieg bez czasu jest planem); zakresy (0 km, > 24 h) sprawdza saveRun.
+export function runFormInput(form: {
+  id: string | null; // null = nowy bieg
+  kind: RunKind;
+  date: IsoDate | null;
+  start: string;
+  distanceText: string;
+  durationText: string;
+  difficulty: number | null;
+  note: string;
+  showInCalendar: boolean;
+}):
+  | { ok: true; input: RunInput }
+  | { ok: false; errors: Partial<Record<keyof RunInput, string>> } {
+  const bezDystansu = form.distanceText.trim() === "";
+  const bezCzasu = form.durationText.trim() === "";
+  const km = parseKm(form.distanceText);
+  const sekundy = parseDuration(form.durationText);
+
+  const errors: Partial<Record<keyof RunInput, string>> = {};
+  if (!bezDystansu && km === null)
+    errors.distanceKm = "Podaj dystans w km, np. 10,5.";
+  if (!bezCzasu && sekundy === null)
+    errors.durationS = "Podaj czas jako h:mm:ss albo mm:ss, np. 58:00.";
+  if (form.date === null) errors.date = "Wybierz datę.";
+  if (form.date === null || Object.keys(errors).length > 0)
+    return { ok: false, errors };
+
+  const input: RunInput = {
+    kind: form.kind,
+    date: form.date,
+    start: form.start,
+    distanceKm: bezDystansu ? null : km,
+    durationS: bezCzasu ? null : sekundy,
+    difficulty: form.difficulty,
+    note: form.note,
+    showInCalendar: form.showInCalendar,
+  };
+  if (form.id !== null) input.id = form.id;
+  return { ok: true, input };
 }
 
 // Epley: kg × (1 + powt./30), zaokrąglone do 0,5

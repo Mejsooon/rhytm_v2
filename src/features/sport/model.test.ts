@@ -22,6 +22,7 @@ import {
   paceSPerKm,
   recordSetIds,
   runKcal,
+  runFormInput,
   sessionItems,
   sessionVolume,
   templateOccurrences,
@@ -98,6 +99,71 @@ describe("1RM i objętość", () => {
         { weight_kg: null, reps: 12, done: true },
       ]),
     ).toBe(480);
+  });
+});
+
+describe("runFormInput", () => {
+  const formularz = {
+    id: null,
+    kind: "tempo" as const,
+    date: "2026-11-17",
+    start: "16:00",
+    distanceText: "10,5",
+    durationText: "52:00",
+    difficulty: 7,
+    note: "ok",
+    showInCalendar: true,
+  };
+
+  it("poprawny formularz → ładunek saveRun (bez id dla nowego biegu)", () => {
+    expect(runFormInput(formularz)).toEqual({
+      ok: true,
+      input: {
+        kind: "tempo",
+        date: "2026-11-17",
+        start: "16:00",
+        distanceKm: 10.5,
+        durationS: 3120,
+        difficulty: 7,
+        note: "ok",
+        showInCalendar: true,
+      },
+    });
+  });
+
+  it("puste pola → null (bez czasu bieg jest planem), id przy edycji", () => {
+    const wynik = runFormInput({
+      ...formularz,
+      id: "b1",
+      distanceText: " ",
+      durationText: "",
+    });
+    expect(wynik).toEqual({
+      ok: true,
+      input: expect.objectContaining({
+        id: "b1",
+        distanceKm: null,
+        durationS: null,
+      }),
+    });
+  });
+
+  it("zły zapis i brak daty → błędy pól", () => {
+    expect(
+      runFormInput({
+        ...formularz,
+        date: null,
+        distanceText: "dużo",
+        durationText: "5 min",
+      }),
+    ).toEqual({
+      ok: false,
+      errors: {
+        distanceKm: "Podaj dystans w km, np. 10,5.",
+        durationS: "Podaj czas jako h:mm:ss albo mm:ss, np. 58:00.",
+        date: "Wybierz datę.",
+      },
+    });
   });
 });
 

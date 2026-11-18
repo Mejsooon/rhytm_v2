@@ -1,6 +1,6 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { saveRun } = vi.hoisted(() => ({ saveRun: vi.fn() }));
 vi.mock("../actions", () => ({ saveRun }));
@@ -38,6 +38,12 @@ const tempo = () => screen.getByTestId("tempo");
 beforeEach(() => {
   vi.clearAllMocks();
   saveRun.mockResolvedValue({ ok: true, id: "nowy" });
+  // Teraz = wt 17.11.2026 18:00 w Warszawie (tylko Date — timery zostają prawdziwe dla userEvent)
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-17T17:00:00Z"));
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("MRunNew", () => {
@@ -190,6 +196,20 @@ describe("MRunNew", () => {
         durationS: null,
       }),
     );
+  });
+
+  it("bieg dziś o późniejszej godzinie startuje bez czasu i zapisuje się jako plan", async () => {
+    pokaz(null, "2026-11-17", "19:00");
+    expect(czas()).toHaveValue("");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+    expect(saveRun).toHaveBeenCalledWith(
+      expect.objectContaining({ start: "19:00", durationS: null }),
+    );
+  });
+
+  it("bieg dziś o wcześniejszej godzinie ma czas z makiety", () => {
+    pokaz(null, "2026-11-17", "17:45");
+    expect(czas()).toHaveValue("52:00");
   });
 
   it("puste pole czasu: „+” wpisuje wartość z makiety", async () => {

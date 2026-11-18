@@ -125,6 +125,13 @@ export function SportView({
     wariantBiegu?.klucz === kluczBiegu &&
     (newRun !== null || edytowanyBieg !== null);
   const biegNaTelefonie = oknoBiegu && wariantBiegu.tel;
+  // Data i godzina okna biegu (RunDialog i MRunNew): edycja — z biegu, nowy — z adresu albo dziś / teraz
+  const dataBiegu = edytowanyBieg
+    ? edytowanyBieg.date
+    : (newRun?.date ?? today);
+  const startBiegu = edytowanyBieg
+    ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
+    : (newRun?.start ?? godzinaTeraz());
   function zamknijBieg() {
     setZamknietyBieg(kluczBiegu);
     router.replace(`/sport?miesiac=${month}`, { scroll: false });
@@ -239,9 +246,19 @@ export function SportView({
         <MSport
           data={data}
           onNewRun={() => otworzBieg({ date: today, start: godzinaTeraz() })}
-          onNewGym={() =>
-            void rozpocznijSilownie({ date: today, start: godzinaTeraz() })
-          }
+          onNewGym={(templateId) => {
+            // Jak w dymku „+ Trening siłowy”: szablon startuje o swojej godzinie, pusty — teraz
+            const szablon = data.templates.find((t) => t.id === templateId);
+            void rozpocznijSilownie(
+              szablon
+                ? {
+                    date: today,
+                    start: szablon.start_time.slice(0, 5),
+                    templateId: szablon.id,
+                  }
+                : { date: today, start: godzinaTeraz() },
+            );
+          }}
           onOpenRun={otworzBieg}
         />
       </div>
@@ -401,12 +418,8 @@ export function SportView({
         <RunDialog
           key={kluczBiegu}
           item={edytowanyBieg}
-          date={edytowanyBieg ? edytowanyBieg.date : (newRun?.date ?? today)}
-          start={
-            edytowanyBieg
-              ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
-              : (newRun?.start ?? godzinaTeraz())
-          }
+          date={dataBiegu}
+          start={startBiegu}
           profile={profile}
           onClose={zamknijBieg}
         />
@@ -415,12 +428,8 @@ export function SportView({
         <MRunNew
           key={kluczBiegu}
           item={edytowanyBieg}
-          date={edytowanyBieg ? edytowanyBieg.date : (newRun?.date ?? today)}
-          start={
-            edytowanyBieg
-              ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
-              : (newRun?.start ?? godzinaTeraz())
-          }
+          date={dataBiegu}
+          start={startBiegu}
           today={today}
           profile={profile}
           onClose={zamknijBieg}

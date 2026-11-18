@@ -24,14 +24,13 @@ import {
   paceSPerKm,
   parseDuration,
   parseKm,
+  runFormInput,
   runKcal,
   type RunKind,
   type SportItem,
 } from "./model";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-const BLAD_DYSTANSU = "Podaj dystans w km, np. 10,5.";
-const BLAD_CZASU = "Podaj czas jako h:mm:ss albo mm:ss, np. 58:00.";
 
 // Etykiety chipów jak w makiecie („Długi”); tytuł sesji w bazie to pełna etykieta rodzaju.
 // Wspólne z arkuszem telefonu (MRunNew)
@@ -95,13 +94,20 @@ export function RunDialog({
 
   async function zapisz() {
     if (pending) return;
-    // Zły zapis łapiemy przed serwerem; zakresy (0 km, > 24 h) sprawdza saveRun
-    const nowe: Bledy = {};
-    if (dystans.trim() !== "" && km === null) nowe.distanceKm = BLAD_DYSTANSU;
-    if (czas.trim() !== "" && sekundy === null) nowe.durationS = BLAD_CZASU;
-    if (dzien === null) nowe.date = "Wybierz datę.";
-    if (Object.keys(nowe).length > 0 || dzien === null) {
-      setBledy(nowe);
+    // Zły zapis łapiemy przed serwerem (wspólne z MRunNew); zakresy (0 km, > 24 h) sprawdza saveRun
+    const formularz = runFormInput({
+      id: item?.sessionId ?? null,
+      kind,
+      date: dzien,
+      start: godzina,
+      distanceText: dystans,
+      durationText: czas,
+      difficulty: trudnosc,
+      note: notatka,
+      showInCalendar: wKalendarzu,
+    });
+    if (!formularz.ok) {
+      setBledy(formularz.errors);
       setBlad("");
       return;
     }
@@ -109,19 +115,8 @@ export function RunDialog({
     setPending(true);
     setBledy({});
     setBlad("");
-    const dane: RunInput = {
-      kind,
-      date: dzien,
-      start: godzina,
-      distanceKm: dystans.trim() === "" ? null : km,
-      durationS: czas.trim() === "" ? null : sekundy,
-      difficulty: trudnosc,
-      note: notatka,
-      showInCalendar: wKalendarzu,
-    };
-    if (item?.sessionId) dane.id = item.sessionId;
     try {
-      const wynik = await saveRun(dane);
+      const wynik = await saveRun(formularz.input);
       if (wynik.ok) {
         onClose();
         return;

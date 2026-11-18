@@ -2,13 +2,14 @@
 
 // Ekran „Sport” na telefonie wg MSport.dc.html: nagłówek z numerem tygodnia i „+”, segment Tydzień / Miesiąc,
 // karta „Bieganie” (km / cel z paskiem tylko przy włączonym celu km), wykres km ze stuknięciem słupka,
-// przyciski „Bieg” i „Trening” oraz lista „Ostatnie”.
+// przyciski „Bieg” i „Trening” oraz lista „Ostatnie”. „Trening” otwiera te same opcje co „+ Trening siłowy”
+// na webie (Ruling): „Pusty trening”, szablony („Z szablonu”) i „Szablony treningów…”.
 // *[Claude]* „Miesiąc” = 4 ostatnie tygodnie (ostatni = bieżący, jak w makiecie „t. 43–46”), cel = 4 × cel tygodnia.
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 
-import { Segment } from "@/components/controls";
+import { ActionPopover, Segment } from "@/components/controls";
 import { DNI_SKROT } from "@/features/calendar/mobile/pl";
 import {
   addDays,
@@ -33,6 +34,9 @@ const ETYKIETA =
   "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
 const PRZYCISK =
   "box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+// Opcja dymku „Trening” — wiersz 44 px
+const OPCJA =
+  "flex min-h-11 w-full cursor-pointer items-center rounded-lg border-0 bg-transparent px-3 text-left text-[15px] text-[#171717] no-underline outline-none hover:bg-[#f5f5f5] hover:text-[#171717] focus-visible:bg-[#f5f5f5]";
 const IKONA_WIERSZA =
   "flex size-10 flex-none items-center justify-center rounded-[10px]";
 
@@ -44,12 +48,14 @@ export function MSport({
 }: {
   data: SportMonthData;
   onNewRun: () => void;
-  onNewGym: () => void;
+  // Trening siłowy: null = pusty, inaczej id szablonu (wystąpienie z dziś)
+  onNewGym: (templateId: string | null) => void;
   onOpenRun: (req: RunRequest) => void;
 }) {
   const { today, profile, items } = data;
   const [zakres, setZakres] = useState<"w" | "m">("w");
   const [slupek, setSlupek] = useState<number | null>(null);
+  const [menuTreningu, setMenuTreningu] = useState(false);
 
   // Bieżący tydzień od profiles.week_start; numer ISO ze środka tygodnia (jak WeekTiles)
   const dzien = weekdayOf(today);
@@ -219,8 +225,8 @@ export function MSport({
           </div>
           <div
             className={cn(
-              "mt-3 flex items-end border-b border-[#eaeaea]",
-              zakres === "w" ? "gap-2.5" : "gap-6",
+              // Odstęp między słupkami jest w przyciskach (padding), żeby pole stuknięcia miało ≥ 44 px
+              "-mx-[5px] mt-3 flex items-end border-b border-[#eaeaea]",
             )}
             style={{ height: 120 }}
           >
@@ -232,7 +238,10 @@ export function MSport({
                 aria-label={`${s.etykieta}: ${formatKm(s.km)} km`}
                 aria-pressed={slupek === k}
                 onClick={() => setSlupek(k)}
-                className="flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
+                className={cn(
+                  "flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent py-0 outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
+                  zakres === "w" ? "px-[5px]" : "px-3",
+                )}
               >
                 <span
                   className="block w-full rounded-t-md"
@@ -248,9 +257,11 @@ export function MSport({
               </button>
             ))}
           </div>
-          <div className="mt-1.5 flex justify-between font-mono text-[10px] text-[#8a8a8a]">
+          <div className="-mx-[5px] mt-1.5 flex font-mono text-[10px] text-[#8a8a8a]">
             {slupki.map((s) => (
-              <span key={s.etykieta}>{s.etykieta}</span>
+              <span key={s.etykieta} className="flex-1 text-center">
+                {s.etykieta}
+              </span>
             ))}
           </div>
         </section>
@@ -276,29 +287,79 @@ export function MSport({
             </svg>
             Bieg
           </button>
-          <button
-            type="button"
-            onClick={onNewGym}
-            className={cn(
-              PRZYCISK,
-              "border-[#e0e0e0] bg-white text-[#171717] hover:bg-[#fafafa]",
-            )}
+          <ActionPopover
+            open={menuTreningu}
+            onOpenChange={setMenuTreningu}
+            align="end"
+            side="top"
+            width={260}
+            ariaLabel="Nowy trening"
+            trigger={
+              <button
+                type="button"
+                className={cn(
+                  PRZYCISK,
+                  "border-[#e0e0e0] bg-white text-[#171717] hover:bg-[#fafafa]",
+                )}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
+                </svg>
+                Trening
+              </button>
+            }
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
-            </svg>
-            Trening
-          </button>
+            <div className="flex flex-col gap-px">
+              <button
+                type="button"
+                className={OPCJA}
+                onClick={() => {
+                  setMenuTreningu(false);
+                  onNewGym(null);
+                }}
+              >
+                Pusty trening
+              </button>
+              {data.templates.length > 0 && (
+                <>
+                  <div className="mt-1 border-t border-[#eaeaea] px-3 pt-2 pb-1 font-mono text-[10px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+                    Z szablonu
+                  </div>
+                  {data.templates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={OPCJA}
+                      onClick={() => {
+                        setMenuTreningu(false);
+                        onNewGym(t.id);
+                      }}
+                    >
+                      {t.name}
+                    </button>
+                  ))}
+                </>
+              )}
+              <div className="my-1 border-t border-[#eaeaea]" />
+              <Link
+                href="/sport/szablony"
+                className={OPCJA}
+                onClick={() => setMenuTreningu(false)}
+              >
+                Szablony treningów…
+              </Link>
+            </div>
+          </ActionPopover>
         </div>
 
         <section aria-labelledby="m-sport-ostatnie">

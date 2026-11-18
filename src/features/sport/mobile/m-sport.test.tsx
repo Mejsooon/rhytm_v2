@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SportMonthData } from "../load-sport";
 import type { SportItem } from "../model";
-import { bieg, daneSportu } from "../sport-test-data";
+import { bieg, daneSportu, SZABLON_PUSH } from "../sport-test-data";
 import { MSport } from "./m-sport";
 
 const SILOWNIA = "a1000000-0000-4000-8000-000000000116";
@@ -185,12 +185,61 @@ describe("MSport", () => {
     expect(within(wykres()).getByText("stuknij słupek")).toBeInTheDocument();
   });
 
-  it("„Bieg” i „Trening”", async () => {
+  it("„Bieg” otwiera nowy bieg", async () => {
     pokaz();
     await userEvent.click(screen.getByRole("button", { name: "Bieg" }));
     expect(onNewRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("„Trening” otwiera opcje jak na webie: pusty, z szablonu, szablony", async () => {
+    pokaz();
     await userEvent.click(screen.getByRole("button", { name: "Trening" }));
-    expect(onNewGym).toHaveBeenCalledTimes(1);
+    const menu = screen.getByRole("dialog", { name: "Nowy trening" });
+    expect(within(menu).getByText("Z szablonu")).toBeInTheDocument();
+    const szablony = within(menu).getByRole("link", {
+      name: "Szablony treningów…",
+    });
+    expect(szablony).toHaveAttribute("href", "/sport/szablony");
+    // Wiersze ≥ 44 px
+    for (const el of [
+      within(menu).getByRole("button", { name: "Pusty trening" }),
+      within(menu).getByRole("button", { name: "Push" }),
+      szablony,
+    ])
+      expect(el.className).toContain("min-h-11");
+
+    await userEvent.click(
+      within(menu).getByRole("button", { name: "Pusty trening" }),
+    );
+    expect(onNewGym).toHaveBeenCalledWith(null);
+    expect(
+      screen.queryByRole("dialog", { name: "Nowy trening" }),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Trening" }));
+    await userEvent.click(screen.getByRole("button", { name: "Push" }));
+    expect(onNewGym).toHaveBeenLastCalledWith(SZABLON_PUSH);
+  });
+
+  it("bez szablonów: bez sekcji „Z szablonu”", async () => {
+    pokaz(dane({ templates: [] }));
+    await userEvent.click(screen.getByRole("button", { name: "Trening" }));
+    const menu = screen.getByRole("dialog", { name: "Nowy trening" });
+    expect(within(menu).queryByText("Z szablonu")).not.toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: "Pusty trening" }),
+    ).toBeInTheDocument();
+  });
+
+  it("słupki: odstęp jest w przyciskach (pole stuknięcia ≥ 44 px)", async () => {
+    pokaz();
+    const slupek = within(wykres()).getByRole("button", { name: "pn: 5,0 km" });
+    expect(slupek.className).toContain("px-[5px]");
+    expect(slupek.parentElement?.className).not.toMatch(/\bgap-/);
+    await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
+    expect(
+      within(wykres()).getByRole("button", { name: "t. 47: 8,0 km" }).className,
+    ).toContain("px-3");
   });
 
   it("„Ostatnie”: bieg otwiera okno biegu, trening siłowy — ekran treningu", async () => {

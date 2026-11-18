@@ -17,7 +17,7 @@ vi.mock("./actions", () => ({
   saveRun,
 }));
 
-import { daneSportu } from "./sport-test-data";
+import { daneSportu, SZABLON_PUSH } from "./sport-test-data";
 import { SportView } from "./sport-view";
 
 const BIEG = "a1000000-0000-4000-8000-000000000015";
@@ -61,16 +61,37 @@ describe("SportView na telefonie", () => {
     );
   });
 
-  it("„Trening” tworzy pusty trening na dziś i otwiera ekran treningu", async () => {
+  it("„Trening” → „Pusty trening” tworzy trening na dziś i otwiera ekran treningu", async () => {
     render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
     await userEvent.click(
       within(telefon()).getByRole("button", { name: "Trening" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Pusty trening" }),
     );
     expect(createGymSession).toHaveBeenCalledWith({
       date: "2026-11-17",
       start: expect.stringMatching(/^\d\d:\d\d$/),
     });
     expect(push).toHaveBeenCalledWith("/sport/trening/nowa-sesja");
+  });
+
+  it("„Trening” → szablon startuje wystąpienie z dziś o godzinie szablonu", async () => {
+    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    await userEvent.click(
+      within(telefon()).getByRole("button", { name: "Trening" }),
+    );
+    await userEvent.click(
+      within(screen.getByRole("dialog", { name: "Nowy trening" })).getByRole(
+        "button",
+        { name: "Push" },
+      ),
+    );
+    expect(createGymSession).toHaveBeenCalledWith({
+      date: "2026-11-17",
+      start: "15:00",
+      templateId: SZABLON_PUSH,
+    });
   });
 
   it("?nowy=bieg poniżej 800 px otwiera arkusz MRunNew zamiast okna web", async () => {

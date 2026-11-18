@@ -2,8 +2,8 @@
 
 // Arkusz biegu na telefonie wg MRunNew.dc.html (pełny ekran, Anuluj / tytuł / Zapisz): chipy rodzaju,
 // dystans i czas −/+ (można też wpisać), tempo liczone, trudność 1–10 z opisem, dzień, „Pokaż w kalendarzu
-// głównym”, notatka. Zasady zapisu jak w RunDialog (web): ten sam ładunek saveRun i te same komunikaty —
-// zmieniając jedno okno, popraw drugie. Zapis nieoptymistyczny: w trakcie Anuluj i Esc są zablokowane.
+// głównym”, notatka. Walidację i ładunek saveRun dzieli z RunDialog (web) przez runFormInput w model.ts.
+// Zapis nieoptymistyczny: w trakcie Anuluj i Esc są zablokowane.
 import { useRef, useState } from "react";
 import { Dialog } from "radix-ui";
 
@@ -14,6 +14,7 @@ import {
   TimePicker,
   type IsoDate,
 } from "@/components/controls";
+import { minutesNow } from "@/features/calendar/load-calendar";
 import { cn } from "@/lib/utils";
 import { saveRun, type RunInput } from "../actions";
 import type { SportProfile } from "../load-sport";
@@ -22,6 +23,7 @@ import {
   formatKm,
   formatPace,
   paceSPerKm,
+  runFormInput,
   parseDuration,
   parseKm,
   type RunKind,
@@ -30,8 +32,6 @@ import {
 import { RODZAJE } from "../run-dialog";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-const BLAD_DYSTANSU = "Podaj dystans w km, np. 10,5.";
-const BLAD_CZASU = "Podaj czas jako h:mm:ss albo mm:ss, np. 58:00.";
 // Wartości startowe i kroki −/+ z makiety (10,0 km, 52:00; 0,5 km, 1 min; minimum 0,5 km i 1 min)
 const DYSTANS_START = 10;
 const CZAS_START = 3120;
@@ -71,7 +71,7 @@ export function MRunNew({
   const [kind, setKind] = useState<RunKind>(item?.runKind ?? "easy");
   const [dzien, setDzien] = useState<IsoDate | null>(date);
   const [godzina, setGodzina] = useState(start);
-  // Nowy bieg: wartości z makiety; bieg w przyszłości startuje bez czasu (zapisze się jako plan)
+  // Nowy bieg: dystans z makiety
   const [dystans, setDystans] = useState(
     item === null
       ? formatKm(DYSTANS_START)
@@ -81,15 +81,17 @@ export function MRunNew({
           : String(item.distanceKm).replace(".", ",")
         : "",
   );
-  const [czas, setCzas] = useState(
-    item === null
-      ? date > today
-        ? ""
-        : formatDuration(CZAS_START)
-      : item.durationS !== null
-        ? formatDuration(item.durationS)
-        : "",
-  );
+  const [czas, setCzas] = useState(() => {
+    if (item !== null)
+      return item.durationS !== null ? formatDuration(item.durationS) : "";
+    // Bieg później (inny dzień albo dziś po tej godzinie w strefie profilu) startuje bez czasu —
+    // zapisze się jako plan, a nie jako wykonany bieg z wartościami z makiety
+    const startMin = Number(start.slice(0, 2)) * 60 + Number(start.slice(3, 5));
+    const pozniej =
+      date > today ||
+      (date === today && startMin > minutesNow(profile.timezone));
+    return pozniej ? "" : formatDuration(CZAS_START);
+  });
   const [trudnosc, setTrudnosc] = useState<number | null>(
     item?.difficulty ?? null,
   );
@@ -155,13 +157,20 @@ export function MRunNew({
 
   async function zapisz() {
     if (zapisuje.current) return;
-    // Zły zapis łapiemy przed serwerem; zakresy (0 km, > 24 h) sprawdza saveRun
-    const nowe: Bledy = {};
-    if (dystans.trim() !== "" && km === null) nowe.distanceKm = BLAD_DYSTANSU;
-    if (czas.trim() !== "" && sekundy === null) nowe.durationS = BLAD_CZASU;
-    if (dzien === null) nowe.date = "Wybierz datę.";
-    if (Object.keys(nowe).length > 0 || dzien === null) {
-      setBledy(nowe);
+    // Zły zapis łapiemy przed serwerem (wspólne z RunDialog); zakresy (0 km, > 24 h) sprawdza saveRun
+    const formularz = runFormInput({
+      id: item?.sessionId ?? null,
+      kind,
+      date: dzien,
+      start: godzina,
+      distanceText: dystans,
+      durationText: czas,
+      difficulty: trudnosc,
+      note: notatka,
+      showInCalendar: wKalendarzu,
+    });
+    if (!formularz.ok) {
+      setBledy(formularz.errors);
       setBlad("");
       return;
     }
@@ -170,20 +179,8 @@ export function MRunNew({
     setPending(true);
     setBledy({});
     setBlad("");
-    // Ładunek jak w RunDialog
-    const dane: RunInput = {
-      kind,
-      date: dzien,
-      start: godzina,
-      distanceKm: dystans.trim() === "" ? null : km,
-      durationS: czas.trim() === "" ? null : sekundy,
-      difficulty: trudnosc,
-      note: notatka,
-      showInCalendar: wKalendarzu,
-    };
-    if (item?.sessionId) dane.id = item.sessionId;
     try {
-      const wynik = await saveRun(dane);
+      const wynik = await saveRun(formularz.input);
       if (wynik.ok) {
         // Po sukcesie arkusz zostaje zablokowany aż do zamknięcia
         onClose();
