@@ -10,9 +10,9 @@ describe("firstSteps", () => {
     expect(wynik.steps.map((s) => s.done)).toEqual([false, false, false, false]);
     expect(wynik.steps.map((s) => [s.key, s.title, s.hint, s.href])).toEqual([
       ["block", "Dodaj pierwszy blok w kalendarzu", null, "/kalendarz"],
-      ["habit", "Dodaj nawyk", "np. woda, czytanie, rozciąganie", "/nawyki"],
+      ["habit", "Dodaj nawyk", "np. woda, czytanie, rozciąganie", "/nawyki?nowy=nawyk"],
       ["workout", "Zapisz trening", "bieg albo siłownia", "/sport"],
-      ["sleep", "Wpisz ostatnią noc", "godzina zaśnięcia i pobudki", "/nawyki"],
+      ["sleep", "Wpisz ostatnią noc", "godzina zaśnięcia i pobudki", "/nawyki?nowy=sen"],
     ]);
   });
 
@@ -20,5 +20,13 @@ describe("firstSteps", () => {
     const wynik = firstSteps({ ...zera, blocks: 2 });
     expect(wynik.steps[0].done).toBe(true);
     expect(wynik.doneCount).toBe(1);
+  });
+});
+
+describe("firstSteps, liczniki nawyków i snu", () => {
+  it("nawyk i wpis snu oznaczają swoje kroki jako zrobione", () => {
+    const wynik = firstSteps({ ...zera, habits: 1, sleepLogs: 3 });
+    expect(wynik.steps.map((s) => s.done)).toEqual([false, true, false, true]);
+    expect(wynik.doneCount).toBe(2);
   });
 });

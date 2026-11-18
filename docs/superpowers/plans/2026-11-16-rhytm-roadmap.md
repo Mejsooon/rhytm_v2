@@ -121,14 +121,14 @@
 **Makiety:** Habits, HabitDetail, HabitDialog, SleepDialog · MHabits, MHabitDetail, MHabitNew, MSleep.
 
 **Lista odbiorcza**
-- [ ] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia.
-- [ ] Kafelki: Nawyki dziś, Ostatnie 30 dni z porównaniem, Najdłuższa seria, Śr. sen 14 dni.
-- [ ] Heatmapa: Miesiąc (‹ › do 12 mies., strzałki nieaktywne na granicy) / 3 / 6 mies. / Rok; dymek „data · x z y nawyków”; dni bez planu szare.
-- [ ] Sen: 14 / 30 dni, wykres z linią celu, dymek słupka, ostatnia noc.
-- [ ] Okno nawyku: nazwa, harmonogram z dniami do zaznaczania i licznikiem X, przypomnienie (przełącznik + wybór godziny), „Pokazuj na ekranie Dziś”.
-- [ ] Szczegóły: kafelki, kalendarz miesiąca ‹ ›, historia harmonogramu, Edytuj, **Usuń** z potwierdzeniem.
-- [ ] Wpis snu: data, zasnąłem/wstałem (wybór godziny web, −/+ telefon), czas na żywo przez północ, samopoczucie 1–5 z etykietami, tagi „Co mogło wpłynąć”, notatka; jeden wpis na dzień.
-- [ ] Telefon: segment Nawyki/Sen, pierścień postępu, lista z dużymi checkboxami i serią, heatmapa 4 tygodni ze stuknięciem.
+- [x] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia. (e2e: habits.spec.ts nowy nawyk i zmiana na „Wybrane dni”; unit: model.test.ts, habit-dialog.test.tsx, habit-week-grid.test.tsx, actions.test.ts; db: habits_sleep.test.sql)
+- [x] Kafelki: Nawyki dziś, Ostatnie 30 dni z porównaniem, Najdłuższa seria, Śr. sen 14 dni. (e2e: „1/1” po odhaczeniu; unit: habit-tiles.test.tsx, model.test.ts, sleep.test.ts; zrzut)
+- [x] Heatmapa: Miesiąc (‹ › do 12 mies., strzałki nieaktywne na granicy) / 3 / 6 mies. / Rok; dymek „data · x z y nawyków”; dni bez planu szare. (unit: habit-heatmap.test.tsx, habit-month.test.tsx, habits-view-mobile.test.tsx; zrzut)
+- [x] Sen: 14 / 30 dni, wykres z linią celu, dymek słupka, ostatnia noc. (e2e: „Ostatnia noc” 7:30, słupek na telefonie; unit: sleep-card.test.tsx, sleep.test.ts; zrzut)
+- [x] Okno nawyku: nazwa, harmonogram z dniami do zaznaczania i licznikiem X, przypomnienie (przełącznik + wybór godziny), „Pokazuj na ekranie Dziś”. (e2e: nowy nawyk, zmiana harmonogramu; unit: habit-dialog.test.tsx, m-habit-sheet.test.tsx; zrzut)
+- [x] Szczegóły: kafelki, kalendarz miesiąca ‹ ›, historia harmonogramu, Edytuj, **Usuń** z potwierdzeniem. (e2e: usunięcie nawyku, historia harmonogramu; unit: habit-detail.test.tsx, habit-detail-mobile.test.tsx, habit-month.test.tsx; zrzut)
+- [x] Wpis snu: data, zasnąłem/wstałem (wybór godziny web, −/+ telefon), czas na żywo przez północ, samopoczucie 1–5 z etykietami, tagi „Co mogło wpłynąć”, notatka; jeden wpis na dzień. (e2e: wpis 23:30 → 07:00 i edycja tego samego dnia, telefon −/+; unit: sleep-dialog.test.tsx, m-sleep-sheet.test.tsx, sleep.test.ts; db: habits_sleep.test.sql; zrzut)
+- [x] Telefon: segment Nawyki/Sen, pierścień postępu, lista z dużymi checkboxami i serią, heatmapa 4 tygodni ze stuknięciem. (e2e: mobile w habits.spec.ts; unit: habits-view-mobile.test.tsx, m-habits.test.tsx; zrzut)
 
 **Testy:** % dnia, serie dni i tygodni, wersjonowanie harmonogramu, sen przez północ, usunięcie nawyku usuwa historię (RLS), e2e nawyk + wpis snu (web i telefon), zrzuty.
 

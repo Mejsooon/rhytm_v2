@@ -159,6 +159,16 @@ pnpm exec supabase db push --remote
 
 Migracja `20261118000001_calendar.sql` dodaje tabele `blocks`, `block_exceptions` i `tasks` wraz z zabezpieczeniami oraz funkcje `move_category` i podziału serii. Vercel wdraża nową wersję zaraz po scaleniu, a kalendarz czyta te tabele, więc migracja musi trafić do bazy w chmurze **przed** merge'em. Inaczej `/kalendarz` zwróci błąd zapytania do nieistniejących tabel.
 
+### Nowa migracja (Etap 3: nawyki i sen)
+
+**Przed** scaleniem Etapu 3 do `main` uruchom u siebie, w folderze projektu:
+
+```
+pnpm exec supabase db push --remote
+```
+
+Migracja `20261118120000_habits_sleep.sql` dodaje tabele `habits`, `habit_schedules`, `habit_checks`, `habit_notes` i `sleep_logs` wraz z zabezpieczeniami (RLS i uprawnienia). Vercel wdraża nową wersję zaraz po scaleniu, a `/nawyki` i licznik pierwszych kroków na `/dzis` czytają te tabele, więc migracja musi trafić do bazy w chmurze **przed** merge'em. Inaczej `/nawyki` i `/dzis` zwrócą błąd zapytania do nieistniejących tabel.
+
 ---
 
 ## 7. Przekazanie dostępu Claude'owi: co wolno wkleić, czego nie

@@ -3,7 +3,8 @@ import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 import { zalozKontoKalendarza, zasiejBlok, zasiejZadanie, WTOREK } from "./helpers/kalendarz";
-import { createConfirmedUser, createUserAtOnboardingEnd, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
+import { dzisWarszawa, przesunDate, zalozKontoNawykow, zasiejNawyk, zasiejSen } from "./helpers/nawyki";
+import { adminClient, createConfirmedUser, createUserAtOnboardingEnd, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
 // Zrzuty ekranów do ręcznego porównania z makietami. Test pada tylko, gdy strona się nie renderuje.
 // Zrzuty: test-results/visual/<ekran>-<web|mobile>.png; zrzuty makiet: `pnpm mockups:shots` → test-results/mockups/<Makieta>.png.
@@ -183,5 +184,68 @@ test.describe("ekrany z sesją", () => {
     await page.goto("/ustawienia/kategorie");
     await expect(page.locator("section").getByRole("heading", { name: "Kategorie kalendarza" })).toBeVisible();
     await zrzut(page, "ustawienia-kategorie", projekt);
+  });
+
+  test("zrzuty /nawyki i /nawyki/[id] (makiety Habits, HabitDetail, HabitDialog, SleepDialog, MHabits, MSleep, MHabitNew, MHabitDetail)", async ({ page }, info) => {
+    const projekt = info.project.name;
+    const userId = await zalozKontoNawykow(page, projekt);
+    // Dwa nawyki z historią odhaczeń z ostatnich dni i 10 nocy snu; daty względem dziś, bo ekran zawsze pokazuje „dziś”
+    const dzis = dzisWarszawa();
+    const woda = await zasiejNawyk(userId, { name: "Woda 2 l", odDni: 40 });
+    const czytanie = await zasiejNawyk(userId, { name: "Czytanie", odDni: 40, type: "weekdays", weekdays: [1, 2, 3, 4, 5] });
+    const odhaczenia = [];
+    for (let i = 1; i <= 20; i++) {
+      if (i % 4 !== 0) odhaczenia.push({ habit_id: woda, user_id: userId, date: przesunDate(dzis, -i) });
+      if (i % 3 !== 0) odhaczenia.push({ habit_id: czytanie, user_id: userId, date: przesunDate(dzis, -i) });
+    }
+    const { error } = await adminClient().from("habit_checks").insert(odhaczenia);
+    if (error) throw new Error(`Nie udało się zasiać odhaczeń: ${error.message}`);
+    for (let i = 0; i < 10; i++) await zasiejSen(userId, i, i % 3 === 0 ? "00:10" : "23:15", i % 2 === 0 ? "07:05" : "06:40");
+
+    await page.goto("/nawyki");
+    if (projekt === "web") {
+      const web = page.getByTestId("web-nawyki");
+      await expect(web.getByRole("link", { name: "Woda 2 l" })).toBeVisible();
+      await zrzut(page, "nawyki", projekt);
+
+      await web.getByRole("button", { name: "Nowy nawyk" }).click();
+      await expect(page.getByRole("dialog", { name: "Nowy nawyk" })).toBeVisible();
+      await zrzut(page, "nawyki-okno-nawyku", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      await web.getByRole("button", { name: "+ Wpis snu" }).click();
+      await expect(page.getByRole("dialog", { name: "Wpis snu" })).toBeVisible();
+      await zrzut(page, "nawyki-okno-snu", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      await page.goto(`/nawyki/${woda}`);
+      await expect(page.getByTestId("web-nawyk").getByRole("heading", { name: "Woda 2 l", level: 1 })).toBeVisible();
+      await zrzut(page, "nawyk-szczegoly", projekt);
+    } else {
+      const m = page.getByTestId("m-nawyki");
+      await expect(m.getByRole("checkbox", { name: "Woda 2 l" })).toBeVisible();
+      await zrzut(page, "nawyki", projekt);
+
+      await m.getByRole("button", { name: "Nowy nawyk" }).click();
+      await expect(page.getByRole("dialog", { name: "Nowy nawyk" })).toBeVisible();
+      await zrzut(page, "nawyki-arkusz-nawyku", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      await m.getByRole("radio", { name: "Sen" }).click();
+      await expect(m.getByRole("button", { name: "Dodaj wpis snu" })).toBeVisible();
+      await zrzut(page, "nawyki-sen", projekt);
+      await m.getByRole("button", { name: "Dodaj wpis snu" }).click();
+      await expect(page.getByRole("dialog", { name: "Wpis snu" })).toBeVisible();
+      await zrzut(page, "nawyki-arkusz-snu", projekt);
+      await page.getByRole("button", { name: "Anuluj" }).click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      await page.goto(`/nawyki/${woda}`);
+      await expect(page.getByTestId("m-nawyk").getByRole("heading", { name: "Woda 2 l", level: 1 })).toBeVisible();
+      await zrzut(page, "nawyk-szczegoly", projekt);
+    }
   });
 });
