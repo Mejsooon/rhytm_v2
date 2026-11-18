@@ -216,7 +216,7 @@ describe("CalendarView", () => {
     wyrenderuj();
     await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
     await userEvent.click(within(screen.getByRole("dialog", { name: "Szczegóły bloku" })).getByRole("button", { name: "Usuń" }));
-    const okno = await screen.findByRole("dialog", { name: "Usunąć blok?" });
+    const okno = await screen.findByRole("alertdialog", { name: "Usunąć blok?" });
     await userEvent.click(within(okno).getByRole("button", { name: "Usuń" }));
     expect(changeOccurrence).toHaveBeenCalledWith({
       blockId: "b1",
