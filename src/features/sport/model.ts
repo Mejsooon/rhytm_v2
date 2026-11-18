@@ -399,6 +399,14 @@ export function sessionItems(
   });
 }
 
+// Podgląd w kalendarzu głównym: kolor kategorii Sport i adres dymku tego treningu na /sport
+export const SPORT_COLOR = "#c2410c";
+
+// { date: "2026-11-19", key: "t:t1:2026-11-19" } -> "/sport?miesiac=2026-11&wybrany=t:t1:2026-11-19"
+export function sportItemHref(item: Pick<SportItem, "date" | "key">): string {
+  return `/sport?miesiac=${item.date.slice(0, 7)}&wybrany=${item.key}`;
+}
+
 // Statystyki 7 dni od weekStartDate: km i kcal tylko z wykonanych biegów,
 // tempo = Σ czas / Σ km, done = wykonane sesje obu rodzajów.
 export function weekStats(

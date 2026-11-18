@@ -88,7 +88,10 @@ describe("minutesNow", () => {
 
 // Atrapa klienta: każda tabela zwraca swoje wiersze, bez względu na filtry
 function klient(tabele: Record<string, ReturnType<typeof fakeTable>>) {
-  return { from: (nazwa: string) => tabele[nazwa] } as never;
+  // Tabele bez danych w teście (np. sport) zwracają pustą listę
+  return {
+    from: (nazwa: string) => tabele[nazwa] ?? fakeTable({ data: [] }),
+  } as never;
 }
 
 describe("loadCalendar", () => {
@@ -260,5 +263,136 @@ describe("loadCalendar", () => {
     expect(zadania.in).toHaveBeenCalledWith("block_id", ["seria"]);
     expect(zadania.in).toHaveBeenCalledWith("occurrence_date", ["2026-10-27"]);
     expect(wynik.tasks.map((t) => t.id)).toEqual(["t2", "t1"]);
+  });
+
+  describe("sport (podgląd w kalendarzu głównym)", () => {
+    const sesja = (o: Record<string, unknown>) => ({
+      id: "s1",
+      user_id: "u1",
+      type: "run",
+      title: "Spokojny",
+      start_local: "2026-11-10T07:00:00",
+      end_local: null,
+      completed: true,
+      show_in_calendar: true,
+      template_id: null,
+      template_date: null,
+      note: null,
+      difficulty: null,
+      created_at: null,
+      ...o,
+    });
+    const szablon = {
+      id: "t1",
+      user_id: "u1",
+      name: "Push",
+      weekdays: [4], // czwartki
+      start_time: "18:30:00",
+      last_used_at: null,
+      created_at: null,
+    };
+
+    it("sesje z zakresu (z danymi biegu) i wystąpienia szablonów od dziś; bez ukrytych w kalendarzu", async () => {
+      const sesje = fakeTable({
+        data: [
+          sesja({}),
+          sesja({ id: "s2", show_in_calendar: false }),
+          // Sesja z szablonu na czwartek 19.11 zastępuje jego wystąpienie
+          sesja({
+            id: "s3",
+            type: "gym",
+            title: "Push",
+            start_local: "2026-11-19T18:30:00",
+            completed: false,
+            template_id: "t1",
+            template_date: "2026-11-19",
+          }),
+        ],
+      });
+      const biegi = fakeTable({
+        data: [
+          {
+            session_id: "s1",
+            user_id: "u1",
+            kind: "easy",
+            distance_km: 10,
+            duration_s: 3480,
+            difficulty: null,
+            kcal: null,
+            weight_kg_snapshot: null,
+          },
+        ],
+      });
+      const wynik = await loadCalendar(
+        klient({
+          sport_sessions: sesje,
+          runs: biegi,
+          workout_templates: fakeTable({ data: [szablon] }),
+          template_skips: fakeTable({
+            data: [{ template_id: "t1", date: "2026-11-26", user_id: "u1" }],
+          }),
+        }),
+        "u1",
+        LISTOPAD,
+        profil,
+        "2026-11-18",
+      );
+      // 12.11 jest przed dziś, 19.11 ma sesję, 26.11 jest pominięty
+      expect(wynik.sport.map((i) => i.key)).toEqual(["s:s1", "s:s3"]);
+      expect(wynik.sport[0]).toMatchObject({
+        planned: false,
+        distanceKm: 10,
+        durationMin: 58,
+      });
+      expect(wynik.sport[1]).toMatchObject({ planned: true, kind: "gym" });
+      expect(sesje.or).toHaveBeenCalledWith(
+        "and(start_local.gte.2026-11-01T00:00:00,start_local.lt.2026-12-01T00:00:00),and(template_date.gte.2026-11-01,template_date.lte.2026-11-30)",
+      );
+      expect(biegi.in).toHaveBeenCalledWith("session_id", ["s1"]);
+    });
+
+    it("wystąpienie szablonu w przyszłym czwartku jest planem z godziną szablonu", async () => {
+      const wynik = await loadCalendar(
+        klient({
+          workout_templates: fakeTable({ data: [szablon] }),
+        }),
+        "u1",
+        { from: "2026-11-16", to: "2026-11-22" },
+        profil,
+        "2026-11-18",
+      );
+      expect(wynik.sport).toEqual([
+        expect.objectContaining({
+          key: "t:t1:2026-11-19",
+          date: "2026-11-19",
+          startMin: 18 * 60 + 30,
+          planned: true,
+        }),
+      ]);
+    });
+
+    it("sesja przeniesiona z zakresu (start poza nim) tylko blokuje wystąpienie", async () => {
+      const wynik = await loadCalendar(
+        klient({
+          sport_sessions: fakeTable({
+            data: [
+              sesja({
+                id: "s4",
+                type: "gym",
+                start_local: "2026-11-24T10:00:00",
+                template_id: "t1",
+                template_date: "2026-11-19",
+              }),
+            ],
+          }),
+          workout_templates: fakeTable({ data: [szablon] }),
+        }),
+        "u1",
+        { from: "2026-11-16", to: "2026-11-22" },
+        profil,
+        "2026-11-18",
+      );
+      expect(wynik.sport).toEqual([]);
+    });
   });
 });

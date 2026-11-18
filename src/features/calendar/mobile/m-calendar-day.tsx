@@ -10,6 +10,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
+import {
+  SPORT_COLOR,
+  sportItemHref,
+  type SportItem,
+} from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "../day-layout";
 import type { CategoryRow } from "../load-calendar";
@@ -29,6 +34,7 @@ export function MCalendarDay({
   weekStart,
   nowMinutes,
   occurrences,
+  sport = [],
   categories,
   clock,
   onAdd,
@@ -40,6 +46,8 @@ export function MCalendarDay({
   nowMinutes: number;
   // Widoczne wystąpienia całego tygodnia wybranego dnia (z nich kropki paska i bloki dnia)
   occurrences: Occurrence[];
+  // Podgląd treningów tygodnia (tylko do odczytu): stuknięcie prowadzi na /sport
+  sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
   onAdd: (date: IsoDate, startMin: number) => void;
@@ -49,7 +57,9 @@ export function MCalendarDay({
   const osRef = useRef<HTMLDivElement>(null);
   const dniTygodnia = viewRange("tydzien", date, weekStart).days;
   const dnia = occurrences.filter((o) => o.date === date);
-  const uklad = layoutDay(dnia);
+  const treningi = sport.filter((i) => i.date === date);
+  // Bloki i treningi dzielą szerokość przy nakładaniu
+  const uklad = layoutDay([...dnia, ...treningi]);
   const linia = nowLine({ date: today, minutes: nowMinutes }, date);
 
   const [, miesiac, numerDnia] = date.split("-").map(Number);
@@ -100,7 +110,9 @@ export function MCalendarDay({
         {dniTygodnia.map((dzien) => {
           const numer = weekdayOf(dzien);
           const wybrany = dzien === date;
-          const maBloki = occurrences.some((o) => o.date === dzien);
+          const maBloki =
+            occurrences.some((o) => o.date === dzien) ||
+            sport.some((i) => i.date === dzien);
           const [, m, d] = dzien.split("-").map(Number);
           return (
             <Link
@@ -236,6 +248,54 @@ export function MCalendarDay({
                   </span>
                 )}
               </button>
+            );
+          })}
+
+          {treningi.map((i) => {
+            const pozycja = uklad.find((u) => u.key === i.key);
+            const kolumna = pozycja?.col ?? 0;
+            const kolumn = pozycja?.cols ?? 1;
+            const czas = Math.min(i.durationMin, 1440 - i.startMin);
+            const koniec = i.startMin + czas;
+            const godziny = `${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
+            const wysokosc = (czas / 60) * WYSOKOSC_GODZINY - 4;
+            // Pole dotyku co najmniej 44 px, jak przy blokach
+            const zapas = wysokosc < 44 ? (44 - wysokosc) / 2 : 0;
+            return (
+              // Plan: przerywana ramka; wykonany: tło w kolorze Sportu
+              <Link
+                key={i.key}
+                href={sportItemHref(i)}
+                data-planned={i.planned || undefined}
+                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-[#171717]"
+                style={{
+                  top: (i.startMin / 60) * WYSOKOSC_GODZINY + 1,
+                  height: wysokosc,
+                  left: `calc(52px + (100% - 56px) * ${kolumna / kolumn})`,
+                  width: `calc((100% - 56px) / ${kolumn})`,
+                  background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                  border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
+                  borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                }}
+              >
+                {zapas > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0"
+                    style={{ top: -zapas, bottom: -zapas }}
+                  />
+                )}
+                <span
+                  className={`flex h-full overflow-hidden ${czas < 60 ? "items-center gap-2" : "flex-col gap-0.5 py-1.5"}`}
+                >
+                  <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
+                    {i.title}
+                  </span>
+                  <span className="flex-none truncate font-mono text-[11px] leading-4 whitespace-nowrap text-[#555555]">
+                    {czas < 60 ? godziny : `${godziny} · Sport`}
+                  </span>
+                </span>
+              </Link>
             );
           })}
 

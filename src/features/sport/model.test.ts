@@ -25,6 +25,7 @@ import {
   runFormInput,
   sessionItems,
   sessionVolume,
+  sportItemHref,
   templateOccurrences,
   templateSets,
   weekStats,
@@ -786,5 +787,16 @@ describe("szablony — przerwa, odmiana, „ostatnio”", () => {
       "pt 13.11",
     );
     expect(formatLastUsed(null, "Europe/Warsaw")).toBe("—");
+  });
+});
+
+describe("sportItemHref", () => {
+  it("prowadzi do miesiąca treningu z kluczem w `wybrany`", () => {
+    expect(sportItemHref({ date: "2026-11-19", key: "t:t1:2026-11-19" })).toBe(
+      "/sport?miesiac=2026-11&wybrany=t:t1:2026-11-19",
+    );
+    expect(sportItemHref({ date: "2026-12-01", key: "s:abc" })).toBe(
+      "/sport?miesiac=2026-12&wybrany=s:abc",
+    );
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 // Dymek „Nowy wpis” wg Calendar.dc.html: data i godzina slotu oraz wybór Blok / Bieg / Siłownia.
-// Kotwicą jest duch slotu w siatce. Bieg i Siłownia to linki do strony Sport (Etap 3 zbuduje formularze).
+// Kotwicą jest duch slotu w siatce. Bieg i Siłownia to linki do strony Sport (okno biegu / pusty trening).
 import Link from "next/link";
 
 import type { IsoDate } from "@/components/controls/calendar-math";

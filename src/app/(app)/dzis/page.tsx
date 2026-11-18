@@ -47,16 +47,17 @@ async function Dzis() {
   }).format(teraz);
   const etykieta = `${dzienTygodnia.charAt(0).toUpperCase()}${dzienTygodnia.slice(1)} · ${dataKrotka}`;
 
-  // Liczniki pierwszych kroków: samo zliczenie wierszy (RLS ogranicza je do własnych); treningi dopiero w Etapie 4
-  const [bloki, nawyki, sen] = await Promise.all([
+  // Liczniki pierwszych kroków: samo zliczenie wierszy (RLS ogranicza je do własnych)
+  const [bloki, nawyki, treningi, sen] = await Promise.all([
     supabase.from("blocks").select("*", { count: "exact", head: true }),
     supabase.from("habits").select("*", { count: "exact", head: true }),
+    supabase.from("sport_sessions").select("*", { count: "exact", head: true }),
     supabase.from("sleep_logs").select("*", { count: "exact", head: true }),
   ]);
   const kroki = firstSteps({
     blocks: bloki.count ?? 0,
     habits: nawyki.count ?? 0,
-    workouts: 0,
+    workouts: treningi.count ?? 0,
     sleepLogs: sen.count ?? 0,
   });
 

@@ -4,6 +4,7 @@
 **Makiety:** `docs/design/mockups/` (`npx serve docs/design/mockups`). Komputer: `X.dc.html` przy 1440 px. Telefon: `MX.dc.html` przy 390×844.
 
 ## Jak czytać ten dokument
+
 - Każdy etap ma **listę odbiorczą**: punkty do odhaczenia, wzięte z makiet i specu. Etap jest skończony, gdy:
   1. każdy punkt listy działa i ma test (e2e albo komponentowy),
   2. zrzuty ekranów etapu zgadzają się z makietami (web 1440 px, telefon 390 px; spec 7),
@@ -14,6 +15,7 @@
 - Sekcja „Wspólne” na początku dotyczy wszystkich etapów.
 
 ## Wspólne (obowiązuje w każdym etapie)
+
 - [ ] Kontrolki wyłącznie z biblioteki z Etapu 0 (spec 3.2): żadnych natywnych `select`, `input type=date|time`.
 - [ ] Dymki: zamykają się wyzwalaczem, wyborem, „Gotowe”, Esc i klikiem poza; nie są przycinane przez karty i tabele.
 - [ ] Liczniki, sumy i karty przeliczają się natychmiast po zmianie (optymistycznie), a zapis idzie w tle; błąd zapisu cofa zmianę i pokazuje komunikat.
@@ -25,9 +27,11 @@
 ---
 
 ## Etap 0: Fundament, kontrolki i logowanie
+
 **Makiety:** Login, Register, Forgot, EmailConfirmed, NotFound, Sidebar · MLogin, MRegister, MForgot, MTabBar.
 
 **Lista odbiorcza**
+
 - Fundament
   - [ ] Repo: Next.js 16, TypeScript, Tailwind v4, shadcn/ui (Radix), Vitest, Testing Library, Playwright, ESLint; CI w GitHub Actions.
   - [ ] Tokeny ze spec 3.1 jako zmienne CSS + Tailwind; Geist i Geist Mono; komponent logo (3×3, zielony kwadrat).
@@ -61,9 +65,11 @@
 ---
 
 ## Etap 1: Onboarding i profil
+
 **Makiety:** Onboarding, OnboardingRole, OnboardingGoals, OnboardingSource, OnboardingPages, OnboardingNotify, OnboardingDone, EmptyToday, Settings (Ogólne bez Kosza) · MOnboarding.
 
 **Lista odbiorcza**
+
 - [x] 7 kroków z paskiem postępu, „Wstecz”/„Dalej”, „Wyloguj”; zapis po każdym kroku; powrót wznawia ostatni krok.
 - [x] Web: podgląd aplikacji na żywo po prawej z zielonym obrysem zmienianego obszaru.
 - [x] Telefon: układ z `MOnboarding` (jedno pytanie na ekran, „Dalej” na dole, bez podglądu).
@@ -82,9 +88,11 @@
 ---
 
 ## Etap 2: Kalendarz główny i zadania
+
 **Makiety:** Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog, Settings (Kategorie) · MCalendarDay, MCalendarWeek, MCalendarMonth, MBlockSheet.
 
 **Lista odbiorcza**
+
 - Widoki
   - [x] Tydzień / Dzień / Miesiąc z przełącznikiem i ‹ Dziś › (adres `?widok=&data=`). (e2e: calendar.spec.ts; unit: calendar-header.test.tsx; zrzut)
   - [x] Filtry kategorii z licznikami; klik ukrywa/pokazuje (przerywana ramka, pusta kropka); „+ Kategoria”. (e2e: ukrycie po odświeżeniu; unit: category-filters.test.tsx, calendar-view.test.tsx)
@@ -118,9 +126,11 @@
 ---
 
 ## Etap 3: Nawyki i sen
+
 **Makiety:** Habits, HabitDetail, HabitDialog, SleepDialog · MHabits, MHabitDetail, MHabitNew, MSleep.
 
 **Lista odbiorcza**
+
 - [x] Harmonogramy: codziennie, wybrane dni, X w tygodniu (wersjonowane); odhaczanie także wstecz w siatce tygodnia. (e2e: habits.spec.ts nowy nawyk i zmiana na „Wybrane dni”; unit: model.test.ts, habit-dialog.test.tsx, habit-week-grid.test.tsx, habits/actions.test.ts; db: habits_sleep.test.sql)
 - [x] Kafelki: Nawyki dziś, Ostatnie 30 dni z porównaniem, Najdłuższa seria, Śr. sen 14 dni. (e2e: „1/1” po odhaczeniu; unit: habit-tiles.test.tsx, model.test.ts, sleep.test.ts; zrzut)
 - [x] Heatmapa: Miesiąc (‹ › do 12 mies., strzałki nieaktywne na granicy) / 3 / 6 mies. / Rok; dymek „data · x z y nawyków”; dni bez planu szare. (unit: habit-heatmap.test.tsx, habit-month.test.tsx, habits-view-mobile.test.tsx; zrzut)
@@ -135,27 +145,31 @@
 ---
 
 ## Etap 4: Sport
+
 **Makiety:** Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail · MSport, MRunNew, MGym.
 
 **Lista odbiorcza**
-- [ ] Miesiąc z „Σ tydz.”, filtr Wszystko/Bieg/Siłownia, dymek treningu (kierunek w górę/lewo przy krawędziach) z akcjami.
-- [ ] Kafelki tygodnia, wykres km z linią celu (~12 tyg.), karta rekordu ćwiczenia, „Ostatnie treningi”.
-- [ ] Nowy bieg: rodzaj (Spokojny / Tempo / Interwały / Długi / Zawody), data, start, dystans, czas, tempo i kcal na żywo (ACSM), trudność 1–10, notatka, „Pokaż w kalendarzu”; bez czasu = plan.
-- [ ] Trening siłowy: edycja kg/powt., ✓ serii, objętość i serie na żywo, „+ Seria” (kopiuje poprzednią), ✕ serii, „Usuń ćwiczenie”, „+ Ćwiczenie” (wyszukiwanie, biblioteka bez duplikatów, własne, Enter/Esc), REKORD, „Zapisz jako szablon”, „Zakończ trening”.
-- [ ] Szablony: lista + karta „+ Nowy szablon”; edytor (nazwa, dni, godzina startu przy wybranych dniach *[Claude: brak na makiecie, wybór godziny z 3.2 obok dni]*, serie −/+, powtórzenia, przerwa, ↑ ↓ ✕, „+ Ćwiczenie”, Zapisz nieaktywne bez nazwy/ćwiczeń, Anuluj, Usuń, komunikat po zapisie); „Rozpocznij” z ostatnimi ciężarami.
-- [ ] Dni szablonu same tworzą zaplanowane treningi (wystąpienia liczone przy odczycie; „Rozpocznij” / edycja zapisuje sesję; usunięcie wystąpienia = `template_skips`); widoczne w kalendarzu Sportu, głównym i na Dziś.
-- [ ] Szczegóły ćwiczenia: 1RM (Epley), najcięższa seria, najwięcej powtórzeń, zmiana 8 tyg., wykres 3 mies./8 tyg., historia z REKORD, „Zmień nazwę”.
-- [ ] Treningi w kalendarzu głównym jako podgląd (kategoria Sport; plan = przerywana ramka, wykonany = pomarańczowy); „Nowy wpis → Bieg/Siłownia” z kalendarza działa.
-- [ ] Telefon: `MSport` (Tydzień/Miesiąc, karta biegania, wykres ze stuknięciem), `MRunNew` (rodzaj, −/+, tempo liczone, trudność 1–10, „Pokaż w kalendarzu”), `MGym` (pasek postępu, duże checkboxy; bez minutnika przerwy).
+
+- [x] Miesiąc z „Σ tydz.”, filtr Wszystko/Bieg/Siłownia, dymek treningu (kierunek w górę/lewo przy krawędziach) z akcjami. (e2e: sport.spec.ts bieg w kalendarzu Sportu, „Rozpocznij” i „Usuń” z dymku; unit: month-calendar.test.tsx, item-popover.test.tsx, sport-view.test.tsx, model.test.ts weekStats; zrzut)
+- [x] Kafelki tygodnia, wykres km z linią celu (~12 tyg.), karta rekordu ćwiczenia, „Ostatnie treningi”. (unit: week-tiles.test.tsx, record-card.test.tsx, recent-table.test.tsx, load-sport.test.ts; zrzut)
+- [x] Nowy bieg: rodzaj (Spokojny / Tempo / Interwały / Długi / Zawody), data, start, dystans, czas, tempo i kcal na żywo (ACSM), trudność 1–10, notatka, „Pokaż w kalendarzu”; bez czasu = plan. (e2e: sport.spec.ts „Nowy bieg” 10 km / 58:00 → 5:48; unit: run-dialog.test.tsx, model.test.ts runKcal/runFormInput, actions.test.ts saveRun; zrzut)
+- [x] Trening siłowy: edycja kg/powt., ✓ serii, objętość i serie na żywo, „+ Seria” (kopiuje poprzednią), ✕ serii, „Usuń ćwiczenie”, „+ Ćwiczenie” (wyszukiwanie, biblioteka bez duplikatów, własne, Enter/Esc), REKORD, „Zapisz jako szablon”, „Zakończ trening”. (e2e: sport.spec.ts kg, ✓, objętość, „Zakończ trening”; unit: gym-log.test.tsx, use-gym-store.test.tsx, model.test.ts recordSetIds/sessionVolume, actions.test.ts; zrzut)
+- [x] Szablony: lista + karta „+ Nowy szablon”; edytor (nazwa, dni, godzina startu przy wybranych dniach _[Claude: brak na makiecie, wybór godziny z 3.2 obok dni]_, serie −/+, powtórzenia, przerwa, ↑ ↓ ✕, „+ Ćwiczenie”, Zapisz nieaktywne bez nazwy/ćwiczeń, Anuluj, Usuń, komunikat po zapisie); „Rozpocznij” z ostatnimi ciężarami. (e2e: sport.spec.ts drugi start z ciężarami z ostatniego razu; unit: templates-list.test.tsx, template-editor.test.tsx, model.test.ts templateSets, actions.test.ts createGymSession/saveTemplate; zrzut listy i edytora)
+- [x] Dni szablonu same tworzą zaplanowane treningi (wystąpienia liczone przy odczycie; „Rozpocznij” / edycja zapisuje sesję; usunięcie wystąpienia = `template_skips`); widoczne w kalendarzu Sportu, głównym i na Dziś. (e2e: sport.spec.ts plan „Push” w kalendarzu głównym i Sportu, „Usuń” → `template_skips`; unit: model.test.ts templateOccurrences, load-calendar.test.ts, load-sport.test.ts; db: sport.test.sql. Na Dziś: tylko licznik „Zapisz trening” (first-steps.test.ts) — treningi w planie dnia to Etap 5 wg Ruling „Dziś”)
+- [x] Szczegóły ćwiczenia: 1RM (Epley), najcięższa seria, najwięcej powtórzeń, zmiana 8 tyg., wykres 3 mies./8 tyg., historia z REKORD, „Zmień nazwę”. (unit: exercise-detail.test.tsx, model.test.ts epley1rm; zrzut)
+- [x] Treningi w kalendarzu głównym jako podgląd (kategoria Sport; plan = przerywana ramka, wykonany = pomarańczowy); „Nowy wpis → Bieg/Siłownia” z kalendarza działa. (e2e: sport.spec.ts podgląd biegu → dymek na /sport, „Nowy wpis” → Bieg / Siłownia; unit: time-grid.test.tsx, month-grid.test.tsx, calendar-view.test.tsx (ukryta kategoria Sport), mobile/m-calendar-\*.test.tsx, new-entry-popover.test.tsx; zrzut)
+- [x] Telefon: `MSport` (Tydzień/Miesiąc, karta biegania, wykres ze stuknięciem), `MRunNew` (rodzaj, −/+, tempo liczone, trudność 1–10, „Pokaż w kalendarzu”), `MGym` (pasek postępu, duże checkboxy; bez minutnika przerwy). (e2e: sport.spec.ts telefon „Bieg” −/+ → „Ostatnie”, „Trening” → checkbox → pasek; unit: mobile/m-sport.test.tsx, m-run-new.test.tsx, m-gym.test.tsx; zrzuty)
 
 **Testy:** tempo, kcal, 1RM, rekordy, objętość, wystąpienia treningów z dni szablonu (zakres dat, pominięcia, zmiana dni), szablon → trening z ostatnimi ciężarami, edytor szablonu (walidacja, kolejność), e2e bieg i trening z szablonu, zrzuty.
 
 ---
 
 ## Etap 5: Dziś (pełny) i szybkie dodawanie na telefonie
+
 **Makiety:** Today · MToday, MQuickAdd.
 
 **Lista odbiorcza**
+
 - [ ] Karta „Ten tydzień” (5 kafelków z danych etapów 2–4; tydzień wg profilu).
 - [ ] Plan dnia: oś 06–22, „TERAZ”, linia czasu, dymek bloku, treningi („plan”), duch slotu + „Nowy wpis”.
 - [ ] „Zadania na dziś” (samodzielne + zaległe, odhaczanie, „+ Zadanie”) i zwijane „Bez daty”; kafelek Zadania liczy oba rodzaje.
@@ -168,9 +182,11 @@
 ---
 
 ## Etap 6: Silnik stron i edytor bloków
+
 **Makiety:** NewPage, EmptyPage, Books, Projects, Websites, AddField (typy podstawowe), ColumnMenu, FilterPopover, PageMenu, NotFound (kosz) · MPages, MEditor.
 
 **Lista odbiorcza**
+
 - Strony i edytor
   - [ ] Tabele `pages`, `page_blocks`, `page_fields`, `page_rows`; sidebar ze stronami (przeciąganie, menu strony, ikony, F2); `/strony` na telefonie (Ulubione, Wszystkie, wyszukiwarka).
   - [ ] Edytor: tytuł (ścieżka na żywo), bloki tekst/nagłówek/lista zadań/separator/tabela, kosz bloku po najechaniu.
@@ -193,9 +209,11 @@
 ---
 
 ## Etap 7: Inteligentne pola i Subscriptions
+
 **Makiety:** Main (Subscriptions), AddField (Kwota cykliczna, Data odnowienia), CalendarRenewal · MSubs, MRowEdit.
 
 **Lista odbiorcza**
+
 - [ ] Kwota cykliczna (tydzień/miesiąc/kwartał/rok, przeliczenia, „43,00 zł / mies.”, suma w stopce); w edycji kwota + segment cyklu.
 - [ ] Data odnowienia (najbliższa przyszła data, „za N dni”), wybór daty w edycji.
 - [ ] Szablon Subscriptions: karty Σ mies., Σ rok, Najbliższe odnowienie; sort po odnowieniu; kategoria jako lista rozwijana z ✓.
@@ -208,9 +226,11 @@
 ---
 
 ## Etap 8: Sejf
+
 **Makiety:** VaultSetup, Vault, Passwords, VaultReset, Settings (Sejf) · MVault, MPasswords.
 
 **Lista odbiorcza**
+
 - [ ] Ustaw sejf: hasło główne z miernikiem, powtórz, ostrzeżenie, „Rozumiem…” odblokowuje „Utwórz sejf”.
 - [ ] Zablokowany: „— zablokowane”, karta odblokowania, „Nie pamiętam hasła — zresetuj sejf”.
 - [ ] Odblokowany: baner z odliczaniem auto-blokady, „Zablokuj teraz”, pokaż/kopiuj, czyszczenie schowka po 30 s.
@@ -224,9 +244,11 @@
 ---
 
 ## Etap 9: Powiadomienia push
+
 **Makiety:** SettingsNotifications, OnboardingNotify (prawdziwa subskrypcja) · MSettings (sekcja powiadomień).
 
 **Lista odbiorcza**
+
 - [ ] Service worker, VAPID, subskrypcja z onboardingu i ustawień.
 - [ ] Ustawienia: push na urządzeniu (wyłączony wyszarza resztę), przełączniki (nawyki, start bloku, odnowienia), cicha noc z wyborem godzin, „Wyślij testowe” z liczbą urządzeń, urządzenia z „TO” i Wyłącz/Włącz, przypomnienia nawyków z wyborem godziny.
 - [ ] pg_cron + funkcja brzegowa: nawyki, start bloku (tylko `blocks.remind`), odnowienia (tylko `page_rows.remind`), podsumowanie tygodnia; cicha noc; `notification_log`.
@@ -236,9 +258,11 @@
 ---
 
 ## Etap 10: Paleta ⌘K, Szukaj, konto, końcowe porównanie
+
 **Makiety:** CommandK, QuickAdd, SettingsAccount, Settings (skróty konta, Usuń konto) · MSearch, MSettings.
 
 **Lista odbiorcza**
+
 - [ ] Paleta ⌘K (web): wyszukiwanie w grupach, szybkie dodawanie z parserem i panelem „Rozumiem to tak”, „Otwórz pełny formularz”.
 - [ ] Szukaj (telefon): pole, „Ostatnio”, „Szybkie akcje”, wyniki grupowane na żywo, „Nic nie znaleziono”.
 - [ ] Konto i bezpieczeństwo: zmiana hasła (pasek siły, zgodność, opis braków, wylogowanie innych), zmiana e-maila, karta Sesje (to urządzenie „TA” + „Wyloguj wszystkie inne”), eksport JSON z postępem, usunięcie konta słowem USUŃ.
@@ -251,27 +275,28 @@
 ---
 
 ## Pokrycie makiet
+
 Każdy plik z płótna ma etap. Ekrany web bez pary mobilnej na telefonie dostają układ jednokolumnowy / arkusz (spec 6.13).
 
-| Makieta (web) | Etap | Makieta (telefon) | Etap |
-|---|---|---|---|
-| Login, Register, Forgot, EmailConfirmed | 0 | MLogin, MRegister, MForgot | 0 |
-| NotFound | 0 (kosz: 6) | MTabBar | 0 |
-| Sidebar | 0 (strony: 6) | MOnboarding | 1 |
-| Onboarding, Role, Goals, Source, Pages, Notify, Done | 1 (push: 9, strony: 6) | MToday, MQuickAdd | 5 |
-| EmptyToday | 1 | MSearch | 10 |
-| Today | 5 | MCalendarDay, MCalendarWeek, MCalendarMonth, MBlockSheet | 2 |
-| QuickAdd, CommandK | 10 | MHabits, MHabitDetail, MHabitNew, MSleep | 3 |
-| Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog | 2 | MSport, MRunNew, MGym | 4 |
-| CalendarRenewal | 7 | MPages, MEditor | 6 |
-| Habits, HabitDetail, HabitDialog, SleepDialog | 3 | MSubs, MRowEdit | 7 |
-| Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail | 4 | MVault, MPasswords | 8 |
-| NewPage, EmptyPage, Books, Projects, Websites, AddField (podst.), ColumnMenu, FilterPopover, PageMenu | 6 | MSettings | 9 (powiadomienia) + 10 |
-| Main (Subscriptions), AddField (inteligentne) | 7 | | |
-| VaultSetup, Vault, Passwords, VaultReset | 8 | | |
-| Settings (Ogólne) | 1 (Kosz: 6, konto: 10) | | |
-| Settings (Kategorie) | 2 | | |
-| Settings (Sejf) | 8 | | |
-| SettingsNotifications | 9 | | |
-| SettingsAccount | 10 | | |
-| MobileToday, MobileCalendar (stare, na stronie Web) | zastąpione przez MToday, MCalendarDay | | |
+| Makieta (web)                                                                                         | Etap                                  | Makieta (telefon)                                        | Etap                   |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- | ---------------------- |
+| Login, Register, Forgot, EmailConfirmed                                                               | 0                                     | MLogin, MRegister, MForgot                               | 0                      |
+| NotFound                                                                                              | 0 (kosz: 6)                           | MTabBar                                                  | 0                      |
+| Sidebar                                                                                               | 0 (strony: 6)                         | MOnboarding                                              | 1                      |
+| Onboarding, Role, Goals, Source, Pages, Notify, Done                                                  | 1 (push: 9, strony: 6)                | MToday, MQuickAdd                                        | 5                      |
+| EmptyToday                                                                                            | 1                                     | MSearch                                                  | 10                     |
+| Today                                                                                                 | 5                                     | MCalendarDay, MCalendarWeek, MCalendarMonth, MBlockSheet | 2                      |
+| QuickAdd, CommandK                                                                                    | 10                                    | MHabits, MHabitDetail, MHabitNew, MSleep                 | 3                      |
+| Calendar, CalendarDay, CalendarMonth, BlockDialog, ScopeDialog, CategoryDialog                        | 2                                     | MSport, MRunNew, MGym                                    | 4                      |
+| CalendarRenewal                                                                                       | 7                                     | MPages, MEditor                                          | 6                      |
+| Habits, HabitDetail, HabitDialog, SleepDialog                                                         | 3                                     | MSubs, MRowEdit                                          | 7                      |
+| Sport, RunDialog, GymLog, WorkoutTemplates, ExerciseDetail                                            | 4                                     | MVault, MPasswords                                       | 8                      |
+| NewPage, EmptyPage, Books, Projects, Websites, AddField (podst.), ColumnMenu, FilterPopover, PageMenu | 6                                     | MSettings                                                | 9 (powiadomienia) + 10 |
+| Main (Subscriptions), AddField (inteligentne)                                                         | 7                                     |                                                          |                        |
+| VaultSetup, Vault, Passwords, VaultReset                                                              | 8                                     |                                                          |                        |
+| Settings (Ogólne)                                                                                     | 1 (Kosz: 6, konto: 10)                |                                                          |                        |
+| Settings (Kategorie)                                                                                  | 2                                     |                                                          |                        |
+| Settings (Sejf)                                                                                       | 8                                     |                                                          |                        |
+| SettingsNotifications                                                                                 | 9                                     |                                                          |                        |
+| SettingsAccount                                                                                       | 10                                    |                                                          |                        |
+| MobileToday, MobileCalendar (stare, na stronie Web)                                                   | zastąpione przez MToday, MCalendarDay |                                                          |                        |

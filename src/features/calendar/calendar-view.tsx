@@ -179,6 +179,11 @@ export function CalendarView({
   const widoczneTel = wystapieniaTel.filter(
     (o) => !o.categoryId || !ukryte.has(o.categoryId),
   );
+  // Podgląd treningów: ukrycie systemowej kategorii „Sport” chowa go; bez tej kategorii jest widoczny
+  const kategoriaSport = data.categories.find(
+    (k) => k.is_system && k.name === "Sport",
+  );
+  const treningi = kategoriaSport?.hidden ? [] : data.sport;
 
   // Ukrycie od razu znika z widoku; błąd zapisu cofa zmianę i pokazuje toast (w store)
   function przelaczKategorie(kategoria: CategoryRow) {
@@ -423,9 +428,9 @@ export function CalendarView({
   }
 
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
-  const wpisyMiesiaca = widoczne.filter(
-    (o) => o.date.slice(0, 7) === date.slice(0, 7),
-  ).length;
+  const wpisyMiesiaca =
+    widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length +
+    treningi.filter((i) => i.date.slice(0, 7) === date.slice(0, 7)).length;
   // Odmiana: 1 wpis widoczny; 2–4, 22–24… wpisy widoczne (ale 12–14 wpisów); reszta wpisów widocznych
   const napisWpisow =
     wpisyMiesiaca === 1
@@ -445,6 +450,7 @@ export function CalendarView({
     <TimeGrid
       days={zakres.days}
       occurrences={naSiatce}
+      sport={treningi}
       categories={data.categories}
       tasks={data.tasks}
       clock={data.profile.clock}
@@ -544,6 +550,7 @@ export function CalendarView({
                 days={zakres.days}
                 month0={Number(date.slice(5, 7)) - 1}
                 occurrences={widoczne}
+                sport={treningi}
                 categories={data.categories}
                 today={today}
                 clock={data.profile.clock}
@@ -582,6 +589,7 @@ export function CalendarView({
               weekStart={weekStart}
               nowMinutes={nowMinutes}
               occurrences={widoczneTel}
+              sport={treningi}
               categories={data.categories}
               clock={data.profile.clock}
               onAdd={dodajNaTelefonie}
@@ -596,6 +604,7 @@ export function CalendarView({
                 today={today}
                 nowMinutes={nowMinutes}
                 occurrences={widoczneTel}
+                sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
                 onAdd={dodajNaTelefonie}
@@ -610,6 +619,7 @@ export function CalendarView({
                 date={date}
                 today={today}
                 occurrences={widoczneTel}
+                sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
                 onAdd={dodajNaTelefonie}

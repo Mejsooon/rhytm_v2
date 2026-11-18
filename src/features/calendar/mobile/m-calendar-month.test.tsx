@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildMonthGrid } from "@/components/controls/calendar-math";
-import { kategoria, wystapienie } from "./fixtures";
+import { kategoria, planZSzablonu, wystapienie } from "./fixtures";
 import { MCalendarMonth } from "./m-calendar-month";
 
 const dni = buildMonthGrid(2026, 10, "mon").map((c) => c.date);
@@ -101,5 +101,19 @@ describe("MCalendarMonth", () => {
   it("nagłówki dni tygodnia zależą od początku tygodnia", () => {
     wyrenderuj();
     expect(screen.getByText("pn")).toBeInTheDocument();
+  });
+});
+
+describe("MCalendarMonth — podgląd treningów", () => {
+  it("dzień z treningiem ma kropkę Sportu, a lista dnia link do /sport", async () => {
+    wyrenderuj({ sport: [planZSzablonu()] });
+    const komorka = screen.getByRole("button", { name: "19 listopada" });
+    expect(within(komorka).getAllByTestId("kropka-kategorii")).toHaveLength(1);
+    await userEvent.click(komorka);
+    expect(screen.queryByText("Brak bloków — dodaj")).toBeNull();
+    expect(screen.getByRole("link", { name: /Push/ })).toHaveAttribute(
+      "href",
+      "/sport?miesiac=2026-11&wybrany=t:t1:2026-11-19",
+    );
   });
 });

@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { kategoria, wystapienie } from "./fixtures";
+import { kategoria, planZSzablonu, trening, wystapienie } from "./fixtures";
 import { MCalendarWeek } from "./m-calendar-week";
 
 const dni = [
@@ -81,5 +81,22 @@ describe("MCalendarWeek", () => {
     wyrenderuj({ onAdd });
     await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 540);
+  });
+});
+
+describe("MCalendarWeek — podgląd treningów", () => {
+  it("dzień z samym treningiem pokazuje go zamiast „Brak bloków”", () => {
+    wyrenderuj({ sport: [trening(), planZSzablonu()] });
+    const wtorek = screen.getByRole("region", { name: "Wtorek 17 listopada" });
+    expect(within(wtorek).queryByText("Brak bloków")).toBeNull();
+    expect(
+      within(wtorek).getByRole("link", { name: /Spokojny/ }),
+    ).toHaveAttribute("href", "/sport?miesiac=2026-11&wybrany=s:s1");
+    const czwartek = screen.getByRole("region", {
+      name: "Czwartek 19 listopada",
+    });
+    expect(
+      within(czwartek).getByRole("link", { name: /Push/ }),
+    ).toHaveAttribute("data-planned", "true");
   });
 });
