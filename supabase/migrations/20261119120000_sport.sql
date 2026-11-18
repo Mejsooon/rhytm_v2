@@ -78,7 +78,9 @@ create table public.gym_sets (
   set_no smallint not null,
   weight_kg numeric(6, 2) check (weight_kg >= 0 and weight_kg <= 1000),
   reps smallint check (reps >= 0 and reps <= 999),
-  done boolean not null default false
+  done boolean not null default false,
+  -- Numer serii jednoznaczny w ćwiczeniu sesji (dwa szybkie „+ seria” nie dadzą dwóch serii nr 3)
+  unique (session_id, exercise_id, set_no)
 );
 
 -- Serie sesji oraz historia ćwiczenia użytkownika

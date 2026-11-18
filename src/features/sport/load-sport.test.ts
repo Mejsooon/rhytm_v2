@@ -276,6 +276,27 @@ describe("loadSportMonth", () => {
     expect(d.setsHistory[1].sets.map((s) => s.id)).toEqual(["s2", "s3"]);
   });
 
+  it("historia: przy tym samym starcie kolejność po id sesji (stała dla REKORDU)", async () => {
+    (tables.sport_sessions as ReturnType<typeof fakeTable>[])[3] = fakeTable({
+      data: [
+        {
+          id: STARA,
+          start_local: "2026-11-17T17:00:00",
+          title: "Push",
+          completed: true,
+        },
+        {
+          id: SILA,
+          start_local: "2026-11-17T17:00:00",
+          title: "Trening siłowy",
+          completed: true,
+        },
+      ],
+    });
+    const d = await loadSportMonth(klient(tables), "u1", "2026-11");
+    expect(d.setsHistory.map((h) => h.sessionId)).toEqual([SILA, STARA]);
+  });
+
   it("błąd zapytania trafia do granicy błędu", async () => {
     tables.workout_templates = fakeTable({ error: { message: "x" } });
     await expect(

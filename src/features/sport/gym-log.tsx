@@ -63,17 +63,21 @@ export function GymLog({ data }: { data: WorkoutData }) {
   const godziny = `${formatClockTime(Math.floor(startMin / 60), startMin % 60, profile.clock)}–${formatClockTime(Math.floor(koniecMin / 60), koniecMin % 60, profile.clock)}`;
   const podtytul = `${dzien} ${dd}.${mm}.${rok} · ${godziny}${data.templateName ? ` · z szablonu „${data.templateName}”` : ""}`;
 
-  // Historia z bieżącymi seriami tego treningu (REKORD i „vs ostatnio” zmieniają się na żywo)
+  // Historia z bieżącymi seriami tego treningu (REKORD i „vs ostatnio” zmieniają się na żywo).
+  // Ten trening liczymy jak zakończony — po „Zakończ” pozostałe widoki pokażą te same plakietki.
   const serieTeraz = sklep.exercises.flatMap((e) => e.sets);
   const historia = data.history.some((h) => h.sessionId === session.id)
     ? data.history.map((h) =>
-        h.sessionId === session.id ? { ...h, sets: serieTeraz } : h,
+        h.sessionId === session.id
+          ? { ...h, completed: true, sets: serieTeraz }
+          : h,
       )
     : [
         ...data.history,
         {
           sessionId: session.id,
           startLocal: session.start_local,
+          completed: true,
           sets: serieTeraz,
         },
       ];

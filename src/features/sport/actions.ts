@@ -37,6 +37,8 @@ const BRAK_TRENINGU = "Nie znaleziono treningu.";
 const BRAK_SZABLONU = "Nie znaleziono szablonu.";
 const BRAK_CWICZENIA = "Nie znaleziono ćwiczenia.";
 const BRAK_SERII = "Nie znaleziono serii.";
+const BLAD_PRZYWROCENIA_POZYCJI =
+  "Nie udało się zapisać ćwiczeń szablonu ani przywrócić poprzednich. Dodaj je ponownie.";
 const ZAJETA_NAZWA = "Masz już ćwiczenie o tej nazwie.";
 const DOMYSLNE_POWTORZENIA = "8–10";
 const SESJE_HISTORII = 50;
@@ -555,31 +557,37 @@ export async function addExercise(
   const exerciseId = ids?.get(parsedName.data.toLowerCase());
   if (!exerciseId) return { ok: false, message: BLAD_ZAPISU };
 
-  const { data: serie, error: bladSerii } = await supabase
-    .from("gym_sets")
-    .select("exercise_id, exercise_position")
-    .eq("session_id", sessionId)
-    .eq("user_id", user.id);
-  if (bladSerii) return { ok: false, message: BLAD_ZAPISU };
-  if ((serie ?? []).some((s) => s.exercise_id === exerciseId))
-    return { ok: true, id: exerciseId };
+  // Ćwiczenie na koniec treningu, serie 1–3. Gdy to samo ćwiczenie doda równolegle druga karta,
+  // unikalność (session_id, exercise_id, set_no) odrzuci zapis (23505) — wtedy raz czytamy serie
+  // ponownie: ćwiczenie już jest → gotowe, inaczej wstawiamy jeszcze raz z nową pozycją.
+  for (let proba = 1; proba <= 2; proba++) {
+    const { data: serie, error: bladSerii } = await supabase
+      .from("gym_sets")
+      .select("exercise_id, exercise_position")
+      .eq("session_id", sessionId)
+      .eq("user_id", user.id);
+    if (bladSerii) return { ok: false, message: BLAD_ZAPISU };
+    if ((serie ?? []).some((s) => s.exercise_id === exerciseId))
+      return { ok: true, id: exerciseId };
 
-  // Na koniec treningu
-  const pozycja =
-    Math.max(0, ...(serie ?? []).map((s) => s.exercise_position)) + 1;
-  const { error } = await supabase.from("gym_sets").insert(
-    [1, 2, 3].map((nr) => ({
-      user_id: user.id,
-      session_id: sessionId,
-      exercise_id: exerciseId,
-      exercise_position: pozycja,
-      set_no: nr,
-      weight_kg: null,
-      reps: null,
-      done: false,
-    })),
-  );
-  if (error) return { ok: false, message: BLAD_ZAPISU };
+    const pozycja =
+      Math.max(0, ...(serie ?? []).map((s) => s.exercise_position)) + 1;
+    const { error } = await supabase.from("gym_sets").insert(
+      [1, 2, 3].map((nr) => ({
+        user_id: user.id,
+        session_id: sessionId,
+        exercise_id: exerciseId,
+        exercise_position: pozycja,
+        set_no: nr,
+        weight_kg: null,
+        reps: null,
+        done: false,
+      })),
+    );
+    if (error?.code === "23505" && proba === 1) continue;
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+    break;
+  }
 
   revalidateSport();
   revalidatePath("/sport/trening/[id]", "page");
@@ -645,37 +653,46 @@ export async function addSet(
   )
     return { ok: false, message: BLAD_ZAPISU };
 
-  const { data: serie, error: bladSerii } = await supabase
-    .from("gym_sets")
-    .select("exercise_position, set_no, weight_kg, reps")
-    .eq("session_id", sessionId)
-    .eq("exercise_id", exerciseId)
-    .eq("user_id", user.id)
-    .order("set_no", { ascending: true });
-  if (bladSerii) return { ok: false, message: BLAD_ZAPISU };
-  const lista = serie ?? [];
-  const poprzednia = lista[lista.length - 1];
-  if (!poprzednia) return { ok: false, message: BRAK_CWICZENIA };
+  // Numer serii = max + 1. Dwa szybkie „+ seria” (albo dwie karty) mogą policzyć ten sam numer —
+  // unikalność (session_id, exercise_id, set_no) odrzuca drugi zapis (23505), więc raz czytamy serie
+  // ponownie i wstawiamy z nowym numerem.
+  let nowaId: string | null = null;
+  for (let proba = 1; proba <= 2 && nowaId === null; proba++) {
+    const { data: serie, error: bladSerii } = await supabase
+      .from("gym_sets")
+      .select("exercise_position, set_no, weight_kg, reps")
+      .eq("session_id", sessionId)
+      .eq("exercise_id", exerciseId)
+      .eq("user_id", user.id)
+      .order("set_no", { ascending: true });
+    if (bladSerii) return { ok: false, message: BLAD_ZAPISU };
+    const lista = serie ?? [];
+    const poprzednia = lista[lista.length - 1];
+    if (!poprzednia) return { ok: false, message: BRAK_CWICZENIA };
 
-  const { data: nowa, error } = await supabase
-    .from("gym_sets")
-    .insert({
-      user_id: user.id,
-      session_id: sessionId,
-      exercise_id: exerciseId,
-      exercise_position: poprzednia.exercise_position,
-      set_no: Math.max(...lista.map((s) => s.set_no)) + 1,
-      weight_kg: poprzednia.weight_kg,
-      reps: poprzednia.reps,
-      done: false,
-    })
-    .select("id")
-    .single();
-  if (error || !nowa) return { ok: false, message: BLAD_ZAPISU };
+    const { data: nowa, error } = await supabase
+      .from("gym_sets")
+      .insert({
+        user_id: user.id,
+        session_id: sessionId,
+        exercise_id: exerciseId,
+        exercise_position: poprzednia.exercise_position,
+        set_no: Math.max(...lista.map((s) => s.set_no)) + 1,
+        weight_kg: poprzednia.weight_kg,
+        reps: poprzednia.reps,
+        done: false,
+      })
+      .select("id")
+      .single();
+    if (error?.code === "23505" && proba === 1) continue;
+    if (error || !nowa) return { ok: false, message: BLAD_ZAPISU };
+    nowaId = nowa.id;
+  }
+  if (nowaId === null) return { ok: false, message: BLAD_ZAPISU };
 
   revalidateSport();
   revalidatePath("/sport/trening/[id]", "page");
-  return { ok: true, id: nowa.id };
+  return { ok: true, id: nowaId };
 }
 
 export async function deleteSet(id: string): Promise<ActionResult> {
@@ -889,8 +906,18 @@ export async function saveTemplate(
     // Nowy szablon bez pozycji nie ma sensu — cofamy go; przy edycji przywracamy stare pozycje
     if (!dane.id)
       await supabase.from("workout_templates").delete().eq("id", templateId);
-    else if (starePozycje.length > 0)
-      await supabase.from("workout_template_items").insert(starePozycje);
+    else if (starePozycje.length > 0) {
+      const { error: bladPrzywrocenia } = await supabase
+        .from("workout_template_items")
+        .insert(starePozycje);
+      // Szablon został bez ćwiczeń — mówimy to wprost, żeby użytkownik dodał je ponownie
+      if (bladPrzywrocenia) {
+        revalidateSport();
+        revalidatePath("/sport/szablony");
+        revalidatePath("/sport/szablony/[id]", "page");
+        return { ok: false, message: BLAD_PRZYWROCENIA_POZYCJI };
+      }
+    }
     return { ok: false, message: BLAD_ZAPISU };
   }
 

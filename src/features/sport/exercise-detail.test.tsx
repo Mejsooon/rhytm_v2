@@ -94,6 +94,39 @@ describe("ExerciseDetail", () => {
     ).toBeInTheDocument();
   });
 
+  it("przyszły / niedokończony trening nie liczy się do historii, wykresu, kafelków ani REKORDU", () => {
+    const d = dane();
+    const punktyPrzed = (() => {
+      const { unmount } = render(<ExerciseDetail data={d} />);
+      const n = screen.getAllByTestId("punkt-wykresu").length;
+      unmount();
+      return n;
+    })();
+    render(
+      <ExerciseDetail
+        data={{
+          ...d,
+          history: [
+            ...d.history,
+            {
+              ...sesja("sz", "2026-11-26", [
+                seriaTreningu("z1", "sz", WYCISKANIE, 1, 1, 100, 5, true),
+              ]),
+              completed: false,
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByText("4 treningi · od 10.09.2026 · w szablonie „Push”"),
+    ).toBeInTheDocument();
+    expect(kafelek("Szac. 1RM")).toHaveTextContent("84,5 kg");
+    expect(kafelek("8 tygodni")).toHaveTextContent("+4,5 kg");
+    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(punktyPrzed);
+    expect(screen.queryByText(/26\.11/)).not.toBeInTheDocument();
+  });
+
   it("podtytuł bez szablonu nie ma fragmentu „w szablonie”", () => {
     render(<ExerciseDetail data={dane({ templateName: null })} />);
     expect(screen.getByText("4 treningi · od 10.09.2026")).toBeInTheDocument();

@@ -5,7 +5,10 @@
 // przyciski „Bieg” i „Trening” oraz lista „Ostatnie”. „Trening” otwiera te same opcje co „+ Trening siłowy”
 // na webie (Ruling): „Pusty trening”, szablony („Z szablonu”) i „Szablony treningów…”.
 // *[Claude]* „Miesiąc” = 4 ostatnie tygodnie (ostatni = bieżący, jak w makiecie „t. 43–46”), cel = 4 × cel tygodnia.
-import { useState } from "react";
+// *[Claude]* Nad „Ostatnie” lista „Zaplanowane” (tylko gdy coś jest): plany biegów, niedokończone treningi
+// i wystąpienia szablonów z bieżącego tygodnia — na telefonie nie ma kalendarza miesiąca, z którego by się je otwierało.
+// `?wybrany=` z kalendarza głównego: poniżej 800 px trening jest przekazywany raz do onSelected (dymek jest tylko na webie).
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 
@@ -17,6 +20,7 @@ import {
   weekdayOf,
 } from "@/features/calendar/view-range";
 import { cn } from "@/lib/utils";
+import type { GymSessionInput } from "../actions";
 import type { RunRequest } from "../item-popover";
 import type { SportMonthData } from "../load-sport";
 import {
@@ -25,6 +29,7 @@ import {
   formatPace,
   plPlural,
   weekStats,
+  type SportItem,
 } from "../model";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
@@ -40,22 +45,96 @@ const OPCJA =
 const IKONA_WIERSZA =
   "flex size-10 flex-none items-center justify-center rounded-[10px]";
 
+// Wiersz listy „Zaplanowane” / „Ostatnie” (64 px) z ikoną rodzaju i strzałką
+const WIERSZ =
+  "flex min-h-16 w-full items-center gap-3 border-0 border-b border-solid border-[#f0f0f0] bg-transparent px-3.5 text-left text-[15px] text-[#171717] no-underline outline-none last:border-b-0 hover:bg-[#fafafa] focus-visible:bg-[#fafafa]";
+const IKONA_BIEGU = (
+  <span className={cn(IKONA_WIERSZA, "bg-[#fff4ed] text-[#c2410c]")}>
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 12h4l3-8 4 16 3-8h4" />
+    </svg>
+  </span>
+);
+const IKONA_SILOWNI = (
+  <span className={cn(IKONA_WIERSZA, "bg-[#f5f3ff] text-[#7c3aed]")}>
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
+    </svg>
+  </span>
+);
+const STRZALKA = (
+  <ChevronRight
+    size={16}
+    aria-hidden="true"
+    className="flex-none text-[#a3a3a3]"
+  />
+);
+
 export function MSport({
   data,
+  selectedKey = null,
   onNewRun,
   onNewGym,
   onOpenRun,
+  onStartGym,
+  onSelected,
 }: {
   data: SportMonthData;
+  // ?wybrany={klucz} z kalendarza głównego
+  selectedKey?: string | null;
   onNewRun: () => void;
   // Trening siłowy: null = pusty, inaczej id szablonu (wystąpienie z dziś)
   onNewGym: (templateId: string | null) => void;
   onOpenRun: (req: RunRequest) => void;
+  // Wystąpienie szablonu z „Zaplanowane” (jego dzień i godzina)
+  onStartGym: (input: GymSessionInput) => void;
+  // Trening z `?wybrany=` na telefonie (wywoływane raz na klucz)
+  onSelected: (item: SportItem) => void;
 }) {
   const { today, profile, items } = data;
   const [zakres, setZakres] = useState<"w" | "m">("w");
   const [slupek, setSlupek] = useState<number | null>(null);
   const [menuTreningu, setMenuTreningu] = useState(false);
+
+  // `?wybrany=` obsłużony raz; ref zeruje się, gdy klucz zniknie z adresu (Next 16 Activity trzyma
+  // ekran w pamięci, więc ten sam klucz przy kolejnym wejściu z kalendarza ma zadziałać znowu).
+  const obsluzonyKlucz = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedKey === null) {
+      obsluzonyKlucz.current = null;
+      return;
+    }
+    if (obsluzonyKlucz.current === selectedKey) return;
+    const telefon =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 799px)").matches;
+    if (!telefon) return;
+    const item = items.find((i) => i.key === selectedKey);
+    // Klucza spoza danych nie ma czym otworzyć — adres czyści SportView
+    if (!item) return;
+    obsluzonyKlucz.current = selectedKey;
+    onSelected(item);
+  }, [selectedKey, items, onSelected]);
 
   // Bieżący tydzień od profiles.week_start; numer ISO ze środka tygodnia (jak WeekTiles)
   const dzien = weekdayOf(today);
@@ -118,6 +197,10 @@ export function MSport({
   const najwiecej = Math.max(0, ...slupki.map((s) => s.km)) || 1;
 
   const ostatnie = data.recent.slice(0, 5);
+  // Plany bieżącego tygodnia (items są posortowane wg daty i godziny)
+  const zaplanowane = items.filter(
+    (i) => i.planned && i.date >= biezacy && i.date <= koniecTygodnia,
+  );
 
   return (
     <div className="flex flex-col">
@@ -362,6 +445,86 @@ export function MSport({
           </ActionPopover>
         </div>
 
+        {zaplanowane.length > 0 && (
+          <section aria-labelledby="m-sport-zaplanowane">
+            <h2
+              id="m-sport-zaplanowane"
+              className="m-0 mb-2 text-[17px] font-semibold"
+            >
+              Zaplanowane
+            </h2>
+            <div className={KARTA}>
+              {zaplanowane.map((item) => {
+                const godzina = `${String(Math.floor(item.startMin / 60)).padStart(2, "0")}:${String(item.startMin % 60).padStart(2, "0")}`;
+                const kiedy = `${DNI[weekdayOf(item.date)]} ${item.date.slice(8, 10)}.${item.date.slice(5, 7)} · ${godzina}`;
+                if (item.kind === "run") {
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() =>
+                        item.sessionId &&
+                        onOpenRun({ sessionId: item.sessionId })
+                      }
+                      className={cn(WIERSZ, "cursor-pointer")}
+                    >
+                      {IKONA_BIEGU}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium">
+                          {item.distanceKm !== null
+                            ? `${item.title} · ${formatKm(item.distanceKm)} km`
+                            : item.title}
+                        </span>
+                        <span className="font-mono text-xs text-[#6b6b6b]">
+                          {kiedy}
+                        </span>
+                      </span>
+                      {STRZALKA}
+                    </button>
+                  );
+                }
+                const tresc = (
+                  <>
+                    {IKONA_SILOWNI}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{`Siłownia — ${item.title}`}</span>
+                      <span className="font-mono text-xs text-[#6b6b6b]">
+                        {kiedy}
+                      </span>
+                    </span>
+                    {STRZALKA}
+                  </>
+                );
+                // Niedokończony trening — jego ekran; wystąpienie szablonu — rozpoczęcie w jego dniu
+                return item.sessionId ? (
+                  <Link
+                    key={item.key}
+                    href={`/sport/trening/${item.sessionId}`}
+                    className={WIERSZ}
+                  >
+                    {tresc}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() =>
+                      onStartGym({
+                        date: item.date,
+                        start: godzina,
+                        templateId: item.templateId ?? undefined,
+                      })
+                    }
+                    className={cn(WIERSZ, "cursor-pointer")}
+                  >
+                    {tresc}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section aria-labelledby="m-sport-ostatnie">
           <h2
             id="m-sport-ostatnie"
@@ -376,8 +539,6 @@ export function MSport({
               </p>
             )}
             {ostatnie.map((item) => {
-              const wiersz =
-                "flex min-h-16 w-full items-center gap-3 border-0 border-b border-solid border-[#f0f0f0] bg-transparent px-3.5 text-left text-[15px] text-[#171717] no-underline outline-none last:border-b-0 hover:bg-[#fafafa] focus-visible:bg-[#fafafa]";
               const kiedy = `${DNI[weekdayOf(item.date)]} ${item.date.slice(8, 10)}.${item.date.slice(5, 7)}`;
               if (item.kind === "run") {
                 const kmBiegu = item.distanceKm ?? 0;
@@ -393,39 +554,16 @@ export function MSport({
                     onClick={() =>
                       item.sessionId && onOpenRun({ sessionId: item.sessionId })
                     }
-                    className={cn(wiersz, "cursor-pointer")}
+                    className={cn(WIERSZ, "cursor-pointer")}
                   >
-                    <span
-                      className={cn(
-                        IKONA_WIERSZA,
-                        "bg-[#fff4ed] text-[#c2410c]",
-                      )}
-                    >
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M3 12h4l3-8 4 16 3-8h4" />
-                      </svg>
-                    </span>
+                    {IKONA_BIEGU}
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{`${item.title} · ${formatKm(kmBiegu)} km`}</span>
                       <span className="font-mono text-xs text-[#6b6b6b]">
                         {opis.join(" · ")}
                       </span>
                     </span>
-                    <ChevronRight
-                      size={16}
-                      aria-hidden="true"
-                      className="flex-none text-[#a3a3a3]"
-                    />
+                    {STRZALKA}
                   </button>
                 );
               }
@@ -437,36 +575,16 @@ export function MSport({
                 <Link
                   key={item.key}
                   href={`/sport/trening/${item.sessionId}`}
-                  className={wiersz}
+                  className={WIERSZ}
                 >
-                  <span
-                    className={cn(IKONA_WIERSZA, "bg-[#f5f3ff] text-[#7c3aed]")}
-                  >
-                    <svg
-                      width="19"
-                      height="19"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
-                    </svg>
-                  </span>
+                  {IKONA_SILOWNI}
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{`Siłownia — ${item.title}`}</span>
                     <span className="font-mono text-xs text-[#6b6b6b]">
                       {`${kiedy} · ${plPlural(cwiczen, "ćwiczenie", "ćwiczenia", "ćwiczeń")} · ${item.durationMin} min`}
                     </span>
                   </span>
-                  <ChevronRight
-                    size={16}
-                    aria-hidden="true"
-                    className="flex-none text-[#a3a3a3]"
-                  />
+                  {STRZALKA}
                 </Link>
               );
             })}

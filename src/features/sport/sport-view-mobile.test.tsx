@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,7 +17,7 @@ vi.mock("./actions", () => ({
   saveRun,
 }));
 
-import { daneSportu, SZABLON_PUSH } from "./sport-test-data";
+import { daneSportu, SESJA_PUSH, SZABLON_PUSH } from "./sport-test-data";
 import { SportView } from "./sport-view";
 
 const BIEG = "a1000000-0000-4000-8000-000000000015";
@@ -159,6 +159,104 @@ describe("SportView na telefonie", () => {
     );
     expect(push).toHaveBeenCalledWith(`/sport?miesiac=2026-11&bieg=${BIEG}`, {
       scroll: false,
+    });
+  });
+
+  it("?wybrany=s:{bieg} na telefonie otwiera arkusz tego biegu (adres ?bieg=)", () => {
+    ustawTelefon(true);
+    const PLAN = "a1000000-0000-4000-8000-000000000017";
+    render(
+      <SportView data={daneSportu()} selectedKey={`s:${PLAN}`} newGym={null} />,
+    );
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith(
+      `/sport?miesiac=2026-11&bieg=${PLAN}`,
+      {
+        scroll: false,
+      },
+    );
+  });
+
+  it("?wybrany=s:{siłownia} na telefonie przechodzi do ekranu treningu", () => {
+    ustawTelefon(true);
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={`s:${SESJA_PUSH}`}
+        newGym={null}
+      />,
+    );
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith(`/sport/trening/${SESJA_PUSH}`);
+  });
+
+  it("?wybrany=t:{szablon}:{dzień} na telefonie startuje to wystąpienie i czyści adres", async () => {
+    ustawTelefon(true);
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={`t:${SZABLON_PUSH}:2026-11-19`}
+        newGym={null}
+      />,
+    );
+    expect(replace).toHaveBeenCalledWith("/sport?miesiac=2026-11", {
+      scroll: false,
+    });
+    expect(createGymSession).toHaveBeenCalledTimes(1);
+    expect(createGymSession).toHaveBeenCalledWith({
+      date: "2026-11-19",
+      start: "15:00",
+      templateId: SZABLON_PUSH,
+    });
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith("/sport/trening/nowa-sesja"),
+    );
+  });
+
+  it("?wybrany= od 800 px zostaje dymkiem na webie (bez nawigacji)", () => {
+    ustawTelefon(false);
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={`s:${SESJA_PUSH}`}
+        newGym={null}
+      />,
+    );
+    expect(replace).not.toHaveBeenCalled();
+    expect(createGymSession).not.toHaveBeenCalled();
+  });
+
+  it("ten sam ?wybrany= po zniknięciu z adresu działa ponownie (Activity)", () => {
+    ustawTelefon(true);
+    const dane = daneSportu();
+    const klucz = `s:${SESJA_PUSH}`;
+    const { rerender } = render(
+      <SportView data={dane} selectedKey={klucz} newGym={null} />,
+    );
+    rerender(<SportView data={dane} selectedKey={null} newGym={null} />);
+    rerender(<SportView data={dane} selectedKey={klucz} newGym={null} />);
+    expect(replace).toHaveBeenCalledTimes(2);
+  });
+
+  it("„Zaplanowane” na telefonie: plan biegu otwiera okno biegu, szablon startuje trening", async () => {
+    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    const lista = within(telefon()).getByRole("region", {
+      name: "Zaplanowane",
+    });
+    await userEvent.click(
+      within(lista).getByRole("button", { name: /Spokojny · 10,0 km/ }),
+    );
+    expect(push).toHaveBeenCalledWith(
+      "/sport?miesiac=2026-11&bieg=a1000000-0000-4000-8000-000000000017",
+      { scroll: false },
+    );
+    await userEvent.click(
+      within(lista).getByRole("button", { name: /Siłownia — Push/ }),
+    );
+    expect(createGymSession).toHaveBeenCalledWith({
+      date: "2026-11-19",
+      start: "15:00",
+      templateId: SZABLON_PUSH,
     });
   });
 });

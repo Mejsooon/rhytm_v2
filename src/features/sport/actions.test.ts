@@ -532,6 +532,78 @@ describe("serie", () => {
   });
 });
 
+describe("serie — wyścig numeru serii (23505)", () => {
+  it("addSet przy zajętym numerze czyta serie ponownie i wstawia z kolejnym numerem", async () => {
+    const odczyt1 = fakeTable({
+      data: [{ exercise_position: 1, set_no: 1, weight_kg: 60, reps: 8 }],
+    });
+    const zajete = fakeTable({ error: { code: "23505", message: "dup" } });
+    const odczyt2 = fakeTable({
+      data: [
+        { exercise_position: 1, set_no: 1, weight_kg: 60, reps: 8 },
+        { exercise_position: 1, set_no: 2, weight_kg: 60, reps: 8 },
+      ],
+    });
+    const wstawienie = fakeTable({ single: { id: SERIA } });
+    tables.gym_sets = [odczyt1, zajete, odczyt2, wstawienie];
+
+    const w = await addSet(SESJA, PRZYSIAD);
+    expect(w).toEqual({ ok: true, id: SERIA });
+    expect(zajete.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ set_no: 2 }),
+    );
+    expect(wstawienie.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ set_no: 3 }),
+    );
+  });
+
+  it("addSet: drugi 23505 z rzędu → błąd zapisu", async () => {
+    const odczyt = fakeTable({
+      data: [{ exercise_position: 1, set_no: 1, weight_kg: 60, reps: 8 }],
+    });
+    const zajete = fakeTable({ error: { code: "23505", message: "dup" } });
+    tables.gym_sets = [odczyt, zajete, odczyt, zajete];
+    const w = await addSet(SESJA, PRZYSIAD);
+    expect(w).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
+  });
+
+  it("addExercise: 23505, bo to samo ćwiczenie dodano równolegle → zwraca je bez drugiego wstawienia", async () => {
+    tables.exercises = fakeTable({
+      data: [{ id: PRZYSIAD, name: "Przysiad" }],
+    });
+    const zajete = fakeTable({ error: { code: "23505", message: "dup" } });
+    const ponownie = fakeTable({
+      data: [{ exercise_id: PRZYSIAD, exercise_position: 1 }],
+    });
+    tables.gym_sets = [fakeTable({ data: [] }), zajete, ponownie];
+    const w = await addExercise(SESJA, "Przysiad");
+    expect(w).toEqual({ ok: true, id: PRZYSIAD });
+    expect(ponownie.insert).not.toHaveBeenCalled();
+  });
+
+  it("addExercise: 23505 bez tego ćwiczenia w treningu → jedna ponowna próba z nową pozycją", async () => {
+    tables.exercises = fakeTable({
+      data: [{ id: PRZYSIAD, name: "Przysiad" }],
+    });
+    const zajete = fakeTable({ error: { code: "23505", message: "dup" } });
+    const ponownie = fakeTable({
+      data: [{ exercise_id: MARTWY, exercise_position: 1 }],
+    });
+    const wstawienie = fakeTable();
+    tables.gym_sets = [fakeTable({ data: [] }), zajete, ponownie, wstawienie];
+    const w = await addExercise(SESJA, "Przysiad");
+    expect(w).toEqual({ ok: true, id: PRZYSIAD });
+    expect(wstawienie.insert).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ exercise_position: 2, set_no: 1 }),
+      ]),
+    );
+  });
+});
+
 describe("finishWorkout", () => {
   it("oznacza wykonany i ustawia koniec = teraz w strefie profilu", async () => {
     tables.sport_sessions = fakeTable({
@@ -705,6 +777,56 @@ describe("saveTemplate", () => {
     });
     expect(usuniecie.delete).toHaveBeenCalled();
     expect(przywrocenie.insert).toHaveBeenCalledWith(stare);
+  });
+
+  it("edycja: nieudane także przywrócenie starych pozycji → wyraźny błąd", async () => {
+    tables.exercises = fakeTable({
+      data: [
+        { id: PRZYSIAD, name: "Przysiad" },
+        { id: MARTWY, name: "Martwy ciąg" },
+        { id: LAWKA, name: "Wyciskanie na ławce" },
+      ],
+    });
+    tables.workout_templates = fakeTable({ data: [{ id: SZABLON }] });
+    const stare = [
+      {
+        id: "p1",
+        user_id: "u1",
+        template_id: SZABLON,
+        exercise_id: PRZYSIAD,
+        position: 1,
+        sets_count: 3,
+        reps_text: "8–10",
+        rest_s: 120,
+      },
+    ];
+    tables.workout_template_items = [
+      fakeTable({ data: stare }),
+      fakeTable(),
+      fakeTable({ error: { message: "x" } }),
+      fakeTable({ error: { message: "y" } }),
+    ];
+
+    const w = await saveTemplate({ ...wzor, id: SZABLON });
+    expect(w).toEqual({
+      ok: false,
+      message:
+        "Nie udało się zapisać ćwiczeń szablonu ani przywrócić poprzednich. Dodaj je ponownie.",
+    });
+  });
+
+  it("dni tygodnia bez powtórzeń i rosnąco", async () => {
+    tables.exercises = fakeTable({
+      data: [
+        { id: PRZYSIAD, name: "Przysiad" },
+        { id: MARTWY, name: "Martwy ciąg" },
+        { id: LAWKA, name: "Wyciskanie na ławce" },
+      ],
+    });
+    await saveTemplate({ ...wzor, weekdays: [5, 3, 5, 1, 3] });
+    expect((tables.workout_templates as Fake).insert).toHaveBeenCalledWith(
+      expect.objectContaining({ weekdays: [1, 3, 5] }),
+    );
   });
 });
 

@@ -6,6 +6,7 @@ import { addDays, weekdayOf } from "@/features/calendar/view-range";
 import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
 import {
+  historyOrder,
   monthGrid,
   sessionItems,
   templateOccurrences,
@@ -32,7 +33,8 @@ export type SportProfile = {
 };
 
 // Jedna sesja siłowa z jej seriami — wejście dla recordSetIds, „+2,5 kg vs ostatnio”,
-// karty rekordu i historii ćwiczenia. Lista zawsze rosnąco po startLocal.
+// karty rekordu i historii ćwiczenia. Lista zawsze rosnąco wg historyOrder (startLocal, potem id).
+// Zawiera też niezakończone sesje (dymek planu pokazuje ich serie); historia liczy tylko completed.
 export type SessionSets = {
   sessionId: string;
   startLocal: string;
@@ -174,9 +176,7 @@ async function loadSetsHistory(
       sets: jej,
     });
   }
-  return wynik.sort((a, b) =>
-    a.startLocal < b.startLocal ? -1 : a.startLocal > b.startLocal ? 1 : 0,
-  );
+  return wynik.sort(historyOrder);
 }
 
 // Szablony z pozycjami (rosnąco po position) i nazwami ćwiczeń

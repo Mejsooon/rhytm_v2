@@ -185,13 +185,40 @@ export function SportView({
     }
   }
 
+  // `?wybrany=` na telefonie (MSport przekazuje trening raz): bieg → arkusz biegu (?bieg=), trening siłowy →
+  // jego ekran, wystąpienie szablonu → rozpoczęcie w jego dniu. Każdy wariant zastępuje adres, więc `wybrany`
+  // znika z niego, a wstecz nie wraca do adresu, który otworzyłby trening znowu. Blokujemy też czyszczenie
+  // adresu przez efekt webu (inaczej ścigałby się z tym przejściem).
+  function otworzWybranyNaTelefonie(item: SportItem) {
+    wyczyszczonyKlucz.current = item.key;
+    setWybrany(null);
+    if (item.kind === "run" && item.sessionId) {
+      router.replace(`/sport?miesiac=${month}&bieg=${item.sessionId}`, {
+        scroll: false,
+      });
+    } else if (item.sessionId) {
+      router.replace(`/sport/trening/${item.sessionId}`);
+    } else {
+      router.replace(`/sport?miesiac=${month}`, { scroll: false });
+      void rozpocznijSilownie({
+        date: item.date,
+        start: `${String(Math.floor(item.startMin / 60)).padStart(2, "0")}:${String(item.startMin % 60).padStart(2, "0")}`,
+        templateId: item.templateId ?? undefined,
+      });
+    }
+  }
+
   // ?nowy=silownia: tworzymy pusty trening raz i zastępujemy adres ekranem treningu
-  // (wstecz nie wraca do adresu, który tworzyłby kolejny trening).
+  // (wstecz nie wraca do adresu, który tworzyłby kolejny trening). Ref zeruje się, gdy parametry
+  // znikną z adresu — Next 16 Activity trzyma ekran w pamięci, a ten sam slot z kalendarza ma zadziałać znowu.
   const nowyData = newGym ? (newGym.date ?? today) : null;
   const nowyStart = newGym ? (newGym.start ?? "") : null;
   const obsluzonyNowy = useRef<string | null>(null);
   useEffect(() => {
-    if (nowyData === null || nowyStart === null) return;
+    if (nowyData === null || nowyStart === null) {
+      obsluzonyNowy.current = null;
+      return;
+    }
     const klucz = `${nowyData}|${nowyStart}`;
     if (obsluzonyNowy.current === klucz) return;
     obsluzonyNowy.current = klucz;
@@ -245,6 +272,7 @@ export function SportView({
       >
         <MSport
           data={data}
+          selectedKey={selectedKey}
           onNewRun={() => otworzBieg({ date: today, start: godzinaTeraz() })}
           onNewGym={(templateId) => {
             // Jak w dymku „+ Trening siłowy”: szablon startuje o swojej godzinie, pusty — teraz
@@ -260,6 +288,8 @@ export function SportView({
             );
           }}
           onOpenRun={otworzBieg}
+          onStartGym={(input) => void rozpocznijSilownie(input)}
+          onSelected={otworzWybranyNaTelefonie}
         />
       </div>
       <div

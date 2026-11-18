@@ -173,11 +173,13 @@ describe("lastSetsSummary", () => {
     {
       sessionId: "s1",
       startLocal: "2026-11-03T10:00:00",
+      completed: true,
       sets: [set({ id: "a1", weight_kg: 50, reps: 10 })],
     },
     {
       sessionId: "s2",
       startLocal: "2026-11-10T10:00:00",
+      completed: true,
       sets: [
         set({ id: "b2", set_no: 2, weight_kg: 60, reps: 8 }),
         set({ id: "b1", set_no: 1, weight_kg: 60, reps: 8 }),
@@ -189,6 +191,7 @@ describe("lastSetsSummary", () => {
     {
       sessionId: "teraz",
       startLocal: "2026-11-17T10:00:00",
+      completed: true,
       sets: [set({ id: "c1", weight_kg: 65 })],
     },
   ];
@@ -202,12 +205,18 @@ describe("lastSetsSummary", () => {
       {
         sessionId: "s1",
         startLocal: "2026-11-03T10:00:00",
+        completed: true,
         sets: [
           set({ id: "a1", weight_kg: null, reps: 12 }),
           set({ id: "a2", set_no: 2, weight_kg: null, reps: 10 }),
         ],
       },
-      { sessionId: "teraz", startLocal: "2026-11-17T10:00:00", sets: [] },
+      {
+        sessionId: "teraz",
+        startLocal: "2026-11-17T10:00:00",
+        completed: true,
+        sets: [],
+      },
     ];
     expect(lastSetsSummary(mc, "teraz", "e1")).toBe("ost. 2×12");
     expect(lastSetsSummary(historia, "s1", "e1")).toBeNull();
@@ -223,6 +232,7 @@ describe("recordSetIds", () => {
         {
           sessionId: "s2",
           startLocal: "2026-11-10T10:00:00",
+          completed: true,
           sets: [
             set({ id: "b1", weight_kg: 72.5 }),
             set({ id: "b2", weight_kg: 72.5, set_no: 2 }),
@@ -233,6 +243,7 @@ describe("recordSetIds", () => {
         {
           sessionId: "s1",
           startLocal: "2026-11-03T10:00:00",
+          completed: true,
           sets: [set({ id: "a1", weight_kg: 70 })],
         },
       ],
@@ -246,16 +257,19 @@ describe("recordSetIds", () => {
         {
           sessionId: "s1",
           startLocal: "2026-11-03T10:00:00",
+          completed: true,
           sets: [set({ id: "a1", weight_kg: 70 })],
         },
         {
           sessionId: "s2",
           startLocal: "2026-11-10T10:00:00",
+          completed: true,
           sets: [set({ id: "b1", weight_kg: null })],
         },
         {
           sessionId: "s3",
           startLocal: "2026-11-17T10:00:00",
+          completed: true,
           sets: [set({ id: "c1", weight_kg: 72.5 })],
         },
       ],
@@ -269,17 +283,98 @@ describe("recordSetIds", () => {
         {
           sessionId: "s1",
           startLocal: "2026-11-03T10:00:00",
+          completed: true,
           sets: [set({ id: "a1", weight_kg: 100, done: false })],
         },
         {
           sessionId: "s2",
           startLocal: "2026-11-10T10:00:00",
+          completed: true,
           sets: [set({ id: "b1", weight_kg: 60 })],
         },
       ],
       "e1",
     );
     expect(wynik.size).toBe(0);
+  });
+});
+
+describe("historia: tylko zakończone treningi, stała kolejność przy tej samej godzinie", () => {
+  it("recordSetIds pomija niezakończone sesje (ani maksimum, ani rekord)", () => {
+    const wynik = recordSetIds(
+      [
+        {
+          sessionId: "s1",
+          startLocal: "2026-11-03T10:00:00",
+          completed: true,
+          sets: [set({ id: "a1", weight_kg: 60 })],
+        },
+        // Przyszła / niedokończona z odhaczoną serią — nie liczy się
+        {
+          sessionId: "s2",
+          startLocal: "2026-11-10T10:00:00",
+          completed: false,
+          sets: [set({ id: "b1", weight_kg: 100 })],
+        },
+        {
+          sessionId: "s3",
+          startLocal: "2026-11-17T10:00:00",
+          completed: true,
+          sets: [set({ id: "c1", weight_kg: 65 })],
+        },
+      ],
+      "e1",
+    );
+    expect([...wynik]).toEqual(["c1"]);
+  });
+
+  it("recordSetIds przy równym startLocal porządkuje po sessionId (niezależnie od kolejności wejścia)", () => {
+    const a = {
+      sessionId: "a",
+      startLocal: "2026-11-10T10:00:00",
+      completed: true,
+      sets: [set({ id: "a1", weight_kg: 60 })],
+    };
+    const b = {
+      sessionId: "b",
+      startLocal: "2026-11-10T10:00:00",
+      completed: true,
+      sets: [set({ id: "b1", weight_kg: 65 })],
+    };
+    expect([...recordSetIds([a, b], "e1")]).toEqual(["b1"]);
+    expect([...recordSetIds([b, a], "e1")]).toEqual(["b1"]);
+  });
+
+  it("kgVsLast i lastSetsSummary pomijają niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
+    const historia = [
+      {
+        sessionId: "a",
+        startLocal: "2026-11-10T10:00:00",
+        completed: true,
+        sets: [set({ id: "a1", weight_kg: 60 })],
+      },
+      {
+        sessionId: "n",
+        startLocal: "2026-11-12T10:00:00",
+        completed: false,
+        sets: [set({ id: "n1", weight_kg: 90, reps: 3 })],
+      },
+      {
+        sessionId: "b",
+        startLocal: "2026-11-10T10:00:00",
+        completed: true,
+        sets: [set({ id: "b1", weight_kg: 62.5 })],
+      },
+      {
+        sessionId: "teraz",
+        startLocal: "2026-11-17T10:00:00",
+        completed: true,
+        sets: [set({ id: "t1", weight_kg: 65 })],
+      },
+    ];
+    expect(kgVsLast(historia, "teraz", "e1")).toBe(2.5);
+    expect(kgVsLast(historia, "b", "e1")).toBe(2.5);
+    expect(lastSetsSummary(historia, "teraz", "e1")).toBe("ost. 1×8 · 62,5 kg");
   });
 });
 
@@ -605,6 +700,23 @@ describe("templateSets i firstReps", () => {
     const w = templateSets([poz], hist);
     expect(w[0]).toMatchObject({ weight_kg: 60, reps: 8 });
   });
+  it("to samo ćwiczenie drugi raz w szablonie jest pomijane (jedno ćwiczenie w treningu)", () => {
+    const w = templateSets(
+      [
+        { ...poz, id: "i1", position: 1, sets_count: 2 },
+        { ...poz, id: "i2", exercise_id: "e2", position: 2, sets_count: 1 },
+        { ...poz, id: "i3", position: 3, sets_count: 4 },
+      ],
+      new Map(),
+    );
+    expect(
+      w.map((s) => [s.exercise_id, s.exercise_position, s.set_no]),
+    ).toEqual([
+      ["e1", 1, 1],
+      ["e1", 1, 2],
+      ["e2", 2, 1],
+    ]);
+  });
   it("firstReps", () => {
     expect(firstReps("8–10")).toBe(8);
     expect(firstReps("12")).toBe(12);
@@ -679,11 +791,13 @@ describe("kgVsLast", () => {
     {
       sessionId: "s1",
       startLocal: "2026-11-03T10:00:00",
+      completed: true,
       sets: [set({ id: "a1", weight_kg: 65 })],
     },
     {
       sessionId: "s2",
       startLocal: "2026-11-10T10:00:00",
+      completed: true,
       sets: [
         set({ id: "b1", weight_kg: 70 }),
         set({ id: "b2", weight_kg: 75, done: false, set_no: 2 }),
@@ -692,6 +806,7 @@ describe("kgVsLast", () => {
     {
       sessionId: "s3",
       startLocal: "2026-11-17T10:00:00",
+      completed: true,
       sets: [
         set({ id: "c1", weight_kg: 70 }),
         set({ id: "c2", weight_kg: 72.5, set_no: 2 }),
@@ -715,6 +830,7 @@ describe("kgVsLast", () => {
           {
             sessionId: "s4",
             startLocal: "2026-11-20T10:00:00",
+            completed: true,
             sets: [set({ id: "d1", weight_kg: null })],
           },
         ],
@@ -732,11 +848,13 @@ describe("kgVsLast", () => {
           {
             sessionId: "s2",
             startLocal: "2026-11-10T10:00:00",
+            completed: true,
             sets: [set({ id: "b1", weight_kg: 90, done: false })],
           },
           {
             sessionId: "s3",
             startLocal: "2026-11-17T10:00:00",
+            completed: true,
             sets: [set({ id: "c1", weight_kg: 62.5 })],
           },
         ],

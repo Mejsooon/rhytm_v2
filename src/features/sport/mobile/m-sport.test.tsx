@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SportMonthData } from "../load-sport";
 import type { SportItem } from "../model";
@@ -70,22 +70,37 @@ function dane(zmiany: Partial<SportMonthData> = {}): SportMonthData {
 const onNewRun = vi.fn();
 const onNewGym = vi.fn();
 const onOpenRun = vi.fn();
+const onStartGym = vi.fn();
+const onSelected = vi.fn();
 
-function pokaz(d: SportMonthData = dane()) {
-  render(
+function pokaz(d: SportMonthData = dane(), selectedKey: string | null = null) {
+  return render(
     <MSport
       data={d}
+      selectedKey={selectedKey}
       onNewRun={onNewRun}
       onNewGym={onNewGym}
       onOpenRun={onOpenRun}
+      onStartGym={onStartGym}
+      onSelected={onSelected}
     />,
   );
+}
+
+// Udajemy szerokość ekranu dla matchMedia (jsdom jej nie ma)
+function ustawTelefon(tel: boolean) {
+  window.matchMedia = vi
+    .fn()
+    .mockReturnValue({ matches: tel }) as unknown as typeof window.matchMedia;
 }
 
 const karta = () => screen.getByRole("region", { name: "Bieganie" });
 const wykres = () => screen.getByRole("region", { name: "Kilometry" });
 
 beforeEach(() => vi.clearAllMocks());
+afterEach(() => {
+  delete (window as { matchMedia?: unknown }).matchMedia;
+});
 
 describe("MSport", () => {
   it("nagłówek z numerem i zakresem tygodnia, „+” otwiera nowy bieg", async () => {
@@ -262,5 +277,117 @@ describe("MSport", () => {
   it("„Ostatnie” bez treningów", () => {
     pokaz(dane({ recent: [] }));
     expect(screen.getByText("Brak wykonanych treningów.")).toBeInTheDocument();
+  });
+
+  it("„Zaplanowane”: plany z bieżącego tygodnia — bieg, niedokończony trening i wystąpienie szablonu", async () => {
+    const NIEDOKONCZONY = "a1000000-0000-4000-8000-000000000316";
+    const d = dane();
+    d.items = [
+      ...d.items,
+      {
+        ...bieg(NIEDOKONCZONY, "2026-11-16"),
+        kind: "gym",
+        title: "Nogi",
+        runKind: null,
+        planned: true,
+        startMin: 18 * 60,
+      },
+      {
+        ...bieg("x", "2026-11-19"),
+        key: `t:${SZABLON_PUSH}:2026-11-19`,
+        sessionId: null,
+        templateId: SZABLON_PUSH,
+        kind: "gym",
+        title: "Push",
+        runKind: null,
+        planned: true,
+        startMin: 15 * 60,
+      },
+      // Plan z następnego tygodnia nie trafia na listę
+      {
+        ...bieg("y", "2026-11-26"),
+        key: `t:${SZABLON_PUSH}:2026-11-26`,
+        sessionId: null,
+        templateId: SZABLON_PUSH,
+        kind: "gym",
+        title: "Push",
+        runKind: null,
+        planned: true,
+        startMin: 15 * 60,
+      },
+    ];
+    // items z loadSportMonth są posortowane wg daty i godziny
+    d.items.sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.startMin - b.startMin,
+    );
+    pokaz(d);
+    const lista = screen.getByRole("region", { name: "Zaplanowane" });
+    const wiersze = Array.from(
+      lista.querySelectorAll<HTMLElement>("a, button"),
+    );
+    expect(wiersze).toHaveLength(3);
+    // Kolejność wg daty
+    expect(wiersze[0]).toHaveTextContent("Siłownia — Nogi");
+    expect(wiersze[0]).toHaveTextContent("pon 16.11 · 18:00");
+    expect(wiersze[0]).toHaveAttribute(
+      "href",
+      `/sport/trening/${NIEDOKONCZONY}`,
+    );
+    expect(wiersze[1]).toHaveTextContent("Spokojny · 10,0 km");
+    expect(wiersze[1]).toHaveTextContent("śr 18.11");
+    await userEvent.click(wiersze[1]);
+    expect(onOpenRun).toHaveBeenCalledWith({
+      sessionId: "a1000000-0000-4000-8000-000000000218",
+    });
+    expect(wiersze[2]).toHaveTextContent("Siłownia — Push");
+    expect(wiersze[2]).toHaveTextContent("czw 19.11 · 15:00");
+    await userEvent.click(wiersze[2]);
+    expect(onStartGym).toHaveBeenCalledWith({
+      date: "2026-11-19",
+      start: "15:00",
+      templateId: SZABLON_PUSH,
+    });
+  });
+
+  it("bez planów w tygodniu nie ma sekcji „Zaplanowane”", () => {
+    const d = dane();
+    pokaz({ ...d, items: d.items.filter((i) => !i.planned) });
+    expect(
+      screen.queryByRole("region", { name: "Zaplanowane" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("?wybrany= na telefonie: przekazuje trening raz (także po ponownym renderze)", () => {
+    ustawTelefon(true);
+    const d = dane();
+    const klucz = "s:a1000000-0000-4000-8000-000000000218";
+    const { rerender } = pokaz(d, klucz);
+    rerender(
+      <MSport
+        data={{ ...d }}
+        selectedKey={klucz}
+        onNewRun={onNewRun}
+        onNewGym={onNewGym}
+        onOpenRun={onOpenRun}
+        onStartGym={onStartGym}
+        onSelected={onSelected}
+      />,
+    );
+    expect(onSelected).toHaveBeenCalledTimes(1);
+    expect(onSelected).toHaveBeenCalledWith(
+      expect.objectContaining({ key: klucz, kind: "run" }),
+    );
+  });
+
+  it("?wybrany= od 800 px nic nie robi (dymek pokazuje web)", () => {
+    ustawTelefon(false);
+    pokaz(dane(), "s:a1000000-0000-4000-8000-000000000218");
+    expect(onSelected).not.toHaveBeenCalled();
+  });
+
+  it("?wybrany= spoza danych nic nie robi", () => {
+    ustawTelefon(true);
+    pokaz(dane(), "s:nie-ma");
+    expect(onSelected).not.toHaveBeenCalled();
   });
 });

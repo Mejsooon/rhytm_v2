@@ -38,7 +38,9 @@ type Sesja = {
 
 export function ExerciseDetail({ data }: { data: ExerciseData }) {
   const router = useRouter();
-  const { exercise, history, today } = data;
+  const { exercise, today } = data;
+  // Tylko zakończone treningi: przyszły / niedokończony nie trafia do wykresu, tabeli, „8 tygodni” ani REKORDU
+  const history = data.history.filter((h) => h.completed);
   const [okno, setOkno] = useState<"3m" | "8t">("8t");
   const [dialogOtwarty, setDialogOtwarty] = useState(false);
   const [nazwa, setNazwa] = useState(exercise.name);

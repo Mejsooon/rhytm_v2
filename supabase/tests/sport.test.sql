@@ -1,5 +1,5 @@
 begin;
-select plan(85);
+select plan(86);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -230,6 +230,10 @@ select throws_ok(
   $$insert into public.sport_sessions (user_id, type, title, start_local, template_id, template_date)
     values ('00000000-0000-0000-0000-00000000000a', 'gym', 'Duplikat', '2026-11-19 18:00', 'c0000000-0000-0000-0000-00000000000a', '2026-11-19')$$,
   '23505', null, 'druga sesja z tym samym (template_id, template_date) łamie unikalność');
+select throws_ok(
+  $$insert into public.gym_sets (user_id, session_id, exercise_id, exercise_position, set_no)
+    values ('00000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-00000000000a', 'e0000000-0000-0000-0000-00000000000a', 1, 1)$$,
+  '23505', null, 'druga seria z tym samym (session_id, exercise_id, set_no) łamie unikalność');
 select throws_ok(
   $$insert into public.sport_sessions (user_id, type, title, start_local)
     values ('00000000-0000-0000-0000-00000000000a', 'swim', 'Pływanie', '2026-11-21 10:00')$$,

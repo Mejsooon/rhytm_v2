@@ -40,9 +40,11 @@ export function RecordCard({
   // „+ Trening siłowy” w pustej karcie
   onNewGym: () => void;
 }) {
+  // Tylko zakończone treningi (przyszły / niedokończony z odhaczoną serią nie jest historią)
+  const zakonczone = setsHistory.filter((h) => h.completed);
   // Ćwiczenia z liczbą sesji, w których mają zrobioną serię z ciężarem (i powt. ≥ 1, czyli punkt 1RM)
   const sesjeCwiczen = new Map<string, number>();
-  for (const sesja of setsHistory) {
+  for (const sesja of zakonczone) {
     const wSesji = new Set<string>();
     for (const s of sesja.sets) {
       if (s.done && s.weight_kg !== null && s.reps !== null && s.reps >= 1)
@@ -93,7 +95,7 @@ export function RecordCard({
     seria: string;
     rekord: boolean;
   }[] = [];
-  for (const sesja of setsHistory) {
+  for (const sesja of zakonczone) {
     let najlepszy: { v: number; seria: string } | null = null;
     let rekord = false;
     for (const s of sesja.sets) {

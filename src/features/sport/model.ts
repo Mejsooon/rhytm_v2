@@ -178,17 +178,36 @@ export function sessionVolume(
   return suma;
 }
 
+// Historia ćwiczeń (REKORD, „vs ostatnio”, „ost. 3×8”, karta rekordu, szczegóły ćwiczenia) liczy się
+// tylko z zakończonych treningów (completed) — przyszły albo niedokończony trening z odhaczoną serią
+// nie jest „wcześniejszą sesją”. Ekran treningu podaje swój trening jako zakończony (podgląd na żywo).
+export type HistorySession = {
+  sessionId: string;
+  startLocal: string;
+  completed: boolean;
+  sets: GymSetRow[];
+};
+
+// Kolejność sesji w historii: startLocal, przy remisie sessionId (ta sama w każdym widoku)
+export function historyOrder(
+  a: Pick<HistorySession, "startLocal" | "sessionId">,
+  b: Pick<HistorySession, "startLocal" | "sessionId">,
+): number {
+  if (a.startLocal !== b.startLocal)
+    return a.startLocal < b.startLocal ? -1 : 1;
+  if (a.sessionId !== b.sessionId) return a.sessionId < b.sessionId ? -1 : 1;
+  return 0;
+}
+
 // REKORD: zrobiona seria z ciężarem > max ciężaru zrobionych serii tego ćwiczenia
-// we wcześniejszych sesjach. Pierwsza sesja nie daje rekordu; w jednej sesji
+// we wcześniejszych zakończonych sesjach. Pierwsza sesja nie daje rekordu; w jednej sesji
 // plakietkę dostaje tylko najcięższa seria (przy remisie pierwsza wg set_no).
 export function recordSetIds(
-  history: { sessionId: string; startLocal: string; sets: GymSetRow[] }[],
+  history: HistorySession[],
   exerciseId: string,
 ): Set<string> {
   const wynik = new Set<string>();
-  const posortowane = [...history].sort((a, b) =>
-    a.startLocal < b.startLocal ? -1 : a.startLocal > b.startLocal ? 1 : 0,
-  );
+  const posortowane = history.filter((h) => h.completed).sort(historyOrder);
   let poprzedniMax: number | null = null;
 
   for (const sesja of posortowane) {
@@ -213,10 +232,10 @@ export function recordSetIds(
 }
 
 // „+2,5 kg vs ostatnio”: maks. ciężar zrobionych serii ćwiczenia w sesji sessionId − to samo
-// w ostatniej wcześniejszej (po startLocal) sesji z zrobioną serią z ciężarem tego ćwiczenia.
+// w ostatniej wcześniejszej (wg historyOrder) zakończonej sesji z zrobioną serią z ciężarem tego ćwiczenia.
 // null, gdy w jednej z nich nie ma zrobionej serii z ciężarem.
 export function kgVsLast(
-  history: { sessionId: string; startLocal: string; sets: GymSetRow[] }[],
+  history: HistorySession[],
   sessionId: string,
   exerciseId: string,
 ): number | null {
@@ -235,36 +254,37 @@ export function kgVsLast(
   const teraz = maksimum(biezaca.sets);
   if (teraz === null) return null;
 
-  let poprzednia: { startLocal: string; max: number } | null = null;
+  // Ostatnia wcześniejsza (wg historyOrder) zakończona sesja z taką serią
+  let poprzednia: { h: HistorySession; max: number } | null = null;
   for (const h of history) {
-    if (h.startLocal >= biezaca.startLocal) continue;
+    if (!h.completed || historyOrder(h, biezaca) >= 0) continue;
     const max = maksimum(h.sets);
     if (max === null) continue;
-    if (poprzednia === null || h.startLocal > poprzednia.startLocal)
-      poprzednia = { startLocal: h.startLocal, max };
+    if (poprzednia === null || historyOrder(h, poprzednia.h) > 0)
+      poprzednia = { h, max };
   }
   return poprzednia === null ? null : teraz - poprzednia.max;
 }
 
-// „ost. 3×8 · 60 kg” (MGym): ostatnia wcześniejsza (po startLocal) sesja ze zrobionymi seriami ćwiczenia —
+// „ost. 3×8 · 60 kg” (MGym): ostatnia wcześniejsza (wg historyOrder) zakończona sesja ze zrobionymi seriami ćwiczenia —
 // liczba zrobionych serii × powt. pierwszej z nich · maks. ciężar (masa ciała: bez kg). Brak → null.
 export function lastSetsSummary(
-  history: { sessionId: string; startLocal: string; sets: GymSetRow[] }[],
+  history: HistorySession[],
   sessionId: string,
   exerciseId: string,
 ): string | null {
   const biezaca = history.find((h) => h.sessionId === sessionId);
   if (!biezaca) return null;
 
-  let poprzednia: { startLocal: string; sets: GymSetRow[] } | null = null;
+  let poprzednia: { h: HistorySession; sets: GymSetRow[] } | null = null;
   for (const h of history) {
-    if (h.startLocal >= biezaca.startLocal) continue;
+    if (!h.completed || historyOrder(h, biezaca) >= 0) continue;
     const zrobione = h.sets.filter(
       (s) => s.exercise_id === exerciseId && s.done,
     );
     if (zrobione.length === 0) continue;
-    if (poprzednia === null || h.startLocal > poprzednia.startLocal)
-      poprzednia = { startLocal: h.startLocal, sets: zrobione };
+    if (poprzednia === null || historyOrder(h, poprzednia.h) > 0)
+      poprzednia = { h, sets: zrobione };
   }
   if (poprzednia === null) return null;
 
@@ -452,7 +472,9 @@ export function firstReps(repsText: string): number | null {
 
 // Serie nowego treningu z szablonu: kg i powt. z ostatniej wykonanej sesji
 // (seria o tym samym numerze, a gdy jej brak, ostatnia seria); bez historii
-// kg puste, a powt. = pierwsza liczba z reps_text.
+// kg puste, a powt. = pierwsza liczba z reps_text. Ćwiczenie powtórzone w szablonie
+// bierzemy tylko z pierwszej pozycji — w treningu każde ćwiczenie jest raz (jak w addExercise),
+// a (sesja, ćwiczenie, numer serii) jest w bazie unikalne.
 export function templateSets(
   items: TemplateItemRow[],
   lastSetsByExercise: Map<string, GymSetRow[]>,
@@ -472,7 +494,10 @@ export function templateSets(
   }[] = [];
   const pozycje = [...items].sort((a, b) => a.position - b.position);
 
+  const uzyte = new Set<string>();
   for (const poz of pozycje) {
+    if (uzyte.has(poz.exercise_id)) continue;
+    uzyte.add(poz.exercise_id);
     const historia = [...(lastSetsByExercise.get(poz.exercise_id) ?? [])].sort(
       (a, b) => a.set_no - b.set_no,
     );

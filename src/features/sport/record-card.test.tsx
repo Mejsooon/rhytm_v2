@@ -24,6 +24,38 @@ describe("RecordCard", () => {
     expect(screen.getByText("REKORD")).toBeInTheDocument();
   });
 
+  it("niedokończony trening (np. przyszły z odhaczoną serią) nie jest punktem ani rekordem", () => {
+    const dane = daneSportu();
+    render(
+      <RecordCard
+        exercises={dane.exercises}
+        setsHistory={[
+          ...dane.setsHistory,
+          {
+            sessionId: "przyszly",
+            startLocal: "2026-11-26T16:00:00",
+            title: "Push",
+            completed: false,
+            sets: [
+              {
+                ...dane.setsHistory[1].sets[0],
+                id: "p1",
+                session_id: "przyszly",
+                weight_kg: 100,
+              },
+            ],
+          },
+        ]}
+        onNewGym={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("84,5 kg")).toBeInTheDocument();
+    expect(screen.getByText("ostatnio: czw 12.11.2026")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /26\.11\.2026/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("najechanie na punkt pokazuje dymek z różnicą", async () => {
     const dane = daneSportu();
     render(

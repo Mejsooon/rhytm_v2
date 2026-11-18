@@ -253,6 +253,19 @@ describe("SportView", () => {
     });
   });
 
+  it("ten sam ?nowy=silownia po zniknięciu z adresu tworzy trening ponownie (Activity)", async () => {
+    createGymSession.mockResolvedValue({ ok: true, id: "z-kalendarza" });
+    const dane = daneSportu();
+    const nowy = { date: "2026-11-20", start: "18:30" };
+    const { rerender } = render(
+      <SportView data={dane} selectedKey={null} newGym={nowy} />,
+    );
+    await waitFor(() => expect(createGymSession).toHaveBeenCalledTimes(1));
+    rerender(<SportView data={dane} selectedKey={null} newGym={null} />);
+    rerender(<SportView data={dane} selectedKey={null} newGym={{ ...nowy }} />);
+    await waitFor(() => expect(createGymSession).toHaveBeenCalledTimes(2));
+  });
+
   it("nowe dane z innym miesiącem zamykają dymek", async () => {
     const dane = daneSportu();
     const { rerender } = render(
