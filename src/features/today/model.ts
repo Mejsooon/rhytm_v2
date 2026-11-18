@@ -44,9 +44,26 @@ export type WeekTiles = {
   run: {
     km: number;
     goalKm: number | null; // null = cel km wyłączony
-    nextRun: { date: IsoDate; startMin: number } | null;
+    nextRun: {
+      date: IsoDate;
+      startMin: number;
+      distanceKm: number | null;
+    } | null;
   };
-  workouts: { done: number; total: number };
+  workouts: {
+    done: number;
+    total: number;
+    // Zaplanowane treningi od teraz do końca tygodnia, rosnąco
+    upcoming: { kind: "run" | "gym"; date: IsoDate; startMin: number }[];
+  };
+  // Słupki kafelków: 7 wartości od weekStartDate, null dla dni po dziś
+  days: {
+    tasks: (number | null)[]; // zrobione zadania z due_date tego dnia
+    habits: ({ done: number; planned: number } | null)[];
+    sleep: (number | null)[]; // minuty snu nocy (data pobudki); null też bez wpisu
+    km: (number | null)[]; // km wykonanych biegów (z dystansem i czasem, jak weekStats)
+    workouts: (number | null)[]; // wykonane treningi
+  };
 };
 
 // Karta „Ten tydzień”: 7 dni od weekStartDate
@@ -74,11 +91,17 @@ export function weekTiles(input: {
   let zadaniaWszystkie = 0;
   let dzisZrobione = 0;
   let dzisWszystkie = 0;
+  // Dni tygodnia: indeks 0 = weekStartDate; dni po dziś to null
+  const dni = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
+  const zadaniaDni: (number | null)[] = dni.map((d) => (d <= today ? 0 : null));
   for (const z of input.tasks) {
     if (z.due_date === null) continue;
     if (z.due_date < weekStartDate || z.due_date > koniec) continue;
     zadaniaWszystkie++;
     if (z.done) zadaniaZrobione++;
+    const i = dni.indexOf(z.due_date);
+    const dotad = zadaniaDni[i];
+    if (z.done && dotad !== null) zadaniaDni[i] = dotad + 1;
     if (z.due_date === today) {
       dzisWszystkie++;
       if (z.done) dzisZrobione++;
@@ -90,8 +113,15 @@ export function weekTiles(input: {
   let sumaProporcji = 0;
   let dniZPlanem = 0;
   let powyzej70 = 0;
+  const nawykiDni: ({ done: number; planned: number } | null)[] = dni.map(
+    () => null,
+  );
   for (let d = weekStartDate; d <= koniec && d <= today; d = addDays(d, 1)) {
     const dzien = dayStats(input.habits, input.checks, d, today);
+    nawykiDni[dni.indexOf(d)] =
+      dzien.percent === null
+        ? { done: 0, planned: 0 }
+        : { done: dzien.done, planned: dzien.planned };
     if (dzien.percent === null) continue;
     sumaProporcji += dzien.done / dzien.planned;
     dniZPlanem++;
@@ -102,12 +132,14 @@ export function weekTiles(input: {
   const noce = new Set<IsoDate>();
   let sumaSnu = 0;
   let nocyZCelem = 0;
+  const senDni: (number | null)[] = dni.map(() => null);
   for (const log of input.sleepLogs) {
     if (log.date < weekStartDate || log.date > koniec || noce.has(log.date))
       continue;
     const minuty = sleepMinutes(log.sleptAt, log.wokeAt);
     if (minuty === null) continue;
     noce.add(log.date);
+    if (log.date <= today) senDni[dni.indexOf(log.date)] = minuty;
     sumaSnu += minuty;
     if (minuty >= input.sleepGoalMin) nocyZCelem++;
   }
@@ -117,19 +149,50 @@ export function weekTiles(input: {
   // najbliższy bieg liczy się od teraz.
   const biegi = input.sportItems.filter((i) => i.kind === "run");
   const statystyki = weekStats(input.sportItems, weekStartDate);
-  let nextRun: { date: IsoDate; startMin: number } | null = null;
+  let nextRun: WeekTiles["run"]["nextRun"] = null;
   let zaplanowane = 0;
+  const nadchodzace: WeekTiles["workouts"]["upcoming"] = [];
+  const kmDni: (number | null)[] = dni.map((d) => (d <= today ? 0 : null));
+  const treningiDni: (number | null)[] = dni.map((d) =>
+    d <= today ? 0 : null,
+  );
   for (const i of input.sportItems) {
-    if (!i.planned || i.date > koniec || i.date < today) continue;
+    if (i.date < weekStartDate || i.date > koniec) continue;
+    // Wykonane: słupki dni (jak weekStats: km tylko z dystansem i czasem)
+    if (!i.planned) {
+      const d = dni.indexOf(i.date);
+      const ileTreningow = treningiDni[d];
+      if (ileTreningow !== null) treningiDni[d] = ileTreningow + 1;
+      const ileKm = kmDni[d];
+      if (
+        i.kind === "run" &&
+        i.distanceKm !== null &&
+        i.durationS !== null &&
+        ileKm !== null
+      ) {
+        kmDni[d] = ileKm + i.distanceKm;
+      }
+      continue;
+    }
+    if (i.date < today) continue;
     zaplanowane++;
-    if (i.kind !== "run") continue;
     if (i.date === today && i.startMin < nowMin) continue;
+    nadchodzace.push({ kind: i.kind, date: i.date, startMin: i.startMin });
+    if (i.kind !== "run") continue;
     const wczesniej =
       nextRun === null ||
       i.date < nextRun.date ||
       (i.date === nextRun.date && i.startMin < nextRun.startMin);
-    if (wczesniej) nextRun = { date: i.date, startMin: i.startMin };
+    if (wczesniej)
+      nextRun = {
+        date: i.date,
+        startMin: i.startMin,
+        distanceKm: i.distanceKm,
+      };
   }
+  nadchodzace.sort((a, b) =>
+    a.date === b.date ? a.startMin - b.startMin : a.date < b.date ? -1 : 1,
+  );
   const zPlanu = statystyki.done + zaplanowane;
 
   return {
@@ -167,6 +230,14 @@ export function weekTiles(input: {
       total: input.workoutsGoalOn
         ? Math.max(zPlanu, input.weeklyWorkoutsGoal)
         : zPlanu,
+      upcoming: nadchodzace,
+    },
+    days: {
+      tasks: zadaniaDni,
+      habits: nawykiDni,
+      sleep: senDni,
+      km: kmDni,
+      workouts: treningiDni,
     },
   };
 }

@@ -248,7 +248,7 @@ describe("weekTiles — bieg", () => {
     expect(r).toEqual({
       km: 13.5,
       goalKm: null,
-      nextRun: { date: DZIS, startMin: 18 * 60 },
+      nextRun: { date: DZIS, startMin: 18 * 60, distanceKm: null },
     });
   });
 
@@ -288,6 +288,10 @@ describe("weekTiles — treningi", () => {
     expect(weekTiles(wejscie({ sportItems })).workouts).toEqual({
       done: 2,
       total: 4,
+      upcoming: [
+        { kind: "run", date: "2026-11-20", startMin: 18 * 60 },
+        { kind: "gym", date: "2026-11-21", startMin: 18 * 60 },
+      ],
     });
   });
 
@@ -302,21 +306,140 @@ describe("weekTiles — treningi", () => {
         runKind: null,
       }),
     ];
-    expect(weekTiles(wejscie({ sportItems: zRana })).workouts).toEqual({
-      done: 2,
-      total: 5,
-    });
+    const w = weekTiles(wejscie({ sportItems: zRana })).workouts;
+    expect(w.done).toBe(2);
+    expect(w.total).toBe(5);
+    // …ale nie jest już „nadchodzący”
+    expect(w.upcoming.map((u) => u.date)).toEqual(["2026-11-20", "2026-11-21"]);
   });
 
   it("z celem mianownik = max(z planu, cel)", () => {
     const w = weekTiles(
       wejscie({ sportItems, workoutsGoalOn: true, weeklyWorkoutsGoal: 5 }),
     ).workouts;
-    expect(w).toEqual({ done: 2, total: 5 });
+    expect(w.total).toBe(5);
     const mniejszyCel = weekTiles(
       wejscie({ sportItems, workoutsGoalOn: true, weeklyWorkoutsGoal: 3 }),
     ).workouts;
-    expect(mniejszyCel).toEqual({ done: 2, total: 4 });
+    expect(mniejszyCel.total).toBe(4);
+  });
+});
+
+describe("weekTiles — dni tygodnia (słupki)", () => {
+  it("7 wartości od początku tygodnia, null po dziś", () => {
+    const habits = [nawyk("h1", PN), nawyk("h2", PN)];
+    const checks: Checks = new Map([
+      ["h1", new Set([PN, "2026-11-17", "2026-11-20"])],
+      ["h2", new Set([PN])],
+    ]);
+    const d = weekTiles(
+      wejscie({
+        tasks: [
+          zadanie("a", { due_date: PN, done: true }),
+          zadanie("b", { due_date: PN, done: true }),
+          zadanie("c", { due_date: DZIS, done: true }),
+          zadanie("d", { due_date: DZIS }),
+          zadanie("pt", { due_date: "2026-11-20", done: true }),
+          zadanie("zalegle", { due_date: "2026-11-10", done: true }),
+        ],
+        habits,
+        checks,
+        sleepLogs: [
+          sen(PN, "23:00", "06:00"), // 7:00
+          sen(DZIS, "22:30", "07:00"), // 8:30
+        ],
+        sportItems: [
+          trening("r1", { date: PN, distanceKm: 8, durationS: 2880 }),
+          trening("r2", { date: PN, distanceKm: 2, durationS: 600 }),
+          // bez czasu — nie liczy się do km (jak weekStats), ale jest treningiem
+          trening("r3", { date: "2026-11-17", distanceKm: 5 }),
+          trening("g1", { kind: "gym", date: "2026-11-17", runKind: null }),
+          trening("p1", { date: DZIS, planned: true, distanceKm: 10 }),
+        ],
+      }),
+    ).days;
+    expect(d.tasks).toEqual([2, 0, 1, null, null, null, null]);
+    expect(d.habits).toEqual([
+      { done: 2, planned: 2 },
+      { done: 1, planned: 2 },
+      { done: 0, planned: 2 },
+      null,
+      null,
+      null,
+      null,
+    ]);
+    expect(d.sleep).toEqual([420, null, 510, null, null, null, null]);
+    expect(d.km).toEqual([10, 0, 0, null, null, null, null]);
+    expect(d.workouts).toEqual([2, 2, 0, null, null, null, null]);
+  });
+
+  it("dzień bez planu nawyków: { done: 0, planned: 0 }", () => {
+    const d = weekTiles(wejscie({ habits: [nawyk("h1", "2026-11-17")] })).days
+      .habits;
+    expect(d.slice(0, 3)).toEqual([
+      { done: 0, planned: 0 },
+      { done: 0, planned: 1 },
+      { done: 0, planned: 1 },
+    ]);
+  });
+
+  it("tydzień od niedzieli: pierwszy słupek to niedziela 15.11", () => {
+    const d = weekTiles(
+      wejscie({
+        weekStartDate: "2026-11-15",
+        tasks: [
+          zadanie("nd15", { due_date: "2026-11-15", done: true }),
+          zadanie("nd22", { due_date: "2026-11-22", done: true }),
+        ],
+        sleepLogs: [sen("2026-11-15", "23:00", "07:00")],
+      }),
+    ).days;
+    expect(d.tasks).toEqual([1, 0, 0, 0, null, null, null]);
+    expect(d.sleep).toEqual([480, null, null, null, null, null, null]);
+  });
+
+  it("nextRun niesie dystans planu", () => {
+    const r = weekTiles(
+      wejscie({
+        sportItems: [
+          trening("p1", { date: "2026-11-19", planned: true, distanceKm: 10 }),
+        ],
+      }),
+    ).run;
+    expect(r.nextRun).toEqual({
+      date: "2026-11-19",
+      startMin: 18 * 60,
+      distanceKm: 10,
+    });
+  });
+
+  it("upcoming: plany od teraz, rosnąco po dniu i godzinie, bez przeszłych z dziś", () => {
+    const w = weekTiles(
+      wejscie({
+        sportItems: [
+          trening("pt", {
+            date: "2026-11-20",
+            startMin: 7 * 60,
+            planned: true,
+          }),
+          trening("g", {
+            kind: "gym",
+            date: "2026-11-19",
+            startMin: 19 * 60,
+            planned: true,
+            runKind: null,
+          }),
+          trening("dzis", { date: DZIS, startMin: 18 * 60, planned: true }),
+          trening("rano", { date: DZIS, startMin: 7 * 60, planned: true }),
+          trening("nast", { date: "2026-11-23", planned: true }),
+        ],
+      }),
+    ).workouts.upcoming;
+    expect(w).toEqual([
+      { kind: "run", date: DZIS, startMin: 18 * 60 },
+      { kind: "gym", date: "2026-11-19", startMin: 19 * 60 },
+      { kind: "run", date: "2026-11-20", startMin: 7 * 60 },
+    ]);
   });
 });
 
