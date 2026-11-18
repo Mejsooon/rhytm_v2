@@ -237,6 +237,48 @@ describe("updateHabit", () => {
     expect(tables.habit_schedules.upsert).toHaveBeenCalledTimes(1);
   });
 
+  it("powrót do wersji sprzed dziś usuwa dzisiejszą wersję zamiast dublować", async () => {
+    // daily od 01.10, dziś (18.11) już zmienione na pn/śr; użytkownik wraca do daily
+    tables.habit_schedules = fakeTable({
+      data: [
+        wersjaDaily,
+        { ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] },
+      ],
+    });
+    const w = await updateHabit(NAWYK, wejscie);
+    expect(w).toEqual({ ok: true });
+    expect(tables.habit_schedules.upsert).not.toHaveBeenCalled();
+    expect(tables.habit_schedules.delete).toHaveBeenCalledTimes(1);
+    expect(tables.habit_schedules.eq).toHaveBeenCalledWith("habit_id", NAWYK);
+    expect(tables.habit_schedules.eq).toHaveBeenCalledWith("valid_from", "2026-11-18");
+  });
+
+  it("nawyk utworzony dziś: zmiana nadpisuje dzisiejszą wersję (nie ma czego przywracać)", async () => {
+    tables.habit_schedules = fakeTable({
+      data: [{ ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] }],
+    });
+    await updateHabit(NAWYK, wejscie);
+    expect(tables.habit_schedules.delete).not.toHaveBeenCalled();
+    expect(tables.habit_schedules.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ valid_from: "2026-11-18", schedule_type: "daily" }),
+      { onConflict: "habit_id,valid_from" },
+    );
+  });
+
+  it("błąd usunięcia dzisiejszej wersji → ok: false", async () => {
+    tables.habit_schedules = fakeTable({
+      data: [
+        wersjaDaily,
+        { ...wersjaDaily, valid_from: "2026-11-18", schedule_type: "weekdays", weekdays: [1, 3] },
+      ],
+    });
+    // pierwsze zapytanie (lista wersji) się udaje, usunięcie zwraca błąd
+    tables.habit_schedules.delete = vi.fn(() => ({
+      eq: () => ({ eq: () => Promise.resolve({ error: { message: "x" } }) }),
+    }));
+    expect(await updateHabit(NAWYK, wejscie)).toEqual({ ok: false, message: BLAD });
+  });
+
   it("nieistniejący nawyk (0 zmienionych wierszy) → ok: false", async () => {
     tables.habits = fakeTable({ data: [] });
     const w = await updateHabit(NAWYK, wejscie);

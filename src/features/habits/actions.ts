@@ -154,7 +154,24 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
     obowiazujaca.times_per_week !== dane.schedule.timesPerWeek ||
     [...obowiazujaca.weekdays].sort().join(",") !== dane.schedule.weekdays.join(",");
 
-  if (zmienilSie) {
+  // Wersja obowiązująca przed dziś (największe valid_from < dziś); brak, gdy nawyk powstał dziś
+  const przedDzis = [...lista].reverse().find((w) => w.valid_from < dzis);
+  const powrotDoPoprzedniej =
+    przedDzis !== undefined &&
+    przedDzis.schedule_type === dane.schedule.type &&
+    przedDzis.times_per_week === dane.schedule.timesPerWeek &&
+    [...przedDzis.weekdays].sort().join(",") === dane.schedule.weekdays.join(",");
+
+  if (zmienilSie && powrotDoPoprzedniej) {
+    // Dzisiejsza zmiana jest cofana: usuwamy wiersz z dzisiejszym valid_from, zamiast wstawiać
+    // drugą, identyczną wersję — obowiązywać znów będzie ta sprzed dziś
+    const { error: bladUsuniecia } = await supabase
+      .from("habit_schedules")
+      .delete()
+      .eq("habit_id", id)
+      .eq("valid_from", dzis);
+    if (bladUsuniecia) return { ok: false, message: BLAD_ZAPISU };
+  } else if (zmienilSie) {
     // Wersja z dzisiejszym valid_from (jeśli już jest) zostaje nadpisana
     const { error: bladZapisu } = await supabase.from("habit_schedules").upsert(
       {
