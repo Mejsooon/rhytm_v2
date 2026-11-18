@@ -106,3 +106,14 @@ describe("TimePicker", () => {
     expect(screen.getByRole("button", { name: "Do" })).toHaveTextContent("12:00 AM");
   });
 });
+
+describe("TimePicker — disabled", () => {
+  it("wyłączony nie otwiera dymka", async () => {
+    const u = userEvent.setup();
+    render(<TimePicker value="12:00" onChange={vi.fn()} ariaLabel="Godzina" disabled />);
+    const przycisk = screen.getByRole("button", { name: "Godzina" });
+    expect(przycisk).toBeDisabled();
+    await u.click(przycisk);
+    expect(screen.queryByText("Minuty")).not.toBeInTheDocument();
+  });
+});

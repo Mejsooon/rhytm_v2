@@ -14,7 +14,7 @@ describe("EmptyToday", () => {
     const dodaj = screen.getAllByText("Dodaj", { selector: "span" });
     expect(dodaj).toHaveLength(4);
     const hrefy = dodaj.map((el) => el.closest("a")!.getAttribute("href"));
-    expect(hrefy).toEqual(["/kalendarz", "/nawyki", "/sport", "/nawyki"]);
+    expect(hrefy).toEqual(["/kalendarz", "/nawyki?nowy=nawyk", "/sport", "/nawyki?nowy=sen"]);
     expect(screen.getByText("Plan dnia jest pusty")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "+ Nowy blok" })).toHaveAttribute("href", "/kalendarz");
   });

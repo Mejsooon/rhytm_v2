@@ -24,6 +24,7 @@ export function TimePicker({
   ariaLabel,
   clock = "24",
   allowEndOfDay = false,
+  disabled = false,
 }: {
   value: string; // 'HH:MM'
   onChange: (v: string) => void;
@@ -31,6 +32,8 @@ export function TimePicker({
   clock?: "24" | "12";
   // Koniec doby: dodatkowa opcja „24:00” (tylko dla pola „do” bloku kończącego się o północy)
   allowEndOfDay?: boolean;
+  // Wyłączony wybór (np. przypomnienie wyłączone): przycisk nie otwiera dymka
+  disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [godzina, minuta] = value.split(":");
@@ -55,8 +58,9 @@ export function TimePicker({
           type="button"
           aria-label={ariaLabel}
           aria-haspopup="dialog"
+          disabled={disabled}
           className={cn(
-            "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 font-mono text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
+            "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 font-mono text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf] disabled:cursor-default disabled:opacity-45 disabled:hover:border-[#e0e0e0]",
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >

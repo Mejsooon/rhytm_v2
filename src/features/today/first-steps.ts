@@ -18,7 +18,7 @@ export function firstSteps(counts: { blocks: number; habits: number; workouts: n
       key: "habit",
       title: "Dodaj nawyk",
       hint: "np. woda, czytanie, rozciąganie",
-      href: "/nawyki",
+      href: "/nawyki?nowy=nawyk",
       done: counts.habits > 0,
     },
     { key: "workout", title: "Zapisz trening", hint: "bieg albo siłownia", href: "/sport", done: counts.workouts > 0 },
@@ -26,7 +26,7 @@ export function firstSteps(counts: { blocks: number; habits: number; workouts: n
       key: "sleep",
       title: "Wpisz ostatnią noc",
       hint: "godzina zaśnięcia i pobudki",
-      href: "/nawyki",
+      href: "/nawyki?nowy=sen",
       done: counts.sleepLogs > 0,
     },
   ];

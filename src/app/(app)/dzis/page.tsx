@@ -39,8 +39,18 @@ async function Dzis() {
   const dataKrotka = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", timeZone: strefa }).format(teraz);
   const etykieta = `${dzienTygodnia.charAt(0).toUpperCase()}${dzienTygodnia.slice(1)} · ${dataKrotka}`;
 
-  // Etap 1: brak tabel bloków, nawyków, treningów i snu — wszystkie liczniki to 0
-  const kroki = firstSteps({ blocks: 0, habits: 0, workouts: 0, sleepLogs: 0 });
+  // Liczniki pierwszych kroków: samo zliczenie wierszy (RLS ogranicza je do własnych); treningi dopiero w Etapie 4
+  const [bloki, nawyki, sen] = await Promise.all([
+    supabase.from("blocks").select("*", { count: "exact", head: true }),
+    supabase.from("habits").select("*", { count: "exact", head: true }),
+    supabase.from("sleep_logs").select("*", { count: "exact", head: true }),
+  ]);
+  const kroki = firstSteps({
+    blocks: bloki.count ?? 0,
+    habits: nawyki.count ?? 0,
+    workouts: 0,
+    sleepLogs: sen.count ?? 0,
+  });
 
   return (
     <>

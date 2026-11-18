@@ -137,6 +137,129 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_checks: {
+        Row: {
+          date: string
+          habit_id: string
+          user_id: string
+        }
+        Insert: {
+          date: string
+          habit_id: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          habit_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_checks_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habit_notes: {
+        Row: {
+          created_at: string | null
+          date: string
+          habit_id: string
+          id: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          habit_id: string
+          id?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          habit_id?: string
+          id?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_notes_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habit_schedules: {
+        Row: {
+          habit_id: string
+          schedule_type: string
+          times_per_week: number | null
+          user_id: string
+          valid_from: string
+          weekdays: number[]
+        }
+        Insert: {
+          habit_id: string
+          schedule_type: string
+          times_per_week?: number | null
+          user_id: string
+          valid_from: string
+          weekdays?: number[]
+        }
+        Update: {
+          habit_id?: string
+          schedule_type?: string
+          times_per_week?: number | null
+          user_id?: string
+          valid_from?: string
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_schedules_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          remind_at: string | null
+          show_on_today: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          remind_at?: string | null
+          show_on_today?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          remind_at?: string | null
+          show_on_today?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_settings: {
         Row: {
           before_block_min: number | null
@@ -251,6 +374,42 @@ export type Database = {
           week_start?: string | null
           weekly_km_goal?: number | null
           weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          created_at: string | null
+          date: string
+          feeling: number | null
+          note: string | null
+          slept_at: string
+          tags: string[]
+          updated_at: string | null
+          user_id: string
+          woke_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          feeling?: number | null
+          note?: string | null
+          slept_at: string
+          tags?: string[]
+          updated_at?: string | null
+          user_id: string
+          woke_at: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          feeling?: number | null
+          note?: string | null
+          slept_at?: string
+          tags?: string[]
+          updated_at?: string | null
+          user_id?: string
+          woke_at?: string
         }
         Relationships: []
       }

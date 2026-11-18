@@ -19,6 +19,8 @@ export function DatePicker({
   today,
   ariaLabel,
   placeholder = "Wybierz datę",
+  min,
+  max,
 }: {
   value: IsoDate | null;
   onChange: (v: IsoDate | null) => void;
@@ -26,6 +28,10 @@ export function DatePicker({
   today?: IsoDate;
   ariaLabel: string;
   placeholder?: string;
+  // Najwcześniejszy dozwolony dzień: wcześniejsze są zablokowane (także „Dziś”, gdy dziś < min)
+  min?: IsoDate;
+  // Najpóźniejszy dozwolony dzień: późniejsze są zablokowane (także „Dziś”, gdy dziś > max)
+  max?: IsoDate;
 }) {
   const [open, setOpen] = React.useState(false);
   // Wyświetlany miesiąc; ustawiany przy otwarciu na miesiąc wartości albo dzisiejszy
@@ -56,6 +62,8 @@ export function DatePicker({
   }
 
   const siatka = open ? buildMonthGrid(widok.rok, widok.miesiac, weekStart) : [];
+  // „Dziś” jest blokowane, gdy dzisiejszy dzień leży poza zakresem min–max
+  const dzisPozaZakresem = (min !== undefined && dzis < min) || (max !== undefined && dzis > max);
 
   return (
     <ActionPopover
@@ -111,8 +119,10 @@ export function DatePicker({
             key={c.date}
             type="button"
             aria-pressed={c.date === value}
+            disabled={(min !== undefined && c.date < min) || (max !== undefined && c.date > max)}
             onClick={() => wybierz(c.date)}
             className={cn(
+              "disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent",
               "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-[#171717] hover:bg-[#f5f5f5]",
               !c.inMonth && "text-[#b5b5b5]",
               c.date === dzis && "border-[#d4d4d4]",
@@ -126,8 +136,9 @@ export function DatePicker({
       <div className="mt-1.5 flex justify-between border-t border-[#f0f0f0] pt-1.5">
         <button
           type="button"
+          disabled={dzisPozaZakresem}
           onClick={() => wybierz(today ?? todayIso())}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5]"
+          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5] disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent"
         >
           Dziś
         </button>

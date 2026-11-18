@@ -4,7 +4,7 @@ import { vi } from "vitest";
 
 // `single` to wynik dla .single()/.maybeSingle() (gdy brak — bierzemy `data`).
 export function fakeTable(
-  result: { data?: unknown; error?: unknown; single?: unknown } = {},
+  result: { data?: unknown; error?: unknown; single?: unknown; pages?: unknown[][] } = {},
 ) {
   const wynik = { data: null, error: null, ...result };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- atrapa na potrzeby testów
@@ -15,6 +15,12 @@ export function fakeTable(
   ]) {
     zapytanie[metoda] = vi.fn(() => zapytanie);
   }
+  // range(from, to): przy `pages` kolejne wywołania dostają kolejne strony wyniku (paginacja)
+  let strona = -1;
+  zapytanie.range = vi.fn(() => {
+    strona++;
+    return zapytanie;
+  });
   // single/maybeSingle zwracają jeden wiersz zamiast listy
   let pojedynczy = false;
   for (const metoda of ["single", "maybeSingle"]) {
@@ -27,6 +33,9 @@ export function fakeTable(
     const gotowy =
       pojedynczy && result.single !== undefined ? { ...wynik, data: result.single } : wynik;
     pojedynczy = false;
+    if (result.pages && strona >= 0) {
+      return Promise.resolve({ ...wynik, data: result.pages[strona] ?? [] }).then(ok, blad);
+    }
     return Promise.resolve(gotowy).then(ok, blad);
   };
   return zapytanie;

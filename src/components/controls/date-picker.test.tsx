@@ -65,3 +65,39 @@ describe("DatePicker", () => {
     expect(screen.getByRole("button", { name: "16" })).toHaveAttribute("aria-pressed", "false");
   });
 });
+
+describe("DatePicker — max", () => {
+  it("dni po max są zablokowane, wcześniejsze dostępne", async () => {
+    const u = userEvent.setup();
+    render(<DatePicker value="2026-11-16" onChange={vi.fn()} today="2026-11-16" max="2026-11-16" ariaLabel="Termin" />);
+    await u.click(screen.getByRole("button", { name: "Termin" }));
+    expect(screen.getByRole("button", { name: "17" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "15" })).toBeEnabled();
+  });
+});
+
+describe("DatePicker — min", () => {
+  it("dni przed min są zablokowane, późniejsze dostępne", async () => {
+    const u = userEvent.setup();
+    render(<DatePicker value="2026-11-16" onChange={vi.fn()} today="2026-11-16" min="2026-11-10" ariaLabel="Termin" />);
+    await u.click(screen.getByRole("button", { name: "Termin" }));
+    expect(screen.getByRole("button", { name: "9" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "10" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "11" })).toBeEnabled();
+  });
+
+  it("min i max razem zostawiają tylko dni z zakresu", async () => {
+    const u = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker value="2026-11-12" onChange={onChange} today="2026-11-16" min="2026-11-10" max="2026-11-14" ariaLabel="Termin" />,
+    );
+    await u.click(screen.getByRole("button", { name: "Termin" }));
+    expect(screen.getByRole("button", { name: "9" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "15" })).toBeDisabled();
+    // „Dziś” (16.11) leży poza zakresem, więc też jest zablokowane
+    expect(screen.getByRole("button", { name: "Dziś" })).toBeDisabled();
+    await u.click(screen.getByRole("button", { name: "10" }));
+    expect(onChange).toHaveBeenCalledWith("2026-11-10");
+  });
+});
