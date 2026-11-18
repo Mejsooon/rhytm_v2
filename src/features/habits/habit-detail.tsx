@@ -13,6 +13,7 @@ import { HabitDialog } from "./habit-dialog";
 import { HabitMonth } from "./habit-month";
 import { HabitNotes } from "./habit-notes";
 import type { HabitDetailData } from "./load-habits";
+import { MHabitDetail } from "./mobile/m-habit-detail";
 import { currentStreak, longestStreak, scheduleOn, successRate30, totalChecks, type Checks } from "./model";
 import { describeSchedule, streakLabel } from "./text";
 
@@ -63,88 +64,92 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
     return { klucz: wersja.validFrom, zakres, opis: describeSchedule(wersja) };
   });
 
-  // Telefon (Task 7): tu dojdzie osobne drzewo `min-[800px]:hidden`, a to dostanie `max-[799px]:hidden`.
-  // Do tego czasu widok webowy pokazujemy na każdej szerokości.
+  // Oba układy są w DOM; przełącza je wyłącznie CSS (800 px). Telefon ma własne okna edycji i usuwania.
   return (
-    <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
-        <div className="font-mono text-[13px] text-[#666666]">
-          <Link href="/nawyki" className="text-[#666666] no-underline hover:text-[#171717]">
-            Nawyki i sen
-          </Link>{" "}
-          <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{habit.name}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" className="border-[#fecaca] text-[#b91c1c] hover:text-[#b91c1c]" onClick={() => setUsuwanie(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-            </svg>
-            Usuń
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => setEdycja(true)}>
-            Edytuj
-          </Button>
-        </div>
-      </header>
+    <>
+      <div className="min-[800px]:hidden">
+        <MHabitDetail data={data} />
+      </div>
+      <div className="flex min-w-0 flex-col max-[799px]:hidden">
+        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
+          <div className="font-mono text-[13px] text-[#666666]">
+            <Link href="/nawyki" className="text-[#666666] no-underline hover:text-[#171717]">
+              Nawyki i sen
+            </Link>{" "}
+            <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{habit.name}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" className="border-[#fecaca] text-[#b91c1c] hover:text-[#b91c1c]" onClick={() => setUsuwanie(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+              </svg>
+              Usuń
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setEdycja(true)}>
+              Edytuj
+            </Button>
+          </div>
+        </header>
 
-      <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7">
-        <div>
-          <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{habit.name}</h1>
-          <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">{podtytul}</p>
-        </div>
-
-        <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
-          {kafelki.map((k) => (
-            <div key={k.etykieta} className="bg-white px-[18px] py-4">
-              <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">{k.etykieta}</div>
-              <div className="mt-2 font-mono text-[26px]">
-                {k.wartosc}
-                {k.jednostka && <span className="ml-1 text-sm text-[#666666]">{k.jednostka}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-6">
-          <div className="flex min-w-0 flex-col gap-6">
-            <HabitMonth
-              // Klucz resetuje widok po przejściu północy na nowy miesiąc
-              key={data.today.slice(0, 7)}
-              habit={habit}
-              checks={dniOdhaczone}
-              today={data.today}
-              weekStart={data.weekStart}
-              maxMonth={data.today.slice(0, 7)}
-            />
-            <HabitNotes habitId={habit.id} notes={data.notes} />
+        <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7">
+          <div>
+            <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{habit.name}</h1>
+            <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">{podtytul}</p>
           </div>
 
-          <section className="rounded-lg border border-[#eaeaea] bg-white">
-            <div className="border-b border-[#eaeaea] px-4 py-3.5">
-              <h2 className="m-0 text-[15px] font-semibold">Historia harmonogramu</h2>
-            </div>
-            {historia.map((w) => (
-              <div key={w.klucz} className="border-b border-[#f0f0f0] px-4 py-3 last:border-b-0">
-                <div className="font-mono text-xs text-[#6b6b6b]">{w.zakres}</div>
-                <div className="mt-0.5">{w.opis}</div>
+          <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+            {kafelki.map((k) => (
+              <div key={k.etykieta} className="bg-white px-[18px] py-4">
+                <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">{k.etykieta}</div>
+                <div className="mt-2 font-mono text-[26px]">
+                  {k.wartosc}
+                  {k.jednostka && <span className="ml-1 text-sm text-[#666666]">{k.jednostka}</span>}
+                </div>
               </div>
             ))}
-            <p className="m-0 border-t border-[#eaeaea] bg-[#fafafa] px-4 py-3 font-mono text-[11px] text-[#6b6b6b]">
-              Zmiana harmonogramu nie przelicza przeszłych dni.
-            </p>
-          </section>
-        </div>
-      </div>
+          </div>
 
-      <HabitDialog
-        open={edycja}
-        onOpenChange={setEdycja}
-        habit={habit}
-        weekStart={data.weekStart}
-        clock={data.clock}
-        today={data.today}
-      />
-      <DeleteHabitDialog habitId={habit.id} name={habit.name} open={usuwanie} onOpenChange={setUsuwanie} />
-    </div>
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-6">
+            <div className="flex min-w-0 flex-col gap-6">
+              <HabitMonth
+                // Klucz resetuje widok po przejściu północy na nowy miesiąc
+                key={data.today.slice(0, 7)}
+                habit={habit}
+                checks={dniOdhaczone}
+                today={data.today}
+                weekStart={data.weekStart}
+                maxMonth={data.today.slice(0, 7)}
+              />
+              <HabitNotes habitId={habit.id} notes={data.notes} />
+            </div>
+
+            <section className="rounded-lg border border-[#eaeaea] bg-white">
+              <div className="border-b border-[#eaeaea] px-4 py-3.5">
+                <h2 className="m-0 text-[15px] font-semibold">Historia harmonogramu</h2>
+              </div>
+              {historia.map((w) => (
+                <div key={w.klucz} className="border-b border-[#f0f0f0] px-4 py-3 last:border-b-0">
+                  <div className="font-mono text-xs text-[#6b6b6b]">{w.zakres}</div>
+                  <div className="mt-0.5">{w.opis}</div>
+                </div>
+              ))}
+              <p className="m-0 border-t border-[#eaeaea] bg-[#fafafa] px-4 py-3 font-mono text-[11px] text-[#6b6b6b]">
+                Zmiana harmonogramu nie przelicza przeszłych dni.
+              </p>
+            </section>
+          </div>
+        </div>
+
+        <HabitDialog
+          open={edycja}
+          onOpenChange={setEdycja}
+          habit={habit}
+          weekStart={data.weekStart}
+          clock={data.clock}
+          today={data.today}
+        />
+        <DeleteHabitDialog habitId={habit.id} name={habit.name} open={usuwanie} onOpenChange={setUsuwanie} />
+      </div>
+    </>
   );
 }

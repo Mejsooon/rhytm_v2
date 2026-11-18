@@ -11,6 +11,8 @@ const { push, deleteHabit, addHabitNote, updateHabit, createHabit } = vi.hoisted
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }) }));
 vi.mock("./actions", () => ({ deleteHabit, addHabitNote, updateHabit, createHabit }));
+// Drzewo telefonu (w DOM obok webu) ma własne testy; tu sprawdzamy web
+vi.mock("./mobile/m-habit-detail", () => ({ MHabitDetail: () => null }));
 
 import { HabitDetail } from "./habit-detail";
 import type { HabitDetailData } from "./load-habits";

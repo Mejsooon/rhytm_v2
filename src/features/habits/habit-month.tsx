@@ -49,6 +49,7 @@ export function HabitMonth({
   weekStart,
   minMonth,
   maxMonth,
+  summary = false,
 }: {
   habit: Habit;
   checks: Set<IsoDate>;
@@ -58,6 +59,8 @@ export function HabitMonth({
   minMonth?: string;
   // Najpóźniejszy miesiąc 'YYYY-MM' — zwykle bieżący
   maxMonth: string;
+  // Telefon (MHabitDetail.dc.html): zamiast legendy „N z M dni zaliczone” dla pokazanego miesiąca
+  summary?: boolean;
 }) {
   const [miesiac, setMiesiac] = useState(maxMonth);
 
@@ -85,6 +88,15 @@ export function HabitMonth({
     return "pominiete";
   }
 
+  // Zaliczone = zrobione / (zrobione + pominięte) w dniach tego miesiąca (pominięte są tylko do wczoraj)
+  let zrobione = 0;
+  let pominiete = 0;
+  for (const k of widoczne) {
+    const stan = stanDnia(k.date, k.inMonth);
+    if (stan === "zrobione") zrobione++;
+    if (stan === "pominiete") pominiete++;
+  }
+
   return (
     <section className="rounded-lg border border-[#eaeaea] bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -95,7 +107,7 @@ export function HabitMonth({
             aria-label="Poprzedni miesiąc"
             disabled={miesiac <= dolny}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, -1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-[10px] max-[799px]:text-base"
           >
             ‹
           </button>
@@ -104,7 +116,7 @@ export function HabitMonth({
             aria-label="Następny miesiąc"
             disabled={miesiac >= maxMonth}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, 1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-[10px] max-[799px]:text-base"
           >
             ›
           </button>
@@ -133,18 +145,24 @@ export function HabitMonth({
         })}
       </div>
 
-      {/* Legenda z makiety */}
-      <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-[#666666]">
-        <span>
-          <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#15803d]" />
-          zrobione
-        </span>
-        <span>
-          <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#fee2e2]" />
-          pominięte
-        </span>
-        <span>szare: dzień bez nawyku</span>
-      </div>
+      {summary && (
+        <div className="mt-2.5 text-[13px] text-[#666666]">{`${zrobione} z ${zrobione + pominiete} dni zaliczone`}</div>
+      )}
+
+      {/* Legenda z makiety (web) */}
+      {!summary && (
+        <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-[#666666]">
+          <span>
+            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#15803d]" />
+            zrobione
+          </span>
+          <span>
+            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#fee2e2]" />
+            pominięte
+          </span>
+          <span>szare: dzień bez nawyku</span>
+        </div>
+      )}
     </section>
   );
 }

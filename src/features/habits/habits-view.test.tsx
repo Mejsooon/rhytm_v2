@@ -13,6 +13,8 @@ const { replace, toastError, setHabitCheck, createHabit, updateHabit, saveSleepL
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("./actions", () => ({ setHabitCheck, createHabit, updateHabit, saveSleepLog }));
+// Drzewo telefonu (w DOM obok webu) ma własne testy; tu sprawdzamy web
+vi.mock("./mobile/m-habits", () => ({ MHabits: () => null }));
 
 import { HabitsView } from "./habits-view";
 import type { HabitsPageData } from "./load-habits";
