@@ -74,6 +74,12 @@ describe("1RM i objętość", () => {
       ]),
     ).toBe(0);
     expect(sessionVolume([{ weight_kg: 60, reps: 8, done: true }])).toBe(480);
+    expect(
+      sessionVolume([
+        { weight_kg: 60, reps: 8, done: true },
+        { weight_kg: null, reps: 12, done: true },
+      ]),
+    ).toBe(480);
   });
 });
 
@@ -100,6 +106,29 @@ describe("recordSetIds", () => {
       "e1",
     );
     expect([...wynik]).toEqual(["b1"]);
+  });
+  it("sesja tylko z seriami mc nie daje rekordu i nie zmienia maksimum", () => {
+    const wynik = recordSetIds(
+      [
+        {
+          sessionId: "s1",
+          startLocal: "2026-11-03T10:00:00",
+          sets: [set({ id: "a1", weight_kg: 70 })],
+        },
+        {
+          sessionId: "s2",
+          startLocal: "2026-11-10T10:00:00",
+          sets: [set({ id: "b1", weight_kg: null })],
+        },
+        {
+          sessionId: "s3",
+          startLocal: "2026-11-17T10:00:00",
+          sets: [set({ id: "c1", weight_kg: 72.5 })],
+        },
+      ],
+      "e1",
+    );
+    expect([...wynik]).toEqual(["c1"]);
   });
   it("niezrobione serie nie ustalają maksimum ani nie są rekordem", () => {
     const wynik = recordSetIds(
@@ -143,6 +172,10 @@ describe("templateOccurrences", () => {
     expect(w[0].planned).toBe(true);
     expect(w[0].kind).toBe("gym");
     expect(w[0].title).toBe("Push");
+  });
+  it("dzisiaj jest włączone", () => {
+    const w = templateOccurrences([szablon()], [], [], od, doo, "2026-11-19");
+    expect(w.map((i) => i.key)).toEqual(["t:t1:2026-11-19"]);
   });
   it("pomija dni z template_skips", () => {
     const skip: SkipRow = {
@@ -279,6 +312,85 @@ describe("weekStats", () => {
   });
 });
 
+describe("weekStats (tydzień od niedzieli)", () => {
+  it("liczy 7 dni od niedzieli zgodnie z wierszem monthGrid", () => {
+    const wiersz = monthGrid("2026-11", "sun")[2]; // 15–21 listopada
+    expect(wiersz[0]).toBe("2026-11-15");
+    expect(wiersz[6]).toBe("2026-11-21");
+    const b = (date: string): SportItem => ({
+      key: date,
+      kind: "run",
+      sessionId: date,
+      templateId: null,
+      date,
+      startMin: 0,
+      durationMin: 60,
+      title: "x",
+      planned: false,
+      showInCalendar: true,
+      distanceKm: 5,
+      durationS: 1500,
+      kcal: 300,
+      difficulty: null,
+      runKind: "easy",
+      note: null,
+    });
+    const w = weekStats(
+      [b("2026-11-14"), b("2026-11-15"), b("2026-11-20"), b("2026-11-22")],
+      wiersz[0],
+    );
+    expect(w.km).toBe(10);
+    expect(w.done).toBe(2);
+    const sob = weekStats([b("2026-11-21"), b("2026-11-22")], wiersz[0]);
+    expect(sob.done).toBe(1);
+  });
+  it("bieg bez dystansu nie psuje tempa", () => {
+    const w = weekStats(
+      [
+        {
+          key: "a",
+          kind: "run",
+          sessionId: "a",
+          templateId: null,
+          date: "2026-11-16",
+          startMin: 0,
+          durationMin: 60,
+          title: "x",
+          planned: false,
+          showInCalendar: true,
+          distanceKm: null,
+          durationS: 3000,
+          kcal: null,
+          difficulty: null,
+          runKind: "easy",
+          note: null,
+        },
+        {
+          key: "b",
+          kind: "run",
+          sessionId: "b",
+          templateId: null,
+          date: "2026-11-17",
+          startMin: 0,
+          durationMin: 60,
+          title: "x",
+          planned: false,
+          showInCalendar: true,
+          distanceKm: 5,
+          durationS: 1500,
+          kcal: null,
+          difficulty: null,
+          runKind: "easy",
+          note: null,
+        },
+      ],
+      "2026-11-16",
+    );
+    expect(w.paceS).toBe(300);
+    expect(w.km).toBe(5);
+  });
+});
+
 describe("monthGrid", () => {
   it("6 x 7, start zależny od week_start", () => {
     const pn = monthGrid("2026-11", "mon");
@@ -340,6 +452,13 @@ describe("templateSets i firstReps", () => {
     const w = templateSets([poz], new Map());
     expect(w).toHaveLength(3);
     expect(w.every((s) => s.weight_kg === null && s.reps === 8)).toBe(true);
+  });
+  it("null powt. w historii wraca do reps_text", () => {
+    const hist = new Map([
+      ["e1", [set({ set_no: 1, weight_kg: 60, reps: null })]],
+    ]);
+    const w = templateSets([poz], hist);
+    expect(w[0]).toMatchObject({ weight_kg: 60, reps: 8 });
   });
   it("firstReps", () => {
     expect(firstReps("8–10")).toBe(8);

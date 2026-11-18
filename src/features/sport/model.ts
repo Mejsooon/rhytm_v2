@@ -264,9 +264,12 @@ export function weekStats(
     if (i.date < weekStartDate || i.date > koniec || i.planned) continue;
     done += 1;
     if (i.kind === "run") {
-      km += i.distanceKm ?? 0;
-      sekundy += i.durationS ?? 0;
       kcal += i.kcal ?? 0;
+      // tempo tylko z biegów z dystansem i czasem naraz
+      if (i.distanceKm !== null && i.durationS !== null) {
+        km += i.distanceKm;
+        sekundy += i.durationS;
+      }
     }
   }
   return { km, paceS: km > 0 ? sekundy / km : null, done, kcal };
@@ -324,7 +327,7 @@ export function templateSets(
         exercise_position: poz.position,
         set_no: nr,
         weight_kg: zHistorii ? zHistorii.weight_kg : null,
-        reps: zHistorii ? zHistorii.reps : firstReps(poz.reps_text),
+        reps: zHistorii?.reps ?? firstReps(poz.reps_text),
       });
     }
   }
