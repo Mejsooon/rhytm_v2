@@ -53,11 +53,11 @@ export function monthTitlePl(year: number, month0: number): string {
 }
 
 // Dzisiejsza data w podanej strefie (domyślnie strefa środowiska); 'en-CA' daje format YYYY-MM-DD
-export function todayIso(timeZone?: string): IsoDate {
+export function todayIso(timeZone?: string, now: Date = new Date()): IsoDate {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date());
+  }).format(now);
 }

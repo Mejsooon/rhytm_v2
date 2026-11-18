@@ -58,7 +58,7 @@ export function mapHabits(
   });
 }
 
-function mapSleepLogs(rows: SleepRow[]): SleepLog[] {
+export function mapSleepLogs(rows: SleepRow[]): SleepLog[] {
   return rows.map((r) => ({
     date: r.date,
     sleptAt: r.slept_at.slice(0, 5),

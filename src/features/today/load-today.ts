@@ -1,0 +1,228 @@
+// Dane ekranu Dziś: wszystko, czego potrzebuje bieżący tydzień, w jednym wywołaniu serwera.
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
+import {
+  loadCalendar,
+  minutesNow,
+  type CategoryRow,
+} from "@/features/calendar/load-calendar";
+import {
+  expandOccurrences,
+  type Occurrence,
+} from "@/features/calendar/occurrences";
+import { addDays } from "@/features/calendar/view-range";
+import { mapHabits, mapSleepLogs } from "@/features/habits/load-habits";
+import type { Checks, Habit } from "@/features/habits/model";
+import type { SleepLog } from "@/features/habits/sleep";
+import type { SportItem } from "@/features/sport/model";
+import type { TaskRow } from "@/features/tasks/model";
+import { safeTimezone } from "@/lib/time/timezones";
+import type { Database } from "@/types/database";
+import { weekStart } from "./model";
+
+type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
+type ScheduleRow = Database["public"]["Tables"]["habit_schedules"]["Row"];
+type SleepRow = Database["public"]["Tables"]["sleep_logs"]["Row"];
+
+const DOMYSLNY_CEL_SNU_MIN = 480;
+const DOMYSLNY_CEL_KM = 20;
+const DOMYSLNY_CEL_TRENINGOW = 3;
+
+export type TodayData = {
+  profile: {
+    timezone: string;
+    weekStart: "mon" | "sun";
+    clock: "24" | "12";
+    displayName: string | null;
+    avatarPath: string | null;
+    sleepGoalMin: number;
+    kmGoalOn: boolean;
+    weeklyKmGoal: number;
+    workoutsGoalOn: boolean;
+    weeklyWorkoutsGoal: number;
+    createdAt: string;
+  };
+  today: IsoDate;
+  nowMin: number;
+  weekStartDate: IsoDate;
+  occurrencesToday: Occurrence[];
+  categories: CategoryRow[];
+  // Z tygodnia + zaległe niezrobione + bez daty
+  tasks: TaskRow[];
+  habits: Habit[];
+  checks: Checks;
+  // Tydzień (zawiera dziś)
+  sleepLogs: SleepLog[];
+  // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
+  sportItems: SportItem[];
+  // Liczba rekordów z całej historii (do stanu pustego „pierwsze kroki”)
+  counts: {
+    blocks: number;
+    habits: number;
+    workouts: number;
+    sleepLogs: number;
+  };
+};
+
+export async function loadToday(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  now: Date = new Date(),
+): Promise<TodayData> {
+  // Profil najpierw: strefa i początek tygodnia wyznaczają zakresy pozostałych zapytań
+  const { data: p, error: blad } = await supabase
+    .from("profiles")
+    .select(
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, created_at",
+    )
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (blad) throw new Error(blad.message);
+
+  const timezone = safeTimezone(p?.timezone);
+  const startTygodnia: "mon" | "sun" = p?.week_start === "sun" ? "sun" : "mon";
+  const profile: TodayData["profile"] = {
+    timezone,
+    weekStart: startTygodnia,
+    clock: p?.clock === "12" ? "12" : "24",
+    displayName: p?.display_name ?? null,
+    avatarPath: p?.avatar_path ?? null,
+    sleepGoalMin: p?.sleep_goal_min ?? DOMYSLNY_CEL_SNU_MIN,
+    kmGoalOn: p?.km_goal_on ?? false,
+    weeklyKmGoal: p?.weekly_km_goal ?? DOMYSLNY_CEL_KM,
+    workoutsGoalOn: p?.workouts_goal_on ?? false,
+    weeklyWorkoutsGoal: p?.weekly_workouts_goal ?? DOMYSLNY_CEL_TRENINGOW,
+    createdAt: p?.created_at ?? now.toISOString(),
+  };
+
+  const today = todayIso(timezone, now);
+  const nowMin = minutesNow(timezone, now);
+  const weekStartDate = weekStart(today, startTygodnia);
+  const koniecTygodnia = addDays(weekStartDate, 6);
+
+  const naLiczbe = { count: "exact" as const, head: true };
+
+  const [
+    kalendarz,
+    zadaniaInneRes,
+    nawykiRes,
+    wersjeRes,
+    odhaczeniaRes,
+    senRes,
+    liczbaBlokowRes,
+    liczbaNawykowRes,
+    liczbaTreningowRes,
+    liczbaSnuRes,
+  ] = await Promise.all([
+    // Bloki, wyjątki, zadania tygodnia, kategorie i treningi tygodnia (wszystkie)
+    loadCalendar(
+      supabase,
+      userId,
+      { from: weekStartDate, to: koniecTygodnia },
+      {
+        timezone,
+        weekStart: startTygodnia,
+        clock: profile.clock,
+      },
+      today,
+      { wszystkieTreningi: true },
+    ),
+    // Zaległe niezrobione sprzed tygodnia oraz zadania bez terminu
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", userId)
+      .or(`and(due_date.lt.${weekStartDate},done.eq.false),due_date.is.null`)
+      .order("position", { ascending: true }),
+    supabase
+      .from("habits")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true }),
+    supabase
+      .from("habit_schedules")
+      .select("*")
+      .eq("user_id", userId)
+      .order("valid_from", { ascending: true }),
+    supabase
+      .from("habit_checks")
+      .select("habit_id, date")
+      .eq("user_id", userId)
+      .gte("date", weekStartDate)
+      .lte("date", koniecTygodnia),
+    supabase
+      .from("sleep_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", weekStartDate)
+      .lte("date", koniecTygodnia)
+      .order("date", { ascending: true }),
+    supabase.from("blocks").select("id", naLiczbe).eq("user_id", userId),
+    supabase.from("habits").select("id", naLiczbe).eq("user_id", userId),
+    supabase
+      .from("sport_sessions")
+      .select("id", naLiczbe)
+      .eq("user_id", userId),
+    supabase.from("sleep_logs").select("date", naLiczbe).eq("user_id", userId),
+  ]);
+
+  // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
+  for (const wynik of [
+    zadaniaInneRes,
+    nawykiRes,
+    wersjeRes,
+    odhaczeniaRes,
+    senRes,
+    liczbaBlokowRes,
+    liczbaNawykowRes,
+    liczbaTreningowRes,
+    liczbaSnuRes,
+  ]) {
+    if (wynik.error) throw new Error(wynik.error.message);
+  }
+
+  // Zadania: tydzień + zaległe + bez daty, bez duplikatów
+  const tasks = [...kalendarz.tasks];
+  const znaneZadania = new Set(tasks.map((t) => t.id));
+  for (const zadanie of (zadaniaInneRes.data ?? []) as TaskRow[]) {
+    if (znaneZadania.has(zadanie.id)) continue;
+    tasks.push(zadanie);
+  }
+
+  // Odhaczenia tygodnia: habitId → zbiór dat
+  const checks: Checks = new Map();
+  for (const c of odhaczeniaRes.data ?? []) {
+    const daty = checks.get(c.habit_id) ?? new Set<IsoDate>();
+    daty.add(c.date);
+    checks.set(c.habit_id, daty);
+  }
+
+  return {
+    profile,
+    today,
+    nowMin,
+    weekStartDate,
+    occurrencesToday: expandOccurrences(
+      kalendarz.blocks,
+      kalendarz.exceptions,
+      today,
+      today,
+    ),
+    categories: kalendarz.categories,
+    tasks,
+    habits: mapHabits(
+      (nawykiRes.data ?? []) as HabitRow[],
+      (wersjeRes.data ?? []) as ScheduleRow[],
+    ),
+    checks,
+    sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
+    sportItems: kalendarz.sport,
+    counts: {
+      blocks: liczbaBlokowRes.count ?? 0,
+      habits: liczbaNawykowRes.count ?? 0,
+      workouts: liczbaTreningowRes.count ?? 0,
+      sleepLogs: liczbaSnuRes.count ?? 0,
+    },
+  };
+}
