@@ -229,7 +229,8 @@ export function OnboardingWizard({
 
           <div className="grid min-h-0 flex-1 grid-cols-[520px_1fr] max-[1100px]:grid-cols-1">
             <div className="flex min-h-0 flex-col px-5 pt-4 pb-0 min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-6">
-              <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-6 min-[800px]:pb-0">
+              {/* Bez paska przewijania (komentarz do makiety OnboardingGoals); kółko i gładzik dalej przewijają */}
+              <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-6 [scrollbar-width:none] min-[800px]:pb-0 [&::-webkit-scrollbar]:hidden">
                 <Widok
                   draft={draft}
                   onChange={setDraft}
