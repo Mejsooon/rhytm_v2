@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildMonthGrid } from "@/components/controls/calendar-math";
-import { kategoria, planZSzablonu, wystapienie } from "./fixtures";
+import { kategoria, planZSzablonu, trening, wystapienie } from "./fixtures";
 import { MCalendarMonth } from "./m-calendar-month";
 
 const dni = buildMonthGrid(2026, 10, "mon").map((c) => c.date);
@@ -114,6 +114,35 @@ describe("MCalendarMonth — podgląd treningów", () => {
     expect(screen.getByRole("link", { name: /Push/ })).toHaveAttribute(
       "href",
       "/sport?miesiac=2026-11&wybrany=t:t1:2026-11-19",
+    );
+  });
+});
+
+describe("MCalendarMonth — kolejność wpisów dnia", () => {
+  it("treningi stoją między blokami wg godziny i mają obwódkę fokusu", () => {
+    // 12.11: blok „Siłownia” 10:00; trening 07:00 i plan 18:30
+    wyrenderuj({
+      sport: [
+        trening({
+          key: "s:a",
+          date: "2026-11-12",
+          startMin: 1110,
+          title: "Push",
+        }),
+        trening({ key: "s:b", date: "2026-11-12", startMin: 420 }),
+      ],
+    });
+    const lista = screen
+      .getByRole("link", { name: "Otwórz dzień" })
+      .closest("div.flex-col") as HTMLElement;
+    const wpisy = [
+      ...lista.querySelectorAll("a[data-planned], a[href^='/sport'], button"),
+    ]
+      .map((e) => e.textContent)
+      .filter((t) => /Spokojny|Siłownia|Push/.test(t ?? ""));
+    expect(wpisy).toEqual(["07:00Spokojny", "10:00Siłownia", "18:30Push"]);
+    expect(screen.getByRole("link", { name: /Spokojny/ })).toHaveClass(
+      "focus-visible:ring-2",
     );
   });
 });

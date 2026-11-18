@@ -56,6 +56,19 @@ export function MCalendarWeek({
         const nazwa = `${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`;
         const dzienne = occurrences.filter((o) => o.date === dzien);
         const treningi = sport.filter((i) => i.date === dzien);
+        // Bloki i treningi dnia razem, godzina rosnąco
+        const wpisy = [
+          ...dzienne.map((o) => ({
+            typ: "blok" as const,
+            o,
+            startMin: o.startMin,
+          })),
+          ...treningi.map((i) => ({
+            typ: "sport" as const,
+            i,
+            startMin: i.startMin,
+          })),
+        ].sort((a, b) => a.startMin - b.startMin);
         return (
           <section key={dzien} aria-label={nazwa} className="flex gap-3">
             <Link
@@ -76,7 +89,38 @@ export function MCalendarWeek({
                   Brak bloków
                 </span>
               )}
-              {dzienne.map((o) => {
+              {wpisy.map((wpis) => {
+                if (wpis.typ === "sport") {
+                  const i = wpis.i;
+                  // Plan ma przerywaną ramkę
+                  return (
+                    <Link
+                      key={i.key}
+                      href={sportItemHref(i)}
+                      data-planned={i.planned || undefined}
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                      style={{
+                        background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                        border: i.planned
+                          ? `1px dashed ${SPORT_COLOR}`
+                          : undefined,
+                        borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                      }}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {i.title}
+                      </span>
+                      <span className="font-mono text-[11px] text-[#555555]">
+                        {formatClockTime(
+                          Math.floor(i.startMin / 60),
+                          i.startMin % 60,
+                          clock,
+                        )}
+                      </span>
+                    </Link>
+                  );
+                }
+                const o = wpis.o;
                 const kolor =
                   categories.find((k) => k.id === o.categoryId)?.color ??
                   KOLOR_BRAK;
@@ -104,31 +148,6 @@ export function MCalendarWeek({
                   </button>
                 );
               })}
-              {/* Treningi pod blokami dnia; plan ma przerywaną ramkę */}
-              {treningi.map((i) => (
-                <Link
-                  key={i.key}
-                  href={sportItemHref(i)}
-                  data-planned={i.planned || undefined}
-                  className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[#171717]"
-                  style={{
-                    background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
-                    border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
-                    borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
-                  }}
-                >
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {i.title}
-                  </span>
-                  <span className="font-mono text-[11px] text-[#555555]">
-                    {formatClockTime(
-                      Math.floor(i.startMin / 60),
-                      i.startMin % 60,
-                      clock,
-                    )}
-                  </span>
-                </Link>
-              ))}
             </div>
           </section>
         );

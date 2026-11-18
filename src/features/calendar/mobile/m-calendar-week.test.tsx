@@ -100,3 +100,17 @@ describe("MCalendarWeek — podgląd treningów", () => {
     ).toHaveAttribute("data-planned", "true");
   });
 });
+
+describe("MCalendarWeek — kolejność wpisów dnia", () => {
+  it("trening 09:00 stoi między blokami 08:00 i 10:00 i ma obwódkę fokusu", () => {
+    wyrenderuj({ sport: [trening({ date: "2026-11-18", startMin: 540 })] });
+    const sroda = screen.getByRole("region", { name: "Środa 18 listopada" });
+    const tytuly = [...sroda.querySelectorAll("button, a[href^='/sport']")].map(
+      (e) => e.querySelector("span")?.textContent,
+    );
+    expect(tytuly).toEqual(["Rutyna", "Spokojny", "Algebra"]);
+    expect(within(sroda).getByRole("link", { name: /Spokojny/ })).toHaveClass(
+      "focus-visible:ring-2",
+    );
+  });
+});

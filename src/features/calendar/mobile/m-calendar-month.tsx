@@ -58,6 +58,19 @@ export function MCalendarMonth({
   );
   const wybraneBloki = occurrences.filter((o) => o.date === wybrany);
   const wybraneTreningi = sport.filter((i) => i.date === wybrany);
+  // Bloki i treningi wybranego dnia razem, godzina rosnąco (jak na webie)
+  const wpisyDnia = [
+    ...wybraneBloki.map((o) => ({
+      typ: "blok" as const,
+      o,
+      startMin: o.startMin,
+    })),
+    ...wybraneTreningi.map((i) => ({
+      typ: "sport" as const,
+      i,
+      startMin: i.startMin,
+    })),
+  ].sort((a, b) => a.startMin - b.startMin);
   const [, mWybranego, dWybranego] = wybrany.split("-").map(Number);
   const tytul = `${dWybranego} ${MIESIACE_DOP[mWybranego - 1]}`;
 
@@ -139,7 +152,36 @@ export function MCalendarMonth({
             Otwórz dzień
           </Link>
         </div>
-        {wybraneBloki.map((o) => {
+        {wpisyDnia.map((wpis) => {
+          if (wpis.typ === "sport") {
+            const i = wpis.i;
+            return (
+              // Plan ma przerywaną ramkę, wykonany trening tło w kolorze Sportu
+              <Link
+                key={i.key}
+                href={sportItemHref(i)}
+                data-planned={i.planned || undefined}
+                className="flex min-h-12 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                style={{
+                  background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                  border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
+                  borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                }}
+              >
+                <span className="w-[42px] font-mono text-xs text-[#555555]">
+                  {formatClockTime(
+                    Math.floor(i.startMin / 60),
+                    i.startMin % 60,
+                    clock,
+                  )}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {i.title}
+                </span>
+              </Link>
+            );
+          }
+          const o = wpis.o;
           const kolor =
             categories.find((k) => k.id === o.categoryId)?.color ?? KOLOR_BRAK;
           return (
@@ -166,31 +208,6 @@ export function MCalendarMonth({
             </button>
           );
         })}
-        {wybraneTreningi.map((i) => (
-          // Plan ma przerywaną ramkę, wykonany trening tło w kolorze Sportu
-          <Link
-            key={i.key}
-            href={sportItemHref(i)}
-            data-planned={i.planned || undefined}
-            className="flex min-h-12 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-[#171717]"
-            style={{
-              background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
-              border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
-              borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
-            }}
-          >
-            <span className="w-[42px] font-mono text-xs text-[#555555]">
-              {formatClockTime(
-                Math.floor(i.startMin / 60),
-                i.startMin % 60,
-                clock,
-              )}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">
-              {i.title}
-            </span>
-          </Link>
-        ))}
         {wybraneBloki.length === 0 && wybraneTreningi.length === 0 && (
           <button
             type="button"
