@@ -32,13 +32,13 @@ a.btnd:hover{background:#991b1b}
     </div>
   </main>
   <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.25)"></div>
-  <!-- Blok jednorazowy: proste potwierdzenie. Blok cykliczny zamiast tego otwiera okno zakresu (ScopeDialog). -->
-  <div role="alertdialog" aria-modal="true" aria-labelledby="usun-tytul" aria-describedby="usun-opis" style="position: absolute; left: 50%; top: 220px; transform: translateX(-50%); width: min(420px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); display: flex; flex-direction: column">
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 16px">
-      <div><h2 id="usun-tytul" style="margin: 0; font-size: 17px; font-weight: 600">Usunąć blok?</h2><p id="usun-opis" style="margin: 4px 0 0; color: #666666; font-size: 13px">„Bieg 10 km”</p></div>
-      <a href="{{back}}" aria-label="Zamknij" style="width: 30px; height: 30px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; text-decoration: none; flex: none">✕</a>
+  <!-- Blok jednorazowy: zwarte potwierdzenie (360 px, bez paska stopki). Blok cykliczny zamiast tego otwiera okno zakresu (ScopeDialog). -->
+  <div role="alertdialog" aria-modal="true" aria-labelledby="usun-tytul" aria-describedby="usun-opis" style="position: absolute; left: 50%; top: 260px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); box-sizing: border-box; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 16px">
+    <div>
+      <h2 id="usun-tytul" style="margin: 0; font-size: 16px; font-weight: 600">Usunąć blok?</h2>
+      <p id="usun-opis" style="margin: 4px 0 0; color: #666666; font-size: 13px">„Bieg 10 km” · wt 17.11 · 16:00–17:00</p>
     </div>
-    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #eaeaea; background: #fafafa; border-radius: 0 0 12px 12px">
+    <div style="display: flex; justify-content: flex-end; gap: 8px">
       <a href="{{back}}" class="btn">Anuluj</a><a href="{{back}}" class="btnd">Usuń</a>
     </div>
   </div>
