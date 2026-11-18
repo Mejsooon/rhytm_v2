@@ -35,6 +35,9 @@ create table public.habit_schedules (
   )
 );
 
+-- Wczytywanie wersji użytkownika (lista nawyków) i polityki RLS po user_id
+create index habit_schedules_user_id_idx on public.habit_schedules (user_id);
+
 -- Odhaczenia: jedno na nawyk i dzień.
 create table public.habit_checks (
   habit_id uuid not null references public.habits (id) on delete cascade,
@@ -57,6 +60,8 @@ create table public.habit_notes (
 );
 
 create index habit_notes_habit_id_date_idx on public.habit_notes (habit_id, date);
+-- Polityki RLS i kaskada z auth.users po user_id
+create index habit_notes_user_id_idx on public.habit_notes (user_id);
 
 -- Dziennik snu: jeden wpis na dzień (data przebudzenia).
 create table public.sleep_logs (

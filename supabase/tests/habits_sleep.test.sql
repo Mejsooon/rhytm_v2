@@ -1,5 +1,5 @@
 begin;
-select plan(57);
+select plan(59);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -66,6 +66,12 @@ select ok(has_table_privilege('authenticated', 'public.sleep_logs', 'delete'),
   'authenticated ma delete na sleep_logs');
 select ok(has_table_privilege('service_role', 'public.sleep_logs', 'SELECT, INSERT, UPDATE, DELETE'),
   'service_role ma dostęp do sleep_logs');
+
+-- Indeksy po user_id (wczytywanie listy i polityki RLS)
+select has_index('public', 'habit_schedules', 'habit_schedules_user_id_idx', array['user_id'],
+  'habit_schedules ma indeks po user_id');
+select has_index('public', 'habit_notes', 'habit_notes_user_id_idx', array['user_id'],
+  'habit_notes ma indeks po user_id');
 select ok(not has_table_privilege('anon', 'public.sleep_logs', 'select'),
   'anon nie czyta sleep_logs');
 
