@@ -20,8 +20,14 @@ describe("goalText", () => {
   it("poniżej celu", () => {
     expect(goalText(432, 480)).toEqual({
       web: "90% celu 8:00 · brakuje 48 min",
-      phone: "Brakuje 48 min do celu",
+      phone: "Brakuje 48 min do celu 8:00",
     });
+    expect(goalText(432, 450).phone).toBe("Brakuje 18 min do celu 7:30");
+  });
+
+  it("cel ≤ 0: sam czas snu, bez procentów", () => {
+    expect(goalText(432, 0)).toEqual({ web: "7:12", phone: "7:12" });
+    expect(goalText(432, -30)).toEqual({ web: "7:12", phone: "7:12" });
   });
 
   it("cel osiągnięty albo przekroczony", () => {
@@ -34,10 +40,14 @@ describe("goalText", () => {
 });
 
 describe("nightTitle", () => {
+  it("„ze” przed „środy”", () => {
+    expect(nightTitle("2026-11-19").web).toBe("Noc ze środy na czwartek");
+    expect(nightTitle("2026-11-18").web).toBe("Noc z wtorku na środę");
+  });
+
   it("web: dni tygodnia, phone: daty", () => {
     expect(nightTitle("2026-11-17").web).toBe("Noc z poniedziałku na wtorek");
     expect(nightTitle("2026-11-15").web).toBe("Noc z soboty na niedzielę");
-    expect(nightTitle("2026-11-19").web).toBe("Noc ze środy na czwartek");
     expect(nightTitle("2026-11-15").phone).toBe("Noc 14 → 15 listopada");
     expect(nightTitle("2026-11-01").phone).toBe(
       "Noc 31 października → 1 listopada",

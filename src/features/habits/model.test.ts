@@ -240,6 +240,72 @@ describe("serie", () => {
     });
   });
 
+  it("seria przez zmianę wersji codziennie → pn/śr/pt", () => {
+    const h = nawyk("a", [
+      codziennie("2026-11-01"),
+      wDni("2026-11-10", [1, 3, 5]),
+    ]);
+    // 05.11 brak; 06–09 codziennie zrobione; od 10.11 pn/śr/pt: 11, 13, 16 zrobione;
+    // dziś (wt 17.11) i 10.11 (wt) niezaplanowane
+    const checks: Checks = new Map([
+      [
+        "a",
+        new Set([
+          ...dni("2026-11-06", 4),
+          "2026-11-11",
+          "2026-11-13",
+          "2026-11-16",
+        ]),
+      ],
+    ]);
+    expect(currentStreak(h, checks, DZIS, "mon")).toEqual({
+      value: 7,
+      unit: "days",
+    });
+    expect(longestStreak(h, checks, DZIS, "mon")).toEqual({
+      value: 7,
+      unit: "days",
+    });
+  });
+
+  it("seria dzienna przez zmianę czasu (29.03 i 25.10)", () => {
+    const h = nawyk("a", [codziennie("2026-03-20")]);
+    const checks: Checks = new Map([
+      ["a", new Set([...dni("2026-03-27", 5), ...dni("2026-10-23", 5)])],
+    ]);
+    expect(currentStreak(h, checks, "2026-03-31", "mon")).toEqual({
+      value: 5,
+      unit: "days",
+    });
+    expect(currentStreak(h, checks, "2026-10-27", "mon")).toEqual({
+      value: 5,
+      unit: "days",
+    });
+  });
+
+  it("X/tydz. ruszył w środku bieżącego tygodnia", () => {
+    // start śr 18.11, dziś czw 19.11; poprzedni tydzień nie ma wersji
+    const h = nawyk("t", [razyWTyg("2026-11-18", 2)]);
+    const jedno: Checks = new Map([["t", new Set(["2026-11-18"])]]);
+    expect(currentStreak(h, jedno, "2026-11-19", "mon")).toEqual({
+      value: 0,
+      unit: "weeks",
+    });
+    expect(weekProgress(h, jedno, "2026-11-19", "mon")).toEqual({
+      done: 1,
+      target: 2,
+    });
+    const dwa: Checks = new Map([["t", new Set(["2026-11-18", "2026-11-19"])]]);
+    expect(currentStreak(h, dwa, "2026-11-19", "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
+    expect(longestStreak(h, dwa, "2026-11-19", "mon")).toEqual({
+      value: 1,
+      unit: "weeks",
+    });
+  });
+
   it("nawyk jeszcze nie obowiązuje: seria 0", () => {
     const h = nawyk("a", [codziennie("2026-12-01")]);
     expect(currentStreak(h, new Map(), DZIS, "mon")).toEqual({
@@ -271,6 +337,35 @@ describe("successRate30 / last30Comparison", () => {
   it("brak danych daje null", () => {
     const h = nawyk("a", [codziennie("2026-12-01")]);
     expect(successRate30(h, new Map(), DZIS)).toBeNull();
+  });
+
+  it("X/tydz. młodszy niż 30 dni: mianownik proporcjonalny do dni od startu", () => {
+    // start 11.11 → 7 dni do 17.11 włącznie; oczekiwane 3 × 7 / 7 = 3
+    const h = nawyk("t", [razyWTyg("2026-11-11", 3)]);
+    const checks: Checks = new Map([
+      ["t", new Set(["2026-11-12", "2026-11-14", "2026-11-16"])],
+    ]);
+    expect(successRate30(h, checks, DZIS)).toBe(100);
+    // start 14 dni temu (04.11): oczekiwane 6, 3 odhaczenia → 50
+    const h2 = nawyk("t", [razyWTyg("2026-11-04", 3)]);
+    expect(successRate30(h2, checks, DZIS)).toBe(50);
+  });
+
+  it("średnia z nieokrąglonych proporcji dnia", () => {
+    // 3 nawyki od 15.11: 15.11 i 16.11 po 1/3, 17.11 3/3.
+    // Z zaokrąglonych procentów (33+33+100)/3 = 55,3 → 55; z proporcji 55,6 → 56
+    const hs = ["a", "b", "c"].map((id) =>
+      nawyk(id, [codziennie("2026-11-15")]),
+    );
+    const checks: Checks = new Map([
+      ["a", new Set(["2026-11-15", "2026-11-16", DZIS])],
+      ["b", new Set([DZIS])],
+      ["c", new Set([DZIS])],
+    ]);
+    expect(last30Comparison(hs, checks, DZIS)).toEqual({
+      percent: 56,
+      deltaPoints: null,
+    });
   });
 
   it("80% vs 74% → deltaPoints 6", () => {
@@ -341,6 +436,14 @@ describe("heatmapy", () => {
     const nd = heatmapMonth([h], checks, "2026-11", DZIS, "sun");
     expect(nd).toHaveLength(30);
     expect(nd[0]?.date).toBe("2026-11-01");
+  });
+
+  it("tygodnie: ciągłe daty przez zmianę czasu 25.10", () => {
+    const kolumny = heatmapWeeks([h], checks, 4, "2026-10-27", "mon");
+    const daty = kolumny.flat().map((k) => k.date);
+    expect(daty).toEqual(dni("2026-10-05", 28));
+    expect(kolumny[2][6].date).toBe("2026-10-25");
+    expect(kolumny[3][0].date).toBe("2026-10-26");
   });
 
   it("tygodnie: ostatnie N kolumn do bieżącego tygodnia włącznie", () => {

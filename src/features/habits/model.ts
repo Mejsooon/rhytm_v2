@@ -234,12 +234,20 @@ export function successRate30(
   if (dzisiejsza.type === "times_per_week") {
     const naTydzien = dzisiejsza.timesPerWeek ?? 0;
     if (naTydzien === 0) return null;
+    // D = dni od pierwszego validFrom do dziś włącznie, najwyżej 30
+    // (młody nawyk nie jest karany za dni, w których jeszcze nie istniał)
+    const pierwszyDzien = habit.schedules[0].validFrom;
+    let dniOkna = 0;
     let ile = 0;
     for (let i = 0; i < 30; i++) {
-      if (odhaczone.has(addDays(today, -i))) ile++;
+      const d = addDays(today, -i);
+      if (d < pierwszyDzien) break;
+      dniOkna++;
+      if (odhaczone.has(d)) ile++;
     }
-    // oczekiwane odhaczenia w 30 dniach = X × 30 / 7; wynik obcięty do 100
-    return Math.min(100, Math.round((ile / ((naTydzien * 30) / 7)) * 100));
+    // oczekiwane odhaczenia = X × D / 7; wynik obcięty do 100
+    const oczekiwane = (naTydzien * dniOkna) / 7;
+    return Math.min(100, Math.round((ile / oczekiwane) * 100));
   }
 
   let planned = 0;
@@ -253,7 +261,8 @@ export function successRate30(
   return planned === 0 ? null : Math.round((done / planned) * 100);
 }
 
-// Średni % dni z planem w ostatnich 30 dniach i różnica względem 30 dni wcześniej
+// Średni % dni z planem w ostatnich 30 dniach i różnica względem 30 dni wcześniej.
+// Uśredniamy nieokrąglone proporcje done/planned; zaokrąglamy tylko wynik końcowy.
 export function last30Comparison(
   habits: Habit[],
   checks: Checks,
@@ -271,11 +280,11 @@ export function last30Comparison(
         addDays(today, -(okno * 30 + i)),
         today,
       );
-      if (komorka.percent === null) continue;
-      suma += komorka.percent;
+      if (komorka.percent === null) continue; // bez planu albo przyszłość
+      suma += komorka.done / komorka.planned;
       ileDni++;
     }
-    srednie.push(ileDni === 0 ? null : suma / ileDni);
+    srednie.push(ileDni === 0 ? null : (suma / ileDni) * 100);
   }
 
   const [teraz, wczesniej] = srednie;

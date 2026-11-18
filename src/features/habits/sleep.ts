@@ -57,11 +57,17 @@ export function sleepMinutes(sleptAt: string, wokeAt: string): number | null {
   return roznica;
 }
 
-// Web: „90% celu 8:00 · brakuje 48 min”, telefon: „Brakuje 48 min do celu”
+// Web: „90% celu 8:00 · brakuje 48 min”, telefon: „Brakuje 48 min do celu 8:00”.
+// Cel ≤ 0 (nieustawiony albo błędny): procent nie ma sensu (dzielenie przez 0),
+// więc oba warianty pokazują sam czas snu, np. „7:12”.
 export function goalText(
   minutes: number,
   goalMin: number,
 ): { web: string; phone: string } {
+  if (goalMin <= 0) {
+    const czas = formatDuration(minutes);
+    return { web: czas, phone: czas };
+  }
   const procent = Math.round((minutes / goalMin) * 100);
   const cel = formatDuration(goalMin);
   if (minutes >= goalMin) {
@@ -73,7 +79,7 @@ export function goalText(
   const brakuje = goalMin - minutes;
   return {
     web: `${procent}% celu ${cel} · brakuje ${brakuje} min`,
-    phone: `Brakuje ${brakuje} min do celu`,
+    phone: `Brakuje ${brakuje} min do celu ${cel}`,
   };
 }
 
