@@ -39,7 +39,7 @@ describe("DeleteBlockDialog", () => {
   it("blok jednorazowy: „Usunąć blok?” i usunięcie po „Usuń”", async () => {
     changeOccurrence.mockResolvedValue({ ok: true });
     const { onDeleted } = wyrenderuj(wystapienie());
-    expect(screen.getByRole("dialog", { name: "Usunąć blok?" })).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog", { name: "Usunąć blok?" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(changeOccurrence).toHaveBeenCalledWith({
       blockId: "b1",
@@ -48,6 +48,35 @@ describe("DeleteBlockDialog", () => {
       delete: true,
     });
     await waitFor(() => expect(onDeleted).toHaveBeenCalled());
+  });
+
+  it("opis z nazwą, dniem i godzinami jak w makiecie, bez przycisku ✕", () => {
+    wyrenderuj(wystapienie({ title: "Bieg 10 km", startMin: 960, durationMin: 60 }));
+    const okno = screen.getByRole("alertdialog", { name: "Usunąć blok?" });
+    expect(okno).toHaveAccessibleDescription("„Bieg 10 km” · wt 17.11 · 16:00–17:00");
+    expect(screen.queryByRole("button", { name: "Zamknij" })).not.toBeInTheDocument();
+  });
+
+  it("w trakcie usuwania przyciski są zablokowane, a Esc nie zamyka", async () => {
+    let zakoncz: (v: { ok: true }) => void = () => {};
+    changeOccurrence.mockReturnValue(new Promise((r) => (zakoncz = r)));
+    const { onCancel, onDeleted } = wyrenderuj(wystapienie());
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(screen.getByRole("button", { name: "Usuń" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Anuluj" })).toBeDisabled();
+    await userEvent.keyboard("{Escape}");
+    expect(onCancel).not.toHaveBeenCalled();
+    zakoncz({ ok: true });
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled());
+  });
+
+  it("błąd usuwania zostaje w oknie", async () => {
+    changeOccurrence.mockResolvedValue({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    const { onDeleted } = wyrenderuj(wystapienie());
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się zapisać. Spróbuj ponownie.");
+    expect(onDeleted).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Usuń" })).toBeEnabled();
   });
 
   it("Anuluj nic nie usuwa", async () => {
