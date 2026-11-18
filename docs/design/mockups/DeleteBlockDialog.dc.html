@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Usunąć blok?</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#171717}a:hover{color:#000000}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.btn{background:#ffffff;color:#171717;border:1px solid #e0e0e0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btnd{background:#b91c1c;color:#ffffff;border:1px solid #b91c1c;border-radius:6px;padding:7px 12px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+a.btnd,a.btnd:hover{color:#ffffff}
+a.btnd:hover{background:#991b1b}
+</style>
+</helmet>
+<div style="height: 900px; position: relative; display: flex; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+  <div style="flex: 0 0 232px; background: #fafafa; border-right: 1px solid #eaeaea"><dc-import name="Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <!-- tło: kalendarz na pełne okno (przyciemniony) -->
+  <main aria-hidden="true" style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; opacity: .5">
+    <header style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #eaeaea">
+      <span class="btn" style="padding: 5px 8px">‹</span><span class="btn" style="padding: 5px 10px">Dziś</span><span class="btn" style="padding: 5px 8px">›</span>
+      <span style="margin-left: 8px; font-size: 16px; font-weight: 600">Listopad 2026</span><span class="mono" style="font-size: 12px; color: #6b6b6b">tydz. 47</span>
+    </header>
+    <div style="flex: 1; display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); background-image: repeating-linear-gradient(to bottom, #f0f0f0 0, #f0f0f0 1px, transparent 1px, transparent 48px)">
+      <div></div><div style="border-left: 1px solid #eaeaea"></div><div style="border-left: 1px solid #eaeaea; position: relative"><div style="position: absolute; left: 3px; right: 3px; top: 482px; height: 45px; border-radius: 6px; background: #c2410c1f; border-left: 3px solid #c2410c"></div></div><div style="border-left: 1px solid #eaeaea"></div><div style="border-left: 1px solid #eaeaea"></div><div style="border-left: 1px solid #eaeaea"></div><div style="border-left: 1px solid #eaeaea"></div><div style="border-left: 1px solid #eaeaea"></div>
+    </div>
+  </main>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.25)"></div>
+  <!-- Blok jednorazowy: proste potwierdzenie. Blok cykliczny zamiast tego otwiera okno zakresu (ScopeDialog). -->
+  <div role="alertdialog" aria-modal="true" aria-labelledby="usun-tytul" aria-describedby="usun-opis" style="position: absolute; left: 50%; top: 220px; transform: translateX(-50%); width: min(420px, calc(100% - 32px)); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.16); display: flex; flex-direction: column">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 16px">
+      <div><h2 id="usun-tytul" style="margin: 0; font-size: 17px; font-weight: 600">Usunąć blok?</h2><p id="usun-opis" style="margin: 4px 0 0; color: #666666; font-size: 13px">„Bieg 10 km”</p></div>
+      <a href="{{back}}" aria-label="Zamknij" style="width: 30px; height: 30px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e0e0e0; border-radius: 6px; background: #ffffff; color: #666666; text-decoration: none; flex: none">✕</a>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #eaeaea; background: #fafafa; border-radius: 0 0 12px 12px">
+      <a href="{{back}}" class="btn">Anuluj</a><a href="{{back}}" class="btnd">Usuń</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // wraca do widoku, z którego otwarto okno (tydzień albo dzień)
+    let back = 'Calendar.dc.html';
+    try { const f = sessionStorage.getItem('rh-from'); if (f && /^[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
+    return { back };
+  }
+}
+</script>
+</body>
+</html>

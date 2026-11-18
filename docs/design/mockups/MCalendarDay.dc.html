@@ -14,69 +14,70 @@ body{margin:0;background:#ffffff}
 a{color:#171717;text-decoration:none}
 .mono{font-family:'Geist Mono',ui-monospace,monospace}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}
-.top{display:flex;align-items:center;gap:4px;padding:8px;min-height:60px;box-sizing:border-box;flex:none}
-.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0}
+.ib{width:44px;height:44px;border:0;background:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#171717;flex:none;padding:0;font:inherit}
 .ib:hover{background:#f5f5f5}
-.body{flex:1;overflow-y:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:16px}
-.h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
-.h2{font-size:17px;font-weight:600;margin:0}
-.sub{font-size:13px;color:#666666}
-.card{border:1px solid #eaeaea;border-radius:12px;background:#ffffff}
-.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-bottom:1px solid #f0f0f0;box-sizing:border-box}
-.row:last-child{border-bottom:0}
-a.row:hover{background:#fafafa}
-.btnp{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#171717;color:#ffffff;border:1px solid #171717;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
-a.btnp,a.btnp:hover{color:#ffffff}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:10px;background:#ffffff;color:#171717;border:1px solid #e0e0e0;font:inherit;font-weight:500;cursor:pointer;width:100%;box-sizing:border-box}
-.btn:hover{background:#fafafa}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:#f2f2f2;border-radius:10px;padding:3px;gap:3px}
 .sg{height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#555555;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.sg.on,.sg[aria-pressed="true"]{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
-.inp{height:48px;border:1px solid #e0e0e0;border-radius:10px;padding:0 14px;font:inherit;font-size:15px;font-weight:400;width:100%;box-sizing:border-box;background:#ffffff;color:#171717;outline:none}
-.inp:focus{border-color:#171717}
-.inp::placeholder{color:#a3a3a3}
-.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #e0e0e0;border-radius:999px;background:#ffffff;font:inherit;font-size:14px;color:#171717;cursor:pointer}
-.chip.on,.chip[aria-pressed="true"]{background:#171717;border-color:#171717;color:#ffffff}
-.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
-.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8}
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.sg.on{background:#ffffff;color:#171717;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fab{position:absolute;right:16px;bottom:80px;width:56px;height:56px;border-radius:16px;background:#171717;color:#ffffff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.18);z-index:5}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8;border:0;padding:0;cursor:pointer}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;background:#ffffff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;max-height:92%;box-shadow:0 -8px 30px rgba(0,0,0,.12);padding-bottom:24px}
 .grab{width:36px;height:5px;border-radius:3px;background:#d4d4d4;margin:8px auto 2px;flex:none}
-.cb{width:24px;height:24px;flex:0 0 24px;border-radius:7px;border:1.5px solid #cfcfcf;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#ffffff}
-.cb[aria-checked="true"]{background:#15803d;border-color:#15803d}
-.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0;transition:background 160ms ease}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 160ms ease}
+.sw{width:50px;height:30px;flex:0 0 50px;border-radius:15px;border:0;background:#d9d9d9;position:relative;cursor:pointer;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .sw[aria-checked="true"]{background:#15803d}
 .sw[aria-checked="true"]::after{transform:translateX(20px)}
-.badge{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;border-radius:5px;padding:2px 7px;white-space:nowrap}
-.stat{display:block;background:#ffffff;padding:12px 14px;color:#171717}
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#eaeaea;border:1px solid #eaeaea;border-radius:12px;overflow:hidden}
-.num{font-family:'Geist Mono',ui-monospace,monospace;font-size:22px;font-weight:500;margin-top:4px}
-.chev{color:#a3a3a3;margin-left:auto;flex:none}
 </style>
 </helmet>
 <div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #ffffff; color: #171717; font-family: 'Geist', system-ui, sans-serif; font-size: 15px">
 
-  <header class="top" style="padding: 8px 8px 4px 16px"><div style="flex: 1"><div class="lbl">2026 · tydzień 46</div><h1 class="h1" style="margin-top: 2px">Listopad</h1></div><a href="MSearch.dc.html" class="ib" aria-label="Szukaj"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a><a href="MBlockSheet.dc.html" class="ib" aria-label="Nowy blok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
+  <!-- zwarty nagłówek w jednej linii: miesiąc + tydzień, kategorie, szukaj, nowy blok -->
+  <header style="flex: none; display: flex; align-items: center; gap: 2px; padding: 8px 8px 4px 16px; min-height: 52px; box-sizing: border-box">
+    <div style="flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0"><h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em">Listopad</h1><span class="lbl">tydz. 46</span></div>
+    <button type="button" class="ib" aria-label="Kategorie" aria-haspopup="dialog" onClick="{{openCats}}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg></button>
+    <a href="MSearch.dc.html" class="ib" aria-label="Szukaj"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a>
+  </header>
   <nav class="seg" aria-label="Widok kalendarza" style="margin: 0 16px 8px; flex: none"><a href="MCalendarDay.dc.html" class="sg on" aria-current="page">Dzień</a><a href="MCalendarWeek.dc.html" class="sg">Tydzień</a><a href="MCalendarMonth.dc.html" class="sg">Miesiąc</a></nav>
-  <div role="group" aria-label="Dzień tygodnia" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 4px 12px 10px; border-bottom: 1px solid #eaeaea; flex: none">
+
+  <!-- pasek tygodnia stoi w miejscu -->
+  <div role="group" aria-label="Dzień tygodnia" style="flex: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 2px 12px 8px">
     <sc-for list="{{week}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.p}}" aria-label="{{d.label}}" onClick="{{d.pick}}" style="{{d.s}}"><span style="font-size: 11px; opacity: .75">{{d.wd}}</span><span class="mono" style="font-size: 16px; font-weight: 500">{{d.n}}</span><span style="{{d.dot}}"></span></button></sc-for>
   </div>
-  <div class="body" style="padding: 14px 16px 100px; gap: 0">
-    <div class="sub" style="padding: 0 0 10px 48px">{{dayTitle}} · {{count}}</div>
-    <div style="position: relative">
-      <div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">07:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">08:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">09:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">10:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">11:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">12:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">13:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">14:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">15:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">16:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">17:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">18:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">19:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">20:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">21:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div><div style="height: 56px; display: flex; align-items: flex-start; gap: 8px"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">22:00</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div>
+  <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #eaeaea; font-size: 13px; color: #666666"><span>{{dayTitle}}</span><span aria-hidden="true">·</span><span>{{count}}</span></div>
+
+  <!-- OŚ GODZIN wypełnia całą resztę ekranu do paska zakładek; przewija się tylko ona -->
+  <div id="rh-tel-os" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 16px 96px">
+    <div style="position: relative; height: 1344px">
+      <sc-for list="{{hours}}" as="h" hint-placeholder-count="24"><div style="{{h.s}}"><span class="mono" style="width: 40px; font-size: 11px; color: #8a8a8a; transform: translateY(-7px); text-align: right">{{h.t}}</span><span style="flex: 1; border-top: 1px solid #f0f0f0"></span></div></sc-for>
       <a href="MBlockSheet.dc.html" aria-label="Dodaj blok w wolnym miejscu" style="position: absolute; left: 48px; right: 0; top: 0; bottom: 0"></a>
-      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4"><a href="MBlockSheet.dc.html" style="{{b.s}}"><span style="font-weight: 600; font-size: 14px; color: #171717">{{b.t}}</span><span class="mono" style="font-size: 11px; color: #555555">{{b.time}}</span></a></sc-for>
-      <sc-if value="{{isToday}}" hint-placeholder-val="{{true}}"><div aria-hidden="true" style="position: absolute; left: 42px; right: 0; top: 257px; height: 2px; background: #b91c1c; z-index: 3"><span style="position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #b91c1c"></span></div></sc-if>
+      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4"><a href="MBlockSheet.dc.html" style="{{b.s}}"><span style="font-weight: 600; font-size: 14px; line-height: 18px; color: #171717; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0">{{b.t}}</span><span class="mono" style="font-size: 11px; line-height: 16px; color: #555555; white-space: nowrap; flex: none">{{b.time}}</span></a></sc-for>
+      <sc-if value="{{isToday}}" hint-placeholder-val="{{true}}"><div aria-hidden="true" style="{{nowS}}"><span style="position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #b91c1c"></span></div></sc-if>
     </div>
   </div>
+
   <a href="MBlockSheet.dc.html" class="fab" aria-label="Nowy blok"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
-  <dc-import name="MTabBar" active="cal" hint-size="390px,84px"></dc-import>
+  <dc-import name="MTabBar" active="cal" hint-size="390px,64px"></dc-import>
+
+  <!-- arkusz z kategoriami (jak przycisk „Kategorie” na komputerze) -->
+  <sc-if value="{{catsOpen}}" hint-placeholder-val="{{false}}">
+    <button type="button" class="dim" aria-label="Zamknij kategorie" onClick="{{closeCats}}"></button>
+    <div class="sheet" role="dialog" aria-label="Kategorie">
+      <span class="grab" aria-hidden="true"></span>
+      <div style="display: flex; align-items: center; padding: 6px 8px 6px 16px"><span style="flex: 1; font-size: 17px; font-weight: 600">Kategorie</span><button type="button" class="ib" aria-label="Zamknij" onClick="{{closeCats}}">✕</button></div>
+      <sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><div style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid #f0f0f0"><span style="{{c.dot}}"></span><span style="flex: 1">{{c.name}}</span><button type="button" class="sw" role="switch" aria-checked="{{c.on}}" aria-label="{{c.aria}}" onClick="{{c.toggle}}"></button></div></sc-for>
+      <a href="CategoryDialog.dc.html" style="display: flex; align-items: center; min-height: 52px; padding: 0 16px; color: #666666">+ Kategoria</a>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
 class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { d: 15, hidden: {}, catsOpen: false }; }
+  componentDidMount() {
+    // start osi na 07:00, jak w aplikacji
+    const el = document.getElementById('rh-tel-os');
+    if (el) el.scrollTop = 7 * 56;
+  }
   renderVals() {
     const CAT = { own: ['#15803d', '#f0faf4', 'Własne'], uni: ['#0070f3', '#eef5ff', 'Studia'], sport: ['#c2410c', '#fff4ed', 'Sport'], work: ['#7c3aed', '#f5f3ff', 'Praca'], life: ['#525252', '#f5f5f5', 'Dom'] };
     const DAYS = {
@@ -88,24 +89,43 @@ class Component extends DCLogic {
       14: [[9, 1, 'Zakupy', 'life'], [11, 3, 'Strona Fanaberia — klient', 'work'], [16, 2, 'Długi bieg 14 km', 'sport']],
       15: [[8, 0.5, 'Poranna rutyna', 'life'], [10.5, 2, 'rhytm — kod', 'own'], [16, 1, 'Bieg 10 km', 'sport'], [19, 1, 'Bazy danych — projekt', 'uni']]
     };
-    const sel = (this.state && this.state.d) || 15;
+    const H = 56;
+    const sel = this.state.d;
+    const hidden = this.state.hidden;
     const WD = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'];
     const FULL = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
     const fmt = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + (h % 1 ? '30' : '00');
-    const list = DAYS[sel] || [];
+    const list = (DAYS[sel] || []).filter((b) => !hidden[b[3]]);
+    const n = list.length;
+    const r10 = n % 10, r100 = n % 100;
+    const word = n === 1 ? 'blok' : (r10 >= 2 && r10 <= 4 && (r100 < 12 || r100 > 14)) ? 'bloki' : 'bloków';
+    const now = 11 + 20 / 60;
     return {
-      week: [9, 10, 11, 12, 13, 14, 15].map((n, i) => ({
-        n, wd: WD[i], p: n === sel ? 'true' : 'false', label: FULL[i] + ' ' + n + ' listopada', pick: () => this.setState({ d: n }),
-        s: 'display:flex;flex-direction:column;align-items:center;gap:2px;height:62px;border:0;border-radius:12px;cursor:pointer;font:inherit;padding:6px 0;' + (n === sel ? 'background:#171717;color:#ffffff' : n === 15 ? 'background:#f5f5f5;color:#171717' : 'background:transparent;color:#171717'),
-        dot: 'width:4px;height:4px;border-radius:50%;background:' + (n === sel ? '#ffffff' : (DAYS[n] || []).length ? '#15803d' : 'transparent')
+      week: [9, 10, 11, 12, 13, 14, 15].map((d, i) => ({
+        n: d, wd: WD[i], p: d === sel ? 'true' : 'false', label: FULL[i] + ' ' + d + ' listopada', pick: () => this.setState({ d }),
+        s: 'display:flex;flex-direction:column;align-items:center;gap:2px;height:58px;border:0;border-radius:12px;cursor:pointer;font:inherit;padding:6px 0;' + (d === sel ? 'background:#171717;color:#ffffff' : d === 15 ? 'background:#f5f5f5;color:#171717' : 'background:transparent;color:#171717'),
+        dot: 'width:4px;height:4px;border-radius:50%;background:' + (d === sel ? '#ffffff' : (DAYS[d] || []).length ? '#15803d' : 'transparent')
       })),
       dayTitle: FULL[[9, 10, 11, 12, 13, 14, 15].indexOf(sel)] + ', ' + sel + ' listopada',
-      count: list.length + (list.length === 1 ? ' blok' : list.length < 5 ? ' bloki' : ' bloków'),
+      count: n + ' ' + word,
       isToday: sel === 15,
+      nowS: 'position:absolute;left:42px;right:0;top:' + Math.round(now * H) + 'px;height:2px;background:#b91c1c;z-index:3',
+      hours: Array.from({ length: 24 }, (_, i) => ({ t: i === 0 ? '' : String(i).padStart(2, '0') + ':00', s: 'position:absolute;left:0;right:0;top:' + (i * H) + 'px;height:' + H + 'px;display:flex;align-items:flex-start;gap:8px' })),
       blocks: list.map((b) => {
         const c = CAT[b[3]];
-        return { t: b[2], time: fmt(b[0]) + '–' + fmt(b[0] + b[1]) + ' · ' + c[2],
-          s: 'position:absolute;left:52px;right:4px;top:' + ((b[0] - 7) * 56 + 1) + 'px;height:' + (b[1] * 56 - 4) + 'px;box-sizing:border-box;border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:1px;overflow:hidden;z-index:2;background:' + c[1] + ';border-left:3px solid ' + c[0] };
+        // krótki blok (< 1 h): tytuł i godzina w jednej linii, żeby nic się nie ucinało
+        const krotki = b[1] < 1;
+        return { t: b[2], time: krotki ? fmt(b[0]) + '–' + fmt(b[0] + b[1]) : fmt(b[0]) + '–' + fmt(b[0] + b[1]) + ' · ' + c[2],
+          s: 'position:absolute;left:52px;right:4px;top:' + (b[0] * H + 1) + 'px;height:' + (b[1] * H - 4) + 'px;box-sizing:border-box;border-radius:8px;display:flex;overflow:hidden;z-index:2;background:' + c[1] + ';border-left:3px solid ' + c[0] + (krotki ? ';flex-direction:row;align-items:center;gap:8px;padding:0 10px' : ';flex-direction:column;gap:2px;padding:6px 10px') };
+      }),
+      catsOpen: this.state.catsOpen,
+      openCats: () => this.setState({ catsOpen: true }),
+      closeCats: () => this.setState({ catsOpen: false }),
+      cats: Object.keys(CAT).map((k) => {
+        const on = !hidden[k];
+        return { name: CAT[k][2], on: on ? 'true' : 'false', aria: 'Pokaż kategorię ' + CAT[k][2],
+          toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [k]: on }) }),
+          dot: 'width:10px;height:10px;border-radius:50%;flex:none;background:' + CAT[k][0] };
       })
     };
   }
