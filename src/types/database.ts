@@ -328,7 +328,9 @@ export type Database = {
           timezone: string | null
           user_id: string
           week_start: string | null
+          weekly_goal_type: string
           weekly_km_goal: number | null
+          weekly_workouts_goal: number | null
           weight_kg: number | null
         }
         Insert: {
@@ -350,7 +352,9 @@ export type Database = {
           timezone?: string | null
           user_id: string
           week_start?: string | null
+          weekly_goal_type?: string
           weekly_km_goal?: number | null
+          weekly_workouts_goal?: number | null
           weight_kg?: number | null
         }
         Update: {
@@ -372,7 +376,9 @@ export type Database = {
           timezone?: string | null
           user_id?: string
           week_start?: string | null
+          weekly_goal_type?: string
           weekly_km_goal?: number | null
+          weekly_workouts_goal?: number | null
           weight_kg?: number | null
         }
         Relationships: []
