@@ -164,14 +164,17 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
       size="sm"
       aria-disabled={valid ? "false" : "true"}
       disabled={zapisuje}
-      className={cn(!valid && "cursor-not-allowed opacity-45")}
+      className={cn(
+        "max-[799px]:h-11",
+        !valid && "cursor-not-allowed opacity-45",
+      )}
       onClick={() => void zapisz()}
     >
       Zapisz szablon
     </Button>
   );
   const przyciskAnuluj = (
-    <Button asChild size="sm">
+    <Button asChild size="sm" className="max-[799px]:h-11">
       <Link href="/sport/szablony">Anuluj</Link>
     </Button>
   );
@@ -182,14 +185,14 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
         <div className="min-w-0 font-mono text-[13px] text-[#666666]">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717]"
+            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
           <span className="text-[#b0b0b0]">/</span>{" "}
           <Link
             href="/sport/szablony"
-            className="text-[#666666] no-underline hover:text-[#171717]"
+            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Szablony treningów
           </Link>{" "}
@@ -453,7 +456,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
             <Button
               size="sm"
               disabled={zapisuje}
-              className="border-[#f3c7c7] text-[#b91c1c] hover:text-[#b91c1c]"
+              className="border-[#f3c7c7] text-[#b91c1c] hover:text-[#b91c1c] max-[799px]:h-11"
               onClick={() => void usun()}
             >
               Usuń szablon

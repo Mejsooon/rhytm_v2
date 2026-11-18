@@ -73,7 +73,7 @@ export function TemplatesList({
         <div className="font-mono text-[13px] text-[#666666]">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717]"
+            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
@@ -81,7 +81,12 @@ export function TemplatesList({
           <span className="text-[#171717]">Szablony treningów</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="primary" size="sm">
+          <Button
+            asChild
+            variant="primary"
+            size="sm"
+            className="max-[799px]:h-11"
+          >
             <Link href="/sport/szablony/nowy">Nowy szablon</Link>
           </Button>
         </div>
@@ -137,14 +142,18 @@ export function TemplatesList({
                   <Button
                     variant="primary"
                     size="sm"
-                    className="text-[13px]"
+                    className="text-[13px] max-[799px]:h-11"
                     disabled={startuje !== null}
                     aria-busy={startuje === t.id ? true : undefined}
                     onClick={() => void rozpocznij(t.id, t.start_time)}
                   >
                     Rozpocznij
                   </Button>
-                  <Button asChild size="sm" className="text-[13px]">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="text-[13px] max-[799px]:h-11"
+                  >
                     <Link href={`/sport/szablony/${t.id}`}>Edytuj</Link>
                   </Button>
                 </div>

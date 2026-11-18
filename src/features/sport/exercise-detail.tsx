@@ -160,7 +160,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         <div className="font-mono text-[13px] text-[#666666]">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717]"
+            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
@@ -170,6 +170,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         </div>
         <Button
           size="sm"
+          className="max-[799px]:h-11"
           onClick={() => {
             setNazwa(exercise.name);
             setBlad(null);
@@ -389,12 +390,17 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         title="Zmień nazwę"
         footer={
           <>
-            <Button size="sm" onClick={() => setDialogOtwarty(false)}>
+            <Button
+              size="sm"
+              className="max-[799px]:h-11"
+              onClick={() => setDialogOtwarty(false)}
+            >
               Anuluj
             </Button>
             <Button
               size="sm"
               variant="primary"
+              className="max-[799px]:h-11"
               disabled={zapisuje}
               onClick={zapisz}
             >

@@ -28,6 +28,9 @@ vi.mock("./actions", () => ({
   saveRun,
 }));
 
+// Drzewo telefonu (w DOM obok webu) ma własne testy (sport-view-mobile.test.tsx); tu sprawdzamy web
+vi.mock("./mobile/m-sport", () => ({ MSport: () => null }));
+
 import { bieg, daneSportu, SESJA_PUSH, SZABLON_PUSH } from "./sport-test-data";
 import { SportView } from "./sport-view";
 

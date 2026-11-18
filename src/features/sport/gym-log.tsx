@@ -2,7 +2,8 @@
 
 // Ekran treningu siłowego na komputerze (GymLog.dc.html): ścieżka z „Zapisz jako szablon” i „Zakończ trening”,
 // objętość i serie, karty ćwiczeń z edycją serii (kg / powt. / ✓ / ✕), REKORD, linia 1RM i „+ Ćwiczenie”.
-// Stan serii trzyma use-gym-store (wspólny z telefonem — MGym dojdzie osobno); drzewo web jest ukryte poniżej 800 px.
+// Stan serii trzyma use-gym-store — jeden na ekran, przekazany też do drzewa telefonu (MGym).
+// Oba drzewa są w DOM; przełącza je wyłącznie CSS (800 px).
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ import { weekdayOf } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
 import { finishWorkout, saveSessionAsTemplate } from "./actions";
 import { ExercisePicker } from "./exercise-picker";
+import { MGym } from "./mobile/m-gym";
 import type { WorkoutData } from "./load-sport";
 import {
   epley1rm,
@@ -119,6 +121,17 @@ export function GymLog({ data }: { data: WorkoutData }) {
 
   return (
     <>
+      <div
+        data-testid="m-gym"
+        className="flex min-w-0 flex-col min-[800px]:hidden"
+      >
+        <MGym
+          data={data}
+          store={sklep}
+          finishing={konczy}
+          onFinish={() => void zakoncz()}
+        />
+      </div>
       <div
         data-testid="web-gym"
         className="flex min-w-0 flex-col max-[799px]:hidden"

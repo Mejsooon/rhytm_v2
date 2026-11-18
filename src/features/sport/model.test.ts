@@ -3,6 +3,7 @@ import { EXERCISE_LIBRARY, searchExercises } from "./library";
 import {
   epley1rm,
   kgVsLast,
+  lastSetsSummary,
   parseKgInput,
   parseRepsInput,
   firstReps,
@@ -97,6 +98,54 @@ describe("1RM i objętość", () => {
         { weight_kg: null, reps: 12, done: true },
       ]),
     ).toBe(480);
+  });
+});
+
+describe("lastSetsSummary", () => {
+  const historia = [
+    {
+      sessionId: "s1",
+      startLocal: "2026-11-03T10:00:00",
+      sets: [set({ id: "a1", weight_kg: 50, reps: 10 })],
+    },
+    {
+      sessionId: "s2",
+      startLocal: "2026-11-10T10:00:00",
+      sets: [
+        set({ id: "b2", set_no: 2, weight_kg: 60, reps: 8 }),
+        set({ id: "b1", set_no: 1, weight_kg: 60, reps: 8 }),
+        set({ id: "b3", set_no: 3, weight_kg: 62.5, reps: 6 }),
+        set({ id: "b4", set_no: 4, weight_kg: 70, reps: 6, done: false }),
+        set({ id: "inne", exercise_id: "e2", weight_kg: 100 }),
+      ],
+    },
+    {
+      sessionId: "teraz",
+      startLocal: "2026-11-17T10:00:00",
+      sets: [set({ id: "c1", weight_kg: 65 })],
+    },
+  ];
+
+  it("ostatnia wcześniejsza sesja: zrobione serie × powt. pierwszej · maks. kg", () => {
+    expect(lastSetsSummary(historia, "teraz", "e1")).toBe("ost. 3×8 · 62,5 kg");
+  });
+
+  it("masa ciała bez kg; brak wcześniejszej sesji → null", () => {
+    const mc = [
+      {
+        sessionId: "s1",
+        startLocal: "2026-11-03T10:00:00",
+        sets: [
+          set({ id: "a1", weight_kg: null, reps: 12 }),
+          set({ id: "a2", set_no: 2, weight_kg: null, reps: 10 }),
+        ],
+      },
+      { sessionId: "teraz", startLocal: "2026-11-17T10:00:00", sets: [] },
+    ];
+    expect(lastSetsSummary(mc, "teraz", "e1")).toBe("ost. 2×12");
+    expect(lastSetsSummary(historia, "s1", "e1")).toBeNull();
+    expect(lastSetsSummary(historia, "teraz", "e9")).toBeNull();
+    expect(lastSetsSummary(historia, "brak", "e1")).toBeNull();
   });
 });
 

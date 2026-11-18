@@ -1,0 +1,217 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { SportMonthData } from "../load-sport";
+import type { SportItem } from "../model";
+import { bieg, daneSportu } from "../sport-test-data";
+import { MSport } from "./m-sport";
+
+const SILOWNIA = "a1000000-0000-4000-8000-000000000116";
+const BIEG_PN = "a1000000-0000-4000-8000-000000000216";
+const BIEG_WT = "a1000000-0000-4000-8000-000000000217";
+
+// Dziś = wt 17.11.2026, tydzień od poniedziałku 16.11 (ISO 47).
+// Tydzień: bieg 5 km / 25:00 (pn), bieg 3 km / 18:00 (wt), siłownia (pn), plan biegu 10 km (śr).
+// Wcześniej: 6,4 km (wt 10.11, t. 46) i 4 km (wt 27.10, t. 44).
+function dane(zmiany: Partial<SportMonthData> = {}): SportMonthData {
+  const silownia: SportItem = {
+    ...bieg(SILOWNIA, "2026-11-16"),
+    kind: "gym",
+    title: "Push",
+    runKind: null,
+    durationMin: 58,
+  };
+  const items: SportItem[] = [
+    bieg("a1000000-0000-4000-8000-000000000027", "2026-10-27", {
+      distanceKm: 4,
+      durationS: 1440,
+    }),
+    bieg("a1000000-0000-4000-8000-000000000110", "2026-11-10", {
+      title: "Interwały",
+      runKind: "intervals",
+      distanceKm: 6.4,
+      durationS: 2035,
+    }),
+    silownia,
+    bieg(BIEG_PN, "2026-11-16", { distanceKm: 5, durationS: 1500 }),
+    bieg(BIEG_WT, "2026-11-17", { distanceKm: 3, durationS: 1080 }),
+    bieg("a1000000-0000-4000-8000-000000000218", "2026-11-18", {
+      planned: true,
+      distanceKm: 10,
+    }),
+  ];
+  const d = daneSportu({ items });
+  return {
+    ...d,
+    recent: items
+      .filter((i) => !i.planned)
+      .sort((a, b) => (a.date > b.date ? -1 : 1)),
+    setsHistory: [
+      ...d.setsHistory,
+      {
+        sessionId: SILOWNIA,
+        startLocal: "2026-11-16T07:00:00",
+        title: "Push",
+        completed: true,
+        sets: [
+          ...d.setsHistory[1].sets.map((s) => ({
+            ...s,
+            id: `x${s.id}`,
+            session_id: SILOWNIA,
+          })),
+        ],
+      },
+    ],
+    ...zmiany,
+  };
+}
+
+const onNewRun = vi.fn();
+const onNewGym = vi.fn();
+const onOpenRun = vi.fn();
+
+function pokaz(d: SportMonthData = dane()) {
+  render(
+    <MSport
+      data={d}
+      onNewRun={onNewRun}
+      onNewGym={onNewGym}
+      onOpenRun={onOpenRun}
+    />,
+  );
+}
+
+const karta = () => screen.getByRole("region", { name: "Bieganie" });
+const wykres = () => screen.getByRole("region", { name: "Kilometry" });
+
+beforeEach(() => vi.clearAllMocks());
+
+describe("MSport", () => {
+  it("nagłówek z numerem i zakresem tygodnia, „+” otwiera nowy bieg", async () => {
+    pokaz();
+    expect(screen.getByText("Tydzień 47 · 16–22.11")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sport" })).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Nowa aktywność" }),
+    );
+    expect(onNewRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("tydzień przechodzący przez miesiąc ma obie daty", () => {
+    pokaz(dane({ today: "2026-12-02" }));
+    expect(screen.getByText("Tydzień 49 · 30.11–6.12")).toBeInTheDocument();
+  });
+
+  it("karta „Bieganie” w tygodniu: km / cel z paskiem, biegi, tempo, siłownia", () => {
+    pokaz();
+    expect(within(karta()).getByTestId("km")).toHaveTextContent("8,0");
+    expect(within(karta()).getByText("/ 25 km")).toBeInTheDocument();
+    // 8 / 25 = 32%
+    expect(within(karta()).getByTestId("pasek-km")).toHaveStyle({
+      width: "32%",
+    });
+    expect(within(karta()).getByTestId("biegi")).toHaveTextContent("2");
+    // (1500 + 1080) / 8 = 322,5 s → 5:23
+    expect(within(karta()).getByTestId("tempo")).toHaveTextContent("5:23");
+    expect(within(karta()).getByTestId("silownia")).toHaveTextContent("1×");
+  });
+
+  it("bez celu km sama liczba: bez „/ cel” i bez paska", () => {
+    const d = dane();
+    pokaz({ ...d, profile: { ...d.profile, kmGoalOn: false } });
+    expect(within(karta()).getByTestId("km")).toHaveTextContent("8,0");
+    expect(within(karta()).getByText("km")).toBeInTheDocument();
+    expect(within(karta()).queryByText(/\/ 25/)).not.toBeInTheDocument();
+    expect(within(karta()).queryByTestId("pasek-km")).not.toBeInTheDocument();
+  });
+
+  it("bez biegów tempo to „—”", () => {
+    pokaz(dane({ items: [] }));
+    expect(within(karta()).getByTestId("km")).toHaveTextContent("0,0");
+    expect(within(karta()).getByTestId("tempo")).toHaveTextContent("—");
+    expect(within(karta()).getByTestId("biegi")).toHaveTextContent("0");
+  });
+
+  it("wykres tygodnia: słupek na dzień, stuknięcie pokazuje wartość", async () => {
+    pokaz();
+    const slupki = within(wykres()).getAllByRole("button");
+    expect(slupki.map((s) => s.getAttribute("aria-label"))).toEqual([
+      "pn: 5,0 km",
+      "wt: 3,0 km",
+      "śr: 0,0 km",
+      "cz: 0,0 km",
+      "pt: 0,0 km",
+      "sb: 0,0 km",
+      "nd: 0,0 km",
+    ]);
+    expect(within(wykres()).getByText("stuknij słupek")).toBeInTheDocument();
+    await userEvent.click(
+      within(wykres()).getByRole("button", { name: "wt: 3,0 km" }),
+    );
+    expect(within(wykres()).getByText("wt · 3,0 km")).toBeInTheDocument();
+    expect(
+      within(wykres()).getByRole("button", { name: "wt: 3,0 km" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("tydzień od niedzieli: oś zaczyna się od nd", () => {
+    const d = dane();
+    pokaz({ ...d, profile: { ...d.profile, weekStart: "sun" } });
+    expect(screen.getByText("Tydzień 47 · 15–21.11")).toBeInTheDocument();
+    const slupki = within(wykres()).getAllByRole("button");
+    expect(slupki[0]).toHaveAttribute("aria-label", "nd: 0,0 km");
+    expect(slupki[1]).toHaveAttribute("aria-label", "pn: 5,0 km");
+  });
+
+  it("Miesiąc: 4 ostatnie tygodnie, cel × 4, słupek na tydzień", async () => {
+    pokaz();
+    await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
+    // 4 + 6,4 + 5 + 3 = 18,4 km
+    expect(within(karta()).getByTestId("km")).toHaveTextContent("18,4");
+    expect(within(karta()).getByText("/ 100 km")).toBeInTheDocument();
+    expect(within(karta()).getByTestId("biegi")).toHaveTextContent("4");
+    const slupki = within(wykres()).getAllByRole("button");
+    expect(slupki.map((s) => s.getAttribute("aria-label"))).toEqual([
+      "t. 44: 4,0 km",
+      "t. 45: 0,0 km",
+      "t. 46: 6,4 km",
+      "t. 47: 8,0 km",
+    ]);
+    await userEvent.click(slupki[2]);
+    expect(within(wykres()).getByText("t. 46 · 6,4 km")).toBeInTheDocument();
+    // Zmiana zakresu czyści wybrany słupek
+    await userEvent.click(screen.getByRole("radio", { name: "Tydzień" }));
+    expect(within(wykres()).getByText("stuknij słupek")).toBeInTheDocument();
+  });
+
+  it("„Bieg” i „Trening”", async () => {
+    pokaz();
+    await userEvent.click(screen.getByRole("button", { name: "Bieg" }));
+    expect(onNewRun).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole("button", { name: "Trening" }));
+    expect(onNewGym).toHaveBeenCalledTimes(1);
+  });
+
+  it("„Ostatnie”: bieg otwiera okno biegu, trening siłowy — ekran treningu", async () => {
+    pokaz();
+    const lista = screen.getByRole("region", { name: "Ostatnie" });
+    const bieg = within(lista).getByRole("button", {
+      name: /Spokojny · 3,0 km/,
+    });
+    expect(bieg).toHaveTextContent("wt 17.11 · 18:00 · 6:00/km");
+    await userEvent.click(bieg);
+    expect(onOpenRun).toHaveBeenCalledWith({ sessionId: BIEG_WT });
+
+    const silownia = within(lista).getByRole("link", {
+      name: /Siłownia — Push/,
+    });
+    expect(silownia).toHaveAttribute("href", `/sport/trening/${SILOWNIA}`);
+    expect(silownia).toHaveTextContent("pon 16.11 · 2 ćwiczenia · 58 min");
+  });
+
+  it("„Ostatnie” bez treningów", () => {
+    pokaz(dane({ recent: [] }));
+    expect(screen.getByText("Brak wykonanych treningów.")).toBeInTheDocument();
+  });
+});

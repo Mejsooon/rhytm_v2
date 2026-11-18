@@ -33,8 +33,9 @@ const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const BLAD_DYSTANSU = "Podaj dystans w km, np. 10,5.";
 const BLAD_CZASU = "Podaj czas jako h:mm:ss albo mm:ss, np. 58:00.";
 
-// Etykiety chipów jak w makiecie („Długi”); tytuł sesji w bazie to pełna etykieta rodzaju
-const RODZAJE: { kind: RunKind; label: string }[] = [
+// Etykiety chipów jak w makiecie („Długi”); tytuł sesji w bazie to pełna etykieta rodzaju.
+// Wspólne z arkuszem telefonu (MRunNew)
+export const RODZAJE: { kind: RunKind; label: string }[] = [
   { kind: "easy", label: "Spokojny" },
   { kind: "tempo", label: "Tempo" },
   { kind: "intervals", label: "Interwały" },

@@ -2,7 +2,7 @@
 
 // Ekran „Sport” na komputerze (Sport.dc.html): nagłówek z ‹ Dziś ›, filtrem i przyciskami,
 // kalendarz miesiąca z „Σ tydz.”, legenda, kafelki z wykresem, karta rekordu i ostatnie treningi.
-// Telefon (MSport) dojdzie osobno; drzewo web jest ukryte poniżej 800 px.
+// Telefon: MSport (drzewo obok webu, przełącza je wyłącznie CSS 800 px) i arkusz biegu MRunNew.
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { createGymSession, type GymSessionInput } from "./actions";
 import { DeleteSessionDialog } from "./delete-session-dialog";
+import { MRunNew } from "./mobile/m-run-new";
+import { MSport } from "./mobile/m-sport";
 import type { RunRequest } from "./item-popover";
 import type { SportMonthData } from "./load-sport";
 import type { SportItem } from "./model";
@@ -103,10 +105,26 @@ export function SportView({
     ? (data.items.find((i) => i.kind === "run" && i.sessionId === runId) ??
       (runItem?.sessionId === runId ? runItem : null))
     : null;
+  // Wariant okna (arkusz telefonu czy okno web) wybiera matchMedia — w efekcie, po hydratacji, osobno
+  // dla każdego adresu okna; do tego czasu okno jest zamknięte. Montowany jest tylko jeden wariant.
+  const [wariantBiegu, setWariantBiegu] = useState<{
+    klucz: string;
+    tel: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (kluczBiegu === null) return;
+    const tel =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 799px)").matches;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- wariant okna jest reakcją na adres i szerokość ekranu
+    setWariantBiegu({ klucz: kluczBiegu, tel });
+  }, [kluczBiegu]);
   const oknoBiegu =
     kluczBiegu !== null &&
     kluczBiegu !== zamknietyBieg &&
+    wariantBiegu?.klucz === kluczBiegu &&
     (newRun !== null || edytowanyBieg !== null);
+  const biegNaTelefonie = oknoBiegu && wariantBiegu.tel;
   function zamknijBieg() {
     setZamknietyBieg(kluczBiegu);
     router.replace(`/sport?miesiac=${month}`, { scroll: false });
@@ -214,6 +232,19 @@ export function SportView({
 
   return (
     <>
+      <div
+        data-testid="m-sport"
+        className="flex min-w-0 flex-col min-[800px]:hidden"
+      >
+        <MSport
+          data={data}
+          onNewRun={() => otworzBieg({ date: today, start: godzinaTeraz() })}
+          onNewGym={() =>
+            void rozpocznijSilownie({ date: today, start: godzinaTeraz() })
+          }
+          onOpenRun={otworzBieg}
+        />
+      </div>
       <div
         data-testid="web-sport"
         className="flex min-w-0 flex-col max-[799px]:hidden"
@@ -366,7 +397,7 @@ export function SportView({
         </div>
       </div>
 
-      {oknoBiegu && (
+      {oknoBiegu && !biegNaTelefonie && (
         <RunDialog
           key={kluczBiegu}
           item={edytowanyBieg}
@@ -376,6 +407,21 @@ export function SportView({
               ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
               : (newRun?.start ?? godzinaTeraz())
           }
+          profile={profile}
+          onClose={zamknijBieg}
+        />
+      )}
+      {biegNaTelefonie && (
+        <MRunNew
+          key={kluczBiegu}
+          item={edytowanyBieg}
+          date={edytowanyBieg ? edytowanyBieg.date : (newRun?.date ?? today)}
+          start={
+            edytowanyBieg
+              ? `${String(Math.floor(edytowanyBieg.startMin / 60)).padStart(2, "0")}:${String(edytowanyBieg.startMin % 60).padStart(2, "0")}`
+              : (newRun?.start ?? godzinaTeraz())
+          }
+          today={today}
           profile={profile}
           onClose={zamknijBieg}
         />

@@ -39,6 +39,9 @@ vi.mock("./actions", () => ({
   saveSessionAsTemplate,
 }));
 
+// Drzewo telefonu (w DOM obok webu) ma własne testy (mobile/m-gym.test.tsx); tu sprawdzamy web
+vi.mock("./mobile/m-gym", () => ({ MGym: () => null }));
+
 import { GymLog } from "./gym-log";
 import { daneTreningu, SESJA } from "./gym-test-data";
 import { WYCISKANIE } from "./sport-test-data";

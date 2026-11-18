@@ -382,3 +382,6 @@ export function useGymStore(data: WorkoutData) {
     addExercise,
   };
 }
+
+// Stan treningu przekazywany z GymLog do drzewa telefonu (MGym) — jeden store na ekran
+export type GymStore = ReturnType<typeof useGymStore>;
