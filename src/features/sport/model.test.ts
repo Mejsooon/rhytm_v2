@@ -8,6 +8,10 @@ import {
   firstReps,
   formatDuration,
   formatKg,
+  formatLastUsed,
+  formatRest,
+  parseRest,
+  plPlural,
   formatKm,
   formatPace,
   parseDuration,
@@ -624,5 +628,48 @@ describe("kgVsLast", () => {
         "e1",
       ),
     ).toBe(-2.5);
+  });
+});
+
+describe("szablony — przerwa, odmiana, „ostatnio”", () => {
+  it("parseRest: m:ss → sekundy, do 30:00; zły zapis → null", () => {
+    expect(parseRest("2:00")).toBe(120);
+    expect(parseRest(" 1:30 ")).toBe(90);
+    expect(parseRest("0:45")).toBe(45);
+    expect(parseRest("30:00")).toBe(1800);
+    expect(parseRest("30:01")).toBeNull();
+    expect(parseRest("2:60")).toBeNull();
+    expect(parseRest("2")).toBeNull();
+    expect(parseRest("")).toBeNull();
+    expect(parseRest("abc")).toBeNull();
+  });
+
+  it("formatRest: sekundy → m:ss", () => {
+    expect(formatRest(120)).toBe("2:00");
+    expect(formatRest(90)).toBe("1:30");
+    expect(formatRest(45)).toBe("0:45");
+    expect(formatRest(parseRest("3:05") as number)).toBe("3:05");
+  });
+
+  it("plPlural: 1 / 2–4 (bez 12–14) / reszta", () => {
+    const cw = (n: number) => plPlural(n, "ćwiczenie", "ćwiczenia", "ćwiczeń");
+    expect(cw(1)).toBe("1 ćwiczenie");
+    expect(cw(4)).toBe("4 ćwiczenia");
+    expect(cw(5)).toBe("5 ćwiczeń");
+    expect(cw(12)).toBe("12 ćwiczeń");
+    expect(cw(22)).toBe("22 ćwiczenia");
+    expect(cw(0)).toBe("0 ćwiczeń");
+    expect(plPlural(13, "seria", "serie", "serii")).toBe("13 serii");
+  });
+
+  it("formatLastUsed: dzień w strefie profilu, brak → —", () => {
+    expect(formatLastUsed("2026-11-12T10:00:00.000Z", "Europe/Warsaw")).toBe(
+      "czw 12.11",
+    );
+    // 23:30 UTC to już piątek w Warszawie
+    expect(formatLastUsed("2026-11-12T23:30:00+00:00", "Europe/Warsaw")).toBe(
+      "pt 13.11",
+    );
+    expect(formatLastUsed(null, "Europe/Warsaw")).toBe("—");
   });
 });

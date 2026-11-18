@@ -15,11 +15,14 @@ export function ExercisePicker({
   exercises,
   excludeNames,
   onPick,
+  side = "top",
 }: {
   exercises: ExerciseRow[];
   // Ćwiczenia już dodane do treningu
   excludeNames: string[];
   onPick: (name: string) => void;
+  // Trening (GymLog) otwiera dymek w górę, edytor szablonu (WorkoutTemplates) w dół
+  side?: "top" | "bottom";
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -47,7 +50,7 @@ export function ExercisePicker({
         setOpen(v);
         setQ("");
       }}
-      side="top"
+      side={side}
       align="start"
       width={300}
       ariaLabel="Dodaj ćwiczenie"

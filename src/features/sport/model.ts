@@ -408,3 +408,43 @@ export function templateSets(
   }
   return wynik;
 }
+
+// Przerwa w szablonie wpisywana jako "m:ss": "2:00" -> 120, "0:45" -> 45; do 30:00, zły zapis -> null
+export function parseRest(text: string): number | null {
+  const m = text.trim().match(/^(\d{1,2}):([0-5]\d)$/);
+  if (!m) return null;
+  const s = Number(m[1]) * 60 + Number(m[2]);
+  return s <= 1800 ? s : null;
+}
+
+// 120 -> "2:00", 45 -> "0:45"
+export function formatRest(s: number): string {
+  return `${Math.floor(s / 60)}:${dwie(s % 60)}`;
+}
+
+// Polska odmiana z liczbą: 1 ćwiczenie, 2–4 ćwiczenia (bez 12–14), 5 ćwiczeń
+export function plPlural(
+  n: number,
+  one: string,
+  few: string,
+  many: string,
+): string {
+  if (n === 1) return `${n} ${one}`;
+  const j = n % 10;
+  const d = n % 100;
+  return `${n} ${j >= 2 && j <= 4 && (d < 12 || d > 14) ? few : many}`;
+}
+
+const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
+
+// „ostatnio: czw 12.11” — chwila last_used_at jako dzień w strefie profilu; brak -> "—"
+export function formatLastUsed(iso: string | null, timeZone: string): string {
+  if (!iso) return "—";
+  const dzien = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+  return `${DNI_KROTKO[weekdayOf(dzien)]} ${dzien.slice(8, 10)}.${dzien.slice(5, 7)}`;
+}
