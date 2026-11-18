@@ -119,13 +119,14 @@ export function StepGoals({
   ];
 
   return (
-    <>
+    // Web: odstępy 14 px, żeby krok mieścił się bez przewijania (OnboardingGoals); telefon jak w kolumnie kreatora
+    <div className="flex flex-col gap-5 min-[800px]:gap-3.5">
       <StepHeader
         title="Co chcesz ogarnąć w rhytm?"
         subtitle="Na tej podstawie przygotujemy startowe strony i cele"
       />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 min-[800px]:gap-1.5">
         {GOALS.map((cel) => {
           const staly = LOCKED_GOALS.includes(cel.key);
           const wlaczony = staly || draft.goals.includes(cel.key);
@@ -139,7 +140,7 @@ export function StepGoals({
               title={staly ? "Zawsze włączone" : undefined}
               onClick={() => onChange(toggleGoal(draft, cel.key))}
               className={cn(
-                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:flex-col-reverse max-[799px]:gap-1",
+                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:flex-col-reverse max-[799px]:gap-1",
                 wlaczony &&
                   !staly &&
                   "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
@@ -294,6 +295,6 @@ export function StepGoals({
           incDisabled={draft.sleepGoalMin >= 660}
         />
       </div>
-    </>
+    </div>
   );
 }

@@ -24,7 +24,7 @@ a{color:#171717}a:hover{color:#15803d}
 .seg{display:flex;padding:4px;gap:4px;background:#f4f4f5;border-radius:10px}
 .seg button{flex:1;height:32px;border:0;border-radius:6px;background:transparent;font:500 13px 'Geist',system-ui,sans-serif;color:#525252;cursor:pointer}
 .seg button[aria-pressed="true"]{background:#ffffff;color:#171717;box-shadow:0 1px 2px rgba(0,0,0,0.08)}
-.opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid #e0e0e0;border-radius:10px;background:#ffffff;font:inherit;color:#171717;cursor:pointer;box-sizing:border-box;transition:border-color 150ms cubic-bezier(0.22,1,0.36,1),background-color 150ms cubic-bezier(0.22,1,0.36,1)}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:10px 14px;border:1px solid #e0e0e0;border-radius:10px;background:#ffffff;font:inherit;color:#171717;cursor:pointer;box-sizing:border-box;transition:border-color 150ms cubic-bezier(0.22,1,0.36,1),background-color 150ms cubic-bezier(0.22,1,0.36,1)}
 .opt:hover{border-color:#a3a3a3}
 .opt[aria-pressed="true"]{border-color:#171717;box-shadow:inset 0 0 0 1px #171717}
 .box{width:18px;height:18px;border-radius:5px;border:1px solid #d4d4d4;display:grid;place-items:center;flex:none;margin-top:1px;box-sizing:border-box}
@@ -41,6 +41,8 @@ a{color:#171717}a:hover{color:#15803d}
 .sw[aria-checked="true"] span{transform:translateX(16px)}
 .kbd{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;border:1px solid #e0e0e0;border-bottom-width:2px;border-radius:4px;padding:0 6px;background:#ffffff;color:#404040}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #15803d;outline-offset:2px}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
 @media (max-width:1100px){.split{grid-template-columns:1fr !important}.pvside{display:none !important}}
 </style>
 </helmet>
@@ -55,12 +57,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
       <div style="display: flex; gap: 4px; padding: 16px 20px 0" aria-label="Postęp: krok 3 z 7"><span style="flex: 1; height: 4px; border-radius: 2px; background: #171717"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #171717"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #171717"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #e5e5e5"></span></div>
       <div class="split" style="flex: 1; min-height: 0; display: grid; grid-template-columns: 520px 1fr">
         <div style="display: flex; flex-direction: column; min-height: 0; padding: 32px 40px 24px">
-          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto">
+          <div class="noscroll" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
             <div>
               <h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em">Co chcesz ogarnąć w rhytm?</h1>
               <p style="margin: 8px 0 0; color: #525252">Na tej podstawie przygotujemy startowe strony i cele</p>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
               <sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="opt" aria-pressed="{{g.on}}" aria-disabled="{{g.locked}}" title="{{g.tip}}" onClick="{{g.toggle}}"><span class="box"><sc-if value="{{g.isLocked}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if><sc-if value="{{g.isFree}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg></sc-if></span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{g.title}}</span><span style="font-size: 13px; color: #737373">{{g.desc}}</span></span></button></sc-for>
             </div>
             <p style="margin: -8px 0 0; font-size: 13px; color: #737373">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
