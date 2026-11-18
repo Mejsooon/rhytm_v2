@@ -22,7 +22,13 @@ const start: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 const web = () => within(screen.getByTestId("notify-web"));
@@ -49,14 +55,20 @@ describe("requestBrowserPermission", () => {
   });
 
   it("wyjątek z requestPermission daje 'denied'", async () => {
-    vi.stubGlobal("Notification", { requestPermission: () => Promise.reject(new Error("x")) });
+    vi.stubGlobal("Notification", {
+      requestPermission: () => Promise.reject(new Error("x")),
+    });
     expect(await requestBrowserPermission()).toBe("denied");
   });
 
   it("granted i denied przechodzą dalej", async () => {
-    vi.stubGlobal("Notification", { requestPermission: () => Promise.resolve("granted") });
+    vi.stubGlobal("Notification", {
+      requestPermission: () => Promise.resolve("granted"),
+    });
     expect(await requestBrowserPermission()).toBe("granted");
-    vi.stubGlobal("Notification", { requestPermission: () => Promise.resolve("default") });
+    vi.stubGlobal("Notification", {
+      requestPermission: () => Promise.resolve("default"),
+    });
     expect(await requestBrowserPermission()).toBe("denied");
   });
 });
@@ -68,16 +80,24 @@ describe("StepNotify", () => {
     expect(web().getByText("Przeglądarka zapyta o zgodę")).toBeInTheDocument();
     await userEvent.click(web().getByRole("button", { name: "Zezwól" }));
     expect(web().getByRole("button", { name: "Zezwól" })).toBeInTheDocument();
-    expect(web().getByText("Przeglądarka nie pozwoliła na powiadomienia")).toBeInTheDocument();
-    expect(phone().getByText("Telefon nie pozwolił na powiadomienia")).toBeInTheDocument();
+    expect(
+      web().getByText("Przeglądarka nie pozwoliła na powiadomienia"),
+    ).toBeInTheDocument();
+    expect(
+      phone().getByText("Telefon nie pozwolił na powiadomienia"),
+    ).toBeInTheDocument();
   });
 
   it("granted: „Włączone” i „Anuluj”; „Anuluj” wraca do „Zezwól”", async () => {
-    vi.stubGlobal("Notification", { requestPermission: () => Promise.resolve("granted") });
+    vi.stubGlobal("Notification", {
+      requestPermission: () => Promise.resolve("granted"),
+    });
     render(<Probe />);
     await userEvent.click(web().getByRole("button", { name: "Zezwól" }));
     expect(web().getByText("Włączone")).toBeInTheDocument();
-    expect(web().getByText("Przeglądarka pozwoliła na powiadomienia")).toBeInTheDocument();
+    expect(
+      web().getByText("Przeglądarka pozwoliła na powiadomienia"),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":true');
     await userEvent.click(web().getByRole("button", { name: "Anuluj" }));
     expect(web().getByRole("button", { name: "Zezwól" })).toBeInTheDocument();
@@ -87,15 +107,21 @@ describe("StepNotify", () => {
   it("przełącznik „Nawyki na dziś” zmienia notify.habits", async () => {
     render(<Probe />);
     expect(web().getAllByRole("switch")).toHaveLength(4);
-    await userEvent.click(web().getByRole("switch", { name: "Nawyki na dziś" }));
+    await userEvent.click(
+      web().getByRole("switch", { name: "Nawyki na dziś" }),
+    );
     expect(screen.getByTestId("out")).toHaveTextContent('"habits":true');
-    await userEvent.click(phone().getByRole("switch", { name: "Nawyki na dziś" }));
+    await userEvent.click(
+      phone().getByRole("switch", { name: "Nawyki na dziś" }),
+    );
     expect(screen.getByTestId("out")).toHaveTextContent('"habits":false');
   });
 
   it("telefon bez zgody przyciemnia wiersze, ale są klikalne", () => {
     render(<Probe />);
-    const wiersz = phone().getByRole("switch", { name: "Przed blokiem" }).closest("[data-reminder-row]");
+    const wiersz = phone()
+      .getByRole("switch", { name: "Przed blokiem" })
+      .closest("[data-reminder-row]");
     expect(wiersz).toHaveClass("opacity-[.55]");
   });
 });

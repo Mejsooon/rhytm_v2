@@ -6,7 +6,10 @@ import type { OnboardingDraft } from "../model";
 
 const uploadAvatar = vi.fn();
 vi.mock("../avatar-upload", async () => {
-  const actual = await vi.importActual<typeof import("../avatar-upload")>("../avatar-upload");
+  const actual =
+    await vi.importActual<typeof import("../avatar-upload")>(
+      "../avatar-upload",
+    );
   return { ...actual, uploadAvatar: (...a: unknown[]) => uploadAvatar(...a) };
 });
 
@@ -28,7 +31,13 @@ const draft: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 const NOW = new Date("2026-11-17T09:00:00Z");
@@ -81,7 +90,9 @@ describe("StepProfile", () => {
       screen.getByLabelText("Wybierz zdjęcie profilowe"),
       plik(3 * 1024 * 1024, "image/png", "a.png"),
     );
-    expect(screen.getByRole("alert")).toHaveTextContent("Plik jest za duży (maks. 2 MB).");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Plik jest za duży (maks. 2 MB).",
+    );
     expect(uploadAvatar).not.toHaveBeenCalled();
   });
 
@@ -92,7 +103,9 @@ describe("StepProfile", () => {
       screen.getByLabelText("Wybierz zdjęcie profilowe"),
       plik(100, "image/gif", "a.gif"),
     );
-    expect(screen.getByRole("alert")).toHaveTextContent("Wybierz zdjęcie PNG, JPG albo WebP.");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Wybierz zdjęcie PNG, JPG albo WebP.",
+    );
     expect(uploadAvatar).not.toHaveBeenCalled();
   });
 
@@ -100,9 +113,15 @@ describe("StepProfile", () => {
     uploadAvatar.mockResolvedValue({ path: "u1/avatar.png" });
     pokaz();
     const f = plik(100, "image/png", "a.png");
-    await userEvent.upload(screen.getByLabelText("Wybierz zdjęcie profilowe"), f);
+    await userEvent.upload(
+      screen.getByLabelText("Wybierz zdjęcie profilowe"),
+      f,
+    );
     expect(uploadAvatar).toHaveBeenCalledWith(f, "u1");
-    expect(onChange).toHaveBeenCalledWith({ ...draft, avatarPath: "u1/avatar.png" });
+    expect(onChange).toHaveBeenCalledWith({
+      ...draft,
+      avatarPath: "u1/avatar.png",
+    });
     expect(onAvatarFile).toHaveBeenCalledWith(f);
   });
 
@@ -113,7 +132,9 @@ describe("StepProfile", () => {
       screen.getByLabelText("Wybierz zdjęcie profilowe"),
       plik(100, "image/png", "a.png"),
     );
-    expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się wgrać zdjęcia.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Nie udało się wgrać zdjęcia.",
+    );
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -125,7 +146,9 @@ describe("StepProfile", () => {
     const [webowy] = screen.getAllByRole("button", { name: "Strefa czasowa" });
     expect(webowy).toHaveTextContent("America/Chicago");
     await userEvent.click(webowy);
-    expect(screen.getAllByRole("option", { name: /America\/Chicago/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("option", { name: /America\/Chicago/ }),
+    ).toHaveLength(1);
     vi.restoreAllMocks();
   });
 
@@ -134,7 +157,9 @@ describe("StepProfile", () => {
       timeZone: "Europe/Warsaw",
     } as Intl.ResolvedDateTimeFormatOptions);
     pokaz();
-    expect(screen.getAllByText("Wykryta z przeglądarki").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Wykryta z przeglądarki").length,
+    ).toBeGreaterThan(0);
     vi.restoreAllMocks();
   });
 

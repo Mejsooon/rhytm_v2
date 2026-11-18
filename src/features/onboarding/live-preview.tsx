@@ -1,6 +1,10 @@
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
-import { categoriesForRoles, effectivePages, type OnboardingDraft } from "./model";
+import {
+  categoriesForRoles,
+  effectivePages,
+  type OnboardingDraft,
+} from "./model";
 
 // Stałe przepisane ze wspólnego skryptu makiet (Onboarding.dc.html, `pv`)
 const CAT: Record<string, string> = {
@@ -29,7 +33,15 @@ const BL: Record<string, [number, number, string, string]> = {
 // Zielony obrys podświetlanej części podglądu (HI z makiety)
 const OBRYS = "rounded-lg shadow-[0_0_0_2px_#15803d]";
 
-const DNI = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+const DNI = [
+  "Niedziela",
+  "Poniedziałek",
+  "Wtorek",
+  "Środa",
+  "Czwartek",
+  "Piątek",
+  "Sobota",
+];
 const MIESIACE = [
   "stycznia",
   "lutego",
@@ -60,7 +72,12 @@ function dataWStrefie(now: Date, timezone: string) {
 const dwie = (n: number) => String(n).padStart(2, "0");
 
 // „16–22.11” albo „28.10–3.11”, dla bieżącego tygodnia
-function zakresTygodnia(y: number, m: number, d: number, weekStart: "mon" | "sun") {
+function zakresTygodnia(
+  y: number,
+  m: number,
+  d: number,
+  weekStart: "mon" | "sun",
+) {
   const dzis = new Date(Date.UTC(y, m - 1, d));
   const dow = dzis.getUTCDay();
   const start = new Date(dzis);
@@ -94,7 +111,13 @@ function Awatar({
 }) {
   if (avatarUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={avatarUrl} alt="" className={cn("flex-none rounded-full object-cover", className)} />;
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className={cn("flex-none rounded-full object-cover", className)}
+      />
+    );
   }
   return (
     <span
@@ -128,7 +151,14 @@ export function LivePreview({
   const bloki = kategorie
     .map((c) => {
       const [h, m, tytul, licznik] = BL[c];
-      return { c, h, m, godzina: formatClockTime(h, m, draft.clock), tytul, licznik };
+      return {
+        c,
+        h,
+        m,
+        godzina: formatClockTime(h, m, draft.clock),
+        tytul,
+        licznik,
+      };
     })
     .sort((a, b) => a.h * 60 + a.m - (b.h * 60 + b.m));
 
@@ -157,9 +187,15 @@ export function LivePreview({
           data-highlighted={String(obrysProfil)}
           className={cn("flex items-center gap-2 p-1.5", obrysProfil && OBRYS)}
         >
-          <Awatar inicjalyTekst={ini} avatarUrl={avatarUrl} className="size-6 text-[10px]" />
+          <Awatar
+            inicjalyTekst={ini}
+            avatarUrl={avatarUrl}
+            className="size-6 text-[10px]"
+          />
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium whitespace-nowrap">{nazwa}</span>
+            <span className="truncate font-medium whitespace-nowrap">
+              {nazwa}
+            </span>
             <span className="text-[11px] text-[#737373]">{draft.timezone}</span>
           </span>
         </div>
@@ -184,7 +220,9 @@ export function LivePreview({
             </div>
           ))}
           {strony.length === 0 && (
-            <div className="flex h-7 items-center px-2 text-[#a3a3a3]">Brak stron</div>
+            <div className="flex h-7 items-center px-2 text-[#a3a3a3]">
+              Brak stron
+            </div>
           )}
         </div>
       </div>
@@ -195,21 +233,31 @@ export function LivePreview({
         <div
           data-testid="pv-cats"
           data-highlighted={String(obrysKategorie)}
-          className={cn("mt-3 flex flex-wrap gap-1.5 p-1", obrysKategorie && OBRYS)}
+          className={cn(
+            "mt-3 flex flex-wrap gap-1.5 p-1",
+            obrysKategorie && OBRYS,
+          )}
         >
           {kategorie.map((c) => (
             <span
               key={c}
               className="inline-flex h-6 items-center gap-1.5 rounded-md border border-[#eaeaea] bg-white px-2 text-[#404040]"
             >
-              <span className="size-2 rounded-full" style={{ background: CAT[c] }} />
+              <span
+                className="size-2 rounded-full"
+                style={{ background: CAT[c] }}
+              />
               {c}
             </span>
           ))}
         </div>
         <div className="mt-3 flex flex-col gap-1.5">
           {bloki.map((b) => (
-            <div key={b.c} data-testid="pv-block" className="flex items-stretch gap-2">
+            <div
+              key={b.c}
+              data-testid="pv-block"
+              className="flex items-stretch gap-2"
+            >
               <span className="w-[52px] flex-none pt-1.5 font-mono text-[11px] text-[#737373]">
                 {b.godzina}
               </span>
@@ -218,7 +266,9 @@ export function LivePreview({
                 style={{ background: TINT[b.c][0], borderColor: TINT[b.c][1] }}
               >
                 <span className="font-medium">{b.tytul}</span>
-                <span className="font-mono text-[11px] text-[#525252]">{b.licznik}</span>
+                <span className="font-mono text-[11px] text-[#525252]">
+                  {b.licznik}
+                </span>
               </div>
             </div>
           ))}
@@ -226,22 +276,101 @@ export function LivePreview({
         {dymek && (
           <div className="absolute top-4 right-4 flex w-60 gap-2.5 rounded-[10px] border border-[#e0e0e0] bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.10)] outline-2 outline-offset-2 outline-[#15803d]">
             <span className="grid size-6 flex-none place-items-center rounded-md bg-[#171717]">
-              <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true">
-                <rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff" />
-                <rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55" />
-                <rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25" />
-                <rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55" />
-                <rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25" />
-                <rect x="32" y="18" width="11" height="11" rx="3" fill="#4ade80" />
-                <rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25" />
-                <rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff" />
-                <rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 48 48"
+                aria-hidden="true"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                />
+                <rect
+                  x="18"
+                  y="4"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.55"
+                />
+                <rect
+                  x="32"
+                  y="4"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.25"
+                />
+                <rect
+                  x="4"
+                  y="18"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.55"
+                />
+                <rect
+                  x="18"
+                  y="18"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.25"
+                />
+                <rect
+                  x="32"
+                  y="18"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#4ade80"
+                />
+                <rect
+                  x="4"
+                  y="32"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.25"
+                />
+                <rect
+                  x="18"
+                  y="32"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                />
+                <rect
+                  x="32"
+                  y="32"
+                  width="11"
+                  height="11"
+                  rx="3"
+                  fill="#ffffff"
+                  opacity="0.55"
+                />
               </svg>
             </span>
             <span className="flex flex-col gap-0.5">
-              <span className="font-medium">Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}</span>
+              <span className="font-medium">
+                Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}
+              </span>
               <span className="text-[#525252]">
-                Start o {pierwszy ? pierwszy.godzina : formatClockTime(8, 0, draft.clock)}
+                Start o{" "}
+                {pierwszy
+                  ? pierwszy.godzina
+                  : formatClockTime(8, 0, draft.clock)}
               </span>
             </span>
           </div>

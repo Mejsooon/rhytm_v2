@@ -34,7 +34,11 @@ export type GoalType = "workouts" | "km";
 export const ROLES: { key: RoleKey; title: string; desc: string }[] = [
   { key: "student", title: "Student", desc: "Zajęcia, kolokwia, projekty" },
   { key: "work", title: "Pracuję", desc: "Godziny pracy i spotkania" },
-  { key: "free", title: "Freelancer lub firma", desc: "Klienci, zlecenia, terminy" },
+  {
+    key: "free",
+    title: "Freelancer lub firma",
+    desc: "Klienci, zlecenia, terminy",
+  },
   { key: "sport", title: "Trenuję regularnie", desc: "Biegi, siłownia, plan" },
   { key: "other", title: "Coś innego", desc: "Kategorie ułożysz sam" },
 ];
@@ -46,14 +50,42 @@ export const GOALS: {
   desc: string;
   page: PageKey | null;
 }[] = [
-  { key: "plan", title: "Plan tygodnia", desc: "Bloki z zadaniami w środku", page: null },
+  {
+    key: "plan",
+    title: "Plan tygodnia",
+    desc: "Bloki z zadaniami w środku",
+    page: null,
+  },
   { key: "sport", title: "Treningi", desc: "Biegi i siłownia", page: null },
-  { key: "habits", title: "Nawyki i sen", desc: "Codzienne odhaczanie", page: null },
-  { key: "subs", title: "Subskrypcje", desc: "Sumy i odnowienia", page: "Subscriptions" },
+  {
+    key: "habits",
+    title: "Nawyki i sen",
+    desc: "Codzienne odhaczanie",
+    page: null,
+  },
+  {
+    key: "subs",
+    title: "Subskrypcje",
+    desc: "Sumy i odnowienia",
+    page: "Subscriptions",
+  },
   { key: "pass", title: "Hasła", desc: "Szyfrowany sejf", page: "Passwords" },
-  { key: "proj", title: "Projekty", desc: "Statusy i terminy", page: "Projects" },
-  { key: "books", title: "Książki", desc: "Co czytasz i co dalej", page: "Books" },
+  {
+    key: "proj",
+    title: "Projekty",
+    desc: "Statusy i terminy",
+    page: "Projects",
+  },
+  {
+    key: "books",
+    title: "Książki",
+    desc: "Co czytasz i co dalej",
+    page: "Books",
+  },
 ];
+
+// Cele bazowe: zawsze włączone, nie da się ich odznaczyć (kłódka w makiecie)
+export const LOCKED_GOALS: GoalKey[] = ["plan", "sport", "habits"];
 
 // OnboardingPages (kolejność = kolejność w sidebarze)
 export const PAGE_TEMPLATES: {
@@ -111,7 +143,11 @@ export const SOURCES: { key: SourceKey; label: string }[] = [
 // OnboardingNotify
 export const REMINDERS: { key: ReminderKey; title: string; when: string }[] = [
   { key: "before", title: "Przed blokiem", when: "10 min wcześniej" },
-  { key: "renew", title: "Odnowienie subskrypcji", when: "3 dni wcześniej, o 9:00" },
+  {
+    key: "renew",
+    title: "Odnowienie subskrypcji",
+    when: "3 dni wcześniej, o 9:00",
+  },
   { key: "weekly", title: "Podsumowanie tygodnia", when: "Niedziela, 18:00" },
   { key: "habits", title: "Nawyki na dziś", when: "Codziennie, 21:00" },
 ];
@@ -180,6 +216,7 @@ export function toggleGoal(
   draft: OnboardingDraft,
   goal: GoalKey,
 ): OnboardingDraft {
+  if (LOCKED_GOALS.includes(goal)) return draft;
   const wlaczony = draft.goals.includes(goal);
   const goals = wlaczony
     ? draft.goals.filter((g) => g !== goal)
@@ -193,7 +230,9 @@ export function toggleGoal(
   const nowe = wlaczony
     ? biezace.filter((p) => p !== strona)
     : [...biezace, strona];
-  const pages = PAGE_TEMPLATES.map((t) => t.key).filter((k) => nowe.includes(k));
+  const pages = PAGE_TEMPLATES.map((t) => t.key).filter((k) =>
+    nowe.includes(k),
+  );
   return { ...draft, goals, pages };
 }
 
@@ -212,7 +251,8 @@ export function stepWorkouts(n: number, dir: -1 | 1): number {
 
 // Poprawny cel: treningi całe 1–14, kilometry 1–300 (też ułamki; jak w schemacie kroku 3)
 export function goalInRange(type: GoalType, value: number): boolean {
-  if (type === "workouts") return Number.isInteger(value) && value >= 1 && value <= 14;
+  if (type === "workouts")
+    return Number.isInteger(value) && value >= 1 && value <= 14;
   return Number.isFinite(value) && value >= 1 && value <= 300;
 }
 
@@ -228,7 +268,12 @@ export function formatWeeklyGoal(type: GoalType, value: number): string {
   const dziesiatki = value % 100;
   let slowo = "treningów";
   if (value === 1) slowo = "trening";
-  else if (jednosci >= 2 && jednosci <= 4 && (dziesiatki < 12 || dziesiatki > 14)) slowo = "treningi";
+  else if (
+    jednosci >= 2 &&
+    jednosci <= 4 &&
+    (dziesiatki < 12 || dziesiatki > 14)
+  )
+    slowo = "treningi";
   return `${value} ${slowo} / tydz.`;
 }
 
@@ -245,9 +290,10 @@ export function formatSleep(min: number): string {
 
 export function canContinue(step: number, draft: OnboardingDraft): boolean {
   if (step === 1) return draft.name.trim() !== "";
-  // Krok 3: pole celu widać tylko przy „Treningi”; sprawdzamy liczbę wybranego rodzaju
-  if (step === 3 && draft.goals.includes("sport")) {
-    const wartosc = draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
+  // Krok 3: pole celu jest zawsze widoczne; sprawdzamy liczbę wybranego rodzaju
+  if (step === 3) {
+    const wartosc =
+      draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
     return goalInRange(draft.goalType, wartosc);
   }
   return true;
@@ -281,25 +327,32 @@ export function buildSummary(
     const tydzien = draft.weekStart === "mon" ? "pn" : "nd";
     profil = `${nazwa} · ${tzCity} · tydzień od ${tydzien}`;
     przypomnienia =
-      `${wlaczone} z 4 włączone` + (draft.notify.perm ? "" : " · bez zgody na push");
+      `${wlaczone} z 4 włączone` +
+      (draft.notify.perm ? "" : " · bez zgody na push");
   }
 
   const wiersze: ReturnType<typeof buildSummary> = [
     { key: "Profil", value: profil, step: 1 },
     { key: "Kategorie", value: kategorie, step: 2 },
   ];
-  // Cel treningowy tylko, gdy wybrano cel „Treningi”
-  if (draft.goals.includes("sport")) {
-    const wartosc = draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
-    wiersze.push({ key: "Cel treningowy", value: formatWeeklyGoal(draft.goalType, wartosc), step: 3 });
-  }
+  // Cel treningowy zawsze („Treningi” to cel bazowy)
+  const wartoscCelu =
+    draft.goalType === "km" ? draft.weeklyKm : draft.weeklyWorkouts;
+  wiersze.push({
+    key: "Cel treningowy",
+    value: formatWeeklyGoal(draft.goalType, wartoscCelu),
+    step: 3,
+  });
   wiersze.push({ key: "Strony", value: strony, step: 5 });
   wiersze.push({ key: "Przypomnienia", value: przypomnienia, step: 6 });
   return wiersze;
 }
 
 // Szkic -> payload kroku w kluczach schematów z src/features/profile/schemas.ts (kroki 1–6)
-export function stepPayload(step: 1 | 2 | 3 | 4 | 5 | 6, draft: OnboardingDraft) {
+export function stepPayload(
+  step: 1 | 2 | 3 | 4 | 5 | 6,
+  draft: OnboardingDraft,
+) {
   switch (step) {
     case 1:
       return {
@@ -316,12 +369,17 @@ export function stepPayload(step: 1 | 2 | 3 | 4 | 5 | 6, draft: OnboardingDraft)
       return {
         goals: draft.goals,
         weekly_goal_type: draft.goalType,
-        weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts) ? draft.weeklyWorkouts : 3,
+        weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts)
+          ? draft.weeklyWorkouts
+          : 3,
         weekly_km_goal: goalInRange("km", draft.weeklyKm) ? draft.weeklyKm : 25,
         sleep_goal_min: draft.sleepGoalMin,
       };
     case 4:
-      return { referral_source: draft.source, referral_other: draft.sourceOther };
+      return {
+        referral_source: draft.source,
+        referral_other: draft.sourceOther,
+      };
     case 5:
       return { pending_pages: effectivePages(draft) };
     case 6:

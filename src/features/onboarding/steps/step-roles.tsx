@@ -2,7 +2,12 @@ import { CalendarDays, Check } from "lucide-react";
 
 import { Checkbox, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import { ROLES, categoriesForRoles, type OnboardingDraft, type RoleKey } from "../model";
+import {
+  ROLES,
+  categoriesForRoles,
+  type OnboardingDraft,
+  type RoleKey,
+} from "../model";
 import { StepHeader } from "./step-header";
 
 // Krok 2: role (OnboardingRole + MOnboarding). Web: karty w siatce 2 kol., telefon: lista z Checkbox.
@@ -30,7 +35,10 @@ export function StepRoles({
       />
 
       {/* Web */}
-      <div data-testid="roles-web" className="grid grid-cols-2 gap-2 max-[799px]:hidden">
+      <div
+        data-testid="roles-web"
+        className="grid grid-cols-2 gap-2 max-[799px]:hidden"
+      >
         {ROLES.map((rola, i) => {
           const wlaczona = draft.roles.includes(rola.key);
           return (
@@ -41,8 +49,11 @@ export function StepRoles({
               onClick={() => przelacz(rola.key)}
               className={cn(
                 "box-border flex w-full cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#171717]/20",
-                wlaczona && "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
-                i === ROLES.length - 1 && ROLES.length % 2 === 1 && "col-span-2",
+                wlaczona &&
+                  "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
+                i === ROLES.length - 1 &&
+                  ROLES.length % 2 === 1 &&
+                  "col-span-2",
               )}
             >
               <span
@@ -81,7 +92,9 @@ export function StepRoles({
               label={
                 <span className="flex flex-col">
                   <span className="font-medium">{rola.title}</span>
-                  <span className="text-[13px] text-[#6b6b6b]">{rola.desc}</span>
+                  <span className="text-[13px] text-[#6b6b6b]">
+                    {rola.desc}
+                  </span>
                 </span>
               }
             />
@@ -106,7 +119,11 @@ export function StepRoles({
 
       {/* Web: jedna linia */}
       <div className="flex items-center gap-2 rounded-lg bg-[#fafafa] px-3 py-2.5 text-[13px] text-[#525252] max-[799px]:hidden">
-        <CalendarDays aria-hidden="true" className="size-4 flex-none text-[#737373]" strokeWidth={1.5} />
+        <CalendarDays
+          aria-hidden="true"
+          className="size-4 flex-none text-[#737373]"
+          strokeWidth={1.5}
+        />
         <span>W kalendarzu: {kategorie.map((k) => k.name).join(", ")}</span>
       </div>
 
@@ -120,7 +137,11 @@ export function StepRoles({
             key={k.name}
             className="inline-flex h-7 items-center gap-1.5 rounded-full border border-[#e0e0e0] bg-white px-2.5 text-[13px]"
           >
-            <span aria-hidden="true" className="size-2 rounded-full" style={{ background: k.color }} />
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full"
+              style={{ background: k.color }}
+            />
             {k.name}
           </span>
         ))}

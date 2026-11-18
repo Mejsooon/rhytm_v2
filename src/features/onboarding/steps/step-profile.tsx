@@ -49,13 +49,19 @@ export function StepProfile({
   firstVisit: boolean;
   now: Date;
 }) {
-  const wykryta = React.useSyncExternalStore(bezSubskrypcji, wykryjStrefe, () => undefined);
+  const wykryta = React.useSyncExternalStore(
+    bezSubskrypcji,
+    wykryjStrefe,
+    () => undefined,
+  );
   // Lista zawiera też zapisaną strefę ze szkicu (gdy nie ma jej w domyślnych) oraz wykrytą, bez duplikatów
   const opcje = timezoneOptions(now, draft.timezone);
   for (const o of timezoneOptions(now, wykryta)) {
-    if (!opcje.some((istniejaca) => istniejaca.value === o.value)) opcje.push(o);
+    if (!opcje.some((istniejaca) => istniejaca.value === o.value))
+      opcje.push(o);
   }
-  const wykrytaPoprawna = wykryta !== undefined && opcje.some((o) => o.value === wykryta);
+  const wykrytaPoprawna =
+    wykryta !== undefined && opcje.some((o) => o.value === wykryta);
 
   // Szkic jest potrzebny po zakończeniu uploadu, a do tego czasu mógł się zmienić (np. wpisane imię)
   const najnowszy = React.useRef(draft);
@@ -125,7 +131,9 @@ export function StepProfile({
           )}
           <div className="flex flex-col gap-1">
             <span className="font-medium">Zdjęcie profilowe</span>
-            <span className="text-[13px] text-[#737373]">Bez zdjęcia pokażemy inicjały</span>
+            <span className="text-[13px] text-[#737373]">
+              Bez zdjęcia pokażemy inicjały
+            </span>
           </div>
           <Button
             size="sm"
@@ -168,7 +176,10 @@ export function StepProfile({
             ariaLabel="Strefa czasowa"
             value={draft.timezone}
             onChange={(timezone) => onChange({ ...draft, timezone })}
-            options={opcje.map((o) => ({ value: o.value, label: `${o.value} (${o.offset})` }))}
+            options={opcje.map((o) => ({
+              value: o.value,
+              label: `${o.value} (${o.offset})`,
+            }))}
           />
         </div>
         {/* Telefon: miasto + dopisek mono z przesunięciem */}
@@ -177,11 +188,17 @@ export function StepProfile({
             ariaLabel="Strefa czasowa"
             value={draft.timezone}
             onChange={(timezone) => onChange({ ...draft, timezone })}
-            options={opcje.map((o) => ({ value: o.value, label: o.city, hint: o.offset }))}
+            options={opcje.map((o) => ({
+              value: o.value,
+              label: o.city,
+              hint: o.offset,
+            }))}
           />
         </div>
         {wykryta === draft.timezone && (
-          <span className="text-xs font-normal text-[#737373]">Wykryta z przeglądarki</span>
+          <span className="text-xs font-normal text-[#737373]">
+            Wykryta z przeglądarki
+          </span>
         )}
       </div>
 

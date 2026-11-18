@@ -22,7 +22,13 @@ const start: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 const web = () => within(screen.getByTestId("source-web"));
@@ -35,8 +41,12 @@ function Probe() {
 describe("StepSource", () => {
   it("pokazuje 10 źródeł", () => {
     render(<Probe />);
-    expect(within(screen.getByTestId("source-web")).getAllByRole("button")).toHaveLength(10);
-    expect(within(screen.getByTestId("source-phone")).getAllByRole("button")).toHaveLength(10);
+    expect(
+      within(screen.getByTestId("source-web")).getAllByRole("button"),
+    ).toHaveLength(10);
+    expect(
+      within(screen.getByTestId("source-phone")).getAllByRole("button"),
+    ).toHaveLength(10);
   });
 
   it("„Inne” pokazuje „Gdzie dokładnie?”, ponowny klik odznacza i chowa pole", async () => {
@@ -52,7 +62,13 @@ describe("StepSource", () => {
     render(<Probe />);
     await userEvent.click(web().getByRole("button", { name: "TikTok" }));
     await userEvent.click(web().getByRole("button", { name: "YouTube" }));
-    expect(web().getByRole("button", { name: "TikTok" })).toHaveAttribute("aria-pressed", "false");
-    expect(web().getByRole("button", { name: "YouTube" })).toHaveAttribute("aria-pressed", "true");
+    expect(web().getByRole("button", { name: "TikTok" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(web().getByRole("button", { name: "YouTube" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

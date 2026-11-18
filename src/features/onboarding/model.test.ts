@@ -40,7 +40,13 @@ const draft: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: ["Subscriptions", "Projects"],
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 const names = (r: string[]) => r;
@@ -72,7 +78,9 @@ describe("categoriesForRoles", () => {
     ]);
   });
   it("free -> Projekty", () => {
-    expect(categoriesForRoles(["free"]).map((x) => x.name)).toEqual(["Projekty"]);
+    expect(categoriesForRoles(["free"]).map((x) => x.name)).toEqual([
+      "Projekty",
+    ]);
   });
   it("wszystkie role", () => {
     expect(
@@ -95,10 +103,7 @@ describe("recommendedPages", () => {
 
 describe("toggleGoal", () => {
   it("wyłączenie celu wyłącza jego stronę", () => {
-    const d = toggleGoal(
-      { ...draft, pages: null, goals: ["subs"] },
-      "subs",
-    );
+    const d = toggleGoal({ ...draft, pages: null, goals: ["subs"] }, "subs");
     expect(d.goals).toEqual([]);
     expect(effectivePages(d)).not.toContain("Subscriptions");
   });
@@ -106,10 +111,10 @@ describe("toggleGoal", () => {
     const d = toggleGoal({ ...draft, pages: ["Websites"], goals: [] }, "books");
     expect(effectivePages(d)).toEqual(["Books", "Websites"]);
   });
-  it("cel bez strony nie zmienia pages", () => {
-    const d = toggleGoal(draft, "plan");
-    expect(d.pages).toEqual(["Subscriptions", "Projects"]);
-    expect(d.goals).not.toContain("plan");
+  it("cele bazowe są stałe: kliknięcie niczego nie zmienia", () => {
+    for (const cel of ["plan", "sport", "habits"] as const) {
+      expect(toggleGoal(draft, cel)).toBe(draft);
+    }
   });
 });
 
@@ -184,13 +189,20 @@ describe("canContinue", () => {
     expect(canContinue(1, draft)).toBe(true);
     expect(canContinue(4, draft)).toBe(true);
   });
-  it("krok 3: zły cel wybranego rodzaju blokuje „Dalej” tylko przy celu „Treningi”", () => {
+  it("krok 3: zły cel wybranego rodzaju blokuje „Dalej”", () => {
     expect(canContinue(3, draft)).toBe(true);
     expect(canContinue(3, { ...draft, weeklyWorkouts: 15 })).toBe(false);
-    expect(canContinue(3, { ...draft, goalType: "km", weeklyKm: Number.NaN })).toBe(false);
+    expect(
+      canContinue(3, { ...draft, goalType: "km", weeklyKm: Number.NaN }),
+    ).toBe(false);
     // Drugi rodzaj nie jest widoczny, więc go nie sprawdzamy
-    expect(canContinue(3, { ...draft, goalType: "km", weeklyWorkouts: 15 })).toBe(true);
-    expect(canContinue(3, { ...draft, goals: ["plan"], weeklyWorkouts: 15 })).toBe(true);
+    expect(
+      canContinue(3, { ...draft, goalType: "km", weeklyWorkouts: 15 }),
+    ).toBe(true);
+    // Pole celu jest zawsze widoczne, nawet gdy w szkicu brak „sport”
+    expect(
+      canContinue(3, { ...draft, goals: ["plan"], weeklyWorkouts: 15 }),
+    ).toBe(false);
   });
 });
 
@@ -234,14 +246,28 @@ describe("buildSummary", () => {
     expect(s[4].value).toBe("3 z 4 włączone");
   });
   it("cel w km i odmiana treningów w wierszu „Cel treningowy”", () => {
-    const wiersz = (d: OnboardingDraft) => buildSummary(d, "web", "Warszawa").find((w) => w.key === "Cel treningowy")?.value;
-    expect(wiersz({ ...draft, goalType: "km", weeklyKm: 25 })).toBe("25 km / tydz.");
+    const wiersz = (d: OnboardingDraft) =>
+      buildSummary(d, "web", "Warszawa").find((w) => w.key === "Cel treningowy")
+        ?.value;
+    expect(wiersz({ ...draft, goalType: "km", weeklyKm: 25 })).toBe(
+      "25 km / tydz.",
+    );
     expect(wiersz({ ...draft, weeklyWorkouts: 1 })).toBe("1 trening / tydz.");
     expect(wiersz({ ...draft, weeklyWorkouts: 5 })).toBe("5 treningów / tydz.");
   });
-  it("bez celu „Treningi” nie ma wiersza „Cel treningowy”", () => {
-    const klucze = buildSummary({ ...draft, goals: ["plan"] }, "mobile", "Warszawa").map((w) => w.key);
-    expect(klucze).toEqual(["Profil", "Kategorie", "Strony", "Przypomnienia"]);
+  it("wiersz „Cel treningowy” jest zawsze (Treningi to cel bazowy)", () => {
+    const klucze = buildSummary(
+      { ...draft, goals: ["plan"] },
+      "mobile",
+      "Warszawa",
+    ).map((w) => w.key);
+    expect(klucze).toEqual([
+      "Profil",
+      "Kategorie",
+      "Cel treningowy",
+      "Strony",
+      "Przypomnienia",
+    ]);
   });
 });
 
@@ -268,18 +294,29 @@ describe("stepPayload", () => {
       sleep_goal_min: 480,
     });
     // Zły (ukryty lub niewidoczny) cel nie psuje zapisu: wraca wartość domyślna
-    expect(stepPayload(3, { ...draft, goalType: "km", weeklyKm: 42, weeklyWorkouts: Number.NaN })).toMatchObject({
+    expect(
+      stepPayload(3, {
+        ...draft,
+        goalType: "km",
+        weeklyKm: 42,
+        weeklyWorkouts: Number.NaN,
+      }),
+    ).toMatchObject({
       weekly_goal_type: "km",
       weekly_workouts_goal: 3,
       weekly_km_goal: 42,
     });
-    expect(stepPayload(4, { ...draft, source: "other", sourceOther: "Blog" })).toEqual({
+    expect(
+      stepPayload(4, { ...draft, source: "other", sourceOther: "Blog" }),
+    ).toEqual({
       referral_source: "other",
       referral_other: "Blog",
     });
   });
   it("krok 5: strony efektywne (polecone, gdy pages = null)", () => {
-    expect(stepPayload(5, draft)).toEqual({ pending_pages: ["Subscriptions", "Projects"] });
+    expect(stepPayload(5, draft)).toEqual({
+      pending_pages: ["Subscriptions", "Projects"],
+    });
     expect(stepPayload(5, { ...draft, pages: null })).toEqual({
       pending_pages: ["Subscriptions", "Projects"],
     });
@@ -295,7 +332,9 @@ describe("stepPayload", () => {
   });
   it("wynik przechodzi przez schematy kroków", () => {
     for (const s of [1, 2, 3, 4, 5, 6] as const) {
-      expect(onboardingStepSchemas[s].safeParse(stepPayload(s, draft)).success).toBe(true);
+      expect(
+        onboardingStepSchemas[s].safeParse(stepPayload(s, draft)).success,
+      ).toBe(true);
     }
   });
 });

@@ -23,7 +23,13 @@ const start: OnboardingDraft = {
   source: null,
   sourceOther: "",
   pages: null,
-  notify: { perm: false, before: true, renew: true, weekly: true, habits: false },
+  notify: {
+    perm: false,
+    before: true,
+    renew: true,
+    weekly: true,
+    habits: false,
+  },
 };
 
 const web = () => within(screen.getByTestId("pages-web"));
@@ -43,26 +49,44 @@ describe("StepPages", () => {
   it("zaznacza strony z celów i oznacza je plakietką „z Twoich celów”", () => {
     render(<Probe />);
     expect(web().getAllByRole("button")).toHaveLength(5);
-    expect(web().getByRole("button", { name: /Subscriptions/ })).toHaveAttribute("aria-pressed", "true");
-    expect(web().getByRole("button", { name: /Projects/ })).toHaveAttribute("aria-pressed", "true");
-    expect(web().getByRole("button", { name: /Books/ })).toHaveAttribute("aria-pressed", "false");
+    expect(
+      web().getByRole("button", { name: /Subscriptions/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(web().getByRole("button", { name: /Projects/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(web().getByRole("button", { name: /Books/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     expect(web().getAllByText("z Twoich celów")).toHaveLength(2);
     expect(phone().getAllByText("z Twoich celów")).toHaveLength(2);
-    expect(phone().getByRole("checkbox", { name: /Subscriptions/ })).toBeChecked();
+    expect(
+      phone().getByRole("checkbox", { name: /Subscriptions/ }),
+    ).toBeChecked();
   });
 
   it("klik „Books” dodaje Books, ponowny klik zdejmuje", async () => {
     render(<Probe />);
     await userEvent.click(web().getByRole("button", { name: /Books/ }));
-    expect(screen.getByTestId("out")).toHaveTextContent("Subscriptions,Projects,Books");
+    expect(screen.getByTestId("out")).toHaveTextContent(
+      "Subscriptions,Projects,Books",
+    );
     await userEvent.click(phone().getByRole("checkbox", { name: /Books/ }));
-    expect(screen.getByTestId("out")).toHaveTextContent("Subscriptions,Projects");
+    expect(screen.getByTestId("out")).toHaveTextContent(
+      "Subscriptions,Projects",
+    );
     expect(screen.getByTestId("out")).not.toHaveTextContent("Books");
   });
 
   it("pokazuje teksty web i telefon", () => {
     render(<Probe />);
-    expect(screen.getByText(/Dodamy te strony do sidebaru/)).toBeInTheDocument();
-    expect(screen.getByText(/Dodamy te strony do listy Stron/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Dodamy te strony do sidebaru/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Dodamy te strony do listy Stron/),
+    ).toBeInTheDocument();
   });
 });
