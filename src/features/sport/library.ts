@@ -31,14 +31,32 @@ const WORKOUT_TEMPLATES: [string, string][] = [
   ["Wykroki", "nogi"],
   ["Hip thrust", "pośladki"],
   ["Plank", "brzuch"],
+  ["Dipy", "triceps"],
 ];
 
+// Ćwiczenia z masą ciała: kg w treningu to wtedy mc (waga z profilu) + opcjonalne dociążenie
+const Z_MASA_CIALA = new Set([
+  "podciąganie",
+  "pompki",
+  "pompki na poręczach",
+  "dipy",
+  "plank",
+]);
+
 const widziane = new Set<string>();
-export const EXERCISE_LIBRARY: { name: string; group: string }[] = [];
+export const EXERCISE_LIBRARY: {
+  name: string;
+  group: string;
+  bodyweight: boolean;
+}[] = [];
 for (const [name, group] of [...GYM_LOG, ...WORKOUT_TEMPLATES]) {
   if (widziane.has(name.toLowerCase())) continue;
   widziane.add(name.toLowerCase());
-  EXERCISE_LIBRARY.push({ name, group });
+  EXERCISE_LIBRARY.push({
+    name,
+    group,
+    bodyweight: Z_MASA_CIALA.has(name.toLowerCase()),
+  });
 }
 
 // Wyniki dymka wyszukiwania: ćwiczenia użytkownika + biblioteka,

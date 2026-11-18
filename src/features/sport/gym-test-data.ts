@@ -78,6 +78,7 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
         name: "Pompki na poręczach",
         muscle_group: "triceps",
         created_at: null,
+        bodyweight: false,
       },
       {
         id: WYCISKANIE,
@@ -85,6 +86,7 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
         name: "Wyciskanie na ławce",
         muscle_group: "klatka",
         created_at: null,
+        bodyweight: false,
       },
     ],
     history: [
@@ -108,4 +110,23 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
     ],
     ...zmiany,
   };
+}
+
+// Ten sam trening, ale „Pompki na poręczach” to ćwiczenie z masą ciała: mc×12 ✓, mc + 5×10 ✓.
+// weightKg = waga z profilu (null = brak wagi w profilu).
+export function daneZMasaCiala(weightKg: number | null = 72): WorkoutData {
+  const baza = daneTreningu();
+  return daneTreningu({
+    profile: { ...baza.profile, weightKg },
+    exercises: baza.exercises.map((e) =>
+      e.id === POMPKI ? { ...e, bodyweight: true } : e,
+    ),
+    sets: baza.sets.map((s) =>
+      s.id === "p1"
+        ? { ...s, done: true }
+        : s.id === "p2"
+          ? { ...s, done: true, weight_kg: 5 }
+          : s,
+    ),
+  });
 }

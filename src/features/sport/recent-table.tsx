@@ -13,6 +13,7 @@ import {
   formatPace,
   formatVolume,
   sessionVolume,
+  type ExerciseRow,
   type SportItem,
 } from "./model";
 
@@ -26,6 +27,8 @@ export function RecentTable({
   month,
   doneInMonth,
   setsHistory,
+  exercises,
+  profileWeight,
   onOpenRun,
 }: {
   // Wykonane treningi malejąco, już po filtrze
@@ -34,9 +37,15 @@ export function RecentTable({
   // Wykonane treningi pokazywanego miesiąca (po filtrze)
   doneInMonth: number;
   setsHistory: SessionSets[];
+  // Ćwiczenia (flaga masy ciała) i waga z profilu do objętości
+  exercises: ExerciseRow[];
+  profileWeight: number | null;
   onOpenRun: (req: RunRequest) => void;
 }) {
   const router = useRouter();
+  const zMasaCiala = new Set(
+    exercises.filter((e) => e.bodyweight).map((e) => e.id),
+  );
   const wiersze = items.slice(0, 10);
 
   function otworz(item: SportItem) {
@@ -98,7 +107,7 @@ export function RecentTable({
                 setsHistory.find((s) => s.sessionId === item.sessionId)?.sets ??
                 [];
               wynik = `${new Set(serie.map((s) => s.exercise_id)).size} ćw.`;
-              dodatkowo = `${formatVolume(sessionVolume(serie))} kg`;
+              dodatkowo = `${formatVolume(sessionVolume(serie, zMasaCiala, profileWeight))} kg`;
             }
             return (
               <tr

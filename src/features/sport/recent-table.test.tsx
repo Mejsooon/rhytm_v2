@@ -6,7 +6,7 @@ const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 import { RecentTable } from "./recent-table";
-import { bieg, daneSportu, SESJA_PUSH } from "./sport-test-data";
+import { bieg, daneSportu, POMPKI, SESJA_PUSH } from "./sport-test-data";
 
 describe("RecentTable", () => {
   it("wiersze: data, typ, wynik, tempo / objętość, trudność", () => {
@@ -17,6 +17,8 @@ describe("RecentTable", () => {
         month="2026-11"
         doneInMonth={5}
         setsHistory={dane.setsHistory}
+        exercises={dane.exercises}
+        profileWeight={72}
         onOpenRun={vi.fn()}
       />,
     );
@@ -37,6 +39,25 @@ describe("RecentTable", () => {
     expect(silownia).toHaveTextContent("652,5 kg");
   });
 
+  it("objętość treningu liczy ćwiczenia z masą ciała wagą z profilu", () => {
+    const dane = daneSportu();
+    render(
+      <RecentTable
+        items={dane.recent}
+        month="2026-11"
+        doneInMonth={5}
+        setsHistory={dane.setsHistory}
+        exercises={dane.exercises.map((e) =>
+          e.id === POMPKI ? { ...e, bodyweight: true } : e,
+        )}
+        profileWeight={72}
+        onOpenRun={vi.fn()}
+      />,
+    );
+    // 652,5 + 72 × 10
+    expect(screen.getAllByRole("row")[3]).toHaveTextContent("1 372,5 kg");
+  });
+
   it("pokazuje najwyżej 10 wierszy", () => {
     const dane = daneSportu();
     const duzo = Array.from({ length: 14 }, (_, i) =>
@@ -55,6 +76,8 @@ describe("RecentTable", () => {
         month="2026-11"
         doneInMonth={14}
         setsHistory={dane.setsHistory}
+        exercises={dane.exercises}
+        profileWeight={72}
         onOpenRun={vi.fn()}
       />,
     );
@@ -70,6 +93,8 @@ describe("RecentTable", () => {
         month="2026-11"
         doneInMonth={5}
         setsHistory={dane.setsHistory}
+        exercises={dane.exercises}
+        profileWeight={72}
         onOpenRun={onOpenRun}
       />,
     );

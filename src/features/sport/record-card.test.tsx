@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { RecordCard } from "./record-card";
-import { daneSportu, WYCISKANIE } from "./sport-test-data";
+import { daneSportu, POMPKI, WYCISKANIE } from "./sport-test-data";
 
 describe("RecordCard", () => {
   it("domyślnie ćwiczenie z największą liczbą sesji z ciężarem", () => {
@@ -12,6 +12,7 @@ describe("RecordCard", () => {
       <RecordCard
         exercises={dane.exercises}
         setsHistory={dane.setsHistory}
+        profileWeight={72}
         onNewGym={vi.fn()}
       />,
     );
@@ -46,6 +47,7 @@ describe("RecordCard", () => {
             ],
           },
         ]}
+        profileWeight={72}
         onNewGym={vi.fn()}
       />,
     );
@@ -62,6 +64,7 @@ describe("RecordCard", () => {
       <RecordCard
         exercises={dane.exercises}
         setsHistory={dane.setsHistory}
+        profileWeight={72}
         onNewGym={vi.fn()}
       />,
     );
@@ -93,6 +96,7 @@ describe("RecordCard", () => {
       <RecordCard
         exercises={dane.exercises}
         setsHistory={historia}
+        profileWeight={72}
         onNewGym={vi.fn()}
       />,
     );
@@ -106,9 +110,45 @@ describe("RecordCard", () => {
     expect(screen.getByText("10 × 10")).toBeInTheDocument();
   });
 
+  it("ćwiczenie z masą ciała: 1RM z wagi z profilu, seria „mc × 10”", () => {
+    const dane = daneSportu();
+    const pompki = dane.exercises
+      .filter((e) => e.id === POMPKI)
+      .map((e) => ({ ...e, bodyweight: true }));
+    const { unmount } = render(
+      <RecordCard
+        exercises={pompki}
+        setsHistory={dane.setsHistory}
+        profileWeight={72}
+        onNewGym={vi.fn()}
+      />,
+    );
+    // 72 × (1 + 10/30) = 96
+    expect(screen.getByText("96,0 kg")).toBeInTheDocument();
+    expect(screen.getByText("mc × 10")).toBeInTheDocument();
+    unmount();
+    // Bez wagi w profilu ćwiczenie z masą ciała nie ma 1RM
+    render(
+      <RecordCard
+        exercises={pompki}
+        setsHistory={dane.setsHistory}
+        profileWeight={null}
+        onNewGym={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Brak treningów siłowych.")).toBeInTheDocument();
+  });
+
   it("bez treningów siłowych: komunikat i „+ Trening siłowy”", async () => {
     const onNewGym = vi.fn();
-    render(<RecordCard exercises={[]} setsHistory={[]} onNewGym={onNewGym} />);
+    render(
+      <RecordCard
+        exercises={[]}
+        setsHistory={[]}
+        profileWeight={72}
+        onNewGym={onNewGym}
+      />,
+    );
     expect(screen.getByText("Brak treningów siłowych.")).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "+ Trening siłowy" }),

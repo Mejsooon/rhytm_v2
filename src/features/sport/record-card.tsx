@@ -8,7 +8,13 @@ import Link from "next/link";
 import { Dropdown, MonoLabel } from "@/components/controls";
 import { weekdayOf } from "@/features/calendar/view-range";
 import type { SessionSets } from "./load-sport";
-import { epley1rm, formatKg, recordSetIds, type ExerciseRow } from "./model";
+import {
+  effectiveKg,
+  epley1rm,
+  formatKg,
+  recordSetIds,
+  type ExerciseRow,
+} from "./model";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const MIESIACE_KROTKO = [
@@ -33,21 +39,32 @@ const kg = (v: number) => v.toFixed(1).replace(".", ",");
 export function RecordCard({
   exercises,
   setsHistory,
+  profileWeight,
   onNewGym,
 }: {
   exercises: ExerciseRow[];
   setsHistory: SessionSets[];
+  // Waga z profilu: ćwiczenia z masą ciała liczą wagę + dociążenie (null = bez 1RM)
+  profileWeight: number | null;
   // „+ Trening siłowy” w pustej karcie
   onNewGym: () => void;
 }) {
   // Tylko zakończone treningi (przyszły / niedokończony z odhaczoną serią nie jest historią)
   const zakonczone = setsHistory.filter((h) => h.completed);
+  const zMasaCiala = new Set(
+    exercises.filter((e) => e.bodyweight).map((e) => e.id),
+  );
   // Ćwiczenia z liczbą sesji, w których mają zrobioną serię z ciężarem (i powt. ≥ 1, czyli punkt 1RM)
   const sesjeCwiczen = new Map<string, number>();
   for (const sesja of zakonczone) {
     const wSesji = new Set<string>();
     for (const s of sesja.sets) {
-      if (s.done && s.weight_kg !== null && s.reps !== null && s.reps >= 1)
+      const ef = effectiveKg(
+        s.weight_kg,
+        zMasaCiala.has(s.exercise_id),
+        profileWeight,
+      );
+      if (s.done && ef !== null && s.reps !== null && s.reps >= 1)
         wSesji.add(s.exercise_id);
     }
     for (const id of wSesji)
@@ -87,7 +104,12 @@ export function RecordCard({
   }
 
   // Punkty: najlepszy 1RM każdej sesji (z serii z ciężarem i powt. ≥ 1), ostatnie PUNKTY sesji
-  const rekordowe = recordSetIds(setsHistory, cwiczenie.id);
+  const rekordowe = recordSetIds(
+    setsHistory,
+    cwiczenie.id,
+    cwiczenie.bodyweight,
+    profileWeight,
+  );
   const wszystkie: {
     when: string;
     miesiac: number;
@@ -101,10 +123,14 @@ export function RecordCard({
     for (const s of sesja.sets) {
       if (s.exercise_id !== cwiczenie.id || !s.done) continue;
       if (rekordowe.has(s.id)) rekord = true;
-      if (s.weight_kg === null || s.reps === null || s.reps < 1) continue;
-      const v = epley1rm(s.weight_kg, s.reps);
+      const ef = effectiveKg(s.weight_kg, cwiczenie.bodyweight, profileWeight);
+      if (ef === null || s.reps === null || s.reps < 1) continue;
+      const v = epley1rm(ef, s.reps);
       if (najlepszy === null || v > najlepszy.v)
-        najlepszy = { v, seria: `${formatKg(s.weight_kg)} × ${s.reps}` };
+        najlepszy = {
+          v,
+          seria: `${formatKg(s.weight_kg, cwiczenie.bodyweight)} × ${s.reps}`,
+        };
     }
     if (!najlepszy) continue;
     const [rok, mm, dd] = sesja.startLocal.slice(0, 10).split("-");

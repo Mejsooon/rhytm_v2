@@ -91,10 +91,28 @@ export function formatKm(km: number): string {
   return km.toFixed(1).replace(".", ",");
 }
 
-// 72.5 -> "72,5", null (masa ciała) -> "mc"
-export function formatKg(kg: number | null): string {
+// 72.5 -> "72,5", null (masa ciała) -> "mc".
+// Ćwiczenie z masą ciała (bodyweight): kg to dociążenie — null/0 -> "mc", 5 -> "mc + 5"
+export function formatKg(kg: number | null, bodyweight = false): string {
+  if (bodyweight) {
+    if (kg === null || kg === 0) return "mc";
+    return `mc + ${String(kg).replace(".", ",")}`;
+  }
   if (kg === null) return "mc";
   return String(kg).replace(".", ",");
+}
+
+// Efektywny ciężar serii. Zwykłe ćwiczenie: wpisany ciężar (null = bez ciężaru).
+// Ćwiczenie z masą ciała: waga z profilu + dociążenie (null/0 = brak); bez wagi w profilu -> null
+// (seria nie liczy się do objętości, 1RM ani REKORDU).
+export function effectiveKg(
+  weightKg: number | null,
+  bodyweight: boolean,
+  profileWeight: number | null,
+): number | null {
+  if (!bodyweight) return weightKg;
+  if (profileWeight === null) return null;
+  return profileWeight + (weightKg ?? 0);
 }
 
 // Objętość: 5640 -> "5 640", 652.5 -> "652,5" (do 0,1; odstęp tysięcy jak w makietach)
@@ -165,14 +183,27 @@ export function epley1rm(weightKg: number, reps: number): number {
   return Math.round(weightKg * (1 + reps / 30) * 2) / 2;
 }
 
-// Σ kg × powt. zrobionych serii; seria bez ciężaru to 0
+// Σ efektywny ciężar × powt. zrobionych serii; seria bez ciężaru to 0.
+// bodyweightIds: id ćwiczeń z masą ciała; profileWeight: waga z profilu (null = brak)
 export function sessionVolume(
-  sets: { weight_kg: number | null; reps: number | null; done: boolean }[],
+  sets: {
+    exercise_id: string;
+    weight_kg: number | null;
+    reps: number | null;
+    done: boolean;
+  }[],
+  bodyweightIds: ReadonlySet<string>,
+  profileWeight: number | null,
 ): number {
   let suma = 0;
   for (const s of sets) {
-    if (s.done && s.weight_kg !== null && s.reps !== null) {
-      suma += s.weight_kg * s.reps;
+    const kg = effectiveKg(
+      s.weight_kg,
+      bodyweightIds.has(s.exercise_id),
+      profileWeight,
+    );
+    if (s.done && kg !== null && s.reps !== null) {
+      suma += kg * s.reps;
     }
   }
   return suma;
@@ -199,12 +230,14 @@ export function historyOrder(
   return 0;
 }
 
-// REKORD: zrobiona seria z ciężarem > max ciężaru zrobionych serii tego ćwiczenia
+// REKORD: zrobiona seria z (efektywnym) ciężarem > max ciężaru zrobionych serii tego ćwiczenia
 // we wcześniejszych zakończonych sesjach. Pierwsza sesja nie daje rekordu; w jednej sesji
 // plakietkę dostaje tylko najcięższa seria (przy remisie pierwsza wg set_no).
 export function recordSetIds(
   history: HistorySession[],
   exerciseId: string,
+  bodyweight: boolean,
+  profileWeight: number | null,
 ): Set<string> {
   const wynik = new Set<string>();
   const posortowane = history.filter((h) => h.completed).sort(historyOrder);
@@ -213,18 +246,27 @@ export function recordSetIds(
   for (const sesja of posortowane) {
     const zrobione = sesja.sets
       .filter(
-        (s) => s.exercise_id === exerciseId && s.done && s.weight_kg !== null,
+        (s) =>
+          s.exercise_id === exerciseId &&
+          s.done &&
+          effectiveKg(s.weight_kg, bodyweight, profileWeight) !== null,
       )
       .sort((a, b) => a.set_no - b.set_no);
     if (zrobione.length === 0) continue;
 
     let najciezsza = zrobione[0];
+    let max = effectiveKg(
+      najciezsza.weight_kg,
+      bodyweight,
+      profileWeight,
+    ) as number;
     for (const s of zrobione) {
-      if ((s.weight_kg as number) > (najciezsza.weight_kg as number)) {
+      const kg = effectiveKg(s.weight_kg, bodyweight, profileWeight) as number;
+      if (kg > max) {
         najciezsza = s;
+        max = kg;
       }
     }
-    const max = najciezsza.weight_kg as number;
     if (poprzedniMax !== null && max > poprzedniMax) wynik.add(najciezsza.id);
     poprzedniMax = poprzedniMax === null ? max : Math.max(poprzedniMax, max);
   }
@@ -234,17 +276,20 @@ export function recordSetIds(
 // „+2,5 kg vs ostatnio”: maks. ciężar zrobionych serii ćwiczenia w sesji sessionId − to samo
 // w ostatniej wcześniejszej (wg historyOrder) zakończonej sesji z zrobioną serią z ciężarem tego ćwiczenia.
 // null, gdy w jednej z nich nie ma zrobionej serii z ciężarem.
+// Ćwiczenie z masą ciała porównuje efektywny ciężar (waga z profilu + dociążenie).
 export function kgVsLast(
   history: HistorySession[],
   sessionId: string,
   exerciseId: string,
+  bodyweight: boolean,
+  profileWeight: number | null,
 ): number | null {
   const maksimum = (sets: GymSetRow[]) => {
     let max: number | null = null;
     for (const s of sets) {
-      if (s.exercise_id !== exerciseId || !s.done || s.weight_kg === null)
-        continue;
-      if (max === null || s.weight_kg > max) max = s.weight_kg;
+      const kg = effectiveKg(s.weight_kg, bodyweight, profileWeight);
+      if (s.exercise_id !== exerciseId || !s.done || kg === null) continue;
+      if (max === null || kg > max) max = kg;
     }
     return max;
   };
@@ -267,11 +312,13 @@ export function kgVsLast(
 }
 
 // „ost. 3×8 · 60 kg” (MGym): ostatnia wcześniejsza (wg historyOrder) zakończona sesja ze zrobionymi seriami ćwiczenia —
-// liczba zrobionych serii × powt. pierwszej z nich · maks. ciężar (masa ciała: bez kg). Brak → null.
+// liczba zrobionych serii × powt. pierwszej z nich · maks. ciężar (masa ciała: bez kg).
+// Ćwiczenie z masą ciała: „· mc” albo „· mc + 5” (maks. dociążenie). Brak → null.
 export function lastSetsSummary(
   history: HistorySession[],
   sessionId: string,
   exerciseId: string,
+  bodyweight: boolean,
 ): string | null {
   const biezaca = history.find((h) => h.sessionId === sessionId);
   if (!biezaca) return null;
@@ -295,6 +342,8 @@ export function lastSetsSummary(
       max = s.weight_kg;
   }
   const powt = serie[0].reps === null ? "—" : String(serie[0].reps);
+  if (bodyweight)
+    return `ost. ${serie.length}×${powt} · ${formatKg(max, true)}`;
   return `ost. ${serie.length}×${powt}${max === null ? "" : ` · ${formatKg(max)} kg`}`;
 }
 

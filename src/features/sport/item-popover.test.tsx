@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ItemPopover } from "./item-popover";
 import type { SportItem } from "./model";
-import { daneSportu, SESJA_PUSH, SZABLON_PUSH } from "./sport-test-data";
+import {
+  daneSportu,
+  POMPKI,
+  SESJA_PUSH,
+  SZABLON_PUSH,
+} from "./sport-test-data";
 
 function wyrenderuj(klucz: string, zmiany: Partial<SportItem> = {}) {
   const dane = daneSportu();
@@ -20,6 +25,7 @@ function wyrenderuj(klucz: string, zmiany: Partial<SportItem> = {}) {
     templates: dane.templates,
     exercises: dane.exercises,
     setsHistory: dane.setsHistory,
+    profileWeight: 72 as number | null,
     onClose: vi.fn(),
     onOpenRun: vi.fn(),
     onStartGym: vi.fn(),
@@ -91,6 +97,39 @@ describe("ItemPopover", () => {
     expect(
       within(w.dymek).getByRole("link", { name: "Otwórz trening" }),
     ).toHaveAttribute("href", `/sport/trening/${SESJA_PUSH}`);
+  });
+
+  it("trening z ćwiczeniem z masą ciała: objętość z wagą z profilu", () => {
+    const dane = daneSportu();
+    const item = dane.items.find(
+      (i) => i.key === `s:${SESJA_PUSH}`,
+    ) as SportItem;
+    const wspolne = {
+      item,
+      openLeft: false,
+      openUp: false,
+      clock: "24" as const,
+      templates: dane.templates,
+      exercises: dane.exercises.map((e) =>
+        e.id === POMPKI ? { ...e, bodyweight: true } : e,
+      ),
+      setsHistory: dane.setsHistory,
+      onClose: vi.fn(),
+      onOpenRun: vi.fn(),
+      onStartGym: vi.fn(),
+      onDelete: vi.fn(),
+    };
+    const { unmount } = render(<ItemPopover {...wspolne} profileWeight={72} />);
+    // 652,5 + 72 × 10
+    expect(statystyka(screen.getByRole("dialog"), "Objętość")).toBe(
+      "1 372,5 kg",
+    );
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Pompki na poręczachmc × 10",
+    );
+    unmount();
+    render(<ItemPopover {...wspolne} profileWeight={null} />);
+    expect(statystyka(screen.getByRole("dialog"), "Objętość")).toBe("652,5 kg");
   });
 
   it("plan z szablonu: Szablon / Start / Ćwiczenia / Serie, „jak ostatnio” i „Rozpocznij”", async () => {

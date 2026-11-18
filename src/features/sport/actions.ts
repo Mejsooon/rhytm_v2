@@ -107,7 +107,7 @@ async function profileFor(
 }
 
 // Id ćwiczeń użytkownika po nazwie bez wielkości liter (klucz: lower(nazwa)).
-// Brakujące są tworzone (grupa mięśni z biblioteki); null przy błędzie.
+// Brakujące są tworzone (grupa mięśni i flaga masy ciała z biblioteki); null przy błędzie.
 async function exerciseIdsByName(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -133,6 +133,7 @@ async function exerciseIdsByName(
         user_id: userId,
         name: nazwa,
         muscle_group: zBiblioteki?.group ?? null,
+        bodyweight: zBiblioteki?.bodyweight ?? false,
       })
       .select("id")
       .single();
@@ -1076,6 +1077,37 @@ export async function renameExercise(
     .eq("user_id", user.id)
     .select("id");
   if (error?.code === "23505") return { ok: false, message: ZAJETA_NAZWA };
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!zmienione || zmienione.length === 0)
+    return { ok: false, message: BRAK_CWICZENIA };
+
+  revalidatePath("/sport");
+  revalidatePath("/sport/cwiczenia/[id]", "page");
+  revalidatePath("/sport/trening/[id]", "page");
+  revalidatePath("/sport/szablony");
+  return { ok: true };
+}
+
+// „Z masą ciała” w szczegółach ćwiczenia: kg serii to wtedy dociążenie (waga z profilu + kg)
+export async function setExerciseBodyweight(
+  id: string,
+  bodyweight: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  if (!idSchema.safeParse(id).success || typeof bodyweight !== "boolean")
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const { data: zmienione, error } = await supabase
+    .from("exercises")
+    .update({ bodyweight })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("id");
   if (error) return { ok: false, message: BLAD_ZAPISU };
   if (!zmienione || zmienione.length === 0)
     return { ok: false, message: BRAK_CWICZENIA };

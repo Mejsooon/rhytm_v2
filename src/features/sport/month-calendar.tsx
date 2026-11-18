@@ -212,6 +212,7 @@ export function MonthCalendar({
                         templates={data.templates}
                         exercises={data.exercises}
                         setsHistory={data.setsHistory}
+                        profileWeight={profile.weightKg}
                         onClose={() => onSelect(null)}
                         onOpenRun={onOpenRun}
                         onStartGym={onStartGym}

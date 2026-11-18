@@ -27,7 +27,7 @@ vi.mock("./actions", () => ({
 
 import { daneTreningu, SESJA, seriaTreningu } from "./gym-test-data";
 import type { WorkoutData } from "./load-sport";
-import { WYCISKANIE } from "./sport-test-data";
+import { POMPKI, WYCISKANIE } from "./sport-test-data";
 import { useGymStore } from "./use-gym-store";
 
 beforeEach(() => vi.clearAllMocks());
@@ -46,6 +46,48 @@ describe("useGymStore", () => {
     expect(result.current.volume).toBe(1202.5);
     expect(result.current.doneCount).toBe(3);
     expect(result.current.totalCount).toBe(6);
+  });
+
+  it("ćwiczenie z masą ciała: objętość = (waga z profilu + dociążenie) × powt.", () => {
+    const baza = daneTreningu();
+    const d = daneTreningu({
+      exercises: baza.exercises.map((e) =>
+        e.id === POMPKI ? { ...e, bodyweight: true } : e,
+      ),
+      sets: baza.sets.map((s) =>
+        s.id === "p1"
+          ? { ...s, done: true }
+          : s.id === "p2"
+            ? { ...s, done: true, weight_kg: 5 }
+            : s,
+      ),
+    });
+    const { result } = renderHook(() => useGymStore(d));
+    expect(
+      result.current.exercises.find((e) => e.id === POMPKI)?.bodyweight,
+    ).toBe(true);
+    expect(
+      result.current.exercises.find((e) => e.id === WYCISKANIE)?.bodyweight,
+    ).toBe(false);
+    // 1202,5 (wyciskanie) + 72 × 12 + 77 × 10
+    expect(result.current.volume).toBe(1202.5 + 864 + 770);
+    // Bez wagi w profilu serie z masą ciała nie liczą się do objętości
+    const bezWagi = { ...d, profile: { ...d.profile, weightKg: null } };
+    const { result: r2 } = renderHook(() => useGymStore(bezWagi));
+    expect(r2.current.volume).toBe(1202.5);
+  });
+
+  it("nowe ćwiczenie z biblioteki dodane na ekranie ma flagę masy ciała", () => {
+    addExercise.mockReturnValue(new Promise(() => {}));
+    const d = daneTreningu();
+    const { result } = renderHook(() => useGymStore(d));
+    act(() => {
+      void result.current.addExercise("Dipy");
+    });
+    expect(result.current.exercises.at(-1)).toMatchObject({
+      name: "Dipy",
+      bodyweight: true,
+    });
   });
 
   it("szkic kg liczy się od razu, a zatwierdzenie wysyła liczbę", async () => {
@@ -197,6 +239,7 @@ describe("useGymStore", () => {
           name: "Martwy ciąg",
           muscle_group: "plecy",
           created_at: null,
+          bodyweight: false,
         },
       ],
       sets: [

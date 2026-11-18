@@ -16,6 +16,7 @@ import {
   updateSet,
   type SetPatch,
 } from "./actions";
+import { EXERCISE_LIBRARY } from "./library";
 import type { WorkoutData } from "./load-sport";
 import {
   parseKgInput,
@@ -24,7 +25,13 @@ import {
   type GymSetRow,
 } from "./model";
 
-export type GymExercise = { id: string; name: string; sets: GymSetRow[] };
+// bodyweight: ćwiczenie z masą ciała — kg serii to dociążenie (waga z profilu + kg)
+export type GymExercise = {
+  id: string;
+  name: string;
+  bodyweight: boolean;
+  sets: GymSetRow[];
+};
 export type DraftField = "kg" | "reps";
 type Szkic = { kg?: string; reps?: string };
 
@@ -205,15 +212,25 @@ export function useGymStore(data: WorkoutData) {
       ? a.exercise_position - b.exercise_position
       : a.set_no - b.set_no,
   );
+  // Ćwiczenia z masą ciała: flaga z danych serwera (po id, a dla ćwiczenia dodanego na ekranie
+  // po nazwie); nowe ćwiczenie, którego serwer jeszcze nie zwrócił, bierze flagę z biblioteki
+  const bodyweightIds = new Set<string>();
   const exercises: GymExercise[] = [];
   for (const s of posortowane) {
     let cwiczenie = exercises.find((e) => e.id === s.exercise_id);
     if (!cwiczenie) {
-      cwiczenie = {
-        id: s.exercise_id,
-        name: poZmianach.names.get(s.exercise_id) ?? "",
-        sets: [],
-      };
+      const name = poZmianach.names.get(s.exercise_id) ?? "";
+      const zBazy =
+        data.exercises.find((e) => e.id === s.exercise_id) ??
+        data.exercises.find((e) => e.name.toLowerCase() === name.toLowerCase());
+      const zBiblioteki = EXERCISE_LIBRARY.find(
+        (l) => l.name.toLowerCase() === name.toLowerCase(),
+      );
+      const bodyweight = zBazy
+        ? zBazy.bodyweight
+        : (zBiblioteki?.bodyweight ?? false);
+      if (bodyweight) bodyweightIds.add(s.exercise_id);
+      cwiczenie = { id: s.exercise_id, name, bodyweight, sets: [] };
       exercises.push(cwiczenie);
     }
     cwiczenie.sets.push(s);
@@ -370,7 +387,7 @@ export function useGymStore(data: WorkoutData) {
   return {
     exercises,
     drafts: biezacy.szkice,
-    volume: sessionVolume(sets),
+    volume: sessionVolume(sets, bodyweightIds, data.profile.weightKg),
     doneCount: sets.filter((s) => s.done).length,
     totalCount: sets.length,
     setDraft,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EXERCISE_LIBRARY, searchExercises } from "./library";
 import {
+  effectiveKg,
   epley1rm,
   kgVsLast,
   lastSetsSummary,
@@ -62,6 +63,32 @@ describe("tempo i formatowanie", () => {
     expect(formatKg(null)).toBe("mc");
   });
 
+  it("formatKg ćwiczenia z masą ciała: „mc” albo „mc + dociążenie”", () => {
+    expect(formatKg(null, true)).toBe("mc");
+    expect(formatKg(0, true)).toBe("mc");
+    expect(formatKg(5, true)).toBe("mc + 5");
+    expect(formatKg(2.5, true)).toBe("mc + 2,5");
+  });
+});
+
+describe("effectiveKg", () => {
+  it("pompki bez dociążenia przy wadze 72 → 72", () => {
+    expect(effectiveKg(null, true, 72)).toBe(72);
+    expect(effectiveKg(0, true, 72)).toBe(72);
+  });
+  it("pompki z dociążeniem +5 → 77", () => {
+    expect(effectiveKg(5, true, 72)).toBe(77);
+  });
+  it("brak wagi w profilu → null", () => {
+    expect(effectiveKg(null, true, null)).toBeNull();
+    expect(effectiveKg(5, true, null)).toBeNull();
+  });
+  it("zwykłe ćwiczenie bez zmian", () => {
+    expect(effectiveKg(60, false, 72)).toBe(60);
+    expect(effectiveKg(null, false, 72)).toBeNull();
+    expect(effectiveKg(60, false, null)).toBe(60);
+  });
+
   it("formatuje objętość z odstępem tysięcy i przecinkiem", () => {
     expect(formatVolume(5640)).toBe("5 640");
     expect(formatVolume(652.5)).toBe("652,5");
@@ -88,18 +115,43 @@ describe("1RM i objętość", () => {
   });
   it("objętość liczy tylko zrobione serie z ciężarem", () => {
     expect(
-      sessionVolume([
-        { weight_kg: null, reps: 10, done: true },
-        { weight_kg: 60, reps: 8, done: false },
-      ]),
+      sessionVolume(
+        [
+          { exercise_id: "e1", weight_kg: null, reps: 10, done: true },
+          { exercise_id: "e1", weight_kg: 60, reps: 8, done: false },
+        ],
+        new Set(),
+        72,
+      ),
     ).toBe(0);
-    expect(sessionVolume([{ weight_kg: 60, reps: 8, done: true }])).toBe(480);
     expect(
-      sessionVolume([
-        { weight_kg: 60, reps: 8, done: true },
-        { weight_kg: null, reps: 12, done: true },
-      ]),
+      sessionVolume(
+        [{ exercise_id: "e1", weight_kg: 60, reps: 8, done: true }],
+        new Set(),
+        72,
+      ),
     ).toBe(480);
+    expect(
+      sessionVolume(
+        [
+          { exercise_id: "e1", weight_kg: 60, reps: 8, done: true },
+          { exercise_id: "e1", weight_kg: null, reps: 12, done: true },
+        ],
+        new Set(),
+        72,
+      ),
+    ).toBe(480);
+  });
+
+  it("objętość ćwiczenia z masą ciała: (waga z profilu + dociążenie) × powt.", () => {
+    const serie = [
+      { exercise_id: "pompki", weight_kg: null, reps: 10, done: true },
+      { exercise_id: "pompki", weight_kg: 5, reps: 8, done: true },
+      { exercise_id: "lawka", weight_kg: 60, reps: 8, done: true },
+    ];
+    expect(sessionVolume(serie, new Set(["pompki"]), 72)).toBe(720 + 616 + 480);
+    // Bez wagi w profilu serie z masą ciała to 0
+    expect(sessionVolume(serie, new Set(["pompki"]), null)).toBe(480);
   });
 });
 
@@ -197,7 +249,9 @@ describe("lastSetsSummary", () => {
   ];
 
   it("ostatnia wcześniejsza sesja: zrobione serie × powt. pierwszej · maks. kg", () => {
-    expect(lastSetsSummary(historia, "teraz", "e1")).toBe("ost. 3×8 · 62,5 kg");
+    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
+      "ost. 3×8 · 62,5 kg",
+    );
   });
 
   it("masa ciała bez kg; brak wcześniejszej sesji → null", () => {
@@ -218,10 +272,10 @@ describe("lastSetsSummary", () => {
         sets: [],
       },
     ];
-    expect(lastSetsSummary(mc, "teraz", "e1")).toBe("ost. 2×12");
-    expect(lastSetsSummary(historia, "s1", "e1")).toBeNull();
-    expect(lastSetsSummary(historia, "teraz", "e9")).toBeNull();
-    expect(lastSetsSummary(historia, "brak", "e1")).toBeNull();
+    expect(lastSetsSummary(mc, "teraz", "e1", false)).toBe("ost. 2×12");
+    expect(lastSetsSummary(historia, "s1", "e1", false)).toBeNull();
+    expect(lastSetsSummary(historia, "teraz", "e9", false)).toBeNull();
+    expect(lastSetsSummary(historia, "brak", "e1", false)).toBeNull();
   });
 });
 
@@ -248,6 +302,8 @@ describe("recordSetIds", () => {
         },
       ],
       "e1",
+      false,
+      null,
     );
     expect([...wynik]).toEqual(["b1"]);
   });
@@ -274,6 +330,8 @@ describe("recordSetIds", () => {
         },
       ],
       "e1",
+      false,
+      null,
     );
     expect([...wynik]).toEqual(["c1"]);
   });
@@ -294,6 +352,8 @@ describe("recordSetIds", () => {
         },
       ],
       "e1",
+      false,
+      null,
     );
     expect(wynik.size).toBe(0);
   });
@@ -324,6 +384,8 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
         },
       ],
       "e1",
+      false,
+      null,
     );
     expect([...wynik]).toEqual(["c1"]);
   });
@@ -341,8 +403,8 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
       completed: true,
       sets: [set({ id: "b1", weight_kg: 65 })],
     };
-    expect([...recordSetIds([a, b], "e1")]).toEqual(["b1"]);
-    expect([...recordSetIds([b, a], "e1")]).toEqual(["b1"]);
+    expect([...recordSetIds([a, b], "e1", false, null)]).toEqual(["b1"]);
+    expect([...recordSetIds([b, a], "e1", false, null)]).toEqual(["b1"]);
   });
 
   it("kgVsLast i lastSetsSummary pomijają niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
@@ -372,9 +434,11 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
         sets: [set({ id: "t1", weight_kg: 65 })],
       },
     ];
-    expect(kgVsLast(historia, "teraz", "e1")).toBe(2.5);
-    expect(kgVsLast(historia, "b", "e1")).toBe(2.5);
-    expect(lastSetsSummary(historia, "teraz", "e1")).toBe("ost. 1×8 · 62,5 kg");
+    expect(kgVsLast(historia, "teraz", "e1", false, null)).toBe(2.5);
+    expect(kgVsLast(historia, "b", "e1", false, null)).toBe(2.5);
+    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
+      "ost. 1×8 · 62,5 kg",
+    );
   });
 });
 
@@ -737,6 +801,17 @@ describe("searchExercises", () => {
     expect(w[0].id).toBe("1");
     expect(w.find((e) => e.name === "Wyciskanie hantli skos")?.id).toBeNull();
   });
+  it("biblioteka ma „Dipy” i flagę masy ciała dla ćwiczeń bez sztangi", () => {
+    const zMasaCiala = EXERCISE_LIBRARY.filter((e) => e.bodyweight)
+      .map((e) => e.name)
+      .sort();
+    expect(zMasaCiala).toEqual(
+      ["Dipy", "Plank", "Podciąganie", "Pompki", "Pompki na poręczach"].sort(),
+    );
+    expect(EXERCISE_LIBRARY.find((e) => e.name === "Dipy")?.group).toBe(
+      "triceps",
+    );
+  });
   it("biblioteka nie ma duplikatów", () => {
     const n = EXERCISE_LIBRARY.map((e) => e.name.toLowerCase());
     expect(new Set(n).size).toBe(n.length);
@@ -816,13 +891,13 @@ describe("kgVsLast", () => {
   ];
 
   it("maks. zrobionej serii teraz − maks. w poprzedniej sesji z ćwiczeniem", () => {
-    expect(kgVsLast(historia, "s3", "e1")).toBe(2.5);
-    expect(kgVsLast(historia, "s2", "e1")).toBe(5);
+    expect(kgVsLast(historia, "s3", "e1", false, null)).toBe(2.5);
+    expect(kgVsLast(historia, "s2", "e1", false, null)).toBe(5);
   });
 
   it("pierwsza sesja, brak zrobionych serii z ciężarem albo inne ćwiczenie → null", () => {
-    expect(kgVsLast(historia, "s1", "e1")).toBeNull();
-    expect(kgVsLast(historia, "s3", "e2")).toBeNull();
+    expect(kgVsLast(historia, "s1", "e1", false, null)).toBeNull();
+    expect(kgVsLast(historia, "s3", "e2", false, null)).toBeNull();
     expect(
       kgVsLast(
         [
@@ -836,6 +911,8 @@ describe("kgVsLast", () => {
         ],
         "s4",
         "e1",
+        false,
+        null,
       ),
     ).toBeNull();
   });
@@ -860,6 +937,8 @@ describe("kgVsLast", () => {
         ],
         "s3",
         "e1",
+        false,
+        null,
       ),
     ).toBe(-2.5);
   });
@@ -916,5 +995,52 @@ describe("sportItemHref", () => {
     expect(sportItemHref({ date: "2026-12-01", key: "s:abc" })).toBe(
       "/sport?miesiac=2026-12&wybrany=s:abc",
     );
+  });
+});
+
+describe("ćwiczenia z masą ciała w historii", () => {
+  const historia = [
+    {
+      sessionId: "s1",
+      startLocal: "2026-11-03T10:00:00",
+      completed: true,
+      sets: [set({ id: "a1", weight_kg: null, reps: 12 })],
+    },
+    {
+      sessionId: "s2",
+      startLocal: "2026-11-10T10:00:00",
+      completed: true,
+      sets: [
+        set({ id: "b1", weight_kg: null, reps: 10 }),
+        set({ id: "b2", set_no: 2, weight_kg: 5, reps: 8 }),
+      ],
+    },
+  ];
+
+  it("REKORD z efektywnym ciężarem: mc + 5 bije samą mc", () => {
+    expect([...recordSetIds(historia, "e1", true, 72)]).toEqual(["b2"]);
+  });
+
+  it("bez wagi w profilu nie ma REKORDU ani „vs ostatnio”", () => {
+    expect(recordSetIds(historia, "e1", true, null).size).toBe(0);
+    expect(kgVsLast(historia, "s2", "e1", true, null)).toBeNull();
+  });
+
+  it("„vs ostatnio” porównuje mc + dociążenie", () => {
+    expect(kgVsLast(historia, "s2", "e1", true, 72)).toBe(5);
+  });
+
+  it("„ost.” pokazuje mc albo mc + dociążenie", () => {
+    const dalej = [
+      ...historia,
+      {
+        sessionId: "s3",
+        startLocal: "2026-11-17T10:00:00",
+        completed: true,
+        sets: [],
+      },
+    ];
+    expect(lastSetsSummary(dalej, "s3", "e1", true)).toBe("ost. 2×10 · mc + 5");
+    expect(lastSetsSummary(dalej, "s2", "e1", true)).toBe("ost. 1×12 · mc");
   });
 });

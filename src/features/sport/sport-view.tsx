@@ -331,6 +331,9 @@ export function SportView({
                 { value: "gym", label: "Siłownia" },
               ]}
             />
+            <Button asChild size="sm">
+              <Link href="/sport/szablony">Szablony</Link>
+            </Button>
             <ActionPopover
               open={menuSilowni}
               onOpenChange={setMenuSilowni}
@@ -428,6 +431,7 @@ export function SportView({
             <RecordCard
               exercises={data.exercises}
               setsHistory={data.setsHistory}
+              profileWeight={profile.weightKg}
               onNewGym={() =>
                 void rozpocznijSilownie({ date: today, start: godzinaTeraz() })
               }
@@ -439,6 +443,8 @@ export function SportView({
             month={month}
             doneInMonth={wykonaneWMiesiacu}
             setsHistory={data.setsHistory}
+            exercises={data.exercises}
+            profileWeight={profile.weightKg}
             onOpenRun={otworzBieg}
           />
         </div>

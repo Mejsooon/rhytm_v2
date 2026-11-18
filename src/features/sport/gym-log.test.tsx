@@ -43,7 +43,7 @@ vi.mock("./actions", () => ({
 vi.mock("./mobile/m-gym", () => ({ MGym: () => null }));
 
 import { GymLog } from "./gym-log";
-import { daneTreningu, SESJA } from "./gym-test-data";
+import { daneTreningu, daneZMasaCiala, SESJA } from "./gym-test-data";
 import { WYCISKANIE } from "./sport-test-data";
 
 const WYC = "Wyciskanie na ławce";
@@ -475,5 +475,64 @@ describe("GymLog — zakończenie i szablon", () => {
     expect(
       within(okno).getByText("Dodaj przynajmniej jedno ćwiczenie."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("GymLog — ćwiczenie z masą ciała", () => {
+  const POMPKI_NAZWA = "Pompki na poręczach";
+
+  it("„mc” z polem dociążenia, nagłówek kolumny i dopisek z wagą z profilu", () => {
+    render(<GymLog data={daneZMasaCiala()} />);
+    const k = karta(POMPKI_NAZWA);
+    expect(within(k).getByText("kg (mc + dociążenie)")).toBeInTheDocument();
+    expect(within(k).getAllByTitle("Masa ciała z profilu")).toHaveLength(2);
+    expect(
+      within(k).getByLabelText(`${POMPKI_NAZWA}, seria 1 — dociążenie (kg)`),
+    ).toHaveValue("");
+    expect(
+      within(k).getByLabelText(`${POMPKI_NAZWA}, seria 2 — dociążenie (kg)`),
+    ).toHaveValue("5");
+    expect(
+      within(k).getByText(
+        "mc = masa ciała 72 kg z profilu · „+ kg” to dociążenie (opcjonalnie)",
+      ),
+    ).toBeInTheDocument();
+    // Zwykłe ćwiczenie bez zmian
+    expect(within(karta(WYC)).getByText("kg")).toBeInTheDocument();
+  });
+
+  it("objętość i 1RM liczą masę ciała + dociążenie", () => {
+    render(<GymLog data={daneZMasaCiala()} />);
+    // 1202,5 + 72×12 + 77×10 = 2836,5
+    expect(objetosc()).toHaveTextContent("2 836,5 kg");
+    // Epley: 77 × (1 + 10/30) = 102,67 → 102,5; 72 × (1 + 12/30) = 100,8 → 101
+    expect(
+      within(karta(POMPKI_NAZWA)).getByText("1RM 102,5 kg"),
+    ).toBeInTheDocument();
+  });
+
+  it("wpisane dociążenie liczy się do objętości od razu i idzie na serwer", async () => {
+    render(<GymLog data={daneZMasaCiala()} />);
+    const pole = screen.getByLabelText(
+      `${POMPKI_NAZWA}, seria 1 — dociążenie (kg)`,
+    );
+    await userEvent.type(pole, "10");
+    // 2836,5 + 10×12
+    expect(objetosc()).toHaveTextContent("2 956,5 kg");
+    await userEvent.tab();
+    expect(updateSet).toHaveBeenCalledWith("p1", { weight_kg: 10 });
+  });
+
+  it("bez wagi w profilu: prośba o wagę z linkiem, serie z mc nie liczą się", () => {
+    render(<GymLog data={daneZMasaCiala(null)} />);
+    expect(objetosc()).toHaveTextContent("1 202,5 kg");
+    const k = karta(POMPKI_NAZWA);
+    expect(within(k).getByText("1RM —")).toBeInTheDocument();
+    expect(
+      within(k).getByRole("link", { name: "Ustawienia → Profil" }),
+    ).toHaveAttribute("href", "/ustawienia/ogolne");
+    expect(k).toHaveTextContent(
+      "Uzupełnij wagę w profilu (Ustawienia → Profil), żeby liczyć objętość i rekordy.",
+    );
   });
 });
