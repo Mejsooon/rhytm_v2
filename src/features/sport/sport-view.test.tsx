@@ -398,4 +398,22 @@ describe("SportView", () => {
       { scroll: false },
     );
   });
+
+  it("zamknięcie okna `?bieg=` czyści bieg z adresu i zostawia miesiąc", async () => {
+    render(
+      <SportView
+        data={daneSportu()}
+        selectedKey={null}
+        newGym={null}
+        runId="a1000000-0000-4000-8000-000000000015"
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(replace).toHaveBeenCalledWith("/sport?miesiac=2026-11", {
+      scroll: false,
+    });
+    expect(
+      screen.queryByRole("dialog", { name: "Edytuj bieg" }),
+    ).not.toBeInTheDocument();
+  });
 });

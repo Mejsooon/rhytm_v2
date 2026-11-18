@@ -63,7 +63,11 @@ export function RunDialog({
   const [dzien, setDzien] = useState<IsoDate | null>(date);
   const [godzina, setGodzina] = useState(start);
   const [dystans, setDystans] = useState(
-    item?.distanceKm != null ? formatKm(item.distanceKm) : "",
+    item?.distanceKm != null
+      ? Number.isInteger(item.distanceKm)
+        ? formatKm(item.distanceKm)
+        : String(item.distanceKm).replace(".", ",")
+      : "",
   );
   const [czas, setCzas] = useState(
     item?.durationS != null ? formatDuration(item.durationS) : "",

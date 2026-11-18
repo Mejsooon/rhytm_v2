@@ -1,7 +1,10 @@
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { loadSportMonth } = vi.hoisted(() => ({ loadSportMonth: vi.fn() }));
+const { loadSportMonth, loadSportRun } = vi.hoisted(() => ({
+  loadSportMonth: vi.fn(),
+  loadSportRun: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/server", () => ({ connection: vi.fn(async () => {}) }));
 vi.mock("@/lib/supabase/server", () => ({
@@ -9,7 +12,10 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: { getUser: async () => ({ data: { user: { id: "u1" } } }) },
   }),
 }));
-vi.mock("@/features/sport/load-sport", () => ({ loadSportMonth }));
+vi.mock("@/features/sport/load-sport", () => ({
+  loadSportMonth,
+  loadSportRun,
+}));
 vi.mock("@/features/sport/sport-view", () => ({ SportView: () => null }));
 
 import SportPage from "./page";
@@ -30,7 +36,11 @@ async function propsWidoku(parametry: Parametry) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  loadSportMonth.mockResolvedValue({ month: "2026-11", today: "2026-11-17" });
+  loadSportMonth.mockResolvedValue({
+    month: "2026-11",
+    today: "2026-11-17",
+    items: [],
+  });
 });
 
 describe("/sport", () => {
@@ -61,5 +71,44 @@ describe("/sport", () => {
       godzina: "25:00",
     });
     expect(p.newGym).toEqual({ date: null, start: null });
+  });
+
+  it("?nowy=bieg bez miesiaca bierze miesiąc z daty", async () => {
+    const p = await propsWidoku({
+      nowy: "bieg",
+      data: "2026-12-03",
+      godzina: "06:45",
+    });
+    expect(loadSportMonth).toHaveBeenCalledWith(
+      expect.anything(),
+      "u1",
+      "2026-12",
+    );
+    expect(p.newRun).toEqual({ date: "2026-12-03", start: "06:45" });
+  });
+
+  it("?nowy=bieg ze złą datą i godziną → null, a jawny miesiac wygrywa", async () => {
+    const p = await propsWidoku({
+      nowy: "bieg",
+      miesiac: "2026-10",
+      data: "2026-12-03",
+      godzina: "99:00",
+    });
+    expect(loadSportMonth).toHaveBeenCalledWith(
+      expect.anything(),
+      "u1",
+      "2026-10",
+    );
+    expect(p.newRun).toEqual({ date: "2026-12-03", start: null });
+  });
+
+  it("?bieg= spoza wczytanych danych wczytuje bieg osobno", async () => {
+    const bieg = { sessionId: "abc", kind: "run" };
+    loadSportRun.mockResolvedValue(bieg);
+    const p = await propsWidoku({ miesiac: "2026-11", bieg: "abc" });
+    expect(loadSportRun).toHaveBeenCalledWith(expect.anything(), "u1", "abc");
+    expect(p.runId).toBe("abc");
+    expect(p.runItem).toBe(bieg);
+    expect(p.newRun).toBeNull();
   });
 });

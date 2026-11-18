@@ -120,4 +120,22 @@ describe("MonthCalendar", () => {
       screen.getByRole("button", { name: "Dodaj trening, śr 18.11" }),
     ).toBeInTheDocument();
   });
+
+  it("klik poza kalendarzem zamyka dymek", async () => {
+    const klucz = "s:a1000000-0000-4000-8000-000000000015";
+    const otwarty = wyrenderuj({ selectedKey: klucz });
+    await userEvent.click(document.body);
+    expect(otwarty.onSelect).toHaveBeenCalledWith(null);
+  });
+
+  it("przy `suspended` klik poza kalendarzem i Esc nie zamykają dymka", async () => {
+    const w = wyrenderuj({
+      selectedKey: "s:a1000000-0000-4000-8000-000000000015",
+      suspended: true,
+    });
+    await userEvent.click(document.body);
+    await userEvent.keyboard("{Escape}");
+    expect(w.onSelect).not.toHaveBeenCalled();
+    expect(w.onAddDay).not.toHaveBeenCalled();
+  });
 });

@@ -205,4 +205,18 @@ describe("RunDialog", () => {
     ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it("edycja zachowuje dokładny dystans (10,25) i zapisuje go bez zmian", async () => {
+    const item = bieg("a1000000-0000-4000-8000-000000000020", "2026-11-15", {
+      startMin: 9 * 60,
+      distanceKm: 10.25,
+      durationS: 3480,
+    });
+    wyrenderuj({ item, date: item.date, start: "09:00" });
+    expect(screen.getByLabelText("Dystans (km)")).toHaveValue("10,25");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz bieg" }));
+    expect(saveRun).toHaveBeenCalledWith(
+      expect.objectContaining({ distanceKm: 10.25, durationS: 3480 }),
+    );
+  });
 });
