@@ -35,7 +35,6 @@ const BRAK_STRONY = "Nie znaleziono strony.";
 const BRAK_BLOKU = "Nie znaleziono bloku.";
 const BRAK_POLA = "Nie znaleziono pola.";
 const BRAK_WIERSZA = "Nie znaleziono wiersza.";
-const POLE_TYTULOWE = "Pola tytułowego nie można usunąć.";
 const POLE_TYTULOWE_TYP = "Typu pola tytułowego nie można zmienić.";
 const BEZ_TYTULU = "Bez tytułu";
 
