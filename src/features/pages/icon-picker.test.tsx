@@ -31,8 +31,18 @@ describe("IconPicker", () => {
     expect(within(kolory).getByRole("button", { name: "Szary" })).toHaveAttribute("aria-pressed", "true");
     await user.click(within(kolory).getByRole("button", { name: "Niebieski" }));
     expect(within(kolory).getByRole("button", { name: "Niebieski" })).toHaveAttribute("aria-pressed", "true");
-    await user.click(screen.getByRole("button", { name: "Ikona książka" }));
+    await user.click(screen.getByRole("button", { name: "Ikona książka czytanie" }));
     expect(onPick).toHaveBeenCalledWith("lucide:book-open:blue");
+  });
+
+  it("etykiety przycisków emoji i ikon są unikalne", async () => {
+    const user = userEvent.setup();
+    render(<IconPicker value="" onPick={vi.fn()} />);
+    const emoji = screen.getAllByRole("button", { name: /^Emoji / }).map((b) => b.getAttribute("aria-label"));
+    expect(new Set(emoji).size).toBe(56);
+    await user.click(screen.getByRole("button", { name: "Ikony" }));
+    const ikony = screen.getAllByRole("button", { name: /^Ikona / }).map((b) => b.getAttribute("aria-label"));
+    expect(new Set(ikony).size).toBe(37);
   });
 
   it("„Usuń” → onPick('')", async () => {
@@ -48,7 +58,7 @@ describe("IconPicker", () => {
     render(<IconPicker value="lucide:rocket:teal" onPick={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Ikony" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Morski" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Ikona start" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Ikona start projekt" })).toHaveAttribute("aria-pressed", "true");
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "xyzxyz");
     expect(screen.getByText("Brak wyników")).toBeInTheDocument();
   });

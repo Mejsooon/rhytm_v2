@@ -1,5 +1,5 @@
 begin;
-select plan(46);
+select plan(53);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -25,6 +25,10 @@ select ok(not has_table_privilege('anon', 'public.page_rows', 'select'), 'anon n
 select has_function('public', 'purge_trash', 'istnieje purge_trash');
 select is(has_function_privilege('authenticated', 'public.purge_trash()', 'execute'), false,
   'authenticated nie wykonuje purge_trash');
+select ok(has_function_privilege('authenticated', 'public.move_page(uuid[], uuid, boolean)', 'execute'),
+  'authenticated wykonuje move_page');
+select is(has_function_privilege('anon', 'public.move_page(uuid[], uuid, boolean)', 'execute'), false,
+  'anon nie wykonuje move_page');
 
 -- Od teraz jako zalogowany A.
 set local role authenticated;
@@ -152,6 +156,17 @@ select set_config('test.page_blank_copy', public.duplicate_page(current_setting(
 select is((select title from public.pages where id = current_setting('test.page_blank_copy')::uuid),
   'Bez tytułu (kopia)', 'kopia strony bez tytułu to „Bez tytułu (kopia)”');
 
+-- move_page: ulubione i kolejność naraz (oryginał Books ląduje za kopią i w ulubionych)
+select public.move_page(
+  array[current_setting('test.page_copy')::uuid, current_setting('test.page_a')::uuid],
+  current_setting('test.page_a')::uuid, true);
+select is((select p.favorite from public.pages as p where p.id = current_setting('test.page_a')::uuid), true,
+  'move_page ustawia ulubione');
+select is((select array_agg(p.id order by p.position) from public.pages as p
+  where p.id in (current_setting('test.page_a')::uuid, current_setting('test.page_copy')::uuid)),
+  array[current_setting('test.page_copy')::uuid, current_setting('test.page_a')::uuid],
+  'move_page zmienia kolejność');
+
 -- Od teraz jako zalogowany B.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
 
@@ -166,6 +181,7 @@ with upd as (update public.pages set title = 'hack' where id = current_setting('
 select is((select count(*) from upd), 0::bigint, 'B nie zmienia strony A');
 with del as (delete from public.pages where id = current_setting('test.page_a')::uuid returning 1)
 select is((select count(*) from del), 0::bigint, 'B nie usuwa strony A');
+select public.move_page(array[current_setting('test.page_a')::uuid], current_setting('test.page_a')::uuid, false);
 
 select throws_ok(
   format('insert into public.page_blocks (page_id, type) values (%L, ''text'')', current_setting('test.page_a')),
@@ -182,6 +198,15 @@ insert into public.pages (id, user_id, title)
 values ('d3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'bez ikony');
 select is((select p.icon from public.pages as p where p.id = 'd3000000-0000-0000-0000-00000000000a'), '',
   'domyślna ikona strony to pusty tekst');
+select lives_ok(
+  format('update public.pages set icon = %L where id = %L', repeat('x', 64), 'd3000000-0000-0000-0000-00000000000a'),
+  'ikona 64 znaki przechodzi');
+select throws_ok(
+  format('update public.pages set icon = %L where id = %L', repeat('x', 65), 'd3000000-0000-0000-0000-00000000000a'),
+  '23514', null, 'ikona dłuższa niż 64 znaki odrzucona');
+-- move_page wołane przez B nie zmieniło strony A (RLS)
+select is((select p.favorite from public.pages as p where p.id = current_setting('test.page_a')::uuid), true,
+  'B nie zmienia ulubionych strony A przez move_page');
 
 insert into public.pages (id, user_id, title, deleted_at)
 values

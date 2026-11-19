@@ -25,3 +25,27 @@ set icon = case p.icon
   when '✉' then 'lucide:file-text:gray'
 end
 where p.icon in ('▦', '▤', '◉', '★', '♪', '✈', '⌂', '✎', '⚑', '◷', '✱', '☰', '⚙', '◆', '●', '▲', '♥', '✉');
+
+-- Ikona to emoji albo `lucide:<nazwa>:<kolor>` — limit jak w zod (schemas.ts).
+alter table public.pages add constraint pages_icon_length check (char_length(icon) <= 64);
+
+-- Przeniesienie strony w sidebarze między sekcjami (Ulubione ↔ Strony): ulubione i kolejność w jednej transakcji.
+-- p_ids — pełna nowa kolejność stron (jak w reorder_pages); RLS ogranicza zmiany do stron właściciela.
+create function public.move_page(p_ids uuid[], p_page_id uuid, p_favorite boolean)
+returns void
+language sql
+security invoker
+set search_path = ''
+as $$
+  update public.pages as p
+  set favorite = p_favorite
+  where p.id = p_page_id;
+
+  update public.pages as p
+  set position = u.ord - 1
+  from unnest(p_ids) with ordinality as u(id, ord)
+  where p.id = u.id;
+$$;
+
+revoke execute on function public.move_page(uuid[], uuid, boolean) from public, anon;
+grant execute on function public.move_page(uuid[], uuid, boolean) to authenticated;

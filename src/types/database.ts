@@ -967,6 +967,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      move_page: {
+        Args: { p_ids: string[]; p_page_id: string; p_favorite: boolean };
+        Returns: undefined;
+      };
       reorder_pages: {
         Args: { p_ids: string[] };
         Returns: undefined;

@@ -123,6 +123,28 @@ describe("PageMenu", () => {
     expect(reorderPages).toHaveBeenLastCalledWith(["a", "b", "c"]);
   });
 
+  it("w arkuszu przenosi w obrębie sekcji: ulubiona strona zamienia się z sąsiednią ulubioną", async () => {
+    const lista = [strona("a", "Alfa", { favorite: true }), strona("x", "Iks"), strona("b", "Books", { favorite: true })];
+    function UprzazUlubione() {
+      const store = usePagesStore(lista);
+      const books = store.pages.find((p) => p.id === "b")!;
+      return (
+        <>
+          <output data-testid="kolejnosc">{store.pages.map((p) => p.id).join(",")}</output>
+          <PageMenu page={books} pages={store.pages} store={store} onRename={vi.fn()} sheet />
+        </>
+      );
+    }
+    const user = userEvent.setup();
+    render(<UprzazUlubione />);
+    await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
+    // Books jest ostatnia wśród ulubionych, choć Iks (nieulubiona) stoi przed nią w pełnej liście
+    expect(screen.getByRole("button", { name: "Przenieś niżej" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Przenieś wyżej" }));
+    expect(reorderPages).toHaveBeenLastCalledWith(["b", "x", "a"]);
+    expect(screen.getByTestId("kolejnosc")).toHaveTextContent("b,x,a");
+  });
+
   it("błąd zapisu kolejności cofa zmianę i pokazuje toast", async () => {
     reorderPages.mockResolvedValue({ ok: false, message: "x" });
     const user = await otworz(true);
@@ -141,7 +163,7 @@ describe("PageMenu", () => {
     expect(screen.getByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    await user.click(screen.getByRole("button", { name: "Emoji książki" }));
+    await user.click(screen.getByRole("button", { name: "Emoji książki books" }));
     expect(setPageIcon).toHaveBeenCalledWith("b", "📚");
     expect(screen.getByTestId("ikona")).toHaveTextContent("📚");
     expect(screen.queryByRole("group", { name: "Wybór ikony" })).toBeNull();
@@ -152,7 +174,7 @@ describe("PageMenu", () => {
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
     await user.click(screen.getByRole("button", { name: "Ikony" }));
     await user.click(screen.getByRole("button", { name: "Zielony" }));
-    await user.click(screen.getByRole("button", { name: "Ikona start" }));
+    await user.click(screen.getByRole("button", { name: "Ikona start projekt" }));
     expect(setPageIcon).toHaveBeenLastCalledWith("b", "lucide:rocket:green");
 
     await user.click(screen.getByRole("button", { name: "Menu strony Books" }));

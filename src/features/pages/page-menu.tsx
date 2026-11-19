@@ -44,7 +44,9 @@ export function PageMenu({
   const [usuwanie, setUsuwanie] = React.useState(false);
 
   const tytul = page.title.trim() === "" ? "Bez tytułu" : page.title;
-  const indeks = pages.findIndex((p) => p.id === page.id);
+  // „Przenieś wyżej / niżej” działa w obrębie sekcji strony (Ulubione albo pozostałe), jak listy na telefonie
+  const sekcja = pages.filter((p) => p.favorite === page.favorite);
+  const indeks = sekcja.findIndex((p) => p.id === page.id);
 
   function zmienOtwarcie(nowe: boolean) {
     setOtwarte(nowe);
@@ -53,10 +55,13 @@ export function PageMenu({
   }
 
   function przenies(kierunek: -1 | 1) {
-    const cel = indeks + kierunek;
-    if (indeks < 0 || cel < 0 || cel >= pages.length) return;
+    const sasiad = sekcja[indeks + kierunek];
+    if (indeks < 0 || sasiad === undefined) return;
+    // Zamiana miejscami z sąsiadem z tej samej sekcji w pełnej kolejności stron
     const ids = pages.map((p) => p.id);
-    [ids[indeks], ids[cel]] = [ids[cel], ids[indeks]];
+    const a = ids.indexOf(page.id);
+    const b = ids.indexOf(sasiad.id);
+    [ids[a], ids[b]] = [ids[b], ids[a]];
     void store.reorder(ids);
   }
 
@@ -143,7 +148,7 @@ export function PageMenu({
             <button
               type="button"
               aria-label="Przenieś niżej"
-              disabled={indeks < 0 || indeks >= pages.length - 1}
+              disabled={indeks < 0 || indeks >= sekcja.length - 1}
               onClick={() => przenies(1)}
               className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
             >

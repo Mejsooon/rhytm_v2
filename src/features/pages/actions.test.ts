@@ -26,6 +26,7 @@ import {
   deleteField,
   deletePage,
   deleteRow,
+  movePage,
   renamePage,
   restoreRow,
   saveTableSettings,
@@ -308,6 +309,23 @@ describe("bloki i ustawienia", () => {
     tables.pages.update.mockClear();
     expect((await setPageIcon(STRONA, "x".repeat(65))).ok).toBe(false);
     expect(tables.pages.update).not.toHaveBeenCalled();
+  });
+
+  it("movePage woła move_page raz (ulubione + kolejność w jednej transakcji) i odświeża sidebar", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    expect(await movePage([BLOK, STRONA], STRONA, true)).toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("move_page", { p_ids: [BLOK, STRONA], p_page_id: STRONA, p_favorite: true });
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+  });
+
+  it("movePage odrzuca stronę spoza listy, zły id i nie-boolean; błąd bazy → BLAD_ZAPISU", async () => {
+    expect((await movePage([BLOK], STRONA, true)).ok).toBe(false);
+    expect((await movePage(["x"], "x", true)).ok).toBe(false);
+    expect((await movePage([STRONA], STRONA, "tak" as unknown as boolean)).ok).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValue({ data: null, error: { message: "x" } });
+    expect(await movePage([STRONA], STRONA, false)).toEqual({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
   });
 
   it("setFavorite odrzuca nie-boolean", async () => {

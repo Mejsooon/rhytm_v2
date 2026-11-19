@@ -90,6 +90,7 @@ export function PageIcon({
 }: {
   icon: string;
   size?: number;
+  // "lock" na razie nieużywane — dla strony Passwords (Etap 8), której TemplateKey jeszcze nie zna
   fallback?: "table" | "lock";
 }) {
   const ikona = parsePageIcon(icon);

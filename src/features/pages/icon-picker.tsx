@@ -17,6 +17,7 @@ const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans
 
 // Wybór ikony strony jak w Notion (IconPicker.dc.html): zakładki „Emoji” / „Ikony”, „Usuń”,
 // wyszukiwarka (działa też bez polskich znaków), 8 kolorów ikon i siatka 8 kolumn.
+// Etykiety przycisków: dwa pierwsze słowa kluczy (unikalne, np. „Emoji jedzenie dieta” / „Emoji jedzenie pizza”).
 // `value` i `onPick` — tekst z `pages.icon` (emoji, `lucide:<nazwa>:<kolor>` albo '' po „Usuń”).
 export function IconPicker({
   value,
@@ -121,7 +122,7 @@ export function IconPicker({
               <button
                 key={znak}
                 type="button"
-                aria-label={`Emoji ${slowa.split(" ")[0]}`}
+                aria-label={`Emoji ${slowa.split(" ").slice(0, 2).join(" ")}`}
                 aria-pressed={obecna?.kind === "emoji" && obecna.v === znak}
                 onClick={() => onPick(serializePageIcon({ kind: "emoji", v: znak }))}
                 className={klasaKomorki(obecna?.kind === "emoji" && obecna.v === znak)}
@@ -140,7 +141,7 @@ export function IconPicker({
                 <button
                   key={nazwa}
                   type="button"
-                  aria-label={`Ikona ${slowa.split(" ")[0]}`}
+                  aria-label={`Ikona ${slowa.split(" ").slice(0, 2).join(" ")}`}
                   aria-pressed={zaznaczona}
                   onClick={() => onPick(zapis)}
                   className={klasaKomorki(zaznaczona)}

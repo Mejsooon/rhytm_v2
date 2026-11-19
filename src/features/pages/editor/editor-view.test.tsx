@@ -85,7 +85,7 @@ describe("EditorView", () => {
     await user.click(przycisk);
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
-    await user.click(screen.getByRole("button", { name: "Emoji książki" }));
+    await user.click(screen.getByRole("button", { name: "Emoji książki books" }));
     expect(setPageIcon).toHaveBeenCalledWith("p1", "📚");
     expect(screen.getByRole("button", { name: "Zmień ikonę" })).toHaveTextContent("📚");
     expect(screen.getByRole("button", { name: "Zmień ikonę" }).className).not.toContain("border-dashed");
