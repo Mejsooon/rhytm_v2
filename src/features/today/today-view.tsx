@@ -23,7 +23,6 @@ import type { TodayData } from "./load-today";
 import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
 import { isoWeekNumber, showFullToday, weekTiles } from "./model";
-import { TodayTasks } from "./today-tasks";
 import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
 
@@ -207,13 +206,6 @@ export function TodayView({
           <DayPlan
             data={data}
             nowMin={teraz}
-            applyOptimistic={applyOptimistic}
-          />
-
-          {/* 3. Samodzielne zadania na dziś, zaległe i bez daty */}
-          <TodayTasks
-            tasks={data.tasks}
-            today={today}
             applyOptimistic={applyOptimistic}
           />
         </div>

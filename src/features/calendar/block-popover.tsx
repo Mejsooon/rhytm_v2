@@ -308,8 +308,14 @@ export function BlockDetails({
 export function BlockPopover({
   onClose,
   align = "start",
+  side = "right",
   ...reszta
-}: Wlasciwosci & Wyrownanie & { onClose: () => void }) {
+}: Wlasciwosci &
+  Wyrownanie & {
+    onClose: () => void;
+    // Strona dymka względem bloku; Dziś ma bloki na całą szerokość, więc otwiera pod/nad blokiem
+    side?: "right" | "bottom";
+  }) {
   // Kotwica to przycisk bloku w siatce, szukany po kluczu wystąpienia (element mógł zostać
   // podmieniony przy odświeżeniu); bez niego dymek się zamyka
   const kotwica = document.querySelector<HTMLElement>(
@@ -329,7 +335,7 @@ export function BlockPopover({
         aria-label="Szczegóły bloku"
         // Najpierw w prawo od bloku; przy prawej krawędzi Radix przerzuca w lewo,
         // a przy dolnej przesuwa dymek w górę (collisionPadding)
-        side="right"
+        side={side}
         align={align}
         sideOffset={10}
         collisionPadding={12}
