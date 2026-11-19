@@ -386,6 +386,168 @@ export type Database = {
         };
         Relationships: [];
       };
+      page_blocks: {
+        Row: {
+          content: Json;
+          created_at: string | null;
+          deleted_at: string | null;
+          id: string;
+          page_id: string;
+          position: number;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          content?: Json;
+          created_at?: string | null;
+          deleted_at?: string | null;
+          id?: string;
+          page_id: string;
+          position?: number;
+          type: string;
+          user_id?: string;
+        };
+        Update: {
+          content?: Json;
+          created_at?: string | null;
+          deleted_at?: string | null;
+          id?: string;
+          page_id?: string;
+          position?: number;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_blocks_page_id_fkey";
+            columns: ["page_id"];
+            isOneToOne: false;
+            referencedRelation: "pages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      page_fields: {
+        Row: {
+          block_id: string;
+          config: Json;
+          id: string;
+          is_title: boolean;
+          name: string;
+          position: number;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          block_id: string;
+          config?: Json;
+          id?: string;
+          is_title?: boolean;
+          name: string;
+          position?: number;
+          type: string;
+          user_id?: string;
+        };
+        Update: {
+          block_id?: string;
+          config?: Json;
+          id?: string;
+          is_title?: boolean;
+          name?: string;
+          position?: number;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_fields_block_id_fkey";
+            columns: ["block_id"];
+            isOneToOne: false;
+            referencedRelation: "page_blocks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      page_rows: {
+        Row: {
+          block_id: string;
+          created_at: string | null;
+          deleted_at: string | null;
+          id: string;
+          position: number;
+          remind: boolean;
+          updated_at: string | null;
+          user_id: string;
+          values: Json;
+        };
+        Insert: {
+          block_id: string;
+          created_at?: string | null;
+          deleted_at?: string | null;
+          id?: string;
+          position?: number;
+          remind?: boolean;
+          updated_at?: string | null;
+          user_id?: string;
+          values?: Json;
+        };
+        Update: {
+          block_id?: string;
+          created_at?: string | null;
+          deleted_at?: string | null;
+          id?: string;
+          position?: number;
+          remind?: boolean;
+          updated_at?: string | null;
+          user_id?: string;
+          values?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_rows_block_id_fkey";
+            columns: ["block_id"];
+            isOneToOne: false;
+            referencedRelation: "page_blocks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pages: {
+        Row: {
+          created_at: string | null;
+          deleted_at: string | null;
+          favorite: boolean;
+          icon: string;
+          id: string;
+          position: number;
+          template_key: string | null;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          deleted_at?: string | null;
+          favorite?: boolean;
+          icon?: string;
+          id?: string;
+          position?: number;
+          template_key?: string | null;
+          title?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string | null;
+          deleted_at?: string | null;
+          favorite?: boolean;
+          icon?: string;
+          id?: string;
+          position?: number;
+          template_key?: string | null;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_path: string | null;
@@ -753,15 +915,56 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      change_field_type: {
+        Args: {
+          p_config: Json;
+          p_field_id: string;
+          p_type: string;
+          p_values: Json;
+        };
+        Returns: undefined;
+      };
+      claim_pending_pages: {
+        Args: { p_available: string[] };
+        Returns: string[];
+      };
       complete_onboarding: {
         Args: { p_categories: Json };
         Returns: undefined;
+      };
+      create_page: {
+        Args: {
+          p_blocks: Json;
+          p_icon: string;
+          p_template_key: string;
+          p_title: string;
+        };
+        Returns: string;
+      };
+      duplicate_page: {
+        Args: { p_page_id: string };
+        Returns: string;
       };
       move_category: {
         Args: {
           p_dir: number;
           p_id: string;
         };
+        Returns: undefined;
+      };
+      purge_trash: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      reorder_fields: {
+        Args: {
+          p_block_id: string;
+          p_ids: string[];
+        };
+        Returns: undefined;
+      };
+      reorder_pages: {
+        Args: { p_ids: string[] };
         Returns: undefined;
       };
       split_block_series: {

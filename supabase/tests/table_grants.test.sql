@@ -2,7 +2,7 @@
 -- Lokalnie config.toml ma [api] auto_expose_new_tables = false, więc — jak w chmurze —
 -- nic nie jest nadawane automatycznie i te testy naprawdę łapią brakujące GRANT-y.
 begin;
-select plan(17);
+select plan(25);
 
 -- Etap 0/1
 select ok(has_table_privilege('authenticated', 'public.profiles', 'SELECT, UPDATE'),
@@ -33,6 +33,24 @@ select ok(has_function_privilege('authenticated', 'public.move_category(uuid, in
   'authenticated przesuwa kategorie');
 select ok(has_function_privilege('authenticated', 'public.split_block_series(uuid, date, jsonb, boolean)', 'execute'),
   'authenticated rozcina serie');
+
+-- Etap 6
+select ok(has_table_privilege('authenticated', 'public.pages', 'SELECT, INSERT, UPDATE, DELETE'),
+  'authenticated zarządza stronami');
+select ok(has_table_privilege('authenticated', 'public.page_blocks', 'SELECT, INSERT, UPDATE, DELETE'),
+  'authenticated zarządza blokami stron');
+select ok(has_table_privilege('authenticated', 'public.page_fields', 'SELECT, INSERT, UPDATE, DELETE'),
+  'authenticated zarządza polami stron');
+select ok(has_table_privilege('authenticated', 'public.page_rows', 'SELECT, INSERT, UPDATE, DELETE'),
+  'authenticated zarządza wierszami stron');
+select ok(has_table_privilege('service_role', 'public.pages', 'SELECT, INSERT, UPDATE, DELETE'),
+  'service_role ma dostęp do stron');
+select ok(has_table_privilege('service_role', 'public.page_blocks', 'SELECT, INSERT, UPDATE, DELETE'),
+  'service_role ma dostęp do bloków stron');
+select ok(has_table_privilege('service_role', 'public.page_fields', 'SELECT, INSERT, UPDATE, DELETE'),
+  'service_role ma dostęp do pól stron');
+select ok(has_table_privilege('service_role', 'public.page_rows', 'SELECT, INSERT, UPDATE, DELETE'),
+  'service_role ma dostęp do wierszy stron');
 
 -- anon nie ma dostępu do danych użytkowników
 select ok(not has_table_privilege('anon', 'public.blocks', 'SELECT'), 'anon nie czyta bloków');
