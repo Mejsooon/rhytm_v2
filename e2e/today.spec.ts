@@ -92,6 +92,15 @@ test.describe("Dziś (web)", () => {
         .getByRole("checkbox", { name: "Powtórka wzorów" }),
     ).toBeChecked();
   });
+});
+
+test.describe("Dziś (telefon)", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "mobile", "układ telefonu");
+  });
 
   test("„+” → Zadanie „Kupić mleko” „Jutro” → Dodaj → toast „Dodano”, zadanie w bazie z jutrzejszą datą", async ({
     page,
