@@ -13,6 +13,7 @@ export function ActionPopover({
   align = "start",
   side = "bottom",
   ariaLabel,
+  onCloseAutoFocus,
   children,
 }: {
   trigger: React.ReactNode;
@@ -23,6 +24,8 @@ export function ActionPopover({
   side?: "top" | "bottom";
   // Nazwa dymku (role="dialog") dla czytników ekranu, np. „Dodaj ćwiczenie”
   ariaLabel?: string;
+  // Zwrot fokusu na wyzwalacz po zamknięciu; preventDefault wyłącza go (np. gdy zaraz otwiera się inny dymek)
+  onCloseAutoFocus?: (e: Event) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -33,6 +36,7 @@ export function ActionPopover({
           align={align}
           side={side}
           aria-label={ariaLabel}
+          onCloseAutoFocus={onCloseAutoFocus}
           sideOffset={6}
           avoidCollisions
           collisionPadding={8}

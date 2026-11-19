@@ -70,6 +70,7 @@ export function CellEditor({
     setSzkic(tekstZapisany);
   }
   const [listaOtwarta, setListaOtwarta] = React.useState(false);
+  const bezZwrotuFokusu = React.useRef(false);
 
   if (field.type === "checkbox") {
     return (
@@ -101,6 +102,12 @@ export function CellEditor({
         open={listaOtwarta}
         onOpenChange={setListaOtwarta}
         width={200}
+        onCloseAutoFocus={(e) => {
+          if (bezZwrotuFokusu.current) {
+            e.preventDefault();
+            bezZwrotuFokusu.current = false;
+          }
+        }}
         trigger={
           <button
             type="button"
@@ -153,8 +160,9 @@ export function CellEditor({
               type="button"
               onClick={() => {
                 setListaOtwarta(false);
-                // Dymek kolumny otwieramy po zamknięciu listy — zwrot fokusu z listy zamknąłby go od razu
-                setTimeout(onEditOptions, 0);
+                // Bez zwrotu fokusu na komórkę — zamknąłby on od razu otwierany dymek kolumny
+                bezZwrotuFokusu.current = true;
+                onEditOptions();
               }}
               className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] max-[799px]:min-h-11"
             >
