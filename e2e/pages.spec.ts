@@ -74,6 +74,8 @@ test.describe("strony", () => {
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
     await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
 
+    // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
+    await expect(page.getByRole("columnheader")).toHaveCount(3);
     const naglowek = page.getByRole("columnheader");
     const okno = page.getByRole("dialog", { name: "Ustawienia kolumny" });
 
