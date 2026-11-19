@@ -285,6 +285,16 @@ declare
   v_pending text[];
   v_claimed text[];
 begin
+  -- Bez części wspólnej wychodzimy bez blokady i zapisu (zwykła nawigacja nie dotyka profilu).
+  select pr.pending_pages into v_pending
+  from public.profiles as pr
+  where pr.user_id = auth.uid();
+
+  if v_pending is null or not (v_pending && coalesce(p_available, '{}'::text[])) then
+    return '{}'::text[];
+  end if;
+
+  -- Ponowny odczyt pod blokadą, żeby równoległe wywołania nie zdublowały wyniku.
   select pr.pending_pages into v_pending
   from public.profiles as pr
   where pr.user_id = auth.uid()
@@ -320,16 +330,23 @@ set search_path = ''
 as $$
 declare
   v_block_id uuid;
+  v_is_title boolean;
   v_item record;
 begin
-  update public.page_fields as f
-  set type = p_type, config = coalesce(p_config, '{}'::jsonb)
-  where f.id = p_field_id
-  returning f.block_id into v_block_id;
+  select f.block_id, f.is_title into v_block_id, v_is_title
+  from public.page_fields as f
+  where f.id = p_field_id;
 
-  if v_block_id is null then
+  if not found then
     raise exception 'Nie znaleziono pola' using errcode = 'P0002';
   end if;
+  if v_is_title then
+    raise exception 'Typu pola tytułowego nie można zmienić';
+  end if;
+
+  update public.page_fields as f
+  set type = p_type, config = coalesce(p_config, '{}'::jsonb)
+  where f.id = p_field_id;
 
   for v_item in select e.key, e.value from jsonb_each(coalesce(p_values, '{}'::jsonb)) as e loop
     update public.page_rows as r
@@ -339,6 +356,77 @@ begin
     end
     where r.id = v_item.key::uuid and r.block_id = v_block_id;
   end loop;
+end;
+$$;
+
+-- Usuwa pole (nie tytułowe) razem z jego śladami: kluczem w values wszystkich wierszy bloku (także z kosza,
+-- także z wartością null) oraz odwołaniami w content.settings (sort, filters, hidden_field_ids, column_summaries, pinned_cards).
+create function public.delete_field(p_field_id uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_block_id uuid;
+  v_is_title boolean;
+  v_id text := p_field_id::text;
+  v_settings jsonb;
+begin
+  select f.block_id, f.is_title into v_block_id, v_is_title
+  from public.page_fields as f
+  where f.id = p_field_id;
+
+  if not found then
+    raise exception 'Nie znaleziono pola' using errcode = 'P0002';
+  end if;
+  if v_is_title then
+    raise exception 'Pola tytułowego nie można usunąć';
+  end if;
+
+  update public.page_rows as r
+  set values = r.values - v_id
+  where r.block_id = v_block_id and r.values ? v_id;
+
+  select b.content -> 'settings' into v_settings
+  from public.page_blocks as b
+  where b.id = v_block_id;
+
+  if jsonb_typeof(v_settings) = 'object' then
+    if jsonb_typeof(v_settings -> 'sort') = 'array' then
+      v_settings := v_settings || jsonb_build_object('sort', coalesce(
+        (select jsonb_agg(e.el) from jsonb_array_elements(v_settings -> 'sort') as e(el)
+         where (e.el ->> 'field_id') is distinct from v_id), '[]'::jsonb));
+    end if;
+    if jsonb_typeof(v_settings -> 'filters') = 'array' then
+      v_settings := v_settings || jsonb_build_object('filters', coalesce(
+        (select jsonb_agg(e.el) from jsonb_array_elements(v_settings -> 'filters') as e(el)
+         where (e.el ->> 'field_id') is distinct from v_id), '[]'::jsonb));
+    end if;
+    if jsonb_typeof(v_settings -> 'hidden_field_ids') = 'array' then
+      v_settings := v_settings || jsonb_build_object('hidden_field_ids', coalesce(
+        (select jsonb_agg(e.el) from jsonb_array_elements(v_settings -> 'hidden_field_ids') as e(el)
+         where (e.el #>> '{}') is distinct from v_id), '[]'::jsonb));
+    end if;
+    if jsonb_typeof(v_settings -> 'column_summaries') = 'object' then
+      v_settings := v_settings || jsonb_build_object('column_summaries', coalesce(
+        (select jsonb_object_agg(e.key, e.value) from jsonb_each(v_settings -> 'column_summaries') as e
+         where e.key <> v_id and (e.value -> 'where' ->> 'field_id') is distinct from v_id), '{}'::jsonb));
+    end if;
+    if jsonb_typeof(v_settings -> 'pinned_cards') = 'array' then
+      v_settings := v_settings || jsonb_build_object('pinned_cards', coalesce(
+        (select jsonb_agg(e.el) from jsonb_array_elements(v_settings -> 'pinned_cards') as e(el)
+         where (e.el ->> 'field_id') is distinct from v_id
+           and (e.el ->> 'date_field_id') is distinct from v_id
+           and (e.el ->> 'title_field_id') is distinct from v_id), '[]'::jsonb));
+    end if;
+
+    update public.page_blocks as b
+    set content = jsonb_set(b.content, '{settings}', v_settings)
+    where b.id = v_block_id;
+  end if;
+
+  delete from public.page_fields as f where f.id = p_field_id;
 end;
 $$;
 
@@ -384,6 +472,7 @@ revoke execute on function public.create_page(text, text, text, jsonb) from publ
 revoke execute on function public.duplicate_page(uuid) from public, anon;
 revoke execute on function public.claim_pending_pages(text[]) from public, anon;
 revoke execute on function public.change_field_type(uuid, text, jsonb, jsonb) from public, anon;
+revoke execute on function public.delete_field(uuid) from public, anon;
 revoke execute on function public.reorder_pages(uuid[]) from public, anon;
 revoke execute on function public.reorder_fields(uuid, uuid[]) from public, anon;
 revoke execute on function public.purge_trash() from public, anon, authenticated;
@@ -391,6 +480,7 @@ grant execute on function public.create_page(text, text, text, jsonb) to authent
 grant execute on function public.duplicate_page(uuid) to authenticated;
 grant execute on function public.claim_pending_pages(text[]) to authenticated;
 grant execute on function public.change_field_type(uuid, text, jsonb, jsonb) to authenticated;
+grant execute on function public.delete_field(uuid) to authenticated;
 grant execute on function public.reorder_pages(uuid[]) to authenticated;
 grant execute on function public.reorder_fields(uuid, uuid[]) to authenticated;
 

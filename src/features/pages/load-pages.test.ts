@@ -73,6 +73,22 @@ describe("loadPages", () => {
     expect(rpc.mock.calls.filter((c) => c[0] === "create_page")).toHaveLength(0);
   });
 
+  it("gdy create_page zawiedzie po claim, wraca nazwę do pending_pages", async () => {
+    const blad = vi.spyOn(console, "error").mockImplementation(() => {});
+    tables.profiles = fakeTable({ single: { pending_pages: ["Subscriptions"] } });
+    rpc.mockImplementation(async (nazwa: string) =>
+      nazwa === "claim_pending_pages"
+        ? { data: ["Projects"], error: null }
+        : { data: null, error: { message: "boom" } },
+    );
+    await loadPages();
+    expect(tables.profiles.update).toHaveBeenCalledWith({
+      pending_pages: ["Subscriptions", "Projects"],
+    });
+    expect(blad).toHaveBeenCalled();
+    blad.mockRestore();
+  });
+
   it("mapuje kolumny na camelCase i sumuje wiersze tabel", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
     const strony = await loadPages();

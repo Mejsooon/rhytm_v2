@@ -32,6 +32,9 @@ import {
   updateRow,
   addField,
   changeFieldType,
+  loadTrash,
+  setFavorite,
+  updateBlockContent,
 } from "./actions";
 import { buildTemplateBlocks } from "./templates";
 
@@ -170,56 +173,28 @@ describe("pola", () => {
     );
   });
 
-  it("deleteField na polu tytułowym zwraca ok:false bez usuwania", async () => {
-    tables.page_fields = fakeTable({ single: { block_id: BLOK, is_title: true } });
-    const w = await deleteField(POLE_TYTUL);
-    expect(w.ok).toBe(false);
+  it("deleteField tylko waliduje i woła RPC delete_field", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    expect(await deleteField(POLE_LICZBA)).toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledWith("delete_field", { p_field_id: POLE_LICZBA });
     expect(tables.page_fields.delete).not.toHaveBeenCalled();
-    expect(tables.page_blocks.update).not.toHaveBeenCalled();
-    expect(tables.page_rows.update).not.toHaveBeenCalled();
   });
 
-  it("deleteField czyści ustawienia bloku i klucz w values wierszy", async () => {
-    const inne = "a3000000-0000-4000-8000-0000000000ff";
-    tables.page_blocks = fakeTable({
-      single: {
-        content: {
-          name: "X",
-          settings: {
-            sort: [{ field_id: POLE_LICZBA, dir: "asc" }, { field_id: inne, dir: "desc" }],
-            filters: [{ field_id: POLE_LICZBA, op: "gte", value: 1 }],
-            hidden_field_ids: [POLE_LICZBA, inne],
-            column_summaries: { [POLE_LICZBA]: { kind: "sum" }, [inne]: { kind: "count" } },
-            pinned_cards: [
-              { label: "A", field_id: POLE_LICZBA, aggregation: "avg" },
-              { label: "B", field_id: inne, aggregation: "avg" },
-            ],
-          },
-        },
-      },
-    });
-    tables.page_rows = fakeTable({
-      data: [{ id: WIERSZ, values: { [POLE_LICZBA]: 5, [POLE_TYTUL]: "Dune" } }],
-    });
-    const w = await deleteField(POLE_LICZBA);
-    expect(w).toEqual({ ok: true });
-    expect(tables.page_fields.delete).toHaveBeenCalled();
-    expect(tables.page_blocks.update).toHaveBeenCalledWith({
-      content: {
-        name: "X",
-        settings: {
-          sort: [{ field_id: inne, dir: "desc" }],
-          filters: [],
-          hidden_field_ids: [inne],
-          column_summaries: { [inne]: { kind: "count" } },
-          pinned_cards: [{ label: "B", field_id: inne, aggregation: "avg" }],
-        },
-      },
-    });
-    expect(tables.page_rows.update).toHaveBeenCalledWith({ values: { [POLE_TYTUL]: "Dune" } });
+  it("deleteField zwraca ok:false, gdy RPC odrzuci pole tytułowe", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "Pola tytułowego nie można usunąć" } });
+    expect((await deleteField(POLE_TYTUL)).ok).toBe(false);
+    expect((await deleteField("nie-uuid")).ok).toBe(false);
+  });
+
+  it("changeFieldType na polu tytułowym zwraca ok:false bez RPC", async () => {
+    tables.page_fields = fakeTable({ single: { is_title: true } });
+    const w = await changeFieldType(POLE_TYTUL, "number", {}, {});
+    expect(w.ok).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("changeFieldType woła RPC z wartościami", async () => {
+    tables.page_fields = fakeTable({ single: { is_title: false } });
     rpc.mockResolvedValue({ data: null, error: null });
     const w = await changeFieldType(POLE_LICZBA, "text", {}, { [WIERSZ]: "5", [STRONA]: null });
     expect(w).toEqual({ ok: true });
@@ -276,6 +251,28 @@ describe("wiersze", () => {
 });
 
 describe("bloki i ustawienia", () => {
+  it("updateBlockContent w tabeli zachowuje settings z bazy", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "Stara", settings: { sort: [{ field_id: "f", dir: "asc" }] } } },
+    });
+    const w = await updateBlockContent(BLOK, { name: "Nowa", settings: { sort: [] } });
+    expect(w).toEqual({ ok: true });
+    expect(tables.page_blocks.update).toHaveBeenCalledWith({
+      content: { name: "Nowa", settings: { sort: [{ field_id: "f", dir: "asc" }] } },
+    });
+  });
+
+  it("updateBlockContent w tekście zapisuje podaną treść", async () => {
+    tables.page_blocks = fakeTable({ single: { type: "text", content: { text: "a" } } });
+    await updateBlockContent(BLOK, { text: "b" });
+    expect(tables.page_blocks.update).toHaveBeenCalledWith({ content: { text: "b" } });
+  });
+
+  it("setFavorite odrzuca nie-boolean", async () => {
+    expect((await setFavorite(STRONA, "tak" as unknown as boolean)).ok).toBe(false);
+    expect(tables.pages.update).not.toHaveBeenCalled();
+  });
+
   it("addBlock('table') wstawia blok, pola i dwa wiersze", async () => {
     tables.page_blocks = fakeTable({ single: null });
     tables.page_rows = fakeTable({
@@ -314,5 +311,48 @@ describe("bloki i ustawienia", () => {
     const w = await saveTableSettings(BLOK, { sort: [] });
     expect(w.ok).toBe(false);
     expect(tables.page_blocks.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("loadTrash", () => {
+  it("mapuje strony z licznikiem i wiersze z tytułem z pola tytułowego", async () => {
+    tables.pages = fakeTable({
+      data: [
+        {
+          id: STRONA,
+          title: "Stara",
+          deleted_at: "2026-11-18T10:00:00Z",
+          page_blocks: [{ page_rows: [{ count: 2 }] }, { page_rows: [{ count: 1 }] }],
+        },
+      ],
+    });
+    tables.page_rows = fakeTable({
+      data: [
+        {
+          id: WIERSZ,
+          values: { [POLE_TYTUL]: "Dune" },
+          deleted_at: "2026-11-19T09:00:00Z",
+          page_blocks: {
+            pages: { title: "Books" },
+            page_fields: [{ id: POLE_TYTUL, is_title: true, config: {} }],
+          },
+        },
+        {
+          id: STRONA,
+          values: {},
+          deleted_at: "2026-11-19T08:00:00Z",
+          page_blocks: { pages: { title: "Books" }, page_fields: [{ id: POLE_TYTUL, is_title: true, config: {} }] },
+        },
+      ],
+    });
+    const w = await loadTrash();
+    expect(w).toEqual({
+      ok: true,
+      pages: [{ id: STRONA, title: "Stara", deletedAt: "2026-11-18T10:00:00Z", rowCount: 3 }],
+      rows: [
+        { id: WIERSZ, title: "Dune", pageTitle: "Books", deletedAt: "2026-11-19T09:00:00Z" },
+        { id: STRONA, title: "Bez tytułu", pageTitle: "Books", deletedAt: "2026-11-19T08:00:00Z" },
+      ],
+    });
   });
 });

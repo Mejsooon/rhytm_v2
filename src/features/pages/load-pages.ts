@@ -4,6 +4,7 @@ import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildTemplateBlocks,
+  TEMPLATE_KEYS,
   PENDING_TO_TEMPLATE,
   TEMPLATES,
   type TemplateKey,
@@ -20,7 +21,6 @@ export type PageSummary = {
   rowCount: number;
 };
 
-const SZABLONY: string[] = ["empty", "books", "projects", "websites"];
 
 export async function loadPages(): Promise<PageSummary[]> {
   const supabase = await createClient();
@@ -37,12 +37,25 @@ export async function loadPages(): Promise<PageSummary[]> {
     const klucz = PENDING_TO_TEMPLATE[nazwa];
     if (!klucz) continue;
     const szablon = TEMPLATES[klucz];
-    await supabase.rpc("create_page", {
+    const { error: bladTworzenia } = await supabase.rpc("create_page", {
       p_title: szablon.name,
       p_icon: szablon.icon,
       p_template_key: klucz,
       p_blocks: buildTemplateBlocks(klucz, () => crypto.randomUUID()) as unknown as Json,
     });
+    if (bladTworzenia) {
+      // Nazwa jest już zdjęta z pending_pages, więc wracamy ją tam, żeby następny render spróbował ponownie
+      console.error("Nie udało się utworzyć strony z onboardingu", nazwa, bladTworzenia);
+      const { data: profil } = await supabase
+        .from("profiles")
+        .select("pending_pages")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      await supabase
+        .from("profiles")
+        .update({ pending_pages: [...(profil?.pending_pages ?? []), nazwa] })
+        .eq("user_id", user.id);
+    }
   }
 
   // Jedno zapytanie: strony z licznikiem wierszy (filtry na osadzonych zasobach tną usunięte bloki i wiersze)
@@ -61,7 +74,7 @@ export async function loadPages(): Promise<PageSummary[]> {
     title: s.title,
     icon: s.icon,
     favorite: s.favorite,
-    templateKey: SZABLONY.includes(s.template_key ?? "")
+    templateKey: (TEMPLATE_KEYS as readonly string[]).includes(s.template_key ?? "")
       ? (s.template_key as TemplateKey)
       : null,
     position: s.position,

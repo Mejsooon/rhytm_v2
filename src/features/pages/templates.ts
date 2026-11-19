@@ -4,7 +4,8 @@ import { PALETA } from "./fields";
 import type { FieldConfig, FieldType } from "./fields";
 import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
 
-export type TemplateKey = "empty" | "books" | "projects" | "websites";
+export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites"] as const;
+export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 // Dokładnie kształt jsonb, który przyjmuje create_page(p_title, p_icon, p_template_key, p_blocks)
 export type CreatePageBlock = {

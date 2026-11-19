@@ -1,5 +1,5 @@
 begin;
-select plan(34);
+select plan(40);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -81,16 +81,53 @@ select ok((select b.content::text like '%' || f.id::text || '%' and b.content::t
   join public.page_fields as f on f.block_id = b.id
   where b.page_id = current_setting('test.page_copy')::uuid), 'ustawienia bloku kopii wskazują nowe pole');
 
+-- Drugie pole (nie tytułowe) do testów zmiany typu i usuwania.
+select set_config('test.field_b', gen_random_uuid()::text, true);
+insert into public.page_fields (id, block_id, name, type, position, is_title)
+values (current_setting('test.field_b')::uuid, current_setting('test.block_a')::uuid, 'Cena', 'text', 1, false);
+update public.page_rows
+set values = jsonb_build_object(current_setting('test.field_a'), 'Dune', current_setting('test.field_b'), 'abc')
+where id = current_setting('test.row_a')::uuid;
+
 -- change_field_type
-select public.change_field_type(current_setting('test.field_a')::uuid, 'number', '{}'::jsonb,
+select throws_ok(
+  format('select public.change_field_type(%L, ''number'', ''{}''::jsonb, ''{}''::jsonb)', current_setting('test.field_a')),
+  'P0001', null, 'change_field_type odrzuca pole tytułowe');
+select public.change_field_type(current_setting('test.field_b')::uuid, 'number', '{}'::jsonb,
   jsonb_build_object(current_setting('test.row_a'), 5));
-select is((select type from public.page_fields where id = current_setting('test.field_a')::uuid), 'number', 'typ pola zmieniony');
-select is((select r.values ->> current_setting('test.field_a') from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
+select is((select type from public.page_fields where id = current_setting('test.field_b')::uuid), 'number', 'typ pola zmieniony');
+select is((select r.values ->> current_setting('test.field_b') from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
   '5', 'wartość przeliczona');
-select public.change_field_type(current_setting('test.field_a')::uuid, 'text', '{}'::jsonb,
+select public.change_field_type(current_setting('test.field_b')::uuid, 'text', '{}'::jsonb,
   jsonb_build_object(current_setting('test.row_a'), null));
-select ok((select not (r.values ? current_setting('test.field_a')) from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
+select ok((select not (r.values ? current_setting('test.field_b')) from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
   'null usuwa klucz z values');
+
+-- delete_field: klucz z wartością null w values i odwołania w ustawieniach znikają razem z polem
+update public.page_rows
+set values = jsonb_build_object(current_setting('test.field_a'), 'Dune', current_setting('test.field_b'), null)
+where id = current_setting('test.row_a')::uuid;
+update public.page_blocks
+set content = jsonb_build_object('settings', jsonb_build_object(
+  'sort', jsonb_build_array(jsonb_build_object('field_id', current_setting('test.field_b'), 'dir', 'asc'),
+                            jsonb_build_object('field_id', current_setting('test.field_a'), 'dir', 'asc')),
+  'filters', jsonb_build_array(jsonb_build_object('field_id', current_setting('test.field_b'), 'op', 'empty')),
+  'hidden_field_ids', jsonb_build_array(current_setting('test.field_b')),
+  'column_summaries', jsonb_build_object(current_setting('test.field_b'), jsonb_build_object('kind', 'sum')),
+  'pinned_cards', jsonb_build_array(jsonb_build_object('label', 'X', 'field_id', current_setting('test.field_a'),
+    'aggregation', 'avg', 'date_field_id', current_setting('test.field_b')))))
+where id = current_setting('test.block_a')::uuid;
+select throws_ok(
+  format('select public.delete_field(%L)', current_setting('test.field_a')),
+  'P0001', null, 'delete_field odrzuca pole tytułowe');
+select public.delete_field(current_setting('test.field_b')::uuid);
+select is((select count(*) from public.page_fields where id = current_setting('test.field_b')::uuid), 0::bigint, 'delete_field usuwa pole');
+select ok((select not (r.values ? current_setting('test.field_b')) from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
+  'delete_field usuwa klucz (także null) z values');
+select ok((select b.content::text not like '%' || current_setting('test.field_b') || '%' from public.page_blocks as b
+  where b.id = current_setting('test.block_a')::uuid), 'delete_field czyści ustawienia bloku');
+select is((select jsonb_array_length(b.content -> 'settings' -> 'sort') from public.page_blocks as b
+  where b.id = current_setting('test.block_a')::uuid), 1, 'delete_field zostawia sort po innym polu');
 
 -- Od teraz jako zalogowany B.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);

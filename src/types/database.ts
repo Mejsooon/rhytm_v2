@@ -941,6 +941,10 @@ export type Database = {
         };
         Returns: string;
       };
+      delete_field: {
+        Args: { p_field_id: string };
+        Returns: undefined;
+      };
       duplicate_page: {
         Args: { p_page_id: string };
         Returns: string;

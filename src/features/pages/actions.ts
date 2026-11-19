@@ -24,6 +24,7 @@ import type { PageRow, TableSettings } from "./table-model";
 import {
   buildTemplateBlocks,
   NEW_TABLE_BLOCK,
+  TEMPLATE_KEYS,
   TEMPLATES,
   type TemplateKey,
 } from "./templates";
@@ -35,11 +36,12 @@ const BRAK_BLOKU = "Nie znaleziono bloku.";
 const BRAK_POLA = "Nie znaleziono pola.";
 const BRAK_WIERSZA = "Nie znaleziono wiersza.";
 const POLE_TYTULOWE = "Pola tytułowego nie można usunąć.";
+const POLE_TYTULOWE_TYP = "Typu pola tytułowego nie można zmienić.";
 const BEZ_TYTULU = "Bez tytułu";
 
 type Blad = { ok: false; message: string };
 
-const szablonSchema = z.enum(["empty", "books", "projects", "websites"]);
+const szablonSchema = z.enum(TEMPLATE_KEYS);
 
 // ---------- Strony ----------
 
@@ -142,7 +144,7 @@ export async function setFavorite(id: string, on: boolean): Promise<{ ok: true }
   if (!user) redirect("/logowanie");
 
   const idOk = idSchema.safeParse(id);
-  if (!idOk.success || typeof on !== "boolean") return { ok: false, message: BLAD_ZAPISU };
+  if (!idOk.success || !z.boolean().safeParse(on).success) return { ok: false, message: BLAD_ZAPISU };
 
   const { error } = await supabase
     .from("pages")
@@ -559,6 +561,17 @@ export async function changeFieldType(
     return { ok: false, message: BLAD_ZAPISU };
   }
 
+  // Pola tytułowego nie wolno przekonwertować (jak w deleteField)
+  const { data: pole, error: bladOdczytu } = await supabase
+    .from("page_fields")
+    .select("is_title")
+    .eq("id", fieldId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
+  if (!pole) return { ok: false, message: BRAK_POLA };
+  if (pole.is_title) return { ok: false, message: POLE_TYTULOWE_TYP };
+
   const { error } = await supabase.rpc("change_field_type", {
     p_field_id: fieldId,
     p_type: typ.data,
@@ -591,7 +604,7 @@ export async function reorderFields(
   return { ok: true };
 }
 
-// Usuwa pole (nie tytułowe) oraz jego ślady: klucz w values wierszy i wpisy w ustawieniach bloku
+// Usuwa pole (nie tytułowe) wraz ze śladami w values i ustawieniach bloku — atomowo w RPC delete_field
 export async function deleteField(fieldId: string): Promise<{ ok: true } | Blad> {
   const supabase = await createClient();
   const {
@@ -602,82 +615,8 @@ export async function deleteField(fieldId: string): Promise<{ ok: true } | Blad>
   const idOk = idSchema.safeParse(fieldId);
   if (!idOk.success) return { ok: false, message: idOk.error.issues[0].message };
 
-  const { data: pole, error: bladOdczytu } = await supabase
-    .from("page_fields")
-    .select("block_id, is_title")
-    .eq("id", fieldId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
-  if (!pole) return { ok: false, message: BRAK_POLA };
-  if (pole.is_title) return { ok: false, message: POLE_TYTULOWE };
-
-  const { error: bladUsuniecia } = await supabase
-    .from("page_fields")
-    .delete()
-    .eq("id", fieldId)
-    .eq("user_id", user.id);
-  if (bladUsuniecia) return { ok: false, message: BLAD_ZAPISU };
-
-  // Ustawienia bloku: bez sortu, filtrów, ukrycia, podsumowań i kart, które wskazują to pole
-  const { data: blok, error: bladBloku } = await supabase
-    .from("page_blocks")
-    .select("content")
-    .eq("id", pole.block_id)
-    .maybeSingle();
-  if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
-  const tresc = (blok?.content ?? {}) as Record<string, unknown>;
-  const ustawienia = tresc.settings as Partial<TableSettings> | undefined;
-  if (ustawienia) {
-    const czyste: Partial<TableSettings> = { ...ustawienia };
-    if (ustawienia.sort) czyste.sort = ustawienia.sort.filter((k) => k.field_id !== fieldId);
-    if (ustawienia.filters) {
-      czyste.filters = ustawienia.filters.filter((f) => f.field_id !== fieldId);
-    }
-    if (ustawienia.hidden_field_ids) {
-      czyste.hidden_field_ids = ustawienia.hidden_field_ids.filter((id) => id !== fieldId);
-    }
-    if (ustawienia.column_summaries) {
-      // Podsumowanie znika razem z polem albo z warunkiem opartym na tym polu
-      czyste.column_summaries = Object.fromEntries(
-        Object.entries(ustawienia.column_summaries).filter(
-          ([klucz, s]) => klucz !== fieldId && s.where?.field_id !== fieldId,
-        ),
-      );
-    }
-    if (ustawienia.pinned_cards) {
-      czyste.pinned_cards = ustawienia.pinned_cards.filter(
-        (c) =>
-          c.field_id !== fieldId &&
-          c.date_field_id !== fieldId &&
-          c.title_field_id !== fieldId,
-      );
-    }
-    const { error } = await supabase
-      .from("page_blocks")
-      .update({ content: { ...tresc, settings: czyste } as Json })
-      .eq("id", pole.block_id)
-      .eq("user_id", user.id);
-    if (error) return { ok: false, message: BLAD_ZAPISU };
-  }
-
-  // Wartości wierszy (także z kosza): tylko te, które mają klucz tego pola
-  const { data: wiersze, error: bladWierszy } = await supabase
-    .from("page_rows")
-    .select("id, values")
-    .eq("block_id", pole.block_id)
-    .not(`values->>${fieldId}`, "is", null);
-  if (bladWierszy) return { ok: false, message: BLAD_ZAPISU };
-  for (const w of wiersze ?? []) {
-    const wartosci = { ...((w.values ?? {}) as Record<string, unknown>) };
-    delete wartosci[fieldId];
-    const { error } = await supabase
-      .from("page_rows")
-      .update({ values: wartosci as Json })
-      .eq("id", w.id)
-      .eq("user_id", user.id);
-    if (error) return { ok: false, message: BLAD_ZAPISU };
-  }
+  const { error } = await supabase.rpc("delete_field", { p_field_id: fieldId });
+  if (error) return { ok: false, message: BLAD_ZAPISU };
   return { ok: true };
 }
 

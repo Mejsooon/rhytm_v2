@@ -6,7 +6,7 @@ import type { FieldConfig, FieldType, PageField } from "./fields";
 import type { PageSummary } from "./load-pages";
 import { idSchema } from "./schemas";
 import type { PageRow } from "./table-model";
-import type { TemplateKey } from "./templates";
+import { TEMPLATE_KEYS, type TemplateKey } from "./templates";
 
 export type BlockType = "text" | "heading" | "todo" | "divider" | "table";
 
@@ -26,7 +26,6 @@ export type LoadedPage = {
   currency: string;
 };
 
-const SZABLONY: string[] = ["empty", "books", "projects", "websites"];
 const ROZMIAR_STRONY = 1000;
 
 // null dla cudzej, usuniętej albo nieistniejącej strony
@@ -127,7 +126,7 @@ export async function loadPage(id: string): Promise<LoadedPage | null> {
       title: strona.title,
       icon: strona.icon,
       favorite: strona.favorite,
-      templateKey: SZABLONY.includes(strona.template_key ?? "")
+      templateKey: (TEMPLATE_KEYS as readonly string[]).includes(strona.template_key ?? "")
         ? (strona.template_key as TemplateKey)
         : null,
       position: strona.position,
