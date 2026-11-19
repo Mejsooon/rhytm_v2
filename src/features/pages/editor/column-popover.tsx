@@ -152,7 +152,7 @@ export function ColumnPopover({
                   aria-label={`Usuń opcję ${o.label}`}
                   disabled={pending}
                   onClick={() => onRemoveOption(o.id)}
-                  className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-70"
+                  className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-70 max-[799px]:min-h-11 max-[799px]:min-w-11"
                 >
                   ×
                 </button>

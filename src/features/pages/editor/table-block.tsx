@@ -55,7 +55,7 @@ export function TableBlock({
   today,
 }: {
   block: LoadedBlock;
-  // Wyłącznie edycja bezpośrednio w komórkach (strony z szablonu dochodzą w Task 9)
+  // Tryb edycji z interfejsu zadania; edytor zna tylko edycję bezpośrednio w komórkach
   editable?: "cell";
   today?: IsoDate;
 }) {
@@ -330,7 +330,8 @@ export function TableBlock({
     plan: PlanZmianyTypu,
     czekajNaSerwer: boolean,
   ): Promise<boolean> {
-    const poprzednieWiersze = wiersze;
+    // Stare wartości tej kolumny — przy błędzie cofamy tylko je (równoległe edycje zostają)
+    const stareWartosci = new Map(wiersze.map((r) => [r.id, r.values[field.id]]));
     const zastosuj = () => {
       setPola((l) => l.map((f) => (f.id === field.id ? { ...f, type, config: plan.config } : f)));
       setWiersze((l) =>
@@ -356,8 +357,16 @@ export function TableBlock({
     polaWToku.current -= 1;
     if (!udane) {
       if (!czekajNaSerwer) {
-        setPola((l) => l.map((f) => (f.id === field.id ? field : f)));
-        setWiersze(poprzednieWiersze);
+        setPola((l) =>
+          l.map((f) => (f.id === field.id ? { ...f, type: field.type, config: field.config } : f)),
+        );
+        setWiersze((l) =>
+          l.map((r) =>
+            stareWartosci.has(r.id)
+              ? { ...r, values: { ...r.values, [field.id]: stareWartosci.get(r.id) } }
+              : r,
+          ),
+        );
       }
       toast.error(BLAD_ZAPISU);
       return false;
@@ -367,6 +376,8 @@ export function TableBlock({
   }
 
   function wybierzTyp(field: PageField, type: FieldType) {
+    // Wiersze bez prawdziwego id mogłyby zapisać zmiany w starym typie po odpowiedzi serwera
+    if (wiersze.some((r) => r.id.startsWith(PREFIKS_TYMCZASOWY))) return;
     const plan = planTypeChange(
       field,
       type,

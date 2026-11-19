@@ -227,7 +227,7 @@ describe("TableBlock", () => {
     expect(screen.getByText("Suma 19,5")).toBeTruthy();
   });
 
-  it("Wybór: Dropdown z opcjami, „Wyczyść” i „Edytuj opcje” otwierające dymek kolumny", async () => {
+  it("Wybór: lista opcji, „Wyczyść” i „Edytuj opcje” otwierające dymek kolumny", async () => {
     const user = userEvent.setup();
     const blok = nowaTabela();
     const status = blok.fields[1];
@@ -330,6 +330,35 @@ describe("TableBlock", () => {
     await user.click(await screen.findByRole("button", { name: "Anuluj" }));
     expect(actions.changeFieldType).not.toHaveBeenCalled();
     expect(screen.queryByText("Zmienić typ pola?")).toBeNull();
+  });
+
+  it("nieudana zmiana typu cofa tylko tę kolumnę, równoległa edycja innej komórki zostaje", async () => {
+    const user = userEvent.setup();
+    const blok = nowaTabela();
+    blok.fields = [...blok.fields, pole("f-t", "Ile", "text", 3)];
+    blok.rows = [{ id: "r1", values: { "f-t": "12" }, position: 0, deletedAt: null }];
+    let odrzuc: (v: { ok: false; message: string }) => void = () => {};
+    actions.changeFieldType.mockReturnValue(new Promise((r) => (odrzuc = r)));
+    render(<TableBlock block={blok} editable="cell" />);
+    await user.click(naglowek("Ile"));
+    await user.click(
+      within(await screen.findByRole("dialog", { name: "Ustawienia kolumny" })).getByRole("button", {
+        name: /Liczba/,
+      }),
+    );
+    await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalled());
+    // Zmiana typu już widoczna; w międzyczasie edytujemy inną komórkę
+    const nazwa = within(screen.getAllByRole("row")[1]).getByRole("textbox", { name: "Nazwa" });
+    await user.type(nazwa, "Zostaje");
+    await user.tab();
+    await waitFor(() => expect(actions.updateRow).toHaveBeenCalled());
+    odrzuc({ ok: false, message: "x" });
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(
+      (within(screen.getAllByRole("row")[1]).getByRole("textbox", { name: "Nazwa" }) as HTMLInputElement).value,
+    ).toBe("Zostaje");
+    // Kolumna wróciła do typu Tekst: nagłówek ma ikonę Aa
+    expect(naglowek("Ile").textContent).toContain("Aa");
   });
 
   it("„+ Nowy wiersz” dodaje pusty wiersz na końcu i podnosi licznik", async () => {

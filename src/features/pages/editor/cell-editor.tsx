@@ -90,6 +90,7 @@ export function CellEditor({
         today={today}
         ariaLabel={label}
         placeholder="—"
+        variant="bare"
       />
     );
   }
