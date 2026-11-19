@@ -1,5 +1,6 @@
 // Lista stron użytkownika (sidebar, /strony) z licznikiem wierszy; przy okazji
 // zakłada strony z szablonów wybranych w onboardingu (profiles.pending_pages).
+import { cache } from "react";
 import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -22,7 +23,8 @@ export type PageSummary = {
 };
 
 
-export async function loadPages(): Promise<PageSummary[]> {
+// cache(): layout i strona /strony w jednym żądaniu dzielą jedno wywołanie
+export const loadPages = cache(async (): Promise<PageSummary[]> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -84,4 +86,4 @@ export async function loadPages(): Promise<PageSummary[]> {
       0,
     ),
   }));
-}
+});

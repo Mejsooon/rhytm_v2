@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Plus, Search, Settings } from "lucide-react";
-import { toast } from "sonner";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { MonoLabel } from "@/components/controls";
-import { createBlankPage } from "@/features/pages/actions";
+import { useCreateBlankPage } from "@/features/pages/use-create-blank-page";
 import type { PageSummary } from "@/features/pages/load-pages";
 import { PageMenu } from "@/features/pages/page-menu";
 import { usePagesStore } from "@/features/pages/use-pages-store";
@@ -24,8 +23,6 @@ import { NAV_MODULES } from "./nav-items";
 const POZYCJA =
   "flex items-center gap-2.5 rounded-md px-2 py-[7px] no-underline transition-colors";
 
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-
 // Sidebar web (Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
 // Strony: kolejność z `position`, przeciąganie zmienia kolejność, F2 zmienia nazwę aktywnej,
 // „⋯” otwiera menu strony (PageMenu). Pusty tytuł wyświetla się jako „Bez tytułu”.
@@ -37,7 +34,7 @@ export function AppSidebar({
   pages?: PageSummary[];
 }) {
   const sciezka = usePathname();
-  const router = useRouter();
+  const nowaStrona = useCreateBlankPage();
   const store = usePagesStore(pages);
   const strony = store.pages;
 
@@ -47,7 +44,6 @@ export function AppSidebar({
   const zakonczono = React.useRef(false);
   const [przeciagana, setPrzeciagana] = React.useState<string | null>(null);
   const [nad, setNad] = React.useState<string | null>(null);
-  const tworzenie = React.useRef(false);
 
   const aktywnaStrona = strony.find((s) => sciezka === `/strony/${s.id}`);
   const aktywnaStronaId = aktywnaStrona?.id;
@@ -68,23 +64,6 @@ export function AppSidebar({
     window.addEventListener("keydown", przyKlawiszu);
     return () => window.removeEventListener("keydown", przyKlawiszu);
   }, [aktywnaStronaId, aktywnaStronaTytul]);
-
-  async function nowaStrona() {
-    if (tworzenie.current) return;
-    tworzenie.current = true;
-    let wynik: Awaited<ReturnType<typeof createBlankPage>> | null = null;
-    try {
-      wynik = await createBlankPage();
-    } catch {
-      wynik = null;
-    }
-    tworzenie.current = false;
-    if (!wynik || !wynik.ok) {
-      toast.error(BLAD_ZAPISU);
-      return;
-    }
-    router.push(`/strony/${wynik.id}`);
-  }
 
   function zapiszNazwe(strona: PageSummary) {
     if (zakonczono.current) return;

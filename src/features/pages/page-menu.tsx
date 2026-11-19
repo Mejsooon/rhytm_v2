@@ -8,10 +8,9 @@ import { ActionPopover, FormDialog } from "@/components/controls";
 import { duplicatePage } from "./actions";
 import { DeletePageDialog } from "./delete-page-dialog";
 import { IconGrid } from "./icon-grid";
+import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
-
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
 const POZYCJA =
   "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-[#171717] hover:bg-[#f5f5f5] max-[799px]:min-h-11";

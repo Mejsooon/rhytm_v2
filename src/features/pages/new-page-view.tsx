@@ -8,11 +8,10 @@ import { toast } from "sonner";
 import { Button, MonoLabel } from "@/components/controls";
 import { createPageFromTemplate } from "./actions";
 import { FIELD_TYPE_META } from "./fields";
+import { BLAD_ZAPISU } from "./messages";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
 const AKCENT = "#15803d";
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-
 // Wybór szablonu nowej strony (NewPage.dc.html): okno 920 px nad przyciemnionym tłem,
 // po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
 export function NewPageView() {

@@ -178,6 +178,22 @@ describe("PageMenu", () => {
     expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,b,c");
   });
 
+  it("nieudane „Cofnij” pokazuje toast z błędem", async () => {
+    restorePage.mockResolvedValue({ ok: false, message: "x" });
+    const user = await otworz();
+    await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    await waitFor(() => expect(toast).toHaveBeenCalled());
+    const opcje = toast.mock.calls[0][1] as { action: { onClick: () => Promise<void> } };
+    await opcje.action.onClick();
+    expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+
+    toast.error.mockClear();
+    restorePage.mockRejectedValue(new Error("sieć"));
+    await opcje.action.onClick();
+    expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+  });
+
   it("odmiana w potwierdzeniu: 1 wiersz, 2 wiersze trafią, 12 wierszy", async () => {
     const { DeletePageDialog } = await import("./delete-page-dialog");
     const przypadki: [number, string][] = [

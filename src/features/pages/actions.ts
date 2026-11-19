@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeValue } from "./fields";
+import { BLAD_ZAPISU } from "./messages";
 import type { CellValue, FieldConfig, FieldType, PageField } from "./fields";
 import type { BlockType, LoadedBlock } from "./load-page";
 import {
@@ -30,7 +31,6 @@ import {
 } from "./templates";
 import { z } from "zod";
 
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const BRAK_STRONY = "Nie znaleziono strony.";
 const BRAK_BLOKU = "Nie znaleziono bloku.";
 const BRAK_POLA = "Nie znaleziono pola.";

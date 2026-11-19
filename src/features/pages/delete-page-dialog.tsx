@@ -6,9 +6,8 @@ import { toast } from "sonner";
 import { Button, FormDialog } from "@/components/controls";
 import { deletePage, restorePage } from "./actions";
 import { rowsForm, rowsLabel } from "./rows-label";
+import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
-
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
 // Potwierdzenie usunięcia strony (PageMenu.dc.html, „Po kliknięciu „Usuń stronę””).
 // Okno czeka na serwer; po sukcesie toast „Usunięto” z „Cofnij” → restorePage.
@@ -51,8 +50,14 @@ export function DeletePageDialog({
     toast("Usunięto", {
       action: {
         label: "Cofnij",
-        onClick: () => {
-          void restorePage(page.id);
+        onClick: async () => {
+          let przywrocono = false;
+          try {
+            przywrocono = (await restorePage(page.id)).ok;
+          } catch {
+            przywrocono = false;
+          }
+          if (!przywrocono) toast.error(BLAD_ZAPISU);
         },
       },
     });

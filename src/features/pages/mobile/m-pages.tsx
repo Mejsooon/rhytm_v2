@@ -2,23 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronRight, Plus, Search, Settings } from "lucide-react";
-import { toast } from "sonner";
 
 import { MonoLabel } from "@/components/controls";
-import { createBlankPage } from "../actions";
+import { useCreateBlankPage } from "../use-create-blank-page";
 import type { PageSummary } from "../load-pages";
 import { rowsLabel } from "../rows-label";
-
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
 // Telefon: lista stron (MPages.dc.html) — „Ulubione” tylko z ulubionymi, „Wszystkie strony” z resztą.
 // Dopisek: „N wierszy” albo „pusta strona” (strona bez tabeli). Wiersze prowadzą do /strony/[id].
 export function MPages({ pages }: { pages: PageSummary[] }) {
-  const router = useRouter();
+  const nowaStrona = useCreateBlankPage();
   const [fraza, setFraza] = React.useState("");
-  const tworzenie = React.useRef(false);
 
   const szukane = fraza.trim().toLowerCase();
   const pasujace = pages.filter((p) => {
@@ -27,23 +22,6 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
   });
   const ulubione = pasujace.filter((p) => p.favorite);
   const pozostale = pasujace.filter((p) => !p.favorite);
-
-  async function nowaStrona() {
-    if (tworzenie.current) return;
-    tworzenie.current = true;
-    let wynik: Awaited<ReturnType<typeof createBlankPage>> | null = null;
-    try {
-      wynik = await createBlankPage();
-    } catch {
-      wynik = null;
-    }
-    tworzenie.current = false;
-    if (!wynik || !wynik.ok) {
-      toast.error(BLAD_ZAPISU);
-      return;
-    }
-    router.push(`/strony/${wynik.id}`);
-  }
 
   // Dwie sekcje mają ten sam układ wierszy, więc budujemy je z jednej tablicy opisów
   const sekcje = [

@@ -13,8 +13,8 @@ import {
   setPageIcon,
 } from "./actions";
 import type { PageSummary } from "./load-pages";
+import { BLAD_ZAPISU } from "./messages";
 
-const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
 export type PagesStore = ReturnType<typeof usePagesStore>;
 
@@ -27,13 +27,14 @@ export function usePagesStore(initial: PageSummary[]) {
     setPages(initial);
   }
 
-  // Wspólny szkielet: od razu pokazuje zmianę, a przy błędzie wraca do poprzedniej listy
+  // Wspólny szkielet: od razu pokazuje zmianę, a przy błędzie cofa tylko własną zmianę (funkcyjnie),
+  // żeby nie nadpisać równoległych zmian innych pozycji
   async function zapisz(
-    nastepna: PageSummary[],
+    zmiana: (lista: PageSummary[]) => PageSummary[],
+    cofniecie: (lista: PageSummary[]) => PageSummary[],
     akcja: () => Promise<{ ok: boolean }>,
   ): Promise<boolean> {
-    const poprzednia = pages;
-    setPages(nastepna);
+    setPages(zmiana);
     let udane = false;
     try {
       udane = (await akcja()).ok;
@@ -41,36 +42,51 @@ export function usePagesStore(initial: PageSummary[]) {
       udane = false;
     }
     if (!udane) {
-      setPages(poprzednia);
+      setPages(cofniecie);
       toast.error(BLAD_ZAPISU);
     }
     return udane;
   }
 
+  // Zmiana jednego pola jednej strony; cofnięcie przywraca tylko to pole tej strony
+  function zmienPole<K extends "title" | "icon" | "favorite">(
+    id: string,
+    pole: K,
+    wartosc: PageSummary[K],
+    akcja: () => Promise<{ ok: boolean }>,
+  ) {
+    const stara = pages.find((p) => p.id === id)?.[pole];
+    return zapisz(
+      (l) => l.map((p) => (p.id === id ? { ...p, [pole]: wartosc } : p)),
+      (l) => l.map((p) => (p.id === id && stara !== undefined ? { ...p, [pole]: stara } : p)),
+      akcja,
+    );
+  }
+
   return {
     pages,
-    reorder: (ids: string[]) =>
-      zapisz(
-        ids
-          .map((id) => pages.find((p) => p.id === id))
-          .filter((p): p is PageSummary => p !== undefined),
+    reorder: (ids: string[]) => {
+      const poprzednie = pages.map((p) => p.id);
+      return zapisz(
+        (l) =>
+          ids
+            .map((id) => l.find((p) => p.id === id))
+            .filter((p): p is PageSummary => p !== undefined),
+        // Cofnięcie układa obecną listę według dawnej kolejności (nowe pozycje na końcu)
+        (l) => {
+          const miejsce = (id: string) => {
+            const i = poprzednie.indexOf(id);
+            return i < 0 ? poprzednie.length : i;
+          };
+          return [...l].sort((x, y) => miejsce(x.id) - miejsce(y.id));
+        },
         () => reorderPages(ids),
-      ),
-    rename: (id: string, title: string) =>
-      zapisz(
-        pages.map((p) => (p.id === id ? { ...p, title } : p)),
-        () => renamePage(id, title),
-      ),
-    setIcon: (id: string, icon: string) =>
-      zapisz(
-        pages.map((p) => (p.id === id ? { ...p, icon } : p)),
-        () => setPageIcon(id, icon),
-      ),
+      );
+    },
+    rename: (id: string, title: string) => zmienPole(id, "title", title, () => renamePage(id, title)),
+    setIcon: (id: string, icon: string) => zmienPole(id, "icon", icon, () => setPageIcon(id, icon)),
     setFavorite: (id: string, on: boolean) =>
-      zapisz(
-        pages.map((p) => (p.id === id ? { ...p, favorite: on } : p)),
-        () => setFavorite(id, on),
-      ),
+      zmienPole(id, "favorite", on, () => setFavorite(id, on)),
     // Po usunięciu na serwerze (okno potwierdzenia czeka na serwer) strona znika z listy
     removeLocal: (id: string) => setPages((lista) => lista.filter((p) => p.id !== id)),
   };
