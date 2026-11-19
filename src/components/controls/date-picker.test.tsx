@@ -17,6 +17,14 @@ function ustaw(value: string | null = "2026-11-20") {
 }
 
 describe("DatePicker", () => {
+  it("wariant „bare” ma widoczny wskaźnik fokusu z klawiatury (jak inne kontrolki)", () => {
+    render(
+      <DatePicker value={null} onChange={vi.fn()} today="2026-11-16" ariaLabel="Termin" variant="bare" />,
+    );
+    const przycisk = screen.getByRole("button", { name: "Termin" });
+    expect(przycisk).toHaveClass("focus-visible:ring-2", "focus-visible:ring-[#171717]/20");
+  });
+
   it("pokazuje datę albo placeholder", () => {
     ustaw();
     expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent(

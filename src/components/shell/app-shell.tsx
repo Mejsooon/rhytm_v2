@@ -2,6 +2,7 @@ import * as React from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
+import { loadPages } from "@/features/pages/load-pages";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
@@ -40,10 +41,15 @@ async function Powloka({
     profil?.display_name?.trim() || email.split("@")[0] || "Konto";
 
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
+  // Lista stron do sidebara (przy okazji zakłada strony z onboardingu)
+  const strony = await loadPages();
 
   return (
     <>
-      <AppSidebar user={{ displayName, email, avatarUrl }} />
+      <AppSidebar
+        user={{ displayName, email, avatarUrl }}
+        pages={strony}
+      />
       {/* Telefon: odstęp na dolny pasek i boczne wcięcia ekranu (notch w poziomie) */}
       <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">
         {children}

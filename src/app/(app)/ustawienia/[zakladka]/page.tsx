@@ -6,6 +6,8 @@ import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
+import { TrashCard } from "@/features/settings/trash-card";
+import { loadTrash } from "@/features/pages/actions";
 import {
   SETTINGS_TABS,
   SettingsTabs,
@@ -35,6 +37,8 @@ async function Ogolne() {
   // Podpisany adres zdjęcia (null → inicjały)
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
   const strefa = safeTimezone(profil?.timezone);
+  // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = komunikat w karcie)
+  const kosz = await loadTrash();
   const waluta = profil?.currency;
   return (
     <>
@@ -71,6 +75,12 @@ async function Ogolne() {
               : "PLN",
           week: profil?.week_start === "sun" ? "sun" : "mon",
         }}
+      />
+      <TrashCard
+        pages={kosz.ok ? kosz.pages : []}
+        rows={kosz.ok ? kosz.rows : []}
+        timeZone={strefa}
+        loadError={!kosz.ok}
       />
     </>
   );

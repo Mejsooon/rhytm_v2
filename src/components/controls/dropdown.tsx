@@ -12,6 +12,8 @@ export type DropdownOption<T extends string> = {
   label: string;
   hint?: string;
   badge?: { label: string; tone: BadgeTone };
+  // Własna zawartość opcji (np. plakietka w kolorze opcji pola strony) zamiast etykiety
+  node?: React.ReactNode;
 };
 
 // Lista rozwijana wg .dd / .ddpop / .ddopt z Settings.dc.html. Lista w portalu (nie ginie
@@ -23,6 +25,7 @@ export function Dropdown<T extends string>({
   placeholder = "Wybierz…",
   ariaLabel,
   width,
+  compact = false,
 }: {
   value: T | null;
   onChange: (v: T) => void;
@@ -30,6 +33,8 @@ export function Dropdown<T extends string>({
   placeholder?: string;
   ariaLabel: string;
   width?: number;
+  // Mały przycisk 28 px szerokości treści (btnBase z Books.dc.html, tryb edycji wiersza)
+  compact?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [aktywny, setAktywny] = React.useState(0);
@@ -82,14 +87,18 @@ export function Dropdown<T extends string>({
           type="button"
           aria-label={ariaLabel}
           aria-haspopup="listbox"
-          style={width ? { width } : undefined}
+          style={width && !compact ? { width } : undefined}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-left text-sm font-normal text-[#171717] outline-none hover:border-[#cfcfcf] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
+            compact
+              ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2 text-left text-xs font-normal whitespace-nowrap text-[#171717] outline-none hover:border-[#cfcfcf]"
+              : "flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-left text-sm font-normal text-[#171717] outline-none hover:border-[#cfcfcf] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
             open && "border-[#171717] hover:border-[#171717]",
           )}
         >
           {wybrana ? (
-            wybrana.badge ? (
+            wybrana.node ? (
+              wybrana.node
+            ) : wybrana.badge ? (
               <StatusBadge tone={wybrana.badge.tone}>
                 {wybrana.badge.label}
               </StatusBadge>
@@ -144,7 +153,9 @@ export function Dropdown<T extends string>({
                     zaznaczona && "bg-[#f0f0f0] font-medium",
                   )}
                 >
-                  {opcja.badge ? (
+                  {opcja.node ? (
+                    opcja.node
+                  ) : opcja.badge ? (
                     <StatusBadge tone={opcja.badge.tone}>
                       {opcja.badge.label}
                     </StatusBadge>

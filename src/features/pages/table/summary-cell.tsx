@@ -1,0 +1,41 @@
+import { summarize, type ColumnSummary, type PageRow, type SummaryKind } from "../table-model";
+import type { PageField } from "../fields";
+
+// Nazwy rodzajów podsumowania w menu kolumny (z makiety: „Brak”, „Liczba wierszy”, „Wypełnione”,
+// „Puste”, „Najbliższa”)
+export const NAZWY_PODSUMOWAN: Record<SummaryKind, string> = {
+  none: "Brak",
+  count: "Liczba wierszy",
+  filled: "Wypełnione",
+  empty: "Puste",
+  sum: "Suma",
+  avg: "Średnia",
+  min: "Minimum",
+  max: "Maksimum",
+  checked: "Zaznaczone",
+  earliest: "Najwcześniejsza",
+  latest: "Najpóźniejsza",
+  nearest: "Najbliższa",
+};
+
+// Komórka stopki tabeli: wynik podsumowania kolumny z wierszy po filtrze (puste dla „Brak”)
+export function SummaryCell({
+  field,
+  rows,
+  summary,
+  today,
+}: {
+  field: PageField;
+  rows: PageRow[];
+  summary: ColumnSummary | undefined;
+  today: string;
+}) {
+  const tekst = summary ? summarize(field, rows, summary, today) : "";
+  return (
+    <td
+      className={`px-3.5 py-2.5 font-mono ${summary?.kind === "avg" ? "text-[#171717]" : "text-[#6b6b6b]"}`}
+    >
+      {tekst}
+    </td>
+  );
+}

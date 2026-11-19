@@ -13,6 +13,7 @@ export function FormDialog({
   wide = false,
   children,
   footer,
+  headerAction,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,6 +24,8 @@ export function FormDialog({
   wide?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  // Przycisk w nagłówku po prawej (telefon: np. „Gotowe” w arkuszu „Kolumna”)
+  headerAction?: React.ReactNode;
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -37,7 +40,7 @@ export function FormDialog({
             aria-hidden="true"
             className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4] min-[800px]:hidden"
           />
-          <div className="flex flex-none items-start justify-between gap-3 px-5 pt-[18px] pb-3.5 max-[799px]:justify-center max-[799px]:border-b max-[799px]:border-[#f0f0f0] max-[799px]:px-2 max-[799px]:pt-1 max-[799px]:pb-1">
+          <div className="flex flex-none items-start justify-between gap-3 px-5 pt-[18px] pb-3.5 max-[799px]:relative max-[799px]:justify-center max-[799px]:border-b max-[799px]:border-[#f0f0f0] max-[799px]:px-2 max-[799px]:pt-1 max-[799px]:pb-1">
             <div>
               <Dialog.Title className="m-0 text-[17px] font-semibold max-[799px]:flex max-[799px]:h-11 max-[799px]:items-center max-[799px]:text-base">
                 {title}
@@ -54,6 +57,11 @@ export function FormDialog({
             >
               ✕
             </Dialog.Close>
+            {headerAction && (
+              <div className="flex-none max-[799px]:absolute max-[799px]:top-1 max-[799px]:right-2">
+                {headerAction}
+              </div>
+            )}
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-5 pb-[18px] max-[799px]:pt-4 max-[799px]:pb-7">
             {children}
