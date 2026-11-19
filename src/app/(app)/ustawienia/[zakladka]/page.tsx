@@ -37,7 +37,7 @@ async function Ogolne() {
   // Podpisany adres zdjęcia (null → inicjały)
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
   const strefa = safeTimezone(profil?.timezone);
-  // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = pusta lista)
+  // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = komunikat w karcie)
   const kosz = await loadTrash();
   const waluta = profil?.currency;
   return (
@@ -80,6 +80,7 @@ async function Ogolne() {
         pages={kosz.ok ? kosz.pages : []}
         rows={kosz.ok ? kosz.rows : []}
         timeZone={strefa}
+        loadError={!kosz.ok}
       />
     </>
   );

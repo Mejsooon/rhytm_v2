@@ -89,6 +89,23 @@ describe("loadPages", () => {
     blad.mockRestore();
   });
 
+  it.each([
+    ["błąd odczytu profilu", { error: { message: "boom" } }],
+    ["brak profilu", { single: null }],
+  ])("gdy create_page zawiedzie, a %s — nie nadpisuje pending_pages", async (_opis, wynik) => {
+    const blad = vi.spyOn(console, "error").mockImplementation(() => {});
+    tables.profiles = fakeTable(wynik);
+    rpc.mockImplementation(async (nazwa: string) =>
+      nazwa === "claim_pending_pages"
+        ? { data: ["Projects"], error: null }
+        : { data: null, error: { message: "boom" } },
+    );
+    await loadPages();
+    expect(tables.profiles.update).not.toHaveBeenCalled();
+    expect(blad).toHaveBeenCalledTimes(2);
+    blad.mockRestore();
+  });
+
   it("mapuje kolumny na camelCase i sumuje wiersze tabel", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
     const strony = await loadPages();

@@ -208,6 +208,28 @@ export async function deletePage(id: string): Promise<{ ok: true } | Blad> {
   return { ok: true };
 }
 
+// Liczba żywych wierszy w żywych tabelach strony (okno potwierdzenia usunięcia czyta ją na świeżo)
+export async function countPageRows(pageId: string): Promise<{ ok: true; count: number } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idOk = idSchema.safeParse(pageId);
+  if (!idOk.success) return { ok: false, message: idOk.error.issues[0].message };
+
+  const { count, error } = await supabase
+    .from("page_rows")
+    .select("id, page_blocks!inner(page_id, deleted_at)", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .eq("page_blocks.page_id", pageId)
+    .is("page_blocks.deleted_at", null);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  return { ok: true, count: count ?? 0 };
+}
+
 export async function restorePage(id: string): Promise<{ ok: true } | Blad> {
   const supabase = await createClient();
   const {
@@ -827,7 +849,7 @@ export async function saveTableSettings(
 // ---------- Kosz ----------
 
 export type TrashData = {
-  pages: { id: string; title: string; deletedAt: string; rowCount: number }[];
+  pages: { id: string; title: string; deletedAt: string }[];
   rows: { id: string; title: string; pageTitle: string; deletedAt: string }[];
 };
 
@@ -842,11 +864,9 @@ export async function loadTrash(): Promise<({ ok: true } & TrashData) | Blad> {
   const [stronyRes, wierszeRes] = await Promise.all([
     supabase
       .from("pages")
-      .select("id, title, deleted_at, page_blocks(page_rows(count))")
+      .select("id, title, deleted_at")
       .eq("user_id", user.id)
       .not("deleted_at", "is", null)
-      .is("page_blocks.deleted_at", null)
-      .is("page_blocks.page_rows.deleted_at", null)
       .order("deleted_at", { ascending: false }),
     supabase
       .from("page_rows")
@@ -868,11 +888,6 @@ export async function loadTrash(): Promise<({ ok: true } & TrashData) | Blad> {
       id: s.id,
       title: s.title,
       deletedAt: s.deleted_at ?? "",
-      rowCount: (s.page_blocks ?? []).reduce(
-        (suma, b) =>
-          suma + (b.page_rows ?? []).reduce((n, r) => n + (r.count ?? 0), 0),
-        0,
-      ),
     })),
     rows: (wierszeRes.data ?? []).map((w) => {
       const tytulowe = w.page_blocks.page_fields.find((f) => f.is_title);

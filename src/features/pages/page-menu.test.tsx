@@ -3,9 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let sciezka = "/strony/b";
-const { push, toast, reorderPages, deletePage, restorePage, setPageIcon, setFavorite, duplicatePage } =
-  vi.hoisted(() => ({
+const {
+  push,
+  replace,
+  toast,
+  reorderPages,
+  deletePage,
+  restorePage,
+  setPageIcon,
+  setFavorite,
+  duplicatePage,
+  countPageRows,
+} = vi.hoisted(() => ({
     push: vi.fn(),
+    replace: vi.fn(),
+    countPageRows: vi.fn(),
     toast: Object.assign(vi.fn(), { error: vi.fn() }),
     reorderPages: vi.fn(),
     deletePage: vi.fn(),
@@ -16,7 +28,7 @@ const { push, toast, reorderPages, deletePage, restorePage, setPageIcon, setFavo
   }));
 vi.mock("next/navigation", () => ({
   usePathname: () => sciezka,
-  useRouter: () => ({ push, back: vi.fn() }),
+  useRouter: () => ({ push, replace, back: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("./actions", () => ({
@@ -26,6 +38,7 @@ vi.mock("./actions", () => ({
   setPageIcon,
   setFavorite,
   duplicatePage,
+  countPageRows,
   renamePage: vi.fn(),
 }));
 
@@ -66,6 +79,8 @@ describe("PageMenu", () => {
     sciezka = "/strony/b";
     reorderPages.mockResolvedValue({ ok: true });
     deletePage.mockResolvedValue({ ok: true });
+    // Domyślnie świeża liczba wierszy jeszcze nie wróciła — okno pokazuje liczbę z listy stron
+    countPageRows.mockReturnValue(new Promise(() => {}));
     restorePage.mockResolvedValue({ ok: true });
     setPageIcon.mockResolvedValue({ ok: true });
     setFavorite.mockResolvedValue({ ok: true });
@@ -147,8 +162,8 @@ describe("PageMenu", () => {
 
     await user.click(within(okno).getByRole("button", { name: "Usuń" }));
     await waitFor(() => expect(deletePage).toHaveBeenCalledWith("b"));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/strony"));
-    expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,c");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/strony"));
+    await waitFor(() => expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,c"));
 
     expect(toast).toHaveBeenCalledWith(
       "Usunięto",
@@ -165,7 +180,45 @@ describe("PageMenu", () => {
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
     await waitFor(() => expect(deletePage).toHaveBeenCalled());
-    expect(push).not.toHaveBeenCalledWith("/strony");
+    expect(replace).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("usuwając otwartą stronę przechodzi na /strony od razu, nie czekając na odpowiedź serwera", async () => {
+    let zakoncz: (v: { ok: true }) => void = () => {};
+    deletePage.mockReturnValue(new Promise((r) => (zakoncz = r)));
+    const user = await otworz();
+    await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    expect(deletePage).toHaveBeenCalledWith("b");
+    // Odpowiedź (z odświeżoną trasą usuniętej strony) jeszcze nie wróciła, a nawigacja już ruszyła
+    expect(replace).toHaveBeenCalledWith("/strony");
+    expect(toast).not.toHaveBeenCalled();
+    zakoncz({ ok: true });
+    await waitFor(() => expect(toast).toHaveBeenCalledWith("Usunięto", expect.anything()));
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("okno pobiera świeżą liczbę wierszy przy otwarciu i ją pokazuje", async () => {
+    let zakoncz: (v: { ok: true; count: number }) => void = () => {};
+    countPageRows.mockReturnValue(new Promise((r) => (zakoncz = r)));
+    const user = await otworz();
+    await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
+    const okno = await screen.findByRole("dialog");
+    expect(countPageRows).toHaveBeenCalledWith("b");
+    // Do czasu odpowiedzi — liczba z listy stron (11)
+    expect(within(okno).getByText(/^11 wierszy trafi/)).toBeInTheDocument();
+    zakoncz({ ok: true, count: 3 });
+    expect(await within(okno).findByText(/^3 wiersze trafią do kosza na 30 dni\./)).toBeInTheDocument();
+  });
+
+  it("błąd odczytu liczby wierszy zostawia liczbę z listy stron", async () => {
+    countPageRows.mockResolvedValue({ ok: false, message: "x" });
+    const user = await otworz();
+    await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
+    const okno = await screen.findByRole("dialog");
+    await waitFor(() => expect(countPageRows).toHaveBeenCalled());
+    expect(within(okno).getByText(/^11 wierszy trafi/)).toBeInTheDocument();
   });
 
   it("błąd usuwania zostawia okno i pokazuje toast", async () => {

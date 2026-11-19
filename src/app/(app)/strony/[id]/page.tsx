@@ -4,17 +4,19 @@ import { connection } from "next/server";
 
 import { EditorView } from "@/features/pages/editor/editor-view";
 import { loadPage } from "@/features/pages/load-page";
+import { loadPages } from "@/features/pages/load-pages";
 import { TemplatePageView } from "@/features/pages/table/template-page-view";
 
 async function Strona({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const dane = await loadPage(id);
+  // Lista stron (dla menu strony na telefonie) — loadPages jest w cache() razem z layoutem
+  const [dane, strony] = await Promise.all([loadPage(id), loadPages()]);
   if (!dane) notFound();
 
   // Strona z szablonu: tabela z kartami; reszta to edytor bloków
-  if (dane.page.templateKey !== null) return <TemplatePageView data={dane} />;
-  return <EditorView data={dane} />;
+  if (dane.page.templateKey !== null) return <TemplatePageView data={dane} pages={strony} />;
+  return <EditorView data={dane} pages={strony} />;
 }
 
 export default function StronaPage({ params }: { params: Promise<{ id: string }> }) {

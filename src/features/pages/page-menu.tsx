@@ -206,10 +206,12 @@ export function PageMenu({
         page={page}
         open={usuwanie}
         onOpenChange={setUsuwanie}
-        onDeleted={() => {
-          store.removeLocal(page.id);
-          if (sciezka === `/strony/${page.id}`) router.push("/strony");
+        // Usuwana strona jest otwarta: przechodzimy na /strony, zanim wróci odpowiedź. Nawigacja wypiera
+        // trwającą akcję z kolejki routera, więc odświeżona trasa (404 usuniętej strony) się nie pokaże
+        onDeleteStart={() => {
+          if (sciezka === `/strony/${page.id}`) router.replace("/strony");
         }}
+        onDeleted={() => store.removeLocal(page.id)}
       />
     </>
   );

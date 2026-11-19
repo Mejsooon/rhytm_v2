@@ -12,14 +12,27 @@ const actions = vi.hoisted(() => ({
   restoreRow: vi.fn(),
   saveTableSettings: vi.fn(),
   updateRow: vi.fn(),
+  reorderPages: vi.fn(),
+  renamePage: vi.fn(),
+  setPageIcon: vi.fn(),
+  setFavorite: vi.fn(),
+  duplicatePage: vi.fn(),
+  deletePage: vi.fn(),
+  restorePage: vi.fn(),
+  countPageRows: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
+}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
 
 import type { LoadedPage } from "../load-page";
+import type { PageSummary } from "../load-pages";
 import { buildTemplateBlocks, type TemplateKey } from "../templates";
 import { TemplatePageView } from "./template-page-view";
 
@@ -339,14 +352,52 @@ describe("TemplatePageView", () => {
       const user = userEvent.setup();
       render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
       await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
-      await user.type(screen.getByRole("textbox", { name: "Tytuł" }), " 2");
+      // Nietknięty szkic po prostu się zamyka przy przejściu do innego wiersza
       await user.click(within(wiersz("Diuna")).getByRole("button", { name: "Edytuj wiersz" }));
       expect(screen.getAllByRole("button", { name: "Zapisz" })).toHaveLength(1);
       expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveValue("Diuna");
+      await user.type(screen.getByRole("textbox", { name: "Tytuł" }), " 2");
       await user.click(screen.getByRole("button", { name: "Anuluj" }));
       expect(screen.queryByRole("button", { name: "Zapisz" })).not.toBeInTheDocument();
       expect(actions.updateRow).not.toHaveBeenCalled();
-      expect(screen.getByText("Deep Work")).toBeInTheDocument();
+      expect(screen.getByText("Diuna")).toBeInTheDocument();
+    });
+
+    it("przejście do innego wiersza najpierw zapisuje zmieniony szkic", async () => {
+      const user = userEvent.setup();
+      const dane = strona("books", "Books", BOOKS);
+      const tytul = dane.blocks[0].fields.find((f) => f.isTitle)!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Tytuł" }), " 2");
+      await user.click(within(wiersz("Diuna")).getByRole("button", { name: "Edytuj wiersz" }));
+      await waitFor(() => expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveValue("Diuna"));
+      expect(actions.updateRow).toHaveBeenCalledWith("row-4", { [tytul.id]: "Deep Work 2" });
+      expect(screen.getByText("Deep Work 2")).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Zapisz" })).toHaveLength(1);
+    });
+
+    it("klik w inny wiersz też zapisuje szkic przed przełączeniem", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Autor" }), "!");
+      await user.click(screen.getByText("Diuna"));
+      await waitFor(() => expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveValue("Diuna"));
+      expect(actions.updateRow).toHaveBeenCalledTimes(1);
+      expect(actions.updateRow.mock.calls[0][0]).toBe("row-4");
+    });
+
+    it("błąd zapisu szkicu przy przełączaniu zostawia otwarty szkic z wpisanymi zmianami", async () => {
+      actions.updateRow.mockResolvedValue({ ok: false, message: "x" });
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Tytuł" }), " 2");
+      await user.click(within(wiersz("Diuna")).getByRole("button", { name: "Edytuj wiersz" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+      expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveValue("Deep Work 2");
+      expect(screen.getAllByRole("button", { name: "Zapisz" })).toHaveLength(1);
     });
 
     it("błąd zapisu cofa zmianę i pokazuje toast", async () => {
@@ -414,6 +465,29 @@ describe("TemplatePageView", () => {
       await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       expect(within(edycja()).getByRole("button", { name: "Status" }).textContent).toContain("Wycena");
       expect(within(edycja()).getByRole("button", { name: "Hosting" }).textContent).toContain("Framer");
+    });
+
+    it("„Nowy wiersz” przy zmienionym szkicu nowego wiersza najpierw go zapisuje", async () => {
+      const user = userEvent.setup();
+      const dane = strona("books", "Books", BOOKS);
+      const tytul = dane.blocks[0].fields.find((f) => f.isTitle)!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Tytuł" }), "Solaris");
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await waitFor(() => expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveValue(""));
+      expect(actions.addRow).toHaveBeenCalledTimes(1);
+      expect(actions.addRow).toHaveBeenCalledWith("blok-1", expect.objectContaining({ [tytul.id]: "Solaris" }));
+      expect(screen.getByText("Solaris")).toBeInTheDocument();
+    });
+
+    it("„Nowy wiersz” przy nietkniętym szkicu nie zapisuje nic", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await user.click(screen.getByRole("button", { name: "+ Nowy wiersz" }));
+      expect(screen.getAllByRole("button", { name: "Zapisz" })).toHaveLength(1);
+      expect(actions.addRow).not.toHaveBeenCalled();
     });
 
     it("✕ usuwa szkic bez zapisu", async () => {
@@ -506,6 +580,51 @@ describe("TemplatePageView", () => {
   });
 
   describe("telefon", () => {
+    // Lista stron z sidebaru: Inbox, ta strona (p1), Projects
+    function listaStron(dane: LoadedPage): PageSummary[] {
+      const inna = (id: string, title: string, position: number): PageSummary => ({
+        id,
+        title,
+        icon: "▤",
+        favorite: false,
+        templateKey: null,
+        position,
+        rowCount: 0,
+      });
+      return [inna("p0", "Inbox", 0), { ...dane.page, position: 1 }, inna("p2", "Projects", 2)];
+    }
+
+    it("nagłówek ma powrót do /strony i menu strony z całą listą (Przenieś wyżej / niżej)", async () => {
+      const user = userEvent.setup();
+      const dane = strona("books", "Books", BOOKS);
+      render(<TemplatePageView data={dane} pages={listaStron(dane)} />);
+      expect(screen.getByRole("link", { name: "Strony" })).toHaveAttribute("href", "/strony");
+      await user.click(screen.getByRole("button", { name: "Menu strony" }));
+      const menu = screen.getByRole("menu", { name: "Strona Books" });
+      expect(within(menu).getByRole("button", { name: "Przenieś wyżej" })).toBeEnabled();
+      expect(within(menu).getByRole("button", { name: "Przenieś niżej" })).toBeEnabled();
+      await user.click(within(menu).getByRole("button", { name: "Przenieś niżej" }));
+      expect(actions.reorderPages).toHaveBeenCalledWith(["p0", "p2", "p1"]);
+      expect(within(menu).getByRole("menuitem", { name: /Usuń stronę/ })).toBeInTheDocument();
+      expect(within(menu).getByRole("menuitem", { name: /Dodaj do ulubionych/ })).toBeInTheDocument();
+    });
+
+    it("„Zmień nazwę” z menu strony otwiera okno i zapisuje nową nazwę", async () => {
+      const user = userEvent.setup();
+      const dane = strona("books", "Books", BOOKS);
+      render(<TemplatePageView data={dane} pages={listaStron(dane)} />);
+      await user.click(screen.getByRole("button", { name: "Menu strony" }));
+      await user.click(screen.getByRole("menuitem", { name: /Zmień nazwę/ }));
+      const okno = await screen.findByRole("dialog", { name: "Zmień nazwę" });
+      const pole = within(okno).getByRole("textbox", { name: "Nazwa strony" });
+      expect(pole).toHaveValue("Books");
+      await user.clear(pole);
+      await user.type(pole, "Książki");
+      await user.click(within(okno).getByRole("button", { name: "Zapisz" }));
+      expect(actions.renamePage).toHaveBeenCalledWith("p1", "Książki");
+      expect(screen.getByRole("heading", { level: 1, name: "Książki" })).toBeInTheDocument();
+    });
+
     function telefon() {
       window.matchMedia = vi
         .fn()

@@ -22,7 +22,12 @@ export function TrashCard({
   pages,
   rows,
   timeZone = "Europe/Warsaw",
-}: TrashData & { timeZone?: string }) {
+  loadError = false,
+}: TrashData & {
+  timeZone?: string;
+  // Odczyt kosza się nie udał — zamiast „Kosz jest pusty.” komunikat o błędzie
+  loadError?: boolean;
+}) {
   const [strony, setStrony] = React.useState(pages);
   const [wiersze, setWiersze] = React.useState(rows);
   // Next 16 zachowuje stan trasy (Activity), więc po nowych danych z serwera stan lokalny trzeba zsynchronizować
@@ -107,7 +112,12 @@ export function TrashCard({
           Usunięte strony i wiersze zostają tu przez 30 dni.
         </p>
 
-        {pusty && (
+        {loadError && (
+          <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            Nie udało się wczytać kosza.
+          </p>
+        )}
+        {pusty && !loadError && (
           <p className="m-0 text-[13px] text-[#666666]">Kosz jest pusty.</p>
         )}
 

@@ -48,14 +48,19 @@ export const loadPages = cache(async (): Promise<PageSummary[]> => {
     if (bladTworzenia) {
       // Nazwa jest już zdjęta z pending_pages, więc wracamy ją tam, żeby następny render spróbował ponownie
       console.error("Nie udało się utworzyć strony z onboardingu", nazwa, bladTworzenia);
-      const { data: profil } = await supabase
+      const { data: profil, error: bladProfilu } = await supabase
         .from("profiles")
         .select("pending_pages")
         .eq("user_id", user.id)
         .maybeSingle();
+      // Bez odczytanej listy zapis nadpisałby ją samą nazwą (zginęłyby np. Subscriptions) — tylko log
+      if (bladProfilu || !profil) {
+        console.error("Nie udało się odczytać pending_pages, nazwa nie wraca", nazwa, bladProfilu);
+        continue;
+      }
       await supabase
         .from("profiles")
-        .update({ pending_pages: [...(profil?.pending_pages ?? []), nazwa] })
+        .update({ pending_pages: [...(profil.pending_pages ?? []), nazwa] })
         .eq("user_id", user.id);
     }
   }

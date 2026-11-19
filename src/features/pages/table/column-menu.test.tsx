@@ -16,6 +16,10 @@ const actions = vi.hoisted(() => ({
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+}));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
 

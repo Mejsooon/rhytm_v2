@@ -4,6 +4,7 @@
 // Błąd zapisu cofa zmianę i pokazuje toast. Nowe dane z serwera zastępują kopię — wzorzec
 // „poprzednie props”, jak w use-today-store.ts (Next 16 Activity nie montuje trasy od nowa).
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -21,6 +22,7 @@ export type EditorStore = ReturnType<typeof useEditorStore>;
 const PREFIKS_TYMCZASOWY = "tmp-";
 
 export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
+  const router = useRouter();
   const [zrodlo, setZrodlo] = useState(initial);
   const [blocks, setBlocks] = useState(initial);
   // Treść zmieniona, zanim blok dostał prawdziwe id: tymczasowe id → ostatnia treść do zapisu
@@ -213,7 +215,11 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
           if (!przywrocono) {
             setBlocks((l) => l.filter((b) => b.id !== usuwany.id));
             toast.error(BLAD_ZAPISU);
+            return;
           }
+          // Kopia tabeli w magazynie edytora pamięta stan z wczytania strony (zmiany wierszy i kolumn
+          // żyły tylko w TableBlock), więc pobieramy świeże dane — resync podmieni wiersze i kolumny
+          if (usuwany.type === "table") router.refresh();
         },
       },
     });

@@ -12,6 +12,7 @@ import { usePagesStore } from "../use-pages-store";
 import { IconGrid } from "../icon-grid";
 import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
+import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
 import { CommandLine } from "./command-line";
 import { MEditor } from "./mobile/m-editor";
@@ -22,12 +23,16 @@ import { useEditorStore } from "./use-editor-store";
 
 // Edytor bloków strony bez szablonu (EmptyPage.dc.html): ikona, tytuł, bloki, linia poleceń,
 // szybki start i link do szablonów. Telefon dostaje ten sam układ w jednej kolumnie.
-export function EditorView({ data }: { data: LoadedPage }) {
+// `pages` — cała lista stron dla „Przenieś wyżej / niżej” w menu strony na telefonie.
+export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSummary[] }) {
   const { page } = data;
   const store = useEditorStore(page.id, data.blocks);
-  // Menu strony na telefonie (ulubione, duplikat, usunięcie) działa na jednopozycyjnej liście tej strony
-  const listaStrony = React.useMemo(() => [page], [page]);
-  const pagesStore = usePagesStore(listaStrony);
+  // Menu strony na telefonie działa na całej liście stron (bez niej — tylko na tej stronie)
+  const listaStron = React.useMemo(
+    () => (pages?.some((p) => p.id === page.id) ? pages : [page]),
+    [pages, page],
+  );
+  const pagesStore = usePagesStore(listaStron);
   const tytulRef = React.useRef<HTMLInputElement>(null);
 
   // Tytuł i ikona: lokalny szkic + ostatnia zapisana wartość (resync przy nowych danych z serwera)
@@ -101,7 +106,7 @@ export function EditorView({ data }: { data: LoadedPage }) {
       </div>
       <MEditor
         store={store}
-        page={pagesStore.pages[0] ?? page}
+        page={pagesStore.pages.find((p) => p.id === page.id) ?? page}
         pages={pagesStore.pages}
         pagesStore={pagesStore}
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później

@@ -32,6 +32,7 @@ import {
   updateRow,
   addField,
   changeFieldType,
+  countPageRows,
   loadTrash,
   setFavorite,
   updateBlockContent,
@@ -147,6 +148,36 @@ describe("strony", () => {
     expect(await deletePage(STRONA)).toEqual({ ok: true });
     expect(tables.pages.update).toHaveBeenCalledWith({ deleted_at: "2026-11-19T10:00:00.000Z" });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+  });
+});
+
+describe("countPageRows", () => {
+  it("liczy żywe wiersze w żywych blokach strony (head + count, filtry na bloku)", async () => {
+    tables.page_rows = fakeTable({ data: null });
+    (tables.page_rows as { then: unknown }).then = (ok: (v: unknown) => unknown) =>
+      Promise.resolve({ data: null, error: null, count: 7 }).then(ok);
+    const w = await countPageRows(STRONA);
+    expect(w).toEqual({ ok: true, count: 7 });
+    const q = tables.page_rows;
+    expect(q.select).toHaveBeenCalledWith("id, page_blocks!inner(page_id, deleted_at)", {
+      count: "exact",
+      head: true,
+    });
+    expect(q.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(q.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(q.eq).toHaveBeenCalledWith("page_blocks.page_id", STRONA);
+    expect(q.is).toHaveBeenCalledWith("page_blocks.deleted_at", null);
+  });
+
+  it("odrzuca id, które nie jest UUID, bez zapytania", async () => {
+    const w = await countPageRows("x");
+    expect(w.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("błąd zapytania zwraca ok:false", async () => {
+    tables.page_rows = fakeTable({ error: { message: "x" } });
+    expect((await countPageRows(STRONA)).ok).toBe(false);
   });
 });
 
@@ -315,14 +346,13 @@ describe("bloki i ustawienia", () => {
 });
 
 describe("loadTrash", () => {
-  it("mapuje strony z licznikiem i wiersze z tytułem z pola tytułowego", async () => {
+  it("mapuje strony i wiersze z tytułem z pola tytułowego", async () => {
     tables.pages = fakeTable({
       data: [
         {
           id: STRONA,
           title: "Stara",
           deleted_at: "2026-11-18T10:00:00Z",
-          page_blocks: [{ page_rows: [{ count: 2 }] }, { page_rows: [{ count: 1 }] }],
         },
       ],
     });
@@ -348,7 +378,7 @@ describe("loadTrash", () => {
     const w = await loadTrash();
     expect(w).toEqual({
       ok: true,
-      pages: [{ id: STRONA, title: "Stara", deletedAt: "2026-11-18T10:00:00Z", rowCount: 3 }],
+      pages: [{ id: STRONA, title: "Stara", deletedAt: "2026-11-18T10:00:00Z" }],
       rows: [
         { id: WIERSZ, title: "Dune", pageTitle: "Books", deletedAt: "2026-11-19T09:00:00Z" },
         { id: STRONA, title: "Bez tytułu", pageTitle: "Books", deletedAt: "2026-11-19T08:00:00Z" },

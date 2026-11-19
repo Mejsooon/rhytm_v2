@@ -13,8 +13,8 @@ vi.mock("sonner", () => ({ toast: { error: toastError } }));
 import { TrashCard } from "./trash-card";
 
 const strony = [
-  { id: "p1", title: "Books", deletedAt: "2026-11-09T10:00:00Z", rowCount: 3 },
-  { id: "p2", title: "", deletedAt: "2026-10-20T10:00:00Z", rowCount: 0 },
+  { id: "p1", title: "Books", deletedAt: "2026-11-09T10:00:00Z" },
+  { id: "p2", title: "", deletedAt: "2026-10-20T10:00:00Z" },
 ];
 const wiersze = [
   {
@@ -107,6 +107,12 @@ describe("TrashCard", () => {
     render(<TrashCard pages={[]} rows={[]} />);
     expect(screen.getByText("Kosz jest pusty.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Strony" })).toBeNull();
+  });
+
+  it("błąd odczytu: „Nie udało się wczytać kosza.” zamiast pustego kosza", () => {
+    render(<TrashCard pages={[]} rows={[]} loadError />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Nie udało się wczytać kosza.");
+    expect(screen.queryByText("Kosz jest pusty.")).toBeNull();
   });
 
   it("po przywróceniu ostatniej pozycji pokazuje „Kosz jest pusty.”", async () => {

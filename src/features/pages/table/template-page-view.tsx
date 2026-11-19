@@ -1,12 +1,19 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+
+import { Button, FormDialog, TextField } from "@/components/controls";
 
 import { operatorsFor } from "../table-model";
 import { planTypeChange, type FieldType, type PageField } from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock, LoadedPage } from "../load-page";
+import type { PageSummary } from "../load-pages";
+import { PageMenu } from "../page-menu";
+import { usePagesStore } from "../use-pages-store";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { visibleRows } from "../table-model";
 import { TEMPLATES } from "../templates";
@@ -41,11 +48,26 @@ const PUSTY_BLOK: LoadedBlock = {
 // Liczba kolumn w makietach szablonów (min-width tabeli 760 / 820 px)
 const KOLUMNY_MAKIETY = 5;
 
+// Przycisk paska telefonu (jak w MEditor)
+const PRZYCISK_PASKA =
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 font-[inherit] text-[#171717] hover:bg-[#f5f5f5]";
+
 // Strona z szablonu (Books / Projects / Websites.dc.html, Pusta strona bez kart): nagłówek
 // z Filtruj / „+ Pole” / „Nowy wiersz”, metadane, przypięte karty, tabela z podglądem i trybem
-// edycji wiersza, stopka z podsumowaniami. Na telefonie wiersz edytuje się w arkuszu.
-export function TemplatePageView({ data }: { data: LoadedPage }) {
-  const { page, today } = data;
+// edycji wiersza, stopka z podsumowaniami. Na telefonie wiersz edytuje się w arkuszu, a nagłówek
+// ma powrót do listy i menu strony (jak MEditor). `pages` — cała lista stron dla „Przenieś wyżej / niżej”.
+export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: PageSummary[] }) {
+  const { today } = data;
+  // Menu strony na telefonie działa na całej liście stron (bez niej — tylko na tej stronie)
+  const listaStron = React.useMemo(
+    () => (pages?.some((p) => p.id === data.page.id) ? pages : [data.page]),
+    [pages, data.page],
+  );
+  const pagesStore = usePagesStore(listaStron);
+  const page = pagesStore.pages.find((p) => p.id === data.page.id) ?? data.page;
+  // Telefon: „Zmień nazwę” z menu strony otwiera okno z nazwą
+  const [zmianaNazwy, setZmianaNazwy] = React.useState(false);
+  const [szkicNazwy, setSzkicNazwy] = React.useState("");
   const blok = data.blocks.find((b) => b.type === "table") ?? PUSTY_BLOK;
   const store = useTableStore(blok);
   const { fields, rows, settings, editing } = store;
@@ -96,7 +118,7 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
 
   function nowyWiersz() {
     setWArkuszu(naTelefonie());
-    store.addRowDraft();
+    void store.addRowDraft();
   }
 
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
@@ -112,10 +134,59 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
     "cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] font-[inherit] text-sm text-[#171717] max-[799px]:min-h-11";
   const kolumnaAkcji = <th scope="col" className="w-[120px] border-b border-[#eaeaea] px-3.5 py-2.5" />;
 
+  function zapiszNazwe(e: React.FormEvent) {
+    e.preventDefault();
+    setZmianaNazwy(false);
+    if (szkicNazwy !== page.title) void pagesStore.rename(page.id, szkicNazwy);
+  }
+
   return (
     <>
+      {/* Telefon: powrót do listy stron i menu strony (jak w MEditor) */}
+      <div className="flex min-h-[60px] flex-none items-center gap-1 p-2 min-[800px]:hidden">
+        <Link href="/strony" aria-label="Strony" className={PRZYCISK_PASKA}>
+          <ChevronLeft size={22} aria-hidden="true" />
+        </Link>
+        <div className="flex-1" />
+        <PageMenu
+          page={page}
+          pages={pagesStore.pages}
+          store={pagesStore}
+          onRename={() => {
+            setSzkicNazwy(page.title);
+            setZmianaNazwy(true);
+          }}
+          sheet
+          triggerLabel="Menu strony"
+          triggerClassName={PRZYCISK_PASKA}
+        />
+      </div>
+      <FormDialog
+        open={zmianaNazwy}
+        onOpenChange={setZmianaNazwy}
+        title="Zmień nazwę"
+        footer={
+          <>
+            <Button onClick={() => setZmianaNazwy(false)}>Anuluj</Button>
+            <Button variant="primary" type="submit" form="zmiana-nazwy-strony">
+              Zapisz
+            </Button>
+          </>
+        }
+      >
+        <form id="zmiana-nazwy-strony" onSubmit={zapiszNazwe}>
+          <TextField
+            label="Nazwa strony"
+            value={szkicNazwy}
+            onChange={(e) => setSzkicNazwy(e.target.value)}
+            placeholder="Bez tytułu"
+            autoFocus
+          />
+        </form>
+      </FormDialog>
+
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-[#666666]">
+        <div className="font-mono text-[13px] text-[#666666] max-[799px]:hidden">
           Strony <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{tytul}</span>
         </div>
         <div className="flex gap-2">
@@ -273,11 +344,11 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
                     onOpen={() => {
                       if (editing?.rowId === r.id || r.id.startsWith(PREFIKS_TYMCZASOWY)) return;
                       setWArkuszu(naTelefonie());
-                      store.startEdit(r);
+                      void store.startEdit(r);
                     }}
                     onEdit={() => {
                       setWArkuszu(naTelefonie());
-                      store.startEdit(r);
+                      void store.startEdit(r);
                     }}
                     onDelete={() => void store.removeRow(r)}
                   />

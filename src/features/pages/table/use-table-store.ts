@@ -96,14 +96,33 @@ export function useTableStore(block: LoadedBlock) {
 
   const posortowanePola = [...fields].sort((a, b) => a.position - b.position);
 
+  // Otwarty szkic różni się od wartości z chwili otwarcia (nowy wiersz: od wartości startowych)
+  function szkicZmieniony(): boolean {
+    if (!editing) return false;
+    const klucze = new Set([...Object.keys(editing.values), ...Object.keys(editing.original)]);
+    return [...klucze].some((k) => !Object.is(editing.values[k], editing.original[k]));
+  }
+
+  // Przed otwarciem innego wiersza zmieniony szkic zapisuje się zwykłym „Zapisz”; nietknięty po prostu
+  // się zamyka. Błąd zapisu (toast już był) przywraca szkic i nie przełącza wiersza.
+  async function zapiszSzkic(): Promise<boolean> {
+    const e = editing;
+    const udane = await saveRow();
+    if (!udane) setEditing(e);
+    return udane;
+  }
+
   // Tryb edycji istniejącego wiersza (tylko jeden naraz; wiersz bez prawdziwego id czeka)
-  function startEdit(row: PageRow) {
+  async function startEdit(row: PageRow) {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+    if (szkicZmieniony() && !(await zapiszSzkic())) return;
     setEditing({ rowId: row.id, values: { ...row.values }, original: { ...row.values } });
   }
 
-  // „Nowy wiersz”: szkic w trybie edycji na końcu tabeli, z opcjami domyślnymi pól (z makiet)
-  function addRowDraft() {
+  // „Nowy wiersz”: szkic w trybie edycji na końcu tabeli, z opcjami domyślnymi pól (z makiet).
+  // original = wartości startowe, żeby nietknięty szkic nie liczył się jako zmieniony
+  async function addRowDraft() {
+    if (szkicZmieniony() && !(await zapiszSzkic())) return;
     const values: Record<string, unknown> = {};
     for (const f of fields) {
       const domyslna = f.config.default_option;
@@ -111,7 +130,7 @@ export function useTableStore(block: LoadedBlock) {
         values[f.id] = domyslna;
       }
     }
-    setEditing({ rowId: null, values, original: {} });
+    setEditing({ rowId: null, values, original: { ...values } });
   }
 
   function setEditValue(fieldId: string, value: unknown) {
@@ -124,9 +143,10 @@ export function useTableStore(block: LoadedBlock) {
 
   // „Zapisz”: wartości przez normalizeValue, pusty tytuł → empty_label (jak na serwerze).
   // Istniejący wiersz wysyła tylko zmienione komórki — nietknięte (także „brudne” z bazy) zostają.
-  async function saveRow() {
+  // Zwraca false, gdy zapis się nie udał (zmiana cofnięta, toast pokazany).
+  async function saveRow(): Promise<boolean> {
     const e = editing;
-    if (!e) return;
+    if (!e) return true;
     const nowe: Record<string, CellValue> = {};
     for (const f of posortowanePola) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
@@ -137,7 +157,7 @@ export function useTableStore(block: LoadedBlock) {
       nowe[f.id] = v;
     }
     setEditing(null);
-    if (e.rowId !== null && Object.keys(nowe).length === 0) return;
+    if (e.rowId !== null && Object.keys(nowe).length === 0) return true;
 
     if (e.rowId === null) {
       const tymczasoweId = `${PREFIKS_TYMCZASOWY}w${++licznik.current}`;
@@ -152,7 +172,7 @@ export function useTableStore(block: LoadedBlock) {
       if (!wynik || !wynik.ok) {
         setRows((l) => l.filter((r) => r.id !== tymczasoweId));
         toast.error(BLAD_ZAPISU);
-        return;
+        return false;
       }
       const prawdziwy = wynik.row;
       setRows((l) => {
@@ -162,12 +182,12 @@ export function useTableStore(block: LoadedBlock) {
           ? bezDuplikatu.map((r) => (r.id === tymczasoweId ? prawdziwy : r))
           : [...bezDuplikatu, prawdziwy];
       });
-      return;
+      return true;
     }
 
     const rowId = e.rowId;
     const stary = rows.find((r) => r.id === rowId);
-    if (!stary) return;
+    if (!stary) return true;
     const poprzednie: Record<string, unknown> = {};
     for (const k of Object.keys(nowe)) poprzednie[k] = stary.values[k];
     setRows((l) => l.map((r) => (r.id === rowId ? { ...r, values: { ...r.values, ...nowe } } : r)));
@@ -191,6 +211,7 @@ export function useTableStore(block: LoadedBlock) {
       );
       toast.error(BLAD_ZAPISU);
     }
+    return udane;
   }
 
   // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow)
