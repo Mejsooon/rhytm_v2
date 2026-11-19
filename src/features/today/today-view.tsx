@@ -137,7 +137,7 @@ export function TodayView({
 
   const kafelki = weekTiles({
     today,
-    nowMin: data.nowMin,
+    nowMin: teraz,
     weekStartDate: data.weekStartDate,
     tasks: data.tasks,
     habits: data.habits,

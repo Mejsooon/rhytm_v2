@@ -35,7 +35,8 @@
      a na iPhonie tyle, ile wymaga pasek gestów. Ta sama wartość odsuwa treść <main> i przyciski FAB. */
   --tabbar-h: calc(56px + max(8px, env(safe-area-inset-bottom)));
   /* Odstęp powiadomień (sonner) od dołu: na telefonie nad dolnym paskiem, na webie 24 px */
-  --toast-bottom: calc(var(--tabbar-h) + 16px);
+  /* Na telefonie nad dolnym paskiem i nad pływającym „+” na Dziś (56 px + odstępy) */
+  --toast-bottom: calc(var(--tabbar-h) + 84px);
 }
 
 @media (min-width: 800px) {
