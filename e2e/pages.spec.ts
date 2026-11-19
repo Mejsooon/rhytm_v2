@@ -69,7 +69,8 @@ test.describe("strony", () => {
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     await page.getByLabel("Nazwa strony").fill("Plan");
     await page.getByLabel("Nazwa strony").blur();
-    // Zapis nazwy kończy się odświeżeniem danych strony; blok dodajemy dopiero po nim
+    // Dla pewności (pas i szelki): wyścig odświeżenia z dodaniem bloku naprawia use-editor-store,
+    // a tu i tak czekamy, aż zapis nazwy się skończy
     await page.waitForLoadState("networkidle");
 
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");

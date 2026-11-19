@@ -6,7 +6,12 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { addBlock, deleteBlock, restoreBlock, updateBlockContent } from "../actions";
+import {
+  addBlock,
+  deleteBlock,
+  restoreBlock,
+  updateBlockContent,
+} from "../actions";
 import type { BlockType, LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU } from "../messages";
 
@@ -23,18 +28,54 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
   // Zapisy treści w toku: id bloku → treść wysyłana na serwer
   const zapisyWToku = useRef(new Map<string, Record<string, unknown>>());
   const licznik = useRef(0);
+  // Id bloków dodanych w tej sesji, dopóki dane z serwera ich nie dogonią
+  const [dodaneLokalnie, setDodaneLokalnie] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
 
-  // Nowe dane z serwera (np. po renamePage) nie mogą zgubić bloków tymczasowych
-  // ani treści z zapisem w toku — te zostają lokalne, resztę bierzemy z serwera
+  // Nowe dane z serwera (np. po renamePage) nie mogą zgubić bloków tymczasowych, treści z zapisem
+  // w toku ani świeżo dodanych bloków: odpowiedź odświeżenia mogła zostać odczytana przed wstawieniem
+  // bloku (brak go) albo między wstawieniem bloku a jego pól (mniej pól / wierszy niż lokalnie)
   if (zrodlo !== initial) {
     setZrodlo(initial);
-    setBlocks((l) => [
-      ...initial.map((b) => {
-        const wToku = zapisyWToku.current.get(b.id);
-        return wToku ? { ...b, content: wToku } : b;
-      }),
-      ...l.filter((b) => b.id.startsWith(PREFIKS_TYMCZASOWY)),
-    ]);
+    // Lokalna kopia jest nowsza od serwerowej, gdy serwer ma mniej pól albo wierszy
+    const nowszaLokalnie = (b: LoadedBlock, lokalny: LoadedBlock | undefined) =>
+      lokalny !== undefined &&
+      (b.fields.length < lokalny.fields.length ||
+        b.rows.length < lokalny.rows.length);
+    // Serwer dogonił bloki dodane lokalnie, więc przestajemy je pilnować
+    const dogonione = initial
+      .filter(
+        (b) =>
+          dodaneLokalnie.has(b.id) &&
+          !nowszaLokalnie(
+            b,
+            blocks.find((x) => x.id === b.id),
+          ),
+      )
+      .map((b) => b.id);
+    setBlocks((l) => {
+      const idSerwera = new Set(initial.map((b) => b.id));
+      return [
+        ...initial.map((b) => {
+          const wToku = zapisyWToku.current.get(b.id);
+          const serwerowy = wToku ? { ...b, content: wToku } : b;
+          const lokalny = l.find((x) => x.id === b.id);
+          return dodaneLokalnie.has(b.id) && nowszaLokalnie(b, lokalny)
+            ? { ...lokalny!, content: serwerowy.content }
+            : serwerowy;
+        }),
+        ...l.filter(
+          (b) =>
+            b.id.startsWith(PREFIKS_TYMCZASOWY) ||
+            (dodaneLokalnie.has(b.id) && !idSerwera.has(b.id)),
+        ),
+      ];
+    });
+    if (dogonione.length > 0)
+      setDodaneLokalnie(
+        new Set([...dodaneLokalnie].filter((id) => !dogonione.includes(id))),
+      );
   }
 
   const posortowane = [...blocks].sort((a, b) => a.position - b.position);
@@ -75,6 +116,7 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
     const zmieniona = oczekujaceTresci.current.get(tymczasoweId);
     oczekujaceTresci.current.delete(tymczasoweId);
     const gotowy = { ...prawdziwy, content: zmieniona ?? prawdziwy.content };
+    setDodaneLokalnie((z) => new Set(z).add(prawdziwy.id));
     setBlocks((l) => {
       // Odświeżenie danych mogło już usunąć blok tymczasowy albo dodać prawdziwy — bez duplikatów
       const bezDuplikatu = l.filter((b) => b.id !== prawdziwy.id);
@@ -90,7 +132,11 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
         zapisano = false;
       }
       if (!zapisano) {
-        setBlocks((l) => l.map((b) => (b.id === prawdziwy.id ? { ...b, content: prawdziwy.content } : b)));
+        setBlocks((l) =>
+          l.map((b) =>
+            b.id === prawdziwy.id ? { ...b, content: prawdziwy.content } : b,
+          ),
+        );
         toast.error(BLAD_ZAPISU);
       }
     }
@@ -98,7 +144,10 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
   }
 
   // Zmiana treści bloku; błąd przywraca poprzednią treść
-  async function update(id: string, content: Record<string, unknown>): Promise<boolean> {
+  async function update(
+    id: string,
+    content: Record<string, unknown>,
+  ): Promise<boolean> {
     const poprzednia = blocks.find((b) => b.id === id)?.content;
     if (poprzednia === undefined) return false;
     setBlocks((l) => l.map((b) => (b.id === id ? { ...b, content } : b)));
@@ -118,7 +167,9 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
     }
     if (zapisyWToku.current.get(id) === content) zapisyWToku.current.delete(id);
     if (!udane) {
-      setBlocks((l) => l.map((b) => (b.id === id ? { ...b, content: poprzednia } : b)));
+      setBlocks((l) =>
+        l.map((b) => (b.id === id ? { ...b, content: poprzednia } : b)),
+      );
       toast.error(BLAD_ZAPISU);
     }
     return udane;
@@ -131,6 +182,7 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
     // Tymczasowego bloku nie da się jeszcze usunąć na serwerze
     if (id.startsWith(PREFIKS_TYMCZASOWY)) return false;
     setBlocks((l) => l.filter((b) => b.id !== id));
+    setDodaneLokalnie((z) => new Set([...z].filter((x) => x !== id)));
 
     let udane = false;
     try {
@@ -149,7 +201,9 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
         label: "Cofnij",
         onClick: async () => {
           // Blok wraca od razu na swoją pozycję (lista jest sortowana po position)
-          setBlocks((l) => (l.some((b) => b.id === usuwany.id) ? l : [...l, usuwany]));
+          setBlocks((l) =>
+            l.some((b) => b.id === usuwany.id) ? l : [...l, usuwany],
+          );
           let przywrocono = false;
           try {
             przywrocono = (await restoreBlock(id)).ok;
