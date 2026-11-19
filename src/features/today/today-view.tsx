@@ -193,7 +193,7 @@ export function TodayView({
           {przyciskNowyBlok}
         </header>
 
-        <div className="box-border flex w-full max-w-[1200px] flex-col gap-6 p-6">
+        <div className="box-border flex w-full flex-col gap-6 p-6">
           {/* 1. Statystyki tygodnia */}
           <WeekCard
             tiles={kafelki}
