@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ActionPopover, FormDialog } from "@/components/controls";
 import { duplicatePage } from "./actions";
 import { DeletePageDialog } from "./delete-page-dialog";
-import { IconGrid } from "./icon-grid";
+import { IconPicker } from "./icon-picker";
 import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
@@ -16,7 +16,8 @@ const POZYCJA =
   "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-[#171717] hover:bg-[#f5f5f5] max-[799px]:min-h-11";
 const IKONA_POZYCJI = "w-[18px] font-mono text-[#6b6b6b]";
 
-// Menu strony (PageMenu.dc.html): na webie dymek 230 px, z `sheet` arkusz od dołu (telefon).
+// Menu strony (PageMenu.dc.html, Sidebar.dc.html): na webie dymek 230 px, z `sheet` arkusz od dołu (telefon).
+// Na webie kolejność zmienia się przeciąganiem w sidebarze, więc „Przenieś wyżej / niżej” jest tylko w arkuszu.
 // `pages` to cała lista w kolejności (dla „Przenieś wyżej / niżej”), `store` — optymistyczne zmiany.
 export function PageMenu({
   page,
@@ -76,13 +77,26 @@ export function PageMenu({
 
   const zawartosc =
     widok === "ikony" ? (
-      <IconGrid
-        current={page.icon}
-        onPick={(ikona) => {
-          zmienOtwarcie(false);
-          void store.setIcon(page.id, ikona);
-        }}
-      />
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Wróć do menu"
+            onClick={() => setWidok("menu")}
+            className="size-7 cursor-pointer rounded-md border-0 bg-transparent font-[inherit] text-[#404040] hover:bg-[#f5f5f5] max-[799px]:size-11"
+          >
+            ←
+          </button>
+          <span className="text-[13px] font-medium">Zmień ikonę</span>
+        </div>
+        <IconPicker
+          value={page.icon}
+          onPick={(ikona) => {
+            zmienOtwarcie(false);
+            if (ikona !== page.icon) void store.setIcon(page.id, ikona);
+          }}
+        />
+      </div>
     ) : (
       <div role="menu" aria-label={`Strona ${tytul}`}>
         <button
@@ -112,29 +126,31 @@ export function PageMenu({
           <span aria-hidden="true" className={IKONA_POZYCJI}>⧉</span>
           <span className="flex-1">Duplikuj</span>
         </button>
-        {/* Etykieta jak w makiecie; kierunek wybiera się strzałkami po prawej */}
-        <div className={`${POZYCJA} cursor-default hover:bg-transparent`}>
-          <span aria-hidden="true" className={IKONA_POZYCJI}>⇅</span>
-          <span className="flex-1">Przenieś wyżej / niżej</span>
-          <button
-            type="button"
-            aria-label="Przenieś wyżej"
-            disabled={indeks <= 0}
-            onClick={() => przenies(-1)}
-            className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            aria-label="Przenieś niżej"
-            disabled={indeks < 0 || indeks >= pages.length - 1}
-            onClick={() => przenies(1)}
-            className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
-          >
-            ↓
-          </button>
-        </div>
+        {/* Tylko arkusz (telefon); etykieta jak w makiecie, kierunek wybiera się strzałkami po prawej */}
+        {sheet && (
+          <div className={`${POZYCJA} cursor-default hover:bg-transparent`}>
+            <span aria-hidden="true" className={IKONA_POZYCJI}>⇅</span>
+            <span className="flex-1">Przenieś wyżej / niżej</span>
+            <button
+              type="button"
+              aria-label="Przenieś wyżej"
+              disabled={indeks <= 0}
+              onClick={() => przenies(-1)}
+              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              aria-label="Przenieś niżej"
+              disabled={indeks < 0 || indeks >= pages.length - 1}
+              onClick={() => przenies(1)}
+              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+            >
+              ↓
+            </button>
+          </div>
+        )}
         <button
           type="button"
           role="menuitem"
@@ -195,7 +211,7 @@ export function PageMenu({
           trigger={przycisk}
           open={otwarte}
           onOpenChange={zmienOtwarcie}
-          width={widok === "ikony" ? 236 : 230}
+          width={widok === "ikony" ? 300 : 230}
           align="start"
           ariaLabel={`Menu strony ${tytul}`}
         >

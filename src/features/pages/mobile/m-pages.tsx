@@ -7,6 +7,7 @@ import { ChevronRight, Plus, Search, Settings } from "lucide-react";
 import { MonoLabel } from "@/components/controls";
 import { useCreateBlankPage } from "../use-create-blank-page";
 import type { PageSummary } from "../load-pages";
+import { PageIcon } from "../page-icon";
 import { rowsLabel } from "../rows-label";
 
 // Telefon: lista stron (MPages.dc.html) — „Ulubione” tylko z ulubionymi, „Wszystkie strony” z resztą.
@@ -80,9 +81,9 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
                     >
                       <span
                         aria-hidden="true"
-                        className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-[#f5f5f5] font-mono text-lg text-[#666666]"
+                        className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-[#f5f5f5] text-[#666666]"
                       >
-                        {strona.icon}
+                        <PageIcon icon={strona.icon} size={18} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">

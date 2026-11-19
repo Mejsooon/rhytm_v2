@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { createEvent, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,17 +8,18 @@ vi.mock("next/navigation", () => ({
   usePathname: () => sciezka,
   useRouter: () => ({ push, back: vi.fn() }),
 }));
-const { createBlankPage, reorderPages, renamePage } = vi.hoisted(() => ({
+const { createBlankPage, reorderPages, renamePage, setFavorite } = vi.hoisted(() => ({
   createBlankPage: vi.fn(),
   reorderPages: vi.fn(),
   renamePage: vi.fn(),
+  setFavorite: vi.fn(),
 }));
 vi.mock("@/features/pages/actions", () => ({
   createBlankPage,
   reorderPages,
   renamePage,
   setPageIcon: vi.fn(),
-  setFavorite: vi.fn(),
+  setFavorite,
   duplicatePage: vi.fn(),
   deletePage: vi.fn(),
   restorePage: vi.fn(),
@@ -58,6 +59,7 @@ describe("AppSidebar", () => {
     createBlankPage.mockResolvedValue({ ok: true, id: "nowa-id" });
     reorderPages.mockResolvedValue({ ok: true });
     renamePage.mockResolvedValue({ ok: true });
+    setFavorite.mockResolvedValue({ ok: true });
   });
 
   it("pokazuje wyszukiwarkę z keycapem, sekcje, 4 moduły, Ustawienia i inicjał", () => {
@@ -174,8 +176,122 @@ describe("AppSidebar", () => {
     // Optymistycznie: Gamma jest już pierwsza
     const nazwy = screen
       .getAllByRole("link")
-      .map((l) => l.textContent?.replace("▦", ""))
+      .map((l) => l.textContent)
       .filter((t) => ["Alfa", "Beta", "Gamma"].includes(t ?? ""));
     expect(nazwy).toEqual(["Gamma", "Alfa", "Beta"]);
+  });
+
+  it("ulubiona strona jest tylko w sekcji „Ulubione” (między Moduły a Strony); bez ulubionych sekcji nie ma", () => {
+    const { rerender } = render(
+      <AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0), strona("b", "Beta", 1)]} />,
+    );
+    expect(screen.queryByText("Ulubione")).toBeNull();
+
+    rerender(
+      <AppSidebar
+        user={uzytkownik}
+        pages={[strona("a", "Alfa", 0), strona("b", "Beta", 1, { favorite: true })]}
+      />,
+    );
+    const ulubione = screen.getByText("Ulubione");
+    const naglowekStron = screen.getByText("Strony");
+    const moduly = screen.getByText("Moduły");
+    expect(moduly.compareDocumentPosition(ulubione) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(ulubione.compareDocumentPosition(naglowekStron) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Beta tylko raz: między „Ulubione” a „Strony”
+    const beta = screen.getAllByRole("link", { name: "Beta" });
+    expect(beta).toHaveLength(1);
+    expect(ulubione.compareDocumentPosition(beta[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(beta[0].compareDocumentPosition(naglowekStron) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const alfa = screen.getByRole("link", { name: "Alfa" });
+    expect(naglowekStron.compareDocumentPosition(alfa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("upuszczenie strony ze „Strony” na ulubioną woła setFavorite(id, true) i reorderPages", () => {
+    render(
+      <AppSidebar
+        user={uzytkownik}
+        pages={[strona("a", "Alfa", 0, { favorite: true }), strona("b", "Beta", 1), strona("c", "Gamma", 2)]}
+      />,
+    );
+    fireEvent.dragStart(screen.getByRole("link", { name: "Gamma" }));
+    fireEvent.dragOver(screen.getByRole("link", { name: "Alfa" }));
+    fireEvent.drop(screen.getByRole("link", { name: "Alfa" }));
+    expect(setFavorite).toHaveBeenCalledWith("c", true);
+    expect(reorderPages).toHaveBeenCalledWith(["c", "a", "b"]);
+    // Optymistycznie: Gamma przed Alfą w sekcji Ulubione
+    const ulubione = screen.getByText("Ulubione");
+    const gamma = screen.getByRole("link", { name: "Gamma" });
+    const naglowekStron = screen.getByText("Strony");
+    expect(ulubione.compareDocumentPosition(gamma) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(gamma.compareDocumentPosition(naglowekStron) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("upuszczenie ulubionej na stronę z „Strony” zdejmuje ulubione; w dolnej połowie wiersza wstawia za nim", () => {
+    render(
+      <AppSidebar
+        user={uzytkownik}
+        pages={[strona("a", "Alfa", 0, { favorite: true }), strona("b", "Beta", 1), strona("c", "Gamma", 2)]}
+      />,
+    );
+    const cel = screen.getByRole("link", { name: "Gamma" }).parentElement!;
+    cel.getBoundingClientRect = () => ({ top: 100, height: 30, bottom: 130, left: 0, right: 200, width: 200, x: 0, y: 100, toJSON: () => ({}) });
+    fireEvent.dragStart(screen.getByRole("link", { name: "Alfa" }));
+    // jsdom nie przenosi clientY do zdarzeń przeciągania — ustawiamy je ręcznie (dolna połowa wiersza)
+    const nadDolem = createEvent.dragOver(cel);
+    Object.defineProperty(nadDolem, "clientY", { value: 125 });
+    fireEvent(cel, nadDolem);
+    expect(cel.className).toContain("shadow-[inset_0_-2px_0_#171717]");
+    expect(screen.getByRole("link", { name: "Alfa" }).parentElement!.className).toContain("opacity-[.45]");
+    fireEvent.drop(cel);
+    expect(setFavorite).toHaveBeenCalledWith("a", false);
+    expect(reorderPages).toHaveBeenCalledWith(["b", "c", "a"]);
+    expect(screen.queryByText("Ulubione")).toBeNull();
+  });
+
+  it("błąd zapisu ulubionych cofa przeniesienie do sekcji", async () => {
+    setFavorite.mockResolvedValue({ ok: false, message: "x" });
+    render(
+      <AppSidebar
+        user={uzytkownik}
+        pages={[strona("a", "Alfa", 0, { favorite: true }), strona("b", "Beta", 1)]}
+      />,
+    );
+    fireEvent.dragStart(screen.getByRole("link", { name: "Beta" }));
+    fireEvent.dragOver(screen.getByRole("link", { name: "Alfa" }));
+    fireEvent.drop(screen.getByRole("link", { name: "Alfa" }));
+    expect(setFavorite).toHaveBeenCalledWith("b", true);
+    await waitFor(() => {
+      const naglowekStron = screen.getByText("Strony");
+      const beta = screen.getByRole("link", { name: "Beta" });
+      expect(naglowekStron.compareDocumentPosition(beta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  it("menu strony na webie nie ma „Przenieś wyżej / niżej”", async () => {
+    const user = userEvent.setup();
+    render(<AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0), strona("b", "Beta", 1)]} />);
+    await user.click(screen.getByRole("button", { name: "Menu strony Alfa" }));
+    expect(screen.getByRole("menu", { name: "Strona Alfa" })).toBeInTheDocument();
+    expect(screen.queryByText("Przenieś wyżej / niżej")).toBeNull();
+  });
+
+  it("wiersz pokazuje ikonę strony: emoji, ikonę w kolorze albo domyślną tabelę", () => {
+    render(
+      <AppSidebar
+        user={uzytkownik}
+        pages={[
+          strona("a", "Alfa", 0, { icon: "📚" }),
+          strona("b", "Beta", 1, { icon: "lucide:rocket:blue" }),
+          strona("c", "Gamma", 2, { icon: "" }),
+        ]}
+      />,
+    );
+    const ikona = (nazwa: string) =>
+      screen.getByRole("link", { name: nazwa }).querySelector("[data-page-icon]")?.getAttribute("data-page-icon");
+    expect(ikona("Alfa")).toBe("📚");
+    expect(ikona("Beta")).toBe("rocket:blue");
+    expect(ikona("Gamma")).toBe("table");
+    expect(screen.getByRole("link", { name: "Beta" }).querySelector("svg")).toHaveAttribute("stroke", "#0070f3");
   });
 });

@@ -12,6 +12,7 @@ import { planTypeChange, type FieldType, type PageField } from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock, LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
+import { PageIcon } from "../page-icon";
 import { PageMenu } from "../page-menu";
 import { usePagesStore } from "../use-pages-store";
 import { rowsForm, rowsLabel } from "../rows-label";
@@ -220,7 +221,13 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
 
       <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4">
         <div>
-          <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{tytul}</h1>
+          {/* Telefon: ikona strony przy tytule (web bez zmian) */}
+          <h1 className="m-0 flex items-center gap-2.5 text-2xl font-semibold tracking-[-0.02em]">
+            <span className="min-[800px]:hidden">
+              <PageIcon icon={page.icon} size={26} />
+            </span>
+            {tytul}
+          </h1>
           <p className="mt-1.5 mb-0 font-mono text-xs text-[#6b6b6b]">
             {meta}
             {liczbaUkrytych > 0 && (

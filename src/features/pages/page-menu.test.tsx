@@ -42,7 +42,6 @@ vi.mock("./actions", () => ({
   renamePage: vi.fn(),
 }));
 
-import { ICONS } from "./icon-grid";
 import type { PageSummary } from "./load-pages";
 import { PageMenu } from "./page-menu";
 import { usePagesStore } from "./use-pages-store";
@@ -54,21 +53,21 @@ function strona(id: string, title: string, reszta: Partial<PageSummary> = {}): P
 const POCZATKOWE = [strona("a", "Alfa"), strona("b", "Books"), strona("c", "Gamma")];
 
 // Menu strony „Books” z prawdziwym magazynem (optymistyczne zmiany widać w `pages`)
-function Uprzaz({ onRename = vi.fn() }: { onRename?: () => void }) {
+function Uprzaz({ onRename = vi.fn(), sheet = false }: { onRename?: () => void; sheet?: boolean }) {
   const store = usePagesStore(POCZATKOWE);
   const books = store.pages.find((p) => p.id === "b");
   return (
     <>
       <output data-testid="kolejnosc">{store.pages.map((p) => p.id).join(",")}</output>
       <output data-testid="ikona">{books?.icon}</output>
-      {books && <PageMenu page={books} pages={store.pages} store={store} onRename={onRename} />}
+      {books && <PageMenu page={books} pages={store.pages} store={store} onRename={onRename} sheet={sheet} />}
     </>
   );
 }
 
-async function otworz() {
+async function otworz(sheet = false) {
   const user = userEvent.setup();
-  render(<Uprzaz />);
+  render(<Uprzaz sheet={sheet} />);
   await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
   return user;
 }
@@ -93,8 +92,15 @@ describe("PageMenu", () => {
     for (const nazwa of ["Zmień nazwę", "Zmień ikonę", "Duplikuj", "★ Dodaj do ulubionych", "Usuń stronę"]) {
       expect(within(menu).getByRole("menuitem", { name: new RegExp(nazwa) })).toBeInTheDocument();
     }
-    expect(within(menu).getByText("Przenieś wyżej / niżej")).toBeInTheDocument();
     expect(within(menu).getByText("F2")).toBeInTheDocument();
+    // Na webie kolejność zmienia się przeciąganiem w sidebarze
+    expect(within(menu).queryByText("Przenieś wyżej / niżej")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Przenieś wyżej" })).toBeNull();
+  });
+
+  it("arkusz (telefon) zostawia „Przenieś wyżej / niżej”", async () => {
+    await otworz(true);
+    expect(screen.getByText("Przenieś wyżej / niżej")).toBeInTheDocument();
   });
 
   it("„Zmień nazwę” zamyka menu i woła onRename", async () => {
@@ -107,8 +113,8 @@ describe("PageMenu", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("„Przenieś wyżej / niżej” woła reorderPages ze zamienioną kolejnością", async () => {
-    const user = await otworz();
+  it("„Przenieś wyżej / niżej” w arkuszu woła reorderPages ze zamienioną kolejnością", async () => {
+    const user = await otworz(true);
     await user.click(screen.getByRole("button", { name: "Przenieś wyżej" }));
     expect(reorderPages).toHaveBeenLastCalledWith(["b", "a", "c"]);
     expect(screen.getByTestId("kolejnosc")).toHaveTextContent("b,a,c");
@@ -119,7 +125,7 @@ describe("PageMenu", () => {
 
   it("błąd zapisu kolejności cofa zmianę i pokazuje toast", async () => {
     reorderPages.mockResolvedValue({ ok: false, message: "x" });
-    const user = await otworz();
+    const user = await otworz(true);
     await user.click(screen.getByRole("button", { name: "Przenieś wyżej" }));
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."),
@@ -127,13 +133,32 @@ describe("PageMenu", () => {
     expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,b,c");
   });
 
-  it("siatka ikon ustawia ikonę", async () => {
+  it("„Zmień ikonę” otwiera IconPicker; emoji ustawia ikonę, „Wróć do menu” wraca", async () => {
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    expect(ICONS).toHaveLength(18);
-    await user.click(screen.getByRole("button", { name: "Ikona ★" }));
-    expect(setPageIcon).toHaveBeenCalledWith("b", "★");
-    expect(screen.getByTestId("ikona")).toHaveTextContent("★");
+    expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Wróć do menu" }));
+    expect(screen.getByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
+    await user.click(screen.getByRole("button", { name: "Emoji książki" }));
+    expect(setPageIcon).toHaveBeenCalledWith("b", "📚");
+    expect(screen.getByTestId("ikona")).toHaveTextContent("📚");
+    expect(screen.queryByRole("group", { name: "Wybór ikony" })).toBeNull();
+  });
+
+  it("ikona liniowa w kolorze i „Usuń” zapisują `lucide:…` i ''", async () => {
+    const user = await otworz();
+    await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
+    await user.click(screen.getByRole("button", { name: "Ikony" }));
+    await user.click(screen.getByRole("button", { name: "Zielony" }));
+    await user.click(screen.getByRole("button", { name: "Ikona start" }));
+    expect(setPageIcon).toHaveBeenLastCalledWith("b", "lucide:rocket:green");
+
+    await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
+    await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
+    await user.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(setPageIcon).toHaveBeenLastCalledWith("b", "");
   });
 
   it("ulubione: „Dodaj do ulubionych” woła setFavorite(id, true)", async () => {

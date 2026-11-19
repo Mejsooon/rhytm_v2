@@ -9,6 +9,7 @@ import { Button, MonoLabel } from "@/components/controls";
 import { createPageFromTemplate } from "./actions";
 import { FIELD_TYPE_META } from "./fields";
 import { BLAD_ZAPISU } from "./messages";
+import { PageIcon } from "./page-icon";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
 const AKCENT = "#15803d";
@@ -108,8 +109,8 @@ export function NewPageView() {
                     }`}
                   >
                     <span className="flex items-center gap-2 font-medium text-[#171717]">
-                      <span aria-hidden="true" className="font-mono text-[#6b6b6b]">
-                        {t.icon}
+                      <span className="text-[#6b6b6b]">
+                        <PageIcon icon={t.icon} size={16} />
                       </span>
                       {t.name}
                     </span>

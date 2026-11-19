@@ -42,6 +42,24 @@ describe("MPages", () => {
     expect(within(wszystkie).getAllByRole("link")).toHaveLength(4);
   });
 
+  it("kafelek 36 px pokazuje ikonę strony 18 px: emoji, ikonę w kolorze albo domyślną tabelę", () => {
+    render(
+      <MPages
+        pages={[
+          strona("a", "Alfa", { icon: "📚" }),
+          strona("b", "Beta", { icon: "lucide:globe:teal" }),
+          strona("c", "Gamma", { icon: "▦" }),
+        ]}
+      />,
+    );
+    const ikona = (nazwa: RegExp) => screen.getByRole("link", { name: nazwa }).querySelector("[data-page-icon]")!;
+    expect(ikona(/Alfa/).getAttribute("data-page-icon")).toBe("📚");
+    expect(ikona(/Beta/).getAttribute("data-page-icon")).toBe("globe:teal");
+    expect(ikona(/Gamma/).getAttribute("data-page-icon")).toBe("table");
+    expect(ikona(/Alfa/)).toHaveStyle({ width: "18px", height: "18px" });
+    expect(ikona(/Alfa/).parentElement!.className).toContain("size-9");
+  });
+
   it("bez ulubionych nie ma sekcji „Ulubione”", () => {
     render(<MPages pages={[strona("p", "Projects", { rowCount: 2 })]} />);
     expect(screen.queryByText("Ulubione")).toBeNull();

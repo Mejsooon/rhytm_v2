@@ -9,6 +9,7 @@ import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { MonoLabel } from "@/components/controls";
 import { useCreateBlankPage } from "@/features/pages/use-create-blank-page";
 import type { PageSummary } from "@/features/pages/load-pages";
+import { PageIcon } from "@/features/pages/page-icon";
 import { PageMenu } from "@/features/pages/page-menu";
 import { usePagesStore } from "@/features/pages/use-pages-store";
 import {
@@ -24,8 +25,9 @@ const POZYCJA =
   "flex items-center gap-2.5 rounded-md px-2 py-[7px] no-underline transition-colors";
 
 // Sidebar web (Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
-// Strony: kolejność z `position`, przeciąganie zmienia kolejność, F2 zmienia nazwę aktywnej,
-// „⋯” otwiera menu strony (PageMenu). Pusty tytuł wyświetla się jako „Bez tytułu”.
+// Strony: kolejność z `position`; ulubione są tylko w sekcji „Ulubione” (ukrytej, gdy pusta).
+// Przeciąganie w obrębie sekcji zmienia kolejność, upuszczenie w drugiej sekcji przełącza ulubione.
+// F2 zmienia nazwę aktywnej, „⋯” otwiera menu strony (PageMenu). Pusty tytuł → „Bez tytułu”.
 export function AppSidebar({
   user,
   pages = [],
@@ -43,7 +45,8 @@ export function AppSidebar({
   // Esc i Enter kończą edycję same; flaga blokuje drugi zapis z onBlur przy odmontowaniu pola
   const zakonczono = React.useRef(false);
   const [przeciagana, setPrzeciagana] = React.useState<string | null>(null);
-  const [nad, setNad] = React.useState<string | null>(null);
+  // Wiersz pod kursorem i strona upuszczenia: przed nim (po = false) albo za nim (po = true)
+  const [nad, setNad] = React.useState<{ id: string; po: boolean } | null>(null);
 
   const aktywnaStrona = strony.find((s) => sciezka === `/strony/${s.id}`);
   const aktywnaStronaId = aktywnaStrona?.id;
@@ -73,18 +76,28 @@ export function AppSidebar({
     if (nowa !== strona.title.trim()) void store.rename(strona.id, nowa);
   }
 
-  function upusc(celId: string) {
+  function upusc(celId: string, po: boolean) {
     const zrodloId = przeciagana;
     setPrzeciagana(null);
     setNad(null);
-    if (zrodloId === null || zrodloId === celId) return;
-    const ids = strony.map((s) => s.id);
-    const z = ids.indexOf(zrodloId);
-    const d = ids.indexOf(celId);
-    if (z < 0 || d < 0) return;
-    ids.splice(d, 0, ids.splice(z, 1)[0]);
-    void store.reorder(ids);
+    const zrodlo = strony.find((s) => s.id === zrodloId);
+    const cel = strony.find((s) => s.id === celId);
+    if (!zrodlo || !cel || zrodlo.id === cel.id) return;
+    // Kolejność jest jedna dla ulubionych i pozostałych: wstawiamy stronę przed/za celem w pełnej liście,
+    // więc wzajemny układ stron w obu sekcjach zostaje
+    const stare = strony.map((s) => s.id);
+    const ids = stare.filter((id) => id !== zrodlo.id);
+    const i = ids.indexOf(cel.id);
+    ids.splice(po ? i + 1 : i, 0, zrodlo.id);
+    // Upuszczenie w drugiej sekcji (Ulubione ↔ Strony) dodaje albo zdejmuje stronę z ulubionych
+    if (zrodlo.favorite !== cel.favorite) void store.setFavorite(zrodlo.id, cel.favorite);
+    if (ids.join(",") !== stare.join(",")) void store.reorder(ids);
   }
+
+  const sekcje = [
+    { nazwa: "Ulubione", lista: strony.filter((s) => s.favorite) },
+    { nazwa: "Strony", lista: strony.filter((s) => !s.favorite) },
+  ];
 
   const aktywna = (href: string) =>
     sciezka === href || sciezka.startsWith(`${href}/`);
@@ -136,108 +149,119 @@ export function AppSidebar({
         </Link>
       ))}
 
-      <div className="flex items-center justify-between px-2 pt-3.5 pb-1.5">
-        <MonoLabel>Strony</MonoLabel>
-        <button
-          type="button"
-          aria-label="Dodaj stronę"
-          onClick={nowaStrona}
-          className="flex cursor-pointer p-0.5 text-[#666666] hover:text-[#171717]"
-        >
-          <Plus size={15} aria-hidden="true" />
-        </button>
-      </div>
-      {strony.map((strona) => {
-        const href = `/strony/${strona.id}`;
-        const tytul = strona.title.trim() === "" ? "Bez tytułu" : strona.title;
-        return (
-          <div
-            key={strona.id}
-            className={cn(
-              "group relative rounded-md",
-              nad === strona.id && przeciagana !== strona.id && "shadow-[inset_0_2px_0_#171717]",
-              przeciagana === strona.id && "opacity-50",
-            )}
-            onDragStart={(e) => {
-              setPrzeciagana(strona.id);
-              if (e.dataTransfer) {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", strona.id);
-              }
-            }}
-            onDragOver={(e) => {
-              if (przeciagana === null) return;
-              e.preventDefault();
-              if (nad !== strona.id) setNad(strona.id);
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              upusc(strona.id);
-            }}
-            onDragEnd={() => {
-              setPrzeciagana(null);
-              setNad(null);
-            }}
-          >
-            {edytowana === strona.id ? (
-              <div className={cn(POZYCJA, "bg-white")}>
-                <span aria-hidden="true" className="w-4 flex-none text-center font-mono text-[#6b6b6b]">
-                  {strona.icon}
-                </span>
-                <input
-                  autoFocus
-                  aria-label="Nazwa strony"
-                  value={szkic}
-                  maxLength={200}
-                  placeholder="Bez tytułu"
-                  onFocus={(e) => e.currentTarget.select()}
-                  onChange={(e) => setSzkic(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      zapiszNazwe(strona);
-                    }
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      zakonczono.current = true;
-                      setEdytowana(null);
+      {sekcje.map(({ nazwa, lista }) =>
+        // „Ulubione” bez stron się nie pokazuje; „Strony” zawsze (z przyciskiem „Dodaj stronę”)
+        nazwa === "Ulubione" && lista.length === 0 ? null : (
+          <React.Fragment key={nazwa}>
+            <div className="flex items-center justify-between px-2 pt-3.5 pb-1.5">
+              <MonoLabel>{nazwa}</MonoLabel>
+              {nazwa === "Strony" && (
+                <button
+                  type="button"
+                  aria-label="Dodaj stronę"
+                  onClick={nowaStrona}
+                  className="flex cursor-pointer p-0.5 text-[#666666] hover:text-[#171717]"
+                >
+                  <Plus size={15} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            {lista.map((strona) => {
+              const href = `/strony/${strona.id}`;
+              const tytul = strona.title.trim() === "" ? "Bez tytułu" : strona.title;
+              return (
+                <div
+                  key={strona.id}
+                  className={cn(
+                    "group relative rounded-md",
+                    // Linia wskaźnika upuszczenia 2 px nad albo pod wierszem, przeciągana strona przygaszona
+                    nad?.id === strona.id &&
+                      przeciagana !== strona.id &&
+                      (nad.po ? "shadow-[inset_0_-2px_0_#171717]" : "shadow-[inset_0_2px_0_#171717]"),
+                    przeciagana === strona.id && "opacity-[.45]",
+                  )}
+                  onDragStart={(e) => {
+                    setPrzeciagana(strona.id);
+                    if (e.dataTransfer) {
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", strona.id);
                     }
                   }}
-                  onBlur={() => zapiszNazwe(strona)}
-                  className="min-w-0 flex-1 rounded border border-[#171717] bg-white px-1.5 py-0.5 text-sm text-[#171717] outline-none"
-                />
-              </div>
-            ) : (
-              <Link
-                href={href}
-                draggable
-                aria-current={aktywna(href) ? "page" : undefined}
-                className={cn(klasaPozycji(href), "pr-8")}
-              >
-                <span aria-hidden="true" className="w-4 flex-none text-center font-mono text-[#6b6b6b]">
-                  {strona.icon}
-                </span>
-                <span className="min-w-0 flex-1 truncate">{tytul}</span>
-              </Link>
-            )}
-            {edytowana !== strona.id && (
-              <div className="absolute top-1/2 right-1 -translate-y-1/2">
-                <PageMenu
-                  page={strona}
-                  pages={strony}
-                  store={store}
-                  onRename={() => {
-                    zakonczono.current = false;
-                    setSzkic(strona.title);
-                    setEdytowana(strona.id);
+                  onDragOver={(e) => {
+                    if (przeciagana === null) return;
+                    e.preventDefault();
+                    if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+                    const ramka = e.currentTarget.getBoundingClientRect();
+                    const po = e.clientY > ramka.top + ramka.height / 2;
+                    if (nad?.id !== strona.id || nad.po !== po) setNad({ id: strona.id, po });
                   }}
-                  triggerClassName="flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-[#666666] opacity-0 group-hover:opacity-100 hover:bg-[#ebebeb] focus-visible:opacity-100 data-[state=open]:opacity-100"
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    upusc(strona.id, nad?.id === strona.id && nad.po);
+                  }}
+                  onDragEnd={() => {
+                    setPrzeciagana(null);
+                    setNad(null);
+                  }}
+                >
+                  {edytowana === strona.id ? (
+                    <div className={cn(POZYCJA, "bg-white")}>
+                      <PageIcon icon={strona.icon} size={16} />
+                      <input
+                        autoFocus
+                        aria-label="Nazwa strony"
+                        value={szkic}
+                        maxLength={200}
+                        placeholder="Bez tytułu"
+                        onFocus={(e) => e.currentTarget.select()}
+                        onChange={(e) => setSzkic(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            zapiszNazwe(strona);
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            zakonczono.current = true;
+                            setEdytowana(null);
+                          }
+                        }}
+                        onBlur={() => zapiszNazwe(strona)}
+                        className="min-w-0 flex-1 rounded border border-[#171717] bg-white px-1.5 py-0.5 text-sm text-[#171717] outline-none"
+                      />
+                    </div>
+                  ) : (
+                    <Link
+                      href={href}
+                      draggable
+                      aria-current={aktywna(href) ? "page" : undefined}
+                      className={cn(klasaPozycji(href), "pr-8")}
+                    >
+                      <PageIcon icon={strona.icon} size={16} />
+                      <span className="min-w-0 flex-1 truncate">{tytul}</span>
+                    </Link>
+                  )}
+                  {edytowana !== strona.id && (
+                    <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                      <PageMenu
+                        page={strona}
+                        pages={strony}
+                        store={store}
+                        onRename={() => {
+                          zakonczono.current = false;
+                          setSzkic(strona.title);
+                          setEdytowana(strona.id);
+                        }}
+                        triggerClassName="flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-[#666666] opacity-0 group-hover:opacity-100 hover:bg-[#ebebeb] focus-visible:opacity-100 data-[state=open]:opacity-100"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </React.Fragment>
+        ),
+      )}
       <button
         type="button"
         onClick={nowaStrona}

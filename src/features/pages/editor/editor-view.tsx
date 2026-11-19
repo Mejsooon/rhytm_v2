@@ -9,7 +9,8 @@ import { ActionPopover, Button, Chip } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { renamePage, setPageIcon } from "../actions";
 import { usePagesStore } from "../use-pages-store";
-import { IconGrid } from "../icon-grid";
+import { IconPicker } from "../icon-picker";
+import { PageIcon } from "../page-icon";
 import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
@@ -117,20 +118,28 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
             <ActionPopover
               open={wyborIkony}
               onOpenChange={setWyborIkony}
-              width={230}
+              width={300}
               ariaLabel="Wybór ikony"
               trigger={
                 <button
                   type="button"
                   aria-label="Zmień ikonę"
-                  className="size-10 cursor-pointer rounded-lg border border-dashed border-[#d4d4d4] bg-[#fafafa] font-[inherit] text-[#6b6b6b] max-[799px]:hidden"
+                  className={`flex size-10 cursor-pointer items-center justify-center rounded-lg p-0 font-[inherit] max-[799px]:hidden ${
+                    ikona === ""
+                      ? "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#6b6b6b]"
+                      : "border border-transparent bg-transparent text-[#171717]"
+                  }`}
                 >
-                  {ikona}
+                  <PageIcon icon={ikona} size={22} />
                 </button>
               }
             >
-              <IconGrid current={ikona} onPick={zmienIkone} />
+              <IconPicker value={ikona} onPick={zmienIkone} />
             </ActionPopover>
+            {/* Telefon: sama ikona przy tytule; zmienia się ją w menu strony („Zmień ikonę”), więc z pagesStore */}
+            <span className="text-[#171717] min-[800px]:hidden">
+              <PageIcon icon={(pagesStore.pages.find((p) => p.id === page.id) ?? page).icon} size={28} />
+            </span>
             <input
               ref={tytulRef}
               type="text"
