@@ -241,6 +241,20 @@ describe("MQuickAdd", () => {
     ).toHaveAttribute("href", "/sport?nowy=bieg&data=2026-11-17&godzina=11:00");
   });
 
+  it("stuknięcie „Pełny formularz” zamyka arkusz (Activity nie trzyma go otwartego)", async () => {
+    const user = userEvent.setup();
+    const onClose = pokaz();
+    await user.click(screen.getByRole("radio", { name: "Blok" }));
+    // jsdom nie nawiguje między dokumentami — blokujemy domyślną akcję linku (bez szumu w logu)
+    const bezNawigacji = (e: Event) => e.preventDefault();
+    document.addEventListener("click", bezNawigacji);
+    await user.click(
+      screen.getByRole("link", { name: /Pełny formularz bloku/ }),
+    );
+    document.removeEventListener("click", bezNawigacji);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("„Zamknij” zamyka arkusz", async () => {
     const user = userEvent.setup();
     const onClose = pokaz();

@@ -203,7 +203,7 @@ export function MQuickAdd({
             </button>
           </div>
 
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-7">
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-4 pt-1 pb-6">
             <Segment
               ariaLabel="Rodzaj"
               value={rodzaj}
@@ -239,7 +239,7 @@ export function MQuickAdd({
                 <div
                   role="group"
                   aria-label="Kiedy"
-                  className="flex gap-2 overflow-x-auto py-[5px]"
+                  className="flex gap-2 overflow-x-auto pb-0.5"
                 >
                   {opcje.map((o) => (
                     <div key={o.label} className="flex-none">

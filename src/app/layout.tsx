@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -33,7 +34,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pl"
       className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* Jedno miejsce na powiadomienia (toast) w całej aplikacji */}
+        <Toaster />
+      </body>
     </html>
   );
 }

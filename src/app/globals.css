@@ -34,6 +34,14 @@
   /* Dolny pasek telefonu (MTabBar.dc.html): 56 px treści + dolny odstęp, co najmniej 8 px,
      a na iPhonie tyle, ile wymaga pasek gestów. Ta sama wartość odsuwa treść <main> i przyciski FAB. */
   --tabbar-h: calc(56px + max(8px, env(safe-area-inset-bottom)));
+  /* Odstęp powiadomień (sonner) od dołu: na telefonie nad dolnym paskiem, na webie 24 px */
+  --toast-bottom: calc(var(--tabbar-h) + 16px);
+}
+
+@media (min-width: 800px) {
+  :root {
+    --toast-bottom: 24px;
+  }
 }
 
 @theme inline {
