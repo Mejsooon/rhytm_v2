@@ -24,7 +24,7 @@ function bezOgonkow(s: string): string {
     .toLowerCase()
     .replace(/ł/g, "l")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 export function filterSlash(query: string): SlashItem[] {

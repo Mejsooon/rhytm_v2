@@ -213,7 +213,7 @@ describe("rows with deletedAt are excluded", () => {
     const k = ksiazki();
     const rows = k.rows.map((r) => (r.id === "r3" ? { ...r, deletedAt: "2026-11-14T10:00:00Z" } : r));
     expect(visibleRows(k.fields, rows, bezUstawien).map((r) => r.id)).not.toContain("r3");
-    expect(summarize(k.pole("Tytuł"), rows, "count", TODAY)).toBe("10 wierszy");
+    expect(summarize(k.pole("Tytuł"), rows, { kind: "count" }, TODAY)).toBe("10 wierszy");
     expect(computeCard(k.settings.pinned_cards[0], k.fields, rows, TODAY).value).toBe("5");
   });
 });
@@ -256,30 +256,33 @@ describe("summarize", () => {
   const rows = [wiersz(1, { cena: 10 }), wiersz(2, { cena: 33 }), wiersz(3, {})];
 
   it("sum i avg Liczby z formatem pln", () => {
-    expect(summarize(cena, rows, "sum", TODAY)).toBe("43,00 zł");
-    expect(summarize(cena, rows, "avg", TODAY)).toBe("śr. 21,50 zł");
-    expect(summarize(cena, rows, "min", TODAY)).toBe("10,00 zł");
-    expect(summarize(cena, rows, "max", TODAY)).toBe("33,00 zł");
+    expect(summarize(cena, rows, { kind: "sum" }, TODAY)).toBe("43,00 zł");
+    expect(summarize(cena, rows, { kind: "avg" }, TODAY)).toBe("śr. 21,50 zł");
+    expect(summarize(cena, rows, { kind: "min" }, TODAY)).toBe("10,00 zł");
+    expect(summarize(cena, rows, { kind: "max" }, TODAY)).toBe("33,00 zł");
   });
 
   it("avg Oceny z 1 miejscem po przecinku", () => {
     const k = ksiazki();
-    expect(summarize(k.pole("Ocena"), k.rows, "avg", TODAY)).toBe("śr. 4,1");
+    expect(summarize(k.pole("Ocena"), k.rows, { kind: "avg" }, TODAY)).toBe("śr. 4,1");
   });
 
   it("count, filled, empty", () => {
-    expect(summarize(cena, rows, "count", TODAY)).toBe("3 wiersze");
-    expect(summarize(cena, rows, "filled", TODAY)).toBe("2 wypełnione");
-    expect(summarize(cena, rows, "empty", TODAY)).toBe("1 pusty");
-    expect(summarize(cena, rows, "none", TODAY)).toBe("");
+    expect(summarize(cena, rows, { kind: "count" }, TODAY)).toBe("3 wiersze");
+    expect(summarize(cena, rows, { kind: "filled" }, TODAY)).toBe("2 wypełnione");
+    expect(summarize(cena, rows, { kind: "empty" }, TODAY)).toBe("1 pusty");
+    expect(summarize(cena, rows, { kind: "none" }, TODAY)).toBe("");
     const k = ksiazki();
-    expect(summarize(k.pole("Przeczytana"), k.rows, "filled", TODAY)).toBe("7 terminów");
+    expect(summarize(k.pole("Przeczytana"), k.rows, { kind: "filled" }, TODAY)).toBe("7 terminów");
+    expect(
+      summarize(k.pole("Przeczytana"), k.rows, { kind: "filled", unit: ["termin", "terminy", "terminów"] }, TODAY),
+    ).toBe("7 terminów");
   });
 
   it("checked pokazuje „x / y”", () => {
     const chk: PageField = { id: "c", name: "Aktywna", type: "checkbox", config: {}, position: 0, isTitle: false };
     const r = [wiersz(1, { c: true }), wiersz(2, { c: false }), wiersz(3, { c: true }), wiersz(4, {})];
-    expect(summarize(chk, r, "checked", TODAY)).toBe("2 / 4");
+    expect(summarize(chk, r, { kind: "checked" }, TODAY)).toBe("2 / 4");
   });
 
   it("earliest, latest i nearest dat (nearest >= today)", () => {
@@ -291,15 +294,15 @@ describe("summarize", () => {
       wiersz(3, { [data.id]: "2026-12-24" }),
       wiersz(4, {}),
     ];
-    expect(summarize(data, r, "earliest", TODAY)).toBe("01.11.2026");
-    expect(summarize(data, r, "latest", TODAY)).toBe("24.12.2026");
-    expect(summarize(data, r, "nearest", TODAY)).toBe("20.11.2026");
-    expect(summarize(data, [r[0]], "nearest", TODAY)).toBe("—");
+    expect(summarize(data, r, { kind: "earliest" }, TODAY)).toBe("01.11.2026");
+    expect(summarize(data, r, { kind: "latest" }, TODAY)).toBe("24.12.2026");
+    expect(summarize(data, r, { kind: "nearest" }, TODAY)).toBe("20.11.2026");
+    expect(summarize(data, [r[0]], { kind: "nearest" }, TODAY)).toBe("—");
   });
 
   it("brak wartości daje „—”", () => {
-    expect(summarize(cena, [], "sum", TODAY)).toBe("—");
-    expect(summarize(cena, [], "avg", TODAY)).toBe("—");
+    expect(summarize(cena, [], { kind: "sum" }, TODAY)).toBe("—");
+    expect(summarize(cena, [], { kind: "avg" }, TODAY)).toBe("—");
   });
 
   it("summaryOptions zależy od typu", () => {
@@ -308,6 +311,44 @@ describe("summarize", () => {
     expect(summaryOptions("checkbox")).toContain("checked");
     expect(summaryOptions("date")).toContain("nearest");
     expect(summaryOptions("text")).toEqual(["none", "count", "filled", "empty"]);
+  });
+});
+
+describe("stopki z szablonów (teksty z makiet)", () => {
+  const stopka = (t: ReturnType<typeof szablon>, name: string, rows: PageRow[]) => {
+    const pole = t.pole(name);
+    return summarize(pole, rows, t.settings.column_summaries[pole.id], TODAY);
+  };
+
+  it("Books: przeczytane, śr., w tym roku", () => {
+    const k = ksiazki();
+    expect(stopka(k, "Status", k.rows)).toBe("7 przeczytanych");
+    expect(stopka(k, "Ocena", k.rows)).toBe("śr. 4,1");
+    expect(stopka(k, "Przeczytana", k.rows)).toBe("6 w tym roku");
+    expect(stopka(k, "Status", k.rows.slice(0, 3))).toBe("1 przeczytana");
+    expect(stopka(k, "Status", k.rows.slice(0, 5))).toBe("3 przeczytane");
+  });
+
+  it("Projects: w toku, terminów, linków", () => {
+    const t = szablon("projects");
+    const rows = [
+      wiersz(1, { [t.pole("Status").id]: t.opcja("Status", "W toku"), [t.pole("Termin").id]: "2026-11-20", [t.pole("Repo").id]: "a/b" }),
+      wiersz(2, { [t.pole("Status").id]: t.opcja("Status", "W toku"), [t.pole("Termin").id]: "2026-12-01" }),
+      wiersz(3, {}),
+    ];
+    expect(stopka(t, "Status", rows)).toBe("2 w toku");
+    expect(stopka(t, "Termin", rows)).toBe("2 terminy");
+    expect(stopka(t, "Repo", rows)).toBe("1 link");
+  });
+
+  it("Websites: linków i na żywo", () => {
+    const t = szablon("websites");
+    const rows = [
+      wiersz(1, { [t.pole("URL").id]: "a.pl", [t.pole("Status").id]: t.opcja("Status", "Na żywo") }),
+      wiersz(2, { [t.pole("URL").id]: "b.pl" }),
+    ];
+    expect(stopka(t, "URL", rows)).toBe("2 linki");
+    expect(stopka(t, "Status", rows)).toBe("1 na żywo");
   });
 });
 
@@ -399,6 +440,13 @@ describe("computeCard: Websites", () => {
     ];
     const karta = computeCard(t.settings.pinned_cards[2], t.fields, rows, TODAY);
     expect(karta).toEqual({ label: "Klienci", value: "2", sub: "" });
+  });
+
+  it("Klienci łączy zapisy różniące się wielkością liter", () => {
+    const t = szablon("websites");
+    const klient = t.pole("Klient").id;
+    const rows = [wiersz(1, { [klient]: "Fanaberia" }), wiersz(2, { [klient]: "fanaberia" })];
+    expect(computeCard(t.settings.pinned_cards[2], t.fields, rows, TODAY).value).toBe("1");
   });
 });
 

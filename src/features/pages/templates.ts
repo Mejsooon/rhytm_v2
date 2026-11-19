@@ -2,7 +2,7 @@
 // Pola, opcje i kolory pochodzą z makiet Books / Projects / Websites.
 import { PALETA } from "./fields";
 import type { FieldConfig, FieldType } from "./fields";
-import type { PinnedCard, SortKey, SummaryKind, TableSettings } from "./table-model";
+import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
 
 export type TemplateKey = "empty" | "books" | "projects" | "websites";
 
@@ -46,7 +46,8 @@ export type TemplateConfig = {
   fields: TemplateField[];
   cards: TemplateCard[];
   sort: { field: string; dir: "asc" | "desc" }[];
-  summaries: Record<string, SummaryKind>;
+  // Stopki kolumn po kluczu pola; option wskazuje klucz opcji tego pola
+  summaries: Record<string, { kind: ColumnSummary["kind"]; option?: string; unit?: [string, string, string] }>;
 };
 
 // Kolory plakietek z makiet na paletę 8 kolorów kategorii; neutralny szary zostaje #525252
@@ -107,7 +108,11 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { field: "status", dir: "asc" },
       { field: "date", dir: "desc" },
     ],
-    summaries: { rating: "avg", date: "filled" },
+    summaries: {
+      status: { kind: "count_option", option: "read", unit: ["przeczytana", "przeczytane", "przeczytanych"] },
+      rating: { kind: "avg" },
+      date: { kind: "count_in_year", unit: ["w tym roku", "w tym roku", "w tym roku"] },
+    },
   },
   projects: {
     name: "Projects",
@@ -158,7 +163,11 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Zrobione", field: "status", aggregation: "count_option_of_total", option: "done" },
     ],
     sort: [{ field: "due", dir: "asc" }],
-    summaries: { due: "filled", repo: "filled" },
+    summaries: {
+      status: { kind: "count_option", option: "wip", unit: ["w toku", "w toku", "w toku"] },
+      due: { kind: "filled", unit: ["termin", "terminy", "terminów"] },
+      repo: { kind: "filled", unit: ["link", "linki", "linków"] },
+    },
   },
   websites: {
     name: "Websites",
@@ -204,7 +213,10 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Klienci", field: "client", aggregation: "count_distinct" },
     ],
     sort: [],
-    summaries: { url: "filled" },
+    summaries: {
+      url: { kind: "filled", unit: ["link", "linki", "linków"] },
+      status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
+    },
   },
 };
 
@@ -236,8 +248,13 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
   });
 
   const sort: SortKey[] = tpl.sort.map((s) => ({ field_id: idPola[s.field], dir: s.dir }));
-  const column_summaries: Record<string, SummaryKind> = {};
-  for (const [k, kind] of Object.entries(tpl.summaries)) column_summaries[idPola[k]] = kind;
+  const column_summaries: Record<string, ColumnSummary> = {};
+  for (const [k, sm] of Object.entries(tpl.summaries)) {
+    const wpis: ColumnSummary = { kind: sm.kind };
+    if (sm.option) wpis.option_id = idOpcji[`${k}.${sm.option}`];
+    if (sm.unit) wpis.unit = sm.unit;
+    column_summaries[idPola[k]] = wpis;
+  }
   const pinned_cards: PinnedCard[] = tpl.cards.map((c) => {
     const card: PinnedCard = { label: c.label, field_id: idPola[c.field], aggregation: c.aggregation };
     if (c.option) card.option_id = idOpcji[`${c.field}.${c.option}`];

@@ -61,11 +61,18 @@ export type PinnedCard = {
   unit?: [string, string, string];
 };
 
+// Podsumowanie kolumny: rodzaj ogólny albo licznik opcji / roku z własną odmianą rzeczownika
+export type ColumnSummary = {
+  kind: SummaryKind | "count_option" | "count_in_year";
+  option_id?: string;
+  unit?: [string, string, string];
+};
+
 export type TableSettings = {
   sort: SortKey[];
   filters: FilterCond[];
   hidden_field_ids: string[];
-  column_summaries: Record<string, SummaryKind>;
+  column_summaries: Record<string, ColumnSummary>;
   pinned_cards: PinnedCard[];
 };
 
@@ -198,9 +205,11 @@ export function summaryOptions(type: FieldType): SummaryKind[] {
 export function summarize(
   field: PageField,
   rows: PageRow[],
-  kind: SummaryKind,
+  summary: ColumnSummary,
   today: string,
 ): string {
+  const kind = summary.kind;
+  const unit = summary.unit;
   const zywe = rows.filter((r) => r.deletedAt === null);
   const wartosci = zywe.map((r) => normalizeValue(field, r.values[field.id]));
   const wypelnione = wartosci.filter((v) => v !== null);
@@ -211,15 +220,27 @@ export function summarize(
     case "none":
       return "";
     case "count":
-      return odmien(zywe.length, "wiersz", "wiersze", "wierszy");
+      return unit ? odmien(zywe.length, ...unit) : odmien(zywe.length, "wiersz", "wiersze", "wierszy");
+    case "count_option": {
+      const n = wartosci.filter((v) => v === summary.option_id).length;
+      return unit ? odmien(n, ...unit) : String(n);
+    }
+    case "count_in_year": {
+      const rok = today.slice(0, 4);
+      const n = daty.filter((d) => d.slice(0, 4) === rok).length;
+      return unit ? odmien(n, ...unit) : String(n);
+    }
     case "filled": {
       const n = wypelnione.length;
+      if (unit) return odmien(n, ...unit);
       if (field.type === "date") return odmien(n, "termin", "terminy", "terminów");
       if (field.type === "url") return odmien(n, "link", "linki", "linków");
       return odmien(n, "wypełniony", "wypełnione", "wypełnionych");
     }
-    case "empty":
-      return odmien(wartosci.length - wypelnione.length, "pusty", "puste", "pustych");
+    case "empty": {
+      const n = wartosci.length - wypelnione.length;
+      return unit ? odmien(n, ...unit) : odmien(n, "pusty", "puste", "pustych");
+    }
     case "checked":
       return `${wartosci.filter((v) => v === true).length} / ${zywe.length}`;
     case "sum":
