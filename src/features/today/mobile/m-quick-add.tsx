@@ -239,7 +239,8 @@ export function MQuickAdd({
                 <div
                   role="group"
                   aria-label="Kiedy"
-                  className="flex gap-2 overflow-x-auto pb-0.5"
+                  // Pionowy odstęp 5 px zostawia chipom pełne pole stuknięcia ≥ 44 px (wymóg ważniejszy niż 2 px z makiety)
+                  className="flex gap-2 overflow-x-auto py-[5px]"
                 >
                   {opcje.map((o) => (
                     <div key={o.label} className="flex-none">
