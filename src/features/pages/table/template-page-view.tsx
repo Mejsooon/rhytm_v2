@@ -218,7 +218,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         </div>
       </header>
 
-      <div className="box-border flex w-full max-w-[1160px] flex-col gap-6 px-6 py-7 max-[799px]:px-4">
+      <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{tytul}</h1>
           <p className="mt-1.5 mb-0 font-mono text-xs text-[#6b6b6b]">
