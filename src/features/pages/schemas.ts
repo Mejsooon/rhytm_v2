@@ -47,6 +47,8 @@ export const fieldConfigSchema = z.object({
   number_format: z.enum(["plain", "pln", "percent"]).optional(),
   show_in_calendar: z.boolean().optional(),
   empty_label: z.string().max(60).optional(),
+  // Id opcji wstawianej do nowego wiersza (Select / Status)
+  default_option: z.string().min(1).max(64).optional(),
 });
 
 // Zawartość bloku zależy od typu (tekst, zadanie, tabela z ustawieniami) — tu tylko obiekt

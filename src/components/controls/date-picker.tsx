@@ -28,6 +28,7 @@ export function DatePicker({
   min,
   max,
   variant = "box",
+  size = "md",
 }: {
   value: IsoDate | null;
   onChange: (v: IsoDate | null) => void;
@@ -41,6 +42,8 @@ export function DatePicker({
   max?: IsoDate;
   // „bare”: goły tekst mono bez ramki i strzałki (komórka tabeli z EmptyPage.dc.html)
   variant?: "box" | "bare";
+  // „sm”: przycisk 28 px, tekst 12 px mono (btnBase z Books.dc.html, tryb edycji wiersza)
+  size?: "md" | "sm";
 }) {
   const [open, setOpen] = React.useState(false);
   // Wyświetlany miesiąc; ustawiany przy otwarciu na miesiąc wartości albo dzisiejszy
@@ -90,14 +93,16 @@ export function DatePicker({
           className={cn(
             variant === "bare"
               ? "inline-flex min-h-5 cursor-pointer items-center border-0 bg-transparent p-0 font-[inherit] text-[13px] text-[#404040] outline-none max-[799px]:min-h-11"
-              : "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
+              : size === "sm"
+                ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2 font-mono text-xs whitespace-nowrap text-[#171717] outline-none hover:border-[#cfcfcf]"
+                : "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
             variant === "box" && open && "border-[#171717] hover:border-[#171717]",
           )}
         >
           {value ? (
             <span className="font-mono">{formatDatePl(value)}</span>
           ) : (
-            <span className="text-[#a3a3a3]">{placeholder}</span>
+            <span className={size === "sm" ? "text-[#6b6b6b]" : "text-[#a3a3a3]"}>{placeholder}</span>
           )}
           {variant === "box" && (
             <ChevronDownIcon

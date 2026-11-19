@@ -24,6 +24,7 @@ export type TemplateField = {
   name: string;
   type: FieldType;
   is_title?: boolean;
+  // default_option to klucz opcji szablonu; buildTemplateBlocks zamienia go na id opcji
   config?: Omit<FieldConfig, "options"> & { options?: TemplateOption[] };
 };
 
@@ -88,6 +89,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
             { key: "read", label: "Przeczytane", color: ZIELONY },
             { key: "want", label: "Chcę przeczytać", color: SZARY },
           ],
+          default_option: "want",
         },
       },
       { key: "rating", name: "Ocena", type: "rating" },
@@ -137,6 +139,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
             { key: "paused", label: "Wstrzymane", color: POMARANCZ },
             { key: "done", label: "Zrobione", color: ZIELONY },
           ],
+          default_option: "todo",
         },
       },
       {
@@ -150,6 +153,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
             { key: "client", label: "Klient", color: SZARY },
             { key: "job", label: "Praca", color: SZARY },
           ],
+          default_option: "own",
         },
       },
       { key: "due", name: "Termin", type: "date", config: { show_in_calendar: true } },
@@ -194,6 +198,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
             { key: "quote", label: "Wycena", color: SZARY },
             { key: "paused", label: "Wstrzymana", color: POMARANCZ },
           ],
+          default_option: "quote",
         },
       },
       {
@@ -209,6 +214,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
             { key: "wordpress", label: "WordPress", color: SZARY },
             { key: "other", label: "Inny", color: SZARY },
           ],
+          default_option: "framer",
         },
       },
     ],
@@ -240,7 +246,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
   const idOpcji: Record<string, string> = {};
   const fields: CreatePageBlock["fields"] = tpl.fields.map((f) => {
     idPola[f.key] = newId();
-    const { options, ...reszta } = f.config ?? {};
+    const { options, default_option, ...reszta } = f.config ?? {};
     const config: FieldConfig = { ...reszta };
     if (options) {
       config.options = options.map((o) => {
@@ -249,6 +255,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
         return { id, label: o.label, color: o.color };
       });
     }
+    if (default_option !== undefined) config.default_option = idOpcji[`${f.key}.${default_option}`];
     return { id: idPola[f.key], name: f.name, type: f.type, config, is_title: f.is_title === true };
   });
 

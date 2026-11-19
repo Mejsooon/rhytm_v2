@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { FIELD_TYPE_META, type PageField } from "../fields";
-import type { LoadedPage } from "../load-page";
+import type { LoadedBlock, LoadedPage } from "../load-page";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { summarize, visibleRows } from "../table-model";
 import { TEMPLATES } from "../templates";
@@ -22,19 +22,25 @@ const NAZWA_SZABLONU = {
   websites: TEMPLATES.websites.name,
 };
 
+// Zastępczy blok, gdy strona nie ma tabeli (stała — nowy obiekt w renderze zapętliłby resync magazynu)
+const PUSTY_BLOK: LoadedBlock = {
+  id: "",
+  type: "table",
+  position: 0,
+  content: {},
+  fields: [],
+  rows: [],
+};
+
+// Liczba kolumn w makietach szablonów (min-width tabeli 760 / 820 px)
+const KOLUMNY_MAKIETY = 5;
+
 // Strona z szablonu (Books / Projects / Websites.dc.html, Pusta strona bez kart): nagłówek
 // z Filtruj / „+ Pole” / „Nowy wiersz”, metadane, przypięte karty, tabela z podglądem i trybem
 // edycji wiersza, stopka z podsumowaniami. Na telefonie wiersz edytuje się w arkuszu.
 export function TemplatePageView({ data }: { data: LoadedPage }) {
   const { page, today } = data;
-  const blok = data.blocks.find((b) => b.type === "table") ?? {
-    id: "",
-    type: "table" as const,
-    position: 0,
-    content: {},
-    fields: [],
-    rows: [],
-  };
+  const blok = data.blocks.find((b) => b.type === "table") ?? PUSTY_BLOK;
   const store = useTableStore(blok);
   const { fields, rows, settings, editing } = store;
   // Edycja w arkuszu (telefon) zamiast w wierszu tabeli
@@ -123,15 +129,20 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
         <PinnedCards
           cards={settings.pinned_cards}
           fields={fields}
-          rows={rows}
+          rows={widoczneWiersze}
           today={today}
           bold={page.templateKey !== "websites"}
         />
 
-        <div className="rounded-lg border border-[#eaeaea] max-[1099px]:overflow-x-auto">
+        {/* Przewijanie poziome poniżej 1100 px; przy większej liczbie kolumn niż w makiecie — zawsze */}
+        <div
+          className={`rounded-lg border border-[#eaeaea] ${
+            widocznePola.length > KOLUMNY_MAKIETY ? "overflow-x-auto" : "max-[1099px]:overflow-x-auto"
+          }`}
+        >
           <table
             className="w-full border-collapse text-[13px]"
-            style={{ minWidth: Math.max(page.templateKey === "projects" ? 820 : 760, 120 * widocznePola.length + 120) }}
+            style={{ minWidth: page.templateKey === "projects" ? 820 : 760 }}
           >
             <thead>
               <tr className="bg-[#fafafa]">

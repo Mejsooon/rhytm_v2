@@ -5,10 +5,11 @@ import * as React from "react";
 import { ActionPopover, Checkbox, DatePicker, type IsoDate } from "@/components/controls";
 import { normalizeValue, type CellValue, type FieldOption, type PageField } from "../fields";
 
-// Kolory plakietek z makiety (PAL): tekst → tło i ramka; inne kolory dostają półprzezroczyste tło
-const TLA_PLAKIETEK: Record<string, { tlo: string; ramka: string }> = {
+// Kolory plakietek z makiety (PAL): tekst → tło i ramka; inne kolory dostają półprzezroczyste tło.
+// Szary z palety (#525252) ma tekst #404040 jak plakietki w Books / Projects.dc.html
+const TLA_PLAKIETEK: Record<string, { tlo: string; ramka: string; tekst?: string }> = {
   "#404040": { tlo: "#f5f5f5", ramka: "#e0e0e0" },
-  "#525252": { tlo: "#f5f5f5", ramka: "#e0e0e0" },
+  "#525252": { tlo: "#f5f5f5", ramka: "#e0e0e0", tekst: "#404040" },
   "#0070f3": { tlo: "#eef5ff", ramka: "#cfe2ff" },
   "#15803d": { tlo: "#f0faf4", ramka: "#bbe5cc" },
   "#c2410c": { tlo: "#fff4ed", ramka: "#fed7aa" },
@@ -29,7 +30,7 @@ export function OptionBadge({
   return (
     <span
       className="inline-flex items-center gap-0.5 rounded-[4px] border px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap"
-      style={{ color: option.color, background: tlo.tlo, borderColor: tlo.ramka }}
+      style={{ color: tlo.tekst ?? option.color, background: tlo.tlo, borderColor: tlo.ramka }}
     >
       {option.label}
       {children}

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { ActionPopover, Checkbox } from "@/components/controls";
+import { ActionPopover, Checkbox, Dropdown } from "@/components/controls";
 import { PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
 
 // Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne i Bezpieczne dochodzą w Etapach 7 i 8)
@@ -160,9 +160,25 @@ export function AddFieldDialog({
           </div>
 
           {typ === "date" && (
-            <div className="flex items-center justify-between gap-2.5 py-2 text-[13px]">
-              <span>Pokaż w kalendarzu</span>
-              <Checkbox checked={wKalendarzu} ariaLabel="Pokaż w kalendarzu" onChange={setWKalendarzu} />
+            <div>
+              <div className="flex items-center justify-between gap-2.5 border-b border-[#f0f0f0] py-2 text-[13px]">
+                <span>Pokaż w kalendarzu</span>
+                <Checkbox checked={wKalendarzu} ariaLabel="Pokaż w kalendarzu" onChange={setWKalendarzu} />
+              </div>
+              {/* Warunek z pola Checkbox dochodzi w Etapie 7 — na razie jedyna opcja „— zawsze —” */}
+              <div className="flex items-center justify-between gap-2.5 py-2 text-[13px]">
+                <span>Tylko gdy zaznaczone</span>
+                <div>
+                  <Dropdown
+                    compact
+                    ariaLabel="Tylko gdy zaznaczone"
+                    width={160}
+                    value="zawsze"
+                    onChange={() => {}}
+                    options={[{ value: "zawsze", label: "— zawsze —" }]}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
@@ -178,7 +194,7 @@ export function AddFieldDialog({
                     type="button"
                     aria-label={`Usuń opcję ${o}`}
                     onClick={() => setOpcje((l) => l.filter((x) => x !== o))}
-                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-[#6b6b6b] hover:text-[#171717]"
+                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-[#6b6b6b] hover:text-[#171717] max-[799px]:min-h-11 max-[799px]:min-w-11"
                   >
                     ×
                   </button>
@@ -208,7 +224,7 @@ export function AddFieldDialog({
                   aria-label="Nowa opcja"
                   // Pole pojawia się po kliknięciu „+ Opcja”
                   autoFocus
-                  className="w-[130px] rounded-[4px] border border-[#171717] bg-white px-2 py-[3px] font-mono text-xs text-[#171717] outline-none"
+                  className="w-[130px] rounded-[4px] border border-[#171717] bg-white px-2 py-[3px] font-mono text-xs text-[#171717] outline-none max-[799px]:min-h-11"
                 />
               )}
             </div>

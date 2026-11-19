@@ -9,6 +9,24 @@ function seqId() {
 }
 
 describe("buildTemplateBlocks", () => {
+  it("opcje domyślne nowego wiersza z makiet wskazują id opcji", () => {
+    const domyslne = (key: "books" | "projects" | "websites") => {
+      const [blok] = buildTemplateBlocks(key, seqId());
+      return blok.fields
+        .filter((f) => f.config.default_option !== undefined)
+        .map((f) => [f.name, f.config.options?.find((o) => o.id === f.config.default_option)?.label]);
+    };
+    expect(domyslne("books")).toEqual([["Status", "Chcę przeczytać"]]);
+    expect(domyslne("projects")).toEqual([
+      ["Status", "Do zrobienia"],
+      ["Obszar", "Własne"],
+    ]);
+    expect(domyslne("websites")).toEqual([
+      ["Status", "Wycena"],
+      ["Hosting", "Framer"],
+    ]);
+  });
+
   it("books: pola z typami, is_title tylko na Tytule", () => {
     const [blok] = buildTemplateBlocks("books", seqId());
     expect(blok.type).toBe("table");

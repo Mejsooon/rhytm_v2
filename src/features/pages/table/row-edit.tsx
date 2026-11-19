@@ -60,6 +60,7 @@ export function RowEdit({
           return (
             <td key={f.id} className={td}>
               <DatePicker
+                size="sm"
                 ariaLabel={f.name}
                 today={today}
                 value={typeof v === "string" ? (v as IsoDate) : null}

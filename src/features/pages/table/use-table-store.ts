@@ -24,8 +24,13 @@ export type TableStore = ReturnType<typeof useTableStore>;
 // Wiersz albo pole czekające na odpowiedź serwera ma tymczasowe id z tym prefiksem
 export const PREFIKS_TYMCZASOWY = "tmp-";
 
-// Edytowany wiersz: rowId null = nowy wiersz (szkic, jeszcze bez zapisu)
-export type RowEditing = { rowId: string | null; values: Record<string, unknown> };
+// Edytowany wiersz: rowId null = nowy wiersz (szkic, jeszcze bez zapisu); original to wartości
+// z chwili otwarcia edycji — zapis wysyła tylko klucze, które się od nich różnią
+export type RowEditing = {
+  rowId: string | null;
+  values: Record<string, unknown>;
+  original: Record<string, unknown>;
+};
 
 export function useTableStore(block: LoadedBlock) {
   // Ustawienia z content.settings; brakujące klucze dostają puste wartości
@@ -84,12 +89,19 @@ export function useTableStore(block: LoadedBlock) {
   // Tryb edycji istniejącego wiersza (tylko jeden naraz; wiersz bez prawdziwego id czeka)
   function startEdit(row: PageRow) {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
-    setEditing({ rowId: row.id, values: { ...row.values } });
+    setEditing({ rowId: row.id, values: { ...row.values }, original: { ...row.values } });
   }
 
-  // „Nowy wiersz”: szkic w trybie edycji na końcu tabeli
+  // „Nowy wiersz”: szkic w trybie edycji na końcu tabeli, z opcjami domyślnymi pól (z makiet)
   function addRowDraft() {
-    setEditing({ rowId: null, values: {} });
+    const values: Record<string, unknown> = {};
+    for (const f of fields) {
+      const domyslna = f.config.default_option;
+      if (domyslna !== undefined && (f.config.options ?? []).some((o) => o.id === domyslna)) {
+        values[f.id] = domyslna;
+      }
+    }
+    setEditing({ rowId: null, values, original: {} });
   }
 
   function setEditValue(fieldId: string, value: unknown) {
@@ -100,18 +112,22 @@ export function useTableStore(block: LoadedBlock) {
     setEditing(null);
   }
 
-  // „Zapisz”: wartości przez normalizeValue, pusty tytuł → empty_label (jak na serwerze)
+  // „Zapisz”: wartości przez normalizeValue, pusty tytuł → empty_label (jak na serwerze).
+  // Istniejący wiersz wysyła tylko zmienione komórki — nietknięte (także „brudne” z bazy) zostają.
   async function saveRow() {
     const e = editing;
     if (!e) return;
     const nowe: Record<string, CellValue> = {};
     for (const f of posortowanePola) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
+      const zmieniona = !Object.is(e.values[f.id], e.original[f.id]);
+      if (e.rowId !== null && !zmieniona) continue;
       let v = normalizeValue(f, e.values[f.id]);
       if (f.isTitle && v === null) v = f.config.empty_label ?? "Bez tytułu";
       nowe[f.id] = v;
     }
     setEditing(null);
+    if (e.rowId !== null && Object.keys(nowe).length === 0) return;
 
     if (e.rowId === null) {
       const tymczasoweId = `${PREFIKS_TYMCZASOWY}w${++licznik.current}`;

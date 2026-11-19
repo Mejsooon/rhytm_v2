@@ -107,6 +107,19 @@ function karta(etykieta: string) {
   return el.parentElement as HTMLElement;
 }
 
+// Wiersz w trybie edycji (tło #f7fbf8)
+function edycja() {
+  const tr = document.querySelector("tr.bg-\\[\\#f7fbf8\\]");
+  if (!tr) throw new Error("Brak wiersza w edycji");
+  return tr as HTMLElement;
+}
+
+// Id opcji pola po etykietach
+function opcja(dane: LoadedPage, pole: string, etykieta: string) {
+  const f = dane.blocks[0].fields.find((x) => x.name === pole)!;
+  return { fieldId: f.id, optionId: f.config.options!.find((o) => o.label === etykieta)!.id };
+}
+
 describe("TemplatePageView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -167,6 +180,16 @@ describe("TemplatePageView", () => {
       expect(karta("W toku").textContent).toContain("3");
     });
 
+    it("karty liczą wiersze po zapisanym filtrze (settings.filters)", () => {
+      const dane = strona("books", "Books", BOOKS);
+      const przeczytane = opcja(dane, "Status", "Przeczytane");
+      const content = dane.blocks[0].content as { settings: { filters: unknown[] } };
+      content.settings.filters = [{ field_id: przeczytane.fieldId, op: "in", value: [przeczytane.optionId] }];
+      render(<TemplatePageView data={dane} />);
+      expect(karta("Czytam teraz").textContent).toContain("0");
+      expect(screen.queryByText("Atomic Habits")).not.toBeInTheDocument();
+    });
+
     it("Projects: termin dalej niż 7 dni jest szary", () => {
       const dane = strona("projects", "Projects", [{ Nazwa: "NetScope", Status: "W toku", Termin: "2026-12-15" }]);
       render(<TemplatePageView data={dane} />);
@@ -182,6 +205,8 @@ describe("TemplatePageView", () => {
       expect(within(deep).getByLabelText("Ocena 4 na 5").textContent).toBe("★★★★★");
       expect(within(deep).getByText("12.10.2026")).toBeInTheDocument();
       expect(within(wiersz("Atomic Habits")).getByLabelText("Brak oceny").textContent).toBe("—");
+      // Szara plakietka ma tekst #404040 jak w makiecie
+      expect(within(wiersz("Clean Code")).getByText("Chcę przeczytać")).toHaveStyle({ color: "#404040" });
     });
 
     it("Books: wiersze w kolejności sortu status, data", () => {
@@ -267,6 +292,30 @@ describe("TemplatePageView", () => {
       expect(karta("Czytam teraz").textContent).toContain("3");
     });
 
+    it("„Zapisz” wysyła tylko zmienione komórki — brudna wartość z bazy zostaje", async () => {
+      const user = userEvent.setup();
+      const dane = strona("books", "Books", BOOKS);
+      const ocena = dane.blocks[0].fields.find((f) => f.name === "Ocena")!;
+      const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
+      // Tekst w polu Ocena (ręczna edycja bazy) — normalizeValue dałby null
+      dane.blocks[0].rows[3].values[ocena.id] = "dużo";
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Autor" }), "!");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+      expect(actions.updateRow).toHaveBeenCalledWith("row-4", { [autor.id]: "Cal Newport!" });
+    });
+
+    it("„Zapisz” bez zmian nie wysyła nic", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      expect(screen.queryByRole("button", { name: "Zapisz" })).not.toBeInTheDocument();
+      expect(actions.updateRow).not.toHaveBeenCalled();
+    });
+
     it("gwiazdki: klik ustawia, ponowny klik tej samej zeruje", async () => {
       const user = userEvent.setup();
       const dane = strona("books", "Books", BOOKS);
@@ -331,14 +380,37 @@ describe("TemplatePageView", () => {
       expect(screen.getByText(/^12 wierszy/)).toBeInTheDocument();
     });
 
-    it("Projects: pusta nazwa → „Bez nazwy”", async () => {
+    it("Projects: pusta nazwa → „Bez nazwy”; opcje domyślne Do zrobienia / Własne", async () => {
       const user = userEvent.setup();
       const dane = strona("projects", "Projects", PROJECTS);
       render(<TemplatePageView data={dane} />);
       await user.click(screen.getByRole("button", { name: "+ Nowy wiersz" }));
+      expect(within(edycja()).getByRole("button", { name: "Status" }).textContent).toContain("Do zrobienia");
+      expect(within(edycja()).getByRole("button", { name: "Obszar" }).textContent).toContain("Własne");
       await user.click(screen.getByRole("button", { name: "Zapisz" }));
       const tytul = dane.blocks[0].fields.find((f) => f.isTitle)!;
-      expect(actions.addRow).toHaveBeenCalledWith("blok-1", expect.objectContaining({ [tytul.id]: "Bez nazwy" }));
+      const status = opcja(dane, "Status", "Do zrobienia");
+      const obszar = opcja(dane, "Obszar", "Własne");
+      expect(actions.addRow).toHaveBeenCalledWith(
+        "blok-1",
+        expect.objectContaining({
+          [tytul.id]: "Bez nazwy",
+          [status.fieldId]: status.optionId,
+          [obszar.fieldId]: obszar.optionId,
+        }),
+      );
+    });
+
+    it("Books i Websites: opcje domyślne z makiet", async () => {
+      const user = userEvent.setup();
+      const { unmount } = render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      expect(within(edycja()).getByRole("button", { name: "Status" }).textContent).toContain("Chcę przeczytać");
+      unmount();
+      render(<TemplatePageView data={strona("websites", "Websites", WEBSITES)} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      expect(within(edycja()).getByRole("button", { name: "Status" }).textContent).toContain("Wycena");
+      expect(within(edycja()).getByRole("button", { name: "Hosting" }).textContent).toContain("Framer");
     });
 
     it("✕ usuwa szkic bez zapisu", async () => {
@@ -390,6 +462,9 @@ describe("TemplatePageView", () => {
 
       await user.click(within(okno).getByRole("button", { name: "Data" }));
       expect(within(okno).getByRole("textbox", { name: "Nazwa pola" })).toHaveValue("Termin");
+      expect(within(okno).getByRole("checkbox", { name: "Pokaż w kalendarzu" })).toBeInTheDocument();
+      expect(within(okno).getByText("Tylko gdy zaznaczone")).toBeInTheDocument();
+      expect(within(okno).getByRole("button", { name: "Tylko gdy zaznaczone" }).textContent).toContain("— zawsze —");
       await user.click(within(okno).getByRole("button", { name: "Status" }));
       expect(within(okno).getByRole("textbox", { name: "Nazwa pola" })).toHaveValue("Status");
       expect(within(okno).getByText("Do zrobienia")).toBeInTheDocument();

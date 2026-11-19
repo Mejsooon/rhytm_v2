@@ -19,6 +19,8 @@ export type FieldConfig = {
   number_format?: "plain" | "pln" | "percent";
   show_in_calendar?: boolean;
   empty_label?: string;
+  // Id opcji, którą dostaje nowy wiersz (Select / Status; z makiet szablonów)
+  default_option?: string;
 };
 
 export type PageField = {
@@ -248,8 +250,11 @@ export function planTypeChange(
 
   if (to === "select" || to === "status") {
     if (field.type === "select" || field.type === "status") {
-      // Status <-> select zachowuje opcje i ich id
+      // Status <-> select zachowuje opcje i ich id (i opcję domyślną)
       config.options = field.config.options ?? [];
+      if (field.config.default_option !== undefined) {
+        config.default_option = field.config.default_option;
+      }
     } else {
       // Z innych typów: osobne opcje z unikalnych wartości, w kolejności pierwszego wystąpienia
       const opcje: FieldOption[] = [];
