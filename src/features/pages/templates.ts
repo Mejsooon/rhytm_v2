@@ -61,7 +61,7 @@ const SZARY = PALETA[7];
 export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   empty: {
     name: "Pusta strona",
-    icon: "□",
+    icon: "",
     desc: "Tabela bez pól. Budujesz ją sama od zera.",
     extra: "",
     fields: [
@@ -73,7 +73,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   books: {
     name: "Books",
-    icon: "▦",
+    icon: "📚",
     desc: "Status czytania, ocena, licznik przeczytanych.",
     extra: "Σ Liczba przeczytanych w tym roku.",
     fields: [
@@ -123,7 +123,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   projects: {
     name: "Projects",
-    icon: "▦",
+    icon: "lucide:rocket:blue",
     desc: "Status i termin, terminy w kalendarzu.",
     extra: "↻ Terminy trafią do kalendarza głównego.",
     fields: [
@@ -180,7 +180,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   websites: {
     name: "Websites",
-    icon: "▦",
+    icon: "lucide:globe:teal",
     desc: "Strony klientów: URL, klient, status.",
     extra: "",
     fields: [

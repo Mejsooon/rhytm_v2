@@ -8,11 +8,8 @@ export const pageTitleSchema = z
   .string()
   .max(200, "Tytuł może mieć maksymalnie 200 znaków.");
 
-export const pageIconSchema = z
-  .string()
-  .trim()
-  .min(1, "Wybierz ikonę.")
-  .max(16, "Ikona jest zbyt długa.");
+// Emoji, `lucide:<nazwa>:<kolor>` albo '' (brak ikony → domyślna tabela); format sprawdza parsePageIcon przy wyświetlaniu
+export const pageIconSchema = z.string().trim().max(64, "Ikona jest zbyt długa.");
 
 export const fieldNameSchema = z
   .string()

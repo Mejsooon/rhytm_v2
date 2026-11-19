@@ -1,5 +1,5 @@
 begin;
-select plan(45);
+select plan(46);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -176,6 +176,13 @@ select throws_ok(
 
 -- Czyszczenie kosza jako postgres.
 reset role;
+
+-- Ikona: nowa strona bez podanej ikony ma pustą (domyślna tabela w aplikacji).
+insert into public.pages (id, user_id, title)
+values ('d3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'bez ikony');
+select is((select p.icon from public.pages as p where p.id = 'd3000000-0000-0000-0000-00000000000a'), '',
+  'domyślna ikona strony to pusty tekst');
+
 insert into public.pages (id, user_id, title, deleted_at)
 values
   ('d1000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'stara', now() - interval '31 days'),

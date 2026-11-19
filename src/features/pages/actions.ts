@@ -54,7 +54,7 @@ export async function createBlankPage(): Promise<{ ok: true; id: string } | Blad
 
   const { data, error } = await supabase.rpc("create_page", {
     p_title: "",
-    p_icon: "▦",
+    p_icon: "",
     p_template_key: null,
     p_blocks: [],
   });

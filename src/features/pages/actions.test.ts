@@ -35,6 +35,7 @@ import {
   countPageRows,
   loadTrash,
   setFavorite,
+  setPageIcon,
   updateBlockContent,
 } from "./actions";
 import { buildTemplateBlocks } from "./templates";
@@ -103,7 +104,7 @@ describe("strony", () => {
     expect(w).toEqual({ ok: true, id: STRONA });
     expect(rpc).toHaveBeenCalledWith("create_page", {
       p_title: "",
-      p_icon: "▦",
+      p_icon: "",
       p_template_key: null,
       p_blocks: [],
     });
@@ -124,7 +125,7 @@ describe("strony", () => {
     );
     expect(rpc).toHaveBeenCalledWith("create_page", {
       p_title: "Books",
-      p_icon: "▦",
+      p_icon: "📚",
       p_template_key: "books",
       p_blocks: oczekiwane,
     });
@@ -297,6 +298,16 @@ describe("bloki i ustawienia", () => {
     tables.page_blocks = fakeTable({ single: { type: "text", content: { text: "a" } } });
     await updateBlockContent(BLOK, { text: "b" });
     expect(tables.page_blocks.update).toHaveBeenCalledWith({ content: { text: "b" } });
+  });
+
+  it("setPageIcon zapisuje emoji, `lucide:…` i pusty tekst; odrzuca dłuższe niż 64 znaki", async () => {
+    for (const ikona of ["📚", "lucide:rocket:blue", ""]) {
+      expect(await setPageIcon(STRONA, ikona)).toEqual({ ok: true });
+      expect(tables.pages.update).toHaveBeenLastCalledWith({ icon: ikona });
+    }
+    tables.pages.update.mockClear();
+    expect((await setPageIcon(STRONA, "x".repeat(65))).ok).toBe(false);
+    expect(tables.pages.update).not.toHaveBeenCalled();
   });
 
   it("setFavorite odrzuca nie-boolean", async () => {
