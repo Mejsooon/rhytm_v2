@@ -21,6 +21,7 @@ import {
   zasiejSzablon,
   zasiejTrening,
 } from "./helpers/sport";
+import { utworzBooks, zalozKontoStron } from "./helpers/strony";
 import {
   adminClient,
   createConfirmedUser,
@@ -618,5 +619,67 @@ test.describe("ekrany z sesją", () => {
       page.getByRole("link", { name: /Push/ }).first(),
     ).toBeVisible();
     await zrzut(page, "kalendarz-sport", projekt);
+  });
+
+  test("zrzuty /strony (makiety NewPage, EmptyPage, Books, ColumnMenu, FilterPopover, MPages, MEditor)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    await zalozKontoStron(page, projekt);
+
+    // Wybór szablonu (NewPage)
+    await page.goto("/strony/nowa");
+    await expect(
+      page.getByRole("heading", { name: "Nowa strona", level: 2 }),
+    ).toBeVisible();
+    await zrzut(page, "strony-nowa", projekt);
+
+    // Strona z szablonu Books (Books, ColumnMenu, FilterPopover)
+    await utworzBooks(page);
+    await zrzut(page, "strony-books", projekt);
+    if (projekt === "web") {
+      await page
+        .getByRole("columnheader")
+        .getByRole("button", { name: "Status", exact: true })
+        .click();
+      await expect(
+        page.getByRole("dialog", { name: "Kolumna Status" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-menu-kolumny", projekt);
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: "Filtruj", exact: true }).click();
+      await expect(page.getByText("Filtr", { exact: true })).toBeVisible();
+      await zrzut(page, "strony-filtr", projekt);
+      await page.keyboard.press("Escape");
+    }
+
+    // Edytor z tabelą (EmptyPage / MEditor)
+    await page.goto("/strony");
+    await page.getByRole("button", { name: "Nowa strona" }).first().click();
+    await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
+    if (projekt === "web") {
+      await page.getByLabel("Nazwa strony").fill("Plan tygodnia");
+      await page.getByLabel("Nazwa strony").blur();
+      await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
+      await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
+      await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    } else {
+      await page.getByRole("button", { name: "Wstaw tabelę" }).click();
+      await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    }
+    await zrzut(page, "strony-edytor", projekt);
+
+    // Lista stron na telefonie (MPages); na webie to samo trasa pokazuje stronę z sidebarem
+    await page.goto("/strony");
+    if (projekt === "mobile")
+      await expect(
+        page.getByRole("heading", { name: "Strony", level: 1 }),
+      ).toBeVisible();
+    await zrzut(page, "strony-lista", projekt);
+
+    // Karta Kosz w Ustawieniach → Ogólne
+    await page.goto("/ustawienia/ogolne#kosz");
+    await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
+    await zrzut(page, "ustawienia-kosz", projekt);
   });
 });

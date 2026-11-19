@@ -189,21 +189,26 @@
 **Lista odbiorcza**
 
 - Strony i edytor
-  - [ ] Tabele `pages`, `page_blocks`, `page_fields`, `page_rows`; sidebar ze stronami (przeciąganie, menu strony, ikony, F2); `/strony` na telefonie (Ulubione, Wszystkie, wyszukiwarka).
-  - [ ] Edytor: tytuł (ścieżka na żywo), bloki tekst/nagłówek/lista zadań/separator/tabela, kosz bloku po najechaniu.
-  - [ ] Menu „/” (filtr, ↑↓, Enter, Esc, hover, „Brak bloku”), „+”, Enter na tekście → akapit, chipy „albo zacznij od”, link do szablonów.
-  - [ ] Telefon `MEditor`: pasek skrótów, arkusz „Wstaw blok”, arkusz „Kolumna”, przewijana tabela.
+  - [x] Tabele `pages`, `page_blocks`, `page_fields`, `page_rows`; sidebar ze stronami (przeciąganie, menu strony, ikony, F2); `/strony` na telefonie (Ulubione, Wszystkie, wyszukiwarka). (e2e: pages.spec.ts telefon 390 px; unit: app-sidebar.test.tsx, page-menu.test.tsx, m-pages.test.tsx, load-pages.test.ts; db: pages.test.sql, table_grants.test.sql; zrzut)
+  - [x] Edytor: tytuł (ścieżka na żywo), bloki tekst/nagłówek/lista zadań/separator/tabela, kosz bloku po najechaniu. (e2e: pages.spec.ts edytor z tabelą; unit: editor-view.test.tsx, blocks.test.ts; zrzut)
+  - [x] Menu „/” (filtr, ↑↓, Enter, Esc, hover, „Brak bloku”), „+”, Enter na tekście → akapit, chipy „albo zacznij od”, link do szablonów. (e2e: „/tab” + Enter w pages.spec.ts; unit: slash-menu.test.tsx, editor-view.test.tsx, blocks.test.ts)
+  - [x] Telefon `MEditor`: pasek skrótów, arkusz „Wstaw blok”, arkusz „Kolumna”, przewijana tabela. (e2e: pages.spec.ts telefon 390 px; unit: m-editor.test.tsx, table-block.test.tsx; zrzut)
 - Tabele
-  - [ ] Blok tabeli: nazwa, kolumny (dymek: nazwa, typ, opcje Wyboru, ←/→, usuń), „+” kolumny otwiera dymek, „+ Nowy wiersz”, licznik, stopka sum.
-  - [ ] Zmiana typu kolumny z przeliczeniem wartości (zgodne bez straty; pozostałe po potwierdzeniu).
-  - [ ] Tryb wiersza: podgląd (formatowanie, klik w wiersz, Edytuj/Usuń po najechaniu) i edycja (kontrolki z 3.2, Zapisz, ✕); nowy wiersz w edycji; puste tytuły „Bez tytułu/Bez nazwy”.
-  - [ ] „+ Pole” (typy podstawowe), menu kolumny (typ, sort, filtruj, podsumowanie, ukryj, usuń; tytułowe nieusuwalne).
-  - [ ] Filtr (warunki „i”, operatory wg typu, „Zapisz jako domyślny”, licznik, „Filtruj · N”).
-  - [ ] Podsumowania kolumn i przypięte karty liczone z wierszy po filtrze, na żywo.
+  - [x] Blok tabeli: nazwa, kolumny (dymek: nazwa, typ, opcje Wyboru, ←/→, usuń), „+” kolumny otwiera dymek, „+ Nowy wiersz”, licznik, stopka sum. (e2e: pages.spec.ts edytor z tabelą; unit: table-block.test.tsx, table-model.test.ts; zrzut)
+  - [x] Zmiana typu kolumny z przeliczeniem wartości (zgodne bez straty; pozostałe po potwierdzeniu). (e2e: Status → Tekst → Liczba, stopka „Suma 5”; unit: fields.test.ts, type-change-dialog.test.tsx, table-block.test.tsx; db: pages.test.sql)
+  - [x] Tryb wiersza: podgląd (formatowanie, klik w wiersz, Edytuj/Usuń po najechaniu) i edycja (kontrolki z 3.2, Zapisz, ✕); nowy wiersz w edycji; puste tytuły „Bez tytułu/Bez nazwy”. (e2e: Books — nowy wiersz, ocena, Usuń i Cofnij; unit: template-page-view.test.tsx, templates.test.ts, actions.test.ts; zrzut)
+  - [x] „+ Pole” (typy podstawowe), menu kolumny (typ, sort, filtruj, podsumowanie, ukryj, usuń; tytułowe nieusuwalne). (unit: column-menu.test.tsx, template-page-view.test.tsx; zrzut menu kolumny; brak e2e menu kolumny, pokrywa je unit)
+  - [x] Filtr (warunki „i”, operatory wg typu, „Zapisz jako domyślny”, licznik, „Filtruj · N”). (unit: filter-popover.test.tsx, table-model.test.ts; zrzut; brak e2e filtra)
+  - [x] Podsumowania kolumn i przypięte karty liczone z wierszy po filtrze, na żywo. (e2e: karta „Czytam teraz” 1 → 0 → 1 po Usuń/Cofnij; unit: table-model.test.ts, template-page-view.test.tsx)
 - Szablony i kosz
-  - [ ] Nowa strona: lista szablonów, „Pola, które powstaną”, nazwa, „Utwórz stronę”; Books, Projects, Websites z kartami z makiet; strony z onboardingu tworzone przy pierwszym wejściu.
-  - [ ] Projects: „za N dni” czerwone ≤ 7 dni, „minął”, „dziś”, „jutro”, „za N mies.”.
-  - [ ] Kosz 30 dni: „Usunięto · Cofnij”, sekcja w Ustawieniach → Ogólne, czyszczenie pg_cron, link w 404.
+  - [x] Nowa strona: lista szablonów, „Pola, które powstaną”, nazwa, „Utwórz stronę”; Books, Projects, Websites z kartami z makiet; strony z onboardingu tworzone przy pierwszym wejściu. (e2e: Books z szablonu w pages.spec.ts; unit: new-page-view.test.tsx, templates.test.ts, load-pages.test.ts; db: pages.test.sql; zrzut). Subscriptions i Passwords celowo ukryte do Etapów 7 i 8, zostają w `pending_pages`.
+  - [x] Projects: „za N dni” czerwone ≤ 7 dni, „minął”, „dziś”, „jutro”, „za N mies.”. (unit: fields.test.ts, template-page-view.test.tsx; brak e2e Projects)
+  - [x] Kosz 30 dni: „Usunięto · Cofnij”, sekcja w Ustawieniach → Ogólne, czyszczenie pg_cron, link w 404. (e2e: usunięcie strony → Kosz → Przywróć w pages.spec.ts; unit: trash-card.test.tsx, page-menu.test.tsx, actions.test.ts; db: pages.test.sql `purge_trash`; zrzut)
+
+- Nie zrobione w tym etapie
+  - [ ] Wpisy w kalendarzu dla „Pokaż w kalendarzu” (Etap 7 z rozstrzygnięcia: w Etapie 6 jest tylko przełącznik w menu kolumny i znaczek „w kalendarzu”).
+  - [ ] Szablony Subscriptions i Passwords (Etap 7 i Etap 8; ukryte w „Nowa strona”).
+  - [ ] Plan zostawia bez e2e menu kolumny, filtr i stronę Projects (pokrywają je testy jednostkowe i zrzuty).
 
 **Testy:** walidacja wartości per typ, zmiana typu, sort, filtr, podsumowania po filtrze, karty, kolejność bloków, menu „/”, RLS stron, e2e strona z szablonu Books (dodanie, edycja, usunięcie wiersza), e2e strona z edytora z tabelą i zmianą typu kolumny, zrzuty.
 

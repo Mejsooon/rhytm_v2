@@ -22,7 +22,14 @@ export default function NotFound() {
           <h1 className="m-0 text-xl font-semibold">Tej strony nie ma</h1>
           <p className="m-0 leading-normal text-[#666666]">
             Mogła zostać usunięta albo link jest niepełny. Strony usunięte w
-            ciągu 30 dni możesz przywrócić z kosza.
+            ciągu 30 dni możesz przywrócić z{" "}
+            <Link
+              href="/ustawienia/ogolne#kosz"
+              className="text-[#171717] underline underline-offset-2"
+            >
+              kosza
+            </Link>
+            .
           </p>
           <div className="flex gap-2">
             <Button asChild variant="primary" size="sm">
