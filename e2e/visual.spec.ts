@@ -113,9 +113,7 @@ test("zrzut /dev/kontrolki (bez makiety)", async ({ page }, info) => {
 test.describe("ekrany z sesją", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("zrzut /dzis, pusty (makieta EmptyToday / MToday)", async ({
-    page,
-  }, info) => {
+  test("zrzut /dzis, pusty (makieta EmptyToday)", async ({ page }, info) => {
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createConfirmedUser(email, haslo);
@@ -123,6 +121,111 @@ test.describe("ekrany z sesją", () => {
     await expect(page).toHaveURL(/\/dzis$/);
     await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
+  });
+
+  test("zrzuty /dzis, pełne (makiety Today, MToday, MQuickAdd)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
+    const dzis = dzisWarszawa();
+    // Wszystkie cztery pierwsze kroki: bloki dnia (jeden z zadaniami), nawyki, bieg i siłownia, sen z kilku nocy
+    const matematyka = await zasiejBlok(userId, {
+      title: "Matematyka",
+      date: dzis,
+      startMin: 600,
+      durationMin: 90,
+      categoryId: kategorie["Nauka"],
+    });
+    await zasiejZadanie(userId, matematyka, dzis, "Zadania z analizy", true);
+    await zasiejZadanie(userId, matematyka, dzis, "Powtórka wzorów");
+    await zasiejZadanie(userId, matematyka, dzis, "Lista 4");
+    await zasiejBlok(userId, {
+      title: "Projekt",
+      date: dzis,
+      startMin: 780,
+      durationMin: 120,
+      categoryId: kategorie["Praca"],
+    });
+    await zasiejBlok(userId, {
+      title: "Angielski",
+      date: dzis,
+      startMin: 1200,
+      durationMin: 60,
+      categoryId: kategorie["Nauka"],
+    });
+    await zasiejBieg(userId, { dniTemu: 0, km: 8, sekundy: 2880 });
+    await zasiejBieg(userId, {
+      dniTemu: 2,
+      km: 6,
+      sekundy: 1860,
+      kind: "tempo",
+    });
+    await zasiejSzablon(userId, {
+      name: "Push",
+      weekdays: [dzienTygodnia(dzis)],
+      startTime: "18:00",
+      cwiczenia: [{ name: "Wyciskanie leżąc", sets: 3, reps: "8" }],
+    });
+    const woda = await zasiejNawyk(userId, { name: "Woda 2 l" });
+    await zasiejNawyk(userId, { name: "Czytanie" });
+    await zasiejNawyk(userId, { name: "Rozciąganie" });
+    const { error } = await adminClient()
+      .from("habit_checks")
+      .insert(
+        [0, 1, 2].map((i) => ({
+          habit_id: woda,
+          user_id: userId,
+          date: przesunDate(dzis, -i),
+        })),
+      );
+    if (error)
+      throw new Error(`Nie udało się zasiać odhaczeń: ${error.message}`);
+    for (let i = 0; i < 4; i++)
+      await zasiejSen(userId, i, i % 2 === 0 ? "23:15" : "00:05", "07:00");
+    // Samodzielne zadania: na dziś, zaległe i bez daty
+    const { error: bladZadan } = await adminClient()
+      .from("tasks")
+      .insert([
+        { user_id: userId, title: "Oddać książkę", due_date: dzis },
+        {
+          user_id: userId,
+          title: "Zapłacić za internet",
+          due_date: przesunDate(dzis, -2),
+        },
+        { user_id: userId, title: "Kupić kalendarz", due_date: null },
+      ]);
+    if (bladZadan)
+      throw new Error(`Nie udało się zasiać zadań: ${bladZadan.message}`);
+
+    await page.goto("/dzis");
+    if (projekt === "web") {
+      const web = page.getByTestId("web-dzis");
+      await expect(
+        web.getByRole("heading", { name: "Plan dnia" }),
+      ).toBeVisible();
+      await zrzut(page, "dzis-pelne", projekt);
+
+      // Dymek bloku na planie dnia (ten sam co w kalendarzu)
+      await web
+        .getByTestId("os-dnia")
+        .locator(`[data-occurrence-key^="${matematyka}"]`)
+        .click();
+      await expect(
+        page.getByRole("dialog", { name: "Szczegóły bloku" }),
+      ).toContainText("1 z 3");
+      await zrzut(page, "dzis-dymek-bloku", projekt);
+    } else {
+      const m = page.getByTestId("m-dzis");
+      await expect(m.getByRole("checkbox", { name: "Woda 2 l" })).toBeVisible();
+      await zrzut(page, "dzis-pelne", projekt);
+
+      await m.getByRole("button", { name: "Szybko dodaj" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Szybko dodaj" }),
+      ).toBeVisible();
+      await zrzut(page, "dzis-szybko-dodaj", projekt);
+    }
   });
 
   test("zrzuty /onboarding/1–7 (makiety Onboarding… / MOnboarding)", async ({
