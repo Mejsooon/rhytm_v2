@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({
   addField: vi.fn(),
   addRow: vi.fn(),
+  changeFieldType: vi.fn(),
+  deleteField: vi.fn(),
+  updateField: vi.fn(),
   deleteRow: vi.fn(),
   restoreRow: vi.fn(),
   saveTableSettings: vi.fn(),

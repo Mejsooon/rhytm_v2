@@ -2,12 +2,17 @@
 
 import * as React from "react";
 
-import { FIELD_TYPE_META, type PageField } from "../fields";
+import { operatorsFor } from "../table-model";
+import { planTypeChange, type FieldType, type PageField } from "../fields";
+import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock, LoadedPage } from "../load-page";
 import { rowsForm, rowsLabel } from "../rows-label";
-import { summarize, visibleRows } from "../table-model";
+import { visibleRows } from "../table-model";
 import { TEMPLATES } from "../templates";
 import { AddFieldDialog } from "./add-field-dialog";
+import { ColumnMenu } from "./column-menu";
+import { FilterPopover } from "./filter-popover";
+import { SummaryCell } from "./summary-cell";
 import { MRowSheet } from "./mobile/m-row-sheet";
 import { PinnedCards } from "./pinned-cards";
 import { RowEdit } from "./row-edit";
@@ -45,12 +50,25 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
   const { fields, rows, settings, editing } = store;
   // Edycja w arkuszu (telefon) zamiast w wierszu tabeli
   const [wArkuszu, setWArkuszu] = React.useState(false);
+  // Otwarte menu kolumny (id pola), filtr i zmiana typu czekająca na potwierdzenie (ze stratą wartości)
+  const [menuPola, setMenuPola] = React.useState<string | null>(null);
+  const [filtrOtwarty, setFiltrOtwarty] = React.useState(false);
+  const [zmianaTypu, setZmianaTypu] = React.useState<{
+    field: PageField;
+    type: FieldType;
+    plan: ReturnType<typeof planTypeChange>;
+  } | null>(null);
+  // „Filtruj po tym polu” zamyka menu i od razu otwiera filtr — bez zwrotu fokusu na nagłówek
+  const bezZwrotuFokusu = React.useRef(false);
 
   const tytul = page.title.trim() === "" ? "Bez tytułu" : page.title;
   const zywe = rows.filter((r) => r.deletedAt === null);
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   const widoczneWiersze = visibleRows(fields, rows, settings, store.tempFilters);
+  // Filtr w edycji (stan klienta) albo zapisany domyślny
+  const filtry = store.tempFilters ?? settings.filters;
+  const liczbaUkrytych = fields.filter((f) => ukryte.has(f.id)).length;
 
   // Metadane: „{N} wierszy · {M} pól · szablon „…” · sort: …”
   const formaPol = rowsForm(fields.length);
@@ -80,12 +98,6 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
     store.addRowDraft();
   }
 
-  // Punkty zaczepienia dla Task 9 (menu kolumny i filtr)
-  function otworzMenuKolumny(field: PageField) {
-    void field;
-  }
-  function otworzFiltr() {}
-
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
   const tytulowe = fields.find((f) => f.isTitle);
   const tytulArkusza =
@@ -106,9 +118,21 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
           Strony <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{tytul}</span>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={otworzFiltr} className={btn}>
-            Filtruj
-          </button>
+          <FilterPopover
+            fields={fields}
+            filters={filtry}
+            today={today}
+            shown={widoczneWiersze.length}
+            total={zywe.length}
+            open={filtrOtwarty}
+            onOpenChange={setFiltrOtwarty}
+            onChange={store.setTempFilters}
+            onSave={() => {
+              void store.patchSettings({ filters: filtry });
+              store.setTempFilters(null);
+            }}
+            triggerClassName={btn}
+          />
           <AddFieldDialog onAdd={(input) => void store.addField(input)} />
           <button
             type="button"
@@ -123,7 +147,21 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
       <div className="box-border flex w-full max-w-[1160px] flex-col gap-6 px-6 py-7 max-[799px]:px-4">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">{tytul}</h1>
-          <p className="mt-1.5 mb-0 font-mono text-xs text-[#6b6b6b]">{meta}</p>
+          <p className="mt-1.5 mb-0 font-mono text-xs text-[#6b6b6b]">
+            {meta}
+            {liczbaUkrytych > 0 && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={() => void store.patchSettings({ hidden_field_ids: [] })}
+                  className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[inherit] underline decoration-dotted underline-offset-2 hover:text-[#171717] max-[799px]:min-h-11"
+                >
+                  {`· ${liczbaUkrytych} ${rowsForm(liczbaUkrytych) === "many" ? "ukrytych" : "ukryte"}`}
+                </button>
+              </>
+            )}
+          </p>
         </div>
 
         <PinnedCards
@@ -152,16 +190,51 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
                     scope="col"
                     className="border-b border-[#eaeaea] px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-[#666666]"
                   >
-                    <button
-                      type="button"
-                      onClick={() => otworzMenuKolumny(f)}
-                      className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] font-medium text-[#666666]"
-                    >
-                      <span aria-hidden="true" className="mr-1.5 font-mono text-[#6b6b6b]">
-                        {FIELD_TYPE_META[f.type].icon}
-                      </span>
-                      {f.name}
-                    </button>
+                    <ColumnMenu
+                      field={f}
+                      open={menuPola === f.id}
+                      // Kolumna czekająca na odpowiedź serwera (tymczasowe id) nie ma jeszcze menu
+                      onOpenChange={(o) => {
+                        if (o && f.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+                        setMenuPola(o ? f.id : null);
+                      }}
+                      canHide={widocznePola.length > 1}
+                      summary={settings.column_summaries[f.id]}
+                      onCloseAutoFocus={(e) => {
+                        if (bezZwrotuFokusu.current) {
+                          e.preventDefault();
+                          bezZwrotuFokusu.current = false;
+                        }
+                      }}
+                      onRename={(nazwa) => void store.patchField(f, { name: nazwa })}
+                      onPickType={(typ) => {
+                        const plan = store.planTypeChangeFor(f, typ);
+                        if (!plan) return;
+                        if (plan.lost > 0) setZmianaTypu({ field: f, type: typ, plan });
+                        else void store.applyTypeChange(f, typ, plan, false);
+                      }}
+                      onSort={(dir) => void store.patchSettings({ sort: [{ field_id: f.id, dir }] })}
+                      onFilter={() => {
+                        bezZwrotuFokusu.current = true;
+                        store.setTempFilters([...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }]);
+                        setFiltrOtwarty(true);
+                      }}
+                      onSummary={(kind) => {
+                        const nowe = { ...settings.column_summaries };
+                        if (kind === "none") delete nowe[f.id];
+                        else nowe[f.id] = { kind };
+                        void store.patchSettings({ column_summaries: nowe });
+                      }}
+                      onToggleCalendar={() =>
+                        void store.patchField(f, {
+                          config: { ...f.config, show_in_calendar: f.config.show_in_calendar !== true },
+                        })
+                      }
+                      onHide={() =>
+                        void store.patchSettings({ hidden_field_ids: [...settings.hidden_field_ids, f.id] })
+                      }
+                      onDelete={() => void store.removeField(f)}
+                    />
                     {f.type === "date" && f.config.show_in_calendar === true && (
                       <span className="ml-1.5 rounded-[4px] border border-[#bbe5cc] px-[5px] py-px font-mono text-[10px] text-[#15803d]">
                         w kalendarzu
@@ -231,15 +304,14 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
                       </td>
                     );
                   }
-                  const podsumowanie = settings.column_summaries[f.id];
-                  const tekst = podsumowanie ? summarize(f, widoczneWiersze, podsumowanie, today) : "";
                   return (
-                    <td
+                    <SummaryCell
                       key={f.id}
-                      className={`px-3.5 py-2.5 font-mono ${podsumowanie?.kind === "avg" ? "text-[#171717]" : "text-[#6b6b6b]"}`}
-                    >
-                      {tekst}
-                    </td>
+                      field={f}
+                      rows={widoczneWiersze}
+                      summary={settings.column_summaries[f.id]}
+                      today={today}
+                    />
                   );
                 })}
                 <td />
@@ -248,6 +320,17 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
           </table>
         </div>
       </div>
+
+      {zmianaTypu && (
+        <TypeChangeDialog
+          lost={zmianaTypu.plan.lost}
+          onCancel={() => setZmianaTypu(null)}
+          onConfirm={async () => {
+            const udane = await store.applyTypeChange(zmianaTypu.field, zmianaTypu.type, zmianaTypu.plan, true);
+            if (udane) setZmianaTypu(null);
+          }}
+        />
+      )}
 
       <MRowSheet
         open={editing !== null && wArkuszu}

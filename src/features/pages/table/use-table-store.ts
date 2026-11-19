@@ -9,12 +9,22 @@ import { toast } from "sonner";
 import {
   addField as addFieldAction,
   addRow,
+  changeFieldType,
+  deleteField,
   deleteRow,
   restoreRow,
   saveTableSettings,
+  updateField,
   updateRow,
 } from "../actions";
-import { normalizeValue, type CellValue, type FieldConfig, type FieldType, type PageField } from "../fields";
+import {
+  normalizeValue,
+  planTypeChange,
+  type CellValue,
+  type FieldConfig,
+  type FieldType,
+  type PageField,
+} from "../fields";
 import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU } from "../messages";
 import type { FilterCond, PageRow, TableSettings } from "../table-model";
@@ -270,6 +280,134 @@ export function useTableStore(block: LoadedBlock) {
     }
   }
 
+  // Plan zmiany typu kolumny z menu; null, gdy któryś wiersz czeka jeszcze na odpowiedź serwera
+  // (zapisałby zmiany w starym typie)
+  function planTypeChangeFor(field: PageField, type: FieldType) {
+    if (rows.some((r) => r.id.startsWith(PREFIKS_TYMCZASOWY))) return null;
+    return planTypeChange(
+      field,
+      type,
+      rows.map((r) => ({ id: r.id, values: r.values })),
+    );
+  }
+
+  // Zapis nowego typu: wartości wszystkich wierszy i pole w jednym RPC. Bez strat — od razu
+  // (błąd cofa tylko tę kolumnę), ze stratą — dopiero po odpowiedzi serwera (okno potwierdzenia czeka)
+  async function applyTypeChange(
+    field: PageField,
+    type: FieldType,
+    plan: NonNullable<ReturnType<typeof planTypeChangeFor>>,
+    czekajNaSerwer: boolean,
+  ): Promise<boolean> {
+    const stareWartosci = new Map(rows.map((r) => [r.id, r.values[field.id]]));
+    const zastosuj = () => {
+      setFields((l) => l.map((f) => (f.id === field.id ? { ...f, type, config: plan.config } : f)));
+      setRows((l) =>
+        l.map((r) =>
+          r.id in plan.values ? { ...r, values: { ...r.values, [field.id]: plan.values[r.id] } } : r,
+        ),
+      );
+    };
+    if (!czekajNaSerwer) zastosuj();
+
+    const wartosci: Record<string, CellValue> = {};
+    for (const [id, v] of Object.entries(plan.values)) {
+      if (!id.startsWith(PREFIKS_TYMCZASOWY)) wartosci[id] = v;
+    }
+    polaWToku.current += 1;
+    let udane = false;
+    try {
+      udane = (await changeFieldType(field.id, type, plan.config, wartosci)).ok;
+    } catch {
+      udane = false;
+    }
+    polaWToku.current -= 1;
+    if (!udane) {
+      if (!czekajNaSerwer) {
+        setFields((l) =>
+          l.map((f) => (f.id === field.id ? { ...f, type: field.type, config: field.config } : f)),
+        );
+        setRows((l) =>
+          l.map((r) =>
+            stareWartosci.has(r.id)
+              ? { ...r, values: { ...r.values, [field.id]: stareWartosci.get(r.id) } }
+              : r,
+          ),
+        );
+      }
+      toast.error(BLAD_ZAPISU);
+      return false;
+    }
+    if (czekajNaSerwer) zastosuj();
+    return true;
+  }
+
+  // Zmiana nazwy albo konfiguracji pola (np. „Pokaż w kalendarzu”): od razu lokalnie, błąd cofa
+  async function patchField(field: PageField, patch: { name?: string; config?: FieldConfig }) {
+    setFields((l) => l.map((f) => (f.id === field.id ? { ...f, ...patch } : f)));
+    polaWToku.current += 1;
+    let udane = false;
+    try {
+      udane = (await updateField(field.id, patch)).ok;
+    } catch {
+      udane = false;
+    }
+    polaWToku.current -= 1;
+    if (!udane) {
+      setFields((l) =>
+        l.map((f) =>
+          f.id === field.id
+            ? {
+                ...f,
+                ...(patch.name !== undefined ? { name: field.name } : {}),
+                ...(patch.config !== undefined ? { config: field.config } : {}),
+              }
+            : f,
+        ),
+      );
+      toast.error(BLAD_ZAPISU);
+    }
+  }
+
+  // „Usuń pole”: kolumna znika od razu razem ze śladami w ustawieniach (jak w RPC delete_field);
+  // błąd przywraca pole i ustawienia
+  async function removeField(field: PageField) {
+    if (field.isTitle || field.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+    const poprzednieUstawienia = settings;
+    setFields((l) => l.filter((f) => f.id !== field.id));
+    setSettings((s) => ({
+      ...s,
+      sort: s.sort.filter((k) => k.field_id !== field.id),
+      filters: s.filters.filter((c) => c.field_id !== field.id),
+      hidden_field_ids: s.hidden_field_ids.filter((id) => id !== field.id),
+      column_summaries: Object.fromEntries(
+        Object.entries(s.column_summaries).filter(
+          ([id, podsumowanie]) => id !== field.id && podsumowanie.where?.field_id !== field.id,
+        ),
+      ),
+      pinned_cards: s.pinned_cards.filter(
+        (c) =>
+          c.field_id !== field.id && c.date_field_id !== field.id && c.title_field_id !== field.id,
+      ),
+    }));
+    setTempFilters((t) => (t ? t.filter((c) => c.field_id !== field.id) : t));
+    polaWToku.current += 1;
+    ustawieniaWToku.current += 1;
+    let udane = false;
+    try {
+      udane = (await deleteField(field.id)).ok;
+    } catch {
+      udane = false;
+    }
+    polaWToku.current -= 1;
+    ustawieniaWToku.current -= 1;
+    if (!udane) {
+      setFields((l) => (l.some((f) => f.id === field.id) ? l : [...l, field]));
+      setSettings(poprzednieUstawienia);
+      toast.error(BLAD_ZAPISU);
+    }
+  }
+
   return {
     fields: posortowanePola,
     rows,
@@ -285,5 +423,9 @@ export function useTableStore(block: LoadedBlock) {
     addField,
     patchSettings,
     setTempFilters,
+    planTypeChangeFor,
+    applyTypeChange,
+    patchField,
+    removeField,
   };
 }
