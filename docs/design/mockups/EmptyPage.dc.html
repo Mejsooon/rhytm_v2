@@ -68,7 +68,18 @@ tr:hover .row-del,.row-del:focus-visible,.row-wrap:hover .row-del{opacity:1}
 
     <div style="padding: 28px 24px 160px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
-        <button type="button" aria-label="Zmień ikonę" style="width: 40px; height: 40px; border: 1px dashed #d4d4d4; border-radius: 8px; background: #fafafa; color: #6b6b6b; font: inherit; cursor: pointer">▦</button>
+        <div style="position: relative; flex: none">
+          <button type="button" aria-label="Zmień ikonę" aria-haspopup="dialog" aria-expanded="{{iconExp}}" onClick="{{toggleIcons}}" style="{{iconBtnS}}">{{pageIcon}}</button>
+          <sc-if value="{{iconOpen}}" hint-placeholder-val="{{false}}">
+            <button type="button" aria-label="Zamknij wybór ikony" tabindex="-1" onClick="{{toggleIcons}}" style="position: fixed; inset: 0; z-index: 25; border: 0; padding: 0; margin: 0; background: transparent; cursor: default"></button>
+            <div role="dialog" aria-label="Wybór ikony" style="position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; width: 236px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+              <input class="inp" type="text" placeholder="Szukaj ikony" aria-label="Szukaj ikony">
+              <div class="mono" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; font-size: 15px; text-align: center">
+                <sc-for list="{{icons}}" as="ic" hint-placeholder-count="18"><button type="button" aria-label="Ikona {{ic.g}}" onClick="{{ic.pick}}" style="{{ic.s}}">{{ic.g}}</button></sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
         <input type="text" value="{{title}}" onChange="{{onTitle}}" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #171717; flex: 1; min-width: 0; background: transparent">
       </div>
 
@@ -386,6 +397,16 @@ class Component extends DCLogic {
 
     return {
       title: S.title || '', crumb: S.title || 'Bez tytułu',
+      // Ikona strony: klik otwiera siatkę 18 ikon, jak w menu strony w sidebarze.
+      pageIcon: S.icon || '▦',
+      iconOpen: !!S.iconOpen, iconExp: S.iconOpen ? 'true' : 'false',
+      toggleIcons: () => this.setState({ iconOpen: !S.iconOpen }),
+      iconBtnS: 'width:40px;height:40px;border-radius:8px;font:inherit;font-size:18px;cursor:pointer;' + (S.icon ? 'border:1px solid #eaeaea;background:#ffffff;color:#171717' : 'border:1px dashed #d4d4d4;background:#fafafa;color:#6b6b6b'),
+      icons: ['▦', '▤', '◉', '★', '♪', '✈', '⌂', '✎', '⚑', '◷', '✱', '☰', '⚙', '◆', '●', '▲', '♥', '✉'].map((g) => ({
+        g,
+        s: 'height:32px;border-radius:6px;font:inherit;cursor:pointer;' + (S.icon === g ? 'border:1px solid #171717;background:#f5f5f5' : 'border:0;background:transparent'),
+        pick: () => this.setState({ icon: g, iconOpen: false })
+      })),
       onTitle: (e) => this.setState({ title: e.target.value }),
       blocks, isEmpty: !B.length,
       cmd, q: q || '',
