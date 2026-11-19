@@ -73,12 +73,20 @@ export function ColumnMenu({
     aktualne = NAZWY_PODSUMOWAN[summary.kind as SummaryKind] ?? "Brak";
   }
 
+  // Nazwa już wysłana (blur i zamknięcie menu nie zapisują jej dwa razy)
+  const wyslana = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    wyslana.current = null;
+  }, [field.name]);
+
   function zapiszNazwe() {
     const czysta = nazwa.trim();
     if (czysta === "" || czysta === field.name) {
       setNazwa(field.name);
       return;
     }
+    if (czysta === wyslana.current) return;
+    wyslana.current = czysta;
     onRename(czysta);
   }
 
@@ -93,7 +101,10 @@ export function ColumnMenu({
     <ActionPopover
       open={open}
       onOpenChange={(o) => {
-        if (!o) setPodmenu(null);
+        if (!o) {
+          setPodmenu(null);
+          zapiszNazwe();
+        }
         onOpenChange(o);
       }}
       width={250}

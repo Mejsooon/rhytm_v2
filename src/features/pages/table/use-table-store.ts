@@ -260,7 +260,7 @@ export function useTableStore(block: LoadedBlock) {
   }
 
   // Zmiana ustawień (sort, ukryte kolumny, podsumowania…): od razu lokalnie, błąd cofa te klucze
-  async function patchSettings(patch: Partial<TableSettings>) {
+  async function patchSettings(patch: Partial<TableSettings>): Promise<boolean> {
     const poprzednie: Partial<TableSettings> = {};
     for (const k of Object.keys(patch) as (keyof TableSettings)[]) {
       (poprzednie as Record<string, unknown>)[k] = settings[k];
@@ -278,6 +278,7 @@ export function useTableStore(block: LoadedBlock) {
       setSettings((s) => ({ ...s, ...poprzednie }));
       toast.error(BLAD_ZAPISU);
     }
+    return udane;
   }
 
   // Plan zmiany typu kolumny z menu; null, gdy któryś wiersz czeka jeszcze na odpowiedź serwera
@@ -324,12 +325,17 @@ export function useTableStore(block: LoadedBlock) {
     polaWToku.current -= 1;
     if (!udane) {
       if (!czekajNaSerwer) {
+        // Cofamy tylko to, co nadal jest ze zmiany: równoległa edycja komórki albo pola zostaje
         setFields((l) =>
-          l.map((f) => (f.id === field.id ? { ...f, type: field.type, config: field.config } : f)),
+          l.map((f) =>
+            f.id === field.id && f.type === type && f.config === plan.config
+              ? { ...f, type: field.type, config: field.config }
+              : f,
+          ),
         );
         setRows((l) =>
           l.map((r) =>
-            stareWartosci.has(r.id)
+            stareWartosci.has(r.id) && Object.is(r.values[field.id], plan.values[r.id])
               ? { ...r, values: { ...r.values, [field.id]: stareWartosci.get(r.id) } }
               : r,
           ),
@@ -373,12 +379,25 @@ export function useTableStore(block: LoadedBlock) {
   // błąd przywraca pole i ustawienia
   async function removeField(field: PageField) {
     if (field.isTitle || field.id.startsWith(PREFIKS_TYMCZASOWY)) return;
-    const poprzednieUstawienia = settings;
+    // Wpisy ustawień i filtru tymczasowego, które usunięcie zabiera — tylko je cofamy przy błędzie
+    const nalezy = (id: string) => id === field.id;
+    const zabranySort = settings.sort.filter((k) => nalezy(k.field_id));
+    const sortPoUsunieciu = JSON.stringify(settings.sort.filter((k) => !nalezy(k.field_id)));
+    const zabraneFiltry = settings.filters.filter((c) => nalezy(c.field_id));
+    const zabranyUkryty = settings.hidden_field_ids.includes(field.id);
+    const zabranePodsumowania = Object.entries(settings.column_summaries).filter(
+      ([id, p]) => nalezy(id) || p.where?.field_id === field.id,
+    );
+    const zabraneKarty = settings.pinned_cards.filter(
+      (c) => nalezy(c.field_id) || c.date_field_id === field.id || c.title_field_id === field.id,
+    );
+    const zabraneFiltryTymczasowe = (tempFilters ?? []).filter((c) => nalezy(c.field_id));
+
     setFields((l) => l.filter((f) => f.id !== field.id));
     setSettings((s) => ({
       ...s,
-      sort: s.sort.filter((k) => k.field_id !== field.id),
-      filters: s.filters.filter((c) => c.field_id !== field.id),
+      sort: s.sort.filter((k) => !nalezy(k.field_id)),
+      filters: s.filters.filter((c) => !nalezy(c.field_id)),
       hidden_field_ids: s.hidden_field_ids.filter((id) => id !== field.id),
       column_summaries: Object.fromEntries(
         Object.entries(s.column_summaries).filter(
@@ -390,7 +409,7 @@ export function useTableStore(block: LoadedBlock) {
           c.field_id !== field.id && c.date_field_id !== field.id && c.title_field_id !== field.id,
       ),
     }));
-    setTempFilters((t) => (t ? t.filter((c) => c.field_id !== field.id) : t));
+    setTempFilters((t) => (t ? t.filter((c) => !nalezy(c.field_id)) : t));
     polaWToku.current += 1;
     ustawieniaWToku.current += 1;
     let udane = false;
@@ -403,7 +422,24 @@ export function useTableStore(block: LoadedBlock) {
     ustawieniaWToku.current -= 1;
     if (!udane) {
       setFields((l) => (l.some((f) => f.id === field.id) ? l : [...l, field]));
-      setSettings(poprzednieUstawienia);
+      setSettings((s) => ({
+        ...s,
+        // Sort wraca tylko, jeśli w międzyczasie nie został zmieniony
+        sort: JSON.stringify(s.sort) === sortPoUsunieciu ? [...s.sort, ...zabranySort] : s.sort,
+        filters: [...s.filters, ...zabraneFiltry],
+        hidden_field_ids:
+          zabranyUkryty && !s.hidden_field_ids.includes(field.id)
+            ? [...s.hidden_field_ids, field.id]
+            : s.hidden_field_ids,
+        column_summaries: {
+          ...Object.fromEntries(zabranePodsumowania.filter(([id]) => !(id in s.column_summaries))),
+          ...s.column_summaries,
+        },
+        pinned_cards: [...s.pinned_cards, ...zabraneKarty],
+      }));
+      if (zabraneFiltryTymczasowe.length > 0) {
+        setTempFilters((t) => (t ? [...t, ...zabraneFiltryTymczasowe] : t));
+      }
       toast.error(BLAD_ZAPISU);
     }
   }

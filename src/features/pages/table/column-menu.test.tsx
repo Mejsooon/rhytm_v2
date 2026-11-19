@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -265,5 +265,89 @@ describe("menu kolumny", () => {
     expect(within(filtr).getByRole("button", { name: "Pole warunku 1" }).textContent).toContain("Autor");
     expect(within(filtr).getByRole("button", { name: "Operator warunku 1" }).textContent).toContain("zawiera");
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+  });
+
+  describe("wyścigi przy błędzie zapisu", () => {
+    it("nieudane usunięcie pola cofa tylko swoje ślady — sort zmieniony w międzyczasie zostaje", async () => {
+      const user = userEvent.setup();
+      let odrzuc!: (v: { ok: false; message: string }) => void;
+      actions.deleteField.mockReturnValue(new Promise((r) => (odrzuc = r)));
+      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      const menu = await otworzMenu(user, "Przeczytana");
+      await user.click(within(menu).getByRole("menuitem", { name: "Usuń pole" }));
+      expect(screen.queryByRole("columnheader", { name: /Przeczytana/ })).not.toBeInTheDocument();
+
+      const menuAutora = await otworzMenu(user, "Autor");
+      await user.click(within(menuAutora).getByRole("menuitem", { name: "Sortuj rosnąco" }));
+      expect(screen.getByText(/· sort: autor$/)).toBeInTheDocument();
+
+      await act(async () => odrzuc({ ok: false, message: "x" }));
+      expect(screen.getByRole("columnheader", { name: /Przeczytana/ })).toBeInTheDocument();
+      expect(screen.getByText(/· sort: autor$/)).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
+    });
+
+    it("nieudane usunięcie pola przywraca jego warunki w filtrze tymczasowym", async () => {
+      const user = userEvent.setup();
+      let odrzuc!: (v: { ok: false; message: string }) => void;
+      actions.deleteField.mockReturnValue(new Promise((r) => (odrzuc = r)));
+      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      const menu = await otworzMenu(user, "Autor");
+      await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
+      expect(await screen.findByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+      await user.keyboard("{Escape}");
+      const menu2 = await otworzMenu(user, "Autor");
+      await user.click(within(menu2).getByRole("menuitem", { name: "Usuń pole" }));
+      expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
+      await act(async () => odrzuc({ ok: false, message: "x" }));
+      expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+    });
+
+    it("nieudana zmiana typu bez strat nie nadpisuje komórki edytowanej w międzyczasie", async () => {
+      const user = userEvent.setup();
+      let odrzuc!: (v: { ok: false; message: string }) => void;
+      actions.changeFieldType.mockReturnValue(new Promise((r) => (odrzuc = r)));
+      render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+      const menu = await otworzMenu(user, "Repo");
+      await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
+      await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
+
+      await user.click(within(screen.getAllByRole("row").find((r) => r.textContent?.includes("rhytm v3")) as HTMLElement).getByRole("button", { name: "Edytuj wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Repo" }), "!");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+
+      await act(async () => odrzuc({ ok: false, message: "x" }));
+      expect(within(naglowek("Repo")).getByText("↗")).toBeInTheDocument();
+      expect(screen.getByText(/rhytm-v3!/)).toBeInTheDocument();
+    });
+  });
+
+  it("zmiana typu przy wierszu czekającym na serwer pokazuje toast zamiast milczeć", async () => {
+    const user = userEvent.setup();
+    actions.addRow.mockReturnValue(new Promise(() => {}));
+    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+    await user.type(screen.getByRole("textbox", { name: "Nazwa" }), "Nowy");
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+    const menu = await otworzMenu(user, "Repo");
+    await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
+    await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
+    expect(toast.error).toHaveBeenCalledWith("Poczekaj, aż wiersze się zapiszą.");
+    expect(actions.changeFieldType).not.toHaveBeenCalled();
+  });
+
+  it("nazwa kolumny zapisuje się też przy zamknięciu menu bez blur", async () => {
+    const user = userEvent.setup();
+    const dane = stronaTestowa("books", "Books", BOOKS);
+    render(<TemplatePageView data={dane} />);
+    const menu = await otworzMenu(user, "Autor");
+    const pole = within(menu).getByRole("textbox", { name: "Nazwa kolumny" });
+    await user.clear(pole);
+    await user.type(pole, "Pisarz");
+    await user.keyboard("{Escape}");
+    const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
+    await waitFor(() => expect(actions.updateField).toHaveBeenCalledWith(autor.id, { name: "Pisarz" }));
+    expect(actions.updateField).toHaveBeenCalledTimes(1);
   });
 });

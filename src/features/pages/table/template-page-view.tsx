@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 
 import { operatorsFor } from "../table-model";
 import { planTypeChange, type FieldType, type PageField } from "../fields";
@@ -128,8 +129,10 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
             onOpenChange={setFiltrOtwarty}
             onChange={store.setTempFilters}
             onSave={() => {
-              void store.patchSettings({ filters: filtry });
-              store.setTempFilters(null);
+              // Filtr tymczasowy znika dopiero po udanym zapisie
+              void store.patchSettings({ filters: filtry }).then((udane) => {
+                if (udane) store.setTempFilters(null);
+              });
             }}
             triggerClassName={btn}
           />
@@ -209,7 +212,10 @@ export function TemplatePageView({ data }: { data: LoadedPage }) {
                       onRename={(nazwa) => void store.patchField(f, { name: nazwa })}
                       onPickType={(typ) => {
                         const plan = store.planTypeChangeFor(f, typ);
-                        if (!plan) return;
+                        if (!plan) {
+                          toast.error("Poczekaj, aż wiersze się zapiszą.");
+                          return;
+                        }
                         if (plan.lost > 0) setZmianaTypu({ field: f, type: typ, plan });
                         else void store.applyTypeChange(f, typ, plan, false);
                       }}
