@@ -39,12 +39,12 @@ nav a:hover{background:#f5f5f5;color:#171717}
     <a href="NewPage.dc.html" aria-label="Dodaj stronę" style="color: #666666; display: flex; padding: 2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
   </div>
   <sc-for list="{{pages}}" as="p" hint-placeholder-count="6">
-  <div style="position: relative" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
+  <div draggable="{{p.draggable}}" onDragStart="{{p.dragStart}}" onDragOver="{{p.dragOver}}" onDrop="{{p.drop}}" onDragEnd="{{dragEnd}}" style="{{p.rowS}}" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
     <sc-if value="{{p.editing}}" hint-placeholder-val="{{false}}">
       <input type="text" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}" style="box-sizing: border-box; width: 100%; height: 32px; padding: 0 8px; border: 1px solid #171717; border-radius: 6px; background: #ffffff; font: inherit; font-size: 14px; color: #171717; outline: none">
     </sc-if>
     <sc-if value="{{p.notEditing}}" hint-placeholder-val="{{true}}">
-      <a href="{{p.href}}" style="{{p.s}}">
+      <a href="{{p.href}}" draggable="false" style="{{p.s}}">
         <dc-import name="PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
         <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
         <sc-if value="{{p.fav}}" hint-placeholder-val="{{false}}"><span aria-label="Ulubiona" style="font-size: 11px; color: #a16207; margin-right: 22px">★</span></sc-if>
@@ -61,7 +61,6 @@ nav a:hover{background:#f5f5f5;color:#171717}
             <button type="button" role="menuitem" class="mi" onClick="{{startRename}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">✎</span><span style="flex: 1">Zmień nazwę</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b">F2</span></button>
             <button type="button" role="menuitem" class="mi" onClick="{{showIcons}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">◇</span><span style="flex: 1">Zmień ikonę</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b">›</span></button>
             <button type="button" role="menuitem" class="mi" onClick="{{duplicate}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">⧉</span><span style="flex: 1">Duplikuj</span></button>
-            <div class="mi" style="cursor: default"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">⇅</span><span style="flex: 1">Przenieś wyżej / niżej</span><button type="button" aria-label="Przenieś wyżej" onClick="{{moveUp}}" disabled="{{upOff}}" style="{{upS}}">↑</button><button type="button" aria-label="Przenieś niżej" onClick="{{moveDown}}" disabled="{{downOff}}" style="{{downS}}">↓</button></div>
             <button type="button" role="menuitem" class="mi" onClick="{{toggleFav}}"><span aria-hidden="true" style="width: 18px; color: #a16207; font-family: 'Geist Mono', monospace">★</span><span style="flex: 1">{{favLabel}}</span></button>
             <div style="height: 1px; background: #eaeaea; margin: 6px 4px"></div>
             <button type="button" role="menuitem" class="mi" onClick="{{askDelete}}" style="color: #b91c1c"><span aria-hidden="true" style="width: 18px; font-family: 'Geist Mono', monospace">✕</span><span style="flex: 1">Usuń stronę</span></button>
@@ -141,7 +140,6 @@ class Component extends DCLogic {
     const menu = st.menu || null;
     const tryb = st.mode || 'list';
     const otwarta = zywe.find((p) => p.k === menu) || null;
-    const idx = otwarta ? zywe.indexOf(otwarta) : -1;
     const nazwa = (p) => ((st.names || {})[p.k] ?? p.name) || 'Bez tytułu';
     const odmiana = (n) => {
       const d = n % 10;
@@ -150,15 +148,15 @@ class Component extends DCLogic {
       if (d >= 2 && d <= 4 && !(s100 >= 12 && s100 <= 14)) return n + ' wiersze trafią';
       return n + ' wierszy trafi';
     };
-    const przesun = (o) => {
-      const ids = zywe.map((p) => p.k);
-      const j = idx + o;
-      if (idx < 0 || j < 0 || j >= ids.length) return;
-      [ids[idx], ids[j]] = [ids[j], ids[idx]];
-      const nowa = ids.map((k) => lista.find((p) => p.k === k)).concat(lista.filter((p) => ids.indexOf(p.k) < 0));
-      this.setState({ list: nowa });
+    // Przeciąganie: strona upuszczona nad/pod inną stroną trafia w to miejsce.
+    const upusc = (cel, po) => {
+      const zrodlo = st.drag;
+      if (!zrodlo || zrodlo === cel) { this.setState({ drag: null, over: null }); return; }
+      const bez = lista.filter((x) => x.k !== zrodlo);
+      const i = bez.findIndex((x) => x.k === cel);
+      bez.splice(po ? i + 1 : i, 0, lista.find((x) => x.k === zrodlo));
+      this.setState({ list: bez, drag: null, over: null });
     };
-    const mini = (off) => 'width:26px;height:26px;border:0;border-radius:5px;background:transparent;font:inherit;color:' + (off ? '#c4c4c4' : '#404040') + ';cursor:' + (off ? 'default' : 'pointer');
 
     const pages = zywe.map((p) => {
       const ikona = (st.icons || {})[p.k] || p.icon || null;
@@ -180,6 +178,25 @@ class Component extends DCLogic {
         menuExp: isOpen ? 'true' : 'false',
         menuLabel: 'Menu strony ' + nazwa(p),
         s: base + 'padding-right:32px;' + (isActive ? 'background:#f0f0f0;color:#171717;font-weight:500;' : (hov || isOpen ? 'background:#f5f5f5;color:#171717;' : 'color:#666666;')),
+        draggable: editing ? 'false' : 'true',
+        rowS: 'position:relative;border-radius:6px;' + (st.drag === p.k ? 'opacity:.45;' : '') + (st.over && st.over.k === p.k && st.drag !== p.k ? (st.over.po ? 'box-shadow:inset 0 -2px 0 #171717;' : 'box-shadow:inset 0 2px 0 #171717;') : ''),
+        dragStart: (e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', p.k);
+          this.setState({ drag: p.k, menu: null });
+        },
+        dragOver: (e) => {
+          if (!st.drag) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          const r = e.currentTarget.getBoundingClientRect();
+          const po = e.clientY > r.top + r.height / 2;
+          if (!st.over || st.over.k !== p.k || st.over.po !== po) this.setState({ over: { k: p.k, po } });
+        },
+        drop: (e) => {
+          e.preventDefault();
+          upusc(p.k, !!(st.over && st.over.k === p.k && st.over.po));
+        },
         enter: () => this.setState({ hov: p.k }),
         toggleMenu: () => this.setState({ menu: isOpen ? null : p.k, mode: 'list' })
       };
@@ -197,6 +214,7 @@ class Component extends DCLogic {
     return {
       s, en, pages,
       lv: () => this.setState({ hov: null }),
+      dragEnd: () => this.setState({ drag: null, over: null }),
       mh: this.props.minHeight ?? 900,
       anyMenu: !!otwarta,
       modeList: tryb === 'list',
@@ -227,12 +245,6 @@ class Component extends DCLogic {
         if (ic[otwarta.k] !== undefined) ic[kopia.k] = ic[otwarta.k];
         this.setState({ list: nowa, icons: ic, menu: null });
       },
-      moveUp: () => przesun(-1),
-      moveDown: () => przesun(1),
-      upOff: idx <= 0,
-      downOff: idx < 0 || idx >= zywe.length - 1,
-      upS: mini(idx <= 0),
-      downS: mini(idx < 0 || idx >= zywe.length - 1),
       favLabel: otwarta && (st.fav || {})[otwarta.k] ? 'Usuń z ulubionych' : 'Dodaj do ulubionych',
       toggleFav: () => {
         const f = Object.assign({}, st.fav || {});
