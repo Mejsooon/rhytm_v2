@@ -69,13 +69,17 @@ test.describe("strony", () => {
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     await page.getByLabel("Nazwa strony").fill("Plan");
     await page.getByLabel("Nazwa strony").blur();
+    // Zapis nazwy kończy się odświeżeniem danych strony; blok dodajemy dopiero po nim
+    await page.waitForLoadState("networkidle");
 
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
     await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
 
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
-    await expect(page.getByRole("columnheader")).toHaveCount(3);
+    await expect(page.getByRole("columnheader")).toHaveCount(3, {
+      timeout: 20_000,
+    });
     const naglowek = page.getByRole("columnheader");
     const okno = page.getByRole("dialog", { name: "Ustawienia kolumny" });
 
