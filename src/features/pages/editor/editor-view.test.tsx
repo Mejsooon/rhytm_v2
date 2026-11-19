@@ -110,7 +110,7 @@ describe("EditorView", () => {
     expect(screen.queryByRole("listbox", { name: "Bloki" })).toBeNull();
   });
 
-  it("„/tab” zostawia Tabelę, a wstawiona tabela pokazuje „Tabela bez nazwy”", async () => {
+  it("„/tab” zostawia Tabelę, a wstawiona tabela ma pole nazwy z placeholderem „Tabela bez nazwy”", async () => {
     const user = userEvent.setup();
     addBlock.mockResolvedValue({ ok: true, block: blok("t1", "table", 0, { name: "" }) });
     render(<EditorView data={dane([])} />);
@@ -118,7 +118,8 @@ describe("EditorView", () => {
     expect(screen.getAllByRole("option")).toHaveLength(1);
     await user.keyboard("{Enter}");
     await waitFor(() => expect(addBlock).toHaveBeenCalledWith("p1", "table", undefined));
-    expect(await screen.findByText("Tabela bez nazwy")).toBeInTheDocument();
+    const nazwa = await screen.findByRole("textbox", { name: "Nazwa tabeli" });
+    expect(nazwa).toHaveAttribute("placeholder", "Tabela bez nazwy");
   });
 
   it("Enter na zwykłym tekście wstawia akapit na końcu i czyści pole", async () => {

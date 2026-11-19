@@ -13,7 +13,7 @@ import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import { BLAD_ZAPISU } from "../messages";
 import { CommandLine } from "./command-line";
-import { TableBlockPlaceholder } from "./table-block-placeholder";
+import { TableBlock } from "./table-block";
 import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
 import { useEditorStore } from "./use-editor-store";
@@ -144,7 +144,7 @@ export function EditorView({ data }: { data: LoadedPage }) {
               />
             )}
             {b.type === "divider" && <hr className="my-3 border-0 border-t border-[#eaeaea]" />}
-            {b.type === "table" && <TableBlockPlaceholder block={b} />}
+            {b.type === "table" && <TableBlock block={b} editable="cell" today={data.today} />}
             <button
               type="button"
               aria-label="Usuń blok"
