@@ -325,6 +325,12 @@ describe("stopki z szablonów (teksty z makiet)", () => {
     expect(stopka(k, "Status", k.rows)).toBe("7 przeczytanych");
     expect(stopka(k, "Ocena", k.rows)).toBe("śr. 4,1");
     expect(stopka(k, "Przeczytana", k.rows)).toBe("6 w tym roku");
+    // Wiersz „Czytam” z datą z 2026 nie wchodzi do licznika (tylko Status = Przeczytane)
+    const czytamZData = wiersz(12, {
+      [k.pole("Status").id]: k.opcja("Status", "Czytam"),
+      [k.pole("Przeczytana").id]: "2026-05-05",
+    });
+    expect(stopka(k, "Przeczytana", [...k.rows, czytamZData])).toBe("6 w tym roku");
     expect(stopka(k, "Status", k.rows.slice(0, 3))).toBe("1 przeczytana");
     expect(stopka(k, "Status", k.rows.slice(0, 5))).toBe("3 przeczytane");
   });

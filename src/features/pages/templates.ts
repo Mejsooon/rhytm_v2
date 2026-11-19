@@ -47,7 +47,7 @@ export type TemplateConfig = {
   cards: TemplateCard[];
   sort: { field: string; dir: "asc" | "desc" }[];
   // Stopki kolumn po kluczu pola; option wskazuje klucz opcji tego pola
-  summaries: Record<string, { kind: ColumnSummary["kind"]; option?: string; unit?: [string, string, string] }>;
+  summaries: Record<string, { kind: ColumnSummary["kind"]; option?: string; unit?: [string, string, string]; where?: { field: string; option: string } }>;
 };
 
 // Kolory plakietek z makiet na paletę 8 kolorów kategorii; neutralny szary zostaje #525252
@@ -111,7 +111,11 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     summaries: {
       status: { kind: "count_option", option: "read", unit: ["przeczytana", "przeczytane", "przeczytanych"] },
       rating: { kind: "avg" },
-      date: { kind: "count_in_year", unit: ["w tym roku", "w tym roku", "w tym roku"] },
+      date: {
+        kind: "count_in_year",
+        unit: ["w tym roku", "w tym roku", "w tym roku"],
+        where: { field: "status", option: "read" },
+      },
     },
   },
   projects: {
@@ -253,6 +257,9 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     const wpis: ColumnSummary = { kind: sm.kind };
     if (sm.option) wpis.option_id = idOpcji[`${k}.${sm.option}`];
     if (sm.unit) wpis.unit = sm.unit;
+    if (sm.where) {
+      wpis.where = { field_id: idPola[sm.where.field], option_id: idOpcji[`${sm.where.field}.${sm.where.option}`] };
+    }
     column_summaries[idPola[k]] = wpis;
   }
   const pinned_cards: PinnedCard[] = tpl.cards.map((c) => {

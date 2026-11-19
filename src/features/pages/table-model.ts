@@ -66,6 +66,8 @@ export type ColumnSummary = {
   kind: SummaryKind | "count_option" | "count_in_year";
   option_id?: string;
   unit?: [string, string, string];
+  // Dodatkowy warunek wierszy przed liczeniem: pole = opcja (np. Status = Przeczytane)
+  where?: { field_id: string; option_id: string };
 };
 
 export type TableSettings = {
@@ -210,7 +212,10 @@ export function summarize(
 ): string {
   const kind = summary.kind;
   const unit = summary.unit;
-  const zywe = rows.filter((r) => r.deletedAt === null);
+  const where = summary.where;
+  const zywe = rows.filter(
+    (r) => r.deletedAt === null && (!where || r.values[where.field_id] === where.option_id),
+  );
   const wartosci = zywe.map((r) => normalizeValue(field, r.values[field.id]));
   const wypelnione = wartosci.filter((v) => v !== null);
   const liczby = wypelnione.filter((v): v is number => typeof v === "number");

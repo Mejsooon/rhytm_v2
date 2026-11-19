@@ -35,7 +35,14 @@ describe("buildTemplateBlocks", () => {
       const polaId = new Set(blok.fields.map((f) => f.id));
       const opcjeId = new Set(blok.fields.flatMap((f) => f.config.options?.map((o) => o.id) ?? []));
       for (const s of settings.sort) expect(polaId.has(s.field_id)).toBe(true);
-      for (const id of Object.keys(settings.column_summaries)) expect(polaId.has(id)).toBe(true);
+      for (const [id, sm] of Object.entries(settings.column_summaries)) {
+        expect(polaId.has(id)).toBe(true);
+        if (sm.option_id) expect(opcjeId.has(sm.option_id)).toBe(true);
+        if (sm.where) {
+          expect(polaId.has(sm.where.field_id)).toBe(true);
+          expect(opcjeId.has(sm.where.option_id)).toBe(true);
+        }
+      }
       for (const c of settings.pinned_cards) {
         expect(polaId.has(c.field_id)).toBe(true);
         if (c.date_field_id) expect(polaId.has(c.date_field_id)).toBe(true);
