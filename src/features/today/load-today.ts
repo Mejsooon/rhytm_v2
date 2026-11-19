@@ -8,6 +8,7 @@ import {
 } from "@/features/calendar/load-calendar";
 import {
   expandOccurrences,
+  type BlockRow,
   type Occurrence,
 } from "@/features/calendar/occurrences";
 import { addDays } from "@/features/calendar/view-range";
@@ -49,6 +50,8 @@ export type TodayData = {
   today: IsoDate;
   nowMin: number;
   weekStartDate: IsoDate;
+  // Bloki tygodnia (okno edycji potrzebuje daty startu serii)
+  blocks: BlockRow[];
   occurrencesToday: Occurrence[];
   categories: CategoryRow[];
   // Z tygodnia + zaległe niezrobione + bez daty
@@ -204,6 +207,7 @@ export async function loadToday(
     today,
     nowMin,
     weekStartDate,
+    blocks: kalendarz.blocks,
     occurrencesToday: expandOccurrences(
       kalendarz.blocks,
       kalendarz.exceptions,

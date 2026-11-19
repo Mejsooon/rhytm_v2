@@ -201,6 +201,7 @@ export function WeekCard({
               {k.slupki.map((s, i) => (
                 <span
                   key={i}
+                  aria-hidden="true"
                   data-testid="slupek-dnia"
                   title={s.tytul}
                   className="block rounded-[2px]"

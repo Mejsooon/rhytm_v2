@@ -26,14 +26,17 @@ import { formatClockTime } from "@/lib/time/timezones";
 import type { CategoryRow } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
 import { recurrenceBadge } from "./recurrence-text";
-import type { CalendarChange } from "./use-calendar-store";
 import { weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const PREFIKS_TYMCZASOWY = "tmp-";
 
+// Dymek zmienia tylko zadania, więc działa z każdym magazynem, który je ma
+// (kalendarz: CalendarData, Dziś: TodayData)
+export type TasksChange = <D extends { tasks: TaskRow[] }>(data: D) => D;
+
 type ApplyOptimistic = (
-  zmiana: CalendarChange,
+  zmiana: TasksChange,
   akcja: () => Promise<ActionResult>,
 ) => Promise<boolean>;
 

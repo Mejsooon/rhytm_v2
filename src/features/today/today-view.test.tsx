@@ -2,19 +2,27 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createBlock, changeOccurrence, createCategory, refresh } = vi.hoisted(
-  () => ({
+const { createBlock, changeOccurrence, createCategory, refresh, toggleTask } =
+  vi.hoisted(() => ({
     createBlock: vi.fn(),
     changeOccurrence: vi.fn(),
     createCategory: vi.fn(),
     refresh: vi.fn(),
-  }),
-);
+    toggleTask: vi.fn(),
+  }));
 vi.mock("@/features/calendar/actions", () => ({
   createBlock,
   changeOccurrence,
 }));
 vi.mock("@/features/categories/actions", () => ({ createCategory }));
+vi.mock("@/features/tasks/actions", () => ({
+  toggleTask,
+  addTask: vi.fn(),
+  deleteTask: vi.fn(),
+  unpinTask: vi.fn(),
+  createStandaloneTask: vi.fn(),
+}));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, push: vi.fn() }),
 }));
@@ -41,6 +49,7 @@ function dane(counts: TodayData["counts"]): TodayData {
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
     weekStartDate: "2026-11-16",
+    blocks: [],
     occurrencesToday: [],
     categories: [],
     tasks: [
@@ -181,5 +190,53 @@ describe("TodayView", () => {
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("odhaczenie zadania w dymku bloku zmienia od razu „x/y” na osi i kafelek „Zadania”", async () => {
+    toggleTask.mockResolvedValue({ ok: true });
+    const d = dane(wszystko);
+    d.occurrencesToday = [
+      {
+        key: "b1:2026-11-17",
+        blockId: "b1",
+        date: "2026-11-17",
+        startMin: 10 * 60,
+        durationMin: 120,
+        title: "rhytm — kod",
+        categoryId: null,
+        note: null,
+        remind: false,
+        recurring: false,
+        recurrence: null,
+        modified: false,
+      },
+    ];
+    d.tasks.push({
+      id: "t3",
+      user_id: "u1",
+      title: "Testy RLS",
+      done: false,
+      due_date: "2026-11-17",
+      block_id: "b1",
+      position: 1,
+      done_at: null,
+      occurrence_date: "2026-11-17",
+      created_at: null,
+    });
+    render(<TodayView data={d} name="Mejson" />);
+    // Tydzień: 1 z 3, dziś 1/2; blok 0/1
+    expect(screen.getByText("1/3")).toBeInTheDocument();
+    expect(screen.getByText("33% · dziś 1/2")).toBeInTheDocument();
+    const blok = screen.getByRole("button", { name: /rhytm — kod/ });
+    expect(within(blok).getByText("0/1")).toBeInTheDocument();
+
+    await userEvent.click(blok);
+    const dymek = await screen.findByRole("dialog", {
+      name: "Szczegóły bloku",
+    });
+    await userEvent.click(within(dymek).getByLabelText("Testy RLS"));
+    expect(within(blok).getByText("1/1")).toBeInTheDocument();
+    expect(screen.getByText("2/3")).toBeInTheDocument();
+    expect(screen.getByText("67% · dziś 2/2")).toBeInTheDocument();
   });
 });

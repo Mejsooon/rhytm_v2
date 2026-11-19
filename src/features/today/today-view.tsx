@@ -1,7 +1,7 @@
 "use client";
 
 // Ekran Dziś (Today.dc.html web; EmptyToday.dc.html przed pierwszymi krokami).
-// Sekcje: nagłówek z „Nowy blok”, karta „Ten tydzień”, dalej plan dnia i zadania (Task 4).
+// Sekcje: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
 // Telefon (MToday, Task 5) dojdzie jako osobne drzewo za `max-[799px]:`; do tego czasu
 // drzewo web widać na każdej szerokości, żeby ekran nie był pusty.
 import { useState } from "react";
@@ -17,14 +17,26 @@ import {
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { DNI_PELNE, MIESIACE_DOP } from "@/features/calendar/mobile/pl";
 import { weekdayOf } from "@/features/calendar/view-range";
+import { DayPlan } from "./day-plan";
 import { EmptyToday } from "./empty-today";
 import { firstSteps } from "./first-steps";
 import type { TodayData } from "./load-today";
 import { isoWeekNumber, showFullToday, weekTiles } from "./model";
+import { TodayTasks } from "./today-tasks";
+import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
 
-export function TodayView({ data, name }: { data: TodayData; name: string }) {
+export function TodayView({
+  data: daneSerwera,
+  name,
+}: {
+  data: TodayData;
+  name: string;
+}) {
   const router = useRouter();
+  // Dane z optymistycznymi zmianami: plan dnia, „Zadania na dziś” i karta tygodnia
+  // liczą się z tych samych zadań, więc odhaczenie zmienia je naraz
+  const { data, applyOptimistic } = useTodayStore(daneSerwera);
   const { profile, today } = data;
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
@@ -127,7 +139,15 @@ export function TodayView({ data, name }: { data: TodayData; name: string }) {
           clock={profile.clock}
         />
 
-        {/* 2. Plan dnia (oś 00–24) i „Zadania na dziś” — Task 4 */}
+        {/* 2. Plan dnia (oś 00–24) */}
+        <DayPlan data={data} applyOptimistic={applyOptimistic} />
+
+        {/* 3. Samodzielne zadania na dziś, zaległe i bez daty */}
+        <TodayTasks
+          tasks={data.tasks}
+          today={today}
+          applyOptimistic={applyOptimistic}
+        />
       </div>
 
       {oknoBloku}
