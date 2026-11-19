@@ -296,4 +296,19 @@ describe("TodayView", () => {
     });
     expect(refresh).toHaveBeenCalledTimes(1);
   });
+
+  it("pływający „+” otwiera arkusz „Szybko dodaj”, a „Zamknij” go zamyka", async () => {
+    render(<TodayView data={dane(wszystko)} name="Mejson" />);
+    await userEvent.click(screen.getByRole("button", { name: "Szybko dodaj" }));
+    const arkusz = await screen.findByRole("dialog", { name: "Szybko dodaj" });
+    // Chipy liczą się od dziś i teraz z profilu (wtorek 10:20 → Dziś = 11:00, Pn 23.11)
+    expect(within(arkusz).getByLabelText("Zadanie")).toBeInTheDocument();
+    expect(
+      within(arkusz).getByRole("button", { name: "Pn 23.11" }),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      within(arkusz).getByRole("button", { name: "Zamknij" }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });

@@ -5,7 +5,7 @@
 // oba układy są w DOM, przełącza je CSS (800 px). Bez jawnego `widok` w adresie telefon pokazuje dzień.
 // Kalendarz wypełnia całe okno (web) i ekran nad dolnym paskiem (dzień na telefonie):
 // strona się nie przewija, przewija się tylko siatka albo oś.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
@@ -76,6 +76,7 @@ export function CalendarView({
   nowMinutes: terazSerwera,
   data: daneSerwera,
   hasExplicitView = true,
+  newBlock = null,
 }: {
   view: CalendarView;
   // Czy adres ma `widok`; bez niego web pokazuje domyślny tydzień, a telefon dzień
@@ -85,6 +86,8 @@ export function CalendarView({
   // Aktualna godzina w strefie profilu, liczona na serwerze; użyją jej widoki z linią „teraz”
   nowMinutes: number;
   data: CalendarData;
+  // ?nowy=blok&data&godzina&tytul — okno nowego bloku otwarte od razu (web okno, telefon arkusz)
+  newBlock?: { date: IsoDate; startMin: number; title: string } | null;
 }) {
   const router = useRouter();
   const { data, applyOptimistic } = useCalendarStore(daneSerwera);
@@ -427,6 +430,59 @@ export function CalendarView({
     });
   }
 
+  // ?nowy=blok: okno nowego bloku otwiera się raz na dany adres (Next 16 Activity trzyma trasę
+  // w pamięci, więc ref zeruje się dopiero, gdy parametry znikną z adresu). Wariant (arkusz telefonu
+  // czy okno web) wybiera matchMedia w efekcie, po hydratacji — jak okno biegu w Sporcie.
+  const nowyData = newBlock?.date ?? null;
+  const nowyStart = newBlock?.startMin ?? null;
+  const nowyTytul = newBlock?.title ?? null;
+  const obsluzonyNowyBlok = useRef<string | null>(null);
+  useEffect(() => {
+    if (nowyData === null || nowyStart === null || nowyTytul === null) {
+      obsluzonyNowyBlok.current = null;
+      return;
+    }
+    const klucz = `${nowyData}|${nowyStart}|${nowyTytul}`;
+    if (obsluzonyNowyBlok.current === klucz) return;
+    obsluzonyNowyBlok.current = klucz;
+    const tel =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 799px)").matches;
+    setWybrany(null);
+    setWybranyTel(null);
+    setOkno({
+      typ: "blok",
+      mode: "create",
+      tel,
+      initial: {
+        title: nowyTytul,
+        categoryId: null,
+        date: nowyData,
+        startMin: nowyStart,
+        // Blok nie przechodzi przez północ
+        durationMin: Math.min(60, 1440 - nowyStart),
+        recurrence: null,
+        note: "",
+        remind: true,
+      },
+    });
+  }, [nowyData, nowyStart, nowyTytul]);
+
+  // Zamknięcie okna bloku (zapis albo anulowanie). Gdy adres ma ?nowy=blok, znikają z niego
+  // nowy, godzina i tytul; widok i data zostają (kalendarz zostaje na dniu nowego bloku).
+  function zamknijOknoBloku() {
+    setOkno(null);
+    if (newBlock === null) return;
+    const parametry = new URLSearchParams(window.location.search);
+    parametry.delete("nowy");
+    parametry.delete("godzina");
+    parametry.delete("tytul");
+    const reszta = parametry.toString();
+    router.replace(`/kalendarz${reszta ? `?${reszta}` : ""}`, {
+      scroll: false,
+    });
+  }
+
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
   const wpisyMiesiaca =
     widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length +
@@ -703,7 +759,7 @@ export function CalendarView({
           today={today}
           tasks={data.tasks}
           applyOptimistic={applyOptimistic}
-          onDone={() => setOkno(null)}
+          onDone={zamknijOknoBloku}
         />
       )}
       {okno?.typ === "blok" && !okno.tel && (
@@ -715,8 +771,8 @@ export function CalendarView({
           weekStart={weekStart}
           today={today}
           onCategoryCreated={dodajKategorie}
-          onSaved={() => setOkno(null)}
-          onCancel={() => setOkno(null)}
+          onSaved={zamknijOknoBloku}
+          onCancel={zamknijOknoBloku}
         />
       )}
       {okno?.typ === "kategoria" && (

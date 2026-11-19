@@ -20,6 +20,7 @@ import { DayPlan } from "./day-plan";
 import { EmptyToday } from "./empty-today";
 import { firstSteps } from "./first-steps";
 import type { TodayData } from "./load-today";
+import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
 import { isoWeekNumber, showFullToday, weekTiles } from "./model";
 import { TodayTasks } from "./today-tasks";
@@ -72,7 +73,7 @@ export function TodayView({
   }, [timezone, today, router]);
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
-  // Otwarty arkusz szybkiego dodawania (pływający „+” na telefonie); arkusz MQuickAdd dochodzi w Task 6
+  // Otwarty arkusz szybkiego dodawania MQuickAdd (pływający „+” na telefonie)
   const [szybkieDodawanie, setSzybkieDodawanie] = useState(false);
 
   // „Nowy blok”: dziś, najbliższa pełna godzina (najpóźniej 23:00), 60 min — jak w kalendarzu.
@@ -169,8 +170,16 @@ export function TodayView({
           onQuickAdd={() => setSzybkieDodawanie(true)}
         />
       </div>
-      {/* Task 6: tu zamontuje się arkusz MQuickAdd (zamknięcie: setSzybkieDodawanie(false)) */}
-      {szybkieDodawanie && null}
+      {/* Arkusz szybkiego dodawania (pływający „+” na telefonie) */}
+      {szybkieDodawanie && (
+        <MQuickAdd
+          today={today}
+          nowMin={teraz}
+          weekStart={profile.weekStart}
+          categories={data.categories}
+          onClose={() => setSzybkieDodawanie(false)}
+        />
+      )}
 
       <div
         data-testid="web-dzis"

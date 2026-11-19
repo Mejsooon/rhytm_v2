@@ -14,6 +14,7 @@ const {
   createCategory,
   toastError,
   push,
+  replace,
   createBlock,
   changeOccurrence,
 } = vi.hoisted(() => ({
@@ -21,6 +22,7 @@ const {
   createCategory: vi.fn(),
   toastError: vi.fn(),
   push: vi.fn(),
+  replace: vi.fn(),
   createBlock: vi.fn(),
   changeOccurrence: vi.fn(),
 }));
@@ -36,7 +38,7 @@ vi.mock("@/features/tasks/actions", () => ({
   unpinTask: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 
 // Układ telefonu (te same bloki w DOM) ma własny plik testów; tu sprawdzamy web
 vi.mock("./mobile/m-calendar-day", () => ({ MCalendarDay: () => null }));
@@ -1060,5 +1062,82 @@ describe("CalendarView — podgląd treningów", () => {
     wyrenderuj(zeSportem(null));
     expect(screen.getByRole("link", { name: /Spokojny/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Push/ })).toBeInTheDocument();
+  });
+
+  describe("?nowy=blok", () => {
+    afterEach(() => window.history.replaceState(null, "", "/"));
+
+    function zAdresem(rerender?: ReturnType<typeof render>["rerender"]) {
+      const widok = (
+        <CalendarView
+          view="tydzien"
+          date="2026-11-20"
+          today="2026-11-17"
+          nowMinutes={600}
+          data={dane()}
+          newBlock={{
+            date: "2026-11-20",
+            startMin: 18 * 60,
+            title: "Nauka SQL",
+          }}
+        />
+      );
+      return rerender ? rerender(widok) : render(widok);
+    }
+
+    it("otwiera okno z datą, godziną i tytułem; zamknięcie czyści adres (widok i data zostają)", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/kalendarz?widok=tydzien&nowy=blok&data=2026-11-20&godzina=18:00&tytul=Nauka%20SQL",
+      );
+      zAdresem();
+      const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+      expect(within(okno).getByLabelText("Tytuł")).toHaveValue("Nauka SQL");
+      expect(
+        within(okno).getByRole("button", { name: "Dzień" }),
+      ).toHaveTextContent("20.11.2026");
+      expect(
+        within(okno).getByRole("button", { name: "Od" }),
+      ).toHaveTextContent("18:00");
+      expect(
+        within(okno).getByRole("button", { name: "Do" }),
+      ).toHaveTextContent("19:00");
+
+      await userEvent.click(
+        within(okno).getByRole("button", { name: "Anuluj" }),
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(replace).toHaveBeenCalledWith(
+        "/kalendarz?widok=tydzien&data=2026-11-20",
+        { scroll: false },
+      );
+    });
+
+    it("ten sam adres nie otwiera okna drugi raz (np. nowe dane z serwera)", async () => {
+      const { rerender } = zAdresem() as ReturnType<typeof render>;
+      const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+      await userEvent.click(
+        within(okno).getByRole("button", { name: "Anuluj" }),
+      );
+      zAdresem(rerender);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("zwykłe zamknięcie okna bez ?nowy=blok nie zmienia adresu", async () => {
+      wyrenderuj();
+      fireEvent.click(screen.getByTestId("kolumna-2026-11-19"), {
+        clientY: 480,
+      });
+      const dymek = await screen.findByRole("dialog", { name: "Nowy wpis" });
+      await userEvent.click(
+        within(dymek).getByRole("button", { name: /Blok/ }),
+      );
+      const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+      await userEvent.click(
+        within(okno).getByRole("button", { name: "Anuluj" }),
+      );
+      expect(replace).not.toHaveBeenCalled();
+    });
   });
 });
