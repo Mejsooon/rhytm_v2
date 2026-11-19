@@ -12,6 +12,10 @@ const { toast, addBlock, updateBlockContent, deleteBlock, restoreBlock, renamePa
     renamePage: vi.fn(),
     setPageIcon: vi.fn(),
   }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+}));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => ({
   addBlock,

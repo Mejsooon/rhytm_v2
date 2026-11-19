@@ -5,6 +5,7 @@ import {
   convertValue,
   formatValue,
   isUrgent,
+  nextOptionId,
   normalizeValue,
   planTypeChange,
   relativeDue,
@@ -208,5 +209,21 @@ describe("isUrgent", () => {
     expect(isUrgent("2026-11-14", dzis, false)).toBe(false);
     expect(isUrgent("2026-11-16", dzis, true)).toBe(false);
     expect(isUrgent(null, dzis, false)).toBe(false);
+  });
+});
+
+describe("nextOptionId", () => {
+  const opcje = [
+    { id: "a", label: "A", color: "#404040" },
+    { id: "b", label: "B", color: "#0070f3" },
+  ];
+  it("przechodzi po kolei, po ostatniej zwraca pustą, z pustej pierwszą", () => {
+    expect(nextOptionId(opcje, null)).toBe("a");
+    expect(nextOptionId(opcje, "a")).toBe("b");
+    expect(nextOptionId(opcje, "b")).toBeNull();
+  });
+  it("nieznana wartość działa jak pusta, brak opcji daje pustą", () => {
+    expect(nextOptionId(opcje, "usunieta")).toBe("a");
+    expect(nextOptionId([], "a")).toBeNull();
   });
 });

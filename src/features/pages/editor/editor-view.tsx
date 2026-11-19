@@ -8,11 +8,13 @@ import { toast } from "sonner";
 import { ActionPopover, Button, Chip } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { renamePage, setPageIcon } from "../actions";
+import { usePagesStore } from "../use-pages-store";
 import { IconGrid } from "../icon-grid";
 import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import { BLAD_ZAPISU } from "../messages";
 import { CommandLine } from "./command-line";
+import { MEditor } from "./mobile/m-editor";
 import { TableBlock } from "./table-block";
 import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
@@ -23,6 +25,10 @@ import { useEditorStore } from "./use-editor-store";
 export function EditorView({ data }: { data: LoadedPage }) {
   const { page } = data;
   const store = useEditorStore(page.id, data.blocks);
+  // Menu strony na telefonie (ulubione, duplikat, usunięcie) działa na jednopozycyjnej liście tej strony
+  const listaStrony = React.useMemo(() => [page], [page]);
+  const pagesStore = usePagesStore(listaStrony);
+  const tytulRef = React.useRef<HTMLInputElement>(null);
 
   // Tytuł i ikona: lokalny szkic + ostatnia zapisana wartość (resync przy nowych danych z serwera)
   const [tytul, setTytul] = React.useState(page.title);
@@ -80,106 +86,138 @@ export function EditorView({ data }: { data: LoadedPage }) {
 
   return (
     <>
-      <ModuleHeader
-        title={sciezka}
-        webParent="Strony"
-        phoneLabel="Strony"
-        webAction={
-          <Button asChild size="sm">
-            <Link href="/strony/nowa">Szablony</Link>
-          </Button>
-        }
-      />
-      <div className="box-border flex w-full max-w-[1160px] flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:px-4 max-[799px]:pt-3">
-        <div className="mb-2 flex items-center gap-3">
-          <ActionPopover
-            open={wyborIkony}
-            onOpenChange={setWyborIkony}
-            width={230}
-            ariaLabel="Wybór ikony"
-            trigger={
+      {/* Telefon ma własny nagłówek w MEditor */}
+      <div className="max-[799px]:hidden">
+        <ModuleHeader
+          title={sciezka}
+          webParent="Strony"
+          phoneLabel="Strony"
+          webAction={
+            <Button asChild size="sm">
+              <Link href="/strony/nowa">Szablony</Link>
+            </Button>
+          }
+        />
+      </div>
+      <MEditor
+        store={store}
+        page={pagesStore.pages[0] ?? page}
+        pages={pagesStore.pages}
+        pagesStore={pagesStore}
+        // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
+        onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
+      >
+        <div className="box-border flex w-full max-w-[1160px] flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:px-4 max-[799px]:pt-0 max-[799px]:pb-0">
+          <div className="mb-2 flex items-center gap-3">
+            <ActionPopover
+              open={wyborIkony}
+              onOpenChange={setWyborIkony}
+              width={230}
+              ariaLabel="Wybór ikony"
+              trigger={
+                <button
+                  type="button"
+                  aria-label="Zmień ikonę"
+                  className="size-10 cursor-pointer rounded-lg border border-dashed border-[#d4d4d4] bg-[#fafafa] font-[inherit] text-[#6b6b6b] max-[799px]:hidden"
+                >
+                  {ikona}
+                </button>
+              }
+            >
+              <IconGrid current={ikona} onPick={zmienIkone} />
+            </ActionPopover>
+            <input
+              ref={tytulRef}
+              type="text"
+              value={tytul}
+              onChange={(e) => setTytul(e.target.value)}
+              onBlur={zapiszTytul}
+              placeholder="Bez tytułu"
+              aria-label="Nazwa strony"
+              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-[#171717] outline-none max-[799px]:text-[28px]"
+            />
+          </div>
+
+          {store.blocks.map((b) => (
+            <div key={b.id} className="group relative pr-8">
+              {b.type === "heading" && (
+                <TextBlock
+                  variant="heading"
+                  text={
+                    typeof b.content.text === "string" ? b.content.text : ""
+                  }
+                  onSave={(text) => void store.update(b.id, { text })}
+                />
+              )}
+              {b.type === "text" && (
+                <TextBlock
+                  variant="text"
+                  text={
+                    typeof b.content.text === "string" ? b.content.text : ""
+                  }
+                  onSave={(text) => void store.update(b.id, { text })}
+                />
+              )}
+              {b.type === "todo" && (
+                <TodoBlock
+                  text={
+                    typeof b.content.text === "string" ? b.content.text : ""
+                  }
+                  done={b.content.done === true}
+                  onSave={(content) => void store.update(b.id, content)}
+                />
+              )}
+              {b.type === "divider" && (
+                <hr className="my-3 border-0 border-t border-[#eaeaea]" />
+              )}
+              {b.type === "table" && (
+                <TableBlock block={b} editable="cell" today={data.today} />
+              )}
               <button
                 type="button"
-                aria-label="Zmień ikonę"
-                className="size-10 cursor-pointer rounded-lg border border-dashed border-[#d4d4d4] bg-[#fafafa] font-[inherit] text-[#6b6b6b] max-[799px]:size-11"
+                aria-label="Usuń blok"
+                onClick={() => void store.remove(b.id)}
+                className="absolute top-1 right-0 inline-flex cursor-pointer rounded-md border-0 bg-transparent p-[5px] text-[#b91c1c] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:bg-[#fef2f2] focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:items-center max-[799px]:justify-center max-[799px]:opacity-100"
               >
-                {ikona}
+                <Trash2 size={14} aria-hidden="true" />
               </button>
-            }
-          >
-            <IconGrid current={ikona} onPick={zmienIkone} />
-          </ActionPopover>
-          <input
-            type="text"
-            value={tytul}
-            onChange={(e) => setTytul(e.target.value)}
-            onBlur={zapiszTytul}
-            placeholder="Bez tytułu"
-            aria-label="Nazwa strony"
-            className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-[#171717] outline-none"
-          />
-        </div>
-
-        {store.blocks.map((b) => (
-          <div key={b.id} className="group relative pr-8">
-            {b.type === "heading" && (
-              <TextBlock
-                variant="heading"
-                text={typeof b.content.text === "string" ? b.content.text : ""}
-                onSave={(text) => void store.update(b.id, { text })}
-              />
-            )}
-            {b.type === "text" && (
-              <TextBlock
-                variant="text"
-                text={typeof b.content.text === "string" ? b.content.text : ""}
-                onSave={(text) => void store.update(b.id, { text })}
-              />
-            )}
-            {b.type === "todo" && (
-              <TodoBlock
-                text={typeof b.content.text === "string" ? b.content.text : ""}
-                done={b.content.done === true}
-                onSave={(content) => void store.update(b.id, content)}
-              />
-            )}
-            {b.type === "divider" && <hr className="my-3 border-0 border-t border-[#eaeaea]" />}
-            {b.type === "table" && <TableBlock block={b} editable="cell" today={data.today} />}
-            <button
-              type="button"
-              aria-label="Usuń blok"
-              onClick={() => void store.remove(b.id)}
-              className="absolute top-1 right-0 inline-flex cursor-pointer rounded-md border-0 bg-transparent p-[5px] text-[#b91c1c] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:bg-[#fef2f2] focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:items-center max-[799px]:justify-center max-[799px]:opacity-100"
-            >
-              <Trash2 size={14} aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-
-        <CommandLine onInsert={(typ, tekst) => void store.add(typ, tekst)} />
-
-        {pusta && (
-          <>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="mr-1 font-mono text-xs text-[#6b6b6b]">albo zacznij od:</span>
-              {QUICK_START.map((q) => (
-                <Chip key={q.type} onClick={() => void store.add(q.type)}>
-                  <span aria-hidden="true" className="font-mono text-[#6b6b6b]">
-                    {q.icon}
-                  </span>
-                  {q.label}
-                </Chip>
-              ))}
             </div>
-            <p className="mt-6 mb-0 font-mono text-xs text-[#6b6b6b]">
-              Wolisz gotowca?{" "}
-              <Link href="/strony/nowa" className="text-[#404040]">
-                Użyj szablonu →
-              </Link>
-            </p>
-          </>
-        )}
-      </div>
+          ))}
+
+          <div className="max-[799px]:hidden">
+            <CommandLine
+              onInsert={(typ, tekst) => void store.add(typ, tekst)}
+            />
+          </div>
+
+          {pusta && (
+            <div className="flex flex-col gap-3 max-[799px]:hidden">
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="mr-1 font-mono text-xs text-[#6b6b6b]">
+                  albo zacznij od:
+                </span>
+                {QUICK_START.map((q) => (
+                  <Chip key={q.type} onClick={() => void store.add(q.type)}>
+                    <span
+                      aria-hidden="true"
+                      className="font-mono text-[#6b6b6b]"
+                    >
+                      {q.icon}
+                    </span>
+                    {q.label}
+                  </Chip>
+                ))}
+              </div>
+              <p className="mt-6 mb-0 font-mono text-xs text-[#6b6b6b]">
+                Wolisz gotowca?{" "}
+                <Link href="/strony/nowa" className="text-[#404040]">
+                  Użyj szablonu →
+                </Link>
+              </p>
+            </div>
+          )}
+        </div>
+      </MEditor>
     </>
   );
 }

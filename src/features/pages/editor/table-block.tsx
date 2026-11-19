@@ -19,6 +19,7 @@ import {
 } from "../actions";
 import {
   PALETA,
+  nextOptionId,
   planTypeChange,
   type CellValue,
   type FieldConfig,
@@ -31,6 +32,7 @@ import { BLAD_ZAPISU } from "../messages";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { editorFooter, type PageRow } from "../table-model";
 import { CellEditor } from "./cell-editor";
+import { MColumnSheet } from "./mobile/m-column-sheet";
 import { ColumnPopover } from "./column-popover";
 import { TypeChangeDialog } from "./type-change-dialog";
 
@@ -105,6 +107,8 @@ export function TableBlock({
   }
 
   const [otwartaKolumna, setOtwartaKolumna] = React.useState<string | null>(null);
+  // Telefon: ta sama kolumna otwiera się w arkuszu „Kolumna” (osobny stan, bo dymek jest tylko na webie)
+  const [arkuszKolumny, setArkuszKolumny] = React.useState<string | null>(null);
   const [zmianaTypu, setZmianaTypu] = React.useState<{
     field: PageField;
     type: FieldType;
@@ -259,7 +263,7 @@ export function TableBlock({
   }
 
   // „+” w nagłówku: kolumna „Kolumna N” typu Tekst, od razu z otwartym dymkiem
-  async function dodajKolumne() {
+  async function dodajKolumne(telefon = false) {
     const tymczasoweId = `${PREFIKS_TYMCZASOWY}k${++licznik.current}`;
     const nazwaKolumny = `Kolumna ${pola.length + 1}`;
     const pozycja = pola.reduce((m, f) => Math.max(m, f.position), -1) + 1;
@@ -267,7 +271,8 @@ export function TableBlock({
       ...l,
       { id: tymczasoweId, name: nazwaKolumny, type: "text", config: {}, position: pozycja, isTitle: false },
     ]);
-    setOtwartaKolumna(tymczasoweId);
+    if (telefon) setArkuszKolumny(tymczasoweId);
+    else setOtwartaKolumna(tymczasoweId);
 
     polaWToku.current += 1;
     let wynik: Awaited<ReturnType<typeof addField>> | null = null;
@@ -280,6 +285,7 @@ export function TableBlock({
     if (!wynik || !wynik.ok) {
       setPola((l) => l.filter((f) => f.id !== tymczasoweId));
       setOtwartaKolumna((o) => (o === tymczasoweId ? null : o));
+      setArkuszKolumny((o) => (o === tymczasoweId ? null : o));
       toast.error(BLAD_ZAPISU);
       return;
     }
@@ -292,6 +298,7 @@ export function TableBlock({
         : [...bezDuplikatu, prawdziwe];
     });
     setOtwartaKolumna((o) => (o === tymczasoweId ? prawdziwe.id : o));
+    setArkuszKolumny((o) => (o === tymczasoweId ? prawdziwe.id : o));
   }
 
   // Nazwa albo konfiguracja pola (opcje); błąd przywraca poprzednie pole
@@ -385,6 +392,7 @@ export function TableBlock({
     );
     if (plan.lost > 0) {
       setOtwartaKolumna(null);
+      setArkuszKolumny(null);
       setZmianaTypu({ field, type, plan });
       return;
     }
@@ -419,6 +427,7 @@ export function TableBlock({
   async function usunKolumne(field: PageField) {
     if (field.isTitle || posortowanePola.length <= 1) return;
     setOtwartaKolumna(null);
+    setArkuszKolumny(null);
     setPola((l) => l.filter((f) => f.id !== field.id));
     polaWToku.current += 1;
     let udane = false;
@@ -435,6 +444,7 @@ export function TableBlock({
   }
 
   const liczbaKolumn = posortowanePola.length;
+  const aktywnaKolumna = posortowanePola.find((f) => f.id === arkuszKolumny) ?? null;
   const siatka: React.CSSProperties = {
     gridTemplateColumns: `minmax(200px,2fr)${
       liczbaKolumn > 1 ? ` repeat(${liczbaKolumn - 1},minmax(140px,1fr))` : ""
@@ -469,7 +479,7 @@ export function TableBlock({
                 <div
                   key={klucze[f.id] ?? f.id}
                   role="columnheader"
-                  className="flex min-w-0 items-center border-r border-b border-[#eaeaea] border-r-[#f0f0f0] px-3.5 py-2 font-medium whitespace-nowrap text-[#666666]"
+                  className="relative flex min-w-0 items-center border-r border-b border-[#eaeaea] border-r-[#f0f0f0] px-3.5 py-2 font-medium whitespace-nowrap text-[#666666]"
                 >
                   <ColumnPopover
                     field={f}
@@ -492,6 +502,13 @@ export function TableBlock({
                     onMove={(kierunek) => void przesunKolumne(f, kierunek)}
                     onDelete={() => void usunKolumne(f)}
                   />
+                  {/* Telefon: przezroczysta nakładka nad nagłówkiem otwiera arkusz „Kolumna” zamiast dymka */}
+                  <button
+                    type="button"
+                    aria-label={`Kolumna ${f.name} — ustawienia`}
+                    onClick={() => setArkuszKolumny(f.id)}
+                    className="absolute inset-0 min-h-11 cursor-pointer border-0 bg-transparent p-0 min-[800px]:hidden"
+                  />
                 </div>
               ))}
               <div className="flex min-w-0 items-stretch border-b border-[#eaeaea]">
@@ -499,7 +516,15 @@ export function TableBlock({
                   type="button"
                   aria-label="Dodaj kolumnę"
                   onClick={() => void dodajKolumne()}
-                  className="min-h-[34px] w-full cursor-pointer border-0 bg-transparent font-[inherit] text-base text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#171717] max-[799px]:min-h-11"
+                  className="min-h-[34px] w-full cursor-pointer border-0 bg-transparent font-[inherit] text-base text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#171717] max-[799px]:hidden"
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nowa kolumna"
+                  onClick={() => void dodajKolumne(true)}
+                  className="min-h-11 w-full cursor-pointer border-0 bg-transparent font-[inherit] text-lg text-[#6b6b6b] min-[800px]:hidden"
                 >
                   +
                 </button>
@@ -517,7 +542,7 @@ export function TableBlock({
                   <div
                     key={klucze[f.id] ?? f.id}
                     role="cell"
-                    className={`flex min-h-5 min-w-0 items-center border-r border-b border-[#f0f0f0] border-r-[#f5f5f5] px-3.5 py-2 group-hover/row:bg-[#fcfcfc] ${
+                    className={`relative flex min-h-5 min-w-0 items-center border-r border-b border-[#f0f0f0] border-r-[#f5f5f5] px-3.5 py-2 group-hover/row:bg-[#fcfcfc] ${
                       i === 0 ? "font-medium" : ""
                     }`}
                   >
@@ -529,6 +554,19 @@ export function TableBlock({
                       onCommit={(v) => void zmienKomorke(r, f, v)}
                       onEditOptions={() => setOtwartaKolumna(f.id)}
                     />
+                    {/* Telefon: stuknięcie komórki Wyboru przełącza na następną opcję (po ostatniej — pusta) */}
+                    {(f.type === "status" || f.type === "select") && (
+                      <button
+                        type="button"
+                        aria-label={`${f.name || "Pole"}: ${
+                          (f.config.options ?? []).find((o) => o.id === r.values[f.id])?.label ?? "brak"
+                        }, stuknij by zmienić`}
+                        onClick={() =>
+                          void zmienKomorke(r, f, nextOptionId(f.config.options ?? [], r.values[f.id]))
+                        }
+                        className="absolute inset-0 min-h-11 cursor-pointer border-0 bg-transparent p-0 min-[800px]:hidden"
+                      />
+                    )}
                   </div>
                 ))}
                 <div className="flex items-center justify-center border-b border-[#f0f0f0] group-hover/row:bg-[#fcfcfc]">
@@ -578,6 +616,31 @@ export function TableBlock({
             </span>
           </div>
         </>
+      )}
+
+      {aktywnaKolumna && (
+        <MColumnSheet
+          key={klucze[aktywnaKolumna.id] ?? aktywnaKolumna.id}
+          field={aktywnaKolumna}
+          index={posortowanePola.indexOf(aktywnaKolumna)}
+          count={liczbaKolumn}
+          open
+          onOpenChange={(o) => setArkuszKolumny(o ? aktywnaKolumna.id : null)}
+          pending={aktywnaKolumna.id.startsWith(PREFIKS_TYMCZASOWY)}
+          onRename={(n) => void zmienPole(aktywnaKolumna, { name: n })}
+          onPickType={(t) => wybierzTyp(aktywnaKolumna, t)}
+          onAddOption={(etykieta) => dodajOpcje(aktywnaKolumna, etykieta)}
+          onRemoveOption={(id) =>
+            void zmienPole(aktywnaKolumna, {
+              config: {
+                ...aktywnaKolumna.config,
+                options: (aktywnaKolumna.config.options ?? []).filter((o) => o.id !== id),
+              },
+            })
+          }
+          onMove={(kierunek) => void przesunKolumne(aktywnaKolumna, kierunek)}
+          onDelete={() => void usunKolumne(aktywnaKolumna)}
+        />
       )}
 
       {zmianaTypu && (

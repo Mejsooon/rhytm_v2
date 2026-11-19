@@ -314,3 +314,12 @@ export function isUrgent(iso: string | null, today: string, done: boolean): bool
   const d = roznicaDni(iso, today);
   return d >= 0 && d <= 7;
 }
+
+// Stuknięcie komórki Wyboru na telefonie: następna opcja po kolei, po ostatniej pusta,
+// z pustej pierwsza. Nieznana wartość (usunięta opcja) liczy się jak pusta.
+export function nextOptionId(options: FieldOption[], current: unknown): string | null {
+  if (options.length === 0) return null;
+  const indeks = options.findIndex((o) => o.id === current);
+  if (indeks === -1) return options[0].id;
+  return indeks + 1 < options.length ? options[indeks + 1].id : null;
+}

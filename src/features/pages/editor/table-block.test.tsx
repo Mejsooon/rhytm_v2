@@ -55,11 +55,11 @@ function pole(id: string, name: string, type: PageField["type"], position: numbe
   return { id, name, type, config: {}, position, isTitle: false };
 }
 
-// Przycisk nagłówka kolumny (komórki mają tę samą nazwę dostępności co kolumna)
+// Przycisk nagłówka kolumny na webie (pierwszy; drugi to nakładka telefonu „Kolumna … — ustawienia”)
 function naglowek(nazwa: string) {
   const th = screen.getAllByRole("columnheader").find((h) => h.textContent?.includes(nazwa));
   if (!th) throw new Error(`Brak nagłówka ${nazwa}`);
-  return within(th).getByRole("button");
+  return within(th).getAllByRole("button")[0];
 }
 
 // Przycisk komórki w danym wierszu danych (1 = pierwszy wiersz pod nagłówkiem)

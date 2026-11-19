@@ -25,6 +25,7 @@ export function PageMenu({
   onRename,
   sheet = false,
   triggerClassName,
+  triggerLabel,
 }: {
   page: PageSummary;
   pages: PageSummary[];
@@ -32,6 +33,8 @@ export function PageMenu({
   onRename: () => void;
   sheet?: boolean;
   triggerClassName?: string;
+  // Własna etykieta przycisku (telefon: samo „Menu strony”); domyślnie z tytułem strony
+  triggerLabel?: string;
 }) {
   const router = useRouter();
   const sciezka = usePathname();
@@ -165,7 +168,7 @@ export function PageMenu({
   const przycisk = (
     <button
       type="button"
-      aria-label={`Menu strony ${tytul}`}
+      aria-label={triggerLabel ?? `Menu strony ${tytul}`}
       aria-haspopup="menu"
       aria-expanded={otwarte}
       onClick={sheet ? () => zmienOtwarcie(true) : undefined}
