@@ -1,9 +1,8 @@
 "use client";
 
 // Ekran Dziś (Today.dc.html web; EmptyToday.dc.html przed pierwszymi krokami).
-// Sekcje: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
-// Telefon (MToday, Task 5) dojdzie jako osobne drzewo za `max-[799px]:`; do tego czasu
-// drzewo web widać na każdej szerokości, żeby ekran nie był pusty.
+// Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
+// Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +20,7 @@ import { DayPlan } from "./day-plan";
 import { EmptyToday } from "./empty-today";
 import { firstSteps } from "./first-steps";
 import type { TodayData } from "./load-today";
+import { MToday } from "./mobile/m-today";
 import { isoWeekNumber, showFullToday, weekTiles } from "./model";
 import { TodayTasks } from "./today-tasks";
 import { useTodayStore } from "./use-today-store";
@@ -29,17 +29,22 @@ import { WeekCard } from "./week-card";
 export function TodayView({
   data: daneSerwera,
   name,
+  avatarUrl = null,
 }: {
   data: TodayData;
   name: string;
+  // Podpisany adres zdjęcia profilu (awatar na telefonie); null → inicjał
+  avatarUrl?: string | null;
 }) {
   const router = useRouter();
   // Dane z optymistycznymi zmianami: plan dnia, „Zadania na dziś” i karta tygodnia
   // liczą się z tych samych zadań, więc odhaczenie zmienia je naraz
-  const { data, applyOptimistic } = useTodayStore(daneSerwera);
+  const { data, applyOptimistic, toggleHabit } = useTodayStore(daneSerwera);
   const { profile, today } = data;
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
+  // Otwarty arkusz szybkiego dodawania (pływający „+” na telefonie); arkusz MQuickAdd dochodzi w Task 6
+  const [szybkieDodawanie, setSzybkieDodawanie] = useState(false);
 
   // „Nowy blok”: dziś, najbliższa pełna godzina (najpóźniej 23:00), 60 min — jak w kalendarzu.
   // Dzień i godzina liczone w chwili kliknięcia, w strefie profilu (strona mogła być otwarta długo).
@@ -120,37 +125,58 @@ export function TodayView({
   const podtytul = `${DNI_PELNE[dzien].toLowerCase()} · ${dzienMiesiaca}.${miesiac}.${rok} · tydz. ${isoWeekNumber(today)}`;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col">
-      {/* Nagłówek web (Today.dc.html) */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
-        <div className="flex items-baseline gap-2.5">
-          <h1 className="m-0 text-lg font-semibold">Dziś</h1>
-          <span className="font-mono text-xs text-[#6b6b6b]">{podtytul}</span>
-        </div>
-        {przyciskNowyBlok}
-      </header>
-
-      <div className="box-border flex w-full max-w-[1200px] flex-col gap-6 p-6">
-        {/* 1. Statystyki tygodnia */}
-        <WeekCard
-          tiles={kafelki}
-          weekStartDate={data.weekStartDate}
-          today={today}
-          clock={profile.clock}
-        />
-
-        {/* 2. Plan dnia (oś 00–24) */}
-        <DayPlan data={data} applyOptimistic={applyOptimistic} />
-
-        {/* 3. Samodzielne zadania na dziś, zaległe i bez daty */}
-        <TodayTasks
-          tasks={data.tasks}
-          today={today}
+    <>
+      <div
+        data-testid="m-dzis"
+        className="flex min-w-0 flex-1 flex-col min-[800px]:hidden"
+      >
+        <MToday
+          data={data}
+          name={name}
+          avatarUrl={avatarUrl}
           applyOptimistic={applyOptimistic}
+          onToggleHabit={(habitId) => void toggleHabit(habitId, today)}
+          onQuickAdd={() => setSzybkieDodawanie(true)}
         />
+      </div>
+      {/* Task 6: tu zamontuje się arkusz MQuickAdd (zamknięcie: setSzybkieDodawanie(false)) */}
+      {szybkieDodawanie && null}
+
+      <div
+        data-testid="web-dzis"
+        className="flex min-w-0 flex-1 flex-col max-[799px]:hidden"
+      >
+        {/* Nagłówek web (Today.dc.html) */}
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
+          <div className="flex items-baseline gap-2.5">
+            <h1 className="m-0 text-lg font-semibold">Dziś</h1>
+            <span className="font-mono text-xs text-[#6b6b6b]">{podtytul}</span>
+          </div>
+          {przyciskNowyBlok}
+        </header>
+
+        <div className="box-border flex w-full max-w-[1200px] flex-col gap-6 p-6">
+          {/* 1. Statystyki tygodnia */}
+          <WeekCard
+            tiles={kafelki}
+            weekStartDate={data.weekStartDate}
+            today={today}
+            clock={profile.clock}
+          />
+
+          {/* 2. Plan dnia (oś 00–24) */}
+          <DayPlan data={data} applyOptimistic={applyOptimistic} />
+
+          {/* 3. Samodzielne zadania na dziś, zaległe i bez daty */}
+          <TodayTasks
+            tasks={data.tasks}
+            today={today}
+            applyOptimistic={applyOptimistic}
+          />
+        </div>
       </div>
 
       {oknoBloku}
-    </div>
+    </>
   );
 }

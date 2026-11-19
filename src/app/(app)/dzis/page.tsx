@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { ModuleHeader } from "@/components/shell/module-header";
+import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { loadToday } from "@/features/today/load-today";
 import { TodayView } from "@/features/today/today-view";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +23,10 @@ async function Dzis() {
     (user.email ?? "").split("@")[0] ||
     "Konto";
 
-  return <TodayView data={dane} name={name} />;
+  // Awatar na telefonie: podpisany adres zdjęcia z profilu (brak → inicjał)
+  const avatarUrl = await getAvatarUrl(supabase, dane.profile.avatarPath);
+
+  return <TodayView data={dane} name={name} avatarUrl={avatarUrl} />;
 }
 
 export default function DzisPage() {

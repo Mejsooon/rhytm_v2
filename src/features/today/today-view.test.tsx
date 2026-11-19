@@ -102,16 +102,16 @@ afterEach(() => {
 describe("TodayView", () => {
   it("pełny widok: nagłówek „wtorek · 17.11.2026 · tydz. 47” i karta „Ten tydzień”", () => {
     render(<TodayView data={dane(wszystko)} name="Mejson" />);
-    expect(screen.getByRole("heading", { name: "Dziś" })).toBeInTheDocument();
+    // Drzewo web (telefon ma własne testy w mobile/m-today.test.tsx)
+    const web = within(screen.getByTestId("web-dzis"));
+    expect(web.getByRole("heading", { name: "Dziś" })).toBeInTheDocument();
+    expect(web.getByText("wtorek · 17.11.2026 · tydz. 47")).toBeInTheDocument();
     expect(
-      screen.getByText("wtorek · 17.11.2026 · tydz. 47"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Ten tydzień" }),
+      web.getByRole("heading", { name: "Ten tydzień" }),
     ).toBeInTheDocument();
     // Kafelek „Zadania” z weekTiles: 1 z 2 zadań tygodnia, dziś 1/1
-    expect(screen.getByText("1/2")).toBeInTheDocument();
-    expect(screen.getByText("50% · dziś 1/1")).toBeInTheDocument();
+    expect(web.getByText("1/2")).toBeInTheDocument();
+    expect(web.getByText("50% · dziś 1/1")).toBeInTheDocument();
     expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
@@ -224,10 +224,11 @@ describe("TodayView", () => {
       created_at: null,
     });
     render(<TodayView data={d} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
     // Tydzień: 1 z 3, dziś 1/2; blok 0/1
-    expect(screen.getByText("1/3")).toBeInTheDocument();
-    expect(screen.getByText("33% · dziś 1/2")).toBeInTheDocument();
-    const blok = screen.getByRole("button", { name: /rhytm — kod/ });
+    expect(web.getByText("1/3")).toBeInTheDocument();
+    expect(web.getByText("33% · dziś 1/2")).toBeInTheDocument();
+    const blok = web.getByRole("button", { name: /rhytm — kod/ });
     expect(within(blok).getByText("0/1")).toBeInTheDocument();
 
     await userEvent.click(blok);
@@ -236,7 +237,13 @@ describe("TodayView", () => {
     });
     await userEvent.click(within(dymek).getByLabelText("Testy RLS"));
     expect(within(blok).getByText("1/1")).toBeInTheDocument();
-    expect(screen.getByText("2/3")).toBeInTheDocument();
-    expect(screen.getByText("67% · dziś 2/2")).toBeInTheDocument();
+    expect(web.getByText("2/3")).toBeInTheDocument();
+    expect(web.getByText("67% · dziś 2/2")).toBeInTheDocument();
+    // Telefon liczy z tych samych danych: kafelek „Zadania” dziś 2/2
+    expect(
+      within(screen.getByTestId("m-dzis")).getByRole("link", {
+        name: /^Zadania/,
+      }),
+    ).toHaveTextContent("Zadania2/2");
   });
 });
