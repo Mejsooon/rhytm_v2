@@ -45,9 +45,7 @@ nav a:hover{background:#f5f5f5;color:#171717}
     </sc-if>
     <sc-if value="{{p.notEditing}}" hint-placeholder-val="{{true}}">
       <a href="{{p.href}}" style="{{p.s}}">
-        <sc-if value="{{p.hasGlyph}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 16px; flex: none; text-align: center; font-family: 'Geist Mono', monospace; font-size: 14px; line-height: 16px">{{p.glyph}}</span></sc-if>
-        <sc-if value="{{p.tableSvg}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg></sc-if>
-        <sc-if value="{{p.lockSvg}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+        <dc-import name="PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
         <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
         <sc-if value="{{p.fav}}" hint-placeholder-val="{{false}}"><span aria-label="Ulubiona" style="font-size: 11px; color: #a16207; margin-right: 22px">★</span></sc-if>
       </a>
@@ -70,12 +68,9 @@ nav a:hover{background:#f5f5f5;color:#171717}
           </div>
         </sc-if>
         <sc-if value="{{modeIcons}}" hint-placeholder-val="{{false}}">
-          <div role="dialog" aria-label="Wybór ikony" style="display: flex; flex-direction: column; gap: 8px; padding: 4px">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 2px">
             <div style="display: flex; align-items: center; gap: 6px"><button type="button" aria-label="Wróć do menu" onClick="{{showList}}" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer; color: #404040">←</button><span style="font-weight: 500">Zmień ikonę</span></div>
-            <input type="text" placeholder="Szukaj ikony" aria-label="Szukaj ikony" style="box-sizing: border-box; width: 100%; padding: 7px 9px; border: 1px solid #e0e0e0; border-radius: 6px; font: inherit; font-size: 13px">
-            <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; font-family: 'Geist Mono', monospace; font-size: 15px; text-align: center">
-              <sc-for list="{{icons}}" as="ic" hint-placeholder-count="18"><button type="button" aria-label="Ikona {{ic.g}}" onClick="{{ic.pick}}" style="{{ic.s}}">{{ic.g}}</button></sc-for>
-            </div>
+            <dc-import name="IconPicker" value="{{curIcon}}" on-pick="{{pickIcon}}" hint-size="100%,330px"></dc-import>
           </div>
         </sc-if>
       </div>
@@ -134,16 +129,15 @@ class Component extends DCLogic {
 
     // Strony: kolejność, nazwy, ikony, ulubione i kosz żyją w stanie, jak w aplikacji.
     const START = [
-      { k: 'subs', href: 'Main.dc.html', name: 'Subscriptions', lock: false, rows: 13 },
-      { k: 'books', href: 'Books.dc.html', name: 'Books', lock: false, rows: 11 },
-      { k: 'projects', href: 'Projects.dc.html', name: 'Projects', lock: false, rows: 8 },
-      { k: 'websites', href: 'Websites.dc.html', name: 'Websites', lock: false, rows: 4 },
-      { k: 'passwords', href: 'Passwords.dc.html', name: 'Passwords', lock: true, rows: 4 },
+      { k: 'subs', href: 'Main.dc.html', name: 'Subscriptions', lock: false, rows: 13, icon: { kind: 'emoji', v: '💳' } },
+      { k: 'books', href: 'Books.dc.html', name: 'Books', lock: false, rows: 11, icon: { kind: 'emoji', v: '📚' } },
+      { k: 'projects', href: 'Projects.dc.html', name: 'Projects', lock: false, rows: 8, icon: { kind: 'icon', v: 'rocket', color: 'blue' } },
+      { k: 'websites', href: 'Websites.dc.html', name: 'Websites', lock: false, rows: 4, icon: { kind: 'icon', v: 'globe', color: 'teal' } },
+      { k: 'passwords', href: 'Passwords.dc.html', name: 'Passwords', lock: true, rows: 4, icon: { kind: 'emoji', v: '🔒' } },
       { k: 'empty', href: 'EmptyPage.dc.html', name: '', lock: false, rows: 0 }
     ];
     const lista = st.list || START;
     const zywe = lista.filter((p) => !(st.deleted || {})[p.k]);
-    const ICONS = ['▦', '▤', '◉', '★', '♪', '✈', '⌂', '✎', '⚑', '◷', '✱', '☰', '⚙', '◆', '●', '▲', '♥', '✉'];
     const menu = st.menu || null;
     const tryb = st.mode || 'list';
     const otwarta = zywe.find((p) => p.k === menu) || null;
@@ -167,7 +161,7 @@ class Component extends DCLogic {
     const mini = (off) => 'width:26px;height:26px;border:0;border-radius:5px;background:transparent;font:inherit;color:' + (off ? '#c4c4c4' : '#404040') + ';cursor:' + (off ? 'default' : 'pointer');
 
     const pages = zywe.map((p) => {
-      const glyph = (st.icons || {})[p.k] || '';
+      const ikona = (st.icons || {})[p.k] || p.icon || null;
       const isActive = p.k === active;
       const isOpen = p.k === menu;
       const editing = st.renaming === p.k;
@@ -175,10 +169,8 @@ class Component extends DCLogic {
       return {
         href: p.href,
         label: nazwa(p),
-        glyph,
-        hasGlyph: !!glyph,
-        tableSvg: !glyph && !p.lock,
-        lockSvg: !glyph && p.lock,
+        icon: ikona,
+        fallback: p.lock ? 'lock' : 'table',
         fav: !!(st.fav || {})[p.k],
         editing,
         notEditing: !editing,
@@ -212,15 +204,12 @@ class Component extends DCLogic {
       closeMenu: () => this.setState({ menu: null, mode: 'list' }),
       showIcons: () => this.setState({ mode: 'icons' }),
       showList: () => this.setState({ mode: 'list' }),
-      icons: ICONS.map((g) => ({
-        g,
-        s: 'height:32px;border-radius:6px;font:inherit;cursor:pointer;' + (otwarta && (st.icons || {})[otwarta.k] === g ? 'border:1px solid #171717;background:#f5f5f5;' : 'border:0;background:transparent;'),
-        pick: () => {
-          const ic = Object.assign({}, st.icons || {});
-          ic[menu] = g;
-          this.setState({ icons: ic, menu: null, mode: 'list' });
-        }
-      })),
+      curIcon: otwarta ? ((st.icons || {})[otwarta.k] || otwarta.icon || null) : null,
+      pickIcon: (v) => {
+        const ic = Object.assign({}, st.icons || {});
+        ic[menu] = v;
+        this.setState({ icons: ic, menu: null, mode: 'list' });
+      },
       startRename: () => this.setState({ renaming: menu, draft: otwarta ? ((st.names || {})[otwarta.k] ?? otwarta.name) : '', menu: null }),
       draft: st.draft || '',
       onDraft: (e) => this.setState({ draft: e.target.value }),
@@ -235,7 +224,7 @@ class Component extends DCLogic {
         const nowa = lista.slice();
         nowa.splice(lista.indexOf(otwarta) + 1, 0, kopia);
         const ic = Object.assign({}, st.icons || {});
-        if (ic[otwarta.k]) ic[kopia.k] = ic[otwarta.k];
+        if (ic[otwarta.k] !== undefined) ic[kopia.k] = ic[otwarta.k];
         this.setState({ list: nowa, icons: ic, menu: null });
       },
       moveUp: () => przesun(-1),
