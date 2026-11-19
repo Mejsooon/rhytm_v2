@@ -48,11 +48,7 @@ async function Powloka({
     <>
       <AppSidebar
         user={{ displayName, email, avatarUrl }}
-        pages={strony.map((s) => ({
-          id: s.id,
-          title: s.title || "Bez tytułu",
-          icon: s.icon,
-        }))}
+        pages={strony}
       />
       {/* Telefon: odstęp na dolny pasek i boczne wcięcia ekranu (notch w poziomie) */}
       <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">
