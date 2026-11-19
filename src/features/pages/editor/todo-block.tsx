@@ -22,12 +22,23 @@ export function TodoBlock({
   }
 
   return (
-    <div className="flex items-center gap-2.5 py-[3px]">
-      <Checkbox
-        checked={done}
-        ariaLabel="Zrobione"
-        onChange={(v) => onSave({ text: wartosc, done: v })}
-      />
+    <div className="flex items-center gap-2.5 py-[3px] max-[799px]:min-h-11">
+      {/* Na telefonie pole 24 px dostaje obszar dotyku 44 px (przezroczysty przycisk nad checkboxem) */}
+      <span className="relative inline-flex">
+        <Checkbox
+          checked={done}
+          ariaLabel="Zrobione"
+          onChange={(v) => onSave({ text: wartosc, done: v })}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden="true"
+          data-testid="todo-hit"
+          onClick={() => onSave({ text: wartosc, done: !done })}
+          className="absolute top-1/2 left-1/2 hidden size-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent p-0 max-[799px]:block"
+        />
+      </span>
       <input
         type="text"
         value={wartosc}

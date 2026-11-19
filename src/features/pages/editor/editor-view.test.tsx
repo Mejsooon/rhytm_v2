@@ -224,4 +224,60 @@ describe("EditorView", () => {
     );
     expect(screen.queryByRole("textbox", { name: "Akapit" })).toBeNull();
   });
+
+  it("odświeżenie danych w trakcie dodawania nie gubi bloku", async () => {
+    const user = userEvent.setup();
+    let zakoncz: (v: unknown) => void = () => {};
+    addBlock.mockImplementation(() => new Promise((r) => (zakoncz = r)));
+    const { rerender } = render(<EditorView data={dane([])} />);
+    await user.type(screen.getByRole("combobox", { name: "Nowy blok" }), "Hej{Enter}");
+    expect(await screen.findByRole("textbox", { name: "Akapit" })).toBeInTheDocument();
+
+    // Nowe dane z serwera (np. po renamePage) bez nowego bloku
+    rerender(<EditorView data={dane([], "Nowy")} />);
+    expect(screen.getByRole("textbox", { name: "Akapit" })).toBeInTheDocument();
+
+    await act(async () => {
+      zakoncz({ ok: true, block: blok("srv-9", "text", 0, { text: "Hej" }) });
+    });
+    const akapity = screen.getAllByRole("textbox", { name: "Akapit" });
+    expect(akapity).toHaveLength(1);
+    expect((akapity[0] as HTMLTextAreaElement).value).toBe("Hej");
+  });
+
+  it("odświeżenie danych, które już zawierają zapisany blok, nie dubluje go", async () => {
+    const user = userEvent.setup();
+    let zakoncz: (v: unknown) => void = () => {};
+    addBlock.mockImplementation(() => new Promise((r) => (zakoncz = r)));
+    const { rerender } = render(<EditorView data={dane([])} />);
+    await user.type(screen.getByRole("combobox", { name: "Nowy blok" }), "Hej{Enter}");
+    rerender(<EditorView data={dane([blok("srv-9", "text", 0, { text: "Hej" })])} />);
+    await act(async () => {
+      zakoncz({ ok: true, block: blok("srv-9", "text", 0, { text: "Hej" }) });
+    });
+    expect(screen.getAllByRole("textbox", { name: "Akapit" })).toHaveLength(1);
+  });
+
+  it("błąd updateBlockContent przywraca poprzednią treść i pokazuje toast", async () => {
+    const user = userEvent.setup();
+    updateBlockContent.mockResolvedValue({ ok: false, message: "x" });
+    render(<EditorView data={dane([blok("a", "text", 0, { text: "Ala" })])} />);
+    const akapit = screen.getByRole("textbox", { name: "Akapit" });
+    await user.type(akapit, " ma kota");
+    await user.tab();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+    await waitFor(() => expect(akapit).toHaveValue("Ala"));
+  });
+
+  it("wiersz zadania ma na telefonie min. 44 px i obszar dotyku 44 px przełączający zadanie", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <EditorView data={dane([blok("z", "todo", 0, { text: "Kup", done: false })])} />,
+    );
+    expect(container.querySelector(".max-\\[799px\\]\\:min-h-11")).not.toBeNull();
+    const trafienie = screen.getByTestId("todo-hit");
+    expect(trafienie).toHaveClass("size-11");
+    await user.click(trafienie);
+    expect(updateBlockContent).toHaveBeenCalledWith("z", { text: "Kup", done: true });
+  });
 });

@@ -20,11 +20,21 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
   const [blocks, setBlocks] = useState(initial);
   // Treść zmieniona, zanim blok dostał prawdziwe id: tymczasowe id → ostatnia treść do zapisu
   const oczekujaceTresci = useRef(new Map<string, Record<string, unknown>>());
+  // Zapisy treści w toku: id bloku → treść wysyłana na serwer
+  const zapisyWToku = useRef(new Map<string, Record<string, unknown>>());
   const licznik = useRef(0);
 
+  // Nowe dane z serwera (np. po renamePage) nie mogą zgubić bloków tymczasowych
+  // ani treści z zapisem w toku — te zostają lokalne, resztę bierzemy z serwera
   if (zrodlo !== initial) {
     setZrodlo(initial);
-    setBlocks(initial);
+    setBlocks((l) => [
+      ...initial.map((b) => {
+        const wToku = zapisyWToku.current.get(b.id);
+        return wToku ? { ...b, content: wToku } : b;
+      }),
+      ...l.filter((b) => b.id.startsWith(PREFIKS_TYMCZASOWY)),
+    ]);
   }
 
   const posortowane = [...blocks].sort((a, b) => a.position - b.position);
@@ -64,13 +74,14 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
     // Zachowujemy treść, którą użytkownik zdążył zmienić przed odpowiedzią serwera
     const zmieniona = oczekujaceTresci.current.get(tymczasoweId);
     oczekujaceTresci.current.delete(tymczasoweId);
-    setBlocks((l) =>
-      l.map((b) =>
-        b.id === tymczasoweId
-          ? { ...prawdziwy, content: zmieniona ?? prawdziwy.content }
-          : b,
-      ),
-    );
+    const gotowy = { ...prawdziwy, content: zmieniona ?? prawdziwy.content };
+    setBlocks((l) => {
+      // Odświeżenie danych mogło już usunąć blok tymczasowy albo dodać prawdziwy — bez duplikatów
+      const bezDuplikatu = l.filter((b) => b.id !== prawdziwy.id);
+      return bezDuplikatu.some((b) => b.id === tymczasoweId)
+        ? bezDuplikatu.map((b) => (b.id === tymczasoweId ? gotowy : b))
+        : [...bezDuplikatu, gotowy];
+    });
     if (zmieniona) {
       let zapisano = false;
       try {
@@ -98,12 +109,14 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
       return true;
     }
 
+    zapisyWToku.current.set(id, content);
     let udane = false;
     try {
       udane = (await updateBlockContent(id, content)).ok;
     } catch {
       udane = false;
     }
+    if (zapisyWToku.current.get(id) === content) zapisyWToku.current.delete(id);
     if (!udane) {
       setBlocks((l) => l.map((b) => (b.id === id ? { ...b, content: poprzednia } : b)));
       toast.error(BLAD_ZAPISU);
