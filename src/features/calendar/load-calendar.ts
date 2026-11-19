@@ -88,6 +88,8 @@ export async function loadCalendar(
   profile?: CalendarProfile,
   // „Dziś” do wystąpień szablonów; domyślnie z profilu (parametr dla testów)
   today?: IsoDate,
+  // Dziś liczymy wszystkie treningi, także ukryte w kalendarzu (show_in_calendar = false)
+  opcje: { wszystkieTreningi?: boolean } = {},
 ): Promise<CalendarData> {
   const { from, to } = range;
   const nastepnyDzien = addDays(to, 1);
@@ -223,7 +225,7 @@ export async function loadCalendar(
   const sesje = (sesjeRes.data ?? []) as SessionRow[];
   const pokazane = sesje.filter(
     (s) =>
-      s.show_in_calendar &&
+      (opcje.wszystkieTreningi || s.show_in_calendar) &&
       s.start_local >= `${from}T00:00:00` &&
       s.start_local < `${nastepnyDzien}T00:00:00`,
   );

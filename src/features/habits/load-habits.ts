@@ -58,7 +58,7 @@ export function mapHabits(
   });
 }
 
-function mapSleepLogs(rows: SleepRow[]): SleepLog[] {
+export function mapSleepLogs(rows: SleepRow[]): SleepLog[] {
   return rows.map((r) => ({
     date: r.date,
     sleptAt: r.slept_at.slice(0, 5),
@@ -89,7 +89,7 @@ async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
 const ROZMIAR_STRONY = 1000;
 
 // Wszystkie odhaczenia (PostgREST obcina odpowiedź do 1000 wierszy, więc czytamy stronami)
-async function loadChecks(
+export async function loadChecks(
   supabase: SupabaseClient<Database>,
   userId: string,
   filtr: { habitId?: string },

@@ -156,7 +156,7 @@
 - [x] Trening siłowy: edycja kg/powt., ✓ serii, objętość i serie na żywo, „+ Seria” (kopiuje poprzednią), ✕ serii, „Usuń ćwiczenie”, „+ Ćwiczenie” (wyszukiwanie, biblioteka bez duplikatów, własne, Enter/Esc), REKORD, „Zapisz jako szablon”, „Zakończ trening”. (e2e: sport.spec.ts kg, ✓, objętość, „Zakończ trening”; unit: gym-log.test.tsx, use-gym-store.test.tsx, model.test.ts recordSetIds/sessionVolume, actions.test.ts; zrzut)
 - [x] Szablony: lista + karta „+ Nowy szablon”; edytor (nazwa, dni, godzina startu przy wybranych dniach _[Claude: brak na makiecie, wybór godziny z 3.2 obok dni]_, serie −/+, powtórzenia, przerwa, ↑ ↓ ✕, „+ Ćwiczenie”, Zapisz nieaktywne bez nazwy/ćwiczeń, Anuluj, Usuń, komunikat po zapisie); „Rozpocznij” z ostatnimi ciężarami. (e2e: sport.spec.ts drugi start z ciężarami z ostatniego razu; unit: templates-list.test.tsx, template-editor.test.tsx, model.test.ts templateSets, actions.test.ts createGymSession/saveTemplate; zrzut listy i edytora)
 - [x] Dni szablonu same tworzą zaplanowane treningi (wystąpienia liczone przy odczycie; „Rozpocznij” / edycja zapisuje sesję; usunięcie wystąpienia = `template_skips`); widoczne w kalendarzu Sportu i głównym. (e2e: sport.spec.ts plan „Push” w kalendarzu głównym i Sportu, „Usuń” → `template_skips`; unit: model.test.ts templateOccurrences, load-calendar.test.ts, load-sport.test.ts; db: sport.test.sql)
-- [ ] … i na Dziś (treningi w planie dnia). Plan dnia na Dziś to Etap 5 (Ruling „Dziś”); w Etapie 4 Dziś ma tylko licznik „Zapisz trening” (first-steps.test.ts).
+- [x] … i na Dziś (treningi w planie dnia; zrobione w Etapie 5, Ruling „Dziś”). (e2e: today.spec.ts bieg na osi planu dnia jako link do /sport; unit: day-plan.test.tsx trening „plan” jako link, model.test.ts dayPlan, mobile/m-today.test.tsx plan dnia jako lista; zrzut)
 - [x] Szczegóły ćwiczenia: 1RM (Epley), najcięższa seria, najwięcej powtórzeń, zmiana 8 tyg., wykres 3 mies./8 tyg., historia z REKORD, „Zmień nazwę”. (unit: exercise-detail.test.tsx, model.test.ts epley1rm; zrzut)
 - [x] Treningi w kalendarzu głównym jako podgląd (kategoria Sport; plan = przerywana ramka, wykonany = pomarańczowy); „Nowy wpis → Bieg/Siłownia” z kalendarza działa. (e2e: sport.spec.ts podgląd biegu → dymek na /sport, „Nowy wpis” → Bieg / Siłownia; unit: time-grid.test.tsx, month-grid.test.tsx, calendar-view.test.tsx (ukryta kategoria Sport), mobile/m-calendar-\*.test.tsx, new-entry-popover.test.tsx; zrzut)
 - [x] Telefon: `MSport` (Tydzień/Miesiąc, karta biegania, wykres ze stuknięciem), `MRunNew` (rodzaj, −/+, tempo liczone, trudność 1–10, „Pokaż w kalendarzu”), `MGym` (pasek postępu, duże checkboxy; bez minutnika przerwy). (e2e: sport.spec.ts telefon „Bieg” −/+ → „Ostatnie”, „Trening” → checkbox → pasek; unit: mobile/m-sport.test.tsx, m-run-new.test.tsx, m-gym.test.tsx; zrzuty)
@@ -171,12 +171,12 @@
 
 **Lista odbiorcza**
 
-- [ ] Karta „Ten tydzień” (5 kafelków z danych etapów 2–4; tydzień wg profilu).
-- [ ] Plan dnia: oś 06–22, „TERAZ”, linia czasu, dymek bloku, treningi („plan”), duch slotu + „Nowy wpis”.
-- [ ] „Zadania na dziś” (samodzielne + zaległe, odhaczanie, „+ Zadanie”) i zwijane „Bez daty”; kafelek Zadania liczy oba rodzaje.
-- [ ] Przejście z EmptyToday do pełnego Dziś po pierwszych krokach.
-- [ ] Telefon `MToday`: nagłówek z szukaj i awatarem, kafelki 2×2 jako linki, karta TERAZ z zadaniami, plan dnia jako lista, nawyki z odhaczaniem, karta biegu, pływający „+”.
-- [ ] Telefon `MQuickAdd`: arkusz z segmentem Zadanie/Blok/Bieg/Nawyk, chipy „Kiedy”, link do pełnego formularza, „Dodaj” zapisuje (zadanie z datą lub bez, blok, bieg-plan, nawyk).
+- [x] Karta „Ten tydzień” (5 kafelków z danych etapów 2–4; tydzień wg profilu). (e2e: today.spec.ts kafelek „Zadania” 0/2 → 1/2 i „50% · dziś 1/2”; unit: week-card.test.tsx, model.test.ts weekTiles/weekStart/isoWeekNumber; zrzut)
+- [x] Plan dnia: oś 06–22, „TERAZ”, linia czasu, dymek bloku, treningi („plan”), duch slotu + „Nowy wpis”. (e2e: today.spec.ts dymek bloku → odhaczenie → „1/2” na osi po odświeżeniu, bieg na osi; unit: day-plan.test.tsx, today-view.test.tsx, model.test.ts dayPlan/nowItem; zrzut planu i dymku)
+- [x] „Zadania na dziś” (samodzielne + zaległe, odhaczanie, „+ Zadanie”) i zwijane „Bez daty”; kafelek Zadania liczy oba rodzaje. (e2e: today.spec.ts „+ Zadanie” → odhaczenie, kafelek 1/3 z zadaniami bloku; unit: today-tasks.test.tsx, model.test.ts weekTiles — zadania; zrzut)
+- [x] Przejście z EmptyToday do pełnego Dziś po pierwszych krokach. (e2e: today.spec.ts konto z 4 krokami ma pełne Dziś, habits.spec.ts / sport.spec.ts liczniki kroków; unit: model.test.ts showFullToday, today-view.test.tsx, first-steps.test.ts; zrzuty pusty i pełny)
+- [x] Telefon `MToday`: nagłówek z szukaj i awatarem, kafelki 2×2 jako linki, karta TERAZ z zadaniami, plan dnia jako lista, nawyki z odhaczaniem, karta biegu, pływający „+”. (e2e: today.spec.ts telefon odhaczenie nawyku → kafelek „Nawyki” 1/1 po odświeżeniu; unit: mobile/m-today.test.tsx, model.test.ts todayTiles; zrzut)
+- [x] Telefon `MQuickAdd`: arkusz z segmentem Zadanie/Blok/Bieg/Nawyk, chipy „Kiedy”, link do pełnego formularza, „Dodaj” zapisuje (zadanie z datą lub bez, blok, bieg-plan, nawyk). (e2e: today.spec.ts „+” → „Kupić mleko” „Jutro” → toast „Dodano”, zadanie z jutrzejszą datą w bazie; unit: mobile/m-quick-add.test.tsx, model.test.ts quickWhenOptions/parseQuickRun; zrzut arkusza)
 
 **Testy:** liczenie kafelków (pn/nd), zadania zaległe, e2e odhaczenie zadania z dymku na Dziś, e2e szybkie dodanie zadania „Jutro” na telefonie, zrzuty.
 

@@ -25,6 +25,7 @@ import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
 import { changeOccurrence, createBlock } from "../actions";
 import type { BlockDialogInitial } from "../block-dialog";
+import type { TasksChange } from "../block-popover";
 import type { CategoryRow } from "../load-calendar";
 import type { Recurrence } from "../occurrences";
 import { describeRecurrence, recurrenceBadge } from "../recurrence-text";
@@ -35,7 +36,6 @@ import {
   type BlockPatch,
   type Scope,
 } from "../scope";
-import type { CalendarChange } from "../use-calendar-store";
 import { weekdayOf } from "../view-range";
 import { DNI_SKROT } from "./pl";
 
@@ -52,8 +52,9 @@ const OPCJE_POWTARZANIA: { value: Powtarzanie; label: string }[] = [
 const PREFIKS_TYMCZASOWY = "tmp-";
 const KOLOR_BRAK = "#a3a3a3";
 
+// Arkusz zmienia tylko zadania, więc działa z magazynem kalendarza i Dziś (jak dymek bloku)
 type ApplyOptimistic = (
-  zmiana: CalendarChange,
+  zmiana: TasksChange,
   akcja: () => Promise<ActionResult>,
 ) => Promise<boolean>;
 

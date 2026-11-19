@@ -2,8 +2,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { setCategoryHidden } = vi.hoisted(() => ({
+const { setCategoryHidden, replace } = vi.hoisted(() => ({
   setCategoryHidden: vi.fn(),
+  replace: vi.fn(),
 }));
 vi.mock("@/features/categories/actions", () => ({
   setCategoryHidden,
@@ -20,7 +21,9 @@ vi.mock("@/features/tasks/actions", () => ({
   unpinTask: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace }),
+}));
 
 import { CalendarView } from "./calendar-view";
 import type { CalendarData } from "./load-calendar";
@@ -253,5 +256,46 @@ describe("CalendarView na telefonie", () => {
     expect(
       within(okno).getByRole("textbox", { name: "Nazwa bloku" }),
     ).toHaveValue("Algebra");
+  });
+
+  it("?nowy=blok na telefonie otwiera arkusz bloku z danymi z adresu; Anuluj czyści adres", async () => {
+    // Udajemy szerokość telefonu dla matchMedia (jsdom jej nie ma)
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+    }) as unknown as typeof window.matchMedia;
+    window.history.replaceState(
+      null,
+      "",
+      "/kalendarz?nowy=blok&data=2026-11-18&godzina=09:00&tytul=Nauka",
+    );
+    try {
+      render(
+        <CalendarView
+          view="tydzien"
+          hasExplicitView={false}
+          date="2026-11-18"
+          today="2026-11-17"
+          nowMinutes={600}
+          data={dane()}
+          newBlock={{ date: "2026-11-18", startMin: 9 * 60, title: "Nauka" }}
+        />,
+      );
+      const arkusz = await screen.findByRole("dialog", { name: "Nowy blok" });
+      expect(within(arkusz).getByLabelText("Nazwa bloku")).toHaveValue("Nauka");
+      expect(
+        within(arkusz).getByRole("button", { name: "Dzień" }),
+      ).toHaveTextContent("18.11");
+      expect(within(arkusz).getByText("09:00")).toBeInTheDocument();
+      await userEvent.click(
+        within(arkusz).getByRole("button", { name: "Anuluj" }),
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(replace).toHaveBeenCalledWith("/kalendarz?data=2026-11-18", {
+        scroll: false,
+      });
+    } finally {
+      delete (window as { matchMedia?: unknown }).matchMedia;
+      window.history.replaceState(null, "", "/");
+    }
   });
 });

@@ -13,7 +13,15 @@ import {
 import { parseCalendarParams, viewRange } from "@/features/calendar/view-range";
 import { createClient } from "@/lib/supabase/server";
 
-type Parametry = Promise<{ widok?: string; data?: string }>;
+type Parametry = Promise<{
+  widok?: string;
+  data?: string;
+  nowy?: string;
+  godzina?: string;
+  tytul?: string;
+}>;
+
+const GODZINA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 // Dane zależą od ciasteczek i adresu → connection + Suspense (jak /dzis)
 async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
@@ -41,14 +49,32 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   );
   const dane = await loadCalendar(supabase, user.id, zakres, profil);
 
+  // ?nowy=blok&data&godzina&tytul (np. z szybkiego dodawania na Dziś) → okno nowego bloku.
+  // Dzień = `data` kalendarza (zła albo brak → dziś); zła albo brak godziny → najbliższa pełna
+  // godzina (najpóźniej 23:00), jak „Nowy blok” na Dziś.
+  const teraz = minutesNow(profil.timezone);
+  const nowyBlok =
+    parametry.nowy === "blok"
+      ? {
+          date,
+          startMin:
+            parametry.godzina && GODZINA.test(parametry.godzina)
+              ? Number(parametry.godzina.slice(0, 2)) * 60 +
+                Number(parametry.godzina.slice(3, 5))
+              : Math.min((Math.floor(teraz / 60) + 1) * 60, 23 * 60),
+          title: (parametry.tytul ?? "").slice(0, 120),
+        }
+      : null;
+
   return (
     <CalendarView
       view={view}
       hasExplicitView={jawnyWidok}
       date={date}
       today={dzis}
-      nowMinutes={minutesNow(profil.timezone)}
+      nowMinutes={teraz}
       data={dane}
+      newBlock={nowyBlok}
     />
   );
 }
