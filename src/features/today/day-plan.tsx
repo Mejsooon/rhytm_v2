@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { todayIso } from "@/components/controls/calendar-math";
 import {
   BlockDialog,
   type BlockDialogInitial,
@@ -15,7 +14,6 @@ import {
 import { BlockPopover } from "@/features/calendar/block-popover";
 import { layoutDay } from "@/features/calendar/day-layout";
 import { DeleteBlockDialog } from "@/features/calendar/delete-block-dialog";
-import { minutesNow } from "@/features/calendar/load-calendar";
 import { NewEntryPopover } from "@/features/calendar/new-entry-popover";
 import type { Occurrence } from "@/features/calendar/occurrences";
 import { sportItemHref } from "@/features/sport/model";
@@ -38,9 +36,12 @@ type Okno =
 
 export function DayPlan({
   data,
+  nowMin: teraz,
   applyOptimistic,
 }: {
   data: TodayData;
+  // Bieżąca minuta w strefie profilu (zegar co minutę w TodayView)
+  nowMin: number;
   applyOptimistic: (
     zmiana: TodayChange,
     akcja: () => Promise<ActionResult>,
@@ -48,36 +49,7 @@ export function DayPlan({
 }) {
   const router = useRouter();
   const { today, profile } = data;
-  const { clock, timezone } = profile;
-
-  // Zegar: start z wartości serwera, potem co minutę w strefie profilu; nowa wartość
-  // z serwera (odświeżenie) zastępuje zegar. Po północy dane są z wczoraj → odświeżamy stronę.
-  const [teraz, setTeraz] = useState(data.nowMin);
-  const [terazDla, setTerazDla] = useState(data.nowMin);
-  if (terazDla !== data.nowMin) {
-    setTerazDla(data.nowMin);
-    setTeraz(data.nowMin);
-  }
-  useEffect(() => {
-    const tik = () => {
-      if (todayIso(timezone) !== today) router.refresh();
-      setTeraz(minutesNow(timezone));
-    };
-    // Pierwszy tik na początku następnej pełnej minuty, potem co minutę — linia i „TERAZ”
-    // nie spóźniają się względem zegara
-    let interwal: number | undefined;
-    const start = window.setTimeout(
-      () => {
-        tik();
-        interwal = window.setInterval(tik, 60_000);
-      },
-      60_000 - (Date.now() % 60_000),
-    );
-    return () => {
-      window.clearTimeout(start);
-      window.clearInterval(interwal);
-    };
-  }, [timezone, today, router]);
+  const { clock } = profile;
 
   const plan = dayPlan(
     data.occurrencesToday,

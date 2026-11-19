@@ -282,7 +282,7 @@ describe("MToday", () => {
     expect(zadania).toHaveTextContent("Zadania1/3");
     const km = t.getByRole("link", { name: /^Km w tyg\./ });
     expect(km).toHaveAttribute("href", "/sport");
-    expect(km).toHaveTextContent("Km w tyg.18,4/25");
+    expect(km).toHaveTextContent("Km w tyg.18,4/25,0");
   });
 
   it("bez wpisu snu kafelek „—”, bez celu km sama liczba", () => {
@@ -394,6 +394,35 @@ describe("MToday", () => {
     ).toHaveAttribute("href", "/kalendarz?widok=dzien");
   });
 
+  it("zakończony blok: „zrobione” tylko bez zadań albo przy wszystkich zrobionych", () => {
+    const d = dane();
+    // Teraz 19:30: rhytm (09:30–11:30, 1/2 zadań) się skończył, Bazy danych trwa
+    d.nowMin = 19 * 60 + 30;
+    vi.setSystemTime(new Date("2026-11-17T18:30:00Z"));
+    const { unmount } = render(<TodayView data={d} name="Mejson" />);
+    let plan = telefon().getByRole("region", { name: "Plan dnia" });
+    expect(within(plan).getByText("2 h · Własne · 1/2")).toBeInTheDocument();
+    expect(within(plan).getByText("rhytm — kod")).toHaveClass("line-through");
+    // Trening zaplanowany na 16:00, który minął, nie jest „zrobiony”
+    expect(within(plan).getByText("1 h · Sport")).toBeInTheDocument();
+    unmount();
+
+    d.tasks = d.tasks.map((t) => (t.id === "t2" ? { ...t, done: true } : t));
+    render(<TodayView data={d} name="Mejson" />);
+    plan = telefon().getByRole("region", { name: "Plan dnia" });
+    expect(within(plan).getAllByText("2 h · zrobione")).toHaveLength(1);
+  });
+
+  it("linki „Kalendarz” i „Wszystkie” mają cel dotyku 44 px", () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    const t = telefon();
+    for (const nazwa of ["Kalendarz", "Wszystkie"]) {
+      expect(t.getByRole("link", { name: nazwa }).className).toContain(
+        "min-h-11",
+      );
+    }
+  });
+
   it("pusty plan dnia: „Plan dnia jest pusty”", () => {
     const d = dane();
     d.occurrencesToday = [];
@@ -455,7 +484,7 @@ describe("MToday", () => {
     render(<TodayView data={dane()} name="Mejson" />);
     const karta = telefon().getByRole("link", { name: /Bieg o 16:00/ });
     expect(karta).toHaveAttribute("href", "/sport");
-    expect(karta).toHaveTextContent("Bieg o 16:00 · 10 km");
+    expect(karta).toHaveTextContent("Bieg o 16:00 · 10,0 km");
     expect(karta).toHaveTextContent("Cel tygodnia: jeszcze 6,6 km");
   });
 
@@ -495,6 +524,7 @@ describe("MToday", () => {
     render(
       <MToday
         data={d}
+        nowMin={d.nowMin}
         name="Mejson"
         avatarUrl={null}
         applyOptimistic={vi.fn()}

@@ -3,14 +3,12 @@
 // Ekran Dziś na telefonie wg MToday.dc.html: nagłówek (szukaj, awatar), kafelki 2×2,
 // karta „TERAZ” z zadaniami trwającego bloku, „Plan dnia” jako lista, nawyki z odhaczaniem
 // i serią, karta najbliższego biegu oraz pływający „+” (szybkie dodawanie, arkusz z Task 6).
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronRight, Plus, Search } from "lucide-react";
 
-import { todayIso } from "@/components/controls/calendar-math";
 import type { BlockDialogInitial } from "@/features/calendar/block-dialog";
-import { minutesNow } from "@/features/calendar/load-calendar";
 import { MBlockSheet } from "@/features/calendar/mobile/m-block-sheet";
 import {
   DNI_PELNE,
@@ -46,6 +44,7 @@ const POLE_WYBORU =
 
 export function MToday({
   data,
+  nowMin: teraz,
   name,
   avatarUrl,
   applyOptimistic,
@@ -54,6 +53,8 @@ export function MToday({
 }: {
   // Dane z optymistycznymi zmianami (useTodayStore)
   data: TodayData;
+  // Bieżąca minuta w strefie profilu (zegar co minutę w TodayView)
+  nowMin: number;
   // Nazwa do inicjału awatara
   name: string;
   avatarUrl: string | null;
@@ -67,34 +68,7 @@ export function MToday({
 }) {
   const router = useRouter();
   const { today, profile } = data;
-  const { clock, timezone } = profile;
-
-  // Zegar jak w planie dnia na webie: start z wartości serwera, potem co minutę w strefie profilu
-  // („TERAZ”, „zostało N min”, przekreślenie zakończonych). Po północy odświeżamy stronę.
-  const [teraz, setTeraz] = useState(data.nowMin);
-  const [terazDla, setTerazDla] = useState(data.nowMin);
-  if (terazDla !== data.nowMin) {
-    setTerazDla(data.nowMin);
-    setTeraz(data.nowMin);
-  }
-  useEffect(() => {
-    const tik = () => {
-      if (todayIso(timezone) !== today) router.refresh();
-      setTeraz(minutesNow(timezone));
-    };
-    let interwal: number | undefined;
-    const start = window.setTimeout(
-      () => {
-        tik();
-        interwal = window.setInterval(tik, 60_000);
-      },
-      60_000 - (Date.now() % 60_000),
-    );
-    return () => {
-      window.clearTimeout(start);
-      window.clearInterval(interwal);
-    };
-  }, [timezone, today, router]);
+  const { clock } = profile;
 
   // Otwarty arkusz edycji bloku (z karty TERAZ) albo null
   const [edycja, setEdycja] = useState<BlockDialogInitial | null>(null);
@@ -208,7 +182,6 @@ export function MToday({
     weeklyWorkoutsGoal: profile.weeklyWorkoutsGoal,
   });
   const bieg = tydzien.run.nextRun;
-  const km = (v: number) => String(Math.round(v * 10) / 10).replace(".", ",");
   let tytulBiegu = "";
   let celBiegu: string | null = null;
   if (bieg) {
@@ -217,12 +190,13 @@ export function MToday({
       bieg.date === today
         ? `Bieg o ${godz(bieg.startMin)}`
         : `Bieg ${DNI_SKROT[weekdayOf(bieg.date)]} ${godz(bieg.startMin)}`;
-    if (bieg.distanceKm !== null) tytulBiegu += ` · ${km(bieg.distanceKm)} km`;
+    if (bieg.distanceKm !== null)
+      tytulBiegu += ` · ${formatKm(bieg.distanceKm)} km`;
     if (kafelki.goalKm !== null) {
       const zostalo = kafelki.goalKm - kafelki.km;
       celBiegu =
         zostalo > 0
-          ? `Cel tygodnia: jeszcze ${km(zostalo)} km`
+          ? `Cel tygodnia: jeszcze ${formatKm(zostalo)} km`
           : "Cel tygodnia osiągnięty";
     }
   }
@@ -301,7 +275,7 @@ export function MToday({
             "/sport",
             "Km w tyg.",
             formatKm(kafelki.km),
-            kafelki.goalKm === null ? null : `/${km(kafelki.goalKm)}`,
+            kafelki.goalKm === null ? null : `/${formatKm(kafelki.goalKm)}`,
           )}
         </div>
 
@@ -380,7 +354,7 @@ export function MToday({
             </h2>
             <Link
               href="/kalendarz?widok=dzien"
-              className="text-sm text-[#666666] no-underline"
+              className="inline-flex min-h-11 items-center text-sm text-[#666666] no-underline"
             >
               Kalendarz
             </Link>
@@ -393,13 +367,23 @@ export function MToday({
             <ul className={cn(KARTA, "m-0 list-none p-0")}>
               {plan.map((p) => {
                 const zakonczony = p.endMin <= teraz;
+                // „zrobione” (makieta) tylko dla zakończonego wpisu bez zadań albo z wszystkimi
+                // zrobionymi; zaplanowany trening, który minął, nie jest zrobiony
+                const zrobiony =
+                  zakonczony && !p.planned && p.tasksDone === p.tasksTotal;
                 const biezacy = p.key === trwajacy?.key;
-                // Zakończony: „30 min · zrobione” (makieta); trening wg planu, który minął, nie jest zrobiony
-                const opis = [
-                  czas(p.endMin - p.startMin),
-                  zakonczony && !p.planned ? "zrobione" : p.categoryName,
-                  p.tasksTotal > 0 ? `${p.tasksDone}/${p.tasksTotal}` : null,
-                ]
+                // Zrobiony: „30 min · zrobione”; inaczej „{czas} · {kategoria} · x/y”
+                const opis = (
+                  zrobiony
+                    ? [czas(p.endMin - p.startMin), "zrobione"]
+                    : [
+                        czas(p.endMin - p.startMin),
+                        p.categoryName,
+                        p.tasksTotal > 0
+                          ? `${p.tasksDone}/${p.tasksTotal}`
+                          : null,
+                      ]
+                )
                   .filter(Boolean)
                   .join(" · ");
                 return (
@@ -469,7 +453,7 @@ export function MToday({
             </h2>
             <Link
               href="/nawyki"
-              className="text-sm text-[#666666] no-underline"
+              className="inline-flex min-h-11 items-center text-sm text-[#666666] no-underline"
             >
               Wszystkie
             </Link>

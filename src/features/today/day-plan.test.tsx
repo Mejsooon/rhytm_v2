@@ -1,5 +1,4 @@
 import {
-  act,
   fireEvent,
   render,
   screen,
@@ -150,7 +149,13 @@ function dane(nadpisz: Partial<TodayData> = {}): TodayData {
 // DayPlan z prawdziwym magazynem Dziś (jak w TodayView)
 function Plan({ d }: { d: TodayData }) {
   const { data, applyOptimistic } = useTodayStore(d);
-  return <DayPlan data={data} applyOptimistic={applyOptimistic} />;
+  return (
+    <DayPlan
+      data={data}
+      nowMin={data.nowMin}
+      applyOptimistic={applyOptimistic}
+    />
+  );
 }
 
 beforeEach(() => {
@@ -197,25 +202,6 @@ describe("DayPlan", () => {
     render(<Plan d={dane({ nowMin: 7 * 60 })} />);
     expect(screen.getByTestId("os-dnia").scrollTop).toBe(6 * 48);
     expect(screen.queryByText("TERAZ")).not.toBeInTheDocument();
-  });
-
-  it("czerwona linia przesuwa się na początku każdej pełnej minuty", () => {
-    vi.useFakeTimers();
-    // 10:20:45 — linia na 10:20, następna minuta za 15 s
-    vi.setSystemTime(new Date("2026-11-17T09:20:45Z"));
-    render(<Plan d={dane()} />);
-    act(() => {
-      vi.advanceTimersByTime(14_999);
-    });
-    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
-    act(() => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:21");
-    act(() => {
-      vi.advanceTimersByTime(60_000);
-    });
-    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:22");
   });
 
   it("trening „plan” jest linkiem do podglądu na /sport", () => {

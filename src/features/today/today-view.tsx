@@ -3,7 +3,7 @@
 // Ekran Dziś (Today.dc.html web; EmptyToday.dc.html przed pierwszymi krokami).
 // Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
 // Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/controls";
@@ -41,6 +41,35 @@ export function TodayView({
   // liczą się z tych samych zadań, więc odhaczenie zmienia je naraz
   const { data, applyOptimistic, toggleHabit } = useTodayStore(daneSerwera);
   const { profile, today } = data;
+  const { timezone } = profile;
+
+  // Jeden zegar dla obu drzew (plan dnia web i MToday): start z wartości serwera, potem na początku
+  // każdej pełnej minuty w strefie profilu; nowa wartość z serwera (odświeżenie) zastępuje zegar.
+  // Po północy dane są z wczoraj → jedno odświeżenie strony.
+  const [teraz, setTeraz] = useState(data.nowMin);
+  const [terazDla, setTerazDla] = useState(data.nowMin);
+  if (terazDla !== data.nowMin) {
+    setTerazDla(data.nowMin);
+    setTeraz(data.nowMin);
+  }
+  useEffect(() => {
+    const tik = () => {
+      if (todayIso(timezone) !== today) router.refresh();
+      setTeraz(minutesNow(timezone));
+    };
+    let interwal: number | undefined;
+    const start = window.setTimeout(
+      () => {
+        tik();
+        interwal = window.setInterval(tik, 60_000);
+      },
+      60_000 - (Date.now() % 60_000),
+    );
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(interwal);
+    };
+  }, [timezone, today, router]);
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
   // Otwarty arkusz szybkiego dodawania (pływający „+” na telefonie); arkusz MQuickAdd dochodzi w Task 6
@@ -132,6 +161,7 @@ export function TodayView({
       >
         <MToday
           data={data}
+          nowMin={teraz}
           name={name}
           avatarUrl={avatarUrl}
           applyOptimistic={applyOptimistic}
@@ -165,7 +195,11 @@ export function TodayView({
           />
 
           {/* 2. Plan dnia (oś 00–24) */}
-          <DayPlan data={data} applyOptimistic={applyOptimistic} />
+          <DayPlan
+            data={data}
+            nowMin={teraz}
+            applyOptimistic={applyOptimistic}
+          />
 
           {/* 3. Samodzielne zadania na dziś, zaległe i bez daty */}
           <TodayTasks

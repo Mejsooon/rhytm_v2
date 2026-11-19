@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -245,5 +245,55 @@ describe("TodayView", () => {
         name: /^Zadania/,
       }),
     ).toHaveTextContent("Zadania2/2");
+  });
+
+  it("jeden zegar co minutę dla obu drzew; po północy jedno odświeżenie", () => {
+    vi.useFakeTimers();
+    // 10:20:45 — następna pełna minuta za 15 s
+    vi.setSystemTime(new Date("2026-11-17T09:20:45Z"));
+    const d = dane(wszystko);
+    d.occurrencesToday = [
+      {
+        key: "b1:2026-11-17",
+        blockId: "b1",
+        date: "2026-11-17",
+        startMin: 10 * 60,
+        durationMin: 120,
+        title: "rhytm — kod",
+        categoryId: null,
+        note: null,
+        remind: false,
+        recurring: false,
+        recurrence: null,
+        modified: false,
+      },
+    ];
+    render(<TodayView data={d} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
+    const tel = within(screen.getByTestId("m-dzis"));
+    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    expect(tel.getByText("10:00–12:00 · zostało 100 min")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(14_999);
+    });
+    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:21");
+    expect(tel.getByText("10:00–12:00 · zostało 99 min")).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:22");
+    expect(refresh).not.toHaveBeenCalled();
+
+    // Przeskok za północ (Warszawa): następny tik widzi inny dzień → jedno odświeżenie
+    vi.setSystemTime(new Date("2026-11-17T23:00:30Z"));
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });
