@@ -34,11 +34,9 @@ nav a:hover{background:#f5f5f5;color:#171717}
   <a href="Sport.dc.html" style="{{s.sport}}" onMouseEnter="{{en.sport}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Sport</a>
   <a href="Habits.dc.html" style="{{s.nawyki}}" onMouseEnter="{{en.nawyki}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>Nawyki i sen</a>
 
-  <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px">
-    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Strony</span>
-    <a href="NewPage.dc.html" aria-label="Dodaj stronę" style="color: #666666; display: flex; padding: 2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
-  </div>
-  <sc-for list="{{pages}}" as="p" hint-placeholder-count="6">
+  <sc-if value="{{hasFav}}" hint-placeholder-val="{{false}}">
+  <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b; padding: 14px 8px 6px; text-transform: uppercase; letter-spacing: .06em">Ulubione</div>
+  <sc-for list="{{favPages}}" as="p" hint-placeholder-count="0">
   <div draggable="{{p.draggable}}" onDragStart="{{p.dragStart}}" onDragOver="{{p.dragOver}}" onDrop="{{p.drop}}" onDragEnd="{{dragEnd}}" style="{{p.rowS}}" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
     <sc-if value="{{p.editing}}" hint-placeholder-val="{{false}}">
       <input type="text" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}" style="box-sizing: border-box; width: 100%; height: 32px; padding: 0 8px; border: 1px solid #171717; border-radius: 6px; background: #ffffff; font: inherit; font-size: 14px; color: #171717; outline: none">
@@ -47,7 +45,49 @@ nav a:hover{background:#f5f5f5;color:#171717}
       <a href="{{p.href}}" draggable="false" style="{{p.s}}">
         <dc-import name="PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
         <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
-        <sc-if value="{{p.fav}}" hint-placeholder-val="{{false}}"><span aria-label="Ulubiona" style="font-size: 11px; color: #a16207; margin-right: 22px">★</span></sc-if>
+      </a>
+      <sc-if value="{{p.showDots}}" hint-placeholder-val="{{false}}">
+        <button type="button" aria-label="{{p.menuLabel}}" aria-haspopup="menu" aria-expanded="{{p.menuExp}}" onClick="{{p.toggleMenu}}" style="position: absolute; right: 3px; top: 3px; width: 26px; height: 26px; border: 0; border-radius: 5px; background: {{p.dotsBg}}; color: #404040; font: inherit; font-size: 14px; line-height: 1; cursor: pointer">⋯</button>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{p.menuOpen}}" hint-placeholder-val="{{false}}">
+      <div style="position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 6px; box-sizing: border-box; font-size: 13px">
+        <sc-if value="{{modeList}}" hint-placeholder-val="{{true}}">
+          <div role="menu" aria-label="{{p.menuLabel}}" style="display: flex; flex-direction: column">
+            <button type="button" role="menuitem" class="mi" onClick="{{startRename}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">✎</span><span style="flex: 1">Zmień nazwę</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b">F2</span></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{showIcons}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">◇</span><span style="flex: 1">Zmień ikonę</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b">›</span></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{duplicate}}"><span aria-hidden="true" style="width: 18px; color: #6b6b6b; font-family: 'Geist Mono', monospace">⧉</span><span style="flex: 1">Duplikuj</span></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{toggleFav}}"><span aria-hidden="true" style="width: 18px; color: #a16207; font-family: 'Geist Mono', monospace">★</span><span style="flex: 1">{{favLabel}}</span></button>
+            <div style="height: 1px; background: #eaeaea; margin: 6px 4px"></div>
+            <button type="button" role="menuitem" class="mi" onClick="{{askDelete}}" style="color: #b91c1c"><span aria-hidden="true" style="width: 18px; font-family: 'Geist Mono', monospace">✕</span><span style="flex: 1">Usuń stronę</span></button>
+          </div>
+        </sc-if>
+        <sc-if value="{{modeIcons}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 2px">
+            <div style="display: flex; align-items: center; gap: 6px"><button type="button" aria-label="Wróć do menu" onClick="{{showList}}" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; font: inherit; cursor: pointer; color: #404040">←</button><span style="font-weight: 500">Zmień ikonę</span></div>
+            <dc-import name="IconPicker" value="{{curIcon}}" on-pick="{{pickIcon}}" hint-size="100%,330px"></dc-import>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+  </sc-for>
+  </sc-if>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px">
+    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em">Strony</span>
+    <a href="NewPage.dc.html" aria-label="Dodaj stronę" style="color: #666666; display: flex; padding: 2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+  </div>
+  <sc-for list="{{otherPages}}" as="p" hint-placeholder-count="6">
+  <div draggable="{{p.draggable}}" onDragStart="{{p.dragStart}}" onDragOver="{{p.dragOver}}" onDrop="{{p.drop}}" onDragEnd="{{dragEnd}}" style="{{p.rowS}}" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
+    <sc-if value="{{p.editing}}" hint-placeholder-val="{{false}}">
+      <input type="text" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}" style="box-sizing: border-box; width: 100%; height: 32px; padding: 0 8px; border: 1px solid #171717; border-radius: 6px; background: #ffffff; font: inherit; font-size: 14px; color: #171717; outline: none">
+    </sc-if>
+    <sc-if value="{{p.notEditing}}" hint-placeholder-val="{{true}}">
+      <a href="{{p.href}}" draggable="false" style="{{p.s}}">
+        <dc-import name="PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
+        <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
       </a>
       <sc-if value="{{p.showDots}}" hint-placeholder-val="{{false}}">
         <button type="button" aria-label="{{p.menuLabel}}" aria-haspopup="menu" aria-expanded="{{p.menuExp}}" onClick="{{p.toggleMenu}}" style="position: absolute; right: 3px; top: 3px; width: 26px; height: 26px; border: 0; border-radius: 5px; background: {{p.dotsBg}}; color: #404040; font: inherit; font-size: 14px; line-height: 1; cursor: pointer">⋯</button>
@@ -155,10 +195,13 @@ class Component extends DCLogic {
       const bez = lista.filter((x) => x.k !== zrodlo);
       const i = bez.findIndex((x) => x.k === cel);
       bez.splice(po ? i + 1 : i, 0, lista.find((x) => x.k === zrodlo));
-      this.setState({ list: bez, drag: null, over: null });
+      // Upuszczenie w innej sekcji (Ulubione ↔ Strony) dodaje albo zdejmuje stronę z ulubionych.
+      const f = Object.assign({}, st.fav || {});
+      f[zrodlo] = !!f[cel];
+      this.setState({ list: bez, fav: f, drag: null, over: null });
     };
 
-    const pages = zywe.map((p) => {
+    const wiersze = zywe.map((p) => {
       const ikona = (st.icons || {})[p.k] || p.icon || null;
       const isActive = p.k === active;
       const isOpen = p.k === menu;
@@ -212,7 +255,10 @@ class Component extends DCLogic {
     const usuwana = lista.find((p) => p.k === st.confirm) || null;
 
     return {
-      s, en, pages,
+      s, en,
+      favPages: wiersze.filter((w) => w.fav),
+      otherPages: wiersze.filter((w) => !w.fav),
+      hasFav: wiersze.some((w) => w.fav),
       lv: () => this.setState({ hov: null }),
       dragEnd: () => this.setState({ drag: null, over: null }),
       mh: this.props.minHeight ?? 900,
