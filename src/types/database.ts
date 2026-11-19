@@ -936,7 +936,7 @@ export type Database = {
         Args: {
           p_blocks: Json;
           p_icon: string;
-          p_template_key: string;
+          p_template_key: string | null;
           p_title: string;
         };
         Returns: string;
