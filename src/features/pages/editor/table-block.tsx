@@ -18,6 +18,8 @@ import {
   updateRow,
 } from "../actions";
 import {
+  EDITOR_TYPES,
+  FIELD_TYPE_META,
   PALETA,
   nextOptionId,
   planTypeChange,
@@ -31,7 +33,7 @@ import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU } from "../messages";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { editorFooter, type PageRow } from "../table-model";
-import { CellEditor } from "./cell-editor";
+import { CellEditor, OptionBadge } from "./cell-editor";
 import { MColumnSheet } from "./mobile/m-column-sheet";
 import { ColumnPopover } from "./column-popover";
 import { TypeChangeDialog } from "./type-change-dialog";
@@ -503,11 +505,14 @@ export function TableBlock({
                     onDelete={() => void usunKolumne(f)}
                   />
                   {/* Telefon: przezroczysta nakładka nad nagłówkiem otwiera arkusz „Kolumna” zamiast dymka */}
+                  {/* Ikona i nazwa to pseudo-elementy (tekst nie dubluje się w DOM); dymek web jest ukryty na telefonie */}
                   <button
                     type="button"
                     aria-label={`Kolumna ${f.name} — ustawienia`}
+                    data-icon={EDITOR_TYPES.find((t) => t.type === f.type)?.icon ?? FIELD_TYPE_META[f.type].icon}
+                    data-name={f.name}
                     onClick={() => setArkuszKolumny(f.id)}
-                    className="absolute inset-0 min-h-11 cursor-pointer border-0 bg-transparent p-0 min-[800px]:hidden"
+                    className="-mx-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-1 font-[inherit] font-medium whitespace-nowrap text-[#666666] before:font-mono before:text-[#6b6b6b] before:content-[attr(data-icon)] after:content-[attr(data-name)] min-[800px]:hidden"
                   />
                 </div>
               ))}
@@ -542,18 +547,25 @@ export function TableBlock({
                   <div
                     key={klucze[f.id] ?? f.id}
                     role="cell"
-                    className={`relative flex min-h-5 min-w-0 items-center border-r border-b border-[#f0f0f0] border-r-[#f5f5f5] px-3.5 py-2 group-hover/row:bg-[#fcfcfc] ${
+                    className={`relative flex min-h-5 min-w-0 max-[799px]:min-h-11 items-center border-r border-b border-[#f0f0f0] border-r-[#f5f5f5] px-3.5 py-2 group-hover/row:bg-[#fcfcfc] ${
                       i === 0 ? "font-medium" : ""
                     }`}
                   >
-                    <CellEditor
-                      field={f}
-                      value={r.values[f.id]}
-                      label={f.name || "Pole"}
-                      today={today}
-                      onCommit={(v) => void zmienKomorke(r, f, v)}
-                      onEditOptions={() => setOtwartaKolumna(f.id)}
-                    />
+                    {/* Wybór na telefonie przełącza opcje stuknięciem, więc dymek web jest tam ukryty */}
+                    <div
+                      className={
+                        f.type === "status" || f.type === "select" ? "max-[799px]:hidden" : "contents"
+                      }
+                    >
+                      <CellEditor
+                        field={f}
+                        value={r.values[f.id]}
+                        label={f.name || "Pole"}
+                        today={today}
+                        onCommit={(v) => void zmienKomorke(r, f, v)}
+                        onEditOptions={() => setOtwartaKolumna(f.id)}
+                      />
+                    </div>
                     {/* Telefon: stuknięcie komórki Wyboru przełącza na następną opcję (po ostatniej — pusta) */}
                     {(f.type === "status" || f.type === "select") && (
                       <button
@@ -564,8 +576,17 @@ export function TableBlock({
                         onClick={() =>
                           void zmienKomorke(r, f, nextOptionId(f.config.options ?? [], r.values[f.id]))
                         }
-                        className="absolute inset-0 min-h-11 cursor-pointer border-0 bg-transparent p-0 min-[800px]:hidden"
-                      />
+                        className="inline-flex min-h-11 w-full cursor-pointer items-center border-0 bg-transparent p-0 font-[inherit] min-[800px]:hidden"
+                      >
+                        {(() => {
+                          const wybrana = (f.config.options ?? []).find((o) => o.id === r.values[f.id]);
+                          return wybrana ? (
+                            <OptionBadge option={wybrana} />
+                          ) : (
+                            <span className="font-mono text-[#a3a3a3]">—</span>
+                          );
+                        })()}
+                      </button>
                     )}
                   </div>
                 ))}

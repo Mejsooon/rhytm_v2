@@ -73,11 +73,12 @@ export function MColumnSheet({
       open={open}
       onOpenChange={onOpenChange}
       title="Kolumna"
-      footer={
+      headerAction={
         <button
           type="button"
+          aria-label="Gotowe"
           onClick={() => onOpenChange(false)}
-          className="flex h-11 w-full cursor-pointer items-center justify-center rounded-[10px] border border-[#171717] bg-[#171717] font-[inherit] font-semibold text-white"
+          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent px-3 font-[inherit] font-semibold text-[#171717] hover:bg-[#f5f5f5]"
         >
           Gotowe
         </button>

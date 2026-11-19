@@ -78,7 +78,7 @@ export function ColumnPopover({
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] border-0 px-1 py-0.5 font-[inherit] font-medium whitespace-nowrap hover:bg-[#efefef] hover:text-[#171717] max-[799px]:min-h-11 ${
+          className={`-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] border-0 px-1 py-0.5 font-[inherit] font-medium whitespace-nowrap hover:bg-[#efefef] hover:text-[#171717] max-[799px]:hidden ${
             open ? "bg-[#efefef] text-[#171717]" : "bg-transparent text-[#666666]"
           }`}
         >

@@ -144,6 +144,7 @@ export function MEditor({
         query={zapytanie}
         onPick={(p) => wstaw(p.type)}
         onClose={zamknijArkusz}
+        focusSheet={menuOtwarte}
       />
     </>
   );

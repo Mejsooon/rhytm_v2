@@ -122,6 +122,33 @@ describe("MEditor (telefon)", () => {
     expect(screen.queryByRole("dialog", { name: "Wstaw blok" })).toBeNull();
   });
 
+  it("„+” przenosi fokus do arkusza, Tab zostaje w arkuszu, a Esc go zamyka", async () => {
+    const user = userEvent.setup();
+    render(<EditorView data={dane([])} />);
+    const plusy = screen.getAllByRole("button", { name: "Wstaw blok" });
+    await user.click(plusy[plusy.length - 1]);
+    const arkusz = screen.getByRole("dialog", { name: "Wstaw blok" });
+    expect(arkusz.contains(document.activeElement)).toBe(true);
+    for (let i = 0; i < 12; i++) {
+      await user.tab();
+      expect(arkusz.contains(document.activeElement)).toBe(true);
+    }
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Wstaw blok" })).toBeNull();
+  });
+
+  it("Esc zamyka arkusz otwarty przez „/” i czyści pole", async () => {
+    const user = userEvent.setup();
+    render(<EditorView data={dane([])} />);
+    const pole = screen.getByRole("textbox", { name: "Nowy blok" });
+    await user.type(pole, "/ta");
+    // Fokus został w polu, więc pisanie dalej filtruje
+    expect(document.activeElement).toBe(pole);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Wstaw blok" })).toBeNull();
+    expect((pole as HTMLInputElement).value).toBe("");
+  });
+
   it("wpisanie „/” w polu poleceń otwiera arkusz, filtruje i pokazuje „Brak bloku”", async () => {
     const user = userEvent.setup();
     render(<EditorView data={dane([])} />);
@@ -183,8 +210,10 @@ describe("MEditor (telefon)", () => {
 
   it("tabela przewija się poziomo", () => {
     render(<EditorView data={dane([tabela()])} />);
-    const wiersz = screen.getAllByRole("row")[0];
-    expect(wiersz.parentElement!.className).toContain("overflow-x-auto");
+    const naglowek = screen.getAllByRole("row")[0];
+    // Kontener przewija się poziomo, a siatka ma minimalną szerokość (244 + 140 px na kolumnę)
+    expect(naglowek.parentElement!.className).toContain("overflow-x-auto");
+    expect(naglowek.style.minWidth).toBe("384px");
   });
 
   it("nagłówek kolumny otwiera arkusz „Kolumna” z kontrolkami", async () => {
@@ -198,7 +227,10 @@ describe("MEditor (telefon)", () => {
     expect(within(arkusz).getByRole("button", { name: "← W lewo" })).toBeTruthy();
     expect(within(arkusz).getByRole("button", { name: "W prawo →" })).toBeTruthy();
     expect(within(arkusz).getByRole("button", { name: "Usuń kolumnę" })).toBeTruthy();
-    await user.click(within(arkusz).getByRole("button", { name: "Gotowe" }));
+    // „Gotowe” jest w nagłówku arkusza (jak w makiecie), nie w stopce
+    const gotowe = within(arkusz).getByRole("button", { name: "Gotowe" });
+    expect(gotowe.closest("[class*='border-b']")?.contains(arkusz.querySelector("h2"))).toBe(true);
+    await user.click(gotowe);
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Kolumna" })).toBeNull());
   });
 
