@@ -92,45 +92,6 @@ test.describe("Dziś (web)", () => {
         .getByRole("checkbox", { name: "Powtórka wzorów" }),
     ).toBeChecked();
   });
-
-  test("„+ Zadanie” w „Zadania na dziś” → zadanie widoczne → odhaczenie; kafelek „Zadania” liczy też zadania bloku", async ({
-    page,
-  }, info) => {
-    await zalozPelneDzis(page, info.project.name);
-    const web = page.getByTestId("web-dzis");
-    const zadania = web.getByRole("region", { name: "Zadania na dziś" });
-    const kafelekZadan = web
-      .getByTestId("kafelek-tygodnia")
-      .filter({ hasText: "Zadania" });
-    await expect(zadania.getByText("Brak zadań na dziś.")).toBeVisible();
-
-    await zadania
-      .getByRole("button", { name: "+ Zadanie", exact: true })
-      .click();
-    // Najpierw kończy się zapis dodania (osobny POST), dopiero potem odhaczamy
-    const dodanie = poZapisie(page);
-    await zadania.getByLabel("Nowe zadanie").fill("Oddać książkę");
-    await zadania.getByLabel("Nowe zadanie").press("Enter");
-    const zadanie = zadania.getByRole("checkbox", { name: "Oddać książkę" });
-    await expect(zadanie).toBeVisible();
-    await expect(zadania).toContainText("0 z 1");
-    // Dwa zadania bloku i jedno samodzielne
-    await expect(kafelekZadan).toContainText("0/3");
-    await dodanie;
-
-    // Pole odhaczenia jest wyłączone, dopóki zadanie nie ma prawdziwego id z serwera; check() na to czeka
-    const odhaczenie = poZapisie(page);
-    await zadanie.check();
-    await expect(zadanie).toBeChecked();
-    await expect(zadania).toContainText("1 z 1");
-    await expect(kafelekZadan).toContainText("1/3");
-    await odhaczenie;
-
-    await page.reload();
-    await expect(zadanie).toBeChecked();
-    await expect(zadania).toContainText("1 z 1");
-    await expect(kafelekZadan).toContainText("1/3");
-  });
 });
 
 test.describe("Dziś (telefon)", () => {

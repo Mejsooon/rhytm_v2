@@ -23,6 +23,7 @@ export function NewEntryPopover({
   startMin,
   clock,
   align = "start",
+  side = "right",
   onBlock,
   onClose,
 }: {
@@ -32,6 +33,8 @@ export function NewEntryPopover({
   clock: "24" | "12";
   // "end" otwiera dymek w górę (dolne wiersze siatki miesiąca)
   align?: "start" | "end";
+  // Dziś: slot na całą szerokość osi, więc dymek pod slotem
+  side?: "right" | "bottom";
   onBlock: () => void;
   onClose: () => void;
 }) {
@@ -49,7 +52,7 @@ export function NewEntryPopover({
       <PopoverContent
         role="dialog"
         aria-label="Nowy wpis"
-        side="right"
+        side={side}
         align={align}
         sideOffset={10}
         collisionPadding={12}

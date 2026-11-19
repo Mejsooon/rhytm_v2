@@ -54,7 +54,7 @@ export type TodayData = {
   blocks: BlockRow[];
   occurrencesToday: Occurrence[];
   categories: CategoryRow[];
-  // Z tygodnia + zaległe niezrobione + bez daty
+  // Zadania tygodnia
   tasks: TaskRow[];
   habits: Habit[];
   checks: Checks;
@@ -111,7 +111,6 @@ export async function loadToday(
 
   const [
     kalendarz,
-    zadaniaInneRes,
     nawykiRes,
     wersjeRes,
     odhaczenia,
@@ -134,15 +133,6 @@ export async function loadToday(
       today,
       { wszystkieTreningi: true },
     ),
-    // Zaległe niezrobione sprzed tygodnia oraz samodzielne niezrobione zadania bez terminu
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("user_id", userId)
-      .or(
-        `and(due_date.lt.${weekStartDate},done.eq.false),and(due_date.is.null,block_id.is.null,done.eq.false)`,
-      )
-      .order("position", { ascending: true }),
     supabase
       .from("habits")
       .select("*")
@@ -174,7 +164,6 @@ export async function loadToday(
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
   for (const wynik of [
-    zadaniaInneRes,
     nawykiRes,
     wersjeRes,
     senRes,
@@ -186,13 +175,8 @@ export async function loadToday(
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
-  // Zadania: tydzień + zaległe + bez daty, bez duplikatów
-  const tasks = [...kalendarz.tasks];
-  const znaneZadania = new Set(tasks.map((t) => t.id));
-  for (const zadanie of (zadaniaInneRes.data ?? []) as TaskRow[]) {
-    if (znaneZadania.has(zadanie.id)) continue;
-    tasks.push(zadanie);
-  }
+  // Zadania tygodnia (kafelki i plan dnia)
+  const tasks = kalendarz.tasks;
 
   // Odhaczenia z całej historii: habitId → zbiór dat
   const checks: Checks = new Map();

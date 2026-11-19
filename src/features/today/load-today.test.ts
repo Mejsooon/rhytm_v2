@@ -131,37 +131,21 @@ describe("loadToday", () => {
     );
   });
 
-  it("zadania: tydzień ∪ zaległe niezrobione ∪ bez daty, bez duplikatów", async () => {
+  it("zadania: tylko z tygodnia (jedno zapytanie, bez zaległych i bez daty)", async () => {
     const { supabase, zapytania } = klient({
       profiles: [PROFIL],
       tasks: [
         {
           data: [
             zadanie({ id: "t-tydz", due_date: "2026-11-18" }),
-            zadanie({ id: "t-dubel", due_date: "2026-11-19" }),
-          ],
-        },
-        {
-          data: [
-            zadanie({ id: "t-dubel", due_date: "2026-11-19" }),
-            zadanie({ id: "t-zalegle", due_date: "2026-11-10" }),
-            zadanie({ id: "t-bez", due_date: null }),
+            zadanie({ id: "t-czw", due_date: "2026-11-19" }),
           ],
         },
       ],
     });
     const wynik = await loadToday(supabase, "u1", TERAZ);
-    expect(wynik.tasks.map((t) => t.id).sort()).toEqual([
-      "t-bez",
-      "t-dubel",
-      "t-tydz",
-      "t-zalegle",
-    ]);
-    // Drugie zapytanie o zadania: zaległe (przed tygodniem, niezrobione) lub bez terminu
-    const drugie = zapytania.filter((z) => z.tabela === "tasks")[1].q;
-    expect(drugie.or).toHaveBeenCalledWith(
-      "and(due_date.lt.2026-11-16,done.eq.false),and(due_date.is.null,block_id.is.null,done.eq.false)",
-    );
+    expect(wynik.tasks.map((t) => t.id).sort()).toEqual(["t-czw", "t-tydz"]);
+    expect(zapytania.filter((z) => z.tabela === "tasks")).toHaveLength(1);
   });
 
   it("nawyki z odhaczeniami tygodnia zamienione na mapę, sen z tygodnia", async () => {

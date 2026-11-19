@@ -221,6 +221,8 @@ describe("DayPlan", () => {
     const dymek = await screen.findByRole("dialog", {
       name: "Szczegóły bloku",
     });
+    // Blok zajmuje całą szerokość osi, więc dymek otwiera się pod blokiem (nie w prawo, poza stronę)
+    expect(dymek).toHaveAttribute("data-side", "bottom");
     await userEvent.click(within(dymek).getByLabelText("Zadanie t2"));
     expect(toggleTask).toHaveBeenCalledWith({ id: "t2", done: true });
     expect(

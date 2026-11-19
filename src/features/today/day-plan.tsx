@@ -320,6 +320,9 @@ export function DayPlan({
 
       {wybraneWystapienie && (
         <BlockPopover
+          // Blok na Dziś zajmuje całą szerokość osi: dymek pod blokiem (Radix przerzuca nad
+          // blok przy dolnej krawędzi i przesuwa w poziomie, żeby nie wyszedł poza stronę)
+          side="bottom"
           occurrence={wybraneWystapienie}
           tasks={data.tasks}
           category={data.categories.find(
@@ -337,6 +340,7 @@ export function DayPlan({
       )}
       {okno?.typ === "wpis" && (
         <NewEntryPopover
+          side="bottom"
           anchor={kotwicaWpisu}
           date={today}
           startMin={okno.startMin}
