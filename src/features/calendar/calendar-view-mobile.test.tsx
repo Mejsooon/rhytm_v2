@@ -260,11 +260,9 @@ describe("CalendarView na telefonie", () => {
 
   it("?nowy=blok na telefonie otwiera arkusz bloku z danymi z adresu; Anuluj czyści adres", async () => {
     // Udajemy szerokość telefonu dla matchMedia (jsdom jej nie ma)
-    window.matchMedia = vi
-      .fn()
-      .mockReturnValue({
-        matches: true,
-      }) as unknown as typeof window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+    }) as unknown as typeof window.matchMedia;
     window.history.replaceState(
       null,
       "",
