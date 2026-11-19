@@ -199,14 +199,23 @@ describe("DayPlan", () => {
     expect(screen.queryByText("TERAZ")).not.toBeInTheDocument();
   });
 
-  it("czerwona linia przesuwa się co minutę", () => {
+  it("czerwona linia przesuwa się na początku każdej pełnej minuty", () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-11-17T09:20:00Z"));
+    // 10:20:45 — linia na 10:20, następna minuta za 15 s
+    vi.setSystemTime(new Date("2026-11-17T09:20:45Z"));
     render(<Plan d={dane()} />);
+    act(() => {
+      vi.advanceTimersByTime(14_999);
+    });
+    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:21");
     act(() => {
       vi.advanceTimersByTime(60_000);
     });
-    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:21");
+    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:22");
   });
 
   it("trening „plan” jest linkiem do podglądu na /sport", () => {
@@ -286,24 +295,65 @@ describe("DayPlan", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
-  it("klik w pusty slot (co 15 min) otwiera „Nowy wpis”; „Blok” otwiera okno na tę godzinę, zapis odświeża plan", async () => {
+  it("„Usuń” bloku cyklicznego pyta o zakres, usuwa z oryginalną datą i odświeża plan", async () => {
+    changeOccurrence.mockResolvedValue({ ok: true });
+    const cykliczny: Occurrence = {
+      ...wystapienie("b3", 18 * 60, 90, "Bazy danych"),
+      // Wystąpienie z 16.11 przesunięte na dziś (wyjątek)
+      key: "b3:2026-11-16",
+      recurring: true,
+      recurrence: { freq: "daily" },
+      modified: true,
+    };
+    render(
+      <Plan
+        d={dane({
+          occurrencesToday: [...dane().occurrencesToday, cykliczny],
+        })}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Bazy danych/ }));
+    const dymek = await screen.findByRole("dialog", {
+      name: "Szczegóły bloku",
+    });
+    await userEvent.click(within(dymek).getByRole("button", { name: "Usuń" }));
+    const okno = await screen.findByRole("dialog", {
+      name: "Usuwasz blok, który się powtarza",
+    });
+    await userEvent.click(within(okno).getByLabelText(/To i następne/));
+    await userEvent.click(within(okno).getByRole("button", { name: "Usuń" }));
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b3",
+      date: "2026-11-16",
+      scope: "following",
+      delete: true,
+    });
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Usuwasz blok, który się powtarza",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("klik w pusty slot (co 30 min) otwiera „Nowy wpis”; „Blok” otwiera okno na tę godzinę, zapis odświeża plan", async () => {
     createBlock.mockResolvedValue({ ok: true, id: "b9" });
     render(<Plan d={dane()} />);
-    // 12 px na kwadrans: 13:15 = 53 kwadranse → 636 px
+    // 24 px na półgodzinę: 640 px → 26. półgodzina = 13:00
     fireEvent.click(screen.getByTestId("siatka-dnia"), { clientY: 640 });
     const dymek = await screen.findByRole("dialog", { name: "Nowy wpis" });
-    expect(within(dymek).getByText("wt 17.11 · 13:15")).toBeInTheDocument();
+    expect(within(dymek).getByText("wt 17.11 · 13:00")).toBeInTheDocument();
     expect(within(dymek).getByRole("link", { name: /Bieg/ })).toHaveAttribute(
       "href",
-      "/sport?nowy=bieg&data=2026-11-17&godzina=13:15",
+      "/sport?nowy=bieg&data=2026-11-17&godzina=13:00",
     );
     await userEvent.click(within(dymek).getByRole("button", { name: /Blok/ }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
-      "13:15",
+      "13:00",
     );
     expect(within(okno).getByRole("button", { name: "Do" })).toHaveTextContent(
-      "14:15",
+      "14:00",
     );
     await userEvent.type(within(okno).getByLabelText("Tytuł"), "Algebra");
     await userEvent.click(
@@ -312,7 +362,7 @@ describe("DayPlan", () => {
     expect(createBlock).toHaveBeenCalledWith(
       expect.objectContaining({
         date: "2026-11-17",
-        startMin: 13 * 60 + 15,
+        startMin: 13 * 60,
         durationMin: 60,
       }),
     );

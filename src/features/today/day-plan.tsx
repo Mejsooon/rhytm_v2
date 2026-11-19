@@ -28,8 +28,8 @@ import type { TodayChange } from "./use-today-store";
 // Wysokość godziny i widoczna część osi (06–22) jak w makiecie
 const GODZINA = 48;
 const WYSOKOSC_OKNA = 816;
-// Kwadrans = 12 px; klik w pusty slot wybiera kwadrans
-const KWADRANS = GODZINA / 4;
+// Półgodzina = 24 px; klik w pusty slot wybiera półgodzinę (jak w makiecie)
+const POLGODZINA = GODZINA / 2;
 
 type Okno =
   | { typ: "wpis"; startMin: number }
@@ -59,11 +59,24 @@ export function DayPlan({
     setTeraz(data.nowMin);
   }
   useEffect(() => {
-    const id = window.setInterval(() => {
+    const tik = () => {
       if (todayIso(timezone) !== today) router.refresh();
       setTeraz(minutesNow(timezone));
-    }, 60_000);
-    return () => window.clearInterval(id);
+    };
+    // Pierwszy tik na początku następnej pełnej minuty, potem co minutę — linia i „TERAZ”
+    // nie spóźniają się względem zegara
+    let interwal: number | undefined;
+    const start = window.setTimeout(
+      () => {
+        tik();
+        interwal = window.setInterval(tik, 60_000);
+      },
+      60_000 - (Date.now() % 60_000),
+    );
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(interwal);
+    };
   }, [timezone, today, router]);
 
   const plan = dayPlan(
@@ -87,7 +100,7 @@ export function DayPlan({
   const [wybrany, setWybrany] = useState<string | null>(null);
   const [okno, setOkno] = useState<Okno | null>(null);
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
-  // Kwadrans pod kursorem (duch „+ 10:00–11:00”)
+  // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
   const [duchMyszy, setDuchMyszy] = useState<number | null>(null);
 
   // Przy otwarciu: na trwający blok, a gdy go nie ma — na 06:00 (tylko przy montażu)
@@ -101,14 +114,15 @@ export function DayPlan({
   const wybraneWystapienie =
     plan.find((p) => p.key === wybrany)?.occurrence ?? null;
 
-  // Kwadrans (0–95) pod wskaźnikiem
-  const kwadransZ = (e: React.MouseEvent<HTMLElement>) =>
+  // Półgodzina (0–47) pod wskaźnikiem
+  const polgodzinaZ = (e: React.MouseEvent<HTMLElement>) =>
     Math.max(
       0,
       Math.min(
-        95,
+        47,
         Math.floor(
-          (e.clientY - e.currentTarget.getBoundingClientRect().top) / KWADRANS,
+          (e.clientY - e.currentTarget.getBoundingClientRect().top) /
+            POLGODZINA,
         ),
       ),
     );
@@ -146,7 +160,7 @@ export function DayPlan({
     });
   }
 
-  // Liczba wpisów: 1 blok; 2–4, 22–24… bloki (ale 12–14 bloków); reszta bloków
+  // Liczba wpisów osi — jak w makiecie („5 bloków” liczy też trening „Bieg 10 km”): 1 blok; 2–4, 22–24… bloki (ale 12–14 bloków); reszta bloków
   const n = plan.length;
   const napisBlokow =
     n === 1
@@ -184,7 +198,7 @@ export function DayPlan({
           }}
           onClick={(e) => {
             if (!wPusteMiejsce(e)) return;
-            const startMin = kwadransZ(e) * 15;
+            const startMin = polgodzinaZ(e) * 30;
             setWybrany(null);
             // Klik w ten sam slot zamyka „Nowy wpis”, w inny go przenosi
             setOkno((o) =>
@@ -198,7 +212,7 @@ export function DayPlan({
               if (duchMyszy !== null) setDuchMyszy(null);
               return;
             }
-            const startMin = kwadransZ(e) * 15;
+            const startMin = polgodzinaZ(e) * 30;
             if (duchMyszy !== startMin) setDuchMyszy(startMin);
           }}
           onMouseLeave={() => setDuchMyszy(null)}
