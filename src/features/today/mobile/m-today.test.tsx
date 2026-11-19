@@ -282,7 +282,7 @@ describe("MToday", () => {
     expect(zadania).toHaveTextContent("Zadania1/3");
     const km = t.getByRole("link", { name: /^Km w tyg\./ });
     expect(km).toHaveAttribute("href", "/sport");
-    expect(km).toHaveTextContent("Km w tyg.18,4/25,0");
+    expect(km).toHaveTextContent("Km w tyg.18,4/25");
   });
 
   it("bez wpisu snu kafelek „—”, bez celu km sama liczba", () => {
@@ -484,8 +484,22 @@ describe("MToday", () => {
     render(<TodayView data={dane()} name="Mejson" />);
     const karta = telefon().getByRole("link", { name: /Bieg o 16:00/ });
     expect(karta).toHaveAttribute("href", "/sport");
-    expect(karta).toHaveTextContent("Bieg o 16:00 · 10,0 km");
+    expect(karta).toHaveTextContent("Bieg o 16:00 · 10 km");
     expect(karta).toHaveTextContent("Cel tygodnia: jeszcze 6,6 km");
+  });
+
+  it("cel i dystans niecałkowite: z przecinkiem", () => {
+    const d = dane();
+    d.profile.weeklyKmGoal = 30.5;
+    d.sportItems[1] = { ...d.sportItems[1], distanceKm: 7.5 };
+    render(<TodayView data={d} name="Mejson" />);
+    const t = telefon();
+    expect(t.getByRole("link", { name: /^Km w tyg\./ })).toHaveTextContent(
+      "Km w tyg.18,4/30,5",
+    );
+    expect(t.getByRole("link", { name: /Bieg o 16:00/ })).toHaveTextContent(
+      "Bieg o 16:00 · 7,5 km",
+    );
   });
 
   it("karta biegu: bez planu dziś najbliższy w tygodniu, cel osiągnięty, bez celu bez dopisku", () => {

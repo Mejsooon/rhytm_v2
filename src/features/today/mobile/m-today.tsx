@@ -191,7 +191,8 @@ export function MToday({
         ? `Bieg o ${godz(bieg.startMin)}`
         : `Bieg ${DNI_SKROT[weekdayOf(bieg.date)]} ${godz(bieg.startMin)}`;
     if (bieg.distanceKm !== null)
-      tytulBiegu += ` · ${formatKm(bieg.distanceKm)} km`;
+      // Dystans jak w makiecie: całe bez „,0” („10 km”), inaczej z przecinkiem
+      tytulBiegu += ` · ${String(Math.round(bieg.distanceKm * 10) / 10).replace(".", ",")} km`;
     if (kafelki.goalKm !== null) {
       const zostalo = kafelki.goalKm - kafelki.km;
       celBiegu =
@@ -275,7 +276,10 @@ export function MToday({
             "/sport",
             "Km w tyg.",
             formatKm(kafelki.km),
-            kafelki.goalKm === null ? null : `/${formatKm(kafelki.goalKm)}`,
+            kafelki.goalKm === null
+              ? null
+              : // Cel jak w makiecie: całe bez „,0” („/25”), inaczej z przecinkiem
+                `/${String(Math.round(kafelki.goalKm * 10) / 10).replace(".", ",")}`,
           )}
         </div>
 
