@@ -234,7 +234,11 @@ begin
   where p.user_id = auth.uid() and p.deleted_at is null and p.position > v_page.position;
 
   insert into public.pages (title, icon, template_key, position, favorite)
-  values (left(v_page.title, 191) || ' (kopia)', v_page.icon, v_page.template_key, v_page.position + 1, false)
+  -- Strona bez tytułu daje „Bez tytułu (kopia)”, a nie „ (kopia)” ze spacją na początku.
+  values (
+    case when btrim(v_page.title) = '' then 'Bez tytułu' else left(v_page.title, 191) end || ' (kopia)',
+    v_page.icon, v_page.template_key, v_page.position + 1, false
+  )
   returning id into v_new_page_id;
 
   for v_block in
@@ -275,6 +279,7 @@ end;
 $$;
 
 -- Atomowo zdejmuje z profiles.pending_pages podane nazwy i zwraca je w kolejności z pending_pages.
+-- Dopiero po onboardingu (onboarded_at): wcześniej krok 5 kreatora może jeszcze przepisać pending_pages.
 create function public.claim_pending_pages(p_available text[])
 returns text[]
 language plpgsql
@@ -288,7 +293,7 @@ begin
   -- Bez części wspólnej wychodzimy bez blokady i zapisu (zwykła nawigacja nie dotyka profilu).
   select pr.pending_pages into v_pending
   from public.profiles as pr
-  where pr.user_id = auth.uid();
+  where pr.user_id = auth.uid() and pr.onboarded_at is not null;
 
   if v_pending is null or not (v_pending && coalesce(p_available, '{}'::text[])) then
     return '{}'::text[];
@@ -297,7 +302,7 @@ begin
   -- Ponowny odczyt pod blokadą, żeby równoległe wywołania nie zdublowały wyniku.
   select pr.pending_pages into v_pending
   from public.profiles as pr
-  where pr.user_id = auth.uid()
+  where pr.user_id = auth.uid() and pr.onboarded_at is not null
   for update;
 
   if v_pending is null then
@@ -321,7 +326,8 @@ end;
 $$;
 
 -- Zmienia typ pola i przelicza wartości wierszy jedną transakcją.
--- p_values: {row_id: nowa wartość | null}; null usuwa klucz z values.
+-- p_values: {row_id: nowa wartość | null}; null usuwa klucz z values. Klient liczy wartości tylko dla żywych
+-- wierszy, więc wierszom z kosza spoza p_values klucz pola znika (po przywróceniu nie niosą starego typu).
 create function public.change_field_type(p_field_id uuid, p_type text, p_config jsonb, p_values jsonb)
 returns void
 language plpgsql
@@ -356,6 +362,13 @@ begin
     end
     where r.id = v_item.key::uuid and r.block_id = v_block_id;
   end loop;
+
+  update public.page_rows as r
+  set values = r.values - p_field_id::text
+  where r.block_id = v_block_id
+    and r.deleted_at is not null
+    and r.values ? p_field_id::text
+    and not (coalesce(p_values, '{}'::jsonb) ? r.id::text);
 end;
 $$;
 

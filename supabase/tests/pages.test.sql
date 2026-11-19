@@ -1,5 +1,5 @@
 begin;
-select plan(40);
+select plan(45);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -7,8 +7,11 @@ values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.pl'),
   ('00000000-0000-0000-0000-00000000000b', 'b@test.pl');
 
-update public.profiles set pending_pages = '{Subscriptions,Books}'
+update public.profiles set pending_pages = '{Subscriptions,Books}', onboarded_at = now()
 where user_id = '00000000-0000-0000-0000-00000000000a';
+-- B jeszcze w kreatorze: claim nie może zdjąć nazw przed końcem onboardingu.
+update public.profiles set pending_pages = '{Books}', onboarded_at = null
+where user_id = '00000000-0000-0000-0000-00000000000b';
 
 -- Uprawnienia i funkcje.
 select ok(has_table_privilege('authenticated', 'public.pages', 'SELECT, INSERT, UPDATE, DELETE'), 'authenticated zarządza pages');
@@ -89,6 +92,16 @@ update public.page_rows
 set values = jsonb_build_object(current_setting('test.field_a'), 'Dune', current_setting('test.field_b'), 'abc')
 where id = current_setting('test.row_a')::uuid;
 
+-- Wiersz w koszu (klient go nie widzi) i żywy wiersz spoza p_values z wartością pola Cena.
+select set_config('test.row_trash', gen_random_uuid()::text, true);
+select set_config('test.row_live', gen_random_uuid()::text, true);
+insert into public.page_rows (id, block_id, values, position, deleted_at)
+values
+  (current_setting('test.row_trash')::uuid, current_setting('test.block_a')::uuid,
+    jsonb_build_object(current_setting('test.field_b'), 'xyz'), 5, now()),
+  (current_setting('test.row_live')::uuid, current_setting('test.block_a')::uuid,
+    jsonb_build_object(current_setting('test.field_b'), 'zostaje'), 6, null);
+
 -- change_field_type
 select throws_ok(
   format('select public.change_field_type(%L, ''number'', ''{}''::jsonb, ''{}''::jsonb)', current_setting('test.field_a')),
@@ -98,6 +111,10 @@ select public.change_field_type(current_setting('test.field_b')::uuid, 'number',
 select is((select type from public.page_fields where id = current_setting('test.field_b')::uuid), 'number', 'typ pola zmieniony');
 select is((select r.values ->> current_setting('test.field_b') from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
   '5', 'wartość przeliczona');
+select ok((select not (r.values ? current_setting('test.field_b')) from public.page_rows as r
+  where r.id = current_setting('test.row_trash')::uuid), 'change_field_type usuwa klucz pola z wiersza w koszu spoza p_values');
+select is((select r.values ->> current_setting('test.field_b') from public.page_rows as r
+  where r.id = current_setting('test.row_live')::uuid), 'zostaje', 'change_field_type nie rusza żywego wiersza spoza p_values');
 select public.change_field_type(current_setting('test.field_b')::uuid, 'text', '{}'::jsonb,
   jsonb_build_object(current_setting('test.row_a'), null));
 select ok((select not (r.values ? current_setting('test.field_b')) from public.page_rows as r where r.id = current_setting('test.row_a')::uuid),
@@ -129,8 +146,19 @@ select ok((select b.content::text not like '%' || current_setting('test.field_b'
 select is((select jsonb_array_length(b.content -> 'settings' -> 'sort') from public.page_blocks as b
   where b.id = current_setting('test.block_a')::uuid), 1, 'delete_field zostawia sort po innym polu');
 
+-- duplicate_page strony bez tytułu
+select set_config('test.page_blank', public.create_page('', '▦', null, '[]'::jsonb)::text, true);
+select set_config('test.page_blank_copy', public.duplicate_page(current_setting('test.page_blank')::uuid)::text, true);
+select is((select title from public.pages where id = current_setting('test.page_blank_copy')::uuid),
+  'Bez tytułu (kopia)', 'kopia strony bez tytułu to „Bez tytułu (kopia)”');
+
 -- Od teraz jako zalogowany B.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+
+select is(public.claim_pending_pages(array['Books', 'Projects', 'Websites']), '{}'::text[],
+  'claim przed końcem onboardingu zwraca pustą tablicę');
+select is((select pending_pages from public.profiles where user_id = '00000000-0000-0000-0000-00000000000b'),
+  '{Books}'::text[], 'claim przed końcem onboardingu nie zmienia pending_pages');
 
 select is((select count(*) from public.pages), 0::bigint, 'B nie widzi stron A');
 
