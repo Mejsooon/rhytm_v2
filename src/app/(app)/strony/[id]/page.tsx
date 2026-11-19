@@ -2,9 +2,9 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
-import { ModuleHeader } from "@/components/shell/module-header";
 import { EditorView } from "@/features/pages/editor/editor-view";
 import { loadPage } from "@/features/pages/load-page";
+import { TemplatePageView } from "@/features/pages/table/template-page-view";
 
 async function Strona({ params }: { params: Promise<{ id: string }> }) {
   await connection();
@@ -12,16 +12,8 @@ async function Strona({ params }: { params: Promise<{ id: string }> }) {
   const dane = await loadPage(id);
   if (!dane) notFound();
 
-  // Strona z szablonu: tymczasowo sam nagłówek (Task 8 podstawia TemplatePageView)
-  if (dane.page.templateKey !== null) {
-    return (
-      <ModuleHeader
-        title={dane.page.title.trim() === "" ? "Bez tytułu" : dane.page.title}
-        webParent="Strony"
-        phoneLabel="Strony"
-      />
-    );
-  }
+  // Strona z szablonu: tabela z kartami; reszta to edytor bloków
+  if (dane.page.templateKey !== null) return <TemplatePageView data={dane} />;
   return <EditorView data={dane} />;
 }
 
