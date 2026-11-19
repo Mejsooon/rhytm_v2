@@ -55,7 +55,7 @@ export const EDITOR_TYPES: { type: FieldType; label: string; icon: string }[] = 
 ];
 
 // 8 kolorów kategorii (spec 3.1), przydzielanych opcjom po kolei
-const PALETA = [
+export const PALETA = [
   "#0070f3",
   "#15803d",
   "#7c3aed",
