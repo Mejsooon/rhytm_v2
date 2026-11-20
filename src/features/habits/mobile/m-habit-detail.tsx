@@ -22,7 +22,7 @@ import { describeSchedule, streakLabel } from "../text";
 import { MHabitSheet } from "./m-habit-sheet";
 
 const PRZYCISK_IKONY =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus";
 const ETYKIETA =
   "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 
@@ -138,7 +138,7 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
         <button
           type="button"
           onClick={() => setUsuwanie(true)}
-          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-destructive-border bg-white text-[15px] font-medium text-destructive-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-destructive-border bg-white text-[15px] font-medium text-destructive-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           <Trash2 size={18} aria-hidden="true" />
           Usuń nawyk

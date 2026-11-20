@@ -9,7 +9,7 @@ describe("Card", () => {
     expect(screen.getByTestId("karta")).toHaveClass(
       "rounded-xl",
       "border-border",
-      "shadow-xs",
+      "shadow-card",
     );
   });
 

@@ -74,6 +74,11 @@ describe("tokeny globals.css", () => {
     expect(css).toContain("--radius-xl: 16px");
     expect(css).toContain("--shadow-xs: 0 1px 2px rgba(0, 0, 0, .05)");
     expect(css).toMatch(/--shadow-lg:\s*0 10px 15px -3px rgba\(0, 0, 0, \.06\),\s*0 4px 6px -4px rgba\(0, 0, 0, \.06\)/);
+    expect(css).toContain("--shadow-btn: 0 1px 2px rgba(0, 0, 0, .05), inset 0 -1px 0 rgba(0, 0, 0, .04)");
+    expect(css).toContain("--shadow-card: 0 1px 2px rgba(0, 0, 0, .05), inset 0 -1px 0 rgba(0, 0, 0, .04)");
+    expect(css).toContain("--shadow-focus: 0 0 0 2px #fff, 0 0 0 4px var(--ring)");
+    expect(css).toContain("--shadow-focus-inset: inset 0 0 0 2px var(--ring)");
+    expect(css).toContain("--shadow-halo: 0 0 0 3px color-mix(in srgb, var(--ring) 24%, transparent)");
     expect(css).toMatch(/--shadow-pop:[^;]*0 24px 48px -12px rgba\(0, 0, 0, \.14\)/);
     expect(css).toContain('--font-sans: "Inter Variable"');
     expect(css).toContain('font-feature-settings: "cv11"');

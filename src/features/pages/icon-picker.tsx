@@ -44,14 +44,14 @@ export function IconPicker({
 
   // Przycisk .seg: 28 px, promień 8 px; wybrany — biała pigułka z cieniem (telefon 44 px — cel dotykowy)
   const klasaZakladki = (wlaczona: boolean) =>
-    `inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-[inherit] text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:h-11 ${
+    `inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-[inherit] text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-11 ${
       wlaczona
         ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
         : "bg-transparent text-muted-foreground hover:text-foreground"
     }`;
   // Komórka siatki: 32 px, promień 8 px; zaznaczona — ramka rgba(0,0,0,.18) i tło rgba(0,0,0,.05)
   const klasaKomorki = (zaznaczona: boolean) =>
-    `flex h-8 cursor-pointer items-center justify-center rounded-[8px] p-0 text-lg leading-none outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:h-11 ${
+    `flex h-8 cursor-pointer items-center justify-center rounded-[8px] p-0 text-lg leading-none outline-none focus-visible:shadow-focus max-[799px]:h-11 ${
       zaznaczona ? "border border-black/[.18] bg-black/5" : "border border-transparent bg-transparent hover:bg-black/[.04]"
     }`;
 
@@ -90,7 +90,7 @@ export function IconPicker({
       </div>
 
       {/* .igroup: lupa i pole w jednej ramce */}
-      <label className="box-border flex h-8 items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_3px_rgba(163,163,163,.24)] max-[799px]:h-11">
+      <label className="box-border flex h-8 items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11">
         <Search size={16} aria-hidden="true" className="flex-none" />
         <input
           type="text"

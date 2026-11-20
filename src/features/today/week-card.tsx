@@ -193,7 +193,7 @@ export function WeekCard({
           <Card
             key={k.etykieta}
             data-testid="kafelek-tygodnia"
-            className="min-w-0 gap-2.5 p-4 shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)]"
+            className="min-w-0 gap-2.5 p-4"
           >
             {/* .lbl */}
             <div className="text-xs font-medium text-muted-foreground">

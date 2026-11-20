@@ -48,7 +48,7 @@ export function StepRoles({
               aria-pressed={wlaczona}
               onClick={() => przelacz(rola.key)}
               className={cn(
-                "box-border flex w-full cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",
+                "box-border flex w-full cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus",
                 wlaczona &&
                   "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
                 i === ROLES.length - 1 &&

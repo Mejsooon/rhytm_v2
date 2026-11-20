@@ -38,7 +38,7 @@ export function CategoryFilters({
           type="button"
           // Czytnik słyszy „Kategorie, widoczne 3 z 4” zamiast sklejonego „Kategorie3/4”
           aria-label={`Kategorie, widoczne ${widoczne.length} z ${categories.length}`}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-white px-2.5 py-[5px] text-[13px] text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-white px-2.5 py-[5px] text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           {widoczne.length > 0 && (
             <span

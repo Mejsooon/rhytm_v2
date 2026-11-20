@@ -35,7 +35,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px]", className)}
+      className={cn("fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:backdrop-blur-none", className)}
       {...props}
     />
   );
@@ -64,7 +64,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] focus-visible:outline-hidden"
+            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:shadow-focus focus-visible:outline-hidden"
           >
             <XIcon className="size-4" />
             <span className="sr-only">Zamknij</span>

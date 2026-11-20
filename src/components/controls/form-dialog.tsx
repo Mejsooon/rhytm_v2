@@ -30,7 +30,7 @@ export function FormDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:bg-black/40" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:bg-black/40 max-[799px]:backdrop-blur-none" />
         <Dialog.Content
           aria-describedby={undefined}
           className={`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[92%] max-[799px]:rounded-t-[18px] max-[799px]:rounded-b-none max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`}
@@ -53,7 +53,7 @@ export function FormDialog({
             </div>
             <Dialog.Close
               aria-label="Zamknij"
-              className="inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:hidden"
+              className="inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-focus max-[799px]:hidden"
             >
               ✕
             </Dialog.Close>

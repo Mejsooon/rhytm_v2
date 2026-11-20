@@ -258,7 +258,7 @@ export function RunDialog({
               aria-pressed={trudnosc === n}
               onClick={() => setTrudnosc(trudnosc === n ? null : n)}
               className={cn(
-                "size-8 cursor-pointer rounded-md border font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                "size-8 cursor-pointer rounded-md border font-mono text-xs outline-none focus-visible:shadow-focus",
                 trudnosc === n
                   ? "border-primary bg-primary text-white"
                   : "border-input bg-white text-soft-foreground",

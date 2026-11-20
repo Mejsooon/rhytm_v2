@@ -351,7 +351,7 @@ export function MBlockSheet({
   }
 
   const NAGLOWEK_PRZYCISK =
-    "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+    "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
   const ETYKIETA =
     "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
   const WIERSZ =
@@ -410,7 +410,7 @@ export function MBlockSheet({
                   <button
                     type="button"
                     onClick={() => setUntil(null)}
-                    className="min-h-11 cursor-pointer rounded-md border border-input bg-white px-3.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                    className="min-h-11 cursor-pointer rounded-md border border-input bg-white px-3.5 text-[13px] outline-none focus-visible:shadow-focus"
                   >
                     Usuń datę końca
                   </button>
@@ -526,7 +526,7 @@ export function MBlockSheet({
                           )
                         }
                         className={cn(
-                          "size-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                          "size-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:shadow-focus",
                           wybrany
                             ? "border-primary bg-primary text-white"
                             : "border-input bg-white text-soft-foreground",
@@ -578,7 +578,7 @@ export function MBlockSheet({
                       aria-label={`Usuń zadanie ${tytul}`}
                       disabled={tymczasowe}
                       onClick={() => usunZadanie(klucz, i)}
-                      className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-faint-foreground outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-40"
+                      className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-faint-foreground outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:shadow-focus disabled:opacity-40"
                     >
                       <XIcon aria-hidden="true" className="size-4" />
                     </button>
@@ -607,7 +607,7 @@ export function MBlockSheet({
                     aria-label="Dodaj zadanie"
                     disabled={zadaniaWylaczone}
                     onClick={dodajZadanie}
-                    className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20"
+                    className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:shadow-focus"
                   >
                     <PlusIcon aria-hidden="true" className="size-[18px]" />
                   </button>

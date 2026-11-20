@@ -140,7 +140,7 @@ export function StepGoals({
               title={staly ? "Zawsze włączone" : undefined}
               onClick={() => onChange(toggleGoal(draft, cel.key))}
               className={cn(
-                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:flex-col-reverse max-[799px]:gap-1",
+                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus max-[799px]:flex-col-reverse max-[799px]:gap-1",
                 wlaczony &&
                   !staly &&
                   "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
@@ -214,7 +214,7 @@ export function StepGoals({
                 role="checkbox"
                 aria-checked={cel.on}
                 onClick={cel.przelacz}
-                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3 max-[799px]:font-normal"
+                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left font-medium text-foreground outline-none focus-visible:shadow-focus max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3 max-[799px]:font-normal"
               >
                 <span
                   aria-hidden="true"

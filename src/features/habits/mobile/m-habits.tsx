@@ -159,7 +159,7 @@ export function MHabits({
           type="button"
           aria-label="Nowy nawyk"
           onClick={onNewHabit}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
         >
           <Plus size={22} aria-hidden="true" />
         </button>
@@ -265,7 +265,7 @@ export function MHabits({
                       onClick={() => onToggle(habit.id, today)}
                       // Kwadrat 28 px, pole stuknięcia 44 px (pseudo-element)
                       className={cn(
-                        "relative inline-flex size-7 flex-none cursor-pointer items-center justify-center rounded-lg border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40",
+                        "relative inline-flex size-7 flex-none cursor-pointer items-center justify-center rounded-lg border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2 after:content-[''] focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40",
                         odhaczone
                           ? "border-success bg-success"
                           : "border-border-strong bg-white",
@@ -395,7 +395,7 @@ export function MHabits({
                 <button
                   type="button"
                   onClick={() => onNewSleep(ostatnia.date)}
-                  className="block cursor-pointer border-0 bg-white px-3.5 py-3 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/20"
+                  className="block cursor-pointer border-0 bg-white px-3.5 py-3 text-left text-foreground outline-none focus-visible:shadow-focus-inset"
                 >
                   <div className={ETYKIETA}>Ostatnia noc</div>
                   <div className="mt-1 font-mono text-[22px] font-medium">

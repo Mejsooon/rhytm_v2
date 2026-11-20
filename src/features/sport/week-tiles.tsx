@@ -141,7 +141,7 @@ export function WeekTiles({
               aria-pressed={wlaczony}
               onClick={() => setMiara(k.klucz)}
               className={cn(
-                "cursor-pointer border-0 px-4 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-inset",
+                "cursor-pointer border-0 px-4 py-3.5 text-left outline-none focus-visible:shadow-focus-inset",
                 i > 0 && "border-l border-border",
                 wlaczony
                   ? "bg-white shadow-[inset_0_-2px_0_#171717]"

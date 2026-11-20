@@ -98,7 +98,7 @@ export function MCalendarWeek({
                       key={i.key}
                       href={sportItemHref(i)}
                       data-planned={i.planned || undefined}
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:shadow-focus"
                       style={{
                         background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
                         border: i.planned

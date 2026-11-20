@@ -104,7 +104,7 @@ export function CategoryDialog({
                 aria-pressed={wybrany}
                 onClick={() => setColor(c.hex)}
                 // 36 px z makiety; na telefonie 44 px pola dotyku
-                className="size-9 cursor-pointer rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/30 max-[799px]:size-11"
+                className="size-9 cursor-pointer rounded-lg outline-none focus-visible:shadow-focus max-[799px]:size-11"
                 style={{
                   background: c.hex,
                   opacity: usedColors.includes(c.hex) && !wybrany ? 0.35 : 1,

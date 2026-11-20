@@ -28,7 +28,7 @@ export type SettingsCategory = {
 
 // Wygląd 36 px; 44 px pola dotyku dzięki ::after wystającemu o 5 px nad i pod
 const PRZYCISK =
-  "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
+  "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
 export function CategoriesCard({
   categories,
@@ -176,7 +176,7 @@ export function CategoriesCard({
                   <button
                     type="button"
                     onClick={() => setDialog({ typ: "edycja", category: k })}
-                    className="relative cursor-pointer truncate border-0 bg-transparent p-0 text-left text-sm font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/20 after:absolute after:-inset-y-[13px] after:inset-x-0 after:content-['']"
+                    className="relative cursor-pointer truncate border-0 bg-transparent p-0 text-left text-sm font-medium text-foreground outline-none hover:underline focus-visible:shadow-focus after:absolute after:-inset-y-[13px] after:inset-x-0 after:content-['']"
                   >
                     {k.name}
                   </button>

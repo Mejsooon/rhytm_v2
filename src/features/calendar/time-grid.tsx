@@ -388,7 +388,7 @@ export function TimeGrid({
                             zacznij(e, "move", { occurrence: o })
                           }
                           title={`${o.title} ${godzinyBloku}`}
-                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground outline-none focus-visible:shadow-focus-inset ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                           style={{
                             background: `${kolor}14`,
                             border: `1px solid ${kolor}40`,
@@ -476,7 +476,7 @@ export function TimeGrid({
                           data-planned={i.planned || undefined}
                           draggable={false}
                           title={`${i.title} ${godzinyTreningu}`}
-                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground outline-none focus-visible:shadow-focus-inset ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                           style={{
                             background: i.planned
                               ? "#ffffff"

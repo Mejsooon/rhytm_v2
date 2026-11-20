@@ -32,7 +32,7 @@ export function Checkbox({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative inline-flex size-4 flex-none cursor-pointer items-center justify-center rounded-[4px] border p-0 shadow-xs transition-[box-shadow,background-color] duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:before:absolute max-[799px]:before:-inset-3.5 max-[799px]:before:content-['']",
+          "relative inline-flex size-4 flex-none cursor-pointer items-center justify-center rounded-[4px] border p-0 shadow-xs transition-[box-shadow,background-color] duration-150 outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:before:absolute max-[799px]:before:-inset-3.5 max-[799px]:before:content-['']",
           checked
             ? "border-primary bg-primary text-primary-foreground"
             : "border-input bg-white text-transparent",

@@ -5,7 +5,7 @@ import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent text-sm leading-none font-medium whitespace-nowrap transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none aria-disabled:cursor-not-allowed aria-disabled:opacity-[.64] aria-disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent text-sm leading-none font-medium whitespace-nowrap transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none aria-disabled:cursor-not-allowed aria-disabled:opacity-[.64] aria-disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "border-destructive bg-destructive text-white shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(239,68,68,.24)] hover:bg-destructive-hover",
         outline:
-          "border-input bg-white shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)] hover:bg-panel",
+          "border-input bg-white shadow-btn hover:bg-panel",
         secondary: "bg-muted text-foreground hover:bg-black/[.07]",
         ghost: "hover:bg-accent aria-expanded:bg-accent",
         link: "text-primary underline-offset-4 hover:underline",

@@ -127,7 +127,7 @@ export function PageMenu({
             type="button"
             aria-label="Wróć do menu"
             onClick={() => setWidok("menu")}
-            className="inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 font-[inherit] text-foreground outline-none hover:bg-accent focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:size-11"
+            className="inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 font-[inherit] text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:size-11"
           >
             {ikony.wstecz}
           </button>
@@ -245,7 +245,7 @@ export function PageMenu({
       onClick={sheet ? () => zmienOtwarcie(true) : undefined}
       className={
         triggerClassName ??
-        "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:bg-accent"
+        "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:shadow-focus aria-expanded:bg-accent"
       }
     >
       {sheet ? <span aria-hidden="true">⋯</span> : <Ellipsis size={16} aria-hidden="true" />}

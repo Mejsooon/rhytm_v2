@@ -119,7 +119,7 @@ export function NewEntryPopover({
         <Link href={`/sport?nowy=silownia&${parametry}`} className={OPCJA}>
           <span
             aria-hidden="true"
-            className={`${KAFELEK} bg-black/5 text-[#404040]`}
+            className={`${KAFELEK} bg-black/5 text-soft-foreground`}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2" />

@@ -243,6 +243,6 @@ describe("MCalendarDay — podgląd treningów", () => {
     expect(plan).toHaveTextContent("18:30–20:00 · Sport");
     expect(screen.getByTestId("kropka-2026-11-21")).toBeInTheDocument();
     // Fokus z klawiatury widoczny jak na webie
-    expect(bieg).toHaveClass("focus-visible:ring-2");
+    expect(bieg).toHaveClass("focus-visible:shadow-focus");
   });
 });

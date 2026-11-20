@@ -2,12 +2,12 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// .card z coss.css: ramka, promień 16 px, cień xs
+// .card z coss.css: ramka, promień 16 px, cień xs + wewnętrzna linia u dołu
 export function Card({ className, children, ...div }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-xs",
+        "relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card",
         className,
       )}
       {...div}

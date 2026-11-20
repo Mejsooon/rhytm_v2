@@ -38,7 +38,7 @@ const KARTA = "rounded-xl border border-border bg-white";
 const ETYKIETA =
   "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const PRZYCISK =
-  "box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border font-medium outline-none focus-visible:shadow-focus";
 // Opcja dymku „Trening” — wiersz 44 px
 const OPCJA =
   "flex min-h-11 w-full cursor-pointer items-center rounded-lg border-0 bg-transparent px-3 text-left text-[15px] text-foreground no-underline outline-none hover:bg-muted hover:text-foreground focus-visible:bg-muted";
@@ -215,7 +215,7 @@ export function MSport({
           type="button"
           aria-label="Nowa aktywność"
           onClick={onNewRun}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
         >
           <Plus size={22} aria-hidden="true" />
         </button>

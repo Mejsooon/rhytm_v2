@@ -110,7 +110,7 @@ export function StepSource({
               aria-pressed={wlaczone}
               onClick={() => wybierz(zrodlo.key)}
               className={cn(
-                "box-border flex h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-white px-3.5 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",
+                "box-border flex h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-white px-3.5 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus",
                 wlaczone &&
                   "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
               )}

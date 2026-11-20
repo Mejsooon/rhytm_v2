@@ -80,7 +80,7 @@ export function PasswordInput({
           aria-label={shown ? "Ukryj hasło" : "Pokaż hasło"}
           aria-pressed={shown}
           onClick={() => setShown((v) => !v)}
-          className="absolute top-1 right-1 flex cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.5 text-muted-foreground outline-none hover:bg-accent focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:top-0 max-[799px]:right-0 max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:p-0"
+          className="absolute top-1 right-1 flex cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.5 text-muted-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:top-0 max-[799px]:right-0 max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:p-0"
         >
           {shown ? (
             <EyeOff

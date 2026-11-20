@@ -42,7 +42,7 @@ function UtworzKonto({ gotowe }: { gotowe: boolean }) {
       onClick={(e) => {
         if (!gotowe) e.preventDefault();
       }}
-      className="w-full leading-[1.21] aria-disabled:opacity-50 max-[799px]:text-[15px]"
+      className="w-full leading-[1.21] max-[799px]:text-[15px]"
     >
       Utwórz konto
     </Button>

@@ -139,7 +139,7 @@ export function HabitWeekGrid({
                         onClick={() => onToggle(habit.id, d)}
                         className={cn(
                           KOMORKA,
-                          "cursor-pointer p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default",
+                          "cursor-pointer p-0 outline-none focus-visible:shadow-focus disabled:cursor-default",
                           odhaczone
                             ? "border-0 bg-success"
                             : aktywna

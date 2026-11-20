@@ -80,7 +80,7 @@ export function HabitNotes({
               void zapisz();
             }
           }}
-          className="box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-60 max-[799px]:h-11 max-[799px]:rounded-md max-[799px]:text-[15px]"
+          className="box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm text-foreground outline-none focus-visible:shadow-focus disabled:opacity-60 max-[799px]:h-11 max-[799px]:rounded-md max-[799px]:text-[15px]"
         />
         {blad && (
           <p role="alert" className="m-0 mt-2 text-xs text-destructive-foreground">

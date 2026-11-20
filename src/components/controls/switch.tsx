@@ -25,7 +25,7 @@ export function Switch({
         if (!disabled) onChange(!checked);
       }}
       className={cn(
-        "relative h-5 w-9 flex-none cursor-pointer rounded-full border-2 border-transparent bg-black/12 p-0 shadow-[inset_0_1px_1px_rgba(0,0,0,.04)] transition-colors duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:before:absolute max-[799px]:before:-inset-3 max-[799px]:before:content-['']",
+        "relative h-5 w-9 flex-none cursor-pointer rounded-full border-2 border-transparent bg-black/12 p-0 shadow-[inset_0_1px_1px_rgba(0,0,0,.04)] transition-colors duration-150 outline-none focus-visible:shadow-focus max-[799px]:before:absolute max-[799px]:before:-inset-3 max-[799px]:before:content-['']",
         checked && "bg-primary",
         disabled && "cursor-not-allowed opacity-[.64]",
       )}

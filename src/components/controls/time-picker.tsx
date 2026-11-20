@@ -65,7 +65,7 @@ export function TimePicker({
           aria-haspopup="dialog"
           disabled={disabled}
           className={cn(
-            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[11px] font-mono text-sm text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)] disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
+            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[11px] font-mono text-sm text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
           )}
         >
           {wTrybie12

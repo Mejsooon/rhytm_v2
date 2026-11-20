@@ -23,7 +23,7 @@ import { NAV_MODULES } from "./nav-items";
 
 // Pozycja .sb-i z coss.css: 32 px, promień 8 px, 14 px / 500
 const POZYCJA =
-  "flex h-8 items-center gap-2 rounded-[8px] px-2 text-sm font-medium no-underline transition-colors outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]";
+  "flex h-8 items-center gap-2 rounded-[8px] px-2 text-sm font-medium no-underline transition-colors outline-none focus-visible:shadow-focus";
 // Nieaktywna pozycja: tekst rgba(38,38,38,.72), najechanie bg rgba(0,0,0,.04)
 const POZYCJA_ZWYKLA = "text-[rgba(38,38,38,.72)] hover:bg-black/[.04] hover:text-foreground";
 // Nagłówek grupy .sb-g
@@ -142,7 +142,7 @@ export function AppSidebar({
             type="button"
             aria-disabled="true"
             // .igroup z coss.css
-            className="mt-1 mb-2 flex h-8 cursor-default items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground shadow-xs outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]"
+            className="mt-1 mb-2 flex h-8 cursor-default items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground shadow-xs outline-none focus-visible:shadow-focus"
           >
             <Search size={16} aria-hidden="true" />
             <span className="flex-1">Szukaj…</span>
@@ -277,7 +277,7 @@ export function AppSidebar({
                             }
                           }}
                           onBlur={() => zapiszNazwe(strona)}
-                          className={cn(FIELD, "border-ring shadow-[0_0_0_3px_rgba(163,163,163,.24)]")}
+                          className={cn(FIELD, "border-ring shadow-halo")}
                         />
                       </div>
                     ) : (
@@ -304,7 +304,7 @@ export function AppSidebar({
                           }}
                           // .btng.ic.xs: widoczny na aktywnej stronie, po najechaniu, z fokusem i przy otwartym menu
                           triggerClassName={cn(
-                            "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:opacity-100 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:bg-accent data-[state=open]:opacity-100 [&_svg]:opacity-80",
+                            "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:opacity-100 focus-visible:shadow-focus aria-expanded:bg-accent data-[state=open]:opacity-100 [&_svg]:opacity-80",
                             aktywna(href) ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                           )}
                         />

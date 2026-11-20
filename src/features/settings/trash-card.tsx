@@ -14,7 +14,7 @@ import { BLAD_ZAPISU } from "@/features/pages/messages";
 import { rowsForm } from "@/features/pages/rows-label";
 
 const PRZYCISK =
-  "relative inline-flex h-9 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
+  "relative inline-flex h-9 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
 const DZIEN_MS = 24 * 60 * 60 * 1000;
 

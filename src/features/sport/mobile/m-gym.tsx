@@ -85,7 +85,7 @@ export function MGym({
         <Link
           href={`/sport?miesiac=${dataTreningu.slice(0, 7)}`}
           aria-label="Wstecz"
-          className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
         >
           <ChevronLeft size={22} aria-hidden="true" />
         </Link>
@@ -104,7 +104,7 @@ export function MGym({
           type="button"
           disabled={finishing}
           onClick={onFinish}
-          className="flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] font-semibold text-success outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50"
+          className="flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] font-semibold text-success outline-none focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50"
         >
           Zakończ
         </button>
@@ -254,7 +254,7 @@ export function MGym({
                       onClick={() => void store.toggleDone(s.id)}
                       // Kwadrat 32 px, pole stuknięcia 44 px (pseudo-element)
                       className={cn(
-                        "relative inline-flex size-8 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50",
+                        "relative inline-flex size-8 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50",
                         s.done
                           ? "border-success bg-success"
                           : "border-border-strong bg-white",
@@ -290,7 +290,7 @@ export function MGym({
           trigger={
             <button
               type="button"
-              className="box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-white font-medium text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
+              className="box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-white font-medium text-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
             >
               <Plus size={18} aria-hidden="true" />
               Dodaj ćwiczenie

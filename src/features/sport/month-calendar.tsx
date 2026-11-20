@@ -186,7 +186,7 @@ export function MonthCalendar({
                           aria-pressed={wcisniety}
                           aria-label={`${item.title}, ${etykietaDnia}`}
                           onClick={() => onSelect(wcisniety ? null : item.key)}
-                          className="mt-1 block w-full cursor-pointer truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                          className="mt-1 block w-full cursor-pointer truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] whitespace-nowrap outline-none focus-visible:shadow-focus"
                           style={{
                             color: item.planned ? kolor : "#171717",
                             background: item.planned ? "#ffffff" : `${kolor}18`,
@@ -243,7 +243,7 @@ export function MonthCalendar({
                             type="button"
                             aria-label="Zamknij"
                             onClick={() => onAddDay(null)}
-                            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
+                            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
                           >
                             ✕
                           </button>
@@ -310,7 +310,7 @@ export function MonthCalendar({
                                       templateId: t.id,
                                     })
                                   }
-                                  className="cursor-pointer rounded-full border border-input bg-white px-2.5 py-[3px] text-xs text-soft-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
+                                  className="cursor-pointer rounded-full border border-input bg-white px-2.5 py-[3px] text-xs text-soft-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
                                 >
                                   {t.name}
                                 </button>

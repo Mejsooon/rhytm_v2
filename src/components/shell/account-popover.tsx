@@ -42,7 +42,7 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           type="button"
           aria-haspopup="dialog"
           className={cn(
-            "flex w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 px-2 py-1.5 text-left text-sm text-foreground outline-none hover:bg-black/[.04] focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]",
+            "flex w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 px-2 py-1.5 text-left text-sm text-foreground outline-none hover:bg-black/[.04] focus-visible:shadow-focus",
             open ? "bg-black/5 hover:bg-black/5" : "bg-transparent",
           )}
         >

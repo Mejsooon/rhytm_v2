@@ -59,7 +59,7 @@ const RODZAJE: {
 const ETYKIETA =
   "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const LINK =
-  "flex min-h-11 items-center gap-2 text-sm text-soft-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "flex min-h-11 items-center gap-2 text-sm text-soft-foreground outline-none focus-visible:shadow-focus";
 
 export function MQuickAdd({
   today,
@@ -197,7 +197,7 @@ export function MQuickAdd({
               aria-label="Zamknij"
               disabled={pending}
               onClick={onClose}
-              className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
+              className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
             >
               <XIcon aria-hidden="true" className="size-5" />
             </button>

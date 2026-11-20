@@ -228,7 +228,7 @@ function HabitForm({
                     )
                   }
                   className={cn(
-                    "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                    "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus",
                     wybrany
                       ? "border-primary bg-primary text-white"
                       : "border-input bg-white text-soft-foreground",

@@ -204,7 +204,7 @@ export function BlockDetails({
                     checked={t.done}
                     disabled={tymczasowe}
                     onChange={() => przelacz(t)}
-                    className="peer m-0 size-4 flex-none cursor-pointer appearance-none rounded-[4px] border border-input bg-white shadow-xs outline-none checked:border-primary checked:bg-primary focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] disabled:cursor-not-allowed disabled:opacity-[.64]"
+                    className="peer m-0 size-4 flex-none cursor-pointer appearance-none rounded-[4px] border border-input bg-white shadow-xs outline-none checked:border-primary checked:bg-primary focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64]"
                   />
                   <CheckIcon
                     aria-hidden="true"
@@ -253,7 +253,7 @@ export function BlockDetails({
           );
         })}
         {/* .igroup 30 px z ikoną + */}
-        <label className="mt-0.5 flex h-[30px] items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_3px_rgba(163,163,163,.24)] max-[799px]:h-11">
+        <label className="mt-0.5 flex h-[30px] items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11">
           <Plus size={14} aria-hidden="true" className="flex-none" />
           <input
             type="text"
@@ -276,7 +276,7 @@ export function BlockDetails({
       {o.note && (
         <div className="max-[799px]:border-t max-[799px]:border-border max-[799px]:pt-2.5 min-[800px]:px-4">
           <div className="text-xs font-medium text-muted-foreground">Notatka</div>
-          <p className="mt-1 mb-0 text-sm leading-normal break-words whitespace-pre-wrap text-[#404040]">
+          <p className="mt-1 mb-0 text-sm leading-normal break-words whitespace-pre-wrap text-soft-foreground">
             {o.note}
           </p>
         </div>

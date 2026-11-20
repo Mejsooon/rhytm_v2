@@ -251,7 +251,7 @@ export function DayPlan({
               data-testid="podglad-przeciagania"
               aria-hidden="true"
               // Zaznaczany zakres: przerywana ramka rgba(0,0,0,.45), tło rgba(0,0,0,.04)
-              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-black/[.45] bg-black/[.04] px-2.5 py-1.5 text-[13px] font-medium text-[#525252] tabular-nums"
+              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-black/[.45] bg-black/[.04] px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums"
               style={{
                 top: (podglad.startMin / 60) * GODZINA + 3,
                 height: (podglad.durationMin / 60) * GODZINA - 6,
@@ -266,7 +266,7 @@ export function DayPlan({
               ref={duchAktywny ? setKotwicaWpisu : undefined}
               aria-hidden="true"
               // Najechanie: rgba(0,0,0,.24) / .02; slot z otwartym „Nowym wpisem” jak zakres (.45 / .04)
-              className={`pointer-events-none absolute right-2.5 left-[72px] z-[2] box-border rounded-md border border-dashed px-2.5 py-1.5 text-[13px] font-medium text-[#525252] tabular-nums ${duchAktywny ? "border-black/[.45] bg-black/[.04]" : "border-black/[.24] bg-black/[.02]"}`}
+              className={`pointer-events-none absolute right-2.5 left-[72px] z-[2] box-border rounded-md border border-dashed px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums ${duchAktywny ? "border-black/[.45] bg-black/[.04]" : "border-black/[.24] bg-black/[.02]"}`}
               style={{ top: (duch / 60) * GODZINA + 3, height: GODZINA - 6 }}
             >
               {`+ ${godz(duch)}–${godz(Math.min(duch + 60, 1440))}`}
@@ -316,13 +316,13 @@ export function DayPlan({
                   )}
                 </span>
                 {!kompakt && (
-                  <span className="block truncate text-xs text-[#525252] tabular-nums">
+                  <span className="block truncate text-xs text-soft-foreground tabular-nums">
                     {`${godziny} · ${p.categoryName ?? "Bez kategorii"}`}
                   </span>
                 )}
               </>
             );
-            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
 
             // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
             if (p.kind !== "block") {

@@ -43,9 +43,9 @@ const ETYKIETA =
 const WIERSZ =
   "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
 const PLUS_MINUS =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-[15px] text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-[15px] text-foreground outline-none hover:bg-muted focus-visible:shadow-focus";
 const WARTOSC =
   "box-border h-11 w-[84px] rounded-md border border-transparent bg-transparent px-1 text-center font-mono text-lg text-foreground outline-none placeholder:text-faint-foreground focus:border-primary";
 
@@ -366,7 +366,7 @@ export function MRunNew({
                     // Ponowne stuknięcie czyści (trudność jest opcjonalna)
                     onClick={() => setTrudnosc(trudnosc === n ? null : n)}
                     className={cn(
-                      "h-11 min-w-0 cursor-pointer rounded-lg border p-0 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                      "h-11 min-w-0 cursor-pointer rounded-lg border p-0 font-mono text-sm outline-none focus-visible:shadow-focus",
                       trudnosc === n
                         ? "border-primary bg-primary text-white"
                         : "border-input bg-white text-foreground",

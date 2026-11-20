@@ -160,7 +160,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                   aria-label={cel.label}
                   onClick={() => przelacz(cel.key)}
                   className={cn(
-                    "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                    "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border p-0 outline-none focus-visible:shadow-focus",
                     cel.on
                       ? "border-primary bg-primary text-white"
                       : "border-border-strong bg-white text-transparent",

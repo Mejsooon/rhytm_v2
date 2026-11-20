@@ -40,7 +40,7 @@ const PRZYCISK_IKONA =
   "inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted";
 // Kwadrat 24 px, pole stuknięcia 44 px (pseudo-element)
 const POLE_WYBORU =
-  "relative inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[7px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40";
+  "relative inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[7px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2.5 after:content-[''] focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40";
 
 export function MToday({
   data,
@@ -303,7 +303,7 @@ export function MToday({
             <button
               type="button"
               onClick={edytujTrwajacy}
-              className="block min-h-11 w-full cursor-pointer border-0 bg-transparent px-3.5 pb-1 text-left text-lg font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-inset"
+              className="block min-h-11 w-full cursor-pointer border-0 bg-transparent px-3.5 pb-1 text-left text-lg font-semibold text-foreground outline-none focus-visible:shadow-focus-inset"
             >
               {trwajacy.title}
             </button>

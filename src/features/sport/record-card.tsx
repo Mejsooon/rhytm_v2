@@ -95,7 +95,7 @@ export function RecordCard({
         <button
           type="button"
           onClick={onNewGym}
-          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:shadow-focus"
         >
           + Trening siłowy
         </button>

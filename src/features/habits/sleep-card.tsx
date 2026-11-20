@@ -107,7 +107,7 @@ export function SleepCard({
               "-m-1.5 rounded-md p-1.5",
               ostatnia &&
                 onOpenLast &&
-                "cursor-pointer outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20",
+                "cursor-pointer outline-none hover:bg-panel focus-visible:shadow-focus",
             )}
           >
             <MonoLabel className="block">Ostatnia noc</MonoLabel>

@@ -23,7 +23,7 @@ describe("DatePicker", () => {
     );
     const przycisk = screen.getByRole("button", { name: "Termin" });
     expect(przycisk).toHaveClass(
-      "focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]",
+      "focus-visible:shadow-focus",
     );
   });
 

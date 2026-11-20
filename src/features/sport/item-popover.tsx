@@ -207,7 +207,7 @@ export function ItemPopover({
   }
 
   const akcja =
-    "inline-flex cursor-pointer items-center rounded-md px-3 py-[7px] text-[13px] whitespace-nowrap no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+    "inline-flex cursor-pointer items-center rounded-md px-3 py-[7px] text-[13px] whitespace-nowrap no-underline outline-none focus-visible:shadow-focus";
   const glowna = `${akcja} border border-primary bg-primary font-medium text-white hover:bg-primary-hover hover:text-white`;
 
   return (
@@ -237,7 +237,7 @@ export function ItemPopover({
           type="button"
           aria-label="Zamknij"
           onClick={onClose}
-          className="ml-auto size-[26px] cursor-pointer rounded-md border border-input bg-white text-xs text-muted-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="ml-auto size-[26px] cursor-pointer rounded-md border border-input bg-white text-xs text-muted-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           ✕
         </button>

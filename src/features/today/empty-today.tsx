@@ -24,7 +24,7 @@ export function EmptyToday({
       </div>
 
       {/* CEmptyToday: .card z .card-h, paskiem .prog i listą pozycji .mi; telefon zostaje jak w MToday */}
-      <section className="overflow-hidden rounded-xl border border-border bg-white bg-clip-padding shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)]">
+      <section className="overflow-hidden rounded-xl border border-border bg-white bg-clip-padding shadow-card">
         <div className="flex items-center justify-between gap-3 px-6 pt-5 max-[799px]:border-b max-[799px]:border-border max-[799px]:px-4 max-[799px]:py-3.5">
           <h3 className="m-0 text-base leading-[1.3] font-semibold max-[799px]:text-[17px]">
             Pierwsze kroki
@@ -46,7 +46,7 @@ export function EmptyToday({
             <a
               key={krok.key}
               href={krok.href}
-              className="flex min-h-14 items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground no-underline outline-none hover:bg-accent hover:text-foreground focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:min-h-[52px] max-[799px]:gap-3.5 max-[799px]:rounded-none max-[799px]:border-b max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:py-3.5 max-[799px]:last:border-b-0"
+              className="flex min-h-14 items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground no-underline outline-none hover:bg-accent hover:text-foreground focus-visible:shadow-focus max-[799px]:min-h-[52px] max-[799px]:gap-3.5 max-[799px]:rounded-none max-[799px]:border-b max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:py-3.5 max-[799px]:last:border-b-0"
             >
               {krok.done ? (
                 <span
@@ -77,7 +77,7 @@ export function EmptyToday({
               </span>
               {!krok.done && (
                 // Wygląd .btn.sm (cały wiersz jest linkiem)
-                <span className="inline-flex h-7 flex-none items-center rounded-md border border-input bg-white bg-clip-padding px-[9px] text-sm leading-none font-medium text-foreground shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)] max-[799px]:h-11">
+                <span className="inline-flex h-7 flex-none items-center rounded-md border border-input bg-white bg-clip-padding px-[9px] text-sm leading-none font-medium text-foreground shadow-btn max-[799px]:h-11">
                   Dodaj
                 </span>
               )}

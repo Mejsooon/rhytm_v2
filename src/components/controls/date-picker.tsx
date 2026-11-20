@@ -93,9 +93,9 @@ export function DatePicker({
           aria-haspopup="dialog"
           className={cn(
             variant === "bare"
-              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:min-h-11"
+              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
               : cn(
-                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)]",
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo",
                   size === "sm"
                     ? "h-7 px-2 font-mono text-xs whitespace-nowrap"
                     : "h-8 px-[11px] text-sm max-[799px]:h-11",

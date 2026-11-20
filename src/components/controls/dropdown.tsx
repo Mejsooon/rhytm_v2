@@ -91,7 +91,7 @@ export function Dropdown<T extends string>({
           style={width && !compact ? { width } : undefined}
           className={cn(
             FIELD,
-            "flex cursor-pointer items-center justify-between gap-2 text-left aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)]",
+            "flex cursor-pointer items-center justify-between gap-2 text-left aria-expanded:border-ring aria-expanded:shadow-halo",
             compact && "inline-flex h-7 w-auto justify-start gap-1.5 px-2 text-xs whitespace-nowrap max-[799px]:h-7 max-[799px]:text-xs",
           )}
         >

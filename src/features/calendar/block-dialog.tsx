@@ -425,7 +425,7 @@ export function BlockDialog({
                     )
                   }
                   className={cn(
-                    "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default max-[799px]:size-11",
+                    "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus disabled:cursor-default max-[799px]:size-11",
                     wybrany
                       ? "border-primary bg-primary text-white"
                       : "border-input bg-white text-soft-foreground",

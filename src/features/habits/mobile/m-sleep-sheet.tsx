@@ -28,9 +28,9 @@ const KROK = 15; // min
 const ETYKIETA =
   "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
 const PRZYCISK_KROKU =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-lg text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-lg text-foreground outline-none hover:bg-muted focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50";
 
 export function MSleepSheet({
   date,
@@ -247,7 +247,7 @@ export function MSleepSheet({
                       // Ponowne stuknięcie wybranej wartości czyści samopoczucie (jak na webie)
                       onClick={() => setFeeling(wybrane ? null : wartosc)}
                       className={cn(
-                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50",
+                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50",
                         wybrane
                           ? "border-success bg-success-soft text-success"
                           : "border-input bg-white text-soft-foreground",

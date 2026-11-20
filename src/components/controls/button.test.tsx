@@ -37,7 +37,7 @@ describe("Button", () => {
   it("fokus z klawiatury rysuje podwójny pierścień", () => {
     render(<Button>Zmień</Button>);
     expect(screen.getByRole("button")).toHaveClass(
-      "focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]",
+      "focus-visible:shadow-focus",
     );
   });
 

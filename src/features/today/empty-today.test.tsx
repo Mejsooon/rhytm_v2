@@ -43,7 +43,7 @@ describe("EmptyToday", () => {
     expect(screen.getByText("1 / 4")).toHaveClass("h-[22px]", "bg-muted", "tabular-nums");
     const wiersz = screen.getByText("Dodaj nawyk").closest("a")!;
     expect(wiersz).toHaveClass("min-h-14", "rounded-md", "hover:bg-accent");
-    expect(within(wiersz).getByText("Dodaj")).toHaveClass("h-7", "border-input", "shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)]");
+    expect(within(wiersz).getByText("Dodaj")).toHaveClass("h-7", "border-input", "shadow-btn");
     expect(screen.getByText("Plan dnia jest pusty").closest("section")).toHaveClass("border-dashed", "rounded-xl");
   });
 });

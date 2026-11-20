@@ -267,7 +267,7 @@ export function MCalendarDay({
                 key={i.key}
                 href={sportItemHref(i)}
                 data-planned={i.planned || undefined}
-                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:shadow-focus"
                 style={{
                   top: (i.startMin / 60) * WYSOKOSC_GODZINY + 1,
                   height: wysokosc,

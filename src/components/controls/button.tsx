@@ -18,7 +18,7 @@ const WARIANTY: Record<Variant, string> = {
   primary:
     "bg-primary text-primary-foreground border-primary shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(38,38,38,.24)] hover:bg-primary-hover hover:text-primary-foreground",
   secondary:
-    "bg-white text-foreground border-input bg-clip-padding shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)] hover:bg-panel hover:text-foreground",
+    "bg-white text-foreground border-input bg-clip-padding shadow-btn hover:bg-panel hover:text-foreground",
   soft: "bg-muted text-foreground border-transparent hover:bg-black/[.07] hover:text-foreground",
   ghost:
     "bg-transparent text-foreground border-transparent hover:bg-accent hover:text-foreground aria-expanded:bg-accent",
@@ -64,7 +64,7 @@ export function Button({
       // Dla <button> domyślnie type="button" (bez przypadkowego submitu)
       {...(asChild ? {} : { type: type ?? "button" })}
       className={cn(
-        "relative inline-flex flex-none cursor-pointer items-center justify-center rounded-md border text-sm leading-none font-medium whitespace-nowrap no-underline transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none aria-disabled:cursor-not-allowed aria-disabled:opacity-[.64] aria-disabled:shadow-none [&_svg]:flex-none [&_svg]:opacity-80",
+        "relative inline-flex flex-none cursor-pointer items-center justify-center rounded-md border text-sm leading-none font-medium whitespace-nowrap no-underline transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none aria-disabled:cursor-not-allowed aria-disabled:opacity-[.64] aria-disabled:shadow-none [&_svg]:flex-none [&_svg]:opacity-80",
         WARIANTY[variant],
         ROZMIARY[size],
         icon && IKONA[size],

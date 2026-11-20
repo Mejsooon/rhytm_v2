@@ -110,7 +110,7 @@ describe("MCalendarWeek — kolejność wpisów dnia", () => {
     );
     expect(tytuly).toEqual(["Rutyna", "Spokojny", "Algebra"]);
     expect(within(sroda).getByRole("link", { name: /Spokojny/ })).toHaveClass(
-      "focus-visible:ring-2",
+      "focus-visible:shadow-focus",
     );
   });
 });

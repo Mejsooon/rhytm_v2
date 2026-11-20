@@ -47,7 +47,7 @@ const ETYKIETA =
 const WIERSZ =
   "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
 
 export function MHabitSheet({
   habit,
@@ -241,7 +241,7 @@ export function MHabitSheet({
                         )
                       }
                       className={cn(
-                        "h-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                        "h-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:shadow-focus",
                         wybrany
                           ? "border-primary bg-primary text-white"
                           : "border-input bg-white text-foreground",

@@ -261,7 +261,7 @@ function SleepForm({
                 // Ponowny klik wybranej wartości czyści samopoczucie
                 onClick={() => setFeeling(wybrane ? null : wartosc)}
                 className={cn(
-                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
+                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-md border text-xs outline-none focus-visible:shadow-focus",
                   wybrane
                     ? "border-primary bg-primary text-white"
                     : "border-input bg-white text-foreground hover:bg-panel",

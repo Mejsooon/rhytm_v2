@@ -127,7 +127,7 @@ export function MonthGrid({
                       e.currentTarget.closest<HTMLElement>("[data-day]");
                     if (komorka) onDayClick(dzien, komorka);
                   }}
-                  className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-muted-foreground opacity-0 outline-none group-hover:bg-active group-hover:opacity-100 focus-visible:bg-active focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/20"
+                  className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-muted-foreground opacity-0 outline-none group-hover:bg-active group-hover:opacity-100 focus-visible:bg-active focus-visible:opacity-100 focus-visible:shadow-focus"
                 >
                   <span aria-hidden="true">+</span>
                 </button>
@@ -149,7 +149,7 @@ export function MonthGrid({
                                 borderLeft: `2px solid ${SPORT_COLOR}`,
                               }
                         }
-                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:shadow-focus"
                       >
                         {i.title}
                       </Link>
@@ -178,7 +178,7 @@ export function MonthGrid({
                             }
                           : undefined
                       }
-                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-ring" : ""}`}
+                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:shadow-focus ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-ring" : ""}`}
                     >
                       {o.title}
                     </button>
