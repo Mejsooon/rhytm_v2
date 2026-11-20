@@ -49,15 +49,15 @@ body{margin:0;background:#ffffff}
 class Component extends DCLogic {
   constructor(p) { super(p); this.state = { c: 5, name: 'Języki' }; }
   renderVals() {
-    const cols = [['#3b82f6', 'Niebieski'], ['#15803d', 'Zielony'], ['#8b5cf6', 'Fioletowy'], ['#f59e0b', 'Pomarańczowy'], ['#ef4444', 'Czerwony'], ['#06b6d4', 'Morski'], ['#eab308', 'Musztardowy'], ['#525252', 'Grafitowy']];
+    const cols = [['#0070f3', 'Niebieski'], ['#15803d', 'Zielony'], ['#7c3aed', 'Fioletowy'], ['#c2410c', 'Pomarańczowy'], ['#b91c1c', 'Czerwony'], ['#0e7490', 'Morski'], ['#a16207', 'Musztardowy'], ['#525252', 'Grafitowy']];
     const used = [0, 1, 2, 3];
     const c = this.state.c;
     // powrót do okna/ekranu, z którego przyszliśmy — tylko ekrany COSS (C…)
     let back = 'CCalendar.dc.html';
     try { const f = sessionStorage.getItem('rh-from-sub') || sessionStorage.getItem('rh-from'); if (f && /^C[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
     const col = cols[c][0];
-    return { colors: cols.map((x, i) => ({ name: x[1] + (used.includes(i) ? ' (zajęty)' : ''), pick: () => this.setState({ c: i }), pressed: c === i ? 'true' : 'false',
-      s: 'width:36px;height:36px;border-radius:10px;cursor:pointer;padding:0;background:' + x[0] + ';opacity:' + (used.includes(i) && c !== i ? '.35' : '1') + ';border:2px solid #fff;box-shadow:' + (c === i ? '0 0 0 2px ' + x[0] : 'inset 0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05)') })),
+    return { colors: cols.map((x, i) => ({ name: x[1], pick: () => this.setState({ c: i }), pressed: c === i ? 'true' : 'false',
+      s: 'width:36px;height:36px;border-radius:10px;cursor:pointer;padding:0;background:' + (used.includes(i) && c !== i ? 'color-mix(in srgb, ' + x[0] + ' 35%, white)' : x[0]) + ';border:2px solid #fff;box-shadow:' + (c === i ? '0 0 0 2px ' + x[0] : 'inset 0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05)') })),
       name: this.state.name, onName: (e) => this.setState({ name: e.target.value }),
       dot: 'background:' + col, prev: 'flex:1;border-radius:10px;padding:7px 12px;background:' + col + '12;border:1px solid ' + col + '4d;box-shadow:none;font-size:14px', back };
   }

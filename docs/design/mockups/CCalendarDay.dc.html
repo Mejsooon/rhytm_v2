@@ -60,6 +60,8 @@ body{margin:0;background:#ffffff}
               <button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" title="{{b.full}}" style="{{b.style}}"><span style="display: flex; gap: 10px; align-items: center; width: 100%; min-width: 0; white-space: nowrap"><span style="flex: 0 1 auto; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis">{{b.title}}</span><span class="num" style="flex: 1 1 0; min-width: 0; font-size: 12px; color: #525252; overflow: hidden; text-overflow: ellipsis">{{b.meta}}</span><span class="bdg out num" style="flex: none; margin-left: auto">{{b.count}}</span></span></button>
             </sc-for>
             <div aria-hidden="true" style="{{nowLine}}"><span style="position: absolute; left: -5px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444"></span></div>
+            <!-- godzina „teraz” na czerwonej pigułce w kolumnie godzin (jak w aplikacji: biała na #dc2626, 11 px / 500) -->
+            <span class="num" aria-hidden="true" style="{{nowLabel}}">11:20</span>
           <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
             <div role="dialog" aria-label="Szczegóły bloku" class="pop" style="{{pop.style}}">
               <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0">
@@ -104,7 +106,7 @@ body{margin:0;background:#ffffff}
         <section class="card" style="padding: 12px">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px"><span style="font-weight: 600; padding-left: 4px">Listopad 2026</span><span style="display: flex; gap: 2px"><button type="button" class="btng ic sm" aria-label="Poprzedni miesiąc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic sm" aria-label="Następny miesiąc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div>
           <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 12px; font-weight: 500; color: #686868; text-align: center; margin-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
-          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{mini}}" as="m" hint-placeholder-count="35"><button type="button" aria-label="{{m.label}}" style="{{m.s}}">{{m.n}}</button></sc-for></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{mini}}" as="m" hint-placeholder-count="42"><button type="button" aria-label="{{m.label}}" style="{{m.s}}">{{m.n}}</button></sc-for></div>
         </section>
         <section class="card">
           <div class="card-h" style="padding: 14px 16px 0"><h2 class="card-t" style="font-size: 14px">Dzień w liczbach</h2></div>
@@ -129,7 +131,7 @@ class Component extends DCLogic {
     if (el) el.scrollTop = 6 * 52;
   }
   renderVals() {
-    const CATDEF = [['Studia', '#3b82f6'], ['Projekty', '#15803d'], ['Praca', '#8b5cf6'], ['Sport', '#f59e0b'], ['Subscriptions', ''], ['Dom', '#eab308']];
+    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
     const hidden = this.state.hidden;
     const cats = CATDEF.map((c) => {
       const on = !hidden[c[0]];
@@ -164,7 +166,7 @@ class Component extends DCLogic {
         style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
       };
     };
-    const COL = { Studia: '#3b82f6', Projekty: '#15803d', Praca: '#8b5cf6', Sport: '#f59e0b' };
+    const COL = { Studia: '#0070f3', Projekty: '#15803d', Praca: '#7c3aed', Sport: '#c2410c' };
     const H = 52;
     const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
     const RAW = [
@@ -187,7 +189,8 @@ class Component extends DCLogic {
     });
     const planned = vis.reduce((a, b) => a + (b[2] - b[1]), 0);
     const hm = (x) => Math.floor(x) + ' h' + (x % 1 ? ' 30 min' : '');
-    const mini = Array.from({ length: 35 }, (_, i) => {
+    // jak buildMonthGrid w aplikacji: zawsze 6 tygodni (42 dni) — listopad 2026 zaczyna się w niedzielę, więc 30.11 wypada w 6. tygodniu
+    const mini = Array.from({ length: 42 }, (_, i) => {
       const d = new Date(Date.UTC(2026, 10, 1 - 6 + i));
       const inm = d.getUTCMonth() === 10;
       const sel = inm && d.getUTCDate() === 17;
@@ -217,6 +220,7 @@ class Component extends DCLogic {
       ghostT: g ? '+ ' + fmt(g.start) + '–' + fmt(g.start + 1) : '',
       ghostS: g ? 'position:absolute;left:8px;right:16px;top:' + Math.round(g.start * H + 2) + 'px;height:' + (H - 4) + 'px;box-sizing:border-box;border:1px dashed rgba(0,0,0,.24);border-radius:10px;background:rgba(0,0,0,.02);color:#686868;font-size:13px;font-weight:500;padding:7px 12px;pointer-events:none' : '',
       nowLine: 'position:absolute;left:0;right:0;top:' + Math.round(now * H) + 'px;border-top:2px solid #ef4444;z-index:3;pointer-events:none',
+      nowLabel: 'position:absolute;left:-58px;top:' + (Math.round(now * H) - 10) + 'px;z-index:3;pointer-events:none;font-size:11px;font-weight:500;line-height:normal;color:#ffffff;background:#dc2626;border-radius:6px;padding:2px 5px',
       mini,
       planned: hm(planned), free: hm(Math.max(0, 12 - planned))
     });

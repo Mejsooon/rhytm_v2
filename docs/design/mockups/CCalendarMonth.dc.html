@@ -88,7 +88,7 @@ class Component extends DCLogic {
   componentDidMount() { try { sessionStorage.setItem('rh-from', 'CCalendarMonth.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   constructor(p) { super(p); this.state = { hidden: { Dom: true }, sel: { d: 17, k: 0 }, done: {}, off: 0 }; }
   renderVals() {
-    const CATDEF = [['Studia', '#3b82f6'], ['Projekty', '#15803d'], ['Praca', '#8b5cf6'], ['Sport', '#f59e0b'], ['Subscriptions', ''], ['Dom', '#eab308']];
+    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
     const hidden = this.state.hidden || { Dom: true };
     const catList = (counts) => CATDEF.map((c) => {
       const on = !hidden[c[0]];
@@ -99,7 +99,7 @@ class Component extends DCLogic {
         dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
       };
     });
-    const COL = { Studia: '#3b82f6', Projekty: '#15803d', Praca: '#8b5cf6', Sport: '#f59e0b' };
+    const COL = { Studia: '#0070f3', Projekty: '#15803d', Praca: '#7c3aed', Sport: '#c2410c' };
     const ev = { 2: [['Matematyka', 'Studia']], 3: [['rhytm — kod', 'Projekty']], 4: [['Bazy danych', 'Studia']], 5: [['Strona klienta', 'Praca']],
       9: [['Matematyka', 'Studia'], ['NetScope', 'Projekty']], 10: [['rhytm — kod', 'Projekty'], ['Bieg', 'Sport']], 12: [['Siłownia', 'Sport']], 13: [['Strona klienta', 'Praca']],
       16: [['Matematyka', 'Studia'], ['SO', 'Studia']], 17: [['rhytm — kod', 'Projekty'], ['Bieg 10 km', 'Sport'], ['Bazy danych', 'Studia'], ['SO', 'Studia']], 18: [['Strona klienta', 'Praca']],
@@ -125,16 +125,18 @@ class Component extends DCLogic {
       const today = inm && off === 0 && n === 17;
       cells.push({
         num: String(n),
-        numS: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;font-size:12px;font-variant-numeric:tabular-nums;' + (today ? 'background:#262626;color:#fafafa;font-weight:600' : inm ? 'color:#262626;font-weight:500' : 'color:#a3a3a3'),
+        // stała szerokość = idealne koło; tabular-nums + letter-spacing 0 + line-height 1 centruje każdą liczbę; odstęp 8 px od bloków
+        numS: 'display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;margin-bottom:8px;border-radius:50%;font-size:12px;line-height:1;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums;' + (today ? 'background:#dc2626;color:#ffffff;font-weight:600' : inm ? 'color:#262626;font-weight:500' : 'color:#a3a3a3'),
         add: (evt) => { const t = evt && evt.target; if (t && t.closest && t.closest('button,a,[role=dialog]')) return; const a = this.state.add; this.setState({ add: (a && a.i === i && a.off === off) ? null : { i, off }, sel: null }); },
         hasAdd: !!(this.state.add && this.state.add.i === i && this.state.add.off === off),
         addWhen: DOW[wd] + ' ' + String(n).padStart(2, '0') + '.' + String(date.getUTCMonth() + 1).padStart(2, '0'),
         addS: 'position:absolute;z-index:6;width:270px;' + (wd <= 3 ? 'left:calc(100% + 6px);' : 'right:calc(100% + 6px);') + (i >= 21 ? 'bottom:0;' : 'top:0;') + 'padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default',
-        s: 'position:relative;cursor:pointer;min-height:112px;padding:6px 6px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid rgba(0,0,0,.06)') + ';border-left:' + (wd === 0 ? '0' : '1px solid rgba(0,0,0,.06)') + ';' + (!inm || wd >= 5 ? 'background:rgba(0,0,0,.018);' : ''),
+        s: 'position:relative;cursor:pointer;min-height:124px;padding:6px 6px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid rgba(0,0,0,.06)') + ';border-left:' + (wd === 0 ? '0' : '1px solid rgba(0,0,0,.06)') + ';' + (!inm || wd >= 5 ? 'background:rgba(0,0,0,.018);' : ''),
         chips: items.slice(0, 3).map((e, k) => {
           const on = off === 0 && sel && sel.d === n && sel.k === k && inm;
           return { t: e[0], open: on ? 'true' : 'false', pick: () => this.setState({ sel: (sel && sel.d === n && sel.k === k) ? null : { d: n, k }, add: null }),
-            s: 'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:500;border-radius:6px;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#262626;' + (COL[e[1]] ? 'background:' + COL[e[1]] + '14;border:1px solid ' + COL[e[1]] + '4d;box-shadow:' + (on ? '0 0 0 2px ' + COL[e[1]] + '66' : 'none') : 'background:#fff;border:1px dashed rgba(0,0,0,.24);color:#404040' + (on ? ';box-shadow:0 0 0 2px rgba(0,0,0,.2)' : '')) };
+            s: 'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:500;border-radius:6px;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#262626;' + // wpis bez kategorii jak w tygodniu/dniu: szary #a3a3a3 (tło 14, ramka 4d); przerywana ramka tylko dla planu treningu
+            (() => { const c = COL[e[1]] || '#a3a3a3'; return 'background:' + c + '14;border:1px solid ' + c + '4d;box-shadow:' + (on ? '0 0 0 2px ' + c + '66' : 'none'); })() };
         }),
         more: items.length > 3, moreT: '+' + (items.length - 3) + ' więcej'
       });

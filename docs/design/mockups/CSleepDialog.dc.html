@@ -40,7 +40,10 @@ body{margin:0;background:#ffffff}
         <div style="flex: 1"><div class="prog"><div style="{{bar}}"></div></div><div class="hint num" style="margin-top: 6px">{{goalTxt}}</div></div>
       </div></div>
       <div class="fld">Samopoczucie
-        <div class="seg" role="radiogroup" aria-label="Samopoczucie" style="align-self: flex-start"><sc-for list="{{moods}}" as="m" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{m.on}}" aria-pressed="{{m.on}}" onClick="{{m.pick}}" style="width: 44px">{{m.n}}</button></sc-for></div>
+        <div class="seg" role="radiogroup" aria-label="Samopoczucie" style="align-self: flex-start"><sc-for list="{{moods}}" as="m" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{m.on}}" aria-pressed="{{m.on}}" onClick="{{m.pick}}" style="width: 64px; height: 46px; flex-direction: column; gap: 0; padding: 0; font-size: 12px; font-weight: 400"><span class="num" style="font-size: 14px; font-weight: 500">{{m.n}}</span><span>{{m.l}}</span></button></sc-for></div>
+      </div>
+      <div class="fld">Co mogło wpłynąć
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; font-weight: 400"><sc-for list="{{tags}}" as="t" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{t.on}}" onClick="{{t.toggle}}">{{t.n}}</button></sc-for></div>
       </div>
       <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><input class="inp" type="text" placeholder="np. kawa po 18:00"></label>
     </div>
@@ -50,7 +53,7 @@ body{margin:0;background:#ffffff}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { from: '23:48', to: '07:00', mood: 4 }; }
+  constructor(p) { super(p); this.state = { from: '23:48', to: '07:00', mood: 4, tags: ['Ekran w łóżku'] }; }
   renderVals() {
     const toM = (t) => { const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
     const a = toM(this.state.from), b = toM(this.state.to);
@@ -64,7 +67,8 @@ class Component extends DCLogic {
       dur: ok ? Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0') : '—',
       bar: 'height:6px;border-radius:999px;width:' + pct + '%;background:' + (pct >= 100 ? '#15803d' : '#262626'),
       goalTxt: !ok ? 'Wpisz godziny w formacie GG:MM' : diff > 0 ? pct + '% celu 8:00 · brakuje ' + diff + ' min' : 'Cel 8:00 osiągnięty' + (diff < 0 ? ' · +' + (-diff) + ' min' : ''),
-      moods: [1, 2, 3, 4, 5].map((n) => ({ n: String(n), on: this.state.mood === n ? 'true' : 'false', pick: () => this.setState({ mood: n }) }))
+      moods: ['Źle', 'Słabo', 'OK', 'Dobrze', 'Super'].map((l, i) => { const n = i + 1; const on = this.state.mood === n; return { n: String(n), l, on: on ? 'true' : 'false', pick: () => this.setState({ mood: on ? null : n }) }; }),
+      tags: ['Kawa po 16', 'Ekran w łóżku', 'Trening', 'Alkohol', 'Stres'].map((n) => { const on = this.state.tags.includes(n); return { n, on: on ? 'true' : 'false', toggle: () => this.setState({ tags: on ? this.state.tags.filter((x) => x !== n) : this.state.tags.concat(n) }) }; })
     };
   }
 }

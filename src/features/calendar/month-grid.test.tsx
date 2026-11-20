@@ -78,6 +78,18 @@ describe("MonthGrid", () => {
     expect(screen.getAllByTestId(/^komorka-/)).toHaveLength(42);
   });
 
+  it("numer dzisiaj to czerwone kółko size-6, komórka ma min. 124 px", () => {
+    wyrenderuj([]);
+    const dzis = screen.getByTestId("numer-2026-11-17");
+    expect(dzis).toHaveClass("bg-destructive-strong", "size-6", "text-white");
+    expect(screen.getByTestId("numer-2026-11-18")).not.toHaveClass(
+      "bg-destructive-strong",
+    );
+    expect(screen.getByTestId("komorka-2026-11-17")).toHaveClass(
+      "min-h-[124px]",
+    );
+  });
+
   it("komórka z 5 wpisami pokazuje 3 i „+2 więcej”", () => {
     const wpisy = [1, 2, 3, 4, 5].map((i) =>
       wystapienie(`b${i}`, "2026-11-18", 480 + i * 60),
@@ -154,7 +166,9 @@ describe("MonthGrid", () => {
       sport: [planZSzablonu()],
     });
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
-    expect(wpis.style.boxShadow).toBe("rgba(163, 163, 163, 0.4) 0px 0px 0px 2px");
+    expect(wpis.style.boxShadow).toBe(
+      "rgba(163, 163, 163, 0.4) 0px 0px 0px 2px",
+    );
     expect(wpis).toHaveAttribute("aria-expanded", "true");
     const plan = screen.getByRole("link", { name: "Push" });
     expect(plan).toHaveClass("bg-background");
@@ -201,7 +215,7 @@ describe("MonthGrid", () => {
   it("wyróżnia dziś i szarzy dni spoza miesiąca", () => {
     wyrenderuj([]);
     expect(screen.getByTestId("numer-2026-11-17").className).toContain(
-      "bg-primary",
+      "bg-destructive-strong",
     );
     expect(screen.getByTestId("numer-2026-10-26").className).toContain(
       "text-faint-foreground",
