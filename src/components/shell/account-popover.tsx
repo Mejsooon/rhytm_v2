@@ -5,8 +5,11 @@ import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import {
   ActionPopover,
+  Avatar,
   MENU_ITEM,
   MENU_ITEM_DANGER,
+  MENU_LABEL,
+  MENU_SEPARATOR,
 } from "@/components/controls";
 import { signOut } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
@@ -17,7 +20,7 @@ export type SidebarUser = {
   avatarUrl: string | null;
 };
 
-// Blok użytkownika na dole sidebara + dymek konta nad nim (Sidebar.dc.html).
+// Blok użytkownika na dole sidebara + dymek konta nad nim (CSidebar.dc.html).
 // Ustawienia mają własną pozycję w sidebarze, więc w dymku jest tylko „Wyloguj się”.
 export function AccountPopover({ user }: { user: SidebarUser }) {
   const [open, setOpen] = React.useState(false);
@@ -31,50 +34,47 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
       open={open}
       onOpenChange={setOpen}
       side="top"
-      width={212}
+      // Pełna szerokość stopki sidebara (232 − 2 × 8 px), jak w CSidebar
+      width={216}
       className="p-1"
       trigger={
         <button
           type="button"
           aria-haspopup="dialog"
           className={cn(
-            "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 p-2 text-left text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20",
-            open ? "bg-active" : "bg-transparent",
+            "flex w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 px-2 py-1.5 text-left text-sm text-foreground outline-none hover:bg-black/[.04] focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]",
+            open ? "bg-black/5 hover:bg-black/5" : "bg-transparent",
           )}
         >
-          <span className="flex size-[26px] flex-none items-center justify-center overflow-hidden rounded-full border border-input bg-active text-xs font-medium">
-            {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- mały awatar z zewnętrznego URL
-              <img
-                src={user.avatarUrl}
-                alt=""
-                className="size-full object-cover"
-              />
-            ) : (
-              inicjal
-            )}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
+          {user.avatarUrl ? (
+            // Zdjęcie w kółku jak .avatar (28 px, wewnętrzna ramka)
+            <span className="inline-flex size-7 flex-none overflow-hidden rounded-full bg-muted shadow-[inset_0_0_0_1px_var(--border)]">
+              {/* eslint-disable-next-line @next/next/no-img-element -- mały awatar z zewnętrznego URL */}
+              <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+            </span>
+          ) : (
+            <Avatar initials={inicjal} className="size-7 text-xs" />
+          )}
+          <span className="flex min-w-0 flex-1 flex-col leading-[1.3]">
             <span className="font-medium">{user.displayName}</span>
             <span className="truncate text-xs text-muted-foreground">
               {user.email}
             </span>
           </span>
-          <ChevronsUpDown size={14} stroke="#666666" aria-hidden="true" />
+          <ChevronsUpDown size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
         </button>
       }
     >
-      <div className="flex flex-col gap-0.5 text-[13px]">
-        <div className="mb-1 border-b border-border px-2.5 pt-2 pb-2.5">
-          <div className="font-medium">{user.displayName}</div>
-          <div className="text-xs text-muted-foreground">{user.email}</div>
+      {/* Treść jak menu „Konto” w CSidebar: .mi-lbl z nazwą i e-mailem, .mi-sep, „Wyloguj się” (.mi.bad) */}
+      <div className="flex flex-col">
+        <div className={cn(MENU_LABEL, "px-2 pt-2 pb-1.5")}>
+          <div className="text-sm font-medium text-foreground">{user.displayName}</div>
+          <div className="truncate font-normal">{user.email}</div>
         </div>
+        <div className={MENU_SEPARATOR} />
         <form action={signOut}>
-          <button
-            type="submit"
-            className={cn(MENU_ITEM, MENU_ITEM_DANGER, "font-medium")}
-          >
-            <LogOut size={15} aria-hidden="true" />
+          <button type="submit" className={cn(MENU_ITEM, MENU_ITEM_DANGER)}>
+            <LogOut size={16} aria-hidden="true" />
             Wyloguj się
           </button>
         </form>

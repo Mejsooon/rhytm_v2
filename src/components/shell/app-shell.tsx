@@ -71,7 +71,7 @@ export function AppShell({
       <React.Suspense
         fallback={
           // Szkielet sidebara (web), żeby układ nie skakał podczas ładowania
-          <div className="hidden w-[232px] flex-none border-r border-border bg-panel min-[800px]:block" />
+          <div className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block" />
         }
       >
         <Powloka requireUser={requireUser}>{children}</Powloka>

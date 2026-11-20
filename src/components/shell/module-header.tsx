@@ -5,18 +5,19 @@ import { Settings } from "lucide-react";
 import { MonoLabel } from "@/components/controls";
 
 // Nagłówek modułu. Oba warianty są w DOM, przełącza je wyłącznie CSS (800 px):
-// - web: „Moduły / Tytuł” w Geist Mono 13 px (EmptyToday.dc.html), „Tytuł” to h1,
+// - web: .topbar z coss.css (CToday.dc.html) — sam tytuł .h-title 18 px / 600 jako h1;
+//   z `webParent` okruszki .crumb jak w CPageMenu.dc.html („Strony / Books”, h1 14 px / 500),
 // - telefon: duży tytuł 28 px z etykietą mono nad nim (MToday / MPages).
 export function ModuleHeader({
   title,
   phoneLabel,
   phoneSettingsLink = false,
-  webParent = "Moduły",
+  webParent,
   phoneTitle,
   webAction,
 }: {
   title: string;
-  // Pierwszy człon ścieżki na webie („Ustawienia / Ogólne”)
+  // Pierwszy człon okruszków na webie („Ustawienia / Ogólne”); bez niego sam tytuł modułu
   webParent?: string;
   // Inny tytuł na telefonie (np. „Ustawienia” zamiast nazwy zakładki)
   phoneTitle?: string;
@@ -29,14 +30,22 @@ export function ModuleHeader({
 }) {
   return (
     <>
-      <header className="flex min-h-[34px] items-center gap-3 border-b border-border px-6 py-3 max-[799px]:hidden">
-        <div className="font-mono text-[13px] text-muted-foreground">
-          <span>{webParent}</span> <span className="text-faint-foreground">/</span>{" "}
-          {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
-          <h1 className="inline text-foreground">{title}</h1>
-        </div>
+      {/* .topbar: min-height 36 px liczone bez paddingu (box-content), padding 10px 24px */}
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
+        {webParent ? (
+          // .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span>{webParent}</span> <span>/</span>{" "}
+            <h1 className="m-0 text-sm font-medium text-foreground">{title}</h1>
+          </div>
+        ) : (
+          // .h-title
+          <h1 className="m-0 text-lg font-semibold tracking-[-0.011em] text-foreground">
+            {title}
+          </h1>
+        )}
         {webAction && (
-          <div className="ml-auto flex items-center gap-2">{webAction}</div>
+          <div className="flex flex-wrap items-center gap-2">{webAction}</div>
         )}
       </header>
       <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">

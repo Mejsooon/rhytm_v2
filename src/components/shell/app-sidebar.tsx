@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Plus, Search, Settings } from "lucide-react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
-import { MonoLabel } from "@/components/controls";
+import { Button, FIELD, Kbd } from "@/components/controls";
 import { useCreateBlankPage } from "@/features/pages/use-create-blank-page";
 import type { PageSummary } from "@/features/pages/load-pages";
 import { PageIcon } from "@/features/pages/page-icon";
@@ -21,10 +21,15 @@ import { cn } from "@/lib/utils";
 import { AccountPopover, type SidebarUser } from "./account-popover";
 import { NAV_MODULES } from "./nav-items";
 
+// Pozycja .sb-i z coss.css: 32 px, promień 8 px, 14 px / 500
 const POZYCJA =
-  "flex items-center gap-2.5 rounded-md px-2 py-[7px] no-underline transition-colors";
+  "flex h-8 items-center gap-2 rounded-[8px] px-2 text-sm font-medium no-underline transition-colors outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]";
+// Nieaktywna pozycja: tekst rgba(38,38,38,.72), najechanie bg rgba(0,0,0,.04)
+const POZYCJA_ZWYKLA = "text-[rgba(38,38,38,.72)] hover:bg-black/[.04] hover:text-foreground";
+// Nagłówek grupy .sb-g
+const GRUPA = "text-xs font-medium text-muted-foreground";
 
-// Sidebar web (Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
+// Sidebar web (CSidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
 // Strony: kolejność z `position`; ulubione są tylko w sekcji „Ulubione” (ukrytej, gdy pusta).
 // Przeciąganie w obrębie sekcji zmienia kolejność, upuszczenie w drugiej sekcji przełącza ulubione.
 // F2 zmienia nazwę aktywnej, „⋯” otwiera menu strony (PageMenu). Pusty tytuł → „Bez tytułu”.
@@ -116,18 +121,18 @@ export function AppSidebar({
   const klasaPozycji = (href: string) =>
     cn(
       POZYCJA,
-      aktywna(href)
-        ? "bg-active font-medium text-foreground"
-        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      aktywna(href) ? "bg-black/5 text-foreground" : POZYCJA_ZWYKLA,
     );
 
   return (
     <nav
       aria-label="Główna nawigacja"
-      className="sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border bg-panel px-2.5 py-3 text-sm text-foreground min-[800px]:flex"
+      className="sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border-soft bg-panel p-2 text-sm text-foreground min-[800px]:flex"
     >
-      <div className="flex items-center gap-2.5 px-2 pt-1.5 pb-2">
-        <RhytmLogo withWordmark />
+      {/* Logo 22 px i nazwa 15 px / 600 w wierszu 40 px */}
+      <div className="flex h-10 items-center gap-2 px-2">
+        <RhytmLogo size={22} />
+        <span className="flex-1 text-[15px] font-semibold tracking-[-0.03em]">rhytm</span>
       </div>
 
       {/* Wyszukiwarka (⌘K) — w tym etapie nieaktywna */}
@@ -136,19 +141,18 @@ export function AppSidebar({
           <button
             type="button"
             aria-disabled="true"
-            className="mt-0.5 mb-2.5 flex cursor-default items-center gap-2 rounded-md border border-border bg-white px-2.5 py-[7px] text-left text-muted-foreground"
+            // .igroup z coss.css
+            className="mt-1 mb-2 flex h-8 cursor-default items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground shadow-xs outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)]"
           >
-            <Search size={15} aria-hidden="true" />
+            <Search size={16} aria-hidden="true" />
             <span className="flex-1">Szukaj…</span>
-            <span className="rounded border border-input px-[5px] font-mono text-[11px]">
-              ⌘K
-            </span>
+            <Kbd>⌘K</Kbd>
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">Wkrótce</TooltipContent>
       </Tooltip>
 
-      <MonoLabel className="px-2 py-1.5">Moduły</MonoLabel>
+      <div className={cn(GRUPA, "px-2 pt-3 pb-1")}>Moduły</div>
       {NAV_MODULES.map(({ key, label, href, icon: Ikona }) => (
         <Link
           key={key}
@@ -189,17 +193,23 @@ export function AppSidebar({
           };
           return (
             <React.Fragment key={nazwa}>
-              <div {...celKonca} className="flex items-center justify-between px-2 pt-3.5 pb-1.5">
-                <MonoLabel>{nazwa}</MonoLabel>
+              {/* .sb-g z odstępem 16 px; przy „Strony” przycisk „+” (ghost xs) */}
+              <div
+                {...celKonca}
+                className={cn("flex items-center justify-between pt-4 pb-1 pl-2", ulubione ? "pr-2" : "pr-1")}
+              >
+                <span className={GRUPA}>{nazwa}</span>
                 {nazwa === "Strony" && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    icon
                     aria-label="Dodaj stronę"
                     onClick={nowaStrona}
-                    className="flex cursor-pointer p-0.5 text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground"
                   >
-                    <Plus size={15} aria-hidden="true" />
-                  </button>
+                    <Plus size={16} aria-hidden="true" />
+                  </Button>
                 )}
               </div>
               {lista.map((strona) => {
@@ -209,12 +219,14 @@ export function AppSidebar({
                   <div
                     key={strona.id}
                     className={cn(
-                      "group relative rounded-md",
+                      "group relative rounded-[8px]",
                       // Linia wskaźnika upuszczenia 2 px nad albo pod wierszem, przeciągana strona przygaszona
                       nad?.typ === "wiersz" &&
                         nad.id === strona.id &&
                         przeciagana !== strona.id &&
-                        (nad.po ? "shadow-[inset_0_-2px_0_#171717]" : "shadow-[inset_0_2px_0_#171717]"),
+                        (nad.po
+                          ? "shadow-[inset_0_-2px_0_var(--foreground)]"
+                          : "shadow-[inset_0_2px_0_var(--foreground)]"),
                       przeciagana === strona.id && "opacity-[.45]",
                     )}
                     onDragStart={(e) => {
@@ -243,8 +255,8 @@ export function AppSidebar({
                     }}
                   >
                     {edytowana === strona.id ? (
-                      <div className={cn(POZYCJA, "bg-white")}>
-                        <PageIcon icon={strona.icon} size={16} />
+                      // Pole nazwy jak .inp w CSidebar: cały wiersz, ramka ring i halo 3 px
+                      <div className="flex h-8 items-center">
                         <input
                           autoFocus
                           aria-label="Nazwa strony"
@@ -265,7 +277,7 @@ export function AppSidebar({
                             }
                           }}
                           onBlur={() => zapiszNazwe(strona)}
-                          className="min-w-0 flex-1 rounded border border-primary bg-white px-1.5 py-0.5 text-sm text-foreground outline-none"
+                          className={cn(FIELD, "border-ring shadow-[0_0_0_3px_rgba(163,163,163,.24)]")}
                         />
                       </div>
                     ) : (
@@ -280,7 +292,7 @@ export function AppSidebar({
                       </Link>
                     )}
                     {edytowana !== strona.id && (
-                      <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                      <div className="absolute top-1 right-1">
                         <PageMenu
                           page={strona}
                           pages={strony}
@@ -290,7 +302,11 @@ export function AppSidebar({
                             setSzkic(strona.title);
                             setEdytowana(strona.id);
                           }}
-                          triggerClassName="flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-border focus-visible:opacity-100 data-[state=open]:opacity-100"
+                          // .btng.ic.xs: widoczny na aktywnej stronie, po najechaniu, z fokusem i przy otwartym menu
+                          triggerClassName={cn(
+                            "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:opacity-100 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:bg-accent data-[state=open]:opacity-100 [&_svg]:opacity-80",
+                            aktywna(href) ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                          )}
                         />
                       </div>
                     )}
@@ -303,7 +319,7 @@ export function AppSidebar({
                     {...celKonca}
                     data-testid="strefa-ulubione"
                     className={cn(
-                      "mx-1 rounded-md border border-dashed px-2 py-2 text-center text-xs text-muted-foreground",
+                      "mx-1 rounded-md border border-dashed bg-muted px-2 py-2 text-center text-xs text-muted-foreground",
                       koniecAktywny ? "border-primary bg-muted" : "border-border-strong",
                     )}
                   >
@@ -313,7 +329,7 @@ export function AppSidebar({
                   <div
                     {...celKonca}
                     data-testid={`koniec-${ulubione ? "ulubione" : "strony"}`}
-                    className={cn("h-3 rounded-md", koniecAktywny && "shadow-[inset_0_2px_0_#171717]")}
+                    className={cn("h-3 rounded-md", koniecAktywny && "shadow-[inset_0_2px_0_var(--foreground)]")}
                   />
                 ))}
             </React.Fragment>
@@ -323,7 +339,7 @@ export function AppSidebar({
       <button
         type="button"
         onClick={nowaStrona}
-        className={cn(POZYCJA, "cursor-pointer text-left text-muted-foreground hover:bg-muted hover:text-foreground")}
+        className={cn(POZYCJA, POZYCJA_ZWYKLA, "cursor-pointer border-0 bg-transparent text-left")}
       >
         <Plus size={16} aria-hidden="true" />
         Nowa strona
@@ -338,7 +354,7 @@ export function AppSidebar({
         <Settings size={16} aria-hidden="true" />
         Ustawienia
       </Link>
-      <div className="mt-1.5 border-t border-border pt-1">
+      <div className="mt-1.5 border-t border-border-soft pt-1.5">
         <AccountPopover user={user} />
       </div>
     </nav>

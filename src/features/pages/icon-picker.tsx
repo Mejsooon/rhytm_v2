@@ -1,6 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { Search } from "lucide-react";
+
+import { Button } from "@/components/controls";
 
 import { PageIcon } from "./page-icon";
 import {
@@ -15,7 +18,7 @@ import {
 
 const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 
-// Wybór ikony strony jak w Notion (IconPicker.dc.html): zakładki „Emoji” / „Ikony”, „Usuń”,
+// Wybór ikony strony jak w Notion (CIconPicker.dc.html): zakładki „Emoji” / „Ikony” (.seg), „Usuń”,
 // wyszukiwarka (działa też bez polskich znaków), 8 kolorów ikon i siatka 8 kolumn.
 // Etykiety przycisków: dwa pierwsze słowa kluczy (unikalne, np. „Emoji jedzenie dieta” / „Emoji jedzenie pizza”).
 // `value` i `onPick` — tekst z `pages.icon` (emoji, `lucide:<nazwa>:<kolor>` albo '' po „Usuń”).
@@ -39,56 +42,68 @@ export function IconPicker({
   const ikony = ICON_NAMES.filter(([, slowa]) => matchesIconQuery(slowa, fraza));
   const pusto = (zakladka === "emoji" ? emoji.length : ikony.length) === 0;
 
+  // Przycisk .seg: 28 px, promień 8 px; wybrany — biała pigułka z cieniem (telefon 40 px jak Segment)
   const klasaZakladki = (wlaczona: boolean) =>
-    `-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-2 pt-1.5 pb-2 font-[inherit] text-[13px] max-[799px]:min-h-11 ${
-      wlaczona ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground"
+    `inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-[inherit] text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:h-10 ${
+      wlaczona
+        ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+        : "bg-transparent text-muted-foreground hover:text-foreground"
     }`;
+  // Komórka siatki: 32 px, promień 8 px; zaznaczona — ramka rgba(0,0,0,.18) i tło rgba(0,0,0,.05)
   const klasaKomorki = (zaznaczona: boolean) =>
-    `flex h-8 cursor-pointer items-center justify-center rounded-md p-0 text-lg leading-none hover:bg-active max-[799px]:h-11 ${
-      zaznaczona ? "border border-primary bg-muted" : "border border-transparent bg-transparent"
+    `flex h-8 cursor-pointer items-center justify-center rounded-[8px] p-0 text-lg leading-none outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:h-11 ${
+      zaznaczona ? "border border-black/[.18] bg-black/5" : "border border-transparent bg-transparent hover:bg-black/[.04]"
     }`;
 
   // role="group": dymek wokół (ActionPopover / arkusz) już jest oknem
   return (
-    <div role="group" aria-label="Wybór ikony" className="box-border flex w-full flex-col gap-2 text-[13px] text-foreground">
-      <div className="flex items-center gap-0.5 border-b border-border">
-        <button
-          type="button"
-          aria-pressed={zakladka === "emoji"}
-          onClick={() => setZakladka("emoji")}
-          className={klasaZakladki(zakladka === "emoji")}
-        >
-          Emoji
-        </button>
-        <button
-          type="button"
-          aria-pressed={zakladka === "icons"}
-          onClick={() => setZakladka("icons")}
-          className={klasaZakladki(zakladka === "icons")}
-        >
-          Ikony
-        </button>
+    <div role="group" aria-label="Wybór ikony" className="box-border flex w-full flex-col gap-2 text-sm text-foreground">
+      <div className="flex items-center gap-2">
+        {/* .seg z coss.css; przyciski z aria-pressed jak dotąd */}
+        <div className="inline-flex items-center gap-0.5 rounded-md bg-muted p-0.5">
+          <button
+            type="button"
+            aria-pressed={zakladka === "emoji"}
+            onClick={() => setZakladka("emoji")}
+            className={klasaZakladki(zakladka === "emoji")}
+          >
+            Emoji
+          </button>
+          <button
+            type="button"
+            aria-pressed={zakladka === "icons"}
+            onClick={() => setZakladka("icons")}
+            className={klasaZakladki(zakladka === "icons")}
+          >
+            Ikony
+          </button>
+        </div>
         <span className="flex-1" />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
           onClick={() => onPick("")}
-          className="cursor-pointer border-0 bg-transparent px-1.5 pt-1.5 pb-2 font-[inherit] text-xs text-muted-foreground hover:text-foreground max-[799px]:min-h-11"
+          className="text-muted-foreground max-[799px]:h-11"
         >
           Usuń
-        </button>
+        </Button>
       </div>
 
-      <input
-        type="text"
-        value={fraza}
-        onChange={(e) => setFraza(e.target.value)}
-        placeholder="Szukaj ikony…"
-        aria-label="Szukaj ikony"
-        className="box-border w-full rounded-md border border-input bg-white px-[9px] py-[7px] font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
-      />
+      {/* .igroup: lupa i pole w jednej ramce */}
+      <label className="box-border flex h-8 items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_3px_rgba(163,163,163,.24)] max-[799px]:h-11">
+        <Search size={16} aria-hidden="true" className="flex-none" />
+        <input
+          type="text"
+          value={fraza}
+          onChange={(e) => setFraza(e.target.value)}
+          placeholder="Szukaj ikony…"
+          aria-label="Szukaj ikony"
+          className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
+        />
+      </label>
 
       {zakladka === "icons" && (
-        <div role="group" aria-label="Kolor ikony" className="flex flex-wrap items-center gap-1.5 max-[799px]:gap-0">
+        <div role="group" aria-label="Kolor ikony" className="flex flex-wrap items-center gap-2 px-0.5 pt-0.5 max-[799px]:gap-0">
           {ICON_COLORS.map((k) => {
             const wybrany = k.key === kolor;
             return (
@@ -106,7 +121,7 @@ export function IconPicker({
                   style={{
                     background: k.hex,
                     border: `2px solid ${wybrany ? "#ffffff" : "transparent"}`,
-                    boxShadow: wybrany ? `0 0 0 2px ${k.hex}` : "none",
+                    boxShadow: wybrany ? `0 0 0 2px ${k.hex}` : "inset 0 0 0 1px rgba(0,0,0,.08)",
                   }}
                 />
               </button>
@@ -152,7 +167,7 @@ export function IconPicker({
             })}
           </div>
         )}
-        {pusto && <p className="my-2.5 text-center text-xs text-muted-foreground">Brak wyników</p>}
+        {pusto && <p className="m-0 px-2 py-4 text-center text-sm font-medium">Brak wyników</p>}
       </div>
     </div>
   );
