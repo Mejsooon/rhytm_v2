@@ -72,6 +72,14 @@ describe("DeleteBlockDialog", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("na webie wygląda jak .dlg z coss.css: promień 16 px, cień pop, szara stopka", () => {
+    wyrenderuj(wystapienie());
+    const okno = screen.getByRole("alertdialog", { name: "Usunąć blok?" });
+    expect(okno).toHaveClass("min-[800px]:rounded-xl", "min-[800px]:border-border", "min-[800px]:shadow-pop");
+    expect(screen.getByRole("button", { name: "Usuń" }).parentElement).toHaveClass("min-[800px]:bg-black/[.025]", "min-[800px]:border-t");
+    expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("h-8", "bg-destructive");
+  });
+
   it("w trakcie usuwania przyciski są zablokowane, a Esc nie zamyka", async () => {
     let zakoncz: (v: { ok: true }) => void = () => {};
     changeOccurrence.mockReturnValue(new Promise((r) => (zakoncz = r)));

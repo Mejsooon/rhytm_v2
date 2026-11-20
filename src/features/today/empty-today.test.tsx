@@ -37,4 +37,13 @@ describe("EmptyToday", () => {
     expect(within(tytul.closest("a")!).getByText("✓")).toBeInTheDocument();
     expect(screen.getAllByText("Dodaj", { selector: "span" })).toHaveLength(3);
   });
+
+  it("wygląd jak CEmptyToday: licznik w odznace, pasek .prog, wiersze .mi, Dodaj jak .btn.sm", () => {
+    render(<EmptyToday name="M" steps={firstSteps({ ...zera, blocks: 1 })} />);
+    expect(screen.getByText("1 / 4")).toHaveClass("h-[22px]", "bg-muted", "tabular-nums");
+    const wiersz = screen.getByText("Dodaj nawyk").closest("a")!;
+    expect(wiersz).toHaveClass("min-h-14", "rounded-md", "hover:bg-accent");
+    expect(within(wiersz).getByText("Dodaj")).toHaveClass("h-7", "border-input", "shadow-[0_1px_2px_rgba(0,0,0,.05),inset_0_-1px_0_rgba(0,0,0,.04)]");
+    expect(screen.getByText("Plan dnia jest pusty").closest("section")).toHaveClass("border-dashed", "rounded-xl");
+  });
 });

@@ -116,6 +116,24 @@ describe("WeekCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("kafelki to osobne karty .card z etykietą .lbl i wartością 24 px / 600 tabular-nums (CToday)", () => {
+    wyrenderuj();
+    const zadania = kafelek("Zadania");
+    expect(zadania).toHaveClass("rounded-xl", "border-border", "p-4", "gap-2.5");
+    expect(within(zadania).getByText("Zadania")).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-muted-foreground",
+    );
+    expect(within(zadania).getByText("Zadania")).not.toHaveClass("uppercase");
+    expect(within(zadania).getByText("18/41")).toHaveClass(
+      "text-2xl",
+      "font-semibold",
+      "tabular-nums",
+    );
+    expect(screen.getByText("pn 16 – nd 22.11")).not.toHaveClass("font-mono");
+  });
+
   it("słupki 7 dni: wysokość v / max × 28, dziś zielony, przyszłość szara 3 px", () => {
     wyrenderuj();
     // Zadania: max = 9 → 28 px i round(4/9 × 28) = 12 px

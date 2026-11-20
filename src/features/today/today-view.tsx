@@ -5,8 +5,9 @@
 // Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
-import { Button } from "@/components/controls";
+import { Button, StatusBadge } from "@/components/controls";
 import { todayIso } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import {
@@ -92,7 +93,9 @@ export function TodayView({
   }
 
   const przyciskNowyBlok = (
-    <Button variant="primary" size="sm" onClick={otworzNowyBlok}>
+    // .btnp z CToday: 32 px, ikona + 16 px
+    <Button variant="primary" size="md" onClick={otworzNowyBlok}>
+      <Plus size={16} aria-hidden="true" />
       Nowy blok
     </Button>
   );
@@ -150,8 +153,9 @@ export function TodayView({
     weeklyWorkoutsGoal: profile.weeklyWorkoutsGoal,
   });
 
-  // „wtorek · 17.11.2026 · tydz. 47” — tydzień ISO także przy tygodniu od niedzieli
-  const podtytul = `${DNI_PELNE[dzien].toLowerCase()} · ${dzienMiesiaca}.${miesiac}.${rok} · tydz. ${isoWeekNumber(today)}`;
+  // „wtorek · 17.11.2026” w odznace i „tydz. 47” obok — tydzień ISO także przy tygodniu od niedzieli
+  const dataNaglowka = `${DNI_PELNE[dzien].toLowerCase()} · ${dzienMiesiaca}.${miesiac}.${rok}`;
+  const tydzien = `tydz. ${isoWeekNumber(today)}`;
 
   return (
     <>
@@ -184,14 +188,22 @@ export function TodayView({
         data-testid="web-dzis"
         className="flex min-w-0 flex-1 flex-col max-[799px]:hidden"
       >
-        {/* Nagłówek web (Today.dc.html) */}
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-          <div className="flex items-baseline gap-2.5">
-            <h1 className="m-0 text-lg font-semibold">Dziś</h1>
-            <span className="font-mono text-xs text-muted-foreground">{podtytul}</span>
-          </div>
-          {przyciskNowyBlok}
-        </header>
+        {/* Nagłówek web (.topbar z CToday): okruszki „Moduły / Dziś”, odznaka z datą, „tydz. N”, „Nowy blok” */}
+        <ModuleHeader
+          title="Dziś"
+          webOnly
+          webMeta={
+            <>
+              <StatusBadge tone="gray" size="lg" className="tabular-nums">
+                {dataNaglowka}
+              </StatusBadge>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {tydzien}
+              </span>
+            </>
+          }
+          webAction={przyciskNowyBlok}
+        />
 
         <div className="box-border flex w-full flex-col gap-6 p-6">
           {/* 1. Statystyki tygodnia */}

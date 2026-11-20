@@ -180,6 +180,27 @@ describe("DayPlan", () => {
     ).toBeInTheDocument();
   });
 
+  it("blok ma ramkę w kolorze kategorii i bez paska", async () => {
+    const d = dane();
+    d.categories = [{ ...d.categories[0], color: "#3b82f6" }];
+    render(<Plan d={d} />);
+    const blok = screen.getByRole("button", { name: /Matematyka/ });
+    // Tło kolor+12, ramka 1 px kolor+4d ze wszystkich stron (bez paska 3 px po lewej), bez cienia inset
+    expect(blok.style.background).toMatch(/#3b82f612|rgba\(59, 130, 246, 0\.07\d*\)/);
+    expect(blok.style.border).toMatch(/1px solid (#3b82f64d|rgba\(59, 130, 246, 0\.3\d*\))/);
+    expect(blok.style.borderLeftWidth).toBe("1px");
+    expect(blok.style.boxShadow).not.toContain("inset");
+    expect(blok).toHaveClass("rounded-md", "px-2.5", "py-1.5", "text-sm");
+    // Zaznaczony: pierścień 2 px biały + 4 px kolor+66
+    await userEvent.click(blok);
+    expect(
+      screen.getByRole("button", { name: /Matematyka/, pressed: true }).style
+        .boxShadow,
+    ).toMatch(
+      /(0 0 0 2px #fff|rgb\(255, 255, 255\) 0px 0px 0px 2px), (0 0 0 4px #3b82f666|rgba\(59, 130, 246, 0\.4\d*\) 0px 0px 0px 4px)/,
+    );
+  });
+
   it("oś przewija się na trwający blok, „TERAZ” jest na nim, czerwona linia na 10:20", () => {
     render(<Plan d={dane()} />);
     // 48 px na godzinę: 10:00 → 480 px

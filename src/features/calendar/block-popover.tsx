@@ -4,7 +4,9 @@
 // BlockDetails to sama treść (użyje jej też arkusz na telefonie), BlockPopover dokłada
 // Radix Popover zakotwiczony przy klikniętym bloku.
 import { useEffect, useRef, useState } from "react";
+import { CheckIcon, Ellipsis, Plus, X } from "lucide-react";
 
+import { Button, Progress, StatusBadge } from "@/components/controls";
 import {
   Popover,
   PopoverAnchor,
@@ -140,14 +142,16 @@ export function BlockDetails({
     );
   }
 
+  // Dymek na webie (.pop z CToday): sekcje mają własny padding 16 px, stopka na szarym tle.
+  // Na telefonie ta sama treść siedzi w arkuszu FormDialog, który ma własny padding — tam bez niego.
   return (
     <div className="flex flex-col gap-3.5 text-sm">
-      <div className="flex items-start gap-2.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
-          <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
+      <div className="flex items-start gap-2.5 min-[800px]:px-4 min-[800px]:pt-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <span
               aria-hidden="true"
-              className="size-2 rounded-full"
+              className="size-2 flex-none rounded-full"
               style={{ background: category?.color ?? "#a3a3a3" }}
             />
             {category?.name ?? "Bez kategorii"}
@@ -155,40 +159,29 @@ export function BlockDetails({
           <span className="text-base leading-[1.3] font-semibold break-words">
             {o.title}
           </span>
-          <span className="font-mono text-xs text-muted-foreground">{kiedy}</span>
+          <span className="text-xs text-muted-foreground tabular-nums">{kiedy}</span>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          icon
           aria-label="Zamknij"
           onClick={onClose}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring size-7 flex-none cursor-pointer rounded-md border border-input bg-white text-muted-foreground max-[799px]:size-11"
+          className="max-[799px]:size-11"
         >
-          ✕
-        </button>
+          <X size={16} aria-hidden="true" />
+        </Button>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 min-[800px]:px-4">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-            Zadania
-          </span>
-          <span className="font-mono text-xs text-muted-foreground">{`${done} z ${total}`}</span>
+          {/* .lbl */}
+          <span className="text-xs font-medium text-muted-foreground">Zadania</span>
+          <span className="text-xs text-muted-foreground tabular-nums">{`${done} z ${total}`}</span>
         </div>
-        <div
-          role="progressbar"
-          aria-label="Postęp zadań"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={procent}
-          className="h-1 rounded-sm bg-active"
-        >
-          <div
-            className="h-1 rounded-sm bg-success"
-            style={{ width: `${procent}%` }}
-          />
-        </div>
+        <Progress value={procent} max={100} ariaLabel="Postęp zadań" />
         {total === 0 && (
-          <span className="py-1.5 text-[13px] text-muted-foreground">
+          <span className="py-1.5 text-xs text-muted-foreground">
             Brak zadań w tym bloku.
           </span>
         )}
@@ -197,60 +190,71 @@ export function BlockDetails({
           return (
             <div
               key={t.id}
-              className="flex min-h-8 items-center gap-1 max-[799px]:min-h-11"
+              className="flex min-h-[30px] items-center gap-1 max-[799px]:min-h-11"
             >
               <label
-                className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-[13px] ${
+                className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm ${
                   t.done ? "text-muted-foreground line-through" : "text-foreground"
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={t.done}
-                  disabled={tymczasowe}
-                  onChange={() => przelacz(t)}
-                  className="m-0 size-4 flex-none accent-[#15803d]"
-                />
+                {/* Natywne pole wyglądające jak checkbox z coss.css (16 px, zaznaczone primary) */}
+                <span className="relative flex size-4 flex-none">
+                  <input
+                    type="checkbox"
+                    checked={t.done}
+                    disabled={tymczasowe}
+                    onChange={() => przelacz(t)}
+                    className="peer m-0 size-4 flex-none cursor-pointer appearance-none rounded-[4px] border border-input bg-white shadow-xs outline-none checked:border-primary checked:bg-primary focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] disabled:cursor-not-allowed disabled:opacity-[.64]"
+                  />
+                  <CheckIcon
+                    aria-hidden="true"
+                    strokeWidth={3}
+                    className="pointer-events-none absolute inset-0 m-auto hidden size-3 text-primary-foreground peer-checked:block"
+                  />
+                </span>
                 <span className="min-w-0 break-words">{t.title}</span>
               </label>
               {otwarteMenu === t.id && (
-                <button
-                  type="button"
+                <Button
+                  size="xs"
                   aria-label={`Odepnij zadanie ${t.title}`}
                   onClick={() => odepnij(t)}
-                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer rounded-md border border-input bg-white px-2 py-0.5 text-xs text-soft-foreground max-[799px]:min-h-11"
+                  className="font-normal text-soft-foreground max-[799px]:h-11"
                 >
                   Odepnij
-                </button>
+                </Button>
               )}
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="xs"
+                icon
                 aria-label={`Opcje zadania ${t.title}`}
                 aria-expanded={otwarteMenu === t.id}
                 disabled={tymczasowe}
                 onClick={() =>
                   setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
                 }
-                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted max-[799px]:size-11"
+                className="text-muted-foreground max-[799px]:size-11"
               >
-                ⋯
-              </button>
-              <button
-                type="button"
+                <Ellipsis size={14} aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                icon
                 aria-label={`Usuń zadanie ${t.title}`}
                 disabled={tymczasowe}
                 onClick={() => usun(t)}
-                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive-foreground max-[799px]:size-11"
+                className="text-muted-foreground hover:text-destructive-foreground max-[799px]:size-11"
               >
-                ×
-              </button>
+                <X size={14} aria-hidden="true" />
+              </Button>
             </div>
           );
         })}
-        <label className="flex min-h-8 items-center gap-2.5 border-t border-dashed border-input pt-1.5 text-muted-foreground max-[799px]:min-h-11">
-          <span aria-hidden="true" className="font-mono">
-            +
-          </span>
+        {/* .igroup 30 px z ikoną + */}
+        <label className="mt-0.5 flex h-[30px] items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_3px_rgba(163,163,163,.24)] max-[799px]:h-11">
+          <Plus size={14} aria-hidden="true" className="flex-none" />
           <input
             type="text"
             aria-label="Nowe zadanie"
@@ -264,41 +268,36 @@ export function BlockDetails({
                 dodaj();
               }
             }}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-foreground outline-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-foreground outline-0 placeholder:text-faint-foreground"
           />
         </label>
       </div>
 
       {o.note && (
-        <div className="border-t border-border pt-2.5">
-          <div className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-            Notatka
-          </div>
-          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-soft-foreground">
+        <div className="max-[799px]:border-t max-[799px]:border-border max-[799px]:pt-2.5 min-[800px]:px-4">
+          <div className="text-xs font-medium text-muted-foreground">Notatka</div>
+          <p className="mt-1 mb-0 text-sm leading-normal break-words whitespace-pre-wrap text-[#404040]">
             {o.note}
           </p>
         </div>
       )}
 
-      <div className="flex gap-2 border-t border-border pt-3">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer rounded-md border border-input bg-white px-3 py-1.5 max-[799px]:min-h-11"
-        >
+      <div className="flex items-center gap-2 border-t border-border pt-3 min-[800px]:rounded-b-[11px] min-[800px]:bg-black/[.025] min-[800px]:px-4 min-[800px]:pb-3">
+        <Button size="sm" onClick={onEdit} className="max-[799px]:h-11">
           Edytuj
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive-outline"
           onClick={onDelete}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer border-0 bg-transparent px-2 py-1.5 font-medium text-destructive-foreground max-[799px]:min-h-11"
+          className="max-[799px]:h-11"
         >
           Usuń
-        </button>
+        </Button>
         {o.recurrence && (
-          <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground">
+          <StatusBadge tone="gray" className="ml-auto">
             {recurrenceBadge(o.recurrence)}
-          </span>
+          </StatusBadge>
         )}
       </div>
     </div>
@@ -348,7 +347,8 @@ export function BlockPopover({
           e.preventDefault();
           if (anchor.isConnected) anchor.focus();
         }}
-        className="max-h-(--radix-popover-content-available-height) w-[340px] overflow-y-auto rounded-md border-input p-4 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
+        // .pop: promień 12 px, ramka border, cień shadow-lg, bez paddingu (sekcje mają własny)
+        className="max-h-(--radix-popover-content-available-height) w-[340px] overflow-y-auto rounded-lg border-border p-0 shadow-lg"
       >
         <BlockDetails {...reszta} onClose={onClose} />
       </PopoverContent>

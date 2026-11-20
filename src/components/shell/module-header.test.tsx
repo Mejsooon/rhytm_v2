@@ -29,4 +29,23 @@ describe("ModuleHeader", () => {
     expect(web).toHaveClass("text-sm", "font-medium", "text-foreground");
     expect(web!.closest("header")).toHaveTextContent("Strony / Books");
   });
+
+  it("webMeta stoi tuż za okruszkami, a webAction po prawej (CToday)", () => {
+    render(
+      <ModuleHeader
+        title="Dziś"
+        webMeta={<span>wtorek · 17.11.2026</span>}
+        webAction={<button type="button">Nowy blok</button>}
+      />,
+    );
+    const meta = screen.getByText("wtorek · 17.11.2026");
+    const h1 = screen
+      .getAllByRole("heading", { level: 1, name: "Dziś" })
+      .find((h) => h.closest("header")?.classList.contains("max-[799px]:hidden"))!;
+    // Ta sama lewa grupa co tytuł; przycisk poza nią
+    expect(meta.parentElement).toBe(h1.parentElement!.parentElement);
+    expect(meta.parentElement).not.toContainElement(
+      screen.getByRole("button", { name: "Nowy blok" }),
+    );
+  });
 });

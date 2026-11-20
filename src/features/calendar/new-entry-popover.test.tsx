@@ -23,6 +23,15 @@ function wyrenderuj(startMin = 600, clock: "24" | "12" = "24") {
 }
 
 describe("NewEntryPopover", () => {
+  it("wygląd z CToday: .pop z paddingiem 4 px, pozycje 44 px z kafelkiem ikony 28 px", () => {
+    wyrenderuj();
+    expect(screen.getByRole("dialog", { name: "Nowy wpis" })).toHaveClass("w-[270px]", "p-1", "rounded-lg", "shadow-lg");
+    const blok = screen.getByRole("button", { name: /Blok/ });
+    expect(blok).toHaveClass("min-h-11", "rounded-sm");
+    expect(blok.firstElementChild).toHaveClass("size-7", "rounded-[8px]", "bg-success-soft", "text-success");
+    expect(screen.getByRole("link", { name: /Bieg/ }).firstElementChild).toHaveClass("bg-warning/10", "text-warning-foreground");
+  });
+
   it("pokazuje dzień i godzinę slotu", () => {
     wyrenderuj();
     expect(
