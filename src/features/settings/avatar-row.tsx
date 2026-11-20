@@ -98,7 +98,7 @@ export function AvatarRow({
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3.5 border-b border-[#f0f0f0] pb-4">
+    <div className="mb-4 flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
       {zrodlo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -109,7 +109,7 @@ export function AvatarRow({
       ) : (
         <span
           aria-hidden="true"
-          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-[#e0e0e0] bg-[#f0f0f0] text-xl font-semibold text-[#171717]"
+          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-input bg-active text-xl font-semibold text-foreground"
         >
           {inicjal}
         </span>
@@ -117,13 +117,13 @@ export function AvatarRow({
       <span className="min-w-0 flex-[1_1_200px]">
         <span className="block font-medium">Zdjęcie profilowe</span>
         {blad ? (
-          <span role="alert" className="text-[13px] text-[#b91c1c]">
+          <span role="alert" className="text-[13px] text-destructive-foreground">
             {blad}
           </span>
         ) : zapisano ? (
-          <span className="text-[13px] text-[#15803d]">Zapisano ✓</span>
+          <span className="text-[13px] text-success">Zapisano ✓</span>
         ) : (
-          <span className="text-[13px] text-[#666666]">
+          <span className="text-[13px] text-muted-foreground">
             {maZdjecie
               ? "PNG, JPG albo WebP, do 2 MB"
               : "Bez zdjęcia pokażemy inicjały"}

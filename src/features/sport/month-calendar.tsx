@@ -19,7 +19,7 @@ const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const NAGLOWEK_PON = ["pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const NAGLOWEK_ND = ["nd", "pon", "wt", "śr", "czw", "pt", "sob"];
 const OPCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent p-2 text-left text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:bg-[#f5f5f5]";
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent p-2 text-left text-foreground outline-none hover:bg-muted focus-visible:bg-muted";
 
 export function MonthCalendar({
   data,
@@ -85,11 +85,11 @@ export function MonthCalendar({
       <div
         ref={kontener}
         data-testid="kalendarz-sportu"
-        className="relative min-w-[760px] rounded-lg border border-[#eaeaea]"
+        className="relative min-w-[760px] rounded-lg border border-border"
       >
         <div
           data-testid="naglowek-dni"
-          className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] rounded-t-lg border-b border-[#eaeaea] bg-[#fafafa] font-mono text-[11px] text-[#6b6b6b]"
+          className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] rounded-t-lg border-b border-border bg-panel font-mono text-[11px] text-muted-foreground"
         >
           {(profile.weekStart === "mon" ? NAGLOWEK_PON : NAGLOWEK_ND).map(
             (d, i) => (
@@ -97,14 +97,14 @@ export function MonthCalendar({
                 key={d}
                 className={cn(
                   "px-2.5 py-2",
-                  i > 0 && "border-l border-[#eaeaea]",
+                  i > 0 && "border-l border-border",
                 )}
               >
                 {d}
               </span>
             ),
           )}
-          <span className="border-l border-[#eaeaea] px-2.5 py-2 text-right">
+          <span className="border-l border-border px-2.5 py-2 text-right">
             Σ tydz.
           </span>
         </div>
@@ -115,7 +115,7 @@ export function MonthCalendar({
           return (
             <div
               key={dni[0]}
-              className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] border-b border-[#eaeaea] last:border-b-0"
+              className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] border-b border-border last:border-b-0"
             >
               {dni.map((date, c) => {
                 const wMiesiacu = date.slice(0, 7) === month;
@@ -140,20 +140,20 @@ export function MonthCalendar({
                     }}
                     className={cn(
                       "group relative box-border min-h-[86px] px-2 py-1.5",
-                      c > 0 && "border-l border-[#eaeaea]",
+                      c > 0 && "border-l border-border",
                       wMiesiacu
-                        ? "cursor-pointer hover:bg-[#fcfcfc]"
-                        : "bg-[#fafafa]",
+                        ? "cursor-pointer hover:bg-panel"
+                        : "bg-panel",
                     )}
                   >
                     <span
                       className={cn(
                         "inline-block text-xs",
                         wMiesiacu && dzisiaj
-                          ? "rounded bg-[#15803d] px-[5px] font-semibold text-white"
+                          ? "rounded bg-success px-[5px] font-semibold text-white"
                           : wMiesiacu
-                            ? "font-medium text-[#171717]"
-                            : "text-[#a3a3a3]",
+                            ? "font-medium text-foreground"
+                            : "text-faint-foreground",
                       )}
                     >
                       {Number(dd)}
@@ -163,7 +163,7 @@ export function MonthCalendar({
                         type="button"
                         aria-label={`Dodaj trening, ${etykietaDnia}`}
                         onClick={() => onAddDay(addDate === date ? null : date)}
-                        className="float-right cursor-pointer border-0 bg-transparent p-0 font-mono text-[13px] leading-none text-[#a3a3a3] opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100"
+                        className="float-right cursor-pointer border-0 bg-transparent p-0 font-mono text-[13px] leading-none text-faint-foreground opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100"
                       >
                         +
                       </button>
@@ -186,7 +186,7 @@ export function MonthCalendar({
                           aria-pressed={wcisniety}
                           aria-label={`${item.title}, ${etykietaDnia}`}
                           onClick={() => onSelect(wcisniety ? null : item.key)}
-                          className="mt-1 block w-full cursor-pointer truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                          className="mt-1 block w-full cursor-pointer truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] whitespace-nowrap outline-none focus-visible:shadow-focus"
                           style={{
                             color: item.planned ? kolor : "#171717",
                             background: item.planned ? "#ffffff" : `${kolor}18`,
@@ -225,7 +225,7 @@ export function MonthCalendar({
                         role="dialog"
                         aria-label="Dodaj trening"
                         className={cn(
-                          "absolute z-20 box-border w-60 cursor-default rounded-xl border border-[#e0e0e0] bg-white p-2 text-left text-sm shadow-[0_16px_48px_rgba(0,0,0,.16)]",
+                          "absolute z-20 box-border w-60 cursor-default rounded-xl border border-input bg-white p-2 text-left text-sm shadow-[0_16px_48px_rgba(0,0,0,.16)]",
                           c >= 4
                             ? "right-[calc(100%+6px)]"
                             : "left-[calc(100%+6px)]",
@@ -236,14 +236,14 @@ export function MonthCalendar({
                           <span className="text-[13px] font-semibold">
                             Dodaj trening
                           </span>
-                          <span className="font-mono text-[11px] text-[#6b6b6b]">
+                          <span className="font-mono text-[11px] text-muted-foreground">
                             {etykietaDnia}
                           </span>
                           <button
                             type="button"
                             aria-label="Zamknij"
                             onClick={() => onAddDay(null)}
-                            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-[#666666] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
                           >
                             ✕
                           </button>
@@ -257,7 +257,7 @@ export function MonthCalendar({
                         >
                           <span
                             aria-hidden="true"
-                            className="flex size-7 items-center justify-center rounded-md border border-[#fed7aa] bg-[#fff4ed] text-xs text-[#c2410c]"
+                            className="flex size-7 items-center justify-center rounded-md border border-warning-border bg-warning-soft text-xs text-warning-foreground"
                           >
                             ●
                           </span>
@@ -265,7 +265,7 @@ export function MonthCalendar({
                             <span className="text-[13px] font-medium">
                               Bieg
                             </span>
-                            <span className="text-xs text-[#666666]">
+                            <span className="text-xs text-muted-foreground">
                               dystans, czas, tempo
                             </span>
                           </span>
@@ -279,7 +279,7 @@ export function MonthCalendar({
                         >
                           <span
                             aria-hidden="true"
-                            className="flex size-7 items-center justify-center rounded-md border border-[#e0e0e0] bg-[#f5f5f5] text-xs text-[#404040]"
+                            className="flex size-7 items-center justify-center rounded-md border border-input bg-muted text-xs text-soft-foreground"
                           >
                             ■
                           </span>
@@ -287,15 +287,15 @@ export function MonthCalendar({
                             <span className="text-[13px] font-medium">
                               Siłownia
                             </span>
-                            <span className="text-xs text-[#666666]">
+                            <span className="text-xs text-muted-foreground">
                               pusty trening siłowy
                             </span>
                           </span>
                         </button>
                         {data.templates.length > 0 && (
                           <>
-                            <div className="mx-0 mt-1.5 mb-1 border-t border-[#eaeaea]" />
-                            <div className="px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+                            <div className="mx-0 mt-1.5 mb-1 border-t border-border" />
+                            <div className="px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
                               Z szablonu
                             </div>
                             <div className="flex flex-wrap gap-1.5 px-2 pt-0.5 pb-1">
@@ -310,7 +310,7 @@ export function MonthCalendar({
                                       templateId: t.id,
                                     })
                                   }
-                                  className="cursor-pointer rounded-full border border-[#e0e0e0] bg-white px-2.5 py-[3px] text-xs text-[#404040] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                                  className="cursor-pointer rounded-full border border-input bg-white px-2.5 py-[3px] text-xs text-soft-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
                                 >
                                   {t.name}
                                 </button>
@@ -325,12 +325,12 @@ export function MonthCalendar({
               })}
               <div
                 data-testid={`suma-${dni[0]}`}
-                className="border-l border-[#eaeaea] bg-[#fafafa] px-2.5 py-2 text-right font-mono text-xs"
+                className="border-l border-border bg-panel px-2.5 py-2 text-right font-mono text-xs"
               >
                 <div className="font-medium">
                   {suma.km > 0 ? `${formatKm(suma.km)} km` : "—"}
                 </div>
-                <div className="mt-0.5 text-[11px] text-[#6b6b6b]">
+                <div className="mt-0.5 text-[11px] text-muted-foreground">
                   {suma.done > 0 ? `${suma.done} tr.` : ""}
                 </div>
               </div>

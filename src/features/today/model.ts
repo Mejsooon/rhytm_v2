@@ -1,4 +1,4 @@
-// Dziś: kafelki tygodnia i dnia, plan dnia, blok „TERAZ”, chipy szybkiego dodawania
+// Dziś: kafelki tygodnia i dnia, plan dnia, blok „Teraz”, chipy szybkiego dodawania
 // i przejście ze stanu pustego — czyste funkcje. Daty to 'YYYY-MM-DD', godziny to minuty
 // od północy w strefie profilu (dostają je z zewnątrz jako `today` i `nowMin`).
 import type { IsoDate } from "@/components/controls/calendar-math";
@@ -315,7 +315,7 @@ export function dayPlan(
   return wynik;
 }
 
-// Blok „TERAZ”: pierwszy blok, dla którego start ≤ teraz < koniec; treningi się nie liczą
+// Blok „Teraz”: pierwszy blok, dla którego start ≤ teraz < koniec; treningi się nie liczą
 export function nowItem(plan: PlanItem[], nowMin: number): PlanItem | null {
   return (
     plan.find(

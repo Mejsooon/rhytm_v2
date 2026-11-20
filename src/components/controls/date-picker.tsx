@@ -4,6 +4,7 @@ import * as React from "react";
 import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 import { ActionPopover } from "./action-popover";
 import {
   buildMonthGrid,
@@ -92,49 +93,51 @@ export function DatePicker({
           aria-haspopup="dialog"
           className={cn(
             variant === "bare"
-              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-[#404040] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:min-h-11"
-              : size === "sm"
-                ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2 font-mono text-xs whitespace-nowrap text-[#171717] outline-none hover:border-[#cfcfcf]"
-                : "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf]",
-            variant === "box" && open && "border-[#171717] hover:border-[#171717]",
+              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
+              : cn(
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo",
+                  size === "sm"
+                    ? "h-7 px-2 font-mono text-xs whitespace-nowrap"
+                    : "h-8 px-[11px] text-sm max-[799px]:h-11",
+                ),
           )}
         >
           {value ? (
             <span className="font-mono">{formatDatePl(value)}</span>
           ) : (
-            <span className={size === "sm" ? "text-[#6b6b6b]" : "text-[#a3a3a3]"}>{placeholder}</span>
+            <span className={size === "sm" ? "text-muted-foreground" : "text-faint-foreground"}>{placeholder}</span>
           )}
           {variant === "box" && (
             <ChevronDownIcon
               aria-hidden="true"
-              className="size-3 flex-none text-[#666666]"
+              className="size-3 flex-none text-muted-foreground"
             />
           )}
         </button>
       }
     >
       <div className="mb-1.5 flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          size="sm"
+          icon
           aria-label="Poprzedni miesiąc"
           onClick={() => przesun(-1)}
-          className="size-7 cursor-pointer rounded-md border border-[#e0e0e0] bg-white hover:bg-[#f5f5f5]"
         >
           ‹
-        </button>
+        </Button>
         <span className="text-[13px] font-semibold">
           {monthTitlePl(widok.rok, widok.miesiac)}
         </span>
-        <button
-          type="button"
+        <Button
+          size="sm"
+          icon
           aria-label="Następny miesiąc"
           onClick={() => przesun(1)}
-          className="size-7 cursor-pointer rounded-md border border-[#e0e0e0] bg-white hover:bg-[#f5f5f5]"
         >
           ›
-        </button>
+        </Button>
       </div>
-      <div className="grid grid-cols-7 gap-0.5 pb-1 text-center font-mono text-[10px] text-[#6b6b6b]">
+      <div className="grid grid-cols-7 gap-0.5 pb-1 text-center font-mono text-[10px] text-muted-foreground">
         {(weekStart === "mon" ? DNI_PN : DNI_ND).map((d) => (
           <span key={d}>{d}</span>
         ))}
@@ -151,33 +154,29 @@ export function DatePicker({
             }
             onClick={() => wybierz(c.date)}
             className={cn(
-              "disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent",
-              "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-[#171717] hover:bg-[#f5f5f5]",
-              !c.inMonth && "text-[#b5b5b5]",
-              c.date === dzis && "border-[#d4d4d4]",
-              c.date === value && "bg-[#171717] text-white hover:bg-[#171717]",
+              "disabled:cursor-default disabled:text-faint-foreground disabled:hover:bg-transparent",
+              "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted",
+              !c.inMonth && "text-faint-foreground",
+              c.date === dzis && "border-border-strong",
+              c.date === value && "bg-primary text-primary-foreground hover:bg-primary",
             )}
           >
             {Number(c.date.slice(8))}
           </button>
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between border-t border-[#f0f0f0] pt-1.5">
-        <button
-          type="button"
+      <div className="mt-1.5 flex justify-between border-t border-border pt-1.5">
+        <Button
+          variant="ghost"
+          size="xs"
           disabled={dzisPozaZakresem}
           onClick={() => wybierz(today ?? todayIso())}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5] disabled:cursor-default disabled:text-[#d4d4d4] disabled:hover:bg-transparent"
         >
           Dziś
-        </button>
-        <button
-          type="button"
-          onClick={() => wybierz(null)}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-[#404040] hover:bg-[#f5f5f5]"
-        >
+        </Button>
+        <Button variant="ghost" size="xs" onClick={() => wybierz(null)}>
           Wyczyść
-        </button>
+        </Button>
       </div>
     </ActionPopover>
   );

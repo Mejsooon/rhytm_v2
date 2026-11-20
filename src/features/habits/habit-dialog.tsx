@@ -181,7 +181,7 @@ function HabitForm({
       footer={
         <>
           {blad && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -228,10 +228,10 @@ function HabitForm({
                     )
                   }
                   className={cn(
-                    "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                    "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus",
                     wybrany
-                      ? "border-[#171717] bg-[#171717] text-white"
-                      : "border-[#e0e0e0] bg-white text-[#404040]",
+                      ? "border-primary bg-primary text-white"
+                      : "border-input bg-white text-soft-foreground",
                   )}
                 >
                   {SKROTY[numer - 1]}
@@ -250,10 +250,10 @@ function HabitForm({
               onDec={() => setRazy((n) => Math.max(1, n - 1))}
               onInc={() => setRazy((n) => Math.min(7, n + 1))}
             />
-            <span className="text-xs text-[#6b6b6b]">razy w tygodniu</span>
+            <span className="text-xs text-muted-foreground">razy w tygodniu</span>
           </div>
         )}
-        <span className="font-mono text-xs font-normal text-[#6b6b6b]">
+        <span className="font-mono text-xs font-normal text-muted-foreground">
           {podsumowanie}
         </span>
       </div>
@@ -266,7 +266,7 @@ function HabitForm({
             onChange={setPrzypomnienie}
             ariaLabel="Przypomnienie push"
           />
-          <span className={przypomnienie ? "" : "text-[#a3a3a3]"}>Push o</span>
+          <span className={przypomnienie ? "" : "text-faint-foreground"}>Push o</span>
           <TimePicker
             clock={clock}
             ariaLabel="Godzina przypomnienia"
@@ -274,7 +274,7 @@ function HabitForm({
             onChange={setGodzina}
             disabled={!przypomnienie}
           />
-          <span className="text-xs text-[#6b6b6b]">{podpisPrzypomnienia}</span>
+          <span className="text-xs text-muted-foreground">{podpisPrzypomnienia}</span>
         </div>
       </div>
 

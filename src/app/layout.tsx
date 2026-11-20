@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
+import "@fontsource-variable/inter";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -32,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pl"
-      className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
+      className={`${GeistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

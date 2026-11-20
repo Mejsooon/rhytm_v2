@@ -66,10 +66,10 @@ function slupki(etykieta: string) {
     .map((s) => [s.getAttribute("title"), s.style.height, s.style.background]);
 }
 
-const SZARY_PUSTY = "rgb(234, 234, 234)";
+const SZARY_PUSTY = "rgba(0, 0, 0, 0.06)";
 const ZIELONY = "rgb(21, 128, 61)";
-const CIEMNY = "rgb(23, 23, 23)";
-const SZARY = "rgb(212, 212, 212)";
+const CIEMNY = "rgb(38, 38, 38)";
+const SZARY = "rgba(0, 0, 0, 0.16)";
 const jeszczeNie = Array.from({ length: 5 }, () => [
   "jeszcze nie",
   "3px",
@@ -114,6 +114,24 @@ describe("WeekCard", () => {
     expect(
       within(treningi).getByText("bieg dziś, siłownia cz"),
     ).toBeInTheDocument();
+  });
+
+  it("kafelki to osobne karty .card z etykietą .lbl i wartością 24 px / 600 tabular-nums (CToday)", () => {
+    wyrenderuj();
+    const zadania = kafelek("Zadania");
+    expect(zadania).toHaveClass("rounded-xl", "border-border", "p-4", "gap-2.5");
+    expect(within(zadania).getByText("Zadania")).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-muted-foreground",
+    );
+    expect(within(zadania).getByText("Zadania")).not.toHaveClass("uppercase");
+    expect(within(zadania).getByText("18/41")).toHaveClass(
+      "text-2xl",
+      "font-semibold",
+      "tabular-nums",
+    );
+    expect(screen.getByText("pn 16 – nd 22.11")).not.toHaveClass("font-mono");
   });
 
   it("słupki 7 dni: wysokość v / max × 28, dziś zielony, przyszłość szara 3 px", () => {

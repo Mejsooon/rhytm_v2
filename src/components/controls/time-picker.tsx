@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
+import { Button } from "./button";
 import { ActionPopover } from "./action-popover";
 
 const GODZINY = Array.from({ length: 24 }, (_, i) =>
@@ -17,7 +18,7 @@ const MINUTY = Array.from({ length: 12 }, (_, i) =>
 );
 
 const KOMORKA =
-  "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-[#171717] hover:bg-[#f5f5f5] aria-pressed:bg-[#171717] aria-pressed:text-white";
+  "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
 // Wybór godziny wg .tmb / .tpop / .tgrid / .tcell z SettingsNotifications.dc.html.
 // Klik godziny zostawia dymek otwarty, klik minut go zamyka.
@@ -64,8 +65,7 @@ export function TimePicker({
           aria-haspopup="dialog"
           disabled={disabled}
           className={cn(
-            "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2.5 font-mono text-[13px] text-[#171717] outline-none hover:border-[#cfcfcf] disabled:cursor-default disabled:opacity-45 disabled:hover:border-[#e0e0e0]",
-            open && "border-[#171717] hover:border-[#171717]",
+            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[11px] font-mono text-sm text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
           )}
         >
           {wTrybie12
@@ -73,13 +73,13 @@ export function TimePicker({
             : value}
           <ChevronDownIcon
             aria-hidden="true"
-            className="size-3 flex-none text-[#666666]"
+            className="size-3 flex-none text-muted-foreground"
           />
         </button>
       }
     >
       <div className="flex flex-col gap-2">
-        <div className="font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]">
+        <div className="font-mono text-[11px] uppercase tracking-[.06em] text-muted-foreground">
           Godzina
         </div>
         {wTrybie12 ? (
@@ -146,7 +146,7 @@ export function TimePicker({
             {formatClockTime(24, 0, clock)}
           </button>
         )}
-        <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]">
+        <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[.06em] text-muted-foreground">
           Minuty
         </div>
         <div className="grid grid-cols-6 gap-[3px]">
@@ -166,14 +166,10 @@ export function TimePicker({
             </button>
           ))}
         </div>
-        <div className="flex justify-end border-t border-[#f0f0f0] pt-2">
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2.5 py-[5px] text-[13px] hover:bg-[#fafafa]"
-          >
+        <div className="flex justify-end border-t border-border pt-2">
+          <Button size="sm" onClick={() => setOpen(false)}>
             Gotowe
-          </button>
+          </Button>
         </div>
       </div>
     </ActionPopover>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Subscriptions (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+
+  <header class="m-head" style="flex: none; padding: 0 8px; border-bottom: 0"><a href="CMPages.dc.html" class="btng ic" aria-label="Strony"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1"></div><a href="CMRowEdit.dc.html" class="btng ic" aria-label="Nowy wiersz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
+  <div class="m-body" style="flex: 1; overflow-y: auto; padding-top: 0; display: flex; flex-direction: column; gap: 16px">
+    <h1 class="m-title" style="font-size: 24px">Subscriptions</h1>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <div class="card" style="padding: 14px 16px"><div class="lbl">Miesięcznie</div><div class="num" style="font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px">{{sumM}}</div></div>
+      <div class="card" style="padding: 14px 16px"><div class="lbl">Rocznie</div><div class="num" style="font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px">{{sumY}}</div></div>
+    </div>
+    <div class="card" style="flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(0,0,0,.025)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="flex: 1; font-size: 14px">Najbliżej: <b>{{nextName}}</b></span><span class="bdg warn num">{{nextRel}}</span></div>
+    <div class="seg" role="group" aria-label="Filtr" style="display: flex"><sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}" style="flex: 1; padding: 0 4px">{{f.t}}</button></sc-for></div>
+    <div class="card" style="overflow: hidden"><sc-for list="{{rows}}" as="r" hint-placeholder-count="7"><a href="CMRowEdit.dc.html" class="m-row" style="padding-top: 10px; padding-bottom: 10px"><span class="avatar">{{r.ini}}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{r.name}}</span><span class="hint num">{{r.date}} · <span style="{{r.relS}}">{{r.rel}}</span></span></span><span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span class="num" style="font-weight: 600">{{r.price}}</span><span class="{{r.catC}}">{{r.cat}}</span></span></a></sc-for></div>
+    <div class="hint num" style="text-align: center">{{count}}</div>
+  </div>
+  <dc-import name="CMTabBar" active="pages" hint-size="390px,64px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const f = (this.state && this.state.f) || 'all';
+    const CAT = { 'Rozrywka': 'bdg out', 'Chmura': 'bdg info', 'Praca': 'bdg ok', 'Nauka': 'bdg warn' };
+    const R = [
+      ['Netflix', 43.00, 'mies.', '2026-11-18', 'Rozrywka'], ['Spotify', 23.99, 'mies.', '2026-11-27', 'Rozrywka'], ['iCloud+', 4.99, 'mies.', '2026-12-01', 'Chmura'],
+      ['Claude Pro', 90.00, 'mies.', '2026-12-04', 'Praca'], ['Google One', 99.99, 'rok', '2027-03-12', 'Chmura'], ['fanaberia.photo', 59.90, 'rok', '2027-01-20', 'Praca'], ['Duolingo', 239.99, 'rok', '2027-06-02', 'Nauka']
+    ];
+    const zl = (n) => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł';
+    const days = (iso) => Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    const rel = (d) => d === 0 ? 'dziś' : d === 1 ? 'jutro' : d <= 60 ? 'za ' + d + ' dni' : 'za ' + Math.round(d / 30) + ' mies.';
+    const m = R.reduce((a, r) => a + (r[2] === 'mies.' ? r[1] : r[1] / 12), 0);
+    const list = R.filter((r) => f === 'all' || (f === 'm' ? r[2] === 'mies.' : r[2] === 'rok')).sort((a, b) => days(a[3]) - days(b[3]));
+    const nx = R.slice().sort((a, b) => days(a[3]) - days(b[3]))[0];
+    return {
+      sumM: zl(m), sumY: zl(m * 12), nextName: nx[0] + ' · ' + zl(nx[1]), nextRel: rel(days(nx[3])),
+      filters: [['all', 'Wszystkie'], ['m', 'Miesięczne'], ['y', 'Roczne']].map((x) => ({ t: x[1], p: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      rows: list.map((r) => { const d = days(r[3]); return {
+        name: r[0], ini: r[0].charAt(0).toUpperCase(), price: zl(r[1]) + (r[2] === 'rok' ? '/r' : '/m'),
+        date: r[3].slice(8, 10) + '.' + r[3].slice(5, 7), rel: rel(d), relS: d <= 7 ? 'color:var(--destructive-foreground)' : '',
+        cat: r[4], catC: CAT[r[4]] }; }),
+      count: list.length + ' z ' + R.length + ' subskrypcji'
+    };
+  }
+}
+</script>
+</body>
+</html>

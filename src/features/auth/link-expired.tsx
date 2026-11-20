@@ -18,20 +18,20 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
 
   return (
     <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-      <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
+      <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
         <CircleAlert
           aria-hidden="true"
-          className="size-5 text-[#b91c1c]"
+          className="size-5 text-destructive-foreground"
           strokeWidth={2}
         />
       </span>
       <h1 className="m-0 text-[22px] font-semibold">Link wygasł</h1>
-      <p className="m-0 leading-normal text-[#666666]">
+      <p className="m-0 leading-normal text-muted-foreground">
         Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
         adres.
       </p>
       {wyslano ? (
-        <p role="status" className="m-0 leading-normal text-[#666666]">
+        <p role="status" className="m-0 leading-normal text-muted-foreground">
           Jeśli konto z tym adresem istnieje, wysłaliśmy nowy link.
         </p>
       ) : (
@@ -65,7 +65,7 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
           />
           <TurnstileWidget resetKey={wynik} />
           {wynik.status === "error" && wynik.message && (
-            <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
               {wynik.message}
             </p>
           )}

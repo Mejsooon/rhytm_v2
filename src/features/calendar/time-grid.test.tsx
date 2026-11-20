@@ -151,6 +151,14 @@ describe("TimeGrid", () => {
     expect(linie[0].style.top).toBe(`${(600 / 60) * 48}px`);
   });
 
+  it("etykieta godziny przy linii „teraz” (widok dnia) ma tło destructive-strong", () => {
+    wyrenderuj({ days: ["2026-11-17"], variant: "day" });
+    const etykieta = screen.getByTestId("etykieta-teraz");
+    expect(etykieta).toHaveTextContent("10:00");
+    expect(etykieta).toHaveClass("bg-destructive-strong");
+    expect(screen.getByTestId("linia-teraz")).toHaveClass("border-destructive");
+  });
+
   it("w tygodniu bez dziś nie ma linii „teraz”", () => {
     wyrenderuj({ days: ["2026-11-23", "2026-11-24"] });
     expect(screen.queryByTestId("linia-teraz")).not.toBeInTheDocument();
@@ -275,7 +283,7 @@ describe("TimeGrid", () => {
       .getByTestId("naglowek-2026-11-17")
       .querySelector("[data-dzis]");
     expect(dzis).toHaveTextContent("17");
-    expect(dzis?.className).toContain("bg-[#15803d]");
+    expect(dzis?.className).toContain("bg-success");
     expect(dzis?.className).toContain("h-6");
     expect(
       screen.getByTestId("naglowek-2026-11-18").querySelector("[data-dzis]"),
@@ -449,7 +457,7 @@ describe("TimeGrid", () => {
       pointerId: 1,
     });
     expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent(
-      "10:00–11:00",
+      "Nowy blok · 10:00–11:00",
     );
     fireEvent.pointerUp(kolumna, { clientX: 10, clientY: 528, pointerId: 1 });
     expect(onRangeDrag).toHaveBeenCalledWith(

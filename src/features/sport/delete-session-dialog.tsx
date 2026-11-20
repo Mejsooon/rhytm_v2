@@ -71,18 +71,18 @@ export function DeleteSessionDialog({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/25" />
         <Dialog.Content
           role="alertdialog"
-          className="fixed top-1/2 left-1/2 z-50 flex w-[min(360px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-[#e0e0e0] bg-white px-5 pt-[18px] pb-4 text-sm text-[#171717] shadow-[0_16px_48px_rgba(0,0,0,.16)] outline-none"
+          className="fixed top-1/2 left-1/2 z-50 flex w-[min(360px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-input bg-white px-5 pt-[18px] pb-4 text-sm text-foreground shadow-[0_16px_48px_rgba(0,0,0,.16)] outline-none"
         >
           <div>
             <Dialog.Title className="m-0 text-base font-semibold">
               Usunąć trening?
             </Dialog.Title>
-            <Dialog.Description className="m-0 mt-1 text-[13px] text-[#666666]">
+            <Dialog.Description className="m-0 mt-1 text-[13px] text-muted-foreground">
               {opis}
             </Dialog.Description>
           </div>
           {blad && (
-            <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+            <p role="alert" className="m-0 text-xs text-destructive-foreground">
               {blad}
             </p>
           )}

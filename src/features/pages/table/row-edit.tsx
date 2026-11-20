@@ -22,10 +22,10 @@ export function RowEdit({
   onCancel: () => void;
 }) {
   return (
-    <tr className="bg-[#f7fbf8]">
+    <tr className="bg-success-soft">
       {fields.map((f) => {
         const surowa = values[f.id];
-        const td = "border-b border-[#f0f0f0] px-3.5 py-[11px]";
+        const td = "border-b border-border px-3.5 py-[11px]";
 
         if (f.type === "status" || f.type === "select") {
           const v = normalizeValue(f, surowa);
@@ -45,7 +45,7 @@ export function RowEdit({
                     f.type === "status" ? (
                       <OptionBadge option={o} />
                     ) : (
-                      <span className="rounded-[4px] border border-[#e0e0e0] px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-[#404040]">
+                      <span className="rounded-[4px] border border-input px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-soft-foreground">
                         {o.label}
                       </span>
                     ),
@@ -85,7 +85,7 @@ export function RowEdit({
                     // Ponowny klik tej samej oceny ją zeruje
                     onClick={() => onChange(f.id, ocena === k ? null : k)}
                     className={`cursor-pointer border-0 bg-transparent px-px py-0 text-[15px] leading-none ${
-                      k <= ocena ? "text-[#171717]" : "text-[#d4d4d4]"
+                      k <= ocena ? "text-foreground" : "text-faint-foreground"
                     }`}
                   >
                     ★
@@ -139,16 +139,16 @@ export function RowEdit({
               placeholder={podpowiedz}
               aria-label={f.name}
               autoFocus={f.isTitle}
-              className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-[#171717] outline-none placeholder:text-[#a3a3a3]"
+              className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-foreground outline-none placeholder:text-faint-foreground"
             />
           </td>
         );
       })}
-      <td className="border-b border-[#f0f0f0] px-3.5 py-[11px] text-right whitespace-nowrap">
+      <td className="border-b border-border px-3.5 py-[11px] text-right whitespace-nowrap">
         <button
           type="button"
           onClick={onSave}
-          className="cursor-pointer rounded-md border border-[#171717] bg-[#171717] px-2.5 py-1 font-[inherit] text-xs font-medium text-white"
+          className="cursor-pointer rounded-md border border-primary bg-primary px-2.5 py-1 font-[inherit] text-xs font-medium text-white"
         >
           Zapisz
         </button>
@@ -156,7 +156,7 @@ export function RowEdit({
           type="button"
           aria-label="Anuluj"
           onClick={onCancel}
-          className="ml-1 cursor-pointer border-0 bg-transparent px-1.5 py-1 font-[inherit] text-[#666666]"
+          className="ml-1 cursor-pointer border-0 bg-transparent px-1.5 py-1 font-[inherit] text-muted-foreground"
         >
           ✕
         </button>

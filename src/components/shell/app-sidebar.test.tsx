@@ -69,7 +69,8 @@ describe("AppSidebar", () => {
   it("pokazuje wyszukiwarkę z keycapem, sekcje, 4 moduły, Ustawienia i inicjał", () => {
     render(<AppSidebar user={uzytkownik} />);
     expect(screen.getByText("Szukaj…")).toBeInTheDocument();
-    expect(screen.getByText("⌘K")).toBeInTheDocument();
+    // Skrót jako Kbd (.kbd z coss.css)
+    expect(screen.getByText("⌘K").tagName).toBe("KBD");
     expect(screen.getByText("Moduły")).toBeInTheDocument();
     expect(screen.getByText("Strony")).toBeInTheDocument();
     for (const nazwa of ["Dziś", "Kalendarz", "Sport", "Nawyki i sen"]) {
@@ -112,7 +113,17 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("pokazuje strony w kolejności position, pusty tytuł jako „Bez tytułu”, aktywna ma tło #f0f0f0", () => {
+  it("dymek konta ma pozycję „Konto” — link do /ustawienia/konto (przed „Wyloguj się”)", async () => {
+    const user = userEvent.setup();
+    render(<AppSidebar user={uzytkownik} />);
+    await user.click(screen.getByRole("button", { name: /Mejson/ }));
+    const dymek = await screen.findByRole("dialog");
+    const konto = within(dymek).getByRole("link", { name: "Konto" });
+    expect(konto).toHaveAttribute("href", "/ustawienia/konto");
+    expect(konto).toHaveClass("cursor-pointer");
+  });
+
+  it("pokazuje strony w kolejności position, pusty tytuł jako „Bez tytułu”, aktywna ma tło .sb-i[aria-current]", () => {
     sciezka = "/strony/b";
     render(
       <AppSidebar
@@ -128,8 +139,10 @@ describe("AppSidebar", () => {
     expect(linki[0].compareDocumentPosition(linki[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(linki[1].compareDocumentPosition(linki[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(linki[0]).toHaveAttribute("aria-current", "page");
-    expect(linki[0].className).toContain("bg-[#f0f0f0]");
-    expect(linki[1].className).not.toContain("bg-[#f0f0f0]");
+    // .sb-i z coss.css: aktywna bg-black/5, pozostałe tekst rgba(38,38,38,.72)
+    expect(linki[0]).toHaveClass("bg-black/5", "h-8", "rounded-[8px]");
+    expect(linki[1]).not.toHaveClass("bg-black/5");
+    expect(linki[1]).toHaveClass("text-[rgba(38,38,38,.72)]");
   });
 
   it.each([
@@ -250,7 +263,7 @@ describe("AppSidebar", () => {
     const nadDolem = createEvent.dragOver(cel);
     Object.defineProperty(nadDolem, "clientY", { value: 125 });
     fireEvent(cel, nadDolem);
-    expect(cel.className).toContain("shadow-[inset_0_-2px_0_#171717]");
+    expect(cel.className).toContain("shadow-[inset_0_-2px_0_var(--foreground)]");
     expect(screen.getByRole("link", { name: "Alfa" }).parentElement!.className).toContain("opacity-[.45]");
     fireEvent.drop(cel);
     expect(movePage).toHaveBeenCalledWith(["b", "c", "a"], "a", false);
@@ -314,7 +327,7 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Ulubione")).toBeInTheDocument();
     const strefa = screen.getByText("Upuść tutaj, aby dodać do ulubionych");
     fireEvent.dragOver(strefa);
-    expect(strefa.className).toContain("border-[#171717]");
+    expect(strefa.className).toContain("border-primary");
     fireEvent.drop(strefa);
     // Pusta sekcja: strona zostaje na swoim miejscu w kolejności, zmienia się tylko ulubione
     expect(movePage).toHaveBeenCalledTimes(1);
@@ -348,7 +361,7 @@ describe("AppSidebar", () => {
     fireEvent.dragStart(screen.getByRole("link", { name: "Alfa" }));
     const koniec = screen.getByTestId("koniec-strony");
     fireEvent.dragOver(koniec);
-    expect(koniec.className).toContain("shadow-[inset_0_2px_0_#171717]");
+    expect(koniec.className).toContain("shadow-[inset_0_2px_0_var(--foreground)]");
     fireEvent.drop(koniec);
     expect(movePage).toHaveBeenLastCalledWith(["c", "b", "d", "a"], "a", false);
 
@@ -365,7 +378,7 @@ describe("AppSidebar", () => {
     fireEvent.dragStart(screen.getByRole("link", { name: "Beta" }));
     const wiersz = screen.getByRole("link", { name: "Alfa" }).parentElement!;
     fireEvent.dragOver(wiersz);
-    expect(wiersz.className).toContain("shadow-[inset_0_2px_0_#171717]");
+    expect(wiersz.className).toContain("shadow-[inset_0_2px_0_var(--foreground)]");
     fireEvent.dragLeave(wiersz, { relatedTarget: screen.getByRole("link", { name: "Ustawienia" }) });
     expect(wiersz.className).not.toContain("shadow-");
   });

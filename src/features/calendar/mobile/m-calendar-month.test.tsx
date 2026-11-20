@@ -63,7 +63,7 @@ describe("MCalendarMonth", () => {
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       screen.getByRole("button", { name: "12 listopada" }).className,
-    ).toContain("bg-[#171717]");
+    ).toContain("bg-primary");
     expect(
       screen.getByRole("heading", { name: "12 listopada" }),
     ).toBeInTheDocument();
@@ -142,7 +142,7 @@ describe("MCalendarMonth — kolejność wpisów dnia", () => {
       .filter((t) => /Spokojny|Siłownia|Push/.test(t ?? ""));
     expect(wpisy).toEqual(["07:00Spokojny", "10:00Siłownia", "18:30Push"]);
     expect(screen.getByRole("link", { name: /Spokojny/ })).toHaveClass(
-      "focus-visible:ring-2",
+      "focus-visible:shadow-focus",
     );
   });
 });

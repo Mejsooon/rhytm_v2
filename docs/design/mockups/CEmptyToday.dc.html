@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Dziś — nowe konto (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Dziś</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 900px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Witaj w rhytm, Mejson</h1><p class="muted" style="margin: 6px 0 0">Cztery kroki i Dziś zacznie pokazywać Twój tydzień.</p></div>
+      <section class="card">
+        <div class="card-h"><div><h2 class="card-t">Pierwsze kroki</h2></div><span class="bdg sec lg num">1 / 4</span></div>
+        <div style="padding: 14px 24px 8px"><div class="prog"><div style="width: 25%; height: 6px; border-radius: 999px; background: #15803d"></div></div></div>
+        <div style="padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 2px">
+          <a href="CBlockDialog.dc.html" class="mi" style="min-height: 56px; padding: 8px 12px !important; border-radius: 10px !important"><span style="width: 20px; height: 20px; border-radius: 50%; background: #15803d; color: #fff; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="flex: 1; color: #686868; text-decoration: line-through">Dodaj pierwszy blok w kalendarzu</span></a>
+          <a href="CHabitDialog.dc.html" class="mi" style="min-height: 56px; padding: 8px 12px !important; border-radius: 10px !important"><span style="width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.2)"></span><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 500">Dodaj nawyk</span><span class="hint" style="font-size: 13px">np. woda, czytanie, rozciąganie</span></span><span class="btn sm">Dodaj</span></a>
+          <a href="CRunDialog.dc.html" class="mi" style="min-height: 56px; padding: 8px 12px !important; border-radius: 10px !important"><span style="width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.2)"></span><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 500">Zapisz trening</span><span class="hint" style="font-size: 13px">bieg albo siłownia</span></span><span class="btn sm">Dodaj</span></a>
+          <a href="CSleepDialog.dc.html" class="mi" style="min-height: 56px; padding: 8px 12px !important; border-radius: 10px !important"><span style="width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.2)"></span><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 500">Wpisz ostatnią noc</span><span class="hint" style="font-size: 13px">godzina zaśnięcia i pobudki</span></span><span class="btn sm">Dodaj</span></a>
+        </div>
+      </section>
+      <section class="card" style="border-style: dashed; box-shadow: none">
+        <div class="empty" style="padding: 40px 24px">
+          <span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
+          <div style="font-weight: 600; margin-top: 4px">Plan dnia jest pusty</div>
+          <p class="muted" style="margin: 0; max-width: 380px">Bloki z kalendarza na dziś pojawią się tutaj jako oś czasu.</p>
+          <a href="CBlockDialog.dc.html" class="btn" style="margin-top: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'CEmptyToday.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

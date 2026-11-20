@@ -79,10 +79,10 @@ export function ProfileCard({
   }
 
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
+    <section className="rounded-lg border border-border bg-white">
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Profil</h2>
-        <p className="mt-1 mb-4 text-[#666666]">
+        <p className="mt-1 mb-4 text-muted-foreground">
           Waga i wzrost służą do liczenia kcal biegów.
         </p>
         {/* Zdjęcie zapisuje się od razu, niezależnie od „Zapisz” poniżej; inicjał z zapisanej nazwy */}

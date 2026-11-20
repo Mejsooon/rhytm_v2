@@ -69,16 +69,16 @@ export function TemplatesList({
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-[#666666]">
+      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
+        <div className="font-mono text-[13px] text-muted-foreground">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
-          <span className="text-[#b0b0b0]">/</span>{" "}
-          <span className="text-[#171717]">Szablony treningów</span>
+          <span className="text-faint-foreground">/</span>{" "}
+          <span className="text-foreground">Szablony treningów</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -97,7 +97,7 @@ export function TemplatesList({
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             Szablony treningów
           </h1>
-          <p className="m-0 mt-1.5 text-[#666666]">
+          <p className="m-0 mt-1.5 text-muted-foreground">
             Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z
             wypełnionymi ciężarami z ostatniego razu.
           </p>
@@ -106,7 +106,7 @@ export function TemplatesList({
         {komunikat && (
           <div
             role="status"
-            className="rounded-lg border border-[#bbe5cc] bg-[#f0faf4] px-3.5 py-2.5 text-[13px] text-[#15803d]"
+            className="rounded-lg border border-success-border bg-success-soft px-3.5 py-2.5 text-[13px] text-success"
           >
             {komunikat}
           </div>
@@ -122,18 +122,18 @@ export function TemplatesList({
               <section
                 key={t.id}
                 aria-labelledby={naglowekId}
-                className="flex flex-col gap-2.5 rounded-lg border border-[#eaeaea] bg-white p-4 hover:border-[#d4d4d4]"
+                className="flex flex-col gap-2.5 rounded-lg border border-border bg-white p-4 hover:border-border-strong"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span id={naglowekId} className="text-base font-semibold">
                     {t.name}
                   </span>
-                  <span className="font-mono text-[11px] text-[#6b6b6b]">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     {`ostatnio: ${formatLastUsed(t.last_used_at, data.profile.timezone)}`}
                   </span>
                 </div>
-                <span className="font-mono text-xs text-[#666666]">{meta}</span>
-                <p className="m-0 text-[13px] leading-[1.6] text-[#404040]">
+                <span className="font-mono text-xs text-muted-foreground">{meta}</span>
+                <p className="m-0 text-[13px] leading-[1.6] text-soft-foreground">
                   {t.items.length
                     ? t.items.map((i) => i.exerciseName).join(" · ")
                     : "Brak ćwiczeń"}
@@ -162,7 +162,7 @@ export function TemplatesList({
           })}
           <Link
             href="/sport/szablony/nowy"
-            className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#eaeaea] bg-white text-[#666666] no-underline hover:text-[#171717]"
+            className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-white text-muted-foreground no-underline hover:text-foreground"
           >
             <span className="text-[22px] leading-none">+</span> Nowy szablon
           </Link>

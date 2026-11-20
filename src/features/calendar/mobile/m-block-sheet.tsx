@@ -351,11 +351,11 @@ export function MBlockSheet({
   }
 
   const NAGLOWEK_PRZYCISK =
-    "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+    "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
   const ETYKIETA =
-    "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+    "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
   const WIERSZ =
-    "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0";
+    "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
 
   return (
     <Dialog.Root
@@ -366,20 +366,20 @@ export function MBlockSheet({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] min-h-[60%] flex-col rounded-t-[18px] bg-white text-[15px] text-[#171717] shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] min-h-[60%] flex-col rounded-t-[18px] bg-white text-[15px] text-foreground shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
         >
           {/* Uchwyt arkusza */}
           <div
             aria-hidden="true"
-            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]"
+            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong"
           />
-          <div className="flex flex-none items-center border-b border-[#f0f0f0] px-2 py-0.5">
+          <div className="flex flex-none items-center border-b border-border px-2 py-0.5">
             <button
               type="button"
               aria-label="Anuluj"
               disabled={pending}
               onClick={onDone}
-              className={cn(NAGLOWEK_PRZYCISK, "text-[#666666]")}
+              className={cn(NAGLOWEK_PRZYCISK, "text-muted-foreground")}
             >
               Anuluj
             </button>
@@ -393,7 +393,7 @@ export function MBlockSheet({
               onClick={zapisz}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
               )}
             >
               Zapisz
@@ -403,14 +403,14 @@ export function MBlockSheet({
           <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-5 pt-4 pb-7">
             {(blad || bladPol) && (
               <div className="flex flex-col items-start gap-1">
-                <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+                <p role="alert" className="m-0 text-xs text-destructive-foreground">
                   {blad || bladPol}
                 </p>
                 {bladPol && (
                   <button
                     type="button"
                     onClick={() => setUntil(null)}
-                    className="min-h-11 cursor-pointer rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                    className="min-h-11 cursor-pointer rounded-md border border-input bg-white px-3.5 text-[13px] outline-none focus-visible:shadow-focus"
                   >
                     Usuń datę końca
                   </button>
@@ -425,7 +425,7 @@ export function MBlockSheet({
               placeholder="Nazwa bloku"
               aria-label="Nazwa bloku"
               onChange={(e) => setTitle(e.target.value)}
-              className="h-[52px] w-full rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 text-lg font-medium text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+              className="h-[52px] w-full rounded-md border border-input bg-white px-3.5 text-lg font-medium text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
             />
 
             <div className="flex flex-col gap-2">
@@ -447,7 +447,7 @@ export function MBlockSheet({
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#eaeaea] bg-white">
+            <div className="rounded-xl border border-border bg-white">
               <div className={WIERSZ}>
                 <span className="flex-1">Dzień</span>
                 <DatePicker
@@ -493,7 +493,7 @@ export function MBlockSheet({
                 />
               </div>
               <div className={cn(WIERSZ, "min-h-10")}>
-                <span className="font-mono text-xs text-[#6b6b6b]">
+                <span className="font-mono text-xs text-muted-foreground">
                   Czas trwania: {czasTrwania}
                 </span>
               </div>
@@ -526,10 +526,10 @@ export function MBlockSheet({
                           )
                         }
                         className={cn(
-                          "size-11 cursor-pointer rounded-[10px] border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                          "size-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:shadow-focus",
                           wybrany
-                            ? "border-[#171717] bg-[#171717] text-white"
-                            : "border-[#e0e0e0] bg-white text-[#404040]",
+                            ? "border-primary bg-primary text-white"
+                            : "border-input bg-white text-soft-foreground",
                         )}
                       >
                         {nazwa}
@@ -539,7 +539,7 @@ export function MBlockSheet({
                 </div>
               )}
               {rep !== "none" && (
-                <div className="rounded-xl border border-[#eaeaea] bg-white">
+                <div className="rounded-xl border border-border bg-white">
                   <div className={WIERSZ}>
                     <span className="flex-1">Powtarzaj do</span>
                     {/* Pusta data = seria bez końca; „Wyczyść” w kalendarzu usuwa koniec */}
@@ -555,7 +555,7 @@ export function MBlockSheet({
                 </div>
               )}
               {rep !== "none" && (
-                <span className="font-mono text-xs text-[#6b6b6b]">
+                <span className="font-mono text-xs text-muted-foreground">
                   {describeRecurrence(recurrence, date)}
                 </span>
               )}
@@ -565,12 +565,12 @@ export function MBlockSheet({
               <span className={ETYKIETA}>
                 Zadania w bloku · {wierszeZadan.length}
               </span>
-              <div className="rounded-xl border border-[#eaeaea] bg-white">
+              <div className="rounded-xl border border-border bg-white">
                 {wierszeZadan.map(({ klucz, tytul, tymczasowe }, i) => (
                   <div key={klucz} className={WIERSZ}>
                     <span
                       aria-hidden="true"
-                      className="size-5 flex-none rounded-md border-[1.5px] border-[#cfcfcf]"
+                      className="size-5 flex-none rounded-md border-[1.5px] border-border-strong"
                     />
                     <span className="min-w-0 flex-1 break-words">{tytul}</span>
                     <button
@@ -578,7 +578,7 @@ export function MBlockSheet({
                       aria-label={`Usuń zadanie ${tytul}`}
                       disabled={tymczasowe}
                       onClick={() => usunZadanie(klucz, i)}
-                      className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#8a8a8a] outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:opacity-40"
+                      className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-faint-foreground outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:shadow-focus disabled:opacity-40"
                     >
                       <XIcon aria-hidden="true" className="size-4" />
                     </button>
@@ -600,14 +600,14 @@ export function MBlockSheet({
                         dodajZadanie();
                       }
                     }}
-                    className="h-11 min-w-0 flex-1 border-0 bg-transparent text-[15px] outline-none placeholder:text-[#a3a3a3]"
+                    className="h-11 min-w-0 flex-1 border-0 bg-transparent text-[15px] outline-none placeholder:text-faint-foreground"
                   />
                   <button
                     type="button"
                     aria-label="Dodaj zadanie"
                     disabled={zadaniaWylaczone}
                     onClick={dodajZadanie}
-                    className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                    className="relative flex size-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none after:absolute after:-inset-1 after:content-[''] focus-visible:shadow-focus"
                   >
                     <PlusIcon aria-hidden="true" className="size-[18px]" />
                   </button>
@@ -615,11 +615,11 @@ export function MBlockSheet({
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#eaeaea] bg-white">
+            <div className="rounded-xl border border-border bg-white">
               <div className={WIERSZ}>
                 <BellIcon
                   aria-hidden="true"
-                  className="size-[18px] flex-none text-[#666666]"
+                  className="size-[18px] flex-none text-muted-foreground"
                 />
                 <span className="flex-1">Przypomnij 10 min wcześniej</span>
                 <Switch

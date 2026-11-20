@@ -23,16 +23,16 @@ export function CardFooter({
   onSave: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-lg border-t border-[#eaeaea] bg-[#fafafa] px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
+    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
       <span
         role="status"
         className={cn(
           "text-[13px]",
           formError
-            ? "text-[#b91c1c]"
+            ? "text-destructive-foreground"
             : message === "saved"
-              ? "text-[#15803d]"
-              : "text-[#666666]",
+              ? "text-success"
+              : "text-muted-foreground",
         )}
       >
         {formError ?? texts[message]}

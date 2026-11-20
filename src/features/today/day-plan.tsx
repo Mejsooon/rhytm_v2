@@ -1,12 +1,13 @@
 "use client";
 
 // „Plan dnia” na Dziś (web, Today.dc.html): oś 00–24 (48 px na godzinę, widać 06–22),
-// bloki dnia z „x/y” zadań i „TERAZ”, treningi (tylko do odczytu, link do /sport),
+// bloki dnia z „x/y” zadań i „Teraz”, treningi (tylko do odczytu, link do /sport),
 // czerwona linia aktualnej godziny. Dymki i okna są te same co w kalendarzu.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { StatusBadge } from "@/components/controls";
 import {
   BlockDialog,
   type BlockDialogInitial,
@@ -174,19 +175,21 @@ export function DayPlan({
   const duchAktywny = okno?.typ === "wpis";
 
   return (
-    <section aria-labelledby="plan-dnia" className="min-w-0">
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-        <h2 id="plan-dnia" className="m-0 text-[15px] font-semibold">
+    <section aria-labelledby="plan-dnia" className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* .card-t */}
+        <h2 id="plan-dnia" className="m-0 text-base leading-[1.3] font-semibold">
           Plan dnia
         </h2>
-        <span className="font-mono text-xs text-[#6b6b6b]">
+        <span className="text-xs text-muted-foreground">
           {`${napisBlokow} · kliknij blok, żeby zobaczyć zadania, albo puste miejsce, żeby dodać`}
         </span>
       </div>
       <div
         ref={os}
         data-testid="os-dnia"
-        className={`overflow-y-auto rounded-lg border border-[#eaeaea]${podglad ? " select-none" : ""}`}
+        // .frame > .inner: ramka 1,5 px rgba(0,0,0,.14), promień 12 px
+        className={`overflow-y-auto rounded-lg border-[1.5px] border-black/[.14] bg-white${podglad ? " select-none" : ""}`}
         style={{
           height: WYSOKOSC_OKNA,
           cursor: podglad ? "crosshair" : undefined,
@@ -199,7 +202,7 @@ export function DayPlan({
           className="relative cursor-pointer"
           style={{
             height: 24 * GODZINA,
-            backgroundImage: `repeating-linear-gradient(to bottom, #ffffff 0, #ffffff ${GODZINA - 1}px, #f0f0f0 ${GODZINA - 1}px, #f0f0f0 ${GODZINA}px)`,
+            backgroundImage: `repeating-linear-gradient(to bottom, #ffffff 0, #ffffff ${GODZINA - 1}px, rgba(0,0,0,.05) ${GODZINA - 1}px, rgba(0,0,0,.05) ${GODZINA}px)`,
           }}
           // Klik zaraz po przeciągnięciu nie otwiera „Nowego wpisu”
           onClickCapture={tlumKlik}
@@ -232,28 +235,29 @@ export function DayPlan({
             <div
               key={h}
               aria-hidden="true"
-              className="absolute left-3 font-mono text-[11px] text-[#6b6b6b]"
-              style={{ top: h * GODZINA + 3 }}
+              className="absolute left-3.5 text-xs text-muted-foreground tabular-nums"
+              style={{ top: h * GODZINA + 4 }}
             >
               {godz(h * 60)}
             </div>
           ))}
           <div
             aria-hidden="true"
-            className="absolute inset-y-0 left-16 border-l border-[#eaeaea]"
+            className="absolute inset-y-0 left-16 border-l border-border"
           />
 
           {podglad && (
             <div
               data-testid="podglad-przeciagania"
               aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-[#737373] bg-[#fafafa]/90 px-2.5 py-1.5 font-mono text-xs text-[#404040]"
+              // Zaznaczany zakres: przerywana ramka rgba(0,0,0,.45), tło rgba(0,0,0,.04)
+              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-black/[.45] bg-black/[.04] px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums"
               style={{
-                top: (podglad.startMin / 60) * GODZINA + 1,
-                height: (podglad.durationMin / 60) * GODZINA - 2,
+                top: (podglad.startMin / 60) * GODZINA + 3,
+                height: (podglad.durationMin / 60) * GODZINA - 6,
               }}
             >
-              {`${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
+              {`Nowy blok · ${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
             </div>
           )}
 
@@ -261,7 +265,8 @@ export function DayPlan({
             <div
               ref={duchAktywny ? setKotwicaWpisu : undefined}
               aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 left-[72px] box-border rounded-md border border-dashed border-[#a3a3a3] bg-[#fafafa] px-2.5 py-1.5 font-mono text-xs text-[#666666]"
+              // Najechanie: rgba(0,0,0,.24) / .02; slot z otwartym „Nowym wpisem” jak zakres (.45 / .04)
+              className={`pointer-events-none absolute right-2.5 left-[72px] z-[2] box-border rounded-md border border-dashed px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums ${duchAktywny ? "border-black/[.45] bg-black/[.04]" : "border-black/[.24] bg-black/[.02]"}`}
               style={{ top: (duch / 60) * GODZINA + 3, height: GODZINA - 6 }}
             >
               {`+ ${godz(duch)}–${godz(Math.min(duch + 60, 1440))}`}
@@ -289,10 +294,13 @@ export function DayPlan({
               // Pas od 72 px do 10 px przed prawą krawędzią, dzielony na kolumny nakładających się wpisów
               left: `calc(72px + (100% - 82px) * ${kolumna / kolumn})`,
               width: `calc((100% - 82px) / ${kolumn} - ${kolumn > 1 ? 4 : 0}px)`,
-              background: `${p.color}14`,
-              border: `1px solid ${p.color}40`,
-              borderLeft: `3px solid ${p.color}`,
-              boxShadow: zaznaczony ? `0 0 0 2px ${p.color}` : undefined,
+              // CToday: tło kolor+12, ramka 1 px kolor+4d, bez paska po lewej;
+              // zaznaczony ma pierścień 2 px biały + 4 px kolor+66
+              background: `${p.color}12`,
+              border: `1px solid ${p.color}4d`,
+              boxShadow: zaznaczony
+                ? `0 0 0 2px #fff, 0 0 0 4px ${p.color}66`
+                : undefined,
             };
             const tresc = (
               <>
@@ -300,25 +308,21 @@ export function DayPlan({
                   <span className="truncate font-medium">
                     {kompakt ? `${p.title} · ${godz(p.startMin)}` : p.title}
                   </span>
-                  {trwa && (
-                    <span className="rounded bg-[#15803d] px-1.5 py-px font-mono text-[10px] text-white">
-                      TERAZ
-                    </span>
-                  )}
+                  {trwa && <StatusBadge tone="green">Teraz</StatusBadge>}
                   {licznik && (
-                    <span className="ml-auto font-mono text-[11px] text-[#404040]">
+                    <StatusBadge tone="outline" className="ml-auto tabular-nums">
                       {licznik}
-                    </span>
+                    </StatusBadge>
                   )}
                 </span>
                 {!kompakt && (
-                  <span className="block truncate font-mono text-[11px] text-[#404040]">
+                  <span className="block truncate text-xs text-soft-foreground tabular-nums">
                     {`${godziny} · ${p.categoryName ?? "Bez kategorii"}`}
                   </span>
                 )}
               </>
             );
-            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-[13px] leading-[1.3] text-[#171717] no-underline hover:text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
 
             // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
             if (p.kind !== "block") {
@@ -357,14 +361,15 @@ export function DayPlan({
           <div
             data-testid="linia-teraz"
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 left-14 border-t-2 border-[#b91c1c]"
+            className="pointer-events-none absolute right-0 left-14 border-t-2 border-destructive"
             style={{ top: (teraz / 60) * GODZINA }}
           />
           <span
             data-testid="etykieta-teraz"
             aria-hidden="true"
-            className="pointer-events-none absolute left-1.5 rounded bg-[#b91c1c] px-1 py-px font-mono text-[10px] text-white"
-            style={{ top: (teraz / 60) * GODZINA - 9 }}
+            // Etykieta godziny: biała na #dc2626 (destructive-strong), promień 6 px, 11 px / 500
+            className="pointer-events-none absolute left-2 rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
+            style={{ top: (teraz / 60) * GODZINA - 10 }}
           >
             {godz(teraz)}
           </span>

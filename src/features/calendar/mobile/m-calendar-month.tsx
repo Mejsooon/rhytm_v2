@@ -77,7 +77,7 @@ export function MCalendarMonth({
   return (
     <div className="flex flex-col">
       <div className="pb-2">
-        <div className="grid grid-cols-7 pb-1.5 text-center font-mono text-[11px] text-[#8a8a8a]">
+        <div className="grid grid-cols-7 pb-1.5 text-center font-mono text-[11px] text-faint-foreground">
           {days.slice(0, 7).map((dzien) => (
             <span key={dzien}>{DNI_SKROT[weekdayOf(dzien)]}</span>
           ))}
@@ -113,16 +113,16 @@ export function MCalendarMonth({
                 aria-label={`${d} ${MIESIACE_DOP[m - 1]}`}
                 aria-pressed={aktywny}
                 onClick={() => setWybrany(dzien)}
-                className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] ${
+                className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-md ${
                   aktywny
-                    ? "bg-[#171717]"
+                    ? "bg-primary"
                     : dzien === today
-                      ? "bg-[#f0f0f0]"
+                      ? "bg-active"
                       : "bg-transparent"
                 }`}
               >
                 <span
-                  className={`font-mono text-[15px] ${aktywny ? "text-white" : "text-[#171717]"} ${dzien === today ? "font-semibold" : ""}`}
+                  className={`font-mono text-[15px] ${aktywny ? "text-white" : "text-foreground"} ${dzien === today ? "font-semibold" : ""}`}
                 >
                   {d}
                 </span>
@@ -142,12 +142,12 @@ export function MCalendarMonth({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 border-t border-[#eaeaea] pt-3.5 pb-24">
+      <div className="flex flex-col gap-2.5 border-t border-border pt-3.5 pb-24">
         <div className="flex items-baseline justify-between">
           <h2 className="text-[17px] font-semibold">{tytul}</h2>
           <Link
             href={`/kalendarz?widok=dzien&data=${wybrany}`}
-            className="inline-flex min-h-11 items-center text-sm text-[#666666]"
+            className="inline-flex min-h-11 items-center text-sm text-muted-foreground"
           >
             Otwórz dzień
           </Link>
@@ -161,14 +161,14 @@ export function MCalendarMonth({
                 key={i.key}
                 href={sportItemHref(i)}
                 data-planned={i.planned || undefined}
-                className="flex min-h-12 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                className="flex min-h-12 w-full items-center gap-2.5 rounded-md px-3 text-left text-foreground outline-none focus-visible:shadow-focus"
                 style={{
                   background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
                   border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
                   borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
                 }}
               >
-                <span className="w-[42px] font-mono text-xs text-[#555555]">
+                <span className="w-[42px] font-mono text-xs text-soft-foreground">
                   {formatClockTime(
                     Math.floor(i.startMin / 60),
                     i.startMin % 60,
@@ -189,13 +189,13 @@ export function MCalendarMonth({
               key={o.key}
               type="button"
               onClick={() => onBlockClick(o.key)}
-              className="flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-[10px] px-3 text-left text-[#171717]"
+              className="flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-md px-3 text-left text-foreground"
               style={{
                 background: `${kolor}14`,
                 borderLeft: `3px solid ${kolor}`,
               }}
             >
-              <span className="w-[42px] font-mono text-xs text-[#555555]">
+              <span className="w-[42px] font-mono text-xs text-soft-foreground">
                 {formatClockTime(
                   Math.floor(o.startMin / 60),
                   o.startMin % 60,
@@ -212,7 +212,7 @@ export function MCalendarMonth({
           <button
             type="button"
             onClick={() => onAdd(wybrany, 540)}
-            className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#eaeaea] bg-white text-sm text-[#666666]"
+            className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-white text-sm text-muted-foreground"
           >
             <Plus size={16} aria-hidden="true" />
             Brak bloków — dodaj

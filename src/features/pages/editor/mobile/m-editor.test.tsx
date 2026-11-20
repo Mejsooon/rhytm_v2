@@ -203,10 +203,10 @@ describe("MEditor (telefon)", () => {
     render(<EditorView data={dane([])} />);
     await user.click(screen.getByRole("button", { name: "Menu strony" }));
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByText("★ Dodaj do ulubionych")).toBeTruthy();
+    expect(within(menu).getByText("Dodaj do ulubionych")).toBeTruthy();
     expect(within(menu).getByText("Zmień nazwę")).toBeTruthy();
     expect(within(menu).getByText("Usuń stronę")).toBeTruthy();
-    await user.click(within(menu).getByText("★ Dodaj do ulubionych"));
+    await user.click(within(menu).getByText("Dodaj do ulubionych"));
     await waitFor(() => expect(actions.setFavorite).toHaveBeenCalledWith("p1", true));
   });
 

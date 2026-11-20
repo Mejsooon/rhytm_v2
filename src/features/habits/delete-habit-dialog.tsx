@@ -58,7 +58,7 @@ export function DeleteHabitDialog({
       footer={
         <>
           {blad && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -75,7 +75,7 @@ export function DeleteHabitDialog({
         </>
       }
     >
-      <p className="m-0 text-[13px] text-[#666666]">
+      <p className="m-0 text-[13px] text-muted-foreground">
         Historia odhaczeń i notatki zostaną usunięte.
       </p>
     </FormDialog>

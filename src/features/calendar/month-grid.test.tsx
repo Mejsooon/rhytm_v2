@@ -124,7 +124,7 @@ describe("MonthGrid", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })]);
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
     expect(wpis.className).toContain("border-dashed");
-    expect(wpis.className).toContain("border-[#a3a3a3]");
+    expect(wpis.className).toContain("border-ring");
     expect(wpis.className).toContain("font-mono");
   });
 
@@ -167,13 +167,13 @@ describe("MonthGrid", () => {
   it("wyróżnia dziś i szarzy dni spoza miesiąca", () => {
     wyrenderuj([]);
     expect(screen.getByTestId("numer-2026-11-17").className).toContain(
-      "bg-[#15803d]",
+      "bg-success",
     );
     expect(screen.getByTestId("numer-2026-10-26").className).toContain(
-      "text-[#a3a3a3]",
+      "text-faint-foreground",
     );
     expect(screen.getByTestId("numer-2026-11-10").className).not.toContain(
-      "text-[#a3a3a3]",
+      "text-faint-foreground",
     );
   });
 

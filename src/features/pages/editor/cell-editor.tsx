@@ -121,7 +121,7 @@ export function CellEditor({
             {wybrana ? (
               <OptionBadge option={wybrana} />
             ) : (
-              <span className="font-mono text-[#a3a3a3]">—</span>
+              <span className="font-mono text-faint-foreground">—</span>
             )}
           </button>
         }
@@ -137,24 +137,24 @@ export function CellEditor({
                 setListaOtwarta(false);
                 if (o.id !== aktualna) onCommit(o.id);
               }}
-              className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-[#171717] hover:bg-[#f5f5f5] max-[799px]:min-h-11 ${
-                o.id === aktualna ? "bg-[#f0f0f0]" : "bg-transparent"
+              className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-foreground hover:bg-muted max-[799px]:min-h-11 ${
+                o.id === aktualna ? "bg-active" : "bg-transparent"
               }`}
             >
               <OptionBadge option={o} />
-              <span aria-hidden="true" className="text-[#15803d]">
+              <span aria-hidden="true" className="text-success">
                 {o.id === aktualna ? "✓" : ""}
               </span>
             </button>
           ))}
-          <div className="mt-1 flex justify-between border-t border-[#f0f0f0] pt-1.5">
+          <div className="mt-1 flex justify-between border-t border-border pt-1.5">
             <button
               type="button"
               onClick={() => {
                 setListaOtwarta(false);
                 if (aktualna !== null) onCommit(null);
               }}
-              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
             >
               Wyczyść
             </button>
@@ -166,7 +166,7 @@ export function CellEditor({
                 bezZwrotuFokusu.current = true;
                 onEditOptions();
               }}
-              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
             >
               Edytuj opcje
             </button>
@@ -200,12 +200,12 @@ export function CellEditor({
       }}
       placeholder={field.isTitle ? "Bez nazwy" : ""}
       aria-label={label}
-      className={`w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-[#a3a3a3] max-[799px]:min-h-11 ${
+      className={`w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground max-[799px]:min-h-11 ${
         field.type === "number"
-          ? "text-right font-mono text-[#171717]"
+          ? "text-right font-mono text-foreground"
           : field.type === "url"
-            ? "font-mono text-[#0070f3]"
-            : "text-[#171717]"
+            ? "font-mono text-info-foreground"
+            : "text-foreground"
       }`}
     />
   );

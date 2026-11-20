@@ -18,9 +18,9 @@ import {
 } from "./model";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
-const KOMORKA = "border-b border-[#f0f0f0] px-4 py-2.5";
+const KOMORKA = "border-b border-border px-4 py-2.5";
 const NAGLOWEK =
-  "border-b border-[#eaeaea] px-4 py-2 font-medium text-[#666666]";
+  "border-b border-border px-4 py-2 font-medium text-muted-foreground";
 
 export function RecentTable({
   items,
@@ -55,16 +55,16 @@ export function RecentTable({
   }
 
   return (
-    <section className="overflow-x-auto rounded-lg border border-[#eaeaea] bg-white">
-      <div className="flex justify-between border-b border-[#eaeaea] px-4 py-3">
+    <section className="overflow-x-auto rounded-lg border border-border bg-white">
+      <div className="flex justify-between border-b border-border px-4 py-3">
         <h2 className="m-0 text-[15px] font-semibold">Ostatnie treningi</h2>
-        <span className="font-mono text-xs text-[#666666]">
+        <span className="font-mono text-xs text-muted-foreground">
           {`${MIESIACE[Number(month.slice(5, 7)) - 1]} · ${doneInMonth} wykonanych`}
         </span>
       </div>
       <table className="w-full min-w-[640px] border-collapse text-[13px]">
         <thead>
-          <tr className="bg-[#fafafa]">
+          <tr className="bg-panel">
             <th scope="col" className={`${NAGLOWEK} text-left`}>
               Data
             </th>
@@ -85,7 +85,7 @@ export function RecentTable({
         <tbody>
           {wiersze.length === 0 && (
             <tr>
-              <td colSpan={5} className={`${KOMORKA} text-[#666666]`}>
+              <td colSpan={5} className={`${KOMORKA} text-muted-foreground`}>
                 Brak wykonanych treningów.
               </td>
             </tr>
@@ -120,17 +120,17 @@ export function RecentTable({
                     otworz(item);
                   }
                 }}
-                className="cursor-pointer outline-none hover:bg-[#fafafa] focus-visible:bg-[#fafafa]"
+                className="cursor-pointer outline-none hover:bg-panel focus-visible:bg-panel"
               >
-                <td className={`${KOMORKA} font-mono text-[#404040]`}>
+                <td className={`${KOMORKA} font-mono text-soft-foreground`}>
                   {`${DNI[weekdayOf(item.date)]} ${dd}.${mm}`}
                 </td>
                 <td className={KOMORKA}>
                   <span
                     className={
                       bieg
-                        ? "rounded border border-[#fed7aa] bg-[#fff4ed] px-1.5 py-px font-mono text-[10px] text-[#c2410c]"
-                        : "rounded border border-[#e0e0e0] bg-[#f5f5f5] px-1.5 py-px font-mono text-[10px] text-[#404040]"
+                        ? "rounded border border-warning-border bg-warning-soft px-1.5 py-px font-mono text-[10px] text-warning-foreground"
+                        : "rounded border border-input bg-muted px-1.5 py-px font-mono text-[10px] text-soft-foreground"
                     }
                   >
                     {bieg ? "BIEG" : "SIŁA"}
@@ -139,12 +139,12 @@ export function RecentTable({
                 </td>
                 <td className={`${KOMORKA} text-right font-mono`}>{wynik}</td>
                 <td
-                  className={`${KOMORKA} text-right font-mono text-[#404040]`}
+                  className={`${KOMORKA} text-right font-mono text-soft-foreground`}
                 >
                   {dodatkowo}
                 </td>
                 <td
-                  className={`${KOMORKA} text-right font-mono text-[#666666]`}
+                  className={`${KOMORKA} text-right font-mono text-muted-foreground`}
                 >
                   {item.difficulty !== null ? `${item.difficulty}/10` : ""}
                 </td>

@@ -42,12 +42,12 @@ export function HabitWeekGrid({
   const dni = viewRange("tydzien", today, weekStart).days;
 
   return (
-    <section className="flex flex-col rounded-lg border border-[#eaeaea] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#eaeaea] px-4 py-3.5">
+    <section className="flex flex-col rounded-lg border border-border bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border px-4 py-3.5">
         <h2 className="m-0 text-[15px] font-semibold">Nawyki</h2>
         {habits.length > 0 && (
           // Nagłówki kolumn nad siatką; margines = przycisk ✓ (34 px) + odstęp 14 px
-          <div className="mr-12 grid grid-cols-[repeat(7,24px)] gap-1.5 text-center font-mono text-[10px] text-[#6b6b6b]">
+          <div className="mr-12 grid grid-cols-[repeat(7,24px)] gap-1.5 text-center font-mono text-[10px] text-muted-foreground">
             {dni.map((d) => (
               <span key={d}>{SKROTY_DNI[weekdayOf(d) - 1]}</span>
             ))}
@@ -58,7 +58,7 @@ export function HabitWeekGrid({
       {habits.length === 0 ? (
         // Stan pusty w stylu makiet
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-12 text-center">
-          <p className="m-0 text-sm text-[#666666]">
+          <p className="m-0 text-sm text-muted-foreground">
             Nie masz jeszcze nawyków.
           </p>
           <Button variant="primary" size="sm" onClick={onNewHabit}>
@@ -85,16 +85,16 @@ export function HabitWeekGrid({
             return (
               <li
                 key={habit.id}
-                className="flex items-center gap-3.5 border-b border-[#f0f0f0] px-4 py-3.5"
+                className="flex items-center gap-3.5 border-b border-border px-4 py-3.5"
               >
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/nawyki/${habit.id}`}
-                    className="font-medium text-[#171717] no-underline hover:text-black"
+                    className="font-medium text-foreground no-underline hover:text-black"
                   >
                     {habit.name}
                   </Link>
-                  <div className="mt-[3px] font-mono text-[11px] text-[#6b6b6b]">
+                  <div className="mt-[3px] font-mono text-[11px] text-muted-foreground">
                     {opis}
                   </div>
                 </div>
@@ -119,7 +119,7 @@ export function HabitWeekGrid({
                           title={`${dd}.${mm} · nie dotyczy`}
                           className={cn(
                             KOMORKA,
-                            "flex items-center justify-center text-xs text-[#6b6b6b]",
+                            "flex items-center justify-center text-xs text-muted-foreground",
                           )}
                         >
                           –
@@ -139,12 +139,12 @@ export function HabitWeekGrid({
                         onClick={() => onToggle(habit.id, d)}
                         className={cn(
                           KOMORKA,
-                          "cursor-pointer p-0 outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default",
+                          "cursor-pointer p-0 outline-none focus-visible:shadow-focus disabled:cursor-default",
                           odhaczone
-                            ? "border-0 bg-[#15803d]"
+                            ? "border-0 bg-success"
                             : aktywna
-                              ? "border-0 bg-[#f0f0f0] hover:bg-[#e5e5e5]"
-                              : "border border-dashed border-[#e0e0e0] bg-white",
+                              ? "border-0 bg-active hover:bg-input"
+                              : "border border-dashed border-input bg-white",
                         )}
                       />
                     );
@@ -164,8 +164,8 @@ export function HabitWeekGrid({
                   className={cn(
                     "size-[34px] flex-none cursor-pointer rounded-md border transition-colors duration-[120ms] disabled:cursor-default disabled:opacity-40",
                     odhaczoneDzis
-                      ? "border-[#15803d] bg-[#15803d] text-white"
-                      : "border-[#e0e0e0] bg-white text-[#6b6b6b]",
+                      ? "border-success bg-success text-white"
+                      : "border-input bg-white text-muted-foreground",
                   )}
                 >
                   ✓
@@ -181,7 +181,7 @@ export function HabitWeekGrid({
       <button
         type="button"
         onClick={onNewHabit}
-        className="cursor-pointer border-0 bg-transparent px-4 py-3 text-left text-sm text-[#666666] hover:text-[#171717]"
+        className="cursor-pointer border-0 bg-transparent px-4 py-3 text-left text-sm text-muted-foreground hover:text-foreground"
       >
         + Nowy nawyk
       </button>

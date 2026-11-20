@@ -3,7 +3,9 @@
 // Dymek „Nowy wpis” wg Calendar.dc.html: data i godzina slotu oraz wybór Blok / Bieg / Siłownia.
 // Kotwicą jest duch slotu w siatce. Bieg i Siłownia to linki do strony Sport (okno biegu / pusty trening).
 import Link from "next/link";
+import { X } from "lucide-react";
 
+import { Button, MENU_ITEM } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   Popover,
@@ -14,8 +16,10 @@ import { formatClockTime } from "@/lib/time/timezones";
 import { weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pn", "wt", "śr", "cz", "pt", "sb", "nd"];
-const OPCJA =
-  "flex items-center gap-2.5 rounded-md p-2 text-left text-[#171717] no-underline outline-none hover:bg-[#f5f5f5] hover:text-[#171717] focus-visible:bg-[#f5f5f5] max-[799px]:min-h-11";
+// Pozycja .mi z CToday: 44 px wysokości (także na webie)
+const OPCJA = `${MENU_ITEM} min-h-11 hover:text-foreground`;
+// Kafelek ikony 28 px, promień 8 px
+const KAFELEK = "grid size-7 flex-none place-items-center rounded-[8px]";
 
 export function NewEntryPopover({
   anchor,
@@ -64,34 +68,36 @@ export function NewEntryPopover({
           )
             e.preventDefault();
         }}
-        className="flex w-[260px] flex-col gap-0.5 rounded-[10px] border-[#e0e0e0] p-2 text-sm shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
+        // .pop z paddingiem 4 px i odstępem 1 px między pozycjami
+        className="flex w-[270px] flex-col gap-px rounded-lg border-border p-1 text-sm shadow-lg"
       >
-        <div className="flex items-center gap-2 px-1 pt-0.5 pb-2">
-          <span className="text-[13px] font-semibold">Nowy wpis</span>
-          <span className="font-mono text-[11px] text-[#6b6b6b]">{kiedy}</span>
-          <button
-            type="button"
+        <div className="flex items-center gap-2 pt-1 pr-1 pb-2 pl-2">
+          <span className="text-sm font-semibold">Nowy wpis</span>
+          <span className="text-xs text-muted-foreground tabular-nums">{kiedy}</span>
+          <Button
+            variant="ghost"
+            size="xs"
+            icon
             aria-label="Zamknij"
             onClick={onClose}
-            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-[#666666] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:size-11"
+            className="ml-auto max-[799px]:size-11"
           >
-            ✕
-          </button>
+            <X size={14} aria-hidden="true" />
+          </Button>
         </div>
-        <button
-          type="button"
-          onClick={onBlock}
-          className={`${OPCJA} cursor-pointer border-0 bg-transparent`}
-        >
+        <button type="button" onClick={onBlock} className={OPCJA}>
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#bbe5cc] bg-[#f0fdf4] text-xs text-[#15803d]"
+            className={`${KAFELEK} bg-success-soft text-success`}
           >
-            ▤
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M3 10h18" />
+            </svg>
           </span>
           <span className="flex flex-col">
-            <span className="text-[13px] font-medium">Blok</span>
-            <span className="text-xs text-[#666666]">
+            <span className="font-medium">Blok</span>
+            <span className="text-xs text-muted-foreground">
               czas na zadania, z kategorią
             </span>
           </span>
@@ -99,25 +105,29 @@ export function NewEntryPopover({
         <Link href={`/sport?nowy=bieg&${parametry}`} className={OPCJA}>
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#fed7aa] bg-[#fff4ed] text-xs text-[#c2410c]"
+            className={`${KAFELEK} bg-warning/10 text-warning-foreground`}
           >
-            ●
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
           </span>
           <span className="flex flex-col">
-            <span className="text-[13px] font-medium">Bieg</span>
-            <span className="text-xs text-[#666666]">dystans, czas, tempo</span>
+            <span className="font-medium">Bieg</span>
+            <span className="text-xs text-muted-foreground">dystans, czas, tempo</span>
           </span>
         </Link>
         <Link href={`/sport?nowy=silownia&${parametry}`} className={OPCJA}>
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#e0e0e0] bg-[#f5f5f5] text-xs text-[#404040]"
+            className={`${KAFELEK} bg-black/5 text-soft-foreground`}
           >
-            ■
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2" />
+            </svg>
           </span>
           <span className="flex flex-col">
-            <span className="text-[13px] font-medium">Siłownia</span>
-            <span className="text-xs text-[#666666]">trening siłowy</span>
+            <span className="font-medium">Siłownia</span>
+            <span className="text-xs text-muted-foreground">trening siłowy</span>
           </span>
         </Link>
       </PopoverContent>

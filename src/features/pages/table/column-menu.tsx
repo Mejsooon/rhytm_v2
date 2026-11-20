@@ -9,11 +9,11 @@ import { summaryOptions, type ColumnSummary, type SummaryKind } from "../table-m
 import { NAZWY_PODSUMOWAN } from "./summary-cell";
 
 const POZYCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left font-[inherit] text-[13px] text-[#171717] hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11";
-const IKONA = "w-[18px] font-mono text-[#6b6b6b]";
-const PODZIAL = "mx-1 my-1.5 h-px bg-[#eaeaea]";
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left font-[inherit] text-[13px] text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11";
+const IKONA = "w-[18px] font-mono text-muted-foreground";
+const PODZIAL = "mx-1 my-1.5 h-px bg-border";
 const PODMENU =
-  "absolute top-0 left-[calc(100%+16px)] z-10 w-[210px] rounded-[10px] border border-[#e0e0e0] bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
+  "absolute top-0 left-[calc(100%+16px)] z-10 w-[210px] rounded-md border border-input bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
 
 // Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Podsumowanie … ›”,
 // „Pokaż w kalendarzu” (tylko Data), „Ukryj kolumnę” i „Usuń pole”. Wyzwalaczem jest nagłówek kolumny;
@@ -115,9 +115,9 @@ export function ColumnMenu({
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] font-medium text-[#666666] max-[799px]:min-h-11"
+          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] font-medium text-muted-foreground max-[799px]:min-h-11"
         >
-          <span aria-hidden="true" className="mr-1.5 font-mono text-[#6b6b6b]">
+          <span aria-hidden="true" className="mr-1.5 font-mono text-muted-foreground">
             {meta.icon}
           </span>
           {field.name}
@@ -137,7 +137,7 @@ export function ColumnMenu({
             }
           }}
           aria-label="Nazwa kolumny"
-          className="mb-1.5 box-border w-full rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 font-[inherit] text-[13px] text-[#171717] outline-none focus:border-[#171717] max-[799px]:min-h-11"
+          className="mb-1.5 box-border w-full rounded-md border border-input bg-white px-2.5 py-2 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
         />
 
         <div className="relative">
@@ -149,19 +149,19 @@ export function ColumnMenu({
             aria-haspopup="menu"
             aria-expanded={podmenu === "typ"}
             onClick={() => setPodmenu(podmenu === "typ" ? null : "typ")}
-            className={`${POZYCJA} ${podmenu === "typ" ? "bg-[#f5f5f5]" : ""}`}
+            className={`${POZYCJA} ${podmenu === "typ" ? "bg-muted" : ""}`}
           >
             <span aria-hidden="true" className={IKONA}>
               {meta.icon}
             </span>
             <span className="flex-1">Typ: {meta.label}</span>
-            <span aria-hidden="true" className="font-mono text-[11px] text-[#6b6b6b]">
+            <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">
               ›
             </span>
           </button>
           {podmenu === "typ" && (
             <div role="menu" aria-label="Typ pola" className={PODMENU}>
-              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
                 Typ pola
               </div>
               {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
@@ -176,13 +176,13 @@ export function ColumnMenu({
                     }
                     wykonaj(() => onPickType(t));
                   }}
-                  className={`${POZYCJA} ${t === field.type ? "bg-[#f0f0f0] font-medium" : ""}`}
+                  className={`${POZYCJA} ${t === field.type ? "bg-active font-medium" : ""}`}
                 >
                   <span aria-hidden="true" className={IKONA}>
                     {FIELD_TYPE_META[t].icon}
                   </span>
                   <span className="flex-1">{FIELD_TYPE_META[t].label}</span>
-                  <span aria-hidden="true" className="text-[#15803d]">
+                  <span aria-hidden="true" className="text-success">
                     {t === field.type ? "✓" : ""}
                   </span>
                 </button>
@@ -220,17 +220,17 @@ export function ColumnMenu({
             aria-haspopup="menu"
             aria-expanded={podmenu === "podsumowanie"}
             onClick={() => setPodmenu(podmenu === "podsumowanie" ? null : "podsumowanie")}
-            className={`${POZYCJA} ${podmenu === "podsumowanie" ? "bg-[#f5f5f5]" : ""}`}
+            className={`${POZYCJA} ${podmenu === "podsumowanie" ? "bg-muted" : ""}`}
           >
             <span aria-hidden="true" className={IKONA}>
               Σ
             </span>
             <span className="flex-1">Podsumowanie</span>
-            <span className="font-mono text-[11px] text-[#6b6b6b]">{aktualne} ›</span>
+            <span className="font-mono text-[11px] text-muted-foreground">{aktualne} ›</span>
           </button>
           {podmenu === "podsumowanie" && (
             <div role="menu" aria-label="Podsumowanie" className={PODMENU}>
-              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
                 Podsumowanie
               </div>
               {summaryOptions(field.type).map((kind) => {
@@ -241,7 +241,7 @@ export function ColumnMenu({
                     type="button"
                     role="menuitem"
                     onClick={() => wykonaj(() => onSummary(kind))}
-                    className={`${POZYCJA} ${wybrane ? "bg-[#f0f0f0]" : ""}`}
+                    className={`${POZYCJA} ${wybrane ? "bg-active" : ""}`}
                   >
                     <span aria-hidden="true" className={IKONA}>
                       {wybrane ? "✓" : ""}
@@ -259,7 +259,7 @@ export function ColumnMenu({
               ▦
             </span>
             <span className="flex-1">Pokaż w kalendarzu</span>
-            <span aria-hidden="true" className="font-mono text-[11px] text-[#6b6b6b]">
+            <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">
               {wKalendarzu ? "✓" : ""}
             </span>
           </button>
@@ -283,9 +283,9 @@ export function ColumnMenu({
           role="menuitem"
           disabled={field.isTitle}
           onClick={() => wykonaj(onDelete)}
-          className={cn(POZYCJA, "text-[#b91c1c]")}
+          className={cn(POZYCJA, "text-destructive-foreground")}
         >
-          <span aria-hidden="true" className={cn(IKONA, "text-[#b91c1c]")}>
+          <span aria-hidden="true" className={cn(IKONA, "text-destructive-foreground")}>
             ✕
           </span>
           <span className="flex-1">Usuń pole</span>

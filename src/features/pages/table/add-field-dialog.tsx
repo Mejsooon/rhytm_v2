@@ -92,7 +92,7 @@ export function AddFieldDialog({
   }
 
   const pole =
-    "w-full rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 font-[inherit] text-sm text-[#171717] outline-none focus:border-[#171717] max-[799px]:h-11";
+    "w-full rounded-md border border-input bg-white px-2.5 py-2 font-[inherit] text-sm text-foreground outline-none focus:border-primary max-[799px]:h-11";
 
   return (
     <ActionPopover
@@ -104,14 +104,14 @@ export function AddFieldDialog({
         <button
           type="button"
           aria-expanded={open}
-          className={`cursor-pointer rounded-md border border-[#e0e0e0] px-3 py-[7px] font-[inherit] text-sm text-[#171717] max-[799px]:min-h-11 ${open ? "bg-[#f0f0f0]" : "bg-white"}`}
+          className={`cursor-pointer rounded-md border border-input px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11 ${open ? "bg-active" : "bg-white"}`}
         >
           + Pole
         </button>
       }
     >
-      <div className="-m-2.5 flex w-[min(640px,calc(100vw-48px))] flex-wrap overflow-hidden rounded-[10px]">
-        <div className="flex flex-[1_1_230px] flex-col gap-0.5 border-r border-[#eaeaea] bg-[#fafafa] p-3">
+      <div className="-m-2.5 flex w-[min(640px,calc(100vw-48px))] flex-wrap overflow-hidden rounded-md">
+        <div className="flex flex-[1_1_230px] flex-col gap-0.5 border-r border-border bg-panel p-3">
           <input
             type="text"
             value={szukaj}
@@ -120,7 +120,7 @@ export function AddFieldDialog({
             aria-label="Szukaj typu"
             className={`${pole} mb-2`}
           />
-          <div className="px-2 pt-2 pb-1 font-mono text-[11px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+          <div className="px-2 pt-2 pb-1 font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
             Podstawowe
           </div>
           {widoczne.map((t) => (
@@ -129,11 +129,11 @@ export function AddFieldDialog({
               type="button"
               aria-pressed={t.type === typ}
               onClick={() => wybierzTyp(t)}
-              className={`flex w-full cursor-pointer items-center gap-1.5 rounded-md border-0 px-2 py-[7px] font-[inherit] text-[13px] text-[#171717] max-[799px]:min-h-11 ${
+              className={`flex w-full cursor-pointer items-center gap-1.5 rounded-md border-0 px-2 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11 ${
                 t.type === typ ? "bg-white shadow-[0_0_0_1px_#e0e0e0]" : "bg-transparent"
               }`}
             >
-              <span aria-hidden="true" className="w-[22px] text-left font-mono text-[#6b6b6b]">
+              <span aria-hidden="true" className="w-[22px] text-left font-mono text-muted-foreground">
                 {t.icon}
               </span>
               <span className="flex-1 text-left">{t.name}</span>
@@ -156,12 +156,12 @@ export function AddFieldDialog({
           </label>
           <div>
             <div className="font-semibold">{wybrany.name}</div>
-            <p className="mt-1 mb-0 text-[13px] leading-normal text-[#666666]">{wybrany.desc}</p>
+            <p className="mt-1 mb-0 text-[13px] leading-normal text-muted-foreground">{wybrany.desc}</p>
           </div>
 
           {typ === "date" && (
             <div>
-              <div className="flex items-center justify-between gap-2.5 border-b border-[#f0f0f0] py-2 text-[13px]">
+              <div className="flex items-center justify-between gap-2.5 border-b border-border py-2 text-[13px]">
                 <span>Pokaż w kalendarzu</span>
                 <Checkbox checked={wKalendarzu} ariaLabel="Pokaż w kalendarzu" onChange={setWKalendarzu} />
               </div>
@@ -187,14 +187,14 @@ export function AddFieldDialog({
               {opcje.map((o) => (
                 <span
                   key={o}
-                  className="inline-flex items-center gap-1 rounded-[4px] border border-[#e0e0e0] py-[3px] pr-1 pl-2 font-mono text-xs"
+                  className="inline-flex items-center gap-1 rounded-[4px] border border-input py-[3px] pr-1 pl-2 font-mono text-xs"
                 >
                   {o}
                   <button
                     type="button"
                     aria-label={`Usuń opcję ${o}`}
                     onClick={() => setOpcje((l) => l.filter((x) => x !== o))}
-                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-[#6b6b6b] hover:text-[#171717] max-[799px]:min-h-11 max-[799px]:min-w-11"
+                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-muted-foreground hover:text-foreground max-[799px]:min-h-11 max-[799px]:min-w-11"
                   >
                     ×
                   </button>
@@ -204,7 +204,7 @@ export function AddFieldDialog({
                 <button
                   type="button"
                   onClick={() => setNowaOpcja("")}
-                  className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2 py-[3px] font-[inherit] text-xs text-[#171717] max-[799px]:min-h-11"
+                  className="cursor-pointer rounded-md border border-input bg-white px-2 py-[3px] font-[inherit] text-xs text-foreground max-[799px]:min-h-11"
                 >
                   + Opcja
                 </button>
@@ -224,25 +224,25 @@ export function AddFieldDialog({
                   aria-label="Nowa opcja"
                   // Pole pojawia się po kliknięciu „+ Opcja”
                   autoFocus
-                  className="w-[130px] rounded-[4px] border border-[#171717] bg-white px-2 py-[3px] font-mono text-xs text-[#171717] outline-none max-[799px]:min-h-11"
+                  className="w-[130px] rounded-[4px] border border-primary bg-white px-2 py-[3px] font-mono text-xs text-foreground outline-none max-[799px]:min-h-11"
                 />
               )}
             </div>
           )}
 
           <div className="flex-1" />
-          <div className="flex justify-end gap-2 border-t border-[#eaeaea] pt-3">
+          <div className="flex justify-end gap-2 border-t border-border pt-3">
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] font-[inherit] text-sm text-[#171717] max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11"
             >
               Anuluj
             </button>
             <button
               type="button"
               onClick={dodaj}
-              className="cursor-pointer rounded-md border border-[#171717] bg-[#171717] px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
             >
               Dodaj pole
             </button>

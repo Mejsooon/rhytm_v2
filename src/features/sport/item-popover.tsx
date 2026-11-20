@@ -28,8 +28,8 @@ export type RunRequest =
   { sessionId: string } | { date: IsoDate; start: string };
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
-const ODZNAKA_BIEGU = "border border-[#fed7aa] bg-[#fff4ed] text-[#c2410c]";
-const ODZNAKA_SILY = "border border-[#e0e0e0] bg-[#f5f5f5] text-[#404040]";
+const ODZNAKA_BIEGU = "border border-warning-border bg-warning-soft text-warning-foreground";
+const ODZNAKA_SILY = "border border-input bg-muted text-soft-foreground";
 
 export function ItemPopover({
   item,
@@ -207,15 +207,15 @@ export function ItemPopover({
   }
 
   const akcja =
-    "inline-flex cursor-pointer items-center rounded-md px-3 py-[7px] text-[13px] whitespace-nowrap no-underline outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
-  const glowna = `${akcja} border border-[#171717] bg-[#171717] font-medium text-white hover:bg-[#2e2e2e] hover:text-white`;
+    "inline-flex cursor-pointer items-center rounded-md px-3 py-[7px] text-[13px] whitespace-nowrap no-underline outline-none focus-visible:shadow-focus";
+  const glowna = `${akcja} border border-primary bg-primary font-medium text-white hover:bg-primary-hover hover:text-white`;
 
   return (
     <div
       role="dialog"
       aria-label={item.title}
       className={cn(
-        "absolute z-20 box-border w-[300px] cursor-default rounded-xl border border-[#e0e0e0] bg-white px-4 py-3.5 text-left text-sm text-[#171717] shadow-[0_16px_48px_rgba(0,0,0,.16)]",
+        "absolute z-20 box-border w-[300px] cursor-default rounded-xl border border-input bg-white px-4 py-3.5 text-left text-sm text-foreground shadow-[0_16px_48px_rgba(0,0,0,.16)]",
         openLeft ? "right-[calc(100%+6px)]" : "left-[calc(100%+6px)]",
         openUp ? "bottom-0" : "top-0",
       )}
@@ -229,7 +229,7 @@ export function ItemPopover({
         >
           {bieg ? "BIEG" : "SIŁA"}
         </span>
-        <span className="font-mono text-[11px] whitespace-nowrap text-[#6b6b6b]">
+        <span className="font-mono text-[11px] whitespace-nowrap text-muted-foreground">
           {item.planned ? "zaplanowany" : "wykonany"}
           {item.showInCalendar && " · w kalendarzu"}
         </span>
@@ -237,18 +237,18 @@ export function ItemPopover({
           type="button"
           aria-label="Zamknij"
           onClick={onClose}
-          className="ml-auto size-[26px] cursor-pointer rounded-md border border-[#e0e0e0] bg-white text-xs text-[#666666] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="ml-auto size-[26px] cursor-pointer rounded-md border border-input bg-white text-xs text-muted-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           ✕
         </button>
       </div>
       <div className="mt-2 text-[15px] font-semibold">{item.title}</div>
-      <div className="mt-0.5 font-mono text-xs text-[#666666]">{kiedy}</div>
+      <div className="mt-0.5 font-mono text-xs text-muted-foreground">{kiedy}</div>
 
-      <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+      <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border">
         {statystyki.map((st) => (
           <div key={st.k} className="bg-white px-2.5 py-2">
-            <div className="font-mono text-[10px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+            <div className="font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
               {st.k}
             </div>
             <div className="mt-0.5 font-mono text-sm font-medium">{st.v}</div>
@@ -261,19 +261,19 @@ export function ItemPopover({
           {lista.map((c, i) => (
             <div key={i} className="flex gap-2">
               <span className="min-w-0 flex-1 truncate">{c.n}</span>
-              <span className="font-mono text-[#666666]">{c.v}</span>
+              <span className="font-mono text-muted-foreground">{c.v}</span>
             </div>
           ))}
         </div>
       )}
 
       {item.note && (
-        <div className="mt-3 rounded-md bg-[#fafafa] px-2.5 py-2 text-xs text-[#404040]">
+        <div className="mt-3 rounded-md bg-panel px-2.5 py-2 text-xs text-soft-foreground">
           {item.note}
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-2 border-t border-[#eaeaea] pt-3">
+      <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
         {bieg ? (
           <button
             type="button"
@@ -304,7 +304,7 @@ export function ItemPopover({
         <button
           type="button"
           onClick={() => onDelete(item)}
-          className={`${akcja} border border-[#e0e0e0] bg-white text-[#b91c1c] hover:bg-[#fafafa]`}
+          className={`${akcja} border border-input bg-white text-destructive-foreground hover:bg-panel`}
         >
           Usuń
         </button>

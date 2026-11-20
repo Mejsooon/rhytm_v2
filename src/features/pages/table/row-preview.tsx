@@ -27,10 +27,10 @@ export function RowPreview({
   const zrobiony = done !== null && row.values[done.fieldId] === done.optionId;
 
   return (
-    <tr onClick={onOpen} className="group/row cursor-pointer [&:hover>td]:bg-[#fafafa]">
+    <tr onClick={onOpen} className="group/row cursor-pointer [&:hover>td]:bg-panel">
       {fields.map((f) => {
         const v = normalizeValue(f, row.values[f.id]);
-        const td = "border-b border-[#f0f0f0] px-3.5 py-[11px]";
+        const td = "border-b border-border px-3.5 py-[11px]";
 
         if (f.isTitle) {
           return (
@@ -49,12 +49,12 @@ export function RowPreview({
                   <OptionBadge option={opcja} />
                 ) : (
                   // Select: etykieta mono w ramce (AREA z Projects.dc.html)
-                  <span className="rounded-[4px] border border-[#e0e0e0] px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-[#404040]">
+                  <span className="rounded-[4px] border border-input px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-soft-foreground">
                     {opcja.label}
                   </span>
                 )
               ) : (
-                <span className="font-mono text-[#a3a3a3]">—</span>
+                <span className="font-mono text-faint-foreground">—</span>
               )}
             </td>
           );
@@ -68,8 +68,8 @@ export function RowPreview({
               aria-label={n ? `Ocena ${n} na 5` : "Brak oceny"}
               className={`${td} font-mono tracking-[0.1em]`}
             >
-              <span className="text-[#171717]">{"★".repeat(n)}</span>
-              <span className="text-[#d4d4d4]">{n ? "★".repeat(5 - n) : "—"}</span>
+              <span className="text-foreground">{"★".repeat(n)}</span>
+              <span className="text-faint-foreground">{n ? "★".repeat(5 - n) : "—"}</span>
             </td>
           );
         }
@@ -82,12 +82,12 @@ export function RowPreview({
               : "";
           const pilny = typeof v === "string" && isUrgent(v, today, zrobiony);
           return (
-            <td key={f.id} className={`${td} font-mono whitespace-nowrap text-[#404040]`}>
+            <td key={f.id} className={`${td} font-mono whitespace-nowrap text-soft-foreground`}>
               {typeof v === "string" ? formatValue(f, v) : "—"}
               {wzgledna && (
                 <>
                   {" "}
-                  <span className={`ml-1.5 ${pilny ? "text-[#b91c1c]" : "text-[#6b6b6b]"}`}>
+                  <span className={`ml-1.5 ${pilny ? "text-destructive-foreground" : "text-muted-foreground"}`}>
                     {wzgledna}
                   </span>
                 </>
@@ -107,12 +107,12 @@ export function RowPreview({
                   rel="noopener noreferrer"
                   // Link nie otwiera edycji wiersza
                   onClick={(e) => e.stopPropagation()}
-                  className="border-b border-[#e0e0e0] text-[#404040] no-underline hover:text-[#000000]"
+                  className="border-b border-input text-soft-foreground no-underline hover:text-foreground"
                 >
                   {formatValue(f, v)}
                 </a>
               ) : (
-                <span className="text-[#404040]">—</span>
+                <span className="text-soft-foreground">—</span>
               )}
             </td>
           );
@@ -120,7 +120,7 @@ export function RowPreview({
 
         if (f.type === "checkbox") {
           return (
-            <td key={f.id} className={`${td} font-mono text-[#15803d]`}>
+            <td key={f.id} className={`${td} font-mono text-success`}>
               {v === true ? "✓" : ""}
             </td>
           );
@@ -128,12 +128,12 @@ export function RowPreview({
 
         // Tekst i liczba
         return (
-          <td key={f.id} className={`${td} text-[#404040] ${f.type === "number" ? "font-mono" : ""}`}>
+          <td key={f.id} className={`${td} text-soft-foreground ${f.type === "number" ? "font-mono" : ""}`}>
             {v === null ? "—" : formatValue(f, v)}
           </td>
         );
       })}
-      <td className="border-b border-[#f0f0f0] px-3.5 py-[11px] text-right whitespace-nowrap">
+      <td className="border-b border-border px-3.5 py-[11px] text-right whitespace-nowrap">
         <button
           type="button"
           aria-label="Edytuj wiersz"
@@ -141,7 +141,7 @@ export function RowPreview({
             e.stopPropagation();
             onEdit();
           }}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-[#404040] opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
+          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-soft-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M12 20h9" />
@@ -156,7 +156,7 @@ export function RowPreview({
             e.stopPropagation();
             onDelete();
           }}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-[#b91c1c] opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
+          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />

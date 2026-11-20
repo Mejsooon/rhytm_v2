@@ -61,7 +61,7 @@ export function NewPasswordForm() {
         <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
           Ustaw nowe hasło
         </h1>
-        <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:text-[13px]">
+        <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:text-[13px]">
           Po zmianie wylogujemy Cię z innych urządzeń.
         </p>
       </div>
@@ -85,12 +85,12 @@ export function NewPasswordForm() {
         autoComplete="new-password"
       />
 
-      <p className="m-0 rounded-md border border-[#eaeaea] bg-[#fafafa] px-3 py-2.5 font-mono text-xs leading-normal text-[#6b6b6b]">
+      <p className="m-0 rounded-md border border-border bg-panel px-3 py-2.5 font-mono text-xs leading-normal text-muted-foreground">
         Hasło do konta nie otwiera sejfu. Sejf ma osobne hasło główne.
       </p>
 
       {blad && (
-        <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+        <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
           {blad}
         </p>
       )}

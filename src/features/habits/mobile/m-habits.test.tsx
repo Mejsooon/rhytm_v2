@@ -235,7 +235,7 @@ describe("MHabits — zakładka Nawyki", () => {
     });
     expect(bezPlanu.style.background).toBe("rgb(250, 250, 250)");
     expect(bezPlanu.className).toContain("border-dashed");
-    expect(bezPlanu.className).toContain("border-[#d4d4d4]");
+    expect(bezPlanu.className).toContain("border-border-strong");
     expect(zero.style.background).toBe("rgb(240, 240, 240)");
     expect(zero.className).not.toContain("border-dashed");
   });

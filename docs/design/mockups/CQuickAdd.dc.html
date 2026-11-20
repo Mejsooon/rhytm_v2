@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szybkie dodawanie (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Dziś</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; opacity: .6">
+      <div style="font-size: 24px; font-weight: 600">Dziś</div><div style="margin-top: 24px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div></div><div class="card" style="margin-top: 24px; height: 520px"></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-label="Szybkie dodawanie" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(620px, calc(100% - 32px)); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+      <span style="color: #15803d; display: flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+      <input type="text" value="{{q}}" onChange="{{onQ}}" aria-label="Co dodać?" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
+      <span class="kbd">Ctrl K</span>
+    </label>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lbl">Rozumiem to tak</div>
+      <div class="frame"><div class="inner" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+        <div style="padding: 10px 14px"><div class="lbl">Typ</div><div style="margin-top: 6px"><span class="{{typCls}}">{{typ}}</span></div></div>
+        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Dzień</div><div class="num" style="margin-top: 6px; font-weight: 500">{{day}}</div></div>
+        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Godzina</div><div class="num" style="margin-top: 6px; font-weight: 500">{{time}}</div></div>
+        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Dystans</div><div class="num" style="margin-top: 6px; font-weight: 500">{{dist}}</div></div>
+      </div></div>
+      <p class="muted" style="margin: 0; font-size: 13px">{{note}}</p>
+      <div class="lbl" style="margin-top: 4px">Przykłady</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{ex}}" as="e" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{e.pick}}">{{e.x}}</button></sc-for></div>
+    </div>
+    <div class="dlg-f" style="justify-content: space-between">
+      <a href="{{full}}" class="btn sm">Otwórz pełny formularz</a>
+      <span style="display: flex; align-items: center; gap: 10px"><span class="hint" style="display: flex; align-items: center; gap: 4px"><span class="kbd">↵</span> zapisz</span><button type="button" class="btnp">{{save}}</button></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { q: 'bieg 10 km jutro 18:00' }; }
+  renderVals() {
+    const q = this.state.q;
+    const low = q.toLowerCase();
+    // [typ, klasa plakietki, przycisk zapisu, pełny formularz, opis pod podglądem]
+    const type = /bieg/.test(low) ? ['Bieg', 'warn', 'Zapisz bieg', 'CRunDialog.dc.html', 'Zapiszemy jako zaplanowany bieg. Czas i tempo uzupełnisz po treningu.']
+      : /siłown|silown|push|pull/.test(low) ? ['Siłownia', 'sec', 'Zapisz trening', 'CGymLog.dc.html', 'Zapiszemy jako zaplanowany trening siłowy. Serie uzupełnisz po treningu.']
+      : /sen /.test(low + ' ') ? ['Sen', 'info', 'Zapisz sen', 'CSleepDialog.dc.html', 'Zapiszemy jako ostatnią noc.']
+      : /nawyk/.test(low) ? ['Nawyk', 'ok', 'Dodaj nawyk', 'CHabitDialog.dc.html', 'Dodamy nowy nawyk do odhaczania.']
+      : ['Blok', 'out', 'Zapisz blok', 'CBlockDialog.dc.html', 'Zapiszemy jako blok w kalendarzu. Zadania dodasz w dymku bloku.'];
+    const t = (low.match(/(\d{1,2}:\d{2})/) || [])[1] || '—';
+    const km = (low.match(/(\d+[.,]?\d*)\s?km/) || [])[1];
+    const day = /jutro/.test(low) ? 'śr 18.11' : /\bpt\b/.test(low) ? 'pt 20.11' : 'wt 17.11';
+    return {
+      q, onQ: (e) => this.setState({ q: e.target.value }),
+      typ: type[0], typCls: 'bdg lg ' + type[1], save: type[2], full: type[3], note: type[4],
+      day, time: t, dist: km ? km + ' km' : '—',
+      ex: ['siłownia push pt 17:00', 'sen 23:40–7:10', 'blok nauka matma jutro 8–10', 'nawyk woda'].map((x) => ({ x, pick: () => this.setState({ q: x }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

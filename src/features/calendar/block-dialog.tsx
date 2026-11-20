@@ -313,7 +313,7 @@ export function BlockDialog({
       footer={
         <>
           {blad && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -389,7 +389,7 @@ export function BlockDialog({
         </div>
       </div>
       {bladPol && (
-        <p role="alert" className="m-0 -mt-1.5 text-xs text-[#b91c1c]">
+        <p role="alert" className="m-0 -mt-1.5 text-xs text-destructive-foreground">
           {bladPol}
         </p>
       )}
@@ -425,10 +425,10 @@ export function BlockDialog({
                     )
                   }
                   className={cn(
-                    "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default max-[799px]:size-11",
+                    "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus disabled:cursor-default max-[799px]:size-11",
                     wybrany
-                      ? "border-[#171717] bg-[#171717] text-white"
-                      : "border-[#e0e0e0] bg-white text-[#404040]",
+                      ? "border-primary bg-primary text-white"
+                      : "border-input bg-white text-soft-foreground",
                   )}
                 >
                   {nazwa}
@@ -439,7 +439,7 @@ export function BlockDialog({
         )}
         {rep !== "none" && (
           <div className="flex items-center gap-2 font-normal">
-            <span className="text-xs text-[#6b6b6b]">do</span>
+            <span className="text-xs text-muted-foreground">do</span>
             <DatePicker
               value={until}
               onChange={setUntil}
@@ -450,7 +450,7 @@ export function BlockDialog({
             />
           </div>
         )}
-        <span className="font-mono text-xs font-normal text-[#6b6b6b]">
+        <span className="font-mono text-xs font-normal text-muted-foreground">
           {describeRecurrence(recurrence, date)}
         </span>
       </div>
@@ -458,7 +458,7 @@ export function BlockDialog({
       <label className="flex flex-col gap-1.5 text-[13px] font-medium">
         <span>
           Notatka{" "}
-          <span className="text-xs font-normal text-[#6b6b6b]">
+          <span className="text-xs font-normal text-muted-foreground">
             opcjonalnie
           </span>
         </span>
@@ -467,14 +467,14 @@ export function BlockDialog({
           value={note}
           maxLength={2000}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full resize-y rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-sm font-normal text-[#171717] outline-none focus:border-[#171717]"
+          className="w-full resize-y rounded-md border border-input bg-white px-2.5 py-2 text-sm font-normal text-foreground outline-none focus:border-primary"
         />
       </label>
 
       <div className="flex items-center gap-2.5 text-[13px] max-[799px]:min-h-11">
         <BellIcon
           aria-hidden="true"
-          className="size-[18px] flex-none text-[#666666]"
+          className="size-[18px] flex-none text-muted-foreground"
         />
         <span className="flex-1">Przypomnij 10 min wcześniej</span>
         <Switch

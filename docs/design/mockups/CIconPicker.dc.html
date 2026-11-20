@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wybór ikony strony (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ipk-cell:hover{background:rgba(0,0,0,.04)}
+.ipk-dot:hover{transform:scale(1.12)}
+</style>
+</helmet>
+<div role="dialog" aria-label="Wybór ikony" style="box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #262626; background: #ffffff">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <div class="seg" role="tablist" aria-label="Rodzaj ikony">
+      <button type="button" role="tab" onClick="{{tabEmoji}}" aria-selected="{{emojiPressed}}">Emoji</button>
+      <button type="button" role="tab" onClick="{{tabIcons}}" aria-selected="{{iconsPressed}}">Ikony</button>
+    </div>
+    <span style="flex: 1"></span>
+    <button type="button" class="btng xs" onClick="{{remove}}" style="color: #686868">Usuń</button>
+  </div>
+  <label class="igroup">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <input type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Szukaj ikony…" aria-label="Szukaj ikony">
+  </label>
+  <sc-if value="{{isIcons}}" hint-placeholder-val="{{false}}">
+    <div role="group" aria-label="Kolor ikony" style="display: flex; align-items: center; gap: 8px; padding: 2px 2px 0">
+      <sc-for list="{{colors}}" as="co" hint-placeholder-count="8"><button type="button" class="ipk-dot" aria-label="{{co.label}}" aria-pressed="{{co.pressed}}" onClick="{{co.pick}}" style="{{co.s}}"></button></sc-for>
+    </div>
+  </sc-if>
+  <div style="max-height: 236px; overflow-y: auto; margin: 0 -2px; padding: 0 2px">
+    <sc-if value="{{isEmoji}}" hint-placeholder-val="{{true}}">
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px">
+        <sc-for list="{{emojis}}" as="em" hint-placeholder-count="24"><button type="button" class="ipk-cell" aria-label="{{em.label}}" onClick="{{em.pick}}" style="{{em.s}}">{{em.e}}</button></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{isIcons}}" hint-placeholder-val="{{false}}">
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px">
+        <sc-for list="{{icons}}" as="ik" hint-placeholder-count="24"><button type="button" class="ipk-cell" aria-label="{{ik.label}}" onClick="{{ik.pick}}" style="{{ik.s}}"><dc-import name="PageIcon" icon="{{ik.icon}}" size="18" hint-size="18px,18px"></dc-import></button></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+      <div class="empty" style="padding: 16px 8px"><span style="font-size: 14px; font-weight: 500">Brak wyników</span><span class="hint">Spróbuj innego słowa.</span></div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"value":{"editor":null},"onPick":{"editor":null},"$preview":{"width":300,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const val = this.props.value || null;
+    const tab = st.tab || (val && val.kind === 'icon' ? 'icons' : 'emoji');
+    const color = st.color || (val && val.kind === 'icon' ? val.color : 'gray');
+    const q = (st.q || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l');
+    const pasuje = (kw) => !q || kw.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l').indexOf(q) >= 0;
+    const pick = (v) => { if (typeof this.props.onPick === 'function') this.props.onPick(v); };
+
+    const EMOJI = [
+      ['📚', 'książki books czytanie biblioteka'], ['📖', 'książka book czytanie'], ['📝', 'notatki notes pisanie'], ['📁', 'folder projekty'],
+      ['🗂️', 'teczka archiwum dokumenty'], ['💼', 'praca work biznes'], ['💻', 'komputer laptop kod programowanie'], ['🌐', 'internet strony www web'],
+      ['🚀', 'start projekt rakieta launch'], ['🎯', 'cel cele target'], ['💡', 'pomysł pomysly idea'], ['🧠', 'nauka mózg wiedza'],
+      ['🎓', 'studia szkoła uczelnia nauka'], ['📅', 'kalendarz plan data'], ['✅', 'zadania todo zrobione'], ['⭐', 'ulubione gwiazda star'],
+      ['❤️', 'serce zdrowie miłość'], ['💪', 'siłownia trening siła gym'], ['🏃', 'bieganie bieg sport run'], ['🚴', 'rower kolarstwo'],
+      ['🧘', 'joga medytacja spokój'], ['😴', 'sen spanie noc'], ['🍎', 'jedzenie dieta zdrowie owoc'], ['☕', 'kawa coffee'],
+      ['🍕', 'jedzenie pizza food'], ['🎬', 'filmy seriale kino film'], ['🎵', 'muzyka music'], ['🎮', 'gry gaming'],
+      ['📷', 'zdjęcia foto aparat'], ['🎨', 'sztuka design projektowanie'], ['✈️', 'podróże samolot travel'], ['🏠', 'dom mieszkanie home'],
+      ['🚗', 'samochód auto car'], ['🌱', 'rośliny ogród rozwój'], ['🔥', 'ogień streak passa'], ['⚡', 'energia szybko'],
+      ['💰', 'pieniądze finanse budżet'], ['💳', 'subskrypcje płatności karta'], ['🔒', 'hasła bezpieczeństwo kłódka'], ['🔑', 'klucz hasła'],
+      ['🛒', 'zakupy sklep'], ['🎁', 'prezenty prezent'], ['👥', 'ludzie zespół kontakty'], ['👤', 'osoba profil'],
+      ['📈', 'wykres wzrost statystyki'], ['📊', 'statystyki dane raport'], ['🔧', 'narzędzia naprawa'], ['⚙️', 'ustawienia'],
+      ['🏆', 'osiągnięcia nagroda puchar'], ['🌍', 'świat podróże ziemia'], ['☀️', 'słońce dzień'], ['🌙', 'noc księżyc'],
+      ['🐶', 'pies zwierzęta'], ['🎉', 'impreza święto'], ['📦', 'paczka dostawa'], ['🧾', 'rachunki faktury']
+    ];
+    const IKONY = [
+      ['table', 'tabela table'], ['book-open', 'książka czytanie book'], ['bookmark', 'zakładka bookmark'], ['file-text', 'dokument notatki plik'],
+      ['folder', 'folder projekty'], ['briefcase', 'praca biznes'], ['code', 'kod programowanie code'], ['globe', 'strony www internet świat'],
+      ['rocket', 'start projekt rakieta'], ['target', 'cel cele'], ['lightbulb', 'pomysł idea'], ['graduation-cap', 'nauka studia szkoła'],
+      ['calendar', 'kalendarz plan'], ['check-square', 'zadania todo'], ['star', 'ulubione gwiazda'], ['heart', 'zdrowie serce'],
+      ['dumbbell', 'siłownia trening'], ['activity', 'bieganie sport aktywność'], ['moon', 'sen noc'], ['sun', 'dzień słońce'],
+      ['leaf', 'natura rośliny'], ['flame', 'ogień streak'], ['zap', 'energia'], ['coffee', 'kawa'],
+      ['film', 'filmy seriale kino'], ['music', 'muzyka'], ['camera', 'zdjęcia foto'], ['plane', 'podróże samolot'],
+      ['home', 'dom mieszkanie'], ['car', 'samochód auto'], ['wallet', 'pieniądze subskrypcje finanse portfel'], ['shopping-cart', 'zakupy koszyk'],
+      ['lock', 'hasła kłódka bezpieczeństwo'], ['key', 'klucz hasła'], ['users', 'ludzie zespół'], ['smile', 'nastrój uśmiech'],
+      ['flag', 'flaga cel']
+    ];
+    const KOLORY = [['gray', '#525252', 'Szary'], ['blue', '#0070f3', 'Niebieski'], ['green', '#15803d', 'Zielony'], ['purple', '#7c3aed', 'Fioletowy'], ['orange', '#c2410c', 'Pomarańczowy'], ['red', '#b91c1c', 'Czerwony'], ['teal', '#0e7490', 'Morski'], ['yellow', '#a16207', 'Żółty']];
+
+    const cell = (sel) => 'height:32px;border-radius:8px;border:' + (sel ? '1px solid rgba(0,0,0,.18)' : '1px solid transparent') + ';background:' + (sel ? 'rgba(0,0,0,.05)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;font:inherit;font-size:18px;line-height:1;cursor:pointer;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+
+    const emojis = EMOJI.filter((e) => pasuje(e[1])).map((e) => ({
+      e: e[0], label: 'Emoji ' + e[1].split(' ')[0],
+      s: cell(!!val && val.kind === 'emoji' && val.v === e[0]),
+      pick: () => pick({ kind: 'emoji', v: e[0] })
+    }));
+    const icons = IKONY.filter((i) => pasuje(i[1])).map((i) => ({
+      icon: { kind: 'icon', v: i[0], color },
+      label: 'Ikona ' + i[1].split(' ')[0],
+      s: cell(!!val && val.kind === 'icon' && val.v === i[0] && val.color === color),
+      pick: () => pick({ kind: 'icon', v: i[0], color })
+    }));
+
+    return {
+      q: st.q || '',
+      onQ: (e) => this.setState({ q: e.target.value }),
+      isEmoji: tab === 'emoji',
+      isIcons: tab === 'icons',
+      emojiPressed: tab === 'emoji' ? 'true' : 'false',
+      iconsPressed: tab === 'icons' ? 'true' : 'false',
+      tabEmoji: () => this.setState({ tab: 'emoji' }),
+      tabIcons: () => this.setState({ tab: 'icons' }),
+      remove: () => pick(null),
+      emojis,
+      icons,
+      empty: (tab === 'emoji' ? emojis : icons).length === 0,
+      colors: KOLORY.map((k) => ({
+        label: k[2],
+        pressed: k[0] === color ? 'true' : 'false',
+        s: 'width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;background:' + k[1] + ';border:2px solid ' + (k[0] === color ? '#ffffff' : 'transparent') + ';box-shadow:' + (k[0] === color ? '0 0 0 2px ' + k[1] : 'inset 0 0 0 1px rgba(0,0,0,.08)') + ';transition:transform 120ms ease',
+        pick: () => this.setState({ color: k[0] })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

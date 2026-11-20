@@ -33,7 +33,7 @@ export function SummaryCell({
   const tekst = summary ? summarize(field, rows, summary, today) : "";
   return (
     <td
-      className={`px-3.5 py-2.5 font-mono ${summary?.kind === "avg" ? "text-[#171717]" : "text-[#6b6b6b]"}`}
+      className={`px-3.5 py-2.5 font-mono ${summary?.kind === "avg" ? "text-foreground" : "text-muted-foreground"}`}
     >
       {tekst}
     </td>

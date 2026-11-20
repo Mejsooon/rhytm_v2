@@ -88,14 +88,14 @@ export function RecordCard({
 
   if (!cwiczenie) {
     return (
-      <section className="flex flex-col items-start justify-center gap-2 rounded-lg border border-[#eaeaea] bg-white px-4 py-3.5">
-        <p className="m-0 text-[13px] text-[#666666]">
+      <section className="flex flex-col items-start justify-center gap-2 rounded-lg border border-border bg-white px-4 py-3.5">
+        <p className="m-0 text-[13px] text-muted-foreground">
           Brak treningów siłowych.
         </p>
         <button
           type="button"
           onClick={onNewGym}
-          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-[#171717] underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:shadow-focus"
         >
           + Trening siłowy
         </button>
@@ -175,12 +175,12 @@ export function RecordCard({
           />
         </div>
       )}
-      <section className="flex flex-1 flex-col rounded-lg border border-[#eaeaea] bg-white px-4 py-3.5">
+      <section className="flex flex-1 flex-col rounded-lg border border-border bg-white px-4 py-3.5">
         <div className="flex items-center justify-between">
           <h2 className="m-0 text-[15px] font-semibold">
             <Link
               href={`/sport/cwiczenia/${cwiczenie.id}`}
-              className="text-[#171717] no-underline hover:underline"
+              className="text-foreground no-underline hover:underline"
             >
               {cwiczenie.name}
             </Link>
@@ -188,8 +188,8 @@ export function RecordCard({
           <span
             className={
               biezacy.rekord
-                ? "rounded border border-[#bbe5cc] bg-[#f0faf4] px-1.5 py-px font-mono text-[11px] text-[#15803d]"
-                : "rounded border border-[#e0e0e0] bg-[#fafafa] px-1.5 py-px font-mono text-[11px] text-[#6b6b6b]"
+                ? "rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[11px] text-success"
+                : "rounded border border-input bg-panel px-1.5 py-px font-mono text-[11px] text-muted-foreground"
             }
           >
             {biezacy.rekord ? "REKORD" : "bez rekordu"}
@@ -204,7 +204,7 @@ export function RecordCard({
             <MonoLabel className="block">Najlepsza seria</MonoLabel>
             <div className="mt-1 font-mono text-xl">{biezacy.seria}</div>
           </div>
-          <div className="ml-auto pb-[3px] font-mono text-[11px] text-[#6b6b6b]">
+          <div className="ml-auto pb-[3px] font-mono text-[11px] text-muted-foreground">
             {hov ? biezacy.when : `ostatnio: ${biezacy.when}`}
           </div>
         </div>
@@ -262,7 +262,7 @@ export function RecordCard({
             </svg>
             {hov && najechany !== null && (
               <div
-                className="pointer-events-none absolute top-1 bottom-2.5 w-0 border-l border-dashed border-[#a3a3a3]"
+                className="pointer-events-none absolute top-1 bottom-2.5 w-0 border-l border-dashed border-ring"
                 style={{ left: `${(px(najechany) / 3).toFixed(2)}%` }}
               />
             )}
@@ -292,7 +292,7 @@ export function RecordCard({
                 onMouseEnter={() => setNajechany(i)}
                 onFocus={() => setNajechany(i)}
                 onClick={() => setNajechany(i)}
-                className="absolute top-0 bottom-0 cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:bg-[#171717]/5"
+                className="absolute top-0 bottom-0 cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:bg-primary/5"
                 style={{
                   left: `${((px(i) - szerStrefy / 2) / 3).toFixed(2)}%`,
                   width: `${(szerStrefy / 3).toFixed(2)}%`,
@@ -303,7 +303,7 @@ export function RecordCard({
           {hov && najechany !== null && (
             <div
               role="tooltip"
-              className="pointer-events-none absolute z-[5] rounded-lg border border-[#e0e0e0] bg-white px-2.5 py-2 whitespace-nowrap shadow-[0_8px_24px_rgba(0,0,0,.1)] [animation:rh-fade_.12s_ease-out]"
+              className="pointer-events-none absolute z-[5] rounded-lg border border-input bg-white px-2.5 py-2 whitespace-nowrap shadow-[0_8px_24px_rgba(0,0,0,.1)] [animation:rh-fade_.12s_ease-out]"
               style={{
                 top: Math.round(
                   py(hov.v) < 55 ? 12 + py(hov.v) + 14 : 12 + py(hov.v) - 100,
@@ -313,12 +313,12 @@ export function RecordCard({
                   : { left: `calc(${px(najechany) / 3}% + 10px)` }),
               }}
             >
-              <div className="font-mono text-[11px] text-[#6b6b6b]">
+              <div className="font-mono text-[11px] text-muted-foreground">
                 {hov.when}
               </div>
               <div className="mt-0.5 font-mono text-sm font-semibold">
                 {kg(hov.v)} kg{" "}
-                <span className="text-[11px] font-normal text-[#6b6b6b]">
+                <span className="text-[11px] font-normal text-muted-foreground">
                   szac. 1RM
                 </span>
               </div>
@@ -334,14 +334,14 @@ export function RecordCard({
                   : "pierwszy pomiar"}
               </div>
               {hov.rekord && (
-                <div className="mt-1.5 inline-block rounded border border-[#bbe5cc] bg-[#f0faf4] px-1.5 py-px font-mono text-[10px] text-[#15803d]">
+                <div className="mt-1.5 inline-block rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
                   REKORD
                 </div>
               )}
             </div>
           )}
         </div>
-        <div className="mt-1 flex justify-between font-mono text-[10px] text-[#6b6b6b]">
+        <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
           <span>{MIESIACE_KROTKO[punkty[0].miesiac - 1]}</span>
           <span>{MIESIACE_KROTKO[punkty[punkty.length - 1].miesiac - 1]}</span>
         </div>

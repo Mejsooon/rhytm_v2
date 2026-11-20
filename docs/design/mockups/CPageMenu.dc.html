@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Menu strony (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="books" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Books</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CFilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="CAddField.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><a href="CBooks.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; width: 100%; opacity: .55">
+      <div style="display: flex; align-items: center; gap: 10px"><dc-import name="PageIcon" icon="{{icon}}" size="26" hint-size="26px,26px"></dc-import><h1 style="margin: 0; font-size: 24px; font-weight: 600">{{name}}</h1></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 92px"></div><div class="card" style="height: 92px"></div><div class="card" style="height: 92px"></div></div>
+      <div class="card" style="height: 420px"></div>
+    </div>
+  </main>
+  <div role="menu" aria-label="Strona Books" class="pop" style="position: absolute; z-index: 20; left: 200px; top: 300px; width: 240px; padding: 4px">
+    <button type="button" role="menuitem" class="mi" onClick="{{rename}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span style="flex: 1">Zmień nazwę</span><span class="mi-sc">F2</span></button>
+    <button type="button" role="menuitem" class="mi" aria-haspopup="dialog" aria-expanded="{{icS}}" onClick="{{toggleIc}}" style="{{icBg}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg><span style="flex: 1">Zmień ikonę</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+    <button type="button" role="menuitem" class="mi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868"><rect x="8" y="8" width="14" height="14" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span style="flex: 1">Duplikuj</span></button>
+    <button type="button" role="menuitem" class="mi" onClick="{{toggleFav}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="color: #686868"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"></path></svg><span style="flex: 1">{{favLabel}}</span></button>
+    <div class="mi-sep"></div>
+    <button type="button" role="menuitem" class="mi bad" onClick="{{askDel}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg><span style="flex: 1">Usuń stronę</span></button>
+  </div>
+  <sc-if value="{{renaming}}" hint-placeholder-val="{{false}}">
+    <div class="pop" style="position: absolute; z-index: 21; left: 448px; top: 300px; width: 252px; padding: 10px">
+      <input type="text" class="inp" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}">
+    </div>
+  </sc-if>
+  <sc-if value="{{icOpen}}" hint-placeholder-val="{{true}}">
+    <div role="dialog" aria-label="Wybór ikony" class="pop" style="position: absolute; z-index: 21; left: 448px; top: 334px; width: 300px; padding: 6px 10px 10px">
+      <dc-import name="CIconPicker" value="{{icon}}" on-pick="{{pickIcon}}" hint-size="100%,340px"></dc-import>
+    </div>
+  </sc-if>
+  <sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}">
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="pd-t" class="dlg" style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); width: min(440px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="pd-t" class="dlg-t">Usunąć stronę „{{name}}”?</h2><p class="dlg-d">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p></div><button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{cancelDel}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+    <div class="dlg-f"><button type="button" class="btng" onClick="{{cancelDel}}">Anuluj</button><button type="button" class="btnd" onClick="{{doDel}}">Usuń</button></div>
+  </div>
+  </sc-if>
+  <sc-if value="{{toastOpen}}" hint-placeholder-val="{{false}}">
+    <div role="status" class="toast" style="position: absolute; right: 24px; bottom: 24px; z-index: 45">
+      <span>Usunięto</span>
+      <button type="button" class="btn xs" onClick="{{undo}}">Cofnij</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const icon = S.icon === undefined ? { kind: 'emoji', v: '📚' } : S.icon;
+    const icOpen = S.icOpen == null ? true : S.icOpen;
+    const name = S.name || 'Books';
+    const save = () => this.setState({ renaming: false, name: (S.draft || '').trim() || 'Books' });
+    return {
+      icon, name,
+      icOpen, icS: icOpen ? 'true' : 'false', icBg: icOpen ? 'background:rgba(0,0,0,.04)' : '',
+      toggleIc: () => this.setState({ icOpen: !icOpen, renaming: false }),
+      pickIcon: (v) => this.setState({ icon: v, icOpen: false }),
+      renaming: !!S.renaming,
+      rename: () => this.setState({ renaming: true, draft: name, icOpen: false }),
+      draft: S.draft || '',
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onDraftKey: (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') this.setState({ renaming: false }); },
+      saveName: save,
+      favLabel: S.fav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych',
+      toggleFav: () => this.setState({ fav: !S.fav }),
+      delOpen: !!S.del, askDel: () => this.setState({ del: true, icOpen: false, renaming: false }), cancelDel: () => this.setState({ del: false }),
+      doDel: () => this.setState({ del: false, toast: true }),
+      toastOpen: !!S.toast, undo: () => this.setState({ toast: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

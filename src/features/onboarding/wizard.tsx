@@ -23,7 +23,7 @@ function Wyloguj({ className }: { className?: string }) {
       <button
         type="submit"
         className={cn(
-          "cursor-pointer border-0 bg-transparent text-[#525252] hover:text-[#171717]",
+          "cursor-pointer border-0 bg-transparent text-soft-foreground hover:text-foreground",
           className,
         )}
       >
@@ -168,11 +168,11 @@ export function OnboardingWizard({
   const mozeDalej = canContinue(step, draft) && !pending;
 
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.45] text-[#171717] tabular-nums min-[800px]:bg-[#fafafa]">
+    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.45] text-foreground tabular-nums min-[800px]:bg-panel">
       {/* Nagłówek web */}
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
         <RhytmLogo size={24} withWordmark />
-        <span className="ml-auto font-mono text-xs text-[#737373]">
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
           Krok {step} z 7
         </span>
         <Wyloguj className="ml-4 p-0 text-[13px]" />
@@ -186,7 +186,7 @@ export function OnboardingWizard({
             aria-label="Wstecz"
             onClick={wstecz}
             disabled={pending}
-            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground hover:bg-muted"
           >
             <ChevronLeft
               aria-hidden="true"
@@ -199,14 +199,14 @@ export function OnboardingWizard({
             <RhytmLogo size={26} />
           </span>
         )}
-        <span className="flex-1 text-center font-mono text-[11px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+        <span className="flex-1 text-center font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
           Krok {step} z 7
         </span>
-        <Wyloguj className="inline-flex h-11 items-center px-3 text-sm text-[#666666]" />
+        <Wyloguj className="inline-flex h-11 items-center px-3 text-sm text-muted-foreground" />
       </header>
 
       <div className="flex min-h-0 flex-1 items-center justify-center min-[800px]:px-6 min-[800px]:pb-10">
-        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-[#eaeaea] min-[800px]:bg-white min-[800px]:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
+        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
           {/* Pasek postępu: 7 segmentów po 4 px */}
           <div
             role="progressbar"
@@ -221,7 +221,7 @@ export function OnboardingWizard({
                 key={k}
                 className={cn(
                   "h-1 rounded-sm",
-                  k <= step ? "bg-[#171717]" : "bg-[#e5e5e5]",
+                  k <= step ? "bg-primary" : "bg-input",
                 )}
               />
             ))}
@@ -244,7 +244,7 @@ export function OnboardingWizard({
 
               <div
                 data-testid="wizard-footer"
-                className="flex flex-none flex-col gap-2 border-t border-[#f0f0f0] bg-white pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:-mx-5 max-[799px]:px-5 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:pt-5 min-[800px]:pb-0"
+                className="flex flex-none flex-col gap-2 border-t border-border bg-white pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:-mx-5 max-[799px]:px-5 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:pt-5 min-[800px]:pb-0"
               >
                 {/* Web: „Wstecz” w stopce; na telefonie jest w nagłówku */}
                 <Button
@@ -261,7 +261,7 @@ export function OnboardingWizard({
                     variant="ghost"
                     onClick={pomin}
                     disabled={pending}
-                    className="text-[#525252] max-[799px]:order-2 max-[799px]:h-11 max-[799px]:border-0"
+                    className="text-soft-foreground max-[799px]:order-2 max-[799px]:h-11 max-[799px]:border-0"
                   >
                     Pomiń
                   </Button>
@@ -277,7 +277,7 @@ export function OnboardingWizard({
                 {blad && (
                   <p
                     role="alert"
-                    className="m-0 text-[13px] text-[#b91c1c] max-[799px]:order-3 min-[800px]:basis-full"
+                    className="m-0 text-[13px] text-destructive-foreground max-[799px]:order-3 min-[800px]:basis-full"
                   >
                     {blad}
                   </p>
@@ -285,7 +285,7 @@ export function OnboardingWizard({
               </div>
             </div>
 
-            <div className="relative overflow-hidden border-l border-[#eaeaea] bg-[#f4f4f5] max-[1100px]:hidden">
+            <div className="relative overflow-hidden border-l border-border bg-muted max-[1100px]:hidden">
               <LivePreview
                 draft={draft}
                 step={step}

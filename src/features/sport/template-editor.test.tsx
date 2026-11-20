@@ -105,8 +105,8 @@ describe("TemplateEditor — nowy szablon", () => {
     );
     // Zaznaczony dzień wypełniony na czarno jak w makiecie
     expect(screen.getByRole("button", { name: "Wt" })).toHaveClass(
-      "bg-[#171717]",
-      "text-white",
+      "bg-primary",
+      "text-primary-foreground",
     );
     expect(
       screen.getByRole("button", { name: "Godzina startu" }),

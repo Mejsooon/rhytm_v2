@@ -101,21 +101,21 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
         data-testid="web-nawyk"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
-          <div className="font-mono text-[13px] text-[#666666]">
+        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
+          <div className="font-mono text-[13px] text-muted-foreground">
             <Link
               href="/nawyki"
-              className="text-[#666666] no-underline hover:text-[#171717]"
+              className="text-muted-foreground no-underline hover:text-foreground"
             >
               Nawyki i sen
             </Link>{" "}
-            <span className="text-[#b0b0b0]">/</span>{" "}
-            <span className="text-[#171717]">{habit.name}</span>
+            <span className="text-faint-foreground">/</span>{" "}
+            <span className="text-foreground">{habit.name}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              className="border-[#fecaca] text-[#b91c1c] hover:text-[#b91c1c]"
+              className="border-destructive-border text-destructive-foreground hover:text-destructive-foreground"
               onClick={() => setUsuwanie(true)}
             >
               <svg
@@ -142,21 +142,21 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
             <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
               {habit.name}
             </h1>
-            <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">
+            <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
               {podtytul}
             </p>
           </div>
 
-          <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+          <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border">
             {kafelki.map((k) => (
               <div key={k.etykieta} className="bg-white px-[18px] py-4">
-                <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+                <div className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
                   {k.etykieta}
                 </div>
                 <div className="mt-2 font-mono text-[26px]">
                   {k.wartosc}
                   {k.jednostka && (
-                    <span className="ml-1 text-sm text-[#666666]">
+                    <span className="ml-1 text-sm text-muted-foreground">
                       {k.jednostka}
                     </span>
                   )}
@@ -179,8 +179,8 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
               <HabitNotes habitId={habit.id} notes={data.notes} />
             </div>
 
-            <section className="rounded-lg border border-[#eaeaea] bg-white">
-              <div className="border-b border-[#eaeaea] px-4 py-3.5">
+            <section className="rounded-lg border border-border bg-white">
+              <div className="border-b border-border px-4 py-3.5">
                 <h2 className="m-0 text-[15px] font-semibold">
                   Historia harmonogramu
                 </h2>
@@ -188,15 +188,15 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
               {historia.map((w) => (
                 <div
                   key={w.klucz}
-                  className="border-b border-[#f0f0f0] px-4 py-3 last:border-b-0"
+                  className="border-b border-border px-4 py-3 last:border-b-0"
                 >
-                  <div className="font-mono text-xs text-[#6b6b6b]">
+                  <div className="font-mono text-xs text-muted-foreground">
                     {w.zakres}
                   </div>
                   <div className="mt-0.5">{w.opis}</div>
                 </div>
               ))}
-              <p className="m-0 border-t border-[#eaeaea] bg-[#fafafa] px-4 py-3 font-mono text-[11px] text-[#6b6b6b]">
+              <p className="m-0 border-t border-border bg-panel px-4 py-3 font-mono text-[11px] text-muted-foreground">
                 Zmiana harmonogramu nie przelicza przeszłych dni.
               </p>
             </section>

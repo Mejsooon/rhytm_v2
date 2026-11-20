@@ -1,6 +1,6 @@
 // Karta „Ten tydzień” wg Today.dc.html: pięć kafelków (Zadania, Nawyki, Śr. sen, Bieg, Treningi),
 // każdy z wartością, słupkami 7 dni tygodnia i dopiskiem. Liczby przychodzą gotowe z `weekTiles` (model.ts).
-import { MonoLabel } from "@/components/controls";
+import { Card } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { DNI_SKROT } from "@/features/calendar/mobile/pl";
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
@@ -59,7 +59,7 @@ export function WeekCard({
           .join(", ");
 
   // Słupki dni jak `spark` w makiecie: wysokość v / max × 28 px (min. 3 px);
-  // dzień bez wartości szary #eaeaea, dziś zielony, dzień z osiągniętym celem ciemny
+  // dzień bez wartości rgba(0,0,0,.06), dziś zielony #15803d, osiągnięty cel #262626, reszta rgba(0,0,0,.16)
   const indeksDzis = Array.from({ length: 7 }, (_, i) =>
     addDays(weekStartDate, i),
   ).indexOf(today);
@@ -80,12 +80,12 @@ export function WeekCard({
       wysokosc: v === null ? 3 : Math.max(3, Math.round((v / max) * 28)),
       kolor:
         v === null
-          ? "#eaeaea"
+          ? "rgba(0,0,0,.06)"
           : i === indeksDzis
             ? "#15803d"
             : cel(v, i)
-              ? "#171717"
-              : "#d4d4d4",
+              ? "#262626"
+              : "rgba(0,0,0,.16)",
     }));
   const bezCelu = () => false;
   const najwiecej = (wartosci: (number | null)[]) =>
@@ -174,25 +174,35 @@ export function WeekCard({
   ];
 
   return (
-    <section aria-labelledby="ten-tydzien">
-      <div className="mb-2.5 flex items-baseline justify-between">
-        <h2 id="ten-tydzien" className="m-0 text-[15px] font-semibold">
+    <section aria-labelledby="ten-tydzien" className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between">
+        {/* .card-t */}
+        <h2
+          id="ten-tydzien"
+          className="m-0 text-base leading-[1.3] font-semibold"
+        >
           Ten tydzień
         </h2>
-        <span className="font-mono text-xs text-[#6b6b6b]">{zakres}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {zakres}
+        </span>
       </div>
-      <div className="grid grid-cols-5 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea] max-[799px]:grid-cols-2">
+      {/* Pięć osobnych kart .card (padding 16, odstęp 10) w siatce z odstępem 12 px */}
+      <div className="grid grid-cols-5 gap-3 max-[799px]:grid-cols-2">
         {kafelki.map((k) => (
-          <div
+          <Card
             key={k.etykieta}
             data-testid="kafelek-tygodnia"
-            className="flex flex-col gap-2.5 bg-white px-4 py-3.5"
+            className="min-w-0 gap-2.5 p-4"
           >
-            <MonoLabel>{k.etykieta}</MonoLabel>
-            <div className="font-mono text-2xl leading-none text-[#171717]">
+            {/* .lbl */}
+            <div className="text-xs font-medium text-muted-foreground">
+              {k.etykieta}
+            </div>
+            <div className="text-2xl leading-none font-semibold tracking-[-0.02em] text-foreground tabular-nums">
               {k.wartosc}{" "}
               {k.jednostka && (
-                <span className="text-[13px] text-[#666666]">
+                <span className="text-[13px] font-normal tracking-normal text-muted-foreground">
                   {k.jednostka}
                 </span>
               )}
@@ -204,16 +214,16 @@ export function WeekCard({
                   aria-hidden="true"
                   data-testid="slupek-dnia"
                   title={s.tytul}
-                  className="block rounded-[2px]"
+                  className="block rounded-[3px]"
                   style={{ height: s.wysokosc, background: s.kolor }}
                 />
               ))}
             </div>
-            {/* Pusty dopisek trzyma wysokość, żeby kafelki w rzędzie się zgadzały */}
-            <div className="min-h-[1lh] font-mono text-[11px] text-[#6b6b6b]">
+            {/* .hint.num; pusty dopisek trzyma wysokość, żeby kafelki w rzędzie się zgadzały */}
+            <div className="min-h-[1lh] text-xs text-muted-foreground tabular-nums">
               {k.dopisek}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </section>

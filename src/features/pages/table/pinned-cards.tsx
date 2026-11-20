@@ -18,7 +18,7 @@ export function PinnedCards({
 }) {
   if (cards.length === 0) return null;
   return (
-    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border">
       {cards.map((card, i) => {
         const wynik = computeCard(card, fields, rows, today);
         // Średnia ocena bez ocen: „— / 5” jak w makiecie
@@ -29,7 +29,7 @@ export function PinnedCards({
             : "";
         return (
           <div key={i} className="bg-white px-[18px] py-4">
-            <div className="font-mono text-[11px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+            <div className="font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
               {wynik.label}
             </div>
             {card.aggregation === "nearest_date" ? (
@@ -38,7 +38,7 @@ export function PinnedCards({
                 {wynik.value}{" "}
                 {wynik.sub && (
                   <span
-                    className={`font-mono text-[13px] ${wynik.urgent ? "text-[#b91c1c]" : "text-[#6b6b6b]"}`}
+                    className={`font-mono text-[13px] ${wynik.urgent ? "text-destructive-foreground" : "text-muted-foreground"}`}
                   >
                     {wynik.sub}
                   </span>
@@ -50,7 +50,7 @@ export function PinnedCards({
                   // „1 / 8” z makiety: druga część mniejsza i szara
                   <>
                     {wynik.value.split(" / ")[0]}{" "}
-                    <span className="text-sm text-[#666666]">/ {wynik.value.split(" / ")[1]}</span>
+                    <span className="text-sm text-muted-foreground">/ {wynik.value.split(" / ")[1]}</span>
                   </>
                 ) : (
                   <>
@@ -58,7 +58,7 @@ export function PinnedCards({
                     {(wynik.sub || skala) && (
                       <>
                         {" "}
-                        <span className="text-sm text-[#666666]">{wynik.sub || skala}</span>
+                        <span className="text-sm text-muted-foreground">{wynik.sub || skala}</span>
                       </>
                     )}
                   </>

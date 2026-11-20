@@ -83,19 +83,19 @@ export function StepNotify({
         data-testid="notify-web"
         className="flex flex-col gap-5 max-[799px]:hidden"
       >
-        <div className="flex items-center gap-3 rounded-[10px] border border-[#e0e0e0] p-3.5">
+        <div className="flex items-center gap-3 rounded-md border border-input p-3.5">
           <Bell
             aria-hidden="true"
-            className="size-[18px] flex-none text-[#525252]"
+            className="size-[18px] flex-none text-soft-foreground"
             strokeWidth={1.5}
           />
           <span className="flex flex-1 flex-col gap-0.5">
             <span className="font-medium">Powiadomienia w przeglądarce</span>
-            <span className="text-[13px] text-[#737373]">{tekstWeb}</span>
+            <span className="text-[13px] text-muted-foreground">{tekstWeb}</span>
           </span>
           {notify.perm ? (
             <>
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#15803d]">
+              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-success">
                 <Check
                   aria-hidden="true"
                   className="size-3.5"
@@ -122,15 +122,15 @@ export function StepNotify({
           )}
         </div>
 
-        <div className="flex flex-col border-t border-[#f0f0f0]">
+        <div className="flex flex-col border-t border-border">
           {REMINDERS.map((r) => (
             <div
               key={r.key}
-              className="flex min-h-14 items-center gap-3 border-b border-[#f0f0f0]"
+              className="flex min-h-14 items-center gap-3 border-b border-border"
             >
               <span className="flex flex-1 flex-col gap-0.5">
                 <span className="font-medium">{r.title}</span>
-                <span className="text-[13px] text-[#737373]">{r.when}</span>
+                <span className="text-[13px] text-muted-foreground">{r.when}</span>
               </span>
               <Switch
                 checked={notify[r.key]}
@@ -143,10 +143,10 @@ export function StepNotify({
           ))}
         </div>
 
-        <div className="flex items-start gap-2 rounded-lg bg-[#fafafa] px-3 py-2.5 text-[13px] text-[#525252]">
+        <div className="flex items-start gap-2 rounded-lg bg-panel px-3 py-2.5 text-[13px] text-soft-foreground">
           <Smartphone
             aria-hidden="true"
-            className="size-4 flex-none text-[#737373]"
+            className="size-4 flex-none text-muted-foreground"
             strokeWidth={1.5}
           />
           <span>
@@ -160,17 +160,17 @@ export function StepNotify({
         data-testid="notify-phone"
         className="flex flex-col gap-4 min-[800px]:hidden"
       >
-        <div className="flex items-center gap-3 rounded-xl border border-[#eaeaea] bg-white p-3.5">
-          <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-[#f5f5f5]">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3.5">
+          <span className="flex size-10 flex-none items-center justify-center rounded-md bg-muted">
             <Bell
               aria-hidden="true"
-              className="size-[19px] text-[#404040]"
+              className="size-[19px] text-soft-foreground"
               strokeWidth={2}
             />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-medium">Powiadomienia</span>
-            <span className="text-xs text-[#666666]">{tekstTelefon}</span>
+            <span className="text-xs text-muted-foreground">{tekstTelefon}</span>
           </span>
           {notify.perm ? (
             <span className="flex flex-col items-end gap-0.5">
@@ -178,7 +178,7 @@ export function StepNotify({
               <button
                 type="button"
                 onClick={cofnij}
-                className="min-h-11 cursor-pointer border-0 bg-transparent px-1 text-xs text-[#666666] underline"
+                className="min-h-11 cursor-pointer border-0 bg-transparent px-1 text-xs text-muted-foreground underline"
               >
                 Anuluj
               </button>
@@ -194,19 +194,19 @@ export function StepNotify({
           )}
         </div>
 
-        <div className="rounded-xl border border-[#eaeaea] bg-white">
+        <div className="rounded-xl border border-border bg-white">
           {REMINDERS.map((r) => (
             <div
               key={r.key}
               data-reminder-row
               className={cn(
-                "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0",
+                "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0",
                 !notify.perm && "opacity-[.55]",
               )}
             >
               <span className="min-w-0 flex-1">
                 <span className="block">{r.title}</span>
-                <span className="font-mono text-xs text-[#6b6b6b]">
+                <span className="font-mono text-xs text-muted-foreground">
                   {r.when}
                 </span>
               </span>
@@ -221,7 +221,7 @@ export function StepNotify({
           ))}
         </div>
 
-        <p className="m-0 text-xs leading-normal text-[#666666]">
+        <p className="m-0 text-xs leading-normal text-muted-foreground">
           Dodaj rhytm do ekranu głównego, żeby dostawać push także przy
           zamkniętej aplikacji.
         </p>

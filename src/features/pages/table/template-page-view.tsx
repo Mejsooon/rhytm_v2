@@ -51,7 +51,7 @@ const KOLUMNY_MAKIETY = 5;
 
 // Przycisk paska telefonu (jak w MEditor)
 const PRZYCISK_PASKA =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 font-[inherit] text-[#171717] hover:bg-[#f5f5f5]";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 font-[inherit] text-foreground hover:bg-muted";
 
 // Strona z szablonu (Books / Projects / Websites.dc.html, Pusta strona bez kart): nagłówek
 // z Filtruj / „+ Pole” / „Nowy wiersz”, metadane, przypięte karty, tabela z podglądem i trybem
@@ -132,8 +132,8 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         : (tytulowe?.config.empty_label ?? "Bez tytułu");
 
   const btn =
-    "cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] font-[inherit] text-sm text-[#171717] max-[799px]:min-h-11";
-  const kolumnaAkcji = <th scope="col" className="w-[120px] border-b border-[#eaeaea] px-3.5 py-2.5" />;
+    "cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11";
+  const kolumnaAkcji = <th scope="col" className="w-[120px] border-b border-border px-3.5 py-2.5" />;
 
   function zapiszNazwe(e: React.FormEvent) {
     e.preventDefault();
@@ -186,9 +186,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         </form>
       </FormDialog>
 
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-[#666666] max-[799px]:hidden">
-          Strony <span className="text-[#b0b0b0]">/</span> <span className="text-[#171717]">{tytul}</span>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
+        <div className="font-mono text-[13px] text-muted-foreground max-[799px]:hidden">
+          Strony <span className="text-faint-foreground">/</span> <span className="text-foreground">{tytul}</span>
         </div>
         <div className="flex gap-2">
           <FilterPopover
@@ -212,7 +212,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
           <button
             type="button"
             onClick={nowyWiersz}
-            className="cursor-pointer rounded-md border border-[#171717] bg-[#171717] px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
+            className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
           >
             Nowy wiersz
           </button>
@@ -228,7 +228,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             </span>
             {tytul}
           </h1>
-          <p className="mt-1.5 mb-0 font-mono text-xs text-[#6b6b6b]">
+          <p className="mt-1.5 mb-0 font-mono text-xs text-muted-foreground">
             {meta}
             {liczbaUkrytych > 0 && (
               <>
@@ -236,7 +236,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                 <button
                   type="button"
                   onClick={() => void store.patchSettings({ hidden_field_ids: [] })}
-                  className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[inherit] underline decoration-dotted underline-offset-2 hover:text-[#171717] max-[799px]:min-h-11"
+                  className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[inherit] underline decoration-dotted underline-offset-2 hover:text-foreground max-[799px]:min-h-11"
                 >
                   {`· ${liczbaUkrytych} ${rowsForm(liczbaUkrytych) === "many" ? "ukrytych" : "ukryte"}`}
                 </button>
@@ -255,7 +255,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
 
         {/* Przewijanie poziome poniżej 1100 px; przy większej liczbie kolumn niż w makiecie — zawsze */}
         <div
-          className={`rounded-lg border border-[#eaeaea] ${
+          className={`rounded-lg border border-border ${
             widocznePola.length > KOLUMNY_MAKIETY ? "overflow-x-auto" : "max-[1099px]:overflow-x-auto"
           }`}
         >
@@ -264,12 +264,12 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             style={{ minWidth: page.templateKey === "projects" ? 820 : 760 }}
           >
             <thead>
-              <tr className="bg-[#fafafa]">
+              <tr className="bg-panel">
                 {widocznePola.map((f) => (
                   <th
                     key={f.id}
                     scope="col"
-                    className="border-b border-[#eaeaea] px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-[#666666]"
+                    className="border-b border-border px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-muted-foreground"
                   >
                     <ColumnMenu
                       field={f}
@@ -320,7 +320,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                       onDelete={() => void store.removeField(f)}
                     />
                     {f.type === "date" && f.config.show_in_calendar === true && (
-                      <span className="ml-1.5 rounded-[4px] border border-[#bbe5cc] px-[5px] py-px font-mono text-[10px] text-[#15803d]">
+                      <span className="ml-1.5 rounded-[4px] border border-success-border px-[5px] py-px font-mono text-[10px] text-success">
                         w kalendarzu
                       </span>
                     )}
@@ -373,7 +373,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
               )}
             </tbody>
             <tfoot>
-              <tr className="bg-[#fafafa]">
+              <tr className="bg-panel">
                 {widocznePola.map((f, i) => {
                   if (i === 0) {
                     return (
@@ -381,7 +381,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                         <button
                           type="button"
                           onClick={nowyWiersz}
-                          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[#666666] max-[799px]:min-h-11"
+                          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-muted-foreground max-[799px]:min-h-11"
                         >
                           + Nowy wiersz
                         </button>

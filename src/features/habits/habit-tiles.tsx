@@ -11,10 +11,10 @@ import { sleepStats, type SleepLog } from "./sleep";
 import { formatDuration, streakLabel } from "./text";
 
 const ETYKIETA =
-  "font-mono text-[11px] uppercase tracking-[.06em] text-[#6b6b6b]";
+  "font-mono text-[11px] uppercase tracking-[.06em] text-muted-foreground";
 const LICZBA = "mt-2 font-mono text-[26px]";
-const POD_LICZBA = "mt-2 font-mono text-xs text-[#6b6b6b]";
-const JEDNOSTKA = "text-sm text-[#666666]";
+const POD_LICZBA = "mt-2 font-mono text-xs text-muted-foreground";
+const JEDNOSTKA = "text-sm text-muted-foreground";
 
 export function HabitTiles({
   habits,
@@ -57,13 +57,13 @@ export function HabitTiles({
   const sen = sleepStats(sleepLogs, today, 14, sleepGoalMin);
 
   return (
-    <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+    <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border">
       <div className="bg-white px-[18px] py-4">
         <div className={ETYKIETA}>Nawyki dziś</div>
         <div className={LICZBA}>{`${dzis.done}/${dzis.planned}`}</div>
-        <div className="mt-2.5 h-1 rounded-sm bg-[#f0f0f0]">
+        <div className="mt-2.5 h-1 rounded-sm bg-active">
           <div
-            className="h-1 rounded-sm bg-[#15803d] transition-[width] duration-200"
+            className="h-1 rounded-sm bg-success transition-[width] duration-200"
             style={{ width: `${pasek}%` }}
           />
         </div>

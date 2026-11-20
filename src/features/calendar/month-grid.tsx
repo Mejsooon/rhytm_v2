@@ -72,13 +72,13 @@ export function MonthGrid({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[760px] rounded-lg border border-[#eaeaea]">
-        <div className="grid grid-cols-7 rounded-t-lg border-b border-[#eaeaea] bg-[#fafafa] font-mono text-[11px] text-[#6b6b6b]">
+      <div className="min-w-[760px] rounded-lg border border-border">
+        <div className="grid grid-cols-7 rounded-t-lg border-b border-border bg-panel font-mono text-[11px] text-muted-foreground">
           {days.slice(0, 7).map((dzien, i) => (
             <span
               key={dzien}
               data-testid="nazwa-dnia"
-              className={`px-2.5 py-2 ${i > 0 ? "border-l border-[#eaeaea]" : ""}`}
+              className={`px-2.5 py-2 ${i > 0 ? "border-l border-border" : ""}`}
             >
               {DNI_KROTKO[weekdayOf(dzien)]}
             </span>
@@ -92,10 +92,10 @@ export function MonthGrid({
             const wpisy = poDniach.get(dzien) ?? [];
             const kiedy = `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`;
             const numerKlasy = !wMiesiacu
-              ? "text-[#a3a3a3]"
+              ? "text-faint-foreground"
               : dzien === today
-                ? "rounded bg-[#15803d] px-[5px] font-semibold text-white"
-                : "font-medium text-[#171717]";
+                ? "rounded bg-success px-[5px] font-semibold text-white"
+                : "font-medium text-foreground";
 
             return (
               <div
@@ -111,7 +111,7 @@ export function MonthGrid({
                     return;
                   onDayClick(dzien, e.currentTarget);
                 }}
-                className={`group relative min-h-28 cursor-pointer px-2 py-1.5 ${i >= 7 ? "border-t border-[#eaeaea]" : ""} ${i % 7 > 0 ? "border-l border-[#eaeaea]" : ""} ${!wMiesiacu || weekend ? "bg-[#fafafa]" : ""} ${activeDay === dzien ? "ring-2 ring-[#171717] ring-inset" : ""}`}
+                className={`group relative min-h-28 cursor-pointer px-2 py-1.5 ${i >= 7 ? "border-t border-border" : ""} ${i % 7 > 0 ? "border-l border-border" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
               >
                 <span
                   data-testid={`numer-${dzien}`}
@@ -127,7 +127,7 @@ export function MonthGrid({
                       e.currentTarget.closest<HTMLElement>("[data-day]");
                     if (komorka) onDayClick(dzien, komorka);
                   }}
-                  className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-[#666666] opacity-0 outline-none group-hover:bg-[#f0f0f0] group-hover:opacity-100 focus-visible:bg-[#f0f0f0] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+                  className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-muted-foreground opacity-0 outline-none group-hover:bg-active group-hover:opacity-100 focus-visible:bg-active focus-visible:opacity-100 focus-visible:shadow-focus"
                 >
                   <span aria-hidden="true">+</span>
                 </button>
@@ -149,7 +149,7 @@ export function MonthGrid({
                                 borderLeft: `2px solid ${SPORT_COLOR}`,
                               }
                         }
-                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:shadow-focus"
                       >
                         {i.title}
                       </Link>
@@ -161,7 +161,7 @@ export function MonthGrid({
                   // Wg makiety: z kategorią tło w kolorze (alfa 14) i lewy pasek 2 px, bez kategorii kreskowana ramka
                   const wyglad = kolor
                     ? "border-l-2"
-                    : "border border-dashed border-[#a3a3a3] font-mono text-[#404040]";
+                    : "border border-dashed border-ring font-mono text-soft-foreground";
                   return (
                     <button
                       key={o.key}
@@ -178,7 +178,7 @@ export function MonthGrid({
                             }
                           : undefined
                       }
-                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30 ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-[#171717]" : ""}`}
+                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:shadow-focus ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-ring" : ""}`}
                     >
                       {o.title}
                     </button>
@@ -188,7 +188,7 @@ export function MonthGrid({
                   <Link
                     href={`/kalendarz?widok=dzien&data=${dzien}`}
                     onClick={onMoreClick}
-                    className="mt-[3px] block font-mono text-[10px] text-[#6b6b6b] hover:text-[#171717]"
+                    className="mt-[3px] block font-mono text-[10px] text-muted-foreground hover:text-foreground"
                   >
                     {`+${wpisy.length - MAX_WPISOW} więcej`}
                   </Link>

@@ -86,10 +86,10 @@ describe("PageMenu", () => {
     duplicatePage.mockResolvedValue({ ok: true, id: "kopia" });
   });
 
-  it("pokazuje pozycje z makiety i „★ Dodaj do ulubionych”", async () => {
+  it("pokazuje pozycje z makiety i „Dodaj do ulubionych” (nazwa bez „★”)", async () => {
     await otworz();
     const menu = screen.getByRole("menu", { name: "Strona Books" });
-    for (const nazwa of ["Zmień nazwę", "Zmień ikonę", "Duplikuj", "★ Dodaj do ulubionych", "Usuń stronę"]) {
+    for (const nazwa of ["Zmień nazwę", "Zmień ikonę", "Duplikuj", "Dodaj do ulubionych", "Usuń stronę"]) {
       expect(within(menu).getByRole("menuitem", { name: new RegExp(nazwa) })).toBeInTheDocument();
     }
     expect(within(menu).getByText("F2")).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe("PageMenu", () => {
 
   it("ulubione: „Dodaj do ulubionych” woła setFavorite(id, true)", async () => {
     const user = await otworz();
-    await user.click(screen.getByRole("menuitem", { name: "★ Dodaj do ulubionych" }));
+    await user.click(screen.getByRole("menuitem", { name: "Dodaj do ulubionych" }));
     expect(setFavorite).toHaveBeenCalledWith("b", true);
   });
 

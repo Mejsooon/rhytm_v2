@@ -44,6 +44,15 @@ describe("Segment", () => {
     );
   });
 
+  it("wybrany ma bg-white, a przycisk 28 px (40 px na telefonie)", () => {
+    render(<Wrapper />);
+    const wybrany = screen.getByRole("radio", { name: "Pn" });
+    expect(wybrany).toHaveClass("bg-white", "h-7", "max-[799px]:h-10");
+    expect(screen.getByRole("radio", { name: "Nd" })).not.toHaveClass(
+      "bg-white",
+    );
+  });
+
   it("strzałki zmieniają wybór", async () => {
     const onChange = vi.fn();
     render(<Wrapper onChange={onChange} />);

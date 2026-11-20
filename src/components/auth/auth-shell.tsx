@@ -34,19 +34,19 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.21] text-[#171717] min-[800px]:bg-[#fafafa] min-[800px]:bg-[linear-gradient(#eeeeee_1px,transparent_1px),linear-gradient(90deg,#eeeeee_1px,transparent_1px)] min-[800px]:bg-[length:48px_48px]">
+    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.21] text-foreground min-[800px]:bg-panel min-[800px]:bg-[linear-gradient(#eeeeee_1px,transparent_1px),linear-gradient(90deg,#eeeeee_1px,transparent_1px)] min-[800px]:bg-[length:48px_48px]">
       <header className="flex items-center justify-between px-6 py-4 max-[799px]:hidden">
         <RhytmLogo size={26} withWordmark />
         {headerAction && (
           <Link
             href={headerAction.href}
-            className="rounded-md border border-[#e0e0e0] bg-white px-3 py-1.5 text-[#171717] no-underline hover:text-black"
+            className="rounded-md border border-input bg-white px-3 py-1.5 text-foreground no-underline hover:text-black"
           >
             {headerAction.label}
           </Link>
         )}
         {headerNote && (
-          <span className="font-mono text-xs text-[#6b6b6b]">{headerNote}</span>
+          <span className="font-mono text-xs text-muted-foreground">{headerNote}</span>
         )}
       </header>
 
@@ -55,7 +55,7 @@ export function AuthShell({
           <Link
             href={phoneBack}
             aria-label="Wstecz"
-            className="inline-flex size-11 items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-muted"
           >
             <ChevronLeft
               aria-hidden="true"
@@ -69,7 +69,7 @@ export function AuthShell({
       <main className="flex flex-1 items-center justify-center p-6 max-[799px]:items-stretch max-[799px]:p-0">
         <div
           className={cn(
-            "box-content flex w-full flex-col gap-4 rounded-xl border border-[#eaeaea] bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_rgba(0,0,0,.04)]",
+            "box-content flex w-full flex-col gap-4 rounded-xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_rgba(0,0,0,.04)]",
             SZEROKOSC_KARTY[width],
             // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
             "max-[799px]:box-border max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",

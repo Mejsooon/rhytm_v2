@@ -125,7 +125,7 @@ function karta(etykieta: string) {
 
 // Wiersz w trybie edycji (tło #f7fbf8)
 function edycja() {
-  const tr = document.querySelector("tr.bg-\\[\\#f7fbf8\\]");
+  const tr = document.querySelector("tr.bg-success-soft");
   if (!tr) throw new Error("Brak wiersza w edycji");
   return tr as HTMLElement;
 }
@@ -191,7 +191,7 @@ describe("TemplatePageView", () => {
       render(<TemplatePageView data={strona("projects", "Projects", PROJECTS)} />);
       const termin = karta("Najbliższy termin");
       expect(termin.textContent).toContain("Projekt z baz danych — drony");
-      expect(within(termin).getByText("za 5 dni")).toHaveClass("text-[#b91c1c]");
+      expect(within(termin).getByText("za 5 dni")).toHaveClass("text-destructive-foreground");
       expect(karta("Zrobione").textContent).toContain("1 / 8");
       expect(karta("W toku").textContent).toContain("3");
     });
@@ -209,7 +209,7 @@ describe("TemplatePageView", () => {
     it("Projects: termin dalej niż 7 dni jest szary", () => {
       const dane = strona("projects", "Projects", [{ Nazwa: "NetScope", Status: "W toku", Termin: "2026-12-15" }]);
       render(<TemplatePageView data={dane} />);
-      expect(within(karta("Najbliższy termin")).getByText("za 30 dni")).toHaveClass("text-[#6b6b6b]");
+      expect(within(karta("Najbliższy termin")).getByText("za 30 dni")).toHaveClass("text-muted-foreground");
     });
   });
 
@@ -247,8 +247,8 @@ describe("TemplatePageView", () => {
         { Nazwa: "Jutro", Status: "W toku", Termin: "2026-11-16" },
       ]);
       render(<TemplatePageView data={dane} />);
-      expect(within(wiersz("drony")).getByText("za 5 dni")).toHaveClass("text-[#b91c1c]");
-      expect(within(wiersz("rhytm v3")).getByText("za 30 dni")).toHaveClass("text-[#6b6b6b]");
+      expect(within(wiersz("drony")).getByText("za 5 dni")).toHaveClass("text-destructive-foreground");
+      expect(within(wiersz("rhytm v3")).getByText("za 30 dni")).toHaveClass("text-muted-foreground");
       expect(within(wiersz("rhytm v2")).getByText("minął")).toBeInTheDocument();
       expect(within(wiersz("NetScope")).getByText("za 3 mies.")).toBeInTheDocument();
       expect(within(wiersz("Dziś")).getByText("dziś")).toBeInTheDocument();
@@ -281,7 +281,7 @@ describe("TemplatePageView", () => {
       render(<TemplatePageView data={dane} />);
       await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
       const edycja = screen.getByRole("textbox", { name: "Tytuł" }).closest("tr") as HTMLElement;
-      expect(edycja).toHaveClass("bg-[#f7fbf8]");
+      expect(edycja).toHaveClass("bg-success-soft");
       expect(within(edycja).getByRole("textbox", { name: "Autor" })).toHaveValue("Cal Newport");
       expect(within(edycja).getByRole("button", { name: "Przeczytana" }).textContent).toContain("12.10.2026");
 
@@ -644,7 +644,7 @@ describe("TemplatePageView", () => {
       expect(within(arkusz).getByRole("button", { name: "Usuń wiersz" })).toBeInTheDocument();
       expect(within(arkusz).getByRole("button", { name: "Anuluj" })).toBeInTheDocument();
       // Bez edycji w wierszu tabeli
-      expect(document.querySelector("tr.bg-\\[\\#f7fbf8\\]")).toBeNull();
+      expect(document.querySelector("tr.bg-success-soft")).toBeNull();
 
       await user.clear(within(arkusz).getByRole("textbox", { name: "Autor" }));
       await user.type(within(arkusz).getByRole("textbox", { name: "Autor" }), "Newport");

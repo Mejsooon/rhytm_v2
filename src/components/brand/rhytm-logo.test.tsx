@@ -9,6 +9,12 @@ describe("RhytmLogo", () => {
     expect(container.querySelectorAll('rect[fill="#15803d"]')).toHaveLength(1);
   });
 
+  it("ciemne kwadraty mają kolor foreground (#262626), nie #171717", () => {
+    const { container } = render(<RhytmLogo />);
+    expect(container.querySelectorAll("rect.fill-foreground")).toHaveLength(8);
+    expect(container.querySelectorAll('rect[fill="#171717"]')).toHaveLength(0);
+  });
+
   it("z withWordmark pokazuje napis rhytm", () => {
     render(<RhytmLogo withWordmark />);
     expect(screen.getByText("rhytm")).toBeInTheDocument();

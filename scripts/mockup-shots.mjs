@@ -1,6 +1,6 @@
 // Zrzuty makiet z docs/design/mockups do test-results/mockups/<Nazwa>.png.
 // Użycie: pnpm mockups:shots [Nazwa ...]   (bez argumentów: wszystkie makiety)
-// Pliki M* (telefon) w 390×844, pozostałe w 1440×900.
+// Pliki M* i CM* (telefon) w 390×844, pozostałe w 1440×900.
 import { createServer } from 'node:http'
 import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
 import { extname, join, normalize } from 'node:path'
@@ -37,7 +37,7 @@ const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: proces
 mkdirSync(OUT, { recursive: true })
 try {
   for (const name of names) {
-    const isPhone = /^M[A-Z]/.test(name)
+    const isPhone = /^C?M[A-Z]/.test(name)
     const page = await browser.newPage({
       viewport: isPhone ? { width: 390, height: 844 } : { width: 1440, height: 900 },
       deviceScaleFactor: isPhone ? 2 : 1,

@@ -180,15 +180,36 @@ describe("DayPlan", () => {
     ).toBeInTheDocument();
   });
 
-  it("oś przewija się na trwający blok, „TERAZ” jest na nim, czerwona linia na 10:20", () => {
+  it("blok ma ramkę w kolorze kategorii i bez paska", async () => {
+    const d = dane();
+    d.categories = [{ ...d.categories[0], color: "#3b82f6" }];
+    render(<Plan d={d} />);
+    const blok = screen.getByRole("button", { name: /Matematyka/ });
+    // Tło kolor+12, ramka 1 px kolor+4d ze wszystkich stron (bez paska 3 px po lewej), bez cienia inset
+    expect(blok.style.background).toMatch(/#3b82f612|rgba\(59, 130, 246, 0\.07\d*\)/);
+    expect(blok.style.border).toMatch(/1px solid (#3b82f64d|rgba\(59, 130, 246, 0\.3\d*\))/);
+    expect(blok.style.borderLeftWidth).toBe("1px");
+    expect(blok.style.boxShadow).not.toContain("inset");
+    expect(blok).toHaveClass("rounded-md", "px-2.5", "py-1.5", "text-sm");
+    // Zaznaczony: pierścień 2 px biały + 4 px kolor+66
+    await userEvent.click(blok);
+    expect(
+      screen.getByRole("button", { name: /Matematyka/, pressed: true }).style
+        .boxShadow,
+    ).toMatch(
+      /(0 0 0 2px #fff|rgb\(255, 255, 255\) 0px 0px 0px 2px), (0 0 0 4px #3b82f666|rgba\(59, 130, 246, 0\.4\d*\) 0px 0px 0px 4px)/,
+    );
+  });
+
+  it("oś przewija się na trwający blok, „Teraz” jest na nim, czerwona linia na 10:20", () => {
     render(<Plan d={dane()} />);
     // 48 px na godzinę: 10:00 → 480 px
     expect(screen.getByTestId("os-dnia").scrollTop).toBe(480);
     const trwajacy = screen.getByRole("button", { name: /rhytm — kod/ });
-    expect(within(trwajacy).getByText("TERAZ")).toBeInTheDocument();
+    expect(within(trwajacy).getByText("Teraz")).toBeInTheDocument();
     expect(
       within(screen.getByRole("button", { name: /Matematyka/ })).queryByText(
-        "TERAZ",
+        "Teraz",
       ),
     ).not.toBeInTheDocument();
     expect(within(trwajacy).getByText("1/3")).toBeInTheDocument();
@@ -196,12 +217,15 @@ describe("DayPlan", () => {
       top: `${(620 / 60) * 48}px`,
     });
     expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    // Etykieta godziny ma tło #dc2626 (destructive-strong), linia zostaje destructive
+    expect(screen.getByTestId("etykieta-teraz")).toHaveClass("bg-destructive-strong");
+    expect(screen.getByTestId("linia-teraz")).toHaveClass("border-destructive");
   });
 
   it("bez trwającego bloku oś przewija się na 06:00", () => {
     render(<Plan d={dane({ nowMin: 7 * 60 })} />);
     expect(screen.getByTestId("os-dnia").scrollTop).toBe(6 * 48);
-    expect(screen.queryByText("TERAZ")).not.toBeInTheDocument();
+    expect(screen.queryByText("Teraz")).not.toBeInTheDocument();
   });
 
   it("trening „plan” jest linkiem do podglądu na /sport", () => {
@@ -344,7 +368,7 @@ describe("DayPlan", () => {
       pointerId: 1,
     });
     expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent(
-      "09:00–13:00",
+      "Nowy blok · 09:00–13:00",
     );
     fireEvent.pointerUp(siatka, { clientX: 300, clientY: 624, pointerId: 1 });
     // Klik, który przeglądarka wysyła zaraz po przeciągnięciu, nie otwiera „Nowego wpisu”

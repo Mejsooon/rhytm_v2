@@ -28,7 +28,7 @@ export type SettingsCategory = {
 
 // Wygląd 36 px; 44 px pola dotyku dzięki ::after wystającemu o 5 px nad i pod
 const PRZYCISK =
-  "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#171717] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
+  "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
 export function CategoriesCard({
   categories,
@@ -145,10 +145,10 @@ export function CategoriesCard({
   }
 
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
+    <section className="rounded-lg border border-border bg-white">
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Kategorie kalendarza</h2>
-        <p className="mt-1 mb-4 text-[#666666]">
+        <p className="mt-1 mb-4 text-muted-foreground">
           Kolory i kolejność kategorii w kalendarzu.
         </p>
 
@@ -157,7 +157,7 @@ export function CategoriesCard({
             <li
               key={k.id}
               aria-label={k.name}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#f0f0f0] py-2 first:border-t-0 max-[799px]:py-2.5"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border py-2 first:border-t-0 max-[799px]:py-2.5"
             >
               <span
                 aria-hidden="true"
@@ -176,13 +176,13 @@ export function CategoriesCard({
                   <button
                     type="button"
                     onClick={() => setDialog({ typ: "edycja", category: k })}
-                    className="relative cursor-pointer truncate border-0 bg-transparent p-0 text-left text-sm font-medium text-[#171717] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[#171717]/20 after:absolute after:-inset-y-[13px] after:inset-x-0 after:content-['']"
+                    className="relative cursor-pointer truncate border-0 bg-transparent p-0 text-left text-sm font-medium text-foreground outline-none hover:underline focus-visible:shadow-focus after:absolute after:-inset-y-[13px] after:inset-x-0 after:content-['']"
                   >
                     {k.name}
                   </button>
                 )}
                 {k.is_system && (
-                  <span className="flex-none rounded-[4px] border border-[#e0e0e0] bg-[#f5f5f5] px-[7px] py-0.5 font-mono text-[11px] text-[#666666]">
+                  <span className="flex-none rounded-[4px] border border-input bg-muted px-[7px] py-0.5 font-mono text-[11px] text-muted-foreground">
                     systemowa
                   </span>
                 )}
@@ -223,7 +223,7 @@ export function CategoriesCard({
                 {!k.is_system && (
                   <button
                     type="button"
-                    className={cn(PRZYCISK, "text-[#b91c1c]")}
+                    className={cn(PRZYCISK, "text-destructive-foreground")}
                     onClick={() => {
                       setBladUsuwania("");
                       setDialog({ typ: "usun", category: k });
@@ -238,14 +238,14 @@ export function CategoriesCard({
         </ul>
 
         {blad && (
-          <p role="alert" className="mt-3 mb-0 text-[13px] text-[#b91c1c]">
+          <p role="alert" className="mt-3 mb-0 text-[13px] text-destructive-foreground">
             {blad}
           </p>
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2.5 rounded-b-lg border-t border-[#eaeaea] bg-[#fafafa] px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
-        <span className="text-[13px] text-[#666666]">
+      <div className="flex items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
+        <span className="text-[13px] text-muted-foreground">
           Ukryte kategorie znikają z kalendarza, ale zostają tutaj.
         </span>
         <Button
@@ -275,7 +275,7 @@ export function CategoriesCard({
           footer={
             <>
               {bladUsuwania && (
-                <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+                <p role="alert" className="mr-auto text-xs text-destructive-foreground">
                   {bladUsuwania}
                 </p>
               )}
@@ -290,7 +290,7 @@ export function CategoriesCard({
             </>
           }
         >
-          <p className="m-0 text-[13px] text-[#666666]">
+          <p className="m-0 text-[13px] text-muted-foreground">
             Bloki zostaną bez kategorii.
           </p>
         </FormDialog>

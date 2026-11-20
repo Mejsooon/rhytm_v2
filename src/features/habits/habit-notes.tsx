@@ -50,15 +50,15 @@ export function HabitNotes({
           key={n.id}
           className={
             phone
-              ? "flex flex-col gap-0.5 border-b border-[#f0f0f0] px-3.5 py-3"
-              : "flex gap-3 border-b border-[#f0f0f0] px-4 py-3"
+              ? "flex flex-col gap-0.5 border-b border-border px-3.5 py-3"
+              : "flex gap-3 border-b border-border px-4 py-3"
           }
         >
           <span
             className={
               phone
-                ? "font-mono text-[11px] text-[#6b6b6b]"
-                : "font-mono text-xs text-[#6b6b6b]"
+                ? "font-mono text-[11px] text-muted-foreground"
+                : "font-mono text-xs text-muted-foreground"
             }
           >
             {`${n.date.slice(8)}.${n.date.slice(5, 7)}`}
@@ -80,10 +80,10 @@ export function HabitNotes({
               void zapisz();
             }
           }}
-          className="box-border w-full rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-sm text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:opacity-60 max-[799px]:h-11 max-[799px]:rounded-[10px] max-[799px]:text-[15px]"
+          className="box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm text-foreground outline-none focus-visible:shadow-focus disabled:opacity-60 max-[799px]:h-11 max-[799px]:rounded-md max-[799px]:text-[15px]"
         />
         {blad && (
-          <p role="alert" className="m-0 mt-2 text-xs text-[#b91c1c]">
+          <p role="alert" className="m-0 mt-2 text-xs text-destructive-foreground">
             {blad}
           </p>
         )}
@@ -95,15 +95,15 @@ export function HabitNotes({
     return (
       <section>
         <h2 className="m-0 mb-2 text-[17px] font-semibold">Notatki</h2>
-        <div className="rounded-xl border border-[#eaeaea] bg-white">
+        <div className="rounded-xl border border-border bg-white">
           {karta}
         </div>
       </section>
     );
   }
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
-      <div className="border-b border-[#eaeaea] px-4 py-3.5">
+    <section className="rounded-lg border border-border bg-white">
+      <div className="border-b border-border px-4 py-3.5">
         <h2 className="m-0 text-[15px] font-semibold">Notatki</h2>
       </div>
       {karta}

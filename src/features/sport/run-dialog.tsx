@@ -144,7 +144,7 @@ export function RunDialog({
       footer={
         <>
           {blad && (
-            <p role="alert" className="m-0 mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="m-0 mr-auto text-xs text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -188,7 +188,7 @@ export function RunDialog({
             ariaLabel="Data"
           />
           {bledy.date && (
-            <p className="m-0 text-xs font-normal text-[#b91c1c]">
+            <p className="m-0 text-xs font-normal text-destructive-foreground">
               {bledy.date}
             </p>
           )}
@@ -227,7 +227,7 @@ export function RunDialog({
           Tempo
           <div
             data-testid="tempo"
-            className="rounded-md border border-[#e0e0e0] bg-[#fafafa] px-[11px] py-[9px] font-mono text-sm font-normal"
+            className="rounded-md border border-input bg-panel px-[11px] py-[9px] font-mono text-sm font-normal"
           >
             {tempo}
           </div>
@@ -236,7 +236,7 @@ export function RunDialog({
           Kcal
           <div
             data-testid="kcal"
-            className="rounded-md border border-[#e0e0e0] bg-[#fafafa] px-[11px] py-[9px] font-mono text-sm font-normal"
+            className="rounded-md border border-input bg-panel px-[11px] py-[9px] font-mono text-sm font-normal"
           >
             {kcalNaZywo !== null ? `≈ ${kcalNaZywo}` : "—"}
           </div>
@@ -246,7 +246,7 @@ export function RunDialog({
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         <span>
           Trudność{" "}
-          <span className="text-xs font-normal text-[#6b6b6b]">
+          <span className="text-xs font-normal text-muted-foreground">
             1 = bardzo lekko, 10 = maks
           </span>
         </span>
@@ -258,10 +258,10 @@ export function RunDialog({
               aria-pressed={trudnosc === n}
               onClick={() => setTrudnosc(trudnosc === n ? null : n)}
               className={cn(
-                "size-8 cursor-pointer rounded-md border font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                "size-8 cursor-pointer rounded-md border font-mono text-xs outline-none focus-visible:shadow-focus",
                 trudnosc === n
-                  ? "border-[#171717] bg-[#171717] text-white"
-                  : "border-[#e0e0e0] bg-white text-[#404040]",
+                  ? "border-primary bg-primary text-white"
+                  : "border-input bg-white text-soft-foreground",
               )}
             >
               {n}
@@ -269,7 +269,7 @@ export function RunDialog({
           ))}
         </div>
         {bledy.difficulty && (
-          <p className="m-0 text-xs font-normal text-[#b91c1c]">
+          <p className="m-0 text-xs font-normal text-destructive-foreground">
             {bledy.difficulty}
           </p>
         )}
@@ -279,7 +279,7 @@ export function RunDialog({
         label={
           <>
             Notatka{" "}
-            <span className="text-xs font-normal text-[#6b6b6b]">
+            <span className="text-xs font-normal text-muted-foreground">
               opcjonalnie
             </span>
           </>
@@ -300,7 +300,7 @@ export function RunDialog({
         Pokaż w kalendarzu głównym jako blok
       </div>
 
-      <p className="m-0 font-mono text-[11px] text-[#6b6b6b]">
+      <p className="m-0 font-mono text-[11px] text-muted-foreground">
         Kcal z wagi w profilu. Bez czasu bieg zapisze się jako plan.
       </p>
     </FormDialog>

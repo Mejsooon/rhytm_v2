@@ -122,7 +122,7 @@ function Awatar({
   return (
     <span
       className={cn(
-        "grid flex-none place-items-center rounded-full bg-[#171717] font-medium text-white",
+        "grid flex-none place-items-center rounded-full bg-primary font-medium text-white",
         className,
       )}
     >
@@ -179,9 +179,9 @@ export function LivePreview({
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-8 flex overflow-hidden rounded-xl border border-[#e0e0e0] bg-white text-xs shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+      className="absolute inset-8 flex overflow-hidden rounded-xl border border-input bg-white text-xs shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
     >
-      <div className="box-border flex w-44 flex-none flex-col gap-0.5 border-r border-[#eaeaea] bg-[#fafafa] px-2 py-3">
+      <div className="box-border flex w-44 flex-none flex-col gap-0.5 border-r border-border bg-panel px-2 py-3">
         <div
           data-testid="pv-profile"
           data-highlighted={String(obrysProfil)}
@@ -196,15 +196,15 @@ export function LivePreview({
             <span className="truncate font-medium whitespace-nowrap">
               {nazwa}
             </span>
-            <span className="text-[11px] text-[#737373]">{draft.timezone}</span>
+            <span className="text-[11px] text-muted-foreground">{draft.timezone}</span>
           </span>
         </div>
-        <div className="px-2 pt-3 pb-1 text-[11px] text-[#737373]">Moduły</div>
+        <div className="px-2 pt-3 pb-1 text-[11px] text-muted-foreground">Moduły</div>
         <div className="flex h-7 items-center rounded-md bg-white px-2 font-medium shadow-[inset_0_0_0_1px_#eaeaea]">
           Dziś
         </div>
         {["Kalendarz", "Sport", "Nawyki i sen"].map((n) => (
-          <div key={n} className="flex h-7 items-center px-2 text-[#525252]">
+          <div key={n} className="flex h-7 items-center px-2 text-soft-foreground">
             {n}
           </div>
         ))}
@@ -213,14 +213,14 @@ export function LivePreview({
           data-highlighted={String(obrysStrony)}
           className={cn("mt-2 py-1", obrysStrony && OBRYS)}
         >
-          <div className="px-2 pb-1 text-[11px] text-[#737373]">Strony</div>
+          <div className="px-2 pb-1 text-[11px] text-muted-foreground">Strony</div>
           {strony.map((p) => (
-            <div key={p} className="flex h-7 items-center px-2 text-[#525252]">
+            <div key={p} className="flex h-7 items-center px-2 text-soft-foreground">
               {p}
             </div>
           ))}
           {strony.length === 0 && (
-            <div className="flex h-7 items-center px-2 text-[#a3a3a3]">
+            <div className="flex h-7 items-center px-2 text-faint-foreground">
               Brak stron
             </div>
           )}
@@ -229,7 +229,7 @@ export function LivePreview({
 
       <div className="relative min-w-0 flex-1 p-4">
         <div className="text-sm font-medium">{dzien}</div>
-        <div className="mt-0.5 text-[11px] text-[#737373]">{tydzien}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{tydzien}</div>
         <div
           data-testid="pv-cats"
           data-highlighted={String(obrysKategorie)}
@@ -241,7 +241,7 @@ export function LivePreview({
           {kategorie.map((c) => (
             <span
               key={c}
-              className="inline-flex h-6 items-center gap-1.5 rounded-md border border-[#eaeaea] bg-white px-2 text-[#404040]"
+              className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-white px-2 text-soft-foreground"
             >
               <span
                 className="size-2 rounded-full"
@@ -258,7 +258,7 @@ export function LivePreview({
               data-testid="pv-block"
               className="flex items-stretch gap-2"
             >
-              <span className="w-[52px] flex-none pt-1.5 font-mono text-[11px] text-[#737373]">
+              <span className="w-[52px] flex-none pt-1.5 font-mono text-[11px] text-muted-foreground">
                 {b.godzina}
               </span>
               <div
@@ -266,7 +266,7 @@ export function LivePreview({
                 style={{ background: TINT[b.c][0], borderColor: TINT[b.c][1] }}
               >
                 <span className="font-medium">{b.tytul}</span>
-                <span className="font-mono text-[11px] text-[#525252]">
+                <span className="font-mono text-[11px] text-soft-foreground">
                   {b.licznik}
                 </span>
               </div>
@@ -274,8 +274,8 @@ export function LivePreview({
           ))}
         </div>
         {dymek && (
-          <div className="absolute top-4 right-4 flex w-60 gap-2.5 rounded-[10px] border border-[#e0e0e0] bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.10)] outline-2 outline-offset-2 outline-[#15803d]">
-            <span className="grid size-6 flex-none place-items-center rounded-md bg-[#171717]">
+          <div className="absolute top-4 right-4 flex w-60 gap-2.5 rounded-md border border-input bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.10)] outline-2 outline-offset-2 outline-success">
+            <span className="grid size-6 flex-none place-items-center rounded-md bg-primary">
               <svg
                 width="14"
                 height="14"
@@ -366,7 +366,7 @@ export function LivePreview({
               <span className="font-medium">
                 Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}
               </span>
-              <span className="text-[#525252]">
+              <span className="text-soft-foreground">
                 Start o{" "}
                 {pierwszy
                   ? pierwszy.godzina

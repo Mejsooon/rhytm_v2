@@ -39,15 +39,15 @@ const KROK_KM = 0.5;
 const KROK_S = 60;
 
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const WIERSZ =
-  "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0";
+  "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
 const PLUS_MINUS =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-[#e0e0e0] bg-white p-0 text-[15px] text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-[15px] text-foreground outline-none hover:bg-muted focus-visible:shadow-focus";
 const WARTOSC =
-  "box-border h-11 w-[84px] rounded-md border border-transparent bg-transparent px-1 text-center font-mono text-lg text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]";
+  "box-border h-11 w-[84px] rounded-md border border-transparent bg-transparent px-1 text-center font-mono text-lg text-foreground outline-none placeholder:text-faint-foreground focus:border-primary";
 
 type Bledy = Partial<Record<keyof RunInput, string>>;
 
@@ -207,16 +207,16 @@ export function MRunNew({
       <Dialog.Portal>
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-[#171717] outline-none"
+          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
         >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-[#f0f0f0] p-2">
+          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
             <button
               type="button"
               disabled={pending}
               onClick={onClose}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "text-[#666666] disabled:cursor-default disabled:opacity-50",
+                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
               )}
             >
               Anuluj
@@ -230,7 +230,7 @@ export function MRunNew({
               onClick={() => void zapisz()}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
               )}
             >
               Zapisz
@@ -239,7 +239,7 @@ export function MRunNew({
 
           <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-[18px] pb-6">
             {blad && (
-              <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+              <p role="alert" className="m-0 text-xs text-destructive-foreground">
                 {blad}
               </p>
             )}
@@ -265,7 +265,7 @@ export function MRunNew({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <div className="rounded-xl border border-[#eaeaea] bg-white">
+              <div className="rounded-xl border border-border bg-white">
                 <div className={cn(WIERSZ, "min-h-16 gap-2")}>
                   <label htmlFor="m-bieg-dystans" className="flex-1">
                     Dystans
@@ -332,8 +332,8 @@ export function MRunNew({
                     +
                   </button>
                 </div>
-                <div className={cn(WIERSZ, "bg-[#fafafa]")}>
-                  <span className="flex-1 text-[13px] text-[#666666]">
+                <div className={cn(WIERSZ, "bg-panel")}>
+                  <span className="flex-1 text-[13px] text-muted-foreground">
                     Tempo (liczone)
                   </span>
                   <span
@@ -345,10 +345,10 @@ export function MRunNew({
                 </div>
               </div>
               {bledy.distanceKm && (
-                <p className="m-0 text-xs text-[#b91c1c]">{bledy.distanceKm}</p>
+                <p className="m-0 text-xs text-destructive-foreground">{bledy.distanceKm}</p>
               )}
               {bledy.durationS && (
-                <p className="m-0 text-xs text-[#b91c1c]">{bledy.durationS}</p>
+                <p className="m-0 text-xs text-destructive-foreground">{bledy.durationS}</p>
               )}
             </div>
 
@@ -366,10 +366,10 @@ export function MRunNew({
                     // Ponowne stuknięcie czyści (trudność jest opcjonalna)
                     onClick={() => setTrudnosc(trudnosc === n ? null : n)}
                     className={cn(
-                      "h-11 min-w-0 cursor-pointer rounded-lg border p-0 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                      "h-11 min-w-0 cursor-pointer rounded-lg border p-0 font-mono text-sm outline-none focus-visible:shadow-focus",
                       trudnosc === n
-                        ? "border-[#171717] bg-[#171717] text-white"
-                        : "border-[#e0e0e0] bg-white text-[#171717]",
+                        ? "border-primary bg-primary text-white"
+                        : "border-input bg-white text-foreground",
                     )}
                   >
                     {n}
@@ -377,11 +377,11 @@ export function MRunNew({
                 ))}
               </div>
               {bledy.difficulty && (
-                <p className="m-0 text-xs text-[#b91c1c]">{bledy.difficulty}</p>
+                <p className="m-0 text-xs text-destructive-foreground">{bledy.difficulty}</p>
               )}
             </div>
 
-            <div className="rounded-xl border border-[#eaeaea] bg-white">
+            <div className="rounded-xl border border-border bg-white">
               <div className={cn(WIERSZ, "flex-wrap py-2")}>
                 <span className="flex-1">Dzień</span>
                 <DatePicker
@@ -407,7 +407,7 @@ export function MRunNew({
               </div>
             </div>
             {bledy.date && (
-              <p className="-mt-3 mb-0 text-xs text-[#b91c1c]">{bledy.date}</p>
+              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">{bledy.date}</p>
             )}
 
             <label className="flex flex-col gap-1.5 text-[13px] font-medium">
@@ -417,11 +417,11 @@ export function MRunNew({
                 placeholder="Jak poszło?"
                 value={notatka}
                 onChange={(e) => setNotatka(e.target.value)}
-                className="box-border h-[88px] w-full resize-none rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-[15px] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+                className="box-border h-[88px] w-full resize-none rounded-md border border-input bg-white px-3.5 py-3 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
               />
             </label>
             {bledy.note && (
-              <p className="-mt-3 mb-0 text-xs text-[#b91c1c]">{bledy.note}</p>
+              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">{bledy.note}</p>
             )}
           </div>
         </Dialog.Content>

@@ -67,11 +67,11 @@ export function AppShell({
   requireUser?: boolean;
 }) {
   return (
-    <div className="flex min-h-dvh flex-1 bg-white text-[#171717]">
+    <div className="flex min-h-dvh flex-1 bg-white text-foreground">
       <React.Suspense
         fallback={
           // Szkielet sidebara (web), żeby układ nie skakał podczas ładowania
-          <div className="hidden w-[232px] flex-none border-r border-[#eaeaea] bg-[#fafafa] min-[800px]:block" />
+          <div className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block" />
         }
       >
         <Powloka requireUser={requireUser}>{children}</Powloka>

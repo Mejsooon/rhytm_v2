@@ -73,7 +73,7 @@ export function PhoneStrengthBar({
       </div>
       <span
         data-testid="pw-hint"
-        className="font-mono text-[11px] font-normal text-[#6b6b6b]"
+        className="font-mono text-[11px] font-normal text-muted-foreground"
       >
         {password
           ? `${OPISY_TELEFON[score]} hasło`

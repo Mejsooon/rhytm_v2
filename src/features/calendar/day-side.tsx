@@ -89,8 +89,8 @@ export function DaySide({
   };
 
   return (
-    <aside className="flex w-[280px] flex-none flex-col gap-4 overflow-y-auto border-l border-[#eaeaea] bg-white p-4">
-      <section className="rounded-lg border border-[#eaeaea] bg-white p-3.5">
+    <aside className="flex w-[280px] flex-none flex-col gap-4 overflow-y-auto border-l border-border bg-white p-4">
+      <section className="rounded-lg border border-border bg-white p-3.5">
         <div className="mb-2 flex items-center justify-between">
           <span className="font-semibold">
             {monthTitlePl(pokazany.rok, pokazany.miesiac0)}
@@ -100,7 +100,7 @@ export function DaySide({
               type="button"
               aria-label="Poprzedni miesiąc"
               onClick={() => przesun(-1)}
-              className="size-7 cursor-pointer rounded-md border border-[#e0e0e0] bg-white"
+              className="size-7 cursor-pointer rounded-md border border-input bg-white"
             >
               ‹
             </button>
@@ -108,13 +108,13 @@ export function DaySide({
               type="button"
               aria-label="Następny miesiąc"
               onClick={() => przesun(1)}
-              className="size-7 cursor-pointer rounded-md border border-[#e0e0e0] bg-white"
+              className="size-7 cursor-pointer rounded-md border border-input bg-white"
             >
               ›
             </button>
           </span>
         </div>
-        <div className="mb-1 grid grid-cols-7 text-center font-mono text-[10px] text-[#6b6b6b]">
+        <div className="mb-1 grid grid-cols-7 text-center font-mono text-[10px] text-muted-foreground">
           {naglowki.map((n) => (
             <span key={n}>{n}</span>
           ))}
@@ -122,11 +122,11 @@ export function DaySide({
         <div className="grid grid-cols-7 gap-0.5">
           {komorki.map((k) => {
             const [, m, d] = k.date.split("-").map(Number);
-            let styl = "bg-transparent text-[#a3a3a3]";
-            if (k.date === date) styl = "bg-[#171717] font-semibold text-white";
+            let styl = "bg-transparent text-faint-foreground";
+            if (k.date === date) styl = "bg-primary font-semibold text-white";
             else if (k.date === today)
-              styl = "bg-[#f0faf4] font-semibold text-[#15803d]";
-            else if (k.inMonth) styl = "bg-transparent text-[#171717]";
+              styl = "bg-success-soft font-semibold text-success";
+            else if (k.inMonth) styl = "bg-transparent text-foreground";
             return (
               <button
                 key={k.date}
@@ -142,18 +142,18 @@ export function DaySide({
         </div>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-lg border border-[#eaeaea] bg-white p-3.5">
+      <section className="flex flex-col gap-2 rounded-lg border border-border bg-white p-3.5">
         <MonoLabel>Dzień w liczbach</MonoLabel>
         <div className="flex justify-between">
-          <span className="text-[#666]">Zaplanowane</span>
+          <span className="text-muted-foreground">Zaplanowane</span>
           <span className="font-mono">{czas(liczby.plannedMin)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#666]">Wolne (8–20)</span>
+          <span className="text-muted-foreground">Wolne (8–20)</span>
           <span className="font-mono">{czas(liczby.freeMin)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#666]">Zadania</span>
+          <span className="text-muted-foreground">Zadania</span>
           <span className="font-mono">{`${liczby.tasksDone} / ${liczby.tasksTotal}`}</span>
         </div>
       </section>

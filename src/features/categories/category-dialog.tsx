@@ -63,7 +63,7 @@ export function CategoryDialog({
       footer={
         <>
           {error && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {error}
             </p>
           )}
@@ -89,7 +89,7 @@ export function CategoryDialog({
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         <span>
           Kolor{" "}
-          <span className="font-normal text-[#6b6b6b] text-xs">
+          <span className="font-normal text-muted-foreground text-xs">
             wyblakłe są już zajęte, ale można je wybrać
           </span>
         </span>
@@ -104,7 +104,7 @@ export function CategoryDialog({
                 aria-pressed={wybrany}
                 onClick={() => setColor(c.hex)}
                 // 36 px z makiety; na telefonie 44 px pola dotyku
-                className="size-9 cursor-pointer rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30 max-[799px]:size-11"
+                className="size-9 cursor-pointer rounded-lg outline-none focus-visible:shadow-focus max-[799px]:size-11"
                 style={{
                   background: c.hex,
                   opacity: usedColors.includes(c.hex) && !wybrany ? 0.35 : 1,
@@ -120,21 +120,21 @@ export function CategoryDialog({
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Podgląd
         <div className="flex items-center gap-3 font-normal">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0e0e0] bg-white px-2.5 py-1 text-xs text-[#404040]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-input bg-white px-2.5 py-1 text-xs text-soft-foreground">
             <span
               aria-hidden="true"
               className="size-2 rounded-full"
               style={{ background: color }}
             />
             {nazwa || "Kategoria"}{" "}
-            <span className="font-mono text-[#6b6b6b]">0</span>
+            <span className="font-mono text-muted-foreground">0</span>
           </span>
           <div
-            className="flex-1 rounded-md border border-[#e0e0e0] px-2.5 py-1.5 text-[13px]"
+            className="flex-1 rounded-md border border-input px-2.5 py-1.5 text-[13px]"
             style={{ borderLeft: `3px solid ${color}` }}
           >
             <div className="font-medium">Angielski</div>
-            <div className="font-mono text-[11px] text-[#404040]">
+            <div className="font-mono text-[11px] text-soft-foreground">
               18:00–19:00
             </div>
           </div>

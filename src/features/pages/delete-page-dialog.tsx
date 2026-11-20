@@ -104,7 +104,7 @@ export function DeletePageDialog({
         </>
       }
     >
-      <p className="m-0 text-[13px] leading-normal text-[#666666]">{tresc}</p>
+      <p className="m-0 text-[13px] leading-normal text-muted-foreground">{tresc}</p>
     </FormDialog>
   );
 }

@@ -470,18 +470,18 @@ export function TableBlock({
         }}
         placeholder="Tabela bez nazwy"
         aria-label="Nazwa tabeli"
-        className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-[15px] font-semibold text-[#171717] outline-none placeholder:text-[#a3a3a3] max-[799px]:min-h-11"
+        className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-[15px] font-semibold text-foreground outline-none placeholder:text-faint-foreground max-[799px]:min-h-11"
       />
 
       {!blokTymczasowy && (
         <>
-          <div className="rounded-lg border border-[#eaeaea] text-[13px] max-[1100px]:overflow-x-auto">
-            <div role="row" style={siatka} className="grid items-stretch rounded-t-lg bg-[#fafafa]">
+          <div className="rounded-lg border border-border text-[13px] max-[1100px]:overflow-x-auto">
+            <div role="row" style={siatka} className="grid items-stretch rounded-t-lg bg-panel">
               {posortowanePola.map((f, i) => (
                 <div
                   key={klucze[f.id] ?? f.id}
                   role="columnheader"
-                  className="relative flex min-w-0 items-center border-r border-b border-[#eaeaea] border-r-[#f0f0f0] px-3.5 py-2 font-medium whitespace-nowrap text-[#666666]"
+                  className="relative flex min-w-0 items-center border-r border-b border-border border-r-border px-3.5 py-2 font-medium whitespace-nowrap text-muted-foreground"
                 >
                   <ColumnPopover
                     field={f}
@@ -512,16 +512,16 @@ export function TableBlock({
                     data-icon={EDITOR_TYPES.find((t) => t.type === f.type)?.icon ?? FIELD_TYPE_META[f.type].icon}
                     data-name={f.name}
                     onClick={() => setArkuszKolumny(f.id)}
-                    className="-mx-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-1 font-[inherit] font-medium whitespace-nowrap text-[#666666] before:font-mono before:text-[#6b6b6b] before:content-[attr(data-icon)] after:content-[attr(data-name)] min-[800px]:hidden"
+                    className="-mx-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-1 font-[inherit] font-medium whitespace-nowrap text-muted-foreground before:font-mono before:text-muted-foreground before:content-[attr(data-icon)] after:content-[attr(data-name)] min-[800px]:hidden"
                   />
                 </div>
               ))}
-              <div className="flex min-w-0 items-stretch border-b border-[#eaeaea]">
+              <div className="flex min-w-0 items-stretch border-b border-border">
                 <button
                   type="button"
                   aria-label="Dodaj kolumnę"
                   onClick={() => void dodajKolumne()}
-                  className="min-h-[34px] w-full cursor-pointer border-0 bg-transparent font-[inherit] text-base text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#171717] max-[799px]:hidden"
+                  className="min-h-[34px] w-full cursor-pointer border-0 bg-transparent font-[inherit] text-base text-muted-foreground hover:bg-active hover:text-foreground max-[799px]:hidden"
                 >
                   +
                 </button>
@@ -529,7 +529,7 @@ export function TableBlock({
                   type="button"
                   aria-label="Nowa kolumna"
                   onClick={() => void dodajKolumne(true)}
-                  className="min-h-11 w-full cursor-pointer border-0 bg-transparent font-[inherit] text-lg text-[#6b6b6b] min-[800px]:hidden"
+                  className="min-h-11 w-full cursor-pointer border-0 bg-transparent font-[inherit] text-lg text-muted-foreground min-[800px]:hidden"
                 >
                   +
                 </button>
@@ -547,7 +547,7 @@ export function TableBlock({
                   <div
                     key={klucze[f.id] ?? f.id}
                     role="cell"
-                    className={`relative flex min-h-5 min-w-0 max-[799px]:min-h-11 items-center border-r border-b border-[#f0f0f0] border-r-[#f5f5f5] px-3.5 py-2 group-hover/row:bg-[#fcfcfc] ${
+                    className={`relative flex min-h-5 min-w-0 max-[799px]:min-h-11 items-center border-r border-b border-border border-r-border px-3.5 py-2 group-hover/row:bg-panel ${
                       i === 0 ? "font-medium" : ""
                     }`}
                   >
@@ -583,20 +583,20 @@ export function TableBlock({
                           return wybrana ? (
                             <OptionBadge option={wybrana} />
                           ) : (
-                            <span className="font-mono text-[#a3a3a3]">—</span>
+                            <span className="font-mono text-faint-foreground">—</span>
                           );
                         })()}
                       </button>
                     )}
                   </div>
                 ))}
-                <div className="flex items-center justify-center border-b border-[#f0f0f0] group-hover/row:bg-[#fcfcfc]">
+                <div className="flex items-center justify-center border-b border-border group-hover/row:bg-panel">
                   <button
                     type="button"
                     aria-label="Usuń wiersz"
                     disabled={r.id.startsWith(PREFIKS_TYMCZASOWY)}
                     onClick={() => void usunWiersz(r)}
-                    className="inline-flex cursor-pointer items-center border-0 bg-transparent px-1.5 py-1 text-[#b91c1c] opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 disabled:cursor-default max-[799px]:size-11 max-[799px]:justify-center max-[799px]:opacity-100"
+                    className="inline-flex cursor-pointer items-center border-0 bg-transparent px-1.5 py-1 text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 disabled:cursor-default max-[799px]:size-11 max-[799px]:justify-center max-[799px]:opacity-100"
                   >
                     <Trash2 size={14} aria-hidden="true" />
                   </button>
@@ -605,13 +605,13 @@ export function TableBlock({
             ))}
 
             {maStopke && (
-              <div role="row" style={siatka} className="grid items-stretch rounded-b-lg bg-[#fafafa]">
+              <div role="row" style={siatka} className="grid items-stretch rounded-b-lg bg-panel">
                 {posortowanePola.map((f) => {
                   const suma = editorFooter(f, zywe);
                   return (
                     <div
                       key={klucze[f.id] ?? f.id}
-                      className={`px-3.5 py-2 font-mono text-xs text-[#6b6b6b] ${
+                      className={`px-3.5 py-2 font-mono text-xs text-muted-foreground ${
                         f.type === "number" ? "text-right" : ""
                       }`}
                     >
@@ -628,11 +628,11 @@ export function TableBlock({
             <button
               type="button"
               onClick={() => void dodajWiersz()}
-              className="cursor-pointer rounded-md border-0 bg-transparent py-1 pr-2 pl-0 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border-0 bg-transparent py-1 pr-2 pl-0 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
             >
               + Nowy wiersz
             </button>
-            <span className="font-mono text-xs text-[#6b6b6b]">
+            <span className="font-mono text-xs text-muted-foreground">
               {rowsLabel(zywe.length)} · {kolumnyLabel(liczbaKolumn)}
             </span>
           </div>

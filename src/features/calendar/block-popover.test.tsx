@@ -125,6 +125,19 @@ beforeEach(() => {
 });
 
 describe("BlockPopover", () => {
+  it("wygląd .pop z CToday: bez paddingu, Edytuj secondary, Usuń destructive-outline, pole .igroup", () => {
+    wyrenderuj();
+    const dymek = screen.getByRole("dialog", { name: "Szczegóły bloku" });
+    expect(dymek).toHaveClass("rounded-lg", "border-border", "p-0", "shadow-lg");
+    expect(screen.getByRole("button", { name: "Edytuj" })).toHaveClass("h-7", "border-input", "bg-white");
+    expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("h-7", "text-destructive-foreground");
+    // Stopka na szarym tle (web)
+    expect(screen.getByRole("button", { name: "Edytuj" }).parentElement).toHaveClass("min-[800px]:bg-black/[.025]");
+    expect(screen.getByLabelText("Nowe zadanie").closest("label")).toHaveClass("h-[30px]", "border-input", "focus-within:border-ring");
+    // Pasek postępu .prog (6 px, wypełnienie primary)
+    expect(screen.getByRole("progressbar")).toHaveClass("h-1.5", "rounded-full", "bg-muted");
+  });
+
   it("pokazuje kategorię, tytuł, godziny i postęp zadań", () => {
     wyrenderuj();
     expect(screen.getByText("Projekty")).toBeInTheDocument();
@@ -200,6 +213,21 @@ describe("BlockPopover", () => {
       expect(screen.getByText("Szablony")).toBeInTheDocument(),
     );
     expect(toastError).toHaveBeenCalled();
+  });
+
+  it("przyciski ⋯ i × przy zadaniu na webie widać po najechaniu/fokusie w wierszu, na telefonie stale", () => {
+    wyrenderuj();
+    for (const nazwa of ["Opcje zadania Szablony", "Usuń zadanie Szablony"]) {
+      const przycisk = screen.getByRole("button", { name: nazwa });
+      expect(przycisk).toHaveClass(
+        "min-[800px]:opacity-0",
+        "min-[800px]:group-hover:opacity-100",
+        "min-[800px]:group-focus-within:opacity-100",
+        "focus-visible:opacity-100",
+      );
+      // Wiersz zadania jest grupą dla group-hover / group-focus-within
+      expect(przycisk.parentElement).toHaveClass("group");
+    }
   });
 
   it("zamyka się, gdy bloku-kotwicy nie ma w DOM", () => {

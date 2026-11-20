@@ -72,7 +72,7 @@ export function MRowSheet({
                     f.type === "status" ? (
                       <OptionBadge option={o} />
                     ) : (
-                      <span className="rounded-[4px] border border-[#e0e0e0] px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-[#404040]">
+                      <span className="rounded-[4px] border border-input px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-soft-foreground">
                         {o.label}
                       </span>
                     ),
@@ -112,7 +112,7 @@ export function MRowSheet({
                     aria-pressed={k <= ocena}
                     onClick={() => onChange(f.id, ocena === k ? null : k)}
                     className={`size-11 cursor-pointer border-0 bg-transparent p-0 text-[22px] leading-none ${
-                      k <= ocena ? "text-[#171717]" : "text-[#d4d4d4]"
+                      k <= ocena ? "text-foreground" : "text-faint-foreground"
                     }`}
                   >
                     ★
@@ -158,7 +158,7 @@ export function MRowSheet({
         <button
           type="button"
           onClick={onDelete}
-          className="mt-1 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-[#f3c7c7] bg-white font-[inherit] font-medium text-[#b91c1c] hover:bg-[#fafafa]"
+          className="mt-1 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-destructive-border bg-white font-[inherit] font-medium text-destructive-foreground hover:bg-panel"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />

@@ -5,7 +5,7 @@ import { CheckIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-// Checkbox wg MRegister.dc.html (.cb, 24 px, promień 7) — na webie 18 px.
+// Checkbox wg .cbx z coss.css (16 px); na telefonie obszar dotyku ≥ 44 px przez pseudoelement.
 // Etykieta jest osobnym elementem (może zawierać linki), a kwadrat dostaje nazwę przez aria-labelledby.
 export function Checkbox({
   checked,
@@ -32,24 +32,20 @@ export function Checkbox({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] p-0 text-white outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50 max-[799px]:size-6 max-[799px]:rounded-[7px]",
+          "relative inline-flex size-4 flex-none cursor-pointer items-center justify-center rounded-[4px] border p-0 shadow-xs transition-[box-shadow,background-color] duration-150 outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:before:absolute max-[799px]:before:-inset-3.5 max-[799px]:before:content-['']",
           checked
-            ? "border-[#15803d] bg-[#15803d]"
-            : "border-[#cfcfcf] bg-white",
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-input bg-white text-transparent",
         )}
       >
         {checked && (
-          <CheckIcon
-            aria-hidden="true"
-            strokeWidth={3}
-            className="size-3 max-[799px]:size-4"
-          />
+          <CheckIcon aria-hidden="true" strokeWidth={3} className="size-3" />
         )}
       </button>
       {label && (
         <span
           id={labelId}
-          className="text-[13px] text-[#171717] max-[799px]:text-sm"
+          className="text-sm text-foreground"
           onClick={(e) => {
             // Klik w link w etykiecie (np. regulamin) nie przełącza pola
             if ((e.target as HTMLElement).closest("a")) return;

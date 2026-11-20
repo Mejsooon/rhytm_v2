@@ -21,7 +21,7 @@ function blokiLabel(n: number): string {
 }
 
 const PRZYCISK_PASKA =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 font-[inherit] text-[#171717] hover:bg-[#f5f5f5]";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 font-[inherit] text-foreground hover:bg-muted";
 
 // Telefon (MEditor.dc.html): nagłówek z powrotem i menu strony, treść strony (`children`), pole poleceń
 // z podpowiedzią, dolny pasek skrótów nad paskiem zakładek i arkusz „Wstaw blok”. Widoczne tylko
@@ -95,7 +95,7 @@ export function MEditor({
 
       <div className="flex flex-col gap-2.5 px-4 pb-[calc(var(--tabbar-h)+72px)] min-[800px]:hidden">
         {store.blocks.length === 0 && (
-          <p className="m-0 mt-1 mb-1.5 text-[13px] text-[#666666]">
+          <p className="m-0 mt-1 mb-1.5 text-[13px] text-muted-foreground">
             Stuknij „+” na dole albo wpisz „/”, żeby wstawić blok.
           </p>
         )}
@@ -106,17 +106,17 @@ export function MEditor({
           onKeyDown={przyKlawiszu}
           placeholder="Wpisz „/”, aby wstawić blok"
           aria-label="Nowy blok"
-          className="min-h-11 w-full border-0 bg-transparent py-2 font-[inherit] text-[#404040] outline-none placeholder:text-[#a3a3a3]"
+          className="min-h-11 w-full border-0 bg-transparent py-2 font-[inherit] text-soft-foreground outline-none placeholder:text-faint-foreground"
         />
       </div>
 
       {/* Pasek skrótów siedzi nad paskiem zakładek (--tabbar-h) */}
-      <div className="fixed inset-x-0 bottom-(--tabbar-h) z-30 flex items-center gap-1 border-t border-[#eaeaea] bg-[#fafafa] px-3 py-2 min-[800px]:hidden">
+      <div className="fixed inset-x-0 bottom-(--tabbar-h) z-30 flex items-center gap-1 border-t border-border bg-panel px-3 py-2 min-[800px]:hidden">
         <button
           type="button"
           aria-label="Wstaw blok"
           onClick={() => setMenuOtwarte(true)}
-          className={`${PRZYCISK_PASKA} !bg-[#171717] !text-white`}
+          className={`${PRZYCISK_PASKA} !bg-primary !text-white`}
         >
           <Plus size={22} aria-hidden="true" />
         </button>
@@ -136,7 +136,7 @@ export function MEditor({
           H
         </button>
         <span className="flex-1" />
-        <span className="font-mono text-[11px] text-[#8a8a8a]">{blokiLabel(store.blocks.length)}</span>
+        <span className="font-mono text-[11px] text-faint-foreground">{blokiLabel(store.blocks.length)}</span>
       </div>
 
       <MInsertSheet

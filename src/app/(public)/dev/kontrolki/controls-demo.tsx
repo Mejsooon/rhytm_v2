@@ -56,7 +56,7 @@ function Sekcja({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-3 border-b border-[#eaeaea] py-6">
+    <section className="flex flex-col gap-3 border-b border-border py-6">
       <MonoLabel>{makieta}</MonoLabel>
       <div className="flex flex-wrap items-center gap-4">{children}</div>
     </section>
@@ -150,7 +150,7 @@ export function ControlsDemo() {
             </>
           }
         >
-          <p className="text-[13px] text-[#666666]">
+          <p className="text-[13px] text-muted-foreground">
             Tej operacji nie da się cofnąć.
           </p>
           <Dropdown
@@ -247,7 +247,7 @@ export function ControlsDemo() {
             onConfirm={() => setPotwierdzono(true)}
           />
           {potwierdzono && (
-            <p className="mt-2 text-[13px] text-[#15803d]">Potwierdzono.</p>
+            <p className="mt-2 text-[13px] text-success">Potwierdzono.</p>
           )}
         </div>
       </Sekcja>

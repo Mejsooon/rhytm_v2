@@ -96,14 +96,14 @@ export function StepDone({
     <>
       <div className="flex flex-col gap-4 max-[799px]:items-center max-[799px]:gap-3 max-[799px]:pt-2 max-[799px]:text-center">
         <span className="max-[799px]:hidden">{LOGO}</span>
-        <span className="flex size-16 items-center justify-center rounded-[18px] border border-[#bbe5cc] bg-[#f0faf4] text-[#15803d] min-[800px]:hidden">
+        <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
           <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
         </span>
         <div>
           <h1 className="m-0 text-[28px] leading-9 font-medium tracking-[-0.01em] max-[799px]:text-[26px] max-[799px]:leading-8">
             Gotowe, {imie}
           </h1>
-          <p className="m-0 mt-2 text-[#525252] max-[799px]:mt-1.5 max-[799px]:text-[13px] max-[799px]:text-[#666666]">
+          <p className="m-0 mt-2 text-soft-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px] max-[799px]:text-muted-foreground">
             <span className="max-[799px]:hidden">
               Twój rhytm jest ułożony. Oto co przygotowaliśmy
             </span>
@@ -116,36 +116,36 @@ export function StepDone({
 
       <dl
         data-testid="done-web"
-        className="m-0 border-t border-[#f0f0f0] max-[799px]:hidden"
+        className="m-0 border-t border-border max-[799px]:hidden"
       >
         {webWiersze.map((w) => (
           <div
             key={w.key}
-            className="grid min-h-12 grid-cols-[24px_128px_1fr_auto] items-center gap-2 border-b border-[#f0f0f0]"
+            className="grid min-h-12 grid-cols-[24px_128px_1fr_auto] items-center gap-2 border-b border-border"
           >
             <Check
               aria-hidden="true"
-              className="size-4 text-[#15803d]"
+              className="size-4 text-success"
               strokeWidth={1.5}
             />
-            <dt className="text-[13px] text-[#737373]">{w.key}</dt>
+            <dt className="text-[13px] text-muted-foreground">{w.key}</dt>
             <dd className="m-0 font-medium">{w.value}</dd>
             <button
               type="button"
               aria-label={`Zmień: ${w.key}`}
               onClick={() => router.push(`/onboarding/${w.step}`)}
-              className="cursor-pointer border-0 bg-transparent p-0 text-[13px] text-[#525252] hover:text-[#15803d]"
+              className="cursor-pointer border-0 bg-transparent p-0 text-[13px] text-soft-foreground hover:text-success"
             >
               Zmień
             </button>
           </div>
         ))}
-        <div className="flex items-center gap-2 pt-5 text-[13px] text-[#525252]">
+        <div className="flex items-center gap-2 pt-5 text-[13px] text-soft-foreground">
           Pierwszy blok dodasz skrótem
-          <kbd className="rounded border border-b-2 border-[#e0e0e0] bg-white px-1.5 font-mono text-xs text-[#404040]">
+          <kbd className="rounded border border-b-2 border-input bg-white px-1.5 font-mono text-xs text-soft-foreground">
             Ctrl
           </kbd>
-          <kbd className="rounded border border-b-2 border-[#e0e0e0] bg-white px-1.5 font-mono text-xs text-[#404040]">
+          <kbd className="rounded border border-b-2 border-input bg-white px-1.5 font-mono text-xs text-soft-foreground">
             K
           </kbd>
         </div>
@@ -155,14 +155,14 @@ export function StepDone({
         data-testid="done-phone"
         className="flex flex-col gap-4 min-[800px]:hidden"
       >
-        <div className="rounded-xl border border-[#eaeaea] bg-white">
+        <div className="rounded-xl border border-border bg-white">
           {telefonWiersze.map((w) => (
             <div
               key={w.key}
-              className="flex min-h-[60px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0"
+              className="flex min-h-[60px] items-center gap-3 border-b border-border px-3.5 last:border-b-0"
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px] text-[#666666]">
+                <span className="block text-[13px] text-muted-foreground">
                   {w.key}
                 </span>
                 <span className="mt-0.5 block text-sm">{w.value}</span>
@@ -171,20 +171,20 @@ export function StepDone({
                 type="button"
                 aria-label={`Zmień: ${w.key}`}
                 onClick={() => router.push(`/onboarding/${w.step}`)}
-                className="min-h-11 cursor-pointer border-0 bg-transparent pl-2 text-sm text-[#404040] underline"
+                className="min-h-11 cursor-pointer border-0 bg-transparent pl-2 text-sm text-soft-foreground underline"
               >
                 Zmień
               </button>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-[#eaeaea] bg-[#fafafa] px-3.5 py-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-panel px-3.5 py-3">
           <Plus
             aria-hidden="true"
-            className="size-[18px] flex-none text-[#666666]"
+            className="size-[18px] flex-none text-muted-foreground"
             strokeWidth={2}
           />
-          <span className="text-[13px] text-[#666666]">
+          <span className="text-[13px] text-muted-foreground">
             Pierwszy blok dodasz przyciskiem „+” na ekranie Dziś.
           </span>
         </div>

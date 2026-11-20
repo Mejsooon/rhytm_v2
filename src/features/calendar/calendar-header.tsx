@@ -94,7 +94,7 @@ export function CalendarHeader({
 
   return (
     <>
-      <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-[#eaeaea] px-4 py-2.5 max-[799px]:hidden">
+      <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-border px-4 py-2.5 max-[799px]:hidden">
         <div className="flex items-center gap-1.5">
           <Button asChild size="sm" className="px-2 py-[5px] text-[13px]">
             <Link
@@ -117,7 +117,7 @@ export function CalendarHeader({
           </Button>
           <h1 className="ml-2 text-base font-semibold">{tytul}</h1>
           {podtytul && (
-            <span className="font-mono text-xs text-[#6b6b6b]">{podtytul}</span>
+            <span className="font-mono text-xs text-muted-foreground">{podtytul}</span>
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -161,7 +161,7 @@ export function CalendarHeader({
             onClick={() =>
               router.push(adres(mobileView, shiftDate(mobileView, date, -1)))
             }
-            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
           >
             <ChevronLeft size={22} aria-hidden="true" />
           </button>
@@ -171,7 +171,7 @@ export function CalendarHeader({
             onClick={() =>
               router.push(adres(mobileView, shiftDate(mobileView, date, 1)))
             }
-            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
           >
             <ChevronRight size={22} aria-hidden="true" />
           </button>

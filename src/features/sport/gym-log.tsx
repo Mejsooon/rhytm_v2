@@ -35,9 +35,9 @@ import { isTempId, useGymStore } from "./use-gym-store";
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const POLE =
-  "box-border w-full rounded-md border border-[#e0e0e0] bg-white px-2 py-[5px] text-sm text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] disabled:bg-[#fafafa]";
+  "box-border w-full rounded-md border border-input bg-white px-2 py-[5px] text-sm text-foreground outline-none placeholder:text-faint-foreground focus:border-primary disabled:bg-panel";
 const AKCJA_KARTY =
-  "mt-1.5 cursor-pointer rounded-md border-0 bg-transparent px-2 py-1.5 text-[13px] hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-50";
+  "mt-1.5 cursor-pointer rounded-md border-0 bg-transparent px-2 py-1.5 text-[13px] hover:bg-muted disabled:cursor-default disabled:opacity-50";
 
 export function GymLog({ data }: { data: WorkoutData }) {
   const router = useRouter();
@@ -141,16 +141,16 @@ export function GymLog({ data }: { data: WorkoutData }) {
         data-testid="web-gym"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
-          <div className="font-mono text-[13px] text-[#666666]">
+        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
+          <div className="font-mono text-[13px] text-muted-foreground">
             <Link
               href={`/sport?miesiac=${data10.slice(0, 7)}`}
-              className="text-[#666666] no-underline hover:text-[#171717]"
+              className="text-muted-foreground no-underline hover:text-foreground"
             >
               Sport
             </Link>{" "}
-            <span className="text-[#b0b0b0]">/</span>{" "}
-            <span className="text-[#171717]">{`${session.title} · ${dzien} ${dd}.${mm}`}</span>
+            <span className="text-faint-foreground">/</span>{" "}
+            <span className="text-foreground">{`${session.title} · ${dzien} ${dd}.${mm}`}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -180,11 +180,11 @@ export function GymLog({ data }: { data: WorkoutData }) {
               <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
                 {session.title}
               </h1>
-              <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">
+              <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
                 {podtytul}
               </p>
             </div>
-            <div className="grid grid-cols-[repeat(2,auto)] gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea]">
+            <div className="grid grid-cols-[repeat(2,auto)] gap-px overflow-hidden rounded-lg border border-border bg-border">
               <div className="bg-white px-4 py-2.5">
                 <MonoLabel className="block">Objętość</MonoLabel>
                 <div data-testid="objetosc" className="mt-1 font-mono text-lg">
@@ -236,7 +236,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
               <section
                 key={cwiczenie.id}
                 aria-labelledby={naglowekId}
-                className="rounded-lg border border-[#eaeaea] bg-white px-4 py-3.5"
+                className="rounded-lg border border-border bg-white px-4 py-3.5"
               >
                 <div className="mb-1.5 flex items-baseline justify-between gap-2.5">
                   {tymczasowe ? (
@@ -247,16 +247,16 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     <Link
                       id={naglowekId}
                       href={`/sport/cwiczenia/${cwiczenie.id}`}
-                      className="font-semibold text-[#171717] no-underline hover:text-black"
+                      className="font-semibold text-foreground no-underline hover:text-black"
                     >
                       {cwiczenie.name}
                     </Link>
                   )}
-                  <span className="font-mono text-xs text-[#6b6b6b]">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {linia1rm}
                   </span>
                 </div>
-                <div className="grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 border-b border-[#f0f0f0] py-1 font-mono text-[11px] text-[#6b6b6b]">
+                <div className="grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 border-b border-border py-1 font-mono text-[11px] text-muted-foreground">
                   <span>seria</span>
                   <span>{zMasaCiala ? "kg (mc + dociążenie)" : "kg"}</span>
                   <span>powt.</span>
@@ -270,7 +270,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     <div
                       key={s.id}
                       data-testid={`seria-${cwiczenie.name}-${j + 1}`}
-                      className={`group grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px_28px] items-center gap-2 py-1.5 font-mono ${s.done ? "text-[#6b6b6b]" : ""}`}
+                      className={`group grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px_28px] items-center gap-2 py-1.5 font-mono ${s.done ? "text-muted-foreground" : ""}`}
                     >
                       <span>{j + 1}</span>
                       {zMasaCiala ? (
@@ -278,7 +278,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span
                             title="Masa ciała z profilu"
-                            className="flex-none rounded border border-[#e0e0e0] bg-[#fafafa] px-1.5 py-[3px] text-[11px] text-[#404040]"
+                            className="flex-none rounded border border-input bg-panel px-1.5 py-[3px] text-[11px] text-soft-foreground"
                           >
                             mc
                           </span>
@@ -346,7 +346,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                           className={POLE}
                         />
                         {rekordowe.has(s.id) && (
-                          <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-[#bbe5cc] bg-[#f0faf4] px-1.5 py-px font-mono text-[10px] text-[#15803d]">
+                          <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
                             REKORD
                           </span>
                         )}
@@ -362,7 +362,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                         aria-label={`Usuń ${etykieta}`}
                         disabled={zablokowana}
                         onClick={() => void sklep.deleteSet(s.id)}
-                        className="cursor-pointer border-0 bg-transparent p-1 text-[#8a8a8a] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-visible:opacity-100 disabled:cursor-default"
+                        className="cursor-pointer border-0 bg-transparent p-1 text-faint-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-visible:opacity-100 disabled:cursor-default"
                       >
                         ✕
                       </button>
@@ -370,7 +370,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                   );
                 })}
                 {zMasaCiala && (
-                  <div className="pt-1.5 font-mono text-[11px] text-[#6b6b6b]">
+                  <div className="pt-1.5 font-mono text-[11px] text-muted-foreground">
                     {profile.weightKg !== null ? (
                       `mc = masa ciała ${formatKg(profile.weightKg)} kg z profilu · „+ kg” to dociążenie (opcjonalnie)`
                     ) : (
@@ -378,7 +378,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                         Uzupełnij wagę w profilu (
                         <Link
                           href="/ustawienia/ogolne"
-                          className="text-[#171717] underline"
+                          className="text-foreground underline"
                         >
                           Ustawienia → Profil
                         </Link>
@@ -392,7 +392,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     type="button"
                     disabled={tymczasowe}
                     onClick={() => void sklep.addSet(cwiczenie.id)}
-                    className={`${AKCJA_KARTY} -ml-2 text-[#666666] hover:text-[#171717]`}
+                    className={`${AKCJA_KARTY} -ml-2 text-muted-foreground hover:text-foreground`}
                   >
                     + Seria
                   </button>
@@ -400,7 +400,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     type="button"
                     disabled={tymczasowe}
                     onClick={() => void sklep.removeExercise(cwiczenie.id)}
-                    className={`${AKCJA_KARTY} -mr-2 text-[#b91c1c]`}
+                    className={`${AKCJA_KARTY} -mr-2 text-destructive-foreground`}
                   >
                     Usuń ćwiczenie
                   </button>
