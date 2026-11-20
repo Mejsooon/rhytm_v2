@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -92,6 +92,24 @@ describe("HabitsView", () => {
     expect(
       screen.getByRole("button", { name: "+ Nowy nawyk" }),
     ).toBeInTheDocument();
+  });
+
+  it("przyciski z ikonami: księżyc przy „Wpis snu”, plus przy „Nowy nawyk” (bez widocznego „+”)", () => {
+    render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
+    const web = screen.getByTestId("web-nawyki");
+    for (const nazwa of ["+ Wpis snu", "Nowy nawyk", "+ Nowy nawyk"]) {
+      const przycisk = within(web).getByRole("button", { name: nazwa });
+      const ikona = przycisk.querySelector("svg");
+      expect(ikona, nazwa).toHaveAttribute("aria-hidden", "true");
+      // Widoczny tekst bez „+” — plus jest ikoną
+      expect(przycisk.textContent, nazwa).not.toContain("+");
+    }
+    expect(
+      within(web).getByRole("button", { name: "+ Wpis snu" }).querySelector("svg"),
+    ).toHaveClass("lucide-moon");
+    expect(
+      within(web).getByRole("button", { name: "+ Nowy nawyk" }).querySelector("svg"),
+    ).toHaveClass("lucide-plus");
   });
 
   it("odhaczenie dziś zmienia 1/2 na 2/2 przed odpowiedzią serwera", async () => {

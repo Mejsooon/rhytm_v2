@@ -65,6 +65,12 @@ describe("tokeny globals.css", () => {
     expect(css).toMatch(/--radius:\s*10px;/);
   });
 
+  it("poziomy heatmapy: heat-1 jasna, heat-2 stonowana zieleń (decyzja 2026-11-20)", () => {
+    expect(css).toMatch(/--heat-1:\s*#bbe5cc;/);
+    expect(css).toMatch(/--heat-2:\s*#86c99f;/);
+    expect(css).toContain("--color-heat-2: var(--heat-2)");
+  });
+
   it("@theme mapuje tokeny i promienie", () => {
     for (const nazwa of Object.keys(tokeny)) {
       expect(css, nazwa).toContain(`--color-${nazwa}: var(--${nazwa})`);

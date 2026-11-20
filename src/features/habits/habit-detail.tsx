@@ -3,9 +3,22 @@
 // Szczegóły nawyku na komputerze (CHabitDetail.dc.html): okruszki, kafelki, kalendarz, historia harmonogramu, notatki.
 import { useState } from "react";
 import Link from "next/link";
-import { InfoIcon, PenLineIcon, TrashIcon } from "lucide-react";
+import {
+  BellIcon,
+  CalendarIcon,
+  InfoIcon,
+  PenLineIcon,
+  TrashIcon,
+} from "lucide-react";
 
-import { Button, Card, CardFooter, CardHeader, CardTitle } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  StatusBadge,
+} from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
 import { addDays } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -54,12 +67,13 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   const biezaca = scheduleOn(habit, data.today) ?? habit.schedules[0];
   const pierwszaData = habit.schedules[0]?.validFrom;
 
-  let podtytul = biezaca ? describeSchedule(biezaca) : "";
+  // Podtytuł jako odznaki: harmonogram, przypomnienie (gdy włączone), „od” pierwszej wersji
+  const harmonogram = biezaca ? describeSchedule(biezaca) : "";
+  let przypomnienie: string | null = null;
   if (habit.remindAt) {
     const [g, m] = habit.remindAt.split(":").map(Number);
-    podtytul += ` · przypomnienie ${formatClockTime(g, m, data.clock)}`;
+    przypomnienie = `przypomnienie ${formatClockTime(g, m, data.clock)}`;
   }
-  if (pierwszaData) podtytul += ` · od ${formatDatePl(pierwszaData)}`;
 
   const kafelki = [
     { etykieta: "Seria", wartosc: seria.wartosc, jednostka: seria.jednostka },
@@ -87,6 +101,7 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
       }
       return {
         klucz: wersja.validFrom,
+        aktualna: wersja.validFrom === biezaca?.validFrom,
         zakres,
         opis: describeSchedule(wersja),
       };
@@ -137,10 +152,29 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
             <h1 className="m-0 truncate text-2xl font-semibold tracking-[-0.02em]">
               {habit.name}
             </h1>
-            {/* .hint: 12 px muted (makieta ma tu odznaki — tekst zostaje jedną linią) */}
-            <p className="m-0 mt-2 text-xs text-muted-foreground tabular-nums">
-              {podtytul}
-            </p>
+            {/* Odznaki .bdg.sec.lg z ikonami (kalendarz, dzwonek) i .bdg.out.lg z datą startu */}
+            <div
+              data-testid="web-podtytul"
+              className="mt-2 flex flex-wrap gap-1.5 tabular-nums"
+            >
+              {harmonogram && (
+                <StatusBadge tone="gray" size="lg">
+                  <CalendarIcon aria-hidden="true" className="size-3" />
+                  {harmonogram}
+                </StatusBadge>
+              )}
+              {przypomnienie && (
+                <StatusBadge tone="gray" size="lg">
+                  <BellIcon aria-hidden="true" className="size-3" />
+                  {przypomnienie}
+                </StatusBadge>
+              )}
+              {pierwszaData && (
+                <StatusBadge tone="outline" size="lg">
+                  {`od ${formatDatePl(pierwszaData)}`}
+                </StatusBadge>
+              )}
+            </div>
           </div>
 
           {/* Kafelki statystyk: osobne karty .card, etykieta .lbl, wartość 26 px / 600 */}
@@ -185,12 +219,18 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
                 {historia.map((w) => (
                   <div
                     key={w.klucz}
-                    className="border-b border-border-soft px-6 py-3 last:border-b-0"
+                    className="flex items-center justify-between gap-3 border-b border-border-soft px-6 py-3 last:border-b-0"
                   >
-                    <div className="text-xs text-muted-foreground tabular-nums">
-                      {w.zakres}
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        {w.zakres}
+                      </div>
+                      <div className="mt-0.5 font-medium">{w.opis}</div>
                     </div>
-                    <div className="mt-0.5 font-medium">{w.opis}</div>
+                    {/* .bdg.ok przy wersji obowiązującej dziś */}
+                    {w.aktualna && (
+                      <StatusBadge tone="green">Aktualny</StatusBadge>
+                    )}
                   </div>
                 ))}
               </div>

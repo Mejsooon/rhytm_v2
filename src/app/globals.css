@@ -51,9 +51,9 @@
   --warning-foreground: #b45309;
   --warning-soft: rgba(245, 158, 11, .08);
   --warning-border: rgba(245, 158, 11, .28);
-  /* Poziomy heatmapy nawyków (CHabits.dc.html): 1 → jasna zieleń, 2 → średnia; 0 = active, 3 = success */
+  /* Poziomy heatmapy nawyków (CHabits.dc.html): 1 → jasna zieleń, 2 → średnia (stonowana #86c99f zamiast #4ade80 z makiety — decyzja 2026-11-20); 0 = active, 3 = success */
   --heat-1: #bbe5cc;
-  --heat-2: #4ade80;
+  --heat-2: #86c99f;
   --radius: 10px;
   /* Dolny pasek telefonu (MTabBar.dc.html): 56 px treści + dolny odstęp, co najmniej 8 px,
      a na iPhonie tyle, ile wymaga pasek gestów. Ta sama wartość odsuwa treść <main> i przyciski FAB. */

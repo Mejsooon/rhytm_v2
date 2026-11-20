@@ -5,6 +5,7 @@ import { useState, type KeyboardEvent } from "react";
 
 import { CardHeader, CardTitle, Segment, StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
+import { weekdayOf } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
@@ -12,6 +13,8 @@ import { sleepMinutes, sleepStats, type SleepLog } from "./sleep";
 import { formatDuration } from "./text";
 
 const WYSOKOSC = 150; // px, wysokość wykresu
+// Skróty dni tygodnia jak w DatePicker (pn = 1 … nd = 7 z weekdayOf, liczone w UTC)
+const DNI_TYGODNIA = ["pn", "wt", "śr", "czw", "pt", "sob", "nd"];
 
 export function SleepCard({
   sleepLogs,
@@ -67,6 +70,24 @@ export function SleepCard({
 
   // '2026-11-17' → '17.11'
   const krotko = (d: IsoDate) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
+
+  // Dymek (CHabits): „wt 17.11” oraz „7:12 h snu · 48 min do celu” / „· cel osiągnięty”;
+  // brak do celu od 60 min w h:mm („1:05 h do celu”)
+  let dymekData = "";
+  let dymekTekst = "";
+  const wybrany = najechany === null ? null : bars[najechany.k];
+  if (wybrany && wybrany.minutes !== null) {
+    dymekData = `${DNI_TYGODNIA[weekdayOf(wybrany.date) - 1]} ${krotko(wybrany.date)}`;
+    const brakuje = goalMin - wybrany.minutes;
+    let cel = "cel osiągnięty";
+    if (brakuje > 0) {
+      cel =
+        brakuje >= 60
+          ? `${formatDuration(brakuje)} h do celu`
+          : `${brakuje} min do celu`;
+    }
+    dymekTekst = `${formatDuration(wybrany.minutes)} h snu · ${cel}`;
+  }
 
   return (
     // Klasy .card (jak Card), ale jako <section> — e2e szuka sekcji po nagłówku
@@ -181,15 +202,13 @@ export function SleepCard({
             );
           })}
 
-          {najechany !== null && bars[najechany.k]?.minutes != null && (
-            // Dymek nad słupkiem: data pogrubiona, pod nią czas (dla czytników „17.11 · 7:12”)
+          {najechany !== null && dymekTekst && (
+            // Dymek nad słupkiem: dzień i data pogrubione, pod nimi czas i cel (dla czytników „wt 17.11 · 7:12 h snu · …”)
             <ChartTooltip anchor={najechany.el}>
-              <div className="font-semibold tabular-nums">
-                {krotko(bars[najechany.k].date)}
-              </div>
+              <div className="font-semibold tabular-nums">{dymekData}</div>
               <span className="sr-only"> · </span>
               <div className="mt-0.5 text-muted-foreground tabular-nums">
-                {formatDuration(bars[najechany.k].minutes ?? 0)}
+                {dymekTekst}
               </div>
             </ChartTooltip>
           )}

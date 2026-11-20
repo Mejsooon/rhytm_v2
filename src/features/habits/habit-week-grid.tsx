@@ -2,7 +2,7 @@
 
 // Karta „Nawyki”: wiersze nawyków z siatką bieżącego tygodnia i przyciskiem ✓ na dziś (CHabits.dc.html)
 import Link from "next/link";
-import { Check, Flame } from "lucide-react";
+import { Check, Flame, Plus } from "lucide-react";
 
 import {
   Button,
@@ -205,9 +205,12 @@ export function HabitWeekGrid({
           variant="ghost"
           size="sm"
           onClick={onNewHabit}
+          // Ikona plusa zamiast „+”; nazwa dostępna zostaje „+ Nowy nawyk” (e2e, testy)
+          aria-label="+ Nowy nawyk"
           className="text-muted-foreground"
         >
-          + Nowy nawyk
+          <Plus size={16} aria-hidden="true" />
+          Nowy nawyk
         </Button>
       </div>
     </section>

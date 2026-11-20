@@ -3,7 +3,7 @@
 // Ekran „Nawyki i sen” na komputerze (CHabits.dc.html): nagłówek, kafelki, karta Nawyki + karta Sen, heatmapa.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Moon, Plus } from "lucide-react";
 
 import { Button } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
@@ -114,7 +114,11 @@ export function HabitsView({
           }
           webAction={
             <>
-              <Button onClick={() => onNewSleep()}>+ Wpis snu</Button>
+              {/* Ikona księżyca zamiast „+”; nazwa dostępna zostaje „+ Wpis snu” (e2e, testy) */}
+              <Button aria-label="+ Wpis snu" onClick={() => onNewSleep()}>
+                <Moon size={16} aria-hidden="true" />
+                Wpis snu
+              </Button>
               <Button variant="primary" onClick={() => onNewHabit()}>
                 <Plus size={16} aria-hidden="true" />
                 Nowy nawyk
