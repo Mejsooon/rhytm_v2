@@ -1,6 +1,6 @@
 "use client";
 
-// Okno nowego i edytowanego nawyku wg HabitDialog.dc.html.
+// Okno nowego i edytowanego nawyku wg CHabitDialog.dc.html.
 // Zapis nieoptymistyczny (wzór: BlockDialog): w trakcie zapisu okno jest zablokowane,
 // błąd zostaje w oknie, sukces zamyka je, a dane odświeża rewalidacja strony.
 import { useRef, useState } from "react";
@@ -211,7 +211,7 @@ function HabitForm({
           options={TRYBY}
         />
         {tryb === "weekdays" && (
-          <div className="flex gap-1.5 font-normal">
+          <div className="flex flex-wrap gap-1.5 font-normal max-[799px]:gap-1">
             {kolejnosc.map((numer) => {
               const wybrany = dni.includes(numer);
               return (
@@ -227,11 +227,13 @@ function HabitForm({
                         : [...d, numer],
                     )
                   }
+                  // 36 px, promień 10 px (jak dni w oknie bloku); wybrany jak przycisk główny,
+                  // pozostałe jak .btn; na telefonie cel 44 px
                   className={cn(
-                    "size-[38px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus",
+                    "size-9 cursor-pointer rounded-md border bg-clip-padding text-[13px] font-medium outline-none focus-visible:shadow-focus max-[799px]:size-11",
                     wybrany
-                      ? "border-primary bg-primary text-white"
-                      : "border-input bg-white text-soft-foreground",
+                      ? "border-primary bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(38,38,38,.24)]"
+                      : "border-input bg-white text-soft-foreground shadow-xs",
                   )}
                 >
                   {SKROTY[numer - 1]}
@@ -253,7 +255,8 @@ function HabitForm({
             <span className="text-xs text-muted-foreground">razy w tygodniu</span>
           </div>
         )}
-        <span className="font-mono text-xs font-normal text-muted-foreground">
+        {/* Podpowiedź jak .hint z coss.css: 12 px, zwykła czcionka */}
+        <span className="text-xs font-normal text-muted-foreground">
           {podsumowanie}
         </span>
       </div>
