@@ -279,8 +279,8 @@ export function DayPlan({
             const kolumn = pozycja?.cols ?? 1;
             const czas = p.endMin - p.startMin;
             const godziny = `${godz(p.startMin)}–${godz(p.endMin)}`;
-            // Krótkie wpisy (< 1 h) mieszczą jedną linię
-            const kompakt = czas < 60;
+            // Wpisy do 1 h włącznie: dwie linie nie mieszczą się w 42 px, więc jedna linia
+            const kompakt = czas <= 60;
             const licznik = p.planned
               ? "plan"
               : p.tasksTotal > 0
@@ -305,9 +305,14 @@ export function DayPlan({
             const tresc = (
               <>
                 <span className="flex w-full items-center gap-2">
-                  <span className="truncate font-medium">
-                    {kompakt ? `${p.title} · ${godz(p.startMin)}` : p.title}
+                  <span className="min-w-0 shrink truncate font-medium">
+                    {p.title}
                   </span>
+                  {kompakt && (
+                    <span className="min-w-0 shrink-[4] truncate text-xs text-soft-foreground tabular-nums">
+                      {godziny}
+                    </span>
+                  )}
                   {trwa && <StatusBadge tone="green">Teraz</StatusBadge>}
                   {licznik && (
                     <StatusBadge tone="outline" className="ml-auto tabular-nums">

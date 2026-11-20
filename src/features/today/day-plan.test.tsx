@@ -251,6 +251,18 @@ describe("DayPlan", () => {
     expect(screen.queryByText("Teraz")).not.toBeInTheDocument();
   });
 
+  it("blok 60-minutowy jest w jednej linii: tytuł i „16:00–17:00” w tym samym wierszu, bez drugiej linii", () => {
+    render(<Plan d={dane()} />);
+    const link = screen.getByRole("link", { name: /Bieg 10 km/ });
+    // Jedna linia: jedyny potomek to wiersz z tytułem i godzinami
+    expect(link.children).toHaveLength(1);
+    const wiersz = link.children[0] as HTMLElement;
+    expect(within(wiersz).getByText("Bieg 10 km")).toBeInTheDocument();
+    expect(within(wiersz).getByText("16:00–17:00")).toBeInTheDocument();
+    expect(link).not.toHaveTextContent("Sport");
+    expect(link).toHaveClass("justify-center", "py-0");
+  });
+
   it("trening „plan” jest linkiem do podglądu na /sport", () => {
     render(<Plan d={dane()} />);
     const link = screen.getByRole("link", { name: /Bieg 10 km/ });
