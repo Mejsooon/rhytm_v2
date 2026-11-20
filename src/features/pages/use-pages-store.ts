@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import {
+  movePage,
   reorderPages,
   renamePage,
   setFavorite,
@@ -81,6 +82,29 @@ export function usePagesStore(initial: PageSummary[]) {
           return [...l].sort((x, y) => miejsce(x.id) - miejsce(y.id));
         },
         () => reorderPages(ids),
+      );
+    },
+    // Przeniesienie między sekcjami (Ulubione ↔ Strony): jedna zmiana optymistyczna, jedno wywołanie
+    // serwera (move_page w jednej transakcji), przy błędzie jedno cofnięcie i jeden toast
+    move: (ids: string[], id: string, favorite: boolean) => {
+      const poprzednie = pages.map((p) => p.id);
+      const staraUlubiona = pages.find((p) => p.id === id)?.favorite ?? !favorite;
+      return zapisz(
+        (l) =>
+          ids
+            .map((i) => l.find((p) => p.id === i))
+            .filter((p): p is PageSummary => p !== undefined)
+            .map((p) => (p.id === id ? { ...p, favorite } : p)),
+        (l) => {
+          const miejsce = (i: string) => {
+            const n = poprzednie.indexOf(i);
+            return n < 0 ? poprzednie.length : n;
+          };
+          return [...l]
+            .sort((x, y) => miejsce(x.id) - miejsce(y.id))
+            .map((p) => (p.id === id ? { ...p, favorite: staraUlubiona } : p));
+        },
+        () => movePage(ids, id, favorite),
       );
     },
     rename: (id: string, title: string) => zmienPole(id, "title", title, () => renamePage(id, title)),

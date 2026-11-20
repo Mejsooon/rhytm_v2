@@ -54,7 +54,7 @@ export async function createBlankPage(): Promise<{ ok: true; id: string } | Blad
 
   const { data, error } = await supabase.rpc("create_page", {
     p_title: "",
-    p_icon: "▦",
+    p_icon: "",
     p_template_key: null,
     p_blocks: [],
   });
@@ -166,6 +166,34 @@ export async function reorderPages(ids: string[]): Promise<{ ok: true } | Blad> 
   if (!lista.success) return { ok: false, message: lista.error.issues[0].message };
 
   const { error } = await supabase.rpc("reorder_pages", { p_ids: lista.data });
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// Przeniesienie strony między sekcjami sidebaru: ulubione i pełna kolejność jednym wywołaniem (jedna transakcja)
+export async function movePage(
+  ids: string[],
+  pageId: string,
+  favorite: boolean,
+): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const dane = z
+    .object({ ids: z.array(idSchema).max(500), pageId: idSchema, favorite: z.boolean() })
+    .refine((d) => d.ids.includes(d.pageId), { message: BLAD_ZAPISU })
+    .safeParse({ ids, pageId, favorite });
+  if (!dane.success) return { ok: false, message: dane.error.issues[0].message };
+
+  const { error } = await supabase.rpc("move_page", {
+    p_ids: dane.data.ids,
+    p_page_id: dane.data.pageId,
+    p_favorite: dane.data.favorite,
+  });
   if (error) return { ok: false, message: BLAD_ZAPISU };
   revalidatePath("/", "layout");
   return { ok: true };

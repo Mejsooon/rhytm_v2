@@ -33,12 +33,12 @@ function blok(id: string, type: LoadedBlock["type"], position: number, content =
   return { id, type, position, content, fields: [], rows: [] };
 }
 
-function dane(bloki: LoadedBlock[], title = ""): LoadedPage {
+function dane(bloki: LoadedBlock[], title = "", icon = ""): LoadedPage {
   return {
     page: {
       id: "p1",
       title,
-      icon: "▦",
+      icon,
       favorite: false,
       templateKey: null,
       position: 0,
@@ -75,6 +75,27 @@ describe("EditorView", () => {
     expect(renamePage).not.toHaveBeenCalled();
     await user.tab();
     await waitFor(() => expect(renamePage).toHaveBeenCalledWith("p1", "Plan"));
+  });
+
+  it("przycisk ikony (przerywana ramka bez ikony) otwiera IconPicker; wybór zapisuje setPageIcon, błąd cofa", async () => {
+    const user = userEvent.setup();
+    render(<EditorView data={dane([])} />);
+    const przycisk = screen.getByRole("button", { name: "Zmień ikonę" });
+    expect(przycisk.className).toContain("border-dashed");
+    await user.click(przycisk);
+    expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
+    await user.click(screen.getByRole("button", { name: "Emoji książki books" }));
+    expect(setPageIcon).toHaveBeenCalledWith("p1", "📚");
+    expect(screen.getByRole("button", { name: "Zmień ikonę" })).toHaveTextContent("📚");
+    expect(screen.getByRole("button", { name: "Zmień ikonę" }).className).not.toContain("border-dashed");
+
+    setPageIcon.mockResolvedValue({ ok: false, message: "x" });
+    await user.click(screen.getByRole("button", { name: "Zmień ikonę" }));
+    await user.click(screen.getByRole("button", { name: "Usuń" }));
+    expect(setPageIcon).toHaveBeenLastCalledWith("p1", "");
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByRole("button", { name: "Zmień ikonę" })).toHaveTextContent("📚");
   });
 
   it("pusty tytuł pokazuje w ścieżce „Bez tytułu”", async () => {

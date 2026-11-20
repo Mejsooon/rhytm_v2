@@ -2,11 +2,24 @@ import { describe, expect, it } from "vitest";
 import { PALETA } from "./fields";
 import { buildTemplateBlocks, NEW_TABLE_BLOCK, PENDING_TO_TEMPLATE, TEMPLATES } from "./templates";
 import type { TableSettings } from "./table-model";
+import { parsePageIcon } from "./page-icons";
 
 function seqId() {
   let n = 0;
   return () => `id-${++n}`;
 }
+
+describe("ikony szablonów", () => {
+  it("books 📚, projects rakieta niebieska, websites glob morski, pusta bez ikony; wszystkie parsują się", () => {
+    expect(TEMPLATES.books.icon).toBe("📚");
+    expect(TEMPLATES.projects.icon).toBe("lucide:rocket:blue");
+    expect(TEMPLATES.websites.icon).toBe("lucide:globe:teal");
+    expect(TEMPLATES.empty.icon).toBe("");
+    for (const klucz of ["books", "projects", "websites"] as const) {
+      expect(parsePageIcon(TEMPLATES[klucz].icon)).not.toBeNull();
+    }
+  });
+});
 
 describe("buildTemplateBlocks", () => {
   it("opcje domyślne nowego wiersza z makiet wskazują id opcji", () => {

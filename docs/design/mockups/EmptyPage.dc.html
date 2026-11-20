@@ -68,7 +68,15 @@ tr:hover .row-del,.row-del:focus-visible,.row-wrap:hover .row-del{opacity:1}
 
     <div style="padding: 28px 24px 160px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
-        <button type="button" aria-label="Zmień ikonę" style="width: 40px; height: 40px; border: 1px dashed #d4d4d4; border-radius: 8px; background: #fafafa; color: #6b6b6b; font: inherit; cursor: pointer">▦</button>
+        <div style="position: relative; flex: none">
+          <button type="button" aria-label="Zmień ikonę" aria-haspopup="dialog" aria-expanded="{{iconExp}}" onClick="{{toggleIcons}}" style="{{iconBtnS}}"><dc-import name="PageIcon" icon="{{pageIconVal}}" size="22" hint-size="22px,22px"></dc-import></button>
+          <sc-if value="{{iconOpen}}" hint-placeholder-val="{{false}}">
+            <button type="button" aria-label="Zamknij wybór ikony" tabindex="-1" onClick="{{toggleIcons}}" style="position: fixed; inset: 0; z-index: 25; border: 0; padding: 0; margin: 0; background: transparent; cursor: default"></button>
+            <div style="position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; width: 300px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06); padding: 6px 10px 10px; box-sizing: border-box">
+              <dc-import name="IconPicker" value="{{pageIconVal}}" on-pick="{{pickIcon}}" hint-size="100%,340px"></dc-import>
+            </div>
+          </sc-if>
+        </div>
         <input type="text" value="{{title}}" onChange="{{onTitle}}" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #171717; flex: 1; min-width: 0; background: transparent">
       </div>
 
@@ -386,6 +394,12 @@ class Component extends DCLogic {
 
     return {
       title: S.title || '', crumb: S.title || 'Bez tytułu',
+      // Ikona strony: emoji albo ikona liniowa w kolorze (IconPicker), jak w menu strony w sidebarze.
+      pageIconVal: S.icon || null,
+      iconOpen: !!S.iconOpen, iconExp: S.iconOpen ? 'true' : 'false',
+      toggleIcons: () => this.setState({ iconOpen: !S.iconOpen }),
+      pickIcon: (v) => this.setState({ icon: v, iconOpen: false }),
+      iconBtnS: 'width:40px;height:40px;border-radius:8px;font:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;' + (S.icon ? 'border:1px solid transparent;background:transparent;color:#171717' : 'border:1px dashed #d4d4d4;background:#fafafa;color:#6b6b6b'),
       onTitle: (e) => this.setState({ title: e.target.value }),
       blocks, isEmpty: !B.length,
       cmd, q: q || '',
