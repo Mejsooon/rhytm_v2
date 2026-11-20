@@ -345,6 +345,21 @@ describe("HabitDetail", () => {
     expect(komorka("2026-11-16").style.boxShadow).toBe("");
   });
 
+  it("web: szare (bez nawyku) i neutralne mają różne tło", async () => {
+    render(<HabitDetail data={dane()} />);
+    const szary = komorka("2026-11-03"); // wt poza planem
+    expect(szary).toHaveAttribute("data-state", "szare");
+    expect(szary.className).toContain("bg-panel");
+    // X/tydz. w październiku: neutralne białe
+    await userEvent.click(
+      screen.getByRole("button", { name: "Poprzedni miesiąc" }),
+    );
+    const neutralny = komorka("2026-10-05");
+    expect(neutralny).toHaveAttribute("data-state", "neutralne");
+    expect(neutralny.className).toContain("bg-white");
+    expect(neutralny.className).not.toContain("bg-panel");
+  });
+
   it("okno usuwania w stylu .dlg: opis 14 px, Usuń destructive z koszem", async () => {
     render(<HabitDetail data={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));

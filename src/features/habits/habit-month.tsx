@@ -14,11 +14,12 @@ type StanDnia = "zrobione" | "pominiete" | "szare" | "neutralne" | "przyszlosc";
 
 const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
-// Web: komórki wg CHabitDetail.dc.html (ramka 1 px w każdym stanie; „szare” w miesiącu jak „off” z makiety)
+// Web: komórki wg CHabitDetail.dc.html (ramka 1 px w każdym stanie). Makieta ma „off” białe dla obu,
+// ale „szare” (dzień bez nawyku) zostaje na szarym tle, żeby różniło się od „neutralne” i legenda była prawdziwa.
 const STYLE_STANU: Record<StanDnia, string> = {
   zrobione: "border-success bg-success text-white",
   pominiete: "border-destructive/[.16] bg-destructive/10 text-destructive-foreground",
-  szare: "border-border bg-white text-faint-foreground",
+  szare: "border-border bg-panel text-faint-foreground",
   neutralne: "border-border bg-white text-faint-foreground",
   przyszlosc: "border-dashed border-input bg-white text-faint-foreground",
 };
@@ -176,7 +177,8 @@ export function HabitMonth({
             data-day={k.date}
             data-state={stan}
             aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
-            // Web: dziś z pierścieniem jak w makiecie (biała przerwa 2 px + obrys 2 px)
+            // Web: dziś z pierścieniem (biała przerwa 2 px + obrys 2 px) — celowy dodatek z makiety CHabitDetail
+            // (wcześniej aplikacja nie wyróżniała dziś); tylko styl, bez zmian w treści i ARIA
             style={
               !phone && k.date === today
                 ? { boxShadow: "0 0 0 2px var(--background), 0 0 0 4px var(--foreground)" }
