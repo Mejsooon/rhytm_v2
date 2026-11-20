@@ -104,7 +104,7 @@ export function StepNotify({
                 Włączone
               </span>
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={cofnij}
                 className="ml-1 h-8 px-3 py-0 text-[13px]"
               >

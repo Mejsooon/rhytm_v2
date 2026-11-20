@@ -168,7 +168,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         title="Zmień nazwę"
         footer={
           <>
-            <Button onClick={() => setZmianaNazwy(false)}>Anuluj</Button>
+            <Button variant="ghost" onClick={() => setZmianaNazwy(false)}>Anuluj</Button>
             <Button variant="primary" type="submit" form="zmiana-nazwy-strony">
               Zapisz
             </Button>

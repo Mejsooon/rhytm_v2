@@ -100,6 +100,8 @@ describe("StepNotify", () => {
       web().getByText("Przeglądarka pozwoliła na powiadomienia"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":true');
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(web().getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
     await userEvent.click(web().getByRole("button", { name: "Anuluj" }));
     expect(web().getByRole("button", { name: "Zezwól" })).toBeInTheDocument();
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":false');

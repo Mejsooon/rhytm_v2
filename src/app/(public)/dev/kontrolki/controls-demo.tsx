@@ -143,7 +143,7 @@ export function ControlsDemo() {
           title="Zresetować sejf?"
           footer={
             <>
-              <Button onClick={() => setOkno(false)}>Anuluj</Button>
+              <Button variant="ghost" onClick={() => setOkno(false)}>Anuluj</Button>
               <Button variant="primary" onClick={() => setOkno(false)}>
                 Zapisz
               </Button>

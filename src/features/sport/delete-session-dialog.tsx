@@ -87,7 +87,7 @@ export function DeleteSessionDialog({
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <Button size="sm" disabled={pending} onClick={onCancel}>
+            <Button variant="ghost" size="sm" disabled={pending} onClick={onCancel}>
               Anuluj
             </Button>
             <Button

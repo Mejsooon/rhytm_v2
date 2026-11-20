@@ -42,6 +42,27 @@ describe("FormDialog", () => {
     expect(stopka).toHaveClass("border-t", "bg-black/[.025]");
   });
 
+  it("✕ jak .btng.ic.sm z makiet: 28 px bez ramki, ikona X, na telefonie cel 44 px", () => {
+    render(
+      <FormDialog open onOpenChange={() => {}} title="X">
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    const zamknij = screen.getByRole("button", { name: "Zamknij" });
+    // ghost: przezroczyste tło i ramka, hover accent; sm + icon: 28 × 28 px
+    expect(zamknij).toHaveClass(
+      "h-7",
+      "w-7",
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+      "max-[799px]:size-11",
+    );
+    expect(zamknij.className).not.toContain("border-input");
+    expect(zamknij.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(zamknij).not.toHaveTextContent("✕");
+  });
+
   it("okno ma promień 16 px", () => {
     render(
       <FormDialog open onOpenChange={() => {}} title="X">

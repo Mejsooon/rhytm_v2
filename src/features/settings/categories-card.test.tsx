@@ -168,6 +168,9 @@ describe("CategoriesCard", () => {
     await userEvent.click(
       within(wiersz("Praca")).getByRole("button", { name: "Usuń" }),
     );
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(deleteCategory).not.toHaveBeenCalled();
     expect(wiersz("Praca")).toBeInTheDocument();

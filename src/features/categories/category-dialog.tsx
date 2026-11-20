@@ -69,7 +69,7 @@ export function CategoryDialog({
               {error}
             </p>
           )}
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button
             variant="primary"
             disabled={nazwa === "" || pending}

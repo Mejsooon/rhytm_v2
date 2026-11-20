@@ -91,6 +91,9 @@ describe("NewPageView", () => {
   it("„Anuluj”, „Zamknij” i Esc wracają (router.back)", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
     await user.click(screen.getByRole("button", { name: "Zamknij" }));
     await user.keyboard("{Escape}");

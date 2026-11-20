@@ -2,7 +2,7 @@
 
 // Filtry kategorii schowane w jednym przycisku.
 // Web (CCalendar.dc.html): przycisk .btn „Kategorie 3/4 ⌄” z kropkami widocznych kategorii; menu .pop
-// z polami .cbx (menuitemcheckbox), separatorem i „+ Kategoria”.
+// z etykietą „Pokaż w kalendarzu”, polami .cbx (menuitemcheckbox), separatorem i „+ Kategoria”.
 // Esc zamyka, fokus wraca na przycisk.
 // Telefon (MCalendarDayFull.dc.html): ikona „Kategorie” (44 px) otwiera dolny arkusz
 // z przełącznikiem przy każdej kategorii i „+ Kategoria”.
@@ -14,6 +14,7 @@ import { Dialog, DropdownMenu } from "radix-ui";
 import {
   Button,
   MENU_ITEM,
+  MENU_LABEL,
   MENU_SEPARATOR,
   StatusBadge,
   Switch,
@@ -87,6 +88,9 @@ export function CategoryFilters({
           // .pop z makiety: promień 12 px, ramka, cień lg, padding 4 px
           className="z-[60] box-border flex w-[230px] flex-col rounded-lg border border-border bg-white bg-clip-padding p-1 text-sm text-foreground shadow-lg outline-none"
         >
+          <DropdownMenu.Label className={MENU_LABEL}>
+            Pokaż w kalendarzu
+          </DropdownMenu.Label>
           {categories.map((kategoria) => {
             const widoczna = !kategoria.hidden;
             return (

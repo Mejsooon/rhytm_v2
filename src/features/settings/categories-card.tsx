@@ -279,7 +279,7 @@ export function CategoriesCard({
                   {bladUsuwania}
                 </p>
               )}
-              <Button onClick={() => setDialog(null)}>Anuluj</Button>
+              <Button variant="ghost" onClick={() => setDialog(null)}>Anuluj</Button>
               <Button
                 variant="destructive"
                 disabled={usuwa}

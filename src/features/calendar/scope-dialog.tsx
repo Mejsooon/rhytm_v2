@@ -99,7 +99,7 @@ export function ScopeDialog({
               {error}
             </p>
           )}
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button
             variant={intent === "delete" ? "destructive" : "primary"}
             disabled={pending || wszystkieWylaczone}

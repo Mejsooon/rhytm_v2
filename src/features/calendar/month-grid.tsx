@@ -18,6 +18,8 @@ import { weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const MAX_WPISOW = 3;
+// Kolor bloku bez kategorii — ten sam co w time-grid (tydzień, dzień)
+const KOLOR_BRAK = "#a3a3a3";
 
 export function MonthGrid({
   days,
@@ -159,14 +161,11 @@ export function MonthGrid({
                     );
                   }
                   const o = wpis.o;
+                  // Bez kategorii szary KOLOR_BRAK jak w tygodniu i dniu (time-grid)
                   const kolor =
-                    (o.categoryId && koloryKategorii.get(o.categoryId)) || null;
+                    (o.categoryId && koloryKategorii.get(o.categoryId)) ||
+                    KOLOR_BRAK;
                   const zaznaczony = activeEntryKey === o.key;
-                  // Wg CCalendarMonth: z kategorią tło kolor+14 i ramka kolor+4d (bez paska),
-                  // bez kategorii białe tło i przerywana szara ramka
-                  const wyglad = kolor
-                    ? "text-foreground"
-                    : "border border-dashed border-black/[.24] bg-background text-soft-foreground";
                   return (
                     <button
                       key={o.key}
@@ -175,24 +174,14 @@ export function MonthGrid({
                       aria-expanded={zaznaczony}
                       title={`${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)} ${o.title}`}
                       onClick={(e) => onEntryClick(o.key, e.currentTarget)}
-                      // Zaznaczony: pierścień 2 px kolor+66 (bez kategorii rgba(0,0,0,.2)) w inline boxShadow,
-                      // więc fokus to outline z odstępem, żeby pierścień go nie zasłonił
-                      style={
-                        kolor
-                          ? {
-                              backgroundColor: `${kolor}14`,
-                              border: `1px solid ${kolor}4d`,
-                              boxShadow: zaznaczony
-                                ? `0 0 0 2px ${kolor}66`
-                                : undefined,
-                            }
-                          : {
-                              boxShadow: zaznaczony
-                                ? "0 0 0 2px rgba(0,0,0,.2)"
-                                : undefined,
-                            }
-                      }
-                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${wyglad}`}
+                      // Wg CCalendarMonth: tło kolor+14 i ramka kolor+4d (bez paska); zaznaczony: pierścień 2 px kolor+66
+                      // w inline boxShadow, więc fokus to outline z odstępem, żeby pierścień go nie zasłonił
+                      style={{
+                        backgroundColor: `${kolor}14`,
+                        border: `1px solid ${kolor}4d`,
+                        boxShadow: zaznaczony ? `0 0 0 2px ${kolor}66` : undefined,
+                      }}
+                      className="mt-[3px] block w-full cursor-pointer overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                       {o.title}
                     </button>

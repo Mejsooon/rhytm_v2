@@ -235,7 +235,8 @@ export function AddFieldDialog({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11"
+              // „Anuluj” bez ramki jak .btng z makiet
+              className="cursor-pointer rounded-md border border-transparent bg-transparent px-3 py-[7px] font-[inherit] text-sm text-foreground hover:bg-accent max-[799px]:min-h-11"
             >
               Anuluj
             </button>

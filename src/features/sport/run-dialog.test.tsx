@@ -35,6 +35,14 @@ beforeEach(() => {
 });
 
 describe("RunDialog", () => {
+  it("„Anuluj” w stopce bez ramki (ghost), na telefonie 44 px", () => {
+    wyrenderuj();
+    const anuluj = screen.getByRole("button", { name: "Anuluj" });
+    expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(anuluj.className).not.toContain("border-input");
+    expect(anuluj).toHaveClass("max-[799px]:h-11");
+  });
+
   it("nowy bieg: Spokojny, data i godzina z parametrów, pokaż w kalendarzu włączone", () => {
     wyrenderuj();
     expect(screen.getByRole("dialog", { name: "Nowy bieg" })).toBeVisible();

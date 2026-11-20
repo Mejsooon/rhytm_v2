@@ -130,6 +130,19 @@ describe("DaySide", () => {
     // okno 12 h minus zajęte (2 h 30 min + 1 h 30 min) = 8 h
     expect(screen.getByText("8 h")).toBeInTheDocument();
     expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    // Pasek postępu zadań pod liczbami (.prog z CCalendarDay.dc.html)
+    const pasek = screen.getByRole("progressbar", { name: "Zadania wykonane" });
+    expect(pasek).toHaveAttribute("aria-valuenow", "1");
+    expect(pasek).toHaveAttribute("aria-valuemax", "3");
+    expect(pasek.firstElementChild).toHaveStyle({ width: "33.33333333333333%" });
+  });
+
+  it("„Dzień w liczbach” bez zadań: pasek postępu 0%", () => {
+    wyrenderuj({ date: "2026-11-17", occurrences: [] });
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    const pasek = screen.getByRole("progressbar", { name: "Zadania wykonane" });
+    expect(pasek).toHaveAttribute("aria-valuenow", "0");
+    expect(pasek.firstElementChild).toHaveStyle({ width: "0%" });
   });
 
   it("format godzin z połówką: 2 h 30 min", () => {

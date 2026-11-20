@@ -203,3 +203,33 @@ describe("TimePicker — disabled", () => {
     expect(screen.queryByText("Minuty")).not.toBeInTheDocument();
   });
 });
+
+describe("TimePicker — wyzwalacz", () => {
+  it("jak .igroup z CBlockDialog: ikona zegara po lewej, godzina sans bez strzałki", () => {
+    render(<TimePicker value="10:00" onChange={vi.fn()} ariaLabel="Od" />);
+    const przycisk = screen.getByRole("button", { name: "Od" });
+    expect(przycisk).toHaveTextContent(/^10:00$/);
+    expect(przycisk).toHaveClass(
+      "h-8",
+      "gap-2",
+      "border-input",
+      "rounded-md",
+      "shadow-xs",
+      "px-[11px]",
+      "tabular-nums",
+      "max-[799px]:h-11",
+    );
+    expect(przycisk.className).not.toContain("font-mono");
+    const ikony = przycisk.querySelectorAll("svg");
+    expect(ikony).toHaveLength(1);
+    expect(ikony[0]).toHaveAttribute("aria-hidden", "true");
+    expect(przycisk.firstElementChild?.tagName.toLowerCase()).toBe("svg");
+  });
+
+  it("className rozszerza wyzwalacz (pełna szerokość w oknie bloku)", () => {
+    render(
+      <TimePicker value="10:00" onChange={vi.fn()} ariaLabel="Od" className="w-full" />,
+    );
+    expect(screen.getByRole("button", { name: "Od" })).toHaveClass("w-full");
+  });
+});

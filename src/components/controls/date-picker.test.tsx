@@ -27,11 +27,81 @@ describe("DatePicker", () => {
     );
   });
 
-  it("pokazuje datę albo placeholder", () => {
+  it("pokazuje datę z dniem tygodnia albo placeholder", () => {
     ustaw();
     expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent(
-      "20.11.2026",
+      /^pt 20\.11\.2026$/,
     );
+  });
+
+  it("skróty dni tygodnia: pn wt śr czw pt sob nd", () => {
+    const dni: [string, string][] = [
+      ["2026-11-16", "pn 16.11.2026"],
+      ["2026-11-17", "wt 17.11.2026"],
+      ["2026-11-18", "śr 18.11.2026"],
+      ["2026-11-19", "czw 19.11.2026"],
+      ["2026-11-20", "pt 20.11.2026"],
+      ["2026-11-21", "sob 21.11.2026"],
+      ["2026-11-22", "nd 22.11.2026"],
+    ];
+    for (const [data, tekst] of dni) {
+      const { unmount } = render(
+        <DatePicker value={data} onChange={vi.fn()} today="2026-11-16" ariaLabel="Termin" />,
+      );
+      expect(screen.getByRole("button", { name: "Termin" })).toHaveTextContent(
+        new RegExp(`^${tekst}$`),
+      );
+      unmount();
+    }
+  });
+
+  it("wyzwalacz jak .igroup z CBlockDialog: ikona kalendarza po lewej, tekst sans bez strzałki", () => {
+    ustaw("2026-11-17");
+    const przycisk = screen.getByRole("button", { name: "Termin" });
+    // .igroup: 32 px, ramka input, promień 10 px, cień xs, odstęp 8 px, ikona w kolorze muted
+    expect(przycisk).toHaveClass(
+      "h-8",
+      "gap-2",
+      "border-input",
+      "rounded-md",
+      "shadow-xs",
+      "px-[11px]",
+      "max-[799px]:h-11",
+    );
+    const ikony = przycisk.querySelectorAll("svg");
+    expect(ikony).toHaveLength(1);
+    expect(ikony[0]).toHaveAttribute("aria-hidden", "true");
+    expect(przycisk.firstElementChild?.tagName.toLowerCase()).toBe("svg");
+    expect(przycisk.querySelector(".font-mono")).toBeNull();
+    expect(przycisk.className).not.toContain("font-mono");
+  });
+
+  it("className rozszerza wyzwalacz (pełna szerokość w oknie bloku)", () => {
+    render(
+      <DatePicker value="2026-11-17" onChange={vi.fn()} ariaLabel="Termin" className="w-full" />,
+    );
+    expect(screen.getByRole("button", { name: "Termin" })).toHaveClass("w-full");
+  });
+
+  it("rozmiar sm: 28 px, ikona i data z dniem tygodnia sans", () => {
+    render(
+      <DatePicker value="2026-11-17" onChange={vi.fn()} ariaLabel="Termin" size="sm" />,
+    );
+    const przycisk = screen.getByRole("button", { name: "Termin" });
+    expect(przycisk).toHaveClass("h-7");
+    expect(przycisk).toHaveTextContent(/^wt 17\.11\.2026$/);
+    expect(przycisk.querySelector("svg")).not.toBeNull();
+    expect(przycisk.className).not.toContain("font-mono");
+  });
+
+  it("wariant „bare” (komórka tabeli) bez zmian: sama data mono, bez ikony", () => {
+    render(
+      <DatePicker value="2026-11-17" onChange={vi.fn()} ariaLabel="Termin" variant="bare" />,
+    );
+    const przycisk = screen.getByRole("button", { name: "Termin" });
+    expect(przycisk).toHaveTextContent(/^17\.11\.2026$/);
+    expect(przycisk.querySelector(".font-mono")).not.toBeNull();
+    expect(przycisk.querySelector("svg")).toBeNull();
   });
 
   it("bez wartości pokazuje placeholder", () => {

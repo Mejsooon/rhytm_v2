@@ -185,7 +185,7 @@ function HabitForm({
               {blad}
             </p>
           )}
-          <Button disabled={pending} onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
             Anuluj
           </Button>
           <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>

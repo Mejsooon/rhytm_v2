@@ -130,6 +130,7 @@ export function DeleteBlockDialog({
           {/* Web: stopka .dlg-f na szarym tle; telefon: dwa pełne przyciski */}
           <div className="flex justify-end gap-2 max-[799px]:flex-col-reverse min-[800px]:rounded-b-[15px] min-[800px]:border-t min-[800px]:border-border min-[800px]:bg-black/[.025] min-[800px]:px-6 min-[800px]:py-4">
             <Button
+              variant="ghost"
               className="max-[799px]:h-12"
               disabled={pending}
               onClick={onCancel}

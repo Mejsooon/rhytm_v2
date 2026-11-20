@@ -428,6 +428,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
         footer={
           <>
             <Button
+              variant="ghost"
               size="sm"
               disabled={zapisujeSzablon}
               onClick={() => setOknoSzablonu(false)}

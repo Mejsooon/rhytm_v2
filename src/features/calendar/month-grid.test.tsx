@@ -137,26 +137,29 @@ describe("MonthGrid", () => {
     expect(wpis).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("wpis bez kategorii ma białe tło i przerywaną szarą ramkę", () => {
+  it("wpis bez kategorii jak w tygodniu: kolor #a3a3a3, pełna ramka 4d i tło 14, bez przerywanej ramki", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })]);
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
-    expect(wpis.className).toContain("border-dashed");
-    expect(wpis.className).toContain("border-black/[.24]");
-    expect(wpis.className).toContain("bg-background");
+    expect(wpis.style.backgroundColor).toBe("rgba(163, 163, 163, 0.08)");
+    expect(wpis.style.border).toBe("1px solid rgba(163, 163, 163, 0.3)");
+    expect(wpis.className).not.toContain("border-dashed");
+    expect(wpis.className).not.toContain("bg-background");
+    expect(wpis.className).toContain("text-foreground");
     expect(wpis.className).not.toContain("font-mono");
   });
 
-  it("zaznaczony wpis bez kategorii ma szary pierścień 2 px, a plan treningu tło z klasy bg-background", () => {
+  it("zaznaczony wpis bez kategorii ma pierścień 2 px #a3a3a366, a plan treningu nadal przerywaną ramkę i tło bg-background", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })], {
       activeEntryKey: "b1:2026-11-18",
       sport: [planZSzablonu()],
     });
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
-    expect(wpis.style.boxShadow).toBe("rgba(0, 0, 0, 0.2) 0px 0px 0px 2px");
+    expect(wpis.style.boxShadow).toBe("rgba(163, 163, 163, 0.4) 0px 0px 0px 2px");
     expect(wpis).toHaveAttribute("aria-expanded", "true");
     const plan = screen.getByRole("link", { name: "Push" });
     expect(plan).toHaveClass("bg-background");
     expect(plan.style.backgroundColor).toBe("");
+    expect(plan.style.border).toContain("dashed");
   });
 
   it("klik w „+2 więcej” woła onMoreClick", async () => {

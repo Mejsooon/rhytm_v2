@@ -40,6 +40,10 @@ beforeEach(() => {
 describe("TemplateEditor — nowy szablon", () => {
   it("ścieżka „Nowy szablon”, nagłówek, brak ćwiczeń i brak „Usuń szablon”", () => {
     render(<TemplateEditor data={dane(true)} />);
+    // „Anuluj” w nagłówku i pod formularzem bez ramki (ghost), na telefonie 44 px
+    for (const anuluj of screen.getAllByRole("link", { name: "Anuluj" })) {
+      expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "max-[799px]:h-11");
+    }
     expect(
       screen.getByText("Nowy szablon", { selector: "span" }),
     ).toBeVisible();

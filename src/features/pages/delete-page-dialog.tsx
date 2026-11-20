@@ -97,7 +97,7 @@ export function DeletePageDialog({
       title={`Usunąć stronę „${tytul}”?`}
       footer={
         <>
-          <Button onClick={() => onOpenChange(false)}>Anuluj</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Anuluj</Button>
           <Button variant="destructive" onClick={usun} disabled={trwa}>
             Usuń
           </Button>

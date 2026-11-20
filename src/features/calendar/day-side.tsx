@@ -1,7 +1,7 @@
 "use client";
 
 // Prawa kolumna widoku dnia wg CCalendarDay.dc.html: szary panel (288 px treści) z dwiema kartami (.card) —
-// mini kalendarz i „Dzień w liczbach”.
+// mini kalendarz i „Dzień w liczbach” z paskiem postępu zadań.
 // Stoi w miejscu obok siatki i przewija się sama, gdy brakuje wysokości.
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   Card,
   CardHeader,
   CardTitle,
+  Progress,
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import type { TaskRow } from "@/features/tasks/model";
@@ -180,6 +181,12 @@ export function DaySide({
             <span className="text-muted-foreground">Zadania</span>
             <span className="font-medium tabular-nums">{`${liczby.tasksDone} / ${liczby.tasksTotal}`}</span>
           </div>
+          <Progress
+            value={liczby.tasksDone}
+            max={liczby.tasksTotal}
+            ariaLabel="Zadania wykonane"
+            className="mt-0.5"
+          />
         </div>
       </Card>
     </aside>

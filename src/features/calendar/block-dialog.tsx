@@ -318,7 +318,7 @@ export function BlockDialog({
               {blad}
             </p>
           )}
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
             Zapisz blok
           </Button>
@@ -362,6 +362,8 @@ export function BlockDialog({
             weekStart={weekStart}
             today={today}
             ariaLabel="Dzień"
+            // Pole pełnej szerokości kolumny jak .igroup w CBlockDialog.dc.html
+            className="w-full"
           />
         </div>
         <div className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
@@ -369,6 +371,7 @@ export function BlockDialog({
           <TimePicker
             clock={clock}
             ariaLabel="Od"
+            className="w-full"
             value={naGodzine(startMin)}
             onChange={(v) => {
               // Zmiana „od” przesuwa „do”, zachowując czas trwania
@@ -383,6 +386,7 @@ export function BlockDialog({
           <TimePicker
             clock={clock}
             ariaLabel="Do"
+            className="w-full"
             allowEndOfDay
             value={naGodzine(endMin)}
             onChange={(v) => setEndMin(zGodziny(v))}

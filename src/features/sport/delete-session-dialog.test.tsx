@@ -73,6 +73,9 @@ describe("DeleteSessionDialog", () => {
         onCancel={onCancel}
       />,
     );
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Nie znaleziono treningu.",

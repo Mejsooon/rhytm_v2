@@ -148,7 +148,7 @@ export function RunDialog({
               {blad}
             </p>
           )}
-          <Button onClick={onClose}>Anuluj</Button>
+          <Button variant="ghost" onClick={onClose}>Anuluj</Button>
           <Button
             variant="primary"
             disabled={pending}

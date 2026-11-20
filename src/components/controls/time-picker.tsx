@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { ClockIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -21,6 +21,7 @@ const KOMORKA =
   "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
 // Wybór godziny wg .tmb / .tpop / .tgrid / .tcell z SettingsNotifications.dc.html.
+// Wyzwalacz jak .igroup z CBlockDialog.dc.html: ikona zegara po lewej i godzina sans.
 // Klik godziny zostawia dymek otwarty, klik minut go zamyka.
 // Tryb 12 h (spec 9.2): siatka 1–12 i przełącznik AM/PM; wartość zawsze zostaje 'HH:MM' (24 h).
 export function TimePicker({
@@ -30,6 +31,7 @@ export function TimePicker({
   clock = "24",
   allowEndOfDay = false,
   disabled = false,
+  className,
 }: {
   value: string; // 'HH:MM'
   onChange: (v: string) => void;
@@ -39,6 +41,8 @@ export function TimePicker({
   allowEndOfDay?: boolean;
   // Wyłączony wybór (np. przypomnienie wyłączone): przycisk nie otwiera dymka
   disabled?: boolean;
+  // Dodatkowe klasy wyzwalacza (np. w-full w oknie bloku)
+  className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const [godzina, minuta] = value.split(":");
@@ -65,16 +69,20 @@ export function TimePicker({
           aria-haspopup="dialog"
           disabled={disabled}
           className={cn(
-            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[11px] font-mono text-sm text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
+            // .igroup: ramka input, promień 10 px, cień xs, ikona muted, tekst sans z cyframi tabelarycznymi
+            "inline-flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-foreground tabular-nums shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
+            className,
           )}
         >
-          {wTrybie12
-            ? formatClockTime(godzinaLiczba, Number(minuta), "12")
-            : value}
-          <ChevronDownIcon
+          <ClockIcon
             aria-hidden="true"
-            className="size-3 flex-none text-muted-foreground"
+            className="size-4 flex-none text-muted-foreground"
           />
+          <span className="min-w-0 truncate">
+            {wTrybie12
+              ? formatClockTime(godzinaLiczba, Number(minuta), "12")
+              : value}
+          </span>
         </button>
       }
     >

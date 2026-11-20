@@ -96,6 +96,9 @@ describe("CategoryDialog", () => {
   it("Anuluj i ✕ wołają onCancel", async () => {
     const onCancel = vi.fn();
     render(<CategoryDialog onSaved={vi.fn()} onCancel={onCancel} />);
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);

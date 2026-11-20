@@ -47,7 +47,7 @@ test.describe("kalendarz (web)", () => {
     const okno = page.getByRole("dialog", { name: "Nowy blok" });
     await expect(
       okno.getByRole("button", { name: "Dzień", exact: true }),
-    ).toHaveText("12.01.2027");
+    ).toHaveText("wt 12.01.2027");
     await expect(
       okno.getByRole("button", { name: "Od", exact: true }),
     ).toHaveText("10:00");

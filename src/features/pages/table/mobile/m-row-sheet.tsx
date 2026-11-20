@@ -45,7 +45,7 @@ export function MRowSheet({
       title={title}
       footer={
         <>
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button variant="primary" onClick={onSave}>
             Zapisz
           </Button>

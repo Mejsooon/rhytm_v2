@@ -87,7 +87,7 @@ describe("BlockDialog", () => {
       screen.getByRole("dialog", { name: "Nowy blok" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dzień" })).toHaveTextContent(
-      "17.11.2026",
+      /^wt 17\.11\.2026$/,
     );
     expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent(
       "10:00",
@@ -308,8 +308,22 @@ describe("BlockDialog", () => {
     });
   });
 
+  it("Dzień, Od i Do jak w CBlockDialog: pola pełnej szerokości kolumny; „Powtarzaj do” bez zmian", async () => {
+    wyrenderuj();
+    for (const nazwa of ["Dzień", "Od", "Do"]) {
+      expect(screen.getByRole("button", { name: nazwa })).toHaveClass("w-full");
+    }
+    await userEvent.click(screen.getByRole("radio", { name: "Co tydzień" }));
+    expect(
+      screen.getByRole("button", { name: "Powtarzaj do" }),
+    ).not.toHaveClass("w-full");
+  });
+
   it("Anuluj i ✕ wołają onCancel", async () => {
     const { onCancel } = wyrenderuj();
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);
