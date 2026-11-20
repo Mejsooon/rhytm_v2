@@ -140,11 +140,11 @@ export function StepGoals({
               title={staly ? "Zawsze włączone" : undefined}
               onClick={() => onChange(toggleGoal(draft, cel.key))}
               className={cn(
-                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:flex-col-reverse max-[799px]:gap-1",
+                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:flex-col-reverse max-[799px]:gap-1",
                 wlaczony &&
                   !staly &&
-                  "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
-                staly && "cursor-default bg-[#fafafa] hover:border-[#e0e0e0]",
+                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
+                staly && "cursor-default bg-panel hover:border-input",
               )}
             >
               <span
@@ -152,10 +152,10 @@ export function StepGoals({
                 className={cn(
                   "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px] max-[799px]:hidden",
                   staly
-                    ? "border-[#e0e0e0] bg-[#f4f4f5] text-[#737373]"
+                    ? "border-input bg-muted text-muted-foreground"
                     : wlaczony
-                      ? "border-[#171717] bg-[#171717] text-white"
-                      : "border-[#cfcfcf] bg-white text-transparent",
+                      ? "border-primary bg-primary text-white"
+                      : "border-border-strong bg-white text-transparent",
                 )}
               >
                 <Ikona className="size-3" strokeWidth={2} />
@@ -168,10 +168,10 @@ export function StepGoals({
                     className={cn(
                       "hidden size-6 flex-none items-center justify-center rounded-[7px] border-[1.5px] max-[799px]:inline-flex",
                       staly
-                        ? "border-[#e0e0e0] bg-[#f4f4f5] text-[#737373]"
+                        ? "border-input bg-muted text-muted-foreground"
                         : wlaczony
-                          ? "border-[#15803d] bg-[#15803d] text-white"
-                          : "border-[#cfcfcf] bg-white text-transparent",
+                          ? "border-success bg-success text-white"
+                          : "border-border-strong bg-white text-transparent",
                     )}
                   >
                     <Ikona
@@ -180,7 +180,7 @@ export function StepGoals({
                     />
                   </span>
                 </span>
-                <span className="text-[13px] text-[#737373] max-[799px]:text-xs">
+                <span className="text-[13px] text-muted-foreground max-[799px]:text-xs">
                   {cel.desc}
                 </span>
               </span>
@@ -188,15 +188,15 @@ export function StepGoals({
           );
         })}
       </div>
-      <p className="-mt-2 text-[13px] text-[#737373] max-[799px]:-mt-1">
+      <p className="-mt-2 text-[13px] text-muted-foreground max-[799px]:-mt-1">
         Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.
       </p>
 
-      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-[#eaeaea] max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm">
+      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm">
         {/* Web: etykieta z podpowiedzią; telefon: etykieta mono jak .lbl w MOnboarding */}
-        <span className="max-[799px]:font-mono max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-[#6b6b6b] max-[799px]:uppercase">
+        <span className="max-[799px]:font-mono max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-muted-foreground max-[799px]:uppercase">
           Cele treningowe{" "}
-          <span className="font-normal text-[#737373]">
+          <span className="font-normal text-muted-foreground">
             · włącz jeden albo oba
           </span>
         </span>
@@ -206,7 +206,7 @@ export function StepGoals({
               key={cel.key}
               className={cn(
                 "flex flex-col gap-2 max-[799px]:min-h-14 max-[799px]:flex-row max-[799px]:items-center max-[799px]:gap-3",
-                i > 0 && "max-[799px]:border-t max-[799px]:border-[#f0f0f0]",
+                i > 0 && "max-[799px]:border-t max-[799px]:border-border",
               )}
             >
               <button
@@ -214,15 +214,15 @@ export function StepGoals({
                 role="checkbox"
                 aria-checked={cel.on}
                 onClick={cel.przelacz}
-                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left font-medium text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3 max-[799px]:font-normal"
+                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3 max-[799px]:font-normal"
               >
                 <span
                   aria-hidden="true"
                   className={cn(
                     "inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px] max-[799px]:size-6 max-[799px]:rounded-[7px]",
                     cel.on
-                      ? "border-[#171717] bg-[#171717] text-white max-[799px]:border-[#15803d] max-[799px]:bg-[#15803d]"
-                      : "border-[#cfcfcf] bg-white text-transparent",
+                      ? "border-primary bg-primary text-white max-[799px]:border-success max-[799px]:bg-success"
+                      : "border-border-strong bg-white text-transparent",
                   )}
                 >
                   <Check
@@ -238,7 +238,7 @@ export function StepGoals({
                   label={cel.label}
                   type="text"
                   inputMode="numeric"
-                  className="font-mono disabled:bg-[#fafafa] disabled:text-[#a3a3a3]"
+                  className="font-mono disabled:bg-panel disabled:text-faint-foreground"
                   disabled={!cel.on}
                   value={cel.on ? cel.pole : "—"}
                   error={cel.on ? cel.blad : undefined}
@@ -257,7 +257,7 @@ export function StepGoals({
                     incDisabled={cel.incDisabled}
                   />
                 ) : (
-                  <span className="font-mono text-[13px] font-normal text-[#a3a3a3]">
+                  <span className="font-mono text-[13px] font-normal text-faint-foreground">
                     wyłączony
                   </span>
                 )}
@@ -268,13 +268,13 @@ export function StepGoals({
         {brakCelu && (
           <p
             role="alert"
-            className="m-0 text-[13px] font-normal text-[#b91c1c] max-[799px]:pb-2.5"
+            className="m-0 text-[13px] font-normal text-destructive-foreground max-[799px]:pb-2.5"
           >
             Włącz co najmniej jeden cel.
           </p>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3 text-[13px] font-medium max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-[#e0e0e0] max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
+      <div className="flex items-center justify-between gap-3 text-[13px] font-medium max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-input max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
         <span>Cel snu</span>
         <Stepper
           ariaLabel="Cel snu"

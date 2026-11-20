@@ -126,8 +126,8 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   aria-label="Zmień ikonę"
                   className={`flex size-10 cursor-pointer items-center justify-center rounded-lg p-0 font-[inherit] max-[799px]:hidden ${
                     ikona === ""
-                      ? "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#6b6b6b]"
-                      : "border border-transparent bg-transparent text-[#171717]"
+                      ? "border border-dashed border-border-strong bg-panel text-muted-foreground"
+                      : "border border-transparent bg-transparent text-foreground"
                   }`}
                 >
                   <PageIcon icon={ikona} size={22} />
@@ -137,7 +137,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
               <IconPicker value={ikona} onPick={zmienIkone} />
             </ActionPopover>
             {/* Telefon: sama ikona przy tytule; zmienia się ją w menu strony („Zmień ikonę”), więc z pagesStore */}
-            <span className="text-[#171717] min-[800px]:hidden">
+            <span className="text-foreground min-[800px]:hidden">
               <PageIcon icon={(pagesStore.pages.find((p) => p.id === page.id) ?? page).icon} size={28} />
             </span>
             <input
@@ -148,7 +148,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
               onBlur={zapiszTytul}
               placeholder="Bez tytułu"
               aria-label="Nazwa strony"
-              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-[#171717] outline-none max-[799px]:text-[28px]"
+              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-foreground outline-none max-[799px]:text-[28px]"
             />
           </div>
 
@@ -182,7 +182,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 />
               )}
               {b.type === "divider" && (
-                <hr className="my-3 border-0 border-t border-[#eaeaea]" />
+                <hr className="my-3 border-0 border-t border-border" />
               )}
               {b.type === "table" && (
                 <TableBlock block={b} editable="cell" today={data.today} />
@@ -191,7 +191,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 type="button"
                 aria-label="Usuń blok"
                 onClick={() => void store.remove(b.id)}
-                className="absolute top-1 right-0 inline-flex cursor-pointer rounded-md border-0 bg-transparent p-[5px] text-[#b91c1c] opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:bg-[#fef2f2] focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:items-center max-[799px]:justify-center max-[799px]:opacity-100"
+                className="absolute top-1 right-0 inline-flex cursor-pointer rounded-md border-0 bg-transparent p-[5px] text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:bg-destructive-soft focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:items-center max-[799px]:justify-center max-[799px]:opacity-100"
               >
                 <Trash2 size={14} aria-hidden="true" />
               </button>
@@ -207,14 +207,14 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           {pusta && (
             <div className="flex flex-col gap-3 max-[799px]:hidden">
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="mr-1 font-mono text-xs text-[#6b6b6b]">
+                <span className="mr-1 font-mono text-xs text-muted-foreground">
                   albo zacznij od:
                 </span>
                 {QUICK_START.map((q) => (
                   <Chip key={q.type} onClick={() => void store.add(q.type)}>
                     <span
                       aria-hidden="true"
-                      className="font-mono text-[#6b6b6b]"
+                      className="font-mono text-muted-foreground"
                     >
                       {q.icon}
                     </span>
@@ -222,9 +222,9 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   </Chip>
                 ))}
               </div>
-              <p className="mt-6 mb-0 font-mono text-xs text-[#6b6b6b]">
+              <p className="mt-6 mb-0 font-mono text-xs text-muted-foreground">
                 Wolisz gotowca?{" "}
-                <Link href="/strony/nowa" className="text-[#404040]">
+                <Link href="/strony/nowa" className="text-soft-foreground">
                   Użyj szablonu →
                 </Link>
               </p>

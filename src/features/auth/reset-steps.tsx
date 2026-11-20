@@ -80,7 +80,7 @@ export function ResetSteps() {
               <span className="max-[799px]:hidden">Nie pamiętasz hasła?</span>
               <span className="min-[800px]:hidden">Reset hasła</span>
             </h1>
-            <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:mt-2 max-[799px]:text-[13px] max-[799px]:leading-normal">
+            <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:mt-2 max-[799px]:text-[13px] max-[799px]:leading-normal">
               <span className="max-[799px]:hidden">
                 Podaj e-mail konta, a wyślemy link do ustawienia nowego hasła.
               </span>
@@ -100,7 +100,7 @@ export function ResetSteps() {
             error={state.fieldErrors?.email}
           />
           {state.status === "error" && state.message && (
-            <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
               {state.message}
             </p>
           )}
@@ -111,7 +111,7 @@ export function ResetSteps() {
           </div>
           <Link
             href="/logowanie"
-            className="text-center text-[13px] text-[#666666] underline max-[799px]:hidden"
+            className="text-center text-[13px] text-muted-foreground underline max-[799px]:hidden"
           >
             ← Wróć do logowania
           </Link>

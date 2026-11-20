@@ -130,8 +130,8 @@ export function WeekTiles({
   const liniaCelu = cel !== null ? wysokosc(cel) : 0;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-[#eaeaea] bg-white">
-      <div className="grid grid-cols-4 border-b border-[#eaeaea]">
+    <section className="overflow-hidden rounded-lg border border-border bg-white">
+      <div className="grid grid-cols-4 border-b border-border">
         {kafelki.map((k, i) => {
           const wlaczony = miara === k.klucz;
           return (
@@ -141,17 +141,17 @@ export function WeekTiles({
               aria-pressed={wlaczony}
               onClick={() => setMiara(k.klucz)}
               className={cn(
-                "cursor-pointer border-0 px-4 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 focus-visible:ring-inset",
-                i > 0 && "border-l border-[#eaeaea]",
+                "cursor-pointer border-0 px-4 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-inset",
+                i > 0 && "border-l border-border",
                 wlaczony
                   ? "bg-white shadow-[inset_0_-2px_0_#171717]"
-                  : "bg-[#fafafa]",
+                  : "bg-panel",
               )}
             >
               <MonoLabel className="block">{k.etykieta}</MonoLabel>
-              <div className="mt-1.5 font-mono text-xl text-[#171717]">
+              <div className="mt-1.5 font-mono text-xl text-foreground">
                 {k.wartosc}{" "}
-                <span className="text-xs text-[#666666]">{k.dopisek}</span>
+                <span className="text-xs text-muted-foreground">{k.dopisek}</span>
               </div>
             </button>
           );
@@ -160,18 +160,18 @@ export function WeekTiles({
       <div className="px-4 pt-3.5 pb-3">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <span className="text-[13px] font-medium">{tytul}</span>
-          <span className="font-mono text-[11px] text-[#6b6b6b]">{notka}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{notka}</span>
         </div>
-        <div className="relative flex h-[150px] items-end gap-2.5 border-b border-[#eaeaea]">
+        <div className="relative flex h-[150px] items-end gap-2.5 border-b border-border">
           {cel !== null && (
             <>
               <div
                 data-testid="linia-celu"
-                className="absolute right-0 left-0 z-[1] border-t border-dashed border-[#15803d]"
+                className="absolute right-0 left-0 z-[1] border-t border-dashed border-success"
                 style={{ bottom: liniaCelu }}
               />
               <span
-                className="absolute right-0 z-[2] bg-white px-1 font-mono text-[10px] text-[#15803d]"
+                className="absolute right-0 z-[2] bg-white px-1 font-mono text-[10px] text-success"
                 style={{ bottom: liniaCelu + 4 }}
               >
                 {celTekst}
@@ -196,14 +196,14 @@ export function WeekTiles({
                       : "#d4d4d4",
                 }}
               >
-                <span className="absolute -top-4 right-0 left-0 text-center font-mono text-[9px] whitespace-nowrap text-[#6b6b6b]">
+                <span className="absolute -top-4 right-0 left-0 text-center font-mono text-[9px] whitespace-nowrap text-muted-foreground">
                   {v > 0 ? format(v) : ""}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-1.5 flex justify-between font-mono text-[10px] text-[#6b6b6b]">
+        <div className="mt-1.5 flex justify-between font-mono text-[10px] text-muted-foreground">
           <span>tydz. {tygodnie[0].numer}</span>
           <span>tydz. {tygodnie[11].numer}</span>
         </div>

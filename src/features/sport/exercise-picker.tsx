@@ -9,7 +9,7 @@ import { searchExercises } from "./library";
 import type { ExerciseRow } from "./model";
 
 const POZYCJA =
-  "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-2 text-left text-[13px] text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:bg-[#f5f5f5] max-[799px]:min-h-11 max-[799px]:text-sm";
+  "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-2 text-left text-[13px] text-foreground outline-none hover:bg-muted focus-visible:bg-muted max-[799px]:min-h-11 max-[799px]:text-sm";
 
 export function ExercisePicker({
   exercises,
@@ -78,7 +78,7 @@ export function ExercisePicker({
           }}
           placeholder="Szukaj albo wpisz własne…"
           aria-label="Szukaj ćwiczenia"
-          className="box-border w-full rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-sm max-[799px]:h-11 max-[799px]:text-[15px] text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+          className="box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm max-[799px]:h-11 max-[799px]:text-[15px] text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
         />
         <div className="flex max-h-[260px] flex-col overflow-y-auto">
           {wyniki.map((w) => (
@@ -89,7 +89,7 @@ export function ExercisePicker({
               onClick={() => wybierz(w.name)}
             >
               <span>{w.name}</span>
-              <span className="font-mono text-[11px] text-[#6b6b6b]">
+              <span className="font-mono text-[11px] text-muted-foreground">
                 {w.group ?? ""}
               </span>
             </button>
@@ -102,7 +102,7 @@ export function ExercisePicker({
               onClick={() => wybierz(q.trim())}
             >
               <span>{`+ Dodaj „${q.trim()}”`}</span>
-              <span className="font-mono text-[11px] text-[#6b6b6b]">
+              <span className="font-mono text-[11px] text-muted-foreground">
                 własne
               </span>
             </button>

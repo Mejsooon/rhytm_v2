@@ -94,7 +94,7 @@ export function ScopeDialog({
       footer={
         <>
           {error && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {error}
             </p>
           )}
@@ -121,8 +121,8 @@ export function ScopeDialog({
               "flex items-start gap-3 rounded-lg border px-3.5 py-3 max-[799px]:min-h-11",
               o.wylaczona ? "cursor-not-allowed opacity-50" : "cursor-pointer",
               wybrany === o.value
-                ? "border-[#171717] bg-[#fafafa]"
-                : "border-[#e0e0e0] bg-white",
+                ? "border-primary bg-panel"
+                : "border-input bg-white",
             )}
           >
             <input
@@ -135,7 +135,7 @@ export function ScopeDialog({
             />
             <span>
               <span className="block font-medium">{o.tytul}</span>
-              <span className="text-[13px] text-[#666666]">{o.opis}</span>
+              <span className="text-[13px] text-muted-foreground">{o.opis}</span>
             </span>
           </label>
         ))}
@@ -144,11 +144,11 @@ export function ScopeDialog({
       {[
         ...new Set([disableThis, disableFollowing, disableAll].filter(Boolean)),
       ].map((p) => (
-        <p key={p} className="m-0 text-xs text-[#6b6b6b]">
+        <p key={p} className="m-0 text-xs text-muted-foreground">
           {p}
         </p>
       ))}
-      <p className="m-0 font-mono text-xs text-[#6b6b6b]">
+      <p className="m-0 font-mono text-xs text-muted-foreground">
         Zadania z odhaczonych wystąpień nie przepadają.
       </p>
     </FormDialog>

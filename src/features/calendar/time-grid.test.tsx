@@ -275,7 +275,7 @@ describe("TimeGrid", () => {
       .getByTestId("naglowek-2026-11-17")
       .querySelector("[data-dzis]");
     expect(dzis).toHaveTextContent("17");
-    expect(dzis?.className).toContain("bg-[#15803d]");
+    expect(dzis?.className).toContain("bg-success");
     expect(dzis?.className).toContain("h-6");
     expect(
       screen.getByTestId("naglowek-2026-11-18").querySelector("[data-dzis]"),

@@ -11,13 +11,13 @@ export function OrSeparator({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 text-xs text-[#6b6b6b] max-[799px]:text-[13px] max-[799px]:text-[#8a8a8a]",
+        "flex items-center gap-3 text-xs text-muted-foreground max-[799px]:text-[13px] max-[799px]:text-faint-foreground",
         className,
       )}
     >
-      <span className="h-px flex-1 bg-[#eaeaea]" />
+      <span className="h-px flex-1 bg-border" />
       {label}
-      <span className="h-px flex-1 bg-[#eaeaea]" />
+      <span className="h-px flex-1 bg-border" />
     </div>
   );
 }

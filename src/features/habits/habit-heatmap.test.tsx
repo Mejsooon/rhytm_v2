@@ -85,7 +85,7 @@ describe("HabitHeatmap", () => {
     expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
 
     const bezPlanu = screen.getByLabelText("01.11.2026 · brak zaplanowanych");
-    expect(bezPlanu.className).toContain("bg-[#fafafa]");
+    expect(bezPlanu.className).toContain("bg-panel");
     fireEvent.mouseEnter(bezPlanu);
     expect(screen.getByRole("tooltip")).toHaveTextContent(
       "01.11.2026 · brak zaplanowanych",
@@ -98,10 +98,10 @@ describe("HabitHeatmap", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
     const bezPlanu = screen.getByLabelText("09.11.2026 · brak zaplanowanych");
     const zero = screen.getByLabelText("16.11.2026 · 0 z 3 nawyków");
-    expect(bezPlanu.className).toContain("bg-[#fafafa]");
+    expect(bezPlanu.className).toContain("bg-panel");
     expect(bezPlanu.className).toContain("border-dashed");
-    expect(bezPlanu.className).toContain("border-[#d4d4d4]");
-    expect(zero.className).toContain("bg-[#f0f0f0]");
+    expect(bezPlanu.className).toContain("border-border-strong");
+    expect(zero.className).toContain("bg-active");
     expect(zero.className).not.toContain("border-dashed");
     expect(bezPlanu.className).not.toBe(zero.className);
   });

@@ -13,8 +13,8 @@ import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
 
 const POZYCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-[#171717] hover:bg-[#f5f5f5] max-[799px]:min-h-11";
-const IKONA_POZYCJI = "w-[18px] font-mono text-[#6b6b6b]";
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-foreground hover:bg-muted max-[799px]:min-h-11";
+const IKONA_POZYCJI = "w-[18px] font-mono text-muted-foreground";
 
 // Menu strony (PageMenu.dc.html, Sidebar.dc.html): na webie dymek 230 px, z `sheet` arkusz od dołu (telefon).
 // Na webie kolejność zmienia się przeciąganiem w sidebarze, więc „Przenieś wyżej / niżej” jest tylko w arkuszu.
@@ -88,7 +88,7 @@ export function PageMenu({
             type="button"
             aria-label="Wróć do menu"
             onClick={() => setWidok("menu")}
-            className="size-7 cursor-pointer rounded-md border-0 bg-transparent font-[inherit] text-[#404040] hover:bg-[#f5f5f5] max-[799px]:size-11"
+            className="size-7 cursor-pointer rounded-md border-0 bg-transparent font-[inherit] text-soft-foreground hover:bg-muted max-[799px]:size-11"
           >
             ←
           </button>
@@ -115,7 +115,7 @@ export function PageMenu({
         >
           <span aria-hidden="true" className={IKONA_POZYCJI}>✎</span>
           <span className="flex-1">Zmień nazwę</span>
-          <span className="font-mono text-[11px] text-[#6b6b6b]">F2</span>
+          <span className="font-mono text-[11px] text-muted-foreground">F2</span>
         </button>
         <button
           type="button"
@@ -125,7 +125,7 @@ export function PageMenu({
         >
           <span aria-hidden="true" className={IKONA_POZYCJI}>◇</span>
           <span className="flex-1">Zmień ikonę</span>
-          <span aria-hidden="true" className="font-mono text-[11px] text-[#6b6b6b]">›</span>
+          <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">›</span>
         </button>
         <button type="button" role="menuitem" className={POZYCJA} onClick={duplikuj}>
           <span aria-hidden="true" className={IKONA_POZYCJI}>⧉</span>
@@ -141,7 +141,7 @@ export function PageMenu({
               aria-label="Przenieś wyżej"
               disabled={indeks <= 0}
               onClick={() => przenies(-1)}
-              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
             >
               ↑
             </button>
@@ -150,7 +150,7 @@ export function PageMenu({
               aria-label="Przenieś niżej"
               disabled={indeks < 0 || indeks >= sekcja.length - 1}
               onClick={() => przenies(1)}
-              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-[#e0e0e0] bg-white font-mono text-[11px] text-[#404040] disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
             >
               ↓
             </button>
@@ -170,17 +170,17 @@ export function PageMenu({
             {page.favorite ? "★ Usuń z ulubionych" : "★ Dodaj do ulubionych"}
           </span>
         </button>
-        <div className="mx-1 my-1.5 h-px bg-[#eaeaea]" />
+        <div className="mx-1 my-1.5 h-px bg-border" />
         <button
           type="button"
           role="menuitem"
-          className={`${POZYCJA} text-[#b91c1c]`}
+          className={`${POZYCJA} text-destructive-foreground`}
           onClick={() => {
             zmienOtwarcie(false);
             setUsuwanie(true);
           }}
         >
-          <span aria-hidden="true" className={`${IKONA_POZYCJI} text-[#b91c1c]`}>✕</span>
+          <span aria-hidden="true" className={`${IKONA_POZYCJI} text-destructive-foreground`}>✕</span>
           <span className="flex-1">Usuń stronę</span>
         </button>
       </div>
@@ -195,7 +195,7 @@ export function PageMenu({
       onClick={sheet ? () => zmienOtwarcie(true) : undefined}
       className={
         triggerClassName ??
-        "flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-[#666666] hover:bg-[#ebebeb]"
+        "flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-muted-foreground hover:bg-border"
       }
     >
       <span aria-hidden="true">⋯</span>

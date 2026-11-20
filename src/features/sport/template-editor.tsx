@@ -36,9 +36,9 @@ const DOMYSLNA_GODZINA = "17:00";
 const SIATKA =
   "grid grid-cols-[28px_minmax(0,1fr)_128px_96px_96px_108px] items-center gap-2.5 max-[799px]:grid-cols-[28px_minmax(140px,1fr)_160px_96px_96px_148px]";
 const POLE =
-  "box-border w-full rounded-md border border-[#e0e0e0] bg-white font-mono text-sm text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]";
+  "box-border w-full rounded-md border border-input bg-white font-mono text-sm text-foreground outline-none placeholder:text-faint-foreground focus:border-primary";
 const IKONA =
-  "inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-[#e0e0e0] bg-white p-0 text-[#404040] hover:bg-[#f5f5f5] aria-disabled:cursor-not-allowed aria-disabled:opacity-35 max-[799px]:size-11";
+  "inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-soft-foreground hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-35 max-[799px]:size-11";
 
 // Stan formularza z szablonu (albo pusty dla nowego)
 function stanPoczatkowy(template: TemplateWithItems | null) {
@@ -181,23 +181,23 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:px-4">
-        <div className="min-w-0 font-mono text-[13px] text-[#666666]">
+      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
+        <div className="min-w-0 font-mono text-[13px] text-muted-foreground">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
-          <span className="text-[#b0b0b0]">/</span>{" "}
+          <span className="text-faint-foreground">/</span>{" "}
           <Link
             href="/sport/szablony"
-            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Szablony treningów
           </Link>{" "}
-          <span className="text-[#b0b0b0]">/</span>{" "}
-          <span className="text-[#171717]">{crumb}</span>
+          <span className="text-faint-foreground">/</span>{" "}
+          <span className="text-foreground">{crumb}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {przyciskAnuluj}
@@ -210,10 +210,10 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {template ? "Edytuj szablon" : "Nowy szablon"}
           </h1>
-          <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">{meta}</p>
+          <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">{meta}</p>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-[#eaeaea] bg-white p-[18px]">
+        <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[18px]">
           <div className="grid grid-cols-2 gap-4 max-[799px]:grid-cols-1">
             <div className="flex flex-col gap-1.5 text-[13px] font-medium">
               <label htmlFor={nazwaId}>Nazwa szablonu</label>
@@ -233,13 +233,13 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 className={cn(
                   POLE,
                   "px-2.5 py-2 font-sans",
-                  tried && nazwa === "" && "border-[#b91c1c]",
+                  tried && nazwa === "" && "border-destructive",
                 )}
               />
               {tried && nazwa === "" && (
                 <span
                   id={`${nazwaId}-blad`}
-                  className="text-xs font-normal text-[#b91c1c]"
+                  className="text-xs font-normal text-destructive-foreground"
                 >
                   Podaj nazwę.
                 </span>
@@ -248,7 +248,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
             <div className="flex flex-col gap-1.5 text-[13px] font-medium">
               <span>
                 Dni tygodnia{" "}
-                <span className="text-xs font-normal text-[#6b6b6b]">
+                <span className="text-xs font-normal text-muted-foreground">
                   (opcjonalnie — pojawi się w kalendarzu Sport)
                 </span>
               </span>
@@ -276,7 +276,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 })}
                 {/* Godzina startu ma sens tylko, gdy szablon sam planuje treningi */}
                 {days.length > 0 && (
-                  <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-normal text-[#6b6b6b]">
+                  <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
                     o
                     <TimePicker
                       value={startTime}
@@ -295,7 +295,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
               <div
                 className={cn(
                   SIATKA,
-                  "py-1 font-mono text-[11px] text-[#6b6b6b]",
+                  "py-1 font-mono text-[11px] text-muted-foreground",
                 )}
               >
                 <span>#</span>
@@ -314,9 +314,9 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                     key={r.key}
                     data-testid="wiersz-cwiczenia"
                     data-name={r.name}
-                    className={cn(SIATKA, "border-b border-[#f0f0f0] py-2")}
+                    className={cn(SIATKA, "border-b border-border py-2")}
                   >
-                    <span className="font-mono text-[#6b6b6b]">{i + 1}</span>
+                    <span className="font-mono text-muted-foreground">{i + 1}</span>
                     <span className="min-w-0 truncate font-medium">
                       {r.name}
                     </span>
@@ -365,7 +365,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       className={cn(
                         POLE,
                         "px-2 py-[5px] max-[799px]:h-11",
-                        zla && "border-[#b91c1c]",
+                        zla && "border-destructive",
                       )}
                     />
                     <span className="inline-flex justify-end gap-1">
@@ -389,7 +389,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       </button>
                       <button
                         type="button"
-                        className={cn(IKONA, "text-[#b91c1c]")}
+                        className={cn(IKONA, "text-destructive-foreground")}
                         aria-label={`Usuń ${r.name}`}
                         onClick={() =>
                           setForm((f) => ({
@@ -406,12 +406,12 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
               })}
             </div>
             {rows.length === 0 && (
-              <p className="m-0 py-3.5 text-xs text-[#6b6b6b]">
+              <p className="m-0 py-3.5 text-xs text-muted-foreground">
                 Brak ćwiczeń — dodaj pierwsze poniżej.
               </p>
             )}
             {tried && zlaPrzerwa && (
-              <p className="m-0 pt-2 text-xs text-[#b91c1c]">
+              <p className="m-0 pt-2 text-xs text-destructive-foreground">
                 Przerwa w formacie m:ss, np. 2:00.
               </p>
             )}
@@ -442,7 +442,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
         </section>
 
         {blad && (
-          <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
             {blad}
           </p>
         )}
@@ -456,7 +456,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
             <Button
               size="sm"
               disabled={zapisuje}
-              className="border-[#f3c7c7] text-[#b91c1c] hover:text-[#b91c1c] max-[799px]:h-11"
+              className="border-destructive-border text-destructive-foreground hover:text-destructive-foreground max-[799px]:h-11"
               onClick={() => void usun()}
             >
               Usuń szablon

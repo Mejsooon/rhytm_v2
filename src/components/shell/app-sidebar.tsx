@@ -117,14 +117,14 @@ export function AppSidebar({
     cn(
       POZYCJA,
       aktywna(href)
-        ? "bg-[#f0f0f0] font-medium text-[#171717]"
-        : "text-[#666666] hover:bg-[#f5f5f5] hover:text-[#171717]",
+        ? "bg-active font-medium text-foreground"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground",
     );
 
   return (
     <nav
       aria-label="Główna nawigacja"
-      className="sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-[#eaeaea] bg-[#fafafa] px-2.5 py-3 text-sm text-[#171717] min-[800px]:flex"
+      className="sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border bg-panel px-2.5 py-3 text-sm text-foreground min-[800px]:flex"
     >
       <div className="flex items-center gap-2.5 px-2 pt-1.5 pb-2">
         <RhytmLogo withWordmark />
@@ -136,11 +136,11 @@ export function AppSidebar({
           <button
             type="button"
             aria-disabled="true"
-            className="mt-0.5 mb-2.5 flex cursor-default items-center gap-2 rounded-md border border-[#eaeaea] bg-white px-2.5 py-[7px] text-left text-[#666666]"
+            className="mt-0.5 mb-2.5 flex cursor-default items-center gap-2 rounded-md border border-border bg-white px-2.5 py-[7px] text-left text-muted-foreground"
           >
             <Search size={15} aria-hidden="true" />
             <span className="flex-1">Szukaj…</span>
-            <span className="rounded border border-[#e0e0e0] px-[5px] font-mono text-[11px]">
+            <span className="rounded border border-input px-[5px] font-mono text-[11px]">
               ⌘K
             </span>
           </button>
@@ -196,7 +196,7 @@ export function AppSidebar({
                     type="button"
                     aria-label="Dodaj stronę"
                     onClick={nowaStrona}
-                    className="flex cursor-pointer p-0.5 text-[#666666] hover:text-[#171717]"
+                    className="flex cursor-pointer p-0.5 text-muted-foreground hover:text-foreground"
                   >
                     <Plus size={15} aria-hidden="true" />
                   </button>
@@ -265,7 +265,7 @@ export function AppSidebar({
                             }
                           }}
                           onBlur={() => zapiszNazwe(strona)}
-                          className="min-w-0 flex-1 rounded border border-[#171717] bg-white px-1.5 py-0.5 text-sm text-[#171717] outline-none"
+                          className="min-w-0 flex-1 rounded border border-primary bg-white px-1.5 py-0.5 text-sm text-foreground outline-none"
                         />
                       </div>
                     ) : (
@@ -290,7 +290,7 @@ export function AppSidebar({
                             setSzkic(strona.title);
                             setEdytowana(strona.id);
                           }}
-                          triggerClassName="flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-[#666666] opacity-0 group-hover:opacity-100 hover:bg-[#ebebeb] focus-visible:opacity-100 data-[state=open]:opacity-100"
+                          triggerClassName="flex size-6 cursor-pointer items-center justify-center rounded border-0 bg-transparent font-mono text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-border focus-visible:opacity-100 data-[state=open]:opacity-100"
                         />
                       </div>
                     )}
@@ -303,8 +303,8 @@ export function AppSidebar({
                     {...celKonca}
                     data-testid="strefa-ulubione"
                     className={cn(
-                      "mx-1 rounded-md border border-dashed px-2 py-2 text-center text-xs text-[#6b6b6b]",
-                      koniecAktywny ? "border-[#171717] bg-[#f5f5f5]" : "border-[#d4d4d4]",
+                      "mx-1 rounded-md border border-dashed px-2 py-2 text-center text-xs text-muted-foreground",
+                      koniecAktywny ? "border-primary bg-muted" : "border-border-strong",
                     )}
                   >
                     Upuść tutaj, aby dodać do ulubionych
@@ -323,7 +323,7 @@ export function AppSidebar({
       <button
         type="button"
         onClick={nowaStrona}
-        className={cn(POZYCJA, "cursor-pointer text-left text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#171717]")}
+        className={cn(POZYCJA, "cursor-pointer text-left text-muted-foreground hover:bg-muted hover:text-foreground")}
       >
         <Plus size={16} aria-hidden="true" />
         Nowa strona
@@ -338,7 +338,7 @@ export function AppSidebar({
         <Settings size={16} aria-hidden="true" />
         Ustawienia
       </Link>
-      <div className="mt-1.5 border-t border-[#eaeaea] pt-1">
+      <div className="mt-1.5 border-t border-border pt-1">
         <AccountPopover user={user} />
       </div>
     </nav>

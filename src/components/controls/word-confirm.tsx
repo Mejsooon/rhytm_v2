@@ -33,7 +33,7 @@ export function WordConfirm({
           {czesci.map((czesc, i) => (
             <React.Fragment key={i}>
               {i > 0 && (
-                <span className="rounded-[4px] border border-[#e0e0e0] bg-[#f5f5f5] px-[5px] font-mono">
+                <span className="rounded-[4px] border border-input bg-muted px-[5px] font-mono">
                   {word}
                 </span>
               )}
@@ -47,7 +47,7 @@ export function WordConfirm({
           onChange={(e) => setWpisane(e.target.value)}
           placeholder={word}
           autoComplete="off"
-          className="w-full rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 font-mono text-sm font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0"
+          className="w-full rounded-md border border-input bg-white px-2.5 py-2 font-mono text-sm font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0"
         />
       </label>
       <div className="flex justify-end">

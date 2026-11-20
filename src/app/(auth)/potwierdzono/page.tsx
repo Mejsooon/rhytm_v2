@@ -15,15 +15,15 @@ export default function PotwierdzonoPage() {
       width={362}
     >
       <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-        <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
+        <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
           <Check
             aria-hidden="true"
-            className="size-5 text-[#15803d]"
+            className="size-5 text-success"
             strokeWidth={2}
           />
         </span>
         <h1 className="m-0 text-[22px] font-semibold">E-mail potwierdzony</h1>
-        <p className="m-0 leading-normal text-[#666666]">
+        <p className="m-0 leading-normal text-muted-foreground">
           Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około
           minuty.
         </p>
@@ -34,7 +34,7 @@ export default function PotwierdzonoPage() {
         >
           <Link href="/onboarding">Dalej</Link>
         </Button>
-        <p className="m-0 font-mono text-[11px] text-[#6b6b6b]">
+        <p className="m-0 font-mono text-[11px] text-muted-foreground">
           Link był jednorazowy i już wygasł.
         </p>
       </div>

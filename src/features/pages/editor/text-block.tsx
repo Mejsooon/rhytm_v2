@@ -34,7 +34,7 @@ export function TextBlock({
         onBlur={przyUtracieFokusu}
         placeholder="Nagłówek"
         aria-label="Nagłówek"
-        className="w-full min-w-0 border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-[#171717] outline-none placeholder:text-[#a3a3a3]"
+        className="w-full min-w-0 border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:text-faint-foreground"
       />
     );
   }
@@ -47,7 +47,7 @@ export function TextBlock({
       onBlur={przyUtracieFokusu}
       placeholder="Pusty akapit"
       aria-label="Akapit"
-      className="block w-full min-w-0 resize-none border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-[#171717] outline-none [field-sizing:content] placeholder:text-[#a3a3a3]"
+      className="block w-full min-w-0 resize-none border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-foreground outline-none [field-sizing:content] placeholder:text-faint-foreground"
     />
   );
 }

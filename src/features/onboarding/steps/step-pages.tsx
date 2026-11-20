@@ -64,16 +64,16 @@ export function StepPages({
               aria-pressed={wlaczona}
               onClick={() => przelacz(strona.key)}
               className={cn(
-                "box-border flex w-full cursor-pointer items-start gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-left text-[#171717] transition-colors outline-none hover:border-[#a3a3a3] focus-visible:ring-2 focus-visible:ring-[#15803d]",
+                "box-border flex w-full cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-success",
                 wlaczona &&
-                  "border-[#171717] shadow-[inset_0_0_0_1px_#171717] hover:border-[#171717]",
+                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
               )}
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border border-[#d4d4d4]",
-                  wlaczona && "border-[#171717] bg-[#171717] text-white",
+                  "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border border-border-strong",
+                  wlaczona && "border-primary bg-primary text-white",
                 )}
               >
                 {wlaczona && <Check className="size-3" strokeWidth={1.5} />}
@@ -82,15 +82,15 @@ export function StepPages({
                 <span className="flex items-center gap-2">
                   <span className="font-medium">{strona.name}</span>
                   {polecane.includes(strona.key) && (
-                    <span className="text-xs text-[#15803d]">
+                    <span className="text-xs text-success">
                       z Twoich celów
                     </span>
                   )}
                 </span>
-                <span className="text-[13px] text-[#737373]">
+                <span className="text-[13px] text-muted-foreground">
                   {strona.desc}
                 </span>
-                <span className="font-mono text-[11px] text-[#a3a3a3]">
+                <span className="font-mono text-[11px] text-faint-foreground">
                   {strona.fields}
                 </span>
               </span>
@@ -115,15 +115,15 @@ export function StepPages({
               aria-checked={wlaczona}
               onClick={() => przelacz(strona.key)}
               className={cn(
-                "box-border flex min-h-11 w-full cursor-pointer items-start gap-3 rounded-xl border border-[#e0e0e0] bg-white p-3.5 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#15803d]",
-                wlaczona && "border-[#15803d] bg-[#f7fbf8]",
+                "box-border flex min-h-11 w-full cursor-pointer items-start gap-3 rounded-xl border border-input bg-white p-3.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-success",
+                wlaczona && "border-success bg-success-soft",
               )}
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "inline-flex size-6 flex-none items-center justify-center rounded-[7px] border-[1.5px] border-[#cfcfcf] bg-white text-white",
-                  wlaczona && "border-[#15803d] bg-[#15803d]",
+                  "inline-flex size-6 flex-none items-center justify-center rounded-[7px] border-[1.5px] border-border-strong bg-white text-white",
+                  wlaczona && "border-success bg-success",
                 )}
               >
                 {wlaczona && <Check className="size-4" strokeWidth={3} />}
@@ -135,10 +135,10 @@ export function StepPages({
                     <StatusBadge tone="green">z Twoich celów</StatusBadge>
                   )}
                 </span>
-                <span className="text-[13px] text-[#666666]">
+                <span className="text-[13px] text-muted-foreground">
                   {strona.desc}
                 </span>
-                <span className="font-mono text-[11px] text-[#6b6b6b]">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {strona.fields}
                 </span>
               </span>
@@ -147,11 +147,11 @@ export function StepPages({
         })}
       </div>
 
-      <p className="m-0 text-[13px] text-[#737373] max-[799px]:hidden">
+      <p className="m-0 text-[13px] text-muted-foreground max-[799px]:hidden">
         Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona”
         w sidebarze
       </p>
-      <p className="m-0 text-xs leading-normal text-[#666666] min-[800px]:hidden">
+      <p className="m-0 text-xs leading-normal text-muted-foreground min-[800px]:hidden">
         Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa
         strona”.
       </p>

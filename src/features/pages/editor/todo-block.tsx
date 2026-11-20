@@ -48,8 +48,8 @@ export function TodoBlock({
         }}
         placeholder="Zadanie"
         aria-label="Zadanie"
-        className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-[#a3a3a3] ${
-          done ? "text-[#a3a3a3] line-through" : "text-[#171717]"
+        className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground ${
+          done ? "text-faint-foreground line-through" : "text-foreground"
         }`}
       />
     </div>

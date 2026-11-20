@@ -73,14 +73,14 @@ export function MInsertSheet({
         ref={arkuszRef}
         className="fixed inset-x-0 bottom-0 z-[51] flex max-h-[92%] flex-col rounded-t-[18px] bg-white shadow-[0_-8px_30px_rgba(0,0,0,.12)] min-[800px]:hidden"
       >
-        <div aria-hidden="true" className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]" />
+        <div aria-hidden="true" className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong" />
         <div className="flex flex-none items-center py-0.5 pr-2 pl-5">
           <h2 ref={tytulRef} tabIndex={-1} className="m-0 flex-1 text-[17px] font-semibold outline-none">Wstaw blok</h2>
           <button
             type="button"
             aria-label="Zamknij"
             onClick={onClose}
-            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-foreground hover:bg-muted"
           >
             <X size={20} aria-hidden="true" />
           </button>
@@ -92,23 +92,23 @@ export function MInsertSheet({
               type="button"
               onClick={() => onPick(p)}
               className={`flex min-h-[60px] w-full cursor-pointer items-center gap-3 rounded-xl border-0 p-2 text-left font-[inherit] ${
-                i === 0 && query.trim() !== "" ? "bg-[#f2f2f2]" : "bg-transparent"
+                i === 0 && query.trim() !== "" ? "bg-muted" : "bg-transparent"
               }`}
             >
               <span
                 aria-hidden="true"
-                className="flex size-10 flex-none items-center justify-center rounded-[10px] border border-[#eaeaea] bg-white font-mono"
+                className="flex size-10 flex-none items-center justify-center rounded-md border border-border bg-white font-mono"
               >
                 {p.icon}
               </span>
               <span className="flex flex-col text-left">
                 <span className="font-medium">{p.name}</span>
-                <span className="text-[13px] text-[#6b6b6b]">{p.desc}</span>
+                <span className="text-[13px] text-muted-foreground">{p.desc}</span>
               </span>
             </button>
           ))}
           {pozycje.length === 0 && (
-            <p className="m-0 px-2 py-3 text-[13px] text-[#666666]">Brak bloku „{query.trim()}”</p>
+            <p className="m-0 px-2 py-3 text-[13px] text-muted-foreground">Brak bloku „{query.trim()}”</p>
           )}
         </div>
       </div>

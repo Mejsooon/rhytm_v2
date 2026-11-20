@@ -22,7 +22,7 @@ describe("DatePicker", () => {
       <DatePicker value={null} onChange={vi.fn()} today="2026-11-16" ariaLabel="Termin" variant="bare" />,
     );
     const przycisk = screen.getByRole("button", { name: "Termin" });
-    expect(przycisk).toHaveClass("focus-visible:ring-2", "focus-visible:ring-[#171717]/20");
+    expect(przycisk).toHaveClass("focus-visible:ring-2", "focus-visible:ring-ring/20");
   });
 
   it("pokazuje datę albo placeholder", () => {
@@ -78,7 +78,7 @@ describe("DatePicker", () => {
     ustaw();
     await u.click(screen.getByRole("button", { name: "Termin" }));
     expect(screen.getByRole("button", { name: "16" })).toHaveClass(
-      "border-[#d4d4d4]",
+      "border-border-strong",
     );
     expect(screen.getByRole("button", { name: "20" })).toHaveAttribute(
       "aria-pressed",

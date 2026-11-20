@@ -144,7 +144,7 @@ export function BlockDetails({
     <div className="flex flex-col gap-3.5 text-sm">
       <div className="flex items-start gap-2.5">
         <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
-          <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-[.06em] text-[#666666] uppercase">
+          <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
             <span
               aria-hidden="true"
               className="size-2 rounded-full"
@@ -155,13 +155,13 @@ export function BlockDetails({
           <span className="text-base leading-[1.3] font-semibold break-words">
             {o.title}
           </span>
-          <span className="font-mono text-xs text-[#666666]">{kiedy}</span>
+          <span className="font-mono text-xs text-muted-foreground">{kiedy}</span>
         </div>
         <button
           type="button"
           aria-label="Zamknij"
           onClick={onClose}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] size-7 flex-none cursor-pointer rounded-md border border-[#e0e0e0] bg-white text-[#666666] max-[799px]:size-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring size-7 flex-none cursor-pointer rounded-md border border-input bg-white text-muted-foreground max-[799px]:size-11"
         >
           ✕
         </button>
@@ -169,10 +169,10 @@ export function BlockDetails({
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+          <span className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
             Zadania
           </span>
-          <span className="font-mono text-xs text-[#666666]">{`${done} z ${total}`}</span>
+          <span className="font-mono text-xs text-muted-foreground">{`${done} z ${total}`}</span>
         </div>
         <div
           role="progressbar"
@@ -180,15 +180,15 @@ export function BlockDetails({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={procent}
-          className="h-1 rounded-sm bg-[#f0f0f0]"
+          className="h-1 rounded-sm bg-active"
         >
           <div
-            className="h-1 rounded-sm bg-[#15803d]"
+            className="h-1 rounded-sm bg-success"
             style={{ width: `${procent}%` }}
           />
         </div>
         {total === 0 && (
-          <span className="py-1.5 text-[13px] text-[#6b6b6b]">
+          <span className="py-1.5 text-[13px] text-muted-foreground">
             Brak zadań w tym bloku.
           </span>
         )}
@@ -201,7 +201,7 @@ export function BlockDetails({
             >
               <label
                 className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-[13px] ${
-                  t.done ? "text-[#6b6b6b] line-through" : "text-[#171717]"
+                  t.done ? "text-muted-foreground line-through" : "text-foreground"
                 }`}
               >
                 <input
@@ -218,7 +218,7 @@ export function BlockDetails({
                   type="button"
                   aria-label={`Odepnij zadanie ${t.title}`}
                   onClick={() => odepnij(t)}
-                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2 py-0.5 text-xs text-[#404040] max-[799px]:min-h-11"
+                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer rounded-md border border-input bg-white px-2 py-0.5 text-xs text-soft-foreground max-[799px]:min-h-11"
                 >
                   Odepnij
                 </button>
@@ -231,7 +231,7 @@ export function BlockDetails({
                 onClick={() =>
                   setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
                 }
-                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] max-[799px]:size-11"
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted max-[799px]:size-11"
               >
                 ⋯
               </button>
@@ -240,14 +240,14 @@ export function BlockDetails({
                 aria-label={`Usuń zadanie ${t.title}`}
                 disabled={tymczasowe}
                 onClick={() => usun(t)}
-                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#b91c1c] max-[799px]:size-11"
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring flex size-6 flex-none cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive-foreground max-[799px]:size-11"
               >
                 ×
               </button>
             </div>
           );
         })}
-        <label className="flex min-h-8 items-center gap-2.5 border-t border-dashed border-[#e0e0e0] pt-1.5 text-[#6b6b6b] max-[799px]:min-h-11">
+        <label className="flex min-h-8 items-center gap-2.5 border-t border-dashed border-input pt-1.5 text-muted-foreground max-[799px]:min-h-11">
           <span aria-hidden="true" className="font-mono">
             +
           </span>
@@ -264,39 +264,39 @@ export function BlockDetails({
                 dodaj();
               }
             }}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#171717] outline-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717]"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-foreground outline-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           />
         </label>
       </div>
 
       {o.note && (
-        <div className="border-t border-[#f0f0f0] pt-2.5">
-          <div className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+        <div className="border-t border-border pt-2.5">
+          <div className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
             Notatka
           </div>
-          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-[#404040]">
+          <p className="mt-1.5 text-[13px] leading-normal break-words whitespace-pre-wrap text-soft-foreground">
             {o.note}
           </p>
         </div>
       )}
 
-      <div className="flex gap-2 border-t border-[#f0f0f0] pt-3">
+      <div className="flex gap-2 border-t border-border pt-3">
         <button
           type="button"
           onClick={onEdit}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-1.5 max-[799px]:min-h-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer rounded-md border border-input bg-white px-3 py-1.5 max-[799px]:min-h-11"
         >
           Edytuj
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] cursor-pointer border-0 bg-transparent px-2 py-1.5 font-medium text-[#b91c1c] max-[799px]:min-h-11"
+          className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer border-0 bg-transparent px-2 py-1.5 font-medium text-destructive-foreground max-[799px]:min-h-11"
         >
           Usuń
         </button>
         {o.recurrence && (
-          <span className="ml-auto self-center font-mono text-[11px] text-[#6b6b6b]">
+          <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground">
             {recurrenceBadge(o.recurrence)}
           </span>
         )}
@@ -348,7 +348,7 @@ export function BlockPopover({
           e.preventDefault();
           if (anchor.isConnected) anchor.focus();
         }}
-        className="max-h-(--radix-popover-content-available-height) w-[340px] overflow-y-auto rounded-[10px] border-[#e0e0e0] p-4 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
+        className="max-h-(--radix-popover-content-available-height) w-[340px] overflow-y-auto rounded-md border-input p-4 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
       >
         <BlockDetails {...reszta} onClose={onClose} />
       </PopoverContent>

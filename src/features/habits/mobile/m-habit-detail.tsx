@@ -22,9 +22,9 @@ import { describeSchedule, streakLabel } from "../text";
 import { MHabitSheet } from "./m-habit-sheet";
 
 const PRZYCISK_IKONY =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20";
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 
 export function MHabitDetail({ data }: { data: HabitDetailData }) {
   const habit = data.habits[0];
@@ -105,14 +105,14 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
           </h1>
         </div>
 
-        <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[#eaeaea] bg-[#eaeaea]">
+        <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
           {kafelki.map((k) => (
             <div key={k.etykieta} className="bg-white px-3.5 py-3">
               <div className={ETYKIETA}>{k.etykieta}</div>
               <div className="mt-1 font-mono text-[22px] font-medium">
                 {k.wartosc}
                 {k.jednostka && (
-                  <span className="ml-1 text-sm text-[#6b6b6b]">
+                  <span className="ml-1 text-sm text-muted-foreground">
                     {k.jednostka}
                   </span>
                 )}
@@ -138,7 +138,7 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
         <button
           type="button"
           onClick={() => setUsuwanie(true)}
-          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-[#f3c7c7] bg-white text-[15px] font-medium text-[#b91c1c] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-destructive-border bg-white text-[15px] font-medium text-destructive-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
         >
           <Trash2 size={18} aria-hidden="true" />
           Usuń nawyk

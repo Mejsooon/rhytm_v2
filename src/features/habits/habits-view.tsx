@@ -101,10 +101,10 @@ export function HabitsView({
         data-testid="web-nawyki"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
           <div className="flex items-baseline gap-2.5">
             <h1 className="m-0 text-lg font-semibold">Nawyki i sen</h1>
-            <span className="font-mono text-xs text-[#6b6b6b]">
+            <span className="font-mono text-xs text-muted-foreground">
               {dataNaglowka}
             </span>
           </div>

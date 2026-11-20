@@ -44,7 +44,7 @@ async function Ekran() {
 export default function NoweHasloPage() {
   return (
     <Suspense
-      fallback={<div className="min-h-dvh bg-white min-[800px]:bg-[#fafafa]" />}
+      fallback={<div className="min-h-dvh bg-white min-[800px]:bg-panel" />}
     >
       <Ekran />
     </Suspense>

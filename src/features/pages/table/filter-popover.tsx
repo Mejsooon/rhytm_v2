@@ -31,7 +31,7 @@ const NAZWY_OPERATOROW: Record<FilterCond["op"], string> = {
 // Web: jeden wiersz siatki na warunek (jak w makiecie); telefon: warunek jako karta z polem i ✕ w jednym rzędzie
 const SIATKA = "flex flex-col gap-2 min-[800px]:gap-1.5";
 const WARUNEK =
-  "grid items-center gap-1.5 min-[800px]:grid-cols-[54px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_30px] max-[799px]:grid-cols-[minmax(0,1fr)_44px] max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-[#eaeaea] max-[799px]:p-2";
+  "grid items-center gap-1.5 min-[800px]:grid-cols-[54px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_30px] max-[799px]:grid-cols-[minmax(0,1fr)_44px] max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-border max-[799px]:p-2";
 
 // Filtr tabeli z FilterPopover.dc.html: warunki „Gdzie … i …”, operatory zależne od typu pola,
 // licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako domyślny”. Zmiany idą do stanu klienta —
@@ -88,7 +88,7 @@ export function FilterPopover({
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`${triggerClassName} ${open ? "!bg-[#f0f0f0]" : ""}`}
+          className={`${triggerClassName} ${open ? "!bg-active" : ""}`}
         >
           {warunki.length > 0 ? `Filtruj · ${warunki.length}` : "Filtruj"}
         </button>
@@ -97,7 +97,7 @@ export function FilterPopover({
       <div className="flex w-[min(540px,calc(100vw-48px))] flex-col gap-2.5 p-1">
         <div className="flex items-center justify-between">
           <span className="font-semibold">Filtr</span>
-          <span className="font-mono text-xs text-[#6b6b6b]">
+          <span className="font-mono text-xs text-muted-foreground">
             {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
           </span>
         </div>
@@ -109,7 +109,7 @@ export function FilterPopover({
             const nazwaWartosci = `Wartość warunku ${n + 1}`;
             return (
               <div key={i} className={WARUNEK}>
-                <span className="font-mono text-xs text-[#6b6b6b] max-[799px]:col-span-2">
+                <span className="font-mono text-xs text-muted-foreground max-[799px]:col-span-2">
                   {n === 0 ? "Gdzie" : "i"}
                 </span>
                 <div className="min-w-0 max-[799px]:order-1">
@@ -161,7 +161,7 @@ export function FilterPopover({
                     <div
                       role="group"
                       aria-label={nazwaWartosci}
-                      className="flex flex-wrap gap-1 rounded-md border border-[#e0e0e0] bg-white px-1.5 py-[5px]"
+                      className="flex flex-wrap gap-1 rounded-md border border-input bg-white px-1.5 py-[5px]"
                     >
                       {opcje.map((o) => {
                         const wybrane = Array.isArray(c.value) && c.value.includes(o.id);
@@ -223,7 +223,7 @@ export function FilterPopover({
                     setSzkice({});
                     onChange(filters.filter((_, j) => j !== i));
                   }}
-                  className="cursor-pointer border-0 bg-transparent text-[#6b6b6b] max-[799px]:order-2 max-[799px]:min-h-11"
+                  className="cursor-pointer border-0 bg-transparent text-muted-foreground max-[799px]:order-2 max-[799px]:min-h-11"
                 >
                   ✕
                 </button>
@@ -232,11 +232,11 @@ export function FilterPopover({
           })}
         </div>
 
-        <div className="flex items-center justify-between border-t border-[#eaeaea] pt-2.5">
+        <div className="flex items-center justify-between border-t border-border pt-2.5">
           <button
             type="button"
             onClick={() => dodaj(fields[0])}
-            className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] font-[inherit] text-[13px] text-[#171717] max-[799px]:min-h-11"
+            className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11"
           >
             + Dodaj warunek
           </button>
@@ -247,20 +247,20 @@ export function FilterPopover({
                 setSzkice({});
                 onChange([]);
               }}
-              className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-3 py-[7px] font-[inherit] text-[13px] text-[#171717] max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11"
             >
               Wyczyść
             </button>
             <button
               type="button"
               onClick={onSave}
-              className="cursor-pointer rounded-md border border-[#171717] bg-[#171717] px-3 py-[7px] font-[inherit] text-[13px] font-medium text-white max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-[13px] font-medium text-white max-[799px]:min-h-11"
             >
               Zapisz jako domyślny
             </button>
           </div>
         </div>
-        <p className="m-0 font-mono text-[11px] text-[#6b6b6b]">
+        <p className="m-0 font-mono text-[11px] text-muted-foreground">
           Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.
         </p>
       </div>

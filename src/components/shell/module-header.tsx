@@ -29,11 +29,11 @@ export function ModuleHeader({
 }) {
   return (
     <>
-      <header className="flex min-h-[34px] items-center gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:hidden">
-        <div className="font-mono text-[13px] text-[#666666]">
-          <span>{webParent}</span> <span className="text-[#b0b0b0]">/</span>{" "}
+      <header className="flex min-h-[34px] items-center gap-3 border-b border-border px-6 py-3 max-[799px]:hidden">
+        <div className="font-mono text-[13px] text-muted-foreground">
+          <span>{webParent}</span> <span className="text-faint-foreground">/</span>{" "}
           {/* Tytuł modułu jest nagłówkiem strony na webie; wygląda jak reszta ścieżki (h1 w linii, te same style) */}
-          <h1 className="inline text-[#171717]">{title}</h1>
+          <h1 className="inline text-foreground">{title}</h1>
         </div>
         {webAction && (
           <div className="ml-auto flex items-center gap-2">{webAction}</div>
@@ -50,7 +50,7 @@ export function ModuleHeader({
           <Link
             href="/ustawienia"
             aria-label="Ustawienia"
-            className="inline-flex size-11 flex-none items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+            className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted"
           >
             <Settings size={21} aria-hidden="true" />
           </Link>
@@ -63,7 +63,7 @@ export function ModuleHeader({
 // Prosty pusty stan modułu — treść dopiszą kolejne etapy
 export function EmptyModule({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-12 text-center text-sm text-[#666666]">
+    <div className="flex flex-1 items-center justify-center px-6 py-12 text-center text-sm text-muted-foreground">
       {children}
     </div>
   );

@@ -28,7 +28,7 @@ type Filtr = "all" | "run" | "gym";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const OPCJA =
-  "flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-[#171717] no-underline outline-none hover:bg-[#f5f5f5] hover:text-[#171717] focus-visible:bg-[#f5f5f5]";
+  "flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-foreground no-underline outline-none hover:bg-muted hover:text-foreground focus-visible:bg-muted";
 
 export function SportView({
   data,
@@ -296,7 +296,7 @@ export function SportView({
         data-testid="web-sport"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
           <div className="flex items-center gap-2.5">
             <Button asChild size="sm" className="px-2 py-1.5">
               <Link href={`/sport?miesiac=${poprzedni}`} aria-label="Poprzedni">
@@ -312,7 +312,7 @@ export function SportView({
               </Link>
             </Button>
             <h1 className="m-0 ml-1.5 text-lg font-semibold">Sport</h1>
-            <span className="font-mono text-xs text-[#6b6b6b]">
+            <span className="font-mono text-xs text-muted-foreground">
               {`${MIESIACE[mies - 1]} ${rok}`}
             </span>
           </div>
@@ -356,7 +356,7 @@ export function SportView({
                 </button>
                 {data.templates.length > 0 && (
                   <>
-                    <div className="mt-1 border-t border-[#eaeaea] px-2.5 pt-2 pb-1 font-mono text-[10px] tracking-[0.06em] text-[#6b6b6b] uppercase">
+                    <div className="mt-1 border-t border-border px-2.5 pt-2 pb-1 font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
                       Z szablonu
                     </div>
                     {data.templates.map((t) => (
@@ -377,7 +377,7 @@ export function SportView({
                     ))}
                   </>
                 )}
-                <div className="my-1 border-t border-[#eaeaea]" />
+                <div className="my-1 border-t border-border" />
                 <Link
                   href="/sport/szablony"
                   className={OPCJA}
@@ -411,9 +411,9 @@ export function SportView({
             suspended={doUsuniecia !== null}
           />
 
-          <div className="-mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-[#666666]">
+          <div className="-mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-muted-foreground">
             <span>
-              <span className="mr-1.5 inline-block size-2.5 rounded-[3px] bg-[#c2410c] align-[-1px]" />
+              <span className="mr-1.5 inline-block size-2.5 rounded-[3px] bg-warning align-[-1px]" />
               Bieg
             </span>
             <span>
@@ -421,7 +421,7 @@ export function SportView({
               Siłownia
             </span>
             <span>
-              <span className="mr-1.5 box-border inline-block size-2.5 rounded-[3px] border border-dashed border-[#6b6b6b] align-[-2px]" />
+              <span className="mr-1.5 box-border inline-block size-2.5 rounded-[3px] border border-dashed border-border-strong align-[-2px]" />
               Zaplanowany, bez danych
             </span>
           </div>

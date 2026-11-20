@@ -38,7 +38,7 @@ export function CategoryFilters({
           type="button"
           // Czytnik słyszy „Kategorie, widoczne 3 z 4” zamiast sklejonego „Kategorie3/4”
           aria-label={`Kategorie, widoczne ${widoczne.length} z ${categories.length}`}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-[#e0e0e0] bg-white px-2.5 py-[5px] text-[13px] text-[#171717] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-white px-2.5 py-[5px] text-[13px] text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
         >
           {widoczne.length > 0 && (
             <span
@@ -61,11 +61,11 @@ export function CategoryFilters({
           Kategorie
           <span
             aria-hidden="true"
-            className="font-mono text-[11px] text-[#6b6b6b]"
+            className="font-mono text-[11px] text-muted-foreground"
           >
             {`${widoczne.length}/${categories.length}`}
           </span>
-          <span aria-hidden="true" className="text-[#6b6b6b]">
+          <span aria-hidden="true" className="text-muted-foreground">
             ▾
           </span>
         </button>
@@ -82,7 +82,7 @@ export function CategoryFilters({
             przycisk.current?.focus();
             onAdd();
           }}
-          className="z-[60] box-border flex w-[220px] flex-col gap-0.5 rounded-[10px] border border-[#e0e0e0] bg-white p-1.5 text-[13px] text-[#171717] shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
+          className="z-[60] box-border flex w-[220px] flex-col gap-0.5 rounded-md border border-input bg-white p-1.5 text-[13px] text-foreground shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
         >
           {categories.map((kategoria) => {
             const widoczna = !kategoria.hidden;
@@ -93,15 +93,15 @@ export function CategoryFilters({
                 // Menu zostaje otwarte, żeby przełączyć kilka kategorii naraz
                 onSelect={(e) => e.preventDefault()}
                 onCheckedChange={() => onToggle(kategoria)}
-                className="flex min-h-[34px] cursor-pointer items-center gap-2.5 rounded-md px-2 outline-none select-none data-[highlighted]:bg-[#f5f5f5]"
+                className="flex min-h-[34px] cursor-pointer items-center gap-2.5 rounded-md px-2 outline-none select-none data-[highlighted]:bg-muted"
               >
                 <span
                   aria-hidden="true"
                   className={cn(
                     "box-border inline-flex size-4 flex-none items-center justify-center rounded border text-[11px] text-white",
                     widoczna
-                      ? "border-[#171717] bg-[#171717]"
-                      : "border-[#c4c4c4] bg-white",
+                      ? "border-primary bg-primary"
+                      : "border-ring bg-white",
                   )}
                 >
                   {widoczna ? "✓" : ""}
@@ -115,7 +115,7 @@ export function CategoryFilters({
                       : { border: `1.5px solid ${kategoria.color}` }
                   }
                 />
-                <span className={widoczna ? "" : "text-[#6b6b6b]"}>
+                <span className={widoczna ? "" : "text-muted-foreground"}>
                   {kategoria.name}
                 </span>
               </DropdownMenu.CheckboxItem>
@@ -125,7 +125,7 @@ export function CategoryFilters({
             onSelect={() => {
               otworzOkno.current = true;
             }}
-            className="mt-1 flex min-h-[34px] cursor-pointer items-center border-t border-[#f0f0f0] px-2 text-[#666666] outline-none select-none data-[highlighted]:bg-[#f5f5f5]"
+            className="mt-1 flex min-h-[34px] cursor-pointer items-center border-t border-border px-2 text-muted-foreground outline-none select-none data-[highlighted]:bg-muted"
           >
             + Kategoria
           </DropdownMenu.Item>
@@ -156,7 +156,7 @@ export function CategorySheet({
           ref={przycisk}
           type="button"
           aria-label="Kategorie"
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
           <ListFilter size={21} aria-hidden="true" />
         </button>
@@ -172,11 +172,11 @@ export function CategorySheet({
             przycisk.current?.focus();
             onAdd();
           }}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white pb-[max(24px,env(safe-area-inset-bottom))] text-[15px] text-[#171717] shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white pb-[max(24px,env(safe-area-inset-bottom))] text-[15px] text-foreground shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
         >
           <span
             aria-hidden="true"
-            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]"
+            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong"
           />
           <div className="flex flex-none items-center py-1.5 pr-2 pl-4">
             <Dialog.Title className="m-0 flex-1 text-[17px] font-semibold">
@@ -184,7 +184,7 @@ export function CategorySheet({
             </Dialog.Title>
             <Dialog.Close
               aria-label="Zamknij"
-              className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+              className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
             >
               <XIcon size={20} aria-hidden="true" />
             </Dialog.Close>
@@ -201,7 +201,7 @@ export function CategorySheet({
                     return;
                   onToggle(kategoria);
                 }}
-                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-[#f0f0f0] px-4"
+                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-border px-4"
               >
                 <span
                   aria-hidden="true"
@@ -224,7 +224,7 @@ export function CategorySheet({
                 otworzOkno.current = true;
                 setOtwarty(false);
               }}
-              className="flex min-h-[52px] w-full cursor-pointer items-center px-4 text-left text-[#666666]"
+              className="flex min-h-[52px] w-full cursor-pointer items-center px-4 text-left text-muted-foreground"
             >
               + Kategoria
             </button>

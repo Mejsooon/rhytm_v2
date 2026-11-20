@@ -78,11 +78,11 @@ export function ColumnPopover({
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] border-0 px-1 py-0.5 font-[inherit] font-medium whitespace-nowrap hover:bg-[#efefef] hover:text-[#171717] max-[799px]:hidden ${
-            open ? "bg-[#efefef] text-[#171717]" : "bg-transparent text-[#666666]"
+          className={`-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] border-0 px-1 py-0.5 font-[inherit] font-medium whitespace-nowrap hover:bg-border hover:text-foreground max-[799px]:hidden ${
+            open ? "bg-border text-foreground" : "bg-transparent text-muted-foreground"
           }`}
         >
-          <span aria-hidden="true" className="font-mono text-[#6b6b6b]">
+          <span aria-hidden="true" className="font-mono text-muted-foreground">
             {ikona}
           </span>
           {field.name}
@@ -103,10 +103,10 @@ export function ColumnPopover({
         }}
         placeholder="Nazwa kolumny"
         aria-label="Nazwa kolumny"
-        className="box-border w-full rounded-md border border-[#e0e0e0] bg-white px-2 py-1.5 font-[inherit] text-[13px] text-[#171717] outline-none focus:border-[#171717] max-[799px]:min-h-11"
+        className="box-border w-full rounded-md border border-input bg-white px-2 py-1.5 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
       />
 
-      <div className="px-2 pt-3 pb-1 font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+      <div className="px-2 pt-3 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
         Typ pola
       </div>
       {EDITOR_TYPES.map((t) => {
@@ -122,17 +122,17 @@ export function ColumnPopover({
             onClick={() => {
               if (!aktualny) onPickType(t.type);
             }}
-            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-[#171717] hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11 ${
-              aktualny ? "bg-[#f0f0f0] font-medium" : "bg-transparent"
+            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11 ${
+              aktualny ? "bg-active font-medium" : "bg-transparent"
             }`}
           >
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="w-[18px] font-mono text-[#6b6b6b]">
+              <span aria-hidden="true" className="w-[18px] font-mono text-muted-foreground">
                 {t.icon}
               </span>
               {t.label}
             </span>
-            <span aria-hidden="true" className="text-[#15803d]">
+            <span aria-hidden="true" className="text-success">
               {aktualny ? "✓" : ""}
             </span>
           </button>
@@ -141,7 +141,7 @@ export function ColumnPopover({
 
       {jestWyborem && (
         <>
-          <div className="px-2 pt-3 pb-1.5 font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">
+          <div className="px-2 pt-3 pb-1.5 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
             Opcje
           </div>
           <div className="flex flex-wrap gap-1 px-2">
@@ -173,13 +173,13 @@ export function ColumnPopover({
               }}
               placeholder="Nowa opcja…"
               aria-label="Nowa opcja"
-              className="box-border w-full min-w-0 rounded-md border border-[#e0e0e0] bg-white px-2 py-1.5 font-[inherit] text-[13px] text-[#171717] outline-none focus:border-[#171717] max-[799px]:min-h-11"
+              className="box-border w-full min-w-0 rounded-md border border-input bg-white px-2 py-1.5 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
             />
             <button
               type="button"
               disabled={pending}
               onClick={dodajOpcje}
-              className="cursor-pointer rounded-md border border-[#e0e0e0] bg-white px-2.5 py-[5px] font-[inherit] text-xs text-[#171717] hover:bg-[#fafafa] disabled:opacity-50 max-[799px]:min-h-11"
+              className="cursor-pointer rounded-md border border-input bg-white px-2.5 py-[5px] font-[inherit] text-xs text-foreground hover:bg-panel disabled:opacity-50 max-[799px]:min-h-11"
             >
               Dodaj
             </button>
@@ -187,13 +187,13 @@ export function ColumnPopover({
         </>
       )}
 
-      <div className="mt-2.5 flex justify-between border-t border-[#f0f0f0] pt-1.5">
+      <div className="mt-2.5 flex justify-between border-t border-border pt-1.5">
         <button
           type="button"
           disabled={index === 0 || pending}
           aria-disabled={index === 0 || pending}
           onClick={() => onMove(-1)}
-          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
         >
           ← W lewo
         </button>
@@ -202,7 +202,7 @@ export function ColumnPopover({
           disabled={index === count - 1 || pending}
           aria-disabled={index === count - 1 || pending}
           onClick={() => onMove(1)}
-          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-[#404040] hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
         >
           W prawo →
         </button>
@@ -212,7 +212,7 @@ export function ColumnPopover({
         disabled={nieMoznaUsunac}
         aria-disabled={nieMoznaUsunac}
         onClick={onDelete}
-        className="mt-1 flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2 py-1.5 text-left font-[inherit] text-[13px] text-[#b91c1c] hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+        className="mt-1 flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2 py-1.5 text-left font-[inherit] text-[13px] text-destructive-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
       >
         Usuń kolumnę
       </button>

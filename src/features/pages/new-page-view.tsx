@@ -63,9 +63,9 @@ export function NewPageView() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="np-title"
-        className="mx-auto mt-[72px] mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-[#e0e0e0] bg-white text-sm text-[#171717] shadow-[0_24px_80px_rgba(0,0,0,.25)] max-[799px]:mt-4"
+        className="mx-auto mt-[72px] mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-input bg-white text-sm text-foreground shadow-[0_24px_80px_rgba(0,0,0,.25)] max-[799px]:mt-4"
       >
-        <div className="flex items-center justify-between border-b border-[#eaeaea] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 id="np-title" className="m-0 text-base font-semibold">
             Nowa strona
           </h2>
@@ -73,7 +73,7 @@ export function NewPageView() {
             type="button"
             aria-label="Zamknij"
             onClick={() => router.back()}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[#666666] hover:text-[#171717] min-[800px]:size-8"
+            className="flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted-foreground hover:text-foreground min-[800px]:size-8"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -81,7 +81,7 @@ export function NewPageView() {
 
         <div className="flex flex-wrap">
           <div className="flex min-w-0 flex-[999_1_380px] flex-col gap-3.5 px-5 py-[18px]">
-            <label className="flex items-center gap-2 rounded-md border border-[#eaeaea] bg-[#fafafa] px-2.5 py-[7px] text-[#666666]">
+            <label className="flex items-center gap-2 rounded-md border border-border bg-panel px-2.5 py-[7px] text-muted-foreground">
               <Search size={15} aria-hidden="true" />
               <input
                 type="text"
@@ -89,7 +89,7 @@ export function NewPageView() {
                 onChange={(e) => setFraza(e.target.value)}
                 placeholder="Szukaj szablonu…"
                 aria-label="Szukaj szablonu"
-                className="min-w-0 flex-1 border-0 bg-transparent text-[#171717] outline-none"
+                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none"
               />
             </label>
             <MonoLabel>Szablony</MonoLabel>
@@ -105,35 +105,35 @@ export function NewPageView() {
                     onClick={() => setWybrany(klucz)}
                     style={{ borderColor: zaznaczony ? AKCENT : "#eaeaea" }}
                     className={`flex min-h-[92px] cursor-pointer flex-col items-start gap-1.5 rounded-lg border p-3.5 text-left font-[inherit] ${
-                      zaznaczony ? "bg-[#f5f5f5]" : "bg-white"
+                      zaznaczony ? "bg-muted" : "bg-white"
                     }`}
                   >
-                    <span className="flex items-center gap-2 font-medium text-[#171717]">
-                      <span className="text-[#6b6b6b]">
+                    <span className="flex items-center gap-2 font-medium text-foreground">
+                      <span className="text-muted-foreground">
                         <PageIcon icon={t.icon} size={16} />
                       </span>
                       {t.name}
                     </span>
-                    <span className="text-xs leading-[1.4] text-[#666666]">{t.desc}</span>
+                    <span className="text-xs leading-[1.4] text-muted-foreground">{t.desc}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-l border-[#eaeaea] bg-[#fafafa] px-5 py-[18px] max-[799px]:border-t max-[799px]:border-l-0">
+          <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-l border-border bg-panel px-5 py-[18px] max-[799px]:border-t max-[799px]:border-l-0">
             <MonoLabel>Pola, które powstaną</MonoLabel>
             <div className="text-lg font-semibold">{szablon.name}</div>
-            <div className="overflow-hidden rounded-lg border border-[#eaeaea]">
+            <div className="overflow-hidden rounded-lg border border-border">
               {wybrany !== "empty" &&
                 szablon.fields.map((pole) => (
                   <div
                     key={pole.key}
-                    className="flex items-center justify-between gap-2.5 border-b border-[#f0f0f0] px-3 py-[9px]"
+                    className="flex items-center justify-between gap-2.5 border-b border-border px-3 py-[9px]"
                   >
                     <span>{pole.name}</span>
                     <span
-                      className="rounded border border-[#e0e0e0] px-1.5 py-px font-mono text-[11px] whitespace-nowrap"
+                      className="rounded border border-input px-1.5 py-px font-mono text-[11px] whitespace-nowrap"
                       style={{
                         color:
                           pole.type === "rating" || pole.config?.show_in_calendar
@@ -147,29 +147,29 @@ export function NewPageView() {
                   </div>
                 ))}
               {wybrany === "empty" && (
-                <div className="px-3 py-3.5 text-[13px] text-[#666666]">
+                <div className="px-3 py-3.5 text-[13px] text-muted-foreground">
                   Tylko kolumna „Nazwa”. Pola dodajesz przyciskiem „+ Pole”.
                 </div>
               )}
             </div>
-            <div className="font-mono text-xs leading-normal whitespace-pre-line text-[#666666]">
+            <div className="font-mono text-xs leading-normal whitespace-pre-line text-muted-foreground">
               {szablon.extra}
             </div>
             <div className="flex-1" />
-            <label className="flex flex-col gap-1.5 text-xs text-[#666666]">
+            <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
               Nazwa strony
               <input
                 type="text"
                 value={nazwa}
                 maxLength={200}
                 onChange={(e) => setNazwaWlasna(e.target.value)}
-                className="rounded-md border border-[#e0e0e0] bg-[#fafafa] px-2.5 py-2 text-sm text-[#171717] outline-none focus:border-[#171717]"
+                className="rounded-md border border-input bg-panel px-2.5 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
             </label>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-[#eaeaea] px-5 py-3.5">
+        <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
           <Button onClick={() => router.back()}>Anuluj</Button>
           <Button variant="primary" onClick={utworz} disabled={trwa}>
             Utwórz stronę

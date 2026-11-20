@@ -82,14 +82,14 @@ export function CheckInbox({
       }
     >
       {reset ? (
-        <span className="flex size-16 items-center justify-center rounded-[18px] border border-[#bbe5cc] bg-[#f0faf4] text-[#15803d] min-[800px]:hidden">
+        <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
           <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
         </span>
       ) : (
-        <span className="flex size-11 items-center justify-center rounded-[10px] border border-[#eaeaea] bg-[#fafafa]">
+        <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
           <Mail
             aria-hidden="true"
-            className="size-5 text-[#171717]"
+            className="size-5 text-foreground"
             strokeWidth={2}
           />
         </span>
@@ -113,8 +113,8 @@ export function CheckInbox({
         <p
           className={
             reset
-              ? "m-0 leading-normal text-[#666666] max-[799px]:max-w-[280px] max-[799px]:text-[13px] max-[799px]:leading-normal"
-              : "m-0 leading-normal text-[#666666]"
+              ? "m-0 leading-normal text-muted-foreground max-[799px]:max-w-[280px] max-[799px]:text-[13px] max-[799px]:leading-normal"
+              : "m-0 leading-normal text-muted-foreground"
           }
         >
           {description ??
@@ -142,11 +142,11 @@ export function CheckInbox({
         >
           Wyślij ponownie
           {pozostalo > 0 && (
-            <span className="font-mono text-[#6b6b6b]">{licznik}</span>
+            <span className="font-mono text-muted-foreground">{licznik}</span>
           )}
         </Button>
         {blad && (
-          <p role="alert" className="m-0 mt-2 text-[13px] text-[#b91c1c]">
+          <p role="alert" className="m-0 mt-2 text-[13px] text-destructive-foreground">
             {blad}
           </p>
         )}

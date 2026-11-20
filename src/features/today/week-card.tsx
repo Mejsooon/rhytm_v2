@@ -179,9 +179,9 @@ export function WeekCard({
         <h2 id="ten-tydzien" className="m-0 text-[15px] font-semibold">
           Ten tydzień
         </h2>
-        <span className="font-mono text-xs text-[#6b6b6b]">{zakres}</span>
+        <span className="font-mono text-xs text-muted-foreground">{zakres}</span>
       </div>
-      <div className="grid grid-cols-5 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea] max-[799px]:grid-cols-2">
+      <div className="grid grid-cols-5 gap-px overflow-hidden rounded-lg border border-border bg-border max-[799px]:grid-cols-2">
         {kafelki.map((k) => (
           <div
             key={k.etykieta}
@@ -189,10 +189,10 @@ export function WeekCard({
             className="flex flex-col gap-2.5 bg-white px-4 py-3.5"
           >
             <MonoLabel>{k.etykieta}</MonoLabel>
-            <div className="font-mono text-2xl leading-none text-[#171717]">
+            <div className="font-mono text-2xl leading-none text-foreground">
               {k.wartosc}{" "}
               {k.jednostka && (
-                <span className="text-[13px] text-[#666666]">
+                <span className="text-[13px] text-muted-foreground">
                   {k.jednostka}
                 </span>
               )}
@@ -210,7 +210,7 @@ export function WeekCard({
               ))}
             </div>
             {/* Pusty dopisek trzyma wysokość, żeby kafelki w rzędzie się zgadzały */}
-            <div className="min-h-[1lh] font-mono text-[11px] text-[#6b6b6b]">
+            <div className="min-h-[1lh] font-mono text-[11px] text-muted-foreground">
               {k.dopisek}
             </div>
           </div>

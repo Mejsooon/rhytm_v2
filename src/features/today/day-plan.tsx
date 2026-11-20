@@ -179,14 +179,14 @@ export function DayPlan({
         <h2 id="plan-dnia" className="m-0 text-[15px] font-semibold">
           Plan dnia
         </h2>
-        <span className="font-mono text-xs text-[#6b6b6b]">
+        <span className="font-mono text-xs text-muted-foreground">
           {`${napisBlokow} · kliknij blok, żeby zobaczyć zadania, albo puste miejsce, żeby dodać`}
         </span>
       </div>
       <div
         ref={os}
         data-testid="os-dnia"
-        className={`overflow-y-auto rounded-lg border border-[#eaeaea]${podglad ? " select-none" : ""}`}
+        className={`overflow-y-auto rounded-lg border border-border${podglad ? " select-none" : ""}`}
         style={{
           height: WYSOKOSC_OKNA,
           cursor: podglad ? "crosshair" : undefined,
@@ -232,7 +232,7 @@ export function DayPlan({
             <div
               key={h}
               aria-hidden="true"
-              className="absolute left-3 font-mono text-[11px] text-[#6b6b6b]"
+              className="absolute left-3 font-mono text-[11px] text-muted-foreground"
               style={{ top: h * GODZINA + 3 }}
             >
               {godz(h * 60)}
@@ -240,14 +240,14 @@ export function DayPlan({
           ))}
           <div
             aria-hidden="true"
-            className="absolute inset-y-0 left-16 border-l border-[#eaeaea]"
+            className="absolute inset-y-0 left-16 border-l border-border"
           />
 
           {podglad && (
             <div
               data-testid="podglad-przeciagania"
               aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-[#737373] bg-[#fafafa]/90 px-2.5 py-1.5 font-mono text-xs text-[#404040]"
+              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-border-strong bg-panel/90 px-2.5 py-1.5 font-mono text-xs text-soft-foreground"
               style={{
                 top: (podglad.startMin / 60) * GODZINA + 1,
                 height: (podglad.durationMin / 60) * GODZINA - 2,
@@ -261,7 +261,7 @@ export function DayPlan({
             <div
               ref={duchAktywny ? setKotwicaWpisu : undefined}
               aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 left-[72px] box-border rounded-md border border-dashed border-[#a3a3a3] bg-[#fafafa] px-2.5 py-1.5 font-mono text-xs text-[#666666]"
+              className="pointer-events-none absolute right-2.5 left-[72px] box-border rounded-md border border-dashed border-ring bg-panel px-2.5 py-1.5 font-mono text-xs text-muted-foreground"
               style={{ top: (duch / 60) * GODZINA + 3, height: GODZINA - 6 }}
             >
               {`+ ${godz(duch)}–${godz(Math.min(duch + 60, 1440))}`}
@@ -301,24 +301,24 @@ export function DayPlan({
                     {kompakt ? `${p.title} · ${godz(p.startMin)}` : p.title}
                   </span>
                   {trwa && (
-                    <span className="rounded bg-[#15803d] px-1.5 py-px font-mono text-[10px] text-white">
+                    <span className="rounded bg-success px-1.5 py-px font-mono text-[10px] text-white">
                       TERAZ
                     </span>
                   )}
                   {licznik && (
-                    <span className="ml-auto font-mono text-[11px] text-[#404040]">
+                    <span className="ml-auto font-mono text-[11px] text-soft-foreground">
                       {licznik}
                     </span>
                   )}
                 </span>
                 {!kompakt && (
-                  <span className="block truncate font-mono text-[11px] text-[#404040]">
+                  <span className="block truncate font-mono text-[11px] text-soft-foreground">
                     {`${godziny} · ${p.categoryName ?? "Bez kategorii"}`}
                   </span>
                 )}
               </>
             );
-            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-[13px] leading-[1.3] text-[#171717] no-underline hover:text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-[13px] leading-[1.3] text-foreground no-underline hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
 
             // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
             if (p.kind !== "block") {
@@ -357,13 +357,13 @@ export function DayPlan({
           <div
             data-testid="linia-teraz"
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 left-14 border-t-2 border-[#b91c1c]"
+            className="pointer-events-none absolute right-0 left-14 border-t-2 border-destructive"
             style={{ top: (teraz / 60) * GODZINA }}
           />
           <span
             data-testid="etykieta-teraz"
             aria-hidden="true"
-            className="pointer-events-none absolute left-1.5 rounded bg-[#b91c1c] px-1 py-px font-mono text-[10px] text-white"
+            className="pointer-events-none absolute left-1.5 rounded bg-destructive px-1 py-px font-mono text-[10px] text-white"
             style={{ top: (teraz / 60) * GODZINA - 9 }}
           >
             {godz(teraz)}

@@ -99,7 +99,7 @@ export function RegisterForm() {
         <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
           Załóż konto
         </h1>
-        <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:text-[13px]">
+        <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:text-[13px]">
           <span className="max-[799px]:hidden">
             Wyślemy link, żeby potwierdzić Twój e-mail.
           </span>
@@ -169,7 +169,7 @@ export function RegisterForm() {
           <PhoneStrengthBar password={password} className="mt-2.5" />
           {/* Na telefonie nie ma listy reguł — powód blokady wysyłki musi być widoczny tutaj */}
           {leak === "leaked" && (
-            <p className="m-0 mt-1.5 font-mono text-[11px] text-[#b91c1c] min-[800px]:hidden">
+            <p className="m-0 mt-1.5 font-mono text-[11px] text-destructive-foreground min-[800px]:hidden">
               To hasło wyciekło w innym serwisie. Wybierz inne.
             </p>
           )}
@@ -182,7 +182,7 @@ export function RegisterForm() {
 
         {/* Własny checkbox nie jest natywnym polem — jego stan przekazujemy ukrytym inputem */}
         {tos && <input type="hidden" name="tos" value="on" />}
-        <div className="max-[799px]:text-sm max-[799px]:text-[#404040]">
+        <div className="max-[799px]:text-sm max-[799px]:text-soft-foreground">
           <Checkbox
             checked={tos}
             onChange={setTos}
@@ -207,7 +207,7 @@ export function RegisterForm() {
         <div className="flex flex-col gap-4 max-[799px]:gap-3.5">
           {(state.status === "error" && state.message) ||
           state.fieldErrors?.tos ? (
-            <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
               {state.message ?? state.fieldErrors?.tos}
             </p>
           ) : null}
@@ -215,11 +215,11 @@ export function RegisterForm() {
         </div>
       </form>
 
-      <p className="order-5 m-0 text-center text-[13px] text-[#666666] max-[799px]:text-sm">
+      <p className="order-5 m-0 text-center text-[13px] text-muted-foreground max-[799px]:text-sm">
         Masz już konto?{" "}
         <Link
           href="/logowanie"
-          className="text-[#171717] underline hover:text-black max-[799px]:font-semibold max-[799px]:no-underline"
+          className="text-foreground underline hover:text-black max-[799px]:font-semibold max-[799px]:no-underline"
         >
           Zaloguj się
         </Link>

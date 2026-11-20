@@ -48,7 +48,7 @@ function wyglad(
   const data = formatDatePl(cell.date);
   if (cell.date > today) {
     return {
-      kolor: "border border-dashed border-[#e0e0e0] bg-white text-[#a3a3a3]",
+      kolor: "border border-dashed border-input bg-white text-faint-foreground",
       data,
       tekst: null,
       szary: false,
@@ -57,7 +57,7 @@ function wyglad(
   if (cell.percent === null) {
     return {
       kolor:
-        "border border-dashed border-[#d4d4d4] bg-[#fafafa] text-[#404040]",
+        "border border-dashed border-border-strong bg-panel text-soft-foreground",
       data,
       tekst: "brak zaplanowanych",
       szary: true,
@@ -65,12 +65,12 @@ function wyglad(
   }
   const kolor =
     cell.percent === 0
-      ? "bg-[#f0f0f0] text-[#404040]"
+      ? "bg-active text-soft-foreground"
       : cell.percent <= 40
-        ? "bg-[#bbe5cc] text-[#404040]"
+        ? "bg-success-soft text-soft-foreground"
         : cell.percent <= 80
-          ? "bg-[#4ade80] text-[#404040]"
-          : "bg-[#15803d] text-white";
+          ? "bg-[#4ade80] text-soft-foreground"
+          : "bg-success text-white";
   return {
     kolor,
     data,
@@ -140,11 +140,11 @@ export function HabitHeatmap({
         } ${rokDzis}`;
 
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#eaeaea] px-4 py-3.5">
+    <section className="rounded-lg border border-border bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border px-4 py-3.5">
         <div className="flex items-baseline gap-2.5">
           <h2 className="m-0 text-[15px] font-semibold">Heatmapa nawyków</h2>
-          <span className="font-mono text-xs text-[#6b6b6b]">
+          <span className="font-mono text-xs text-muted-foreground">
             % nawyków zrobionych danego dnia
           </span>
         </div>
@@ -194,7 +194,7 @@ export function HabitHeatmap({
                 ›
               </Button>
             </div>
-            <div className="grid grid-cols-[repeat(7,40px)] gap-1 text-center font-mono text-[10px] text-[#6b6b6b]">
+            <div className="grid grid-cols-[repeat(7,40px)] gap-1 text-center font-mono text-[10px] text-muted-foreground">
               {kolejnoscDni.map((d) => (
                 <span key={d}>{d}</span>
               ))}
@@ -223,7 +223,7 @@ export function HabitHeatmap({
                     }
                     onBlur={() => setNajechany(null)}
                     className={cn(
-                      "box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
+                      "box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       w.kolor,
                       cell.date === today && "font-semibold",
                       najechany?.date === cell.date &&
@@ -238,7 +238,7 @@ export function HabitHeatmap({
           </div>
         ) : (
           <div className="mx-auto flex w-max gap-2">
-            <div className="grid grid-rows-[repeat(7,14px)] gap-1 font-mono text-[10px] text-[#6b6b6b]">
+            <div className="grid grid-rows-[repeat(7,14px)] gap-1 font-mono text-[10px] text-muted-foreground">
               {kolejnoscDni.map((d, i) => (
                 <span key={d} className="leading-[14px]">
                   {i % 2 === 0 ? d : ""}
@@ -268,7 +268,7 @@ export function HabitHeatmap({
                     }
                     onBlur={() => setNajechany(null)}
                     className={cn(
-                      "box-border size-3.5 cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
+                      "box-border size-3.5 cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       w.kolor,
                       najechany?.date === cell.date &&
                         "shadow-[0_0_0_2px_#171717]",
@@ -288,7 +288,7 @@ export function HabitHeatmap({
             <span
               className={cn(
                 "font-mono text-[11px]",
-                najechany.w.szary ? "text-[#a3a3a3]" : "text-[#d4d4d4]",
+                najechany.w.szary ? "text-faint-foreground" : "text-faint-foreground",
               )}
             >
               {najechany.w.tekst}
@@ -296,14 +296,14 @@ export function HabitHeatmap({
           </ChartTooltip>
         )}
 
-        <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-[#6b6b6b]">
+        <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
           <span>{zakresTekst}</span>
           <span className="flex items-center gap-1">
             mniej
-            <span className="size-3 rounded-[3px] bg-[#f0f0f0]" />
-            <span className="size-3 rounded-[3px] bg-[#bbe5cc]" />
+            <span className="size-3 rounded-[3px] bg-active" />
+            <span className="size-3 rounded-[3px] bg-success-soft" />
             <span className="size-3 rounded-[3px] bg-[#4ade80]" />
-            <span className="size-3 rounded-[3px] bg-[#15803d]" />
+            <span className="size-3 rounded-[3px] bg-success" />
             więcej
           </span>
         </div>

@@ -76,8 +76,8 @@ export function MCalendarWeek({
               aria-label={nazwa}
               className={`flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl ${
                 dzien === today
-                  ? "bg-[#171717] text-white"
-                  : "bg-[#f5f5f5] text-[#171717]"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-foreground"
               }`}
             >
               <span className="text-[11px]">{DNI_SKROT[numer]}</span>
@@ -85,7 +85,7 @@ export function MCalendarWeek({
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
               {dzienne.length === 0 && treningi.length === 0 && (
-                <span className="flex min-h-10 items-center text-sm text-[#6b6b6b]">
+                <span className="flex min-h-10 items-center text-sm text-muted-foreground">
                   Brak bloków
                 </span>
               )}
@@ -98,7 +98,7 @@ export function MCalendarWeek({
                       key={i.key}
                       href={sportItemHref(i)}
                       data-planned={i.planned || undefined}
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                       style={{
                         background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
                         border: i.planned
@@ -110,7 +110,7 @@ export function MCalendarWeek({
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {i.title}
                       </span>
-                      <span className="font-mono text-[11px] text-[#555555]">
+                      <span className="font-mono text-[11px] text-soft-foreground">
                         {formatClockTime(
                           Math.floor(i.startMin / 60),
                           i.startMin % 60,
@@ -129,7 +129,7 @@ export function MCalendarWeek({
                     key={o.key}
                     type="button"
                     onClick={() => onBlockClick(o.key)}
-                    className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-left text-[#171717]"
+                    className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-left text-foreground"
                     style={{
                       background: `${kolor}14`,
                       borderLeft: `3px solid ${kolor}`,
@@ -138,7 +138,7 @@ export function MCalendarWeek({
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">
                       {o.title}
                     </span>
-                    <span className="font-mono text-[11px] text-[#555555]">
+                    <span className="font-mono text-[11px] text-soft-foreground">
                       {formatClockTime(
                         Math.floor(o.startMin / 60),
                         o.startMin % 60,
@@ -158,7 +158,7 @@ export function MCalendarWeek({
         aria-label="Dodaj blok"
         onClick={() => onAdd(date, startPlusa)}
         // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
-        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       >
         <Plus size={26} aria-hidden="true" />
       </button>

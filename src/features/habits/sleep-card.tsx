@@ -69,8 +69,8 @@ export function SleepCard({
   const krotko = (d: IsoDate) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
 
   return (
-    <section className="flex flex-col rounded-lg border border-[#eaeaea] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#eaeaea] px-4 py-3.5">
+    <section className="flex flex-col rounded-lg border border-border bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border px-4 py-3.5">
         <h2 className="m-0 text-[15px] font-semibold">Sen</h2>
         <Segment
           ariaLabel="Zakres snu"
@@ -107,7 +107,7 @@ export function SleepCard({
               "-m-1.5 rounded-md p-1.5",
               ostatnia &&
                 onOpenLast &&
-                "cursor-pointer outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                "cursor-pointer outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20",
             )}
           >
             <MonoLabel className="block">Ostatnia noc</MonoLabel>
@@ -118,7 +118,7 @@ export function SleepCard({
               {minutyOstatniej === null ? "—" : formatDuration(minutyOstatniej)}
             </div>
             {ostatnia && (
-              <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">
+              <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                 {godziny}
               </div>
             )}
@@ -133,7 +133,7 @@ export function SleepCard({
 
         <div
           className={cn(
-            "relative mt-auto flex items-end border-b border-[#eaeaea]",
+            "relative mt-auto flex items-end border-b border-border",
             zakres === "30" ? "gap-[3px]" : "gap-[5px]",
           )}
           style={{ height: WYSOKOSC }}
@@ -141,11 +141,11 @@ export function SleepCard({
         >
           {/* Linia celu (przerywana) z podpisem */}
           <div
-            className="absolute right-0 left-0 border-t border-dashed border-[#15803d]"
+            className="absolute right-0 left-0 border-t border-dashed border-success"
             style={{ bottom: liniaCelu }}
           />
           <span
-            className="absolute right-0 font-mono text-[10px] text-[#15803d]"
+            className="absolute right-0 font-mono text-[10px] text-success"
             style={{ bottom: liniaCelu + 4 }}
           >
             cel {celTekst} h
@@ -169,8 +169,8 @@ export function SleepCard({
                 onFocus={(e) => setNajechany({ k, el: e.currentTarget })}
                 onBlur={() => setNajechany(null)}
                 className={cn(
-                  "flex-1 cursor-default rounded-t-[3px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]",
-                  b.met ? "bg-[#15803d]" : "bg-[#d4d4d4]",
+                  "flex-1 cursor-default rounded-t-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  b.met ? "bg-success" : "bg-border-strong",
                   najechany?.k === k && "shadow-[0_0_0_2px_#171717]",
                 )}
                 style={{ height: wysokosc }}
@@ -187,7 +187,7 @@ export function SleepCard({
             </ChartTooltip>
           )}
         </div>
-        <div className="-mt-2.5 flex justify-between font-mono text-[10px] text-[#6b6b6b]">
+        <div className="-mt-2.5 flex justify-between font-mono text-[10px] text-muted-foreground">
           <span>{krotko(bars[0].date)}</span>
           <span>{krotko(today)}</span>
         </div>

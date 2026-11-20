@@ -33,14 +33,14 @@ import type { TodayData } from "../load-today";
 import { dayPlan, nowItem, todayTiles, weekTiles } from "../model";
 import type { TodayChange } from "../use-today-store";
 
-const KARTA = "rounded-xl border border-[#eaeaea] bg-white";
+const KARTA = "rounded-xl border border-border bg-white";
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const PRZYCISK_IKONA =
-  "inline-flex size-11 flex-none items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]";
+  "inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted";
 // Kwadrat 24 px, pole stuknięcia 44 px (pseudo-element)
 const POLE_WYBORU =
-  "relative inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[7px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-40";
+  "relative inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-[7px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40";
 
 export function MToday({
   data,
@@ -210,13 +210,13 @@ export function MToday({
   ) => (
     <Link
       href={href}
-      className="block bg-white px-3.5 py-3 text-[#171717] no-underline"
+      className="block bg-white px-3.5 py-3 text-foreground no-underline"
     >
       <div className={ETYKIETA}>{tytul}</div>
       <div className="mt-1 font-mono text-[22px] font-medium">
         {wartosc}
         {dopisek !== null && (
-          <span className="text-sm text-[#6b6b6b]">{dopisek}</span>
+          <span className="text-sm text-muted-foreground">{dopisek}</span>
         )}
       </div>
     </Link>
@@ -239,7 +239,7 @@ export function MToday({
           aria-label="Konto i ustawienia"
           className={PRZYCISK_IKONA}
         >
-          <span className="flex size-8 items-center justify-center overflow-hidden rounded-full border border-[#e0e0e0] bg-[#f0f0f0] text-[13px] font-semibold">
+          <span className="flex size-8 items-center justify-center overflow-hidden rounded-full border border-input bg-active text-[13px] font-semibold">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- mały awatar z podpisanego URL
               <img src={avatarUrl} alt="" className="size-full object-cover" />
@@ -253,7 +253,7 @@ export function MToday({
       {/* Dół: miejsce na pływający „+” nad dolnym paskiem */}
       <div className="flex flex-col gap-4 px-4 pt-3 pb-[110px]">
         {/* Kafelki 2×2 */}
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#eaeaea] bg-[#eaeaea]">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border">
           {kafelek(
             "/nawyki",
             "Nawyki",
@@ -287,23 +287,23 @@ export function MToday({
         {trwajacy && wystapienie && (
           <section
             aria-labelledby="m-teraz"
-            className="rounded-xl border border-[#bbe5cc] bg-[#f7fbf8]"
+            className="rounded-xl border border-success-border bg-success-soft"
           >
             <div className="flex items-center gap-2 px-3.5 pt-3.5 pb-1.5">
               <span
                 id="m-teraz"
-                className="rounded-[5px] border border-[#bbe5cc] bg-white px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-[#15803d]"
+                className="rounded-[5px] border border-success-border bg-white px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-success"
               >
                 TERAZ
               </span>
-              <span className="font-mono text-xs text-[#666666]">
+              <span className="font-mono text-xs text-muted-foreground">
                 {`${godz(trwajacy.startMin)}–${godz(trwajacy.endMin)} · zostało ${trwajacy.endMin - teraz} min`}
               </span>
             </div>
             <button
               type="button"
               onClick={edytujTrwajacy}
-              className="block min-h-11 w-full cursor-pointer border-0 bg-transparent px-3.5 pb-1 text-left text-lg font-semibold text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 focus-visible:ring-inset"
+              className="block min-h-11 w-full cursor-pointer border-0 bg-transparent px-3.5 pb-1 text-left text-lg font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-inset"
             >
               {trwajacy.title}
             </button>
@@ -323,8 +323,8 @@ export function MToday({
                       className={cn(
                         POLE_WYBORU,
                         t.done
-                          ? "border-[#15803d] bg-[#15803d]"
-                          : "border-[#cfcfcf] bg-white",
+                          ? "border-success bg-success"
+                          : "border-border-strong bg-white",
                       )}
                     >
                       {t.done && (
@@ -338,7 +338,7 @@ export function MToday({
                     <span
                       className={cn(
                         "min-w-0",
-                        t.done && "text-[#8a8a8a] line-through",
+                        t.done && "text-faint-foreground line-through",
                       )}
                     >
                       {t.title}
@@ -358,13 +358,13 @@ export function MToday({
             </h2>
             <Link
               href="/kalendarz?widok=dzien"
-              className="inline-flex min-h-11 items-center text-sm text-[#666666] no-underline"
+              className="inline-flex min-h-11 items-center text-sm text-muted-foreground no-underline"
             >
               Kalendarz
             </Link>
           </div>
           {plan.length === 0 ? (
-            <div className={cn(KARTA, "px-3.5 py-4 text-sm text-[#666666]")}>
+            <div className={cn(KARTA, "px-3.5 py-4 text-sm text-muted-foreground")}>
               Plan dnia jest pusty
             </div>
           ) : (
@@ -393,7 +393,7 @@ export function MToday({
                 return (
                   <li
                     key={p.key}
-                    className="border-b border-[#f0f0f0] last:border-b-0"
+                    className="border-b border-border last:border-b-0"
                   >
                     <Link
                       href={
@@ -402,16 +402,16 @@ export function MToday({
                           : "/kalendarz?widok=dzien"
                       }
                       className={cn(
-                        "flex min-h-[60px] items-center gap-3 px-3.5 text-[#171717] no-underline",
-                        biezacy && "bg-[#f7fbf8]",
+                        "flex min-h-[60px] items-center gap-3 px-3.5 text-foreground no-underline",
+                        biezacy && "bg-success-soft",
                       )}
                     >
                       <span
                         className={cn(
                           "w-11 flex-none font-mono text-xs",
                           biezacy
-                            ? "font-medium text-[#15803d]"
-                            : "text-[#666666]",
+                            ? "font-medium text-success"
+                            : "text-muted-foreground",
                         )}
                       >
                         {godz(p.startMin)}
@@ -426,7 +426,7 @@ export function MToday({
                           className={cn(
                             "block",
                             zakonczony
-                              ? "text-[#8a8a8a] line-through"
+                              ? "text-faint-foreground line-through"
                               : "font-medium",
                           )}
                         >
@@ -435,7 +435,7 @@ export function MToday({
                         <span
                           className={cn(
                             "font-mono text-xs",
-                            zakonczony ? "text-[#8a8a8a]" : "text-[#666666]",
+                            zakonczony ? "text-faint-foreground" : "text-muted-foreground",
                           )}
                         >
                           {opis}
@@ -457,13 +457,13 @@ export function MToday({
             </h2>
             <Link
               href="/nawyki"
-              className="inline-flex min-h-11 items-center text-sm text-[#666666] no-underline"
+              className="inline-flex min-h-11 items-center text-sm text-muted-foreground no-underline"
             >
               Wszystkie
             </Link>
           </div>
           {nawyki.length === 0 ? (
-            <div className={cn(KARTA, "px-3.5 py-4 text-sm text-[#666666]")}>
+            <div className={cn(KARTA, "px-3.5 py-4 text-sm text-muted-foreground")}>
               Brak nawyków na dziś
             </div>
           ) : (
@@ -493,7 +493,7 @@ export function MToday({
                 return (
                   <div
                     key={h.id}
-                    className="flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0"
+                    className="flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0"
                   >
                     <button
                       type="button"
@@ -505,8 +505,8 @@ export function MToday({
                       className={cn(
                         POLE_WYBORU,
                         odhaczone
-                          ? "border-[#15803d] bg-[#15803d]"
-                          : "border-[#cfcfcf] bg-white",
+                          ? "border-success bg-success"
+                          : "border-border-strong bg-white",
                       )}
                     >
                       {odhaczone && (
@@ -518,7 +518,7 @@ export function MToday({
                       )}
                     </button>
                     <span className="min-w-0 flex-1">{h.name}</span>
-                    <span className="font-mono text-xs text-[#6b6b6b]">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {napis}
                     </span>
                   </div>
@@ -534,10 +534,10 @@ export function MToday({
             href="/sport"
             className={cn(
               KARTA,
-              "flex items-center gap-3 p-3.5 text-[#171717] no-underline",
+              "flex items-center gap-3 p-3.5 text-foreground no-underline",
             )}
           >
-            <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-[#fff4ed] text-[#c2410c]">
+            <span className="flex size-10 flex-none items-center justify-center rounded-md bg-warning-soft text-warning-foreground">
               <svg
                 width="20"
                 height="20"
@@ -555,13 +555,13 @@ export function MToday({
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{tytulBiegu}</span>
               {celBiegu && (
-                <span className="text-[13px] text-[#666666]">{celBiegu}</span>
+                <span className="text-[13px] text-muted-foreground">{celBiegu}</span>
               )}
             </span>
             <ChevronRight
               size={18}
               aria-hidden="true"
-              className="flex-none text-[#a3a3a3]"
+              className="flex-none text-faint-foreground"
             />
           </Link>
         )}
@@ -572,7 +572,7 @@ export function MToday({
         aria-label="Szybko dodaj"
         onClick={onQuickAdd}
         // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
-        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl border-0 bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl border-0 bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       >
         <Plus size={26} aria-hidden="true" />
       </button>

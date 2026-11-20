@@ -112,10 +112,10 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
   }
 
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white">
+    <section className="rounded-lg border border-border bg-white">
       <div className="p-5">
         <h2 className="m-0 text-base font-semibold">Cele</h2>
-        <p className="mt-1 mb-4 text-[#666666]">
+        <p className="mt-1 mb-4 text-muted-foreground">
           Pokazywane na ekranie Dziś, w Sporcie i przy śnie.
         </p>
         <div className="grid grid-cols-2 gap-3.5 max-[799px]:grid-cols-1">
@@ -160,10 +160,10 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                   aria-label={cel.label}
                   onClick={() => przelacz(cel.key)}
                   className={cn(
-                    "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border p-0 outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                    "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
                     cel.on
-                      ? "border-[#171717] bg-[#171717] text-white"
-                      : "border-[#d4d4d4] bg-white text-transparent",
+                      ? "border-primary bg-primary text-white"
+                      : "border-border-strong bg-white text-transparent",
                   )}
                 >
                   <Check className="size-3" strokeWidth={2.5} />
@@ -177,7 +177,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                       inputMode="numeric"
                       className={cn(
                         "text-right font-mono",
-                        bladCelu && "border-[#b91c1c]",
+                        bladCelu && "border-destructive",
                       )}
                       value={cel.val}
                       aria-invalid={bladCelu ? true : undefined}
@@ -194,7 +194,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                     />
                   </div>
                 ) : (
-                  <span className="w-[72px] flex-none text-right font-mono text-xs text-[#a3a3a3]">
+                  <span className="w-[72px] flex-none text-right font-mono text-xs text-faint-foreground">
                     wył.
                   </span>
                 )}
@@ -203,7 +203,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
             {bladCelu && (
               <p
                 id={`${opisCeluId}-blad`}
-                className="m-0 text-xs text-[#b91c1c]"
+                className="m-0 text-xs text-destructive-foreground"
               >
                 {bladCelu}
               </p>

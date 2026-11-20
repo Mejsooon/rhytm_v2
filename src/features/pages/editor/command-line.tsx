@@ -64,7 +64,7 @@ export function CommandLine({
           setZamkniete(false);
           poleRef.current?.focus();
         }}
-        className="inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-md border border-[#e0e0e0] bg-white p-0 font-[inherit] text-[15px] leading-none text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#171717] max-[799px]:size-11"
+        className="inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 font-[inherit] text-[15px] leading-none text-muted-foreground hover:bg-muted hover:text-foreground max-[799px]:size-11"
       >
         +
       </button>
@@ -84,7 +84,7 @@ export function CommandLine({
         aria-controls={menuOtwarte ? "menu-blokow" : undefined}
         aria-haspopup="listbox"
         aria-expanded={menuOtwarte}
-        className="min-w-0 flex-1 border-0 bg-transparent py-1.5 font-[inherit] text-[#404040] outline-none placeholder:text-[#a3a3a3]"
+        className="min-w-0 flex-1 border-0 bg-transparent py-1.5 font-[inherit] text-soft-foreground outline-none placeholder:text-faint-foreground"
       />
       {menuOtwarte && (
         <SlashMenu

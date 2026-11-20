@@ -145,7 +145,7 @@ export function TimeGrid({
       }
     >
       <div className={variant === "week" ? "min-w-[760px]" : ""}>
-        <div className="sticky top-0 z-20 border-b border-[#eaeaea] bg-white">
+        <div className="sticky top-0 z-20 border-b border-border bg-white">
           {variant === "week" ? (
             <>
               {/* Nagłówki dni; dziś: numer w zielonym kółku */}
@@ -157,16 +157,16 @@ export function TimeGrid({
                     <div
                       key={dzien}
                       data-testid={`naglowek-${dzien}`}
-                      className="flex items-center gap-1.5 border-l border-[#eaeaea] px-2.5 pt-2 pb-1.5"
+                      className="flex items-center gap-1.5 border-l border-border px-2.5 pt-2 pb-1.5"
                     >
-                      <span className="font-mono text-[11px] text-[#6b6b6b] uppercase">
+                      <span className="font-mono text-[11px] text-muted-foreground uppercase">
                         {DNI_KROTKO[weekdayOf(dzien)]}
                       </span>
                       <span
                         data-dzis={jestDzis || undefined}
                         className={
                           jestDzis
-                            ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#15803d] px-1 text-[13px] font-semibold text-white"
+                            ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success px-1 text-[13px] font-semibold text-white"
                             : "text-[13px] font-medium"
                         }
                       >
@@ -178,10 +178,10 @@ export function TimeGrid({
               </div>
               {/* Wiersz „cały dzień” — w Etapie 2 pusty (odnowienia subskrypcji dojdą później) */}
               <div
-                className="grid border-t border-[#f0f0f0]"
+                className="grid border-t border-border"
                 style={{ gridTemplateColumns: kolumny }}
               >
-                <div className="p-1.5 text-right font-mono text-[10px] leading-tight text-[#6b6b6b]">
+                <div className="p-1.5 text-right font-mono text-[10px] leading-tight text-muted-foreground">
                   cały
                   <br />
                   dzień
@@ -189,7 +189,7 @@ export function TimeGrid({
                 {days.map((dzien) => (
                   <div
                     key={dzien}
-                    className="min-h-[26px] border-l border-[#eaeaea] p-1"
+                    className="min-h-[26px] border-l border-border p-1"
                   />
                 ))}
               </div>
@@ -197,26 +197,26 @@ export function TimeGrid({
           ) : (
             // Dzień: „cały dzień” i numer dnia w jednym wierszu
             <div className="grid" style={{ gridTemplateColumns: kolumny }}>
-              <div className="px-1.5 py-2 text-right font-mono text-[10px] leading-tight text-[#6b6b6b]">
+              <div className="px-1.5 py-2 text-right font-mono text-[10px] leading-tight text-muted-foreground">
                 cały
                 <br />
                 dzień
               </div>
               <div
                 data-testid={`naglowek-${days[0]}`}
-                className="flex min-h-[26px] items-center gap-2 border-l border-[#eaeaea] px-2 py-1.5"
+                className="flex min-h-[26px] items-center gap-2 border-l border-border px-2 py-1.5"
               >
                 <span
                   data-dzis={days[0] === today || undefined}
                   className={
                     days[0] === today
-                      ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#15803d] px-1 text-[13px] font-semibold text-white"
+                      ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success px-1 text-[13px] font-semibold text-white"
                       : "text-[13px] font-medium"
                   }
                 >
                   {Number(days[0].split("-")[2])}
                 </span>
-                <span className="font-mono text-[11px] text-[#6b6b6b] uppercase">
+                <span className="font-mono text-[11px] text-muted-foreground uppercase">
                   {DNI_KROTKO[weekdayOf(days[0])]}
                 </span>
               </div>
@@ -229,7 +229,7 @@ export function TimeGrid({
             {godziny.map((h) => (
               <div
                 key={h}
-                className="box-border -translate-y-1.5 px-2 text-right font-mono text-[10px] text-[#6b6b6b]"
+                className="box-border -translate-y-1.5 px-2 text-right font-mono text-[10px] text-muted-foreground"
                 style={{ height: wysokoscGodziny }}
               >
                 {/* Etykieta siedzi na linii godziny; północ bez etykiety (styka się z nagłówkiem).
@@ -263,7 +263,7 @@ export function TimeGrid({
                 key={dzien}
                 data-testid={`kolumna-${dzien}`}
                 data-kolumna={dzien}
-                className="relative cursor-pointer border-l border-[#eaeaea]"
+                className="relative cursor-pointer border-l border-border"
                 // Dzisiejsza kolumna ma bardzo jasne zielone tło
                 style={{
                   height: wysokoscSiatki,
@@ -315,7 +315,7 @@ export function TimeGrid({
                   <div
                     ref={duchAktywny ? onSlotAnchor : undefined}
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-1 left-1 box-border rounded-md border border-dashed border-[#a3a3a3] bg-[#fafafa] px-2 py-1 font-mono text-[11px] text-[#666666]"
+                    className="pointer-events-none absolute right-1 left-1 box-border rounded-md border border-dashed border-ring bg-panel px-2 py-1 font-mono text-[11px] text-muted-foreground"
                     style={{
                       top: (duch.startMin / 60) * wysokoscGodziny + 2,
                       height: wysokoscGodziny - 4,
@@ -329,7 +329,7 @@ export function TimeGrid({
                   <div
                     data-testid="podglad-przeciagania"
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-1 left-1 z-10 box-border overflow-hidden rounded-md border border-dashed border-[#737373] bg-[#fafafa]/90 px-2 py-1 font-mono text-[11px] text-[#404040]"
+                    className="pointer-events-none absolute right-1 left-1 z-10 box-border overflow-hidden rounded-md border border-dashed border-border-strong bg-panel/90 px-2 py-1 font-mono text-[11px] text-soft-foreground"
                     style={{
                       top: (podglad.startMin / 60) * wysokoscGodziny + 1,
                       height: (podglad.durationMin / 60) * wysokoscGodziny - 2,
@@ -388,7 +388,7 @@ export function TimeGrid({
                             zacznij(e, "move", { occurrence: o })
                           }
                           title={`${o.title} ${godzinyBloku}`}
-                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                           style={{
                             background: `${kolor}14`,
                             border: `1px solid ${kolor}40`,
@@ -408,7 +408,7 @@ export function TimeGrid({
                               <span className="block truncate text-xs leading-[1.3] font-medium">
                                 {o.title}
                               </span>
-                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-[#404040]">
+                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-soft-foreground">
                                 {[godzinyBloku, licznik, cykliczny]
                                   .filter(Boolean)
                                   .join(" · ")}
@@ -420,15 +420,15 @@ export function TimeGrid({
                               <span className="min-w-0 shrink truncate font-medium">
                                 {o.title}
                               </span>
-                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-[#404040]">
+                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-soft-foreground">
                                 {`${godzinyBloku} · ${kategoria?.name ?? "Bez kategorii"}`}
                               </span>
                               {cykliczny && (
-                                <span className="shrink-0 font-mono text-[11px] text-[#404040]">
+                                <span className="shrink-0 font-mono text-[11px] text-soft-foreground">
                                   {cykliczny}
                                 </span>
                               )}
-                              <span className="ml-auto shrink-0 font-mono text-[11px] text-[#404040]">
+                              <span className="ml-auto shrink-0 font-mono text-[11px] text-soft-foreground">
                                 {licznik}
                               </span>
                             </span>
@@ -476,7 +476,7 @@ export function TimeGrid({
                           data-planned={i.planned || undefined}
                           draggable={false}
                           title={`${i.title} ${godzinyTreningu}`}
-                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-[#171717] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#171717] ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
                           style={{
                             background: i.planned
                               ? "#ffffff"
@@ -499,7 +499,7 @@ export function TimeGrid({
                               <span className="block truncate text-xs leading-[1.3] font-medium">
                                 {i.title}
                               </span>
-                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-[#404040]">
+                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-soft-foreground">
                                 {godzinyTreningu}
                               </span>
                             </>
@@ -508,7 +508,7 @@ export function TimeGrid({
                               <span className="min-w-0 shrink truncate font-medium">
                                 {i.title}
                               </span>
-                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-[#404040]">
+                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-soft-foreground">
                                 {`${godzinyTreningu} · Sport`}
                               </span>
                             </span>
@@ -525,13 +525,13 @@ export function TimeGrid({
                   (totalCount ?? 0) === 0 && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-[#e0e0e0] bg-white p-6 text-center text-[#666666]"
+                      className="absolute top-40 right-4 left-2 rounded-lg border border-dashed border-input bg-white p-6 text-center text-muted-foreground"
                     >
                       Brak bloków w tym dniu.{" "}
                       <button
                         type="button"
                         onClick={() => onSlotClick(dzien, 8 * 60)}
-                        className="cursor-pointer text-[#171717] underline hover:text-black"
+                        className="cursor-pointer text-foreground underline hover:text-black"
                       >
                         Dodaj blok
                       </button>
@@ -542,12 +542,12 @@ export function TimeGrid({
                   <>
                     <div
                       data-testid="linia-teraz"
-                      className="pointer-events-none absolute right-0 left-0 border-t-2 border-[#b91c1c]"
+                      className="pointer-events-none absolute right-0 left-0 border-t-2 border-destructive"
                       style={{ top: (linia / 60) * wysokoscGodziny }}
                     />
                     {variant === "day" && (
                       <span
-                        className="pointer-events-none absolute -left-[58px] rounded bg-[#b91c1c] px-1 py-px font-mono text-[10px] text-white"
+                        className="pointer-events-none absolute -left-[58px] rounded bg-destructive px-1 py-px font-mono text-[10px] text-white"
                         style={{ top: (linia / 60) * wysokoscGodziny - 9 }}
                       >
                         {formatClockTime(

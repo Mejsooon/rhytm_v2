@@ -11,7 +11,7 @@ export function StepHeader({
       <h1 className="m-0 text-2xl leading-8 font-medium tracking-[-0.01em] max-[799px]:text-[26px]">
         {title}
       </h1>
-      <p className="m-0 mt-2 text-[#525252] max-[799px]:mt-1.5">{subtitle}</p>
+      <p className="m-0 mt-2 text-soft-foreground max-[799px]:mt-1.5">{subtitle}</p>
     </div>
   );
 }

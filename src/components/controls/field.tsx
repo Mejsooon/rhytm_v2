@@ -13,7 +13,7 @@ export function MonoLabel({
   return (
     <span
       className={cn(
-        "font-mono text-[11px] tracking-[0.06em] text-[#6b6b6b] uppercase",
+        "font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase",
         className,
       )}
     >
@@ -51,9 +51,9 @@ export function TextField({
           aria-invalid={error ? true : undefined}
           aria-describedby={opisId}
           className={cn(
-            "peer w-full rounded-md border border-[#e0e0e0] bg-white px-[11px] py-[9px] text-sm font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
+            "peer w-full rounded-md border border-input bg-white px-[11px] py-[9px] text-sm font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
             webPlaceholder && "min-[800px]:placeholder:text-transparent",
-            error && "border-[#b91c1c]",
+            error && "border-destructive",
             className,
           )}
           {...props}
@@ -61,7 +61,7 @@ export function TextField({
         {webPlaceholder && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-[#a3a3a3] opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
+            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-faint-foreground opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
           >
             {webPlaceholder}
           </span>
@@ -72,7 +72,7 @@ export function TextField({
           id={opisId}
           className={cn(
             "text-xs font-normal",
-            error ? "text-[#b91c1c]" : "text-[#666666]",
+            error ? "text-destructive-foreground" : "text-muted-foreground",
           )}
         >
           {error ?? hint}

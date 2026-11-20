@@ -43,11 +43,11 @@ const GODZINY = ["07:30", "12:00", "18:00", "21:00"];
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const WIERSZ =
-  "flex min-h-[52px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0";
+  "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
 
 export function MHabitSheet({
   habit,
@@ -160,16 +160,16 @@ export function MHabitSheet({
       <Dialog.Portal>
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-[#171717] outline-none"
+          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
         >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-[#f0f0f0] p-2">
+          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
             <button
               type="button"
               disabled={pending}
               onClick={onDone}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "text-[#666666] disabled:cursor-default disabled:opacity-50",
+                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
               )}
             >
               Anuluj
@@ -183,7 +183,7 @@ export function MHabitSheet({
               onClick={zapisz}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
               )}
             >
               Zapisz
@@ -192,7 +192,7 @@ export function MHabitSheet({
 
           <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-[18px] pb-6">
             {blad && (
-              <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+              <p role="alert" className="m-0 text-xs text-destructive-foreground">
                 {blad}
               </p>
             )}
@@ -205,7 +205,7 @@ export function MHabitSheet({
                 maxLength={80}
                 placeholder="Np. Woda 2 l"
                 onChange={(e) => setName(e.target.value)}
-                className="box-border h-12 w-full rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 text-[15px] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+                className="box-border h-12 w-full rounded-md border border-input bg-white px-3.5 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
               />
             </label>
 
@@ -241,10 +241,10 @@ export function MHabitSheet({
                         )
                       }
                       className={cn(
-                        "h-11 cursor-pointer rounded-[10px] border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                        "h-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
                         wybrany
-                          ? "border-[#171717] bg-[#171717] text-white"
-                          : "border-[#e0e0e0] bg-white text-[#171717]",
+                          ? "border-primary bg-primary text-white"
+                          : "border-input bg-white text-foreground",
                       )}
                     >
                       {SKROTY[numer - 1]}
@@ -255,7 +255,7 @@ export function MHabitSheet({
             )}
 
             {tryb === "times_per_week" && (
-              <div className="rounded-xl border border-[#eaeaea] bg-white">
+              <div className="rounded-xl border border-border bg-white">
                 <div className={WIERSZ}>
                   <span className="flex-1">Razy w tygodniu</span>
                   <Stepper
@@ -270,7 +270,7 @@ export function MHabitSheet({
               </div>
             )}
 
-            <div className="rounded-xl border border-[#eaeaea] bg-white">
+            <div className="rounded-xl border border-border bg-white">
               <div className={WIERSZ}>
                 <span className="flex-1">Przypomnienie</span>
                 <Switch
@@ -322,7 +322,7 @@ export function MHabitSheet({
               </div>
             </div>
 
-            <p className="m-0 text-[13px] leading-normal text-[#666666]">
+            <p className="m-0 text-[13px] leading-normal text-muted-foreground">
               {podsumowanie}
             </p>
           </div>

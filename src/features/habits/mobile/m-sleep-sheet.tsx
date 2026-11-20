@@ -26,11 +26,11 @@ const DOMYSLNA_POBUDKA = "07:00";
 const KROK = 15; // min
 
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
 const PRZYCISK_KROKU =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-[#e0e0e0] bg-white p-0 text-lg text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50";
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-lg text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50";
 
 export function MSleepSheet({
   date,
@@ -129,16 +129,16 @@ export function MSleepSheet({
       <Dialog.Portal>
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-[#171717] outline-none"
+          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
         >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-[#f0f0f0] p-2">
+          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
             <button
               type="button"
               disabled={pending}
               onClick={onDone}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "text-[#666666] disabled:cursor-default disabled:opacity-50",
+                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
               )}
             >
               Anuluj
@@ -152,7 +152,7 @@ export function MSleepSheet({
               onClick={zapisz}
               className={cn(
                 NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-[#a3a3a3]",
+                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
               )}
             >
               Zapisz
@@ -161,7 +161,7 @@ export function MSleepSheet({
 
           <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-5 pb-6">
             {blad && (
-              <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+              <p role="alert" className="m-0 text-xs text-destructive-foreground">
                 {blad}
               </p>
             )}
@@ -173,28 +173,28 @@ export function MSleepSheet({
                 {minuty === null ? "—" : formatDuration(minuty)}
               </div>
               {minuty === null ? (
-                <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+                <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
                   Godziny zaśnięcia i pobudki muszą się różnić.
                 </p>
               ) : (
-                <div className="text-[13px] text-[#666666]">
+                <div className="text-[13px] text-muted-foreground">
                   {goalText(minuty, goalMin).phone}
                 </div>
               )}
             </div>
 
-            <div className="rounded-xl border border-[#eaeaea] bg-white">
+            <div className="rounded-xl border border-border bg-white">
               {wiersze.map(({ nazwa, testId, wartosc, zmien, Ikona }) => {
                 const [g, m] = wartosc.split(":").map(Number);
                 return (
                   <div
                     key={nazwa}
-                    className="flex min-h-16 items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0"
+                    className="flex min-h-16 items-center gap-3 border-b border-border px-3.5 last:border-b-0"
                   >
                     <Ikona
                       size={20}
                       aria-hidden="true"
-                      className="flex-none text-[#666666]"
+                      className="flex-none text-muted-foreground"
                     />
                     <span className="flex-1">{nazwa}</span>
                     <button
@@ -247,10 +247,10 @@ export function MSleepSheet({
                       // Ponowne stuknięcie wybranej wartości czyści samopoczucie (jak na webie)
                       onClick={() => setFeeling(wybrane ? null : wartosc)}
                       className={cn(
-                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50",
+                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50",
                         wybrane
-                          ? "border-[#15803d] bg-[#f0faf4] text-[#15803d]"
-                          : "border-[#e0e0e0] bg-white text-[#404040]",
+                          ? "border-success bg-success-soft text-success"
+                          : "border-input bg-white text-soft-foreground",
                       )}
                     >
                       <span className="font-mono text-lg">{wartosc}</span>
@@ -292,7 +292,7 @@ export function MSleepSheet({
                 disabled={pending}
                 placeholder="Opcjonalnie"
                 onChange={(e) => setNote(e.target.value)}
-                className="box-border h-[88px] w-full resize-none rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 py-3 text-[15px] font-normal text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] disabled:opacity-60"
+                className="box-border h-[88px] w-full resize-none rounded-md border border-input bg-white px-3.5 py-3 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary disabled:opacity-60"
               />
             </label>
           </div>

@@ -14,11 +14,11 @@ const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
 // Style komórek wprost z makiety
 const STYLE_STANU: Record<StanDnia, string> = {
-  zrobione: "bg-[#15803d] text-white",
-  pominiete: "bg-[#fee2e2] text-[#b91c1c]",
-  szare: "bg-[#fafafa] text-[#a3a3a3]",
-  neutralne: "bg-white text-[#a3a3a3]",
-  przyszlosc: "border border-dashed border-[#e0e0e0] bg-white text-[#a3a3a3]",
+  zrobione: "bg-success text-white",
+  pominiete: "bg-destructive-soft text-destructive-foreground",
+  szare: "bg-panel text-faint-foreground",
+  neutralne: "bg-white text-faint-foreground",
+  przyszlosc: "border border-dashed border-input bg-white text-faint-foreground",
 };
 
 const OPIS_STANU: Record<StanDnia, string> = {
@@ -127,16 +127,16 @@ export function HabitMonth({
       : `${zrobione} z ${zrobione + pominiete} dni zaliczone`;
 
   return (
-    <section className="rounded-lg border border-[#eaeaea] bg-white p-4">
+    <section className="rounded-lg border border-border bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="m-0 text-[15px] font-semibold">{`${MIESIACE[m - 1][0].toUpperCase()}${MIESIACE[m - 1].slice(1)} ${rok}`}</h2>
-        <div className="flex gap-1 font-mono text-xs text-[#6b6b6b]">
+        <div className="flex gap-1 font-mono text-xs text-muted-foreground">
           <button
             type="button"
             aria-label="Poprzedni miesiąc"
             disabled={miesiac <= dolny}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, -1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-[10px] max-[799px]:text-base"
+            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
           >
             ‹
           </button>
@@ -145,14 +145,14 @@ export function HabitMonth({
             aria-label="Następny miesiąc"
             disabled={miesiac >= maxMonth}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, 1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-[#f5f5f5] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-[10px] max-[799px]:text-base"
+            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
           >
             ›
           </button>
         </div>
       </div>
 
-      <div className="mb-1 grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-[#6b6b6b]">
+      <div className="mb-1 grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-muted-foreground">
         {naglowki.map((n) => (
           <span key={n}>{n}</span>
         ))}
@@ -169,7 +169,7 @@ export function HabitMonth({
               className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${
                 // Telefon: pominięte szare jak w makiecie; web zostaje przy czerwonym
                 phone && stan === "pominiete"
-                  ? "bg-[#f5f5f5] text-[#8a8a8a]"
+                  ? "bg-muted text-faint-foreground"
                   : STYLE_STANU[stan]
               }`}
             >
@@ -180,18 +180,18 @@ export function HabitMonth({
       </div>
 
       {phone && (
-        <div className="mt-2.5 text-[13px] text-[#666666]">{podsumowanie}</div>
+        <div className="mt-2.5 text-[13px] text-muted-foreground">{podsumowanie}</div>
       )}
 
       {/* Legenda z makiety (web) */}
       {!phone && (
-        <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-[#666666]">
+        <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted-foreground">
           <span>
-            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#15803d]" />
+            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-success" />
             zrobione
           </span>
           <span>
-            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-[#fee2e2]" />
+            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-destructive-soft" />
             pominięte
           </span>
           <span>szare: dzień bez nawyku</span>

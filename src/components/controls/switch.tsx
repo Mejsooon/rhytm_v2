@@ -25,8 +25,8 @@ export function Switch({
         if (!disabled) onChange(!checked);
       }}
       className={cn(
-        "relative h-[22px] w-10 flex-none cursor-pointer rounded-full border-0 p-0 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:h-[30px] max-[799px]:w-[50px]",
-        checked ? "bg-[#15803d]" : "bg-[#d4d4d4] max-[799px]:bg-[#d9d9d9]",
+        "relative h-[22px] w-10 flex-none cursor-pointer rounded-full border-0 p-0 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:h-[30px] max-[799px]:w-[50px]",
+        checked ? "bg-success" : "bg-border-strong max-[799px]:bg-border-strong",
         disabled && "cursor-not-allowed opacity-40",
       )}
     >

@@ -90,9 +90,9 @@ export function Dropdown<T extends string>({
           style={width && !compact ? { width } : undefined}
           className={cn(
             compact
-              ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-white px-2 text-left text-xs font-normal whitespace-nowrap text-[#171717] outline-none hover:border-[#cfcfcf]"
-              : "flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-[#e0e0e0] bg-white px-2.5 py-2 text-left text-sm font-normal text-[#171717] outline-none hover:border-[#cfcfcf] max-[799px]:h-12 max-[799px]:rounded-[10px] max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
-            open && "border-[#171717] hover:border-[#171717]",
+              ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white px-2 text-left text-xs font-normal whitespace-nowrap text-foreground outline-none hover:border-border-strong"
+              : "flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-white px-2.5 py-2 text-left text-sm font-normal text-foreground outline-none hover:border-border-strong max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
+            open && "border-primary hover:border-primary",
           )}
         >
           {wybrana ? (
@@ -106,11 +106,11 @@ export function Dropdown<T extends string>({
               <span>{wybrana.label}</span>
             )
           ) : (
-            <span className="text-[#a3a3a3]">{placeholder}</span>
+            <span className="text-faint-foreground">{placeholder}</span>
           )}
           <ChevronDownIcon
             aria-hidden="true"
-            className="size-3 flex-none text-[#666666]"
+            className="size-3 flex-none text-muted-foreground"
           />
         </button>
       </Popover.Trigger>
@@ -126,7 +126,7 @@ export function Dropdown<T extends string>({
             lista.current?.focus();
           }}
           style={{ width: width ?? "var(--radix-popover-trigger-width)" }}
-          className="z-[70] rounded-[10px] border border-[#e0e0e0] bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
+          className="z-[70] rounded-md border border-input bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
         >
           <div
             ref={lista}
@@ -148,9 +148,9 @@ export function Dropdown<T extends string>({
                   onClick={() => wybierz(i)}
                   onMouseMove={() => setAktywny(i)}
                   className={cn(
-                    "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md px-2.5 py-[7px] text-left text-[13px] text-[#171717] max-[799px]:py-3 max-[799px]:text-[15px]",
-                    i === aktywny && "bg-[#f5f5f5]",
-                    zaznaczona && "bg-[#f0f0f0] font-medium",
+                    "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md px-2.5 py-[7px] text-left text-[13px] text-foreground max-[799px]:py-3 max-[799px]:text-[15px]",
+                    i === aktywny && "bg-muted",
+                    zaznaczona && "bg-active font-medium",
                   )}
                 >
                   {opcja.node ? (
@@ -164,12 +164,12 @@ export function Dropdown<T extends string>({
                   )}
                   <span className="flex items-center gap-2">
                     {opcja.hint && (
-                      <span className="font-mono text-xs font-normal text-[#6b6b6b]">
+                      <span className="font-mono text-xs font-normal text-muted-foreground">
                         {opcja.hint}
                       </span>
                     )}
                     {zaznaczona && (
-                      <span aria-hidden="true" className="text-[#15803d]">
+                      <span aria-hidden="true" className="text-success">
                         ✓
                       </span>
                     )}

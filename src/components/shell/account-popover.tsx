@@ -33,11 +33,11 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           type="button"
           aria-haspopup="dialog"
           className={cn(
-            "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 p-2 text-left text-sm text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20",
-            open ? "bg-[#f0f0f0]" : "bg-transparent",
+            "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 p-2 text-left text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20",
+            open ? "bg-active" : "bg-transparent",
           )}
         >
-          <span className="flex size-[26px] flex-none items-center justify-center overflow-hidden rounded-full border border-[#e0e0e0] bg-[#f0f0f0] text-xs font-medium">
+          <span className="flex size-[26px] flex-none items-center justify-center overflow-hidden rounded-full border border-input bg-active text-xs font-medium">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- mały awatar z zewnętrznego URL
               <img
@@ -51,7 +51,7 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="font-medium">{user.displayName}</span>
-            <span className="truncate text-xs text-[#666666]">
+            <span className="truncate text-xs text-muted-foreground">
               {user.email}
             </span>
           </span>
@@ -61,14 +61,14 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
     >
       {/* Popover ma własny padding 10 px, makieta 6 px — wyrównujemy ujemnym marginesem */}
       <div className="-m-1 flex flex-col gap-0.5 text-[13px]">
-        <div className="mb-1 border-b border-[#f0f0f0] px-2.5 pt-2 pb-2.5">
+        <div className="mb-1 border-b border-border px-2.5 pt-2 pb-2.5">
           <div className="font-medium">{user.displayName}</div>
-          <div className="text-xs text-[#666666]">{user.email}</div>
+          <div className="text-xs text-muted-foreground">{user.email}</div>
         </div>
         <form action={signOut}>
           <button
             type="submit"
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[#b91c1c] hover:bg-[#f5f5f5]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-destructive-foreground hover:bg-muted"
           >
             <LogOut size={15} aria-hidden="true" />
             Wyloguj się

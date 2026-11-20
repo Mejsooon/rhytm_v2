@@ -15,7 +15,7 @@ import { weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 const OPCJA =
-  "flex items-center gap-2.5 rounded-md p-2 text-left text-[#171717] no-underline outline-none hover:bg-[#f5f5f5] hover:text-[#171717] focus-visible:bg-[#f5f5f5] max-[799px]:min-h-11";
+  "flex items-center gap-2.5 rounded-md p-2 text-left text-foreground no-underline outline-none hover:bg-muted hover:text-foreground focus-visible:bg-muted max-[799px]:min-h-11";
 
 export function NewEntryPopover({
   anchor,
@@ -64,16 +64,16 @@ export function NewEntryPopover({
           )
             e.preventDefault();
         }}
-        className="flex w-[260px] flex-col gap-0.5 rounded-[10px] border-[#e0e0e0] p-2 text-sm shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
+        className="flex w-[260px] flex-col gap-0.5 rounded-md border-input p-2 text-sm shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)]"
       >
         <div className="flex items-center gap-2 px-1 pt-0.5 pb-2">
           <span className="text-[13px] font-semibold">Nowy wpis</span>
-          <span className="font-mono text-[11px] text-[#6b6b6b]">{kiedy}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{kiedy}</span>
           <button
             type="button"
             aria-label="Zamknij"
             onClick={onClose}
-            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-[#666666] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20 max-[799px]:size-11"
+            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:size-11"
           >
             ✕
           </button>
@@ -85,13 +85,13 @@ export function NewEntryPopover({
         >
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#bbe5cc] bg-[#f0fdf4] text-xs text-[#15803d]"
+            className="flex size-7 items-center justify-center rounded-md border border-success-border bg-success-soft text-xs text-success"
           >
             ▤
           </span>
           <span className="flex flex-col">
             <span className="text-[13px] font-medium">Blok</span>
-            <span className="text-xs text-[#666666]">
+            <span className="text-xs text-muted-foreground">
               czas na zadania, z kategorią
             </span>
           </span>
@@ -99,25 +99,25 @@ export function NewEntryPopover({
         <Link href={`/sport?nowy=bieg&${parametry}`} className={OPCJA}>
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#fed7aa] bg-[#fff4ed] text-xs text-[#c2410c]"
+            className="flex size-7 items-center justify-center rounded-md border border-warning-border bg-warning-soft text-xs text-warning-foreground"
           >
             ●
           </span>
           <span className="flex flex-col">
             <span className="text-[13px] font-medium">Bieg</span>
-            <span className="text-xs text-[#666666]">dystans, czas, tempo</span>
+            <span className="text-xs text-muted-foreground">dystans, czas, tempo</span>
           </span>
         </Link>
         <Link href={`/sport?nowy=silownia&${parametry}`} className={OPCJA}>
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md border border-[#e0e0e0] bg-[#f5f5f5] text-xs text-[#404040]"
+            className="flex size-7 items-center justify-center rounded-md border border-input bg-muted text-xs text-soft-foreground"
           >
             ■
           </span>
           <span className="flex flex-col">
             <span className="text-[13px] font-medium">Siłownia</span>
-            <span className="text-xs text-[#666666]">trening siłowy</span>
+            <span className="text-xs text-muted-foreground">trening siłowy</span>
           </span>
         </Link>
       </PopoverContent>

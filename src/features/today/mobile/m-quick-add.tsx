@@ -57,9 +57,9 @@ const RODZAJE: {
 ];
 
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 const LINK =
-  "flex min-h-11 items-center gap-2 text-sm text-[#404040] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20";
+  "flex min-h-11 items-center gap-2 text-sm text-soft-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
 
 export function MQuickAdd({
   today,
@@ -181,12 +181,12 @@ export function MQuickAdd({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white text-[15px] text-[#171717] shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white text-[15px] text-foreground shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
         >
           {/* Uchwyt arkusza */}
           <div
             aria-hidden="true"
-            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4]"
+            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong"
           />
           <div className="flex items-center py-1 pr-2 pl-5">
             <Dialog.Title className="m-0 flex-1 text-[17px] font-semibold">
@@ -197,7 +197,7 @@ export function MQuickAdd({
               aria-label="Zamknij"
               disabled={pending}
               onClick={onClose}
-              className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+              className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
             >
               <XIcon aria-hidden="true" className="size-5" />
             </button>
@@ -229,7 +229,7 @@ export function MQuickAdd({
                     void dodaj();
                   }
                 }}
-                className="box-border h-[52px] w-full rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 text-[17px] text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717]"
+                className="box-border h-[52px] w-full rounded-md border border-input bg-white px-3.5 text-[17px] text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
               />
             </label>
 
@@ -261,12 +261,12 @@ export function MQuickAdd({
               <Link href={pelnyBlok} onClick={onClose} className={LINK}>
                 <PenLine
                   aria-hidden="true"
-                  className="size-4 flex-none text-[#666666]"
+                  className="size-4 flex-none text-muted-foreground"
                 />
                 Pełny formularz bloku (kategoria, zadania, powtarzanie)
                 <ChevronRight
                   aria-hidden="true"
-                  className="size-4 flex-none text-[#a3a3a3]"
+                  className="size-4 flex-none text-faint-foreground"
                 />
               </Link>
             )}
@@ -274,18 +274,18 @@ export function MQuickAdd({
               <Link href={pelnyBieg} onClick={onClose} className={LINK}>
                 <PenLine
                   aria-hidden="true"
-                  className="size-4 flex-none text-[#666666]"
+                  className="size-4 flex-none text-muted-foreground"
                 />
                 Pełny formularz biegu (dystans, tempo)
                 <ChevronRight
                   aria-hidden="true"
-                  className="size-4 flex-none text-[#a3a3a3]"
+                  className="size-4 flex-none text-faint-foreground"
                 />
               </Link>
             )}
 
             {blad && (
-              <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+              <p role="alert" className="m-0 text-xs text-destructive-foreground">
                 {blad}
               </p>
             )}

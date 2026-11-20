@@ -66,7 +66,7 @@ export function MColumnSheet({
   }
 
   const przyciskPrzesuniecia =
-    "flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-[#e0e0e0] bg-white font-[inherit] font-medium text-[#171717] hover:bg-[#fafafa] disabled:cursor-not-allowed disabled:opacity-40";
+    "flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-white font-[inherit] font-medium text-foreground hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <FormDialog
@@ -78,7 +78,7 @@ export function MColumnSheet({
           type="button"
           aria-label="Gotowe"
           onClick={() => onOpenChange(false)}
-          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent px-3 font-[inherit] font-semibold text-[#171717] hover:bg-[#f5f5f5]"
+          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent px-3 font-[inherit] font-semibold text-foreground hover:bg-muted"
         >
           Gotowe
         </button>
@@ -97,10 +97,10 @@ export function MColumnSheet({
           }
         }}
         aria-label="Nazwa kolumny"
-        className="box-border h-12 w-full rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 font-[inherit] text-[15px] text-[#171717] outline-none focus:border-[#171717]"
+        className="box-border h-12 w-full rounded-md border border-input bg-white px-3.5 font-[inherit] text-[15px] text-foreground outline-none focus:border-primary"
       />
 
-      <span className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">Typ pola</span>
+      <span className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">Typ pola</span>
       <div className="grid grid-cols-2 gap-2">
         {EDITOR_TYPES.map((t) => {
           // Wybór obejmuje też starsze pola typu select
@@ -114,11 +114,11 @@ export function MColumnSheet({
               onClick={() => {
                 if (!aktualny) onPickType(t.type);
               }}
-              className={`flex h-12 cursor-pointer items-center gap-2 rounded-[10px] border px-3.5 text-left font-[inherit] text-[#171717] disabled:cursor-not-allowed disabled:opacity-40 ${
-                aktualny ? "border-[#171717] bg-[#f5f5f5]" : "border-[#e0e0e0] bg-white"
+              className={`flex h-12 cursor-pointer items-center gap-2 rounded-md border px-3.5 text-left font-[inherit] text-foreground disabled:cursor-not-allowed disabled:opacity-40 ${
+                aktualny ? "border-primary bg-muted" : "border-input bg-white"
               }`}
             >
-              <span aria-hidden="true" className="w-5 font-mono text-[#6b6b6b]">
+              <span aria-hidden="true" className="w-5 font-mono text-muted-foreground">
                 {t.icon}
               </span>
               {t.label}
@@ -129,7 +129,7 @@ export function MColumnSheet({
 
       {jestWyborem && (
         <>
-          <span className="font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase">Opcje</span>
+          <span className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">Opcje</span>
           <div className="flex flex-wrap gap-1.5">
             {opcje.map((o) => (
               <OptionBadge key={o.id} option={o}>
@@ -159,13 +159,13 @@ export function MColumnSheet({
               }}
               placeholder="Nowa opcja…"
               aria-label="Nowa opcja"
-              className="box-border h-11 min-w-0 flex-1 rounded-[10px] border border-[#e0e0e0] bg-white px-3.5 font-[inherit] text-[15px] text-[#171717] outline-none focus:border-[#171717]"
+              className="box-border h-11 min-w-0 flex-1 rounded-md border border-input bg-white px-3.5 font-[inherit] text-[15px] text-foreground outline-none focus:border-primary"
             />
             <button
               type="button"
               disabled={pending}
               onClick={dodajOpcje}
-              className="h-11 cursor-pointer rounded-[10px] border border-[#e0e0e0] bg-white px-4 font-[inherit] text-[#171717] disabled:opacity-50"
+              className="h-11 cursor-pointer rounded-md border border-input bg-white px-4 font-[inherit] text-foreground disabled:opacity-50"
             >
               Dodaj
             </button>
@@ -195,7 +195,7 @@ export function MColumnSheet({
         type="button"
         disabled={nieMoznaUsunac}
         onClick={onDelete}
-        className="flex h-11 w-full cursor-pointer items-center justify-center rounded-[10px] border border-[#f3c7c7] bg-white font-[inherit] font-medium text-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-11 w-full cursor-pointer items-center justify-center rounded-md border border-destructive-border bg-white font-[inherit] font-medium text-destructive-foreground disabled:cursor-not-allowed disabled:opacity-40"
       >
         Usuń kolumnę
       </button>

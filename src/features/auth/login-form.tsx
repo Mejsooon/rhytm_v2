@@ -38,7 +38,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           <span className="max-[799px]:hidden">Zaloguj się do rhytm</span>
           <span className="min-[800px]:hidden">Witaj z powrotem</span>
         </h1>
-        <p className="mt-1.5 mb-0 text-[#666666] max-[799px]:text-[13px]">
+        <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:text-[13px]">
           <span className="max-[799px]:hidden">
             Kalendarz, sport, nawyki i Twoje strony w jednym miejscu.
           </span>
@@ -83,7 +83,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           rightLink={
             <Link
               href="/reset-hasla"
-              className="text-[#666666] underline hover:text-black max-[799px]:text-sm max-[799px]:text-[#404040] max-[799px]:no-underline"
+              className="text-muted-foreground underline hover:text-black max-[799px]:text-sm max-[799px]:text-soft-foreground max-[799px]:no-underline"
             >
               Nie pamiętasz hasła?
             </Link>
@@ -94,7 +94,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
 
         <div className="flex flex-col gap-4 max-[799px]:mt-1 max-[799px]:gap-3.5">
           {blad && (
-            <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -109,12 +109,12 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
         </div>
       </form>
 
-      <p className="order-8 m-0 text-center text-[13px] text-[#666666] max-[799px]:mt-auto max-[799px]:text-sm">
+      <p className="order-8 m-0 text-center text-[13px] text-muted-foreground max-[799px]:mt-auto max-[799px]:text-sm">
         <span className="max-[799px]:hidden">
           Nie masz konta?{" "}
           <Link
             href="/rejestracja"
-            className="text-[#171717] underline hover:text-black"
+            className="text-foreground underline hover:text-black"
           >
             Zarejestruj się
           </Link>
@@ -123,7 +123,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           Nie masz konta?{" "}
           <Link
             href="/rejestracja"
-            className="font-semibold text-[#171717] no-underline"
+            className="font-semibold text-foreground no-underline"
           >
             Załóż konto
           </Link>

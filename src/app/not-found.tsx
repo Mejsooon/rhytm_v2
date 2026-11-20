@@ -8,10 +8,10 @@ import { AppShell } from "@/components/shell/app-shell";
 export default function NotFound() {
   return (
     <AppShell requireUser={false}>
-      <header className="flex min-h-[34px] items-center border-b border-[#eaeaea] px-6 py-3">
-        <div className="font-mono text-[13px] text-[#666666]">
-          <span>rhytm</span> <span className="text-[#b0b0b0]">/</span>{" "}
-          <span className="text-[#171717]">404</span>
+      <header className="flex min-h-[34px] items-center border-b border-border px-6 py-3">
+        <div className="font-mono text-[13px] text-muted-foreground">
+          <span>rhytm</span> <span className="text-faint-foreground">/</span>{" "}
+          <span className="text-foreground">404</span>
         </div>
       </header>
       <div className="flex flex-1 items-center justify-center px-6 py-12">
@@ -20,12 +20,12 @@ export default function NotFound() {
             404
           </span>
           <h1 className="m-0 text-xl font-semibold">Tej strony nie ma</h1>
-          <p className="m-0 leading-normal text-[#666666]">
+          <p className="m-0 leading-normal text-muted-foreground">
             Mogła zostać usunięta albo link jest niepełny. Strony usunięte w
             ciągu 30 dni możesz przywrócić z{" "}
             <Link
               href="/ustawienia/ogolne#kosz"
-              className="text-[#171717] underline underline-offset-2"
+              className="text-foreground underline underline-offset-2"
             >
               kosza
             </Link>
@@ -43,7 +43,7 @@ export default function NotFound() {
               className="cursor-default"
             >
               Szukaj
-              <span className="rounded border border-[#e0e0e0] bg-white px-[5px] font-mono text-[11px] font-normal text-[#404040]">
+              <span className="rounded border border-input bg-white px-[5px] font-mono text-[11px] font-normal text-soft-foreground">
                 ⌘K
               </span>
             </Button>

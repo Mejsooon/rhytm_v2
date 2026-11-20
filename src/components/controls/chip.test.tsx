@@ -8,8 +8,8 @@ describe("Chip", () => {
     render(<Chip selected>Pn</Chip>);
     const chip = screen.getByRole("button", { name: "Pn" });
     expect(chip).toHaveAttribute("aria-pressed", "true");
-    expect(chip).toHaveClass("border-[#171717]", "bg-white", "font-medium");
-    expect(chip).not.toHaveClass("bg-[#171717]");
+    expect(chip).toHaveClass("border-primary", "bg-white", "font-medium");
+    expect(chip).not.toHaveClass("bg-primary");
   });
 
   it("variant solid: zaznaczony wypełniony na czarno z białym tekstem", () => {
@@ -19,9 +19,9 @@ describe("Chip", () => {
       </Chip>,
     );
     const chip = screen.getByRole("button", { name: "Pn" });
-    expect(chip).toHaveClass("bg-[#171717]", "border-[#171717]", "text-white");
+    expect(chip).toHaveClass("bg-primary", "border-primary", "text-white");
     expect(chip).not.toHaveClass("bg-white");
-    expect(chip).not.toHaveClass("text-[#404040]");
+    expect(chip).not.toHaveClass("text-soft-foreground");
   });
 
   it("variant solid bez zaznaczenia wygląda jak zwykły chip", () => {
@@ -29,6 +29,6 @@ describe("Chip", () => {
     const chip = screen.getByRole("button", { name: "Wt" });
     expect(chip).toHaveAttribute("aria-pressed", "false");
     expect(chip).toHaveClass("bg-white");
-    expect(chip).not.toHaveClass("bg-[#171717]");
+    expect(chip).not.toHaveClass("bg-primary");
   });
 });

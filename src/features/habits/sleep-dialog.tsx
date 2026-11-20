@@ -164,7 +164,7 @@ function SleepForm({
       footer={
         <>
           {blad && (
-            <p role="alert" className="mr-auto text-xs text-[#b91c1c]">
+            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
               {blad}
             </p>
           )}
@@ -212,7 +212,7 @@ function SleepForm({
       </div>
 
       {/* Czas snu na żywo */}
-      <div className="flex items-center gap-3.5 rounded-lg border border-[#eaeaea] bg-[#fafafa] px-3.5 py-3">
+      <div className="flex items-center gap-3.5 rounded-lg border border-border bg-panel px-3.5 py-3">
         <div>
           <MonoLabel className="block">Czas snu</MonoLabel>
           <div className="mt-1 font-mono text-[22px]">
@@ -221,20 +221,20 @@ function SleepForm({
         </div>
         <div className="min-w-0 flex-1">
           {minuty === null ? (
-            <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+            <p role="alert" className="m-0 text-xs text-destructive-foreground">
               Godziny zaśnięcia i pobudki muszą się różnić.
             </p>
           ) : (
             <>
               {goalMin > 0 && (
-                <div className="h-1.5 rounded-[3px] bg-[#eaeaea]">
+                <div className="h-1.5 rounded-[3px] bg-border">
                   <div
-                    className="h-1.5 rounded-[3px] bg-[#171717]"
+                    className="h-1.5 rounded-[3px] bg-primary"
                     style={{ width: `${procent}%` }}
                   />
                 </div>
               )}
-              <div className="mt-1.5 font-mono text-[11px] text-[#6b6b6b]">
+              <div className="mt-1.5 font-mono text-[11px] text-muted-foreground">
                 {goalText(minuty, goalMin).web}
               </div>
             </>
@@ -261,14 +261,14 @@ function SleepForm({
                 // Ponowny klik wybranej wartości czyści samopoczucie
                 onClick={() => setFeeling(wybrane ? null : wartosc)}
                 className={cn(
-                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20",
+                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-md border text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
                   wybrane
-                    ? "border-[#171717] bg-[#171717] text-white"
-                    : "border-[#e0e0e0] bg-white text-[#171717] hover:bg-[#fafafa]",
+                    ? "border-primary bg-primary text-white"
+                    : "border-input bg-white text-foreground hover:bg-panel",
                 )}
               >
                 <span className="font-mono text-sm">{wartosc}</span>
-                <span className={wybrane ? "text-white/80" : "text-[#6b6b6b]"}>
+                <span className={wybrane ? "text-white/80" : "text-muted-foreground"}>
                   {etykieta}
                 </span>
               </button>
@@ -300,7 +300,7 @@ function SleepForm({
         label={
           <>
             Notatka{" "}
-            <span className="text-xs font-normal text-[#6b6b6b]">
+            <span className="text-xs font-normal text-muted-foreground">
               opcjonalnie
             </span>
           </>

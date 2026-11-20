@@ -134,9 +134,9 @@ describe("MHabitDetail", () => {
       '[data-day="2026-11-04"]',
     ) as HTMLElement;
     expect(pominiety).toHaveAttribute("data-state", "pominiete");
-    expect(pominiety.className).toContain("bg-[#f5f5f5]");
-    expect(pominiety.className).toContain("text-[#8a8a8a]");
-    expect(pominiety.className).not.toContain("bg-[#fee2e2]");
+    expect(pominiety.className).toContain("bg-muted");
+    expect(pominiety.className).toContain("text-faint-foreground");
+    expect(pominiety.className).not.toContain("bg-destructive-soft");
     // Bez webowej legendy
     expect(
       screen.queryByText("szare: dzień bez nawyku"),

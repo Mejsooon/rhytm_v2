@@ -63,10 +63,10 @@ describe("DaySide", () => {
     expect(screen.getByText("listopad 2026")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "17 listopada" }).className,
-    ).toContain("text-[#15803d]");
+    ).toContain("text-success");
     expect(
       screen.getByRole("button", { name: "18 listopada" }).className,
-    ).toContain("bg-[#171717]");
+    ).toContain("bg-primary");
   });
 
   it("klik dnia woła onPick z datą", async () => {

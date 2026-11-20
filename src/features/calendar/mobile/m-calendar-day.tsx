@@ -122,10 +122,10 @@ export function MCalendarDay({
               aria-current={wybrany ? "date" : undefined}
               className={`flex h-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 ${
                 wybrany
-                  ? "bg-[#171717] text-white"
+                  ? "bg-primary text-white"
                   : dzien === today
-                    ? "bg-[#f5f5f5] text-[#171717]"
-                    : "text-[#171717]"
+                    ? "bg-muted text-foreground"
+                    : "text-foreground"
               }`}
             >
               <span className="text-[11px] opacity-75">{DNI_SKROT[numer]}</span>
@@ -133,7 +133,7 @@ export function MCalendarDay({
               {maBloki ? (
                 <span
                   data-testid={`kropka-${dzien}`}
-                  className={`size-1 rounded-full ${wybrany ? "bg-white" : "bg-[#15803d]"}`}
+                  className={`size-1 rounded-full ${wybrany ? "bg-white" : "bg-success"}`}
                 />
               ) : (
                 <span className="size-1" />
@@ -145,7 +145,7 @@ export function MCalendarDay({
 
       <div
         data-testid="m-wiersz-daty"
-        className="flex flex-none items-center gap-2 border-t border-b border-t-[#f0f0f0] border-b-[#eaeaea] px-4 py-1.5 text-[13px] text-[#666666]"
+        className="flex flex-none items-center gap-2 border-t border-b border-t-border border-b-border px-4 py-1.5 text-[13px] text-muted-foreground"
       >
         <span>{tytul}</span>
         <span aria-hidden="true">·</span>
@@ -165,10 +165,10 @@ export function MCalendarDay({
               className="absolute inset-x-0 flex items-start gap-2"
               style={{ top: godzina * WYSOKOSC_GODZINY }}
             >
-              <span className="w-10 -translate-y-[7px] text-right font-mono text-[11px] whitespace-nowrap text-[#8a8a8a]">
+              <span className="w-10 -translate-y-[7px] text-right font-mono text-[11px] whitespace-nowrap text-faint-foreground">
                 {formatClockTime(godzina, 0, clock)}
               </span>
-              <span className="flex-1 border-t border-[#f0f0f0]" />
+              <span className="flex-1 border-t border-border" />
             </div>
           ))}
 
@@ -206,7 +206,7 @@ export function MCalendarDay({
                 key={o.key}
                 type="button"
                 onClick={() => onBlockClick(o.key)}
-                className="absolute z-[2] box-border cursor-pointer rounded-lg px-2.5 text-left text-[#171717]"
+                className="absolute z-[2] box-border cursor-pointer rounded-lg px-2.5 text-left text-foreground"
                 style={{
                   top: (o.startMin / 60) * WYSOKOSC_GODZINY + 1,
                   height: wysokosc,
@@ -233,7 +233,7 @@ export function MCalendarDay({
                     <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
                       {o.title}
                     </span>
-                    <span className="flex-none font-mono text-[11px] leading-4 whitespace-nowrap text-[#555555]">
+                    <span className="flex-none font-mono text-[11px] leading-4 whitespace-nowrap text-soft-foreground">
                       {godziny}
                     </span>
                   </span>
@@ -242,7 +242,7 @@ export function MCalendarDay({
                     <span className="min-w-0 truncate text-sm leading-[18px] font-semibold">
                       {o.title}
                     </span>
-                    <span className="truncate font-mono text-[11px] leading-4 text-[#555555]">
+                    <span className="truncate font-mono text-[11px] leading-4 text-soft-foreground">
                       {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
                     </span>
                   </span>
@@ -267,7 +267,7 @@ export function MCalendarDay({
                 key={i.key}
                 href={sportItemHref(i)}
                 data-planned={i.planned || undefined}
-                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/30"
+                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                 style={{
                   top: (i.startMin / 60) * WYSOKOSC_GODZINY + 1,
                   height: wysokosc,
@@ -291,7 +291,7 @@ export function MCalendarDay({
                   <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
                     {i.title}
                   </span>
-                  <span className="flex-none truncate font-mono text-[11px] leading-4 whitespace-nowrap text-[#555555]">
+                  <span className="flex-none truncate font-mono text-[11px] leading-4 whitespace-nowrap text-soft-foreground">
                     {czas < 60 ? godziny : `${godziny} · Sport`}
                   </span>
                 </span>
@@ -303,10 +303,10 @@ export function MCalendarDay({
             <div
               data-testid="linia-teraz"
               aria-hidden="true"
-              className="pointer-events-none absolute right-0 left-[42px] z-[3] h-0.5 bg-[#b91c1c]"
+              className="pointer-events-none absolute right-0 left-[42px] z-[3] h-0.5 bg-destructive"
               style={{ top: (linia / 60) * WYSOKOSC_GODZINY }}
             >
-              <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-[#b91c1c]" />
+              <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-destructive" />
             </div>
           )}
         </div>
@@ -317,7 +317,7 @@ export function MCalendarDay({
         aria-label="Dodaj blok"
         onClick={() => onAdd(date, startPlusa)}
         // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
-        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-[#171717] text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       >
         <Plus size={26} aria-hidden="true" />
       </button>

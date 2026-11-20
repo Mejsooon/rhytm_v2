@@ -32,10 +32,10 @@ export function Checkbox({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] p-0 text-white outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50 max-[799px]:size-6 max-[799px]:rounded-[7px]",
+          "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] p-0 text-white outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50 max-[799px]:size-6 max-[799px]:rounded-[7px]",
           checked
-            ? "border-[#15803d] bg-[#15803d]"
-            : "border-[#cfcfcf] bg-white",
+            ? "border-success bg-success"
+            : "border-border-strong bg-white",
         )}
       >
         {checked && (
@@ -49,7 +49,7 @@ export function Checkbox({
       {label && (
         <span
           id={labelId}
-          className="text-[13px] text-[#171717] max-[799px]:text-sm"
+          className="text-[13px] text-foreground max-[799px]:text-sm"
           onClick={(e) => {
             // Klik w link w etykiecie (np. regulamin) nie przełącza pola
             if ((e.target as HTMLElement).closest("a")) return;

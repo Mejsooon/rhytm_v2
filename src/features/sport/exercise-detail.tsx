@@ -204,21 +204,21 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-[#eaeaea] px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-[#666666]">
+      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
+        <div className="font-mono text-[13px] text-muted-foreground">
           <Link
             href="/sport"
-            className="text-[#666666] no-underline hover:text-[#171717] max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
           </Link>{" "}
-          <span className="text-[#b0b0b0]">/</span> <span>Ćwiczenia</span>{" "}
-          <span className="text-[#b0b0b0]">/</span>{" "}
-          <span className="text-[#171717]">{exercise.name}</span>
+          <span className="text-faint-foreground">/</span> <span>Ćwiczenia</span>{" "}
+          <span className="text-faint-foreground">/</span>{" "}
+          <span className="text-foreground">{exercise.name}</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {/* Etykieta obok przełącznika; na telefonie pole stuknięcia ≥ 44 px */}
-          <div className="flex items-center gap-2 text-[13px] text-[#404040] max-[799px]:min-h-11">
+          <div className="flex items-center gap-2 text-[13px] text-soft-foreground max-[799px]:min-h-11">
             <Switch
               checked={zMasaCiala}
               onChange={(v) => void przelaczMaseCiala(v)}
@@ -252,12 +252,12 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {exercise.name}
           </h1>
-          <p className="m-0 mt-1.5 font-mono text-xs text-[#6b6b6b]">
+          <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
             {podtytul}
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-[#eaeaea] bg-[#eaeaea] max-[799px]:grid-cols-2">
+        <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border max-[799px]:grid-cols-2">
           <div className="bg-white px-[18px] py-4">
             <MonoLabel>Szac. 1RM</MonoLabel>
             <div className="mt-2 font-mono text-[26px]">
@@ -266,7 +266,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
               ) : (
                 <>
                   {kg(najlepszy1rm)}{" "}
-                  <span className="text-sm text-[#666666]">kg</span>
+                  <span className="text-sm text-muted-foreground">kg</span>
                 </>
               )}
             </div>
@@ -311,7 +311,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
 
         <section
           aria-labelledby="wykres-1rm"
-          className="rounded-lg border border-[#eaeaea] bg-white p-4"
+          className="rounded-lg border border-border bg-white p-4"
         >
           <div className="flex items-center justify-between gap-3">
             <h2 id="wykres-1rm" className="m-0 text-[15px] font-semibold">
@@ -328,7 +328,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             />
           </div>
           {punkty.length === 0 ? (
-            <p className="m-0 mt-4 text-[13px] text-[#666666]">
+            <p className="m-0 mt-4 text-[13px] text-muted-foreground">
               Brak danych w tym okresie.
             </p>
           ) : (
@@ -388,9 +388,9 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
 
         <section
           aria-labelledby="historia-cwiczenia"
-          className="overflow-x-auto rounded-lg border border-[#eaeaea] bg-white"
+          className="overflow-x-auto rounded-lg border border-border bg-white"
         >
-          <div className="border-b border-[#eaeaea] px-4 py-3">
+          <div className="border-b border-border px-4 py-3">
             <h2
               id="historia-cwiczenia"
               className="m-0 text-[15px] font-semibold"
@@ -399,25 +399,25 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             </h2>
           </div>
           {wiersze.length === 0 ? (
-            <p className="m-0 px-4 py-3.5 text-[13px] text-[#666666]">
+            <p className="m-0 px-4 py-3.5 text-[13px] text-muted-foreground">
               Brak zrobionych serii tego ćwiczenia.
             </p>
           ) : (
             <table className="w-full min-w-[520px] border-collapse text-[13px]">
               <thead>
-                <tr className="bg-[#fafafa]">
+                <tr className="bg-panel">
                   {["Data", "Najlepsza seria", "Szac. 1RM"].map((t) => (
                     <th
                       key={t}
                       scope="col"
-                      className="border-b border-[#eaeaea] px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-[#666666]"
+                      className="border-b border-border px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-muted-foreground"
                     >
                       {t}
                     </th>
                   ))}
                   <th
                     scope="col"
-                    className="border-b border-[#eaeaea] px-3.5 py-2.5"
+                    className="border-b border-border px-3.5 py-2.5"
                   >
                     <span className="sr-only">Rekord</span>
                   </th>
@@ -426,18 +426,18 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
               <tbody>
                 {wiersze.map((s) => (
                   <tr key={s.id}>
-                    <td className="border-b border-[#f0f0f0] px-3.5 py-[11px] font-mono text-[#404040]">
+                    <td className="border-b border-border px-3.5 py-[11px] font-mono text-soft-foreground">
                       {etykietaDnia(s.dzien)}
                     </td>
-                    <td className="border-b border-[#f0f0f0] px-3.5 py-[11px] font-mono">
+                    <td className="border-b border-border px-3.5 py-[11px] font-mono">
                       {s.seria}
                     </td>
-                    <td className="border-b border-[#f0f0f0] px-3.5 py-[11px] font-mono">
+                    <td className="border-b border-border px-3.5 py-[11px] font-mono">
                       {s.v === null ? "—" : `${kg(s.v)} kg`}
                     </td>
-                    <td className="border-b border-[#f0f0f0] px-3.5 py-[11px]">
+                    <td className="border-b border-border px-3.5 py-[11px]">
                       {s.rekord && (
-                        <span className="rounded border border-[#bbe5cc] bg-[#f0faf4] px-1.5 py-px font-mono text-[10px] text-[#15803d]">
+                        <span className="rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
                           REKORD
                         </span>
                       )}

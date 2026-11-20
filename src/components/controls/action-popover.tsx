@@ -41,7 +41,7 @@ export function ActionPopover({
           avoidCollisions
           collisionPadding={8}
           style={width ? { width } : undefined}
-          className="z-[70] rounded-[10px] border border-[#eaeaea] bg-white p-2.5 text-sm text-[#171717] shadow-[0_12px_32px_rgba(0,0,0,.12)] outline-none"
+          className="z-[70] rounded-md border border-border bg-white p-2.5 text-sm text-foreground shadow-[0_12px_32px_rgba(0,0,0,.12)] outline-none"
         >
           {children}
         </Popover.Content>

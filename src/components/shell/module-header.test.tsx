@@ -16,7 +16,7 @@ describe("ModuleHeader", () => {
       h.closest("header")?.classList.contains("max-[799px]:hidden"),
     );
     expect(web).toBeDefined();
-    expect(web).toHaveClass("inline", "text-[#171717]");
+    expect(web).toHaveClass("inline", "text-foreground");
     expect(web!.closest("header")).toHaveTextContent("Moduły / Kalendarz");
   });
 });

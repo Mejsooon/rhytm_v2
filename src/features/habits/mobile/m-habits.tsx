@@ -41,9 +41,9 @@ const ODCIENIE = [
 const WYSOKOSC_WYKRESU = 140; // px
 const OBWOD_PIERSCIENIA = 94.2; // 2π · 15
 
-const KARTA = "rounded-xl border border-[#eaeaea] bg-white";
+const KARTA = "rounded-xl border border-border bg-white";
 const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-[#6b6b6b] uppercase";
+  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 
 export function MHabits({
   data,
@@ -159,7 +159,7 @@ export function MHabits({
           type="button"
           aria-label="Nowy nawyk"
           onClick={onNewHabit}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent p-0 text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
         >
           <Plus size={22} aria-hidden="true" />
         </button>
@@ -186,7 +186,7 @@ export function MHabits({
               "flex flex-col items-center gap-3 px-4 py-12 text-center",
             )}
           >
-            <p className="m-0 text-sm text-[#666666]">
+            <p className="m-0 text-sm text-muted-foreground">
               Nie masz jeszcze nawyków.
             </p>
             <Button variant="primary" onClick={onNewHabit}>
@@ -229,7 +229,7 @@ export function MHabits({
               <div className="min-w-0 flex-1">
                 <div className="text-lg font-semibold">{`${dzis.done} z ${dzis.planned} zrobione dziś`}</div>
                 {rekord && (
-                  <div className="text-[13px] text-[#666666]">{`Najdłuższa seria: ${rekord.name} · ${rekord.label}`}</div>
+                  <div className="text-[13px] text-muted-foreground">{`Najdłuższa seria: ${rekord.name} · ${rekord.label}`}</div>
                 )}
               </div>
             </div>
@@ -254,7 +254,7 @@ export function MHabits({
                 return (
                   <div
                     key={habit.id}
-                    className="flex min-h-16 items-center gap-3 border-b border-[#f0f0f0] px-3.5 last:border-b-0"
+                    className="flex min-h-16 items-center gap-3 border-b border-border px-3.5 last:border-b-0"
                   >
                     <button
                       type="button"
@@ -265,10 +265,10 @@ export function MHabits({
                       onClick={() => onToggle(habit.id, today)}
                       // Kwadrat 28 px, pole stuknięcia 44 px (pseudo-element)
                       className={cn(
-                        "relative inline-flex size-7 flex-none cursor-pointer items-center justify-center rounded-lg border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-40",
+                        "relative inline-flex size-7 flex-none cursor-pointer items-center justify-center rounded-lg border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-40",
                         odhaczone
-                          ? "border-[#15803d] bg-[#15803d]"
-                          : "border-[#cfcfcf] bg-white",
+                          ? "border-success bg-success"
+                          : "border-border-strong bg-white",
                       )}
                     >
                       {odhaczone && (
@@ -281,16 +281,16 @@ export function MHabits({
                     </button>
                     <Link
                       href={`/nawyki/${habit.id}`}
-                      className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-[#171717] no-underline"
+                      className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-foreground no-underline"
                     >
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium">{habit.name}</span>
-                        <span className="font-mono text-xs text-[#6b6b6b]">{`${harmonogram} · seria ${seria}`}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{`${harmonogram} · seria ${seria}`}</span>
                       </span>
                       <ChevronRight
                         size={16}
                         aria-hidden="true"
-                        className="flex-none text-[#a3a3a3]"
+                        className="flex-none text-faint-foreground"
                       />
                     </Link>
                   </div>
@@ -304,11 +304,11 @@ export function MHabits({
                 <h2 className="m-0 text-[17px] font-semibold">
                   Ostatnie 4 tygodnie
                 </h2>
-                <span className="font-mono text-[11px] text-[#6b6b6b]">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {podpisDnia}
                 </span>
               </div>
-              <div className="mb-1 grid grid-cols-7 gap-[5px] text-center font-mono text-[10px] text-[#8a8a8a]">
+              <div className="mb-1 grid grid-cols-7 gap-[5px] text-center font-mono text-[10px] text-faint-foreground">
                 {naglowkiDni.map((n) => (
                   <span key={n}>{n}</span>
                 ))}
@@ -351,14 +351,14 @@ export function MHabits({
                       onClick={() => setDzien(komorka.date)}
                       // Pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px)
                       className={cn(
-                        "relative box-border aspect-square cursor-pointer rounded-md p-0 outline-none after:absolute after:-inset-0.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717] disabled:cursor-default",
+                        "relative box-border aspect-square cursor-pointer rounded-md p-0 outline-none after:absolute after:-inset-0.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
                         przyszlosc
-                          ? "border border-dashed border-[#e0e0e0]"
+                          ? "border border-dashed border-input"
                           : bezPlanu
-                            ? "border border-dashed border-[#d4d4d4]"
+                            ? "border border-dashed border-border-strong"
                             : "border-0",
                         dzien === komorka.date &&
-                          "border-2 border-solid border-[#171717]",
+                          "border-2 border-solid border-primary",
                       )}
                       style={{
                         background: przyszlosc
@@ -371,7 +371,7 @@ export function MHabits({
                   );
                 })}
               </div>
-              <div className="mt-2.5 flex items-center justify-end gap-1 text-[11px] text-[#6b6b6b]">
+              <div className="mt-2.5 flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
                 <span>mniej</span>
                 {[0, 1, 2, 3, 5].map((n) => (
                   <span
@@ -389,22 +389,22 @@ export function MHabits({
 
         {zakladka === "sen" && (
           <>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#eaeaea] bg-[#eaeaea]">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border">
               {ostatnia ? (
                 // Stuknięcie otwiera wpis ostatniej nocy do edycji
                 <button
                   type="button"
                   onClick={() => onNewSleep(ostatnia.date)}
-                  className="block cursor-pointer border-0 bg-white px-3.5 py-3 text-left text-[#171717] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#171717]/20"
+                  className="block cursor-pointer border-0 bg-white px-3.5 py-3 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/20"
                 >
                   <div className={ETYKIETA}>Ostatnia noc</div>
                   <div className="mt-1 font-mono text-[22px] font-medium">
                     {minutyOstatniej === null
                       ? "—"
                       : formatDuration(minutyOstatniej)}
-                    <span className="text-sm text-[#6b6b6b]"> h</span>
+                    <span className="text-sm text-muted-foreground"> h</span>
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">
+                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                     {opisOstatniej}
                   </div>
                 </button>
@@ -414,7 +414,7 @@ export function MHabits({
                   <div className="mt-1 font-mono text-[22px] font-medium">
                     —
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">
+                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                     {opisOstatniej}
                   </div>
                 </div>
@@ -427,12 +427,12 @@ export function MHabits({
                   ) : (
                     <>
                       {formatDuration(statystyki.avg)}
-                      <span className="text-sm text-[#6b6b6b]"> h</span>
+                      <span className="text-sm text-muted-foreground"> h</span>
                     </>
                   )}
                 </div>
                 {cel > 0 && (
-                  <div className="mt-0.5 font-mono text-[11px] text-[#6b6b6b]">{`cel ${formatDuration(cel)}`}</div>
+                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{`cel ${formatDuration(cel)}`}</div>
                 )}
               </div>
             </div>
@@ -455,14 +455,14 @@ export function MHabits({
                   />
                 </div>
               </div>
-              <div className="mb-1.5 min-h-[18px] font-mono text-xs text-[#404040]">
+              <div className="mb-1.5 min-h-[18px] font-mono text-xs text-soft-foreground">
                 {slupek === null
                   ? "Stuknij słupek, żeby zobaczyć szczegóły"
                   : opisSlupka(slupek)}
               </div>
               <div
                 className={cn(
-                  "relative flex items-end border-b border-[#eaeaea]",
+                  "relative flex items-end border-b border-border",
                   zakres === "14" ? "gap-1.5" : "gap-[3px]",
                 )}
                 style={{ height: WYSOKOSC_WYKRESU }}
@@ -470,7 +470,7 @@ export function MHabits({
                 {cel > 0 && (
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-[#bbe5cc]"
+                    className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-success-border"
                     style={{ bottom: liniaCelu }}
                   />
                 )}
@@ -494,7 +494,7 @@ export function MHabits({
                       aria-label={opisSlupka(k)}
                       aria-pressed={slupek === k}
                       onClick={() => setSlupek(k)}
-                      className="flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
+                      className="flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span
                         className="block w-full rounded-t-[4px]"
@@ -507,7 +507,7 @@ export function MHabits({
                   );
                 })}
               </div>
-              <div className="mt-1.5 flex justify-between font-mono text-[10px] text-[#8a8a8a]">
+              <div className="mt-1.5 flex justify-between font-mono text-[10px] text-faint-foreground">
                 <span>{krotko(statystyki.bars[0].date)}</span>
                 <span>dziś</span>
               </div>
@@ -515,7 +515,7 @@ export function MHabits({
 
             <Button
               variant="primary"
-              className="h-12 w-full rounded-[10px] text-[15px]"
+              className="h-12 w-full rounded-md text-[15px]"
               onClick={() => onNewSleep(today)}
             >
               <Moon size={18} aria-hidden="true" />

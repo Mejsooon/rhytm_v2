@@ -15,7 +15,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Moduły"
-      className="fixed inset-x-0 bottom-0 z-40 grid h-(--tabbar-h) grid-cols-5 border-t border-[#eaeaea] bg-[#fafafa]/95 pt-1.5 pr-[max(4px,env(safe-area-inset-right))] pl-[max(4px,env(safe-area-inset-left))] pb-[max(8px,env(safe-area-inset-bottom))] min-[800px]:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-(--tabbar-h) grid-cols-5 border-t border-border bg-panel/95 pt-1.5 pr-[max(4px,env(safe-area-inset-right))] pl-[max(4px,env(safe-area-inset-left))] pb-[max(8px,env(safe-area-inset-bottom))] min-[800px]:hidden"
     >
       {TAB_ITEMS.map(({ key, label, href, icon: Ikona }) => {
         const aktywna = sciezka === href || sciezka.startsWith(`${href}/`);
@@ -25,8 +25,8 @@ export function TabBar() {
             href={href}
             aria-current={aktywna ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center justify-center gap-[3px] rounded-[10px] text-[11px] no-underline",
-              aktywna ? "font-semibold text-[#171717]" : "text-[#7a7a7a]",
+              "flex flex-col items-center justify-center gap-[3px] rounded-md text-[11px] no-underline",
+              aktywna ? "font-semibold text-foreground" : "text-muted-foreground",
             )}
           >
             <Ikona size={22} strokeWidth={2} aria-hidden="true" />

@@ -6,7 +6,7 @@ describe("Button", () => {
   it("primary ma tło #171717 i biały tekst", () => {
     render(<Button variant="primary">Zaloguj się</Button>);
     const klasy = screen.getByRole("button").className;
-    expect(klasy).toContain("bg-[#171717]");
+    expect(klasy).toContain("bg-primary");
     expect(klasy).toContain("text-white");
   });
 
@@ -18,17 +18,17 @@ describe("Button", () => {
     );
     const link = screen.getByRole("link", { name: "X" });
     expect(link.tagName).toBe("A");
-    expect(link.className).toContain("hover:bg-[#2e2e2e]");
+    expect(link.className).toContain("hover:bg-primary-hover");
     expect(link.className).toContain("hover:text-white");
   });
 
-  it("destructive ma kolor #b91c1c", () => {
+  it("destructive ma kolor tokenu destructive", () => {
     render(<Button variant="destructive">Usuń konto</Button>);
-    expect(screen.getByRole("button").className).toContain("#b91c1c");
+    expect(screen.getByRole("button").className).toContain("bg-destructive");
   });
 
   it("domyślnie secondary", () => {
     render(<Button>Zmień</Button>);
-    expect(screen.getByRole("button").className).toContain("border-[#e0e0e0]");
+    expect(screen.getByRole("button").className).toContain("border-input");
   });
 });

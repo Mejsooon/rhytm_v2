@@ -93,23 +93,23 @@ export function DeleteBlockDialog({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/25 max-[799px]:bg-black/40" />
         <Dialog.Content
           role="alertdialog"
-          className="fixed z-50 flex flex-col gap-4 bg-white text-sm text-[#171717] outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:w-[min(360px,calc(100%-32px))] min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 min-[800px]:rounded-xl min-[800px]:border min-[800px]:border-[#e0e0e0] min-[800px]:px-5 min-[800px]:pt-[18px] min-[800px]:pb-4 min-[800px]:shadow-[0_16px_48px_rgba(0,0,0,.16)] max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:rounded-t-[18px] max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-7 max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]"
+          className="fixed z-50 flex flex-col gap-4 bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:w-[min(360px,calc(100%-32px))] min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 min-[800px]:rounded-xl min-[800px]:border min-[800px]:border-input min-[800px]:px-5 min-[800px]:pt-[18px] min-[800px]:pb-4 min-[800px]:shadow-[0_16px_48px_rgba(0,0,0,.16)] max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:rounded-t-[18px] max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-7 max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]"
         >
           {/* Uchwyt arkusza — tylko na telefonie */}
           <div
             aria-hidden="true"
-            className="mx-auto h-[5px] w-9 flex-none rounded-[3px] bg-[#d4d4d4] min-[800px]:hidden"
+            className="mx-auto h-[5px] w-9 flex-none rounded-[3px] bg-border-strong min-[800px]:hidden"
           />
           <div>
             <Dialog.Title className="m-0 text-base font-semibold">
               Usunąć blok?
             </Dialog.Title>
-            <Dialog.Description className="m-0 mt-1 text-[13px] text-[#666666]">
+            <Dialog.Description className="m-0 mt-1 text-[13px] text-muted-foreground">
               {opis}
             </Dialog.Description>
           </div>
           {blad && (
-            <p role="alert" className="m-0 text-xs text-[#b91c1c]">
+            <p role="alert" className="m-0 text-xs text-destructive-foreground">
               {blad}
             </p>
           )}

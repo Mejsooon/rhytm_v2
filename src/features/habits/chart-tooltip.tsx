@@ -49,7 +49,7 @@ export function ChartTooltip({
     <div
       ref={dymek}
       role="tooltip"
-      className="pointer-events-none fixed z-50 rounded-lg bg-[#171717] px-2.5 py-2 text-xs leading-[1.4] whitespace-nowrap text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+      className="pointer-events-none fixed z-50 rounded-lg bg-primary px-2.5 py-2 text-xs leading-[1.4] whitespace-nowrap text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
       // Przed pomiarem dymek jest niewidoczny w lewym górnym rogu
       style={
         pozycja

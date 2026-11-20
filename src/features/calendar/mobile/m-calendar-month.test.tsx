@@ -63,7 +63,7 @@ describe("MCalendarMonth", () => {
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       screen.getByRole("button", { name: "12 listopada" }).className,
-    ).toContain("bg-[#171717]");
+    ).toContain("bg-primary");
     expect(
       screen.getByRole("heading", { name: "12 listopada" }),
     ).toBeInTheDocument();

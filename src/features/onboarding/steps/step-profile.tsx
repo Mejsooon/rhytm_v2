@@ -125,13 +125,13 @@ export function StepProfile({
               className="size-14 flex-none rounded-full object-cover max-[799px]:size-16"
             />
           ) : (
-            <span className="grid size-14 flex-none place-items-center rounded-full bg-[#171717] text-lg font-medium text-white max-[799px]:size-16 max-[799px]:border max-[799px]:border-[#e0e0e0] max-[799px]:bg-[#f0f0f0] max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-[#171717]">
+            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-white max-[799px]:size-16 max-[799px]:border max-[799px]:border-input max-[799px]:bg-active max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-foreground">
               {inicjaly(draft.name)}
             </span>
           )}
           <div className="flex flex-col gap-1">
             <span className="font-medium">Zdjęcie profilowe</span>
-            <span className="text-[13px] text-[#737373]">
+            <span className="text-[13px] text-muted-foreground">
               Bez zdjęcia pokażemy inicjały
             </span>
           </div>
@@ -153,7 +153,7 @@ export function StepProfile({
           />
         </div>
         {blad && (
-          <p role="alert" className="m-0 text-[13px] text-[#b91c1c]">
+          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
             {blad}
           </p>
         )}
@@ -196,7 +196,7 @@ export function StepProfile({
           />
         </div>
         {wykryta === draft.timezone && (
-          <span className="text-xs font-normal text-[#737373]">
+          <span className="text-xs font-normal text-muted-foreground">
             Wykryta z przeglądarki
           </span>
         )}

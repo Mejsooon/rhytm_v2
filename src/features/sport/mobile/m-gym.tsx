@@ -16,7 +16,7 @@ import { formatDuration, formatKg, lastSetsSummary } from "../model";
 import { isTempId, type GymStore } from "../use-gym-store";
 
 const POLE =
-  "box-border h-11 w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1.5 font-mono text-base text-[#171717] outline-none placeholder:text-[#a3a3a3] focus:border-[#171717] focus:bg-white disabled:opacity-60";
+  "box-border h-11 w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1.5 font-mono text-base text-foreground outline-none placeholder:text-faint-foreground focus:border-primary focus:bg-white disabled:opacity-60";
 const KOLUMNY = "grid grid-cols-[36px_1fr_1fr_44px] gap-2 px-3.5";
 
 export function MGym({
@@ -85,7 +85,7 @@ export function MGym({
         <Link
           href={`/sport?miesiac=${dataTreningu.slice(0, 7)}`}
           aria-label="Wstecz"
-          className="inline-flex size-11 flex-none items-center justify-center rounded-[10px] text-[#171717] outline-none hover:bg-[#f5f5f5] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+          className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20"
         >
           <ChevronLeft size={22} aria-hidden="true" />
         </Link>
@@ -95,7 +95,7 @@ export function MGym({
           </h1>
           <div
             data-testid="m-serie"
-            className="font-mono text-[11px] text-[#6b6b6b]"
+            className="font-mono text-[11px] text-muted-foreground"
           >
             {`${store.doneCount}/${store.totalCount} serii${czas ? ` · ${czas}` : ""}`}
           </div>
@@ -104,15 +104,15 @@ export function MGym({
           type="button"
           disabled={finishing}
           onClick={onFinish}
-          className="flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] font-semibold text-[#15803d] outline-none focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50"
+          className="flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] font-semibold text-success outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50"
         >
           Zakończ
         </button>
       </header>
-      <div className="h-1 flex-none bg-[#f0f0f0]">
+      <div className="h-1 flex-none bg-active">
         <div
           data-testid="m-postep"
-          className="h-full bg-[#15803d]"
+          className="h-full bg-success"
           style={{ width: `${procent}%` }}
         />
       </div>
@@ -131,14 +131,14 @@ export function MGym({
             <section
               key={cwiczenie.id}
               aria-labelledby={naglowekId}
-              className="rounded-xl border border-[#eaeaea] bg-white"
+              className="rounded-xl border border-border bg-white"
             >
               <div className="flex items-center gap-2 px-3.5 pt-3 pb-1.5">
                 <span id={naglowekId} className="flex-1 font-semibold">
                   {cwiczenie.name}
                 </span>
                 {ostatnio && (
-                  <span className="font-mono text-[11px] text-[#6b6b6b]">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     {ostatnio}
                   </span>
                 )}
@@ -146,7 +146,7 @@ export function MGym({
               <div
                 className={cn(
                   KOLUMNY,
-                  "py-1 font-mono text-[11px] text-[#8a8a8a]",
+                  "py-1 font-mono text-[11px] text-faint-foreground",
                 )}
               >
                 <span>SERIA</span>
@@ -164,15 +164,15 @@ export function MGym({
                     className={cn(
                       KOLUMNY,
                       "min-h-12 items-center",
-                      s.done && "bg-[#f7fbf8]",
+                      s.done && "bg-success-soft",
                     )}
                   >
-                    <span className="font-mono text-[13px] text-[#6b6b6b]">
+                    <span className="font-mono text-[13px] text-muted-foreground">
                       {j + 1}
                     </span>
                     {cwiczenie.bodyweight ? (
                       // Masa ciała: „mc” albo „mc + 5”; pole to dociążenie (puste = bez dociążenia)
-                      <span className="flex min-w-0 items-center font-mono text-base text-[#171717]">
+                      <span className="flex min-w-0 items-center font-mono text-base text-foreground">
                         <span
                           title="Masa ciała z profilu"
                           className="flex-none whitespace-pre"
@@ -254,10 +254,10 @@ export function MGym({
                       onClick={() => void store.toggleDone(s.id)}
                       // Kwadrat 32 px, pole stuknięcia 44 px (pseudo-element)
                       className={cn(
-                        "relative inline-flex size-8 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-[#171717]/20 disabled:cursor-default disabled:opacity-50",
+                        "relative inline-flex size-8 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-default disabled:opacity-50",
                         s.done
-                          ? "border-[#15803d] bg-[#15803d]"
-                          : "border-[#cfcfcf] bg-white",
+                          ? "border-success bg-success"
+                          : "border-border-strong bg-white",
                       )}
                     >
                       {s.done && (
@@ -275,7 +275,7 @@ export function MGym({
                 type="button"
                 disabled={tymczasowe}
                 onClick={() => void store.addSet(cwiczenie.id)}
-                className="h-11 w-full cursor-pointer rounded-b-xl border-0 border-t border-solid border-[#f0f0f0] bg-transparent text-sm text-[#404040] outline-none focus-visible:bg-[#fafafa] disabled:cursor-default disabled:opacity-50"
+                className="h-11 w-full cursor-pointer rounded-b-xl border-0 border-t border-solid border-border bg-transparent text-sm text-soft-foreground outline-none focus-visible:bg-panel disabled:cursor-default disabled:opacity-50"
               >
                 + Dodaj serię
               </button>
@@ -290,7 +290,7 @@ export function MGym({
           trigger={
             <button
               type="button"
-              className="box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-[#e0e0e0] bg-white font-medium text-[#171717] outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-[#171717]/20"
+              className="box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-white font-medium text-foreground outline-none hover:bg-panel focus-visible:ring-2 focus-visible:ring-ring/20"
             >
               <Plus size={18} aria-hidden="true" />
               Dodaj ćwiczenie

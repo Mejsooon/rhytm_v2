@@ -41,17 +41,17 @@ export function IconPicker({
 
   const klasaZakladki = (wlaczona: boolean) =>
     `-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-2 pt-1.5 pb-2 font-[inherit] text-[13px] max-[799px]:min-h-11 ${
-      wlaczona ? "border-[#171717] font-medium text-[#171717]" : "border-transparent text-[#666666]"
+      wlaczona ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground"
     }`;
   const klasaKomorki = (zaznaczona: boolean) =>
-    `flex h-8 cursor-pointer items-center justify-center rounded-md p-0 text-lg leading-none hover:bg-[#f0f0f0] max-[799px]:h-11 ${
-      zaznaczona ? "border border-[#171717] bg-[#f5f5f5]" : "border border-transparent bg-transparent"
+    `flex h-8 cursor-pointer items-center justify-center rounded-md p-0 text-lg leading-none hover:bg-active max-[799px]:h-11 ${
+      zaznaczona ? "border border-primary bg-muted" : "border border-transparent bg-transparent"
     }`;
 
   // role="group": dymek wokół (ActionPopover / arkusz) już jest oknem
   return (
-    <div role="group" aria-label="Wybór ikony" className="box-border flex w-full flex-col gap-2 text-[13px] text-[#171717]">
-      <div className="flex items-center gap-0.5 border-b border-[#eaeaea]">
+    <div role="group" aria-label="Wybór ikony" className="box-border flex w-full flex-col gap-2 text-[13px] text-foreground">
+      <div className="flex items-center gap-0.5 border-b border-border">
         <button
           type="button"
           aria-pressed={zakladka === "emoji"}
@@ -72,7 +72,7 @@ export function IconPicker({
         <button
           type="button"
           onClick={() => onPick("")}
-          className="cursor-pointer border-0 bg-transparent px-1.5 pt-1.5 pb-2 font-[inherit] text-xs text-[#666666] hover:text-[#171717] max-[799px]:min-h-11"
+          className="cursor-pointer border-0 bg-transparent px-1.5 pt-1.5 pb-2 font-[inherit] text-xs text-muted-foreground hover:text-foreground max-[799px]:min-h-11"
         >
           Usuń
         </button>
@@ -84,7 +84,7 @@ export function IconPicker({
         onChange={(e) => setFraza(e.target.value)}
         placeholder="Szukaj ikony…"
         aria-label="Szukaj ikony"
-        className="box-border w-full rounded-md border border-[#e0e0e0] bg-white px-[9px] py-[7px] font-[inherit] text-[13px] text-[#171717] outline-none focus:border-[#171717] max-[799px]:min-h-11"
+        className="box-border w-full rounded-md border border-input bg-white px-[9px] py-[7px] font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
       />
 
       {zakladka === "icons" && (
@@ -152,7 +152,7 @@ export function IconPicker({
             })}
           </div>
         )}
-        {pusto && <p className="my-2.5 text-center text-xs text-[#6b6b6b]">Brak wyników</p>}
+        {pusto && <p className="my-2.5 text-center text-xs text-muted-foreground">Brak wyników</p>}
       </div>
     </div>
   );

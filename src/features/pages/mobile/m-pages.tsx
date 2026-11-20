@@ -40,7 +40,7 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
         <Link
           href="/ustawienia"
           aria-label="Ustawienia"
-          className="inline-flex size-11 flex-none items-center justify-center rounded-[10px] text-[#171717] hover:bg-[#f5f5f5]"
+          className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
           <Settings size={21} aria-hidden="true" />
         </Link>
@@ -48,14 +48,14 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
           type="button"
           aria-label="Nowa strona"
           onClick={nowaStrona}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent text-[#171717] hover:bg-[#f5f5f5]"
+          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-foreground hover:bg-muted"
         >
           <Plus size={22} aria-hidden="true" />
         </button>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 px-4 pt-1 pb-6">
-        <label className="flex h-11 items-center gap-2.5 rounded-[10px] bg-[#f5f5f5] px-3 text-[#8a8a8a]">
+        <label className="flex h-11 items-center gap-2.5 rounded-md bg-muted px-3 text-faint-foreground">
           <Search size={18} aria-hidden="true" />
           <input
             type="search"
@@ -63,7 +63,7 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
             onChange={(e) => setFraza(e.target.value)}
             placeholder="Szukaj stron i wierszy"
             aria-label="Szukaj stron"
-            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-[#171717] outline-none placeholder:text-[#8a8a8a]"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-foreground outline-none placeholder:text-faint-foreground"
           />
         </label>
 
@@ -72,16 +72,16 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
             lista.length > 0 && (
               <section key={nazwa}>
                 <MonoLabel className="mb-2 block">{nazwa}</MonoLabel>
-                <div className="overflow-hidden rounded-xl border border-[#eaeaea] bg-white">
+                <div className="overflow-hidden rounded-xl border border-border bg-white">
                   {lista.map((strona) => (
                     <Link
                       key={strona.id}
                       href={`/strony/${strona.id}`}
-                      className="flex min-h-[60px] items-center gap-3 border-b border-[#f0f0f0] px-3.5 text-[#171717] no-underline last:border-b-0 hover:bg-[#fafafa]"
+                      className="flex min-h-[60px] items-center gap-3 border-b border-border px-3.5 text-foreground no-underline last:border-b-0 hover:bg-panel"
                     >
                       <span
                         aria-hidden="true"
-                        className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-[#f5f5f5] text-[#666666]"
+                        className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-muted text-muted-foreground"
                       >
                         <PageIcon icon={strona.icon} size={18} />
                       </span>
@@ -89,13 +89,13 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
                         <span className="block truncate font-medium">
                           {strona.title.trim() === "" ? "Bez tytułu" : strona.title}
                         </span>
-                        <span className="font-mono text-xs text-[#6b6b6b]">
+                        <span className="font-mono text-xs text-muted-foreground">
                           {strona.templateKey === null && strona.rowCount === 0
                             ? "pusta strona"
                             : rowsLabel(strona.rowCount)}
                         </span>
                       </span>
-                      <ChevronRight size={16} aria-hidden="true" className="flex-none text-[#a3a3a3]" />
+                      <ChevronRight size={16} aria-hidden="true" className="flex-none text-faint-foreground" />
                     </Link>
                   ))}
                 </div>
@@ -104,13 +104,13 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
         )}
 
         {szukane !== "" && pasujace.length === 0 && (
-          <p className="m-0 text-center text-[13px] text-[#666666]">Nic nie znaleziono.</p>
+          <p className="m-0 text-center text-[13px] text-muted-foreground">Nic nie znaleziono.</p>
         )}
 
         <button
           type="button"
           onClick={nowaStrona}
-          className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#eaeaea] bg-white font-[inherit] text-[15px] text-[#404040] hover:bg-[#fafafa]"
+          className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-white font-[inherit] text-[15px] text-soft-foreground hover:bg-panel"
         >
           <Plus size={18} aria-hidden="true" />
           Nowa strona

@@ -128,8 +128,8 @@ describe("AppSidebar", () => {
     expect(linki[0].compareDocumentPosition(linki[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(linki[1].compareDocumentPosition(linki[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(linki[0]).toHaveAttribute("aria-current", "page");
-    expect(linki[0].className).toContain("bg-[#f0f0f0]");
-    expect(linki[1].className).not.toContain("bg-[#f0f0f0]");
+    expect(linki[0].className).toContain("bg-active");
+    expect(linki[1].className).not.toContain("bg-active");
   });
 
   it.each([
@@ -314,7 +314,7 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Ulubione")).toBeInTheDocument();
     const strefa = screen.getByText("Upuść tutaj, aby dodać do ulubionych");
     fireEvent.dragOver(strefa);
-    expect(strefa.className).toContain("border-[#171717]");
+    expect(strefa.className).toContain("border-primary");
     fireEvent.drop(strefa);
     // Pusta sekcja: strona zostaje na swoim miejscu w kolejności, zmienia się tylko ulubione
     expect(movePage).toHaveBeenCalledTimes(1);

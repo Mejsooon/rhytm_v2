@@ -59,8 +59,8 @@ describe("SleepCard", () => {
     );
     const powyzej = screen.getByLabelText("16.11 · 8:30");
     const ponizej = screen.getByLabelText("17.11 · 7:12");
-    expect(powyzej.className).toContain("bg-[#15803d]");
-    expect(ponizej.className).toContain("bg-[#d4d4d4]");
+    expect(powyzej.className).toContain("bg-success");
+    expect(ponizej.className).toContain("bg-border-strong");
     fireEvent.mouseEnter(powyzej);
     expect(screen.getByRole("tooltip")).toHaveTextContent("16.11 · 8:30");
     expect(screen.getByRole("tooltip").parentElement).toBe(document.body);

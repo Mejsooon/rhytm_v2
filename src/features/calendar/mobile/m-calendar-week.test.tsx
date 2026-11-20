@@ -43,7 +43,7 @@ describe("MCalendarWeek", () => {
     wyrenderuj();
     expect(screen.getAllByRole("link", { name: /listopada$/ })).toHaveLength(7);
     const dzis = screen.getByRole("link", { name: "Wtorek 17 listopada" });
-    expect(dzis.className).toContain("bg-[#171717]");
+    expect(dzis.className).toContain("bg-primary");
     expect(dzis).toHaveAttribute(
       "href",
       "/kalendarz?widok=dzien&data=2026-11-17",
