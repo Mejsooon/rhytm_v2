@@ -415,17 +415,20 @@ export function TimeGrid({
                               </span>
                             </>
                           ) : (
-                            <span className="flex items-baseline gap-2.5 text-[13px] leading-[1.3]">
-                              <span className="font-medium">{o.title}</span>
-                              <span className="font-mono text-[11px] text-[#404040]">
+                            // Jedna linia bez zawijania: przy wąskim bloku najpierw ucina się opis, potem tytuł
+                            <span className="flex min-w-0 items-baseline gap-2.5 text-[13px] leading-[1.3] whitespace-nowrap">
+                              <span className="min-w-0 shrink truncate font-medium">
+                                {o.title}
+                              </span>
+                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-[#404040]">
                                 {`${godzinyBloku} · ${kategoria?.name ?? "Bez kategorii"}`}
                               </span>
                               {cykliczny && (
-                                <span className="font-mono text-[11px] text-[#404040]">
+                                <span className="shrink-0 font-mono text-[11px] text-[#404040]">
                                   {cykliczny}
                                 </span>
                               )}
-                              <span className="ml-auto font-mono text-[11px] text-[#404040]">
+                              <span className="ml-auto shrink-0 font-mono text-[11px] text-[#404040]">
                                 {licznik}
                               </span>
                             </span>
@@ -501,9 +504,11 @@ export function TimeGrid({
                               </span>
                             </>
                           ) : (
-                            <span className="flex items-baseline gap-2.5 text-[13px] leading-[1.3]">
-                              <span className="font-medium">{i.title}</span>
-                              <span className="font-mono text-[11px] text-[#404040]">
+                            <span className="flex min-w-0 items-baseline gap-2.5 text-[13px] leading-[1.3] whitespace-nowrap">
+                              <span className="min-w-0 shrink truncate font-medium">
+                                {i.title}
+                              </span>
+                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-[#404040]">
                                 {`${godzinyTreningu} · Sport`}
                               </span>
                             </span>

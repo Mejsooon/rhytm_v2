@@ -355,6 +355,28 @@ describe("TimeGrid", () => {
     );
   });
 
+  it("dzień: tytuł i opis bloku są w jednej linii bez zawijania, przy braku miejsca ucinają się wielokropkiem", () => {
+    wyrenderuj({
+      days: ["2026-11-17"],
+      variant: "day",
+      occurrences: [
+        wystapienie({
+          blockId: "d1",
+          title: "Sport",
+          startMin: 960,
+          durationMin: 60,
+        }),
+      ],
+    });
+    const blok = screen.getByRole("button", { name: /Sport/ });
+    const linia = blok.firstElementChild as HTMLElement;
+    expect(linia.className).toContain("whitespace-nowrap");
+    const [tytul, opis] = Array.from(linia.children) as HTMLElement[];
+    expect(tytul.className).toContain("truncate");
+    expect(opis.className).toContain("truncate");
+    expect(opis).toHaveTextContent("16:00–17:00");
+  });
+
   it("tydzień: blok 45 min jest w jednej linii, blok godzinny ma dwie linie z ciasną linią godzin", () => {
     wyrenderuj({
       occurrences: [
