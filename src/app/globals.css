@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Tailwind nie skanuje docs/: przykłady klas w planach (np. `bg-[var(...)]`) dawały błędny CSS i `next dev` padał */
+@source not "../../docs";
 
 /* Tokeny COSS UI (makiety docs/design/mockups/coss/coss.css) — tylko jasny motyw */
 :root {

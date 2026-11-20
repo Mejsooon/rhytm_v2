@@ -11,14 +11,14 @@ describe("ModuleHeader", () => {
       name: "Kalendarz",
     });
     expect(naglowki).toHaveLength(2);
-    // Web: .topbar z CToday — sam tytuł .h-title (18 px / 600), w nagłówku ukrytym na telefonie
+    // Web: .topbar z okruszkami .crumb „Moduły / Kalendarz” — h1 to sam tytuł, w nagłówku ukrytym na telefonie
     const web = naglowki.find((h) =>
       h.closest("header")?.classList.contains("max-[799px]:hidden"),
     );
     expect(web).toBeDefined();
-    expect(web).toHaveClass("text-lg", "font-semibold", "text-foreground");
+    expect(web).toHaveClass("text-sm", "font-medium", "text-foreground");
     expect(web!.closest("header")).toHaveClass("border-b", "border-border", "px-6", "py-2.5", "min-h-9");
-    expect(web!.closest("header")).toHaveTextContent(/^Kalendarz$/);
+    expect(web!.closest("header")).toHaveTextContent("Moduły / Kalendarz");
   });
 
   it("z webParent pokazuje okruszki jak .crumb (CPageMenu): „Strony / Books”", () => {
