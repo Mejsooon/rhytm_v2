@@ -94,7 +94,7 @@ Każdy etap ma osobny plan (`docs/superpowers/plans/`), osobną gałąź i reali
 1. **Makiety w repo:** skopiować wszystkie C* i CM* z kanwy do `docs/design/mockups/` wraz z arkuszem COSS i fontem Inter, tak żeby podgląd działał offline. Zaktualizować README (wzorcem są C*/CM*, stare pliki to archiwum). Stare pliki zostają.
 2. **Tokeny:**
    - `globals.css` dostaje tokeny COSS z tabeli wyżej oraz zmapowane zmienne shadcn i `@theme`: kolory, promienie (`--radius` 10 px plus nazwane dla karty, ramki i menu) i cienie (`shadow-xs`, `shadow-lg`).
-   - Font Inter przez `next/font/google` (z `cv11`) zamiast Geist Sans. Geist Mono zostaje do `mono`.
+   - Font Inter z paczki `@fontsource-variable/inter` (z `cv11`) zamiast Geist Sans. Build działa offline. Geist Mono zostaje do `mono`.
 3. **Kolory i promienie wpisane na sztywno → tokeny, w całej aplikacji:**
    - Mechaniczna zamiana starych wartości na klasy tokenów według jednej tabeli mapowania, na przykład `[#171717]` → `foreground`/`primary`, `[#eaeaea]` → `border`, `[#666666]`/`[#6b6b6b]` → `muted-foreground`, `[#f5f5f5]` → `muted`.
    - Kolory kategorii i danych (paleta kategorii, heatmapa, wykresy) zostają jako dane, nie jako tokeny.
@@ -106,7 +106,7 @@ Każdy etap ma osobny plan (`docs/superpowers/plans/`), osobną gałąź i reali
    - sidebar (`CSidebar`) z menu konta i menu strony (`CPageMenu`),
    - nagłówek modułu,
    - Dziś (`CToday`, `CEmptyToday`),
-   - szybkie dodawanie i szukaj (`CQuickAdd`, `CCommandK`),
+   - (szybkie dodawanie i ⌘K na webie nie istnieją jeszcze w aplikacji, w pilocie tylko wyłączone pole „Szukaj…” w sidebarze; `CQuickAdd`/`CCommandK` wejdą razem z tymi funkcjami),
    - toasty.
    - Telefon w pilocie dostaje tylko tokeny i kontrolki. Układy CM* przychodzą w Etapie 3.
 
@@ -132,7 +132,7 @@ Ekrany `mobile/` i odpowiedzi `max-[799px]:` zgodne z CM*: pasek zakładek, Dzi�
 ## Decyzje Claude (do sprawdzenia przez Mejsona)
 
 - Zamiana kolorów wpisanych na sztywno na tokeny obejmuje **całą aplikację już w Etapie 1**, a nie tylko pilot. Bez tego późniejsze zmiany tokenów niczego nie przestawią. Efekt uboczny: po Etapie 1 wszystkie ekrany mają nową paletę i font, ale stare układy.
-- Inter z `next/font/google` (samohostowany przez Next), a nie z bloba kanwy.
+- Inter z paczki npm `@fontsource-variable/inter`, a nie z `next/font/google` ani z bloba kanwy, bo build ma działać bez dostępu do Google Fonts.
 - Stare makiety zostają w repo i na kanwie jako archiwum, nic nie usuwamy.
 - **Pobranie makiet:** pliki C*, CM*, `canvas.json`, arkusz COSS i font Inter pobiera z kanwy koordynator (Claude, który ma narzędzia artefaktów). Robi to przed pierwszym zadaniem i commituje je na gałęzi. Wykonawcy pracują już na kopiach w repo.
 - **Ocena pilota:** Mejson ogląda pilot na podglądzie Vercel gałęzi `feat/coss-pilot`, z prawdziwym logowaniem i swoimi danymi, tak jak przy wcześniejszych etapach. Nie potrzeba dodatkowego środowiska.
