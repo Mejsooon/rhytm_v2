@@ -113,7 +113,7 @@ body{margin:0;background:#ffffff}
           </sc-if>
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #686868; margin-top: 14px">
             <span>{{heatRange}}</span>
-            <span style="display: flex; align-items: center; gap: 4px">mniej <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(0,0,0,.05)"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #bbe5cc"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #4ade80"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #15803d"></span> więcej</span>
+            <span style="display: flex; align-items: center; gap: 4px">mniej <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(0,0,0,.05)"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #bbe5cc"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #86c99f"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #15803d"></span> więcej</span>
           </div>
         </div>
       </section>
@@ -144,7 +144,7 @@ class Component extends DCLogic {
     const habits = H.map((h, i) => ({ name: h[0], schedule: h[1], streak: h[2], week: mk(h[3], !!done[i]), btn: btn(!!done[i]),
       pressed: done[i] ? 'true' : 'false', label: done[i] ? 'Cofnij odhaczenie: ' + h[0] : 'Odhacz dziś: ' + h[0],
       toggle: () => this.setState({ done: Object.assign({}, done, { [i]: !done[i] }) }) }));
-    const shades = ['rgba(0,0,0,.05)', '#bbe5cc', '#4ade80', '#15803d'];
+    const shades = ['rgba(0,0,0,.05)', '#bbe5cc', '#86c99f', '#15803d'];
     const MON = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
     const DOW = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
     const END = Date.UTC(2026, 10, 22);
@@ -223,8 +223,9 @@ class Component extends DCLogic {
       hasSTip: S.sh !== undefined && S.sh !== null && S.sh < hrs.length,
       stip: (S.sh !== undefined && S.sh !== null && S.sh < hrs.length) ? (() => {
         const k = S.sh; const h = hrs[k]; const d = new Date(Date.UTC(2026, 10, 17) - (hrs.length - 1 - k) * 86400000);
-        const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
-        return { date: DOW[(d.getUTCDay() + 6) % 7] + ' ' + p2(d.getUTCDate()) + '.' + p2(d.getUTCMonth() + 1), txt: hh + ':' + p2(mm) + ' h snu' + (h >= 8 ? ' · cel osiągnięty' : ' · ' + Math.round((8 - h) * 60) + ' min do celu'),
+        const SDOW = ['pn', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+        const mins = Math.round(h * 60), miss = 480 - mins;
+        return { date: SDOW[(d.getUTCDay() + 6) % 7] + ' ' + p2(d.getUTCDate()) + '.' + p2(d.getUTCMonth() + 1), txt: Math.floor(mins / 60) + ':' + p2(mins % 60) + ' h snu · ' + (miss <= 0 ? 'cel osiągnięty' : miss >= 60 ? Math.floor(miss / 60) + ':' + p2(miss % 60) + ' h do celu' : miss + ' min do celu'),
           s: 'position:absolute;z-index:5;pointer-events:none;width:170px;box-sizing:border-box;bottom:' + (Math.round((h / 9) * 150) + 10) + 'px;left:calc(' + ((k + 0.5) / hrs.length * 100) + '% - 85px);' + TIP };
       })() : null,
       sleepFrom: p2(sDate.getUTCDate()) + '.' + p2(sDate.getUTCMonth() + 1),

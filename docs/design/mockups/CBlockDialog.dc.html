@@ -38,7 +38,7 @@ body{margin:0;background:#ffffff}
       <label class="fld">Tytuł<input class="inp" type="text" value="rhytm — kod"></label>
       <div class="fld">Kategoria<div role="group" aria-label="Kategoria" style="display: flex; flex-wrap: wrap; gap: 6px">
         <sc-for list="{{cats}}" as="c" hint-placeholder-count="4"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}"><span class="dot" style="{{c.dot}}"></span>{{c.label}}</button></sc-for>
-        <a href="CCategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowa</a>
+        <a href="CCategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none">+ Nowa</a>
       </div></div>
       <div style="display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 12px">
         <label class="fld">Dzień<span class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><input class="num" type="text" value="{{day}}" onChange="{{onDay}}"></span></label>
@@ -53,6 +53,12 @@ body{margin:0;background:#ffffff}
         <span class="hint">{{repInfo}} Każde powtórzenie ma własną, pustą listę zadań.</span>
       </div>
       <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><textarea class="inp" rows="2">Najpierw migracje, potem UI.</textarea></label>
+      <!-- przypomnienie jak w aplikacji: dzwonek, tekst, przełącznik (nowy blok: włączone) -->
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; color: #686868"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+        <span style="flex: 1">Przypomnij 10 min wcześniej</span>
+        <button type="button" class="sw" role="switch" aria-checked="{{remindS}}" aria-label="Przypomnienie" onClick="{{toggleRemind}}"></button>
+      </div>
     </div>
     <div class="dlg-f">
       <a href="{{back}}" class="btng">Anuluj</a><a href="{{back}}" class="btnp">Zapisz blok</a>
@@ -62,7 +68,7 @@ body{margin:0;background:#ffffff}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { rep: 'weekly', cat: 'proj', days: { 1: true }, day: 'wt 17.11.2026', from: '10:00', to: '12:30' }; }
+  constructor(p) { super(p); this.state = { rep: 'weekly', cat: 'proj', days: { 1: true }, day: 'wt 17.11.2026', from: '10:00', to: '12:30', remind: true }; }
   componentDidMount() {
     try {
       sessionStorage.setItem('rh-from-sub', 'CBlockDialog.dc.html');
@@ -80,10 +86,12 @@ class Component extends DCLogic {
     let back = 'CCalendar.dc.html';
     try { const f = sessionStorage.getItem('rh-from'); if (f && /^C[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
     const opts = [['none','Nie powtarzaj'],['daily','Codziennie'],['weekdays','Dni robocze'],['weekly','Co tydzień'],['custom','Własne…']];
-    const cats = [['stud', 'Studia', '#3b82f6'], ['proj', 'Projekty', '#15803d'], ['praca', 'Praca', '#8b5cf6'], ['dom', 'Dom', '#f59e0b']];
+    const cats = [['stud', 'Studia', '#0070f3'], ['proj', 'Projekty', '#15803d'], ['praca', 'Praca', '#7c3aed'], ['dom', 'Dom', '#c2410c']];
     const days = this.state.days;
     return {
       back,
+      remindS: this.state.remind ? 'true' : 'false',
+      toggleRemind: () => this.setState({ remind: !this.state.remind }),
       day: this.state.day, from: this.state.from, to: this.state.to,
       onDay: (e) => this.setState({ day: e.target.value }),
       onFrom: (e) => this.setState({ from: e.target.value }),

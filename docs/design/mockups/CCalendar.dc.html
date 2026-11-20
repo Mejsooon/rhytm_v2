@@ -120,7 +120,7 @@ class Component extends DCLogic {
     if (el) el.scrollTop = 6 * 48;
   }
   renderVals() {
-    const CATDEF = [['Studia', '#3b82f6'], ['Projekty', '#15803d'], ['Praca', '#8b5cf6'], ['Sport', '#f59e0b'], ['Subscriptions', ''], ['Dom', '#eab308']];
+    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
     const hidden = this.state.hidden;
     const cats = CATDEF.map((c) => {
       const on = !hidden[c[0]];
@@ -171,12 +171,12 @@ class Component extends DCLogic {
       return b;
     };
     const days = [
-      { dow: 'pon', num: '16', renewal: '', blocks: [block('m1', 'pon 16.11', 8, 10, 'Matematyka — ćwiczenia', 'Studia', '#3b82f6', { count: '0/3', tasks: [['Zadania 4.1–4.6', false], ['Powtórka całek', false], ['Lista 5', false]] }), block('so', 'pon 16.11', 13, 15, 'Systemy operacyjne', 'Studia', '#3b82f6')] },
-      { dow: 'wt', num: '17', today: true, renewal: '', blocks: [block('kod', 'wt 17.11', 10, 12.5, 'rhytm — kod', 'Projekty', '#15803d', { count: '2/4', rec: true, tasks: [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]] }), block('bieg', 'wt 17.11', 16, 17, 'Bieg 10 km', 'Sport', '#f59e0b')] },
-      { dow: 'śr', num: '18', renewal: '', blocks: [block('kl1', 'śr 18.11', 9, 11, 'Strona klienta', 'Praca', '#8b5cf6', { count: '1/2', tasks: [['Galeria zdjęć', true], ['Formularz kontaktu', false]] }), block('bd1', 'śr 18.11', 18, 19.5, 'Bazy danych', 'Studia', '#3b82f6')] },
-      { dow: 'czw', num: '19', renewal: '', blocks: [block('bd2', 'czw 19.11', 8, 9.5, 'Bazy danych', 'Studia', '#3b82f6'), block('sil', 'czw 19.11', 15, 16.5, 'Siłownia — push', 'Sport', '#f59e0b')] },
-      { dow: 'pt', num: '20', renewal: '', blocks: [block('ns', 'pt 20.11', 10, 12, 'NetScope — research', 'Projekty', '#15803d', { count: '0/2', tasks: [['Porównać GUI do nmapa', false], ['Lista funkcji SOFT', false]] }), block('kl2', 'pt 20.11', 14, 15, 'Strona klienta', 'Praca', '#8b5cf6')] },
-      { dow: 'sob', num: '21', renewal: 'Netflix · 43,00 zł', blocks: [block('lb', 'sob 21.11', 10, 11.5, 'Długi bieg (plan)', 'Sport', '#f59e0b', { planned: true })] },
+      { dow: 'pon', num: '16', renewal: '', blocks: [block('m1', 'pon 16.11', 8, 10, 'Matematyka — ćwiczenia', 'Studia', '#0070f3', { count: '0/3', tasks: [['Zadania 4.1–4.6', false], ['Powtórka całek', false], ['Lista 5', false]] }), block('so', 'pon 16.11', 13, 15, 'Systemy operacyjne', 'Studia', '#0070f3')] },
+      { dow: 'wt', num: '17', today: true, renewal: '', blocks: [block('kod', 'wt 17.11', 10, 12.5, 'rhytm — kod', 'Projekty', '#15803d', { count: '2/4', rec: true, tasks: [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]] }), block('bieg', 'wt 17.11', 16, 17, 'Bieg 10 km', 'Sport', '#c2410c')] },
+      { dow: 'śr', num: '18', renewal: '', blocks: [block('kl1', 'śr 18.11', 9, 11, 'Strona klienta', 'Praca', '#7c3aed', { count: '1/2', tasks: [['Galeria zdjęć', true], ['Formularz kontaktu', false]] }), block('bd1', 'śr 18.11', 18, 19.5, 'Bazy danych', 'Studia', '#0070f3')] },
+      { dow: 'czw', num: '19', renewal: '', blocks: [block('bd2', 'czw 19.11', 8, 9.5, 'Bazy danych', 'Studia', '#0070f3'), block('sil', 'czw 19.11', 15, 16.5, 'Siłownia — push', 'Sport', '#c2410c')] },
+      { dow: 'pt', num: '20', renewal: '', blocks: [block('ns', 'pt 20.11', 10, 12, 'NetScope — research', 'Projekty', '#15803d', { count: '0/2', tasks: [['Porównać GUI do nmapa', false], ['Lista funkcji SOFT', false]] }), block('kl2', 'pt 20.11', 14, 15, 'Strona klienta', 'Praca', '#7c3aed')] },
+      { dow: 'sob', num: '21', renewal: 'Netflix · 43,00 zł', blocks: [block('lb', 'sob 21.11', 10, 11.5, 'Długi bieg (plan)', 'Sport', '#c2410c', { planned: true })] },
       { dow: 'nd', num: '22', renewal: '', blocks: [block('plan', 'nd 22.11', 18, 19, 'Plan tygodnia', 'Projekty', '#15803d')] }
     ];
     days.forEach((d) => {
