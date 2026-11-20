@@ -110,6 +110,8 @@ describe("SleepCard", () => {
     expect(screen.getByText("23:48 → 07:00")).toHaveClass("text-xs", "tabular-nums");
     // Podpis celu jako odznaka .bdg.ok
     expect(screen.getByText("cel 8 h")).toHaveClass("bg-success-soft", "text-success", "rounded-sm");
+    // Nieprzezroczysta podkładka pod odznaką, by tekst był czytelny nad słupkiem
+    expect(screen.getByText("cel 8 h").parentElement).toHaveClass("bg-card");
     // Słupki z zaokrągleniem 4 px u góry
     expect(screen.getByLabelText("17.11 · 7:12")).toHaveClass("rounded-t-[4px]");
     // Oś dat bez mono

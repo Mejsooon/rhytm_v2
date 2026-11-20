@@ -145,8 +145,8 @@ export function SleepCard({
             className="absolute right-0 left-0 border-t border-dashed border-success"
             style={{ bottom: liniaCelu }}
           />
-          {/* Podpis celu jako odznaka .bdg.ok tuż nad linią */}
-          <span className="absolute right-0 flex" style={{ bottom: liniaCelu + 5 }}>
+          {/* Podpis celu jako odznaka .bdg.ok tuż nad linią; nieprzezroczyste tło (bg-card) pod półprzezroczystym zielonym, by tekst był czytelny nad słupkiem */}
+          <span className="absolute right-0 flex rounded-sm bg-card" style={{ bottom: liniaCelu + 5 }}>
             <StatusBadge tone="green">cel {celTekst} h</StatusBadge>
           </span>
 

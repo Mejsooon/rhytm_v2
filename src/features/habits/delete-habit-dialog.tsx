@@ -71,14 +71,15 @@ export function DeleteHabitDialog({
             disabled={pending}
             onClick={() => void usun()}
           >
-            <TrashIcon aria-hidden="true" className="size-4" />
+            {/* Ikona tylko w wersji web; telefon (m-habit-detail) bez zmian */}
+            <TrashIcon aria-hidden="true" className="size-4 max-[799px]:hidden" />
             Usuń
           </Button>
         </>
       }
     >
-      {/* .dlg-d: 14 px muted */}
-      <p className="m-0 text-sm text-muted-foreground">
+      {/* .dlg-d: 14 px muted na web, 13 px na telefonie */}
+      <p className="m-0 text-sm text-muted-foreground max-[799px]:text-[13px]">
         Historia odhaczeń i notatki zostaną usunięte.
       </p>
     </FormDialog>

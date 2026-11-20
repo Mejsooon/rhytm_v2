@@ -233,7 +233,7 @@ export function HabitHeatmap({
                     onBlur={() => setNajechany(null)}
                     // Zaznaczenie to pierścień w style; fokus klawiatury — osobny obrys (outline)
                     className={cn(
-                      "box-border size-10 cursor-default rounded-[8px] px-1.5 py-1 text-xs font-medium tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid",
+                      "box-border size-10 cursor-default rounded-[8px] px-1.5 py-1 text-xs font-medium tabular-nums focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring focus-visible:outline-solid",
                       w.kolor,
                       cell.date === today && "font-bold",
                     )}
@@ -285,7 +285,7 @@ export function HabitHeatmap({
                     onBlur={() => setNajechany(null)}
                     // Zaznaczenie to pierścień w style; fokus klawiatury — osobny obrys (outline)
                     className={cn(
-                      "box-border size-3.5 cursor-default rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid",
+                      "box-border size-3.5 cursor-default rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring focus-visible:outline-solid",
                       w.kolor,
                     )}
                     style={
