@@ -1,9 +1,11 @@
 "use client";
 
-// Kalendarz miesiąca jednego nawyku (HabitDetail.dc.html): zrobione / pominięte / szare / neutralne.
-// Używany na komputerze i (Task 7) na telefonie z własnym `minMonth`.
+// Kalendarz miesiąca jednego nawyku (CHabitDetail.dc.html): zrobione / pominięte / szare / neutralne.
+// Używany na komputerze i (Task 7) na telefonie z własnym `minMonth`; telefon zostaje w dotychczasowym wyglądzie.
 import { useState } from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
+import { Button, CardContent, CardHeader, CardTitle } from "@/components/controls";
 import { buildMonthGrid, MIESIACE } from "@/components/controls/calendar-math";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { isPlanned, scheduleOn, type Habit } from "./model";
@@ -12,8 +14,17 @@ type StanDnia = "zrobione" | "pominiete" | "szare" | "neutralne" | "przyszlosc";
 
 const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
-// Style komórek wprost z makiety
+// Web: komórki wg CHabitDetail.dc.html (ramka 1 px w każdym stanie; „szare” w miesiącu jak „off” z makiety)
 const STYLE_STANU: Record<StanDnia, string> = {
+  zrobione: "border-success bg-success text-white",
+  pominiete: "border-destructive/[.16] bg-destructive/10 text-destructive-foreground",
+  szare: "border-border bg-white text-faint-foreground",
+  neutralne: "border-border bg-white text-faint-foreground",
+  przyszlosc: "border-dashed border-input bg-white text-faint-foreground",
+};
+
+// Telefon (MHabitDetail.dc.html) — style bez zmian do Etapu 3
+const STYLE_STANU_TEL: Record<StanDnia, string> = {
   zrobione: "bg-success text-white",
   pominiete: "bg-destructive-soft text-destructive-foreground",
   szare: "bg-panel text-faint-foreground",
@@ -126,77 +137,141 @@ export function HabitMonth({
       ? `${zrobione} razy w tym miesiącu`
       : `${zrobione} z ${zrobione + pominiete} dni zaliczone`;
 
+  // Nazwa miesiąca z wielkiej litery: „Listopad 2026”
+  const tytul = `${MIESIACE[m - 1][0].toUpperCase()}${MIESIACE[m - 1].slice(1)} ${rok}`;
+
+  const naglowkiDni = (
+    <div
+      className={
+        phone
+          ? "mb-1 grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-muted-foreground"
+          : "mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-muted-foreground"
+      }
+    >
+      {naglowki.map((n) => (
+        <span key={n}>{n}</span>
+      ))}
+    </div>
+  );
+
+  const siatka = (
+    <div className="grid grid-cols-7 gap-1">
+      {widoczne.map((k) => {
+        const stan = stanDnia(k.date, k.inMonth);
+        let wyglad = STYLE_STANU[stan];
+        // Web: dzień spoza miesiąca przezroczysty, jaśniejsza cyfra (.out z makiety)
+        if (!k.inMonth) {
+          wyglad = "border-transparent bg-transparent text-faint-foreground/50";
+        }
+        if (phone) {
+          // Telefon: pominięte dni szare zamiast czerwonych, reszta jak dotąd
+          wyglad =
+            stan === "pominiete"
+              ? "bg-muted text-faint-foreground"
+              : STYLE_STANU_TEL[stan];
+        }
+        return (
+          <span
+            key={k.date}
+            data-day={k.date}
+            data-state={stan}
+            aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
+            // Web: dziś z pierścieniem jak w makiecie (biała przerwa 2 px + obrys 2 px)
+            style={
+              !phone && k.date === today
+                ? { boxShadow: "0 0 0 2px var(--background), 0 0 0 4px var(--foreground)" }
+                : undefined
+            }
+            className={
+              phone
+                ? `box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${wyglad}`
+                : `box-border flex h-10 items-center justify-center rounded-[8px] border text-[13px] font-medium tabular-nums ${wyglad}`
+            }
+          >
+            {Number(k.date.slice(8))}
+          </span>
+        );
+      })}
+    </div>
+  );
+
+  if (phone) {
+    return (
+      <section className="rounded-lg border border-border bg-white p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="m-0 text-[15px] font-semibold">{tytul}</h2>
+          <div className="flex gap-1 font-mono text-xs text-muted-foreground">
+            <button
+              type="button"
+              aria-label="Poprzedni miesiąc"
+              disabled={miesiac <= dolny}
+              onClick={() => setMiesiac(przesunMiesiac(miesiac, -1))}
+              className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="Następny miesiąc"
+              disabled={miesiac >= maxMonth}
+              onClick={() => setMiesiac(przesunMiesiac(miesiac, 1))}
+              className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+        {naglowkiDni}
+        {siatka}
+        <div className="mt-2.5 text-[13px] text-muted-foreground">{podsumowanie}</div>
+      </section>
+    );
+  }
+
+  // Web: .card z nagłówkiem .card-h (tytuł + ‹ › jako .btng.ic.sm) i treścią .card-p
   return (
-    <section className="rounded-lg border border-border bg-white p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="m-0 text-[15px] font-semibold">{`${MIESIACE[m - 1][0].toUpperCase()}${MIESIACE[m - 1].slice(1)} ${rok}`}</h2>
-        <div className="flex gap-1 font-mono text-xs text-muted-foreground">
-          <button
-            type="button"
+    <section className="relative flex min-w-0 flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+      <CardHeader className="items-center">
+        <CardTitle as="h2">{tytul}</CardTitle>
+        <span className="flex gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
             aria-label="Poprzedni miesiąc"
             disabled={miesiac <= dolny}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, -1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
           >
-            ‹
-          </button>
-          <button
-            type="button"
+            <ChevronLeftIcon aria-hidden="true" className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
             aria-label="Następny miesiąc"
             disabled={miesiac >= maxMonth}
             onClick={() => setMiesiac(przesunMiesiac(miesiac, 1))}
-            className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
           >
-            ›
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-1 grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-muted-foreground">
-        {naglowki.map((n) => (
-          <span key={n}>{n}</span>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {widoczne.map((k) => {
-          const stan = stanDnia(k.date, k.inMonth);
-          return (
-            <span
-              key={k.date}
-              data-day={k.date}
-              data-state={stan}
-              aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
-              className={`box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${
-                // Telefon: pominięte szare jak w makiecie; web zostaje przy czerwonym
-                phone && stan === "pominiete"
-                  ? "bg-muted text-faint-foreground"
-                  : STYLE_STANU[stan]
-              }`}
-            >
-              {Number(k.date.slice(8))}
-            </span>
-          );
-        })}
-      </div>
-
-      {phone && (
-        <div className="mt-2.5 text-[13px] text-muted-foreground">{podsumowanie}</div>
-      )}
-
-      {/* Legenda z makiety (web) */}
-      {!phone && (
-        <div className="mt-3 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted-foreground">
-          <span>
-            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-success" />
+            <ChevronRightIcon aria-hidden="true" className="size-4" />
+          </Button>
+        </span>
+      </CardHeader>
+      <CardContent>
+        {naglowkiDni}
+        {siatka}
+        {/* Legenda z makiety (teksty bez zmian) */}
+        <div className="mt-3.5 flex flex-wrap items-center gap-3.5 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-[3px] bg-success" />
             zrobione
           </span>
-          <span>
-            <span className="mr-[5px] inline-block size-2.5 rounded-[3px] bg-destructive-soft" />
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-[3px] bg-destructive/[.14]" />
             pominięte
           </span>
           <span>szare: dzień bez nawyku</span>
         </div>
-      )}
+      </CardContent>
     </section>
   );
 }

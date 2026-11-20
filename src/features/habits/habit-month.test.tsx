@@ -156,4 +156,53 @@ describe("HabitMonth", () => {
       screen.getByLabelText("30 października 2026 · bez nawyku"),
     ).toBeInTheDocument();
   });
+  it("nawigacja miesiąca ma etykiety i zmienia miesiąc", async () => {
+    render(
+      <HabitMonth
+        habit={nawyk([codziennie("2026-09-01")])}
+        checks={new Set()}
+        today="2026-11-17"
+        weekStart="mon"
+        maxMonth="2026-11"
+      />,
+    );
+    const wstecz = screen.getByRole("button", { name: "Poprzedni miesiąc" });
+    const dalej = screen.getByRole("button", { name: "Następny miesiąc" });
+    // .btng.ic.sm z ikoną chevronu
+    for (const b of [wstecz, dalej]) {
+      expect(b.className).toContain("h-7");
+      expect(b.className).toContain("w-7");
+      expect(b.className).toContain("bg-transparent");
+      expect(b.querySelector("svg")).not.toBeNull();
+    }
+    expect(dalej).toBeDisabled();
+    await userEvent.click(wstecz);
+    expect(
+      screen.getByRole("heading", { name: "Październik 2026" }),
+    ).toBeInTheDocument();
+    await userEvent.click(dalej);
+    expect(
+      screen.getByRole("heading", { name: "Listopad 2026" }),
+    ).toBeInTheDocument();
+    expect(dalej).toBeDisabled();
+  });
+
+  it("telefon: przyciski miesiąca 44 px i dotychczasowa karta", () => {
+    render(
+      <HabitMonth
+        habit={nawyk([codziennie("2026-09-01")])}
+        checks={new Set()}
+        today="2026-11-17"
+        weekStart="mon"
+        maxMonth="2026-11"
+        phone
+      />,
+    );
+    const wstecz = screen.getByRole("button", { name: "Poprzedni miesiąc" });
+    expect(wstecz.className).toContain("max-[799px]:size-11");
+    const karta = wstecz.closest("section") as HTMLElement;
+    expect(karta.className).toContain("rounded-lg");
+    expect(karta.className).toContain("p-4");
+    expect(karta.className).not.toContain("shadow-card");
+  });
 });

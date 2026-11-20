@@ -1,8 +1,9 @@
 "use client";
 
-// Potwierdzenie usunięcia nawyku; po sukcesie wracamy na listę /nawyki.
+// Potwierdzenie usunięcia nawyku (FormDialog w stylu .dlg, jak „Usunąć blok?”); po sukcesie wracamy na listę /nawyki.
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TrashIcon } from "lucide-react";
 
 import { Button, FormDialog } from "@/components/controls";
 import type { ActionResult } from "@/lib/action-result";
@@ -70,12 +71,14 @@ export function DeleteHabitDialog({
             disabled={pending}
             onClick={() => void usun()}
           >
+            <TrashIcon aria-hidden="true" className="size-4" />
             Usuń
           </Button>
         </>
       }
     >
-      <p className="m-0 text-[13px] text-muted-foreground">
+      {/* .dlg-d: 14 px muted */}
+      <p className="m-0 text-sm text-muted-foreground">
         Historia odhaczeń i notatki zostaną usunięte.
       </p>
     </FormDialog>
