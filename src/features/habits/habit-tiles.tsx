@@ -1,4 +1,5 @@
-// Rząd czterech kafelków z liczbami (Habits.dc.html, „RZĄD 1”)
+// Rząd czterech kafelków z liczbami (CHabits.dc.html: cztery osobne .card, odstęp 12 px)
+import { Card, StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   dayStats,
@@ -10,11 +11,13 @@ import {
 import { sleepStats, type SleepLog } from "./sleep";
 import { formatDuration, streakLabel } from "./text";
 
-const ETYKIETA =
-  "font-mono text-[11px] uppercase tracking-[.06em] text-muted-foreground";
-const LICZBA = "mt-2 font-mono text-[26px]";
-const POD_LICZBA = "mt-2 font-mono text-xs text-muted-foreground";
-const JEDNOSTKA = "text-sm text-muted-foreground";
+// Kafelek .card z CHabits: etykieta .lbl, duża liczba (.num 26 px), podpowiedź .hint
+const KAFELEK = "min-w-0 px-[18px] py-4";
+const ETYKIETA = "text-xs font-medium text-muted-foreground";
+const LICZBA =
+  "mt-2 text-[26px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums";
+const POD_LICZBA = "mt-2 truncate text-xs text-muted-foreground";
+const JEDNOSTKA = "text-sm font-normal tracking-normal text-muted-foreground";
 
 export function HabitTiles({
   habits,
@@ -57,31 +60,39 @@ export function HabitTiles({
   const sen = sleepStats(sleepLogs, today, 14, sleepGoalMin);
 
   return (
-    <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border">
-      <div className="bg-white px-[18px] py-4">
+    <div className="grid grid-cols-4 gap-3">
+      <Card className={KAFELEK}>
         <div className={ETYKIETA}>Nawyki dziś</div>
         <div className={LICZBA}>{`${dzis.done}/${dzis.planned}`}</div>
-        <div className="mt-2.5 h-1 rounded-sm bg-active">
+        {/* .prog: tor 6 px, wypełnienie zielone */}
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-1 rounded-sm bg-success transition-[width] duration-200"
+            className="h-full rounded-full bg-success transition-[width] duration-200"
             style={{ width: `${pasek}%` }}
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white px-[18px] py-4">
+      <Card className={KAFELEK}>
         <div className={ETYKIETA}>Ostatnie 30 dni</div>
         <div className={LICZBA}>
           {trzydziesci.percent === null ? "—" : `${trzydziesci.percent}%`}
         </div>
         {roznica !== null && (
-          <div className={POD_LICZBA}>
-            {`${roznica < 0 ? "−" : roznica > 0 ? "+" : ""}${Math.abs(roznica)} pkt vs poprzednie 30`}
+          // Różnica w odznace: wzrost zielony (.bdg.ok), spadek czerwony, zero szare
+          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+            <StatusBadge
+              tone={roznica > 0 ? "green" : roznica < 0 ? "red" : "gray"}
+              className="tabular-nums"
+            >
+              {`${roznica < 0 ? "−" : roznica > 0 ? "+" : ""}${Math.abs(roznica)} pkt`}
+            </StatusBadge>{" "}
+            <span>vs poprzednie 30</span>
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white px-[18px] py-4">
+      <Card className={KAFELEK}>
         <div className={ETYKIETA}>Najdłuższa seria</div>
         {rekord === null ? (
           <div className={LICZBA}>—</div>
@@ -95,9 +106,9 @@ export function HabitTiles({
             <div className={POD_LICZBA}>{rekord.name}</div>
           </>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white px-[18px] py-4">
+      <Card className={KAFELEK}>
         <div className={ETYKIETA}>Śr. sen · 14 dni</div>
         {sen.avg === null ? (
           <div className={LICZBA}>—</div>
@@ -112,7 +123,7 @@ export function HabitTiles({
             <div className={POD_LICZBA}>{sen.metGoal} z 14 nocy ≥ cel</div>
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
-// Ekran „Nawyki i sen” na komputerze (Habits.dc.html): nagłówek, kafelki, karta Nawyki + karta Sen, heatmapa.
+// Ekran „Nawyki i sen” na komputerze (CHabits.dc.html): nagłówek, kafelki, karta Nawyki + karta Sen, heatmapa.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/controls";
+import { ModuleHeader } from "@/components/shell/module-header";
 import { formatDatePl } from "@/components/controls/calendar-math";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { weekdayOf } from "@/features/calendar/view-range";
@@ -101,22 +103,25 @@ export function HabitsView({
         data-testid="web-nawyki"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-          <div className="flex items-baseline gap-2.5">
-            <h1 className="m-0 text-lg font-semibold">Nawyki i sen</h1>
-            <span className="font-mono text-xs text-muted-foreground">
+        {/* .topbar z CHabits: sam tytuł, data jako .hint, akcje .btn i .btnp (32 px) */}
+        <ModuleHeader
+          title="Nawyki i sen"
+          webOnly
+          webMeta={
+            <span className="text-xs text-muted-foreground tabular-nums">
               {dataNaglowka}
             </span>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={() => onNewSleep()}>
-              + Wpis snu
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => onNewHabit()}>
-              Nowy nawyk
-            </Button>
-          </div>
-        </header>
+          }
+          webAction={
+            <>
+              <Button onClick={() => onNewSleep()}>+ Wpis snu</Button>
+              <Button variant="primary" onClick={() => onNewHabit()}>
+                <Plus size={16} aria-hidden="true" />
+                Nowy nawyk
+              </Button>
+            </>
+          }
+        />
 
         <div className="box-border flex w-full flex-col gap-6 p-6">
           <HabitTiles

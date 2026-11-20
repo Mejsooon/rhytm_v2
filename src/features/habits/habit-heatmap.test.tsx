@@ -104,6 +104,31 @@ describe("HabitHeatmap", () => {
     expect(zero.className).toContain("bg-active");
     expect(zero.className).not.toContain("border-dashed");
     expect(bezPlanu.className).not.toBe(zero.className);
+    // Poziomy z makiety: 2 z 3 (67%) → średnia zieleń
+    expect(
+      screen.getByLabelText("17.11.2026 · 2 z 3 nawyków").className,
+    ).toContain("bg-heat-2");
+  });
+
+  it("komórka heatmapy ma widoczny fokus niezależny od zaznaczenia", async () => {
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("radio", { name: "3 mies." }));
+    const dzis = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
+    act(() => dzis.focus());
+    // Zaznaczenie to pierścień w style, a fokus — obrys (outline), więc jedno nie zasłania drugiego
+    expect(dzis).toHaveClass(
+      "focus-visible:outline-solid",
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+    expect(dzis.style.boxShadow).toContain("var(--foreground)");
+
+    await userEvent.click(screen.getByRole("radio", { name: "Miesiąc" }));
+    const dzien = screen.getByLabelText("17.11.2026 · 2 z 3 nawyków");
+    fireEvent.mouseEnter(dzien);
+    expect(dzien).toHaveClass("focus-visible:outline-ring");
+    expect(dzien.style.boxShadow).toContain("var(--foreground)");
   });
 
   it("komórka dostaje fokus z klawiatury i wtedy pokazuje dymek", async () => {

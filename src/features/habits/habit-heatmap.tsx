@@ -1,9 +1,16 @@
 "use client";
 
-// Karta „Heatmapa nawyków”: miesiąc z nawigacją albo 13 / 26 / 52 kolumny tygodni (Habits.dc.html, „RZĄD 3”)
+// Karta „Heatmapa nawyków”: miesiąc z nawigacją albo 13 / 26 / 52 kolumny tygodni (CHabits.dc.html)
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button, Segment } from "@/components/controls";
+import {
+  Button,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Segment,
+} from "@/components/controls";
 import {
   formatDatePl,
   monthTitlePl,
@@ -40,6 +47,7 @@ const MAKS_WSTECZ = 12; // miesięcy
 
 // Kolor komórki i treść dymka; przyszłość bez dymka.
 // Progi z makiety: 0% → najjaśniejszy, ≤ 40% → 1, ≤ 80% → 2, powyżej → najciemniejszy.
+// Paleta poziomów (CHabits): active → heat-1 → heat-2 → success.
 // Dzień bez planu ma własny wygląd (jaśniejsze tło i przerywana ramka), żeby nie mylił się z 0%
 function wyglad(
   cell: DayCell,
@@ -67,9 +75,9 @@ function wyglad(
     cell.percent === 0
       ? "bg-active text-soft-foreground"
       : cell.percent <= 40
-        ? "bg-success-soft text-soft-foreground"
+        ? "bg-heat-1 text-soft-foreground"
         : cell.percent <= 80
-          ? "bg-[#4ade80] text-soft-foreground"
+          ? "bg-heat-2 text-soft-foreground"
           : "bg-success text-white";
   return {
     kolor,
@@ -140,13 +148,12 @@ export function HabitHeatmap({
         } ${rokDzis}`;
 
   return (
-    <section className="rounded-lg border border-border bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border px-4 py-3.5">
-        <div className="flex items-baseline gap-2.5">
-          <h2 className="m-0 text-[15px] font-semibold">Heatmapa nawyków</h2>
-          <span className="font-mono text-xs text-muted-foreground">
-            % nawyków zrobionych danego dnia
-          </span>
+    // .card jako <section> (te same klasy co Card)
+    <section className="relative flex min-w-0 flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+      <CardHeader className="flex-wrap items-center">
+        <div>
+          <CardTitle as="h2">Heatmapa nawyków</CardTitle>
+          <CardDescription>% nawyków zrobionych danego dnia</CardDescription>
         </div>
         <Segment
           ariaLabel="Zakres heatmapy"
@@ -162,14 +169,15 @@ export function HabitHeatmap({
             { value: "52", label: "Rok" },
           ]}
         />
-      </div>
+      </CardHeader>
 
-      <div className="overflow-x-auto p-4">
+      <div className="overflow-x-auto px-6 py-5">
         {tryb === "miesiac" ? (
           <div className="mx-auto flex w-max flex-col gap-2.5">
             <div className="flex items-center justify-between gap-2">
               <Button
                 size="sm"
+                icon
                 aria-label="Poprzedni miesiąc"
                 disabled={wstecz >= MAKS_WSTECZ}
                 onClick={() => {
@@ -177,13 +185,14 @@ export function HabitHeatmap({
                   setNajechany(null);
                 }}
               >
-                ‹
+                <ChevronLeft size={16} aria-hidden="true" />
               </Button>
               <span className="text-sm font-semibold">
                 {monthTitlePl(rok, miesiac0)}
               </span>
               <Button
                 size="sm"
+                icon
                 aria-label="Następny miesiąc"
                 disabled={wstecz <= 0}
                 onClick={() => {
@@ -191,10 +200,10 @@ export function HabitHeatmap({
                   setNajechany(null);
                 }}
               >
-                ›
+                <ChevronRight size={16} aria-hidden="true" />
               </Button>
             </div>
-            <div className="grid grid-cols-[repeat(7,40px)] gap-1 text-center font-mono text-[10px] text-muted-foreground">
+            <div className="grid grid-cols-[repeat(7,40px)] gap-1 text-center text-[11px] font-medium text-muted-foreground">
               {kolejnoscDni.map((d) => (
                 <span key={d}>{d}</span>
               ))}
@@ -222,13 +231,20 @@ export function HabitHeatmap({
                       setNajechany({ date: cell.date, el: e.currentTarget, w })
                     }
                     onBlur={() => setNajechany(null)}
+                    // Zaznaczenie to pierścień w style; fokus klawiatury — osobny obrys (outline)
                     className={cn(
-                      "box-border size-10 cursor-default rounded-md px-[5px] py-1 font-mono text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "box-border size-10 cursor-default rounded-[8px] px-1.5 py-1 text-xs font-medium tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid",
                       w.kolor,
-                      cell.date === today && "font-semibold",
-                      najechany?.date === cell.date &&
-                        "shadow-[0_0_0_2px_#171717]",
+                      cell.date === today && "font-bold",
                     )}
+                    style={
+                      najechany?.date === cell.date
+                        ? {
+                            boxShadow:
+                              "0 0 0 2px var(--background), 0 0 0 4px var(--foreground)",
+                          }
+                        : undefined
+                    }
                   >
                     {Number(cell.date.slice(8, 10))}
                   </span>
@@ -238,7 +254,7 @@ export function HabitHeatmap({
           </div>
         ) : (
           <div className="mx-auto flex w-max gap-2">
-            <div className="grid grid-rows-[repeat(7,14px)] gap-1 font-mono text-[10px] text-muted-foreground">
+            <div className="grid grid-rows-[repeat(7,14px)] gap-1 text-[10px] font-medium text-muted-foreground">
               {kolejnoscDni.map((d, i) => (
                 <span key={d} className="leading-[14px]">
                   {i % 2 === 0 ? d : ""}
@@ -267,12 +283,16 @@ export function HabitHeatmap({
                       setNajechany({ date: cell.date, el: e.currentTarget, w })
                     }
                     onBlur={() => setNajechany(null)}
+                    // Zaznaczenie to pierścień w style; fokus klawiatury — osobny obrys (outline)
                     className={cn(
-                      "box-border size-3.5 cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "box-border size-3.5 cursor-default rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid",
                       w.kolor,
-                      najechany?.date === cell.date &&
-                        "shadow-[0_0_0_2px_#171717]",
                     )}
+                    style={
+                      najechany?.date === cell.date
+                        ? { boxShadow: "0 0 0 2px var(--foreground)" }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -280,15 +300,18 @@ export function HabitHeatmap({
           </div>
         )}
 
-        {/* Dymek dnia (przyszłość go nie ma): data pogrubiona, „brak zaplanowanych” szarym */}
+        {/* Dymek dnia (przyszłość go nie ma): data pogrubiona, pod nią „x z y nawyków” szarym;
+            „ · ” zostaje dla czytników ekranu, na ekranie dzieli to nowa linia */}
         {najechany && najechany.w.tekst !== null && (
           <ChartTooltip anchor={najechany.el}>
-            <span className="font-semibold">{najechany.w.data}</span>
-            {" · "}
+            <span className="block font-semibold">{najechany.w.data}</span>
+            <span className="sr-only">{" · "}</span>
             <span
               className={cn(
-                "font-mono text-[11px]",
-                najechany.w.szary ? "text-faint-foreground" : "text-faint-foreground",
+                "mt-0.5 block tabular-nums",
+                najechany.w.szary
+                  ? "text-faint-foreground"
+                  : "text-muted-foreground",
               )}
             >
               {najechany.w.tekst}
@@ -296,13 +319,14 @@ export function HabitHeatmap({
           </ChartTooltip>
         )}
 
-        <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
+        <div className="mt-3.5 flex items-center justify-between text-xs text-muted-foreground">
           <span>{zakresTekst}</span>
+          {/* Legenda poziomów: te same kolory co komórki */}
           <span className="flex items-center gap-1">
             mniej
             <span className="size-3 rounded-[3px] bg-active" />
-            <span className="size-3 rounded-[3px] bg-success-soft" />
-            <span className="size-3 rounded-[3px] bg-[#4ade80]" />
+            <span className="size-3 rounded-[3px] bg-heat-1" />
+            <span className="size-3 rounded-[3px] bg-heat-2" />
             <span className="size-3 rounded-[3px] bg-success" />
             więcej
           </span>

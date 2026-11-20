@@ -110,12 +110,45 @@ describe("HabitWeekGrid", () => {
 
   it("X/tydz. pokazuje postęp tygodnia i pozwala odhaczyć dowolny dzień", () => {
     wyrenderuj(new Map([["h4", new Set(["2026-11-16"])]]));
-    expect(
-      within(wiersz("Angielski")).getByText(/4× w tygodniu · seria .* · 1\/4/),
-    ).toBeInTheDocument();
+    // Harmonogram, seria w odznace (.bdg.sec) i postęp tygodnia
+    expect(wiersz("Angielski")).toHaveTextContent(
+      /4× w tygodniu.*seria .*1\/4/,
+    );
     expect(
       screen.getByRole("button", { name: /^Angielski · 17\.11/ }),
     ).toBeEnabled();
+  });
+
+  it("wygląd jak w makiecie: komórki 24 px, ✓ 32 px, seria w odznace", () => {
+    wyrenderuj(new Map([["h1", new Set([DZIS])]]));
+    expect(
+      screen.getByRole("button", { name: /^Woda 2 l · 17\.11/ }),
+    ).toHaveClass("size-6", "rounded-sm", "bg-success");
+    expect(
+      screen.getByRole("button", { name: /^Woda 2 l · 16\.11/ }),
+    ).toHaveClass("bg-active");
+    const zrobione = screen.getByRole("button", {
+      name: "Cofnij odhaczenie: Woda 2 l",
+    });
+    expect(zrobione).toHaveClass(
+      "size-8",
+      "rounded-md",
+      "bg-success",
+      "focus-visible:shadow-focus",
+    );
+    expect(
+      screen.getByRole("button", { name: "Odhacz dziś: Czytanie" }),
+    ).toHaveClass("bg-white", "text-faint-foreground", "shadow-xs");
+    // Seria: szara odznaka z ikoną płomienia
+    // „seria” (sr-only) → napis z liczbą → odznaka
+    const seria = within(wiersz("Woda 2 l")).getByText(/^seria/).parentElement
+      ?.parentElement as HTMLElement;
+    expect(seria).toHaveClass("bg-muted");
+    expect(seria?.querySelector("svg")).not.toBeNull();
+    // Długa nazwa skraca się wielokropkiem
+    expect(screen.getByRole("link", { name: "Woda 2 l" })).toHaveClass(
+      "truncate",
+    );
   });
 
   it("nazwa nawyku to link do szczegółów", () => {
