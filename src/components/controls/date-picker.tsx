@@ -105,7 +105,7 @@ export function DatePicker({
           {value ? (
             <span className="font-mono">{formatDatePl(value)}</span>
           ) : (
-            <span className={size === "sm" ? "text-muted-foreground" : "text-[rgba(104,104,104,.72)]"}>{placeholder}</span>
+            <span className={size === "sm" ? "text-muted-foreground" : "text-faint-foreground"}>{placeholder}</span>
           )}
           {variant === "box" && (
             <ChevronDownIcon

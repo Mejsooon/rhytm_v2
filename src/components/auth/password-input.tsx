@@ -60,8 +60,8 @@ export function PasswordInput({
           value={value}
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}
           className={cn(
-            "peer pr-11 max-[799px]:pr-[52px]",
             FIELD,
+            "peer pr-11 max-[799px]:pr-[52px]",
             webPlaceholder
               ? "min-[800px]:placeholder:text-transparent"
               : !placeholder && "min-[800px]:placeholder:opacity-0",
@@ -70,7 +70,7 @@ export function PasswordInput({
         {webPlaceholder && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-[rgba(104,104,104,.72)] opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
+            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-faint-foreground opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
           >
             {webPlaceholder}
           </span>

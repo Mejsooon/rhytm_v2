@@ -106,7 +106,7 @@ export function Dropdown<T extends string>({
               <span>{wybrana.label}</span>
             )
           ) : (
-            <span className="text-[rgba(104,104,104,.72)]">{placeholder}</span>
+            <span className="text-faint-foreground">{placeholder}</span>
           )}
           <ChevronDownIcon
             aria-hidden="true"
