@@ -1,12 +1,13 @@
 "use client";
 
-// Siatka godzin dla widoku tygodnia i dnia (web) wg CalendarNotionWeek.dc.html i CalendarNotionDay.dc.html.
+// Siatka godzin dla widoku tygodnia i dnia (web) wg CCalendar.dc.html i CCalendarDay.dc.html.
 // Siatka sama jest przewijanym elementem i wypełnia wysokość rodzica; nagłówek dni i „cały dzień”
 // są przyklejone u góry. Cała doba 00–24, przewinięta przy montażu do 06:00 albo do trwającego bloku.
 // Pozycje bloków to czas ścienny (startMin), więc nie zależą od stref.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import { StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   SPORT_COLOR,
@@ -40,6 +41,7 @@ export function TimeGrid({
   nowMinutes,
   variant,
   totalCount,
+  selectedKey,
   activeSlot,
   onSlotAnchor,
   onSlotClick,
@@ -60,6 +62,8 @@ export function TimeGrid({
   variant: "week" | "day";
   // Widok dnia: ile bloków ma dzień łącznie (z ukrytymi kategoriami); 0 pokazuje „Brak bloków”
   totalCount?: number;
+  // Klucz wystąpienia z otwartym dymkiem: blok dostaje pierścień zaznaczenia
+  selectedKey?: string | null;
   // Slot, dla którego jest otwarty dymek „Nowy wpis”: duch zostaje na nim mimo ruchu myszy
   activeSlot?: { date: IsoDate; startMin: number } | null;
   // Element ducha aktywnego slotu — kotwica dymku „Nowy wpis”
@@ -121,7 +125,7 @@ export function TimeGrid({
 
   const godziny = Array.from({ length: 24 }, (_, h) => h);
   // Linia godziny na górze każdej godziny, pod etykietą z osi
-  const tloLinii = `repeating-linear-gradient(to bottom, #f0f0f0 0, #f0f0f0 1px, transparent 1px, transparent ${wysokoscGodziny}px)`;
+  const tloLinii = `repeating-linear-gradient(to bottom, rgba(0,0,0,.05) 0, rgba(0,0,0,.05) 1px, transparent 1px, transparent ${wysokoscGodziny}px)`;
 
   return (
     // Jedyny przewijany element widoku: wypełnia wysokość rodzica (flex), nagłówek dni
@@ -145,10 +149,10 @@ export function TimeGrid({
       }
     >
       <div className={variant === "week" ? "min-w-[760px]" : ""}>
-        <div className="sticky top-0 z-20 border-b border-border bg-white">
+        <div className="sticky top-0 z-20 border-b border-border bg-background">
           {variant === "week" ? (
             <>
-              {/* Nagłówki dni; dziś: numer w zielonym kółku */}
+              {/* Nagłówki dni; dziś: numer w ciemnym kółku */}
               <div className="grid" style={{ gridTemplateColumns: kolumny }}>
                 <div />
                 {days.map((dzien) => {
@@ -157,17 +161,17 @@ export function TimeGrid({
                     <div
                       key={dzien}
                       data-testid={`naglowek-${dzien}`}
-                      className="flex items-center gap-1.5 border-l border-border px-2.5 pt-2 pb-1.5"
+                      className="flex items-center gap-1.5 border-l border-border-soft px-2.5 pt-2 pb-1.5"
                     >
-                      <span className="font-mono text-[11px] text-muted-foreground uppercase">
+                      <span className="text-xs font-medium text-muted-foreground">
                         {DNI_KROTKO[weekdayOf(dzien)]}
                       </span>
                       <span
                         data-dzis={jestDzis || undefined}
                         className={
                           jestDzis
-                            ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success px-1 text-[13px] font-semibold text-white"
-                            : "text-[13px] font-medium"
+                            ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[13px] font-semibold text-primary-foreground"
+                            : "text-[13px] font-semibold"
                         }
                       >
                         {Number(dzien.split("-")[2])}
@@ -178,10 +182,10 @@ export function TimeGrid({
               </div>
               {/* Wiersz „cały dzień” — w Etapie 2 pusty (odnowienia subskrypcji dojdą później) */}
               <div
-                className="grid border-t border-border"
+                className="grid border-t border-border-soft"
                 style={{ gridTemplateColumns: kolumny }}
               >
-                <div className="p-1.5 text-right font-mono text-[10px] leading-tight text-muted-foreground">
+                <div className="p-1.5 text-right text-[11px] leading-[1.2] text-muted-foreground">
                   cały
                   <br />
                   dzień
@@ -189,7 +193,7 @@ export function TimeGrid({
                 {days.map((dzien) => (
                   <div
                     key={dzien}
-                    className="min-h-[26px] border-l border-border p-1"
+                    className="min-h-7 border-l border-border-soft p-1"
                   />
                 ))}
               </div>
@@ -197,26 +201,26 @@ export function TimeGrid({
           ) : (
             // Dzień: „cały dzień” i numer dnia w jednym wierszu
             <div className="grid" style={{ gridTemplateColumns: kolumny }}>
-              <div className="px-1.5 py-2 text-right font-mono text-[10px] leading-tight text-muted-foreground">
+              <div className="px-1.5 py-2 text-right text-[11px] leading-[1.2] text-muted-foreground">
                 cały
                 <br />
                 dzień
               </div>
               <div
                 data-testid={`naglowek-${days[0]}`}
-                className="flex min-h-[26px] items-center gap-2 border-l border-border px-2 py-1.5"
+                className="flex min-h-7 items-center gap-2 border-l border-border-soft px-2 py-1.5"
               >
                 <span
                   data-dzis={days[0] === today || undefined}
                   className={
                     days[0] === today
-                      ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success px-1 text-[13px] font-semibold text-white"
-                      : "text-[13px] font-medium"
+                      ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[13px] font-semibold text-primary-foreground"
+                      : "text-[13px] font-semibold"
                   }
                 >
                   {Number(days[0].split("-")[2])}
                 </span>
-                <span className="font-mono text-[11px] text-muted-foreground uppercase">
+                <span className="text-xs font-medium text-muted-foreground">
                   {DNI_KROTKO[weekdayOf(days[0])]}
                 </span>
               </div>
@@ -229,7 +233,7 @@ export function TimeGrid({
             {godziny.map((h) => (
               <div
                 key={h}
-                className="box-border -translate-y-1.5 px-2 text-right font-mono text-[10px] text-muted-foreground"
+                className="box-border -translate-y-[7px] px-2 text-right text-[11px] text-muted-foreground tabular-nums"
                 style={{ height: wysokoscGodziny }}
               >
                 {/* Etykieta siedzi na linii godziny; północ bez etykiety (styka się z nagłówkiem).
@@ -263,12 +267,15 @@ export function TimeGrid({
                 key={dzien}
                 data-testid={`kolumna-${dzien}`}
                 data-kolumna={dzien}
-                className="relative cursor-pointer border-l border-border"
-                // Dzisiejsza kolumna ma bardzo jasne zielone tło
+                className="relative cursor-pointer border-l border-border-soft"
+                // Dzisiejsza kolumna tygodnia ma ledwo widoczne szare tło (w dniu bez tła, jak w makiecie)
                 style={{
                   height: wysokoscSiatki,
                   backgroundImage: tloLinii,
-                  backgroundColor: dzien === today ? "#fbfdfb" : undefined,
+                  backgroundColor:
+                    variant === "week" && dzien === today
+                      ? "rgba(0,0,0,.015)"
+                      : undefined,
                 }}
                 // Klik zaraz po przeciągnięciu nie otwiera dymku ani nie wybiera slotu
                 onClickCapture={tlumKlik}
@@ -315,10 +322,14 @@ export function TimeGrid({
                   <div
                     ref={duchAktywny ? onSlotAnchor : undefined}
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-1 left-1 box-border rounded-md border border-dashed border-ring bg-panel px-2 py-1 font-mono text-[11px] text-muted-foreground"
+                    // Jak w Dziś: najechanie rgba(0,0,0,.24) / .02; slot z otwartym „Nowym wpisem” .45 / .04.
+                    // Położenie jak bloku: tydzień 3 px z boków, dzień 8 px z lewej i 16 px z prawej
+                    className={`pointer-events-none absolute box-border border border-dashed font-medium text-soft-foreground tabular-nums ${variant === "week" ? "right-[3px] left-[3px] rounded-[8px] px-2 py-1 text-xs" : "right-4 left-2 rounded-md px-3 py-[7px] text-[13px]"} ${duchAktywny ? "border-black/[.45] bg-black/[.04]" : "border-black/[.24] bg-black/[.02]"}`}
                     style={{
-                      top: (duch.startMin / 60) * wysokoscGodziny + 2,
-                      height: wysokoscGodziny - 4,
+                      top:
+                        (duch.startMin / 60) * wysokoscGodziny +
+                        (variant === "week" ? 1 : 2),
+                      height: wysokoscGodziny - (variant === "week" ? 3 : 4),
                     }}
                   >
                     {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}–${formatClockTime(Math.floor(Math.min(duch.startMin + 60, 1440) / 60), Math.min(duch.startMin + 60, 1440) % 60, clock)}`}
@@ -329,10 +340,15 @@ export function TimeGrid({
                   <div
                     data-testid="podglad-przeciagania"
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-1 left-1 z-10 box-border overflow-hidden rounded-md border border-dashed border-border-strong bg-panel/90 px-2 py-1 font-mono text-[11px] text-soft-foreground"
+                    // Zaznaczany zakres i przenoszony blok jak w Dziś: przerywana ramka rgba(0,0,0,.45), tło .04
+                    className={`pointer-events-none absolute z-10 box-border overflow-hidden border border-dashed border-black/[.45] bg-black/[.04] font-medium text-soft-foreground tabular-nums ${variant === "week" ? "right-[3px] left-[3px] rounded-[8px] px-2 py-1 text-xs" : "right-4 left-2 rounded-md px-3 py-[7px] text-[13px]"}`}
                     style={{
-                      top: (podglad.startMin / 60) * wysokoscGodziny + 1,
-                      height: (podglad.durationMin / 60) * wysokoscGodziny - 2,
+                      top:
+                        (podglad.startMin / 60) * wysokoscGodziny +
+                        (variant === "week" ? 1 : 2),
+                      height:
+                        (podglad.durationMin / 60) * wysokoscGodziny -
+                        (variant === "week" ? 3 : 4),
                     }}
                   >
                     {`${podglad.kind === "create" ? "Nowy blok · " : ""}${formatClockTime(Math.floor(podglad.startMin / 60), podglad.startMin % 60, clock)}–${formatClockTime(Math.floor((podglad.startMin + podglad.durationMin) / 60), (podglad.startMin + podglad.durationMin) % 60, clock)}`}
@@ -340,7 +356,8 @@ export function TimeGrid({
                 )}
 
                 <div
-                  className={`absolute inset-y-0 ${variant === "week" ? "right-0 left-0" : "right-3 left-2"}`}
+                  // Tydzień: pełna szerokość kolumny (bloki 3 px od krawędzi); dzień: 8 px z lewej, 16 px z prawej
+                  className={`absolute inset-y-0 ${variant === "week" ? "right-0 left-0" : "right-3 left-1"}`}
                 >
                   {dnia.map((o) => {
                     const pozycja = uklad.find((u) => u.key === o.key);
@@ -367,11 +384,16 @@ export function TimeGrid({
                     // Jedna linia bez pionowych odstępów: w tygodniu bloki krótsze niż godzina
                     // (dwie linie nie mieszczą się w 48 px), w dniu krótsze niż 45 min
                     const kompakt = variant === "week" ? czas < 60 : czas < 45;
+                    // Blok krótszy niż 30 min: bez górnej i dolnej ramki, żeby linia tekstu się zmieściła
+                    const ciasny = czas < 30;
+                    const zaznaczony = selectedKey === o.key;
                     return (
                       <div
                         key={o.key}
                         data-testid={`blok-${o.key}`}
-                        className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}${podglad?.key === o.key ? " opacity-40" : ""}`}
+                        // Odstępy wg makiet: tydzień 3 px z boków, 1 px nad i 2 px pod; dzień 4 px z boków, 2 px nad i pod.
+                        // Krótki blok (kompakt) bez odstępów w pionie: przycisk zajmuje całą wysokość, jak dotąd
+                        className={`absolute box-border ${variant === "week" ? "px-[3px]" : "px-1"}${kompakt ? "" : variant === "week" ? " pt-px pb-0.5" : " py-0.5"}${podglad?.key === o.key ? " opacity-40" : ""}`}
                         style={{
                           top: (o.startMin / 60) * wysokoscGodziny,
                           height: (czas / 60) * wysokoscGodziny,
@@ -388,27 +410,33 @@ export function TimeGrid({
                             zacznij(e, "move", { occurrence: o })
                           }
                           title={`${o.title} ${godzinyBloku}`}
-                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground outline-none focus-visible:shadow-focus-inset ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          // Fokus jako outline z odstępem: inline boxShadow zaznaczenia nie może go zasłonić
+                          className={`box-border flex h-full w-full cursor-pointer flex-col items-stretch overflow-hidden text-left text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${variant === "week" ? `rounded-[8px] px-2 ${kompakt ? "justify-center py-0" : "py-1"}` : `rounded-md px-3 ${kompakt ? "justify-center py-0" : "py-[7px]"}`}`}
                           style={{
-                            background: `${kolor}14`,
-                            border: `1px solid ${kolor}40`,
-                            borderLeft: `3px solid ${kolor}`,
-                            // Kompakt: bez górnej i dolnej ramki, żeby linia 11 px się zmieściła
-                            ...(kompakt
+                            // CCalendar: tło kolor+12, ramka 1 px kolor+4d, bez paska po lewej;
+                            // zaznaczony ma pierścień 2 px biały + 4 px kolor+66
+                            background: `${kolor}12`,
+                            border: `1px solid ${kolor}4d`,
+                            ...(ciasny
                               ? { borderTopWidth: 0, borderBottomWidth: 0 }
                               : {}),
+                            boxShadow: zaznaczony
+                              ? `0 0 0 2px #fff, 0 0 0 4px ${kolor}66`
+                              : undefined,
                           }}
                         >
                           {kompakt ? (
-                            <span className="block truncate text-[11px] leading-none font-medium">
+                            <span
+                              className={`block truncate leading-none font-medium ${variant === "week" ? "text-xs" : "text-[13px]"}`}
+                            >
                               {`${o.title} · ${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}`}
                             </span>
                           ) : variant === "week" ? (
                             <>
-                              <span className="block truncate text-xs leading-[1.3] font-medium">
+                              <span className="block truncate text-[13px] leading-[1.3] font-medium">
                                 {o.title}
                               </span>
-                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-soft-foreground">
+                              <span className="mt-px block truncate text-[11px] leading-[14px] text-soft-foreground tabular-nums">
                                 {[godzinyBloku, licznik, cykliczny]
                                   .filter(Boolean)
                                   .join(" · ")}
@@ -416,21 +444,26 @@ export function TimeGrid({
                             </>
                           ) : (
                             // Jedna linia bez zawijania: przy wąskim bloku najpierw ucina się opis, potem tytuł
-                            <span className="flex min-w-0 items-baseline gap-2.5 text-[13px] leading-[1.3] whitespace-nowrap">
+                            <span className="flex w-full min-w-0 items-center gap-2.5 text-sm leading-[1.3] whitespace-nowrap">
                               <span className="min-w-0 shrink truncate font-medium">
                                 {o.title}
                               </span>
-                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-soft-foreground">
+                              <span className="min-w-0 shrink-[4] truncate text-xs text-soft-foreground tabular-nums">
                                 {`${godzinyBloku} · ${kategoria?.name ?? "Bez kategorii"}`}
                               </span>
                               {cykliczny && (
-                                <span className="shrink-0 font-mono text-[11px] text-soft-foreground">
+                                <span className="shrink-0 text-xs text-soft-foreground">
                                   {cykliczny}
                                 </span>
                               )}
-                              <span className="ml-auto shrink-0 font-mono text-[11px] text-soft-foreground">
-                                {licznik}
-                              </span>
+                              {licznik && (
+                                <StatusBadge
+                                  tone="outline"
+                                  className="ml-auto shrink-0 tabular-nums"
+                                >
+                                  {licznik}
+                                </StatusBadge>
+                              )}
                             </span>
                           )}
                         </button>
@@ -457,11 +490,12 @@ export function TimeGrid({
                     const koniec = i.startMin + czas;
                     const godzinyTreningu = `${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)}–${formatClockTime(Math.floor(koniec / 60), koniec % 60, clock)}`;
                     const kompakt = variant === "week" ? czas < 60 : czas < 45;
+                    const ciasny = czas < 30;
                     return (
                       <div
                         key={i.key}
                         data-testid={`sport-${i.key}`}
-                        className={`absolute box-border px-1${kompakt ? "" : " py-0.5"}`}
+                        className={`absolute box-border ${variant === "week" ? "px-[3px]" : "px-1"}${kompakt ? "" : variant === "week" ? " pt-px pb-0.5" : " py-0.5"}`}
                         style={{
                           top: (i.startMin / 60) * wysokoscGodziny,
                           height: (czas / 60) * wysokoscGodziny,
@@ -470,45 +504,46 @@ export function TimeGrid({
                         }}
                       >
                         {/* Link (nie przycisk): kolumna nie zaczyna na nim przeciągania, a klik
-                            otwiera dymek treningu na /sport. Plan ma przerywaną ramkę, wykonany jest pełny */}
+                            otwiera dymek treningu na /sport. Plan ma białe tło i przerywaną ramkę, wykonany jak blok */}
                         <Link
                           href={sportItemHref(i)}
                           data-planned={i.planned || undefined}
                           draggable={false}
                           title={`${i.title} ${godzinyTreningu}`}
-                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden rounded-md px-2 text-left text-foreground outline-none focus-visible:shadow-focus-inset ${kompakt ? "justify-center py-0" : "py-[5px]"}`}
+                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden text-left text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${variant === "week" ? `rounded-[8px] px-2 ${kompakt ? "justify-center py-0" : "py-1"}` : `rounded-md px-3 ${kompakt ? "justify-center py-0" : "py-[7px]"}`}`}
                           style={{
                             background: i.planned
                               ? "#ffffff"
-                              : `${SPORT_COLOR}14`,
+                              : `${SPORT_COLOR}12`,
                             border: i.planned
                               ? `1px dashed ${SPORT_COLOR}`
-                              : `1px solid ${SPORT_COLOR}40`,
-                            borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
-                            ...(kompakt
+                              : `1px solid ${SPORT_COLOR}4d`,
+                            ...(ciasny
                               ? { borderTopWidth: 0, borderBottomWidth: 0 }
                               : {}),
                           }}
                         >
                           {kompakt ? (
-                            <span className="block truncate text-[11px] leading-none font-medium">
+                            <span
+                              className={`block truncate leading-none font-medium ${variant === "week" ? "text-xs" : "text-[13px]"}`}
+                            >
                               {`${i.title} · ${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)}`}
                             </span>
                           ) : variant === "week" ? (
                             <>
-                              <span className="block truncate text-xs leading-[1.3] font-medium">
+                              <span className="block truncate text-[13px] leading-[1.3] font-medium">
                                 {i.title}
                               </span>
-                              <span className="mt-0.5 block truncate font-mono text-[10px] leading-[14px] text-soft-foreground">
+                              <span className="mt-px block truncate text-[11px] leading-[14px] text-soft-foreground tabular-nums">
                                 {godzinyTreningu}
                               </span>
                             </>
                           ) : (
-                            <span className="flex min-w-0 items-baseline gap-2.5 text-[13px] leading-[1.3] whitespace-nowrap">
+                            <span className="flex w-full min-w-0 items-center gap-2.5 text-sm leading-[1.3] whitespace-nowrap">
                               <span className="min-w-0 shrink truncate font-medium">
                                 {i.title}
                               </span>
-                              <span className="min-w-0 shrink-[4] truncate font-mono text-[11px] text-soft-foreground">
+                              <span className="min-w-0 shrink-[4] truncate text-xs text-soft-foreground tabular-nums">
                                 {`${godzinyTreningu} · Sport`}
                               </span>
                             </span>
@@ -542,14 +577,18 @@ export function TimeGrid({
                   <>
                     <div
                       data-testid="linia-teraz"
-                      className="pointer-events-none absolute right-0 left-0 border-t-2 border-destructive"
+                      // Czerwona linia 2 px z kropką 8 px na lewym końcu, nad blokami
+                      className="pointer-events-none absolute right-0 left-0 z-[3] border-t-2 border-destructive"
                       style={{ top: (linia / 60) * wysokoscGodziny }}
-                    />
+                    >
+                      <span className="absolute -top-[5px] -left-[5px] size-2 rounded-full bg-destructive" />
+                    </div>
                     {variant === "day" && (
                       <span
                         data-testid="etykieta-teraz"
-                        className="pointer-events-none absolute -left-[58px] rounded bg-destructive-strong px-1 py-px font-mono text-[10px] text-white"
-                        style={{ top: (linia / 60) * wysokoscGodziny - 9 }}
+                        // Jak na Dziś: biała na destructive-strong, promień 6 px, 11 px / 500
+                        className="pointer-events-none absolute -left-[58px] z-[3] rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
+                        style={{ top: (linia / 60) * wysokoscGodziny - 10 }}
                       >
                         {formatClockTime(
                           Math.floor(linia / 60),

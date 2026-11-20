@@ -201,6 +201,26 @@ describe("DayPlan", () => {
     );
   });
 
+  it("zaznaczony blok ma fokus niezależny od pierścienia zaznaczenia", async () => {
+    render(<Plan d={dane()} />);
+    await userEvent.click(screen.getByRole("button", { name: /Matematyka/ }));
+    const blok = screen.getByRole("button", {
+      name: /Matematyka/,
+      pressed: true,
+    });
+    // Pierścień zaznaczenia siedzi w inline boxShadow, więc fokus to outline z odstępem
+    expect(blok.style.boxShadow).toMatch(
+      /0 0 0 4px #15803d66|0px 0px 0px 4px/,
+    );
+    expect(blok).toHaveClass(
+      "focus-visible:outline-solid",
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+    expect(blok.className).not.toContain("shadow-focus");
+  });
+
   it("oś przewija się na trwający blok, „Teraz” jest na nim, czerwona linia na 10:20", () => {
     render(<Plan d={dane()} />);
     // 48 px na godzinę: 10:00 → 480 px

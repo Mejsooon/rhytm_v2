@@ -322,7 +322,8 @@ export function DayPlan({
                 )}
               </>
             );
-            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+            // Fokus jako outline z odstępem: inline boxShadow zaznaczenia nie może go zasłonić
+            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
 
             // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
             if (p.kind !== "block") {
