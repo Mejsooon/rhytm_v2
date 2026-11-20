@@ -224,6 +224,7 @@ export function PageMenu({
           onOpenChange={zmienOtwarcie}
           width={widok === "ikony" ? 300 : 230}
           align="start"
+          className={widok === "menu" ? "p-1" : undefined}
           ariaLabel={`Menu strony ${tytul}`}
         >
           {zawartosc}

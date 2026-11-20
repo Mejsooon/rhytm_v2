@@ -17,7 +17,7 @@ function Toaster(props: ToasterProps) {
         classNames: {
           // .toast z coss.css; wersje z „!” przebijają własne style sonnera
           toast:
-            "rounded-lg shadow-lg rounded-xl! border! border-border! py-3! pr-3! pl-4! text-sm! shadow-[var(--shadow-lg),0_16px_32px_-12px_rgba(0,0,0,.14)]!",
+            "items-center! gap-3! rounded-lg! border! border-border! py-3! pr-3! pl-4! text-sm! shadow-[var(--shadow-lg),0_16px_32px_-12px_rgba(0,0,0,.14)]!",
         },
       }}
       style={

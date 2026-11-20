@@ -29,14 +29,14 @@ describe("Toaster", () => {
     );
   });
 
-  it("toast ma promień rounded-lg i cień shadow-lg", async () => {
+  it("toast ma promień 12 px, ramkę i cień COSS", async () => {
     render(<Toaster />);
     act(() => {
       toast("Zapisano");
     });
     await screen.findByText("Zapisano");
     const el = document.querySelector("[data-sonner-toast]") as HTMLElement;
-    expect(el).toHaveClass("rounded-lg", "shadow-lg");
+    expect(el).toHaveClass("rounded-lg!", "border-border!");
   });
 
   it("główny layout montuje Toaster w całej aplikacji", () => {

@@ -32,6 +32,7 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
       onOpenChange={setOpen}
       side="top"
       width={212}
+      className="p-1"
       trigger={
         <button
           type="button"
@@ -63,8 +64,7 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
         </button>
       }
     >
-      {/* Popover ma własny padding 10 px, makieta 6 px — wyrównujemy ujemnym marginesem */}
-      <div className="-m-1 flex flex-col gap-0.5 text-[13px]">
+      <div className="flex flex-col gap-0.5 text-[13px]">
         <div className="mb-1 border-b border-border px-2.5 pt-2 pb-2.5">
           <div className="font-medium">{user.displayName}</div>
           <div className="text-xs text-muted-foreground">{user.email}</div>
