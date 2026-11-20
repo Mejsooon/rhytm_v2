@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Szukaj (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+</style>
+</helmet>
+<div class="m-screen" style="background:#fafafa">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="background:transparent;border-bottom:0;gap:8px;padding:0 8px 0 16px">
+    <label class="igroup" style="flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" value="{{q}}" onChange="{{onQ}}" placeholder="Szukaj w rhytm" aria-label="Szukaj"></label>
+    <a href="CMToday.dc.html" class="btng">Anuluj</a>
+  </header>
+  <div style="height:748px;overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+    <sc-if value="{{empty}}" hint-placeholder-val="{{true}}">
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Ostatnio</span><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{recent}}" as="r" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{r.pick}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{r.t}}</button></sc-for></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Szybkie akcje</span><div class="card" style="overflow:hidden"><a href="CMQuickAdd.dc.html" class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span style="flex:1">Nowe zadanie lub blok</span></a><a href="CMRunNew.dc.html" class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg><span style="flex:1">Zapisz bieg</span></a><a href="CMSleep.dc.html" class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path></svg><span style="flex:1">Wpis snu</span></a><a href="CMEditor.dc.html" class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg><span style="flex:1">Nowa strona</span></a></div></div>
+    </sc-if>
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="0">
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">{{g.t}}</span><div class="card" style="overflow:hidden"><sc-for list="{{g.items}}" as="it" hint-placeholder-count="2"><a href="{{it.href}}" class="m-row" style="min-height:52px"><span style="flex:1;min-width:0"><span style="display:block">{{it.t}}</span><span class="hint num">{{it.m}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-for></div></div>
+    </sc-for>
+    <sc-if value="{{none}}" hint-placeholder-val="{{false}}"><div class="empty"><span class="empty-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span><p class="muted" style="margin:0">Nic nie znaleziono dla „{{q}}”</p></div></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const q = (this.state && this.state.q) || '';
+    const ALL = [
+      ['Strony', 'Subscriptions', '7 wierszy · 195,30 zł/mies.', 'CMSubs.dc.html'], ['Strony', 'Books', '11 wierszy', 'CMPages.dc.html'], ['Strony', 'Projects', '8 wierszy', 'CMPages.dc.html'],
+      ['Kalendarz', 'rhytm — kod', 'dziś 10:30–12:30', 'CMCalendarDay.dc.html'], ['Kalendarz', 'Bieg 10 km', 'dziś 16:00', 'CMCalendarDay.dc.html'], ['Kalendarz', 'Bazy danych — projekt', 'dziś 19:00', 'CMCalendarDay.dc.html'],
+      ['Nawyki', 'Woda 2 l', 'seria 12 dni', 'CMHabitDetail.dc.html'], ['Nawyki', 'Czytanie 20 min', 'seria 5 dni', 'CMHabitDetail.dc.html'],
+      ['Sport', 'Trening siłowy — Push', 'czw 12.11', 'CMGym.dc.html']
+    ];
+    const ql = q.trim().toLowerCase();
+    const hits = ql ? ALL.filter((x) => (x[1] + ' ' + x[2]).toLowerCase().indexOf(ql) >= 0) : [];
+    const groups = [];
+    hits.forEach((x) => { let g = groups.filter((y) => y.t === x[0])[0]; if (!g) { g = { t: x[0], items: [] }; groups.push(g); } g.items.push({ t: x[1], m: x[2], href: x[3] }); });
+    return {
+      q, onQ: (e) => this.setState({ q: e.target.value }), empty: !ql, none: !!ql && !hits.length, groups,
+      recent: ['bazy', 'bieg', 'netflix', 'woda'].map((t) => ({ t, pick: () => this.setState({ q: t }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

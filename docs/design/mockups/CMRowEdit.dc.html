@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Edycja wiersza (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .date-cell{height:40px;padding:0;border:0;border-radius:8px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;cursor:pointer}
+</style>
+</helmet>
+<div class="m-screen">
+
+  <header class="m-head" style="padding: 0 8px; border-bottom: 0"><a href="CMPages.dc.html" class="btng ic" aria-label="Strony"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1"></div><span style="width: 44px"></span></header>
+  <div class="m-body" style="opacity: .45; padding-top: 0; display: flex; flex-direction: column; gap: 16px"><h1 class="m-title" style="font-size: 24px">Subscriptions</h1><div class="card" style="height: 90px"></div><div class="card" style="height: 340px"></div></div>
+  <a href="CMSubs.dc.html" class="backdrop" aria-label="Zamknij"></a>
+  <div class="dlg m-sheet" role="dialog" aria-label="Edytuj subskrypcję" style="height: 90%">
+    <div class="m-grab" aria-hidden="true"></div>
+    <div class="dlg-h" style="align-items: center; padding: 4px 12px 8px; border-bottom: 1px solid var(--border)">
+      <a href="CMSubs.dc.html" class="btng" style="color: var(--muted-foreground)">Anuluj</a>
+      <h2 class="dlg-t" style="flex: 1; text-align: center; font-size: 16px">Netflix</h2>
+      <a href="CMSubs.dc.html" class="btnp">Zapisz</a>
+    </div>
+    <div class="dlg-b" style="flex: 1; overflow-y: auto; padding-top: 16px; gap: 18px">
+      <label class="fld">Nazwa<input class="inp" type="text" value="Netflix"></label>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: end">
+        <label class="fld">Kwota<span class="igroup"><input class="num" type="text" inputMode="decimal" value="43,00"><span>zł</span></span></label>
+        <div class="seg" role="group" aria-label="Cykl" style="display: flex"><sc-for list="{{cycles}}" as="c" hint-placeholder-count="2"><button type="button" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="flex: 1">{{c.t}}</button></sc-for></div>
+      </div>
+      <div class="fld">Data odnowienia
+        <div class="card" style="padding: 10px 10px 8px; font-weight: 400">
+          <div style="display: flex; align-items: center; padding: 0 2px 6px"><button type="button" class="btng ic" aria-label="Poprzedni miesiąc" onClick="{{prev}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="flex: 1; text-align: center; font-weight: 600; font-size: 14px">{{calLabel}}</span><button type="button" class="btng ic" aria-label="Następny miesiąc" onClick="{{next}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+          <div class="lbl" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cal}}" as="d" hint-placeholder-count="35"><button type="button" class="date-cell" aria-label="{{d.label}}" aria-pressed="{{d.p}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.t}}</button></sc-for></div>
+        </div>
+        <span class="hint num">{{dateTxt}}</span>
+      </div>
+      <div class="fld"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip m-hit" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div></div>
+      <div class="card" style="overflow: hidden">
+        <div class="m-row"><span style="flex: 1">Aktywna</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{active}}" aria-label="Aktywna" onClick="{{toggleActive}}"></button></div>
+        <div class="m-row"><span style="flex: 1">Przypomnij 3 dni przed</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div>
+      </div>
+      <a href="CMSubs.dc.html" class="btndo" style="width: 100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń wiersz</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const cyc = S.cyc || 'mies.', cat = S.cat || 'Rozrywka', iso = S.iso || '2026-11-18', mo = S.mo || 0;
+    const MON = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const first = new Date(Date.UTC(2026, 10 + mo, 1));
+    const y = first.getUTCFullYear(), m = first.getUTCMonth();
+    const lead = (first.getUTCDay() + 6) % 7, nd = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const p2 = (x) => String(x).padStart(2, '0');
+    const cal = [];
+    for (let i = 0; i < lead; i++) cal.push({ t: '', label: '', p: 'false', s: 'visibility:hidden', pick: () => {} });
+    for (let d = 1; d <= nd; d++) {
+      const ds = y + '-' + p2(m + 1) + '-' + p2(d), on = ds === iso, today = ds === '2026-11-15';
+      cal.push({ t: d, label: d + ' ' + MON[m], p: on ? 'true' : 'false', pick: () => this.setState({ iso: ds }),
+        s: on ? 'background:var(--primary);color:var(--primary-foreground);font-weight:600' : today ? 'background:var(--accent);color:var(--foreground);font-weight:600' : 'background:transparent;color:var(--foreground)' });
+    }
+    const dd = Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    return {
+      cycles: ['mies.', 'rok'].map((c) => ({ t: c, p: c === cyc ? 'true' : 'false', pick: () => this.setState({ cyc: c }) })),
+      cal, calLabel: MON[m] + ' ' + y, prev: () => this.setState({ mo: mo - 1 }), next: () => this.setState({ mo: mo + 1 }),
+      dateTxt: iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) + ' · ' + (dd < 0 ? 'minęło' : dd === 0 ? 'dziś' : 'za ' + dd + ' dni'),
+      cats: ['Rozrywka', 'Chmura', 'Praca', 'Nauka', 'Zdrowie', 'Inne'].map((c) => ({ t: c, p: c === cat ? 'true' : 'false', pick: () => this.setState({ cat: c }) })),
+      active: S.act === false ? 'false' : 'true', toggleActive: () => this.setState({ act: S.act === false }),
+      rem: S.rem ? 'true' : 'false', toggleRem: () => this.setState({ rem: !S.rem })
+    };
+  }
+}
+</script>
+</body>
+</html>

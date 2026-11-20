@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Szybkie dodawanie (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+</style>
+</helmet>
+<div class="m-screen" style="background:#fafafa">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="background:transparent;border-bottom:0"><div style="flex:1"><div class="hint num">Niedziela · 15 listopada</div><h1 class="m-title">Dziś</h1></div></header>
+  <div style="padding:12px 16px;display:flex;flex-direction:column;gap:16px;opacity:.5"><div class="card" style="height:150px"></div><div class="card" style="height:220px"></div></div>
+  <a href="CMToday.dc.html" aria-label="Zamknij" class="backdrop"></a>
+  <div role="dialog" aria-label="Szybko dodaj" class="dlg m-sheet" style="border-bottom:0">
+    <div class="m-grab"></div>
+    <div class="dlg-h" style="padding:8px 8px 8px 20px;align-items:center"><h2 class="dlg-t" style="flex:1">Szybko dodaj</h2><a href="CMToday.dc.html" class="btng ic" aria-label="Zamknij"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b" style="padding:4px 20px 20px">
+      <div class="seg" style="display:flex" role="group" aria-label="Rodzaj"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="4"><button type="button" style="flex:1" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      <label class="fld" style="font-weight:400"><span class="lbl">{{fieldLbl}}</span><input class="inp" type="text" placeholder="{{ph}}"></label>
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Kiedy</span>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px"><sc-for list="{{whens}}" as="w" hint-placeholder-count="4"><button type="button" class="chip" style="flex:none" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div>
+      </div>
+      <sc-if value="{{isBlock}}" hint-placeholder-val="{{false}}"><a href="CMBlockSheet.dc.html" class="m-row" style="padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span style="flex:1">Pełny formularz bloku (kategoria, zadania, powtarzanie)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
+      <sc-if value="{{isRun}}" hint-placeholder-val="{{false}}"><a href="CMRunNew.dc.html" class="m-row" style="padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span style="flex:1">Pełny formularz biegu (dystans, tempo)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
+    </div>
+    <div class="dlg-f" style="padding-bottom:28px"><a href="CMToday.dc.html" class="btnp" style="width:100%">Dodaj</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const k = S.k || 'task', w = S.w || 'Dziś';
+    const K = [['task', 'Zadanie', 'Co jest do zrobienia?', 'Zadanie'], ['block', 'Blok', 'Nazwa bloku, np. Nauka SQL', 'Blok w kalendarzu'], ['run', 'Bieg', 'Np. 8 km spokojnie', 'Bieg'], ['habit', 'Nawyk', 'Np. Woda 2 l', 'Nawyk']];
+    const cur = K.filter((x) => x[0] === k)[0];
+    return {
+      kinds: K.map((x) => ({ t: x[1], p: x[0] === k ? 'true' : 'false', pick: () => this.setState({ k: x[0] }) })),
+      ph: cur[2], fieldLbl: cur[3], isBlock: k === 'block', isRun: k === 'run',
+      whens: ['Dziś', 'Dziś 18:00', 'Jutro', 'Pn 16.11', 'Bez daty'].map((t) => ({ t, p: t === w ? 'true' : 'false', pick: () => this.setState({ w: t }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

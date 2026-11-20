@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Kalendarz, miesiąc (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .month-cell{height:46px;border:0;border-radius:10px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+
+  <header class="m-head" style="flex: none; padding-top: 4px; padding-bottom: 4px">
+    <div style="flex: 1; min-width: 0"><div class="lbl num">{{year}}</div><h1 class="m-title">{{monthName}}</h1></div>
+    <button type="button" class="btng ic" aria-label="Poprzedni miesiąc" onClick="{{prev}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+    <button type="button" class="btng ic" aria-label="Następny miesiąc" onClick="{{next}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+  </header>
+  <nav class="seg" aria-label="Widok kalendarza" style="display: flex; flex: none; margin: 12px 16px 8px"><a href="CMCalendarDay.dc.html" style="flex: 1">Dzień</a><a href="CMCalendarWeek.dc.html" style="flex: 1">Tydzień</a><a href="CMCalendarMonth.dc.html" aria-current="page" style="flex: 1">Miesiąc</a></nav>
+  <div style="padding: 4px 12px 8px; flex: none">
+    <div class="lbl" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding-bottom: 6px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cells}}" as="c" hint-placeholder-count="35"><button type="button" class="month-cell" aria-label="{{c.label}}" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="{{c.s}}"><span class="num" style="{{c.ns}}">{{c.t}}</span><span style="display: flex; gap: 2px; height: 5px"><sc-for list="{{c.dots}}" as="dt" hint-placeholder-count="2"><span style="{{dt.s}}"></span></sc-for></span></button></sc-for></div>
+  </div>
+  <div style="flex: 1; overflow-y: auto; border-top: 1px solid var(--border); padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; justify-content: space-between"><h2 class="card-t" style="font-size: 17px">{{selTitle}}</h2><a href="CMCalendarDay.dc.html" class="btng" style="padding: 0 4px">Otwórz dzień</a></div>
+    <sc-for list="{{selItems}}" as="b" hint-placeholder-count="3"><a href="CMCalendarDay.dc.html" style="{{b.s}}"><span class="num muted" style="font-size: 12px; width: 42px">{{b.time}}</span><span style="flex: 1; font-weight: 500; font-size: 14px">{{b.t}}</span></a></sc-for>
+    <sc-if value="{{selEmpty}}" hint-placeholder-val="{{false}}"><a href="CMBlockSheet.dc.html" class="btn" style="width: 100%; height: 56px; border-style: dashed; box-shadow: none; color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Brak bloków — dodaj</a></sc-if>
+  </div>
+  <dc-import name="CMTabBar" active="cal" hint-size="390px,64px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const CAT = { own: '#15803d', uni: '#3b82f6', sport: '#f59e0b', work: '#8b5cf6', life: '#eab308' };
+    const DAYS = {
+      9: [[7, 0.5, 'Poranna rutyna', 'life'], [10, 2, 'Systemy operacyjne — wykład', 'uni'], [14, 1.5, 'Strona Fanaberia', 'work'], [18, 1, 'Siłownia — Push', 'sport']],
+      10: [[8, 1.5, 'Bazy danych — lab', 'uni'], [12, 2, 'rhytm — kod', 'own'], [17, 1, 'Bieg 6 km', 'sport']],
+      11: [[9, 3, 'Strona Fanaberia', 'work'], [15, 1.5, 'C# — ćwiczenia', 'uni'], [19, 1, 'Angielski', 'life']],
+      12: [[7, 0.5, 'Poranna rutyna', 'life'], [10, 2, 'rhytm — kod', 'own'], [18, 1.5, 'Siłownia — Pull', 'sport']],
+      13: [[10, 1.5, 'Wstęp do cyberbezpieczeństwa', 'uni'], [13, 2, 'NetScope — research', 'own'], [17, 1, 'Bieg interwały', 'sport']],
+      14: [[9, 1, 'Zakupy', 'life'], [11, 3, 'Strona Fanaberia — klient', 'work'], [16, 2, 'Długi bieg 14 km', 'sport']],
+      15: [[8, 0.5, 'Poranna rutyna', 'life'], [10.5, 2, 'rhytm — kod', 'own'], [16, 1, 'Bieg 10 km', 'sport'], [19, 1, 'Bazy danych — projekt', 'uni']]
+    };
+    const S = this.state || {};
+    const mo = S.mo || 0;
+    const base = new Date(Date.UTC(2026, 10 + mo, 1));
+    const y = base.getUTCFullYear(), m = base.getUTCMonth();
+    const MON = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const MONG = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const lead = (base.getUTCDay() + 6) % 7;
+    const nd = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const sel = S.sel || (mo === 0 ? 15 : 1);
+    const isNov = y === 2026 && m === 10;
+    const evs = (d) => {
+      if (isNov && DAYS[d]) return DAYS[d];
+      const wd = (lead + d - 1) % 7;
+      if (wd === 5 || wd === 6) return [[10, 2, 'Długi bieg', 'sport']];
+      return d % 3 === 0 ? [[10, 2, 'rhytm — kod', 'own'], [18, 1, 'Siłownia', 'sport']] : [[9, 1.5, 'Zajęcia', 'uni']];
+    };
+    const fmt = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + (h % 1 ? '30' : '00');
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push({ t: '', label: '', p: 'false', pick: () => {}, s: 'visibility:hidden', ns: '', dots: [] });
+    for (let d = 1; d <= nd; d++) {
+      const on = d === sel, today = isNov && d === 15;
+      const cats = evs(d).map((b) => b[3]).filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
+      cells.push({ t: d, label: d + ' ' + MONG[m], p: on ? 'true' : 'false', pick: () => this.setState({ sel: d }),
+        s: on ? 'background:var(--primary);color:var(--primary-foreground);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : today ? 'background:var(--accent);color:var(--foreground)' : 'background:transparent;color:var(--foreground)',
+        ns: 'font-size:15px' + (today ? ';font-weight:600' : ''),
+        dots: cats.map((c) => ({ s: 'width:5px;height:5px;border-radius:50%;background:' + (on ? '#fafafa' : CAT[c]) })) });
+    }
+    const items = evs(sel);
+    return {
+      year: y, monthName: MON[m], cells,
+      prev: () => this.setState({ mo: mo - 1, sel: 1 }), next: () => this.setState({ mo: mo + 1, sel: 1 }),
+      selTitle: sel + ' ' + MONG[m], selEmpty: !items.length,
+      selItems: items.map((b) => ({ t: b[2], time: fmt(b[0]), s: 'display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border-radius:10px;box-sizing:border-box;color:inherit;text-decoration:none;background:' + CAT[b[3]] + '12;border:1px solid ' + CAT[b[3]] + '4d' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

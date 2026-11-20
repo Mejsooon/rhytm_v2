@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Onboarding, 7 kroków (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+html body .step-title{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.02em}
+html body .choice{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--input);border-radius:12px;background:#fff;background-clip:padding-box;box-shadow:var(--shadow-xs5);font:inherit;color:var(--foreground);cursor:pointer;box-sizing:border-box;min-height:44px}
+html body .choice:hover{background:#fafafa}
+html body .choice[aria-checked="true"]{border-color:rgba(0,0,0,.24);background:rgba(0,0,0,.025);box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+html body .choice[aria-checked="true"] .cbx{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+html body .choice[aria-disabled="true"]{background:#fafafa;cursor:default;box-shadow:none}
+html body .choice[aria-disabled="true"] .cbx{background:#f4f4f5;border-color:var(--border);box-shadow:none;color:#737373}
+html body button.m-row{width:100%;min-height:64px;border:0;border-bottom:1px solid var(--border);background:#fff;font:inherit;text-align:left;cursor:pointer}
+html body button.m-row:last-child{border-bottom:0}
+html body button.m-row[aria-checked="true"]{background:rgba(0,0,0,.025)}
+html body button.m-row[aria-checked="true"] .cbx{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+html body .steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding:0 16px 8px}
+</style>
+</helmet>
+<div class="m-screen" style="display:flex;flex-direction:column;background:#fafafa">
+  <div class="m-status"><span>9:41</span><span></span></div>
+
+  <header style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex:none">
+    <div class="m-head" style="border-bottom:0;background:transparent;padding:0 12px 0 8px">
+      <sc-if value="{{canBack}}" hint-placeholder-val="{{false}}"><button type="button" class="btng ic" aria-label="Wstecz" onClick="{{prev}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button></sc-if>
+      <sc-if value="{{noBack}}" hint-placeholder-val="{{true}}"><span style="display:flex;align-items:center;justify-content:center;width:44px"><svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg></span></sc-if>
+      <span style="flex: 1; text-align: center"><span class="bdg sec num">Krok {{step}} z 7</span></span>
+      <a href="CMLogin.dc.html" class="btng muted">Wyloguj</a>
+    </div>
+    <div role="progressbar" aria-label="Postęp onboardingu" aria-valuemin="1" aria-valuemax="7" aria-valuenow="{{step}}" class="steps"><sc-for list="{{dots}}" as="d" hint-placeholder-count="7"><span style="{{d.s}}"></span></sc-for></div>
+  </header>
+
+  <div style="flex: 1; overflow-y: auto; padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 18px">
+    <sc-if value="{{s1}}" hint-placeholder-val="{{true}}">
+      <div><h1 class="step-title">Uzupełnij profil</h1><p class="muted" style="margin: 6px 0 0">Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach.</p></div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span class="avatar" style="width: 56px; height: 56px; font-size: 18px; background: #262626; color: #fafafa; box-shadow: none; flex: none">{{initials}}</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 500">Zdjęcie profilowe</span><span class="hint" style="font-size: 13px">Bez zdjęcia pokażemy inicjały</span></span>
+        <button type="button" class="btn">Wgraj</button>
+      </div>
+      <label class="fld">Imię lub pseudonim<input class="inp" type="text" value="{{name}}" onChange="{{onName}}" placeholder="Jak mamy się do Ciebie zwracać?" autocomplete="nickname"></label>
+      <div class="fld">Strefa czasowa
+        <span style="position: relative; display: block"><button type="button" class="dd" onClick="{{tzToggle}}" aria-haspopup="listbox" aria-expanded="{{tzExp}}"><span>{{tzTxt}} <span class="hint num">{{tzSub}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button>
+          <sc-if value="{{tzOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Strefa czasowa" class="pop" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;padding:4px"><sc-for list="{{tzs}}" as="z" hint-placeholder-count="5"><button type="button" role="option" class="mi" aria-selected="{{z.p}}" onClick="{{z.pick}}" style="justify-content:space-between"><span>{{z.t}} <span class="hint num">{{z.sub}}</span></span><span>{{z.check}}</span></button></sc-for></div></sc-if>
+        </span>
+        <span class="hint" style="font-weight: 400; font-size: 12px">Wykryta z przeglądarki</span>
+      </div>
+      <div class="fld">Tydzień zaczyna się od<div class="seg" style="display:flex"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="2"><button type="button" style="flex:1" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div></div>
+      <div class="fld">Format godziny<div class="seg" style="display:flex"><sc-for list="{{clocks}}" as="c" hint-placeholder-count="2"><button type="button" style="flex:1" aria-pressed="{{c.p}}" onClick="{{c.pick}}"><span class="num" style="font-size: 13px">{{c.t}}</span></button></sc-for></div></div>
+    </sc-if>
+
+    <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="step-title">Kim jesteś?</h1><p class="muted" style="margin: 6px 0 0">Dopasujemy kategorie w kalendarzu. Możesz zaznaczyć kilka.</p></div>
+      <div class="card" style="padding: 0; gap: 0; overflow: hidden"><sc-for list="{{roles}}" as="r" hint-placeholder-count="5"><button type="button" role="checkbox" aria-checked="{{r.on}}" onClick="{{r.pick}}" class="m-row"><span class="cbx" aria-hidden="true" aria-checked="{{r.on}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><span style="flex: 1"><span style="display: block; font-weight: 500">{{r.t}}</span><span class="hint" style="font-size: 13px">{{r.d}}</span></span></button></sc-for></div>
+      <sc-if value="{{isStudent}}" hint-placeholder-val="{{true}}"><label class="fld">Kierunek studiów <span class="hint" style="font-weight: 400; font-size: 12px; margin-top: -4px">opcjonalnie</span><input class="inp" type="text" value="{{field}}" onChange="{{onField}}" placeholder="Np. Informatyka"></label></sc-if>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px"><span class="lbl" style="margin-right: 2px">W kalendarzu</span><sc-for list="{{cats}}" as="c" hint-placeholder-count="3"><span style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.t}}</span></sc-for></div>
+    </sc-if>
+
+    <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="step-title">Co chcesz ogarnąć w rhytm?</h1><p class="muted" style="margin: 6px 0 0">Na tej podstawie przygotujemy startowe strony i cele.</p></div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="choice" role="checkbox" aria-checked="{{g.on}}" aria-disabled="{{g.locked}}" onClick="{{g.pick}}" style="flex-direction:column;gap:4px;min-height:76px"><span style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 8px"><span style="font-weight: 500">{{g.t}}</span><span class="cbx" aria-hidden="true" aria-checked="{{g.on}}"><sc-if value="{{g.isLocked}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if><sc-if value="{{g.isFree}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if></span></span><span class="hint" style="font-size: 12px">{{g.d}}</span></button></sc-for></div>
+      <p class="hint" style="margin: -4px 0 0; font-size: 13px">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
+      <div class="card" style="padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 0"><span class="lbl">Cele treningowe · jeden albo oba</span><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><div style="{{t.rowS}}"><button type="button" class="cbx m-hit" role="checkbox" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></button><span style="flex: 1; min-width: 0">{{t.lbl}}</span><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><span class="m-step"><button type="button" aria-label="{{t.minus}}" onClick="{{t.m}}">−</button><span class="num">{{t.txt}}</span><button type="button" aria-label="{{t.plus}}" onClick="{{t.p}}">+</button></span></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><span class="hint num">wyłączony</span></sc-if></div></sc-for><sc-if value="{{noGoal}}" hint-placeholder-val="{{false}}"><span class="err" style="padding-bottom: 10px">Włącz co najmniej jeden cel.</span></sc-if></div>
+      <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><div class="card" style="padding: 0; gap: 0"><div class="m-row"><span style="flex: 1">Cel snu</span><span class="m-step"><button type="button" aria-label="Krócej" onClick="{{slM}}">−</button><span class="num">{{sleep}}</span><button type="button" aria-label="Dłużej" onClick="{{slP}}">+</button></span></div></div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="step-title">Skąd o nas usłyszałeś?</h1><p class="muted" style="margin: 6px 0 0">Jedno pytanie, które mówi nam, gdzie warto o rhytm opowiadać. Możesz je pominąć.</p></div>
+      <div role="group" aria-label="Źródło" style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{srcs}}" as="x" hint-placeholder-count="10"><button type="button" class="chip" aria-pressed="{{x.p}}" onClick="{{x.pick}}">{{x.t}}</button></sc-for></div>
+      <sc-if value="{{isOther}}" hint-placeholder-val="{{false}}"><label class="fld">Gdzie dokładnie?<input class="inp" type="text" value="{{other}}" onChange="{{onOther}}" placeholder="Np. podcast, newsletter"></label></sc-if>
+    </sc-if>
+
+    <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="step-title">Od czego zaczynasz?</h1><p class="muted" style="margin: 6px 0 0">Dodamy te strony do listy Stron. Zaznaczyliśmy je na podstawie Twoich celów.</p></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{pages}}" as="p" hint-placeholder-count="5"><button type="button" class="choice" role="checkbox" aria-checked="{{p.on}}" onClick="{{p.pick}}"><span class="cbx" aria-hidden="true" aria-checked="{{p.on}}" style="margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-weight: 600">{{p.t}}</span><sc-if value="{{p.rec}}" hint-placeholder-val="{{false}}"><span class="bdg ok">z Twoich celów</span></sc-if></span><span class="hint" style="font-size: 13px">{{p.d}}</span><span class="hint num" style="font-size: 11px">{{p.f}}</span></span></button></sc-for></div>
+      <p class="hint" style="margin: 0; font-size: 12px; line-height: 1.5">Pustą stronę i kolejne szablony dodasz później przyciskiem „Nowa strona”.</p>
+    </sc-if>
+
+    <sc-if value="{{s6}}" hint-placeholder-val="{{false}}">
+      <div><h1 class="step-title">Przypomnienia</h1><p class="muted" style="margin: 6px 0 0">Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili.</p></div>
+      <div class="card" style="padding: 14px; display: flex; flex-direction: row; align-items: center; gap: 12px">
+        <span style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0,0,0,.05); display: flex; align-items: center; justify-content: center; flex: none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg></span>
+        <span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Powiadomienia</span><span class="hint" style="font-size: 12px">{{permText}}</span></span>
+        <sc-if value="{{permOff}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{allow}}">Zezwól</button></sc-if>
+        <sc-if value="{{permOn}}" hint-placeholder-val="{{false}}"><span style="display: flex; flex-direction: column; align-items: flex-end; gap: 0"><span class="bdg ok">Włączone</span><button type="button" class="btng sm muted" onClick="{{revoke}}" style="text-decoration:underline">Anuluj</button></span></sc-if>
+      </div>
+      <div class="card" style="padding: 0; gap: 0; overflow: hidden"><sc-for list="{{rems}}" as="r" hint-placeholder-count="4"><div class="m-row" style="{{r.rowS}}"><span style="flex: 1; min-width: 0"><span style="display: block">{{r.t}}</span><span class="hint num">{{r.w}}</span></span><button type="button" class="sw" role="switch" aria-checked="{{r.on}}" aria-label="{{r.t}}" onClick="{{r.toggle}}"></button></div></sc-for></div>
+      <p class="hint" style="margin: 0; font-size: 12px; line-height: 1.5">Dodaj rhytm do ekranu głównego, żeby dostawać push także przy zamkniętej aplikacji.</p>
+    </sc-if>
+
+    <sc-if value="{{s7}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 8px">
+        <span style="width: 56px; height: 56px; border-radius: 16px; background: rgba(21,128,61,.08); border: 1px solid rgba(21,128,61,.25); display: flex; align-items: center; justify-content: center; color: #15803d"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span>
+        <h1 class="step-title">Gotowe, {{displayName}}</h1>
+        <p class="muted" style="margin: 0">Twój rhytm jest ułożony. Oto co przygotowaliśmy.</p>
+      </div>
+      <div class="card" style="padding: 0; gap: 0; overflow: hidden"><sc-for list="{{summary}}" as="s" hint-placeholder-count="4"><div class="m-row" style="min-height:60px"><span style="flex: 1; min-width: 0"><span class="lbl" style="display: block">{{s.k}}</span><span style="display: block; margin-top: 2px; font-size: 14px">{{s.v}}</span></span><button type="button" class="btng" onClick="{{s.go}}">Zmień</button></div></sc-for></div>
+      <div class="card" style="display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; background: #fafafa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span class="hint" style="font-size: 13px">Pierwszy blok dodasz przyciskiem „+” na ekranie Dziś.</span></div>
+    </sc-if>
+  </div>
+
+  <div style="flex: none; padding: 12px 20px 30px; border-top: 1px solid rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,.02)">
+    <sc-if value="{{notLast}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{next}}" aria-disabled="{{nextDis}}" style="{{nextS}}">Dalej<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></sc-if>
+    <sc-if value="{{s4}}" hint-placeholder-val="{{false}}"><button type="button" class="btng muted" onClick="{{skip}}">Pomiń</button></sc-if>
+    <sc-if value="{{s7}}" hint-placeholder-val="{{false}}"><a href="CMToday.dc.html" class="btnp">Przejdź do Dziś</a></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const step = S.step || 1;
+    const name = S.name ?? 'Mejson';
+    const nm = name.trim() || 'Ty';
+    const tz = S.tz || 'Europe/Warsaw', week = S.week || 'pn', clock = S.clock || '24';
+    const R = S.roles || { student: true, sport: true };
+    const G = S.goals || { plan: true, sport: true, habits: true, subs: true, proj: true };
+    const P = S.pages;
+    const src = S.src || null;
+    const N = S.notify || { perm: false, before: true, renew: true, weekly: true, habits: false };
+    const km = S.km ?? 25, tr = S.tr ?? 3, trOn = S.trOn !== false, kmOn = S.kmOn !== false, sleep = S.sleep ?? 480;
+    const go = (n) => this.setState({ step: n, tzOpen: false });
+    const TZ = [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00']];
+    const tzCur = TZ.filter((z) => z[0] === tz)[0];
+    const ROLES = [['student', 'Student', 'Zajęcia, kolokwia, projekty'], ['work', 'Pracuję', 'Godziny pracy i spotkania'], ['free', 'Freelancer lub firma', 'Klienci, zlecenia, terminy'], ['sport', 'Trenuję regularnie', 'Biegi, siłownia, plan'], ['other', 'Coś innego', 'Kategorie ułożysz sam']];
+    const CAT = { Studia: ['#3b82f6', '#3b82f612', '#3b82f64d'], Praca: ['#8b5cf6', '#8b5cf612', '#8b5cf64d'], Projekty: ['#15803d', '#15803d12', '#15803d4d'], Sport: ['#f59e0b', '#f59e0b12', '#f59e0b4d'], Dom: ['#a16207', '#a1620712', '#a162074d'] };
+    const cats = [];
+    if (R.student) cats.push('Studia'); if (R.work) cats.push('Praca'); if (R.free) cats.push('Projekty'); if (R.sport) cats.push('Sport');
+    if (!cats.length) cats.push('Dom');
+    const GOALS = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['pass', 'Hasła', 'Szyfrowany sejf', 'Passwords'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
+    const rec = GOALS.filter((g) => G[g[0]] && g[3]).map((g) => g[3]);
+    const PAGES = [['Subscriptions', 'Sumy miesięczne i roczne, odnowienia w kalendarzu', 'Kwota cykliczna · Data odnowienia · Aktywna'], ['Projects', 'Statusy, terminy i linki do repo', 'Status · Data · URL'], ['Books', 'Przeczytane, w trakcie i na później', 'Status · Ocena · Autor'], ['Websites', 'Zakładki z kategoriami', 'URL · Select · Checkbox'], ['Passwords', 'Hasło główne ustawisz przy pierwszym otwarciu', 'Sekret · URL · Login']];
+    const pages = P || rec.reduce((o, p) => { o[p] = true; return o; }, {});
+    const SRC = ['Od znajomego', 'Na uczelni', 'TikTok', 'Instagram', 'YouTube', 'X', 'Reddit', 'Wyszukiwarka', 'ChatGPT lub inne AI', 'Inne'];
+    const REMS = [['before', 'Przed blokiem', '10 min wcześniej'], ['renew', 'Odnowienie subskrypcji', '3 dni wcześniej, o 9:00'], ['weekly', 'Podsumowanie tygodnia', 'Niedziela, 18:00'], ['habits', 'Nawyki na dziś', 'Codziennie, 21:00']];
+    const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    const nameOk = !!name.trim();
+    const pagesSel = PAGES.filter((p) => pages[p[0]]).map((p) => p[0]);
+    const remOn = REMS.filter((r) => N[r[0]]).length;
+    const canNext = step === 1 ? nameOk : true;
+    return {
+      step, s1: step === 1, s2: step === 2, s3: step === 3, s4: step === 4, s5: step === 5, s6: step === 6, s7: step === 7,
+      canBack: step > 1, noBack: step === 1, notLast: step < 7,
+      dots: [1, 2, 3, 4, 5, 6, 7].map((i) => ({ s: 'height:4px;border-radius:999px;background:' + (i <= step ? '#262626' : 'rgba(0,0,0,.08)') })),
+      next: () => { if (canNext) go(Math.min(7, step + 1)); }, prev: () => go(Math.max(1, step - 1)),
+      nextDis: canNext ? 'false' : 'true', nextS: 'width:100%;' + (canNext ? '' : 'cursor:not-allowed'),
+      skip: () => this.setState({ step: 5, src: null }),
+      name, onName: (e) => this.setState({ name: e.target.value }),
+      initials: nm.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+      tzTxt: tzCur[1], tzSub: tzCur[2], tzOpen: !!S.tzOpen, tzExp: S.tzOpen ? 'true' : 'false', tzToggle: () => this.setState({ tzOpen: !S.tzOpen }),
+      tzs: TZ.map((z) => ({ t: z[1], sub: z[2], p: z[0] === tz ? 'true' : 'false', check: z[0] === tz ? '✓' : '', pick: () => this.setState({ tz: z[0], tzOpen: false }),})),
+      weeks: [['pn', 'Poniedziałku'], ['nd', 'Niedzieli']].map((w) => ({ t: w[1], p: w[0] === week ? 'true' : 'false', pick: () => this.setState({ week: w[0] }) })),
+      clocks: [['24', '24 h · 14:30'], ['12', '12 h · 2:30 PM']].map((c) => ({ t: c[1], p: c[0] === clock ? 'true' : 'false', pick: () => this.setState({ clock: c[0] }) })),
+      roles: ROLES.map((r) => { const on = !!R[r[0]]; return { t: r[1], d: r[2], on: on ? 'true' : 'false', pick: () => this.setState({ roles: Object.assign({}, R, { [r[0]]: !on }) }) }; }),
+      isStudent: !!R.student, field: S.field ?? 'Cyberbezpieczeństwo', onField: (e) => this.setState({ field: e.target.value }),
+      cats: cats.map((c) => ({ t: c, s: 'display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;font-size:13px;background:' + CAT[c][1] + ';border:1px solid ' + CAT[c][2], dot: 'width:8px;height:8px;border-radius:50%;background:' + CAT[c][0] })),
+      goals: GOALS.map((g) => { const lk = g[0] === 'plan' || g[0] === 'sport' || g[0] === 'habits'; const on = lk || !!G[g[0]]; return { t: g[1], d: g[2], on: on ? 'true' : 'false', locked: lk ? 'true' : 'false', isLocked: lk, isFree: !lk,
+        pick: () => { if (lk) return; this.setState({ goals: Object.assign({}, G, { [g[0]]: !on }), pages: null }); } }; }),
+      showSleep: true, km, sleep: hm(sleep),
+      tg: [
+        { k: 'tr', lbl: 'Treningi w tygodniu', on: trOn, txt: String(tr), minus: 'Mniej treningów', plus: 'Więcej treningów', m: () => this.setState({ tr: Math.max(1, tr - 1) }), p: () => this.setState({ tr: Math.min(14, tr + 1) }) },
+        { k: 'km', lbl: 'Kilometry biegu w tygodniu', on: kmOn, txt: km + ' km', minus: 'Mniej kilometrów', plus: 'Więcej kilometrów', m: () => this.setState({ km: Math.max(5, km - 5) }), p: () => this.setState({ km: Math.min(150, km + 5) }) }
+      ].map((t, ix) => Object.assign({}, t, { on: t.on ? 'true' : 'false', isOn: t.on, off: !t.on, toggle: () => this.setState({ [t.k + 'On']: !t.on }),
+        rowS: 'display:flex;align-items:center;gap:12px;min-height:60px;' + (ix ? 'border-top:1px solid rgba(0,0,0,.06)' : '') })),
+      noGoal: !trOn && !kmOn,
+      slM: () => this.setState({ sleep: Math.max(300, sleep - 15) }), slP: () => this.setState({ sleep: Math.min(660, sleep + 15) }),
+      srcs: SRC.map((x) => ({ t: x, p: x === src ? 'true' : 'false', pick: () => this.setState({ src: x }) })),
+      isOther: src === 'Inne', other: S.other || '', onOther: (e) => this.setState({ other: e.target.value }),
+      pages: PAGES.map((p) => { const on = !!pages[p[0]]; return { t: p[0], d: p[1], f: p[2], on: on ? 'true' : 'false', rec: rec.indexOf(p[0]) >= 0,
+        pick: () => this.setState({ pages: Object.assign({}, pages, { [p[0]]: !on }) }) }; }),
+      permOn: !!N.perm, permOff: !N.perm, permText: N.perm ? 'Telefon pozwolił na powiadomienia' : 'Telefon zapyta o zgodę',
+      allow: () => this.setState({ notify: Object.assign({}, N, { perm: true }) }), revoke: () => this.setState({ notify: Object.assign({}, N, { perm: false }) }),
+      rems: REMS.map((r) => ({ t: r[1], w: r[2], on: N[r[0]] ? 'true' : 'false', rowS: N.perm ? '' : 'opacity:.55',
+        toggle: () => this.setState({ notify: Object.assign({}, N, { [r[0]]: !N[r[0]] }) }) })),
+      displayName: nm,
+      summary: [
+        { k: 'Profil', v: nm + ' · ' + tzCur[1] + ' · tydzień od ' + (week === 'pn' ? 'pn' : 'nd'), go: () => go(1) },
+        { k: 'Kategorie', v: cats.join(', '), go: () => go(2) },
+        // Cele treningowe: włączone (jeden albo oba)
+        { k: 'Cele treningowe', v: [trOn ? tr + ' ' + (tr === 1 ? 'trening' : (tr % 10 >= 2 && tr % 10 <= 4 && (tr % 100 < 12 || tr % 100 > 14)) ? 'treningi' : 'treningów') + ' / tydz.' : '', kmOn ? String(km).replace('.', ',') + ' km / tydz.' : ''].filter(Boolean).join(' · '), go: () => go(3) },
+        { k: 'Strony', v: pagesSel.join(', ') || 'brak', go: () => go(5) },
+        { k: 'Przypomnienia', v: remOn + ' z 4 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
