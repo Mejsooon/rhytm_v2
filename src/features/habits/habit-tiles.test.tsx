@@ -8,6 +8,10 @@ import type { SleepLog } from "./sleep";
 
 const DZIS = "2026-11-17"; // wtorek
 
+// Kafelek (.card) po etykiecie
+const kafelek = (etykieta: string) =>
+  screen.getByText(etykieta).parentElement as HTMLElement;
+
 // Woda: codziennie od dziś−42; odhaczona przez ostatnie 30 dni i 12 z 13 dni wcześniej.
 // Rozciąganie: wtorki od dziś, nieodhaczone → dziś 1/2, a 30 dni: 98% vs 92% → +6 pkt
 function nawyki(): Habit[] {
@@ -96,7 +100,14 @@ describe("HabitTiles", () => {
     expect(screen.getByText("Nawyki dziś")).toBeInTheDocument();
     expect(screen.getByText("1/2")).toBeInTheDocument();
     expect(screen.getByText("98%")).toBeInTheDocument();
-    expect(screen.getByText("+6 pkt vs poprzednie 30")).toBeInTheDocument();
+    // Różnica w zielonej odznace (.bdg.ok), reszta jako podpowiedź obok
+    expect(kafelek("Ostatnie 30 dni")).toHaveTextContent(
+      "+6 pkt vs poprzednie 30",
+    );
+    expect(screen.getByText("+6 pkt")).toHaveClass(
+      "bg-success-soft",
+      "text-success",
+    );
     // Woda: 35 dni z rzędu (dziś−34 … dziś)
     expect(screen.getByText("35")).toBeInTheDocument();
     expect(screen.getByText("Woda 2 l")).toBeInTheDocument();
@@ -104,6 +115,19 @@ describe("HabitTiles", () => {
     expect(screen.getByText("8:04")).toBeInTheDocument();
     expect(screen.getByText("/ 8:00")).toBeInTheDocument();
     expect(screen.getByText("2 z 14 nocy ≥ cel")).toBeInTheDocument();
+    // Każdy kafelek to osobna .card
+    for (const etykieta of [
+      "Nawyki dziś",
+      "Ostatnie 30 dni",
+      "Najdłuższa seria",
+      "Śr. sen · 14 dni",
+    ]) {
+      expect(kafelek(etykieta)).toHaveClass(
+        "rounded-xl",
+        "border-border",
+        "shadow-card",
+      );
+    }
   });
 
   it("bez historii nie pokazuje różnicy, a bez snu pokazuje „—”", () => {
@@ -131,7 +155,7 @@ describe("HabitTiles", () => {
         sleepGoalMin={480}
       />,
     );
-    expect(screen.queryByText(/pkt vs poprzednie 30/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pkt/)).not.toBeInTheDocument();
     expect(screen.queryByText(/nocy ≥ cel/)).not.toBeInTheDocument();
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
@@ -244,6 +268,9 @@ describe("HabitTiles", () => {
         sleepGoalMin={480}
       />,
     );
-    expect(screen.getByText("0 pkt vs poprzednie 30")).toBeInTheDocument();
+    expect(kafelek("Ostatnie 30 dni")).toHaveTextContent(
+      "0 pkt vs poprzednie 30",
+    );
+    expect(screen.getByText("0 pkt")).toHaveClass("bg-muted");
   });
 });

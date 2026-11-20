@@ -70,6 +70,36 @@ describe("SleepDialog", () => {
     expect(siatka).toHaveClass("grid-cols-[minmax(max-content,1fr)_minmax(0,1fr)_minmax(0,1fr)]");
   });
 
+  it("czas snu w ramce .frame, pasek .prog zielony po osiągnięciu celu", () => {
+    wyrenderuj({ existing: LOGI[1] });
+    const ramka = screen.getByText("Czas snu").closest("[data-czas-snu]") as HTMLElement;
+    expect(ramka).toHaveClass("rounded-lg", "border-[1.5px]", "border-border-strong", "bg-white");
+    expect(screen.getByText("Czas snu")).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
+    expect(screen.getByText("7:12")).toHaveClass("text-[22px]", "font-semibold", "tabular-nums");
+    const pasek = ramka.querySelector("[data-pasek-celu]") as HTMLElement;
+    expect(pasek).toHaveClass("bg-primary", "rounded-full");
+    expect(pasek.parentElement).toHaveClass("h-1.5", "rounded-full", "bg-muted");
+    expect(screen.getByText("90% celu 8:00 · brakuje 48 min")).toHaveClass("text-xs", "tabular-nums");
+  });
+
+  it("pasek celu zielony przy 100%", () => {
+    wyrenderuj({ date: "2026-11-15" });
+    const pasek = document.querySelector("[data-pasek-celu]") as HTMLElement;
+    expect(pasek).toHaveClass("bg-success");
+  });
+
+  it("samopoczucie jak .seg: szary tor, wybrany biały z cieniem", async () => {
+    const u = userEvent.setup();
+    wyrenderuj({ date: "2026-11-15" });
+    const grupa = screen.getByRole("radiogroup", { name: "Samopoczucie" });
+    expect(grupa).toHaveClass("bg-muted", "rounded-md", "p-0.5");
+    const ok = within(grupa).getByRole("radio", { name: /OK/ });
+    expect(ok).toHaveClass("bg-transparent", "text-muted-foreground", "focus-visible:shadow-focus");
+    await u.click(ok);
+    expect(ok).toHaveClass("bg-white", "text-foreground");
+    expect(ok.className).not.toContain("bg-primary");
+  });
+
   it("tytuł z nocy i domyślne 23:00 → 07:00 dla nowego wpisu", () => {
     wyrenderuj({ date: "2026-11-15" });
     expect(

@@ -66,6 +66,37 @@ describe("HabitDialog", () => {
     expect(anuluj).toHaveClass("max-[799px]:h-11");
   });
 
+  it("dni tygodnia jak w makiecie: 36 px, promień 10 px, wybrany jak przycisk główny, na telefonie 44 px", async () => {
+    const u = userEvent.setup();
+    wyrenderuj();
+    await u.click(screen.getByRole("radio", { name: "Wybrane dni" }));
+    await u.click(screen.getByRole("button", { name: "poniedziałek" }));
+    const pn = screen.getByRole("button", { name: "poniedziałek" });
+    const wt = screen.getByRole("button", { name: "wtorek" });
+    for (const b of [pn, wt]) {
+      expect(b).toHaveClass(
+        "size-9",
+        "rounded-md",
+        "text-[13px]",
+        "font-medium",
+        "focus-visible:shadow-focus",
+        "max-[799px]:size-11",
+      );
+    }
+    expect(pn).toHaveClass("border-primary", "bg-primary", "text-primary-foreground");
+    expect(wt).toHaveClass("border-input", "bg-white", "text-soft-foreground", "shadow-xs");
+    expect(wt.className).not.toContain("text-white");
+    // 7 × 44 px + 6 × 4 px mieści się w jednym rzędzie na 390 px
+    expect(pn.parentElement).toHaveClass("max-[799px]:gap-1");
+  });
+
+  it("zdanie pod harmonogramem jako podpowiedź (.hint), nie mono", () => {
+    wyrenderuj();
+    const zdanie = screen.getByText("Codziennie. Seria liczona w dniach.");
+    expect(zdanie).toHaveClass("text-xs", "font-normal", "text-muted-foreground");
+    expect(zdanie).not.toHaveClass("font-mono");
+  });
+
   it("tryb nowy: tytuł, przycisk i zdanie dla Codziennie", () => {
     wyrenderuj();
     expect(

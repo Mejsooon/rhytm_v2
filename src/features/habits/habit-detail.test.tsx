@@ -89,18 +89,25 @@ describe("HabitDetail", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Rozciąganie" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("pn, śr, pt, nd · przypomnienie 20:30 · od 01.10.2026"),
-    ).toBeInTheDocument();
+    // Podtytuł: trzy odznaki jak w CHabitDetail (harmonogram, przypomnienie, „od”)
+    const odznaki = within(screen.getByTestId("web-podtytul"))
+      .getAllByText(/./)
+      .map((o) => o.textContent);
+    expect(odznaki).toEqual([
+      "pn, śr, pt, nd",
+      "przypomnienie 20:30",
+      "od 01.10.2026",
+    ]);
   });
 
-  it("bez przypomnienia pomija ten fragment", () => {
+  it("bez przypomnienia pomija tę odznakę", () => {
     const d = dane();
     d.habits[0].remindAt = null;
     render(<HabitDetail data={d} />);
-    expect(
-      screen.getByText("pn, śr, pt, nd · od 01.10.2026"),
-    ).toBeInTheDocument();
+    const podtytul = screen.getByTestId("web-podtytul");
+    expect(within(podtytul).queryByText(/przypomnienie/)).toBeNull();
+    expect(within(podtytul).getByText("pn, śr, pt, nd")).toBeInTheDocument();
+    expect(within(podtytul).getByText("od 01.10.2026")).toBeInTheDocument();
   });
 
   it("kafelki: seria, najdłuższa seria, 30 dni i łącznie", () => {
@@ -158,6 +165,11 @@ describe("HabitDetail", () => {
       "od 01.11.2026",
       "01.10 – 31.10.2026",
     ]);
+    // Odznaka „Aktualny” (.bdg.ok) tylko przy obowiązującej dziś wersji
+    const aktualny = within(karta).getByText("Aktualny");
+    expect(aktualny).toHaveClass("bg-success-soft", "text-success");
+    expect(within(karta).getAllByText("Aktualny")).toHaveLength(1);
+    expect(aktualny.parentElement).toHaveTextContent("od 01.11.2026");
     expect(within(karta).getByText("3× w tygodniu")).toBeInTheDocument();
     expect(within(karta).getByText("pn, śr, pt, nd")).toBeInTheDocument();
     expect(
@@ -241,5 +253,144 @@ describe("HabitDetail", () => {
     zakoncz({ ok: true });
     await waitFor(() => expect(pole).toHaveValue(""));
     expect(pole).toHaveFocus();
+  });
+  it("nagłówek .topbar: okruszki .crumb, Usuń destructive-outline, Edytuj primary", () => {
+    render(<HabitDetail data={dane()} />);
+    const link = screen.getByRole("link", { name: "Nawyki i sen" });
+    const okruszki = link.parentElement as HTMLElement;
+    expect(okruszki.className).toContain("text-sm");
+    expect(okruszki.className).toContain("text-muted-foreground");
+    const naglowek = okruszki.closest("header") as HTMLElement;
+    expect(naglowek.className).toContain("px-6");
+    expect(naglowek.className).toContain("py-2.5");
+    const usun = screen.getByRole("button", { name: "Usuń" });
+    // destructive-outline (.btndo), rozmiar md 32 px
+    expect(usun.className).toContain("border-input");
+    expect(usun.className).toContain("text-destructive-foreground");
+    expect(usun.className).toContain("h-8");
+    expect(usun.querySelector("svg")).not.toBeNull();
+    const edytuj = screen.getByRole("button", { name: "Edytuj" });
+    expect(edytuj.className).toContain("bg-primary");
+    expect(edytuj.className).toContain("h-8");
+  });
+
+  it("długa nazwa skraca się wielokropkiem w okruszkach i tytule", () => {
+    const d = dane();
+    d.habits[0].name = "Bardzo długa nazwa nawyku ".repeat(8).trim();
+    render(<HabitDetail data={d} />);
+    const okruszek = screen
+      .getByRole("link", { name: "Nawyki i sen" })
+      .parentElement?.querySelector("b") as HTMLElement;
+    expect(okruszek).toHaveTextContent(d.habits[0].name);
+    expect(okruszek.className).toContain("truncate");
+    expect(okruszek.className).toContain("min-w-0");
+    const tytul = screen.getByRole("heading", { level: 1 });
+    expect(tytul.className).toContain("truncate");
+  });
+
+  it("podtytuł jak .hint, kafelki jako osobne karty .card", () => {
+    render(<HabitDetail data={dane()} />);
+    // Odznaki .bdg.sec.lg z ikonami (kalendarz, dzwonek) i .bdg.out.lg dla „od”
+    const podtytul = screen.getByTestId("web-podtytul");
+    const harmonogram = within(podtytul).getByText("pn, śr, pt, nd");
+    expect(harmonogram).toHaveClass("bg-muted", "h-[22px]");
+    expect(harmonogram.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    const przypomnienie = within(podtytul).getByText("przypomnienie 20:30");
+    expect(przypomnienie).toHaveClass("bg-muted", "h-[22px]");
+    expect(przypomnienie.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    const od = within(podtytul).getByText("od 01.10.2026");
+    expect(od).toHaveClass("border-input", "bg-white", "h-[22px]");
+    expect(od.querySelector("svg")).toBeNull();
+    const etykieta = screen.getByText("Łącznie");
+    expect(etykieta.className).toContain("text-xs");
+    expect(etykieta.className).toContain("font-medium");
+    expect(etykieta.className).not.toContain("uppercase");
+    const kafelek = etykieta.parentElement as HTMLElement;
+    expect(kafelek.className).toContain("rounded-xl");
+    expect(kafelek.className).toContain("shadow-card");
+    const wartosc = etykieta.nextElementSibling as HTMLElement;
+    expect(wartosc.className).toContain("text-[26px]");
+    expect(wartosc.className).toContain("font-semibold");
+    expect(wartosc.className).toContain("tabular-nums");
+    expect(wartosc.className).not.toContain("font-mono");
+    expect(kafelek.parentElement?.className).toContain("gap-3");
+  });
+
+  it("kalendarz, historia i notatki to karty .card z nagłówkiem .card-t", () => {
+    render(<HabitDetail data={dane()} />);
+    for (const nazwa of ["Listopad 2026", "Historia harmonogramu", "Notatki"]) {
+      const h = screen.getByRole("heading", { name: nazwa });
+      expect(h.className).toContain("text-base");
+      const karta = h.closest("section") as HTMLElement;
+      expect(karta.className).toContain("rounded-xl");
+      expect(karta.className).toContain("shadow-card");
+    }
+    const dopisek = screen.getByText(
+      "Zmiana harmonogramu nie przelicza przeszłych dni.",
+    );
+    // stopka .foot z ikoną informacji
+    expect(dopisek.className).toContain("text-xs");
+    expect(dopisek.parentElement?.className).toContain("bg-black/[.025]");
+    expect(dopisek.parentElement?.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("od 01.11.2026").className).toContain(
+      "tabular-nums",
+    );
+    expect(screen.getByText("3× w tygodniu").className).toContain(
+      "font-medium",
+    );
+    // pole notatki jak .inp
+    expect(screen.getByPlaceholderText("Dodaj notatkę").className).toContain(
+      "shadow-xs",
+    );
+  });
+
+  it("komórki kalendarza jak w makiecie; dziś z pierścieniem w style", () => {
+    render(<HabitDetail data={dane()} />);
+    const zrobione = komorka("2026-11-02");
+    expect(zrobione.className).toContain("bg-success");
+    expect(zrobione.className).toContain("border-success");
+    expect(zrobione.className).toContain("rounded-[8px]");
+    expect(zrobione.className).toContain("tabular-nums");
+    expect(zrobione.className).not.toContain("font-mono");
+    expect(komorka("2026-11-04").className).toContain("bg-destructive/10");
+    expect(komorka("2026-11-03").className).toContain("border-border");
+    expect(komorka("2026-11-18").className).toContain("border-dashed");
+    // dzień spoza miesiąca: przezroczysty
+    expect(komorka("2026-12-01").className).toContain("bg-transparent");
+    expect(komorka("2026-11-17").style.boxShadow).toContain(
+      "var(--foreground)",
+    );
+    expect(komorka("2026-11-16").style.boxShadow).toBe("");
+  });
+
+  it("web: szare (bez nawyku) i neutralne mają różne tło", async () => {
+    render(<HabitDetail data={dane()} />);
+    const szary = komorka("2026-11-03"); // wt poza planem
+    expect(szary).toHaveAttribute("data-state", "szare");
+    expect(szary.className).toContain("bg-panel");
+    // X/tydz. w październiku: neutralne białe
+    await userEvent.click(
+      screen.getByRole("button", { name: "Poprzedni miesiąc" }),
+    );
+    const neutralny = komorka("2026-10-05");
+    expect(neutralny).toHaveAttribute("data-state", "neutralne");
+    expect(neutralny.className).toContain("bg-white");
+    expect(neutralny.className).not.toContain("bg-panel");
+  });
+
+  it("okno usuwania w stylu .dlg: opis 14 px, Usuń destructive z koszem", async () => {
+    render(<HabitDetail data={dane()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    const okno = screen.getByRole("dialog");
+    expect(
+      within(okno).getByText("Historia odhaczeń i notatki zostaną usunięte.")
+        .className,
+    ).toContain("text-sm");
+    const usun = within(okno).getByRole("button", { name: "Usuń" });
+    expect(usun.className).toContain("bg-destructive");
+    expect(usun.querySelector("svg")).not.toBeNull();
+    expect(
+      within(okno).getByRole("button", { name: "Anuluj" }).className,
+    ).toContain("bg-transparent");
   });
 });

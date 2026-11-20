@@ -1,6 +1,7 @@
 "use client";
 
-// Ciemny dymek wykresu (heatmapa, słupki snu) w portalu na <body> z position: fixed,
+// Dymek wykresu (heatmapa, słupki snu) jak w CHabits: biały .pop z ramką i cieniem,
+// w portalu na <body> z position: fixed,
 // żeby przewijane karty (overflow) go nie przycinały. Pozycja liczona z getBoundingClientRect
 // komórki: nad nią, a gdy brakuje miejsca — pod nią; zawsze w granicach okna.
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -49,7 +50,7 @@ export function ChartTooltip({
     <div
       ref={dymek}
       role="tooltip"
-      className="pointer-events-none fixed z-50 rounded-lg bg-primary px-2.5 py-2 text-xs leading-[1.4] whitespace-nowrap text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+      className="pointer-events-none fixed z-50 rounded-[8px] border border-border bg-white bg-clip-padding px-2.5 py-1.5 text-xs leading-[1.4] whitespace-nowrap text-foreground shadow-lg"
       // Przed pomiarem dymek jest niewidoczny w lewym górnym rogu
       style={
         pozycja

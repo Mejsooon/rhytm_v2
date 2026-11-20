@@ -1,10 +1,24 @@
 "use client";
 
-// Szczegóły nawyku na komputerze (HabitDetail.dc.html): okruszek, kafelki, kalendarz, historia harmonogramu, notatki.
+// Szczegóły nawyku na komputerze (CHabitDetail.dc.html): okruszki, kafelki, kalendarz, historia harmonogramu, notatki.
 import { useState } from "react";
 import Link from "next/link";
+import {
+  BellIcon,
+  CalendarIcon,
+  InfoIcon,
+  PenLineIcon,
+  TrashIcon,
+} from "lucide-react";
 
-import { Button } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  StatusBadge,
+} from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
 import { addDays } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -53,12 +67,13 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   const biezaca = scheduleOn(habit, data.today) ?? habit.schedules[0];
   const pierwszaData = habit.schedules[0]?.validFrom;
 
-  let podtytul = biezaca ? describeSchedule(biezaca) : "";
+  // Podtytuł jako odznaki: harmonogram, przypomnienie (gdy włączone), „od” pierwszej wersji
+  const harmonogram = biezaca ? describeSchedule(biezaca) : "";
+  let przypomnienie: string | null = null;
   if (habit.remindAt) {
     const [g, m] = habit.remindAt.split(":").map(Number);
-    podtytul += ` · przypomnienie ${formatClockTime(g, m, data.clock)}`;
+    przypomnienie = `przypomnienie ${formatClockTime(g, m, data.clock)}`;
   }
-  if (pierwszaData) podtytul += ` · od ${formatDatePl(pierwszaData)}`;
 
   const kafelki = [
     { etykieta: "Seria", wartosc: seria.wartosc, jednostka: seria.jednostka },
@@ -86,6 +101,7 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
       }
       return {
         klucz: wersja.validFrom,
+        aktualna: wersja.validFrom === biezaca?.validFrom,
         zakres,
         opis: describeSchedule(wersja),
       };
@@ -101,67 +117,82 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
         data-testid="web-nawyk"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-          <div className="font-mono text-[13px] text-muted-foreground">
+        {/* .topbar z coss.css: okruszki .crumb (rodzic jako link, nazwa skracana wielokropkiem) i akcje */}
+        <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5">
+          <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
             <Link
               href="/nawyki"
-              className="text-muted-foreground no-underline hover:text-foreground"
+              className="flex-none rounded-sm text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus"
             >
               Nawyki i sen
             </Link>{" "}
-            <span className="text-faint-foreground">/</span>{" "}
-            <span className="text-foreground">{habit.name}</span>
+            <span>/</span>{" "}
+            <b className="min-w-0 truncate font-medium text-foreground">
+              {habit.name}
+            </b>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {/* .btndo i .btnp z ikonami jak w makiecie */}
             <Button
-              size="sm"
-              className="border-destructive-border text-destructive-foreground hover:text-destructive-foreground"
+              variant="destructive-outline"
               onClick={() => setUsuwanie(true)}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-              </svg>
+              <TrashIcon aria-hidden="true" className="size-4" />
               Usuń
             </Button>
-            <Button variant="primary" size="sm" onClick={() => setEdycja(true)}>
+            <Button variant="primary" onClick={() => setEdycja(true)}>
+              <PenLineIcon aria-hidden="true" className="size-4" />
               Edytuj
             </Button>
           </div>
         </header>
 
         <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7">
-          <div>
-            <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
+          <div className="min-w-0">
+            <h1 className="m-0 truncate text-2xl font-semibold tracking-[-0.02em]">
               {habit.name}
             </h1>
-            <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
-              {podtytul}
-            </p>
+            {/* Odznaki .bdg.sec.lg z ikonami (kalendarz, dzwonek) i .bdg.out.lg z datą startu */}
+            <div
+              data-testid="web-podtytul"
+              className="mt-2 flex flex-wrap gap-1.5 tabular-nums"
+            >
+              {harmonogram && (
+                <StatusBadge tone="gray" size="lg">
+                  <CalendarIcon aria-hidden="true" className="size-3" />
+                  {harmonogram}
+                </StatusBadge>
+              )}
+              {przypomnienie && (
+                <StatusBadge tone="gray" size="lg">
+                  <BellIcon aria-hidden="true" className="size-3" />
+                  {przypomnienie}
+                </StatusBadge>
+              )}
+              {pierwszaData && (
+                <StatusBadge tone="outline" size="lg">
+                  {`od ${formatDatePl(pierwszaData)}`}
+                </StatusBadge>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border">
+          {/* Kafelki statystyk: osobne karty .card, etykieta .lbl, wartość 26 px / 600 */}
+          <div className="grid grid-cols-4 gap-3">
             {kafelki.map((k) => (
-              <div key={k.etykieta} className="bg-white px-[18px] py-4">
-                <div className="font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
+              <Card key={k.etykieta} className="px-[18px] py-4">
+                <div className="text-xs font-medium text-muted-foreground">
                   {k.etykieta}
                 </div>
-                <div className="mt-2 font-mono text-[26px]">
+                <div className="mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
                   {k.wartosc}
                   {k.jednostka && (
-                    <span className="ml-1 text-sm text-muted-foreground">
+                    <span className="ml-1 text-sm font-normal tracking-normal text-muted-foreground">
                       {k.jednostka}
                     </span>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
@@ -179,26 +210,39 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
               <HabitNotes habitId={habit.id} notes={data.notes} />
             </div>
 
-            <section className="rounded-lg border border-border bg-white">
-              <div className="border-b border-border px-4 py-3.5">
-                <h2 className="m-0 text-[15px] font-semibold">
-                  Historia harmonogramu
-                </h2>
-              </div>
-              {historia.map((w) => (
-                <div
-                  key={w.klucz}
-                  className="border-b border-border px-4 py-3 last:border-b-0"
-                >
-                  <div className="font-mono text-xs text-muted-foreground">
-                    {w.zakres}
+            {/* .card z nagłówkiem .card-h, wierszami i stopką .foot z ikoną informacji */}
+            <section className="relative flex min-w-0 flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+              <CardHeader className="pb-3.5">
+                <CardTitle as="h2">Historia harmonogramu</CardTitle>
+              </CardHeader>
+              <div className="border-t border-border">
+                {historia.map((w) => (
+                  <div
+                    key={w.klucz}
+                    className="flex items-center justify-between gap-3 border-b border-border-soft px-6 py-3 last:border-b-0"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        {w.zakres}
+                      </div>
+                      <div className="mt-0.5 font-medium">{w.opis}</div>
+                    </div>
+                    {/* .bdg.ok przy wersji obowiązującej dziś */}
+                    {w.aktualna && (
+                      <StatusBadge tone="green">Aktualny</StatusBadge>
+                    )}
                   </div>
-                  <div className="mt-0.5">{w.opis}</div>
-                </div>
-              ))}
-              <p className="m-0 border-t border-border bg-panel px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                Zmiana harmonogramu nie przelicza przeszłych dni.
-              </p>
+                ))}
+              </div>
+              <CardFooter className="justify-start">
+                <InfoIcon
+                  aria-hidden="true"
+                  className="size-3.5 flex-none text-muted-foreground"
+                />
+                <span className="flex-1 text-xs text-muted-foreground">
+                  Zmiana harmonogramu nie przelicza przeszłych dni.
+                </span>
+              </CardFooter>
             </section>
           </div>
         </div>

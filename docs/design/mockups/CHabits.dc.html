@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nawyki i sen (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 1120px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="nawyki" min-height="1120" hint-size="100%,1120px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px"><nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Nawyki i sen</b></nav><span class="hint num">wtorek · 17.11.2026</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CSleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="CHabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
+    </header>
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Nawyki dziś</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">{{doneTxt}}</div><div class="prog" style="margin-top: 10px"><div style="{{doneBar}}"></div></div></div>
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Ostatnie 30 dni</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">84%</div><div style="margin-top: 8px"><span class="bdg ok num">+6 pkt</span> <span class="hint">vs poprzednie 30</span></div></div>
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Najdłuższa seria</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">12 <span style="font-size: 14px; font-weight: 400; color: #686868">dni</span></div><div class="hint" style="margin-top: 8px">Woda 2 l</div></div>
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Śr. sen · 14 dni</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">7:21 <span style="font-size: 14px; font-weight: 400; color: #686868">/ 8:00</span></div><div class="hint" style="margin-top: 8px">5 z 14 nocy ≥ cel</div></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: stretch">
+        <section class="card">
+          <div class="card-h" style="align-items: center; padding-bottom: 12px">
+            <h2 class="card-t">Nawyki</h2>
+            <div style="display: grid; grid-template-columns: repeat(7, 24px); gap: 6px; font-size: 11px; font-weight: 500; color: #686868; text-align: center; margin-right: 46px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          </div>
+          <div style="border-top: 1px solid rgba(0,0,0,.08)">
+          <sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 24px; border-bottom: 1px solid rgba(0,0,0,.06)">
+              <div style="flex: 1; min-width: 0">
+                <a href="CHabitDetail.dc.html" style="font-weight: 500; color: #262626; text-decoration: none">{{h.name}}</a>
+                <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px"><span class="hint">{{h.schedule}}</span><span class="bdg sec num"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>{{h.streak}}</span></div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, 24px); gap: 6px">
+                <sc-for list="{{h.week}}" as="c" hint-placeholder-count="7"><span title="{{c.t}}" style="{{c.s}}"></span></sc-for>
+              </div>
+              <button type="button" aria-label="{{h.label}}" aria-pressed="{{h.pressed}}" onClick="{{h.toggle}}" style="{{h.btn}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></button>
+            </div>
+          </sc-for>
+          </div>
+          <div style="flex: 1"></div>
+          <div style="padding: 10px 16px"><a href="CHabitDialog.dc.html" class="btng sm" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
+        </section>
+
+        <section class="card">
+          <div class="card-h" style="align-items: center">
+            <h2 class="card-t">Sen</h2>
+            <div class="seg" role="group" aria-label="Zakres snu">
+              <button type="button" aria-pressed="{{s14p}}" onClick="{{set14}}">14 dni</button>
+              <button type="button" aria-pressed="{{s30p}}" onClick="{{set30}}">30 dni</button>
+            </div>
+          </div>
+          <div style="padding: 16px 24px 20px; display: flex; flex-direction: column; gap: 16px; flex: 1">
+            <div style="display: flex; gap: 28px">
+              <div><div class="lbl">Ostatnia noc</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 6px">7:12</div><div class="hint num" style="margin-top: 2px">23:48 → 07:00</div></div>
+              <div><div class="lbl">Samopoczucie</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 6px">4/5</div></div>
+            </div>
+            <div style="position: relative; display: flex; align-items: flex-end; gap: {{sleepGap}}; height: 150px; border-bottom: 1px solid rgba(0,0,0,.08); margin-top: auto" onMouseLeave="{{sTipOff}}">
+              <div style="position: absolute; left: 0; right: 0; bottom: 133px; border-top: 1px dashed #15803d"></div>
+              <span class="bdg ok" style="position: absolute; right: 0; bottom: 138px">cel 8 h</span>
+              <sc-for list="{{sleep}}" as="s" hint-placeholder-count="14"><div aria-label="{{s.t}}" onMouseEnter="{{s.enter}}" style="{{s.s}}"></div></sc-for>
+              <sc-if value="{{hasSTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{stip.s}}"><div style="font-weight: 600">{{stip.date}}</div><div class="num" style="font-size: 12px; color: #686868; margin-top: 2px">{{stip.txt}}</div></div></sc-if>
+            </div>
+            <div class="num" style="display: flex; justify-content: space-between; font-size: 11px; color: #686868; margin-top: -10px"><span>{{sleepFrom}}</span><span>17.11</span></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-h" style="align-items: center">
+          <div><h2 class="card-t">Heatmapa nawyków</h2><p class="card-d">% nawyków zrobionych danego dnia</p></div>
+          <div class="seg" role="group" aria-label="Zakres heatmapy">
+            <button type="button" aria-pressed="{{hmp}}" onClick="{{setM}}">Miesiąc</button>
+            <button type="button" aria-pressed="{{h3p}}" onClick="{{set3}}">3 mies.</button>
+            <button type="button" aria-pressed="{{h6p}}" onClick="{{set6}}">6 mies.</button>
+            <button type="button" aria-pressed="{{h12p}}" onClick="{{set12}}">Rok</button>
+          </div>
+        </div>
+        <div style="padding: 20px 24px; overflow-x: auto">
+          <sc-if value="{{hm}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 10px; width: max-content; margin: 0 auto">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+              <button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" aria-disabled="{{mPrevOffA}}" onClick="{{mPrev}}" style="{{mPrevS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <span style="font-weight: 600; font-size: 14px">{{mLabel}}</span>
+              <button type="button" class="btn ic sm" aria-label="Następny miesiąc" aria-disabled="{{mNextOffA}}" onClick="{{mNext}}" style="{{mNextS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(7, 40px); gap: 4px; font-size: 11px; font-weight: 500; color: #686868; text-align: center"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+            <div style="position: relative; display: grid; grid-template-columns: repeat(7, 40px); gap: 4px" onMouseLeave="{{mTipOff}}">
+              <sc-for list="{{mcells}}" as="c" hint-placeholder-count="35"><span aria-label="{{c.t}}" onMouseEnter="{{c.enter}}" style="{{c.s}}">{{c.num}}</span></sc-for>
+              <sc-if value="{{hasMTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{mtip.s}}"><div style="font-weight: 600">{{mtip.date}}</div><div class="num" style="font-size: 12px; color: #686868; margin-top: 2px">{{mtip.txt}}</div></div></sc-if>
+            </div>
+          </div>
+          </sc-if>
+          <sc-if value="{{hy}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; gap: 8px; width: max-content; margin: 0 auto">
+            <div style="display: grid; grid-template-rows: repeat(7, 14px); gap: 4px; font-size: 10px; font-weight: 500; color: #686868"><span>pn</span><span></span><span>śr</span><span></span><span>pt</span><span></span><span>nd</span></div>
+            <div style="position: relative; display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); gap: 4px" onMouseLeave="{{tipOff}}">
+              <sc-for list="{{heat}}" as="x" hint-placeholder-count="364"><span aria-label="{{x.t}}" onMouseEnter="{{x.enter}}" style="{{x.s}}"></span></sc-for>
+              <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{tip.s}}"><div style="font-weight: 600">{{tip.date}}</div><div class="num" style="font-size: 12px; color: #686868; margin-top: 2px">{{tip.txt}}</div></div></sc-if>
+            </div>
+          </div>
+          </sc-if>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #686868; margin-top: 14px">
+            <span>{{heatRange}}</span>
+            <span style="display: flex; align-items: center; gap: 4px">mniej <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(0,0,0,.05)"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #bbe5cc"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #4ade80"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: #15803d"></span> więcej</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const done = S.done || { 0: true, 1: true };
+    const sleepR = S.sleepR || 14;
+    const heatR = S.heatR || 52;
+    const TIP = 'background:#ffffff;color:#262626;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;box-shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.08)';
+    const cell = (v) => 'width:24px;height:24px;border-radius:6px;box-sizing:border-box;' + (v === 1 ? 'background:#15803d' : v === 0 ? 'background:rgba(0,0,0,.05)' : 'border:1px dashed rgba(0,0,0,.12);background:#ffffff');
+    const mk = (pattern, today) => pattern.split('').map((ch, i) => { const v = i === 1 ? (today ? 1 : 0) : ch === '1' ? 1 : ch === '0' ? 0 : -1; return { s: cell(v), t: v === 1 ? 'zrobione' : v === 0 ? 'nie' : 'nie dotyczy / jeszcze nie' }; });
+    const btn = (on) => 'width:32px;height:32px;flex:0 0 32px;border-radius:10px;font:inherit;cursor:pointer;display:grid;place-items:center;padding:0;transition:background-color 120ms;' + (on ? 'background:#15803d;color:#ffffff;border:1px solid #15803d;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 2px rgba(21,128,61,.3)' : 'background:#ffffff;color:#a3a3a3;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)');
+    const H = [
+      ['Woda 2 l', 'codziennie', '12 dni', '1------'],
+      ['Czytanie 20 min', 'codziennie', '5 dni', '1------'],
+      ['Rozciąganie', 'pn, śr, pt, nd', '3', '1------'],
+      ['Bez telefonu po 23:00', 'codziennie', '1 dzień', '1------'],
+      ['Angielski', '4× w tygodniu', '3 tyg.', '1------']
+    ];
+    const doneN = H.filter((h, i) => done[i]).length;
+    const habits = H.map((h, i) => ({ name: h[0], schedule: h[1], streak: h[2], week: mk(h[3], !!done[i]), btn: btn(!!done[i]),
+      pressed: done[i] ? 'true' : 'false', label: done[i] ? 'Cofnij odhaczenie: ' + h[0] : 'Odhacz dziś: ' + h[0],
+      toggle: () => this.setState({ done: Object.assign({}, done, { [i]: !done[i] }) }) }));
+    const shades = ['rgba(0,0,0,.05)', '#bbe5cc', '#4ade80', '#15803d'];
+    const MON = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    const DOW = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+    const END = Date.UTC(2026, 10, 22);
+    const all = [];
+    for (let i = 0; i < 364; i++) {
+      const d = new Date(END - (363 - i) * 86400000);
+      const future = i > 358;
+      const n = i === 358 ? doneN : future ? -1 : Math.min(5, ((i * 37 + (i % 7) * 11 + Math.floor(i / 30) * 3) % 10) % 6 + (i % 4 === 0 ? 1 : 0));
+      const pct = n < 0 ? 0 : n / 5;
+      const lvl = n <= 0 ? 0 : pct <= 0.4 ? 1 : pct <= 0.8 ? 2 : 3;
+      all.push({ i, n, future, date: DOW[i % 7] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(), lvl });
+    }
+    const cells = all.slice(364 - heatR * 7);
+    const hm = !!S.hm;
+    const mo = S.mo || 0;
+    const MONF = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+    const START0 = END - 363 * 86400000;
+    const mFirst = new Date(Date.UTC(2026, 10 + mo, 1));
+    const mLead = (mFirst.getUTCDay() + 6) % 7;
+    const mDays = new Date(Date.UTC(mFirst.getUTCFullYear(), mFirst.getUTCMonth() + 1, 0)).getUTCDate();
+    const mh = S.mh;
+    const mcells = [];
+    for (let k = 0; k < mLead; k++) mcells.push({ num: '', t: '', s: 'width:40px;height:40px;visibility:hidden', enter: () => {} });
+    for (let dd = 1; dd <= mDays; dd++) {
+      const ts = Date.UTC(mFirst.getUTCFullYear(), mFirst.getUTCMonth(), dd);
+      const idx = Math.round((ts - START0) / 86400000);
+      const c = idx >= 0 && idx < 364 ? all[idx] : { i: -1, n: -1, future: ts > END - 5 * 86400000, lvl: 0, date: DOW[(new Date(ts).getUTCDay() + 6) % 7] + ' ' + dd + ' ' + MON[mFirst.getUTCMonth()] + ' ' + mFirst.getUTCFullYear() };
+      const pos = mcells.length;
+      const dark = !c.future && c.n > 0 && c.lvl === 3;
+      mcells.push({ num: String(dd), t: c.date, c,
+        s: 'width:40px;height:40px;box-sizing:border-box;border-radius:8px;padding:4px 6px;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums;cursor:default;' + (c.future || c.n < 0 ? 'border:1px dashed rgba(0,0,0,.12);background:#ffffff;color:#a3a3a3' : 'background:' + shades[c.lvl] + ';color:' + (dark ? '#ffffff' : '#404040')) + (c.i === 358 ? ';font-weight:700' : '') + (mh === pos ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #262626' : ''),
+        enter: () => { if ((this.state || {}).mh !== pos) this.setState({ mh: pos }); } });
+    }
+    const mhc = mh !== undefined && mh !== null && mcells[mh] ? mcells[mh].c : null;
+    const mhCol = mh ? mh % 7 : 0;
+    const mhRow = mh ? Math.floor(mh / 7) : 0;
+    const hov = S.hov;
+    const heat = cells.map((c, k) => ({
+      t: c.date,
+      s: 'width:14px;height:14px;border-radius:4px;box-sizing:border-box;cursor:default;' + (c.future ? 'border:1px dashed rgba(0,0,0,.12);background:#ffffff' : 'background:' + shades[c.lvl]) + (hov === k ? ';box-shadow:0 0 0 2px #262626' : ''),
+      enter: () => { if ((this.state || {}).hov !== k) this.setState({ hov: k }); }
+    }));
+    const hc = hov !== undefined && hov !== null ? cells[hov] : null;
+    const col = hov !== undefined && hov !== null ? Math.floor(hov / 7) : 0;
+    const row = hov !== undefined && hov !== null ? hov % 7 : 0;
+    const tipLeft = Math.min(Math.max(col * 18 + 7 - 95, -20), heatR * 18 - 170);
+    const sleepAll = [6.8, 7.4, 7.9, 6.6, 8.1, 7.3, 6.9, 8.5, 7.7, 6.4, 7.0, 8.0, 7.6, 7.2, 6.9, 8.3, 7.1, 6.2, 7.8, 8.2, 6.5, 8.4, 9.0, 7.0, 6.8, 7.9, 8.1, 6.9, 7.5, 7.2];
+    const hrs = sleepAll.slice(30 - sleepR);
+    const sDate = new Date(Date.UTC(2026, 10, 17) - (sleepR - 1) * 86400000);
+    const p2 = (x) => String(x).padStart(2, '0');
+    return {
+      habits,
+      doneTxt: doneN + '/5',
+      doneBar: 'width:' + Math.round(doneN / 5 * 100) + '%;height:6px;background:#15803d;border-radius:999px;transition:width 200ms',
+      heat,
+      heatRange: hm ? 'najedź na dzień, żeby zobaczyć szczegóły' : (() => { const a = new Date(END - (heatR * 7 - 1) * 86400000); return MON[a.getUTCMonth()] + ' ' + a.getUTCFullYear() + ' → lis 2026'; })(),
+      hm, hy: !hm, hmp: hm ? 'true' : 'false',
+      h3p: !hm && heatR === 13 ? 'true' : 'false', h6p: !hm && heatR === 26 ? 'true' : 'false', h12p: !hm && heatR === 52 ? 'true' : 'false',
+      setM: () => this.setState({ hm: true, hov: null, mh: null }),
+      set3: () => this.setState({ heatR: 13, hm: false, hov: null }), set6: () => this.setState({ heatR: 26, hm: false, hov: null }), set12: () => this.setState({ heatR: 52, hm: false, hov: null }),
+      mLabel: MONF[mFirst.getUTCMonth()] + ' ' + mFirst.getUTCFullYear(),
+      mPrev: () => this.setState({ mo: Math.max(-12, mo - 1), mh: null }), mNext: () => this.setState({ mo: Math.min(0, mo + 1), mh: null }),
+      mPrevOffA: mo <= -12 ? 'true' : 'false', mNextOffA: mo >= 0 ? 'true' : 'false',
+      mPrevS: mo <= -12 ? 'opacity:.4;cursor:default' : '', mNextS: mo >= 0 ? 'opacity:.4;cursor:default' : '',
+      mcells,
+      mTipOff: () => this.setState({ mh: null }),
+      hasMTip: !!mhc,
+      mtip: mhc ? { date: mhc.date, txt: mhc.future ? 'jeszcze przed nami' : mhc.n < 0 ? 'brak danych' : mhc.n + ' z 5 nawyków · ' + Math.round(mhc.n / 5 * 100) + '%' + (mhc.i === 358 ? ' · dziś' : ''),
+        s: 'position:absolute;z-index:5;pointer-events:none;width:190px;box-sizing:border-box;left:' + Math.min(Math.max(mhCol * 44 + 20 - 95, -30), 7 * 44 - 160) + 'px;' + (mhRow < 1 ? 'top:' + (mhRow * 44 + 46) + 'px;' : 'top:' + (mhRow * 44 - 54) + 'px;') + TIP } : null,
+      hasTip: !!hc,
+      tip: hc ? { date: hc.date, txt: hc.future ? 'jeszcze przed nami' : hc.n + ' z 5 nawyków · ' + Math.round(hc.n / 5 * 100) + '%' + (hc.i === 358 ? ' · dziś' : ''),
+        s: 'position:absolute;z-index:5;pointer-events:none;width:190px;box-sizing:border-box;left:' + tipLeft + 'px;' + (row < 2 ? 'top:' + (row * 18 + 22) + 'px;' : 'top:' + (row * 18 - 52) + 'px;') + TIP } : null,
+      sleep: hrs.map((h, k) => ({ t: h + ' h', enter: () => { if ((this.state || {}).sh !== k) this.setState({ sh: k }); }, s: 'flex:1;border-radius:4px 4px 0 0;cursor:default;height:' + Math.round((h / 9) * 150) + 'px;background:' + (h >= 8 ? '#15803d' : 'rgba(0,0,0,.12)') + (S.sh === k ? ';box-shadow:0 0 0 2px #262626' : '') })),
+      sleepGap: sleepR === 30 ? '3px' : '5px',
+      sTipOff: () => this.setState({ sh: null }),
+      hasSTip: S.sh !== undefined && S.sh !== null && S.sh < hrs.length,
+      stip: (S.sh !== undefined && S.sh !== null && S.sh < hrs.length) ? (() => {
+        const k = S.sh; const h = hrs[k]; const d = new Date(Date.UTC(2026, 10, 17) - (hrs.length - 1 - k) * 86400000);
+        const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+        return { date: DOW[(d.getUTCDay() + 6) % 7] + ' ' + p2(d.getUTCDate()) + '.' + p2(d.getUTCMonth() + 1), txt: hh + ':' + p2(mm) + ' h snu' + (h >= 8 ? ' · cel osiągnięty' : ' · ' + Math.round((8 - h) * 60) + ' min do celu'),
+          s: 'position:absolute;z-index:5;pointer-events:none;width:170px;box-sizing:border-box;bottom:' + (Math.round((h / 9) * 150) + 10) + 'px;left:calc(' + ((k + 0.5) / hrs.length * 100) + '% - 85px);' + TIP };
+      })() : null,
+      sleepFrom: p2(sDate.getUTCDate()) + '.' + p2(sDate.getUTCMonth() + 1),
+      s14p: sleepR === 14 ? 'true' : 'false', s30p: sleepR === 30 ? 'true' : 'false',
+      tipOff: () => this.setState({ hov: null }),
+      set14: () => this.setState({ sleepR: 14, sh: null }), set30: () => this.setState({ sleepR: 30, sh: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

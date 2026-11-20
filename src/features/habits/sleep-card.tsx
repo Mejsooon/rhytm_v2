@@ -1,10 +1,11 @@
 "use client";
 
-// Karta „Sen”: ostatnia noc i wykres słupkowy z linią celu (Habits.dc.html, „RZĄD 2”)
+// Karta „Sen”: ostatnia noc i wykres słupkowy z linią celu (CHabits.dc.html, karta „Sen”)
 import { useState, type KeyboardEvent } from "react";
 
-import { MonoLabel, Segment } from "@/components/controls";
+import { CardHeader, CardTitle, Segment, StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
+import { weekdayOf } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
 import { cn } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
@@ -12,6 +13,8 @@ import { sleepMinutes, sleepStats, type SleepLog } from "./sleep";
 import { formatDuration } from "./text";
 
 const WYSOKOSC = 150; // px, wysokość wykresu
+// Skróty dni tygodnia jak w DatePicker (pn = 1 … nd = 7 z weekdayOf, liczone w UTC)
+const DNI_TYGODNIA = ["pn", "wt", "śr", "czw", "pt", "sob", "nd"];
 
 export function SleepCard({
   sleepLogs,
@@ -68,10 +71,29 @@ export function SleepCard({
   // '2026-11-17' → '17.11'
   const krotko = (d: IsoDate) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
 
+  // Dymek (CHabits): „wt 17.11” oraz „7:12 h snu · 48 min do celu” / „· cel osiągnięty”;
+  // brak do celu od 60 min w h:mm („1:05 h do celu”)
+  let dymekData = "";
+  let dymekTekst = "";
+  const wybrany = najechany === null ? null : bars[najechany.k];
+  if (wybrany && wybrany.minutes !== null) {
+    dymekData = `${DNI_TYGODNIA[weekdayOf(wybrany.date) - 1]} ${krotko(wybrany.date)}`;
+    const brakuje = goalMin - wybrany.minutes;
+    let cel = "cel osiągnięty";
+    if (brakuje > 0) {
+      cel =
+        brakuje >= 60
+          ? `${formatDuration(brakuje)} h do celu`
+          : `${brakuje} min do celu`;
+    }
+    dymekTekst = `${formatDuration(wybrany.minutes)} h snu · ${cel}`;
+  }
+
   return (
-    <section className="flex flex-col rounded-lg border border-border bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border px-4 py-3.5">
-        <h2 className="m-0 text-[15px] font-semibold">Sen</h2>
+    // Klasy .card (jak Card), ale jako <section> — e2e szuka sekcji po nagłówku
+    <section className="relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+      <CardHeader className="flex-wrap items-center">
+        <CardTitle as="h2">Sen</CardTitle>
         <Segment
           ariaLabel="Zakres snu"
           value={zakres}
@@ -84,10 +106,10 @@ export function SleepCard({
             { value: "30", label: "30 dni" },
           ]}
         />
-      </div>
+      </CardHeader>
 
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="flex gap-6">
+      <div className="flex flex-1 flex-col gap-4 px-6 pt-4 pb-5">
+        <div className="flex gap-7">
           <div
             // Z wpisem i obsługą kliknięcia blok działa jak przycisk (fokus z klawiatury, Enter/Spacja)
             {...(ostatnia && onOpenLast
@@ -110,23 +132,23 @@ export function SleepCard({
                 "cursor-pointer outline-none hover:bg-panel focus-visible:shadow-focus",
             )}
           >
-            <MonoLabel className="block">Ostatnia noc</MonoLabel>
+            <div className="text-xs font-medium text-muted-foreground">Ostatnia noc</div>
             {ostatnia && onOpenLast && (
               <span className="sr-only">Edytuj ostatnią noc</span>
             )}
-            <div className="mt-1.5 font-mono text-xl">
+            <div className="mt-1.5 text-xl font-semibold tabular-nums">
               {minutyOstatniej === null ? "—" : formatDuration(minutyOstatniej)}
             </div>
             {ostatnia && (
-              <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+              <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                 {godziny}
               </div>
             )}
           </div>
           {ostatnia?.feeling != null && (
             <div>
-              <MonoLabel className="block">Samopoczucie</MonoLabel>
-              <div className="mt-1.5 font-mono text-xl">{`${ostatnia.feeling}/5`}</div>
+              <div className="text-xs font-medium text-muted-foreground">Samopoczucie</div>
+              <div className="mt-1.5 text-xl font-semibold tabular-nums">{`${ostatnia.feeling}/5`}</div>
             </div>
           )}
         </div>
@@ -144,11 +166,9 @@ export function SleepCard({
             className="absolute right-0 left-0 border-t border-dashed border-success"
             style={{ bottom: liniaCelu }}
           />
-          <span
-            className="absolute right-0 font-mono text-[10px] text-success"
-            style={{ bottom: liniaCelu + 4 }}
-          >
-            cel {celTekst} h
+          {/* Podpis celu jako odznaka .bdg.ok tuż nad linią; nieprzezroczyste tło (bg-card) pod półprzezroczystym zielonym, by tekst był czytelny nad słupkiem */}
+          <span className="absolute right-0 flex rounded-sm bg-card" style={{ bottom: liniaCelu + 5 }}>
+            <StatusBadge tone="green">cel {celTekst} h</StatusBadge>
           </span>
 
           {bars.map((b, k) => {
@@ -168,26 +188,32 @@ export function SleepCard({
                 onMouseEnter={(e) => setNajechany({ k, el: e.currentTarget })}
                 onFocus={(e) => setNajechany({ k, el: e.currentTarget })}
                 onBlur={() => setNajechany(null)}
+                // Zaznaczenie (mysz/fokus) to pierścień w style, a fokus klawiatury osobny obrys
                 className={cn(
-                  "flex-1 cursor-default rounded-t-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex-1 cursor-default rounded-t-[4px] outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   b.met ? "bg-success" : "bg-border-strong",
-                  najechany?.k === k && "shadow-[0_0_0_2px_#171717]",
                 )}
-                style={{ height: wysokosc }}
+                style={{
+                  height: wysokosc,
+                  boxShadow:
+                    najechany?.k === k ? "0 0 0 2px var(--foreground)" : undefined,
+                }}
               />
             );
           })}
 
-          {najechany !== null && bars[najechany.k]?.minutes != null && (
-            // Dymek nad słupkiem: „17.11 · 7:12”
+          {najechany !== null && dymekTekst && (
+            // Dymek nad słupkiem: dzień i data pogrubione, pod nimi czas i cel (dla czytników „wt 17.11 · 7:12 h snu · …”)
             <ChartTooltip anchor={najechany.el}>
-              <span className="font-mono">
-                {`${krotko(bars[najechany.k].date)} · ${formatDuration(bars[najechany.k].minutes ?? 0)}`}
-              </span>
+              <div className="font-semibold tabular-nums">{dymekData}</div>
+              <span className="sr-only"> · </span>
+              <div className="mt-0.5 text-muted-foreground tabular-nums">
+                {dymekTekst}
+              </div>
             </ChartTooltip>
           )}
         </div>
-        <div className="-mt-2.5 flex justify-between font-mono text-[10px] text-muted-foreground">
+        <div className="-mt-2.5 flex justify-between text-[11px] text-muted-foreground tabular-nums">
           <span>{krotko(bars[0].date)}</span>
           <span>{krotko(today)}</span>
         </div>
