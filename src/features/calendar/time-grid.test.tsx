@@ -106,7 +106,12 @@ describe("TimeGrid", () => {
     wyrenderuj({
       occurrences: [
         wystapienie({ blockId: "a", title: "A", durationMin: 30 }),
-        wystapienie({ blockId: "b", title: "B", startMin: 510, durationMin: 30 }),
+        wystapienie({
+          blockId: "b",
+          title: "B",
+          startMin: 510,
+          durationMin: 30,
+        }),
       ],
       selectedKey: "a:2026-11-17",
       sport: [planZSzablonu()],
@@ -340,14 +345,13 @@ describe("TimeGrid", () => {
     expect(screen.getByTestId("przewijanie").scrollTop).toBe(14 * 48);
   });
 
-  it("w tygodniu ma nagłówki dni, dziś: numer w ciemnym kółku i ledwo szare tło kolumny", () => {
+  it("w tygodniu ma nagłówki dni, dziś: numer w czerwonym kółku i ledwo szare tło kolumny", () => {
     wyrenderuj();
     const dzis = screen
       .getByTestId("naglowek-2026-11-17")
       .querySelector("[data-dzis]");
     expect(dzis).toHaveTextContent("17");
-    expect(dzis?.className).toContain("bg-primary");
-    expect(dzis?.className).toContain("h-6");
+    expect(dzis).toHaveClass("bg-destructive-strong", "size-6", "text-white");
     expect(
       screen.getByTestId("naglowek-2026-11-18").querySelector("[data-dzis]"),
     ).toBeNull();
@@ -384,7 +388,10 @@ describe("TimeGrid", () => {
     });
     const naglowek = screen.getByTestId("naglowek-2026-11-17");
     expect(naglowek).toHaveTextContent("17wt");
-    expect(naglowek.querySelector("[data-dzis]")).not.toBeNull();
+    expect(naglowek.querySelector("[data-dzis]")).toHaveClass(
+      "bg-destructive-strong",
+      "size-6",
+    );
     expect(screen.getByTestId("blok-b1:2026-11-17")).toHaveTextContent(
       "Studia",
     );

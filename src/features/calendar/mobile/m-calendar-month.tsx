@@ -114,15 +114,16 @@ export function MCalendarMonth({
                 aria-pressed={aktywny}
                 onClick={() => setWybrany(dzien)}
                 className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-md ${
-                  aktywny
-                    ? "bg-primary"
-                    : dzien === today
-                      ? "bg-active"
-                      : "bg-transparent"
+                  aktywny ? "bg-primary" : "bg-transparent"
                 }`}
               >
                 <span
-                  className={`font-mono text-[15px] ${aktywny ? "text-white" : "text-foreground"} ${dzien === today ? "font-semibold" : ""}`}
+                  data-dzis={dzien === today || undefined}
+                  className={
+                    dzien === today
+                      ? "inline-flex size-[26px] items-center justify-center rounded-full bg-destructive-strong text-sm leading-none font-semibold tracking-normal text-white tabular-nums"
+                      : `font-mono text-[15px] ${aktywny ? "text-white" : "text-foreground"}`
+                  }
                 >
                   {d}
                 </span>
