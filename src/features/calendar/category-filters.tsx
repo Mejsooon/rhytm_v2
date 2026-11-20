@@ -1,16 +1,24 @@
 "use client";
 
 // Filtry kategorii schowane w jednym przycisku.
-// Web (CalendarNotionWeek.dc.html): „Kategorie 3/4 ▾” z kropkami widocznych kategorii; menu z
-// polami wyboru (menuitemcheckbox), na końcu „+ Kategoria”. Esc zamyka, fokus wraca na przycisk.
+// Web (CCalendar.dc.html): przycisk .btn „Kategorie 3/4 ⌄” z kropkami widocznych kategorii; menu .pop
+// z etykietą „Pokaż w kalendarzu”, polami .cbx (menuitemcheckbox), separatorem i „+ Kategoria”.
+// Esc zamyka, fokus wraca na przycisk.
 // Telefon (MCalendarDayFull.dc.html): ikona „Kategorie” (44 px) otwiera dolny arkusz
 // z przełącznikiem przy każdej kategorii i „+ Kategoria”.
 // Ukrywanie działa tak samo jak dawne chipy: `onToggle` dostaje kategorię, rodzic zapisuje optymistycznie.
 import { useRef, useState } from "react";
-import { ListFilter, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDown, ListFilter, Plus, XIcon } from "lucide-react";
 import { Dialog, DropdownMenu } from "radix-ui";
 
-import { Switch } from "@/components/controls";
+import {
+  Button,
+  MENU_ITEM,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+  StatusBadge,
+  Switch,
+} from "@/components/controls";
 import { cn } from "@/lib/utils";
 import type { CategoryRow } from "./load-calendar";
 
@@ -32,13 +40,10 @@ export function CategoryFilters({
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          ref={przycisk}
-          type="button"
+      <DropdownMenu.Trigger asChild ref={przycisk}>
+        <Button
           // Czytnik słyszy „Kategorie, widoczne 3 z 4” zamiast sklejonego „Kategorie3/4”
           aria-label={`Kategorie, widoczne ${widoczne.length} z ${categories.length}`}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-white px-2.5 py-[5px] text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           {widoczne.length > 0 && (
             <span
@@ -50,7 +55,8 @@ export function CategoryFilters({
                 <span
                   key={k.id}
                   className={cn(
-                    "box-border size-[9px] rounded-full border-[1.5px] border-white",
+                    // Makieta: 9 px + ramka 1,5 px z każdej strony (content-box) = 12 px
+                    "box-border size-3 rounded-full border-[1.5px] border-white",
                     i > 0 && "-ml-1",
                   )}
                   style={{ background: k.color }}
@@ -59,21 +65,18 @@ export function CategoryFilters({
             </span>
           )}
           Kategorie
-          <span
-            aria-hidden="true"
-            className="font-mono text-[11px] text-muted-foreground"
-          >
-            {`${widoczne.length}/${categories.length}`}
+          <span aria-hidden="true" className="inline-flex">
+            <StatusBadge tone="gray" className="tabular-nums">
+              {`${widoczne.length}/${categories.length}`}
+            </StatusBadge>
           </span>
-          <span aria-hidden="true" className="text-muted-foreground">
-            ▾
-          </span>
-        </button>
+          <ChevronDown size={16} aria-hidden="true" />
+        </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="end"
-          sideOffset={6}
+          sideOffset={4}
           collisionPadding={8}
           onCloseAutoFocus={(e) => {
             if (!otworzOkno.current) return;
@@ -82,8 +85,12 @@ export function CategoryFilters({
             przycisk.current?.focus();
             onAdd();
           }}
-          className="z-[60] box-border flex w-[220px] flex-col gap-0.5 rounded-md border border-input bg-white p-1.5 text-[13px] text-foreground shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
+          // .pop z makiety: promień 12 px, ramka, cień lg, padding 4 px
+          className="z-[60] box-border flex w-[230px] flex-col rounded-lg border border-border bg-white bg-clip-padding p-1 text-sm text-foreground shadow-lg outline-none"
         >
+          <DropdownMenu.Label className={MENU_LABEL}>
+            Pokaż w kalendarzu
+          </DropdownMenu.Label>
           {categories.map((kategoria) => {
             const widoczna = !kategoria.hidden;
             return (
@@ -93,18 +100,22 @@ export function CategoryFilters({
                 // Menu zostaje otwarte, żeby przełączyć kilka kategorii naraz
                 onSelect={(e) => e.preventDefault()}
                 onCheckedChange={() => onToggle(kategoria)}
-                className="flex min-h-[34px] cursor-pointer items-center gap-2.5 rounded-md px-2 outline-none select-none data-[highlighted]:bg-muted"
+                className={cn(
+                  MENU_ITEM,
+                  "select-none data-[highlighted]:bg-accent",
+                )}
               >
+                {/* Kwadrat .cbx (16 px) — tylko wygląd, stan niesie menuitemcheckbox */}
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "box-border inline-flex size-4 flex-none items-center justify-center rounded border text-[11px] text-white",
+                    "box-border grid size-4 flex-none place-items-center rounded-[4px] border shadow-xs",
                     widoczna
-                      ? "border-primary bg-primary"
-                      : "border-ring bg-white",
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-white text-transparent",
                   )}
                 >
-                  {widoczna ? "✓" : ""}
+                  <CheckIcon strokeWidth={3} className="size-3" />
                 </span>
                 <span
                   aria-hidden="true"
@@ -121,13 +132,21 @@ export function CategoryFilters({
               </DropdownMenu.CheckboxItem>
             );
           })}
+          <DropdownMenu.Separator className={MENU_SEPARATOR} />
           <DropdownMenu.Item
             onSelect={() => {
               otworzOkno.current = true;
             }}
-            className="mt-1 flex min-h-[34px] cursor-pointer items-center border-t border-border px-2 text-muted-foreground outline-none select-none data-[highlighted]:bg-muted"
+            className={cn(
+              MENU_ITEM,
+              "text-muted-foreground select-none data-[highlighted]:bg-accent",
+            )}
           >
-            + Kategoria
+            {/* Wygląd jak w makiecie (ikona + „Kategoria”), nazwa dostępna bez zmian: „+ Kategoria” */}
+            <Plus size={16} aria-hidden="true" />
+            <span>
+              <span className="sr-only">+</span> Kategoria
+            </span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

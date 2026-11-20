@@ -58,15 +58,35 @@ function wyrenderuj(over: Partial<Parameters<typeof DaySide>[0]> = {}) {
 }
 
 describe("DaySide", () => {
-  it("mini kalendarz: tytuł miesiąca, dziś zielony, wybrany czarny", () => {
+  it("mini kalendarz: tytuł miesiąca, dziś z obwódką, wybrany czarny", () => {
     wyrenderuj();
-    expect(screen.getByText("listopad 2026")).toBeInTheDocument();
+    // Tekst bez zmian, wielką literę daje CSS (jak „Listopad 2026” w makiecie)
+    expect(screen.getByText("listopad 2026").className).toContain(
+      "first-letter:uppercase",
+    );
+    // Dziś jak w DatePicker: obwódka border-strong
     expect(
       screen.getByRole("button", { name: "17 listopada" }).className,
-    ).toContain("text-success");
+    ).toContain("border-border-strong");
+    const wybrany = screen.getByRole("button", { name: "18 listopada" });
+    expect(wybrany.className).toContain("bg-primary");
+    expect(wybrany.className).toContain("text-primary-foreground");
+    expect(wybrany.className).toContain("h-[30px]");
+  });
+
+  it("wygląd COSS: szary panel 288 px z kartami, strzałki ghost", () => {
+    wyrenderuj();
+    const panel = screen.getByRole("complementary");
+    // Makieta: 288 px treści + 2 × 16 px paddingu + 1 px ramki (content-box)
+    expect(panel.className).toContain("w-[321px]");
+    expect(panel.className).toContain("bg-panel");
+    expect(panel.querySelectorAll(".shadow-card")).toHaveLength(2);
+    const strzalka = screen.getByRole("button", { name: "Następny miesiąc" });
+    expect(strzalka.className).toContain("bg-transparent");
+    expect(strzalka.querySelector("svg")).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "18 listopada" }).className,
-    ).toContain("bg-primary");
+      screen.getByRole("heading", { level: 2, name: "Dzień w liczbach" }),
+    ).toBeInTheDocument();
   });
 
   it("klik dnia woła onPick z datą", async () => {
@@ -110,6 +130,15 @@ describe("DaySide", () => {
     // okno 12 h minus zajęte (2 h 30 min + 1 h 30 min) = 8 h
     expect(screen.getByText("8 h")).toBeInTheDocument();
     expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    // Pasek postępu zadań pod liczbami (.prog z makiety)
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "1",
+    );
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuemax",
+      "3",
+    );
   });
 
   it("format godzin z połówką: 2 h 30 min", () => {
