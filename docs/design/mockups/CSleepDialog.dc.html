@@ -65,7 +65,7 @@ class Component extends DCLogic {
       from: this.state.from, to: this.state.to,
       onFrom: (e) => this.setState({ from: e.target.value }), onTo: (e) => this.setState({ to: e.target.value }),
       dur: ok ? Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0') : '—',
-      bar: 'height:6px;border-radius:999px;width:' + pct + '%;background:' + (pct >= 100 ? '#15803d' : '#262626'),
+      bar: 'height:6px;border-radius:999px;width:' + pct + '%;background:#15803d',
       goalTxt: !ok ? 'Wpisz godziny w formacie GG:MM' : diff > 0 ? pct + '% celu 8:00 · brakuje ' + diff + ' min' : 'Cel 8:00 osiągnięty' + (diff < 0 ? ' · +' + (-diff) + ' min' : ''),
       moods: ['Źle', 'Słabo', 'OK', 'Dobrze', 'Super'].map((l, i) => { const n = i + 1; const on = this.state.mood === n; return { n: String(n), l, on: on ? 'true' : 'false', pick: () => this.setState({ mood: on ? null : n }) }; }),
       tags: ['Kawa po 16', 'Ekran w łóżku', 'Trening', 'Alkohol', 'Stres'].map((n) => { const on = this.state.tags.includes(n); return { n, on: on ? 'true' : 'false', toggle: () => this.setState({ tags: on ? this.state.tags.filter((x) => x !== n) : this.state.tags.concat(n) }) }; })

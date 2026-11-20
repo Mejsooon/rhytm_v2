@@ -60,7 +60,7 @@ body{margin:0;background:#ffffff}
   <div style="flex: 1; overflow-y: auto; padding: 8px 16px 100px; display: flex; flex-direction: column; gap: 18px">
     <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
       <section style="display: flex; gap: 12px">
-        <div style="{{d.badgeS}}"><span style="font-size: 11px">{{d.wd}}</span><span class="num" style="font-size: 18px; font-weight: 500">{{d.n}}</span></div>
+        <div style="{{d.badgeS}}"><span style="font-size: 11px">{{d.wd}}</span><span class="num" style="{{d.numS}}">{{d.n}}</span></div>
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px">
           <sc-for list="{{d.items}}" as="b" hint-placeholder-count="3"><a href="CMCalendarDay.dc.html" style="{{b.s}}"><span style="flex: 1; min-width: 0; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.t}}</span><span class="num muted" style="font-size: 12px">{{b.time}}</span></a></sc-for>
         </div>
@@ -89,7 +89,8 @@ class Component extends DCLogic {
     return {
       days: [9, 10, 11, 12, 13, 14, 15].map((n, i) => ({
         n, wd: WD[i],
-        badgeS: 'width:44px;height:52px;flex:none;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;' + (n === 15 ? 'background:var(--primary);color:var(--primary-foreground);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:var(--accent);color:var(--foreground)'),
+        badgeS: 'width:44px;height:52px;flex:none;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;' + 'background:var(--accent);color:var(--foreground)',
+        numS: n === 15 ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:28px;height:28px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:16px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:18px;font-weight:500',
         items: DAYS[n].map((b) => ({ t: b[2], time: fmt(b[0]),
           s: 'display:flex;align-items:center;gap:8px;min-height:44px;padding:0 10px;border-radius:10px;box-sizing:border-box;color:inherit;text-decoration:none;background:' + CAT[b[3]] + '12;border:1px solid ' + CAT[b[3]] + '4d' }))
       }))

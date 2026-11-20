@@ -47,7 +47,7 @@ body{margin:0;background:#ffffff}
         <div style="position: sticky; top: 0; z-index: 4; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,.08); display: grid; grid-template-columns: 64px 1fr">
           <div style="font-size: 11px; color: #686868; padding: 8px 6px; text-align: right; line-height: 1.2">cały<br>dzień</div>
           <div style="border-left: 1px solid rgba(0,0,0,.06); padding: 6px 8px; min-height: 28px; display: flex; align-items: center; gap: 8px">
-            <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; border-radius: 12px; background: #262626; color: #fafafa; font-weight: 600; font-size: 13px">17</span>
+            <span style="display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 24px; height: 24px; padding: 0; border-radius: 50%; background: #dc2626; color: #ffffff; font-weight: 600; font-size: 13px; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums">17</span>
             <span style="font-size: 12px; font-weight: 500; color: #686868">wt</span>
           </div>
         </div>
@@ -114,7 +114,7 @@ body{margin:0;background:#ffffff}
             <div style="display: flex; justify-content: space-between"><span class="muted">Zaplanowane</span><span class="num" style="font-weight: 500">{{planned}}</span></div>
             <div style="display: flex; justify-content: space-between"><span class="muted">Wolne (8–20)</span><span class="num" style="font-weight: 500">{{free}}</span></div>
             <div style="display: flex; justify-content: space-between"><span class="muted">Zadania</span><span class="num" style="font-weight: 500">2 / 15</span></div>
-            <div class="prog" style="margin-top: 2px"><div style="width: 13%; height: 6px; border-radius: 999px; background: #262626"></div></div>
+            <div class="prog" style="margin-top: 2px"><div style="width: 13%; height: 6px; border-radius: 999px; background: #15803d"></div></div>
           </div>
         </section>
       </aside>
@@ -162,7 +162,7 @@ class Component extends DCLogic {
         hasNote: selB.id === 'kod', note: 'Najpierw migracje, potem UI. Okno „+ Pole” wg makiety.', rec: selB.rec ? 'co tydzień' : '', hasRec: !!selB.rec,
         delHref: selB.rec ? 'CScopeDialog.dc.html' : 'CDeleteBlockDialog.dc.html',
         dot: 'width:8px;height:8px;border-radius:50%;background:' + selB.color,
-        bar: 'height:6px;border-radius:999px;background:#262626;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+        bar: 'height:6px;border-radius:999px;background:#15803d;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
         style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
       };
     };
@@ -195,7 +195,7 @@ class Component extends DCLogic {
       const inm = d.getUTCMonth() === 10;
       const sel = inm && d.getUTCDate() === 17;
       return { n: String(d.getUTCDate()), label: d.getUTCDate() + (inm ? ' listopada' : ''),
-        s: 'height:30px;border:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#262626;color:#fafafa;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : inm ? 'background:transparent;color:#262626' : 'background:transparent;color:#a3a3a3') };
+        s: 'height:30px;border:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#dc2626;color:#ffffff;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : inm ? 'background:transparent;color:#262626' : 'background:transparent;color:#a3a3a3') };
     });
     const selRaw = vis.find((b) => b[0] === this.state.sel);
     const pop = selRaw ? mkPop({ id: selRaw[0] === 'b1' ? 'kod' : selRaw[0], title: selRaw[3], cat: selRaw[4], color: COL[selRaw[4]], day: 'wt 17.11', time: fmt(selRaw[1]) + '–' + fmt(selRaw[2]), tasks: selRaw[6], rec: selRaw[7] }, 'left:46%;max-width:calc(54% - 16px);top:' + Math.round(selRaw[1] * H) + 'px;') : null;
