@@ -1,7 +1,7 @@
 "use client";
 
 // „Plan dnia” na Dziś (web, Today.dc.html): oś 00–24 (48 px na godzinę, widać 06–22),
-// bloki dnia z „x/y” zadań i „TERAZ”, treningi (tylko do odczytu, link do /sport),
+// bloki dnia z „x/y” zadań i „Teraz”, treningi (tylko do odczytu, link do /sport),
 // czerwona linia aktualnej godziny. Dymki i okna są te same co w kalendarzu.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -257,7 +257,7 @@ export function DayPlan({
                 height: (podglad.durationMin / 60) * GODZINA - 6,
               }}
             >
-              {`${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
+              {`Nowy blok · ${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
             </div>
           )}
 
@@ -308,7 +308,7 @@ export function DayPlan({
                   <span className="truncate font-medium">
                     {kompakt ? `${p.title} · ${godz(p.startMin)}` : p.title}
                   </span>
-                  {trwa && <StatusBadge tone="green">TERAZ</StatusBadge>}
+                  {trwa && <StatusBadge tone="green">Teraz</StatusBadge>}
                   {licznik && (
                     <StatusBadge tone="outline" className="ml-auto tabular-nums">
                       {licznik}
@@ -367,8 +367,8 @@ export function DayPlan({
           <span
             data-testid="etykieta-teraz"
             aria-hidden="true"
-            // Etykieta godziny: biała na #ef4444, promień 6 px, 11 px / 500
-            className="pointer-events-none absolute left-2 rounded-sm bg-destructive px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
+            // Etykieta godziny: biała na #dc2626 (destructive-strong), promień 6 px, 11 px / 500
+            className="pointer-events-none absolute left-2 rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
             style={{ top: (teraz / 60) * GODZINA - 10 }}
           >
             {godz(teraz)}

@@ -36,6 +36,7 @@ const tokeny: Record<string, string> = {
   ring: "#a3a3a3",
   destructive: "#ef4444",
   "destructive-hover": "#f05252",
+  "destructive-strong": "#dc2626",
   "destructive-foreground": "#b91c1c",
   "destructive-soft": "rgba(239,68,68,.08)",
   "destructive-border": "rgba(239,68,68,.24)",

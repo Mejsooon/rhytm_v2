@@ -66,10 +66,10 @@ function slupki(etykieta: string) {
     .map((s) => [s.getAttribute("title"), s.style.height, s.style.background]);
 }
 
-const SZARY_PUSTY = "rgb(234, 234, 234)";
+const SZARY_PUSTY = "rgba(0, 0, 0, 0.06)";
 const ZIELONY = "rgb(21, 128, 61)";
-const CIEMNY = "rgb(23, 23, 23)";
-const SZARY = "rgb(212, 212, 212)";
+const CIEMNY = "rgb(38, 38, 38)";
+const SZARY = "rgba(0, 0, 0, 0.16)";
 const jeszczeNie = Array.from({ length: 5 }, () => [
   "jeszcze nie",
   "3px",

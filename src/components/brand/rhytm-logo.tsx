@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 
-const CIEMNY = "#171717";
 const AKCENT = "#15803d";
 
 // Siatka 3×3 kwadratów 11×11 (rx=3), pozycje 4/18/32; krycia wierszami
@@ -44,7 +43,9 @@ export function RhytmLogo({
             width={11}
             height={11}
             rx={3}
-            fill={k.accent ? AKCENT : CIEMNY}
+            // Ciemne kwadraty: kolor foreground (#262626); akcent zostaje zielony
+            fill={k.accent ? AKCENT : undefined}
+            className={k.accent ? undefined : "fill-foreground"}
             opacity={k.opacity}
           />
         ))}

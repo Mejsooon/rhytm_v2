@@ -107,6 +107,7 @@ export function PageMenu({
         dalej: <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">›</span>,
         duplikuj: <span aria-hidden="true" className={IKONA_POZYCJI}>⧉</span>,
         usun: <span aria-hidden="true" className={`${IKONA_POZYCJI} text-destructive-foreground`}>✕</span>,
+        ulubione: <span aria-hidden="true" className={IKONA_POZYCJI}>★</span>,
         wstecz: "←",
       }
     : {
@@ -114,6 +115,7 @@ export function PageMenu({
         ikona: <Smile size={16} aria-hidden="true" className="flex-none text-muted-foreground" />,
         dalej: <ChevronRight size={14} aria-hidden="true" className="flex-none text-muted-foreground" />,
         duplikuj: <Copy size={16} aria-hidden="true" className="flex-none text-muted-foreground" />,
+        ulubione: <Star size={16} aria-hidden="true" className="flex-none text-muted-foreground" />,
         usun: <Trash2 size={16} aria-hidden="true" className="flex-none" />,
         wstecz: <ChevronLeft size={16} aria-hidden="true" />,
       };
@@ -204,21 +206,11 @@ export function PageMenu({
             void store.setFavorite(page.id, !page.favorite);
           }}
         >
-          {sheet ? (
-            // Arkusz: gwiazdka w samym tekście pełni rolę ikony pozycji
-            <span className="flex-1">
-              {page.favorite ? "★ Usuń z ulubionych" : "★ Dodaj do ulubionych"}
-            </span>
-          ) : (
-            <>
-              <Star size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
-              {/* Nazwa pozycji bez zmian („★ …”) — gwiazdkę widać jako ikonę, znak zostaje dla czytników */}
-              <span className="flex-1">
-                <span className="sr-only">★</span>
-                {page.favorite ? " Usuń z ulubionych" : " Dodaj do ulubionych"}
-              </span>
-            </>
-          )}
+          {/* Gwiazdka to tylko ikona (aria-hidden) — nazwa pozycji bez „★” */}
+          {ikony.ulubione}
+          <span className="flex-1">
+            {page.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
+          </span>
         </button>
         <div className={MENU_SEPARATOR} />
         <button

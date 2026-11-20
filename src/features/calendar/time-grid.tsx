@@ -335,7 +335,7 @@ export function TimeGrid({
                       height: (podglad.durationMin / 60) * wysokoscGodziny - 2,
                     }}
                   >
-                    {`${formatClockTime(Math.floor(podglad.startMin / 60), podglad.startMin % 60, clock)}–${formatClockTime(Math.floor((podglad.startMin + podglad.durationMin) / 60), (podglad.startMin + podglad.durationMin) % 60, clock)}`}
+                    {`${podglad.kind === "create" ? "Nowy blok · " : ""}${formatClockTime(Math.floor(podglad.startMin / 60), podglad.startMin % 60, clock)}–${formatClockTime(Math.floor((podglad.startMin + podglad.durationMin) / 60), (podglad.startMin + podglad.durationMin) % 60, clock)}`}
                   </div>
                 )}
 
@@ -547,7 +547,8 @@ export function TimeGrid({
                     />
                     {variant === "day" && (
                       <span
-                        className="pointer-events-none absolute -left-[58px] rounded bg-destructive px-1 py-px font-mono text-[10px] text-white"
+                        data-testid="etykieta-teraz"
+                        className="pointer-events-none absolute -left-[58px] rounded bg-destructive-strong px-1 py-px font-mono text-[10px] text-white"
                         style={{ top: (linia / 60) * wysokoscGodziny - 9 }}
                       >
                         {formatClockTime(

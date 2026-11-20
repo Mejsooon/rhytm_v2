@@ -61,5 +61,6 @@ describe("IconPicker", () => {
     expect(screen.getByRole("button", { name: "Ikona start projekt" })).toHaveAttribute("aria-pressed", "true");
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "xyzxyz");
     expect(screen.getByText("Brak wyników")).toBeInTheDocument();
+    expect(screen.getByText("Spróbuj innego słowa.")).toHaveClass("text-xs", "text-muted-foreground");
   });
 });

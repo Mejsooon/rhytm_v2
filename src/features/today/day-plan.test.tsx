@@ -201,15 +201,15 @@ describe("DayPlan", () => {
     );
   });
 
-  it("oś przewija się na trwający blok, „TERAZ” jest na nim, czerwona linia na 10:20", () => {
+  it("oś przewija się na trwający blok, „Teraz” jest na nim, czerwona linia na 10:20", () => {
     render(<Plan d={dane()} />);
     // 48 px na godzinę: 10:00 → 480 px
     expect(screen.getByTestId("os-dnia").scrollTop).toBe(480);
     const trwajacy = screen.getByRole("button", { name: /rhytm — kod/ });
-    expect(within(trwajacy).getByText("TERAZ")).toBeInTheDocument();
+    expect(within(trwajacy).getByText("Teraz")).toBeInTheDocument();
     expect(
       within(screen.getByRole("button", { name: /Matematyka/ })).queryByText(
-        "TERAZ",
+        "Teraz",
       ),
     ).not.toBeInTheDocument();
     expect(within(trwajacy).getByText("1/3")).toBeInTheDocument();
@@ -217,12 +217,15 @@ describe("DayPlan", () => {
       top: `${(620 / 60) * 48}px`,
     });
     expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    // Etykieta godziny ma tło #dc2626 (destructive-strong), linia zostaje destructive
+    expect(screen.getByTestId("etykieta-teraz")).toHaveClass("bg-destructive-strong");
+    expect(screen.getByTestId("linia-teraz")).toHaveClass("border-destructive");
   });
 
   it("bez trwającego bloku oś przewija się na 06:00", () => {
     render(<Plan d={dane({ nowMin: 7 * 60 })} />);
     expect(screen.getByTestId("os-dnia").scrollTop).toBe(6 * 48);
-    expect(screen.queryByText("TERAZ")).not.toBeInTheDocument();
+    expect(screen.queryByText("Teraz")).not.toBeInTheDocument();
   });
 
   it("trening „plan” jest linkiem do podglądu na /sport", () => {
@@ -365,7 +368,7 @@ describe("DayPlan", () => {
       pointerId: 1,
     });
     expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent(
-      "09:00–13:00",
+      "Nowy blok · 09:00–13:00",
     );
     fireEvent.pointerUp(siatka, { clientX: 300, clientY: 624, pointerId: 1 });
     // Klik, który przeglądarka wysyła zaraz po przeciągnięciu, nie otwiera „Nowego wpisu”

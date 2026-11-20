@@ -100,12 +100,12 @@ afterEach(() => {
 });
 
 describe("TodayView", () => {
-  it("pełny widok: nagłówek „Moduły / Dziś” z odznaką „wtorek · 17.11.2026” i „tydz. 47” oraz karta „Ten tydzień”", () => {
+  it("pełny widok: nagłówek: sam tytuł „Dziś” (bez „Moduły /”) z odznaką „wtorek · 17.11.2026” i „tydz. 47” oraz karta „Ten tydzień”", () => {
     render(<TodayView data={dane(wszystko)} name="Mejson" />);
     // Drzewo web (telefon ma własne testy w mobile/m-today.test.tsx)
     const web = within(screen.getByTestId("web-dzis"));
     expect(web.getByRole("heading", { name: "Dziś" })).toBeInTheDocument();
-    expect(web.getByText("Moduły")).toBeInTheDocument();
+    expect(web.queryByText("Moduły")).not.toBeInTheDocument();
     // CToday: odznaka .bdg.sec.lg.num z datą i .hint.num z numerem tygodnia
     expect(web.getByText("wtorek · 17.11.2026")).toHaveClass(
       "h-[22px]",

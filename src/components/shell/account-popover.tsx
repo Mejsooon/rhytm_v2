@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import Link from "next/link";
 
 import {
   ActionPopover,
@@ -21,7 +22,7 @@ export type SidebarUser = {
 };
 
 // Blok użytkownika na dole sidebara + dymek konta nad nim (CSidebar.dc.html).
-// Ustawienia mają własną pozycję w sidebarze, więc w dymku jest tylko „Wyloguj się”.
+// Ustawienia mają własną pozycję w sidebarze, więc w dymku są „Konto” (→ /ustawienia/konto) i „Wyloguj się”.
 export function AccountPopover({ user }: { user: SidebarUser }) {
   const [open, setOpen] = React.useState(false);
   // Inicjał: pierwsza litera nazwy, wielka (Array.from — bezpieczne dla znaków poza BMP)
@@ -72,6 +73,15 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           <div className="truncate font-normal">{user.email}</div>
         </div>
         <div className={MENU_SEPARATOR} />
+        {/* „Konto” (.mi): ikona w kolorze muted + tekst, prowadzi do zakładki „Konto i bezpieczeństwo” */}
+        <Link
+          href="/ustawienia/konto"
+          onClick={() => setOpen(false)}
+          className={MENU_ITEM}
+        >
+          <UserRound size={16} aria-hidden="true" className="text-muted-foreground" />
+          Konto
+        </Link>
         <form action={signOut}>
           <button type="submit" className={cn(MENU_ITEM, MENU_ITEM_DANGER)}>
             <LogOut size={16} aria-hidden="true" />

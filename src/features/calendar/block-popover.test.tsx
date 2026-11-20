@@ -215,6 +215,21 @@ describe("BlockPopover", () => {
     expect(toastError).toHaveBeenCalled();
   });
 
+  it("przyciski ⋯ i × przy zadaniu na webie widać po najechaniu/fokusie w wierszu, na telefonie stale", () => {
+    wyrenderuj();
+    for (const nazwa of ["Opcje zadania Szablony", "Usuń zadanie Szablony"]) {
+      const przycisk = screen.getByRole("button", { name: nazwa });
+      expect(przycisk).toHaveClass(
+        "min-[800px]:opacity-0",
+        "min-[800px]:group-hover:opacity-100",
+        "min-[800px]:group-focus-within:opacity-100",
+        "focus-visible:opacity-100",
+      );
+      // Wiersz zadania jest grupą dla group-hover / group-focus-within
+      expect(przycisk.parentElement).toHaveClass("group");
+    }
+  });
+
   it("zamyka się, gdy bloku-kotwicy nie ma w DOM", () => {
     const onClose = vi.fn();
     wyrenderuj({ onClose, occurrence: wystapienie({ key: "b1:2026-11-18" }) });

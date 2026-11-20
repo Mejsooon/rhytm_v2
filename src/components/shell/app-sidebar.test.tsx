@@ -113,6 +113,16 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("dymek konta ma pozycję „Konto” — link do /ustawienia/konto (przed „Wyloguj się”)", async () => {
+    const user = userEvent.setup();
+    render(<AppSidebar user={uzytkownik} />);
+    await user.click(screen.getByRole("button", { name: /Mejson/ }));
+    const dymek = await screen.findByRole("dialog");
+    const konto = within(dymek).getByRole("link", { name: "Konto" });
+    expect(konto).toHaveAttribute("href", "/ustawienia/konto");
+    expect(konto).toHaveClass("cursor-pointer");
+  });
+
   it("pokazuje strony w kolejności position, pusty tytuł jako „Bez tytułu”, aktywna ma tło .sb-i[aria-current]", () => {
     sciezka = "/strony/b";
     render(

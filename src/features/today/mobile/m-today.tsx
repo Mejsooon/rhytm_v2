@@ -1,7 +1,7 @@
 "use client";
 
 // Ekran Dziś na telefonie wg MToday.dc.html: nagłówek (szukaj, awatar), kafelki 2×2,
-// karta „TERAZ” z zadaniami trwającego bloku, „Plan dnia” jako lista, nawyki z odhaczaniem
+// karta „Teraz” z zadaniami trwającego bloku, „Plan dnia” jako lista, nawyki z odhaczaniem
 // i serią, karta najbliższego biegu oraz pływający „+” (szybkie dodawanie, arkusz z Task 6).
 import { useState } from "react";
 import Link from "next/link";
@@ -70,7 +70,7 @@ export function MToday({
   const { today, profile } = data;
   const { clock } = profile;
 
-  // Otwarty arkusz edycji bloku (z karty TERAZ) albo null
+  // Otwarty arkusz edycji bloku (z karty Teraz) albo null
   const [edycja, setEdycja] = useState<BlockDialogInitial | null>(null);
 
   const godz = (minuty: number) =>
@@ -283,7 +283,7 @@ export function MToday({
           )}
         </div>
 
-        {/* TERAZ: tylko gdy trwa blok */}
+        {/* Teraz: tylko gdy trwa blok */}
         {trwajacy && wystapienie && (
           <section
             aria-labelledby="m-teraz"
@@ -294,7 +294,7 @@ export function MToday({
                 id="m-teraz"
                 className="rounded-[5px] border border-success-border bg-white px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-success"
               >
-                TERAZ
+                Teraz
               </span>
               <span className="font-mono text-xs text-muted-foreground">
                 {`${godz(trwajacy.startMin)}–${godz(trwajacy.endMin)} · zostało ${trwajacy.endMin - teraz} min`}

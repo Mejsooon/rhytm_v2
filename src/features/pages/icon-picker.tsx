@@ -167,7 +167,13 @@ export function IconPicker({
             })}
           </div>
         )}
-        {pusto && <p className="m-0 px-2 py-4 text-center text-sm font-medium">Brak wyników</p>}
+        {pusto && (
+          // .empty z CIconPicker: tytuł 14 px / 500 i podpowiedź .hint 12 px muted
+          <div className="flex flex-col items-center gap-2 px-2 py-4 text-center">
+            <span className="text-sm font-medium">Brak wyników</span>
+            <span className="text-xs font-normal text-muted-foreground">Spróbuj innego słowa.</span>
+          </div>
+        )}
       </div>
     </div>
   );

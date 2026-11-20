@@ -59,7 +59,7 @@ export function WeekCard({
           .join(", ");
 
   // Słupki dni jak `spark` w makiecie: wysokość v / max × 28 px (min. 3 px);
-  // dzień bez wartości szary #eaeaea, dziś zielony, dzień z osiągniętym celem ciemny
+  // dzień bez wartości rgba(0,0,0,.06), dziś zielony #15803d, osiągnięty cel #262626, reszta rgba(0,0,0,.16)
   const indeksDzis = Array.from({ length: 7 }, (_, i) =>
     addDays(weekStartDate, i),
   ).indexOf(today);
@@ -80,12 +80,12 @@ export function WeekCard({
       wysokosc: v === null ? 3 : Math.max(3, Math.round((v / max) * 28)),
       kolor:
         v === null
-          ? "#eaeaea"
+          ? "rgba(0,0,0,.06)"
           : i === indeksDzis
             ? "#15803d"
             : cel(v, i)
-              ? "#171717"
-              : "#d4d4d4",
+              ? "#262626"
+              : "rgba(0,0,0,.16)",
     }));
   const bezCelu = () => false;
   const najwiecej = (wartosci: (number | null)[]) =>

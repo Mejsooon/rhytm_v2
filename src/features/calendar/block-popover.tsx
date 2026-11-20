@@ -190,7 +190,7 @@ export function BlockDetails({
           return (
             <div
               key={t.id}
-              className="flex min-h-[30px] items-center gap-1 max-[799px]:min-h-11"
+              className="group flex min-h-[30px] items-center gap-1 max-[799px]:min-h-11"
             >
               <label
                 className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm ${
@@ -214,6 +214,7 @@ export function BlockDetails({
                 </span>
                 <span className="min-w-0 break-words">{t.title}</span>
               </label>
+              {/* ⋯ i × na webie pojawiają się po najechaniu na wiersz lub przy fokusie w nim; na telefonie stale */}
               {otwarteMenu === t.id && (
                 <Button
                   size="xs"
@@ -234,7 +235,7 @@ export function BlockDetails({
                 onClick={() =>
                   setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
                 }
-                className="text-muted-foreground max-[799px]:size-11"
+                className="text-muted-foreground max-[799px]:size-11 min-[800px]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <Ellipsis size={14} aria-hidden="true" />
               </Button>
@@ -245,7 +246,7 @@ export function BlockDetails({
                 aria-label={`Usuń zadanie ${t.title}`}
                 disabled={tymczasowe}
                 onClick={() => usun(t)}
-                className="text-muted-foreground hover:text-destructive-foreground max-[799px]:size-11"
+                className="text-muted-foreground hover:text-destructive-foreground max-[799px]:size-11 min-[800px]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <X size={14} aria-hidden="true" />
               </Button>

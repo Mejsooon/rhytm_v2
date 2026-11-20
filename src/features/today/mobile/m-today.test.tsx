@@ -297,11 +297,11 @@ describe("MToday", () => {
     );
   });
 
-  it("karta TERAZ: godziny, „zostało N min” i odhaczanie zadań wystąpienia (optymistycznie)", async () => {
+  it("karta Teraz: godziny, „zostało N min” i odhaczanie zadań wystąpienia (optymistycznie)", async () => {
     toggleTask.mockResolvedValue({ ok: true });
     render(<TodayView data={dane()} name="Mejson" />);
     const t = telefon();
-    const karta = t.getByRole("region", { name: "TERAZ" });
+    const karta = t.getByRole("region", { name: "Teraz" });
     // 09:30–11:30, teraz 10:20 → zostało 70 min
     expect(
       within(karta).getByText("09:30–11:30 · zostało 70 min"),
@@ -328,7 +328,7 @@ describe("MToday", () => {
   it("błąd odhaczenia zadania cofa zmianę i pokazuje toast", async () => {
     toggleTask.mockResolvedValue({ ok: false, message: "x" });
     render(<TodayView data={dane()} name="Mejson" />);
-    const karta = telefon().getByRole("region", { name: "TERAZ" });
+    const karta = telefon().getByRole("region", { name: "Teraz" });
     const testy = within(karta).getByRole("checkbox", { name: "Testy RLS" });
     await userEvent.click(testy);
     await waitFor(() =>
@@ -339,19 +339,19 @@ describe("MToday", () => {
     expect(testy).toHaveAttribute("aria-checked", "false");
   });
 
-  it("bez trwającego bloku nie ma karty TERAZ", () => {
+  it("bez trwającego bloku nie ma karty Teraz", () => {
     const d = dane();
     d.nowMin = 12 * 60;
     vi.setSystemTime(new Date("2026-11-17T11:00:00Z"));
     render(<TodayView data={d} name="Mejson" />);
     expect(
-      telefon().queryByRole("region", { name: "TERAZ" }),
+      telefon().queryByRole("region", { name: "Teraz" }),
     ).not.toBeInTheDocument();
   });
 
-  it("stuknięcie w tytuł TERAZ otwiera arkusz bloku w trybie edycji", async () => {
+  it("stuknięcie w tytuł Teraz otwiera arkusz bloku w trybie edycji", async () => {
     render(<TodayView data={dane()} name="Mejson" />);
-    const karta = telefon().getByRole("region", { name: "TERAZ" });
+    const karta = telefon().getByRole("region", { name: "Teraz" });
     await userEvent.click(
       within(karta).getByRole("button", { name: "rhytm — kod" }),
     );

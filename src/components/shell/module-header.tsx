@@ -5,21 +5,21 @@ import { Settings } from "lucide-react";
 import { MonoLabel } from "@/components/controls";
 
 // Nagłówek modułu. Oba warianty są w DOM, przełącza je wyłącznie CSS (800 px):
-// - web: .topbar z coss.css z okruszkami .crumb jak w CEmptyToday / CPageMenu
-//   („Moduły / Dziś”, „Strony / Books”): rodzic 14 px muted, „/”, tytuł (h1) 14 px / 500,
+// - web: .topbar z coss.css; moduły (bez webParent) pokazują sam tytuł .h-title
+//   (18 px / 600), strony z webParent okruszki .crumb („Strony / Books”),
 // - telefon: duży tytuł 28 px z etykietą mono nad nim (MToday / MPages).
 export function ModuleHeader({
   title,
   phoneLabel,
   phoneSettingsLink = false,
-  webParent = "Moduły",
+  webParent,
   phoneTitle,
   webMeta,
   webAction,
   webOnly = false,
 }: {
   title: string;
-  // Pierwszy człon okruszków na webie („Ustawienia / Ogólne”)
+  // Pierwszy człon okruszków na webie („Ustawienia / Ogólne”); bez niego web pokazuje sam tytuł
   webParent?: string;
   // Inny tytuł na telefonie (np. „Ustawienia” zamiast nazwy zakładki)
   phoneTitle?: string;
@@ -39,11 +39,16 @@ export function ModuleHeader({
       {/* .topbar: min-height 36 px liczone bez paddingu (box-content), padding 10px 24px */}
       <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500 */}
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <span>{webParent}</span> <span>/</span>{" "}
-            <h1 className="m-0 text-sm font-medium text-foreground">{title}</h1>
-          </div>
+          {webParent ? (
+            // .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span>{webParent}</span> <span>/</span>{" "}
+              <h1 className="m-0 text-sm font-medium text-foreground">{title}</h1>
+            </div>
+          ) : (
+            // .h-title: sam tytuł modułu, bez „Moduły /”
+            <h1 className="m-0 text-lg font-semibold tracking-[-0.011em]">{title}</h1>
+          )}
           {webMeta}
         </div>
         {webAction && (

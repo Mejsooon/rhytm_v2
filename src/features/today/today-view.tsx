@@ -188,7 +188,7 @@ export function TodayView({
         data-testid="web-dzis"
         className="flex min-w-0 flex-1 flex-col max-[799px]:hidden"
       >
-        {/* Nagłówek web (.topbar z CToday): okruszki „Moduły / Dziś”, odznaka z datą, „tydz. N”, „Nowy blok” */}
+        {/* Nagłówek web (.topbar z CToday): sam tytuł „Dziś”, odznaka z datą, „tydz. N”, „Nowy blok” */}
         <ModuleHeader
           title="Dziś"
           webOnly
