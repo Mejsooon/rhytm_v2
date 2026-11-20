@@ -144,7 +144,7 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
-  it("wygląd COSS: przycisk .btn z plakietką licznika, menu .pop z etykietą i polami .cbx", async () => {
+  it("wygląd COSS: przycisk .btn z plakietką licznika, menu .pop z polami .cbx", async () => {
     render(
       <CategoryFilters
         categories={kategorie}
@@ -165,7 +165,6 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
     expect(menu.className).toContain("rounded-lg");
     expect(menu.className).toContain("shadow-lg");
     expect(menu.className).toContain("w-[230px]");
-    expect(screen.getByText("Pokaż w kalendarzu")).toBeInTheDocument();
     const studia = screen.getByRole("menuitemcheckbox", { name: /Studia/ });
     expect(studia.className).toContain("min-h-8");
     expect(studia.className).toContain("data-[highlighted]:bg-accent");

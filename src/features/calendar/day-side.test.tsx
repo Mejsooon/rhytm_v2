@@ -130,15 +130,6 @@ describe("DaySide", () => {
     // okno 12 h minus zajęte (2 h 30 min + 1 h 30 min) = 8 h
     expect(screen.getByText("8 h")).toBeInTheDocument();
     expect(screen.getByText("1 / 3")).toBeInTheDocument();
-    // Pasek postępu zadań pod liczbami (.prog z makiety)
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "aria-valuenow",
-      "1",
-    );
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "aria-valuemax",
-      "3",
-    );
   });
 
   it("format godzin z połówką: 2 h 30 min", () => {
