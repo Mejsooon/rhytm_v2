@@ -4,7 +4,14 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { ActionPopover, FormDialog } from "@/components/controls";
+import {
+  ActionPopover,
+  FormDialog,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
+  MENU_SEPARATOR,
+} from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { duplicatePage } from "./actions";
 import { DeletePageDialog } from "./delete-page-dialog";
 import { IconPicker } from "./icon-picker";
@@ -12,8 +19,7 @@ import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
 
-const POZYCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-foreground hover:bg-muted max-[799px]:min-h-11";
+const POZYCJA = MENU_ITEM;
 const IKONA_POZYCJI = "w-[18px] font-mono text-muted-foreground";
 
 // Menu strony (PageMenu.dc.html, Sidebar.dc.html): na webie dymek 230 px, z `sheet` arkusz od dołu (telefon).
@@ -133,7 +139,7 @@ export function PageMenu({
         </button>
         {/* Tylko arkusz (telefon); etykieta jak w makiecie, kierunek wybiera się strzałkami po prawej */}
         {sheet && (
-          <div className={`${POZYCJA} cursor-default hover:bg-transparent`}>
+          <div className={cn(POZYCJA, "cursor-default hover:bg-transparent")}>
             <span aria-hidden="true" className={IKONA_POZYCJI}>⇅</span>
             <span className="flex-1">Przenieś wyżej / niżej</span>
             <button
@@ -170,11 +176,11 @@ export function PageMenu({
             {page.favorite ? "★ Usuń z ulubionych" : "★ Dodaj do ulubionych"}
           </span>
         </button>
-        <div className="mx-1 my-1.5 h-px bg-border" />
+        <div className={MENU_SEPARATOR} />
         <button
           type="button"
           role="menuitem"
-          className={`${POZYCJA} text-destructive-foreground`}
+          className={cn(POZYCJA, MENU_ITEM_DANGER)}
           onClick={() => {
             zmienOtwarcie(false);
             setUsuwanie(true);

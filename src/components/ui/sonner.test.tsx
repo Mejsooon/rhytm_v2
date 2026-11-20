@@ -29,6 +29,16 @@ describe("Toaster", () => {
     );
   });
 
+  it("toast ma promień rounded-lg i cień shadow-lg", async () => {
+    render(<Toaster />);
+    act(() => {
+      toast("Zapisano");
+    });
+    await screen.findByText("Zapisano");
+    const el = document.querySelector("[data-sonner-toast]") as HTMLElement;
+    expect(el).toHaveClass("rounded-lg", "shadow-lg");
+  });
+
   it("główny layout montuje Toaster w całej aplikacji", () => {
     const html = renderToStaticMarkup(
       RootLayout({ children: <p>treść</p> } as Parameters<

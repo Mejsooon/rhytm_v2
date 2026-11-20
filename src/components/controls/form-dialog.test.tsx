@@ -26,6 +26,31 @@ describe("FormDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("stopka ma tło i ramkę COSS", () => {
+    render(
+      <FormDialog
+        open
+        onOpenChange={() => {}}
+        title="X"
+        footer={<button>Zapisz</button>}
+      >
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    const stopka = screen.getByRole("button", { name: "Zapisz" })
+      .parentElement as HTMLElement;
+    expect(stopka).toHaveClass("border-t", "bg-black/[.025]");
+  });
+
+  it("okno ma promień 16 px", () => {
+    render(
+      <FormDialog open onOpenChange={() => {}} title="X">
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    expect(screen.getByRole("dialog", { name: "X" })).toHaveClass("rounded-xl");
+  });
+
   it("zamknięte nie renderuje okna", () => {
     render(
       <FormDialog open={false} onOpenChange={() => {}} title="X">
