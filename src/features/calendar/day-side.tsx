@@ -144,10 +144,11 @@ export function DaySide({
                 className={cn(
                   "h-[30px] cursor-pointer rounded-[8px] border border-transparent bg-transparent p-0 text-[13px] tabular-nums outline-none hover:bg-muted focus-visible:shadow-focus",
                   k.inMonth ? "text-foreground" : "text-faint-foreground",
-                  // Dziś jak w DatePicker: obwódka
-                  k.date === today && "border-border-strong",
                   wybrany &&
                     "border-primary bg-primary font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16)] hover:bg-primary",
+                  // Dziś: czerwony kwadrat (wygrywa z wybranym, jak na makiecie)
+                  k.date === today &&
+                    "border-destructive-strong bg-destructive-strong font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.16)] hover:bg-destructive-strong",
                 )}
               >
                 {d}

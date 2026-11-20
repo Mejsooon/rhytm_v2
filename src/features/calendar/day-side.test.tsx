@@ -58,16 +58,17 @@ function wyrenderuj(over: Partial<Parameters<typeof DaySide>[0]> = {}) {
 }
 
 describe("DaySide", () => {
-  it("mini kalendarz: tytuł miesiąca, dziś z obwódką, wybrany czarny", () => {
+  it("mini kalendarz: tytuł miesiąca, dziś czerwony kwadrat, wybrany czarny", () => {
     wyrenderuj();
     // Tekst bez zmian, wielką literę daje CSS (jak „Listopad 2026” w makiecie)
     expect(screen.getByText("listopad 2026").className).toContain(
       "first-letter:uppercase",
     );
-    // Dziś jak w DatePicker: obwódka border-strong
-    expect(
-      screen.getByRole("button", { name: "17 listopada" }).className,
-    ).toContain("border-border-strong");
+    expect(screen.getByRole("button", { name: "17 listopada" })).toHaveClass(
+      "bg-destructive-strong",
+      "text-white",
+      "h-[30px]",
+    );
     const wybrany = screen.getByRole("button", { name: "18 listopada" });
     expect(wybrany.className).toContain("bg-primary");
     expect(wybrany.className).toContain("text-primary-foreground");
@@ -134,7 +135,9 @@ describe("DaySide", () => {
     const pasek = screen.getByRole("progressbar", { name: "Zadania wykonane" });
     expect(pasek).toHaveAttribute("aria-valuenow", "1");
     expect(pasek).toHaveAttribute("aria-valuemax", "3");
-    expect(pasek.firstElementChild).toHaveStyle({ width: "33.33333333333333%" });
+    expect(pasek.firstElementChild).toHaveStyle({
+      width: "33.33333333333333%",
+    });
   });
 
   it("„Dzień w liczbach” bez zadań: pasek postępu 0%", () => {

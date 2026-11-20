@@ -58,28 +58,56 @@ describe("SleepDialog", () => {
   it("„Anuluj” w stopce bez ramki (ghost), na telefonie 44 px", () => {
     wyrenderuj();
     const anuluj = screen.getByRole("button", { name: "Anuluj" });
-    expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(anuluj).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+    );
     expect(anuluj.className).not.toContain("border-input");
     expect(anuluj).toHaveClass("max-[799px]:h-11");
   });
 
   it("kolumna „Data pobudki” nie węższa niż data z dniem tygodnia (wyzwalacz .igroup nie wychodzi na „Zasnąłem”)", () => {
     wyrenderuj();
-    const siatka = screen.getByRole("button", { name: "Data pobudki" }).parentElement
-      ?.parentElement as HTMLElement;
-    expect(siatka).toHaveClass("grid-cols-[minmax(max-content,1fr)_minmax(0,1fr)_minmax(0,1fr)]");
+    const siatka = screen.getByRole("button", { name: "Data pobudki" })
+      .parentElement?.parentElement as HTMLElement;
+    expect(siatka).toHaveClass(
+      "grid-cols-[minmax(max-content,1fr)_minmax(0,1fr)_minmax(0,1fr)]",
+    );
   });
 
-  it("czas snu w ramce .frame, pasek .prog zielony po osiągnięciu celu", () => {
+  it("czas snu w ramce .frame, pasek .prog zawsze zielony", () => {
     wyrenderuj({ existing: LOGI[1] });
-    const ramka = screen.getByText("Czas snu").closest("[data-czas-snu]") as HTMLElement;
-    expect(ramka).toHaveClass("rounded-lg", "border-[1.5px]", "border-border-strong", "bg-white");
-    expect(screen.getByText("Czas snu")).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
-    expect(screen.getByText("7:12")).toHaveClass("text-[22px]", "font-semibold", "tabular-nums");
+    const ramka = screen
+      .getByText("Czas snu")
+      .closest("[data-czas-snu]") as HTMLElement;
+    expect(ramka).toHaveClass(
+      "rounded-lg",
+      "border-[1.5px]",
+      "border-border-strong",
+      "bg-white",
+    );
+    expect(screen.getByText("Czas snu")).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-muted-foreground",
+    );
+    expect(screen.getByText("7:12")).toHaveClass(
+      "text-[22px]",
+      "font-semibold",
+      "tabular-nums",
+    );
     const pasek = ramka.querySelector("[data-pasek-celu]") as HTMLElement;
-    expect(pasek).toHaveClass("bg-primary", "rounded-full");
-    expect(pasek.parentElement).toHaveClass("h-1.5", "rounded-full", "bg-muted");
-    expect(screen.getByText("90% celu 8:00 · brakuje 48 min")).toHaveClass("text-xs", "tabular-nums");
+    expect(pasek).toHaveClass("bg-success", "rounded-full");
+    expect(pasek.parentElement).toHaveClass(
+      "h-1.5",
+      "rounded-full",
+      "bg-muted",
+    );
+    expect(screen.getByText("90% celu 8:00 · brakuje 48 min")).toHaveClass(
+      "text-xs",
+      "tabular-nums",
+    );
   });
 
   it("pasek celu zielony przy 100%", () => {
@@ -94,7 +122,11 @@ describe("SleepDialog", () => {
     const grupa = screen.getByRole("radiogroup", { name: "Samopoczucie" });
     expect(grupa).toHaveClass("bg-muted", "rounded-md", "p-0.5");
     const ok = within(grupa).getByRole("radio", { name: /OK/ });
-    expect(ok).toHaveClass("bg-transparent", "text-muted-foreground", "focus-visible:shadow-focus");
+    expect(ok).toHaveClass(
+      "bg-transparent",
+      "text-muted-foreground",
+      "focus-visible:shadow-focus",
+    );
     await u.click(ok);
     expect(ok).toHaveClass("bg-white", "text-foreground");
     expect(ok.className).not.toContain("bg-primary");
