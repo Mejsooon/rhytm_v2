@@ -214,7 +214,8 @@ export function BlockDetails({
                 </span>
                 <span className="min-w-0 break-words">{t.title}</span>
               </label>
-              {/* ⋯ i × na webie pojawiają się po najechaniu na wiersz lub przy fokusie w nim; na telefonie stale */}
+              {/* ⋯ i × na webie z myszą pojawiają się po najechaniu na wiersz lub przy fokusie w nim;
+                  bez hovera (tablet dotykowy ≥ 800 px, telefon) są widoczne stale */}
               {otwarteMenu === t.id && (
                 <Button
                   size="xs"
@@ -235,7 +236,7 @@ export function BlockDetails({
                 onClick={() =>
                   setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
                 }
-                className="text-muted-foreground max-[799px]:size-11 min-[800px]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
+                className="text-muted-foreground max-[799px]:size-11 min-[800px]:[@media(hover:hover)]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <Ellipsis size={14} aria-hidden="true" />
               </Button>
@@ -246,7 +247,7 @@ export function BlockDetails({
                 aria-label={`Usuń zadanie ${t.title}`}
                 disabled={tymczasowe}
                 onClick={() => usun(t)}
-                className="text-muted-foreground hover:text-destructive-foreground max-[799px]:size-11 min-[800px]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
+                className="text-muted-foreground hover:text-destructive-foreground max-[799px]:size-11 min-[800px]:[@media(hover:hover)]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
               >
                 <X size={14} aria-hidden="true" />
               </Button>

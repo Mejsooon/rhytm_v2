@@ -36,4 +36,38 @@ describe("Chip", () => {
     expect(chip).toHaveClass("bg-white");
     expect(chip).not.toHaveClass("bg-primary");
   });
+
+  it("wyłączony wybrany chip nie zmienia tła po najechaniu", () => {
+    render(
+      <>
+        <Chip selected disabled>
+          Pn
+        </Chip>
+        <Chip disabled>Wt</Chip>
+        <Chip selected variant="solid" disabled>
+          Śr
+        </Chip>
+      </>,
+    );
+    const wybrany = screen.getByRole("button", { name: "Pn" });
+    const zwykly = screen.getByRole("button", { name: "Wt" });
+    const pelny = screen.getByRole("button", { name: "Śr" });
+    for (const chip of [wybrany, zwykly, pelny]) {
+      // Tło po najechaniu tylko dla włączonego chipa (bez disabled:hover:bg-white)
+      expect(chip.className).not.toContain("disabled:hover:");
+      expect(chip.className).not.toMatch(/(^|\s)hover:bg-/);
+    }
+    expect(wybrany).toHaveClass("enabled:hover:bg-muted");
+    expect(zwykly).toHaveClass("enabled:hover:bg-panel");
+    expect(pelny).toHaveClass("enabled:hover:bg-primary-hover");
+  });
+
+  it("dashed (+ Nowa) jak w makiecie: przerywana ramka, szary tekst, bez cienia", () => {
+    render(<Chip dashed>+ Nowa</Chip>);
+    expect(screen.getByRole("button", { name: "+ Nowa" })).toHaveClass(
+      "border-dashed",
+      "text-muted-foreground",
+      "shadow-none",
+    );
+  });
 });

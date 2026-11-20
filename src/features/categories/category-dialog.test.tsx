@@ -111,4 +111,29 @@ describe("CategoryDialog", () => {
       color: "#7c3aed",
     });
   });
+
+  it("wygląd jak w CCategoryDialog: kolory 36 px z promieniem 10 px, podgląd bloku według reguły bloku", () => {
+    render(
+      <CategoryDialog
+        category={{ id: "k1", name: "Języki", color: "#0e7490" }}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    const wybrany = screen.getByRole("button", { name: "Morski" });
+    expect(wybrany).toHaveClass("size-9", "rounded-md", "border-2", "border-white");
+    // Pierścień wybranego koloru w kolorze danych, fokus jako obrys poza nim
+    expect(wybrany).toHaveClass(
+      "shadow-[0_0_0_2px_var(--kolor)]",
+      "focus-visible:outline-ring",
+    );
+    const blok = screen.getByText("Angielski").parentElement as HTMLElement;
+    expect(blok.style.background).toBe("rgba(14, 116, 144, 0.07)");
+    expect(blok.style.border).toBe("1px solid rgba(14, 116, 144, 0.3)");
+    expect(blok.style.borderLeft).not.toContain("3px");
+    expect(blok).toHaveClass("rounded-md", "px-3", "py-[7px]", "text-sm");
+    // Podgląd w ramce .frame, chip w stanie wybranym z licznikiem jako odznaka
+    expect(blok.parentElement).toHaveClass("rounded-lg", "border-[1.5px]", "p-3");
+    expect(screen.getByText("0")).toHaveClass("bg-muted", "rounded-sm", "h-4");
+  });
 });

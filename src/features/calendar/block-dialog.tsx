@@ -11,6 +11,7 @@ import {
   Button,
   Chip,
   DatePicker,
+  FIELD,
   FormDialog,
   Segment,
   Switch,
@@ -402,55 +403,62 @@ export function BlockDialog({
           onChange={setRep}
           options={OPCJE_POWTARZANIA}
         />
-        {(rep === "weekly" || rep === "custom") && (
-          <div className="flex flex-wrap items-center gap-1.5 font-normal">
-            {DNI.map((nazwa, i) => {
-              const numer = i + 1;
-              // Co tydzień: dzień wynika z daty (tylko podgląd); własne: dni do wyboru
-              const wybrany =
-                rep === "weekly"
-                  ? weekdayOf(date) === numer
-                  : dni.includes(numer);
-              return (
-                <button
-                  key={nazwa}
-                  type="button"
-                  aria-pressed={wybrany}
-                  disabled={rep === "weekly"}
-                  onClick={() =>
-                    setDni((d) =>
-                      d.includes(numer)
-                        ? d.filter((n) => n !== numer)
-                        : [...d, numer],
-                    )
-                  }
-                  className={cn(
-                    "size-[34px] cursor-pointer rounded-md border text-xs outline-none focus-visible:shadow-focus disabled:cursor-default max-[799px]:size-11",
-                    wybrany
-                      ? "border-primary bg-primary text-white"
-                      : "border-input bg-white text-soft-foreground",
-                  )}
-                >
-                  {nazwa}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Dni i „do” z datą końca w jednym wierszu (CBlockDialog.dc.html); na telefonie „do” w osobnej linii jak dotąd */}
         {rep !== "none" && (
-          <div className="flex items-center gap-2 font-normal">
-            <span className="text-xs text-muted-foreground">do</span>
-            <DatePicker
-              value={until}
-              onChange={setUntil}
-              weekStart={weekStart}
-              today={today}
-              ariaLabel="Powtarzaj do"
-              placeholder="bez końca"
-            />
+          <div className="flex flex-wrap items-center gap-1.5 font-normal">
+            {(rep === "weekly" || rep === "custom") &&
+              DNI.map((nazwa, i) => {
+                const numer = i + 1;
+                // Co tydzień: dzień wynika z daty (tylko podgląd); własne: dni do wyboru
+                const wybrany =
+                  rep === "weekly"
+                    ? weekdayOf(date) === numer
+                    : dni.includes(numer);
+                return (
+                  <button
+                    key={nazwa}
+                    type="button"
+                    aria-pressed={wybrany}
+                    disabled={rep === "weekly"}
+                    onClick={() =>
+                      setDni((d) =>
+                        d.includes(numer)
+                          ? d.filter((n) => n !== numer)
+                          : [...d, numer],
+                      )
+                    }
+                    // 36 px, promień 10 px; wybrany jak przycisk główny, pozostałe jak .btn
+                    className={cn(
+                      "size-9 cursor-pointer rounded-md border bg-clip-padding text-[13px] font-medium outline-none focus-visible:shadow-focus disabled:cursor-default max-[799px]:size-11",
+                      wybrany
+                        ? "border-primary bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(38,38,38,.24)]"
+                        : "border-input bg-white text-soft-foreground shadow-xs",
+                    )}
+                  >
+                    {nazwa}
+                  </button>
+                );
+              })}
+            <span
+              className={cn(
+                "flex items-center gap-1.5 max-[799px]:basis-full max-[799px]:gap-2",
+                (rep === "weekly" || rep === "custom") && "ml-2 max-[799px]:ml-0",
+              )}
+            >
+              <span className="text-xs text-muted-foreground">do</span>
+              <DatePicker
+                value={until}
+                onChange={setUntil}
+                weekStart={weekStart}
+                today={today}
+                ariaLabel="Powtarzaj do"
+                placeholder="bez końca"
+              />
+            </span>
           </div>
         )}
-        <span className="font-mono text-xs font-normal text-muted-foreground">
+        {/* Podsumowanie jak .hint z makiety */}
+        <span className="text-xs font-normal text-muted-foreground">
           {describeRecurrence(recurrence, date)}
         </span>
       </div>
@@ -467,7 +475,11 @@ export function BlockDialog({
           value={note}
           maxLength={2000}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full resize-y rounded-md border border-input bg-white px-2.5 py-2 text-sm font-normal text-foreground outline-none focus:border-primary"
+          // textarea.inp z coss.css; na telefonie wysokość z rows i 14 px jak dotąd
+          className={cn(
+            FIELD,
+            "h-auto resize-y py-[7px] leading-normal max-[799px]:h-auto max-[799px]:text-sm",
+          )}
         />
       </label>
 

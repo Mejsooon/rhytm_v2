@@ -414,4 +414,28 @@ describe("BlockDialog", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("wygląd jak w makiecie: dni jak w CBlockDialog, „do” w wierszu dni, podsumowanie jako podpowiedź, notatka jak pole", async () => {
+    wyrenderuj("edit", CYKLICZNY);
+    const wt = screen.getByRole("button", { name: "wt" });
+    expect(wt).toHaveClass("size-9", "rounded-md", "text-[13px]", "font-medium");
+    expect(wt).toHaveClass("bg-primary", "text-primary-foreground");
+    expect(screen.getByRole("button", { name: "pn" })).toHaveClass(
+      "bg-white",
+      "border-input",
+      "shadow-xs",
+    );
+    // „do” z datą końca w tym samym wierszu co dni
+    expect(
+      screen.getByRole("button", { name: "Powtarzaj do" }).closest("div.flex-wrap"),
+    ).toContainElement(wt);
+    const podsumowanie = screen.getByText(/^Co tydzień we wtorki/);
+    expect(podsumowanie).not.toHaveClass("font-mono");
+    expect(podsumowanie).toHaveClass("text-xs", "text-muted-foreground");
+    expect(screen.getByRole("textbox", { name: /Notatka/ })).toHaveClass(
+      "shadow-xs",
+      "focus:border-ring",
+      "py-[7px]",
+    );
+  });
 });

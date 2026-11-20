@@ -4,6 +4,7 @@
 // cykliczny — okno zakresu.
 import { useRef, useState } from "react";
 import { Dialog } from "radix-ui";
+import { Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/controls";
 import type { ActionResult } from "@/lib/action-result";
@@ -103,7 +104,14 @@ export function DeleteBlockDialog({
             aria-hidden="true"
             className="mx-auto h-[5px] w-9 flex-none rounded-[3px] bg-border-strong min-[800px]:hidden"
           />
-          <div className="min-[800px]:px-6 min-[800px]:pt-6 min-[800px]:pb-4">
+          {/* .dlg-h z makiety ma tu dolny odstęp 20 px (bez treści pod nagłówkiem); z błędem pod spodem 16 px */}
+          <div
+            className={
+              blad
+                ? "min-[800px]:px-6 min-[800px]:pt-6 min-[800px]:pb-4"
+                : "min-[800px]:px-6 min-[800px]:pt-6 min-[800px]:pb-5"
+            }
+          >
             <Dialog.Title className="m-0 text-base leading-[1.3] font-semibold min-[800px]:text-lg">
               Usunąć blok?
             </Dialog.Title>
@@ -134,6 +142,8 @@ export function DeleteBlockDialog({
               disabled={pending}
               onClick={() => usun("all")}
             >
+              {/* Kosz z makiety tylko na webie; telefon bez zmian */}
+              <Trash2Icon aria-hidden="true" className="size-4 max-[799px]:hidden" />
               Usuń
             </Button>
           </div>
