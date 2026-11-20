@@ -102,6 +102,25 @@ describe("TimeGrid", () => {
     expect(pole.style.height).toBe("72px");
   });
 
+  it("zaznaczony blok leży nad sąsiadami (z-[1]), fokus podnosi go wyżej (z-[2]), plan treningu ma bg-background", () => {
+    wyrenderuj({
+      occurrences: [
+        wystapienie({ blockId: "a", title: "A", durationMin: 30 }),
+        wystapienie({ blockId: "b", title: "B", startMin: 510, durationMin: 30 }),
+      ],
+      selectedKey: "a:2026-11-17",
+      sport: [planZSzablonu()],
+    });
+    const zaznaczony = screen.getByTestId("blok-a:2026-11-17");
+    expect(zaznaczony).toHaveClass("z-[1]", "focus-within:z-[2]");
+    const inny = screen.getByTestId("blok-b:2026-11-17");
+    expect(inny).not.toHaveClass("z-[1]");
+    expect(inny).toHaveClass("focus-within:z-[2]");
+    const plan = screen.getByRole("link", { name: /Push/ });
+    expect(plan).toHaveClass("bg-background");
+    expect(plan.style.background).toBe("");
+  });
+
   it("w widoku dnia godzina ma 52 px", () => {
     wyrenderuj({
       days: ["2026-11-17"],

@@ -65,6 +65,22 @@ describe("CategoryDialog", () => {
     );
   });
 
+  it("zajęty, niewybrany kolor blaknie tylko tłem, bez opacity (obrys fokusu pełny)", () => {
+    render(
+      <CategoryDialog
+        usedColors={["#0e7490"]}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    const zajety = screen.getByRole("button", { name: "Morski" });
+    expect(zajety.style.opacity).toBe("");
+    expect(zajety.className).toContain("color-mix");
+    expect(zajety).toHaveClass("focus-visible:outline-ring");
+    const wolny = screen.getByRole("button", { name: "Niebieski" });
+    expect(wolny.className).not.toContain("color-mix");
+  });
+
   it("błąd akcji pokazuje komunikat i nie zamyka okna", async () => {
     createCategory.mockResolvedValue({ ok: false, message: "Nazwa zajęta." });
     const onSaved = vi.fn();

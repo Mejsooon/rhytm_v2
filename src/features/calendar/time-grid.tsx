@@ -393,7 +393,7 @@ export function TimeGrid({
                         data-testid={`blok-${o.key}`}
                         // Odstępy wg makiet: tydzień 3 px z boków, 1 px nad i 2 px pod; dzień 4 px z boków, 2 px nad i pod.
                         // Krótki blok (kompakt) bez odstępów w pionie: przycisk zajmuje całą wysokość, jak dotąd
-                        className={`absolute box-border ${variant === "week" ? "px-[3px]" : "px-1"}${kompakt ? "" : variant === "week" ? " pt-px pb-0.5" : " py-0.5"}${podglad?.key === o.key ? " opacity-40" : ""}`}
+                        className={`absolute box-border focus-within:z-[2] ${zaznaczony ? "z-[1]" : ""} ${variant === "week" ? "px-[3px]" : "px-1"}${kompakt ? "" : variant === "week" ? " pt-px pb-0.5" : " py-0.5"}${podglad?.key === o.key ? " opacity-40" : ""}`}
                         style={{
                           top: (o.startMin / 60) * wysokoscGodziny,
                           height: (czas / 60) * wysokoscGodziny,
@@ -510,11 +510,11 @@ export function TimeGrid({
                           data-planned={i.planned || undefined}
                           draggable={false}
                           title={`${i.title} ${godzinyTreningu}`}
-                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden text-left text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${variant === "week" ? `rounded-[8px] px-2 ${kompakt ? "justify-center py-0" : "py-1"}` : `rounded-md px-3 ${kompakt ? "justify-center py-0" : "py-[7px]"}`}`}
+                          className={`box-border flex h-full w-full flex-col items-stretch overflow-hidden text-left text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${i.planned ? "bg-background" : ""} ${variant === "week" ? `rounded-[8px] px-2 ${kompakt ? "justify-center py-0" : "py-1"}` : `rounded-md px-3 ${kompakt ? "justify-center py-0" : "py-[7px]"}`}`}
                           style={{
-                            background: i.planned
-                              ? "#ffffff"
-                              : `${SPORT_COLOR}12`,
+                            ...(i.planned
+                              ? {}
+                              : { background: `${SPORT_COLOR}12` }),
                             border: i.planned
                               ? `1px dashed ${SPORT_COLOR}`
                               : `1px solid ${SPORT_COLOR}4d`,

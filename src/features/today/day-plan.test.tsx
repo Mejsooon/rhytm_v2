@@ -219,6 +219,9 @@ describe("DayPlan", () => {
       "focus-visible:outline-ring",
     );
     expect(blok.className).not.toContain("shadow-focus");
+    // Zaznaczony leży nad sąsiadami, fokus jeszcze wyżej; linia „teraz” (z-3) nad obydwoma
+    expect(blok).toHaveClass("z-[1]", "focus-visible:z-[2]");
+    expect(screen.getByTestId("linia-teraz")).toHaveClass("z-[3]");
   });
 
   it("oś przewija się na trwający blok, „Teraz” jest na nim, czerwona linia na 10:20", () => {

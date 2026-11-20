@@ -8,6 +8,7 @@ import { Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/controls";
 import type { ActionResult } from "@/lib/action-result";
+import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import type { Occurrence } from "./occurrences";
@@ -106,11 +107,10 @@ export function DeleteBlockDialog({
           />
           {/* .dlg-h z makiety ma tu dolny odstęp 20 px (bez treści pod nagłówkiem); z błędem pod spodem 16 px */}
           <div
-            className={
-              blad
-                ? "min-[800px]:px-6 min-[800px]:pt-6 min-[800px]:pb-4"
-                : "min-[800px]:px-6 min-[800px]:pt-6 min-[800px]:pb-5"
-            }
+            className={cn(
+              "min-[800px]:px-6 min-[800px]:pt-6",
+              blad ? "min-[800px]:pb-4" : "min-[800px]:pb-5",
+            )}
           >
             <Dialog.Title className="m-0 text-base leading-[1.3] font-semibold min-[800px]:text-lg">
               Usunąć blok?

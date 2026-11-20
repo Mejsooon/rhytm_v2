@@ -3,7 +3,7 @@
 // Okno nowej kategorii (albo edycji nazwy i koloru, gdy podano `category`) wg CategoryDialog.dc.html: nazwa, 8 kolorów (zajęte wyblakłe, ale do wyboru),
 // podgląd chipu i bloku, „Dodaj kategorię”. Zapisuje przez createCategory i oddaje nową kategorię
 // wywołującemu — ten sam komponent obsługuje „+ Kategoria” i „+ Nowa” z okna bloku.
-import * as React from "react";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 
 import { Button, FormDialog, TextField } from "@/components/controls";
@@ -98,6 +98,7 @@ export function CategoryDialog({
         <div className="flex flex-wrap gap-2">
           {CATEGORY_COLORS.map((c) => {
             const wybrany = c.hex === color;
+            const zajety = usedColors.includes(c.hex);
             return (
               <button
                 key={c.hex}
@@ -112,13 +113,15 @@ export function CategoryDialog({
                   wybrany
                     ? "shadow-[0_0_0_2px_var(--kolor)]"
                     : "shadow-[inset_0_0_0_1px_rgba(0,0,0,.08),0_1px_2px_rgba(0,0,0,.05)]",
+                  // Zajęty, niewybrany: blaknie tylko kolor pola (nie opacity), żeby obrys fokusu był w pełni widoczny
+                  zajety && !wybrany
+                    ? "bg-[color-mix(in_srgb,var(--kolor)_35%,white)]"
+                    : "bg-(--kolor)",
                 )}
                 style={
                   {
                     "--kolor": c.hex,
-                    background: c.hex,
-                    opacity: usedColors.includes(c.hex) && !wybrany ? 0.35 : 1,
-                  } as React.CSSProperties
+                  } as CSSProperties
                 }
               />
             );

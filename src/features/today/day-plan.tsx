@@ -323,7 +323,7 @@ export function DayPlan({
               </>
             );
             // Fokus jako outline z odstępem: inline boxShadow zaznaczenia nie może go zasłonić
-            const klasy = `absolute box-border flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+            const klasy = `absolute box-border focus-visible:z-[2] ${zaznaczony ? "z-[1]" : ""} flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
 
             // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
             if (p.kind !== "block") {
@@ -362,14 +362,14 @@ export function DayPlan({
           <div
             data-testid="linia-teraz"
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 left-14 border-t-2 border-destructive"
+            className="pointer-events-none absolute right-0 left-14 z-[3] border-t-2 border-destructive"
             style={{ top: (teraz / 60) * GODZINA }}
           />
           <span
             data-testid="etykieta-teraz"
             aria-hidden="true"
             // Etykieta godziny: biała na #dc2626 (destructive-strong), promień 6 px, 11 px / 500
-            className="pointer-events-none absolute left-2 rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
+            className="pointer-events-none absolute left-2 z-[3] rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
             style={{ top: (teraz / 60) * GODZINA - 10 }}
           >
             {godz(teraz)}

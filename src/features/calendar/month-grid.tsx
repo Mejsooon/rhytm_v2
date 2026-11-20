@@ -146,16 +146,13 @@ export function MonthGrid({
                         title={`${formatClockTime(Math.floor(i.startMin / 60), i.startMin % 60, clock)} ${i.title}`}
                         style={
                           i.planned
-                            ? {
-                                backgroundColor: "#ffffff",
-                                border: `1px dashed ${SPORT_COLOR}`,
-                              }
+                            ? { border: `1px dashed ${SPORT_COLOR}` }
                             : {
                                 backgroundColor: `${SPORT_COLOR}14`,
                                 border: `1px solid ${SPORT_COLOR}4d`,
                               }
                         }
-                        className="mt-[3px] block w-full overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        className={`mt-[3px] block w-full overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${i.planned ? "bg-background" : ""}`}
                       >
                         {i.title}
                       </Link>

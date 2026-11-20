@@ -146,6 +146,19 @@ describe("MonthGrid", () => {
     expect(wpis.className).not.toContain("font-mono");
   });
 
+  it("zaznaczony wpis bez kategorii ma szary pierścień 2 px, a plan treningu tło z klasy bg-background", () => {
+    wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })], {
+      activeEntryKey: "b1:2026-11-18",
+      sport: [planZSzablonu()],
+    });
+    const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    expect(wpis.style.boxShadow).toBe("rgba(0, 0, 0, 0.2) 0px 0px 0px 2px");
+    expect(wpis).toHaveAttribute("aria-expanded", "true");
+    const plan = screen.getByRole("link", { name: "Push" });
+    expect(plan).toHaveClass("bg-background");
+    expect(plan.style.backgroundColor).toBe("");
+  });
+
   it("klik w „+2 więcej” woła onMoreClick", async () => {
     const onMoreClick = vi.fn();
     const wpisy = [1, 2, 3, 4, 5].map((i) =>
