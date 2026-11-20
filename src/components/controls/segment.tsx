@@ -4,8 +4,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// Segment wg BlockDialog.dc.html (web: przyciski w ramce, wybrany #f0f0f0)
-// i MBlockSheet.dc.html (telefon: szare tło, wybrana biała pigułka z cieniem).
+// Segment wg .seg z coss.css: szare tło, wybrany przycisk to biała pigułka z cieniem.
+// Przycisk 28 px, na telefonie 40 px, a kontener rozciąga się na całą szerokość.
 export function Segment<T extends string>({
   value,
   onChange,
@@ -38,7 +38,7 @@ export function Segment<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className="flex w-max max-w-full overflow-hidden rounded-md border border-input text-[13px] max-[799px]:grid max-[799px]:w-full max-[799px]:auto-cols-fr max-[799px]:grid-flow-col max-[799px]:gap-[3px] max-[799px]:rounded-md max-[799px]:border-0 max-[799px]:bg-muted max-[799px]:p-[3px]"
+      className="inline-flex w-max max-w-full items-center gap-0.5 rounded-md bg-muted p-0.5 text-sm max-[799px]:grid max-[799px]:w-full max-[799px]:auto-cols-fr max-[799px]:grid-flow-col"
     >
       {options.map((opcja, i) => {
         const wybrany = opcja.value === value;
@@ -55,11 +55,10 @@ export function Segment<T extends string>({
             onClick={() => onChange(opcja.value)}
             onKeyDown={(e) => naKlawisz(e, i)}
             className={cn(
-              "flex cursor-pointer items-center justify-center border-0 px-3 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/20 max-[799px]:h-[34px] max-[799px]:rounded-lg max-[799px]:border-l-0 max-[799px]:px-2 max-[799px]:py-0",
-              i > 0 && "border-l border-input",
+              "inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-medium whitespace-nowrap transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:h-10 max-[799px]:px-2",
               wybrany
-                ? "bg-active font-medium text-foreground max-[799px]:bg-white max-[799px]:shadow-[0_1px_2px_rgba(0,0,0,.08)]"
-                : "bg-white text-muted-foreground max-[799px]:bg-transparent max-[799px]:text-soft-foreground",
+                ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+                : "bg-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {opcja.label}

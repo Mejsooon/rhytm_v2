@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-// Przełącznik wg SettingsNotifications.dc.html (.sw, 40×22) i MRegister.dc.html (telefon, 50×30)
+// Przełącznik wg .sw z coss.css (36×20); na telefonie obszar dotyku ≥ 44 px przez pseudoelement
 export function Switch({
   checked,
   onChange,
@@ -25,16 +25,16 @@ export function Switch({
         if (!disabled) onChange(!checked);
       }}
       className={cn(
-        "relative h-[22px] w-10 flex-none cursor-pointer rounded-full border-0 p-0 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:h-[30px] max-[799px]:w-[50px]",
-        checked ? "bg-success" : "bg-border-strong max-[799px]:bg-border-strong",
-        disabled && "cursor-not-allowed opacity-40",
+        "relative h-5 w-9 flex-none cursor-pointer rounded-full border-2 border-transparent bg-black/12 p-0 shadow-[inset_0_1px_1px_rgba(0,0,0,.04)] transition-colors duration-150 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:before:absolute max-[799px]:before:-inset-3 max-[799px]:before:content-['']",
+        checked && "bg-primary",
+        disabled && "cursor-not-allowed opacity-[.64]",
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          "absolute top-[3px] left-[3px] size-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,.2)] transition-transform duration-150 max-[799px]:size-6 max-[799px]:shadow-[0_1px_3px_rgba(0,0,0,.25)]",
-          checked && "translate-x-[18px] max-[799px]:translate-x-5",
+          "absolute top-0 left-0 size-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,.16)] transition-transform duration-150",
+          checked && "translate-x-4",
         )}
       />
     </button>

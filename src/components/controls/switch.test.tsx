@@ -20,6 +20,16 @@ describe("Switch", () => {
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
   });
 
+  it("checked ma bg-primary, rozmiar h-5 w-9", () => {
+    const { rerender } = render(
+      <Switch checked onChange={() => {}} ariaLabel="X" />,
+    );
+    const sw = screen.getByRole("switch");
+    expect(sw).toHaveClass("bg-primary", "h-5", "w-9");
+    rerender(<Switch checked={false} onChange={() => {}} ariaLabel="X" />);
+    expect(screen.getByRole("switch")).not.toHaveClass("bg-primary");
+  });
+
   it("disabled nie woła onChange", async () => {
     const onChange = vi.fn();
     render(

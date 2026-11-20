@@ -1,9 +1,11 @@
-import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
+// Licznik „−  wartość  +”.
+// Web: przyciski jak .btn.sm.ic (28 px) i osobne pole wartości.
+// Telefon: jedna ramka z przyciskami 44 px jak .m-step z CMToday.dc.html.
 const PRZYCISK =
-  "inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-input bg-white text-sm font-medium text-foreground transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/20 disabled:pointer-events-none disabled:opacity-50 max-[799px]:size-11 max-[799px]:rounded-md";
+  "max-[799px]:size-11 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:text-lg max-[799px]:shadow-none";
 
-// Licznik „−  wartość  +” (web: jak „Cel snu” w Settings, 32 px; telefon: przyciski 44 px jak w MOnboarding).
 export function Stepper({
   value,
   onDec,
@@ -23,33 +25,33 @@ export function Stepper({
     <div
       role="group"
       aria-label={ariaLabel}
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-1.5 max-[799px]:inline-flex max-[799px]:gap-0 max-[799px]:overflow-hidden max-[799px]:rounded-md max-[799px]:border max-[799px]:border-input max-[799px]:shadow-xs"
     >
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
+        icon
         aria-label={`Zmniejsz ${ariaLabel}`}
         disabled={decDisabled}
         onClick={onDec}
         className={PRZYCISK}
       >
         −
-      </button>
-      <span
-        className={cn(
-          "inline-flex h-8 min-w-16 items-center justify-center rounded-lg border border-input bg-white px-3 font-mono text-sm text-foreground max-[799px]:h-11 max-[799px]:min-w-20 max-[799px]:rounded-md",
-        )}
-      >
+      </Button>
+      <span className="inline-flex h-7 min-w-16 items-center justify-center rounded-md border border-input bg-white px-3 font-mono text-sm text-foreground shadow-xs max-[799px]:h-11 max-[799px]:min-w-12 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-2 max-[799px]:font-sans max-[799px]:tabular-nums max-[799px]:shadow-none">
         {value}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
+        icon
         aria-label={`Zwiększ ${ariaLabel}`}
         disabled={incDisabled}
         onClick={onInc}
         className={PRZYCISK}
       >
         +
-      </button>
+      </Button>
     </div>
   );
 }

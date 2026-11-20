@@ -4,12 +4,13 @@ import { describe, expect, it } from "vitest";
 import { Chip } from "./chip";
 
 describe("Chip", () => {
-  it("domyślnie zaznaczony ma ciemną ramkę na białym tle", () => {
+  it("domyślnie zaznaczony ma szare tło (bg-muted)", () => {
     render(<Chip selected>Pn</Chip>);
     const chip = screen.getByRole("button", { name: "Pn" });
     expect(chip).toHaveAttribute("aria-pressed", "true");
-    expect(chip).toHaveClass("border-primary", "bg-white", "font-medium");
+    expect(chip).toHaveClass("bg-muted");
     expect(chip).not.toHaveClass("bg-primary");
+    expect(chip).not.toHaveClass("bg-white");
   });
 
   it("variant solid: zaznaczony wypełniony na czarno z białym tekstem", () => {
@@ -19,9 +20,13 @@ describe("Chip", () => {
       </Chip>,
     );
     const chip = screen.getByRole("button", { name: "Pn" });
-    expect(chip).toHaveClass("bg-primary", "border-primary", "text-white");
+    expect(chip).toHaveClass(
+      "bg-primary",
+      "border-primary",
+      "text-primary-foreground",
+    );
     expect(chip).not.toHaveClass("bg-white");
-    expect(chip).not.toHaveClass("text-soft-foreground");
+    expect(chip).not.toHaveClass("text-foreground");
   });
 
   it("variant solid bez zaznaczenia wygląda jak zwykły chip", () => {
