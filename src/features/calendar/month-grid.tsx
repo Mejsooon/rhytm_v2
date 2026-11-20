@@ -95,11 +95,11 @@ export function MonthGrid({
             const weekend = weekdayOf(dzien) >= 6;
             const wpisy = poDniach.get(dzien) ?? [];
             const kiedy = `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`;
-            // Numer w kółku 22 px; dziś ciemne kółko, dni spoza miesiąca wyszarzone
+            // Numer w kółku 24 px (size-6); dziś czerwone kółko, dni spoza miesiąca wyszarzone
             const numerKlasy = !wMiesiacu
               ? "text-faint-foreground"
               : dzien === today
-                ? "bg-primary font-semibold text-primary-foreground"
+                ? "bg-destructive-strong font-semibold text-white"
                 : "font-medium text-foreground";
 
             return (
@@ -116,11 +116,11 @@ export function MonthGrid({
                     return;
                   onDayClick(dzien, e.currentTarget);
                 }}
-                className={`group relative min-h-28 cursor-pointer p-1.5 ${i >= 7 ? "border-t border-border-soft" : ""} ${i % 7 > 0 ? "border-l border-border-soft" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${i === 35 ? "rounded-bl-lg" : ""} ${i === 41 ? "rounded-br-lg" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
+                className={`group relative min-h-[124px] cursor-pointer p-1.5 ${i >= 7 ? "border-t border-border-soft" : ""} ${i % 7 > 0 ? "border-l border-border-soft" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${i === 35 ? "rounded-bl-lg" : ""} ${i === 41 ? "rounded-br-lg" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
               >
                 <span
                   data-testid={`numer-${dzien}`}
-                  className={`inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1 text-xs tabular-nums ${numerKlasy}`}
+                  className={`mb-2 inline-flex size-6 items-center justify-center rounded-full text-xs leading-none tracking-normal tabular-nums ${numerKlasy}`}
                 >
                   {d}
                 </span>
@@ -179,7 +179,9 @@ export function MonthGrid({
                       style={{
                         backgroundColor: `${kolor}14`,
                         border: `1px solid ${kolor}4d`,
-                        boxShadow: zaznaczony ? `0 0 0 2px ${kolor}66` : undefined,
+                        boxShadow: zaznaczony
+                          ? `0 0 0 2px ${kolor}66`
+                          : undefined,
                       }}
                       className="mt-[3px] block w-full cursor-pointer overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >

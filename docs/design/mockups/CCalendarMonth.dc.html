@@ -125,12 +125,13 @@ class Component extends DCLogic {
       const today = inm && off === 0 && n === 17;
       cells.push({
         num: String(n),
-        numS: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;font-size:12px;font-variant-numeric:tabular-nums;' + (today ? 'background:#262626;color:#fafafa;font-weight:600' : inm ? 'color:#262626;font-weight:500' : 'color:#a3a3a3'),
+        // stała szerokość = idealne koło; tabular-nums + letter-spacing 0 + line-height 1 centruje każdą liczbę; odstęp 8 px od bloków
+        numS: 'display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;margin-bottom:8px;border-radius:50%;font-size:12px;line-height:1;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums;' + (today ? 'background:#dc2626;color:#ffffff;font-weight:600' : inm ? 'color:#262626;font-weight:500' : 'color:#a3a3a3'),
         add: (evt) => { const t = evt && evt.target; if (t && t.closest && t.closest('button,a,[role=dialog]')) return; const a = this.state.add; this.setState({ add: (a && a.i === i && a.off === off) ? null : { i, off }, sel: null }); },
         hasAdd: !!(this.state.add && this.state.add.i === i && this.state.add.off === off),
         addWhen: DOW[wd] + ' ' + String(n).padStart(2, '0') + '.' + String(date.getUTCMonth() + 1).padStart(2, '0'),
         addS: 'position:absolute;z-index:6;width:270px;' + (wd <= 3 ? 'left:calc(100% + 6px);' : 'right:calc(100% + 6px);') + (i >= 21 ? 'bottom:0;' : 'top:0;') + 'padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default',
-        s: 'position:relative;cursor:pointer;min-height:112px;padding:6px 6px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid rgba(0,0,0,.06)') + ';border-left:' + (wd === 0 ? '0' : '1px solid rgba(0,0,0,.06)') + ';' + (!inm || wd >= 5 ? 'background:rgba(0,0,0,.018);' : ''),
+        s: 'position:relative;cursor:pointer;min-height:124px;padding:6px 6px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid rgba(0,0,0,.06)') + ';border-left:' + (wd === 0 ? '0' : '1px solid rgba(0,0,0,.06)') + ';' + (!inm || wd >= 5 ? 'background:rgba(0,0,0,.018);' : ''),
         chips: items.slice(0, 3).map((e, k) => {
           const on = off === 0 && sel && sel.d === n && sel.k === k && inm;
           return { t: e[0], open: on ? 'true' : 'false', pick: () => this.setState({ sel: (sel && sel.d === n && sel.k === k) ? null : { d: n, k }, add: null }),
