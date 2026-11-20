@@ -75,6 +75,65 @@ describe("SleepCard", () => {
     expect(screen.queryByText("Samopoczucie")).not.toBeInTheDocument();
   });
 
+  it("karta snu bez wpisów pokazuje stan pusty", () => {
+    render(
+      <SleepCard sleepLogs={[]} today="2026-11-17" goalMin={480} clock="24" />,
+    );
+    // Dotychczasowy stan pusty: „—” zamiast czasu, bez godzin i samopoczucia
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.queryByText(/→/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Edytuj ostatnią noc/ })).not.toBeInTheDocument();
+    // Wykres bez dzielenia przez zero: 14 pustych słupków o wysokości 0, bez fokusu
+    expect(slupki()).toHaveLength(14);
+    for (const b of slupki()) {
+      expect((b as HTMLElement).style.height).toBe("0px");
+      expect(b).not.toHaveAttribute("tabindex");
+    }
+    // Linia celu i podpis „cel 8 h” zostają
+    expect(screen.getByText("cel 8 h")).toBeInTheDocument();
+    expect(screen.getByText("17.11")).toBeInTheDocument();
+  });
+
+  it("karta i wykres jak w makiecie CHabits", () => {
+    render(
+      <SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="24" />,
+    );
+    const karta = screen.getByRole("heading", { name: "Sen" }).closest("section");
+    expect(karta).toHaveClass("rounded-xl", "border-border", "shadow-card", "bg-clip-padding");
+    expect(screen.getByRole("heading", { name: "Sen" })).toHaveClass("text-base", "font-semibold");
+    // Etykiety .lbl (12 px, bez mono), wartości 20 px pogrubione z cyframi tabelarycznymi
+    const etykieta = screen.getByText("Ostatnia noc");
+    expect(etykieta).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
+    expect(etykieta.className).not.toContain("font-mono");
+    expect(screen.getByText("7:12")).toHaveClass("text-xl", "font-semibold", "tabular-nums");
+    expect(screen.getByText("7:12").className).not.toContain("font-mono");
+    expect(screen.getByText("23:48 → 07:00")).toHaveClass("text-xs", "tabular-nums");
+    // Podpis celu jako odznaka .bdg.ok
+    expect(screen.getByText("cel 8 h")).toHaveClass("bg-success-soft", "text-success", "rounded-sm");
+    // Słupki z zaokrągleniem 4 px u góry
+    expect(screen.getByLabelText("17.11 · 7:12")).toHaveClass("rounded-t-[4px]");
+    // Oś dat bez mono
+    expect(screen.getByText("17.11").parentElement).toHaveClass("text-[11px]", "tabular-nums");
+  });
+
+  it("zaznaczony słupek ma pierścień w style, a fokus klawiatury osobny obrys", () => {
+    render(
+      <SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="24" />,
+    );
+    const slupek = screen.getByLabelText("17.11 · 7:12");
+    expect(slupek).toHaveClass(
+      "focus-visible:outline-solid",
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+    expect(slupek.style.boxShadow).toBe("");
+    fireEvent.mouseEnter(slupek);
+    expect(slupek.style.boxShadow).toContain("var(--foreground)");
+    // Dymek .pop: data pogrubiona, czas w drugiej linii
+    expect(screen.getByText("17.11", { selector: "[role=tooltip] *" })).toHaveClass("font-semibold");
+  });
+
   it("słupek z wpisem dostaje fokus i pokazuje dymek", () => {
     render(
       <SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="24" />,

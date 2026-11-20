@@ -1,6 +1,6 @@
 "use client";
 
-// Okno wpisu snu wg SleepDialog.dc.html; tagi jako chipy i etykiety samopoczucia z MSleep.dc.html.
+// Okno wpisu snu wg CSleepDialog.dc.html; tagi jako chipy i etykiety samopoczucia z MSleep.dc.html.
 // Zapis nieoptymistyczny (wzór: BlockDialog): w trakcie zapisu okno jest zablokowane,
 // błąd zostaje w oknie, sukces zamyka je, a dane odświeża rewalidacja strony.
 import { useRef, useState } from "react";
@@ -10,7 +10,6 @@ import {
   Chip,
   DatePicker,
   FormDialog,
-  MonoLabel,
   TextField,
   TimePicker,
 } from "@/components/controls";
@@ -212,11 +211,14 @@ function SleepForm({
         </div>
       </div>
 
-      {/* Czas snu na żywo */}
-      <div className="flex items-center gap-3.5 rounded-lg border border-border bg-panel px-3.5 py-3">
+      {/* Czas snu na żywo — ramka .frame > .inner z makiety */}
+      <div
+        data-czas-snu
+        className="flex items-center gap-4 rounded-lg border-[1.5px] border-border-strong bg-white px-3.5 py-3"
+      >
         <div>
-          <MonoLabel className="block">Czas snu</MonoLabel>
-          <div className="mt-1 font-mono text-[22px]">
+          <div className="text-xs font-medium text-muted-foreground">Czas snu</div>
+          <div className="mt-1 text-[22px] font-semibold tabular-nums">
             {minuty === null ? "—" : formatDuration(minuty)}
           </div>
         </div>
@@ -228,14 +230,19 @@ function SleepForm({
           ) : (
             <>
               {goalMin > 0 && (
-                <div className="h-1.5 rounded-[3px] bg-border">
+                // Pasek .prog: ciemny, a po osiągnięciu celu zielony
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-1.5 rounded-[3px] bg-primary"
+                    data-pasek-celu
+                    className={cn(
+                      "h-1.5 rounded-full",
+                      procent >= 100 ? "bg-success" : "bg-primary",
+                    )}
                     style={{ width: `${procent}%` }}
                   />
                 </div>
               )}
-              <div className="mt-1.5 font-mono text-[11px] text-muted-foreground">
+              <div className="mt-1.5 text-xs text-muted-foreground tabular-nums">
                 {goalText(minuty, goalMin).web}
               </div>
             </>
@@ -248,7 +255,8 @@ function SleepForm({
         <div
           role="radiogroup"
           aria-label="Samopoczucie"
-          className="flex gap-1.5 font-normal"
+          // Tor .seg: szare tło, wybrana wartość to biała pigułka z cieniem
+          className="inline-flex gap-0.5 self-start rounded-md bg-muted p-0.5 font-normal"
         >
           {SAMOPOCZUCIE.map((etykieta, i) => {
             const wartosc = i + 1;
@@ -262,16 +270,14 @@ function SleepForm({
                 // Ponowny klik wybranej wartości czyści samopoczucie
                 onClick={() => setFeeling(wybrane ? null : wartosc)}
                 className={cn(
-                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-md border text-xs outline-none focus-visible:shadow-focus",
+                  "flex h-[46px] w-16 cursor-pointer flex-col items-center justify-center rounded-[8px] text-xs outline-none focus-visible:shadow-focus",
                   wybrane
-                    ? "border-primary bg-primary text-white"
-                    : "border-input bg-white text-foreground hover:bg-panel",
+                    ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+                    : "bg-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
-                <span className="font-mono text-sm">{wartosc}</span>
-                <span className={wybrane ? "text-white/80" : "text-muted-foreground"}>
-                  {etykieta}
-                </span>
+                <span className="text-sm font-medium tabular-nums">{wartosc}</span>
+                <span>{etykieta}</span>
               </button>
             );
           })}
