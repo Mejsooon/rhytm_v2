@@ -87,7 +87,7 @@ describe("BlockDialog", () => {
       screen.getByRole("dialog", { name: "Nowy blok" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dzień" })).toHaveTextContent(
-      "17.11.2026",
+      /^wt 17\.11\.2026$/,
     );
     expect(screen.getByRole("button", { name: "Od" })).toHaveTextContent(
       "10:00",
@@ -308,8 +308,22 @@ describe("BlockDialog", () => {
     });
   });
 
+  it("Dzień, Od i Do jak w CBlockDialog: pola pełnej szerokości kolumny; „Powtarzaj do” bez zmian", async () => {
+    wyrenderuj();
+    for (const nazwa of ["Dzień", "Od", "Do"]) {
+      expect(screen.getByRole("button", { name: nazwa })).toHaveClass("w-full");
+    }
+    await userEvent.click(screen.getByRole("radio", { name: "Co tydzień" }));
+    expect(
+      screen.getByRole("button", { name: "Powtarzaj do" }),
+    ).not.toHaveClass("w-full");
+  });
+
   it("Anuluj i ✕ wołają onCancel", async () => {
     const { onCancel } = wyrenderuj();
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);
@@ -413,5 +427,29 @@ describe("BlockDialog", () => {
         "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("wygląd jak w makiecie: dni jak w CBlockDialog, „do” w wierszu dni, podsumowanie jako podpowiedź, notatka jak pole", async () => {
+    wyrenderuj("edit", CYKLICZNY);
+    const wt = screen.getByRole("button", { name: "wt" });
+    expect(wt).toHaveClass("size-9", "rounded-md", "text-[13px]", "font-medium");
+    expect(wt).toHaveClass("bg-primary", "text-primary-foreground");
+    expect(screen.getByRole("button", { name: "pn" })).toHaveClass(
+      "bg-white",
+      "border-input",
+      "shadow-xs",
+    );
+    // „do” z datą końca w tym samym wierszu co dni
+    expect(
+      screen.getByRole("button", { name: "Powtarzaj do" }).closest("div.flex-wrap"),
+    ).toContainElement(wt);
+    const podsumowanie = screen.getByText(/^Co tydzień we wtorki/);
+    expect(podsumowanie).not.toHaveClass("font-mono");
+    expect(podsumowanie).toHaveClass("text-xs", "text-muted-foreground");
+    expect(screen.getByRole("textbox", { name: /Notatka/ })).toHaveClass(
+      "shadow-xs",
+      "focus:border-ring",
+      "py-[7px]",
+    );
   });
 });

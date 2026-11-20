@@ -168,7 +168,7 @@ function SleepForm({
               {blad}
             </p>
           )}
-          <Button disabled={pending} onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
             Anuluj
           </Button>
           <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
@@ -177,7 +177,8 @@ function SleepForm({
         </>
       }
     >
-      <div className="grid grid-cols-3 gap-3">
+      {/* Kolumna daty nie węższa niż „śr 18.11.2026” z ikoną; godziny dzielą resztę */}
+      <div className="grid grid-cols-[minmax(max-content,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3">
         <div className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
           Data pobudki
           <DatePicker

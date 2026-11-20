@@ -102,6 +102,25 @@ describe("TimeGrid", () => {
     expect(pole.style.height).toBe("72px");
   });
 
+  it("zaznaczony blok leży nad sąsiadami (z-[1]), fokus podnosi go wyżej (z-[2]), plan treningu ma bg-background", () => {
+    wyrenderuj({
+      occurrences: [
+        wystapienie({ blockId: "a", title: "A", durationMin: 30 }),
+        wystapienie({ blockId: "b", title: "B", startMin: 510, durationMin: 30 }),
+      ],
+      selectedKey: "a:2026-11-17",
+      sport: [planZSzablonu()],
+    });
+    const zaznaczony = screen.getByTestId("blok-a:2026-11-17");
+    expect(zaznaczony).toHaveClass("z-[1]", "focus-within:z-[2]");
+    const inny = screen.getByTestId("blok-b:2026-11-17");
+    expect(inny).not.toHaveClass("z-[1]");
+    expect(inny).toHaveClass("focus-within:z-[2]");
+    const plan = screen.getByRole("link", { name: /Push/ });
+    expect(plan).toHaveClass("bg-background");
+    expect(plan.style.background).toBe("");
+  });
+
   it("w widoku dnia godzina ma 52 px", () => {
     wyrenderuj({
       days: ["2026-11-17"],
@@ -214,6 +233,50 @@ describe("TimeGrid", () => {
     expect(screen.getByTestId("blok-b1:2026-11-10")).toHaveTextContent("1/1");
   });
 
+  it("blok tygodnia bez paska, ramka 4d", () => {
+    wyrenderuj({
+      categories: [{ ...kategorie[0], color: "#3b82f6" }],
+      occurrences: [wystapienie({})],
+    });
+    const blok = screen.getByRole("button", { name: /Blok/ });
+    // Tło kolor+12, ramka 1 px kolor+4d ze wszystkich stron, bez paska po lewej i bez cienia inset
+    expect(blok.style.background).toMatch(
+      /#3b82f612|rgba\(59, 130, 246, 0\.07\d*\)/,
+    );
+    expect(blok.style.border).toMatch(
+      /1px solid (#3b82f64d|rgba\(59, 130, 246, 0\.3\d*\))/,
+    );
+    expect(blok.style.borderLeftWidth).toBe("1px");
+    expect(blok.style.boxShadow).not.toContain("inset");
+  });
+
+  it("zaznaczony blok ma fokus i pierścień", () => {
+    wyrenderuj({
+      categories: [{ ...kategorie[0], color: "#3b82f6" }],
+      occurrences: [
+        wystapienie({ blockId: "z1", title: "Zaznaczony" }),
+        wystapienie({ blockId: "z2", title: "Inny", startMin: 720 }),
+      ],
+      selectedKey: "z1:2026-11-17",
+    });
+    const blok = screen.getByRole("button", { name: /Zaznaczony/ });
+    // Pierścień: 2 px biały + 4 px kolor+66
+    expect(blok.style.boxShadow).toMatch(
+      /(0 0 0 2px #fff|rgb\(255, 255, 255\) 0px 0px 0px 2px), (0 0 0 4px #3b82f666|rgba\(59, 130, 246, 0\.4\d*\) 0px 0px 0px 4px)/,
+    );
+    // Fokus jako outline z odstępem — inline boxShadow go nie zasłoni
+    expect(blok).toHaveClass(
+      "focus-visible:outline-solid",
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+    expect(blok.className).not.toContain("shadow-focus");
+    expect(screen.getByRole("button", { name: /Inny/ }).style.boxShadow).toBe(
+      "",
+    );
+  });
+
   it("blok bez kategorii jest szary", () => {
     wyrenderuj({ occurrences: [wystapienie({ categoryId: null })] });
     expect(
@@ -277,19 +340,19 @@ describe("TimeGrid", () => {
     expect(screen.getByTestId("przewijanie").scrollTop).toBe(14 * 48);
   });
 
-  it("w tygodniu ma nagłówki dni, dziś: numer w zielonym kółku i jasne tło kolumny", () => {
+  it("w tygodniu ma nagłówki dni, dziś: numer w ciemnym kółku i ledwo szare tło kolumny", () => {
     wyrenderuj();
     const dzis = screen
       .getByTestId("naglowek-2026-11-17")
       .querySelector("[data-dzis]");
     expect(dzis).toHaveTextContent("17");
-    expect(dzis?.className).toContain("bg-success");
+    expect(dzis?.className).toContain("bg-primary");
     expect(dzis?.className).toContain("h-6");
     expect(
       screen.getByTestId("naglowek-2026-11-18").querySelector("[data-dzis]"),
     ).toBeNull();
     expect(screen.getByTestId("kolumna-2026-11-17").style.backgroundColor).toBe(
-      "rgb(251, 253, 251)",
+      "rgba(0, 0, 0, 0.016)", // jsdom zaokrągla .015
     );
     expect(screen.getByTestId("kolumna-2026-11-18").style.backgroundColor).toBe(
       "",
@@ -407,7 +470,7 @@ describe("TimeGrid", () => {
     ).toHaveTextContent("Trzy kwadranse · 10:00");
     const godzina = screen.getByRole("button", { name: /Godzina/ });
     expect(godzina).toHaveTextContent("Godzina12:00–13:00");
-    const linia = godzina.querySelector(".font-mono") as HTMLElement;
+    const linia = godzina.querySelector(".tabular-nums") as HTMLElement;
     expect(linia.className).toContain("leading-[14px]");
   });
 
@@ -481,10 +544,12 @@ describe("TimeGrid", () => {
     it("bieg wykonany jest pełny w kolorze Sportu, plan z szablonu ma przerywaną ramkę", () => {
       wyrenderuj({ sport: [trening(), planZSzablonu()] });
       const bieg = screen.getByRole("link", { name: /Spokojny/ });
-      expect(bieg.style.borderLeft).toBe("3px solid rgb(194, 65, 12)");
+      expect(bieg.style.border).toMatch(
+        /1px solid rgba\(194, 65, 12, 0\.3\d*\)/,
+      );
       expect(bieg).not.toHaveAttribute("data-planned");
       const plan = screen.getByRole("link", { name: /Push/ });
-      expect(plan.style.borderLeft).toBe("3px dashed rgb(194, 65, 12)");
+      expect(plan.style.border).toBe("1px dashed rgb(194, 65, 12)");
       expect(plan).toHaveAttribute("data-planned", "true");
       expect(plan).toHaveTextContent("18:30–20:00");
       // 18:30 w tygodniu (48 px / h) i 1,5 h

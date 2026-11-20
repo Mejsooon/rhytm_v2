@@ -41,7 +41,7 @@ export function TypeChangeDialog({
       title="Zmienić typ pola?"
       footer={
         <>
-          <Button onClick={onCancel} disabled={trwa}>
+          <Button variant="ghost" onClick={onCancel} disabled={trwa}>
             Anuluj
           </Button>
           <Button variant="primary" onClick={potwierdz} disabled={trwa}>

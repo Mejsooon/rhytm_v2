@@ -55,6 +55,21 @@ function wyrenderuj(
 beforeEach(() => vi.clearAllMocks());
 
 describe("SleepDialog", () => {
+  it("„Anuluj” w stopce bez ramki (ghost), na telefonie 44 px", () => {
+    wyrenderuj();
+    const anuluj = screen.getByRole("button", { name: "Anuluj" });
+    expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(anuluj.className).not.toContain("border-input");
+    expect(anuluj).toHaveClass("max-[799px]:h-11");
+  });
+
+  it("kolumna „Data pobudki” nie węższa niż data z dniem tygodnia (wyzwalacz .igroup nie wychodzi na „Zasnąłem”)", () => {
+    wyrenderuj();
+    const siatka = screen.getByRole("button", { name: "Data pobudki" }).parentElement
+      ?.parentElement as HTMLElement;
+    expect(siatka).toHaveClass("grid-cols-[minmax(max-content,1fr)_minmax(0,1fr)_minmax(0,1fr)]");
+  });
+
   it("tytuł z nocy i domyślne 23:00 → 07:00 dla nowego wpisu", () => {
     wyrenderuj({ date: "2026-11-15" });
     expect(

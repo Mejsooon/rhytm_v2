@@ -62,7 +62,7 @@ export function DeleteHabitDialog({
               {blad}
             </p>
           )}
-          <Button disabled={pending} onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
             Anuluj
           </Button>
           <Button

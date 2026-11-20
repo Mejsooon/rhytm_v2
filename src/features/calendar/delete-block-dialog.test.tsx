@@ -78,6 +78,9 @@ describe("DeleteBlockDialog", () => {
     expect(okno).toHaveClass("min-[800px]:rounded-xl", "min-[800px]:border-border", "min-[800px]:shadow-pop");
     expect(screen.getByRole("button", { name: "Usuń" }).parentElement).toHaveClass("min-[800px]:bg-black/[.025]", "min-[800px]:border-t");
     expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("h-8", "bg-destructive");
+    // CDeleteBlockDialog: nagłówek z dolnym odstępem 20 px, kosz przy „Usuń” (tylko web)
+    expect(screen.getByRole("heading", { name: "Usunąć blok?" }).parentElement).toHaveClass("min-[800px]:pb-5");
+    expect(screen.getByRole("button", { name: "Usuń" }).querySelector("svg")).toHaveClass("size-4", "max-[799px]:hidden");
   });
 
   it("w trakcie usuwania przyciski są zablokowane, a Esc nie zamyka", async () => {
@@ -109,6 +112,11 @@ describe("DeleteBlockDialog", () => {
 
   it("Anuluj nic nie usuwa", async () => {
     const { onCancel } = wyrenderuj(wystapienie());
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
+    // Telefon: pełny przycisk 48 px zostaje
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-12");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(onCancel).toHaveBeenCalled();
     expect(changeOccurrence).not.toHaveBeenCalled();

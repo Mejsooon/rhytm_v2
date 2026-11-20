@@ -112,20 +112,54 @@ describe("MonthGrid", () => {
     expect(wpis).toHaveAttribute("title", "1:30 PM Wpis b1");
   });
 
-  it("wpis z kategorią ma tło w kolorze (alfa 14) i lewy pasek", () => {
+  it("chip bloku w miesiącu bez paska", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480)]);
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    // CCalendarMonth: tło kolor+14, ramka 1 px kolor+4d dookoła, bez lewego paska
     expect(wpis.style.backgroundColor).toBe("rgba(0, 112, 243, 0.08)");
-    expect(wpis.style.borderLeftColor).toBe("rgb(0, 112, 243)");
-    expect(wpis.className).toContain("border-l-2");
+    expect(wpis.style.border).toBe("1px solid rgba(0, 112, 243, 0.3)");
+    expect(wpis.style.borderLeftWidth).not.toBe("2px");
+    expect(wpis.className).not.toContain("border-l-2");
+    // Bez zaznaczenia brak pierścienia; nigdy cień wewnętrzny (pasek)
+    expect(wpis.style.boxShadow).not.toContain("inset");
+    expect(wpis.className).toContain("rounded-sm");
+    expect(wpis.className).toContain("text-xs");
   });
 
-  it("wpis bez kategorii ma kreskowaną szarą ramkę i tekst mono", () => {
+  it("zaznaczony chip ma pierścień 2 px w kolorze kategorii, a fokus to outline", () => {
+    wyrenderuj([wystapienie("b1", "2026-11-18", 480)], {
+      activeEntryKey: "b1:2026-11-18",
+    });
+    const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    expect(wpis.style.boxShadow).toBe("rgba(0, 112, 243, 0.4) 0px 0px 0px 2px");
+    expect(wpis.style.boxShadow).not.toContain("inset");
+    expect(wpis.className).toContain("focus-visible:outline-ring");
+    expect(wpis).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("wpis bez kategorii jak w tygodniu: kolor #a3a3a3, pełna ramka 4d i tło 14, bez przerywanej ramki", () => {
     wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })]);
     const wpis = screen.getByRole("button", { name: /Wpis b1/ });
-    expect(wpis.className).toContain("border-dashed");
-    expect(wpis.className).toContain("border-ring");
-    expect(wpis.className).toContain("font-mono");
+    expect(wpis.style.backgroundColor).toBe("rgba(163, 163, 163, 0.08)");
+    expect(wpis.style.border).toBe("1px solid rgba(163, 163, 163, 0.3)");
+    expect(wpis.className).not.toContain("border-dashed");
+    expect(wpis.className).not.toContain("bg-background");
+    expect(wpis.className).toContain("text-foreground");
+    expect(wpis.className).not.toContain("font-mono");
+  });
+
+  it("zaznaczony wpis bez kategorii ma pierścień 2 px #a3a3a366, a plan treningu nadal przerywaną ramkę i tło bg-background", () => {
+    wyrenderuj([wystapienie("b1", "2026-11-18", 480, { categoryId: null })], {
+      activeEntryKey: "b1:2026-11-18",
+      sport: [planZSzablonu()],
+    });
+    const wpis = screen.getByRole("button", { name: /Wpis b1/ });
+    expect(wpis.style.boxShadow).toBe("rgba(163, 163, 163, 0.4) 0px 0px 0px 2px");
+    expect(wpis).toHaveAttribute("aria-expanded", "true");
+    const plan = screen.getByRole("link", { name: "Push" });
+    expect(plan).toHaveClass("bg-background");
+    expect(plan.style.backgroundColor).toBe("");
+    expect(plan.style.border).toContain("dashed");
   });
 
   it("klik w „+2 więcej” woła onMoreClick", async () => {
@@ -167,7 +201,7 @@ describe("MonthGrid", () => {
   it("wyróżnia dziś i szarzy dni spoza miesiąca", () => {
     wyrenderuj([]);
     expect(screen.getByTestId("numer-2026-11-17").className).toContain(
-      "bg-success",
+      "bg-primary",
     );
     expect(screen.getByTestId("numer-2026-10-26").className).toContain(
       "text-faint-foreground",
@@ -186,7 +220,9 @@ describe("MonthGrid", () => {
         "link",
         { name: "Spokojny" },
       );
-      expect(bieg.style.borderLeft).toBe("2px solid rgb(194, 65, 12)");
+      // Wykonany jak chip bloku: tło 14, ramka 4d, bez paska
+      expect(bieg.style.backgroundColor).toBe("rgba(194, 65, 12, 0.08)");
+      expect(bieg.style.border).toBe("1px solid rgba(194, 65, 12, 0.3)");
       expect(bieg).toHaveAttribute(
         "href",
         "/sport?miesiac=2026-11&wybrany=s:s1",

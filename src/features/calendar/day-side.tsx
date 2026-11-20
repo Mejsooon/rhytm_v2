@@ -1,15 +1,24 @@
 "use client";
 
-// Prawa kolumna widoku dnia wg CalendarNotionDay.dc.html: mini kalendarz i karta „Dzień w liczbach”.
-// Stała szerokość 280 px obok siatki; stoi w miejscu i przewija się sama, gdy brakuje wysokości.
+// Prawa kolumna widoku dnia wg CCalendarDay.dc.html: szary panel (288 px treści) z dwiema kartami (.card) —
+// mini kalendarz i „Dzień w liczbach” z paskiem postępu zadań.
+// Stoi w miejscu obok siatki i przewija się sama, gdy brakuje wysokości.
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   buildMonthGrid,
   monthTitlePl,
   type IsoDate,
 } from "@/components/controls/calendar-math";
-import { MonoLabel } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  Progress,
+} from "@/components/controls";
+import { cn } from "@/lib/utils";
 import type { TaskRow } from "@/features/tasks/model";
 import { dayNumbers } from "./day-layout";
 import type { Occurrence } from "./occurrences";
@@ -89,32 +98,35 @@ export function DaySide({
   };
 
   return (
-    <aside className="flex w-[280px] flex-none flex-col gap-4 overflow-y-auto border-l border-border bg-white p-4">
-      <section className="rounded-lg border border-border bg-white p-3.5">
+    <aside className="flex w-[321px] flex-none flex-col gap-4 overflow-y-auto border-l border-border bg-panel p-4">
+      <Card className="p-3">
         <div className="mb-2 flex items-center justify-between">
-          <span className="font-semibold">
+          {/* Wielka litera tylko w wyglądzie („Listopad 2026”), tekst zostaje z monthTitlePl */}
+          <span className="pl-1 font-semibold first-letter:uppercase">
             {monthTitlePl(pokazany.rok, pokazany.miesiac0)}
           </span>
-          <span className="flex gap-1">
-            <button
-              type="button"
+          <span className="flex gap-0.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon
               aria-label="Poprzedni miesiąc"
               onClick={() => przesun(-1)}
-              className="size-7 cursor-pointer rounded-md border border-input bg-white"
             >
-              ‹
-            </button>
-            <button
-              type="button"
+              <ChevronLeft size={16} aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon
               aria-label="Następny miesiąc"
               onClick={() => przesun(1)}
-              className="size-7 cursor-pointer rounded-md border border-input bg-white"
             >
-              ›
-            </button>
+              <ChevronRight size={16} aria-hidden="true" />
+            </Button>
           </span>
         </div>
-        <div className="mb-1 grid grid-cols-7 text-center font-mono text-[10px] text-muted-foreground">
+        <div className="mb-1 grid grid-cols-7 text-center text-xs font-medium text-muted-foreground">
           {naglowki.map((n) => (
             <span key={n}>{n}</span>
           ))}
@@ -122,41 +134,61 @@ export function DaySide({
         <div className="grid grid-cols-7 gap-0.5">
           {komorki.map((k) => {
             const [, m, d] = k.date.split("-").map(Number);
-            let styl = "bg-transparent text-faint-foreground";
-            if (k.date === date) styl = "bg-primary font-semibold text-white";
-            else if (k.date === today)
-              styl = "bg-success-soft font-semibold text-success";
-            else if (k.inMonth) styl = "bg-transparent text-foreground";
+            const wybrany = k.date === date;
             return (
               <button
                 key={k.date}
                 type="button"
                 aria-label={`${d} ${MIESIACE_DOPELNIACZ[m - 1]}`}
                 onClick={() => onPick(k.date)}
-                className={`h-7 cursor-pointer rounded-md font-mono text-xs ${styl}`}
+                className={cn(
+                  "h-[30px] cursor-pointer rounded-[8px] border border-transparent bg-transparent p-0 text-[13px] tabular-nums outline-none hover:bg-muted focus-visible:shadow-focus",
+                  k.inMonth ? "text-foreground" : "text-faint-foreground",
+                  // Dziś jak w DatePicker: obwódka
+                  k.date === today && "border-border-strong",
+                  wybrany &&
+                    "border-primary bg-primary font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16)] hover:bg-primary",
+                )}
               >
                 {d}
               </button>
             );
           })}
         </div>
-      </section>
+      </Card>
 
-      <section className="flex flex-col gap-2 rounded-lg border border-border bg-white p-3.5">
-        <MonoLabel>Dzień w liczbach</MonoLabel>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Zaplanowane</span>
-          <span className="font-mono">{czas(liczby.plannedMin)}</span>
+      <Card>
+        <CardHeader className="px-4 pt-3.5">
+          <CardTitle as="h2" className="text-sm">
+            Dzień w liczbach
+          </CardTitle>
+        </CardHeader>
+        {/* Wysokość linii „normal” jak w makiecie (wiersze co 25 px) */}
+        <div className="flex flex-col gap-2 px-4 pt-2.5 pb-3.5 leading-[normal]">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Zaplanowane</span>
+            <span className="font-medium tabular-nums">
+              {czas(liczby.plannedMin)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Wolne (8–20)</span>
+            <span className="font-medium tabular-nums">
+              {czas(liczby.freeMin)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Zadania</span>
+            <span className="font-medium tabular-nums">{`${liczby.tasksDone} / ${liczby.tasksTotal}`}</span>
+          </div>
+          <Progress
+            value={liczby.tasksDone}
+            max={liczby.tasksTotal}
+            ariaLabel="Zadania wykonane"
+            className="mt-0.5"
+          />
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Wolne (8–20)</span>
-          <span className="font-mono">{czas(liczby.freeMin)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Zadania</span>
-          <span className="font-mono">{`${liczby.tasksDone} / ${liczby.tasksTotal}`}</span>
-        </div>
-      </section>
+      </Card>
     </aside>
   );
 }

@@ -58,6 +58,14 @@ const NAWYK: Habit = {
 beforeEach(() => vi.clearAllMocks());
 
 describe("HabitDialog", () => {
+  it("„Anuluj” w stopce bez ramki (ghost), na telefonie 44 px", () => {
+    wyrenderuj();
+    const anuluj = screen.getByRole("button", { name: "Anuluj" });
+    expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(anuluj.className).not.toContain("border-input");
+    expect(anuluj).toHaveClass("max-[799px]:h-11");
+  });
+
   it("tryb nowy: tytuł, przycisk i zdanie dla Codziennie", () => {
     wyrenderuj();
     expect(

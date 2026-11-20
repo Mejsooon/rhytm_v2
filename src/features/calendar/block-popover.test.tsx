@@ -215,12 +215,14 @@ describe("BlockPopover", () => {
     expect(toastError).toHaveBeenCalled();
   });
 
-  it("przyciski ⋯ i × przy zadaniu na webie widać po najechaniu/fokusie w wierszu, na telefonie stale", () => {
+  it("przyciski ⋯ i × przy zadaniu na webie z myszą widać po najechaniu/fokusie w wierszu, bez hovera (tablet, telefon) stale", () => {
     wyrenderuj();
     for (const nazwa of ["Opcje zadania Szablony", "Usuń zadanie Szablony"]) {
       const przycisk = screen.getByRole("button", { name: nazwa });
+      // Chowanie tylko tam, gdzie jest hover — tablet dotykowy ≥ 800 px widzi przyciski stale
+      expect(przycisk).not.toHaveClass("min-[800px]:opacity-0");
       expect(przycisk).toHaveClass(
-        "min-[800px]:opacity-0",
+        "min-[800px]:[@media(hover:hover)]:opacity-0",
         "min-[800px]:group-hover:opacity-100",
         "min-[800px]:group-focus-within:opacity-100",
         "focus-visible:opacity-100",

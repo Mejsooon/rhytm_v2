@@ -239,6 +239,9 @@ describe("ExerciseDetail", () => {
     await user.click(screen.getByRole("button", { name: "Zmień nazwę" }));
     const pole = screen.getByRole("textbox", { name: "Nazwa ćwiczenia" });
     expect(pole).toHaveValue("Wyciskanie na ławce");
+    // „Anuluj” bez ramki (ghost, .btng z makiet), na telefonie 44 px
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-11");
     await user.clear(pole);
     await user.type(pole, "Wyciskanie sztangi");
     await user.click(screen.getByRole("button", { name: "Zapisz" }));

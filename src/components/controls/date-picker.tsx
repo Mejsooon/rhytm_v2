@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
@@ -16,9 +16,12 @@ import {
 
 const DNI_PN = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 const DNI_ND = ["nd", "pn", "wt", "śr", "cz", "pt", "sb"];
+// Skróty dnia tygodnia na wyzwalaczu („wt 17.11.2026” z CBlockDialog.dc.html); indeks = getUTCDay (0 = niedziela)
+const DNI_WYZWALACZ = ["nd", "pn", "wt", "śr", "czw", "pt", "sob"];
 
 // Wybór daty wg dp() z Books.dc.html: dymek 244 px, nagłówek z miesiącem, siatka 7 × 6,
 // stopka „Dziś” / „Wyczyść”. Wybór dnia zamyka dymek.
+// Wyzwalacz „box” jak .igroup z CBlockDialog.dc.html: ikona kalendarza po lewej i data sans z dniem tygodnia.
 export function DatePicker({
   value,
   onChange,
@@ -30,6 +33,7 @@ export function DatePicker({
   max,
   variant = "box",
   size = "md",
+  className,
 }: {
   value: IsoDate | null;
   onChange: (v: IsoDate | null) => void;
@@ -43,8 +47,10 @@ export function DatePicker({
   max?: IsoDate;
   // „bare”: goły tekst mono bez ramki i strzałki (komórka tabeli z EmptyPage.dc.html)
   variant?: "box" | "bare";
-  // „sm”: przycisk 28 px, tekst 12 px mono (btnBase z Books.dc.html, tryb edycji wiersza)
+  // „sm”: przycisk 28 px, ikona 14 px i tekst 12 px sans (btnBase z Books.dc.html, tryb edycji wiersza)
   size?: "md" | "sm";
+  // Dodatkowe klasy wyzwalacza (np. w-full w oknie bloku)
+  className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   // Wyświetlany miesiąc; ustawiany przy otwarciu na miesiąc wartości albo dzisiejszy
@@ -95,23 +101,34 @@ export function DatePicker({
             variant === "bare"
               ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
               : cn(
-                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo",
+                  // .igroup: ramka input, promień 10 px, cień xs, ikona muted, tekst sans z cyframi tabelarycznymi
+                  "inline-flex min-w-0 cursor-pointer items-center rounded-md border border-input bg-white bg-clip-padding text-left text-foreground tabular-nums shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo",
                   size === "sm"
-                    ? "h-7 px-2 font-mono text-xs whitespace-nowrap"
-                    : "h-8 px-[11px] text-sm max-[799px]:h-11",
+                    ? "h-7 gap-1.5 px-2 text-xs whitespace-nowrap"
+                    : "h-8 gap-2 px-[11px] text-sm max-[799px]:h-11",
                 ),
+            className,
           )}
         >
+          {variant === "box" && (
+            <CalendarIcon
+              aria-hidden="true"
+              className={cn(
+                "flex-none text-muted-foreground",
+                size === "sm" ? "size-3.5" : "size-4",
+              )}
+            />
+          )}
           {value ? (
-            <span className="font-mono">{formatDatePl(value)}</span>
+            variant === "bare" ? (
+              <span className="font-mono">{formatDatePl(value)}</span>
+            ) : (
+              <span className="min-w-0 truncate">
+                {`${DNI_WYZWALACZ[new Date(`${value}T00:00:00Z`).getUTCDay()]} ${formatDatePl(value)}`}
+              </span>
+            )
           ) : (
             <span className={size === "sm" ? "text-muted-foreground" : "text-faint-foreground"}>{placeholder}</span>
-          )}
-          {variant === "box" && (
-            <ChevronDownIcon
-              aria-hidden="true"
-              className="size-3 flex-none text-muted-foreground"
-            />
           )}
         </button>
       }

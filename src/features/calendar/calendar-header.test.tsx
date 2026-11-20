@@ -122,4 +122,29 @@ describe("CalendarHeader", () => {
     );
     expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-19");
   });
+
+  it("wygląd COSS: zgrupowane ‹ Dziś ›, podtytuł jako szara plakietka, Nowy blok z ikoną", () => {
+    wyrenderuj();
+    // Grupa przycisków jak w makiecie: zaokrąglone tylko skrajne rogi, środkowy bez promienia
+    const poprzedni = screen.getByRole("link", { name: "Poprzedni tydzień" });
+    const dzis = screen.getByRole("link", { name: "Dziś" });
+    const nastepny = screen.getByRole("link", { name: "Następny tydzień" });
+    expect(poprzedni.className).toContain("rounded-r-none");
+    expect(poprzedni.className).toContain("w-8");
+    expect(dzis.className).toContain("rounded-none");
+    expect(dzis.className).toContain("-ml-px");
+    expect(nastepny.className).toContain("rounded-l-none");
+    expect(poprzedni.querySelector("svg")).not.toBeNull();
+    // Podtytuł „tydz. 47” to .bdg.sec.num
+    const plakietka = within(
+      screen.getByRole("heading", { level: 1 }).closest("header")!,
+    ).getByText("tydz. 47");
+    expect(plakietka.className).toContain("bg-muted");
+    expect(plakietka.className).toContain("tabular-nums");
+    // Nowy blok: .btnp z ikoną plusa, rozmiar md (32 px)
+    const nowy = screen.getByRole("button", { name: "Nowy blok" });
+    expect(nowy.className).toContain("bg-primary");
+    expect(nowy.className).toContain("h-8");
+    expect(nowy.querySelector("svg")).not.toBeNull();
+  });
 });

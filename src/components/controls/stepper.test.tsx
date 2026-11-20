@@ -48,4 +48,13 @@ describe("Stepper", () => {
     await userEvent.click(minus);
     expect(onDec).not.toHaveBeenCalled();
   });
+
+  it("przyciski na telefonie mają fokus wewnątrz (ramka z overflow-hidden go nie utnie)", () => {
+    ustaw();
+    for (const nazwa of ["Zmniejsz Cel tygodniowy", "Zwiększ Cel tygodniowy"]) {
+      expect(screen.getByRole("button", { name: nazwa })).toHaveClass(
+        "max-[799px]:focus-visible:shadow-focus-inset",
+      );
+    }
+  });
 });

@@ -514,6 +514,7 @@ export function CalendarView({
       nowMinutes={nowMinutes}
       variant={view === "dzien" ? "day" : "week"}
       totalCount={view === "dzien" ? wystapienia.length : undefined}
+      selectedKey={wybrany}
       // Ponowny klik w ten sam blok zamyka dymek
       onBlockClick={(key) => setWybrany((w) => (w === key ? null : key))}
       activeSlot={okno?.typ === "wpis" ? okno : null}

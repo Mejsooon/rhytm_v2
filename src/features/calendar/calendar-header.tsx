@@ -1,16 +1,22 @@
 "use client";
 
 // Nagłówek kalendarza.
-// Web (CalendarNotionWeek/Day.dc.html): jeden cienki pasek — ‹ Dziś › z tytułem po lewej,
-// „Kategorie”, segment Dzień/Tydzień/Miesiąc i „Nowy blok” po prawej.
+// Web (CCalendar.dc.html, CCalendarDay.dc.html): jeden pasek — zgrupowane ‹ Dziś › z tytułem
+// i szarą plakietką (tydz. N / N z M bloków) po lewej, „Kategorie”, segment Dzień/Tydzień/Miesiąc
+// i „Nowy blok” po prawej.
 // Telefon (MCalendarDayFull.dc.html): jedna linia „Listopad” + „tydz. N”, ikona Kategorie i strzałki,
 // segment pod spodem. Nowy blok na telefonie dodaje pływający przycisk widoku.
 // Oba układy są w DOM, przełącza je CSS (800 px).
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
-import { Button, MonoLabel, Segment } from "@/components/controls";
+import {
+  Button,
+  MonoLabel,
+  Segment,
+  StatusBadge,
+} from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { CategoryFilters, CategorySheet } from "./category-filters";
 import type { CategoryRow } from "./load-calendar";
@@ -96,28 +102,41 @@ export function CalendarHeader({
     <>
       <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-border px-4 py-2.5 max-[799px]:hidden">
         <div className="flex items-center gap-1.5">
-          <Button asChild size="sm" className="px-2 py-[5px] text-[13px]">
-            <Link
-              href={adres(view, shiftDate(view, date, -1))}
-              aria-label={`Poprzedni ${OKRES[view]}`}
+          {/* Grupa ‹ Dziś ›: przyciski sklejone, zaokrąglone tylko skrajne rogi; fokus nad sąsiadem */}
+          <div className="inline-flex">
+            <Button
+              asChild
+              icon
+              className="rounded-r-none focus-visible:z-10"
             >
-              ‹
-            </Link>
-          </Button>
-          <Button asChild size="sm" className="px-2.5 py-[5px] text-[13px]">
-            <Link href={adres(view, today)}>Dziś</Link>
-          </Button>
-          <Button asChild size="sm" className="px-2 py-[5px] text-[13px]">
-            <Link
-              href={adres(view, shiftDate(view, date, 1))}
-              aria-label={`Następny ${OKRES[view]}`}
+              <Link
+                href={adres(view, shiftDate(view, date, -1))}
+                aria-label={`Poprzedni ${OKRES[view]}`}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild className="-ml-px rounded-none focus-visible:z-10">
+              <Link href={adres(view, today)}>Dziś</Link>
+            </Button>
+            <Button
+              asChild
+              icon
+              className="-ml-px rounded-l-none focus-visible:z-10"
             >
-              ›
-            </Link>
-          </Button>
+              <Link
+                href={adres(view, shiftDate(view, date, 1))}
+                aria-label={`Następny ${OKRES[view]}`}
+              >
+                <ChevronRight size={16} aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
           <h1 className="ml-2 text-base font-semibold">{tytul}</h1>
           {podtytul && (
-            <span className="font-mono text-xs text-muted-foreground">{podtytul}</span>
+            <StatusBadge tone="gray" className="tabular-nums">
+              {podtytul}
+            </StatusBadge>
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -127,12 +146,8 @@ export function CalendarHeader({
             onAdd={onAddCategory}
           />
           {segment(view)}
-          <Button
-            variant="primary"
-            size="sm"
-            className="text-[13px]"
-            onClick={onNewBlock}
-          >
+          <Button variant="primary" onClick={onNewBlock}>
+            <Plus size={16} aria-hidden="true" />
             Nowy blok
           </Button>
         </div>

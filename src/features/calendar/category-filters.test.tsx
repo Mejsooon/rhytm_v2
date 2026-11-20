@@ -47,6 +47,10 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
     expect(przycisk).toHaveTextContent("Kategorie2/3");
     // Kropki tylko widocznych (Studia, Sport), najwyżej 4
     expect(screen.getByTestId("kropki-kategorii").children).toHaveLength(2);
+    expect(
+      (screen.getByTestId("kropki-kategorii").children[0] as HTMLElement)
+        .className,
+    ).toContain("size-3");
   });
 
   it("najwyżej 4 kropki przy wielu widocznych kategoriach", () => {
@@ -139,6 +143,38 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
     );
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+  it("wygląd COSS: przycisk .btn z plakietką licznika, menu .pop z etykietą i polami .cbx", async () => {
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+      />,
+    );
+    const przycisk = screen.getByRole("button", {
+      name: /^Kategorie, widoczne/,
+    });
+    expect(przycisk.className).toContain("h-8");
+    expect(przycisk.className).toContain("shadow-btn");
+    expect(screen.getByText("2/3").className).toContain("bg-muted");
+    await userEvent.click(przycisk);
+    const menu = await screen.findByRole("menu", {
+      name: "Kategorie, widoczne 2 z 3",
+    });
+    expect(menu.className).toContain("rounded-lg");
+    expect(menu.className).toContain("shadow-lg");
+    expect(menu.className).toContain("w-[230px]");
+    // Etykieta .mi-lbl „Pokaż w kalendarzu” nad listą kategorii (CCalendar.dc.html)
+    const etykieta = screen.getByText("Pokaż w kalendarzu");
+    expect(etykieta).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
+    expect(menu.firstElementChild).toBe(etykieta);
+    const studia = screen.getByRole("menuitemcheckbox", { name: /Studia/ });
+    expect(studia.className).toContain("min-h-8");
+    expect(studia.className).toContain("data-[highlighted]:bg-accent");
+    // Zaznaczone pole wyboru: czarny kwadrat z ikoną ptaszka
+    expect(studia.querySelector("svg")).not.toBeNull();
+    expect(screen.getByRole("separator")).toBeInTheDocument();
   });
 });
 

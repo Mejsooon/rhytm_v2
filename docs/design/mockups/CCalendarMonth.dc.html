@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kalendarz — miesiąc (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.cm-plus{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#686868;opacity:0;pointer-events:none}
+.cm-day:hover .cm-plus{opacity:1;background:rgba(0,0,0,.05)}
+</style>
+</helmet>
+<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="kalendarz" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Kalendarz</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><nav class="seg" aria-label="Widok"><a href="CCalendarDay.dc.html">Dzień</a><a href="CCalendar.dc.html">Tydzień</a><a href="CCalendarMonth.dc.html" aria-current="page">Miesiąc</a></nav><a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a></div>
+    </header>
+    <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; gap: 10px"><div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni miesiąc" onClick="{{prev}}" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" onClick="{{today}}" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny miesiąc" onClick="{{next}}" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><h1 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600">{{monthLabel}}</h1><span class="bdg sec num">{{summary}}</span></div>
+      <div role="group" aria-label="Pokaż kategorie" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+        <span class="lbl" style="margin-right: 4px">Pokaż</span>
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}" style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.name}} <span class="bdg sec num" style="height: 16px; min-width: 16px; font-size: 11px">{{c.count}}</span></button></sc-for>
+        <a href="CCategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+      </div>
+      <div class="frame" style="min-width: 760px"><div class="inner" style="overflow: visible">
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-bottom: 1px solid rgba(0,0,0,.08); font-size: 12px; font-weight: 500; color: #686868"><span style="padding: 8px 10px">pon</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">wt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">śr</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">czw</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">pt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">sob</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">nd</span></div>
+        <div style="position: relative">
+        <sc-if value="{{hasPop}}" hint-placeholder-val="{{true}}">
+          <div role="dialog" aria-label="Szczegóły" class="pop" style="{{pop.style}}">
+            <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #686868"><span style="{{pop.dot}}"></span>{{pop.cat}}</span>
+                <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{pop.title}}</span>
+                <span class="hint num">{{pop.when}}</span>
+              </div>
+              <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{close}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+            </div>
+            <sc-if value="{{pop.isBlock}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px">
+                <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Zadania</span><span class="hint num">{{pop.doneN}} z {{pop.total}}</span></div>
+                <div class="prog"><div style="{{pop.bar}}"></div></div>
+                <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><span class="hint" style="padding: 6px 0">Brak zadań w tym bloku.</span></sc-if>
+                <sc-for list="{{pop.tasks}}" as="t" hint-placeholder-count="3"><label style="{{t.s}}"><input type="checkbox" checked="{{t.done}}" onChange="{{t.toggle}}">{{t.title}}</label></sc-for>
+                <label class="igroup" style="height: 30px; margin-top: 2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><input type="text" placeholder="Dodaj zadanie" aria-label="Nowe zadanie" style="font-size: 13px"></label>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(0,0,0,.08); padding: 12px 16px; background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px"><a href="CBlockDialog.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</a><a href="CDeleteBlockDialog.dc.html" class="btndo sm">Usuń</a></div>
+            </sc-if>
+            <sc-if value="{{pop.isRenewal}}" hint-placeholder-val="{{false}}">
+              <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 10px">
+                <div class="frame"><div class="inner" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))">
+                  <div style="padding: 10px 12px"><div class="lbl">Kwota</div><div class="num" style="margin-top: 4px; font-weight: 500">{{pop.amount}}</div></div>
+                  <div style="padding: 10px 12px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Cykl</div><div style="margin-top: 4px; font-weight: 500">co miesiąc</div></div>
+                </div></div>
+                <div class="alert info" style="padding: 8px 10px; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px; color: #3b82f6"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>Tylko podgląd. Edytujesz na stronie Subscriptions.</div>
+              </div>
+              <div style="padding: 12px 16px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px"><a href="CMain.dc.html" class="btn sm" style="width: 100%">Otwórz w Subscriptions<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+          <sc-for list="{{cells}}" as="c" hint-placeholder-count="42"><div class="cm-day" onClick="{{c.add}}" style="{{c.s}}"><span style="{{c.numS}}">{{c.num}}</span><span class="cm-plus" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span><sc-for list="{{c.chips}}" as="ch" hint-placeholder-count="1"><button type="button" onClick="{{ch.pick}}" aria-expanded="{{ch.open}}" style="{{ch.s}}">{{ch.t}}</button></sc-for><sc-if value="{{c.more}}" hint-placeholder-val="{{false}}"><span style="display: block; font-size: 11px; font-weight: 500; color: #686868; margin-top: 3px; padding-left: 4px">{{c.moreT}}</span></sc-if><sc-if value="{{c.hasAdd}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Nowy wpis" class="pop" style="{{c.addS}}">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
+                <span style="font-size: 14px; font-weight: 600">Nowy wpis</span>
+                <span class="hint num">{{c.addWhen}}</span>
+                <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </div>
+              <a href="CBlockDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(21,128,61,.08); color: #15803d; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Blok</span><span class="hint">czas na zadania, z kategorią</span></span></a>
+              <a href="CRunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
+              <a href="CGymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">trening siłowy</span></span></a>
+            </div></sc-if></div></sc-for>
+        </div>
+        </div>
+      </div></div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'CCalendarMonth.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  constructor(p) { super(p); this.state = { hidden: { Dom: true }, sel: { d: 17, k: 0 }, done: {}, off: 0 }; }
+  renderVals() {
+    const CATDEF = [['Studia', '#3b82f6'], ['Projekty', '#15803d'], ['Praca', '#8b5cf6'], ['Sport', '#f59e0b'], ['Subscriptions', ''], ['Dom', '#eab308']];
+    const hidden = this.state.hidden || { Dom: true };
+    const catList = (counts) => CATDEF.map((c) => {
+      const on = !hidden[c[0]];
+      return {
+        name: c[0], count: String(counts[c[0]] || 0), pressed: on ? 'true' : 'false',
+        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
+        s: on ? '' : 'color:#686868;border-style:dashed;box-shadow:none;background:transparent',
+        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
+      };
+    });
+    const COL = { Studia: '#3b82f6', Projekty: '#15803d', Praca: '#8b5cf6', Sport: '#f59e0b' };
+    const ev = { 2: [['Matematyka', 'Studia']], 3: [['rhytm — kod', 'Projekty']], 4: [['Bazy danych', 'Studia']], 5: [['Strona klienta', 'Praca']],
+      9: [['Matematyka', 'Studia'], ['NetScope', 'Projekty']], 10: [['rhytm — kod', 'Projekty'], ['Bieg', 'Sport']], 12: [['Siłownia', 'Sport']], 13: [['Strona klienta', 'Praca']],
+      16: [['Matematyka', 'Studia'], ['SO', 'Studia']], 17: [['rhytm — kod', 'Projekty'], ['Bieg 10 km', 'Sport'], ['Bazy danych', 'Studia'], ['SO', 'Studia']], 18: [['Strona klienta', 'Praca']],
+      19: [['Siłownia', 'Sport'], ['Bazy danych', 'Studia']], 20: [['NetScope', 'Projekty']], 21: [['↻ Netflix', 'Subscriptions'], ['Długi bieg', 'Sport']], 23: [['Matematyka', 'Studia']],
+      24: [['rhytm — kod', 'Projekty'], ['↻ YouTube', 'Subscriptions']], 26: [['Bazy danych', 'Studia']], 28: [['↻ iCloud+', 'Subscriptions']], 30: [['Matematyka', 'Studia']] };
+    const counts = {};
+    Object.values(ev).forEach((l) => l.forEach((e) => { counts[e[1]] = (counts[e[1]] || 0) + 1; }));
+    const sel = this.state.sel;
+    const TIME = { 'Matematyka': '08:00–09:30', 'rhytm — kod': '10:00–12:30', 'Bazy danych': '18:30–20:00', 'Strona klienta': '09:00–11:00', 'NetScope': '10:00–12:00', 'Bieg': '16:00–17:00', 'Bieg 10 km': '16:00–17:00', 'Siłownia': '15:00–16:30', 'SO': '13:00–15:00', 'Długi bieg': '10:00–11:30' };
+    const TASKS = { 'rhytm — kod': [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]], 'Matematyka': [['Zadania 4.1–4.6', true], ['Powtórka całek', false]], 'Bazy danych': [['Diagram ERD', true], ['Zapytania z aliasami AS', false]], 'Strona klienta': [['Galeria zdjęć', true], ['Formularz kontaktu', false]], 'NetScope': [['Lista funkcji SOFT', false]] };
+    const AMOUNT = { '↻ Netflix': '43,00 zł / mies.', '↻ YouTube': '29,99 zł / mies.', '↻ iCloud+': '4,99 zł / mies.' };
+    const DOW = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+    const off = this.state.off || 0;
+    const first = new Date(Date.UTC(2026, 10 + off, 1));
+    const tm = first.getUTCMonth(), ty = first.getUTCFullYear();
+    const lead = (first.getUTCDay() + 6) % 7;
+    const MONTHS = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(Date.UTC(ty, tm, 1 - lead + i));
+      const n = date.getUTCDate(), inm = date.getUTCMonth() === tm, wd = i % 7;
+      const items = (inm && off === 0 ? (ev[n] || []) : []).filter((e) => !hidden[e[1]]);
+      const today = inm && off === 0 && n === 17;
+      cells.push({
+        num: String(n),
+        numS: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;font-size:12px;font-variant-numeric:tabular-nums;' + (today ? 'background:#262626;color:#fafafa;font-weight:600' : inm ? 'color:#262626;font-weight:500' : 'color:#a3a3a3'),
+        add: (evt) => { const t = evt && evt.target; if (t && t.closest && t.closest('button,a,[role=dialog]')) return; const a = this.state.add; this.setState({ add: (a && a.i === i && a.off === off) ? null : { i, off }, sel: null }); },
+        hasAdd: !!(this.state.add && this.state.add.i === i && this.state.add.off === off),
+        addWhen: DOW[wd] + ' ' + String(n).padStart(2, '0') + '.' + String(date.getUTCMonth() + 1).padStart(2, '0'),
+        addS: 'position:absolute;z-index:6;width:270px;' + (wd <= 3 ? 'left:calc(100% + 6px);' : 'right:calc(100% + 6px);') + (i >= 21 ? 'bottom:0;' : 'top:0;') + 'padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default',
+        s: 'position:relative;cursor:pointer;min-height:112px;padding:6px 6px;box-sizing:border-box;border-top:' + (i < 7 ? '0' : '1px solid rgba(0,0,0,.06)') + ';border-left:' + (wd === 0 ? '0' : '1px solid rgba(0,0,0,.06)') + ';' + (!inm || wd >= 5 ? 'background:rgba(0,0,0,.018);' : ''),
+        chips: items.slice(0, 3).map((e, k) => {
+          const on = off === 0 && sel && sel.d === n && sel.k === k && inm;
+          return { t: e[0], open: on ? 'true' : 'false', pick: () => this.setState({ sel: (sel && sel.d === n && sel.k === k) ? null : { d: n, k }, add: null }),
+            s: 'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:500;border-radius:6px;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#262626;' + (COL[e[1]] ? 'background:' + COL[e[1]] + '14;border:1px solid ' + COL[e[1]] + '4d;box-shadow:' + (on ? '0 0 0 2px ' + COL[e[1]] + '66' : 'none') : 'background:#fff;border:1px dashed rgba(0,0,0,.24);color:#404040' + (on ? ';box-shadow:0 0 0 2px rgba(0,0,0,.2)' : '')) };
+        }),
+        more: items.length > 3, moreT: '+' + (items.length - 3) + ' więcej'
+      });
+    }
+    const shown = Object.values(ev).reduce((a, l) => a + l.filter((e) => !hidden[e[1]]).length, 0);
+    let pop = null;
+    if (sel && off === 0) {
+      const list = (ev[sel.d] || []).filter((e) => !hidden[e[1]]);
+      const e = list[sel.k];
+      if (e) {
+        const idx = 5 + sel.d;
+        const row = Math.floor(idx / 7), wd = idx % 7;
+        const right = wd <= 3;
+        const isRen = e[1] === 'Subscriptions';
+        const tasks = (TASKS[e[0]] || []).map((t, j) => {
+          const key = sel.d + e[0] + j;
+          const d = this.state.done[key] !== undefined ? this.state.done[key] : t[1];
+          return { title: t[0], done: d, toggle: () => this.setState({ done: Object.assign({}, this.state.done, { [key]: !d }) }), s: 'display:flex;align-items:center;gap:10px;min-height:30px;font-size:14px;cursor:pointer;' + (d ? 'color:#686868;text-decoration:line-through' : 'color:#262626') };
+        });
+        const doneN = tasks.filter((t) => t.done).length;
+        const up = row >= 3;
+        const anchor = row * 112 + 26 + sel.k * 24;
+        const vpos = up ? 'bottom:' + (6 * 112 - anchor - 26) + 'px;' : 'top:' + anchor + 'px;';
+        pop = {
+          title: e[0].replace('↻ ', ''), cat: isRen ? 'Odnowienie · Subscriptions' : e[1],
+          when: DOW[wd] + ' ' + String(sel.d).padStart(2, '0') + '.11.2026' + (isRen ? '' : ' · ' + (TIME[e[0]] || '')),
+          isBlock: !isRen, isRenewal: isRen, amount: AMOUNT[e[0]] || '', tasks, doneN, total: tasks.length, empty: tasks.length === 0,
+          dot: isRen ? 'display:none' : 'width:8px;height:8px;border-radius:50%;background:' + COL[e[1]],
+          bar: 'height:6px;border-radius:999px;background:#262626;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+          style: 'position:absolute;z-index:5;width:330px;' + vpos + 'left:' + (right ? 'calc(100% * ' + (wd + 1) + ' / 7 + 10px)' : 'calc(100% * ' + wd + ' / 7 - 340px)') + ';display:flex;flex-direction:column;gap:12px;font-size:14px;text-align:left'
+        };
+      }
+    }
+    return { cats: catList(counts), cells, summary: off === 0 ? shown + ' wpisów widocznych' : 'brak wpisów w makiecie',
+      monthLabel: MONTHS[tm] + ' ' + ty,
+      prev: () => this.setState({ off: off - 1, sel: null, add: null }), next: () => this.setState({ off: off + 1, sel: null, add: null }), today: () => this.setState({ off: 0 }), hasPop: !!pop, pop, close: () => this.setState({ sel: null }), closeAdd: () => this.setState({ add: null }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 "use client";
 
-// Siatka miesiąca (web) wg CalendarMonth.dc.html: 6 tygodni, w komórce numer dnia i do 3 wpisów
+// Siatka miesiąca (web) wg CCalendarMonth.dc.html: 6 tygodni, w komórce numer dnia i do 3 wpisów
 // (tytuł na tle koloru kategorii), reszta jako link „+N więcej” do widoku dnia.
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
@@ -17,6 +18,8 @@ import { weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const MAX_WPISOW = 3;
+// Kolor bloku bez kategorii — ten sam co w time-grid (tydzień, dzień)
+const KOLOR_BRAK = "#a3a3a3";
 
 export function MonthGrid({
   days,
@@ -72,13 +75,14 @@ export function MonthGrid({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[760px] rounded-lg border border-border">
-        <div className="grid grid-cols-7 rounded-t-lg border-b border-border bg-panel font-mono text-[11px] text-muted-foreground">
+      {/* Ramka jak .frame w coss.css: 1,5 px rgba(0,0,0,.14), promień 12 px, białe tło */}
+      <div className="min-w-[760px] rounded-lg border-[1.5px] border-black/[.14] bg-background">
+        <div className="grid grid-cols-7 border-b border-border text-xs font-medium text-muted-foreground">
           {days.slice(0, 7).map((dzien, i) => (
             <span
               key={dzien}
               data-testid="nazwa-dnia"
-              className={`px-2.5 py-2 ${i > 0 ? "border-l border-border" : ""}`}
+              className={`px-2.5 py-2 ${i > 0 ? "border-l border-border-soft" : ""}`}
             >
               {DNI_KROTKO[weekdayOf(dzien)]}
             </span>
@@ -91,10 +95,11 @@ export function MonthGrid({
             const weekend = weekdayOf(dzien) >= 6;
             const wpisy = poDniach.get(dzien) ?? [];
             const kiedy = `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`;
+            // Numer w kółku 22 px; dziś ciemne kółko, dni spoza miesiąca wyszarzone
             const numerKlasy = !wMiesiacu
               ? "text-faint-foreground"
               : dzien === today
-                ? "rounded bg-success px-[5px] font-semibold text-white"
+                ? "bg-primary font-semibold text-primary-foreground"
                 : "font-medium text-foreground";
 
             return (
@@ -111,11 +116,11 @@ export function MonthGrid({
                     return;
                   onDayClick(dzien, e.currentTarget);
                 }}
-                className={`group relative min-h-28 cursor-pointer px-2 py-1.5 ${i >= 7 ? "border-t border-border" : ""} ${i % 7 > 0 ? "border-l border-border" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
+                className={`group relative min-h-28 cursor-pointer p-1.5 ${i >= 7 ? "border-t border-border-soft" : ""} ${i % 7 > 0 ? "border-l border-border-soft" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${i === 35 ? "rounded-bl-lg" : ""} ${i === 41 ? "rounded-br-lg" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
               >
                 <span
                   data-testid={`numer-${dzien}`}
-                  className={`inline-block font-mono text-xs ${numerKlasy}`}
+                  className={`inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1 text-xs tabular-nums ${numerKlasy}`}
                 >
                   {d}
                 </span>
@@ -127,14 +132,14 @@ export function MonthGrid({
                       e.currentTarget.closest<HTMLElement>("[data-day]");
                     if (komorka) onDayClick(dzien, komorka);
                   }}
-                  className="absolute top-1.5 right-2 flex size-5 cursor-pointer items-center justify-center rounded border-0 bg-transparent text-sm text-muted-foreground opacity-0 outline-none group-hover:bg-active group-hover:opacity-100 focus-visible:bg-active focus-visible:opacity-100 focus-visible:shadow-focus"
+                  className="absolute top-1.5 right-1.5 flex size-[22px] cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-muted-foreground opacity-0 outline-none group-hover:bg-active group-hover:opacity-100 focus-visible:bg-active focus-visible:opacity-100 focus-visible:shadow-focus"
                 >
-                  <span aria-hidden="true">+</span>
+                  <Plus className="size-3.5" aria-hidden="true" />
                 </button>
                 {wpisy.slice(0, MAX_WPISOW).map((wpis) => {
                   if (wpis.typ === "sport") {
                     const i = wpis.i;
-                    // Plan: przerywana ramka; wykonany: tło w kolorze Sportu i lewy pasek
+                    // Plan: białe tło i przerywana ramka; wykonany jak chip bloku (tło 14, ramka 4d, bez paska)
                     return (
                       <Link
                         key={i.key}
@@ -146,39 +151,37 @@ export function MonthGrid({
                             ? { border: `1px dashed ${SPORT_COLOR}` }
                             : {
                                 backgroundColor: `${SPORT_COLOR}14`,
-                                borderLeft: `2px solid ${SPORT_COLOR}`,
+                                border: `1px solid ${SPORT_COLOR}4d`,
                               }
                         }
-                        className="mt-[3px] block w-full overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:shadow-focus"
+                        className={`mt-[3px] block w-full overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${i.planned ? "bg-background" : ""}`}
                       >
                         {i.title}
                       </Link>
                     );
                   }
                   const o = wpis.o;
+                  // Bez kategorii szary KOLOR_BRAK jak w tygodniu i dniu (time-grid)
                   const kolor =
-                    (o.categoryId && koloryKategorii.get(o.categoryId)) || null;
-                  // Wg makiety: z kategorią tło w kolorze (alfa 14) i lewy pasek 2 px, bez kategorii kreskowana ramka
-                  const wyglad = kolor
-                    ? "border-l-2"
-                    : "border border-dashed border-ring font-mono text-soft-foreground";
+                    (o.categoryId && koloryKategorii.get(o.categoryId)) ||
+                    KOLOR_BRAK;
+                  const zaznaczony = activeEntryKey === o.key;
                   return (
                     <button
                       key={o.key}
                       type="button"
                       data-occurrence-key={o.key}
-                      aria-expanded={activeEntryKey === o.key}
+                      aria-expanded={zaznaczony}
                       title={`${formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)} ${o.title}`}
                       onClick={(e) => onEntryClick(o.key, e.currentTarget)}
-                      style={
-                        kolor
-                          ? {
-                              backgroundColor: `${kolor}14`,
-                              borderLeftColor: kolor,
-                            }
-                          : undefined
-                      }
-                      className={`mt-[3px] block w-full cursor-pointer overflow-hidden rounded px-1.5 py-0.5 text-left text-[11px] text-ellipsis whitespace-nowrap outline-none focus-visible:shadow-focus ${wyglad} ${activeEntryKey === o.key ? "ring-2 ring-ring" : ""}`}
+                      // Wg CCalendarMonth: tło kolor+14 i ramka kolor+4d (bez paska); zaznaczony: pierścień 2 px kolor+66
+                      // w inline boxShadow, więc fokus to outline z odstępem, żeby pierścień go nie zasłonił
+                      style={{
+                        backgroundColor: `${kolor}14`,
+                        border: `1px solid ${kolor}4d`,
+                        boxShadow: zaznaczony ? `0 0 0 2px ${kolor}66` : undefined,
+                      }}
+                      className="mt-[3px] block w-full cursor-pointer overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                       {o.title}
                     </button>
@@ -188,7 +191,7 @@ export function MonthGrid({
                   <Link
                     href={`/kalendarz?widok=dzien&data=${dzien}`}
                     onClick={onMoreClick}
-                    className="mt-[3px] block font-mono text-[10px] text-muted-foreground hover:text-foreground"
+                    className="mt-[3px] block rounded-sm pl-1 text-[11px] font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:shadow-focus"
                   >
                     {`+${wpisy.length - MAX_WPISOW} więcej`}
                   </Link>

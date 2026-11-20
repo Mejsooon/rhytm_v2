@@ -530,6 +530,10 @@ describe("TemplatePageView", () => {
       }));
       render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
       await user.click(screen.getByRole("button", { name: "+ Pole" }));
+      // „Anuluj” bez ramki (ghost, .btng z makiet)
+      expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+      expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
+      expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:min-h-11");
       const okno = screen.getByRole("dialog", { name: "Nowe pole" });
       expect(within(okno).getByText("Podstawowe")).toBeInTheDocument();
       const typy = ["Tekst", "Liczba", "Checkbox", "URL", "Select", "Status", "Data", "Ocena"];
@@ -617,6 +621,8 @@ describe("TemplatePageView", () => {
       await user.click(screen.getByRole("menuitem", { name: /Zmień nazwę/ }));
       const okno = await screen.findByRole("dialog", { name: "Zmień nazwę" });
       const pole = within(okno).getByRole("textbox", { name: "Nazwa strony" });
+      // „Anuluj” bez ramki (ghost, .btng z makiet)
+      expect(within(okno).getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
       expect(pole).toHaveValue("Books");
       await user.clear(pole);
       await user.type(pole, "Książki");
@@ -643,6 +649,9 @@ describe("TemplatePageView", () => {
       expect(within(arkusz).getByRole("button", { name: "Ocena 4 na 5" })).toBeInTheDocument();
       expect(within(arkusz).getByRole("button", { name: "Usuń wiersz" })).toBeInTheDocument();
       expect(within(arkusz).getByRole("button", { name: "Anuluj" })).toBeInTheDocument();
+      // „Anuluj” bez ramki (ghost, .btng z makiet)
+      expect(within(arkusz).getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+      expect(within(arkusz).getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
       // Bez edycji w wierszu tabeli
       expect(document.querySelector("tr.bg-success-soft")).toBeNull();
 

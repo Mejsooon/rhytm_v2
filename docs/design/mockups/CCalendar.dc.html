@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kalendarz — tydzień (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="height: 100vh; min-height: 900px; flex-wrap: nowrap; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col" style="flex: 0 0 240px; height: 100%; position: static; overflow-y: auto"><dc-import name="CSidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0">
+    <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni tydzień" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny tydzień" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+        <h1 style="margin: 0 0 0 8px; font-size: 16px; font-weight: 600">Listopad 2026</h1>
+        <span class="bdg sec num">tydz. 47</span>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <div style="position: relative">
+          <button type="button" class="btn" aria-expanded="{{catsOpen}}" aria-haspopup="true" onClick="{{toggleCats}}">
+            <span aria-hidden="true" style="display: inline-flex"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d}}"></span></sc-for></span>
+            Kategorie <span class="bdg sec num">{{catsCount}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{catsOpenB}}" hint-placeholder-val="{{false}}">
+            <div role="menu" aria-label="Kategorie" class="pop" style="position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; width: 230px; padding: 4px; display: flex; flex-direction: column">
+              <div class="mi-lbl">Pokaż w kalendarzu</div>
+              <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" role="menuitemcheckbox" class="mi" aria-checked="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cbx" aria-checked="{{c.pressed}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{c.dot}}"></span><span style="{{c.nameS}}">{{c.name}}</span></button></sc-for>
+              <div class="mi-sep"></div>
+              <a href="CCategoryDialog.dc.html" class="mi" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+            </div>
+          </sc-if>
+        </div>
+        <nav class="seg" aria-label="Widok"><a href="CCalendarDay.dc.html">Dzień</a><a href="CCalendar.dc.html" aria-current="page">Tydzień</a><a href="CCalendarMonth.dc.html">Miesiąc</a></nav>
+        <a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+      </div>
+    </header>
+    <div id="rh-siatka-tydzien-c" style="flex: 1 1 auto; min-height: 0; overflow: auto">
+      <div style="min-width: 760px">
+        <div style="position: sticky; top: 0; z-index: 4; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,.08)">
+          <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr))">
+            <div></div>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7"><div style="padding: 8px 10px 6px; border-left: 1px solid rgba(0,0,0,.06); display: flex; align-items: center; gap: 6px"><span style="font-size: 12px; font-weight: 500; color: #686868">{{d.dow}}</span><span style="{{d.numS}}">{{d.num}}</span></div></sc-for>
+          </div>
+          <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); border-top: 1px solid rgba(0,0,0,.05)">
+            <div style="font-size: 11px; color: #686868; padding: 6px; text-align: right; line-height: 1.2">cały<br>dzień</div>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7"><div style="padding: 4px; border-left: 1px solid rgba(0,0,0,.06); min-height: 28px"><sc-if value="{{d.renewal}}" hint-placeholder-val="{{false}}"><a href="CCalendarRenewal.dc.html" class="bdg out lg" style="width: 100%; justify-content: flex-start; border-style: dashed; text-decoration: none; overflow: hidden"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg><span style="overflow: hidden; text-overflow: ellipsis">{{d.renewal}}</span></a></sc-if></div></sc-for>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); position: relative">
+          <div><sc-for list="{{hours}}" as="h" hint-placeholder-count="24"><div class="num" style="height: 48px; box-sizing: border-box; font-size: 11px; color: #686868; padding: 0 8px; text-align: right; transform: translateY(-7px)">{{h}}</div></sc-for></div>
+          <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+            <div style="{{d.colS}}" onClick="{{d.click}}" onMouseMove="{{d.move}}" onMouseLeave="{{d.leave}}">
+              <sc-if value="{{d.hasGhost}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{d.ghostS}}">{{d.ghostT}}</div></sc-if>
+              <sc-for list="{{d.blocks}}" as="b" hint-placeholder-count="1">
+                <button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" style="{{b.style}}">
+                  <span style="display: block; line-height: 1.3; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.title}}</span>
+                  <span class="num" style="display: block; font-size: 11px; color: #525252; margin-top: 1px">{{b.time}} {{b.count}}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{d.today}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{nowLine}}"><span style="position: absolute; left: -5px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444"></span></div></sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+            <div role="dialog" aria-label="Szczegóły bloku" class="pop" style="{{pop.style}}">
+              <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0">
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #686868"><span style="{{pop.dot}}"></span>{{pop.cat}}</span>
+                  <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{pop.title}}</span>
+                  <span class="hint num">{{pop.when}}</span>
+                </div>
+                <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{close}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px">
+                <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Zadania</span><span class="hint num">{{pop.doneN}} z {{pop.total}}</span></div>
+                <div class="prog"><div style="{{pop.bar}}"></div></div>
+                <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><span class="hint" style="padding: 6px 0">Brak zadań w tym bloku.</span></sc-if>
+                <sc-for list="{{pop.tasks}}" as="t" hint-placeholder-count="3"><label style="{{t.s}}"><input type="checkbox" checked="{{t.done}}" onChange="{{t.toggle}}">{{t.title}}</label></sc-for>
+                <label class="igroup" style="height: 30px; margin-top: 2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><input type="text" placeholder="Dodaj zadanie" aria-label="Nowe zadanie" style="font-size: 13px"></label>
+              </div>
+              <sc-if value="{{pop.hasNote}}" hint-placeholder-val="{{true}}"><div style="padding: 0 16px"><div class="lbl">Notatka</div><p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #404040">{{pop.note}}</p></div></sc-if>
+              <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(0,0,0,.08); padding: 12px 16px; background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px">
+                <a href="CBlockDialog.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</a>
+                <a href="{{pop.delHref}}" class="btndo sm">Usuń</a>
+                <sc-if value="{{pop.hasRec}}" hint-placeholder-val="{{false}}"><span class="bdg sec" style="margin-left: auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>{{pop.rec}}</span></sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{hasAdd}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="Nowy wpis" class="pop" style="{{add.style}}">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
+                <span style="font-size: 14px; font-weight: 600">Nowy wpis</span>
+                <span class="hint num">{{add.when}}</span>
+                <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </div>
+              <a href="CBlockDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(21,128,61,.08); color: #15803d; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Blok</span><span class="hint">czas na zadania, z kategorią</span></span></a>
+              <a href="CRunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
+              <a href="CGymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">trening siłowy</span></span></a>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: 'kod', hidden: { Dom: true }, done: {} }; }
+  componentDidMount() {
+    try { sessionStorage.setItem('rh-from', 'CCalendar.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {}
+    const el = document.getElementById('rh-siatka-tydzien-c');
+    if (el) el.scrollTop = 6 * 48;
+  }
+  renderVals() {
+    const CATDEF = [['Studia', '#3b82f6'], ['Projekty', '#15803d'], ['Praca', '#8b5cf6'], ['Sport', '#f59e0b'], ['Subscriptions', ''], ['Dom', '#eab308']];
+    const hidden = this.state.hidden;
+    const cats = CATDEF.map((c) => {
+      const on = !hidden[c[0]];
+      return {
+        name: c[0], pressed: on ? 'true' : 'false', on, color: c[1],
+        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
+        nameS: on ? '' : 'color:#686868',
+        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
+      };
+    });
+    const visibleCats = cats.filter((c) => c.on);
+    const openC = !!this.state.catsOpen;
+    const catsOut = {
+      cats, catsOpen: openC ? 'true' : 'false', catsOpenB: openC, toggleCats: () => this.setState({ catsOpen: !openC }),
+      catsCount: visibleCats.length + '/' + cats.length,
+      dots: visibleCats.filter((c) => c.color).slice(0, 4).map((c, i) => 'width:9px;height:9px;border-radius:50%;border:1.5px solid #ffffff;background:' + c.color + (i ? ';margin-left:-4px' : ''))
+    };    const mkTasks = (selB) => selB.tasks.map((t, k) => {
+      const key = selB.id + k;
+      const done = this.state.done[key] !== undefined ? this.state.done[key] : t[1];
+      return { title: t[0], done, toggle: () => this.setState({ done: Object.assign({}, this.state.done, { [key]: !done }) }), s: 'display:flex;align-items:center;gap:10px;min-height:30px;font-size:14px;cursor:pointer;' + (done ? 'color:#686868;text-decoration:line-through' : 'color:#262626') };
+    });
+    const mkPop = (selB, posStyle) => {
+      const tasks = mkTasks(selB);
+      const doneN = tasks.filter((t) => t.done).length;
+      return {
+        title: selB.title, cat: selB.cat, when: selB.day + ' · ' + selB.time, tasks, doneN, total: tasks.length, empty: tasks.length === 0,
+        hasNote: selB.id === 'kod', note: 'Najpierw migracje, potem UI. Okno „+ Pole” wg makiety.', rec: selB.rec ? 'Co tydzień' : '', hasRec: !!selB.rec,
+        delHref: selB.rec ? 'CScopeDialog.dc.html' : 'CDeleteBlockDialog.dc.html',
+        dot: 'width:8px;height:8px;border-radius:50%;background:' + selB.color,
+        bar: 'height:6px;border-radius:999px;background:#262626;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+        style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
+      };
+    };
+    const H = 48;
+    const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
+    const all = [];
+    const block = (id, day, start, end, title, cat, color, opts) => {
+      const o = opts || {};
+      const sel = this.state.sel === id;
+      const b = {
+        id, cat, title, color, day, start, tasks: o.tasks || [], rec: o.rec || '',
+        time: fmt(start) + '–' + fmt(end), count: o.count ? '· ' + o.count : '',
+        pressed: sel ? 'true' : 'false',
+        pick: () => this.setState({ sel: sel ? null : id, add: null }),
+        style: 'position:absolute;left:3px;right:3px;top:' + (start * H + 1) + 'px;height:' + ((end - start) * H - 3) + 'px;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;text-align:left;font:inherit;cursor:pointer;border-radius:8px;padding:4px 8px;overflow:hidden;color:#262626;background:' + (o.planned ? '#ffffff' : color + '14') + ';border:1px ' + (o.planned ? 'dashed ' + color : 'solid ' + color + '4d') + ';box-shadow:' + (sel ? '0 0 0 2px #fff,0 0 0 4px ' + color + '66' : 'none')
+      };
+      all.push(b);
+      return b;
+    };
+    const days = [
+      { dow: 'pon', num: '16', renewal: '', blocks: [block('m1', 'pon 16.11', 8, 10, 'Matematyka — ćwiczenia', 'Studia', '#3b82f6', { count: '0/3', tasks: [['Zadania 4.1–4.6', false], ['Powtórka całek', false], ['Lista 5', false]] }), block('so', 'pon 16.11', 13, 15, 'Systemy operacyjne', 'Studia', '#3b82f6')] },
+      { dow: 'wt', num: '17', today: true, renewal: '', blocks: [block('kod', 'wt 17.11', 10, 12.5, 'rhytm — kod', 'Projekty', '#15803d', { count: '2/4', rec: true, tasks: [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]] }), block('bieg', 'wt 17.11', 16, 17, 'Bieg 10 km', 'Sport', '#f59e0b')] },
+      { dow: 'śr', num: '18', renewal: '', blocks: [block('kl1', 'śr 18.11', 9, 11, 'Strona klienta', 'Praca', '#8b5cf6', { count: '1/2', tasks: [['Galeria zdjęć', true], ['Formularz kontaktu', false]] }), block('bd1', 'śr 18.11', 18, 19.5, 'Bazy danych', 'Studia', '#3b82f6')] },
+      { dow: 'czw', num: '19', renewal: '', blocks: [block('bd2', 'czw 19.11', 8, 9.5, 'Bazy danych', 'Studia', '#3b82f6'), block('sil', 'czw 19.11', 15, 16.5, 'Siłownia — push', 'Sport', '#f59e0b')] },
+      { dow: 'pt', num: '20', renewal: '', blocks: [block('ns', 'pt 20.11', 10, 12, 'NetScope — research', 'Projekty', '#15803d', { count: '0/2', tasks: [['Porównać GUI do nmapa', false], ['Lista funkcji SOFT', false]] }), block('kl2', 'pt 20.11', 14, 15, 'Strona klienta', 'Praca', '#8b5cf6')] },
+      { dow: 'sob', num: '21', renewal: 'Netflix · 43,00 zł', blocks: [block('lb', 'sob 21.11', 10, 11.5, 'Długi bieg (plan)', 'Sport', '#f59e0b', { planned: true })] },
+      { dow: 'nd', num: '22', renewal: '', blocks: [block('plan', 'nd 22.11', 18, 19, 'Plan tygodnia', 'Projekty', '#15803d')] }
+    ];
+    days.forEach((d) => {
+      d.blocks = d.blocks.filter((b) => !hidden[b.cat]);
+      if (hidden.Subscriptions) d.renewal = '';
+      d.today = !!d.today;
+      d.numS = d.today ? 'display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:12px;background:#262626;color:#fafafa;font-weight:600;font-size:13px' : 'font-weight:600;font-size:13px';
+      d.colS = 'position:relative;height:' + (24 * H) + 'px;border-left:1px solid rgba(0,0,0,.06);background-image:repeating-linear-gradient(to bottom,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px,transparent ' + H + 'px)' + (d.today ? ';background-color:rgba(0,0,0,.015)' : '');
+    });
+    const selB = all.find((b) => b.id === this.state.sel && !hidden[b.cat]);
+    const ad = this.state.add;
+    const gh = this.state.ghost;
+    const skip = (e) => { const t = e && e.target; return !!(t && t.closest && t.closest('button,a,[role=dialog],label,input')); };
+    const slot = (e) => { const r = e.currentTarget.getBoundingClientRect(); return Math.max(0, Math.min(23, Math.floor((e.clientY - r.top) / (H / 2)) / 2)); };
+    days.forEach((d, i) => {
+      d.click = (e) => { if (skip(e)) return; const s = slot(e); this.setState({ add: (ad && ad.col === i && ad.start === s) ? null : { col: i, start: s }, sel: null }); };
+      d.move = (e) => { if (skip(e)) { if (this.state.ghost) this.setState({ ghost: null }); return; } const s = slot(e); const g = this.state.ghost; if (!g || g.col !== i || g.start !== s) this.setState({ ghost: { col: i, start: s } }); };
+      d.leave = () => { if (this.state.ghost) this.setState({ ghost: null }); };
+      const g = (ad && ad.col === i) ? ad : (gh && gh.col === i ? gh : null);
+      d.hasGhost = !!g;
+      d.ghostT = g ? '+ ' + fmt(g.start) + '–' + fmt(g.start + 1) : '';
+      d.ghostS = g ? 'position:absolute;left:3px;right:3px;top:' + (g.start * H + 1) + 'px;height:' + (H - 3) + 'px;box-sizing:border-box;border:1px dashed rgba(0,0,0,.24);border-radius:8px;background:rgba(0,0,0,.02);color:#686868;font-size:12px;font-weight:500;padding:4px 8px;pointer-events:none' : '';
+    });
+    const colOf = (id) => days.findIndex((d) => d.blocks.some((b) => b.id === id));
+    let pop = null;
+    if (selB) {
+      const col = colOf(selB.id);
+      const right = col <= 3;
+      const left = right ? 'calc(56px + (100% - 56px) * ' + (col + 1) + ' / 7 + 10px)' : 'calc(56px + (100% - 56px) * ' + col + ' / 7 - 350px)';
+      pop = mkPop(selB, 'left:' + left + ';top:' + (selB.start * H) + 'px;');
+    }
+    let add = null;
+    if (ad) {
+      const right = ad.col <= 3;
+      const left = right ? 'calc(56px + (100% - 56px) * ' + (ad.col + 1) + ' / 7 + 10px)' : 'calc(56px + (100% - 56px) * ' + ad.col + ' / 7 - 280px)';
+      add = { when: days[ad.col].dow + ' ' + days[ad.col].num + '.11 · ' + fmt(ad.start), style: 'position:absolute;z-index:6;left:' + left + ';width:270px;top:' + (ad.start * H) + 'px;padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default' };
+    }
+    const now = 11 + 20 / 60;
+    return Object.assign({}, catsOut, {
+      days,
+      hours: Array.from({ length: 24 }, (_, i) => (i === 0 ? '' : String(i).padStart(2, '0') + ':00')),
+      hasSel: !!pop, pop, close: () => this.setState({ sel: null }),
+      hasAdd: !!add, add, closeAdd: () => this.setState({ add: null }),
+      nowLine: 'position:absolute;left:0;right:0;top:' + Math.round(now * H) + 'px;border-top:2px solid #ef4444;z-index:3;pointer-events:none'
+    });
+  }
+}
+</script>
+</body>
+</html>

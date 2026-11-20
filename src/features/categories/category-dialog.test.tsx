@@ -65,6 +65,22 @@ describe("CategoryDialog", () => {
     );
   });
 
+  it("zajęty, niewybrany kolor blaknie tylko tłem, bez opacity (obrys fokusu pełny)", () => {
+    render(
+      <CategoryDialog
+        usedColors={["#0e7490"]}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    const zajety = screen.getByRole("button", { name: "Morski" });
+    expect(zajety.style.opacity).toBe("");
+    expect(zajety.className).toContain("color-mix");
+    expect(zajety).toHaveClass("focus-visible:outline-ring");
+    const wolny = screen.getByRole("button", { name: "Niebieski" });
+    expect(wolny.className).not.toContain("color-mix");
+  });
+
   it("błąd akcji pokazuje komunikat i nie zamyka okna", async () => {
     createCategory.mockResolvedValue({ ok: false, message: "Nazwa zajęta." });
     const onSaved = vi.fn();
@@ -80,6 +96,9 @@ describe("CategoryDialog", () => {
   it("Anuluj i ✕ wołają onCancel", async () => {
     const onCancel = vi.fn();
     render(<CategoryDialog onSaved={vi.fn()} onCancel={onCancel} />);
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);
@@ -110,5 +129,30 @@ describe("CategoryDialog", () => {
       name: "Nauka",
       color: "#7c3aed",
     });
+  });
+
+  it("wygląd jak w CCategoryDialog: kolory 36 px z promieniem 10 px, podgląd bloku według reguły bloku", () => {
+    render(
+      <CategoryDialog
+        category={{ id: "k1", name: "Języki", color: "#0e7490" }}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    const wybrany = screen.getByRole("button", { name: "Morski" });
+    expect(wybrany).toHaveClass("size-9", "rounded-md", "border-2", "border-white");
+    // Pierścień wybranego koloru w kolorze danych, fokus jako obrys poza nim
+    expect(wybrany).toHaveClass(
+      "shadow-[0_0_0_2px_var(--kolor)]",
+      "focus-visible:outline-ring",
+    );
+    const blok = screen.getByText("Angielski").parentElement as HTMLElement;
+    expect(blok.style.background).toBe("rgba(14, 116, 144, 0.07)");
+    expect(blok.style.border).toBe("1px solid rgba(14, 116, 144, 0.3)");
+    expect(blok.style.borderLeft).not.toContain("3px");
+    expect(blok).toHaveClass("rounded-md", "px-3", "py-[7px]", "text-sm");
+    // Podgląd w ramce .frame, chip w stanie wybranym z licznikiem jako odznaka
+    expect(blok.parentElement).toHaveClass("rounded-lg", "border-[1.5px]", "p-3");
+    expect(screen.getByText("0")).toHaveClass("bg-muted", "rounded-sm", "h-4");
   });
 });

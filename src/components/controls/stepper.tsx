@@ -3,8 +3,9 @@ import { Button } from "./button";
 // Licznik „−  wartość  +”.
 // Web: przyciski jak .btn.sm.ic (28 px) i osobne pole wartości.
 // Telefon: jedna ramka z przyciskami 44 px jak .m-step z CMToday.dc.html.
+// Fokus na telefonie w środku przycisku (shadow-focus-inset) — ramka z overflow-hidden ucinała pierścień
 const PRZYCISK =
-  "max-[799px]:size-11 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:text-lg max-[799px]:shadow-none";
+  "max-[799px]:size-11 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:text-lg max-[799px]:shadow-none max-[799px]:focus-visible:shadow-focus-inset";
 
 export function Stepper({
   value,

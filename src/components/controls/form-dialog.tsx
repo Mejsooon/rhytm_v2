@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { XIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
+
+import { Button } from "./button";
 
 // Okno wg VaultReset.dc.html (od 800 px, na środku) i arkusz wg MBlockSheet.dc.html
 // (poniżej 800 px, od dołu z uchwytem). Przełączanie wyłącznie klasami CSS.
@@ -51,11 +54,17 @@ export function FormDialog({
                 </p>
               )}
             </div>
-            <Dialog.Close
-              aria-label="Zamknij"
-              className="inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-focus max-[799px]:hidden"
-            >
-              ✕
+            {/* ✕ jak .btng.ic.sm z makiet: 28 px bez ramki; na telefonie (gdyby był widoczny) cel 44 px */}
+            <Dialog.Close asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon
+                aria-label="Zamknij"
+                className="max-[799px]:hidden max-[799px]:size-11"
+              >
+                <XIcon aria-hidden="true" className="size-4" />
+              </Button>
             </Dialog.Close>
             {headerAction && (
               <div className="flex-none max-[799px]:absolute max-[799px]:top-1 max-[799px]:right-2">

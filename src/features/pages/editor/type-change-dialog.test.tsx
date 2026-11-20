@@ -20,6 +20,9 @@ describe("TypeChangeDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
     render(<TypeChangeDialog lost={2} onConfirm={onConfirm} onCancel={onCancel} />);
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await user.click(screen.getByRole("button", { name: "Zmień typ" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole("button", { name: "Anuluj" }));

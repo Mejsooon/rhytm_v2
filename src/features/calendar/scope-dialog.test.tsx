@@ -58,6 +58,9 @@ describe("ScopeDialog", () => {
 
   it("Anuluj woła onCancel i nie wybiera zakresu", async () => {
     const { onPick, onCancel } = wyrenderuj();
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(onCancel).toHaveBeenCalled();
     expect(onPick).not.toHaveBeenCalled();
@@ -116,5 +119,32 @@ describe("ScopeDialog", () => {
     expect(
       screen.getByRole("button", { name: "Zapisz zmianę" }),
     ).toBeDisabled();
+  });
+
+  it("wygląd jak w CScopeDialog: karty opcji 12 px, wybrana z obwódką, zdanie o zadaniach w ramce info", () => {
+    wyrenderuj({ disableAll: "B" });
+    const wybrana = screen.getByLabelText(/Tylko to wystąpienie/).closest("label");
+    expect(wybrana).toHaveClass(
+      "rounded-lg",
+      "border-black/[.24]",
+      "bg-black/[.025]",
+      "shadow-[0_0_0_1px_rgba(0,0,0,.12)]",
+    );
+    const zwykla = screen.getByLabelText(/To i następne/).closest("label");
+    expect(zwykla).toHaveClass("border-input", "bg-white", "shadow-xs");
+    const wylaczona = screen.getByLabelText(/Wszystkie wystąpienia/).closest("label");
+    expect(wylaczona).toHaveClass("opacity-[.64]", "cursor-not-allowed");
+    // Radio jak w coss.css: 16 px, zaznaczone = gruba ciemna obwódka
+    expect(screen.getByLabelText(/Tylko to wystąpienie/)).toHaveClass(
+      "appearance-none",
+      "size-4",
+      "checked:border-[5px]",
+      "checked:border-primary",
+    );
+    const info = screen.getByText(
+      "Zadania z odhaczonych wystąpień nie przepadają.",
+    );
+    expect(info).toHaveClass("border-info-border", "rounded-lg", "text-[13px]");
+    expect(info).not.toHaveClass("font-mono");
   });
 });

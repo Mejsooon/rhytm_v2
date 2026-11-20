@@ -174,7 +174,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
     </Button>
   );
   const przyciskAnuluj = (
-    <Button asChild size="sm" className="max-[799px]:h-11">
+    <Button asChild variant="ghost" size="sm" className="max-[799px]:h-11">
       <Link href="/sport/szablony">Anuluj</Link>
     </Button>
   );

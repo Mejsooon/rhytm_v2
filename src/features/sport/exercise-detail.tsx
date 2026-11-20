@@ -457,6 +457,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         footer={
           <>
             <Button
+              variant="ghost"
               size="sm"
               className="max-[799px]:h-11"
               onClick={() => setDialogOtwarty(false)}

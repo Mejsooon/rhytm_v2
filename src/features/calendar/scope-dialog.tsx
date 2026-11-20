@@ -3,6 +3,7 @@
 // Okno zakresu zmiany wg ScopeDialog.dc.html: tylko to wystąpienie / to i następne / wszystkie.
 // Używane przy edycji i usuwaniu wystąpienia bloku cyklicznego.
 import { useState } from "react";
+import { InfoIcon } from "lucide-react";
 
 import { Button, FormDialog } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
@@ -98,7 +99,7 @@ export function ScopeDialog({
               {error}
             </p>
           )}
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button
             variant={intent === "delete" ? "destructive" : "primary"}
             disabled={pending || wszystkieWylaczone}
@@ -115,23 +116,25 @@ export function ScopeDialog({
         className="flex flex-col gap-2"
       >
         {opcje.map((o) => (
+          // Karta opcji jak w CScopeDialog.dc.html: 12 px promienia, wybrana z ciemniejszą obwódką
           <label
             key={o.value}
             className={cn(
-              "flex items-start gap-3 rounded-lg border px-3.5 py-3 max-[799px]:min-h-11",
-              o.wylaczona ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              "flex items-start gap-3 rounded-lg border bg-clip-padding px-3.5 py-3 max-[799px]:min-h-11",
+              o.wylaczona ? "cursor-not-allowed opacity-[.64]" : "cursor-pointer",
               wybrany === o.value
-                ? "border-primary bg-panel"
-                : "border-input bg-white",
+                ? "border-black/[.24] bg-black/[.025] shadow-[0_0_0_1px_rgba(0,0,0,.12)]"
+                : "border-input bg-white shadow-xs",
             )}
           >
+            {/* Radio z coss.css: 16 px, zaznaczone = obwódka 5 px w kolorze primary */}
             <input
               type="radio"
               name="zakres"
               checked={wybrany === o.value}
               disabled={o.wylaczona}
               onChange={() => setWybrany(o.value)}
-              className="mt-[3px] accent-[#171717]"
+              className="m-0 mt-0.5 size-4 flex-none cursor-pointer appearance-none rounded-full border border-input bg-white shadow-xs outline-none checked:border-[5px] checked:border-primary focus-visible:shadow-focus disabled:cursor-not-allowed"
             />
             <span>
               <span className="block font-medium">{o.tytul}</span>
@@ -148,7 +151,12 @@ export function ScopeDialog({
           {p}
         </p>
       ))}
-      <p className="m-0 font-mono text-xs text-muted-foreground">
+      {/* .alert.info z makiety: niebieska ramka i ikona (web); na telefonie zwykła podpowiedź jak dotąd */}
+      <p className="m-0 flex items-start gap-2.5 rounded-lg border border-info-border bg-info/[.04] px-3.5 py-3 text-[13px] max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0 max-[799px]:text-xs max-[799px]:text-muted-foreground">
+        <InfoIcon
+          aria-hidden="true"
+          className="mt-px size-4 flex-none text-info max-[799px]:hidden"
+        />
         Zadania z odhaczonych wystąpień nie przepadają.
       </p>
     </FormDialog>

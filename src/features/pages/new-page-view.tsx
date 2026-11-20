@@ -170,7 +170,7 @@ export function NewPageView() {
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
-          <Button onClick={() => router.back()}>Anuluj</Button>
+          <Button variant="ghost" onClick={() => router.back()}>Anuluj</Button>
           <Button variant="primary" onClick={utworz} disabled={trwa}>
             Utwórz stronę
           </Button>

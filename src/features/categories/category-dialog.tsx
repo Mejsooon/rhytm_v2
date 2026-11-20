@@ -3,9 +3,11 @@
 // Okno nowej kategorii (albo edycji nazwy i koloru, gdy podano `category`) wg CategoryDialog.dc.html: nazwa, 8 kolorów (zajęte wyblakłe, ale do wyboru),
 // podgląd chipu i bloku, „Dodaj kategorię”. Zapisuje przez createCategory i oddaje nową kategorię
 // wywołującemu — ten sam komponent obsługuje „+ Kategoria” i „+ Nowa” z okna bloku.
+import type { CSSProperties } from "react";
 import { useState } from "react";
 
 import { Button, FormDialog, TextField } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { createCategory, updateCategory } from "./actions";
 import { CATEGORY_COLORS } from "./colors";
 
@@ -67,7 +69,7 @@ export function CategoryDialog({
               {error}
             </p>
           )}
-          <Button onClick={onCancel}>Anuluj</Button>
+          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
           <Button
             variant="primary"
             disabled={nazwa === "" || pending}
@@ -96,6 +98,7 @@ export function CategoryDialog({
         <div className="flex flex-wrap gap-2">
           {CATEGORY_COLORS.map((c) => {
             const wybrany = c.hex === color;
+            const zajety = usedColors.includes(c.hex);
             return (
               <button
                 key={c.hex}
@@ -103,14 +106,23 @@ export function CategoryDialog({
                 aria-label={c.name}
                 aria-pressed={wybrany}
                 onClick={() => setColor(c.hex)}
-                // 36 px z makiety; na telefonie 44 px pola dotyku
-                className="size-9 cursor-pointer rounded-lg outline-none focus-visible:shadow-focus max-[799px]:size-11"
-                style={{
-                  background: c.hex,
-                  opacity: usedColors.includes(c.hex) && !wybrany ? 0.35 : 1,
-                  border: `2px solid ${wybrany ? "#171717" : "#ffffff"}`,
-                  boxShadow: `0 0 0 1px ${wybrany ? "#171717" : "#e0e0e0"}`,
-                }}
+                // 36 px z makiety (promień 10 px, biała ramka 2 px); na telefonie 44 px pola dotyku.
+                // Wybrany: pierścień 2 px w swoim kolorze; fokus jako obrys poza pierścieniem, żeby go nie zasłonić
+                className={cn(
+                  "size-9 cursor-pointer rounded-md border-2 border-white p-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring focus-visible:outline-solid max-[799px]:size-11",
+                  wybrany
+                    ? "shadow-[0_0_0_2px_var(--kolor)]"
+                    : "shadow-[inset_0_0_0_1px_rgba(0,0,0,.08),0_1px_2px_rgba(0,0,0,.05)]",
+                  // Zajęty, niewybrany: blaknie tylko kolor pola (nie opacity), żeby obrys fokusu był w pełni widoczny
+                  zajety && !wybrany
+                    ? "bg-[color-mix(in_srgb,var(--kolor)_35%,white)]"
+                    : "bg-(--kolor)",
+                )}
+                style={
+                  {
+                    "--kolor": c.hex,
+                  } as CSSProperties
+                }
               />
             );
           })}
@@ -119,22 +131,29 @@ export function CategoryDialog({
 
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Podgląd
-        <div className="flex items-center gap-3 font-normal">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-input bg-white px-2.5 py-1 text-xs text-soft-foreground">
+        {/* .frame z makiety (tylko web — na telefonie układ bez ramki jak dotąd); chip w stanie
+            wybranym z licznikiem, blok według reguły bloku */}
+        <div className="flex items-center gap-3 rounded-lg border-[1.5px] border-black/[.14] bg-white p-3 font-normal max-[799px]:border-0 max-[799px]:p-0">
+          <span className="inline-flex h-7 flex-none items-center gap-1.5 rounded-[8px] border border-black/[.18] bg-muted px-[9px] text-sm font-medium whitespace-nowrap text-foreground">
             <span
               aria-hidden="true"
               className="size-2 rounded-full"
               style={{ background: color }}
             />
             {nazwa || "Kategoria"}{" "}
-            <span className="font-mono text-muted-foreground">0</span>
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-muted px-[5px] text-[11px] tabular-nums">
+              0
+            </span>
           </span>
           <div
-            className="flex-1 rounded-md border border-input px-2.5 py-1.5 text-[13px]"
-            style={{ borderLeft: `3px solid ${color}` }}
+            className="min-w-0 flex-1 rounded-md px-3 py-[7px] text-sm"
+            style={{
+              background: `${color}12`,
+              border: `1px solid ${color}4d`,
+            }}
           >
             <div className="font-medium">Angielski</div>
-            <div className="font-mono text-[11px] text-soft-foreground">
+            <div className="text-xs text-soft-foreground tabular-nums">
               18:00–19:00
             </div>
           </div>

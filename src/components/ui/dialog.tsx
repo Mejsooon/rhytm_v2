@@ -5,6 +5,7 @@ import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/controls/button";
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -62,12 +63,17 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:shadow-focus focus-visible:outline-hidden"
-          >
-            <XIcon className="size-4" />
-            <span className="sr-only">Zamknij</span>
+          // ✕ jak .btng.ic.sm z makiet: 28 px bez ramki; na telefonie cel 44 px
+          <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon
+              className="absolute top-4 right-4 max-[799px]:size-11"
+            >
+              <XIcon aria-hidden="true" className="size-4" />
+              <span className="sr-only">Zamknij</span>
+            </Button>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

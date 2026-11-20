@@ -450,6 +450,8 @@ describe("GymLog — zakończenie i szablon", () => {
     );
     const okno = screen.getByRole("dialog", { name: "Zapisz jako szablon" });
     const nazwa = within(okno).getByLabelText("Nazwa szablonu");
+    // „Anuluj” bez ramki (ghost, .btng z makiet)
+    expect(within(okno).getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
     expect(nazwa).toHaveValue("Push");
     await userEvent.clear(nazwa);
     await userEvent.type(nazwa, "Push B");
