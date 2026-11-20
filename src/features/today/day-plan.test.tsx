@@ -324,6 +324,42 @@ describe("DayPlan", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("przeciągnięcie po pustej osi pokazuje zakres i otwiera „Nowy blok” na ten czas (jak w kalendarzu)", async () => {
+    render(<Plan d={dane()} />);
+    // Przewijana oś ma w jsdom zerowy prostokąt (puszczenie byłoby „poza siatką”)
+    const os = screen.getByTestId("os-dnia");
+    os.getBoundingClientRect = () => new DOMRect(0, 0, 800, 2000);
+    const siatka = screen.getByTestId("siatka-dnia");
+    // 48 px na godzinę: 432 px = 9:00, 624 px = 13:00
+    fireEvent.pointerDown(siatka, {
+      clientX: 300,
+      clientY: 432,
+      button: 0,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(siatka, {
+      buttons: 1,
+      clientX: 300,
+      clientY: 624,
+      pointerId: 1,
+    });
+    expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent(
+      "09:00–13:00",
+    );
+    fireEvent.pointerUp(siatka, { clientX: 300, clientY: 624, pointerId: 1 });
+    // Klik, który przeglądarka wysyła zaraz po przeciągnięciu, nie otwiera „Nowego wpisu”
+    fireEvent.click(siatka, { clientX: 300, clientY: 624 });
+    expect(
+      screen.queryByTestId("podglad-przeciagania"),
+    ).not.toBeInTheDocument();
+    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(within(okno).getByText(/09:00/)).toBeInTheDocument();
+    expect(within(okno).getByText(/13:00/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Nowy wpis" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("klik w pusty slot (co 30 min) otwiera „Nowy wpis”; „Blok” otwiera okno na tę godzinę, zapis odświeża plan", async () => {
     createBlock.mockResolvedValue({ ok: true, id: "b9" });
     render(<Plan d={dane()} />);

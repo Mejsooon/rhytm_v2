@@ -15,6 +15,7 @@ import { BlockPopover } from "@/features/calendar/block-popover";
 import { layoutDay } from "@/features/calendar/day-layout";
 import { DeleteBlockDialog } from "@/features/calendar/delete-block-dialog";
 import { NewEntryPopover } from "@/features/calendar/new-entry-popover";
+import { useGridDrag } from "@/features/calendar/use-grid-drag";
 import type { Occurrence } from "@/features/calendar/occurrences";
 import { sportItemHref } from "@/features/sport/model";
 import type { ActionResult } from "@/lib/action-result";
@@ -83,6 +84,29 @@ export function DayPlan({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Przeciąganie po pustej osi zaznacza zakres i otwiera „Nowy blok” na ten czas (jak w kalendarzu)
+  const { podglad, zacznij, tlumKlik } = useGridDrag({
+    korzen: os,
+    wysokoscGodziny: GODZINA,
+    onRange: (zakres) => {
+      setWybrany(null);
+      setOkno({
+        typ: "blok",
+        mode: "create",
+        initial: {
+          title: "",
+          categoryId: null,
+          date: zakres.date,
+          startMin: zakres.startMin,
+          durationMin: zakres.durationMin,
+          recurrence: null,
+          note: "",
+          remind: true,
+        },
+      });
+    },
+  });
+
   const wybraneWystapienie =
     plan.find((p) => p.key === wybrany)?.occurrence ?? null;
 
@@ -142,7 +166,11 @@ export function DayPlan({
         : `${n} bloków`;
 
   // Aktywny slot (otwarty „Nowy wpis”) ma pierwszeństwo przed duchem myszy
-  const duch = okno?.typ === "wpis" ? okno.startMin : duchMyszy;
+  const duch = podglad
+    ? null
+    : okno?.typ === "wpis"
+      ? okno.startMin
+      : duchMyszy;
   const duchAktywny = okno?.typ === "wpis";
 
   return (
@@ -158,15 +186,26 @@ export function DayPlan({
       <div
         ref={os}
         data-testid="os-dnia"
-        className="overflow-y-auto rounded-lg border border-[#eaeaea]"
-        style={{ height: WYSOKOSC_OKNA }}
+        className={`overflow-y-auto rounded-lg border border-[#eaeaea]${podglad ? " select-none" : ""}`}
+        style={{
+          height: WYSOKOSC_OKNA,
+          cursor: podglad ? "crosshair" : undefined,
+        }}
       >
         <div
           data-testid="siatka-dnia"
+          // Jedyna „kolumna” osi: z niej useGridDrag czyta dzień i górną krawędź
+          data-kolumna={today}
           className="relative cursor-pointer"
           style={{
             height: 24 * GODZINA,
             backgroundImage: `repeating-linear-gradient(to bottom, #ffffff 0, #ffffff ${GODZINA - 1}px, #f0f0f0 ${GODZINA - 1}px, #f0f0f0 ${GODZINA}px)`,
+          }}
+          // Klik zaraz po przeciągnięciu nie otwiera „Nowego wpisu”
+          onClickCapture={tlumKlik}
+          onPointerDown={(e) => {
+            if (!wPusteMiejsce(e)) return;
+            zacznij(e, "create");
           }}
           onClick={(e) => {
             if (!wPusteMiejsce(e)) return;
@@ -203,6 +242,20 @@ export function DayPlan({
             aria-hidden="true"
             className="absolute inset-y-0 left-16 border-l border-[#eaeaea]"
           />
+
+          {podglad && (
+            <div
+              data-testid="podglad-przeciagania"
+              aria-hidden="true"
+              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-[#737373] bg-[#fafafa]/90 px-2.5 py-1.5 font-mono text-xs text-[#404040]"
+              style={{
+                top: (podglad.startMin / 60) * GODZINA + 1,
+                height: (podglad.durationMin / 60) * GODZINA - 2,
+              }}
+            >
+              {`${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
+            </div>
+          )}
 
           {duch !== null && (
             <div
