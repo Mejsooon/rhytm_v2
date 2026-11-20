@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
+import { Button } from "./button";
 import { ActionPopover } from "./action-popover";
 
 const GODZINY = Array.from({ length: 24 }, (_, i) =>
@@ -17,7 +18,7 @@ const MINUTY = Array.from({ length: 12 }, (_, i) =>
 );
 
 const KOMORKA =
-  "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted aria-pressed:bg-primary aria-pressed:text-white";
+  "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
 // Wybór godziny wg .tmb / .tpop / .tgrid / .tcell z SettingsNotifications.dc.html.
 // Klik godziny zostawia dymek otwarty, klik minut go zamyka.
@@ -64,8 +65,7 @@ export function TimePicker({
           aria-haspopup="dialog"
           disabled={disabled}
           className={cn(
-            "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white px-2.5 font-mono text-[13px] text-foreground outline-none hover:border-border-strong disabled:cursor-default disabled:opacity-45 disabled:hover:border-input",
-            open && "border-primary hover:border-primary",
+            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[11px] font-mono text-sm text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)] disabled:cursor-not-allowed disabled:opacity-[.64] disabled:shadow-none max-[799px]:h-11",
           )}
         >
           {wTrybie12
@@ -167,13 +167,9 @@ export function TimePicker({
           ))}
         </div>
         <div className="flex justify-end border-t border-border pt-2">
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="cursor-pointer rounded-md border border-input bg-white px-2.5 py-[5px] text-[13px] hover:bg-panel"
-          >
+          <Button size="sm" onClick={() => setOpen(false)}>
             Gotowe
-          </button>
+          </Button>
         </div>
       </div>
     </ActionPopover>

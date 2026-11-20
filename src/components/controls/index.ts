@@ -1,5 +1,5 @@
 export { Button } from "./button";
-export { TextField, MonoLabel } from "./field";
+export { TextField, MonoLabel, FIELD } from "./field";
 export { ActionPopover } from "./action-popover";
 export { FormDialog } from "./form-dialog";
 export { Dropdown, type DropdownOption } from "./dropdown";

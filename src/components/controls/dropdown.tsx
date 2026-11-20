@@ -5,6 +5,7 @@ import { Popover } from "radix-ui";
 import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { FIELD } from "./field";
 import { StatusBadge, type BadgeTone } from "./status-badge";
 
 export type DropdownOption<T extends string> = {
@@ -89,10 +90,9 @@ export function Dropdown<T extends string>({
           aria-haspopup="listbox"
           style={width && !compact ? { width } : undefined}
           className={cn(
-            compact
-              ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white px-2 text-left text-xs font-normal whitespace-nowrap text-foreground outline-none hover:border-border-strong"
-              : "flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-white px-2.5 py-2 text-left text-sm font-normal text-foreground outline-none hover:border-border-strong max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
-            open && "border-primary hover:border-primary",
+            FIELD,
+            "flex cursor-pointer items-center justify-between gap-2 text-left aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)]",
+            compact && "inline-flex h-7 w-auto justify-start gap-1.5 px-2 text-xs whitespace-nowrap max-[799px]:h-7 max-[799px]:text-xs",
           )}
         >
           {wybrana ? (
@@ -106,7 +106,7 @@ export function Dropdown<T extends string>({
               <span>{wybrana.label}</span>
             )
           ) : (
-            <span className="text-faint-foreground">{placeholder}</span>
+            <span className="text-[rgba(104,104,104,.72)]">{placeholder}</span>
           )}
           <ChevronDownIcon
             aria-hidden="true"
@@ -126,7 +126,7 @@ export function Dropdown<T extends string>({
             lista.current?.focus();
           }}
           style={{ width: width ?? "var(--radix-popover-trigger-width)" }}
-          className="z-[70] rounded-md border border-input bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] outline-none"
+          className="z-[70] rounded-lg border border-border bg-white bg-clip-padding p-1 shadow-lg outline-none"
         >
           <div
             ref={lista}
@@ -148,9 +148,9 @@ export function Dropdown<T extends string>({
                   onClick={() => wybierz(i)}
                   onMouseMove={() => setAktywny(i)}
                   className={cn(
-                    "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md px-2.5 py-[7px] text-left text-[13px] text-foreground max-[799px]:py-3 max-[799px]:text-[15px]",
-                    i === aktywny && "bg-muted",
-                    zaznaczona && "bg-active font-medium",
+                    "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm px-2 text-left text-sm font-normal text-foreground max-[799px]:min-h-11 max-[799px]:text-[15px]",
+                    i === aktywny && "bg-accent",
+                    zaznaczona && "font-medium",
                   )}
                 >
                   {opcja.node ? (

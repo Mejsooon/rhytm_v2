@@ -2,7 +2,9 @@
 
 import * as React from "react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { FIELD } from "./field";
 import { matchesWord } from "./match-word";
 
 // Potwierdzenie słowem wg VaultReset.dc.html: przycisk nieaktywny (aria-disabled, bez reakcji
@@ -47,14 +49,13 @@ export function WordConfirm({
           onChange={(e) => setWpisane(e.target.value)}
           placeholder={word}
           autoComplete="off"
-          className="w-full rounded-md border border-input bg-white px-2.5 py-2 font-mono text-sm font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0"
+          className={cn(FIELD, "font-mono")}
         />
       </label>
       <div className="flex justify-end">
         <Button
           variant={destructive ? "destructive" : "primary"}
           aria-disabled={!zgodne}
-          className={zgodne ? undefined : "cursor-not-allowed opacity-40"}
           onClick={() => {
             if (zgodne) onConfirm();
           }}

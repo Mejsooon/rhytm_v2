@@ -4,6 +4,7 @@ import * as React from "react";
 import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 import { ActionPopover } from "./action-popover";
 import {
   buildMonthGrid,
@@ -92,17 +93,19 @@ export function DatePicker({
           aria-haspopup="dialog"
           className={cn(
             variant === "bare"
-              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 max-[799px]:min-h-11"
-              : size === "sm"
-                ? "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white px-2 font-mono text-xs whitespace-nowrap text-foreground outline-none hover:border-border-strong"
-                : "inline-flex h-[30px] max-[799px]:h-11 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:border-border-strong",
-            variant === "box" && open && "border-primary hover:border-primary",
+              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] max-[799px]:min-h-11"
+              : cn(
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--ring)] aria-expanded:border-ring aria-expanded:shadow-[0_0_0_3px_rgba(163,163,163,.24)]",
+                  size === "sm"
+                    ? "h-7 px-2 font-mono text-xs whitespace-nowrap"
+                    : "h-8 px-[11px] text-sm max-[799px]:h-11",
+                ),
           )}
         >
           {value ? (
             <span className="font-mono">{formatDatePl(value)}</span>
           ) : (
-            <span className={size === "sm" ? "text-muted-foreground" : "text-faint-foreground"}>{placeholder}</span>
+            <span className={size === "sm" ? "text-muted-foreground" : "text-[rgba(104,104,104,.72)]"}>{placeholder}</span>
           )}
           {variant === "box" && (
             <ChevronDownIcon
@@ -114,25 +117,25 @@ export function DatePicker({
       }
     >
       <div className="mb-1.5 flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          size="sm"
+          icon
           aria-label="Poprzedni miesiąc"
           onClick={() => przesun(-1)}
-          className="size-7 cursor-pointer rounded-md border border-input bg-white hover:bg-muted"
         >
           ‹
-        </button>
+        </Button>
         <span className="text-[13px] font-semibold">
           {monthTitlePl(widok.rok, widok.miesiac)}
         </span>
-        <button
-          type="button"
+        <Button
+          size="sm"
+          icon
           aria-label="Następny miesiąc"
           onClick={() => przesun(1)}
-          className="size-7 cursor-pointer rounded-md border border-input bg-white hover:bg-muted"
         >
           ›
-        </button>
+        </Button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 pb-1 text-center font-mono text-[10px] text-muted-foreground">
         {(weekStart === "mon" ? DNI_PN : DNI_ND).map((d) => (
@@ -155,7 +158,7 @@ export function DatePicker({
               "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted",
               !c.inMonth && "text-faint-foreground",
               c.date === dzis && "border-border-strong",
-              c.date === value && "bg-primary text-white hover:bg-primary",
+              c.date === value && "bg-primary text-primary-foreground hover:bg-primary",
             )}
           >
             {Number(c.date.slice(8))}
@@ -163,21 +166,17 @@ export function DatePicker({
         ))}
       </div>
       <div className="mt-1.5 flex justify-between border-t border-border pt-1.5">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
           disabled={dzisPozaZakresem}
           onClick={() => wybierz(today ?? todayIso())}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-soft-foreground hover:bg-muted disabled:cursor-default disabled:text-faint-foreground disabled:hover:bg-transparent"
         >
           Dziś
-        </button>
-        <button
-          type="button"
-          onClick={() => wybierz(null)}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-soft-foreground hover:bg-muted"
-        >
+        </Button>
+        <Button variant="ghost" size="xs" onClick={() => wybierz(null)}>
           Wyczyść
-        </button>
+        </Button>
       </div>
     </ActionPopover>
   );

@@ -22,8 +22,12 @@ export function MonoLabel({
   );
 }
 
-// Pole tekstowe z etykietą wg Login/Settings (ramka #e0e0e0, 6 px, fokus #171717);
-// na telefonie 48 px wysokości i promień 10 px z MLogin.dc.html
+// Klasy pola wg .inp z coss.css: 32 px (na telefonie 44 px), promień 10 px, cień xs,
+// fokus: ramka ring + halo 3 px; błąd: czerwona ramka (aria-invalid)
+export const FIELD =
+  "block h-8 w-full min-w-0 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm font-normal text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-[rgba(104,104,104,.72)] focus:border-ring focus:shadow-[0_0_0_3px_rgba(163,163,163,.24)] aria-[invalid=true]:border-destructive/[.36] aria-[invalid=true]:focus:shadow-[0_0_0_3px_rgba(239,68,68,.16)] disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11 max-[799px]:text-[15px]";
+
+// Pole tekstowe z etykietą (.inp z coss.css)
 export function TextField({
   label,
   error,
@@ -51,9 +55,9 @@ export function TextField({
           aria-invalid={error ? true : undefined}
           aria-describedby={opisId}
           className={cn(
-            "peer w-full rounded-md border border-input bg-white px-[11px] py-[9px] text-sm font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary max-[799px]:h-12 max-[799px]:rounded-md max-[799px]:px-3.5 max-[799px]:py-0 max-[799px]:text-[15px]",
+            "peer",
+            FIELD,
             webPlaceholder && "min-[800px]:placeholder:text-transparent",
-            error && "border-destructive",
             className,
           )}
           {...props}
@@ -61,7 +65,7 @@ export function TextField({
         {webPlaceholder && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-faint-foreground opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
+            className="pointer-events-none absolute top-1/2 left-[11px] -translate-y-1/2 text-sm leading-[1.21] text-[rgba(104,104,104,.72)] opacity-0 peer-placeholder-shown:opacity-100 max-[799px]:hidden"
           >
             {webPlaceholder}
           </span>
