@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowy nawyk (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Nawyki i sen</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CSleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="CHabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div></div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px"><div class="card" style="height: 420px"></div><div class="card" style="height: 420px"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="hd-t" class="dlg" style="position: absolute; left: 50%; top: 90px; transform: translateX(-50%); width: min(540px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="hd-t" class="dlg-t">Nowy nawyk</h2></div><a href="CHabits.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <label class="fld">Nazwa<input class="inp" type="text" value="Rozciąganie"></label>
+      <div class="fld">Harmonogram
+        <div class="seg" role="radiogroup" aria-label="Harmonogram" style="align-self: flex-start"><sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{m.pressed}}" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}">{{m.label}}</button></sc-for></div>
+        <sc-if value="{{isDays}}" hint-placeholder-val="{{true}}"><div role="group" aria-label="Dni" style="display: flex; gap: 6px"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.pressed}}" aria-label="{{d.label}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for></div></sc-if>
+        <sc-if value="{{isTimes}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 10px; font-weight: 400"><span style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(0,0,0,.1); border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.05); overflow: hidden"><button type="button" class="btng ic" aria-label="Mniej" onClick="{{dec}}" style="border-radius: 0; height: 30px; border-right: 1px solid rgba(0,0,0,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="num" style="width: 40px; text-align: center; font-weight: 600">{{n}}</span><button type="button" class="btng ic" aria-label="Więcej" onClick="{{inc}}" style="border-radius: 0; height: 30px; border-left: 1px solid rgba(0,0,0,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></span><span class="hint">razy w tygodniu</span></div></sc-if>
+        <span class="hint">{{summary}}</span>
+      </div>
+      <div class="fld">Przypomnienie
+        <div style="display: flex; align-items: center; gap: 10px; font-weight: 400">
+          <button type="button" class="sw" role="switch" aria-checked="{{remA}}" aria-label="Przypomnienie push" onClick="{{toggleRem}}"></button>
+          <span style="{{remTxtS}}">Push o</span><span style="position: relative; display: inline-flex">
+            <button type="button" class="dd num" onClick="{{toggleTp}}" aria-disabled="{{remOffA}}" aria-haspopup="dialog" aria-expanded="{{tpExp}}" aria-label="Godzina przypomnienia" style="{{timeS}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{time}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+            <sc-if value="{{tpOpen}}" hint-placeholder-val="{{false}}">
+              <div role="dialog" aria-label="Wybierz godzinę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; width: 240px; padding: 10px; display: flex; flex-direction: column; gap: 8px">
+                <span class="lbl">Godzina</span>
+                <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px"><sc-for list="{{hours}}" as="h" hint-placeholder-count="18"><button type="button" class="num" aria-pressed="{{h.pressed}}" onClick="{{h.pick}}" style="{{h.s}}">{{h.t}}</button></sc-for></div>
+                <span class="lbl" style="margin-top: 2px">Minuty</span>
+                <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px"><sc-for list="{{mins}}" as="mm" hint-placeholder-count="4"><button type="button" class="num" aria-pressed="{{mm.pressed}}" onClick="{{mm.pick}}" style="{{mm.s}}">:{{mm.t}}</button></sc-for></div>
+                <button type="button" class="btnp xs" onClick="{{toggleTp}}" style="align-self: flex-end; margin-top: 2px">Gotowe</button>
+              </div>
+            </sc-if>
+          </span>
+          <span class="hint">{{remHint}}</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-f"><a href="CHabits.dc.html" class="btng">Anuluj</a><a href="CHabits.dc.html" class="btnp">Dodaj nawyk</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { mode: 'days', n: 4, rem: true, on: [0, 2, 4, 6], time: '20:30' }; }
+  renderVals() {
+    const m = this.state.mode, n = this.state.n, rem = this.state.rem;
+    const modes = [['daily','Codziennie'],['days','Wybrane dni'],['times','X razy w tygodniu']];
+    const on = this.state.on;
+    const DN = ['pn','wt','śr','cz','pt','sb','nd'];
+    const FULL = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
+    const picked = DN.filter((d, i) => on.includes(i));
+    const cell = 'height:28px;border-radius:8px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;';
+    return {
+      modes: modes.map((x) => ({ label: x[1], pressed: m === x[0] ? 'true' : 'false', pick: () => this.setState({ mode: x[0] }) })),
+      isDays: m === 'days', isTimes: m === 'times', n: String(n),
+      inc: () => this.setState({ n: Math.min(7, n + 1) }), dec: () => this.setState({ n: Math.max(1, n - 1) }),
+      days: DN.map((d, i) => ({ d, label: FULL[i], pressed: on.includes(i) ? 'true' : 'false',
+        toggle: () => this.setState({ on: on.includes(i) ? (on.length > 1 ? on.filter((x) => x !== i) : on) : on.concat([i]).sort() }),
+        s: 'width:36px;height:36px;border-radius:10px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;' + (on.includes(i) ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') })),
+      summary: m === 'daily' ? 'Codziennie. Seria liczona w dniach.' : m === 'days' ? (picked.length === 7 ? 'Wszystkie dni — to to samo co „Codziennie”.' : picked.join(', ') + '. Pozostałe dni nie psują serii.') : n + '× w tygodniu, dowolne dni. Seria liczona w tygodniach.',
+      remA: rem ? 'true' : 'false', time: this.state.time,
+      toggleRem: () => this.setState({ rem: !rem, tp: false }),
+      tpOpen: !!this.state.tp && rem, tpExp: this.state.tp && rem ? 'true' : 'false',
+      toggleTp: () => { if (this.state.rem) this.setState({ tp: !this.state.tp }); },
+      remOffA: rem ? 'false' : 'true',
+      hours: Array.from({ length: 18 }, (_, i) => i + 6).map((h) => { const t = String(h).padStart(2, '0'); const o = this.state.time.slice(0, 2) === t; return { t, pressed: o ? 'true' : 'false', pick: () => this.setState({ time: t + this.state.time.slice(2) }), s: cell + (o ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') }; }),
+      mins: ['00', '15', '30', '45'].map((mm) => { const o = this.state.time.slice(3) === mm; return { t: mm, pressed: o ? 'true' : 'false', pick: () => this.setState({ time: this.state.time.slice(0, 3) + mm }), s: cell + (o ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') }; }),
+      remTxtS: rem ? '' : 'color:#a3a3a3',
+      timeS: 'width:auto;gap:8px;' + (rem ? '' : 'opacity:.5;cursor:default'),
+      remHint: rem ? (m === 'days' ? 'tylko w dni z harmonogramu' : m === 'daily' ? 'codziennie' : 'w dni bez odhaczenia') : 'przypomnienia wyłączone'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szczegóły nawyku (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="nawyki" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Nawyki i sen</span><span aria-hidden="true">/</span><b>Rozciąganie</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CHabits.dc.html" class="btndo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</a><a href="CHabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</a></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Rozciąganie</h1><div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px"><span class="bdg sec lg"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>pn, śr, pt, nd</span><span class="bdg sec lg"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg>przypomnienie 20:30</span><span class="bdg out lg">od 01.10.2026</span></div></div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><div class="card" style="padding: 16px 18px"><div class="lbl">Seria</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">3</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Najdłuższa seria</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">9</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">30 dni</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">82%</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Łącznie</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">27 <span style="font-size: 14px; font-weight: 400; color: #686868">razy</span></div></div></div>
+      <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start">
+        <section class="card">
+          <div class="card-h" style="align-items: center"><h2 class="card-t">{{mLabel}}</h2><span style="display: flex; gap: 2px"><button type="button" class="btng ic sm" aria-label="Poprzedni miesiąc" onClick="{{prev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic sm" aria-label="Następny miesiąc" onClick="{{next}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div>
+          <div class="card-p">
+            <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; font-size: 11px; font-weight: 500; color: #686868; text-align: center; margin-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+            <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px"><sc-for list="{{cells}}" as="c" hint-placeholder-count="42"><button type="button" aria-label="{{c.lbl}}" onClick="{{c.toggle}}" style="{{c.s}}">{{c.n}}</button></sc-for></div>
+            <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #686868; margin-top: 14px"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #15803d"></span>zrobione</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: rgba(239,68,68,.14)"></span>pominięte</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1)"></span>dzień bez nawyku</span><span>· kliknij dzień, żeby przełączyć</span></div>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-h" style="padding-bottom: 14px"><h2 class="card-t">Historia harmonogramu</h2></div>
+          <div style="border-top: 1px solid rgba(0,0,0,.08)">
+            <div style="padding: 12px 24px; border-bottom: 1px solid rgba(0,0,0,.06); display: flex; justify-content: space-between; align-items: center"><div><div class="hint num">od 01.11.2026</div><div style="margin-top: 2px; font-weight: 500">pn, śr, pt, nd</div></div><span class="bdg ok">Aktualny</span></div>
+            <div style="padding: 12px 24px"><div class="hint num">01.10 – 31.10.2026</div><div style="margin-top: 2px; font-weight: 500">3× w tygodniu</div></div>
+          </div>
+          <div class="foot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg><span class="hint" style="flex: 1">Zmiana harmonogramu nie przelicza przeszłych dni.</span></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { st: {}, off: 0 }; }
+  renderVals() {
+    const DONE = [1, 2, 6, 8, 9, 13, 15, 16], SKIP = [4, 11], SCHED = [0, 2, 4, 6];
+    const off = this.state.off;
+    const first = new Date(Date.UTC(2026, 10 + off, 1));
+    const lead = (first.getUTCDay() + 6) % 7;
+    const MONF = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const st = this.state.st;
+    const cells = Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1 - lead + i));
+      const n = d.getUTCDate(), inm = d.getUTCMonth() === first.getUTCMonth();
+      const isNov = off === 0 && inm;
+      const key = first.getUTCMonth() + '-' + n;
+      const base = isNov ? (DONE.includes(n) ? 'done' : SKIP.includes(n) ? 'skip' : n > 17 ? 'future' : 'off') : (inm ? (off < 0 ? (SCHED.includes(i % 7) ? (n % 3 ? 'done' : 'skip') : 'off') : 'future') : 'out');
+      const s = st[key] || base;
+      const look = { done: 'background:#15803d;color:#fff;border:1px solid #15803d', skip: 'background:rgba(239,68,68,.1);color:#b91c1c;border:1px solid rgba(239,68,68,.16)', off: 'background:#fff;color:#a3a3a3;border:1px solid rgba(0,0,0,.08)', future: 'background:#fff;color:#a3a3a3;border:1px dashed rgba(0,0,0,.12)', out: 'background:transparent;color:#d4d4d4;border:1px solid transparent' }[s];
+      return { n: String(n), lbl: n + ' — ' + ({ done: 'zrobione', skip: 'pominięte', off: 'bez nawyku', future: 'jeszcze nie', out: 'inny miesiąc' }[s]),
+        s: 'height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;box-sizing:border-box;cursor:' + (s === 'done' || s === 'skip' ? 'pointer' : 'default') + ';' + look + (isNov && n === 17 ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #262626' : ''),
+        toggle: () => { if (s === 'done' || s === 'skip') this.setState({ st: Object.assign({}, st, { [key]: s === 'done' ? 'skip' : 'done' }) }); } };
+    });
+    return { cells, mLabel: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(), prev: () => this.setState({ off: Math.max(-1, off - 1) }), next: () => this.setState({ off: Math.min(0, off + 1) }) };
+  }
+}
+</script>
+</body>
+</html>
