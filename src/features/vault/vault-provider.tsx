@@ -267,8 +267,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         if (!nowy) return { ok: false, message: ZLE_HASLO };
 
         const res = await rewrapVaultAction(nowy, oczekiwany);
-        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
-        if (!res.ok) return { ok: false, message: res.message };
+        if (!res.ok) return { ok: false, message: epoka !== epokaRef.current ? ZABLOKOWANO : res.message };
+        // Serwer już zapisał nowe hasło — materiał zapisujemy także po blokadzie w trakcie,
+        // inaczej ponowna próba z tymi samymi hasłami zwróciłaby „Nieprawidłowe hasło główne.”.
+        // Klucz danych się nie zmienia, więc niczego tu nie odblokowujemy.
         materialRef.current = { ...nowy, updated_at: res.updated_at };
         return { ok: true };
       } catch {
