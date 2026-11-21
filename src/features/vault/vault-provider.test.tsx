@@ -11,12 +11,21 @@ const { getVault, createVault, rewrapVaultAction, resetVault } = vi.hoisted(() =
 
 vi.mock("./actions", () => ({ getVault, createVault, rewrapVault: rewrapVaultAction, resetVault }));
 
-import { createVaultMaterial, type VaultMaterial } from "./crypto";
+// unwrapDataKey owinięty w vi.fn, żeby w wybranych testach ręcznie odroczyć odwijanie klucza
+vi.mock("./crypto", async (importOriginal) => {
+  const oryginal = await importOriginal<typeof import("./crypto")>();
+  return { ...oryginal, unwrapDataKey: vi.fn(oryginal.unwrapDataKey) };
+});
+
+import { createVaultMaterial, unwrapDataKey, type VaultMaterial } from "./crypto";
 import { useVault, VaultProvider } from "./vault-provider";
 
 const HASLO = "poprawne-haslo-glowne";
 const PIEC_MIN = 5 * 60 * 1000;
 let material: VaultMaterial;
+let material2: VaultMaterial;
+let kluczTestowy: CryptoKey;
+const HASLO2 = "inne-haslo-glowne-2";
 
 function wrapper({ children }: { children: React.ReactNode }) {
   return <VaultProvider>{children}</VaultProvider>;
@@ -32,7 +41,10 @@ async function zamontuj() {
 
 beforeAll(async () => {
   // Prawdziwa kryptografia (PBKDF2 600 000 iteracji): materiał liczymy raz
-  material = (await createVaultMaterial(HASLO)).material;
+  const pierwszy = await createVaultMaterial(HASLO);
+  material = pierwszy.material;
+  kluczTestowy = pierwszy.key;
+  material2 = (await createVaultMaterial(HASLO2)).material;
 }, 30000);
 
 beforeEach(() => {
@@ -229,5 +241,193 @@ describe("VaultProvider", () => {
     expect(setItem).not.toHaveBeenCalled();
     expect(localStorage.length).toBe(0);
     expect(sessionStorage.length).toBe(0);
+  });
+
+  it("zmiana hasła w innej karcie: stare hasło + nowszy updated_at → sukces", async () => {
+    const widok = await zamontuj();
+    getVault.mockResolvedValue({
+      ok: true,
+      vault: { ...material2, generation: 3, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-05T10:00:00Z" },
+    });
+    let wynik: unknown;
+    await act(async () => {
+      wynik = await widok.result.current.unlock(HASLO2);
+    });
+    expect(wynik).toEqual({ ok: true });
+    expect(widok.result.current.status).toBe("odblokowany");
+  });
+
+  it("złe hasło i ten sam updated_at → Nieprawidłowe hasło główne. (bez ponawiania)", async () => {
+    const widok = await zamontuj();
+    let wynik: unknown;
+    await act(async () => {
+      wynik = await widok.result.current.unlock(HASLO2);
+    });
+    expect(wynik).toEqual({ ok: false, message: "Nieprawidłowe hasło główne." });
+  });
+
+  it("changePassword: nowszy updated_at z innym materiałem → sukces z nowym oczekiwanym updated_at", async () => {
+    rewrapVaultAction.mockResolvedValue({ ok: true, updated_at: "2026-11-06T10:00:00Z" });
+    const widok = await zamontuj();
+    getVault.mockResolvedValue({
+      ok: true,
+      vault: { ...material2, generation: 3, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-05T10:00:00Z" },
+    });
+    let wynik: unknown;
+    await act(async () => {
+      wynik = await widok.result.current.changePassword(HASLO2, "nowe-haslo-glowne");
+    });
+    expect(wynik).toEqual({ ok: true });
+    expect(rewrapVaultAction.mock.calls[0][1]).toBe("2026-11-05T10:00:00Z");
+  });
+
+  it("za słabe hasło: setup i changePassword nie wołają serwera", async () => {
+    const widok = await zamontuj();
+    let a: unknown;
+    let b: unknown;
+    await act(async () => {
+      a = await widok.result.current.setup("krotkie");
+      b = await widok.result.current.changePassword(HASLO, "krotkie");
+    });
+    const komunikat = "Hasło główne jest za słabe. Wymagane co najmniej „Średnie”.";
+    expect(a).toEqual({ ok: false, message: komunikat });
+    expect(b).toEqual({ ok: false, message: komunikat });
+    expect(createVault).not.toHaveBeenCalled();
+    expect(rewrapVaultAction).not.toHaveBeenCalled();
+  });
+
+  it("lock() w trakcie unlock: klucz się nie odradza", async () => {
+    const widok = await zamontuj();
+    let rozwiaz!: (k: CryptoKey) => void;
+    vi.mocked(unwrapDataKey).mockImplementationOnce(() => new Promise((r) => (rozwiaz = r)));
+    let obietnica!: Promise<unknown>;
+    await act(async () => {
+      obietnica = widok.result.current.unlock(HASLO);
+    });
+    act(() => {
+      widok.result.current.lock();
+    });
+    let wynik: unknown;
+    await act(async () => {
+      rozwiaz(kluczTestowy);
+      wynik = await obietnica;
+    });
+    expect(wynik).toEqual({ ok: false, message: "Sejf został zablokowany. Spróbuj ponownie." });
+    expect(widok.result.current.status).toBe("zablokowany");
+    await expect(widok.result.current.encrypt("x")).rejects.toThrow();
+  });
+
+  it("reset() w trakcie unlock: klucz się nie odradza", async () => {
+    resetVault.mockResolvedValue({ ok: true, cleared: 0 });
+    const widok = await zamontuj();
+    let rozwiaz!: (k: CryptoKey) => void;
+    vi.mocked(unwrapDataKey).mockImplementationOnce(() => new Promise((r) => (rozwiaz = r)));
+    let obietnica!: Promise<unknown>;
+    await act(async () => {
+      obietnica = widok.result.current.unlock(HASLO);
+    });
+    await act(async () => {
+      await widok.result.current.reset();
+    });
+    let wynik: unknown;
+    await act(async () => {
+      rozwiaz(kluczTestowy);
+      wynik = await obietnica;
+    });
+    expect(wynik).toMatchObject({ ok: false });
+    expect(widok.result.current.status).toBe("brak");
+    await expect(widok.result.current.encrypt("x")).rejects.toThrow();
+  });
+
+  it("odmontowanie w trakcie unlock: klucz nie zostaje ustawiony", async () => {
+    const widok = await zamontuj();
+    const encrypt = widok.result.current.encrypt;
+    let rozwiaz!: (k: CryptoKey) => void;
+    vi.mocked(unwrapDataKey).mockImplementationOnce(() => new Promise((r) => (rozwiaz = r)));
+    let obietnica!: Promise<unknown>;
+    await act(async () => {
+      obietnica = widok.result.current.unlock(HASLO);
+    });
+    widok.unmount();
+    let wynik: unknown;
+    await act(async () => {
+      rozwiaz(kluczTestowy);
+      wynik = await obietnica;
+    });
+    expect(wynik).toMatchObject({ ok: false });
+    await expect(encrypt("x")).rejects.toThrow();
+  });
+
+  it("lock() w trakcie setup: klucz się nie odradza", async () => {
+    getVault.mockResolvedValue({ ok: true, vault: null });
+    const widok = await zamontuj();
+    let rozwiaz!: (r: unknown) => void;
+    createVault.mockImplementationOnce(() => new Promise((r) => (rozwiaz = r)));
+    let obietnica!: Promise<unknown>;
+    await act(async () => {
+      obietnica = widok.result.current.setup("bardzo-dobre-haslo-123");
+      // createVaultMaterial liczy PBKDF2; czekamy, aż setup dojdzie do createVault
+      while (!rozwiaz) await new Promise((r) => setImmediate(r));
+    });
+    act(() => {
+      widok.result.current.lock();
+    });
+    let wynik: unknown;
+    await act(async () => {
+      rozwiaz({ ok: true, generation: 1 });
+      wynik = await obietnica;
+    });
+    expect(wynik).toMatchObject({ ok: false });
+    await expect(widok.result.current.encrypt("x")).rejects.toThrow();
+  });
+
+  it("zmiana generacji na serwerze przy odblokowanej karcie → zablokowany", async () => {
+    const widok = await zamontuj();
+    await act(async () => {
+      await widok.result.current.unlock(HASLO);
+    });
+    getVault.mockResolvedValue({
+      ok: true,
+      vault: { ...material, generation: 4, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-02T10:00:00Z" },
+    });
+    // Złe stare hasło wymusza doczytanie sejfu (odswiez) przy odblokowanym kluczu
+    await act(async () => {
+      await widok.result.current.changePassword("zle-haslo-glowne", "nowe-haslo-glowne");
+    });
+    expect(widok.result.current.status).toBe("zablokowany");
+    expect(widok.result.current.generation).toBe(4);
+    await expect(widok.result.current.encrypt("x")).rejects.toThrow();
+  });
+
+  it("pierwszy getVault rzuca: status ladowanie, unlock ponawia pobranie", async () => {
+    getVault.mockRejectedValueOnce(new Error("siec"));
+    const widok = await zamontuj();
+    expect(widok.result.current.status).toBe("ladowanie");
+    let wynik: unknown;
+    await act(async () => {
+      wynik = await widok.result.current.unlock(HASLO);
+    });
+    expect(wynik).toEqual({ ok: true });
+    expect(widok.result.current.status).toBe("odblokowany");
+  });
+
+  it("wyjątek akcji serwerowej → komunikat zamiast rzucenia", async () => {
+    resetVault.mockRejectedValue(new Error("siec"));
+    const widok = await zamontuj();
+    let wynik: unknown;
+    await act(async () => {
+      wynik = await widok.result.current.reset();
+    });
+    expect(wynik).toEqual({ ok: false, message: "Nie udało się połączyć z sejfem. Spróbuj ponownie." });
+  });
+
+  it("odmontowanie: wcześniej pobrane encrypt rzuca", async () => {
+    const widok = await zamontuj();
+    await act(async () => {
+      await widok.result.current.unlock(HASLO);
+    });
+    const encrypt = widok.result.current.encrypt;
+    widok.unmount();
+    await expect(encrypt("x")).rejects.toThrow();
   });
 });

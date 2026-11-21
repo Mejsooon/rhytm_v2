@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { createVault, getVault, resetVault, rewrapVault as rewrapVaultAction } from "./actions";
+import { masterPasswordStrength, MASTER_MIN_STRENGTH } from "./strength";
 import {
   createVaultMaterial,
   decryptSecret,
@@ -37,6 +38,8 @@ const AKTYWNOSC = ["pointerdown", "keydown", "touchstart", "wheel", "scroll"] as
 const ZLE_HASLO = "Nieprawidłowe hasło główne.";
 const NIE_ZAPISANO = "Nie zapisano. Sejf musi być odblokowany.";
 const BLAD_SEJFU = "Nie udało się połączyć z sejfem. Spróbuj ponownie.";
+const ZABLOKOWANO = "Sejf został zablokowany. Spróbuj ponownie.";
+const ZA_SLABE = "Hasło główne jest za słabe. Wymagane co najmniej „Średnie”.";
 
 const VaultContext = React.createContext<VaultState | null>(null);
 
@@ -58,19 +61,39 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   // Materiał z serwera (owinięty klucz) wraz z updated_at do optymistycznej zmiany hasła
   const materialRef = React.useRef<(VaultMaterial & { updated_at: string }) | null>(null);
   const deadlineRef = React.useRef(0);
+  // Epoka rośnie przy każdej blokadzie/resecie/odmontowaniu: wolne operacje async z starą epoką nie mogą ustawić klucza
+  const epokaRef = React.useRef(0);
+  // Czy pierwsze getVault się udało (przy błędzie sieci status zostaje „ladowanie”)
+  const zaladowanoRef = React.useRef(false);
 
   // Blokada: czyści referencję do klucza i zatrzymuje odliczanie
   const lock = React.useCallback(() => {
+    epokaRef.current += 1;
     keyRef.current = null;
     deadlineRef.current = 0;
     setRemainingMs(0);
     setStatus((s) => (s === "odblokowany" ? "zablokowany" : s));
   }, []);
 
-  // Pobiera sejf z serwera i uzgadnia z nim materiał, generację i status (klucz zostaje, jeśli jest)
+  // Pobiera sejf z serwera i uzgadnia z nim materiał, generację i status.
+  // Odrzuca odpowiedź, jeśli w międzyczasie zmieniła się epoka; zmiana generacji lub brak sejfu czyści klucz.
   const odswiez = React.useCallback(async (): Promise<boolean> => {
-    const res = await getVault();
-    if (!res.ok) return false;
+    const epoka = epokaRef.current;
+    let res: Awaited<ReturnType<typeof getVault>>;
+    try {
+      res = await getVault();
+    } catch {
+      return false;
+    }
+    if (epoka !== epokaRef.current || !res.ok) return false;
+    zaladowanoRef.current = true;
+
+    if (keyRef.current && (!res.vault || res.vault.generation !== generationRef.current)) {
+      epokaRef.current += 1;
+      keyRef.current = null;
+      deadlineRef.current = 0;
+      setRemainingMs(0);
+    }
     if (!res.vault) {
       materialRef.current = null;
       generationRef.current = null;
@@ -100,7 +123,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       else return odswiez();
     });
     return () => {
-      // Odmontowanie providera też zwalnia klucz
+      // Odmontowanie providera też zwalnia klucz i unieważnia trwające operacje
+      epokaRef.current += 1;
       keyRef.current = null;
     };
   }, [odswiez]);
@@ -121,52 +145,84 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       if (document.visibilityState === "visible") sprawdz();
     };
     const id = setInterval(sprawdz, 1000);
-    for (const nazwa of AKTYWNOSC) window.addEventListener(nazwa, naAktywnosc, { passive: true });
+    // scroll przewijanych kontenerów nie bąbelkuje, więc nasłuchujemy w fazie przechwytywania
+    for (const nazwa of AKTYWNOSC)
+      window.addEventListener(nazwa, naAktywnosc, nazwa === "scroll" ? { passive: true, capture: true } : { passive: true });
     document.addEventListener("visibilitychange", naWidocznosc);
     return () => {
       clearInterval(id);
-      for (const nazwa of AKTYWNOSC) window.removeEventListener(nazwa, naAktywnosc);
+      for (const nazwa of AKTYWNOSC) window.removeEventListener(nazwa, naAktywnosc, nazwa === "scroll" ? { capture: true } : undefined);
       document.removeEventListener("visibilitychange", naWidocznosc);
     };
   }, [status, lock]);
 
-  const setup = React.useCallback(async (password: string): Promise<Wynik> => {
-    if (!webCryptoAvailable()) return { ok: false, message: BLAD_SEJFU };
-    const { material, key } = await createVaultMaterial(password);
-    const res = await createVault(material);
-    if (!res.ok) return { ok: false, message: res.message };
-    keyRef.current = key;
-    generationRef.current = res.generation;
-    setGeneration(res.generation);
-    deadlineRef.current = Date.now() + BLOKADA_MS;
-    setRemainingMs(BLOKADA_MS);
-    setStatus("odblokowany");
-    // Doczytujemy created_at i updated_at (do późniejszej zmiany hasła); błąd nie cofa założonego sejfu
-    await odswiez();
-    return { ok: true };
-  }, [odswiez]);
-
-  const unlock = React.useCallback(async (password: string): Promise<Wynik> => {
-    if (!materialRef.current && !(await odswiez())) return { ok: false, message: BLAD_SEJFU };
-    const material = materialRef.current;
-    if (!material) return { ok: false, message: BLAD_SEJFU };
-
-    let key = await unwrapDataKey(password, material);
-    if (!key) {
-      // Hasło mogło się zmienić w innej karcie: jeśli serwer ma nowszy materiał, próbujemy jeszcze raz
-      if (await odswiez()) {
-        const swiezy = materialRef.current;
-        if (swiezy && swiezy.updated_at !== material.updated_at) key = await unwrapDataKey(password, swiezy);
+  const setup = React.useCallback(
+    async (password: string): Promise<Wynik> => {
+      if (masterPasswordStrength(password) < MASTER_MIN_STRENGTH) return { ok: false, message: ZA_SLABE };
+      if (!webCryptoAvailable()) return { ok: false, message: BLAD_SEJFU };
+      const epoka = epokaRef.current;
+      try {
+        if (!zaladowanoRef.current) {
+          const zaladowano = await odswiez();
+          if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+          if (!zaladowano) return { ok: false, message: BLAD_SEJFU };
+        }
+        const { material, key } = await createVaultMaterial(password);
+        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        const res = await createVault(material);
+        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        if (!res.ok) return { ok: false, message: res.message };
+        keyRef.current = key;
+        generationRef.current = res.generation;
+        setGeneration(res.generation);
+        deadlineRef.current = Date.now() + BLOKADA_MS;
+        setRemainingMs(BLOKADA_MS);
+        setStatus("odblokowany");
+        // Doczytujemy created_at i updated_at (do późniejszej zmiany hasła); błąd nie cofa założonego sejfu
+        await odswiez();
+        return { ok: true };
+      } catch {
+        return { ok: false, message: BLAD_SEJFU };
       }
-    }
-    if (!key) return { ok: false, message: ZLE_HASLO };
+    },
+    [odswiez],
+  );
 
-    keyRef.current = key;
-    deadlineRef.current = Date.now() + BLOKADA_MS;
-    setRemainingMs(BLOKADA_MS);
-    setStatus("odblokowany");
-    return { ok: true };
-  }, [odswiez]);
+  const unlock = React.useCallback(
+    async (password: string): Promise<Wynik> => {
+      const epoka = epokaRef.current;
+      try {
+        if (!zaladowanoRef.current || !materialRef.current) {
+          const zaladowano = await odswiez();
+          if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+          if (!zaladowano) return { ok: false, message: BLAD_SEJFU };
+        }
+        const material = materialRef.current;
+        if (!material) return { ok: false, message: BLAD_SEJFU };
+
+        let key = await unwrapDataKey(password, material);
+        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        if (!key) {
+          // Hasło mogło się zmienić w innej karcie: jeśli serwer ma nowszy materiał, próbujemy jeszcze raz
+          if (await odswiez()) {
+            const swiezy = materialRef.current;
+            if (swiezy && swiezy.updated_at !== material.updated_at) key = await unwrapDataKey(password, swiezy);
+          }
+          if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        }
+        if (!key) return { ok: false, message: ZLE_HASLO };
+
+        keyRef.current = key;
+        deadlineRef.current = Date.now() + BLOKADA_MS;
+        setRemainingMs(BLOKADA_MS);
+        setStatus("odblokowany");
+        return { ok: true };
+      } catch {
+        return { ok: false, message: BLAD_SEJFU };
+      }
+    },
+    [odswiez],
+  );
 
   const encrypt = React.useCallback(async (text: string): Promise<SecretValue> => {
     const key = keyRef.current;
@@ -183,49 +239,68 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   const changePassword = React.useCallback(
     async (oldPw: string, newPw: string): Promise<Wynik> => {
-      if (!materialRef.current && !(await odswiez())) return { ok: false, message: BLAD_SEJFU };
-      const material = materialRef.current;
-      if (!material) return { ok: false, message: BLAD_SEJFU };
-
-      let nowy = await rewrapVault(oldPw, newPw, material);
-      let oczekiwany = material.updated_at;
-      if (!nowy) {
-        // Jak przy odblokowaniu: serwer mógł mieć nowszy materiał (zmiana w innej karcie)
-        if (await odswiez()) {
-          const swiezy = materialRef.current;
-          if (swiezy && swiezy.updated_at !== material.updated_at) {
-            nowy = await rewrapVault(oldPw, newPw, swiezy);
-            oczekiwany = swiezy.updated_at;
-          }
+      if (masterPasswordStrength(newPw) < MASTER_MIN_STRENGTH) return { ok: false, message: ZA_SLABE };
+      const epoka = epokaRef.current;
+      try {
+        if (!zaladowanoRef.current || !materialRef.current) {
+          const zaladowano = await odswiez();
+          if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+          if (!zaladowano) return { ok: false, message: BLAD_SEJFU };
         }
-      }
-      if (!nowy) return { ok: false, message: ZLE_HASLO };
+        const material = materialRef.current;
+        if (!material) return { ok: false, message: BLAD_SEJFU };
 
-      const res = await rewrapVaultAction(nowy, oczekiwany);
-      if (!res.ok) return { ok: false, message: res.message };
-      materialRef.current = { ...nowy, updated_at: res.updated_at };
-      return { ok: true };
+        let nowy = await rewrapVault(oldPw, newPw, material);
+        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        let oczekiwany = material.updated_at;
+        if (!nowy) {
+          // Jak przy odblokowaniu: serwer mógł mieć nowszy materiał (zmiana w innej karcie)
+          if (await odswiez()) {
+            const swiezy = materialRef.current;
+            if (swiezy && swiezy.updated_at !== material.updated_at) {
+              nowy = await rewrapVault(oldPw, newPw, swiezy);
+              oczekiwany = swiezy.updated_at;
+            }
+          }
+          if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        }
+        if (!nowy) return { ok: false, message: ZLE_HASLO };
+
+        const res = await rewrapVaultAction(nowy, oczekiwany);
+        if (epoka !== epokaRef.current) return { ok: false, message: ZABLOKOWANO };
+        if (!res.ok) return { ok: false, message: res.message };
+        materialRef.current = { ...nowy, updated_at: res.updated_at };
+        return { ok: true };
+      } catch {
+        return { ok: false, message: BLAD_SEJFU };
+      }
     },
     [odswiez],
   );
 
   const reset = React.useCallback(async () => {
-    const res = await resetVault();
-    if (!res.ok) return { ok: false as const, message: res.message };
-    // Po resecie stary klucz jest bezużyteczny: czyścimy go i wracamy do stanu „brak sejfu”
-    keyRef.current = null;
-    deadlineRef.current = 0;
-    materialRef.current = null;
-    generationRef.current = null;
-    setGeneration(null);
-    setCreatedAt(null);
-    setRemainingMs(0);
-    setStatus("brak");
-    return { ok: true as const, cleared: res.cleared };
+    try {
+      const res = await resetVault();
+      if (!res.ok) return { ok: false as const, message: res.message };
+      // Po resecie stary klucz jest bezużyteczny: czyścimy go i wracamy do stanu „brak sejfu”
+      epokaRef.current += 1;
+      keyRef.current = null;
+      deadlineRef.current = 0;
+      materialRef.current = null;
+      generationRef.current = null;
+      setGeneration(null);
+      setCreatedAt(null);
+      setRemainingMs(0);
+      setStatus("brak");
+      return { ok: true as const, cleared: res.cleared };
+    } catch {
+      return { ok: false as const, message: BLAD_SEJFU };
+    }
   }, []);
 
   // Zapis Sekretu odrzucony z powodu innej generacji: blokujemy i doczytujemy aktualny sejf
   const onStaleGeneration = React.useCallback(() => {
+    // lock() podbija epokę, więc trwające unlock/setup/changePassword nie ustawią klucza
     lock();
     void odswiez();
   }, [lock, odswiez]);
