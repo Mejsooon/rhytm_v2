@@ -2,10 +2,20 @@
 
 import * as React from "react";
 
-import { ActionPopover, Checkbox, DatePicker, type IsoDate } from "@/components/controls";
+import {
+  ActionPopover,
+  Button,
+  Checkbox,
+  DatePicker,
+  MENU_ITEM,
+  MENU_SEPARATOR,
+  type IsoDate,
+} from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { normalizeValue, type CellValue, type FieldOption, type PageField } from "../fields";
 
-// Kolory plakietek z makiety (PAL): tekst → tło i ramka; inne kolory dostają półprzezroczyste tło.
+// Kolory plakietek (dane wybrane przez użytkownika — zostają jak są): tekst → tło; inne kolory dostają półprzezroczyste tło.
+// Kształt jak .bdg z coss.css (18 px, promień 6 px, bez widocznej ramki).
 // Szary z palety (#525252) ma tekst #404040 jak plakietki w Books / Projects.dc.html
 const TLA_PLAKIETEK: Record<string, { tlo: string; ramka: string; tekst?: string }> = {
   "#404040": { tlo: "#f5f5f5", ramka: "#e0e0e0" },
@@ -29,8 +39,8 @@ export function OptionBadge({
   const tlo = TLA_PLAKIETEK[kolor] ?? { tlo: `${option.color}14`, ramka: `${option.color}40` };
   return (
     <span
-      className="inline-flex items-center gap-0.5 rounded-[4px] border px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap"
-      style={{ color: tlo.tekst ?? option.color, background: tlo.tlo, borderColor: tlo.ramka }}
+      className="inline-flex h-[18px] items-center justify-center gap-1 rounded-sm border border-transparent px-[5px] text-xs leading-none font-medium whitespace-nowrap"
+      style={{ color: tlo.tekst ?? option.color, background: tlo.tlo }}
     >
       {option.label}
       {children}
@@ -103,7 +113,8 @@ export function CellEditor({
       <ActionPopover
         open={listaOtwarta}
         onOpenChange={setListaOtwarta}
-        width={200}
+        width={210}
+        className="p-1"
         onCloseAutoFocus={(e) => {
           if (bezZwrotuFokusu.current) {
             e.preventDefault();
@@ -116,12 +127,12 @@ export function CellEditor({
             aria-label={label}
             aria-haspopup="listbox"
             aria-expanded={listaOtwarta}
-            className="inline-flex min-h-5 cursor-pointer items-center border-0 bg-transparent p-0 font-[inherit] max-[799px]:min-h-11"
+            className="inline-flex min-h-[22px] cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
           >
             {wybrana ? (
               <OptionBadge option={wybrana} />
             ) : (
-              <span className="font-mono text-faint-foreground">—</span>
+              <span className="text-faint-foreground">—</span>
             )}
           </button>
         }
@@ -137,39 +148,40 @@ export function CellEditor({
                 setListaOtwarta(false);
                 if (o.id !== aktualna) onCommit(o.id);
               }}
-              className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-foreground hover:bg-muted max-[799px]:min-h-11 ${
-                o.id === aktualna ? "bg-active" : "bg-transparent"
-              }`}
+              className={cn(MENU_ITEM, "justify-between", o.id === aktualna && "bg-active")}
             >
               <OptionBadge option={o} />
-              <span aria-hidden="true" className="text-success">
+              <span aria-hidden="true" className="text-sm">
                 {o.id === aktualna ? "✓" : ""}
               </span>
             </button>
           ))}
-          <div className="mt-1 flex justify-between border-t border-border pt-1.5">
-            <button
-              type="button"
+          <div className={MENU_SEPARATOR} />
+          <div className="flex justify-between">
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={() => {
                 setListaOtwarta(false);
                 if (aktualna !== null) onCommit(null);
               }}
-              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
+              className="text-muted-foreground max-[799px]:h-11"
             >
               Wyczyść
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={() => {
                 setListaOtwarta(false);
                 // Bez zwrotu fokusu na komórkę — zamknąłby on od razu otwierany dymek kolumny
                 bezZwrotuFokusu.current = true;
                 onEditOptions();
               }}
-              className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
+              className="max-[799px]:h-11"
             >
               Edytuj opcje
-            </button>
+            </Button>
           </div>
         </div>
       </ActionPopover>
@@ -200,11 +212,12 @@ export function CellEditor({
       }}
       placeholder={field.isTitle ? "Bez nazwy" : ""}
       aria-label={label}
-      className={`w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground max-[799px]:min-h-11 ${
+      // .ed-in: bez ramki, po fokusie delikatne tło i obrys; liczby do prawej z tabular-nums
+      className={`w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-focus max-[799px]:min-h-11 ${
         field.type === "number"
-          ? "text-right font-mono text-foreground"
+          ? "text-right text-foreground tabular-nums"
           : field.type === "url"
-            ? "font-mono text-info-foreground"
+            ? "text-info-foreground"
             : "text-foreground"
       }`}
     />

@@ -125,7 +125,7 @@ function karta(etykieta: string) {
 
 // Wiersz w trybie edycji (tło #f7fbf8)
 function edycja() {
-  const tr = document.querySelector("tr.bg-success-soft");
+  const tr = document.querySelector('tr[class*="bg-success-soft"]');
   if (!tr) throw new Error("Brak wiersza w edycji");
   return tr as HTMLElement;
 }
@@ -179,6 +179,49 @@ describe("TemplatePageView", () => {
     });
   });
 
+  describe("wygląd COSS", () => {
+    it("tabela jak .tbl: nagłówek 40 px, wiersz 44 px, ostatni wiersz bez dolnej linii", () => {
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      const th = screen.getByRole("columnheader", { name: /Tytuł/ });
+      expect(th).toHaveClass("h-10");
+      const deep = wiersz("Deep Work");
+      expect(deep).toHaveClass("group/wiersz");
+      expect(within(deep).getByText("Deep Work").closest("td")).toHaveClass(
+        "h-11",
+        "group-last/wiersz:border-b-0",
+      );
+    });
+
+    it("strona na pełną szerokość, bez limitu 1100 px", () => {
+      const { container } = render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      expect(container.innerHTML).not.toContain("max-w-[1100px]");
+    });
+
+    it("karty to .card z etykietą .lbl i liczbą tabular-nums", () => {
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      expect(karta("Średnia ocena")).toHaveClass("rounded-xl", "shadow-card");
+      expect(screen.getByText("Średnia ocena", { selector: "div" })).toHaveClass("text-xs", "font-medium");
+    });
+
+    it("długa wartość komórki ma truncate, a tabela przewija się poziomo", () => {
+      const dlugi = "Bardzo długi tytuł książki ".repeat(10).trim();
+      render(<TemplatePageView data={strona("books", "Books", [{ Tytuł: dlugi, Autor: "A" }])} />);
+      const tekst = screen.getByText(dlugi);
+      expect(tekst).toHaveClass("truncate");
+      expect(tekst.closest("table")?.parentElement).toHaveClass("overflow-x-auto");
+    });
+
+    it("strona-szablon bez wierszy i kart pokazuje stan pusty bez pustych ramek", () => {
+      const { container } = render(<TemplatePageView data={strona("empty", "Notatki", [])} />);
+      // Bez kart nie ma siatki kart ani pustej ramki
+      expect(container.querySelector('[data-testid="przypiete-karty"]')).toBeNull();
+      // Tabela ma nagłówek i stopkę z „+ Nowy wiersz”, a w tbody nie ma pustych wierszy
+      expect(screen.getByRole("columnheader", { name: /Nazwa/ })).toBeInTheDocument();
+      expect(container.querySelectorAll("tbody tr")).toHaveLength(0);
+      expect(screen.getByRole("button", { name: "+ Nowy wiersz" })).toBeInTheDocument();
+    });
+  });
+
   describe("karty", () => {
     it("Books: przeczytane w roku, czytam teraz, średnia ocena", () => {
       render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
@@ -209,7 +252,7 @@ describe("TemplatePageView", () => {
     it("Projects: termin dalej niż 7 dni jest szary", () => {
       const dane = strona("projects", "Projects", [{ Nazwa: "NetScope", Status: "W toku", Termin: "2026-12-15" }]);
       render(<TemplatePageView data={dane} />);
-      expect(within(karta("Najbliższy termin")).getByText("za 30 dni")).toHaveClass("text-muted-foreground");
+      expect(within(karta("Najbliższy termin")).getByText("za 30 dni")).toHaveClass("bg-muted");
     });
   });
 
@@ -281,7 +324,7 @@ describe("TemplatePageView", () => {
       render(<TemplatePageView data={dane} />);
       await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
       const edycja = screen.getByRole("textbox", { name: "Tytuł" }).closest("tr") as HTMLElement;
-      expect(edycja).toHaveClass("bg-success-soft");
+      expect(edycja).toHaveClass("bg-success-soft/50");
       expect(within(edycja).getByRole("textbox", { name: "Autor" })).toHaveValue("Cal Newport");
       expect(within(edycja).getByRole("button", { name: "Przeczytana" }).textContent).toContain("12.10.2026");
 
@@ -653,7 +696,7 @@ describe("TemplatePageView", () => {
       expect(within(arkusz).getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
       expect(within(arkusz).getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
       // Bez edycji w wierszu tabeli
-      expect(document.querySelector("tr.bg-success-soft")).toBeNull();
+      expect(document.querySelector('tr[class*="bg-success-soft"]')).toBeNull();
 
       await user.clear(within(arkusz).getByRole("textbox", { name: "Autor" }));
       await user.type(within(arkusz).getByRole("textbox", { name: "Autor" }), "Newport");

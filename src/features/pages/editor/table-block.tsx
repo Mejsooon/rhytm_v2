@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { IsoDate } from "@/components/controls";
+import { Button, StatusBadge, type IsoDate } from "@/components/controls";
 import {
   addField,
   addRow,
@@ -470,18 +470,19 @@ export function TableBlock({
         }}
         placeholder="Tabela bez nazwy"
         aria-label="Nazwa tabeli"
-        className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-[15px] font-semibold text-foreground outline-none placeholder:text-faint-foreground max-[799px]:min-h-11"
+        className="w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-focus max-[799px]:min-h-11"
       />
 
       {!blokTymczasowy && (
         <>
-          <div className="rounded-lg border border-border text-[13px] max-[1100px]:overflow-x-auto">
-            <div role="row" style={siatka} className="grid items-stretch rounded-t-lg bg-panel">
+          {/* .frame > .inner: ramka 1,5 px, promień 12 px; poniżej 1100 px tabela przewija się poziomo */}
+          <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white text-sm max-[1100px]:overflow-x-auto">
+            <div role="row" style={siatka} className="grid items-stretch rounded-t-[10px] border-b border-border bg-black/[.02]">
               {posortowanePola.map((f, i) => (
                 <div
                   key={klucze[f.id] ?? f.id}
                   role="columnheader"
-                  className="relative flex min-w-0 items-center border-r border-b border-border border-r-border px-3.5 py-2 font-medium whitespace-nowrap text-muted-foreground"
+                  className="relative flex min-w-0 items-center px-3 py-2 font-medium whitespace-nowrap text-muted-foreground"
                 >
                   <ColumnPopover
                     field={f}
@@ -516,14 +517,14 @@ export function TableBlock({
                   />
                 </div>
               ))}
-              <div className="flex min-w-0 items-stretch border-b border-border">
+              <div className="flex min-w-0 items-stretch">
                 <button
                   type="button"
                   aria-label="Dodaj kolumnę"
                   onClick={() => void dodajKolumne()}
-                  className="min-h-[34px] w-full cursor-pointer border-0 bg-transparent font-[inherit] text-base text-muted-foreground hover:bg-active hover:text-foreground max-[799px]:hidden"
+                  className="grid min-h-[38px] w-full cursor-pointer place-items-center border-0 bg-transparent text-faint-foreground outline-none hover:bg-black/[.04] hover:text-foreground focus-visible:shadow-focus-inset max-[799px]:hidden"
                 >
-                  +
+                  <Plus size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -541,13 +542,13 @@ export function TableBlock({
                 key={klucze[r.id] ?? r.id}
                 role="row"
                 style={siatka}
-                className="group/row grid items-stretch"
+                className="group/wiersz grid items-center border-b border-border last:border-b-0 hover:bg-black/[.02]"
               >
                 {posortowanePola.map((f, i) => (
                   <div
                     key={klucze[f.id] ?? f.id}
                     role="cell"
-                    className={`relative flex min-h-5 min-w-0 max-[799px]:min-h-11 items-center border-r border-b border-border border-r-border px-3.5 py-2 group-hover/row:bg-panel ${
+                    className={`relative flex min-h-[38px] min-w-0 items-center px-3 py-2 max-[799px]:min-h-11 ${
                       i === 0 ? "font-medium" : ""
                     }`}
                   >
@@ -583,35 +584,37 @@ export function TableBlock({
                           return wybrana ? (
                             <OptionBadge option={wybrana} />
                           ) : (
-                            <span className="font-mono text-faint-foreground">—</span>
+                            <span className="text-faint-foreground">—</span>
                           );
                         })()}
                       </button>
                     )}
                   </div>
                 ))}
-                <div className="flex items-center justify-center border-b border-border group-hover/row:bg-panel">
-                  <button
-                    type="button"
+                <div className="flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    icon
                     aria-label="Usuń wiersz"
                     disabled={r.id.startsWith(PREFIKS_TYMCZASOWY)}
                     onClick={() => void usunWiersz(r)}
-                    className="inline-flex cursor-pointer items-center border-0 bg-transparent px-1.5 py-1 text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 disabled:cursor-default max-[799px]:size-11 max-[799px]:justify-center max-[799px]:opacity-100"
+                    className="text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/wiersz:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:opacity-100"
                   >
                     <Trash2 size={14} aria-hidden="true" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
 
             {maStopke && (
-              <div role="row" style={siatka} className="grid items-stretch rounded-b-lg bg-panel">
+              <div role="row" style={siatka} className="grid items-stretch rounded-b-[10px] bg-black/[.02]">
                 {posortowanePola.map((f) => {
                   const suma = editorFooter(f, zywe);
                   return (
                     <div
                       key={klucze[f.id] ?? f.id}
-                      className={`px-3.5 py-2 font-mono text-xs text-muted-foreground ${
+                      className={`px-3 py-2 text-sm text-muted-foreground tabular-nums ${
                         f.type === "number" ? "text-right" : ""
                       }`}
                     >
@@ -625,16 +628,12 @@ export function TableBlock({
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => void dodajWiersz()}
-              className="cursor-pointer rounded-md border-0 bg-transparent py-1 pr-2 pl-0 font-[inherit] text-xs text-soft-foreground hover:bg-muted max-[799px]:min-h-11"
-            >
+            <Button variant="ghost" onClick={() => void dodajWiersz()} className="text-muted-foreground">
               + Nowy wiersz
-            </button>
-            <span className="font-mono text-xs text-muted-foreground">
+            </Button>
+            <StatusBadge tone="gray" className="tabular-nums">
               {rowsLabel(zywe.length)} · {kolumnyLabel(liczbaKolumn)}
-            </span>
+            </StatusBadge>
           </div>
         </>
       )}

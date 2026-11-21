@@ -1,5 +1,8 @@
 "use client";
 
+import { Pencil, Trash2 } from "lucide-react";
+
+import { Button, StatusBadge } from "@/components/controls";
 import { OptionBadge } from "../editor/cell-editor";
 import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
 import type { PageRow } from "../table-model";
@@ -27,15 +30,19 @@ export function RowPreview({
   const zrobiony = done !== null && row.values[done.fieldId] === done.optionId;
 
   return (
-    <tr onClick={onOpen} className="group/row cursor-pointer [&:hover>td]:bg-panel">
+    // .tbl: wiersz 44 px, najechanie podświetla komórki o 2 %, ostatni wiersz bez dolnej linii
+    <tr onClick={onOpen} className="group/wiersz cursor-pointer [&:hover>td]:bg-black/[.02]">
       {fields.map((f) => {
         const v = normalizeValue(f, row.values[f.id]);
-        const td = "border-b border-border px-3.5 py-[11px]";
+        // Długie wartości są obcinane wielokropkiem (komórka ma max-w), a tabela przewija się poziomo
+        const td = "h-11 max-w-[280px] border-b border-border px-3 group-last/wiersz:border-b-0";
 
         if (f.isTitle) {
           return (
             <td key={f.id} className={`${td} font-medium`}>
-              {typeof v === "string" ? v : (f.config.empty_label ?? "Bez tytułu")}
+              <span className="block truncate">
+                {typeof v === "string" ? v : (f.config.empty_label ?? "Bez tytułu")}
+              </span>
             </td>
           );
         }
@@ -48,13 +55,11 @@ export function RowPreview({
                 f.type === "status" ? (
                   <OptionBadge option={opcja} />
                 ) : (
-                  // Select: etykieta mono w ramce (AREA z Projects.dc.html)
-                  <span className="rounded-[4px] border border-input px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-soft-foreground">
-                    {opcja.label}
-                  </span>
+                  // Select: odznaka z ramką (.bdg.out, „Obszar” z CProjects.dc.html)
+                  <StatusBadge tone="outline">{opcja.label}</StatusBadge>
                 )
               ) : (
-                <span className="font-mono text-faint-foreground">—</span>
+                <span className="text-faint-foreground">—</span>
               )}
             </td>
           );
@@ -66,10 +71,11 @@ export function RowPreview({
             <td
               key={f.id}
               aria-label={n ? `Ocena ${n} na 5` : "Brak oceny"}
-              className={`${td} font-mono tracking-[0.1em]`}
+              className={`${td} text-[15px] tracking-[0.08em]`}
             >
-              <span className="text-foreground">{"★".repeat(n)}</span>
-              <span className="text-faint-foreground">{n ? "★".repeat(5 - n) : "—"}</span>
+              {/* Gwiazdki: wypełnione bursztynowe, puste jasnoszare (CBooks.dc.html) */}
+              <span className="text-warning">{"★".repeat(n)}</span>
+              <span className="text-black/[.14]">{n ? "★".repeat(5 - n) : "—"}</span>
             </td>
           );
         }
@@ -82,14 +88,19 @@ export function RowPreview({
               : "";
           const pilny = typeof v === "string" && isUrgent(v, today, zrobiony);
           return (
-            <td key={f.id} className={`${td} font-mono whitespace-nowrap text-soft-foreground`}>
+            <td key={f.id} className={`${td} whitespace-nowrap text-soft-foreground tabular-nums`}>
               {typeof v === "string" ? formatValue(f, v) : "—"}
               {wzgledna && (
                 <>
                   {" "}
-                  <span className={`ml-1.5 ${pilny ? "text-destructive-foreground" : "text-muted-foreground"}`}>
-                    {wzgledna}
-                  </span>
+                  {/* Pilny termin to czerwona odznaka (.bdg.bad), reszta zwykły szary tekst */}
+                  {pilny ? (
+                    <StatusBadge tone="red" className="ml-1.5">
+                      {wzgledna}
+                    </StatusBadge>
+                  ) : (
+                    <span className="ml-1.5 text-muted-foreground">{wzgledna}</span>
+                  )}
                 </>
               )}
             </td>
@@ -99,7 +110,7 @@ export function RowPreview({
         if (f.type === "url") {
           const adres = typeof v === "string" ? (/^https?:\/\//i.test(v) ? v : `https://${v}`) : null;
           return (
-            <td key={f.id} className={`${td} font-mono`}>
+            <td key={f.id} className={`${td} tabular-nums`}>
               {adres ? (
                 <a
                   href={adres}
@@ -107,7 +118,7 @@ export function RowPreview({
                   rel="noopener noreferrer"
                   // Link nie otwiera edycji wiersza
                   onClick={(e) => e.stopPropagation()}
-                  className="border-b border-input text-soft-foreground no-underline hover:text-foreground"
+                  className="block truncate rounded-sm text-soft-foreground underline decoration-black/20 underline-offset-[3px] outline-none hover:text-foreground focus-visible:shadow-focus"
                 >
                   {formatValue(f, v)}
                 </a>
@@ -120,49 +131,59 @@ export function RowPreview({
 
         if (f.type === "checkbox") {
           return (
-            <td key={f.id} className={`${td} font-mono text-success`}>
-              {v === true ? "✓" : ""}
+            <td key={f.id} className={td}>
+              {/* Zaznaczone: kwadrat jak .cbx (16 px) z ✓; puste pole bez znacznika, jak dotąd */}
+              {v === true ? (
+                <span
+                  className="inline-flex size-4 items-center justify-center rounded-[4px] border border-primary bg-primary text-xs leading-none text-primary-foreground"
+                >
+                  ✓
+                </span>
+              ) : (
+                ""
+              )}
             </td>
           );
         }
 
         // Tekst i liczba
         return (
-          <td key={f.id} className={`${td} text-soft-foreground ${f.type === "number" ? "font-mono" : ""}`}>
-            {v === null ? "—" : formatValue(f, v)}
+          <td
+            key={f.id}
+            className={`${td} text-soft-foreground ${f.type === "number" ? "text-right tabular-nums" : ""}`}
+          >
+            <span className="block truncate">{v === null ? "—" : formatValue(f, v)}</span>
           </td>
         );
       })}
-      <td className="border-b border-border px-3.5 py-[11px] text-right whitespace-nowrap">
-        <button
-          type="button"
+      {/* Akcje pojawiają się po najechaniu na wiersz (.row-del + .btng.xs) */}
+      <td className="h-11 border-b border-border px-3 text-right whitespace-nowrap group-last/wiersz:border-b-0">
+        <Button
+          variant="ghost"
+          size="xs"
           aria-label="Edytuj wiersz"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-soft-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
+          className="opacity-0 transition-opacity duration-[120ms] group-hover/wiersz:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-          </svg>
+          <Pencil aria-hidden="true" className="size-3.5" />
           Edytuj
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="xs"
           aria-label="Usuń wiersz"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1.5 py-1 font-[inherit] text-xs text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 focus-visible:opacity-100 max-[799px]:hidden"
+          className="text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover/wiersz:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:hidden"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-          </svg>
+          <Trash2 aria-hidden="true" className="size-3.5" />
           Usuń
-        </button>
+        </Button>
       </td>
     </tr>
   );

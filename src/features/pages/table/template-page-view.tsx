@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, FormDialog, TextField } from "@/components/controls";
+import { Button, FormDialog, StatusBadge, TextField } from "@/components/controls";
 
 import { operatorsFor } from "../table-model";
 import { planTypeChange, type FieldType, type PageField } from "../fields";
@@ -45,9 +45,6 @@ const PUSTY_BLOK: LoadedBlock = {
   fields: [],
   rows: [],
 };
-
-// Liczba kolumn w makietach szablonów (min-width tabeli 760 / 820 px)
-const KOLUMNY_MAKIETY = 5;
 
 // Przycisk paska telefonu (jak w MEditor)
 const PRZYCISK_PASKA =
@@ -131,9 +128,12 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         ? (edytowany.values[tytulowe.id] as string)
         : (tytulowe?.config.empty_label ?? "Bez tytułu");
 
+  // Wyzwalacz „Filtruj” wygląda jak Button secondary (.btn z coss.css): 32 px, cień btn, fokus shadow-focus
   const btn =
-    "cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11";
-  const kolumnaAkcji = <th scope="col" className="w-[120px] border-b border-border px-3.5 py-2.5" />;
+    "relative inline-flex h-8 flex-none cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm leading-none font-medium whitespace-nowrap text-foreground shadow-btn transition-[box-shadow,background-color] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus max-[799px]:h-11";
+  // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
+  const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground";
+  const kolumnaAkcji = <th scope="col" className={`${NAGLOWEK} w-[150px]`} />;
 
   function zapiszNazwe(e: React.FormEvent) {
     e.preventDefault();
@@ -186,11 +186,12 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         </form>
       </FormDialog>
 
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-muted-foreground max-[799px]:hidden">
-          Strony <span className="text-faint-foreground">/</span> <span className="text-foreground">{tytul}</span>
+      {/* .topbar: okruszki 14 px i akcje */}
+      <header className="flex min-h-[57px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
+        <div className="text-sm text-muted-foreground max-[799px]:hidden">
+          Strony <span aria-hidden="true">/</span> <span className="font-medium text-foreground">{tytul}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterPopover
             fields={fields}
             filters={filtry}
@@ -209,16 +210,14 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             triggerClassName={btn}
           />
           <AddFieldDialog onAdd={(input) => void store.addField(input)} />
-          <button
-            type="button"
-            onClick={nowyWiersz}
-            className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
-          >
+          <Button variant="primary" onClick={nowyWiersz}>
+            <Plus aria-hidden="true" className="size-4" />
             Nowy wiersz
-          </button>
+          </Button>
         </div>
       </header>
 
+      {/* Pełna szerokość obszaru treści (bez limitu), odstępy jak w makiecie: 24 / 28 px */}
       <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4">
         <div>
           {/* Telefon: ikona strony przy tytule (web bez zmian) */}
@@ -228,7 +227,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             </span>
             {tytul}
           </h1>
-          <p className="mt-1.5 mb-0 font-mono text-xs text-muted-foreground">
+          <p className="mt-2.5 mb-0 text-sm text-muted-foreground tabular-nums">
             {meta}
             {liczbaUkrytych > 0 && (
               <>
@@ -236,7 +235,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                 <button
                   type="button"
                   onClick={() => void store.patchSettings({ hidden_field_ids: [] })}
-                  className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[inherit] underline decoration-dotted underline-offset-2 hover:text-foreground max-[799px]:min-h-11"
+                  className="cursor-pointer rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[inherit] underline decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:min-h-11"
                 >
                   {`· ${liczbaUkrytych} ${rowsForm(liczbaUkrytych) === "many" ? "ukrytych" : "ukryte"}`}
                 </button>
@@ -250,26 +249,21 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
           fields={fields}
           rows={widoczneWiersze}
           today={today}
-          bold={page.templateKey !== "websites"}
         />
 
-        {/* Przewijanie poziome poniżej 1100 px; przy większej liczbie kolumn niż w makiecie — zawsze */}
-        <div
-          className={`rounded-lg border border-border ${
-            widocznePola.length > KOLUMNY_MAKIETY ? "overflow-x-auto" : "max-[1099px]:overflow-x-auto"
-          }`}
-        >
+        {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
+        <div className="overflow-x-auto rounded-xl border-[1.5px] border-black/[.14] bg-white">
           <table
-            className="w-full border-collapse text-[13px]"
+            className="w-full border-collapse text-sm"
             style={{ minWidth: page.templateKey === "projects" ? 820 : 760 }}
           >
             <thead>
-              <tr className="bg-panel">
+              <tr>
                 {widocznePola.map((f) => (
                   <th
                     key={f.id}
                     scope="col"
-                    className="border-b border-border px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-muted-foreground"
+                    className={`${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
                   >
                     <ColumnMenu
                       field={f}
@@ -320,9 +314,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                       onDelete={() => void store.removeField(f)}
                     />
                     {f.type === "date" && f.config.show_in_calendar === true && (
-                      <span className="ml-1.5 rounded-[4px] border border-success-border px-[5px] py-px font-mono text-[10px] text-success">
+                      <StatusBadge tone="green" className="ml-1.5 align-middle">
                         w kalendarzu
-                      </span>
+                      </StatusBadge>
                     )}
                   </th>
                 ))}
@@ -373,18 +367,14 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
               )}
             </tbody>
             <tfoot>
-              <tr className="bg-panel">
+              <tr className="bg-black/[.02]">
                 {widocznePola.map((f, i) => {
                   if (i === 0) {
                     return (
-                      <td key={f.id} className="px-3.5 py-2.5">
-                        <button
-                          type="button"
-                          onClick={nowyWiersz}
-                          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-muted-foreground max-[799px]:min-h-11"
-                        >
+                      <td key={f.id} className="h-11 border-t border-border px-2 py-1.5">
+                        <Button variant="ghost" onClick={nowyWiersz} className="text-muted-foreground">
                           + Nowy wiersz
-                        </button>
+                        </Button>
                       </td>
                     );
                   }
@@ -398,7 +388,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                     />
                   );
                 })}
-                <td />
+                <td className="h-11 border-t border-border" />
               </tr>
             </tfoot>
           </table>
