@@ -1,5 +1,17 @@
 // Typy pól silnika stron: wartości, formatowanie, konwersja i daty względne.
 // Czyste funkcje bez bazy i UI — zapis do bazy robią RPC z Etapu 6.
+import {
+  Calendar,
+  CaseSensitive,
+  CircleDot,
+  Contrast,
+  Hash,
+  Link,
+  SquareCheck,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
+
 import type { IsoDate } from "@/components/controls";
 
 export type FieldType =
@@ -34,26 +46,30 @@ export type PageField = {
 
 export type CellValue = string | number | boolean | null;
 
-// Ikony nagłówków i etykiety z makiet (AddField)
-export const FIELD_TYPE_META: Record<FieldType, { icon: string; label: string }> = {
-  text: { icon: "Aa", label: "Tekst" },
-  number: { icon: "#", label: "Liczba" },
-  checkbox: { icon: "✓", label: "Checkbox" },
-  url: { icon: "↗", label: "URL" },
-  select: { icon: "◉", label: "Select" },
-  status: { icon: "◐", label: "Status" },
-  date: { icon: "▦", label: "Data" },
-  rating: { icon: "★", label: "Ocena" },
+// Ikony nagłówków i etykiety z makiet (AddField). Icon to ikona lucide z makiet (web);
+// icon to dawny znak, który zostaje dla telefonu (mobile/ czyta go bez zmian wyglądu).
+export const FIELD_TYPE_META: Record<
+  FieldType,
+  { icon: string; Icon: LucideIcon; label: string }
+> = {
+  text: { icon: "Aa", Icon: CaseSensitive, label: "Tekst" },
+  number: { icon: "#", Icon: Hash, label: "Liczba" },
+  checkbox: { icon: "✓", Icon: SquareCheck, label: "Checkbox" },
+  url: { icon: "↗", Icon: Link, label: "URL" },
+  select: { icon: "◉", Icon: CircleDot, label: "Select" },
+  status: { icon: "◐", Icon: Contrast, label: "Status" },
+  date: { icon: "▦", Icon: Calendar, label: "Data" },
+  rating: { icon: "★", Icon: Star, label: "Ocena" },
 };
 
 // „Typ pola” w edytorze (EmptyPage): Wybór = status z kolorowymi plakietkami
-export const EDITOR_TYPES: { type: FieldType; label: string; icon: string }[] = [
-  { type: "text", label: "Tekst", icon: "Aa" },
-  { type: "number", label: "Liczba", icon: "#" },
-  { type: "date", label: "Data", icon: "▦" },
-  { type: "status", label: "Wybór", icon: "◐" },
-  { type: "checkbox", label: "Checkbox", icon: "☑" },
-  { type: "url", label: "Link", icon: "↗" },
+export const EDITOR_TYPES: { type: FieldType; label: string; icon: string; Icon: LucideIcon }[] = [
+  { type: "text", label: "Tekst", icon: "Aa", Icon: CaseSensitive },
+  { type: "number", label: "Liczba", icon: "#", Icon: Hash },
+  { type: "date", label: "Data", icon: "▦", Icon: Calendar },
+  { type: "status", label: "Wybór", icon: "◐", Icon: Contrast },
+  { type: "checkbox", label: "Checkbox", icon: "☑", Icon: SquareCheck },
+  { type: "url", label: "Link", icon: "↗", Icon: Link },
 ];
 
 // 8 kolorów kategorii (spec 3.1), przydzielanych opcjom po kolei

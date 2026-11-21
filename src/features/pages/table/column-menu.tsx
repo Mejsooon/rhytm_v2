@@ -140,10 +140,12 @@ export function ColumnMenu({
           aria-expanded={open}
           className="cursor-pointer rounded-sm border-0 bg-transparent p-0 font-[inherit] font-medium text-muted-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
         >
-          {/* Znak typu pola: 12 px, półgruby, jasnoszary jak w nagłówkach makiety */}
-          <span aria-hidden="true" className="mr-1.5 text-xs font-semibold text-faint-foreground">
-            {meta.icon}
-          </span>
+          {/* Ikona typu pola: 14 px, jasnoszara, odstęp 6 px jak w nagłówkach makiety */}
+          <meta.Icon
+            size={14}
+            aria-hidden="true"
+            className="mr-1.5 inline align-[-2px] text-faint-foreground"
+          />
           {field.name}
         </button>
       }
@@ -182,10 +184,8 @@ export function ColumnMenu({
             }}
             className={cn(POZYCJA, podmenu === "typ" && "bg-accent")}
           >
-            {/* Znak typu w kolumnie ikon (16 px), jak lucide w pozostałych pozycjach */}
-            <span aria-hidden="true" className="w-4 flex-none text-center text-xs font-semibold text-muted-foreground">
-              {meta.icon}
-            </span>
+            {/* Ikona typu w kolumnie ikon (16 px), jak pozostałe pozycje */}
+            <meta.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
             <span className="flex-1">Typ: {meta.label}</span>
             <ChevronRight size={14} aria-hidden="true" className="flex-none" />
           </button>
@@ -206,9 +206,11 @@ export function ColumnMenu({
                   }}
                   className={cn(POZYCJA, t === field.type && "bg-accent font-medium")}
                 >
-                  <span aria-hidden="true" className="w-4 flex-none text-center text-xs font-semibold text-muted-foreground">
-                    {FIELD_TYPE_META[t].icon}
-                  </span>
+                  {React.createElement(FIELD_TYPE_META[t].Icon, {
+                    size: 16,
+                    "aria-hidden": true,
+                    className: "flex-none text-muted-foreground",
+                  })}
                   <span className="flex-1">{FIELD_TYPE_META[t].label}</span>
                   {t === field.type && <Check size={14} aria-hidden="true" className="flex-none" />}
                 </button>

@@ -162,6 +162,15 @@ describe("TemplatePageView", () => {
       ).toBeInTheDocument();
     });
 
+    it("ikona strony stoi przy tytule h1 (aria-hidden), nazwa h1 bez zmian", () => {
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      const h1 = screen.getByRole("heading", { level: 1, name: "Books" });
+      const ikona = h1.querySelector("[data-page-icon]");
+      expect(ikona).not.toBeNull();
+      expect(ikona).toHaveAttribute("aria-hidden", "true");
+      expect(ikona?.parentElement).toBe(h1);
+    });
+
     it("Websites: bez części „sort”; liczba wierszy w odmianie", () => {
       render(<TemplatePageView data={strona("websites", "Websites", WEBSITES)} />);
       expect(screen.getByText("2 wiersze · 5 pól · szablon „Websites”")).toBeInTheDocument();

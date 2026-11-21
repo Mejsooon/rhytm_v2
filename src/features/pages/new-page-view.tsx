@@ -64,14 +64,21 @@ export function NewPageView() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="np-title"
+        aria-describedby="np-desc"
         // .dlg: promień 16 px, ramka border, cień pop; 64 px od góry jak w makiecie
         className="mx-auto mt-16 mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop max-[799px]:mt-4"
       >
         {/* .dlg-h */}
         <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
-          <h2 id="np-title" className="m-0 text-lg leading-[1.3] font-semibold">
-            Nowa strona
-          </h2>
+          <div>
+            <h2 id="np-title" className="m-0 text-lg leading-[1.3] font-semibold">
+              Nowa strona
+            </h2>
+            {/* .dlg-d: opis okna, 14 px, kolor muted, 4 px od tytułu */}
+            <p id="np-desc" className="mt-1 mb-0 text-sm text-muted-foreground">
+              Wybierz szablon albo zacznij od pustej tabeli.
+            </p>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -128,6 +135,12 @@ export function NewPageView() {
                   </button>
                 );
               })}
+              {/* .empty: komunikat na całą szerokość siatki, gdy fraza nic nie znalazła */}
+              {widoczne.length === 0 && (
+                <div className="col-span-full flex flex-col items-center gap-2 p-6 text-center">
+                  Brak szablonu „{fraza}”.
+                </div>
+              )}
             </div>
           </div>
 

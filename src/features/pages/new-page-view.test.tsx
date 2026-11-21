@@ -34,6 +34,25 @@ describe("NewPageView", () => {
     expect(screen.getByText("Tabela bez pól. Budujesz ją sama od zera.")).toBeInTheDocument();
   });
 
+  it("pokazuje podtytuł powiązany z oknem jako opis", () => {
+    render(<NewPageView />);
+    const podtytul = screen.getByText("Wybierz szablon albo zacznij od pustej tabeli.");
+    expect(podtytul).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Nowa strona" })).toHaveAccessibleDescription(
+      "Wybierz szablon albo zacznij od pustej tabeli.",
+    );
+  });
+
+  it("wyszukiwanie bez dopasowania pokazuje komunikat z frazą", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
+    await user.type(screen.getByRole("textbox", { name: "Szukaj szablonu" }), "xyz");
+    expect(screen.getByText("Brak szablonu „xyz”.")).toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: "Szukaj szablonu" }));
+    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
+  });
+
   it("wybór szablonu zmienia panel „Pola, które powstaną”", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);

@@ -78,6 +78,15 @@ describe("filtr tabeli", () => {
     expect(within(filtr).getByRole("button", { name: "+ Dodaj warunek" })).toBeInTheDocument();
   });
 
+  it("bez warunków pokazuje komunikat, po dodaniu warunku znika", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    const filtr = await otworzFiltr(user);
+    expect(within(filtr).getByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeInTheDocument();
+    await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+    expect(within(filtr).queryByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeNull();
+  });
+
   it("filtr przy prawej krawędzi otwiera się do środka: dymek filtra dostaje avoidCollisions i collisionPadding 8 px, wyrównanie do prawej", async () => {
     const user = userEvent.setup();
     zlapane.propsy.length = 0;

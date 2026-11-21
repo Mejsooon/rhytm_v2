@@ -58,8 +58,8 @@ export function ColumnPopover({
   const jestWyborem = field.type === "status" || field.type === "select";
   const opcje = field.config.options ?? [];
   const meta = FIELD_TYPE_META[field.type];
-  // Ikona nagłówka: dla Wyboru ◐, dla Checkboxa ☑ (jak lista typów w dymku)
-  const ikona = EDITOR_TYPES.find((t) => t.type === field.type)?.icon ?? meta.icon;
+  // Ikona nagłówka: ta sama co na liście typów w dymku (Wybór = status, Checkbox)
+  const Ikona = EDITOR_TYPES.find((t) => t.type === field.type)?.Icon ?? meta.Icon;
   const nieMoznaUsunac = field.isTitle || count <= 1 || pending;
 
   function zapiszNazwe() {
@@ -96,9 +96,7 @@ export function ColumnPopover({
             open ? "bg-black/5 text-foreground" : "bg-transparent text-muted-foreground",
           )}
         >
-          <span aria-hidden="true" className="min-w-3.5 text-xs font-semibold text-faint-foreground">
-            {ikona}
-          </span>
+          <Ikona size={14} aria-hidden="true" className="flex-none text-faint-foreground" />
           {field.name}
         </button>
       }
@@ -142,9 +140,7 @@ export function ColumnPopover({
               aktualny && "bg-accent",
             )}
           >
-            <span aria-hidden="true" className="w-5 flex-none text-center text-xs font-semibold text-muted-foreground">
-              {t.icon}
-            </span>
+            <t.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
             <span className="flex-1">{t.label}</span>
             {aktualny && <Check size={14} aria-hidden="true" className="flex-none" />}
           </button>

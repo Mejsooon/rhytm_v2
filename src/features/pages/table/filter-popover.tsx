@@ -243,6 +243,13 @@ export function FilterPopover({
           })}
         </div>
 
+        {/* .empty z paddingiem 18 px: stan bez warunków */}
+        {warunki.length === 0 && (
+          <div className="flex flex-col items-center gap-2 p-[18px] text-center">
+            Brak warunków. Tabela pokazuje wszystkie wiersze.
+          </div>
+        )}
+
         <div className="flex items-center justify-between border-t border-border pt-3">
           <Button
             size="sm"

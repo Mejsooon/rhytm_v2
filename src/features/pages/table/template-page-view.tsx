@@ -221,11 +221,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
       {/* Pełna szerokość obszaru treści (bez limitu), odstępy jak w makiecie: 24 / 28 px */}
       <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4">
         <div>
-          {/* Telefon: ikona strony przy tytule (web bez zmian) */}
+          {/* Ikona strony przy tytule: 26 px, odstęp 10 px jak w makietach */}
           <h1 className="m-0 flex items-center gap-2.5 text-2xl font-semibold tracking-[-0.02em]">
-            <span className="min-[800px]:hidden">
-              <PageIcon icon={page.icon} size={26} />
-            </span>
+            <PageIcon icon={page.icon} size={26} />
             {tytul}
           </h1>
           <p className="mt-2.5 mb-0 text-sm text-muted-foreground tabular-nums">

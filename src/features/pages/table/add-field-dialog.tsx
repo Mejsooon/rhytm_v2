@@ -2,22 +2,22 @@
 
 import * as React from "react";
 
-import { Search } from "lucide-react";
+import { Search, type LucideIcon } from "lucide-react";
 
 import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import { PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
+import { FIELD_TYPE_META, PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
 
 // Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne i Bezpieczne dochodzą w Etapach 7 i 8)
-const TYPY: { type: FieldType; icon: string; name: string; desc: string; defName: string }[] = [
-  { type: "text", icon: "Aa", name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
-  { type: "number", icon: "#", name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
-  { type: "checkbox", icon: "✓", name: "Checkbox", desc: "Tak / nie. Może sterować widocznością dat w kalendarzu.", defName: "Aktywna" },
-  { type: "url", icon: "↗", name: "URL", desc: "Klikalny link.", defName: "Link" },
-  { type: "select", icon: "◉", name: "Select", desc: "Jedna opcja z listy, z kolorową etykietą.", defName: "Kategoria" },
-  { type: "status", icon: "◐", name: "Status", desc: "Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.", defName: "Status" },
-  { type: "date", icon: "▦", name: "Data", desc: "Data bez godziny. Może trafić do kalendarza głównego.", defName: "Termin" },
-  { type: "rating", icon: "★", name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
+const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; defName: string }[] = [
+  { type: "text", Icon: FIELD_TYPE_META.text.Icon, name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
+  { type: "number", Icon: FIELD_TYPE_META.number.Icon, name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
+  { type: "checkbox", Icon: FIELD_TYPE_META.checkbox.Icon, name: "Checkbox", desc: "Tak / nie. Może sterować widocznością dat w kalendarzu.", defName: "Aktywna" },
+  { type: "url", Icon: FIELD_TYPE_META.url.Icon, name: "URL", desc: "Klikalny link.", defName: "Link" },
+  { type: "select", Icon: FIELD_TYPE_META.select.Icon, name: "Select", desc: "Jedna opcja z listy, z kolorową etykietą.", defName: "Kategoria" },
+  { type: "status", Icon: FIELD_TYPE_META.status.Icon, name: "Status", desc: "Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.", defName: "Status" },
+  { type: "date", Icon: FIELD_TYPE_META.date.Icon, name: "Data", desc: "Data bez godziny. Może trafić do kalendarza głównego.", defName: "Termin" },
+  { type: "rating", Icon: FIELD_TYPE_META.rating.Icon, name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
 
 // Wybrany typ: biała pigułka z cieniem; fokus zostawia cień i dodaje obrys
@@ -142,9 +142,7 @@ export function AddFieldDialog({
               )}
             >
               <span className="flex items-center gap-2">
-                <span aria-hidden="true" className="w-[22px] text-center text-[13px] font-semibold text-muted-foreground">
-                  {t.icon}
-                </span>
+                <t.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
                 {t.name}
               </span>
             </button>

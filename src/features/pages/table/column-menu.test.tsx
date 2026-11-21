@@ -216,7 +216,8 @@ describe("menu kolumny", () => {
       const repo = dane.blocks[0].fields.find((f) => f.name === "Repo")!;
       await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalledTimes(1));
       expect(actions.changeFieldType.mock.calls[0].slice(0, 2)).toEqual([repo.id, "text"]);
-      expect(within(naglowek("Repo")).getByText("Aa")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("Aa")).toBeNull();
     });
 
     it("ze stratą pyta o potwierdzenie i dopiero po nim zapisuje", async () => {
@@ -231,7 +232,8 @@ describe("menu kolumny", () => {
       await user.click(screen.getByRole("button", { name: "Zmień typ" }));
       await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(screen.queryByText("Zmienić typ pola?")).not.toBeInTheDocument());
-      expect(within(naglowek("Autor")).getByText("#")).toBeInTheDocument();
+      expect(naglowek("Autor").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Autor")).queryByText("#")).toBeNull();
     });
 
     it("błąd zapisu cofa typ kolumny i pokazuje toast", async () => {
@@ -242,7 +244,8 @@ describe("menu kolumny", () => {
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
       await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      expect(within(naglowek("Repo")).getByText("↗")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("↗")).toBeNull();
     });
   });
 
@@ -388,7 +391,8 @@ describe("menu kolumny", () => {
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
 
       await act(async () => odrzuc({ ok: false, message: "x" }));
-      expect(within(naglowek("Repo")).getByText("↗")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("↗")).toBeNull();
       expect(screen.getByText(/rhytm-v3!/)).toBeInTheDocument();
     });
   });

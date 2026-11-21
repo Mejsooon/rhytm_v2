@@ -384,8 +384,9 @@ describe("TableBlock", () => {
     expect(
       (within(screen.getAllByRole("row")[1]).getByRole("textbox", { name: "Nazwa" }) as HTMLInputElement).value,
     ).toBe("Zostaje");
-    // Kolumna wróciła do typu Tekst: nagłówek ma ikonę Aa
-    expect(naglowek("Ile").textContent).toContain("Aa");
+    // Kolumna wróciła do typu Tekst: nagłówek ma ikonę typu (svg), nie znak
+    expect(naglowek("Ile").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+    expect(naglowek("Ile").textContent).not.toContain("Aa");
   });
 
   it("„+ Nowy wiersz” dodaje pusty wiersz na końcu i podnosi licznik", async () => {
