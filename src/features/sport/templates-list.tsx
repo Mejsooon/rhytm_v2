@@ -94,7 +94,7 @@ export function TemplatesList({
         </div>
       </header>
 
-      <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
+      <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             Szablony treningów

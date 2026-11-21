@@ -104,6 +104,25 @@ describe("WeekTiles", () => {
     );
   });
 
+  it("najechanie na tydzień podświetla słupek i pokazuje dymek z datami, wartością i celem", async () => {
+    wyrenderuj();
+    const slupki = screen.getAllByTestId("slupek");
+    await userEvent.hover(slupki[10].parentElement!);
+    const dymek = screen.getByRole("tooltip");
+    expect(dymek).toHaveTextContent("tydz. 46");
+    expect(dymek).toHaveTextContent("18,4 km");
+    expect(dymek).toHaveTextContent(/do celu brakuje|cel osiągnięty/);
+    expect(slupki[10].parentElement).toHaveClass("bg-black/[.035]");
+    await userEvent.unhover(slupki[10].parentElement!);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
+  it("dymek tygodnia otwiera się też z klawiatury (Tab)", async () => {
+    wyrenderuj();
+    for (let i = 0; i < 5; i++) await userEvent.tab();
+    expect(screen.getByRole("tooltip")).toHaveTextContent("tydz.");
+  });
+
   it("wykres bez danych nie ma NaN w wysokościach", async () => {
     const dane = daneSportu();
     render(<WeekTiles items={[]} today={dane.today} profile={dane.profile} />);

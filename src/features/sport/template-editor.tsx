@@ -66,13 +66,15 @@ function stanPoczatkowy(template: TemplateWithItems | null) {
     name: template?.name ?? "",
     days: template ? [...template.weekdays] : [],
     startTime: template ? template.start_time.slice(0, 5) : DOMYSLNA_GODZINA,
-    rows: (template?.items ?? []).map((i): Wiersz => ({
-      key: i.id,
-      name: i.exerciseName,
-      sets: i.sets_count,
-      reps: i.reps_text,
-      rest: formatRest(i.rest_s),
-    })),
+    rows: (template?.items ?? []).map(
+      (i): Wiersz => ({
+        key: i.id,
+        name: i.exerciseName,
+        sets: i.sets_count,
+        reps: i.reps_text,
+        rest: formatRest(i.rest_s),
+      }),
+    ),
   };
 }
 
@@ -221,7 +223,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
         </div>
       </header>
 
-      <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
+      <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {template ? "Edytuj szablon" : "Nowy szablon"}
