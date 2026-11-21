@@ -39,6 +39,9 @@ const vault = vi.hoisted(() => ({
   lock: vi.fn(),
   reset: vi.fn(),
   countSecrets: vi.fn(),
+  encrypt: vi.fn(),
+  decrypt: vi.fn(),
+  onStaleGeneration: vi.fn(),
 }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => vault.state }));
 vi.mock("@/features/vault/actions", () => ({ countSecrets: vault.countSecrets }));
@@ -49,6 +52,9 @@ import { buildTemplateBlocks, type TemplateKey } from "../templates";
 import { TemplatePageView } from "./template-page-view";
 
 const TODAY = "2026-11-15";
+// Tekst jawny widziany tylko po odszyfrowaniu; NOWY_SEKRET to to, co zwraca atrapa encrypt
+const JAWNE = "jawne-haslo-z-sejfu";
+const NOWY_SEKRET = { v: 1, g: 1, iv: btoa("iv-nowy-12bB"), ct: btoa("nowy-szyfrogram-szesnascie") };
 
 // Strona z szablonu z wierszami podanymi po nazwach pól i etykietach opcji (dane z makiet)
 function strona(key: TemplateKey, title: string, wiersze: Record<string, unknown>[]): LoadedPage {
@@ -160,7 +166,13 @@ describe("TemplatePageView", () => {
       unlock: vault.unlock,
       lock: vault.lock,
       reset: vault.reset,
+      encrypt: vault.encrypt,
+      decrypt: vault.decrypt,
+      onStaleGeneration: vault.onStaleGeneration,
     };
+    // Atrapa kryptografii: szyfrogram z innej wartości niż tekst jawny, odszyfrowanie zwraca „jawne”
+    vault.encrypt.mockImplementation(async () => NOWY_SEKRET);
+    vault.decrypt.mockResolvedValue(JAWNE);
     vault.countSecrets.mockResolvedValue({ ok: true, count: 4 });
     for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
     actions.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
@@ -902,6 +914,19 @@ describe("TemplatePageView", () => {
       expect(screen.getAllByText("••••••••••••")).toHaveLength(2);
       expect(document.body.textContent).not.toContain(SEKRET.ct);
       expect(document.body.textContent).not.toContain(SEKRET.iv);
+      // Przed „Pokaż” jawny tekst nie występuje nigdzie w DOM (także w atrybutach)
+      expect(document.body.innerHTML).not.toContain(JAWNE);
+    });
+
+    it("odblokowany: Pokaż odsłania tekst tylko w klikniętej komórce, a Kopiuj nie odsłania nic", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Pokaż hasło" }));
+      expect(await within(wiersz("GitHub")).findByText(JAWNE)).toBeInTheDocument();
+      expect(within(wiersz("Supabase")).queryByText(JAWNE)).not.toBeInTheDocument();
+      // Klik w przycisk w komórce nie otwiera edycji wiersza
+      expect(screen.queryByRole("button", { name: "Zapisz" })).not.toBeInTheDocument();
     });
 
     it("zablokowany: szyfrogram nie trafia do tekstu strony", () => {
@@ -919,6 +944,179 @@ describe("TemplatePageView", () => {
       const pole = await screen.findByLabelText("Hasło");
       expect(pole).toBeDisabled();
       expect(pole).toHaveAttribute("placeholder", "Odblokuj sejf, żeby edytować");
+    });
+
+    it("edycja szyfruje przed zapisem: updateRow dostaje SecretValue, nigdy string", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      expect(pole).toBeEnabled();
+      expect(pole).toHaveAttribute("type", "password");
+      // Wartość początkowa to odszyfrowany sekret
+      await waitFor(() => expect(pole).toHaveValue(JAWNE));
+      await user.clear(pole);
+      await user.type(pole, "nowe-tajne");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+      expect(vault.encrypt).toHaveBeenCalledWith("nowe-tajne");
+      const [id, zmiany] = actions.updateRow.mock.calls[0] as [string, Record<string, unknown>];
+      expect(id).toBe("row-1");
+      expect(zmiany[haslo.id]).toEqual(NOWY_SEKRET);
+      expect(typeof zmiany[haslo.id]).not.toBe("string");
+      // Tekst jawny nie wychodzi poza komponent: ani do akcji, ani do toastów
+      expect(JSON.stringify(actions.updateRow.mock.calls)).not.toContain("nowe-tajne");
+      expect(JSON.stringify([toast.mock.calls, toast.error.mock.calls])).not.toContain("nowe-tajne");
+    });
+
+    it("edycja bez ruszania hasła: updateRow nie dostaje pola Sekret", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const login = await screen.findByRole("textbox", { name: "Login" });
+      await user.clear(login);
+      await user.type(login, "inny");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+      expect(vault.encrypt).not.toHaveBeenCalled();
+      expect(actions.updateRow.mock.calls[0][1]).not.toHaveProperty(haslo.id);
+    });
+
+    it("wyczyszczone pole Sekret zapisuje null", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      await waitFor(() => expect(pole).toHaveValue(JAWNE));
+      await user.clear(pole);
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+      expect(actions.updateRow.mock.calls[0][1]).toEqual({ [haslo.id]: null });
+    });
+
+    it("sejf zablokowany w trakcie edycji: encrypt rzuca, toast bez treści błędu i brak zapisu", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      vault.encrypt.mockRejectedValue(new Error("tajny-szczegol"));
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      await user.type(await screen.findByLabelText("Hasło"), "x");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie zapisano. Sejf musi być odblokowany."));
+      expect(actions.updateRow).not.toHaveBeenCalled();
+    });
+
+    it("blokada podczas edycji: pole znów wyłączone i bez wpisanego tekstu", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const { rerender } = render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      await waitFor(() => expect(pole).toHaveValue(JAWNE));
+      vault.state = { ...vault.state, status: "zablokowany" };
+      rerender(<TemplatePageView data={dane} />);
+      expect(screen.getByLabelText("Hasło")).toBeDisabled();
+      expect(screen.getByLabelText("Hasło")).toHaveValue("");
+      expect(document.body.innerHTML).not.toContain(JAWNE);
+    });
+
+    it("zapis odrzucony z inną generacją: onStaleGeneration i komunikat z serwera", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      actions.updateRow.mockResolvedValue({
+        ok: false,
+        message: "Sejf zmienił się w innej karcie. Odblokuj go ponownie.",
+      });
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      await user.type(await screen.findByLabelText("Hasło"), "x");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(vault.onStaleGeneration).toHaveBeenCalledTimes(1));
+      expect(toast.error).toHaveBeenCalledWith("Sejf zmienił się w innej karcie. Odblokuj go ponownie.");
+    });
+
+    it("nowy wiersz z hasłem: addRow dostaje SecretValue", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Serwis" }), "Nowy serwis");
+      await user.type(screen.getByLabelText("Hasło"), "swieze-haslo");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.addRow).toHaveBeenCalledTimes(1));
+      const wartosci = actions.addRow.mock.calls[0][1] as Record<string, unknown>;
+      expect(wartosci[haslo.id]).toEqual(NOWY_SEKRET);
+      expect(JSON.stringify(actions.addRow.mock.calls)).not.toContain("swieze-haslo");
+    });
+
+    it("+ Pole: Sekret w grupie Bezpieczne tylko na stronie z szablonu", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const { unmount } = render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(screen.getByRole("button", { name: "+ Pole" }));
+      const okno = await screen.findByRole("dialog", { name: "Nowe pole" });
+      expect(within(okno).getByText("Bezpieczne")).toBeInTheDocument();
+      await user.click(within(okno).getByRole("button", { name: /Sekret/ }));
+      expect(within(okno).getByText("Zamaskowana wartość, np. hasło.")).toBeInTheDocument();
+      expect(within(okno).getByRole("textbox", { name: "Nazwa pola" })).toHaveValue("Hasło");
+      actions.addField.mockImplementation(async (_b: string, pole: { name: string; type: string; config: object }) => ({
+        ok: true,
+        field: { id: "srv-pole", name: pole.name, type: pole.type, config: pole.config, position: 9, isTitle: false },
+      }));
+      await user.click(within(okno).getByRole("button", { name: "Dodaj pole" }));
+      await waitFor(() => expect(actions.addField).toHaveBeenCalledTimes(1));
+      expect(actions.addField.mock.calls[0][1]).toMatchObject({ type: "secret", name: "Hasło" });
+      unmount();
+
+      // Pusta strona (bez szablonu) nie oferuje Sekretu
+      const pusta = strona("empty", "Pusta", []);
+      pusta.page.templateKey = null;
+      render(<TemplatePageView data={pusta} />);
+      await user.click(screen.getByRole("button", { name: "+ Pole" }));
+      const okno2 = await screen.findByRole("dialog", { name: "Nowe pole" });
+      expect(within(okno2).queryByText("Bezpieczne")).not.toBeInTheDocument();
+      expect(within(okno2).queryByRole("button", { name: /Sekret/ })).not.toBeInTheDocument();
+    });
+
+    it("menu kolumny secret: brak sortowania i zmiany typu", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      const naglowek = screen.getByRole("columnheader", { name: /Hasło/ });
+      await user.click(within(naglowek).getByRole("button", { name: /Hasło/ }));
+      const menu = screen.getByRole("menu", { name: "Kolumna Hasło" });
+      expect(within(menu).queryByRole("menuitem", { name: "Sortuj rosnąco" })).not.toBeInTheDocument();
+      expect(within(menu).queryByRole("menuitem", { name: "Sortuj malejąco" })).not.toBeInTheDocument();
+      expect(within(menu).getByRole("menuitem", { name: /Typ: Sekret/ })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" })).toBeInTheDocument();
+    });
+
+    it("filtr: pole secret tylko pusty/niepusty", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      const naglowek = screen.getByRole("columnheader", { name: /Hasło/ });
+      await user.click(within(naglowek).getByRole("button", { name: /Hasło/ }));
+      await user.click(screen.getByRole("menuitem", { name: "Filtruj po tym polu" }));
+      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+      await user.click(within(filtr).getByRole("button", { name: "Operator warunku 1" }));
+      expect(await screen.findByRole("option", { name: "jest puste" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "nie jest puste" })).toBeInTheDocument();
+      expect(screen.getAllByRole("option").filter((o) => o.closest("[role=listbox]"))).toHaveLength(2);
+      // Dla pusty / niepusty nie ma pola wartości
+      expect(within(filtr).queryByRole("textbox", { name: "Wartość warunku 1" })).not.toBeInTheDocument();
     });
 
     it("nowy wiersz zapisany z samym tytułem: addRow dostaje null dla pola Sekret", async () => {

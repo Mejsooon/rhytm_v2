@@ -172,7 +172,8 @@ export function ColumnMenu({
           <button
             type="button"
             role="menuitem"
-            disabled={field.isTitle}
+            // Typu Sekret nie zmienia się w żadną stronę
+            disabled={field.isTitle || field.type === "secret"}
             aria-label={`Typ: ${meta.label} ›`}
             aria-haspopup="menu"
             aria-expanded={podmenu === "typ"}
@@ -221,14 +222,19 @@ export function ColumnMenu({
         </div>
 
         <div className={MENU_SEPARATOR} />
-        <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("asc"))} className={POZYCJA}>
-          <ArrowUpNarrowWide aria-hidden="true" className={IKONA} />
-          <span className="flex-1">Sortuj rosnąco</span>
-        </button>
-        <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("desc"))} className={POZYCJA}>
-          <ArrowDownWideNarrow aria-hidden="true" className={IKONA} />
-          <span className="flex-1">Sortuj malejąco</span>
-        </button>
+        {/* Szyfrogramu nie da się sortować: kolumna Sekret nie ma sortowania */}
+        {field.type !== "secret" && (
+          <>
+            <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("asc"))} className={POZYCJA}>
+              <ArrowUpNarrowWide aria-hidden="true" className={IKONA} />
+              <span className="flex-1">Sortuj rosnąco</span>
+            </button>
+            <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("desc"))} className={POZYCJA}>
+              <ArrowDownWideNarrow aria-hidden="true" className={IKONA} />
+              <span className="flex-1">Sortuj malejąco</span>
+            </button>
+          </>
+        )}
         <button type="button" role="menuitem" onClick={() => wykonaj(onFilter)} className={POZYCJA}>
           <Funnel aria-hidden="true" className={IKONA} />
           <span className="flex-1">Filtruj po tym polu</span>

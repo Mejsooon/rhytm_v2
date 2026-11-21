@@ -75,10 +75,11 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
   const [zmianaNazwy, setZmianaNazwy] = React.useState(false);
   const [szkicNazwy, setSzkicNazwy] = React.useState("");
   const blok = data.blocks.find((b) => b.type === "table") ?? PUSTY_BLOK;
-  const store = useTableStore(blok);
-  const { fields, rows, settings, editing } = store;
   // Sejf: tylko strony z polem Sekret pokazują cokolwiek z jego stanu
   const vault = useVault();
+  // Zapis Sekretu z inną generacją sejfu blokuje go i każe odblokować ponownie
+  const store = useTableStore(blok, vault.onStaleGeneration);
+  const { fields, rows, settings, editing } = store;
   const maSekret = fields.some((f) => f.type === "secret");
   // „Anuluj” w ustawianiu hasła głównego chowa formularz (tabela z „— nieustawiony sejf”)
   const [anulowanoSejf, setAnulowanoSejf] = React.useState(false);
@@ -234,7 +235,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             }}
             triggerClassName={btn}
           />
-          <AddFieldDialog onAdd={(input) => void store.addField(input)} />
+          <AddFieldDialog allowSecret={page.templateKey !== null && page.templateKey !== "empty"} onAdd={(input) => void store.addField(input)} />
           <Button variant="primary" onClick={nowyWiersz}>
             <Plus aria-hidden="true" className="size-4" />
             Nowy wiersz
@@ -377,7 +378,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                     values={editing.values}
                     today={today}
                     onChange={store.setEditValue}
-                    onSave={() => void store.saveRow()}
+                    onSave={(nadpisane) => void store.saveRow(nadpisane)}
                     onCancel={store.cancelEdit}
                   />
                 ) : (
@@ -387,7 +388,6 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                     fields={widocznePola}
                     today={today}
                     done={zrobione}
-                    sejf={maSekret ? vault.status : undefined}
                     onOpen={() => {
                       if (editing?.rowId === r.id || r.id.startsWith(PREFIKS_TYMCZASOWY)) return;
                       setWArkuszu(naTelefonie());
@@ -407,7 +407,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                   values={editing.values}
                   today={today}
                   onChange={store.setEditValue}
-                  onSave={() => void store.saveRow()}
+                  onSave={(nadpisane) => void store.saveRow(nadpisane)}
                   onCancel={store.cancelEdit}
                 />
               )}

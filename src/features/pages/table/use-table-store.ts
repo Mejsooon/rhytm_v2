@@ -26,7 +26,7 @@ import {
   type PageField,
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
-import { BLAD_ZAPISU } from "../messages";
+import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE } from "../messages";
 import type { FilterCond, PageRow, TableSettings } from "../table-model";
 
 export type TableStore = ReturnType<typeof useTableStore>;
@@ -42,7 +42,8 @@ export type RowEditing = {
   original: Record<string, unknown>;
 };
 
-export function useTableStore(block: LoadedBlock) {
+// onStaleGeneration: wołane, gdy serwer odrzuci zapis Sekretu z powodu innej generacji sejfu
+export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void) {
   // Ustawienia z content.settings; brakujące klucze dostają puste wartości
   const surowe = (block.content.settings ?? {}) as Partial<TableSettings>;
   const zSerwera: TableSettings = {
@@ -144,15 +145,17 @@ export function useTableStore(block: LoadedBlock) {
   // „Zapisz”: wartości przez normalizeValue, pusty tytuł → empty_label (jak na serwerze).
   // Istniejący wiersz wysyła tylko zmienione komórki — nietknięte (także „brudne” z bazy) zostają.
   // Zwraca false, gdy zapis się nie udał (zmiana cofnięta, toast pokazany).
-  async function saveRow(): Promise<boolean> {
+  // nadpisane: zaszyfrowane wartości pól Sekret (SecretValue albo null) z RowEdit — tekst jawny nigdy tu nie trafia.
+  async function saveRow(nadpisane?: Record<string, unknown>): Promise<boolean> {
     const e = editing;
     if (!e) return true;
     const nowe: Record<string, CellValue> = {};
+    const wartosci = nadpisane ? { ...e.values, ...nadpisane } : e.values;
     for (const f of posortowanePola) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
-      const zmieniona = !Object.is(e.values[f.id], e.original[f.id]);
+      const zmieniona = !Object.is(wartosci[f.id], e.original[f.id]);
       if (e.rowId !== null && !zmieniona) continue;
-      let v = normalizeValue(f, e.values[f.id]);
+      let v = normalizeValue(f, wartosci[f.id]);
       if (f.isTitle && v === null) v = f.config.empty_label ?? "Bez tytułu";
       nowe[f.id] = v;
     }
@@ -171,7 +174,11 @@ export function useTableStore(block: LoadedBlock) {
       }
       if (!wynik || !wynik.ok) {
         setRows((l) => l.filter((r) => r.id !== tymczasoweId));
-        toast.error(BLAD_ZAPISU);
+        // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
+        if (wynik && wynik.message === SEJF_ZMIENIL_SIE) {
+          onStaleGeneration?.();
+          toast.error(SEJF_ZMIENIL_SIE);
+        } else toast.error(BLAD_ZAPISU);
         return false;
       }
       const prawdziwy = wynik.row;
@@ -197,8 +204,11 @@ export function useTableStore(block: LoadedBlock) {
     Object.assign(wToku.zmiany, nowe);
     wierszeWToku.current.set(rowId, wToku);
     let udane = false;
+    let nieAktualnySejf = false;
     try {
-      udane = (await updateRow(rowId, nowe)).ok;
+      const wynik = await updateRow(rowId, nowe);
+      udane = wynik.ok;
+      nieAktualnySejf = !wynik.ok && wynik.message === SEJF_ZMIENIL_SIE;
     } catch {
       udane = false;
     }
@@ -209,7 +219,11 @@ export function useTableStore(block: LoadedBlock) {
       setRows((l) =>
         l.map((r) => (r.id === rowId ? { ...r, values: { ...r.values, ...poprzednie } } : r)),
       );
-      toast.error(BLAD_ZAPISU);
+      if (nieAktualnySejf) {
+        // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
+        onStaleGeneration?.();
+        toast.error(SEJF_ZMIENIL_SIE);
+      } else toast.error(BLAD_ZAPISU);
     }
     return udane;
   }
