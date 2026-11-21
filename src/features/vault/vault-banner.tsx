@@ -46,7 +46,7 @@ export function VaultBanner() {
       <span role="status" className="flex-1 font-medium">
         {otwarty ? "Sejf odblokowany" : "Sejf zablokowany"}
       </span>
-      <span aria-hidden={otwarty ? "true" : undefined} className="text-[13px] tabular-nums opacity-80">
+      <span className="text-[13px] tabular-nums opacity-80">
         {otwarty ? `blokada za ${odliczanie}` : "serwer widzi tylko szyfrogram"}
       </span>
     </div>
