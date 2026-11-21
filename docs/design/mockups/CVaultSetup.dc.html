@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ustawienie sejfu (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+a[aria-disabled="true"]{opacity:.45;pointer-events:none}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="passwords" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Passwords</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; display: flex; flex-direction: column; gap: 20px; max-width: 1160px; box-sizing: border-box; width: 100%">
+      <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 26px">🔒</span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Passwords</h1></div>
+      <div class="card" style="height: 52px"></div><div class="card" style="height: 300px"></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="vs-t" class="dlg" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: min(500px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="vs-t" class="dlg-t">Ustaw hasło główne sejfu</h2><p class="dlg-d">Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko szyfrogram.</p></div><a href="CSettings.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <label class="fld">Hasło główne<input class="inp" type="password" value="{{pw}}" onInput="{{onPw}}" autocomplete="new-password"></label>
+      <div><div style="display: flex; gap: 4px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="{{b}}"></span></sc-for></div><div class="hint" style="margin-top: 6px; {{strS}}">{{strTxt}}</div></div>
+      <label class="fld">Powtórz<input class="inp" type="password" value="{{pw2}}" onInput="{{onPw2}}" autocomplete="new-password" aria-invalid="{{mismatch}}"><sc-if value="{{mismatchB}}" hint-placeholder-val="{{false}}"><span class="err">Hasła się różnią.</span></sc-if></label>
+      <div class="alert bad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4M12 17h.01"></path></svg><span><b>Nie da się go odzyskać.</b> Jeśli je zapomnisz, jedyna opcja to reset sejfu, który usuwa wszystkie zapisane sekrety. To nie jest hasło do konta.</span></div>
+      <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer"><button type="button" class="cbx" role="checkbox" aria-checked="{{okS}}" onClick="{{toggle}}" style="margin-top: 2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button><span>Rozumiem, że zapomnianego hasła głównego nie da się odzyskać.</span></label>
+    </div>
+    <div class="dlg-f"><a href="CSettings.dc.html" class="btng">Anuluj</a><a href="CPasswords.dc.html" class="btnp" aria-disabled="{{dis}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Utwórz sejf</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const pw = S.pw != null ? S.pw : 'przykładowe-hasło-główne';
+    const pw2 = S.pw2 != null ? S.pw2 : 'przykładowe-hasło-główne';
+    const ok = !!S.ok;
+    let sc = 0; if (pw.length >= 8) sc++; if (pw.length >= 14) sc++; if (/[0-9]/.test(pw) || /[^a-z0-9ąćęłńóśźż]/i.test(pw)) sc++; if (/[A-Z]/.test(pw) && pw.length >= 16) sc++;
+    const col = sc <= 1 ? '#ef4444' : sc === 2 ? '#f59e0b' : '#15803d';
+    const mism = pw2.length > 0 && pw2 !== pw;
+    const can = ok && !mism && sc >= 2;
+    return { pw, pw2, onPw: (e) => this.setState({ pw: e.target.value }), onPw2: (e) => this.setState({ pw2: e.target.value }),
+      bars: [0, 1, 2, 3].map((i) => 'flex:1;height:4px;border-radius:2px;background:' + (i < sc ? col : 'rgba(0,0,0,.08)')),
+      strTxt: ['Za krótkie', 'Słabe', 'Średnie', 'Mocne', 'Bardzo mocne'][sc], strS: 'color:' + (sc <= 1 ? '#b91c1c' : sc === 2 ? '#b45309' : '#15803d'),
+      mismatch: mism ? 'true' : 'false', mismatchB: mism,
+      okS: ok ? 'true' : 'false', toggle: () => this.setState({ ok: !ok }), dis: can ? 'false' : 'true' };
+  }
+}
+</script>
+</body>
+</html>
