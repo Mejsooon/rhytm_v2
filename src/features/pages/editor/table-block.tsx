@@ -470,7 +470,7 @@ export function TableBlock({
         }}
         placeholder="Tabela bez nazwy"
         aria-label="Nazwa tabeli"
-        className="w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-focus max-[799px]:min-h-11"
+        className="w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
       />
 
       {!blokTymczasowy && (

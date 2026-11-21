@@ -213,7 +213,7 @@ export function CellEditor({
       placeholder={field.isTitle ? "Bez nazwy" : ""}
       aria-label={label}
       // .ed-in: bez ramki, po fokusie delikatne tło i obrys; liczby do prawej z tabular-nums
-      className={`w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-focus max-[799px]:min-h-11 ${
+      className={`w-full min-w-0 rounded-md border-0 bg-transparent p-0 font-[inherit] outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11 ${
         field.type === "number"
           ? "text-right text-foreground tabular-nums"
           : field.type === "url"

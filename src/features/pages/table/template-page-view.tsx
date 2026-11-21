@@ -46,6 +46,9 @@ const PUSTY_BLOK: LoadedBlock = {
   rows: [],
 };
 
+// Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
+const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground";
+
 // Przycisk paska telefonu (jak w MEditor)
 const PRZYCISK_PASKA =
   "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 font-[inherit] text-foreground hover:bg-muted";
@@ -131,8 +134,6 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
   // Wyzwalacz „Filtruj” wygląda jak Button secondary (.btn z coss.css): 32 px, cień btn, fokus shadow-focus
   const btn =
     "relative inline-flex h-8 flex-none cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm leading-none font-medium whitespace-nowrap text-foreground shadow-btn transition-[box-shadow,background-color] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus max-[799px]:h-11";
-  // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
-  const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground";
   const kolumnaAkcji = <th scope="col" className={`${NAGLOWEK} w-[150px]`} />;
 
   function zapiszNazwe(e: React.FormEvent) {
