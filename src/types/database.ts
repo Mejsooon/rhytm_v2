@@ -832,6 +832,39 @@ export type Database = {
           },
         ];
       };
+      vaults: {
+        Row: {
+          created_at: string;
+          generation: number;
+          kdf: Json;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          wrap_iv: string;
+          wrapped_key: string;
+        };
+        Insert: {
+          created_at?: string;
+          generation?: number;
+          kdf?: Json;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          wrap_iv?: string;
+          wrapped_key?: string;
+        };
+        Update: {
+          created_at?: string;
+          generation?: number;
+          kdf?: Json;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          wrap_iv?: string;
+          wrapped_key?: string;
+        };
+        Relationships: [];
+      };
       workout_template_items: {
         Row: {
           exercise_id: string;
@@ -932,6 +965,10 @@ export type Database = {
         Args: { p_categories: Json };
         Returns: undefined;
       };
+      count_secrets: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       create_page: {
         Args: {
           p_blocks: Json;
@@ -974,6 +1011,10 @@ export type Database = {
       reorder_pages: {
         Args: { p_ids: string[] };
         Returns: undefined;
+      };
+      reset_vault: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
       };
       split_block_series: {
         Args: {

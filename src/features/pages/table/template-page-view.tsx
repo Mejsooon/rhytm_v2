@@ -2,10 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, Plus } from "lucide-react";
+import { ChevronLeft, Lock, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, FormDialog, StatusBadge, TextField } from "@/components/controls";
+import { VaultBanner } from "@/features/vault/vault-banner";
+import { useVault } from "@/features/vault/vault-provider";
+import { VaultSetup } from "@/features/vault/vault-setup";
+import { VaultUnlockCard } from "@/features/vault/vault-unlock-card";
 
 import { operatorsFor } from "../table-model";
 import { planTypeChange, type FieldType, type PageField } from "../fields";
@@ -34,6 +38,7 @@ const NAZWA_SZABLONU = {
   books: "Book tracker",
   projects: TEMPLATES.projects.name,
   websites: TEMPLATES.websites.name,
+  passwords: TEMPLATES.passwords.name,
 };
 
 // Zastępczy blok, gdy strona nie ma tabeli (stała — nowy obiekt w renderze zapętliłby resync magazynu)
@@ -70,8 +75,21 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
   const [zmianaNazwy, setZmianaNazwy] = React.useState(false);
   const [szkicNazwy, setSzkicNazwy] = React.useState("");
   const blok = data.blocks.find((b) => b.type === "table") ?? PUSTY_BLOK;
-  const store = useTableStore(blok);
+  // Sejf: tylko strony z polem Sekret pokazują cokolwiek z jego stanu
+  const vault = useVault();
+  // Zapis Sekretu z inną generacją sejfu blokuje go i każe odblokować ponownie
+  const store = useTableStore(blok, vault.onStaleGeneration);
   const { fields, rows, settings, editing } = store;
+  const maSekret = fields.some((f) => f.type === "secret");
+  // „Anuluj” w ustawianiu hasła głównego chowa formularz (tabela z „— nieustawiony sejf”)
+  const [anulowanoSejf, setAnulowanoSejf] = React.useState(false);
+  const [poprzedniStatus, setPoprzedniStatus] = React.useState(vault.status);
+  if (poprzedniStatus !== vault.status) {
+    setPoprzedniStatus(vault.status);
+    // Po resecie (status wraca do „brak”) formularz ustawiania otwiera się ponownie
+    if (vault.status !== "brak") setAnulowanoSejf(false);
+  }
+  const ustawianieSejfu = maSekret && vault.status === "brak" && !anulowanoSejf;
   // Edycja w arkuszu (telefon) zamiast w wierszu tabeli
   const [wArkuszu, setWArkuszu] = React.useState(false);
   // Otwarte menu kolumny (id pola), filtr i zmiana typu czekająca na potwierdzenie (ze stratą wartości)
@@ -192,7 +210,14 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
         <div className="text-sm text-muted-foreground max-[799px]:hidden">
           Strony <span aria-hidden="true">/</span> <span className="font-medium text-foreground">{tytul}</span>
         </div>
+        {!ustawianieSejfu && (
         <div className="flex flex-wrap items-center gap-2">
+          {maSekret && vault.status === "odblokowany" && (
+            <Button onClick={vault.lock}>
+              <Lock aria-hidden="true" className="size-4" />
+              Zablokuj teraz
+            </Button>
+          )}
           <FilterPopover
             fields={fields}
             filters={filtry}
@@ -210,12 +235,13 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             }}
             triggerClassName={btn}
           />
-          <AddFieldDialog onAdd={(input) => void store.addField(input)} />
+          <AddFieldDialog allowSecret={page.templateKey !== null && page.templateKey !== "empty"} onAdd={(input) => void store.addField(input)} />
           <Button variant="primary" onClick={nowyWiersz}>
             <Plus aria-hidden="true" className="size-4" />
             Nowy wiersz
           </Button>
         </div>
+        )}
       </header>
 
       {/* Pełna szerokość obszaru treści (bez limitu), odstępy jak w makiecie: 24 / 28 px */}
@@ -227,7 +253,21 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             {tytul}
           </h1>
           <p className="mt-2.5 mb-0 text-sm text-muted-foreground tabular-nums">
-            {meta}
+            {maSekret ? (
+              // Sejf: licznik wierszy i odznaka szyfrowania obok siebie (CVault.dc.html)
+              <span className="inline-flex flex-wrap items-center gap-1.5 align-middle">
+                <StatusBadge tone="gray" size="lg">
+                  {rowsLabel(zywe.length)}
+                </StatusBadge>
+                <StatusBadge tone="green" size="lg">
+                  <Lock aria-hidden="true" className="size-3" />
+                  AES-GCM w przeglądarce
+                </StatusBadge>
+                {polaSortu.length > 0 && <span>· sort: {polaSortu.join(", ")}</span>}
+              </span>
+            ) : (
+              meta
+            )}
             {liczbaUkrytych > 0 && (
               <>
                 {" "}
@@ -243,14 +283,21 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
           </p>
         </div>
 
+        {maSekret && <VaultBanner />}
+
+        {ustawianieSejfu && <VaultSetup onCancel={() => setAnulowanoSejf(true)} />}
+
+        {!ustawianieSejfu && (
         <PinnedCards
           cards={settings.pinned_cards}
           fields={fields}
           rows={widoczneWiersze}
           today={today}
         />
+        )}
 
         {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
+        {!ustawianieSejfu && (
         <div className="overflow-x-auto rounded-xl border-[1.5px] border-black/[.14] bg-white">
           <table
             className="w-full border-collapse text-sm"
@@ -333,6 +380,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                     onChange={store.setEditValue}
                     onSave={() => void store.saveRow()}
                     onCancel={store.cancelEdit}
+                    registerSecret={store.registerSecret}
                   />
                 ) : (
                   <RowPreview
@@ -362,6 +410,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                   onChange={store.setEditValue}
                   onSave={() => void store.saveRow()}
                   onCancel={store.cancelEdit}
+                  registerSecret={store.registerSecret}
                 />
               )}
             </tbody>
@@ -392,6 +441,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             </tfoot>
           </table>
         </div>
+        )}
+
+        {maSekret && vault.status === "zablokowany" && <VaultUnlockCard />}
       </div>
 
       {zmianaTypu && (

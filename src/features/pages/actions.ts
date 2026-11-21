@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 
 import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
+import { isSecretValue } from "@/features/vault/crypto";
 import { normalizeValue } from "./fields";
-import { BLAD_ZAPISU } from "./messages";
+import { BLAD_ZAPISU, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE } from "./messages";
 import type { CellValue, FieldConfig, FieldType, PageField } from "./fields";
 import type { BlockType, LoadedBlock } from "./load-page";
 import {
@@ -37,8 +38,11 @@ const BRAK_POLA = "Nie znaleziono pola.";
 const BRAK_WIERSZA = "Nie znaleziono wiersza.";
 const POLE_TYTULOWE_TYP = "Typu pola tytułowego nie można zmienić.";
 const BEZ_TYTULU = "Bez tytułu";
+const SEKRET_TYP = "Nie można zmienić typu pola Sekret.";
+const SEKRET_TYLKO_SZABLON = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
 
-type Blad = { ok: false; message: string };
+// code: stale_generation = zapis Sekretu z inną generacją sejfu (klient blokuje sejf po kodzie, nie po treści)
+type Blad = { ok: false; message: string; code?: "stale_generation" };
 
 const szablonSchema = z.enum(TEMPLATE_KEYS);
 
@@ -516,6 +520,22 @@ export async function addField(
   if (!nazwa.success) return { ok: false, message: nazwa.error.issues[0].message };
   if (!typ.success || !config.success) return { ok: false, message: BLAD_ZAPISU };
 
+  // Pole Sekret tylko w tabeli strony z szablonu (nie w edytorze bloków)
+  if (typ.data === "secret") {
+    const { data: blokSekretu, error: bladBloku } = await supabase
+      .from("page_blocks")
+      .select("id, pages!inner(template_key)")
+      .eq("id", blockId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
+    if (!blokSekretu) return { ok: false, message: BRAK_BLOKU };
+    const kluczSzablonu = blokSekretu.pages?.template_key ?? null;
+    if (kluczSzablonu === null || kluczSzablonu === "empty") {
+      return { ok: false, message: SEKRET_TYLKO_SZABLON };
+    }
+  }
+
   const { data: ostatnie, error: bladPozycji } = await supabase
     .from("page_fields")
     .select("position")
@@ -610,15 +630,20 @@ export async function changeFieldType(
     return { ok: false, message: BLAD_ZAPISU };
   }
 
+  // Na Sekret nie zmieniamy typu (zwykła wartość nie jest szyfrogramem)
+  if (typ.data === "secret") return { ok: false, message: SEKRET_TYP };
+
   // Pola tytułowego nie wolno przekonwertować (jak w deleteField)
   const { data: pole, error: bladOdczytu } = await supabase
     .from("page_fields")
-    .select("is_title")
+    .select("is_title, type")
     .eq("id", fieldId)
     .eq("user_id", user.id)
     .maybeSingle();
   if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
   if (!pole) return { ok: false, message: BRAK_POLA };
+  // Z Sekretu też nie: szyfrogramu nie da się przeliczyć na inny typ
+  if (pole.type === "secret") return { ok: false, message: SEKRET_TYP };
   if (pole.is_title) return { ok: false, message: POLE_TYTULOWE_TYP };
 
   const { error } = await supabase.rpc("change_field_type", {
@@ -691,6 +716,21 @@ export async function addRow(
     .eq("block_id", blockId);
   if (bladPol) return { ok: false, message: BLAD_ZAPISU };
 
+  // Sekret: serwer sprawdza tylko kształt i generation aktywnego sejfu, niczego nie odszyfrowuje
+  const maSekret = (pola ?? []).some(
+    (p) => p.type === "secret" && wartosci.data[p.id] !== null && wartosci.data[p.id] !== undefined,
+  );
+  let sejf: { status: string; generation: number } | null = null;
+  if (maSekret) {
+    const { data: wierszSejfu, error: bladSejfu } = await supabase
+      .from("vaults")
+      .select("status, generation")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (bladSejfu) return { ok: false, message: BLAD_ZAPISU };
+    sejf = wierszSejfu;
+  }
+
   // Wartości przez normalizeValue; puste pole tytułowe dostaje etykietę (empty_label)
   const nowe: Record<string, CellValue> = {};
   for (const p of pola ?? []) {
@@ -703,6 +743,16 @@ export async function addRow(
       isTitle: p.is_title,
     };
     if (!(p.id in wartosci.data) && !pole.isTitle) continue;
+    const surowaSekret = wartosci.data[p.id];
+    if (pole.type === "secret" && surowaSekret !== null && surowaSekret !== undefined) {
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
+      if (!isSecretValue(surowaSekret) || surowaSekret.ct.length > 8192 || sejf === null) {
+        return { ok: false, message: SEJF_ZABLOKOWANY };
+      }
+      // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
+      if (surowaSekret.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
+      if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
+    }
     let v = normalizeValue(pole, wartosci.data[p.id]);
     if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;
     nowe[p.id] = v;
@@ -770,6 +820,22 @@ export async function updateRow(
     .eq("block_id", wiersz.block_id);
   if (bladPol) return { ok: false, message: BLAD_ZAPISU };
 
+  // Sekret: serwer sprawdza tylko kształt i generation aktywnego sejfu, niczego nie odszyfrowuje
+  const maSekret = Object.entries(wartosci.data).some(
+    ([klucz, w]) =>
+      w !== null && w !== undefined && (pola ?? []).some((f) => f.id === klucz && f.type === "secret"),
+  );
+  let sejf: { status: string; generation: number } | null = null;
+  if (maSekret) {
+    const { data: wierszSejfu, error: bladSejfu } = await supabase
+      .from("vaults")
+      .select("status, generation")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (bladSejfu) return { ok: false, message: BLAD_ZAPISU };
+    sejf = wierszSejfu;
+  }
+
   const nowe = { ...((wiersz.values ?? {}) as Record<string, unknown>) };
   for (const [klucz, surowa] of Object.entries(wartosci.data)) {
     const p = (pola ?? []).find((f) => f.id === klucz);
@@ -782,6 +848,15 @@ export async function updateRow(
       position: p.position,
       isTitle: p.is_title,
     };
+    if (pole.type === "secret" && surowa !== null && surowa !== undefined) {
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
+      if (!isSecretValue(surowa) || surowa.ct.length > 8192 || sejf === null) {
+        return { ok: false, message: SEJF_ZABLOKOWANY };
+      }
+      // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
+      if (surowa.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
+      if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
+    }
     let v = normalizeValue(pole, surowa);
     if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;
     nowe[klucz] = v;

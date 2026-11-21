@@ -34,4 +34,22 @@ describe("WordConfirm", () => {
     await userEvent.click(btn);
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
+
+  it("hideButton: brak wbudowanego przycisku, wpisane słowo trafia do onValueChange", async () => {
+    const onValueChange = vi.fn();
+    render(
+      <WordConfirm
+        word="RESETUJ"
+        label="Wpisz RESETUJ, żeby potwierdzić"
+        confirmLabel="Zresetuj sejf"
+        onConfirm={vi.fn()}
+        hideButton
+        value=""
+        onValueChange={onValueChange}
+      />,
+    );
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    await userEvent.type(screen.getByRole("textbox"), "R");
+    expect(onValueChange).toHaveBeenCalledWith("R");
+  });
 });

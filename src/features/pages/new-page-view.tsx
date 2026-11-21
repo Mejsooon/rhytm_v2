@@ -130,6 +130,12 @@ export function NewPageView() {
                         <PageIcon icon={t.icon} size={16} />
                       </span>
                       {t.name}
+                      {/* Odznaka „szyfr.” przy szablonie z polem Sekret (makieta CNewPage) */}
+                      {t.fields.some((f) => f.type === "secret") && (
+                        <StatusBadge tone="green" className="ml-auto">
+                          szyfr.
+                        </StatusBadge>
+                      )}
                     </span>
                     <span className="text-[13px] leading-[1.45] text-muted-foreground">{t.desc}</span>
                   </button>
@@ -157,7 +163,11 @@ export function NewPageView() {
                   >
                     <span>{pole.name}</span>
                     <StatusBadge
-                      tone={pole.type === "rating" || pole.config?.show_in_calendar ? "green" : "outline"}
+                      tone={
+                        pole.type === "rating" || pole.type === "secret" || pole.config?.show_in_calendar
+                          ? "green"
+                          : "outline"
+                      }
                     >
                       {FIELD_TYPE_META[pole.type].label}
                       {pole.config?.show_in_calendar ? " · w kalendarzu" : ""}

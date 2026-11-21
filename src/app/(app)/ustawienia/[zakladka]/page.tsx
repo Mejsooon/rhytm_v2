@@ -7,6 +7,7 @@ import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
 import { TrashCard } from "@/features/settings/trash-card";
+import { VaultCard } from "@/features/settings/vault-card";
 import { loadTrash } from "@/features/pages/actions";
 import {
   SETTINGS_TABS,
@@ -133,6 +134,8 @@ export default async function ZakladkaPage({
             <Suspense fallback={null}>
               <Kategorie />
             </Suspense>
+          ) : tab.slug === "sejf" ? (
+            <VaultCard />
           ) : (
             <EmptyModule>Ta zakładka powstanie w kolejnym etapie.</EmptyModule>
           )}

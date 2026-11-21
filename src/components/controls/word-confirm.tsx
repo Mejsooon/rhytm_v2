@@ -15,14 +15,27 @@ export function WordConfirm({
   confirmLabel,
   onConfirm,
   destructive = false,
+  value,
+  onValueChange,
+  hideButton = false,
 }: {
   word: string;
   label: string;
   confirmLabel: string;
   onConfirm: () => void;
   destructive?: boolean;
+  // Opcjonalnie sterowane z zewnątrz (np. przycisk potwierdzenia w stopce okna)
+  value?: string;
+  onValueChange?: (v: string) => void;
+  // Ukrywa wbudowany przycisk (potwierdza rodzic)
+  hideButton?: boolean;
 }) {
-  const [wpisane, setWpisane] = React.useState("");
+  const [lokalne, setLokalne] = React.useState("");
+  const wpisane = value ?? lokalne;
+  const setWpisane = (v: string) => {
+    setLokalne(v);
+    onValueChange?.(v);
+  };
   const zgodne = matchesWord(wpisane, word);
 
   // Słowo w etykiecie wyróżnione jak w makiecie (mono, szare tło, ramka)
@@ -52,6 +65,7 @@ export function WordConfirm({
           className={cn(FIELD, "font-mono")}
         />
       </label>
+      {!hideButton && (
       <div className="flex justify-end">
         <Button
           variant={destructive ? "destructive" : "primary"}
@@ -63,6 +77,7 @@ export function WordConfirm({
           {confirmLabel}
         </Button>
       </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
+import { SecretCell } from "@/features/vault/secret-cell";
 import { OptionBadge } from "../editor/cell-editor";
 import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
 import type { PageRow } from "../table-model";
@@ -43,6 +44,20 @@ export function RowPreview({
               <span className="block max-w-[280px] truncate">
                 {typeof v === "string" ? v : (f.config.empty_label ?? "Bez tytułu")}
               </span>
+            </td>
+          );
+        }
+
+        // Sekret: komórka dostaje surową wartość (szyfrogram) i sama decyduje, co pokazać; nigdy nie renderujemy szyfrogramu
+        if (f.type === "secret") {
+          const tytulowe = fields.find((p) => p.isTitle);
+          const nazwaSerwisu = tytulowe ? row.values[tytulowe.id] : null;
+          return (
+            <td key={f.id} className={td}>
+              <SecretCell
+                value={row.values[f.id]}
+                serviceName={typeof nazwaSerwisu === "string" && nazwaSerwisu !== "" ? nazwaSerwisu : f.name}
+              />
             </td>
           );
         }

@@ -26,13 +26,20 @@ import {
   type PageField,
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
-import { BLAD_ZAPISU } from "../messages";
+import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE } from "../messages";
 import type { FilterCond, PageRow, TableSettings } from "../table-model";
 
 export type TableStore = ReturnType<typeof useTableStore>;
 
 // Wiersz albo pole czekające na odpowiedź serwera ma tymczasowe id z tym prefiksem
 export const PREFIKS_TYMCZASOWY = "tmp-";
+
+// Rejestracja z RowEdit: czy hasło zostało zmienione i funkcja szyfrująca zmienione pola Sekret
+// (zwraca zaszyfrowane wartości albo null, gdy szyfrowanie się nie udało). Bez tekstu jawnego.
+export type SecretRegistration = {
+  changed: boolean;
+  encrypt: () => Promise<Record<string, unknown> | null>;
+};
 
 // Edytowany wiersz: rowId null = nowy wiersz (szkic, jeszcze bez zapisu); original to wartości
 // z chwili otwarcia edycji — zapis wysyła tylko klucze, które się od nich różnią
@@ -42,7 +49,8 @@ export type RowEditing = {
   original: Record<string, unknown>;
 };
 
-export function useTableStore(block: LoadedBlock) {
+// onStaleGeneration: wołane, gdy serwer odrzuci zapis Sekretu z powodu innej generacji sejfu
+export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void) {
   // Ustawienia z content.settings; brakujące klucze dostają puste wartości
   const surowe = (block.content.settings ?? {}) as Partial<TableSettings>;
   const zSerwera: TableSettings = {
@@ -70,6 +78,9 @@ export function useTableStore(block: LoadedBlock) {
   const ustawieniaWToku = useRef(0);
   const wierszeWToku = useRef(new Map<string, { n: number; zmiany: Record<string, unknown> }>());
   const licznik = useRef(0);
+  // Rejestracja pól Sekret z otwartego RowEdit i blokada drugiego zapisu w trakcie szyfrowania / zapisu
+  const sekretRef = useRef<SecretRegistration | null>(null);
+  const zapisujeRef = useRef(false);
 
   if (zrodloPol !== block.fields) {
     setZrodloPol(block.fields);
@@ -99,6 +110,7 @@ export function useTableStore(block: LoadedBlock) {
   // Otwarty szkic różni się od wartości z chwili otwarcia (nowy wiersz: od wartości startowych)
   function szkicZmieniony(): boolean {
     if (!editing) return false;
+    if (sekretRef.current?.changed) return true;
     const klucze = new Set([...Object.keys(editing.values), ...Object.keys(editing.original)]);
     return [...klucze].some((k) => !Object.is(editing.values[k], editing.original[k]));
   }
@@ -108,7 +120,8 @@ export function useTableStore(block: LoadedBlock) {
   async function zapiszSzkic(): Promise<boolean> {
     const e = editing;
     const udane = await saveRow();
-    if (!udane) setEditing(e);
+    // Szkic przywrócony już przez zapiszWiersz (z szyfrogramem nowego hasła) zostaje bez zmian
+    if (!udane) setEditing((cur) => cur ?? e);
     return udane;
   }
 
@@ -144,15 +157,35 @@ export function useTableStore(block: LoadedBlock) {
   // „Zapisz”: wartości przez normalizeValue, pusty tytuł → empty_label (jak na serwerze).
   // Istniejący wiersz wysyła tylko zmienione komórki — nietknięte (także „brudne” z bazy) zostają.
   // Zwraca false, gdy zapis się nie udał (zmiana cofnięta, toast pokazany).
+  // Pola Sekret zmienione w RowEdit są szyfrowane przed zapisem (przy „Zapisz”, przełączaniu wiersza i „Nowy wiersz”);
+  // nie uda się szyfrowanie → nic się nie zapisuje i edycja zostaje. Drugi zapis w trakcie pierwszego jest ignorowany.
   async function saveRow(): Promise<boolean> {
+    if (zapisujeRef.current) return false;
+    zapisujeRef.current = true;
+    try {
+      let nadpisane: Record<string, unknown> | undefined;
+      if (sekretRef.current?.changed) {
+        const zaszyfrowane = await sekretRef.current.encrypt();
+        if (zaszyfrowane === null) return false;
+        nadpisane = zaszyfrowane;
+      }
+      return await zapiszWiersz(nadpisane);
+    } finally {
+      zapisujeRef.current = false;
+    }
+  }
+
+  // nadpisane: zaszyfrowane wartości pól Sekret (SecretValue albo null) — tekst jawny nigdy tu nie trafia.
+  async function zapiszWiersz(nadpisane?: Record<string, unknown>): Promise<boolean> {
     const e = editing;
     if (!e) return true;
     const nowe: Record<string, CellValue> = {};
+    const wartosci = nadpisane ? { ...e.values, ...nadpisane } : e.values;
     for (const f of posortowanePola) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
-      const zmieniona = !Object.is(e.values[f.id], e.original[f.id]);
+      const zmieniona = !Object.is(wartosci[f.id], e.original[f.id]);
       if (e.rowId !== null && !zmieniona) continue;
-      let v = normalizeValue(f, e.values[f.id]);
+      let v = normalizeValue(f, wartosci[f.id]);
       if (f.isTitle && v === null) v = f.config.empty_label ?? "Bez tytułu";
       nowe[f.id] = v;
     }
@@ -171,7 +204,18 @@ export function useTableStore(block: LoadedBlock) {
       }
       if (!wynik || !wynik.ok) {
         setRows((l) => l.filter((r) => r.id !== tymczasoweId));
-        toast.error(BLAD_ZAPISU);
+        // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
+        if (wynik && !wynik.ok && wynik.code === "stale_generation") {
+          onStaleGeneration?.();
+          toast.error(SEJF_ZMIENIL_SIE);
+          // Edycja zostaje otwarta z dotychczasowymi wartościami (sejf i tak się blokuje)
+          setEditing((cur) => cur ?? e);
+        } else {
+          toast.error(BLAD_ZAPISU);
+          // Edycja zostaje otwarta z szyfrogramem nowego hasła (nigdy z tekstem jawnym): pole pokaże
+          // NOWE hasło, a ponowne „Zapisz” je wyśle
+          setEditing((cur) => cur ?? { ...e, values: wartosci });
+        }
         return false;
       }
       const prawdziwy = wynik.row;
@@ -197,8 +241,11 @@ export function useTableStore(block: LoadedBlock) {
     Object.assign(wToku.zmiany, nowe);
     wierszeWToku.current.set(rowId, wToku);
     let udane = false;
+    let nieAktualnySejf = false;
     try {
-      udane = (await updateRow(rowId, nowe)).ok;
+      const wynik = await updateRow(rowId, nowe);
+      udane = wynik.ok;
+      nieAktualnySejf = !wynik.ok && wynik.code === "stale_generation";
     } catch {
       udane = false;
     }
@@ -209,7 +256,18 @@ export function useTableStore(block: LoadedBlock) {
       setRows((l) =>
         l.map((r) => (r.id === rowId ? { ...r, values: { ...r.values, ...poprzednie } } : r)),
       );
-      toast.error(BLAD_ZAPISU);
+      if (nieAktualnySejf) {
+        // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
+        onStaleGeneration?.();
+        toast.error(SEJF_ZMIENIL_SIE);
+        // Edycja zostaje otwarta z dotychczasowymi wartościami (o ile nie otwarto już innego wiersza)
+        setEditing((cur) => cur ?? e);
+      } else {
+        toast.error(BLAD_ZAPISU);
+        // Edycja zostaje otwarta z szyfrogramem nowego hasła (o ile nie otwarto już innego wiersza):
+        // pole pokaże NOWE hasło, a ponowne „Zapisz” wyśle je jeszcze raz (różni się od original)
+        setEditing((cur) => cur ?? { ...e, values: wartosci });
+      }
     }
     return udane;
   }
@@ -472,6 +530,9 @@ export function useTableStore(block: LoadedBlock) {
     tempFilters,
     editing,
     startEdit,
+    registerSecret: (r: SecretRegistration | null) => {
+      sekretRef.current = r;
+    },
     addRowDraft,
     setEditValue,
     cancelEdit,

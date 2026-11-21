@@ -55,6 +55,9 @@ export function MRowSheet({
       {fields.map((f) => {
         const surowa = values[f.id];
 
+        // Sekret nie jest edytowalny jako zwykły tekst (tekst jawny nie może trafić do stanu ani na serwer)
+        if (f.type === "secret") return null;
+
         if (f.type === "status" || f.type === "select") {
           const v = normalizeValue(f, surowa);
           return (

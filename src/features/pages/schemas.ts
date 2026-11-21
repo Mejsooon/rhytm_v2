@@ -28,6 +28,7 @@ export const fieldTypeSchema = z.enum([
   "status",
   "date",
   "rating",
+  "secret",
 ]);
 
 export const fieldConfigSchema = z.object({

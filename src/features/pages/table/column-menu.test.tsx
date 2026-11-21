@@ -21,6 +21,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+// Strony bez pola Sekret nie czytają stanu sejfu
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
 import { TemplatePageView } from "./template-page-view";

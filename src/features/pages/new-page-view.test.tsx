@@ -20,17 +20,21 @@ describe("NewPageView", () => {
     createPageFromTemplate.mockResolvedValue({ ok: true, id: "nowa" });
   });
 
-  it("pokazuje 4 szablony (Pusta strona, Books, Projects, Websites)", () => {
+  it("pokazuje 5 szablonów (Pusta strona, Books, Projects, Websites, Passwords z odznaką „szyfr.”)", () => {
     render(<NewPageView />);
     const karty = screen.getAllByRole("button", { pressed: false }).concat(
       screen.getAllByRole("button", { pressed: true }),
     );
-    const nazwy = ["Pusta strona", "Books", "Projects", "Websites"];
+    const nazwy = ["Pusta strona", "Books", "Projects", "Websites", "Passwords"];
     for (const n of nazwy) {
       expect(karty.some((k) => k.textContent?.includes(n))).toBe(true);
     }
     expect(screen.queryByText("Subscriptions")).toBeNull();
-    expect(screen.queryByText("Passwords")).toBeNull();
+    const passwords = karty.find((k) => k.textContent?.includes("Passwords"));
+    expect(passwords?.textContent).toContain("szyfr.");
+    expect(passwords?.textContent).toContain("Hasła szyfrowane w przeglądarce hasłem głównym.");
+    // Odznaka tylko przy Passwords
+    expect(screen.getAllByText("szyfr.")).toHaveLength(1);
     expect(screen.getByText("Tabela bez pól. Budujesz ją sama od zera.")).toBeInTheDocument();
   });
 

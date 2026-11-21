@@ -4,11 +4,11 @@ import * as React from "react";
 
 import { Search, type LucideIcon } from "lucide-react";
 
-import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL } from "@/components/controls";
+import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL, StatusBadge } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { FIELD_TYPE_META, PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
 
-// Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne i Bezpieczne dochodzą w Etapach 7 i 8)
+// Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne dochodzą w Etapie 7)
 const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; defName: string }[] = [
   { type: "text", Icon: FIELD_TYPE_META.text.Icon, name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
   { type: "number", Icon: FIELD_TYPE_META.number.Icon, name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
@@ -19,6 +19,15 @@ const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; def
   { type: "date", Icon: FIELD_TYPE_META.date.Icon, name: "Data", desc: "Data bez godziny. Może trafić do kalendarza głównego.", defName: "Termin" },
   { type: "rating", Icon: FIELD_TYPE_META.rating.Icon, name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
+
+// Grupa „Bezpieczne” z AddField.dc.html: Sekret (szyfrowany w przeglądarce), tylko na stronach z szablonu
+const TYP_SEKRET = {
+  type: "secret" as const,
+  Icon: FIELD_TYPE_META.secret.Icon,
+  name: "Sekret",
+  desc: "Zamaskowana wartość, np. hasło.",
+  defName: "Hasło",
+};
 
 // Wybrany typ: biała pigułka z cieniem; fokus zostawia cień i dodaje obrys
 const WYBRANY_TYP =
@@ -34,8 +43,11 @@ const OPCJE_STATUSU = [
 // Okno „Nowe pole” (AddField.dc.html) przy przycisku „+ Pole”: lista typów z wyszukiwarką
 // po lewej, po prawej nazwa pola (domyślna z typu), opis i ustawienia typu.
 export function AddFieldDialog({
+  allowSecret = false,
   onAdd,
 }: {
+  // Typ Sekret tylko na stronie z szablonu (nie na „Pustej stronie”)
+  allowSecret?: boolean;
   onAdd: (input: { name: string; type: FieldType; config: FieldConfig }) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -48,8 +60,10 @@ export function AddFieldDialog({
   const [nowaOpcja, setNowaOpcja] = React.useState<string | null>(null);
   const [wKalendarzu, setWKalendarzu] = React.useState(false);
 
-  const wybrany = TYPY.find((t) => t.type === typ) ?? TYPY[0];
-  const widoczne = TYPY.filter((t) => t.name.toLowerCase().includes(szukaj.trim().toLowerCase()));
+  const wybrany = [...TYPY, TYP_SEKRET].find((t) => t.type === typ) ?? TYPY[0];
+  const fraza = szukaj.trim().toLowerCase();
+  const widoczne = TYPY.filter((t) => t.name.toLowerCase().includes(fraza));
+  const sekretWidoczny = allowSecret && TYP_SEKRET.name.toLowerCase().includes(fraza);
 
   function otworz(o: boolean) {
     if (o) {
@@ -65,7 +79,7 @@ export function AddFieldDialog({
     setOpen(o);
   }
 
-  function wybierzTyp(t: (typeof TYPY)[number]) {
+  function wybierzTyp(t: (typeof TYPY)[number] | typeof TYP_SEKRET) {
     setTyp(t.type);
     if (!nazwaWlasna) setNazwa(t.defName);
     setOpcje(t.type === "status" ? OPCJE_STATUSU.map((o) => o.label) : []);
@@ -126,7 +140,7 @@ export function AddFieldDialog({
               className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground"
             />
           </div>
-          <div className={MENU_LABEL}>Podstawowe</div>
+          {widoczne.length > 0 && <div className={MENU_LABEL}>Podstawowe</div>}
           {widoczne.map((t) => (
             <button
               key={t.type}
@@ -147,6 +161,27 @@ export function AddFieldDialog({
               </span>
             </button>
           ))}
+          {sekretWidoczny && (
+            <>
+              <div className={MENU_LABEL}>Bezpieczne</div>
+              <button
+                type="button"
+                aria-pressed={typ === "secret"}
+                onClick={() => wybierzTyp(TYP_SEKRET)}
+                className={cn(
+                  "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-0 px-2 text-left text-sm text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:min-h-11",
+                  typ === "secret" ? WYBRANY_TYP : "bg-transparent",
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <TYP_SEKRET.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
+                  {TYP_SEKRET.name}
+                </span>
+                {/* .bdg.ok z makiety: odznaka „szyfr.” */}
+                <StatusBadge tone="green">szyfr.</StatusBadge>
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex flex-[999_1_320px] flex-col gap-3.5 p-4">
