@@ -50,6 +50,22 @@ describe("VaultSetup", () => {
     expect(document.querySelectorAll("[data-segment]")).toHaveLength(4);
   });
 
+  it("próg „Mocne”: hasło „Średnie” nie pozwala utworzyć sejfu", async () => {
+    const user = userEvent.setup();
+    render(<VaultSetup onCancel={() => {}} />);
+    await user.type(screen.getByLabelText("Hasło główne"), "abcdefghijk1");
+    await user.type(screen.getByLabelText("Powtórz"), "abcdefghijk1");
+    await user.click(screen.getByRole("checkbox"));
+    expect(screen.getByText("Średnie")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeDisabled();
+    await user.clear(screen.getByLabelText("Hasło główne"));
+    await user.clear(screen.getByLabelText("Powtórz"));
+    await user.type(screen.getByLabelText("Hasło główne"), "abcdefghijL1");
+    await user.type(screen.getByLabelText("Powtórz"), "abcdefghijL1");
+    expect(screen.getByText("Mocne")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeEnabled();
+  });
+
   it("wysłanie: setup dostaje hasło, a pola są czyszczone", async () => {
     const user = userEvent.setup();
     vault.setup.mockResolvedValue({ ok: true });

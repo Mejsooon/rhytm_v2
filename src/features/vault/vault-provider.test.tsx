@@ -314,7 +314,13 @@ describe("VaultProvider", () => {
       a = await widok.result.current.setup("krotkie");
       b = await widok.result.current.changePassword(HASLO, "krotkie");
     });
-    const komunikat = "Hasło główne jest za słabe. Wymagane co najmniej „Średnie”.";
+    // „Średnie” (12 znaków, 2 rodzaje) też jest poniżej progu „Mocne”
+    let c: unknown;
+    await act(async () => {
+      c = await widok.result.current.setup("abcdefghijk1");
+    });
+    expect(c).toEqual({ ok: false, message: "Hasło główne jest za słabe. Wymagane co najmniej „Mocne”." });
+    const komunikat = "Hasło główne jest za słabe. Wymagane co najmniej „Mocne”.";
     expect(a).toEqual({ ok: false, message: komunikat });
     expect(b).toEqual({ ok: false, message: komunikat });
     expect(createVault).not.toHaveBeenCalled();

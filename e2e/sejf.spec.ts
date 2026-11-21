@@ -96,7 +96,7 @@ test.describe("sejf", () => {
     ).toBeDisabled();
     await ustawianie.getByLabel("Hasło główne", { exact: true }).fill(glowne);
     await expect(
-      ustawianie.getByText(/^(Średnie|Mocne|Bardzo mocne)$/),
+      ustawianie.getByText(/^(Mocne|Bardzo mocne)$/),
     ).toBeVisible();
     await ustawianie.getByLabel("Powtórz", { exact: true }).fill(`${glowne}x`);
     await expect(ustawianie.getByText("Hasła się różnią.")).toBeVisible();

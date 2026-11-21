@@ -951,6 +951,7 @@ describe("TemplatePageView", () => {
 
     it("edycja szyfruje przed zapisem: updateRow dostaje SecretValue, nigdy string", async () => {
       const user = userEvent.setup();
+      vi.stubGlobal("CSS", { supports: () => true });
       vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
       const dane = strona("passwords", "Passwords", HASLA);
       const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
@@ -1365,4 +1366,9 @@ describe("TemplatePageView", () => {
       expect(screen.queryByText("Sejf zablokowany")).not.toBeInTheDocument();
     });
   });
+});
+
+// Globalne podmiany (np. CSS.supports) nie przechodzą między testami
+afterEach(() => {
+  vi.unstubAllGlobals();
 });

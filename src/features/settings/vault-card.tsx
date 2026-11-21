@@ -194,8 +194,8 @@ function ZmianaHasla() {
         : "text-success";
 
   const bladStopki = blad !== null && blad !== ZLE_HASLO;
-  // Próg „Min. „Średnie”” odpowiada MASTER_MIN_STRENGTH = 2; zaktualizuj tekst przy zmianie progu
-  let komunikat = "Min. „Średnie”, 12+ znaków.";
+  // Próg „Min. „Mocne”” odpowiada MASTER_MIN_STRENGTH = 3; zaktualizuj tekst przy zmianie progu
+  let komunikat = "Min. „Mocne”, 12+ znaków.";
   if (bladStopki) komunikat = blad;
   else if (zmieniono)
     komunikat =

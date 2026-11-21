@@ -45,6 +45,6 @@ describe("masterPasswordStrength", () => {
   });
 
   it("minimalna wymagana siła to 2", () => {
-    expect(MASTER_MIN_STRENGTH).toBe(2);
+    expect(MASTER_MIN_STRENGTH).toBe(3);
   });
 });

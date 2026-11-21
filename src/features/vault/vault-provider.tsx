@@ -39,7 +39,7 @@ const ZLE_HASLO = "Nieprawidłowe hasło główne.";
 const NIE_ZAPISANO = "Nie zapisano. Sejf musi być odblokowany.";
 const BLAD_SEJFU = "Nie udało się połączyć z sejfem. Spróbuj ponownie.";
 const ZABLOKOWANO = "Sejf został zablokowany. Spróbuj ponownie.";
-const ZA_SLABE = "Hasło główne jest za słabe. Wymagane co najmniej „Średnie”.";
+const ZA_SLABE = "Hasło główne jest za słabe. Wymagane co najmniej „Mocne”.";
 
 const VaultContext = React.createContext<VaultState | null>(null);
 

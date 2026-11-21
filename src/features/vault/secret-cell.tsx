@@ -157,7 +157,7 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
   );
 }
 
-// Pole Sekret w wierszu w trybie edycji: type="text" maskowane CSS (menedżery haseł nie traktują go jak
+// Pole Sekret w wierszu w trybie edycji: type="text" maskowane CSS (albo type="password", gdy przeglądarka nie maskuje) (menedżery haseł nie traktują go jak
 // hasła do konta i go nie zapisują), „Pokaż” zdejmuje maskę. Tekst jest sterowany z góry (stan
 // RowEdit), więc nie trafia do stanu tabeli; wartość początkowa jest odszyfrowywana lokalnie po odblokowaniu.
 export function SecretEdit({
@@ -203,13 +203,27 @@ export function SecretEdit({
     };
   }, [odblokowany, source, decrypt, onPrefill, fieldId]);
 
+  // Wersja mieszana: gdzie przeglądarka umie maskować pole tekstowe (-webkit-text-security), używamy
+  // type="text" — menedżery haseł go nie przechwytują. Gdzie nie umie (starsze Firefoksy), wracamy do
+  // type="password", żeby hasło nigdy nie było widoczne jawnie bez „Pokaż”.
+  const maskaCss =
+    typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("-webkit-text-security", "disc");
+  const jawne = odblokowany && pokaz;
+
   return (
     <div className="flex items-center gap-0.5">
       {/* Bez atrybutu name; atrybuty data-* wyłączają 1Password, LastPass, Bitwarden i inne menedżery */}
       <input
-        type="text"
+        type={maskaCss || jawne ? "text" : "password"}
         disabled={!odblokowany}
-        autoComplete="off"
+        autoComplete={maskaCss ? "off" : "new-password"}
+        // Zamaskowanego hasła nie da się skopiować ani wyciąć (jak w zwykłym polu hasła)
+        onCopy={(e) => {
+          if (!jawne) e.preventDefault();
+        }}
+        onCut={(e) => {
+          if (!jawne) e.preventDefault();
+        }}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
@@ -226,7 +240,7 @@ export function SecretEdit({
           if (e.key === "Enter") onSubmit();
           if (e.key === "Escape") onCancel();
         }}
-        className={cn(FIELD, "h-[30px] tabular-nums", !(odblokowany && pokaz) && "[-webkit-text-security:disc]")}
+        className={cn(FIELD, "h-[30px] tabular-nums", !jawne && "[-webkit-text-security:disc]")}
       />
       {odblokowany && (
         <Button

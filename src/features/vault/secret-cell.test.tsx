@@ -274,6 +274,7 @@ describe("SecretEdit", () => {
   }
 
   it("pole tekstowe z maskowaniem CSS, wyłączone podpowiedzi i menedżery haseł, bez name", () => {
+    vi.stubGlobal("CSS", { supports: () => true });
     const p = pole();
     expect(p).toHaveAttribute("type", "text");
     expect(p).toHaveClass("[-webkit-text-security:disc]");
@@ -290,9 +291,35 @@ describe("SecretEdit", () => {
   });
 
   it("Pokaż zdejmuje maskowanie", () => {
+    vi.stubGlobal("CSS", { supports: () => true });
     const p = pole();
     fireEvent.click(screen.getByRole("button", { name: "Pokaż hasło" }));
     expect(p).toHaveAttribute("type", "text");
     expect(p).not.toHaveClass("[-webkit-text-security:disc]");
   });
+
+  it("przeglądarka bez maskowania CSS: type=password, a Pokaż przełącza na tekst", () => {
+    vi.stubGlobal("CSS", { supports: () => false });
+    const p = pole();
+    expect(p).toHaveAttribute("type", "password");
+    expect(p).toHaveAttribute("autocomplete", "new-password");
+    expect(p).toHaveAttribute("data-1p-ignore");
+    expect(p).not.toHaveAttribute("name");
+    fireEvent.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    expect(p).toHaveAttribute("type", "text");
+  });
+
+  it("zamaskowanego hasła nie da się skopiować ani wyciąć; po Pokaż można", () => {
+    vi.stubGlobal("CSS", { supports: () => true });
+    const p = pole();
+    expect(fireEvent.copy(p)).toBe(false);
+    expect(fireEvent.cut(p)).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    expect(fireEvent.copy(p)).toBe(true);
+  });
+});
+
+// Globalne podmiany (np. CSS.supports) nie przechodzą między testami
+afterEach(() => {
+  vi.unstubAllGlobals();
 });

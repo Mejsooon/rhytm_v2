@@ -1,7 +1,7 @@
 // Lokalny miernik siły hasła głównego sejfu. Działa tylko w przeglądarce, hasło nigdzie nie wychodzi.
 
-// Minimalna siła, którą akceptuje formularz ustawiania hasła („Średnie”)
-export const MASTER_MIN_STRENGTH = 2;
+// Minimalna siła, którą akceptuje formularz ustawiania i zmiany hasła („Mocne”)
+export const MASTER_MIN_STRENGTH = 3;
 
 // 0 = „Za krótkie”, 1 = „Słabe”, 2 = „Średnie”, 3 = „Mocne”, 4 = „Bardzo mocne”
 export function masterPasswordStrength(pw: string): 0 | 1 | 2 | 3 | 4 {

@@ -65,7 +65,7 @@ vaults (
 )
 ```
 
-- RLS: SELECT/INSERT/UPDATE/DELETE tylko `user_id = auth.uid()`.
+- RLS: SELECT/INSERT/UPDATE tylko `user_id = auth.uid()`; bez DELETE z przeglądarki (wiersz znika kaskadą z kontem). Triggery: zakaz obniżania `generation`, zakaz zmiany typu pola z/na `secret`.
 - INSERT przez PK = brak dwóch sejfów (drugi INSERT kończy się błędem; UI pokazuje „Sejf już istnieje” i przeładowuje stan).
 - Usunięcie konta kasuje sejf (CASCADE); usunięcie konta już opisuje „sejf” w makiecie CSettings.
 
@@ -84,7 +84,7 @@ Pole Sekret: `page_fields.type = 'secret'` (nowy element `FieldType`, ikona luci
 - Szyfrowanie wartości: AES-GCM, nowy losowy IV 12 B dla każdego zapisu, tekst UTF-8; zapis `{v:1, iv, ct}`.
 - Klucz danych po odwinięciu: `CryptoKey` **nieeksportowalny**, trzymany tylko w pamięci (stan React w providerze na poziomie layoutu `(app)`), nigdy serializowany.
 - Zmiana hasła głównego: odblokowanie starym → nowa sól, nowy klucz owijający → ponowne owinięcie tego samego klucza danych (wymaga klucza extractable tylko w tej operacji: odwinięcie z `extractable: true` w obrębie jednej funkcji, bez przechowywania) → UPDATE `vaults` (kdf, wrapped_key, wrap_iv, updated_at). Dane w wierszach bez zmian.
-- Miernik siły: 5 stanów z makiety („Za krótkie”, „Słabe”, „Średnie”, „Mocne”, „Bardzo mocne”), 4 segmenty. Własna ocena lokalna (bez HIBP — hasło główne nie opuszcza przeglądarki; nie używa `passwordStrength` z hasła konta): < 12 znaków = „Za krótkie”; od 12 znaków punkty za długość (≥ 16, ≥ 20) i za każdą klasę znaków (małe, wielkie, cyfry, symbole) ponad jedną → „Słabe” / „Średnie” / „Mocne” / „Bardzo mocne”. Dokładne progi ustala plan i testy (np. 12 znaków, 2 klasy = „Średnie”). Utworzenie sejfu i zmiana hasła wymagają ≥ „Średnie”.
+- Miernik siły: 5 stanów z makiety („Za krótkie”, „Słabe”, „Średnie”, „Mocne”, „Bardzo mocne”), 4 segmenty. Własna ocena lokalna (bez HIBP — hasło główne nie opuszcza przeglądarki; nie używa `passwordStrength` z hasła konta): < 12 znaków = „Za krótkie”; od 12 znaków punkty za długość (≥ 16, ≥ 20) i za każdą klasę znaków (małe, wielkie, cyfry, symbole) ponad jedną → „Słabe” / „Średnie” / „Mocne” / „Bardzo mocne”. Dokładne progi ustala plan i testy (np. 12 znaków, 2 klasy = „Średnie”). Utworzenie sejfu i zmiana hasła wymagają ≥ „Mocne” (decyzja Mejsona po przeglądzie bezpieczeństwa, 2026-11-21: „Średnie” przepuszczało hasła słownikowe z cyfrą).
 
 ### Stan sejfu w aplikacji (provider)
 
@@ -98,7 +98,7 @@ Pole Sekret: `page_fields.type = 'secret'` (nowy element `FieldType`, ikona luci
 
 - **Strona z polem Sekret, sejf nieustawiony** → widok `CVaultSetup` w miejscu tabeli (okruszki „Strony / Passwords”, tytuł strony z ikoną, karta „Ustaw hasło główne sejfu”). Anuluj → wraca do tabeli z komórkami Sekret „— nieustawiony sejf” i bez możliwości wpisania sekretu.
 - **Sejf zablokowany** (`CVault`): tabela widoczna (pozostałe pola normalnie), kolumna Sekret pokazuje „zablokowane”; baner „Sejf zablokowany · serwer widzi tylko szyfrogram”; karta „Odblokuj sejf” (pole hasła głównego, „Odblokuj”, „Klucz zostaje tylko w pamięci tej karty. Blokada po 5 min bezczynności.”, link „Nie pamiętam hasła — zresetuj sejf”). Edycja wiersza możliwa dla zwykłych pól; pole Sekret w edycji wyłączone z podpowiedzią „Odblokuj sejf, żeby edytować”.
-- **Sejf odblokowany** (`CPasswords`): baner `alert ok` „Sejf odblokowany · blokada za mm:ss”, przycisk „Zablokuj teraz” w topbarze; komórki `••••••••••••` z przyciskami Pokaż (przełącza na tekst jawny tylko w tej komórce, do ponownego kliknięcia/blokady) i Kopiuj (toast + czyszczenie schowka po 30 s, jeśli schowek wciąż zawiera ten sam tekst — `navigator.clipboard.readText` gdy dostępne, inaczej zapis pustego tekstu); edycja: pole hasła (type=password z „Pokaż”), szyfrowane przed wysłaniem.
+- **Sejf odblokowany** (`CPasswords`): baner `alert ok` „Sejf odblokowany · blokada za mm:ss”, przycisk „Zablokuj teraz” w topbarze; komórki `••••••••••••` z przyciskami Pokaż (przełącza na tekst jawny tylko w tej komórce, do ponownego kliknięcia/blokady) i Kopiuj (toast + po 30 s zapis pustego tekstu do schowka — od razu, gdy karta ma fokus, inaczej po powrocie fokusu; także przy blokadzie; bez `readText`, który w tle nie działa); edycja: pole bez `name`, wyłączone dla menedżerów haseł — `type="text"` maskowane `-webkit-text-security`, a w przeglądarkach bez tej właściwości `type="password"`; zamaskowanego nie da się skopiować; „Pokaż”; szyfrowane przed wysłaniem. Formularze hasła głównego mają ukryte pole `username` „Sejf rhytm (hasło główne)”, żeby przeglądarka nie nadpisała danych logowania konta.
 - **Reset** (`CVaultReset`): okno: „Zresetować sejf?”, „Tej operacji nie da się cofnąć.”, „Zostanie usunięte: N sekretów” / „Zostaje: serwisy, loginy, URL-e”, „Pola „Sekret” zostaną wyczyszczone, a potem ustawisz nowe hasło główne.”, „Wpisz RESETUJ, żeby potwierdzić” (kontrolka `WordConfirm`), „Zresetuj sejf”. N = liczba niepustych wartości Sekret we wszystkich stronach.
 - **Ustawienia → Sejf** (brak makiety treści — projekt w stylu `CSettingsAccount`, do akceptacji wizualnej): karta „Sejf” ze stanem („Ustawiony 21.11.2026” / „Nie ustawiony”), „Zmień hasło główne” (stare, nowe z miernikiem, powtórz), „Zablokuj teraz” (gdy odblokowany), strefa niebezpieczna „Zresetuj sejf” (to samo okno co wyżej). Bez sejfu: przycisk „Ustaw sejf” otwierający formularz z CVaultSetup.
 
@@ -146,7 +146,8 @@ Pole Sekret: `page_fields.type = 'secret'` (nowy element `FieldType`, ikona luci
 - Miernik siły liczony lokalnie z długości i klas znaków (bez HIBP).
 
 - Ustawienia → Sejf zaprojektowane bez makiety, w stylu CSettingsAccount.
-- Minimalne wymagania hasła głównego: 12 znaków i siła ≥ „Średnie”.
+- Minimalne wymagania hasła głównego: 12 znaków i siła ≥ „Mocne”.
+- Model zagrożeń: serwer niezaufany co do poufności, nie integralności — AAD wiąże szyfrogram z wersją sejfu (`g`), nie z wierszem; serwer mógłby przełożyć szyfrogram między wierszami, ale go nie odczyta. Zmiana hasła głównego nie zmienia klucza danych (stara kopia bazy + stare hasło otwierają sekrety).
 - Blokada po 5 min **bezczynności** (nie od odblokowania); odświeżenie strony zawsze blokuje.
 - Zmiana typu pola na/z Sekret zablokowana.
 - Reset czyści też sekrety w wierszach w koszu.
