@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Button, FormDialog, WordConfirm } from "@/components/controls";
+import { Button, FormDialog, matchesWord, WordConfirm } from "@/components/controls";
 import { rowsForm } from "@/features/pages/rows-label";
 import { countSecrets } from "./actions";
 import { useVault } from "./vault-provider";
@@ -20,6 +20,9 @@ export function VaultResetDialog({
   // Liczba niepustych sekretów (null — jeszcze nieznana lub błąd odczytu)
   const [liczba, setLiczba] = React.useState<number | null>(null);
   const [blad, setBlad] = React.useState<string | null>(null);
+  // Wpisane słowo potwierdzenia (przycisk jest w stopce, więc stan trzymamy tutaj)
+  const [wpisane, setWpisane] = React.useState("");
+  const zgodne = matchesWord(wpisane, "RESETUJ");
   // Chroni przed podwójnym wysłaniem resetu
   const trwa = React.useRef(false);
 
@@ -38,6 +41,7 @@ export function VaultResetDialog({
       aktualne = false;
       setLiczba(null);
       setBlad(null);
+      setWpisane("");
     };
   }, [open]);
 
@@ -51,9 +55,27 @@ export function VaultResetDialog({
       title="Zresetować sejf?"
       description="Tej operacji nie da się cofnąć."
       footer={
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Anuluj
-        </Button>
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Anuluj
+          </Button>
+          <Button
+            variant="destructive"
+            aria-disabled={!zgodne}
+            onClick={() => {
+              if (!zgodne || trwa.current) return;
+              trwa.current = true;
+              setBlad(null);
+              void reset().then((wynik) => {
+                trwa.current = false;
+                if (wynik.ok) onOpenChange(false);
+                else setBlad(wynik.message);
+              });
+            }}
+          >
+            Zresetuj sejf
+          </Button>
+        </>
       }
     >
       <div className="grid grid-cols-2 gap-2.5">
@@ -76,16 +98,10 @@ export function VaultResetDialog({
         label="Wpisz RESETUJ, żeby potwierdzić"
         confirmLabel="Zresetuj sejf"
         destructive
-        onConfirm={() => {
-          if (trwa.current) return;
-          trwa.current = true;
-          setBlad(null);
-          void reset().then((wynik) => {
-            trwa.current = false;
-            if (wynik.ok) onOpenChange(false);
-            else setBlad(wynik.message);
-          });
-        }}
+        hideButton
+        value={wpisane}
+        onValueChange={setWpisane}
+        onConfirm={() => {}}
       />
       {blad && (
         <p role="alert" className="m-0 text-[13px] text-destructive-foreground">

@@ -32,7 +32,6 @@ export function VaultBanner() {
 
   return (
     <div
-      role="status"
       className={cn(
         "flex items-center gap-2.5 rounded-lg border px-3.5 py-3 text-sm",
         otwarty ? "border-success-border bg-success/[.04]" : "border-border bg-white",
@@ -43,8 +42,11 @@ export function VaultBanner() {
       ) : (
         <Lock aria-hidden="true" className="size-[18px] flex-none" />
       )}
-      <span className="flex-1 font-medium">{otwarty ? "Sejf odblokowany" : "Sejf zablokowany"}</span>
-      <span className="text-[13px] tabular-nums opacity-80">
+      {/* Region live tylko dla tekstu stanu; licznik co sekundę nie jest ogłaszany */}
+      <span role="status" className="flex-1 font-medium">
+        {otwarty ? "Sejf odblokowany" : "Sejf zablokowany"}
+      </span>
+      <span aria-hidden={otwarty ? "true" : undefined} className="text-[13px] tabular-nums opacity-80">
         {otwarty ? `blokada za ${odliczanie}` : "serwer widzi tylko szyfrogram"}
       </span>
     </div>

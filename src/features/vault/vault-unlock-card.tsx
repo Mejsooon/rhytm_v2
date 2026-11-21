@@ -88,7 +88,7 @@ export function VaultUnlockCard() {
           variant="ghost"
           size="sm"
           onClick={() => setReset(true)}
-          className="text-destructive-foreground hover:text-destructive-foreground"
+          className="text-destructive-foreground hover:text-destructive-foreground max-[799px]:h-11"
         >
           Nie pamiętam hasła — zresetuj sejf
         </Button>

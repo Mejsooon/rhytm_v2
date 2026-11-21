@@ -32,6 +32,20 @@ describe("VaultResetDialog", () => {
     expect(within(okno).getByText("Pola „Sekret” zostaną wyczyszczone, a potem ustawisz nowe hasło główne.")).toBeInTheDocument();
   });
 
+  it("Zresetuj sejf w stopce obok Anuluj, nieaktywne do wpisania RESETUJ", async () => {
+    const user = userEvent.setup();
+    m.countSecrets.mockResolvedValue({ ok: true, count: 2 });
+    render(<VaultResetDialog open onOpenChange={() => {}} />);
+    const okno = await screen.findByRole("dialog");
+    const przycisk = within(okno).getByRole("button", { name: "Zresetuj sejf" });
+    expect(przycisk).toHaveAttribute("aria-disabled", "true");
+    expect(within(okno).getByRole("button", { name: "Anuluj" }).parentElement).toBe(przycisk.parentElement);
+    await user.click(przycisk);
+    expect(m.reset).not.toHaveBeenCalled();
+    await user.type(within(okno).getByPlaceholderText("RESETUJ"), "RESETUJ");
+    expect(przycisk).toHaveAttribute("aria-disabled", "false");
+  });
+
   it("udany reset zamyka okno; błąd pokazuje komunikat", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();

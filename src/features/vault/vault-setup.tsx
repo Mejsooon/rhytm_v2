@@ -57,7 +57,7 @@ export function VaultSetup({ onCancel }: { onCancel: () => void }) {
             Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko szyfrogram.
           </p>
         </div>
-        <Button variant="ghost" size="sm" icon aria-label="Zamknij" onClick={onCancel}>
+        <Button variant="ghost" size="sm" icon aria-label="Zamknij" onClick={onCancel} className="max-[799px]:size-11">
           <X aria-hidden="true" className="size-4" />
         </Button>
       </div>

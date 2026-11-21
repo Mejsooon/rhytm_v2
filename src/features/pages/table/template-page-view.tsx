@@ -262,7 +262,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                   <Lock aria-hidden="true" className="size-3" />
                   AES-GCM w przeglądarce
                 </StatusBadge>
-                {polaSortu.length > 0 && <span>sort: {polaSortu.join(", ")}</span>}
+                {polaSortu.length > 0 && <span>· sort: {polaSortu.join(", ")}</span>}
               </span>
             ) : (
               meta

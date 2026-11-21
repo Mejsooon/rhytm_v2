@@ -18,7 +18,13 @@ describe("VaultBanner", () => {
     vault.state = { status: "odblokowany", remainingMs: 61_000 };
     render(<VaultBanner />);
     expect(screen.getByText("blokada za 01:01")).toBeInTheDocument();
-    vault.state = { status: "odblokowany", remainingMs: 300_000 };
+  });
+
+  it("odblokowany: licznik nie jest w regionie live", () => {
+    vault.state = { status: "odblokowany", remainingMs: 61_000 };
+    render(<VaultBanner />);
+    expect(screen.getByRole("status")).toHaveTextContent("Sejf odblokowany");
+    expect(screen.getByRole("status")).not.toHaveTextContent("blokada za");
   });
 
   it("brak, ładowanie: nic", () => {

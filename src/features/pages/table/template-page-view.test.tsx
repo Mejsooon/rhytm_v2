@@ -800,7 +800,8 @@ describe("TemplatePageView", () => {
 
   // Passwords (CVaultSetup / CVault / CPasswords.dc.html)
   describe("sejf (pole Sekret)", () => {
-    const SEKRET = { v: 1, g: 1, iv: "AAAAAAAAAAAAAAAA", ct: "AAAAAAAAAAAAAAAAAAAAAA==" };
+    // Rozpoznawalny szyfrogram: nie może trafić do tekstu strony
+    const SEKRET = { v: 1, g: 1, iv: btoa("iv-dwanascie"), ct: btoa("szyfrogram-szesnascie") };
     const HASLA = [
       { Serwis: "GitHub", Login: "mejsooon", Hasło: SEKRET, URL: "github.com" },
       { Serwis: "Supabase", Login: "mejson@…", Hasło: SEKRET, URL: "supabase.com" },
@@ -893,6 +894,66 @@ describe("TemplatePageView", () => {
       expect(screen.queryByText("Sejf zablokowany")).not.toBeInTheDocument();
       expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
+    });
+
+    it("odblokowany: komórki Sekret to ••••••••••••, a szyfrogram nie trafia do tekstu strony", () => {
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getAllByText("••••••••••••")).toHaveLength(2);
+      expect(document.body.textContent).not.toContain(SEKRET.ct);
+      expect(document.body.textContent).not.toContain(SEKRET.iv);
+    });
+
+    it("zablokowany: szyfrogram nie trafia do tekstu strony", () => {
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(document.body.textContent).not.toContain(SEKRET.ct);
+      expect(document.body.textContent).not.toContain(SEKRET.iv);
+    });
+
+    it("edycja wiersza: pole Hasło wyłączone z podpowiedzią Odblokuj sejf, żeby edytować", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      expect(pole).toBeDisabled();
+      expect(pole).toHaveAttribute("placeholder", "Odblokuj sejf, żeby edytować");
+    });
+
+    it("nowy wiersz zapisany z samym tytułem: addRow dostaje null dla pola Sekret", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Serwis" }), "Nowy serwis");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.addRow).toHaveBeenCalledTimes(1));
+      const wartosci = actions.addRow.mock.calls[0][1] as Record<string, unknown>;
+      expect(wartosci[haslo.id]).toBeNull();
+    });
+
+    it("arkusz mobilny pomija pole Sekret", async () => {
+      window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const arkusz = screen.getByRole("dialog", { name: "GitHub" });
+      expect(within(arkusz).getByRole("textbox", { name: "Login" })).toBeInTheDocument();
+      expect(within(arkusz).queryByLabelText("Hasło")).not.toBeInTheDocument();
+    });
+
+    it("po resecie (status przechodzi na brak) otwiera się VaultSetup", () => {
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      const dane = strona("passwords", "Passwords", HASLA);
+      const { rerender } = render(<TemplatePageView data={dane} />);
+      expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
+      vault.state = { ...vault.state, status: "brak", generation: null };
+      rerender(<TemplatePageView data={dane} />);
+      expect(screen.getByRole("heading", { name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
     });
 
     it("nieobsługiwany: komunikat o nowoczesnej przeglądarce", () => {
