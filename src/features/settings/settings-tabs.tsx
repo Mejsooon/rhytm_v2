@@ -2,13 +2,21 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-export const SETTINGS_TABS = [
-  { slug: "ogolne", label: "Ogólne" },
+export const SETTINGS_TABS: readonly {
+  slug: "ogolne" | "konto" | "sejf" | "powiadomienia" | "kategorie";
+  label: string;
+  description?: string;
+}[] = [
+  {
+    slug: "ogolne",
+    label: "Ogólne",
+    description: "Profil, cele i podstawowe preferencje aplikacji.",
+  },
   { slug: "konto", label: "Konto i bezpieczeństwo" },
   { slug: "sejf", label: "Sejf" },
   { slug: "powiadomienia", label: "Powiadomienia" },
   { slug: "kategorie", label: "Kategorie kalendarza" },
-] as const;
+];
 
 export type SettingsTabSlug = (typeof SETTINGS_TABS)[number]["slug"];
 
@@ -27,10 +35,10 @@ export function SettingsTabs({ active }: { active: SettingsTabSlug }) {
             href={`/ustawienia/${tab.slug}`}
             aria-current={aktywna ? "page" : undefined}
             className={cn(
-              "rounded-md px-2.5 py-[7px] whitespace-nowrap no-underline max-[799px]:flex max-[799px]:min-h-11 max-[799px]:flex-none max-[799px]:items-center max-[799px]:px-3.5",
+              "flex items-center rounded-lg px-2.5 whitespace-nowrap font-medium no-underline min-[800px]:h-8 max-[799px]:flex max-[799px]:min-h-11 max-[799px]:flex-none max-[799px]:items-center max-[799px]:px-3.5",
               aktywna
-                ? "bg-active font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-active text-foreground"
+                : "text-muted-foreground hover:bg-hover hover:text-foreground",
             )}
           >
             {tab.label}

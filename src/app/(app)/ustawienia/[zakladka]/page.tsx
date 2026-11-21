@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
-import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
+import { ModuleHeader } from "@/components/shell/module-header";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
@@ -122,10 +122,17 @@ export default async function ZakladkaPage({
       />
       <div className="flex w-full max-w-[1100px] items-start gap-8 px-6 py-7 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:gap-4 max-[799px]:py-2">
         <SettingsTabs active={tab.slug as SettingsTabSlug} />
-        <div className="flex min-w-0 flex-1 flex-col gap-6 max-[799px]:w-full max-[799px]:gap-4">
-          <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">
-            {tab.label}
-          </h2>
+        <div className="flex min-w-0 max-w-[840px] flex-1 flex-col gap-6 max-[799px]:w-full max-[799px]:gap-4">
+          <div className="max-[799px]:hidden">
+            <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
+              {tab.label}
+            </h2>
+            {tab.description ? (
+              <p className="m-0 mt-1 text-muted-foreground">
+                {tab.description}
+              </p>
+            ) : null}
+          </div>
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
               <Ogolne />
@@ -137,7 +144,9 @@ export default async function ZakladkaPage({
           ) : tab.slug === "sejf" ? (
             <VaultCard />
           ) : (
-            <EmptyModule>Ta zakładka powstanie w kolejnym etapie.</EmptyModule>
+            <div className="rounded-xl border bg-white px-6 py-10 text-center text-muted-foreground shadow-card">
+              Ta zakładka powstanie w kolejnym etapie.
+            </div>
           )}
         </div>
       </div>
