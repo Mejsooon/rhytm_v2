@@ -174,11 +174,10 @@ test.describe("sejf", () => {
     await expect(reset.getByText("Zostanie usunięte")).toBeVisible();
     await expect(reset.getByText("1 sekret", { exact: true })).toBeVisible();
     await expect(reset.getByText("serwisy, loginy, URL-e")).toBeVisible();
-    // Bez wpisanego słowa reset nic nie robi
-    await reset
-      .getByRole("button", { name: "Zresetuj sejf", exact: true })
-      .click();
-    await expect(reset).toBeVisible();
+    // Bez wpisanego słowa przycisk resetu jest nieaktywny
+    await expect(
+      reset.getByRole("button", { name: "Zresetuj sejf", exact: true }),
+    ).toHaveAttribute("aria-disabled", "true");
     await reset.getByPlaceholder("RESETUJ").fill("RESETUJ");
     await reset
       .getByRole("button", { name: "Zresetuj sejf", exact: true })
