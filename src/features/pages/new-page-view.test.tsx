@@ -34,6 +34,25 @@ describe("NewPageView", () => {
     expect(screen.getByText("Tabela bez pól. Budujesz ją sama od zera.")).toBeInTheDocument();
   });
 
+  it("pokazuje podtytuł powiązany z oknem jako opis", () => {
+    render(<NewPageView />);
+    const podtytul = screen.getByText("Wybierz szablon albo zacznij od pustej tabeli.");
+    expect(podtytul).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Nowa strona" })).toHaveAccessibleDescription(
+      "Wybierz szablon albo zacznij od pustej tabeli.",
+    );
+  });
+
+  it("wyszukiwanie bez dopasowania pokazuje komunikat z frazą", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
+    await user.type(screen.getByRole("textbox", { name: "Szukaj szablonu" }), "xyz");
+    expect(screen.getByText("Brak szablonu „xyz”.")).toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: "Szukaj szablonu" }));
+    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
+  });
+
   it("wybór szablonu zmienia panel „Pola, które powstaną”", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
@@ -98,5 +117,38 @@ describe("NewPageView", () => {
     await user.click(screen.getByRole("button", { name: "Zamknij" }));
     await user.keyboard("{Escape}");
     expect(back).toHaveBeenCalledTimes(3);
+  });
+
+  it("karta szablonu ma fokus z shadow-focus i hover", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    const karta = screen.getByRole("button", { name: /Books/ });
+    expect(karta).toHaveClass("rounded-xl", "shadow-xs", "hover:bg-panel", "focus-visible:shadow-focus", "outline-none");
+    // Zaznaczona: obwódka primary + cień zaznaczenia w style, fokus jako obrys
+    await user.click(karta);
+    expect(karta).toHaveClass("border-primary", "focus-visible:outline-solid", "outline-ring");
+    expect(karta.style.boxShadow).toContain("rgba(38, 38, 38, 0.12)");
+    expect(karta).not.toHaveClass("focus-visible:shadow-focus");
+  });
+
+  it("okno jak .dlg: tło z rozmyciem, promień, cień pop, szara stopka", () => {
+    render(<NewPageView />);
+    const okno = screen.getByRole("dialog");
+    expect(okno.parentElement).toHaveClass("backdrop-blur-[4px]");
+    expect(okno).toHaveClass("rounded-xl", "border-border", "shadow-pop");
+    expect(screen.getByRole("button", { name: "Utwórz stronę" }).parentElement).toHaveClass(
+      "border-t",
+      "bg-black/[.025]",
+    );
+  });
+
+  it("pola i odznaki typów z tokenów (StatusBadge), pole nazwy jak FIELD", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("button", { name: /Projects/ }));
+    expect(screen.getByText("Data · w kalendarzu")).toHaveClass("bg-success-soft", "text-success");
+    expect(screen.getByText("Tekst", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
+    expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");
   });
 });

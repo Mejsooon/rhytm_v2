@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Subscriptions (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible{opacity:1}
+.row-click{cursor:pointer}
+@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+</style>
+</helmet>
+<div class="shell" style="min-height: 935px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="subs" min-height="935" hint-size="100%,935px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Subscriptions</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CFilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="CAddField.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><button type="button" class="btnp" onClick="{{addRow}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</button></div>
+    </header>
+    <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; width: 100%">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 26px; line-height: 1" aria-hidden="true">💳</span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px"><span class="bdg sec lg num">{{countRows}} wierszy</span><span class="bdg ok lg num">{{countLive}} aktywnych</span><span class="bdg sec lg">5 pól</span><span class="bdg out lg">szablon „Subscription tracker”</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Σ miesięcznie</div><div class="num" style="font-size: 26px; margin-top: 8px; font-weight: 600; letter-spacing: -.02em">{{sumMonth}} <span style="font-size: 14px; font-weight: 400; color: #686868">zł</span></div></div>
+        <div class="card" style="padding: 16px 18px"><div class="lbl">Σ rocznie</div><div class="num" style="font-size: 26px; margin-top: 8px; font-weight: 600; letter-spacing: -.02em">{{sumYear}} <span style="font-size: 14px; font-weight: 400; color: #686868">zł</span></div></div>
+        <a href="CCalendarRenewal.dc.html" class="card" style="padding: 16px 18px; text-decoration: none"><div class="lbl">Najbliższe odnowienie</div><div style="display: flex; align-items: center; gap: 8px; margin-top: 10px"><span style="font-size: 18px; font-weight: 600">{{nextName}}</span><span class="bdg warn lg">{{nextRel}}</span></div></a>
+      </div>
+      <div class="frame"><div class="inner tbl-wrap">
+        <table class="tbl" style="min-width: 900px">
+          <thead><tr>
+            <th scope="col" class="th"><span style="color: #a3a3a3; margin-right: 6px; font-size: 12px; font-weight: 600">Aa</span>Nazwa</th>
+            <th scope="col" class="th" style="text-align: right; width: 220px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Kwota cykliczna</th>
+            <th scope="col" class="th" style="padding-left: 40px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>Data odnowienia <a href="CCalendarRenewal.dc.html" class="bdg ok" style="margin-left: 6px; text-decoration: none">w kalendarzu</a></th>
+            <th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>Kategoria</th>
+            <th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>Aktywna</th>
+            <th scope="col" class="th" style="width: 170px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Akcje</span></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="13">
+              <sc-if value="{{r.view}}" hint-placeholder-val="{{true}}">
+              <tr class="row-click" style="{{r.rowS}}" onClick="{{r.open}}" title="Kliknij, aby edytować">
+                <td class="td" style="font-weight: 500">{{r.name}}</td>
+                <td class="td num" style="text-align: right">{{r.price}} <span class="muted">/ {{r.cycle}}</span></td>
+                <td class="td num" style="padding-left: 40px">{{r.date}} <span class="{{r.relC}}" style="margin-left: 6px">{{r.rel}}</span></td>
+                <td class="td"><span class="bdg out">{{r.cat}}</span></td>
+                <td class="td"><input type="checkbox" defaultChecked="{{r.active}}" aria-label="Aktywna"></td>
+                <td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="row-del btng xs" aria-label="Edytuj wiersz" onClick="{{r.edit}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</button><button type="button" class="row-del btng xs" aria-label="Usuń wiersz" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</button></td>
+              </tr>
+              </sc-if>
+              <sc-if value="{{r.editing}}" hint-placeholder-val="{{false}}"><tr style="background: rgba(21,128,61,.04)"><td class="td" style="font-weight: 500"><input class="inp" type="text" value="{{r.ev.name}}" onChange="{{r.eon.name}}" placeholder="Nazwa…" aria-label="Nazwa" style="height: 30px"></td><td class="td num" style="text-align: right; white-space: nowrap"><span style="display: inline-flex; align-items: center; gap: 6px"><input class="inp num" type="text" inputMode="decimal" value="{{r.ev.price}}" onChange="{{r.eon.price}}" placeholder="0,00" aria-label="Kwota" style="height: 30px; width: 84px; text-align: right"><span class="seg" role="group" aria-label="Cykl" style="padding: 2px"><sc-for list="{{r.u.cyc}}" as="cy" hint-placeholder-count="2"><button type="button" aria-pressed="{{cy.p}}" onClick="{{cy.pick}}" style="height: 24px; padding: 0 8px; font-size: 13px">{{cy.t}}</button></sc-for></span></span></td><td class="td" style="padding-left: 40px"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{r.u.toggleDate}}" aria-haspopup="dialog" aria-expanded="{{r.u.dateExp}}" aria-label="Data odnowienia" style="height: 30px; width: auto; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="{{r.u.dateTxtS}}">{{r.u.dateTxt}}</span></button><sc-if value="{{r.u.dateOpen}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; padding: 10px; width: 256px"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 0 8px"><button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" onClick="{{r.u.calPrev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-size: 14px; font-weight: 600">{{r.u.calLabel}}</span><button type="button" class="btn ic sm" aria-label="Następny miesiąc" onClick="{{r.u.calNext}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 12px; font-weight: 500; color: #686868; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{r.u.cal}}" as="dc" hint-placeholder-count="35"><button type="button" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="dd" onClick="{{r.u.toggleCat}}" aria-haspopup="listbox" aria-expanded="{{r.u.catExp}}" aria-label="Kategoria" style="height: 30px; width: auto; gap: 8px"><span>{{r.u.catTxt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{r.u.catOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Kategoria" class="ddpop" style="right: auto; width: 180px"><sc-for list="{{r.u.cats}}" as="ct" hint-placeholder-count="7"><button type="button" role="option" class="ddopt" aria-selected="{{ct.p}}" onClick="{{ct.pick}}"><span>{{ct.t}}</span><sc-if value="{{ct.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></td><td class="td"><input type="checkbox" defaultChecked="{{r.active}}" aria-label="Aktywna"></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="btnp xs" onClick="{{r.esave}}">Zapisz</button><button type="button" class="btng ic xs" aria-label="Anuluj" onClick="{{r.ecancel}}" style="margin-left: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></td></tr></sc-if>
+            </sc-for>
+            <sc-for list="{{newRows}}" as="nr" hint-placeholder-count="0"><tr style="background: rgba(21,128,61,.04)"><td class="td" style="font-weight: 500"><input class="inp" type="text" value="{{nr.v.name}}" onChange="{{nr.on.name}}" placeholder="Nazwa…" aria-label="Nazwa" style="height: 30px"></td><td class="td num" style="text-align: right; white-space: nowrap"><span style="display: inline-flex; align-items: center; gap: 6px"><input class="inp num" type="text" inputMode="decimal" value="{{nr.v.price}}" onChange="{{nr.on.price}}" placeholder="0,00" aria-label="Kwota" style="height: 30px; width: 84px; text-align: right"><span class="seg" role="group" aria-label="Cykl" style="padding: 2px"><sc-for list="{{nr.u.cyc}}" as="cy" hint-placeholder-count="2"><button type="button" aria-pressed="{{cy.p}}" onClick="{{cy.pick}}" style="height: 24px; padding: 0 8px; font-size: 13px">{{cy.t}}</button></sc-for></span></span></td><td class="td" style="padding-left: 40px"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{nr.u.toggleDate}}" aria-haspopup="dialog" aria-expanded="{{nr.u.dateExp}}" aria-label="Data odnowienia" style="height: 30px; width: auto; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="{{nr.u.dateTxtS}}">{{nr.u.dateTxt}}</span></button><sc-if value="{{nr.u.dateOpen}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; padding: 10px; width: 256px"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 0 8px"><button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" onClick="{{nr.u.calPrev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-size: 14px; font-weight: 600">{{nr.u.calLabel}}</span><button type="button" class="btn ic sm" aria-label="Następny miesiąc" onClick="{{nr.u.calNext}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 12px; font-weight: 500; color: #686868; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{nr.u.cal}}" as="dc" hint-placeholder-count="35"><button type="button" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="dd" onClick="{{nr.u.toggleCat}}" aria-haspopup="listbox" aria-expanded="{{nr.u.catExp}}" aria-label="Kategoria" style="height: 30px; width: auto; gap: 8px"><span>{{nr.u.catTxt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{nr.u.catOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Kategoria" class="ddpop" style="right: auto; width: 180px"><sc-for list="{{nr.u.cats}}" as="ct" hint-placeholder-count="7"><button type="button" role="option" class="ddopt" aria-selected="{{ct.p}}" onClick="{{ct.pick}}"><span>{{ct.t}}</span><sc-if value="{{ct.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></td><td class="td"><input type="checkbox" defaultChecked="{{true}}" aria-label="Aktywna"></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="btnp xs" onClick="{{nr.save}}">Zapisz</button><button type="button" class="btng ic xs" aria-label="Anuluj" onClick="{{nr.remove}}" style="margin-left: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></td></tr></sc-for>
+          </tbody>
+          <tfoot><tr style="background: rgba(0,0,0,.02)">
+            <td style="padding: 6px 8px; border-top: 1px solid rgba(0,0,0,.08)"><button type="button" class="btng sm" onClick="{{addRow}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</button></td>
+            <td class="num" style="padding: 0 12px; text-align: right; font-weight: 600; border-top: 1px solid rgba(0,0,0,.08)">Σ {{sumMonth}} zł / mies.</td>
+            <td class="num muted" style="padding: 0 12px 0 40px; border-top: 1px solid rgba(0,0,0,.08)">{{countLive}} w kalendarzu</td>
+            <td style="border-top: 1px solid rgba(0,0,0,.08)"></td><td style="border-top: 1px solid rgba(0,0,0,.08)"></td><td style="border-top: 1px solid rgba(0,0,0,.08)"></td>
+          </tr></tfoot>
+        </table>
+      </div></div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":935}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-page', 'CMain.dc.html'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const D = S.drafts || [];
+    const DEL = S.del || {};
+    const T0 = Date.UTC(2026, 10, 15);
+    const money = (n) => { const p = n.toFixed(2).split('.'); return p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + p[1]; };
+    const num = (s) => { const n = parseFloat(String(s || '').replace(/[^0-9,.-]/g, '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+    const rel = (iso) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return { date: '—', rel: '' };
+      const d = Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - T0) / 86400000);
+      return { date: m[3] + '.' + m[2] + '.' + m[1], rel: d < 0 ? 'minęło' : d === 0 ? 'dziś' : d === 1 ? 'jutro' : d < 45 ? 'za ' + d + ' dni' : 'za ' + Math.round(d / 30) + ' mies.' };
+    };
+    const F = ['name', 'price', 'cycle', 'date', 'cat'];
+    const DEF = { cycle: 'mies.', cat: 'Rozrywka' };
+    const put = (k, p) => this.setState({ drafts: D.map((x) => (x.k === k ? Object.assign({}, x, p) : x)) });
+    const P = S.pick || null;
+    const CATS = ['Rozrywka', 'Chmura', 'Zdrowie', 'Praca', 'Sport', 'Nauka', 'Inne'];
+    const MONF = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const p2 = (x) => String(x).padStart(2, '0');
+    const ui = (key, v, set) => {
+      const open = P && P.key === key ? P.kind : null;
+      const iso = v.date || '';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+      const b = new Date(m ? Date.UTC(+m[1], +m[2] - 1, 1) : Date.UTC(2026, 10, 1));
+      const mo = open === 'date' ? (P.mo || 0) : 0;
+      const first = new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth() + mo, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      const cal = [];
+      for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'height:30px;visibility:hidden', pick: () => {} });
+      for (let d = 1; d <= nd; d++) {
+        const ds = first.getUTCFullYear() + '-' + p2(first.getUTCMonth() + 1) + '-' + p2(d);
+        const on = ds === iso, today = ds === '2026-11-15';
+        cal.push({ t: String(d), pick: () => { set({ date: ds }); this.setState({ pick: null }); },
+          s: 'height:30px;padding:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;border:0;' + (today ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:28px;height:28px;justify-self:center;align-self:center;border-radius:50%;line-height:1;letter-spacing:0;background:#dc2626;color:#ffffff;font-weight:600' + (on ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #262626' : '') : on ? 'background:#262626;color:#fafafa;font-weight:600' : 'background:transparent;color:#262626') });
+      }
+      const cyc = v.cycle || 'mies.';
+      const cat = v.cat || 'Rozrywka';
+      return {
+        cyc: [['mies.', 'mies.'], ['rok', 'rok']].map((c) => ({ t: c[1], p: cyc === c[0] ? 'true' : 'false', pick: () => set({ cycle: c[0] }) })),
+        dateTxt: m ? m[3] + '.' + m[2] + '.' + m[1] : 'Wybierz datę', dateTxtS: m ? '' : 'color:#686868',
+        dateOpen: open === 'date', dateExp: open === 'date' ? 'true' : 'false',
+        toggleDate: () => this.setState({ pick: open === 'date' ? null : { key, kind: 'date', mo: 0 } }),
+        calLabel: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
+        calPrev: () => this.setState({ pick: { key, kind: 'date', mo: mo - 1 } }),
+        calNext: () => this.setState({ pick: { key, kind: 'date', mo: mo + 1 } }),
+        cal,
+        catTxt: cat,
+        catOpen: open === 'cat', catExp: open === 'cat' ? 'true' : 'false',
+        toggleCat: () => this.setState({ pick: open === 'cat' ? null : { key, kind: 'cat' } }),
+        cats: CATS.map((c) => ({ t: c, p: cat === c ? 'true' : 'false', on: cat === c, pick: () => { set({ cat: c }); this.setState({ pick: null }); } }))
+      };
+    };
+    const base = [
+        { name: 'Netflix', price: '43,00', cycle: 'mies.', date: '21.11.2026', rel: 'za 6 dni', cat: 'Rozrywka' },
+        { name: 'YouTube Premium', price: '29,99', cycle: 'mies.', date: '24.11.2026', rel: 'za 9 dni', cat: 'Rozrywka' },
+        { name: 'iCloud+', price: '4,99', cycle: 'mies.', date: '28.11.2026', rel: 'za 13 dni', cat: 'Chmura' },
+        { name: 'Siłownia — karnet', price: '129,00', cycle: 'mies.', date: '01.12.2026', rel: 'za 16 dni', cat: 'Zdrowie' },
+        { name: 'Spotify', price: '23,99', cycle: 'mies.', date: '02.12.2026', rel: 'za 17 dni', cat: 'Rozrywka' },
+        { name: 'Claude Pro', price: '99,00', cycle: 'mies.', date: '05.12.2026', rel: 'za 20 dni', cat: 'Praca' },
+        { name: 'GitHub Copilot', price: '40,00', cycle: 'mies.', date: '08.12.2026', rel: 'za 23 dni', cat: 'Praca' },
+        { name: 'Google One 2 TB', price: '46,99', cycle: 'mies.', date: '12.12.2026', rel: 'za 27 dni', cat: 'Chmura' },
+        { name: 'Disney+', price: '37,99', cycle: 'mies.', date: '03.01.2027', rel: 'anulowana', cat: 'Rozrywka', active: false },
+        { name: 'Strava', price: '249,99', cycle: 'rok', date: '10.02.2027', rel: 'za 3 mies.', cat: 'Sport' },
+        { name: 'Framer Mini', price: '600,00', cycle: 'rok', date: '14.03.2027', rel: 'za 4 mies.', cat: 'Praca' },
+        { name: 'Duolingo Super', price: '239,99', cycle: 'rok', date: '20.04.2027', rel: 'za 5 mies.', cat: 'Nauka' },
+        { name: 'Domena .photo', price: '120,00', cycle: 'rok', date: '09.06.2027', rel: 'za 7 mies.', cat: 'Praca' }
+    ].map((r, i) => Object.assign(r, { id: 'b' + i }));
+    const OV = S.over || {};
+    const E = S.edit || null;
+    const toIso = (s) => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s || ''); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; };
+    const all = base.concat(S.added || []).map((r) => (OV[r.id] ? Object.assign({}, r, OV[r.id]) : r)).filter((r) => !DEL[r.id]);
+    const live = all.filter((r) => r.active !== false);
+    const perMonth = live.reduce((a, r) => a + (r.cycle === 'rok' ? num(r.price) / 12 : num(r.price)), 0);
+    const perYear = live.reduce((a, r) => a + (r.cycle === 'rok' ? num(r.price) : num(r.price) * 12), 0);
+    const next = live.filter((r) => /^za \d+ dni$|^dziś$|^jutro$/.test(r.rel)).sort((a, b) => (parseInt(a.rel.replace(/\D/g, '') || '0', 10)) - (parseInt(b.rel.replace(/\D/g, '') || '0', 10)))[0];
+    const relC = (r) => r.active === false ? 'bdg sec' : /^za \d+ dni$|^dziś$|^jutro$/.test(r.rel) && parseInt(r.rel.replace(/\D/g, '') || '0', 10) <= 10 ? 'bdg warn' : 'muted';
+    return {
+      addRow: () => this.setState({ drafts: D.concat([{ k: Date.now(), v: {}, saved: false }]) }),
+      newRows: D.map((x) => ({ k: x.k,
+        u: ui('n' + x.k, Object.assign({}, DEF, x.v), (patch) => put(x.k, { v: Object.assign({}, x.v, patch) })),
+        v: F.reduce((o, f) => { o[f] = x.v[f] || DEF[f] || ''; return o; }, {}),
+        on: F.reduce((o, f) => { o[f] = (e) => put(x.k, { v: Object.assign({}, x.v, { [f]: e.target.value }) }); return o; }, {}),
+        save: () => {
+          const v = Object.assign({}, DEF, x.v);
+          const r = rel(v.date);
+          const row = { id: 'n' + x.k, name: (v.name || '').trim() || 'Bez nazwy', price: money(num(v.price)), cycle: v.cycle, date: r.date, rel: r.rel, cat: v.cat };
+          this.setState({ drafts: D.filter((y) => y.k !== x.k), added: (S.added || []).concat([row]) });
+        },
+        remove: () => this.setState({ drafts: D.filter((y) => y.k !== x.k) }) })),
+      sumMonth: money(perMonth),
+      sumYear: money(perYear),
+      nextName: next ? next.name : '—',
+      nextRel: next ? next.rel : '',
+      countRows: all.length,
+      countLive: live.length,
+      rows: all.map((r) => Object.assign({}, r, {
+        active: r.active !== false, relC: relC(r),
+        rowS: r.active === false ? 'color:#686868;text-decoration:line-through' : '',
+        del: () => this.setState({ del: Object.assign({}, DEL, { [r.id]: true }), edit: null }),
+        view: !(E && E.id === r.id),
+        editing: !!(E && E.id === r.id),
+        edit: () => this.setState({ edit: { id: r.id, v: { name: r.name, price: r.price, cycle: r.cycle, date: toIso(r.date), cat: r.cat } } }),
+        open: (e) => { const t = e && e.target; if (t && t.closest && t.closest('button,a,input,select,label')) return; this.setState({ edit: { id: r.id, v: { name: r.name, price: r.price, cycle: r.cycle, date: toIso(r.date), cat: r.cat } } }); },
+        ev: E && E.id === r.id ? E.v : {},
+        u: E && E.id === r.id ? ui('e' + r.id, E.v, (patch) => this.setState({ edit: { id: r.id, v: Object.assign({}, (this.state.edit || {}).v, patch) } })) : {},
+        eon: F.reduce((o, f) => { o[f] = (e) => this.setState({ edit: { id: r.id, v: Object.assign({}, (this.state.edit || {}).v, { [f]: e.target.value }) } }); return o; }, {}),
+        esave: () => {
+          const v = (this.state.edit || {}).v || {};
+          const d = rel(v.date);
+          this.setState({ edit: null, over: Object.assign({}, OV, { [r.id]: { name: (v.name || '').trim() || 'Bez nazwy', price: money(num(v.price)), cycle: v.cycle || 'mies.', date: d.date, rel: r.active === false ? r.rel : d.rel, cat: v.cat || 'Inne' } }) });
+        },
+        ecancel: () => this.setState({ edit: null })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

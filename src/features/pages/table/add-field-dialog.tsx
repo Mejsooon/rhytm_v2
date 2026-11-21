@@ -2,20 +2,27 @@
 
 import * as React from "react";
 
-import { ActionPopover, Checkbox, Dropdown } from "@/components/controls";
-import { PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
+import { Search, type LucideIcon } from "lucide-react";
+
+import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL } from "@/components/controls";
+import { cn } from "@/lib/utils";
+import { FIELD_TYPE_META, PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
 
 // Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne i Bezpieczne dochodzą w Etapach 7 i 8)
-const TYPY: { type: FieldType; icon: string; name: string; desc: string; defName: string }[] = [
-  { type: "text", icon: "Aa", name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
-  { type: "number", icon: "#", name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
-  { type: "checkbox", icon: "✓", name: "Checkbox", desc: "Tak / nie. Może sterować widocznością dat w kalendarzu.", defName: "Aktywna" },
-  { type: "url", icon: "↗", name: "URL", desc: "Klikalny link.", defName: "Link" },
-  { type: "select", icon: "◉", name: "Select", desc: "Jedna opcja z listy, z kolorową etykietą.", defName: "Kategoria" },
-  { type: "status", icon: "◐", name: "Status", desc: "Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.", defName: "Status" },
-  { type: "date", icon: "▦", name: "Data", desc: "Data bez godziny. Może trafić do kalendarza głównego.", defName: "Termin" },
-  { type: "rating", icon: "★", name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
+const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; defName: string }[] = [
+  { type: "text", Icon: FIELD_TYPE_META.text.Icon, name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
+  { type: "number", Icon: FIELD_TYPE_META.number.Icon, name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
+  { type: "checkbox", Icon: FIELD_TYPE_META.checkbox.Icon, name: "Checkbox", desc: "Tak / nie. Może sterować widocznością dat w kalendarzu.", defName: "Aktywna" },
+  { type: "url", Icon: FIELD_TYPE_META.url.Icon, name: "URL", desc: "Klikalny link.", defName: "Link" },
+  { type: "select", Icon: FIELD_TYPE_META.select.Icon, name: "Select", desc: "Jedna opcja z listy, z kolorową etykietą.", defName: "Kategoria" },
+  { type: "status", Icon: FIELD_TYPE_META.status.Icon, name: "Status", desc: "Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.", defName: "Status" },
+  { type: "date", Icon: FIELD_TYPE_META.date.Icon, name: "Data", desc: "Data bez godziny. Może trafić do kalendarza głównego.", defName: "Termin" },
+  { type: "rating", Icon: FIELD_TYPE_META.rating.Icon, name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
+
+// Wybrany typ: biała pigułka z cieniem; fokus zostawia cień i dodaje obrys
+const WYBRANY_TYP =
+  "bg-white shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] hover:bg-white focus-visible:shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid";
 
 // Gotowe opcje Statusu (kolory jak w szablonach: szary, niebieski, zielony)
 const OPCJE_STATUSU = [
@@ -91,58 +98,59 @@ export function AddFieldDialog({
     setOpen(false);
   }
 
-  const pole =
-    "w-full rounded-md border border-input bg-white px-2.5 py-2 font-[inherit] text-sm text-foreground outline-none focus:border-primary max-[799px]:h-11";
-
   return (
     <ActionPopover
       open={open}
       onOpenChange={otworz}
       align="end"
       ariaLabel="Nowe pole"
+      // .pop bez paddingu: lewa kolumna z listą typów sięga krawędzi okna
+      className="overflow-hidden p-0"
       trigger={
-        <button
-          type="button"
-          aria-expanded={open}
-          className={`cursor-pointer rounded-md border border-input px-3 py-[7px] font-[inherit] text-sm text-foreground max-[799px]:min-h-11 ${open ? "bg-active" : "bg-white"}`}
-        >
+        <Button aria-expanded={open} className="aria-expanded:bg-accent">
           + Pole
-        </button>
+        </Button>
       }
     >
-      <div className="-m-2.5 flex w-[min(640px,calc(100vw-48px))] flex-wrap overflow-hidden rounded-md">
-        <div className="flex flex-[1_1_230px] flex-col gap-0.5 border-r border-border bg-panel p-3">
-          <input
-            type="text"
-            value={szukaj}
-            onChange={(e) => setSzukaj(e.target.value)}
-            placeholder="Szukaj typu…"
-            aria-label="Szukaj typu"
-            className={`${pole} mb-2`}
-          />
-          <div className="px-2 pt-2 pb-1 font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-            Podstawowe
+      <div className="flex w-[min(660px,calc(100vw-48px))] flex-wrap">
+        <div className="flex flex-[1_1_230px] flex-col gap-px border-r border-black/[.08] bg-panel p-2">
+          {/* .igroup: pole z ikoną lupy */}
+          <div className="mb-1 flex h-8 items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11">
+            <Search size={16} aria-hidden="true" className="flex-none" />
+            <input
+              type="text"
+              value={szukaj}
+              onChange={(e) => setSzukaj(e.target.value)}
+              placeholder="Szukaj typu…"
+              aria-label="Szukaj typu"
+              className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground"
+            />
           </div>
+          <div className={MENU_LABEL}>Podstawowe</div>
           {widoczne.map((t) => (
             <button
               key={t.type}
               type="button"
               aria-pressed={t.type === typ}
               onClick={() => wybierzTyp(t)}
-              className={`flex w-full cursor-pointer items-center gap-1.5 rounded-md border-0 px-2 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11 ${
-                t.type === typ ? "bg-white shadow-[0_0_0_1px_#e0e0e0]" : "bg-transparent"
-              }`}
+              // Wybrany typ: biała pigułka z cieniem; fokus na nim to obrys (cień zaznaczenia zajmuje shadow)
+              className={cn(
+                "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-0 px-2 text-left text-sm text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:min-h-11",
+                t.type === typ
+                  ? WYBRANY_TYP
+                  : "bg-transparent",
+              )}
             >
-              <span aria-hidden="true" className="w-[22px] text-left font-mono text-muted-foreground">
-                {t.icon}
+              <span className="flex items-center gap-2">
+                <t.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
+                {t.name}
               </span>
-              <span className="flex-1 text-left">{t.name}</span>
             </button>
           ))}
         </div>
 
-        <div className="flex flex-[999_1_300px] flex-col gap-3 p-4">
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+        <div className="flex flex-[999_1_320px] flex-col gap-3.5 p-4">
+          <label className="flex flex-col gap-2 text-sm font-medium">
             Nazwa pola
             <input
               type="text"
@@ -151,22 +159,23 @@ export function AddFieldDialog({
                 setNazwa(e.target.value);
                 setNazwaWlasna(true);
               }}
-              className={`${pole} font-normal`}
+              className={FIELD}
             />
           </label>
           <div>
-            <div className="font-semibold">{wybrany.name}</div>
+            <div className="flex items-center gap-2 font-semibold">{wybrany.name}</div>
             <p className="mt-1 mb-0 text-[13px] leading-normal text-muted-foreground">{wybrany.desc}</p>
           </div>
 
           {typ === "date" && (
-            <div>
-              <div className="flex items-center justify-between gap-2.5 border-b border-border py-2 text-[13px]">
+            // .frame > .inner: ramka 1,5 px, promień 12 px, wiersze .srow z cienką linią
+            <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white px-3">
+              <div className="flex items-center justify-between gap-2.5 border-b border-black/[.06] py-[9px] text-sm">
                 <span>Pokaż w kalendarzu</span>
                 <Checkbox checked={wKalendarzu} ariaLabel="Pokaż w kalendarzu" onChange={setWKalendarzu} />
               </div>
               {/* Warunek z pola Checkbox dochodzi w Etapie 7 — na razie jedyna opcja „— zawsze —” */}
-              <div className="flex items-center justify-between gap-2.5 py-2 text-[13px]">
+              <div className="flex items-center justify-between gap-2.5 py-[9px] text-sm">
                 <span>Tylko gdy zaznaczone</span>
                 <div>
                   <Dropdown
@@ -185,29 +194,26 @@ export function AddFieldDialog({
           {(typ === "select" || typ === "status") && (
             <div className="flex flex-wrap items-center gap-1.5">
               {opcje.map((o) => (
+                // .bdg.out.lg: biała odznaka z ramką, 22 px
                 <span
                   key={o}
-                  className="inline-flex items-center gap-1 rounded-[4px] border border-input py-[3px] pr-1 pl-2 font-mono text-xs"
+                  className="inline-flex h-[22px] items-center justify-center gap-1 rounded-sm border border-input bg-white pr-1 pl-[7px] text-[13px] leading-none font-medium whitespace-nowrap text-foreground"
                 >
                   {o}
                   <button
                     type="button"
                     aria-label={`Usuń opcję ${o}`}
                     onClick={() => setOpcje((l) => l.filter((x) => x !== o))}
-                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-muted-foreground hover:text-foreground max-[799px]:min-h-11 max-[799px]:min-w-11"
+                    className="cursor-pointer border-0 bg-transparent px-0.5 font-[inherit] text-muted-foreground outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:min-h-11 max-[799px]:min-w-11"
                   >
                     ×
                   </button>
                 </span>
               ))}
               {nowaOpcja === null ? (
-                <button
-                  type="button"
-                  onClick={() => setNowaOpcja("")}
-                  className="cursor-pointer rounded-md border border-input bg-white px-2 py-[3px] font-[inherit] text-xs text-foreground max-[799px]:min-h-11"
-                >
+                <Button variant="ghost" size="xs" onClick={() => setNowaOpcja("")} className="max-[799px]:h-11">
                   + Opcja
-                </button>
+                </Button>
               ) : (
                 <input
                   type="text"
@@ -224,29 +230,20 @@ export function AddFieldDialog({
                   aria-label="Nowa opcja"
                   // Pole pojawia się po kliknięciu „+ Opcja”
                   autoFocus
-                  className="w-[130px] rounded-[4px] border border-primary bg-white px-2 py-[3px] font-mono text-xs text-foreground outline-none max-[799px]:min-h-11"
+                  className={cn(FIELD, "w-[130px]")}
                 />
               )}
             </div>
           )}
 
           <div className="flex-1" />
-          <div className="flex justify-end gap-2 border-t border-border pt-3">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              // „Anuluj” bez ramki jak .btng z makiet
-              className="cursor-pointer rounded-md border border-transparent bg-transparent px-3 py-[7px] font-[inherit] text-sm text-foreground hover:bg-accent max-[799px]:min-h-11"
-            >
+          <div className="flex justify-end gap-2 border-t border-black/[.08] pt-3">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
               Anuluj
-            </button>
-            <button
-              type="button"
-              onClick={dodaj}
-              className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-sm font-medium text-white max-[799px]:min-h-11"
-            >
+            </Button>
+            <Button variant="primary" onClick={dodaj}>
               Dodaj pole
-            </button>
+            </Button>
           </div>
         </div>
       </div>

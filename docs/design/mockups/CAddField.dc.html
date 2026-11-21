@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowe pole (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:14px}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="subs" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Subscriptions</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CFilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="CAddField.dc.html" class="btn" aria-expanded="true" style="background: rgba(0,0,0,.04)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><a href="CMain.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</a></div>
+    </header>
+    <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%"><div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1><div style="display: flex; gap: 6px; margin-top: 10px"><span class="bdg sec lg">13 wierszy · 12 aktywnych · 5 pól</span></div></div><div class="frame"><div class="inner"><table class="tbl" style="min-width: 760px"><thead><tr><th scope="col" class="th"><span style="color: #a3a3a3; margin-right: 6px; font-size: 12px; font-weight: 600">Aa</span>Nazwa</th><th scope="col" class="th" style="text-align: right"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Kwota cykliczna</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"></path></svg>Data odnowienia</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>Kategoria</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>Aktywna</th></tr></thead><tbody><tr><td class="td" style="font-weight: 500">Netflix</td><td class="td num" style="text-align: right">43,00 <span class="muted">/ mies.</span></td><td class="td num">21.11.2026 <span class="muted" style="margin-left: 6px">za 6 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">YouTube Premium</td><td class="td num" style="text-align: right">29,99 <span class="muted">/ mies.</span></td><td class="td num">24.11.2026 <span class="muted" style="margin-left: 6px">za 9 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">iCloud+</td><td class="td num" style="text-align: right">4,99 <span class="muted">/ mies.</span></td><td class="td num">28.11.2026 <span class="muted" style="margin-left: 6px">za 13 dni</span></td><td class="td"><span class="bdg out">Chmura</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Siłownia — karnet</td><td class="td num" style="text-align: right">129,00 <span class="muted">/ mies.</span></td><td class="td num">01.12.2026 <span class="muted" style="margin-left: 6px">za 16 dni</span></td><td class="td"><span class="bdg out">Zdrowie</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Spotify</td><td class="td num" style="text-align: right">23,99 <span class="muted">/ mies.</span></td><td class="td num">02.12.2026 <span class="muted" style="margin-left: 6px">za 17 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Claude Pro</td><td class="td num" style="text-align: right">99,00 <span class="muted">/ mies.</span></td><td class="td num">05.12.2026 <span class="muted" style="margin-left: 6px">za 20 dni</span></td><td class="td"><span class="bdg out">Praca</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr></tbody></table></div></div></div>
+  </main>
+    <div role="dialog" aria-label="Nowe pole" class="pop" style="position: absolute; right: 24px; top: 52px; z-index: 20; width: min(660px, calc(100% - 48px)); padding: 0; display: flex; flex-wrap: wrap; overflow: hidden">
+      <div style="flex: 1 1 230px; border-right: 1px solid rgba(0,0,0,.08); padding: 8px; display: flex; flex-direction: column; gap: 1px; background: #fafafa">
+        <div class="igroup" style="margin-bottom: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onInput="{{onQ}}" placeholder="Szukaj typu…" aria-label="Szukaj typu"></div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div class="mi-lbl">{{g.name}}</div>
+          <sc-for list="{{g.items}}" as="t" hint-placeholder-count="4">
+            <button type="button" class="ddopt" aria-pressed="{{t.p}}" onClick="{{t.pick}}" style="{{t.s}}"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; text-align: center; color: #686868; font-size: 13px; font-weight: 600">{{t.icon}}</span>{{t.name}}</span><sc-if value="{{t.hasBadge}}" hint-placeholder-val="{{false}}"><span class="bdg ok">{{t.badge}}</span></sc-if></button>
+          </sc-for>
+        </sc-for>
+      </div>
+      <div style="flex: 999 1 320px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+        <label class="fld">Nazwa pola<input class="inp" type="text" value="{{nameV}}" onChange="{{onName}}"></label>
+        <div><div style="font-weight: 600; display: flex; align-items: center; gap: 8px">{{sel.name}}<sc-if value="{{sel.smart}}" hint-placeholder-val="{{false}}"><span class="bdg ok">inteligentne</span></sc-if></div><p class="muted" style="margin: 4px 0 0; font-size: 13px; line-height: 1.5">{{sel.desc}}</p></div>
+        <sc-if value="{{is.recurring}}" hint-placeholder-val="{{true}}">
+          <div class="frame"><div class="inner" style="padding: 0 12px">
+            <div class="srow"><span>Domyślny cykl</span><div class="seg" role="group" aria-label="Domyślny cykl"><sc-for list="{{cycles}}" as="c" hint-placeholder-count="4"><button type="button" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div></div>
+            <div class="srow"><span>Suma w stopce</span><span class="bdg sec">/ mies. i / rok</span></div>
+            <div class="srow" style="border: 0"><span>Waluta</span><span class="muted" style="font-size: 13px">zł (z Ustawień)</span></div>
+          </div></div>
+          <div class="alert info" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg><span class="num">{{example}}</span></div>
+        </sc-if>
+        <sc-if value="{{is.renewal}}" hint-placeholder-val="{{false}}">
+          <div class="frame"><div class="inner" style="padding: 0 12px">
+            <div class="srow"><span>Cykl z pola</span><select class="inp" aria-label="Cykl z pola" style="width: auto"><option>Cena (Kwota cykliczna)</option><option>własny cykl</option></select></div>
+            <div class="srow"><span>Pokaż w kalendarzu</span><button type="button" class="sw" role="switch" aria-checked="{{calV}}" onClick="{{toggleCal}}" aria-label="Pokaż w kalendarzu"></button></div>
+            <div class="srow" style="border: 0"><span>Tylko gdy zaznaczone</span><select class="inp" aria-label="Tylko gdy zaznaczone" style="width: auto"><option>Aktywna</option><option>— zawsze —</option></select></div>
+          </div></div>
+        </sc-if>
+        <sc-if value="{{is.date}}" hint-placeholder-val="{{false}}">
+          <div class="frame"><div class="inner" style="padding: 0 12px">
+            <div class="srow"><span>Pokaż w kalendarzu</span><button type="button" class="sw" role="switch" aria-checked="{{dateCalV}}" onClick="{{toggleDateCal}}" aria-label="Pokaż w kalendarzu"></button></div>
+            <div class="srow" style="border: 0"><span>Tylko gdy zaznaczone</span><select class="inp" aria-label="Tylko gdy zaznaczone" style="width: auto"><option>— zawsze —</option></select></div>
+          </div></div>
+        </sc-if>
+        <sc-if value="{{is.select}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px"><span class="bdg out lg">Rozrywka</span><span class="bdg out lg">Praca</span><span class="bdg out lg">Chmura</span><button type="button" class="btng xs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Opcja</button></div>
+        </sc-if>
+        <sc-if value="{{is.secret}}" hint-placeholder-val="{{false}}">
+          <div class="alert ok" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><span>Wartości są szyfrowane w przeglądarce hasłem głównym sejfu. Jeśli sejfu jeszcze nie masz, ustawisz go po dodaniu pola.</span></div>
+        </sc-if>
+        <div style="flex: 1"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid rgba(0,0,0,.08); padding-top: 12px"><a href="{{back}}" class="btng">Anuluj</a><a href="{{back}}" class="btnp">Dodaj pole</a></div>
+      </div>
+    </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const picked = S.picked || 'recurring';
+    const q = (S.q || '').toLowerCase();
+    const cyc = S.cyc || 'miesiąc';
+    const T = {
+      text: ['Aa', 'Tekst', 'Zwykły tekst.', 'Notatka'], number: ['#', 'Liczba', 'Liczba ze zwykłym formatem, w zł albo w %.', 'Liczba'],
+      checkbox: ['✓', 'Checkbox', 'Tak / nie. Może sterować widocznością dat w kalendarzu.', 'Aktywna'], url: ['↗', 'URL', 'Klikalny link.', 'Link'],
+      select: ['◉', 'Select', 'Jedna opcja z listy, z kolorową etykietą.', 'Kategoria'], status: ['◐', 'Status', 'Select z gotowymi opcjami: Do zrobienia / W toku / Zrobione.', 'Status'],
+      date: ['▦', 'Data', 'Data bez godziny. Może trafić do kalendarza głównego.', 'Termin'], rating: ['★', 'Ocena', 'Gwiazdki 1–5.', 'Ocena'],
+      recurring: ['↻zł', 'Kwota cykliczna', 'Kwota z cyklem. Sama przelicza się na miesiąc i rok, a pod tabelą liczy sumy.', 'Cena', 'liczy'],
+      renewal: ['↻', 'Data odnowienia', 'Pokazuje najbliższą przyszłą datę wg cyklu i liczbę dni do niej. Nic nie trzeba przesuwać ręcznie.', 'Odnowienie', 'liczy'],
+      secret: ['✱', 'Sekret', 'Zamaskowana wartość, np. hasło.', 'Hasło', 'szyfr.']
+    };
+    const item = (id) => ({ icon: T[id][0], name: T[id][1], badge: T[id][4] || '', hasBadge: !!T[id][4], p: id === picked ? 'true' : 'false',
+      s: id === picked ? 'background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.05)' : '',
+      pick: () => this.setState({ picked: id, name: null }) });
+    const grp = (name, ids) => ({ name, items: ids.filter((id) => !q || T[id][1].toLowerCase().includes(q)).map(item) });
+    let back = 'CMain.dc.html';
+    try { const f = sessionStorage.getItem('rh-page'); if (f && /^C[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
+    const ex = { 'tydzień': '15,00 / tydz. → 65,00 / mies. · 780,00 / rok', 'miesiąc': '50,00 / mies. → 600,00 / rok', 'kwartał': '150,00 / kw. → 50,00 / mies. · 600,00 / rok', 'rok': '600,00 / rok → 50,00 / mies.' };
+    const cal = S.cal == null ? true : S.cal;
+    const dateCal = !!S.dateCal;
+    return {
+      back, q: S.q || '', onQ: (e) => this.setState({ q: e.target.value }),
+      groups: [grp('Podstawowe', ['text', 'number', 'checkbox', 'url', 'select', 'status', 'date', 'rating']), grp('Inteligentne', ['recurring', 'renewal']), grp('Bezpieczne', ['secret'])].filter((g) => g.items.length),
+      sel: { name: T[picked][1], desc: T[picked][2], smart: picked === 'recurring' || picked === 'renewal' },
+      nameV: S.name != null ? S.name : T[picked][3], onName: (e) => this.setState({ name: e.target.value }),
+      cycles: ['miesiąc', 'rok', 'tydzień', 'kwartał'].map((c) => ({ t: c, p: c === cyc ? 'true' : 'false', pick: () => this.setState({ cyc: c }) })),
+      example: ex[cyc], calV: cal ? 'true' : 'false', toggleCal: () => this.setState({ cal: !cal }),
+      dateCalV: dateCal ? 'true' : 'false', toggleDateCal: () => this.setState({ dateCal: !dateCal }),
+      is: { recurring: picked === 'recurring', renewal: picked === 'renewal', date: picked === 'date', select: picked === 'select' || picked === 'status', secret: picked === 'secret' }
+    };
+  }
+}
+</script>
+</body>
+</html>

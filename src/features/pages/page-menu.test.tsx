@@ -310,4 +310,26 @@ describe("PageMenu", () => {
       unmount();
     }
   });
+
+  it("okno usuwania jak .dlg ze wzoru Sportu: zwarte 400 px, cień pop, szara stopka, ikona kosza", async () => {
+    const { DeletePageDialog } = await import("./delete-page-dialog");
+    render(<DeletePageDialog page={strona("b", "Books", { rowCount: 3 })} open onOpenChange={vi.fn()} onDeleted={vi.fn()} />);
+    const okno = screen.getByRole("dialog");
+    expect(okno.className).toContain("min-[800px]:shadow-pop");
+    expect(okno.className).toContain("w-[min(400px,calc(100%-32px))]");
+    const usun = within(okno).getByRole("button", { name: "Usuń" });
+    expect(usun.querySelector("svg")).not.toBeNull();
+    expect(usun.parentElement?.className).toContain("min-[800px]:bg-black/[.025]");
+  });
+
+  it("na telefonie okno usuwania to arkusz od dołu z uchwytem, a opis jest powiązany przez aria-describedby", async () => {
+    const { DeletePageDialog } = await import("./delete-page-dialog");
+    render(<DeletePageDialog page={strona("b", "Books", { rowCount: 3 })} open onOpenChange={vi.fn()} onDeleted={vi.fn()} />);
+    const okno = screen.getByRole("dialog");
+    expect(okno).toHaveClass("max-[799px]:inset-x-0", "max-[799px]:bottom-0", "max-[799px]:rounded-t-[18px]", "max-[799px]:rounded-b-none");
+    expect(okno.querySelector("div[aria-hidden='true']")).toHaveClass("min-[800px]:hidden");
+    const opis = screen.getByText(/do kosza na 30 dni/);
+    expect(opis.id).not.toBe("");
+    expect(okno).toHaveAttribute("aria-describedby", opis.id);
+  });
 });

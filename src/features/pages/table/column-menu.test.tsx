@@ -72,6 +72,41 @@ describe("menu kolumny", () => {
     expect(within(menu).queryByRole("menuitem", { name: /Pokaż w kalendarzu/ })).not.toBeInTheDocument();
   });
 
+  it("klasy z makiety CColumnMenu: .pop p-1, pole FIELD, pozycje .mi, separatory, Usuń pole czerwone", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    const menu = await otworzMenu(user, "Termin");
+    const dymek = menu.closest("[role=dialog]") as HTMLElement;
+    expect(dymek).toHaveClass("p-1", "rounded-lg", "shadow-lg");
+    expect(dymek).toHaveStyle({ width: "260px" });
+    expect(within(menu).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
+    for (const nazwa of ["Sortuj rosnąco", "Filtruj po tym polu", "Ukryj kolumnę", /Typ: Data/, /Pokaż w kalendarzu/]) {
+      expect(within(menu).getByRole("menuitem", { name: nazwa })).toHaveClass("min-h-8", "rounded-sm", "hover:bg-accent");
+    }
+    expect(within(menu).getByRole("menuitem", { name: "Usuń pole" })).toHaveClass("text-destructive-foreground");
+    expect(menu.querySelectorAll(".h-px.bg-border")).toHaveLength(3);
+    // Ikony pozycji to lucide (svg), nie znaki
+    expect(within(menu).getByRole("menuitem", { name: "Sortuj rosnąco" }).querySelector("svg")).not.toBeNull();
+    // Przełącznik „Pokaż w kalendarzu” jest w stanie włączonym (Termin ma show_in_calendar)
+    expect(within(menu).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }).querySelector("[data-on=true]")).not.toBeNull();
+    // Otwarte podmenu: .pop z p-1, szerokość 210 px, a pozycja rodzica podświetlona
+    await user.click(within(menu).getByRole("menuitem", { name: /Podsumowanie/ }));
+    const podmenu = screen.getByRole("menu", { name: "Podsumowanie" });
+    expect(podmenu).toHaveClass("rounded-lg", "border", "p-1", "shadow-lg", "w-[210px]");
+    expect(within(menu).getByRole("menuitem", { name: /^Podsumowanie/ })).toHaveClass("bg-accent");
+  });
+
+  // Przesuwanie do środka przy krawędzi okna sprawdza action-popover.test.tsx (avoidCollisions, collisionPadding)
+  it("menu ostatniej kolumny otwiera się pod nagłówkiem w dymku Radixa", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    const zMenu = screen.getAllByRole("columnheader").filter((h) => within(h).queryByRole("button"));
+    await user.click(within(zMenu[zMenu.length - 1]).getByRole("button"));
+    const dymek = screen.getByRole("dialog", { name: /^Kolumna / });
+    expect(dymek.parentElement).toHaveAttribute("data-radix-popper-content-wrapper");
+    expect(dymek).toHaveAttribute("data-side", "bottom");
+  });
+
   it("pole tytułowe: Typ i Usuń pole są wyszarzone", async () => {
     const user = userEvent.setup();
     render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
@@ -141,6 +176,34 @@ describe("menu kolumny", () => {
     expect(screen.getByRole("columnheader", { name: /Pisarz/ })).toBeInTheDocument();
   });
 
+  describe("podmenu przy prawej krawędzi", () => {
+    async function podmenuTypu(prawaKrawedz: number) {
+      const spy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        x: 0, y: 0, width: 260, height: 300, top: 0, left: prawaKrawedz - 260, bottom: 300, right: prawaKrawedz,
+        toJSON: () => ({}),
+      } as DOMRect);
+      const user = userEvent.setup();
+      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      const menu = await otworzMenu(user, "Autor");
+      await user.click(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ }));
+      const podmenu = screen.getByRole("menu", { name: "Typ pola" });
+      spy.mockRestore();
+      return podmenu;
+    }
+
+    it("blisko prawej krawędzi otwiera się w lewo", async () => {
+      const podmenu = await podmenuTypu(window.innerWidth - 10);
+      expect(podmenu).toHaveClass("right-[calc(100%+12px)]");
+      expect(podmenu).not.toHaveClass("left-[calc(100%+12px)]");
+    });
+
+    it("z zapasem miejsca otwiera się w prawo", async () => {
+      const podmenu = await podmenuTypu(200);
+      expect(podmenu).toHaveClass("left-[calc(100%+12px)]");
+      expect(podmenu).not.toHaveClass("right-[calc(100%+12px)]");
+    });
+  });
+
   describe("typ", () => {
     it("bez strat zmienia od razu, bez okna", async () => {
       const user = userEvent.setup();
@@ -153,7 +216,8 @@ describe("menu kolumny", () => {
       const repo = dane.blocks[0].fields.find((f) => f.name === "Repo")!;
       await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalledTimes(1));
       expect(actions.changeFieldType.mock.calls[0].slice(0, 2)).toEqual([repo.id, "text"]);
-      expect(within(naglowek("Repo")).getByText("Aa")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("Aa")).toBeNull();
     });
 
     it("ze stratą pyta o potwierdzenie i dopiero po nim zapisuje", async () => {
@@ -168,7 +232,8 @@ describe("menu kolumny", () => {
       await user.click(screen.getByRole("button", { name: "Zmień typ" }));
       await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(screen.queryByText("Zmienić typ pola?")).not.toBeInTheDocument());
-      expect(within(naglowek("Autor")).getByText("#")).toBeInTheDocument();
+      expect(naglowek("Autor").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Autor")).queryByText("#")).toBeNull();
     });
 
     it("błąd zapisu cofa typ kolumny i pokazuje toast", async () => {
@@ -179,7 +244,8 @@ describe("menu kolumny", () => {
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
       await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      expect(within(naglowek("Repo")).getByText("↗")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("↗")).toBeNull();
     });
   });
 
@@ -218,11 +284,14 @@ describe("menu kolumny", () => {
       await user.click(within(menu).getByRole("menuitem", { name: "Podsumowanie Brak ›" }));
       const podmenu = screen.getByRole("menu", { name: "Podsumowanie" });
       expect(within(podmenu).getAllByRole("menuitem").map((e) => e.textContent)).toEqual([
-        "✓Brak",
+        "Brak",
         "Liczba wierszy",
         "Wypełnione",
         "Puste",
       ]);
+      // Wybrana pozycja ma ikonę ✓ po prawej (jak w makiecie), pozostałe jej nie mają
+      expect(within(podmenu).getByRole("menuitem", { name: "Brak" }).querySelector("svg")).not.toBeNull();
+      expect(within(podmenu).getByRole("menuitem", { name: "Puste" }).querySelector("svg")).toBeNull();
       await user.click(within(podmenu).getByRole("menuitem", { name: "Wypełnione" }));
       const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", {
@@ -241,7 +310,7 @@ describe("menu kolumny", () => {
         within(screen.getByRole("menu", { name: "Podsumowanie" }))
           .getAllByRole("menuitem")
           .map((e) => e.textContent),
-      ).toEqual(["Brak", "Liczba wierszy", "Wypełnione", "Puste", "✓Średnia", "Minimum", "Maksimum"]);
+      ).toEqual(["Brak", "Liczba wierszy", "Wypełnione", "Puste", "Średnia", "Minimum", "Maksimum"]);
     });
 
     it("podsumowanie z szablonu pokazuje swoją etykietę, a wybór go zastępuje", async () => {
@@ -322,7 +391,8 @@ describe("menu kolumny", () => {
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
 
       await act(async () => odrzuc({ ok: false, message: "x" }));
-      expect(within(naglowek("Repo")).getByText("↗")).toBeInTheDocument();
+      expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
+      expect(within(naglowek("Repo")).queryByText("↗")).toBeNull();
       expect(screen.getByText(/rhytm-v3!/)).toBeInTheDocument();
     });
   });

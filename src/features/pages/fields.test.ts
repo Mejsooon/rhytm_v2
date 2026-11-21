@@ -25,15 +25,13 @@ const opcje: FieldOption[] = [
 ];
 
 describe("meta typów", () => {
-  it("ikony z makiet", () => {
+  it("ikony z makiet: komponenty lucide, znak zostaje dla telefonu", () => {
+    for (const typ of Object.keys(FIELD_TYPE_META) as (keyof typeof FIELD_TYPE_META)[]) {
+      expect(FIELD_TYPE_META[typ].Icon).toBeTruthy();
+    }
+    for (const t of EDITOR_TYPES) expect(t.Icon).toBeTruthy();
     expect(FIELD_TYPE_META.text.icon).toBe("Aa");
-    expect(FIELD_TYPE_META.status.icon).toBe("◐");
-    expect(FIELD_TYPE_META.select.icon).toBe("◉");
     expect(FIELD_TYPE_META.rating.icon).toBe("★");
-    expect(FIELD_TYPE_META.date.icon).toBe("▦");
-    expect(FIELD_TYPE_META.url.icon).toBe("↗");
-    expect(FIELD_TYPE_META.checkbox.icon).toBe("✓");
-    expect(FIELD_TYPE_META.number.icon).toBe("#");
   });
 
   it("edytor ma 6 typów z EmptyPage", () => {

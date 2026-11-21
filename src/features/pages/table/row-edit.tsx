@@ -1,10 +1,13 @@
 "use client";
 
-import { Checkbox, DatePicker, Dropdown, type IsoDate } from "@/components/controls";
+import { X } from "lucide-react";
+
+import { Button, Checkbox, DatePicker, Dropdown, FIELD, StatusBadge, type IsoDate } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { OptionBadge } from "../editor/cell-editor";
 import { normalizeValue, type PageField } from "../fields";
 
-// Wiersz w trybie edycji (Books / Projects / Websites.dc.html, tło #f7fbf8): pola tekstowe,
+// Wiersz w trybie edycji (CBooks / CProjects / CWebsites.dc.html, tło zieleni 4 %): pola tekstowe,
 // listy z plakietką i ✓, wybór daty, gwiazdki; „Zapisz” zapisuje, ✕ anuluje bez zapisu.
 export function RowEdit({
   fields,
@@ -22,10 +25,10 @@ export function RowEdit({
   onCancel: () => void;
 }) {
   return (
-    <tr className="bg-success-soft">
+    <tr className="group/wiersz bg-success-soft/50">
       {fields.map((f) => {
         const surowa = values[f.id];
-        const td = "border-b border-border px-3.5 py-[11px]";
+        const td = "h-11 border-b border-border px-3 group-last/wiersz:border-b-0";
 
         if (f.type === "status" || f.type === "select") {
           const v = normalizeValue(f, surowa);
@@ -45,9 +48,7 @@ export function RowEdit({
                     f.type === "status" ? (
                       <OptionBadge option={o} />
                     ) : (
-                      <span className="rounded-[4px] border border-input px-[7px] py-0.5 font-mono text-[11px] whitespace-nowrap text-soft-foreground">
-                        {o.label}
-                      </span>
+                      <StatusBadge tone="outline">{o.label}</StatusBadge>
                     ),
                 }))}
               />
@@ -84,8 +85,8 @@ export function RowEdit({
                     aria-pressed={k <= ocena}
                     // Ponowny klik tej samej oceny ją zeruje
                     onClick={() => onChange(f.id, ocena === k ? null : k)}
-                    className={`cursor-pointer border-0 bg-transparent px-px py-0 text-[15px] leading-none ${
-                      k <= ocena ? "text-foreground" : "text-faint-foreground"
+                    className={`cursor-pointer rounded-sm border-0 bg-transparent px-px py-0 text-[15px] leading-none outline-none focus-visible:shadow-focus ${
+                      k <= ocena ? "text-warning" : "text-black/[.14]"
                     }`}
                   >
                     ★
@@ -125,7 +126,7 @@ export function RowEdit({
         return (
           <td
             key={f.id}
-            className={`${td} ${f.isTitle ? "font-medium" : ""} ${f.type === "url" || f.type === "number" ? "font-mono" : ""}`}
+            className={`${td} ${f.isTitle ? "font-medium" : ""} ${f.type === "url" || f.type === "number" ? "tabular-nums" : ""}`}
           >
             <input
               type="text"
@@ -139,27 +140,19 @@ export function RowEdit({
               placeholder={podpowiedz}
               aria-label={f.name}
               autoFocus={f.isTitle}
-              className="w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-foreground outline-none placeholder:text-faint-foreground"
+              // .inp 30 px (na telefonie 44 px); liczby do prawej
+              className={cn(FIELD, "h-[30px]", f.type === "number" && "text-right")}
             />
           </td>
         );
       })}
-      <td className="border-b border-border px-3.5 py-[11px] text-right whitespace-nowrap">
-        <button
-          type="button"
-          onClick={onSave}
-          className="cursor-pointer rounded-md border border-primary bg-primary px-2.5 py-1 font-[inherit] text-xs font-medium text-white"
-        >
+      <td className="h-11 border-b border-border px-3 text-right whitespace-nowrap group-last/wiersz:border-b-0">
+        <Button variant="primary" size="xs" onClick={onSave}>
           Zapisz
-        </button>
-        <button
-          type="button"
-          aria-label="Anuluj"
-          onClick={onCancel}
-          className="ml-1 cursor-pointer border-0 bg-transparent px-1.5 py-1 font-[inherit] text-muted-foreground"
-        >
-          ✕
-        </button>
+        </Button>
+        <Button variant="ghost" size="xs" icon aria-label="Anuluj" onClick={onCancel} className="ml-1 text-muted-foreground max-[799px]:size-11">
+          <X aria-hidden="true" className="size-3.5" />
+        </Button>
       </td>
     </tr>
   );

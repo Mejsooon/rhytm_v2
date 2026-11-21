@@ -2,6 +2,17 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Przechwytuje propsy każdego Popover.Content Radixa (dymek filtra idzie przez ActionPopover)
+const zlapane = vi.hoisted(() => ({ propsy: [] as Record<string, unknown>[] }));
+vi.mock("radix-ui", async (importOriginal) => {
+  const oryginal = await importOriginal<typeof import("radix-ui")>();
+  const Content = (props: Record<string, unknown>) => {
+    zlapane.propsy.push(props);
+    return <oryginal.Popover.Content {...(props as object)} />;
+  };
+  return { ...oryginal, Popover: { ...oryginal.Popover, Content } };
+});
+
 const actions = vi.hoisted(() => ({
   addField: vi.fn(),
   addRow: vi.fn(),
@@ -65,6 +76,51 @@ describe("filtr tabeli", () => {
     expect(within(filtr).getByText("5 z 5 wierszy")).toBeInTheDocument();
     expect(within(filtr).getByText("Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.")).toBeInTheDocument();
     expect(within(filtr).getByRole("button", { name: "+ Dodaj warunek" })).toBeInTheDocument();
+  });
+
+  it("bez warunków pokazuje komunikat, po dodaniu warunku znika", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    const filtr = await otworzFiltr(user);
+    expect(within(filtr).getByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeInTheDocument();
+    await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+    expect(within(filtr).queryByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeNull();
+  });
+
+  it("filtr przy prawej krawędzi otwiera się do środka: dymek filtra dostaje avoidCollisions i collisionPadding 8 px, wyrównanie do prawej", async () => {
+    const user = userEvent.setup();
+    zlapane.propsy.length = 0;
+    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    await otworzFiltr(user);
+    const dymek = zlapane.propsy.find((p) => p["aria-label"] === "Filtr");
+    expect(dymek?.avoidCollisions).toBe(true);
+    expect(dymek?.collisionPadding).toBe(8);
+    expect(dymek?.align).toBe("end");
+  });
+
+  it("wygląd COSS: dymek z paddingiem 14 px, wyzwalacz podświetlony, licznik jako plakietka, przyciski z kontrolki Button", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    const wyzwalacz = screen.getByRole("button", { name: "Filtruj" });
+    expect(wyzwalacz.className).not.toContain("bg-accent");
+    const filtr = await otworzFiltr(user);
+    expect(filtr.className).toContain("p-3.5");
+    expect(wyzwalacz.className).toContain("bg-accent");
+    expect(wyzwalacz.className).not.toContain("!bg-active");
+    expect(within(filtr).getByText("5 z 5 wierszy").className).toContain("bg-muted");
+    expect(within(filtr).getByText("Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.").className).not.toContain("font-mono");
+    // „+ Dodaj warunek” i „Wyczyść”: wysokość 28 px (Button sm), „Zapisz jako domyślny”: wariant główny
+    expect(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }).className).toContain("h-7");
+    expect(within(filtr).getByRole("button", { name: "Wyczyść" }).className).toContain("bg-transparent");
+    expect(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }).className).toContain("bg-primary");
+    await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+    // Etykieta „Gdzie” jak .lbl (12 px, 500), pole wartości jak FIELD (32 px), usuwanie jako ghost-icon
+    expect(within(filtr).getByText("Gdzie").className).not.toContain("font-mono");
+    expect(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }).className).toContain("h-8");
+    const usun = within(filtr).getByRole("button", { name: "Usuń warunek" });
+    expect(usun.className).toContain("bg-transparent");
+    expect(usun.className).toContain("w-7");
+    expect(usun.textContent).toBe("");
   });
 
   it("„+ Dodaj warunek” dodaje „Gdzie …”, tekst zawęża tabelę, licznik i przycisk się aktualizują", async () => {

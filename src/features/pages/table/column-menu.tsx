@@ -1,19 +1,38 @@
 "use client";
 
 import * as React from "react";
+import {
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  Calendar,
+  Check,
+  ChevronRight,
+  EyeOff,
+  Funnel,
+  Sigma,
+  Trash2,
+} from "lucide-react";
 
-import { ActionPopover } from "@/components/controls";
+import {
+  ActionPopover,
+  FIELD,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+} from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { FIELD_TYPE_META, type FieldType, type PageField } from "../fields";
 import { summaryOptions, type ColumnSummary, type SummaryKind } from "../table-model";
 import { NAZWY_PODSUMOWAN } from "./summary-cell";
 
-const POZYCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left font-[inherit] text-[13px] text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11";
-const IKONA = "w-[18px] font-mono text-muted-foreground";
-const PODZIAL = "mx-1 my-1.5 h-px bg-border";
+// Pozycja menu (.mi); wyłączona: opacity .64
+const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
+// Ikona pozycji: lucide 16 px w kolorze muted-foreground
+const IKONA = "size-4 flex-none text-muted-foreground";
+// Podmenu (.pop): obok menu, odstęp 8 px (w prawo albo w lewo, gdy brakuje miejsca); na telefonie pod pozycją
 const PODMENU =
-  "absolute top-0 left-[calc(100%+16px)] z-10 w-[210px] rounded-md border border-input bg-white p-1.5 shadow-[0_12px_32px_rgba(0,0,0,.12),0_2px_6px_rgba(0,0,0,.06)] max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
+  "absolute top-0 z-10 w-[210px] rounded-lg border border-border bg-white bg-clip-padding p-1 shadow-lg max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
 
 // Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Podsumowanie … ›”,
 // „Pokaż w kalendarzu” (tylko Data), „Ukryj kolumnę” i „Usuń pole”. Wyzwalaczem jest nagłówek kolumny;
@@ -52,6 +71,9 @@ export function ColumnMenu({
   onCloseAutoFocus?: (e: Event) => void;
 }) {
   const [podmenu, setPodmenu] = React.useState<"typ" | "podsumowanie" | null>(null);
+  // Strona otwarcia podmenu: w lewo, gdy menu stoi przy prawej krawędzi okna
+  const [wLewo, setWLewo] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
   const [nazwa, setNazwa] = React.useState(field.name);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(field.name);
   if (zrodloNazwy !== field.name) {
@@ -107,7 +129,8 @@ export function ColumnMenu({
         }
         onOpenChange(o);
       }}
-      width={250}
+      width={260}
+      className="p-1"
       onCloseAutoFocus={onCloseAutoFocus}
       ariaLabel={`Kolumna ${field.name}`}
       trigger={
@@ -115,30 +138,35 @@ export function ColumnMenu({
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] font-medium text-muted-foreground max-[799px]:min-h-11"
+          className="cursor-pointer rounded-sm border-0 bg-transparent p-0 font-[inherit] font-medium text-muted-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
         >
-          <span aria-hidden="true" className="mr-1.5 font-mono text-muted-foreground">
-            {meta.icon}
-          </span>
+          {/* Ikona typu pola: 14 px, jasnoszara, odstęp 6 px jak w nagłówkach makiety */}
+          <meta.Icon
+            size={14}
+            aria-hidden="true"
+            className="mr-1.5 inline align-[-2px] text-faint-foreground"
+          />
           {field.name}
         </button>
       }
     >
-      <div role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
-        <input
-          type="text"
-          value={nazwa}
-          onChange={(e) => setNazwa(e.target.value)}
-          onBlur={zapiszNazwe}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              e.currentTarget.blur();
-            }
-          }}
-          aria-label="Nazwa kolumny"
-          className="mb-1.5 box-border w-full rounded-md border border-input bg-white px-2.5 py-2 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
-        />
+      <div ref={menuRef} role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
+        <div className="p-1">
+          <input
+            type="text"
+            value={nazwa}
+            onChange={(e) => setNazwa(e.target.value)}
+            onBlur={zapiszNazwe}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
+            aria-label="Nazwa kolumny"
+            className={FIELD}
+          />
+        </div>
 
         <div className="relative">
           <button
@@ -148,22 +176,22 @@ export function ColumnMenu({
             aria-label={`Typ: ${meta.label} ›`}
             aria-haspopup="menu"
             aria-expanded={podmenu === "typ"}
-            onClick={() => setPodmenu(podmenu === "typ" ? null : "typ")}
-            className={`${POZYCJA} ${podmenu === "typ" ? "bg-muted" : ""}`}
+            onClick={() => {
+              // Podmenu ma 210 px + odstęp 12 px; przy prawej krawędzi otwiera się w lewo
+              const rect = menuRef.current?.getBoundingClientRect();
+              setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+              setPodmenu(podmenu === "typ" ? null : "typ");
+            }}
+            className={cn(POZYCJA, podmenu === "typ" && "bg-accent")}
           >
-            <span aria-hidden="true" className={IKONA}>
-              {meta.icon}
-            </span>
+            {/* Ikona typu w kolumnie ikon (16 px), jak pozostałe pozycje */}
+            <meta.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
             <span className="flex-1">Typ: {meta.label}</span>
-            <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">
-              ›
-            </span>
+            <ChevronRight size={14} aria-hidden="true" className="flex-none" />
           </button>
           {podmenu === "typ" && (
-            <div role="menu" aria-label="Typ pola" className={PODMENU}>
-              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-                Typ pola
-              </div>
+            <div role="menu" aria-label="Typ pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+              <div className={MENU_LABEL}>Typ pola</div>
               {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
                 <button
                   key={t}
@@ -176,42 +204,36 @@ export function ColumnMenu({
                     }
                     wykonaj(() => onPickType(t));
                   }}
-                  className={`${POZYCJA} ${t === field.type ? "bg-active font-medium" : ""}`}
+                  className={cn(POZYCJA, t === field.type && "bg-accent font-medium")}
                 >
-                  <span aria-hidden="true" className={IKONA}>
-                    {FIELD_TYPE_META[t].icon}
-                  </span>
+                  {React.createElement(FIELD_TYPE_META[t].Icon, {
+                    size: 16,
+                    "aria-hidden": true,
+                    className: "flex-none text-muted-foreground",
+                  })}
                   <span className="flex-1">{FIELD_TYPE_META[t].label}</span>
-                  <span aria-hidden="true" className="text-success">
-                    {t === field.type ? "✓" : ""}
-                  </span>
+                  {t === field.type && <Check size={14} aria-hidden="true" className="flex-none" />}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className={PODZIAL} />
+        <div className={MENU_SEPARATOR} />
         <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("asc"))} className={POZYCJA}>
-          <span aria-hidden="true" className={IKONA}>
-            ↑
-          </span>
+          <ArrowUpNarrowWide aria-hidden="true" className={IKONA} />
           <span className="flex-1">Sortuj rosnąco</span>
         </button>
         <button type="button" role="menuitem" onClick={() => wykonaj(() => onSort("desc"))} className={POZYCJA}>
-          <span aria-hidden="true" className={IKONA}>
-            ↓
-          </span>
+          <ArrowDownWideNarrow aria-hidden="true" className={IKONA} />
           <span className="flex-1">Sortuj malejąco</span>
         </button>
         <button type="button" role="menuitem" onClick={() => wykonaj(onFilter)} className={POZYCJA}>
-          <span aria-hidden="true" className={IKONA}>
-            ⏚
-          </span>
+          <Funnel aria-hidden="true" className={IKONA} />
           <span className="flex-1">Filtruj po tym polu</span>
         </button>
 
-        <div className={PODZIAL} />
+        <div className={MENU_SEPARATOR} />
         <div className="relative">
           <button
             type="button"
@@ -219,20 +241,22 @@ export function ColumnMenu({
             aria-label={`Podsumowanie ${aktualne} ›`}
             aria-haspopup="menu"
             aria-expanded={podmenu === "podsumowanie"}
-            onClick={() => setPodmenu(podmenu === "podsumowanie" ? null : "podsumowanie")}
-            className={`${POZYCJA} ${podmenu === "podsumowanie" ? "bg-muted" : ""}`}
+            onClick={() => {
+              const rect = menuRef.current?.getBoundingClientRect();
+              setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+              setPodmenu(podmenu === "podsumowanie" ? null : "podsumowanie");
+            }}
+            className={cn(POZYCJA, podmenu === "podsumowanie" && "bg-accent")}
           >
-            <span aria-hidden="true" className={IKONA}>
-              Σ
-            </span>
+            <Sigma aria-hidden="true" className={IKONA} />
             <span className="flex-1">Podsumowanie</span>
-            <span className="font-mono text-[11px] text-muted-foreground">{aktualne} ›</span>
+            {/* .mi-sc: bieżąca wartość po prawej, bez rozstrzelenia liter */}
+            <span className="text-xs text-muted-foreground">{aktualne}</span>
+            <ChevronRight size={14} aria-hidden="true" className="flex-none" />
           </button>
           {podmenu === "podsumowanie" && (
-            <div role="menu" aria-label="Podsumowanie" className={PODMENU}>
-              <div className="px-2.5 pt-1.5 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-                Podsumowanie
-              </div>
+            <div role="menu" aria-label="Podsumowanie" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+              <div className={MENU_LABEL}>Podsumowanie</div>
               {summaryOptions(field.type).map((kind) => {
                 const wybrane = summary ? summary.kind === kind : kind === "none";
                 return (
@@ -241,12 +265,10 @@ export function ColumnMenu({
                     type="button"
                     role="menuitem"
                     onClick={() => wykonaj(() => onSummary(kind))}
-                    className={`${POZYCJA} ${wybrane ? "bg-active" : ""}`}
+                    className={cn(POZYCJA, wybrane && "bg-accent")}
                   >
-                    <span aria-hidden="true" className={IKONA}>
-                      {wybrane ? "✓" : ""}
-                    </span>
                     <span className="flex-1">{NAZWY_PODSUMOWAN[kind]}</span>
+                    {wybrane && <Check size={14} aria-hidden="true" className="flex-none" />}
                   </button>
                 );
               })}
@@ -255,12 +277,23 @@ export function ColumnMenu({
         </div>
         {field.type === "date" && (
           <button type="button" role="menuitem" onClick={() => wykonaj(onToggleCalendar)} className={POZYCJA}>
-            <span aria-hidden="true" className={IKONA}>
-              ▦
-            </span>
+            <Calendar aria-hidden="true" className={IKONA} />
             <span className="flex-1">Pokaż w kalendarzu</span>
-            <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">
-              {wKalendarzu ? "✓" : ""}
+            {/* Dekoracyjny przełącznik (.sw 36×20 pomniejszony do .8); stan niesie sama pozycja */}
+            <span
+              aria-hidden="true"
+              data-on={wKalendarzu}
+              className={cn(
+                "relative h-5 w-9 flex-none origin-right scale-[.8] rounded-full border-2 border-transparent bg-black/12 shadow-[inset_0_1px_1px_rgba(0,0,0,.04)] transition-colors duration-150",
+                wKalendarzu && "bg-primary",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0 left-0 size-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,.16)] transition-transform duration-150",
+                  wKalendarzu && "translate-x-4",
+                )}
+              />
             </span>
           </button>
         )}
@@ -271,23 +304,19 @@ export function ColumnMenu({
           onClick={() => wykonaj(onHide)}
           className={POZYCJA}
         >
-          <span aria-hidden="true" className={IKONA}>
-            ◌
-          </span>
+          <EyeOff aria-hidden="true" className={IKONA} />
           <span className="flex-1">Ukryj kolumnę</span>
         </button>
 
-        <div className={PODZIAL} />
+        <div className={MENU_SEPARATOR} />
         <button
           type="button"
           role="menuitem"
           disabled={field.isTitle}
           onClick={() => wykonaj(onDelete)}
-          className={cn(POZYCJA, "text-destructive-foreground")}
+          className={cn(POZYCJA, MENU_ITEM_DANGER, "disabled:hover:bg-transparent")}
         >
-          <span aria-hidden="true" className={cn(IKONA, "text-destructive-foreground")}>
-            ✕
-          </span>
+          <Trash2 aria-hidden="true" className="size-4 flex-none" />
           <span className="flex-1">Usuń pole</span>
         </button>
       </div>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Projects (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible{opacity:1}
+.row-click{cursor:pointer}
+@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+</style>
+</helmet>
+<div class="shell" style="min-height: 960px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="projects" min-height="960" hint-size="100%,960px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Projects</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CFilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="CAddField.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><button type="button" class="btnp" onClick="{{addRow}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</button></div>
+    </header>
+    <div style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; width: 100%">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 8px; background: rgba(59,130,246,.1); display: grid; place-items: center; color: #3b82f6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg></span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Projects</h1></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px"><span class="bdg sec lg num">{{countRows}}</span><span class="bdg sec lg">5 pól</span><span class="bdg out lg">szablon „Projects”</span><span class="bdg out lg">sort: termin</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px"><div class="card" style="padding: 16px 18px"><div class="lbl">W toku</div><div class="num" style="font-size: 26px; margin-top: 8px; font-weight: 600; letter-spacing: -.02em">{{wip}}</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Najbliższy termin</div><div style="display: flex; align-items: center; gap: 8px; margin-top: 10px"><span style="font-size: 18px; font-weight: 600">{{nearName}}</span><span class="{{nearC}}">{{nearRel}}</span></div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Zrobione</div><div class="num" style="font-size: 26px; margin-top: 8px; font-weight: 600; letter-spacing: -.02em">{{done}} <span style="font-size: 14px; font-weight: 400; color: #686868">/ {{total}}</span></div></div></div>
+      <div class="frame"><div class="inner tbl-wrap">
+        <table class="tbl" style="min-width: 820px">
+          <thead><tr><th scope="col" class="th"><span style="color: #a3a3a3; margin-right: 6px; font-size: 12px; font-weight: 600">Aa</span>Nazwa</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor"></path></svg>Status</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>Obszar</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Termin <span class="bdg ok" style="margin-left: 6px">w kalendarzu</span></th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Repo</th><th scope="col" class="th" style="width: 150px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Akcje</span></th></tr></thead>
+          <tbody>
+            <sc-for list="{{list}}" as="r" hint-placeholder-count="6">
+              <sc-if value="{{r.view}}" hint-placeholder-val="{{true}}"><tr class="row-click" onClick="{{r.open}}"><td class="td" style="font-weight: 500">{{r.name}}</td><td class="td"><span class="{{r.statusC}}">{{r.status}}</span></td><td class="td"><span class="bdg out">{{r.area}}</span></td><td class="td num" style="color: #525252; white-space: nowrap">{{r.dateTxt}} <span class="{{r.relC}}" style="margin-left: 6px">{{r.rel}}</span></td><td class="td num"><a href="#" onClick="{{r.link}}" style="color: #404040; text-decoration: underline; text-decoration-color: rgba(0,0,0,.2); text-underline-offset: 3px">{{r.repo}}</a></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="row-del btng xs" aria-label="Edytuj wiersz" onClick="{{r.edit}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</button><button type="button" class="row-del btng xs" aria-label="Usuń wiersz" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</button></td></tr></sc-if>
+              <sc-if value="{{r.editing}}" hint-placeholder-val="{{false}}"><tr style="background: rgba(21,128,61,.04)"><td class="td"><input class="inp" type="text" value="{{r.f.v.name}}" onChange="{{r.f.on.name}}" placeholder="Nazwa…" aria-label="Nazwa" style="height: 30px"></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="dd" onClick="{{r.f.status.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.status.exp}}" aria-label="Status" style="height: 30px; width: auto; gap: 8px; padding-left: 6px"><span class="{{r.f.status.bs}}">{{r.f.status.txt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{r.f.status.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Status" class="ddpop" style="right: auto; width: 190px"><sc-for list="{{r.f.status.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="ddopt" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span class="{{o.bs}}">{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="dd" onClick="{{r.f.area.toggle}}" aria-haspopup="listbox" aria-expanded="{{r.f.area.exp}}" aria-label="Obszar" style="height: 30px; width: auto; gap: 8px; padding-left: 6px"><span class="{{r.f.area.bs}}">{{r.f.area.txt}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{r.f.area.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Obszar" class="ddpop" style="right: auto; width: 160px"><sc-for list="{{r.f.area.opts}}" as="o" hint-placeholder-count="4"><button type="button" role="option" class="ddopt" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span class="{{o.bs}}">{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></td><td class="td"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{r.f.d.toggle}}" aria-haspopup="dialog" aria-expanded="{{r.f.d.exp}}" aria-label="Termin" style="height: 30px; width: auto; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="{{r.f.d.txtS}}">{{r.f.d.txt}}</span></button><sc-if value="{{r.f.d.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; padding: 10px; width: 256px"><div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px"><button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" onClick="{{r.f.d.prev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-size: 14px; font-weight: 600">{{r.f.d.label}}</span><button type="button" class="btn ic sm" aria-label="Następny miesiąc" onClick="{{r.f.d.next}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 12px; font-weight: 500; color: #686868; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{r.f.d.cal}}" as="dc" hint-placeholder-count="35"><button type="button" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); margin-top: 8px; padding-top: 8px"><button type="button" class="btng xs" onClick="{{r.f.d.today}}">Dziś</button><button type="button" class="btng xs" onClick="{{r.f.d.clear}}" style="color: #686868">Wyczyść</button></div></div></sc-if></span></td><td class="td"><input class="inp num" type="text" value="{{r.f.v.repo}}" onChange="{{r.f.on.repo}}" placeholder="github.com/…" aria-label="Repo" style="height: 30px"></td><td class="td" style="text-align: right; white-space: nowrap"><button type="button" class="btnp xs" onClick="{{r.f.save}}">Zapisz</button><button type="button" class="btng ic xs" aria-label="Anuluj" onClick="{{r.f.cancel}}" style="margin-left: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></td></tr></sc-if>
+            </sc-for>
+          </tbody>
+          <tfoot><tr style="background: rgba(0,0,0,.02)"><td style="padding: 6px 8px; border-top: 1px solid rgba(0,0,0,.08)"><button type="button" class="btng sm" onClick="{{addRow}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</button></td><td class="num muted" style="padding: 0 12px; border-top: 1px solid rgba(0,0,0,.08)">{{wipTxt}}</td><td style="border-top: 1px solid rgba(0,0,0,.08)"></td><td class="num muted" style="padding: 0 12px; border-top: 1px solid rgba(0,0,0,.08)">{{termTxt}}</td><td class="num muted" style="padding: 0 12px; border-top: 1px solid rgba(0,0,0,.08)">{{linkTxt}}</td><td style="border-top: 1px solid rgba(0,0,0,.08)"></td></tr></tfoot>
+        </table>
+      </div></div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-page', 'CProjects.dc.html'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const TODAY = '2026-11-15';
+    const E = S.edit || null;
+    const P = S.pick || null;
+    const MONF = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const p2 = (x) => String(x).padStart(2, '0');
+    const fmt = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '—');
+    const days = (iso) => Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
+    const pl = (n, one, few, many) => n + ' ' + (n === 1 ? one : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? few : many);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const setV = (patch) => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, patch) }) });
+    const startEdit = (r) => this.setState({ edit: { id: r.id, isNew: false, v: Object.assign({}, r) }, pick: null });
+    const dd = (key, val, opts, cls) => {
+      const open = !!(P && P.kind === key);
+      return { txt: val, bs: cls[val] || 'bdg out', open, exp: open ? 'true' : 'false',
+        toggle: () => this.setState({ pick: open ? null : { kind: key } }),
+        opts: opts.map((o) => ({ t: o, bs: cls[o] || 'bdg out', p: o === val ? 'true' : 'false', on: o === val,
+          pick: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { [key]: o }) }), pick: null }) })) };
+    };
+    const dp = (iso) => {
+      const open = !!(P && P.kind === 'date');
+      const mo = open ? (P.mo || 0) : 0;
+      const b = iso || TODAY;
+      const first = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1 + mo, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      const cal = [];
+      for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'visibility:hidden', pick: () => {} });
+      for (let d = 1; d <= nd; d++) {
+        const ds = first.getUTCFullYear() + '-' + p2(first.getUTCMonth() + 1) + '-' + p2(d);
+        const on = ds === iso;
+        cal.push({ t: String(d), s: 'height:30px;padding:0;border:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (on ? 'background:#262626;color:#fafafa;font-weight:600' : ds === TODAY ? 'background:rgba(0,0,0,.05);color:#262626;font-weight:600' : 'background:transparent;color:#262626'),
+          pick: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: ds }) }), pick: null }) });
+      }
+      return { txt: iso ? fmt(iso) : 'Wybierz datę', txtS: iso ? '' : 'color:#686868', open, exp: open ? 'true' : 'false',
+        toggle: () => this.setState({ pick: open ? null : { kind: 'date', mo: 0 } }),
+        label: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
+        prev: () => this.setState({ pick: { kind: 'date', mo: mo - 1 } }), next: () => this.setState({ pick: { kind: 'date', mo: mo + 1 } }),
+        cal,
+        today: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: TODAY }) }), pick: null }),
+        clear: () => this.setState({ edit: Object.assign({}, E, { v: Object.assign({}, E.v, { date: '' }) }), pick: null }) };
+    };
+    const ST = { 'W toku': 'bdg info', 'Do zrobienia': 'bdg sec', 'Wstrzymane': 'bdg warn', 'Zrobione': 'bdg ok' };
+    const AREAS = { 'Studia': 'bdg out', 'Własne': 'bdg out', 'Klient': 'bdg out', 'Praca': 'bdg out' };
+    const BASE = [
+      { id: 1, name: 'Projekt z baz danych — drony', status: 'W toku', area: 'Studia', date: '2026-11-20', repo: '' },
+      { id: 2, name: 'rhytm v3', status: 'W toku', area: 'Własne', date: '2026-12-15', repo: 'Mejsooon/rhytm-v3' },
+      { id: 3, name: 'Strona Fanaberia', status: 'W toku', area: 'Klient', date: '2026-11-30', repo: 'framer.com' },
+      { id: 4, name: 'LeetRepeat', status: 'Wstrzymane', area: 'Własne', date: '', repo: 'Mejsooon/leetrepeat' },
+      { id: 5, name: 'NetScope', status: 'Do zrobienia', area: 'Własne', date: '2027-02-15', repo: 'Mejsooon/netscope' },
+      { id: 6, name: 'Chainlock', status: 'Do zrobienia', area: 'Własne', date: '', repo: '' },
+      { id: 7, name: 'Password Manager', status: 'Wstrzymane', area: 'Własne', date: '', repo: 'Mejsooon/password_manager_dev' },
+      { id: 8, name: 'rhytm v2', status: 'Zrobione', area: 'Własne', date: '2026-11-13', repo: 'Mejsooon/rhytm' }
+    ];
+    const R = S.rows || BASE;
+    const NEW = { name: '', status: 'Do zrobienia', area: 'Własne', date: '', repo: '' };
+    const TEXT = ['name', 'repo'];
+    const CLEAN = (v) => ({ name: (v.name || '').trim() || 'Bez nazwy', status: v.status, area: v.area, date: v.date || '', repo: (v.repo || '').trim() });
+    const rel = (r) => { if (!r.date) return ''; const d = days(r.date); return d < 0 ? 'minął' : d === 0 ? 'dziś' : d === 1 ? 'jutro' : d <= 60 ? 'za ' + d + ' dni' : 'za ' + Math.round(d / 30) + ' mies.'; };
+    const urgent = (r) => !!r.date && r.status !== 'Zrobione' && days(r.date) >= 0 && days(r.date) <= 7;
+    const SHOW = (r) => ({ name: r.name || 'Bez nazwy', status: r.status, statusC: ST[r.status], area: r.area,
+      dateTxt: fmt(r.date), rel: rel(r), relC: urgent(r) ? 'bdg bad' : 'muted',
+      repo: r.repo || '—', link: (e) => { stop(e); if (e && e.preventDefault) e.preventDefault(); } });
+    const FORM = () => ({ status: dd('status', E.v.status, Object.keys(ST), ST), area: dd('area', E.v.area, Object.keys(AREAS), AREAS), d: dp(E.v.date) });
+    const saveRow = () => {
+      const row = Object.assign(CLEAN(E.v), { id: E.isNew ? Date.now() : E.id });
+      this.setState({ rows: E.isNew ? R.concat([row]) : R.map((x) => (x.id === E.id ? row : x)), edit: null, pick: null });
+    };
+    const form = E ? Object.assign(FORM(), {
+      v: E.v,
+      on: TEXT.reduce((o, k) => { o[k] = (e) => setV({ [k]: e.target.value }); return o; }, {}),
+      save: saveRow,
+      cancel: () => this.setState({ edit: null, pick: null })
+    }) : {};
+    const list = R.map((r) => {
+      const ed = !!(E && !E.isNew && E.id === r.id);
+      return Object.assign(SHOW(r), {
+        view: !ed, editing: ed, f: ed ? form : {},
+        open: () => { if (!ed) startEdit(r); },
+        edit: (e) => { stop(e); startEdit(r); },
+        del: (e) => { stop(e); this.setState({ rows: R.filter((x) => x.id !== r.id), edit: ed ? null : E, pick: ed ? null : P }); }
+      });
+    });
+    if (E && E.isNew) list.push(Object.assign(SHOW(NEW), { view: false, editing: true, f: form }));
+    const addRow = () => this.setState({ edit: { id: 'new', isNew: true, v: Object.assign({}, NEW) }, pick: null });
+
+    const near = R.filter((r) => r.date && r.status !== 'Zrobione' && days(r.date) >= 0).sort((a, b) => days(a.date) - days(b.date))[0];
+    const done = R.filter((r) => r.status === 'Zrobione').length;
+    const wip = R.filter((r) => r.status === 'W toku').length;
+    return { list, addRow, countRows: pl(R.length, 'wiersz', 'wiersze', 'wierszy'),
+      wip, wipTxt: wip + ' w toku',
+      nearName: near ? near.name : 'Brak terminów', nearRel: near ? rel(near) : '', nearC: near && urgent(near) ? 'bdg bad lg' : 'bdg sec lg',
+      done, total: R.length,
+      termTxt: pl(R.filter((r) => r.date).length, 'termin', 'terminy', 'terminów'),
+      linkTxt: pl(R.filter((r) => r.repo).length, 'link', 'linki', 'linków') };
+  }
+}
+</script>
+</body>
+</html>

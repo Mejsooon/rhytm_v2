@@ -33,7 +33,10 @@ export function SummaryCell({
   const tekst = summary ? summarize(field, rows, summary, today) : "";
   return (
     <td
-      className={`px-3.5 py-2.5 font-mono ${summary?.kind === "avg" ? "text-foreground" : "text-muted-foreground"}`}
+      // Stopka jak w makiecie: 44 px, linia nad komórką, liczby do prawej; średnia wyróżniona
+      className={`h-11 border-t border-border px-3 tabular-nums ${field.type === "number" ? "text-right" : ""} ${
+        summary?.kind === "avg" ? "font-semibold text-foreground" : "text-muted-foreground"
+      }`}
     >
       {tekst}
     </td>

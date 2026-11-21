@@ -1,24 +1,24 @@
+import { Card, StatusBadge } from "@/components/controls";
 import type { PageField } from "../fields";
 import { computeCard, type PageRow, type PinnedCard } from "../table-model";
 
-// Trzy przypięte karty nad tabelą (Books / Projects / Websites.dc.html); wartości z computeCard
+// Trzy przypięte karty nad tabelą (CBooks / CProjects / CWebsites.dc.html): .card z etykietą .lbl
+// i liczbą 26 px; wartości z computeCard
 export function PinnedCards({
   cards,
   fields,
   rows,
   today,
-  bold = true,
 }: {
   cards: PinnedCard[];
   fields: PageField[];
   rows: PageRow[];
   today: string;
-  // Websites.dc.html ma liczby bez pogrubienia
-  bold?: boolean;
 }) {
+  // Bez kart nie ma siatki ani pustej ramki
   if (cards.length === 0) return null;
   return (
-    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border">
+    <div data-testid="przypiete-karty" className="grid grid-cols-3 gap-3">
       {cards.map((card, i) => {
         const wynik = computeCard(card, fields, rows, today);
         // Średnia ocena bez ocen: „— / 5” jak w makiecie
@@ -28,29 +28,27 @@ export function PinnedCards({
             ? "/ 5"
             : "";
         return (
-          <div key={i} className="bg-white px-[18px] py-4">
-            <div className="font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-              {wynik.label}
-            </div>
+          <Card key={i} className="min-w-0 px-[18px] py-4">
+            <div className="text-xs font-medium text-muted-foreground">{wynik.label}</div>
             {card.aggregation === "nearest_date" ? (
-              // Najbliższy termin: nazwa 18 px i czas do terminu, czerwony przy ≤ 7 dniach
-              <div className="mt-2.5 text-lg font-medium">
-                {wynik.value}{" "}
+              // Najbliższy termin: nazwa 18 px i czas do terminu w odznace, czerwonej przy ≤ 7 dniach
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-lg font-semibold">
+                <span>{wynik.value}</span>
                 {wynik.sub && (
-                  <span
-                    className={`font-mono text-[13px] ${wynik.urgent ? "text-destructive-foreground" : "text-muted-foreground"}`}
-                  >
+                  <StatusBadge tone={wynik.urgent ? "red" : "gray"} size="lg">
                     {wynik.sub}
-                  </span>
+                  </StatusBadge>
                 )}
               </div>
             ) : (
-              <div className={`mt-2 font-mono text-[26px] ${bold ? "font-medium" : ""}`}>
+              <div className="mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
                 {card.aggregation === "count_option_of_total" ? (
                   // „1 / 8” z makiety: druga część mniejsza i szara
                   <>
                     {wynik.value.split(" / ")[0]}{" "}
-                    <span className="text-sm text-muted-foreground">/ {wynik.value.split(" / ")[1]}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      / {wynik.value.split(" / ")[1]}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -58,14 +56,14 @@ export function PinnedCards({
                     {(wynik.sub || skala) && (
                       <>
                         {" "}
-                        <span className="text-sm text-muted-foreground">{wynik.sub || skala}</span>
+                        <span className="text-sm font-normal text-muted-foreground">{wynik.sub || skala}</span>
                       </>
                     )}
                   </>
                 )}
               </div>
             )}
-          </div>
+          </Card>
         );
       })}
     </div>
