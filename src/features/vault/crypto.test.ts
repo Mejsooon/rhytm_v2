@@ -107,7 +107,7 @@ describe("crypto sejfu", () => {
       expect(await decryptSecret(klucz!, wartosc)).toBe("tajne");
       expect(await unwrapDataKey(HASLO, nowy!)).toBeNull();
 
-      // zły stary hasło → null
+      // złe stare hasło → null
       expect(await rewrapVault("zle-stare-haslo", INNE_HASLO, material)).toBeNull();
     },
     TIMEOUT,
@@ -121,6 +121,57 @@ describe("crypto sejfu", () => {
       const odwiniety = await unwrapDataKey(HASLO, material);
       await expect(crypto.subtle.exportKey("raw", odwiniety!)).rejects.toThrow();
       expect(key.extractable).toBe(false);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "materiał z niezaufanego serwera: zły alg, iteracje, sól, iv lub base64 → null",
+    async () => {
+      const { material } = await createVaultMaterial(HASLO);
+      const bajty = (n: number) => btoa("x".repeat(n));
+      const zlePrzypadki = [
+        { ...material, kdf: { ...material.kdf, iterations: 1000 } },
+        { ...material, kdf: { ...material.kdf, alg: "PBKDF2-SHA-1" } },
+        { ...material, kdf: { ...material.kdf, salt: bajty(8) } },
+        { ...material, wrap_iv: bajty(8) },
+        { ...material, wrapped_key: bajty(48) },
+        { ...material, wrapped_key: "%%%" },
+        { ...material, kdf: { ...material.kdf, salt: "%%%" } },
+        { ...material, wrap_iv: "%%%" },
+      ] as unknown as (typeof material)[];
+      for (const m of zlePrzypadki) {
+        expect(await unwrapDataKey(HASLO, m)).toBeNull();
+        expect(await rewrapVault(HASLO, INNE_HASLO, m)).toBeNull();
+      }
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "decryptSecret zwraca null dla podmienionego g (AAD)",
+    async () => {
+      const { key } = await createVaultMaterial(HASLO);
+      const wartosc = await encryptSecret(key, "tajne", 1);
+      expect(await decryptSecret(key, { ...wartosc, g: 2 })).toBeNull();
+      expect(await decryptSecret(key, wartosc)).toBe("tajne");
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "hasło utworzone w NFC odblokowuje się wpisane w NFD",
+    async () => {
+      const nfc = "zażółć-gęślą-jaźń-12".normalize("NFC");
+      const nfd = nfc.normalize("NFD");
+      expect(nfd).not.toBe(nfc);
+      const { material, key } = await createVaultMaterial(nfc);
+      const wartosc = await encryptSecret(key, "tajne", 1);
+      const odwiniety = await unwrapDataKey(nfd, material);
+      expect(odwiniety).not.toBeNull();
+      expect(await decryptSecret(odwiniety!, wartosc)).toBe("tajne");
+      const nowy = await rewrapVault(nfd, INNE_HASLO, material);
+      expect(nowy).not.toBeNull();
     },
     TIMEOUT,
   );

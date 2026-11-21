@@ -7,6 +7,8 @@ export type VaultMaterial = { kdf: VaultKdf; wrapped_key: string; wrap_iv: strin
 export type SecretValue = { v: 1; g: number; iv: string; ct: string };
 
 const ITERATIONS = 600000;
+// Uwaga: base64 poniżej powstaje przez btoa(String.fromCharCode(...bajty)); spread ma limit argumentów
+// silnika (rzędu 100 tys.), więc dla bardzo długich tekstów (setki KB) trzeba by kodować porcjami.
 const BASE64_RE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 // Sprawdza kształt wartości Sekretu: wersja, generacja ≥ 1, iv = 12 B, ct ≥ 16 B (sam tag GCM)
@@ -37,7 +39,7 @@ export async function createVaultMaterial(
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const wrapIv = crypto.getRandomValues(new Uint8Array(12));
 
-  const passKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, [
+  const passKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password.normalize("NFC")), "PBKDF2", false, [
     "deriveKey",
   ]);
   const wrappingKey = await crypto.subtle.deriveKey(
@@ -79,15 +81,20 @@ export async function createVaultMaterial(
 // Odwija klucz danych hasłem; null przy złym haśle (tag GCM się nie zgadza) lub uszkodzonym materiale
 export async function unwrapDataKey(password: string, material: VaultMaterial): Promise<CryptoKey | null> {
   try {
+    // Materiał pochodzi z niezaufanego serwera: sprawdzamy parametry, zanim ruszymy WebCrypto
+    if (material.kdf.alg !== "PBKDF2-SHA-256" || material.kdf.iterations !== ITERATIONS) return null;
+    if (!BASE64_RE.test(material.kdf.salt) || atob(material.kdf.salt).length !== 16) return null;
+    if (!BASE64_RE.test(material.wrap_iv) || atob(material.wrap_iv).length !== 12) return null;
+    if (!BASE64_RE.test(material.wrapped_key)) return null;
     const salt = Uint8Array.from(atob(material.kdf.salt), (c) => c.charCodeAt(0));
     const wrapIv = Uint8Array.from(atob(material.wrap_iv), (c) => c.charCodeAt(0));
     const wrapped = Uint8Array.from(atob(material.wrapped_key), (c) => c.charCodeAt(0));
 
-    const passKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, [
+    const passKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password.normalize("NFC")), "PBKDF2", false, [
       "deriveKey",
     ]);
     const wrappingKey = await crypto.subtle.deriveKey(
-      { name: "PBKDF2", hash: "SHA-256", salt, iterations: material.kdf.iterations },
+      { name: "PBKDF2", hash: "SHA-256", salt, iterations: ITERATIONS },
       passKey,
       { name: "AES-GCM", length: 256 },
       false,
@@ -116,19 +123,24 @@ export async function rewrapVault(
 ): Promise<VaultMaterial | null> {
   let dataKey: CryptoKey;
   try {
+    // Materiał pochodzi z niezaufanego serwera: sprawdzamy parametry, zanim ruszymy WebCrypto
+    if (material.kdf.alg !== "PBKDF2-SHA-256" || material.kdf.iterations !== ITERATIONS) return null;
+    if (!BASE64_RE.test(material.kdf.salt) || atob(material.kdf.salt).length !== 16) return null;
+    if (!BASE64_RE.test(material.wrap_iv) || atob(material.wrap_iv).length !== 12) return null;
+    if (!BASE64_RE.test(material.wrapped_key)) return null;
     const oldSalt = Uint8Array.from(atob(material.kdf.salt), (c) => c.charCodeAt(0));
     const oldIv = Uint8Array.from(atob(material.wrap_iv), (c) => c.charCodeAt(0));
     const wrapped = Uint8Array.from(atob(material.wrapped_key), (c) => c.charCodeAt(0));
 
     const oldPassKey = await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode(oldPassword),
+      new TextEncoder().encode(oldPassword.normalize("NFC")),
       "PBKDF2",
       false,
       ["deriveKey"],
     );
     const oldWrappingKey = await crypto.subtle.deriveKey(
-      { name: "PBKDF2", hash: "SHA-256", salt: oldSalt, iterations: material.kdf.iterations },
+      { name: "PBKDF2", hash: "SHA-256", salt: oldSalt, iterations: ITERATIONS },
       oldPassKey,
       { name: "AES-GCM", length: 256 },
       false,
@@ -149,9 +161,11 @@ export async function rewrapVault(
     return null;
   }
 
+  // Druga połowa (owijanie nowym hasłem) celowo NIE jest w try/catch: błąd WebCrypto ma tu rzucić,
+  // bo null oznacza wyłącznie złe stare hasło albo zły materiał
   const newSalt = crypto.getRandomValues(new Uint8Array(16));
   const newIv = crypto.getRandomValues(new Uint8Array(12));
-  const newPassKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(newPassword), "PBKDF2", false, [
+  const newPassKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(newPassword.normalize("NFC")), "PBKDF2", false, [
     "deriveKey",
   ]);
   const newWrappingKey = await crypto.subtle.deriveKey(
@@ -173,7 +187,9 @@ export async function rewrapVault(
 // Szyfruje tekst kluczem danych; nowy iv 12 B przy każdym wywołaniu; g = vaults.generation
 export async function encryptSecret(key: CryptoKey, text: string, generation: number): Promise<SecretValue> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
+  // AAD wiąże szyfrogram z generacją: podmiana g w wartości psuje odszyfrowanie
+  const aad = new TextEncoder().encode(`rhytm-secret:v1:g${generation}`);
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, new TextEncoder().encode(text));
   return {
     v: 1,
     g: generation,
@@ -187,7 +203,8 @@ export async function decryptSecret(key: CryptoKey, value: SecretValue): Promise
   try {
     const iv = Uint8Array.from(atob(value.iv), (c) => c.charCodeAt(0));
     const ct = Uint8Array.from(atob(value.ct), (c) => c.charCodeAt(0));
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+    const aad = new TextEncoder().encode(`rhytm-secret:v${value.v}:g${value.g}`);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: aad }, key, ct);
     return new TextDecoder().decode(plain);
   } catch {
     return null;
