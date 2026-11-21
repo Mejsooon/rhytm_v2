@@ -151,7 +151,10 @@ export function MonthCalendar({
                     className={cn(
                       "group relative box-border min-h-[88px] p-1.5",
                       c > 0 && "border-l border-border-soft",
-                      wMiesiacu ? "cursor-pointer" : "bg-black/[.018]",
+                      // Najechanie: lekkie podświetlenie, że w dzień da się kliknąć
+                      wMiesiacu
+                        ? "cursor-pointer hover:bg-panel"
+                        : "bg-black/[.018]",
                     )}
                   >
                     <span

@@ -117,6 +117,14 @@ describe("MonthCalendar", () => {
     expect(w.onAddDay).toHaveBeenCalledWith("2026-11-18");
   });
 
+  it("dzień miesiąca podświetla się po najechaniu", () => {
+    wyrenderuj();
+    expect(screen.getByTestId("dzien-2026-11-18")).toHaveClass(
+      "cursor-pointer",
+      "hover:bg-panel",
+    );
+  });
+
   it("dymek „Dodaj trening”: Bieg / Siłownia / „Z szablonu”", async () => {
     const w = wyrenderuj({ addDate: "2026-11-18" });
     const dymek = screen.getByRole("dialog", { name: "Dodaj trening" });

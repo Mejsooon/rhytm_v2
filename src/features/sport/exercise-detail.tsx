@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { PencilIcon } from "lucide-react";
 
 import {
   Button,
@@ -245,6 +246,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
               setDialogOtwarty(true);
             }}
           >
+            <PencilIcon aria-hidden="true" className="size-4" />
             Zmień nazwę
           </Button>
         </div>

@@ -86,6 +86,12 @@ beforeEach(() => {
 });
 
 describe("ExerciseDetail", () => {
+  it("„Zmień nazwę” ma ikonę ołówka", () => {
+    render(<ExerciseDetail data={dane()} />);
+    const przycisk = screen.getByRole("button", { name: "Zmień nazwę" });
+    expect(przycisk.querySelector("svg")).not.toBeNull();
+  });
+
   it("ścieżka, nagłówek i podtytuł z liczbą treningów", () => {
     render(<ExerciseDetail data={dane()} />);
     expect(screen.getByRole("link", { name: "Sport" })).toHaveAttribute(

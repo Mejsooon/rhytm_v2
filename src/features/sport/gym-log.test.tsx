@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -243,6 +243,16 @@ describe("GymLog — serie", () => {
       screen.getByRole("checkbox", { name: `${WYC}, seria 5 zrobiona` }),
     ).not.toBeChecked();
     expect(licznik()).toHaveTextContent("3 / 7");
+  });
+
+  it("po „+ Seria” fokus trafia do pola kg nowej serii", async () => {
+    render(<GymLog data={daneTreningu()} />);
+    await userEvent.click(
+      within(karta(WYC)).getByRole("button", { name: "+ Seria" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText(`${WYC}, seria 5 — ciężar`)).toHaveFocus(),
+    );
   });
 
   it("seria jeszcze niezapisana ma zablokowane pola, ✓ i ✕", async () => {

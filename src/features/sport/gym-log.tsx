@@ -4,7 +4,7 @@
 // objętość i serie, karty ćwiczeń z edycją serii (kg / powt. / ✓ / ✕), REKORD, linia 1RM i „+ Ćwiczenie”.
 // Stan serii trzyma use-gym-store — jeden na ekran, przekazany też do drzewa telefonu (MGym).
 // Oba drzewa są w DOM; przełącza je wyłącznie CSS (800 px).
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -44,6 +44,26 @@ export function GymLog({ data }: { data: WorkoutData }) {
   const router = useRouter();
   const { session, profile } = data;
   const sklep = useGymStore(data);
+  // Po „+ Seria”: czekamy, aż nowa seria dostanie id z serwera (pola są wtedy aktywne), i dajemy fokus jej polu kg
+  const fokusSerii = useRef<{ exerciseId: string; liczba: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    const cel = fokusSerii.current;
+    if (!cel) return;
+    const cw = sklep.exercises.find((e) => e.id === cel.exerciseId);
+    if (!cw) {
+      fokusSerii.current = null;
+      return;
+    }
+    const ostatnia = cw.sets[cw.sets.length - 1];
+    if (cw.sets.length <= cel.liczba || !ostatnia || isTempId(ostatnia.id))
+      return;
+    document
+      .querySelector<HTMLInputElement>(`[data-kg-serii="${ostatnia.id}"]`)
+      ?.focus();
+    fokusSerii.current = null;
+  }, [sklep.exercises]);
 
   const [konczy, setKonczy] = useState(false);
   const [oknoSzablonu, setOknoSzablonu] = useState(false);
@@ -320,6 +340,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                               inputMode="decimal"
                               placeholder="+ kg"
                               aria-label={`${etykieta} — dociążenie (kg)`}
+                              data-kg-serii={s.id}
                               disabled={zablokowana}
                               value={
                                 szkic?.kg ??
@@ -343,6 +364,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
                             inputMode="decimal"
                             placeholder="kg"
                             aria-label={`${etykieta} — ciężar`}
+                            data-kg-serii={s.id}
                             disabled={zablokowana}
                             value={
                               szkic?.kg ??
@@ -433,7 +455,13 @@ export function GymLog({ data }: { data: WorkoutData }) {
                     variant="ghost"
                     size="sm"
                     disabled={tymczasowe}
-                    onClick={() => void sklep.addSet(cwiczenie.id)}
+                    onClick={() => {
+                      fokusSerii.current = {
+                        exerciseId: cwiczenie.id,
+                        liczba: cwiczenie.sets.length,
+                      };
+                      void sklep.addSet(cwiczenie.id);
+                    }}
                     className="text-muted-foreground"
                   >
                     + Seria
