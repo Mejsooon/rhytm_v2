@@ -39,7 +39,7 @@ export function CardFooter({
       </span>
       <span className="flex gap-2 max-[799px]:[&>button]:flex-1">
         {dirty && (
-          <Button onClick={onReset} className="max-[799px]:h-12">
+          <Button variant="ghost" onClick={onReset} className="max-[799px]:h-12">
             Cofnij
           </Button>
         )}

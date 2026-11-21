@@ -110,7 +110,7 @@ export function AvatarRow({
       ) : (
         <span
           aria-hidden="true"
-          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-input bg-active text-xl font-semibold text-foreground"
+          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-border bg-muted text-xl font-semibold text-foreground"
         >
           {inicjal}
         </span>
@@ -118,13 +118,13 @@ export function AvatarRow({
       <span className="min-w-0 flex-[1_1_200px]">
         <span className="block font-medium">Zdjęcie profilowe</span>
         {blad ? (
-          <span role="alert" className="text-[13px] text-destructive-foreground">
+          <span role="alert" className="text-sm text-destructive-foreground">
             {blad}
           </span>
         ) : zapisano ? (
-          <span className="text-[13px] text-success">Zapisano ✓</span>
+          <span className="text-sm text-success">Zapisano ✓</span>
         ) : (
-          <span className="text-[13px] text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {maZdjecie
               ? "PNG, JPG albo WebP, do 2 MB"
               : "Bez zdjęcia pokażemy inicjały"}
@@ -134,8 +134,7 @@ export function AvatarRow({
       <span className="flex gap-2">
         {maZdjecie && (
           <Button
-            size="sm"
-            className="max-[799px]:h-11 max-[799px]:px-3.5"
+            variant="destructive-outline"
             disabled={pracuje}
             onClick={usun}
           >
@@ -143,8 +142,6 @@ export function AvatarRow({
           </Button>
         )}
         <Button
-          size="sm"
-          className="max-[799px]:h-11 max-[799px]:px-3.5"
           disabled={pracuje}
           onClick={() => wejscie.current?.click()}
         >

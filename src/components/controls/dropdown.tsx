@@ -111,7 +111,7 @@ export function Dropdown<T extends string>({
                 {variant === "select" && wybrana.hint && (
                   <>
                     {" "}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs tabular-nums text-muted-foreground">
                       {wybrana.hint}
                     </span>
                   </>
@@ -184,7 +184,12 @@ export function Dropdown<T extends string>({
                   )}
                   <span className="flex items-center gap-2">
                     {opcja.hint && (
-                      <span className="font-mono text-xs font-normal text-muted-foreground">
+                      <span
+                        className={cn(
+                          "text-xs font-normal text-muted-foreground",
+                          variant === "select" ? "tabular-nums" : "font-mono",
+                        )}
+                      >
                         {opcja.hint}
                       </span>
                     )}

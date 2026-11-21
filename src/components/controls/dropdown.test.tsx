@@ -142,4 +142,20 @@ describe("Dropdown", () => {
     );
     expect(wyzwalacz.querySelector("svg")).toHaveClass("lucide-chevron-down", "size-3");
   });
+
+  it("hint na liście: select bez font-mono (tabular-nums), menu z font-mono", async () => {
+    const opcje = [{ value: "PLN", label: "PLN", hint: "zł" }];
+    const { unmount } = render(
+      <Dropdown variant="select" value="PLN" onChange={() => {}} ariaLabel="Waluta" options={opcje} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Waluta" }));
+    let hint = screen.getByRole("option").querySelector("span > span")!;
+    expect(hint).toHaveClass("tabular-nums", "text-xs", "font-normal", "text-muted-foreground");
+    expect(hint).not.toHaveClass("font-mono");
+    unmount();
+    render(<Dropdown value="PLN" onChange={() => {}} ariaLabel="Waluta" options={opcje} />);
+    await userEvent.click(screen.getByRole("button", { name: "Waluta" }));
+    hint = screen.getByRole("option").querySelector("span > span")!;
+    expect(hint).toHaveClass("font-mono");
+  });
 });
