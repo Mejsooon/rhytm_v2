@@ -3,7 +3,15 @@
 // Kalendarz miesiąca Sportu (Sport.dc.html, „KALENDARZ: MIESIĄC”): 6 tygodni wg początku tygodnia,
 // chipy treningów, kolumna „Σ tydz.”, dymek treningu i dymek dnia „Dodaj trening”.
 import { useEffect, useRef } from "react";
+import { Activity, Dumbbell, Plus, X } from "lucide-react";
 
+import {
+  Button,
+  Chip,
+  MENU_ITEM,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+} from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { weekdayOf } from "@/features/calendar/view-range";
@@ -13,13 +21,14 @@ import { ItemPopover, type RunRequest } from "./item-popover";
 import type { SportMonthData } from "./load-sport";
 import { formatKm, monthGrid, weekStats, type SportItem } from "./model";
 
-const BIEG = "#c2410c";
-const SILA = "#404040";
+// Kolory danych z makiety CSport: bieg = token warning (#f59e0b), siłownia #525252
+export const BIEG = "#f59e0b";
+export const SILA = "#525252";
+// Pozycja „Dodaj trening” jak .mi z makiety (min. 44 px, kafelek ikony 28 px)
+const OPCJA = `${MENU_ITEM} min-h-11 gap-2.5 py-1`;
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const NAGLOWEK_PON = ["pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const NAGLOWEK_ND = ["nd", "pon", "wt", "śr", "czw", "pt", "sob"];
-const OPCJA =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent p-2 text-left text-foreground outline-none hover:bg-muted focus-visible:bg-muted";
 
 export function MonthCalendar({
   data,
@@ -82,26 +91,30 @@ export function MonthCalendar({
 
   return (
     <div>
+      {/* Ramka jak .frame>.inner z makiety: border 1,5 px (border-strong), promień 12 px */}
       <div
         ref={kontener}
         data-testid="kalendarz-sportu"
-        className="relative min-w-[760px] rounded-lg border border-border"
+        className="relative min-w-[760px] rounded-lg border-[1.5px] border-border-strong bg-white"
       >
         <div
           data-testid="naglowek-dni"
-          className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] rounded-t-lg border-b border-border bg-panel font-mono text-[11px] text-muted-foreground"
+          className="grid grid-cols-[repeat(7,minmax(0,1fr))_92px] rounded-t-[10px] border-b border-border text-xs font-medium text-muted-foreground"
         >
           {(profile.weekStart === "mon" ? NAGLOWEK_PON : NAGLOWEK_ND).map(
             (d, i) => (
               <span
                 key={d}
-                className={cn("px-2.5 py-2", i > 0 && "border-l border-border")}
+                className={cn(
+                  "px-2.5 py-2",
+                  i > 0 && "border-l border-border-soft",
+                )}
               >
                 {d}
               </span>
             ),
           )}
-          <span className="border-l border-border px-2.5 py-2 text-right">
+          <span className="border-l border-border-soft px-2.5 py-2 text-right">
             Σ tydz.
           </span>
         </div>
@@ -112,7 +125,7 @@ export function MonthCalendar({
           return (
             <div
               key={dni[0]}
-              className="grid grid-cols-[repeat(7,minmax(0,1fr))_88px] border-b border-border last:border-b-0"
+              className="grid grid-cols-[repeat(7,minmax(0,1fr))_92px] border-b border-border-soft last:border-b-0"
             >
               {dni.map((date, c) => {
                 const wMiesiacu = date.slice(0, 7) === month;
@@ -136,9 +149,9 @@ export function MonthCalendar({
                       onAddDay(addDate === date ? null : date);
                     }}
                     className={cn(
-                      "group relative box-border min-h-[86px] px-2 py-1.5",
-                      c > 0 && "border-l border-border",
-                      wMiesiacu ? "cursor-pointer hover:bg-panel" : "bg-panel",
+                      "group relative box-border min-h-[88px] p-1.5",
+                      c > 0 && "border-l border-border-soft",
+                      wMiesiacu ? "cursor-pointer" : "bg-black/[.018]",
                     )}
                   >
                     <span
@@ -158,9 +171,9 @@ export function MonthCalendar({
                         type="button"
                         aria-label={`Dodaj trening, ${etykietaDnia}`}
                         onClick={() => onAddDay(addDate === date ? null : date)}
-                        className="float-right cursor-pointer border-0 bg-transparent p-0 font-mono text-[13px] leading-none text-faint-foreground opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100"
+                        className="float-right flex cursor-pointer border-0 bg-transparent p-0 text-faint-foreground opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100"
                       >
-                        +
+                        <Plus size={14} aria-hidden="true" />
                       </button>
                     )}
 
@@ -181,19 +194,24 @@ export function MonthCalendar({
                           aria-pressed={wcisniety}
                           aria-label={`${item.title}, ${etykietaDnia}`}
                           onClick={() => onSelect(wcisniety ? null : item.key)}
-                          className="mt-1 block w-full cursor-pointer truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] whitespace-nowrap outline-none focus-visible:shadow-focus"
+                          // Fokus przez outline, bo cień zaznaczenia zajmuje box-shadow w style
+                          className="mt-1 flex w-full cursor-pointer items-center gap-1.5 overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium whitespace-nowrap text-foreground tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-ring"
                           style={{
-                            color: item.planned ? kolor : "#171717",
-                            background: item.planned ? "#ffffff" : `${kolor}18`,
+                            background: item.planned ? "#ffffff" : `${kolor}14`,
                             border: item.planned
                               ? `1px dashed ${kolor}`
-                              : `1px solid ${kolor}40`,
+                              : `1px solid ${kolor}30`,
                             boxShadow: wcisniety
                               ? `0 0 0 2px ${kolor}55`
                               : undefined,
                           }}
                         >
-                          {item.kind === "run" ? "●" : "■"} {krotko}
+                          <span
+                            aria-hidden="true"
+                            className="size-1.5 flex-none rounded-full"
+                            style={{ background: kolor }}
+                          />
+                          <span className="min-w-0 truncate">{krotko}</span>
                         </button>
                       );
                     })}
@@ -216,32 +234,35 @@ export function MonthCalendar({
                     )}
 
                     {wMiesiacu && addDate === date && (
+                      // .pop z makiety: promień 12 px, ramka border, cień shadow-lg, padding 4 px
                       <div
                         role="dialog"
                         aria-label="Dodaj trening"
                         className={cn(
-                          "absolute z-20 box-border w-60 cursor-default rounded-xl border border-input bg-white p-2 text-left text-sm shadow-[0_16px_48px_rgba(0,0,0,.16)]",
+                          "absolute z-20 box-border w-[250px] cursor-default rounded-lg border border-border bg-white bg-clip-padding p-1 text-left text-sm shadow-lg",
                           c >= 4
                             ? "right-[calc(100%+6px)]"
                             : "left-[calc(100%+6px)]",
                           r >= 3 ? "bottom-0" : "top-0",
                         )}
                       >
-                        <div className="flex items-center gap-2 px-1 pt-0.5 pb-2">
-                          <span className="text-[13px] font-semibold">
+                        <div className="flex items-center gap-2 py-1 pr-1 pl-2">
+                          <span className="text-sm font-semibold">
                             Dodaj trening
                           </span>
-                          <span className="font-mono text-[11px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground tabular-nums">
                             {etykietaDnia}
                           </span>
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            icon
                             aria-label="Zamknij"
                             onClick={() => onAddDay(null)}
-                            className="ml-auto size-6 cursor-pointer rounded-md border-0 bg-transparent text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
+                            className="ml-auto"
                           >
-                            ✕
-                          </button>
+                            <X size={14} aria-hidden="true" />
+                          </Button>
                         </div>
                         <button
                           type="button"
@@ -252,14 +273,12 @@ export function MonthCalendar({
                         >
                           <span
                             aria-hidden="true"
-                            className="flex size-7 items-center justify-center rounded-md border border-warning-border bg-warning-soft text-xs text-warning-foreground"
+                            className="grid size-7 flex-none place-items-center rounded-[8px] bg-warning-soft text-warning-foreground"
                           >
-                            ●
+                            <Activity size={15} />
                           </span>
                           <span className="flex flex-col">
-                            <span className="text-[13px] font-medium">
-                              Bieg
-                            </span>
+                            <span className="font-medium">Bieg</span>
                             <span className="text-xs text-muted-foreground">
                               dystans, czas, tempo
                             </span>
@@ -274,14 +293,12 @@ export function MonthCalendar({
                         >
                           <span
                             aria-hidden="true"
-                            className="flex size-7 items-center justify-center rounded-md border border-input bg-muted text-xs text-soft-foreground"
+                            className="grid size-7 flex-none place-items-center rounded-[8px] bg-black/[.05] text-soft-foreground"
                           >
-                            ■
+                            <Dumbbell size={15} />
                           </span>
                           <span className="flex flex-col">
-                            <span className="text-[13px] font-medium">
-                              Siłownia
-                            </span>
+                            <span className="font-medium">Siłownia</span>
                             <span className="text-xs text-muted-foreground">
                               pusty trening siłowy
                             </span>
@@ -289,15 +306,12 @@ export function MonthCalendar({
                         </button>
                         {data.templates.length > 0 && (
                           <>
-                            <div className="mx-0 mt-1.5 mb-1 border-t border-border" />
-                            <div className="px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
-                              Z szablonu
-                            </div>
-                            <div className="flex flex-wrap gap-1.5 px-2 pt-0.5 pb-1">
+                            <div className={MENU_SEPARATOR} />
+                            <div className={MENU_LABEL}>Z szablonu</div>
+                            <div className="flex flex-wrap gap-1.5 px-2 pt-0.5 pb-1.5">
                               {data.templates.map((t) => (
-                                <button
+                                <Chip
                                   key={t.id}
-                                  type="button"
                                   onClick={() =>
                                     onStartGym({
                                       date,
@@ -305,10 +319,9 @@ export function MonthCalendar({
                                       templateId: t.id,
                                     })
                                   }
-                                  className="cursor-pointer rounded-full border border-input bg-white px-2.5 py-[3px] text-xs text-soft-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
                                 >
                                   {t.name}
-                                </button>
+                                </Chip>
                               ))}
                             </div>
                           </>
@@ -320,12 +333,12 @@ export function MonthCalendar({
               })}
               <div
                 data-testid={`suma-${dni[0]}`}
-                className="border-l border-border bg-panel px-2.5 py-2 text-right font-mono text-xs"
+                className="border-l border-border-soft bg-black/[.02] px-2.5 py-2 text-right text-[13px]"
               >
-                <div className="font-medium">
+                <div className="font-semibold tabular-nums">
                   {suma.km > 0 ? `${formatKm(suma.km)} km` : "—"}
                 </div>
-                <div className="mt-0.5 text-[11px] text-muted-foreground">
+                <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                   {suma.done > 0 ? `${suma.done} tr.` : ""}
                 </div>
               </div>

@@ -48,13 +48,42 @@ describe("MonthCalendar", () => {
     const wykonany = screen.getByRole("button", {
       name: "Długi bieg, nd 15.11",
     });
-    expect(wykonany).toHaveTextContent("● 12,0");
+    expect(wykonany).toHaveTextContent("12,0");
     const plan = screen.getByRole("button", { name: "Spokojny, wt 17.11" });
-    expect(plan).toHaveTextContent("● 10 km");
+    expect(plan).toHaveTextContent("10 km");
     expect(plan.style.border).toContain("dashed");
     expect(
       screen.getByRole("button", { name: "Push, czw 12.11" }),
-    ).toHaveTextContent("■ Push");
+    ).toHaveTextContent("Push");
+  });
+
+  it("chip wykonanego biegu ma kolor #f59e0b, siłowni #525252", () => {
+    wyrenderuj();
+    // Wykonany: tło kolor+14, ramka kolor+30; kropka w kolorze typu
+    const bieg = screen.getByRole("button", { name: "Długi bieg, nd 15.11" });
+    expect(bieg.style.background).toBe("rgba(245, 158, 11, 0.08)");
+    expect(bieg.style.border).toBe("1px solid rgba(245, 158, 11, 0.19)");
+    expect((bieg.firstElementChild as HTMLElement).style.background).toBe(
+      "rgb(245, 158, 11)",
+    );
+    const sila = screen.getByRole("button", { name: "Push, czw 12.11" });
+    expect(sila.style.background).toBe("rgba(82, 82, 82, 0.08)");
+    expect(sila.style.border).toBe("1px solid rgba(82, 82, 82, 0.19)");
+    expect((sila.firstElementChild as HTMLElement).style.background).toBe(
+      "rgb(82, 82, 82)",
+    );
+    // Planowany: biała z przerywaną ramką w kolorze typu
+    const plan = screen.getByRole("button", { name: "Spokojny, wt 17.11" });
+    expect(plan.style.background).toBe("rgb(255, 255, 255)");
+    expect(plan.style.border).toBe("1px dashed rgb(245, 158, 11)");
+  });
+
+  it("dymek w kolumnie piątek–niedziela otwiera się w lewo", () => {
+    // pt 06.11: kolumna 4 (pierwsza z otwieranych w lewo)
+    wyrenderuj({ selectedKey: "s:a1000000-0000-4000-8000-000000000006" });
+    const dymek = screen.getByRole("dialog", { name: "Pull" });
+    expect(dymek.className).toContain("right-[calc(100%+6px)]");
+    expect(dymek.className).not.toContain("left-[calc(100%+6px)]");
   });
 
   it("klik w trening wybiera jego klucz", async () => {
