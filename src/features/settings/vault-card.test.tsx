@@ -64,21 +64,36 @@ function zSejfem() {
   });
 }
 
-// Mały komponent testowy: odblokowuje sejf prawdziwym unlock (karta nie ma własnego pola odblokowania)
-function Odblokuj() {
-  const { unlock, status } = useVault();
+// Mały komponent testowy: odblokowuje sejf prawdziwym unlock podanym hasłem (karta nie ma własnego pola odblokowania)
+function Odblokuj({ haslo, etykieta }: { haslo: string; etykieta: string }) {
+  const { unlock } = useVault();
+  const [blad, setBlad] = React.useState("");
   return (
     <>
-      <button onClick={() => void unlock(STARE)}>test-odblokuj</button>
-      <span data-testid="status">{status}</span>
+      <button
+        onClick={() =>
+          void unlock(haslo).then((w) => setBlad(w.ok ? "" : w.message))
+        }
+      >
+        {etykieta}
+      </button>
+      <span data-testid={`blad-${etykieta}`}>{blad}</span>
     </>
   );
+}
+
+// Pokazuje status providera (osobno, żeby nie dublować go przy kilku przyciskach)
+function StatusProvidera() {
+  const { status } = useVault();
+  return <span data-testid="status">{status}</span>;
 }
 
 async function zamontuj() {
   render(
     <VaultProvider>
-      <Odblokuj />
+      <Odblokuj haslo={STARE} etykieta="test-odblokuj" />
+      <Odblokuj haslo={NOWE} etykieta="test-odblokuj-nowe" />
+      <StatusProvidera />
       <VaultCard />
     </VaultProvider>,
   );
@@ -100,6 +115,8 @@ afterEach(() => {
   createVault.mockReset();
   rewrapVaultAction.mockReset();
   resetVault.mockReset();
+  // Przywraca prawdziwe webCryptoAvailable po teście „nieobsługiwany”
+  vi.mocked(webCryptoAvailable).mockRestore();
 });
 
 describe("VaultCard", () => {
@@ -280,10 +297,22 @@ describe("VaultCard", () => {
   it("komunikat sukcesu zależy od statusu: zablokowany i odblokowany", async () => {
     const user = userEvent.setup();
     zSejfem();
-    rewrapVaultAction.mockImplementation(async () => ({
-      ok: true,
-      updated_at: "2026-11-21T11:00:00Z",
-    }));
+    // Mock serwera: zapisany materiał wraca z getVault z tym samym updated_at, które zwraca akcja
+    let licznik = 0;
+    rewrapVaultAction.mockImplementation(async (m: VaultMaterial) => {
+      licznik += 1;
+      const updatedAt = `2026-11-21T1${licznik}:00:00Z`;
+      getVault.mockResolvedValue({
+        ok: true,
+        vault: {
+          ...m,
+          generation: 1,
+          created_at: "2026-11-21T10:00:00Z",
+          updated_at: updatedAt,
+        },
+      });
+      return { ok: true, updated_at: updatedAt };
+    });
     await zamontuj();
 
     async function zmien(stare: string, nowe: string) {
@@ -300,15 +329,48 @@ describe("VaultCard", () => {
       ),
     ).toBeInTheDocument();
 
-    // Odblokowanie (hasło po zmianie to NOWE, ale provider ma jeszcze materiał z getVault: odblokowujemy STARE)
+    // Stare hasło już nie odblokowuje
     await user.click(screen.getByRole("button", { name: "test-odblokuj" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("blad-test-odblokuj")).toHaveTextContent(
+        "Nieprawidłowe hasło główne.",
+      ),
+    );
+    expect(screen.getByTestId("status")).toHaveTextContent("zablokowany");
+
+    // Nowe hasło odblokowuje
+    await user.click(
+      screen.getByRole("button", { name: "test-odblokuj-nowe" }),
+    );
     await waitFor(() =>
       expect(screen.getByTestId("status")).toHaveTextContent("odblokowany"),
     );
-    await zmien(STARE, NOWE + "2");
+
+    await zmien(NOWE, NOWE + "2");
     expect(
       await screen.findByText("Hasło główne zmienione."),
     ).toBeInTheDocument();
+  }, 90000);
+
+  it("błąd „Nieprawidłowe hasło główne.” znika po wpisaniu znaku w polu obecnego hasła", async () => {
+    const user = userEvent.setup();
+    zSejfem();
+    await zamontuj();
+    await user.type(
+      screen.getByLabelText("Obecne hasło główne"),
+      "zle-haslo-glowne-9",
+    );
+    await user.type(screen.getByLabelText("Nowe hasło główne"), NOWE);
+    await user.type(screen.getByLabelText("Powtórz nowe hasło"), NOWE);
+    await user.click(screen.getByRole("button", { name: "Zmień hasło" }));
+    expect(
+      await screen.findByText("Nieprawidłowe hasło główne."),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Obecne hasło główne"), "a");
+    expect(
+      screen.queryByText("Nieprawidłowe hasło główne."),
+    ).not.toBeInTheDocument();
   }, 60000);
 
   it("reset odmontowuje formularz: po ponownym ustawieniu pola są puste", async () => {
@@ -406,6 +468,5 @@ describe("VaultCard", () => {
     expect(
       screen.queryByRole("button", { name: "Zresetuj sejf" }),
     ).not.toBeInTheDocument();
-    vi.mocked(webCryptoAvailable).mockRestore();
   });
 });
