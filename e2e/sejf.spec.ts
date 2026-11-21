@@ -161,9 +161,7 @@ test.describe("sejf", () => {
 
     // Reset w Ustawienia → Sejf (po przeładowaniu sejf jest zablokowany; reset działa też zablokowany)
     await page.goto("/ustawienia/sejf");
-    await expect(
-      page.getByRole("heading", { name: "Sejf", exact: true }),
-    ).toBeVisible();
+    // „Sejf” jest nagłówkiem w topbarze, zakładce i karcie — czekamy na stan karty
     await expect(page.getByText("Zablokowany", { exact: true })).toBeVisible();
     await page
       .getByRole("button", { name: "Zresetuj sejf", exact: true })
