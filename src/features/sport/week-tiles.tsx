@@ -29,6 +29,8 @@ export function WeekTiles({
   profile: SportProfile;
 }) {
   const [miara, setMiara] = useState<Miara>("km");
+  // Tydzień pod kursorem (albo z fokusem klawiatury): podświetlony słupek i dymek
+  const [aktywny, setAktywny] = useState<number | null>(null);
 
   // 12 tygodni od profiles.week_start; ostatni = bieżący
   const dzien = weekdayOf(today);
@@ -39,7 +41,11 @@ export function WeekTiles({
   const tygodnie = Array.from({ length: 12 }, (_, i) => {
     const od = addDays(biezacy, (i - 11) * 7);
     // Numer ISO ze środka tygodnia (przy tygodniu od niedzieli niedziela należy do poprzedniego)
-    return { numer: isoWeekNumber(addDays(od, 3)), ...weekStats(items, od) };
+    return {
+      numer: isoWeekNumber(addDays(od, 3)),
+      od,
+      ...weekStats(items, od),
+    };
   });
   const teraz = tygodnie[11];
 
@@ -84,6 +90,7 @@ export function WeekTiles({
   let notka: string;
   let celTekst = "";
   let format: (v: number) => string;
+  let jednostka: string;
   if (miara === "km") {
     wartosci = tygodnie.map((t) => t.km);
     tytul = "Kilometry tygodniowo";
@@ -95,11 +102,13 @@ export function WeekTiles({
       celTekst = `cel ${profile.weeklyKmGoal} km`;
     }
     format = (v) => String(Math.round(v * 10) / 10).replace(".", ",");
+    jednostka = " km";
   } else if (miara === "pace") {
     wartosci = tygodnie.map((t) => t.paceS ?? 0);
     tytul = "Średnie tempo biegów";
     notka = "wyższy słupek = szybciej";
     format = (v) => formatPace(v);
+    jednostka = " /km";
   } else if (miara === "sessions") {
     wartosci = tygodnie.map((t) => t.done);
     tytul = "Treningi tygodniowo";
@@ -109,11 +118,13 @@ export function WeekTiles({
       celTekst = `plan ${profile.weeklyWorkoutsGoal}`;
     }
     format = (v) => String(v);
+    jednostka = " tr.";
   } else {
     wartosci = tygodnie.map((t) => t.kcal);
     tytul = "Spalone kcal tygodniowo";
     notka = "biegi, wzór ACSM";
     format = (v) => v.toLocaleString("pl-PL");
+    jednostka = " kcal";
   }
 
   // Skala: największa wartość albo cel z zapasem 20%; tempo odwrotnie (krótszy czas = wyższy słupek)
@@ -187,24 +198,106 @@ export function WeekTiles({
           {wartosci.map((v, i) => {
             const ostatni = i === wartosci.length - 1;
             const trafiony = cel !== null && v >= cel;
+            const wl = aktywny === i;
+            const wys = Math.max(2, v > 0 ? wysokosc(v) : 2);
+            const tydzien = tygodnie[i];
+            // Daty tygodnia DD.MM–DD.MM z IsoDate (RRRR-MM-DD)
+            const od = `${tydzien.od.slice(8, 10)}.${tydzien.od.slice(5, 7)}`;
+            const doDnia = addDays(tydzien.od, 6);
+            const zakres = `tydz. ${tydzien.numer} · ${od}–${doDnia.slice(8, 10)}.${doDnia.slice(5, 7)}${ostatni ? " (bieżący)" : ""}`;
+            // Porównanie z celem (km) albo planem (treningi); tempo i kcal nie mają celu
+            const porownanie =
+              v <= 0
+                ? "brak treningów"
+                : cel === null
+                  ? ""
+                  : trafiony
+                    ? miara === "sessions"
+                      ? "plan osiągnięty"
+                      : "cel osiągnięty"
+                    : miara === "sessions"
+                      ? `do planu brakuje ${cel - v}`
+                      : `do celu brakuje ${format(Math.round((cel - v) * 10) / 10)}${jednostka}`;
             return (
               <div
                 key={i}
-                data-testid="slupek"
-                title={`tydz. ${tygodnie[i].numer}: ${format(v)}`}
+                tabIndex={0}
+                aria-label={`tydz. ${tydzien.numer}: ${format(v)}`}
+                onMouseEnter={() => setAktywny(i)}
+                onMouseLeave={() => setAktywny(null)}
+                onFocus={() => setAktywny(i)}
+                onBlur={() => setAktywny(null)}
+                // Kolumna tygodnia: cała wysokość wykresu reaguje na kursor; fokus jako obrys
                 className={cn(
-                  "relative flex-1 rounded-t-[4px]",
-                  ostatni
-                    ? "bg-success"
-                    : trafiony
-                      ? "bg-foreground"
-                      : "bg-black/12",
+                  "relative -mx-[3px] flex flex-1 items-end self-stretch rounded-t-md px-[3px] outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-ring",
+                  wl && "bg-black/[.035]",
                 )}
-                style={{ height: Math.max(2, v > 0 ? wysokosc(v) : 2) }}
               >
-                <span className="absolute -top-[17px] right-0 left-0 text-center text-[10px] whitespace-nowrap text-muted-foreground tabular-nums">
-                  {v > 0 ? format(v) : ""}
-                </span>
+                <div
+                  data-testid="slupek"
+                  title={`tydz. ${tydzien.numer}: ${format(v)}`}
+                  className={cn(
+                    "relative flex-1 rounded-t-[4px] transition-colors duration-100",
+                    ostatni
+                      ? wl
+                        ? "bg-success brightness-[.85]"
+                        : "bg-success"
+                      : trafiony
+                        ? wl
+                          ? "bg-black"
+                          : "bg-foreground"
+                        : wl
+                          ? "bg-black/[.28]"
+                          : "bg-black/12",
+                  )}
+                  style={{ height: wys }}
+                >
+                  <span
+                    className={cn(
+                      "absolute -top-[17px] right-0 left-0 text-center text-[10px] whitespace-nowrap tabular-nums",
+                      wl
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {v > 0 ? format(v) : ""}
+                  </span>
+                </div>
+                {wl && (
+                  <div
+                    role="tooltip"
+                    data-testid="dymek-tygodnia"
+                    // Dymek nad słupkiem; przy skrajnych tygodniach otwiera się do środka
+                    className={cn(
+                      "pointer-events-none absolute z-[5] rounded-lg border border-border bg-white px-2.5 py-2 text-left whitespace-nowrap shadow-lg",
+                      i >= wartosci.length - 3
+                        ? "right-0"
+                        : i <= 1
+                          ? "left-0"
+                          : "left-1/2 -translate-x-1/2",
+                    )}
+                    style={{ bottom: wys + 24 }}
+                  >
+                    <div className="text-[11px] text-muted-foreground tabular-nums">
+                      {zakres}
+                    </div>
+                    <div className="mt-0.5 text-[15px] font-semibold tabular-nums">
+                      {v > 0 ? `${format(v)}${jednostka}` : "—"}
+                    </div>
+                    {porownanie && (
+                      <div
+                        className={cn(
+                          "mt-0.5 text-xs tabular-nums",
+                          v > 0 && trafiony
+                            ? "text-success"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {porownanie}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
