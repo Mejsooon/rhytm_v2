@@ -17,7 +17,7 @@ body{margin:0;background:#ffffff}
   <div class="sb-col"><dc-import name="CSidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main class="main">
     <header class="topbar">
-      <div class="crumb"><span>Moduły</span><span aria-hidden="true">/</span><b>Kalendarz</b></div>
+      <h1 class="h-title">Kalendarz</h1>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
         <nav class="seg" aria-label="Widok"><a href="CCalendarDay.dc.html">Dzień</a><a href="CCalendar.dc.html" aria-current="page">Tydzień</a><a href="CCalendarMonth.dc.html">Miesiąc</a></nav>
         <a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
@@ -41,14 +41,14 @@ body{margin:0;background:#ffffff}
         <a href="CCategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none">+ Nowa</a>
       </div></div>
       <div style="display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 12px">
-        <label class="fld">Dzień<span class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><input class="num" type="text" value="{{day}}" onChange="{{onDay}}"></span></label>
-        <label class="fld">Od<input class="inp num" type="text" value="{{from}}" onChange="{{onFrom}}"></label>
-        <label class="fld">Do<input class="inp num" type="text" value="{{to}}" onChange="{{onTo}}"></label>
+        <label class="fld">Dzień<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="{{day}}" onChange="{{onDay}}"></span></label>
+        <label class="fld">Od<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{from}}" onChange="{{onFrom}}"></span></label>
+        <label class="fld">Do<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{to}}" onChange="{{onTo}}"></span></label>
       </div>
       <div class="fld">Powtarzanie
         <div class="seg" role="radiogroup" aria-label="Powtarzanie" style="align-self: flex-start"><sc-for list="{{reps}}" as="r" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{r.pressed}}" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}">{{r.label}}</button></sc-for></div>
         <sc-if value="{{weekly}}" hint-placeholder-val="{{true}}">
-          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 400"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.on}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for><span class="hint" style="margin-left: 8px">do</span><input class="inp num" type="text" value="31.01.2027" aria-label="Powtarzaj do" style="width: 120px"></div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 400"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.on}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for><span class="hint" style="margin-left: 8px">do</span><span class="igroup num" style="width: 156px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="nd 31.01.2027" aria-label="Powtarzaj do"></span></div>
         </sc-if>
         <span class="hint">{{repInfo}} Każde powtórzenie ma własną, pustą listę zadań.</span>
       </div>

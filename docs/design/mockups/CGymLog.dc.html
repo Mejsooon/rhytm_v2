@@ -23,7 +23,7 @@ body{margin:0;background:#ffffff}
     </header>
     <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
-        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Push</h1><div style="display: flex; gap: 6px; margin-top: 8px"><span class="bdg sec lg num">czw 19.11.2026 · 15:00–16:30</span><span class="bdg out lg">z szablonu „Push”</span></div></div>
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Push</h1><div style="display: flex; gap: 6px; margin-top: 8px"><span class="bdg sec lg num">czw 19.11.2026 · 15:00–16:30 · z szablonu „Push”</span></div></div>
         <div class="frame" style="padding: 3px"><div class="inner" style="display: grid; grid-template-columns: repeat(2, auto)">
           <div style="padding: 10px 18px"><div class="lbl">Objętość</div><div class="num" style="font-size: 18px; font-weight: 600; margin-top: 4px">{{vol}}</div></div>
           <div style="padding: 10px 18px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Serie</div><div class="num" style="font-size: 18px; font-weight: 600; margin-top: 4px">{{sets}}</div></div>
@@ -33,10 +33,10 @@ body{margin:0;background:#ffffff}
         <section class="card">
           <div class="card-h" style="align-items: center; padding: 16px 20px 10px">
             <a href="CExerciseDetail.dc.html" style="font-weight: 600; font-size: 15px; text-decoration: none; color: #262626">{{e.name}}</a>
-            <span style="display: flex; gap: 6px"><span class="bdg sec num">1RM {{e.best}}</span><span class="bdg out">{{e.note}}</span></span>
+            <span style="display: flex; gap: 6px"><span class="bdg sec num">{{e.line}}</span><sc-if value="{{e.hasNote}}" hint-placeholder-val="{{true}}"><span class="bdg out">{{e.note}}</span></sc-if></span>
           </div>
           <div style="padding: 0 20px">
-            <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 32px 28px; gap: 8px; font-size: 12px; font-weight: 500; color: #686868; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.08)"><span>Seria</span><span>{{e.kgHead}}</span><span>Powt.</span><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span></span></div>
+            <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 32px 28px; gap: 8px; font-size: 12px; font-weight: 500; color: #686868; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.08)"><span>seria</span><span>{{e.kgHead}}</span><span>powt.</span><span>✓</span><span></span></div>
             <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
               <div style="{{s.rowS}}"><span class="bdg sec num" style="width: 24px">{{s.n}}</span><sc-if value="{{s.isKg}}" hint-placeholder-val="{{true}}"><input class="inp num" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="kg" aria-label="{{s.kgLabel}}" style="height: 30px"></sc-if><sc-if value="{{s.isBw}}" hint-placeholder-val="{{false}}"><span class="igroup" style="height: 30px; padding-left: 4px"><span class="bdg sec" title="Masa ciała z profilu">mc</span><input type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="+ kg" aria-label="{{s.addLabel}}" class="num"></span></sc-if><input class="inp num" type="text" inputMode="numeric" value="{{s.reps}}" onChange="{{s.onReps}}" placeholder="powt." aria-label="{{s.repsLabel}}" style="height: 30px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="{{s.doneLabel}}"><button type="button" class="btng ic xs" aria-label="{{s.delLabel}}" onClick="{{s.del}}" style="color: #a3a3a3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
             </sc-for>
@@ -84,7 +84,7 @@ class Component extends DCLogic {
     const num = (v) => { const x = parseFloat(String(v || '').replace(',', '.')); return isNaN(x) ? 0 : x; };
     let vol = 0, cnt = 0, all = 0;
     const items = EX.map((e) => ({
-      name: e.name, best: e.best, note: e.note || 'nowe', bw: !!e.bw, kgHead: e.bw ? 'kg (mc + dociążenie)' : 'kg',
+      name: e.name, best: e.best, note: e.note || 'nowe', line: '1RM ' + e.best + (/^[+−]/.test(e.note || '') ? ' · ' + e.note : ''), hasNote: !/^[+−]/.test(e.note || ''), bw: !!e.bw, kgHead: e.bw ? 'kg (mc + dociążenie)' : 'kg',
       addSet: () => updE(e.id, (x) => { const last = x.sets[x.sets.length - 1]; return Object.assign({}, x, { sets: x.sets.concat([{ id: nid(), kg: last ? last.kg : '', reps: last ? last.reps : '', d: false }]) }); }),
       remove: () => save(EX.filter((x) => x.id !== e.id)),
       sets: e.sets.map((s, j) => {

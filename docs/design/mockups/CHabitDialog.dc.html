@@ -18,7 +18,7 @@ body{margin:0;background:#ffffff}
   <div class="sb-col"><dc-import name="CSidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main class="main">
     <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Nawyki i sen</b></nav>
+      <h1 class="h-title">Nawyki i sen</h1>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CSleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="CHabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
     </header>
     <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
@@ -41,7 +41,7 @@ body{margin:0;background:#ffffff}
         <div style="display: flex; align-items: center; gap: 10px; font-weight: 400">
           <button type="button" class="sw" role="switch" aria-checked="{{remA}}" aria-label="Przypomnienie push" onClick="{{toggleRem}}"></button>
           <span style="{{remTxtS}}">Push o</span><span style="position: relative; display: inline-flex">
-            <button type="button" class="dd num" onClick="{{toggleTp}}" aria-disabled="{{remOffA}}" aria-haspopup="dialog" aria-expanded="{{tpExp}}" aria-label="Godzina przypomnienia" style="{{timeS}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{time}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+            <button type="button" class="igroup num" onClick="{{toggleTp}}" aria-disabled="{{remOffA}}" aria-haspopup="dialog" aria-expanded="{{tpExp}}" aria-label="Godzina przypomnienia" style="{{timeS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span style="color: var(--foreground)">{{time}}</span></button>
             <sc-if value="{{tpOpen}}" hint-placeholder-val="{{false}}">
               <div role="dialog" aria-label="Wybierz godzinę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; width: 240px; padding: 10px; display: flex; flex-direction: column; gap: 8px">
                 <span class="lbl">Godzina</span>
@@ -92,7 +92,7 @@ class Component extends DCLogic {
       mins: ['00', '15', '30', '45'].map((mm) => { const o = this.state.time.slice(3) === mm; return { t: mm, pressed: o ? 'true' : 'false', pick: () => this.setState({ time: this.state.time.slice(0, 3) + mm }), s: cell + (o ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') }; }),
       todayA: this.state.today ? 'true' : 'false', toggleToday: () => this.setState({ today: !this.state.today }),
       remTxtS: rem ? '' : 'color:#a3a3a3',
-      timeS: 'width:auto;gap:8px;' + (rem ? '' : 'opacity:.5;cursor:default'),
+      timeS: 'width:auto;gap:8px;font:inherit;font-size:14px;cursor:pointer;' + (rem ? '' : 'opacity:.5;cursor:default'),
       remHint: rem ? (m === 'days' ? 'tylko w dni z harmonogramu' : m === 'daily' ? 'codziennie' : 'w dni bez odhaczenia') : 'przypomnienia wyłączone'
     };
   }

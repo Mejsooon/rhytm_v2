@@ -69,7 +69,7 @@ body{margin:0;background:#ffffff}
       <input class="inp" type="text" placeholder="Nazwa bloku" aria-label="Nazwa bloku" style="font-size: 18px; font-weight: 500">
       <div class="fld"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="{{c.s}}"><span class="dot" style="{{c.dot}}"></span>{{c.t}}</button></sc-for></div></div>
       <div class="card">
-        <div class="m-row"><span style="flex: 1">Dzień</span><span class="num muted">nd, 15.11.2026</span></div>
+        <div class="m-row"><span style="flex: 1">Dzień</span><span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><span style="color: var(--foreground)">nd 15.11.2026</span></span></div>
         <div class="m-row"><span style="flex: 1">Od</span><span class="m-step"><button type="button" aria-label="Wcześniej" onClick="{{s1m}}">−</button><span>{{from}}</span><button type="button" aria-label="Później" onClick="{{s1p}}">+</button></span></div>
         <div class="m-row"><span style="flex: 1">Do</span><span class="m-step"><button type="button" aria-label="Wcześniej" onClick="{{s2m}}">−</button><span>{{to}}</span><button type="button" aria-label="Później" onClick="{{s2p}}">+</button></span></div>
         <div class="m-row" style="min-height: 40px"><span class="hint num">Czas trwania: {{dur}}</span></div>
