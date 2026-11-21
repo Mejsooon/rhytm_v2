@@ -293,7 +293,7 @@ export function MonthCalendar({
                         >
                           <span
                             aria-hidden="true"
-                            className="grid size-7 flex-none place-items-center rounded-[8px] bg-black/[.05] text-soft-foreground"
+                            className="grid size-7 flex-none place-items-center rounded-[8px] bg-muted text-soft-foreground"
                           >
                             <Dumbbell size={15} />
                           </span>

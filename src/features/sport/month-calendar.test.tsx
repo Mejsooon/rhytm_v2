@@ -130,6 +130,12 @@ describe("MonthCalendar", () => {
     await userEvent.click(
       within(dymek).getByRole("button", { name: /Siłownia/ }),
     );
+    // Kafelek siłowni z tokenu muted, jak odznaki SIŁA
+    expect(
+      within(dymek)
+        .getByRole("button", { name: /Siłownia/ })
+        .querySelector("span[aria-hidden=true]"),
+    ).toHaveClass("bg-muted");
     expect(w.onStartGym).toHaveBeenLastCalledWith({
       date: "2026-11-18",
       start: expect.stringMatching(/^\d\d:(00|15|30|45)$/),

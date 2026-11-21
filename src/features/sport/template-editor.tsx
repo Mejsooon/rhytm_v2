@@ -66,15 +66,13 @@ function stanPoczatkowy(template: TemplateWithItems | null) {
     name: template?.name ?? "",
     days: template ? [...template.weekdays] : [],
     startTime: template ? template.start_time.slice(0, 5) : DOMYSLNA_GODZINA,
-    rows: (template?.items ?? []).map(
-      (i): Wiersz => ({
-        key: i.id,
-        name: i.exerciseName,
-        sets: i.sets_count,
-        reps: i.reps_text,
-        rest: formatRest(i.rest_s),
-      }),
-    ),
+    rows: (template?.items ?? []).map((i): Wiersz => ({
+      key: i.id,
+      name: i.exerciseName,
+      sets: i.sets_count,
+      reps: i.reps_text,
+      rest: formatRest(i.rest_s),
+    })),
   };
 }
 
@@ -276,7 +274,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                           }))
                         }
                         className={cn(
-                          "inline-flex h-7 w-9 cursor-pointer items-center justify-center rounded-[8px] border-0 px-0 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-10 max-[799px]:w-11",
+                          "inline-flex h-7 w-9 cursor-pointer items-center justify-center rounded-[8px] border-0 px-0 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-11 max-[799px]:w-11",
                           wlaczony
                             ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
                             : "bg-transparent text-muted-foreground hover:text-foreground",
@@ -336,7 +334,10 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       {r.name}
                     </span>
                     {/* Serie −/+ w jednej ramce (30 px) jak w makiecie */}
-                    <span className="inline-flex h-[30px] items-center justify-self-start overflow-hidden rounded-md border border-input bg-white shadow-xs">
+                    <span
+                      data-testid="stepper-serii"
+                      className="inline-flex h-[30px] max-[799px]:h-11 items-center justify-self-start overflow-hidden rounded-md border border-input bg-white shadow-xs"
+                    >
                       <Button
                         variant="ghost"
                         size="sm"
@@ -394,7 +395,10 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                         aria-disabled={pierwszy ? "true" : "false"}
                         onClick={() => przesun(i, -1)}
                       >
-                        <ChevronUpIcon aria-hidden="true" className="size-3.5" />
+                        <ChevronUpIcon
+                          aria-hidden="true"
+                          className="size-3.5"
+                        />
                       </Button>
                       <Button
                         variant="ghost"
@@ -405,7 +409,10 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                         aria-disabled={ostatni ? "true" : "false"}
                         onClick={() => przesun(i, 1)}
                       >
-                        <ChevronDownIcon aria-hidden="true" className="size-3.5" />
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className="size-3.5"
+                        />
                       </Button>
                       <Button
                         variant="ghost"
@@ -451,12 +458,6 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 exercises={data.exercises}
                 excludeNames={rows.map((r) => r.name)}
                 side="bottom"
-                trigger={
-                  <Button aria-label="+ Ćwiczenie">
-                    <PlusIcon aria-hidden="true" className="size-4" />
-                    Ćwiczenie
-                  </Button>
-                }
                 onPick={(nazwaCwiczenia) => {
                   licznik.current += 1;
                   setForm((f) => ({
@@ -486,7 +487,10 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           </div>
 
           {/* .foot: Zapisz / Anuluj po lewej, „Usuń szablon” (.btndo) po prawej */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 max-[799px]:px-[18px]">
+          <div
+            data-testid="stopka-szablonu"
+            className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 max-[799px]:px-[18px]"
+          >
             <div className="flex gap-2">
               {przyciskZapisz}
               {przyciskAnuluj}

@@ -188,7 +188,10 @@ export function GymLog({ data }: { data: WorkoutData }) {
             </div>
             {/* .frame > .inner: ramka 1,5 px z dwiema komórkami */}
             <div className="rounded-xl p-[3px]">
-              <div className="grid grid-cols-[repeat(2,auto)] overflow-hidden rounded-xl border-[1.5px] border-border-strong bg-white">
+              <div
+                data-testid="podsumowanie-treningu"
+                className="grid grid-cols-[repeat(2,auto)] overflow-hidden rounded-xl border-[1.5px] border-border-strong bg-white"
+              >
                 <div className="px-[18px] py-2.5">
                   <div className="text-xs font-medium text-muted-foreground">
                     Objętość

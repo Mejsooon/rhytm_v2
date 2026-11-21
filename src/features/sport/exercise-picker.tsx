@@ -3,7 +3,7 @@
 // „+ Ćwiczenie” z dymkiem wyszukiwania (GymLog.dc.html): ćwiczenia użytkownika + biblioteka bez już
 // dodanych, „+ Dodaj „…”” dla własnej nazwy, Enter wybiera pierwszy wynik, Esc zamyka.
 import { useState, type ReactElement } from "react";
-import { SearchIcon } from "lucide-react";
+import { PlusIcon, SearchIcon } from "lucide-react";
 
 import {
   ActionPopover,
@@ -24,7 +24,12 @@ export function ExercisePicker({
   excludeNames,
   onPick,
   side = "top",
-  trigger = <Button>+ Ćwiczenie</Button>,
+  trigger = (
+    <Button aria-label="+ Ćwiczenie">
+      <PlusIcon aria-hidden="true" className="size-4" />
+      Ćwiczenie
+    </Button>
+  ),
 }: {
   exercises: ExerciseRow[];
   // Ćwiczenia już dodane do treningu

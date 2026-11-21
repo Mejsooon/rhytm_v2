@@ -111,10 +111,9 @@ describe("GymLog — wygląd COSS", () => {
     expect(
       within(karta(WYC)).getByText("1RM 84,5 kg · +2,5 kg vs ostatnio"),
     ).toHaveClass("bg-muted", "h-[18px]");
-    expect(objetosc().parentElement?.parentElement).toHaveClass(
-      "border-[1.5px]",
-      "border-border-strong",
-    );
+    expect(
+      objetosc().closest("[data-testid=podsumowanie-treningu]"),
+    ).toHaveClass("border-[1.5px]", "border-border-strong");
   });
 
   it("pola serii mają 30 px, a ✕ to ghost xs widoczny bez najechania", () => {

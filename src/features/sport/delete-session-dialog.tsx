@@ -76,7 +76,7 @@ export function DeleteSessionDialog({
           role="alertdialog"
           // Web: .dlg (promień 16 px, ramka border, cień pop) z .dlg-h i szarą stopką .dlg-f;
           // telefon: zwarta karta na środku jak dotąd
-          className="fixed top-1/2 left-1/2 z-50 flex w-[min(400px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 flex-col bg-white bg-clip-padding text-sm text-foreground outline-none min-[800px]:rounded-xl min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:w-[min(360px,calc(100%-32px))] max-[799px]:gap-4 max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-input max-[799px]:px-5 max-[799px]:pt-[18px] max-[799px]:pb-4 max-[799px]:shadow-[0_16px_48px_rgba(0,0,0,.16)]"
+          className="fixed top-1/2 left-1/2 z-50 flex w-[min(400px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 flex-col bg-white bg-clip-padding text-sm text-foreground outline-none min-[800px]:rounded-xl min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:w-[min(360px,calc(100%-32px))] max-[799px]:gap-4 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-input max-[799px]:px-5 max-[799px]:pt-[18px] max-[799px]:pb-4 max-[799px]:shadow-[0_16px_48px_rgba(0,0,0,.16)]"
         >
           {/* .dlg-h z makiety: dolny odstęp 20 px (z błędem pod spodem 16 px) */}
           <div

@@ -100,10 +100,9 @@ describe("TemplatesList", () => {
       "bg-muted",
       "tabular-nums",
     );
-    expect(within(push_).getByText("Wyciskanie na ławce")).toHaveClass(
-      "bg-white",
-      "border-input",
-    );
+    expect(
+      within(push_).getByText("Wyciskanie na ławce").parentElement,
+    ).toHaveClass("bg-white", "border-input");
     // Rozpocznij = primary sm, Edytuj = secondary sm; na telefonie 44 px
     expect(
       within(push_).getByRole("button", { name: "Rozpocznij" }),
@@ -122,17 +121,33 @@ describe("TemplatesList", () => {
 
   it("długa nazwa szablonu ma truncate", () => {
     const d = dane();
-    const dluga = "Bardzo długa nazwa szablonu treningowego dla całego tygodnia";
+    const dluga =
+      "Bardzo długa nazwa szablonu treningowego dla całego tygodnia";
     d.templates[0] = { ...d.templates[0], name: dluga };
     render(<TemplatesList data={d} flash={null} />);
     expect(screen.getByText(dluga)).toHaveClass("min-w-0", "truncate");
   });
 
+  it("długa nazwa ćwiczenia w karcie szablonu ma truncate", () => {
+    const d = dane();
+    const dluga =
+      "Bardzo długi wyciskanie sztangi leżąc na ławce skośnej głową w dół";
+    d.templates[0] = {
+      ...d.templates[0],
+      items: [{ ...d.templates[0].items[0], exerciseName: dluga }],
+    };
+    render(<TemplatesList data={d} flash={null} />);
+    const tekst = screen.getByText(dluga);
+    expect(tekst).toHaveClass("min-w-0", "truncate");
+    expect(tekst.parentElement).toHaveClass("max-w-full");
+  });
+
   it("karta „+ Nowy szablon” ma przerywaną ramkę i prowadzi do edytora", () => {
     render(<TemplatesList data={dane()} flash={null} />);
-    expect(
-      screen.getByRole("link", { name: "+ Nowy szablon" }),
-    ).toHaveClass("border-dashed", "min-h-[190px]");
+    expect(screen.getByRole("link", { name: "+ Nowy szablon" })).toHaveClass(
+      "border-dashed",
+      "min-h-[190px]",
+    );
   });
 
   it("karta „+ Nowy szablon” prowadzi do edytora", () => {

@@ -119,6 +119,7 @@ describe("TemplateEditor — nowy szablon", () => {
       "w-9",
     );
     expect(screen.getByRole("button", { name: "Pn" })).toHaveClass(
+      "max-[799px]:h-11",
       "bg-transparent",
       "text-muted-foreground",
     );
@@ -176,10 +177,11 @@ describe("TemplateEditor — wygląd COSS", () => {
       "shadow-xs",
       "rounded-md",
     );
-    expect(screen.getByRole("button", { name: "+ Ćwiczenie" })).toHaveClass(
-      "h-8",
-      "bg-white",
-    );
+    const dodaj = screen.getByRole("button", { name: "+ Ćwiczenie" });
+    expect(dodaj).toHaveClass("h-8", "bg-white");
+    // Ikona plus i tekst „Ćwiczenie” jak w makiecie (domyślny trigger ExercisePicker)
+    expect(dodaj.querySelector("svg")).not.toBeNull();
+    expect(dodaj).toHaveTextContent("Ćwiczenie");
     const wiersz = screen.getAllByTestId("wiersz-cwiczenia")[0];
     // Numer w szarej odznace, długa nazwa ćwiczenia ucinana
     expect(within(wiersz).getByText("1")).toHaveClass("bg-muted");
@@ -195,15 +197,17 @@ describe("TemplateEditor — wygląd COSS", () => {
     render(<TemplateEditor data={dane()} />);
     const mniej = screen.getByRole("button", { name: `${WYC}: mniej serii` });
     expect(mniej).toHaveClass("w-7", "rounded-none");
-    expect(mniej.parentElement).toHaveClass(
+    expect(mniej.closest("[data-testid=stepper-serii]")).toHaveClass(
+      "max-[799px]:h-11",
       "rounded-md",
       "border",
       "border-input",
       "overflow-hidden",
     );
-    expect(
-      screen.getByRole("button", { name: `Usuń ${WYC}` }),
-    ).toHaveClass("text-destructive-foreground", "w-7");
+    expect(screen.getByRole("button", { name: `Usuń ${WYC}` })).toHaveClass(
+      "text-destructive-foreground",
+      "w-7",
+    );
     expect(
       screen.getByRole("button", { name: `Przesuń ${WYC} w górę` }),
     ).toHaveClass("aria-disabled:opacity-35");
@@ -217,8 +221,9 @@ describe("TemplateEditor — wygląd COSS", () => {
 
   it("stopka z przyciskami jest w karcie (.foot)", () => {
     render(<TemplateEditor data={dane()} />);
-    const stopka = screen.getAllByRole("button", { name: "Zapisz szablon" })[1]
-      .parentElement!.parentElement!;
+    const stopka = screen
+      .getAllByRole("button", { name: "Zapisz szablon" })[1]
+      .closest("[data-testid=stopka-szablonu]");
     expect(stopka).toHaveClass("border-t", "bg-black/[.025]");
   });
 });

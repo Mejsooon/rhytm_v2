@@ -142,7 +142,7 @@ describe("ExerciseDetail", () => {
     );
     expect(svg.querySelector("polyline")).toHaveAttribute("stroke", "#262626");
     const kropki = screen.getAllByTestId("punkt-wykresu");
-    // 8 tyg.: B 15.10 nie wchodzi, C 05.11 (rekord) i D 12.11, + 24.09? — ostatni punkt to zwykły, rekord ma r=5
+    // Wykres 8 tygodni: rekord (r=5) jest zielony z białą obwódką, pozostałe punkty (r=3.5) są białe z ciemną obwódką
     const rekord = kropki.find((c) => c.getAttribute("r") === "5");
     expect(rekord).toHaveAttribute("fill", "#15803d");
     expect(rekord).toHaveAttribute("stroke", "#fff");

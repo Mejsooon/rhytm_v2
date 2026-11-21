@@ -80,7 +80,9 @@ export function TemplatesList({
             Sport
           </Link>
           <span aria-hidden="true">/</span>
-          <span className="font-medium text-foreground">Szablony treningów</span>
+          <span className="font-medium text-foreground">
+            Szablony treningów
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="primary">
@@ -148,8 +150,14 @@ export function TemplatesList({
                   <div className="flex flex-wrap gap-1">
                     {t.items.length ? (
                       t.items.map((i, idx) => (
-                        <StatusBadge key={`${i.exerciseName}-${idx}`} tone="outline">
-                          {i.exerciseName}
+                        <StatusBadge
+                          key={`${i.exerciseName}-${idx}`}
+                          tone="outline"
+                          className="max-w-full"
+                        >
+                          <span className="min-w-0 truncate">
+                            {i.exerciseName}
+                          </span>
                         </StatusBadge>
                       ))
                     ) : (
