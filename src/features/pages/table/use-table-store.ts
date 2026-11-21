@@ -120,7 +120,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   async function zapiszSzkic(): Promise<boolean> {
     const e = editing;
     const udane = await saveRow();
-    if (!udane) setEditing(e);
+    // Szkic przywrócony już przez zapiszWiersz (z szyfrogramem nowego hasła) zostaje bez zmian
+    if (!udane) setEditing((cur) => cur ?? e);
     return udane;
   }
 
@@ -207,9 +208,14 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         if (wynik && !wynik.ok && wynik.code === "stale_generation") {
           onStaleGeneration?.();
           toast.error(SEJF_ZMIENIL_SIE);
-        } else toast.error(BLAD_ZAPISU);
-        // Edycja zostaje otwarta z dotychczasowymi wartościami
-        setEditing((cur) => cur ?? e);
+          // Edycja zostaje otwarta z dotychczasowymi wartościami (sejf i tak się blokuje)
+          setEditing((cur) => cur ?? e);
+        } else {
+          toast.error(BLAD_ZAPISU);
+          // Edycja zostaje otwarta z szyfrogramem nowego hasła (nigdy z tekstem jawnym): pole pokaże
+          // NOWE hasło, a ponowne „Zapisz” je wyśle
+          setEditing((cur) => cur ?? { ...e, values: wartosci });
+        }
         return false;
       }
       const prawdziwy = wynik.row;
@@ -254,9 +260,14 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
         onStaleGeneration?.();
         toast.error(SEJF_ZMIENIL_SIE);
-      } else toast.error(BLAD_ZAPISU);
-      // Edycja zostaje otwarta z dotychczasowymi wartościami (o ile nie otwarto już innego wiersza)
-      setEditing((cur) => cur ?? e);
+        // Edycja zostaje otwarta z dotychczasowymi wartościami (o ile nie otwarto już innego wiersza)
+        setEditing((cur) => cur ?? e);
+      } else {
+        toast.error(BLAD_ZAPISU);
+        // Edycja zostaje otwarta z szyfrogramem nowego hasła (o ile nie otwarto już innego wiersza):
+        // pole pokaże NOWE hasło, a ponowne „Zapisz” wyśle je jeszcze raz (różni się od original)
+        setEditing((cur) => cur ?? { ...e, values: wartosci });
+      }
     }
     return udane;
   }

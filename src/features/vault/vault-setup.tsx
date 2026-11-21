@@ -48,6 +48,8 @@ export function VaultSetup({ onCancel }: { onCancel: () => void }) {
         });
       }}
     >
+      {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
+      <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
       <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
         <div>
           <h2 id={`${id}-t`} className="m-0 text-lg leading-[1.3] font-semibold">

@@ -958,7 +958,10 @@ describe("TemplatePageView", () => {
       await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
       const pole = await screen.findByLabelText("Hasło");
       expect(pole).toBeEnabled();
-      expect(pole).toHaveAttribute("type", "password");
+      // Pole tekstowe maskowane CSS (menedżer haseł go nie zapisuje), bez atrybutu name
+      expect(pole).toHaveAttribute("type", "text");
+      expect(pole).toHaveClass("[-webkit-text-security:disc]");
+      expect(pole).not.toHaveAttribute("name");
       // Wartość początkowa to odszyfrowany sekret
       await waitFor(() => expect(pole).toHaveValue(JAWNE));
       await user.clear(pole);
@@ -1163,6 +1166,76 @@ describe("TemplatePageView", () => {
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
       expect(vault.onStaleGeneration).not.toHaveBeenCalled();
       expect(within(edycja()).getByDisplayValue("mejsooon2")).toBeInTheDocument();
+    });
+
+    it("błąd updateRow po zmianie hasła: edycja pokazuje NOWE hasło, ponowne Zapisz wysyła SecretValue", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      // Odszyfrowanie rozpoznaje nowy szyfrogram po ct
+      vault.decrypt.mockImplementation(async (v: { ct: string }) => (v.ct === NOWY_SEKRET.ct ? "nowe-tajne" : JAWNE));
+      // Odpowiedź z opóźnieniem (jak sieć): wiersz w edycji zdąży się zamknąć i otworzyć na nowo
+      actions.updateRow
+        .mockImplementationOnce(
+          () => new Promise((r) => setTimeout(() => r({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." }), 30)),
+        )
+        .mockResolvedValueOnce({ ok: true });
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      await waitFor(() => expect(pole).toHaveValue(JAWNE));
+      await user.clear(pole);
+      await user.type(pole, "nowe-tajne");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+      // Przywrócony szkic ma szyfrogram nowego hasła, nie stare hasło
+      await waitFor(() => expect(screen.getByLabelText("Hasło")).toHaveValue("nowe-tajne"));
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(2));
+      expect(actions.updateRow.mock.calls[1][0]).toBe("row-1");
+      expect(actions.updateRow.mock.calls[1][1]).toEqual({ [haslo.id]: NOWY_SEKRET });
+      expect(JSON.stringify(actions.updateRow.mock.calls)).not.toContain("nowe-tajne");
+    });
+
+    it("błąd addRow po wpisaniu hasła: edycja pokazuje NOWE hasło, ponowne Zapisz wysyła SecretValue", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      vault.decrypt.mockImplementation(async (v: { ct: string }) => (v.ct === NOWY_SEKRET.ct ? "nowe-tajne" : JAWNE));
+      actions.addRow.mockImplementationOnce(() => new Promise((_r, odrzuc) => setTimeout(() => odrzuc(new Error("sieć")), 30)));
+      const dane = strona("passwords", "Passwords", HASLA);
+      const haslo = dane.blocks[0].fields.find((f) => f.name === "Hasło")!;
+      render(<TemplatePageView data={dane} />);
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await user.type(screen.getByRole("textbox", { name: "Serwis" }), "Nowy serwis");
+      await user.type(screen.getByLabelText("Hasło"), "nowe-tajne");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+      await waitFor(() => expect(screen.getByLabelText("Hasło")).toHaveValue("nowe-tajne"));
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      await waitFor(() => expect(actions.addRow).toHaveBeenCalledTimes(2));
+      const wartosci = actions.addRow.mock.calls[1][1] as Record<string, unknown>;
+      expect(wartosci[haslo.id]).toEqual(NOWY_SEKRET);
+      expect(JSON.stringify(actions.addRow.mock.calls)).not.toContain("nowe-tajne");
+    });
+
+    it("błąd zapisu przy przełączaniu wiersza: szkic zostaje z NOWYM hasłem", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      vault.decrypt.mockImplementation(async (v: { ct: string }) => (v.ct === NOWY_SEKRET.ct ? "nowe-tajne" : JAWNE));
+      actions.updateRow.mockImplementationOnce(
+        () => new Promise((r) => setTimeout(() => r({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." }), 30)),
+      );
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(within(wiersz("GitHub")).getByText("mejsooon"));
+      const pole = await screen.findByLabelText("Hasło");
+      await waitFor(() => expect(pole).toHaveValue(JAWNE));
+      await user.clear(pole);
+      await user.type(pole, "nowe-tajne");
+      await user.click(within(wiersz("Supabase")).getByText("mejson@…"));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+      await waitFor(() => expect(screen.getByLabelText("Hasło")).toHaveValue("nowe-tajne"));
+      expect(within(edycja()).getByDisplayValue("mejsooon")).toBeInTheDocument();
     });
 
     it("podwójny Zapisz: jeden addRow", async () => {

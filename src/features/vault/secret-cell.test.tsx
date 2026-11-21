@@ -7,7 +7,7 @@ vi.mock("sonner", () => ({ toast }));
 const vault = vi.hoisted(() => ({ state: {} as Record<string, unknown> }));
 vi.mock("./vault-provider", () => ({ useVault: () => vault.state }));
 
-import { SecretCell } from "./secret-cell";
+import { SecretCell, SecretEdit } from "./secret-cell";
 
 // Dwa poprawne kształty szyfrogramu (iv 12 B, ct ≥ 16 B); „tekst jawny” zwraca atrapa decrypt
 const IV = btoa("iv-dwanascie");
@@ -41,6 +41,7 @@ describe("SecretCell", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("zablokowany: zablokowane, bez przycisków", () => {
@@ -101,8 +102,9 @@ describe("SecretCell", () => {
     expect(document.body.innerHTML).not.toContain("jawne-haslo-A");
   });
 
-  it("kopiuj: toast i czyszczenie po 30 s tylko gdy schowek bez zmian", async () => {
+  it("kopiuj: toast, a po 30 s (z fokusem) czyszczenie schowka bez readText", async () => {
     vi.useFakeTimers();
+    vi.spyOn(document, "hasFocus").mockReturnValue(true);
     const write = vi.fn().mockResolvedValue(undefined);
     const read = vi.fn().mockResolvedValue("jawne-haslo-A");
     schowek({ write, read });
@@ -110,7 +112,6 @@ describe("SecretCell", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
     });
-    // SHA-256 liczy się asynchronicznie (prawdziwy czas), stąd vi.waitFor
     await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
     expect(toast).toHaveBeenCalledWith("Skopiowano hasło GitHub", { description: "Schowek wyczyści się za 30 s." });
     // Toast nie zawiera tekstu jawnego
@@ -123,11 +124,18 @@ describe("SecretCell", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
-    await vi.waitFor(() => expect(write).toHaveBeenLastCalledWith(""));
+    expect(write).toHaveBeenLastCalledWith("");
+    expect(write).toHaveBeenCalledTimes(2);
+    // Schowka nie czytamy
+    expect(read).not.toHaveBeenCalled();
+  });
 
-    // Użytkownik skopiował coś innego: schowka nie ruszamy
-    write.mockClear();
-    read.mockResolvedValue("coś innego");
+  it("kopiuj bez fokusu: po 30 s czeka na powrót do karty i dopiero wtedy czyści", async () => {
+    vi.useFakeTimers();
+    const fokus = vi.spyOn(document, "hasFocus").mockReturnValue(false);
+    const write = vi.fn().mockResolvedValue(undefined);
+    schowek({ write });
+    render(<SecretCell value={A} serviceName="GitHub" />);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
     });
@@ -135,12 +143,66 @@ describe("SecretCell", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
-    // Dajemy czas na hash (prawdziwy), po czym sprawdzamy, że czyszczenia nie było
-    await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2));
-    vi.useRealTimers();
-    await new Promise((r) => setTimeout(r, 50));
-    expect(write).toHaveBeenCalledTimes(1);
     expect(write).not.toHaveBeenCalledWith("");
+    fokus.mockReturnValue(true);
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(write).toHaveBeenLastCalledWith("");
+    // Nasłuch jednorazowy: kolejny focus nic nie robi
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+
+  it("kopiuj, a potem blokada przed upływem 30 s: schowek czyszczony od razu", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(document, "hasFocus").mockReturnValue(true);
+    const write = vi.fn().mockResolvedValue(undefined);
+    schowek({ write });
+    const { rerender } = render(<SecretCell value={A} serviceName="GitHub" />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
+    });
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    stan("zablokowany");
+    rerender(<SecretCell value={A} serviceName="GitHub" />);
+    expect(write).toHaveBeenLastCalledWith("");
+    // Zaplanowane czyszczenie po 30 s już się nie powtarza
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+
+  it("kopiuj, a potem odmontowanie komórki: schowek czyszczony od razu", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(document, "hasFocus").mockReturnValue(true);
+    const write = vi.fn().mockResolvedValue(undefined);
+    schowek({ write });
+    const { unmount } = render(<SecretCell value={A} serviceName="GitHub" />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
+    });
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
+    unmount();
+    expect(write).toHaveBeenLastCalledWith("");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+
+  it("odsłonięty tekst ma translate=no i notranslate", async () => {
+    render(<SecretCell value={A} serviceName="GitHub" />);
+    fireEvent.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    const tekst = await screen.findByText("jawne-haslo-A");
+    expect(tekst).toHaveAttribute("translate", "no");
+    expect(tekst).toHaveClass("notranslate");
   });
 
   it("kopiuj: blokada w trakcie odszyfrowywania → nic nie trafia do schowka", async () => {
@@ -159,21 +221,6 @@ describe("SecretCell", () => {
     expect(write).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
-  });
-
-  it("kopiuj bez readText: po 30 s wpisuje pusty tekst", async () => {
-    vi.useFakeTimers();
-    const write = vi.fn().mockResolvedValue(undefined);
-    schowek({ write });
-    render(<SecretCell value={A} serviceName="GitHub" />);
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
-    });
-    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(30_000);
-    });
-    await vi.waitFor(() => expect(write).toHaveBeenLastCalledWith(""));
   });
 
   it("schowek niedostępny → Nie udało się skopiować.", async () => {
@@ -201,5 +248,51 @@ describe("SecretCell", () => {
   it("niepoprawny kształt wartości → nie da się odczytać", () => {
     render(<SecretCell value={{ v: 1, g: 1 }} serviceName="GitHub" />);
     expect(screen.getByText("nie da się odczytać")).toBeInTheDocument();
+  });
+});
+
+describe("SecretEdit", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stan("odblokowany");
+  });
+
+  function pole(text = "tajne") {
+    render(
+      <SecretEdit
+        fieldId="f1"
+        label="Hasło"
+        source={null}
+        text={text}
+        onText={() => {}}
+        onPrefill={() => {}}
+        onSubmit={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    return screen.getByLabelText("Hasło");
+  }
+
+  it("pole tekstowe z maskowaniem CSS, wyłączone podpowiedzi i menedżery haseł, bez name", () => {
+    const p = pole();
+    expect(p).toHaveAttribute("type", "text");
+    expect(p).toHaveClass("[-webkit-text-security:disc]");
+    expect(p).toHaveAttribute("autocomplete", "off");
+    expect(p).toHaveAttribute("spellcheck", "false");
+    expect(p).toHaveAttribute("autocapitalize", "off");
+    expect(p).toHaveAttribute("autocorrect", "off");
+    expect(p).toHaveAttribute("data-1p-ignore");
+    expect(p).toHaveAttribute("data-lpignore", "true");
+    expect(p).toHaveAttribute("data-bwignore");
+    expect(p).toHaveAttribute("data-form-type", "other");
+    expect(p).toHaveAttribute("translate", "no");
+    expect(p).not.toHaveAttribute("name");
+  });
+
+  it("Pokaż zdejmuje maskowanie", () => {
+    const p = pole();
+    fireEvent.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    expect(p).toHaveAttribute("type", "text");
+    expect(p).not.toHaveClass("[-webkit-text-security:disc]");
   });
 });

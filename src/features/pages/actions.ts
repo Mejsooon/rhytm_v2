@@ -745,8 +745,8 @@ export async function addRow(
     if (!(p.id in wartosci.data) && !pole.isTitle) continue;
     const surowaSekret = wartosci.data[p.id];
     if (pole.type === "secret" && surowaSekret !== null && surowaSekret !== undefined) {
-      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
-      if (!isSecretValue(surowaSekret) || sejf === null) {
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
+      if (!isSecretValue(surowaSekret) || surowaSekret.ct.length > 8192 || sejf === null) {
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
@@ -849,8 +849,8 @@ export async function updateRow(
       isTitle: p.is_title,
     };
     if (pole.type === "secret" && surowa !== null && surowa !== undefined) {
-      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
-      if (!isSecretValue(surowa) || sejf === null) {
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
+      if (!isSecretValue(surowa) || surowa.ct.length > 8192 || sejf === null) {
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie

@@ -31,17 +31,54 @@ create policy "vaults_update_own" on public.vaults
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
-create policy "vaults_delete_own" on public.vaults
-  for delete to authenticated
-  using (user_id = (select auth.uid()));
-
-grant select, insert, update, delete on public.vaults to authenticated;
+-- Bez polityki DELETE: sejfu nie usuwa się z aplikacji (reset zostawia wiersz z podbitym generation),
+-- a usunięcie konta kasuje go kaskadą z auth.users.
+grant select, insert, update on public.vaults to authenticated;
 grant all on public.vaults to service_role;
+
+-- generation nigdy nie maleje: inaczej stare szyfrogramy z poprzedniego sejfu znów przeszłyby walidację.
+create function public.vaults_generation_guard()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if new.generation < old.generation then
+    raise exception 'vaults.generation nie może maleć';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger vaults_generation_guard
+  before update on public.vaults
+  for each row execute function public.vaults_generation_guard();
 
 -- Nowy typ pola: Sekret (wartość to szyfrogram {v, g, iv, ct} albo null).
 alter table public.page_fields drop constraint if exists page_fields_type_check;
 alter table public.page_fields add constraint page_fields_type_check
   check (type in ('text', 'number', 'checkbox', 'url', 'select', 'status', 'date', 'rating', 'secret'));
+
+-- Typu pola Sekret nie da się zmienić ani nadać istniejącemu polu (także przez RPC change_field_type):
+-- inaczej szyfrogramy stałyby się tekstem albo tekst jawny trafiłby do pola udającego Sekret.
+create function public.page_fields_secret_type_guard()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if (old.type = 'secret' or new.type = 'secret') and old.type <> new.type then
+    raise exception 'Nie można zmienić typu pola Sekret';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger page_fields_secret_type_guard
+  before update of type on public.page_fields
+  for each row execute function public.page_fields_secret_type_guard();
 
 -- Liczba niepustych wartości Sekret użytkownika (także w wierszach z kosza).
 create function public.count_secrets()

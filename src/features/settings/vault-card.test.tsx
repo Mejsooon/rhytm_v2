@@ -152,6 +152,18 @@ describe("VaultCard", () => {
       expect(pole).toHaveAttribute("type", "password");
       expect(pole).toHaveAttribute("autocomplete", ac);
     }
+    expect(
+      screen.getByText("Zmiana hasła głównego nie zmienia klucza szyfrowania — stare kopie zapasowe nadal otwiera stare hasło."),
+    ).toBeInTheDocument();
+    const pole = screen.getByLabelText("Obecne hasło główne");
+    // Ukryta nazwa użytkownika: menedżer haseł zapisuje hasło główne pod osobnym wpisem, nie pod kontem
+    const uzytkownik = pole.closest("form")!.querySelector('input[autocomplete="username"]');
+    expect(uzytkownik).not.toBeNull();
+    expect(uzytkownik).toHaveValue("Sejf rhytm (hasło główne)");
+    expect(uzytkownik).toHaveAttribute("readonly");
+    expect(uzytkownik).toHaveAttribute("hidden");
+    expect(uzytkownik).toHaveAttribute("aria-hidden", "true");
+    expect(uzytkownik).toHaveAttribute("tabindex", "-1");
     // Zablokowany: bez „Zablokuj teraz”
     expect(
       screen.queryByRole("button", { name: "Zablokuj teraz" }),

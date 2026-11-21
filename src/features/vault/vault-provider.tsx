@@ -137,7 +137,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       if (zostalo <= 0) lock();
       else setRemainingMs(zostalo);
     };
-    const naAktywnosc = () => {
+    const naAktywnosc = (e: Event) => {
+      // Tylko prawdziwa aktywność użytkownika: zdarzenia wysłane skryptem nie przedłużają odblokowania
+      if (!e.isTrusted) return;
       deadlineRef.current = Date.now() + BLOKADA_MS;
     };
     // Po powrocie na kartę sprawdzamy czas od razu (w tle timery bywają wstrzymane)

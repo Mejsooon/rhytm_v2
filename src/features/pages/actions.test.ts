@@ -492,6 +492,26 @@ describe("pole Sekret", () => {
     expect((await addRow(BLOK, { [POLE_SEKRET]: null })).ok).toBe(true);
   });
 
+  it("addRow odrzuca SecretValue, gdy nie ma wiersza vaults", async () => {
+    tables.vaults = fakeTable({ single: null });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: SEKRET })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
+  it("updateRow i addRow odrzucają ct dłuższe niż 8192 znaki; zapisują bez dodatkowych kluczy", async () => {
+    const zaDlugi = { ...SEKRET, ct: "A".repeat(8196) };
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+    // Dokładnie 8192 znaki przechodzą; dodatkowe klucze nie trafiają do bazy
+    const graniczny = { ...SEKRET, ct: "A".repeat(8192) };
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...graniczny, jawne: "x" } })).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenLastCalledWith({
+      values: { [POLE_TYTUL]: "Dune", [POLE_SEKRET]: graniczny },
+    });
+  });
+
   it("changeFieldType z i na secret zwraca błąd", async () => {
     // Na secret
     tables.page_fields = fakeTable({ single: { is_title: false, type: "text" } });

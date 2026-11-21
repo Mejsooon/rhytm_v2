@@ -88,7 +88,14 @@ describe("VaultProvider", () => {
     expect(widok.result.current.status).toBe("zablokowany");
   });
 
-  it("aktywność resetuje licznik", async () => {
+  it("aktywność (zdarzenie zaufane) resetuje licznik", async () => {
+    // jsdom nie tworzy zdarzeń z isTrusted = true, więc wywołujemy nasłuch bezpośrednio
+    const nasluchy: { typ: string; fn: EventListener }[] = [];
+    const dodaj = window.addEventListener.bind(window);
+    vi.spyOn(window, "addEventListener").mockImplementation((typ, fn, opcje) => {
+      if (typeof fn === "function") nasluchy.push({ typ, fn });
+      dodaj(typ, fn, opcje);
+    });
     const widok = await zamontuj();
     await act(async () => {
       await widok.result.current.unlock(HASLO);
@@ -97,12 +104,30 @@ describe("VaultProvider", () => {
       vi.advanceTimersByTime(4 * 60 * 1000);
     });
     act(() => {
-      window.dispatchEvent(new Event("pointerdown"));
+      for (const n of nasluchy.filter((x) => x.typ === "pointerdown")) n.fn({ isTrusted: true } as Event);
     });
     await act(async () => {
       vi.advanceTimersByTime(4 * 60 * 1000);
     });
     expect(widok.result.current.status).toBe("odblokowany");
+    await act(async () => {
+      vi.advanceTimersByTime(61 * 1000);
+    });
+    expect(widok.result.current.status).toBe("zablokowany");
+  });
+
+  it("zdarzenie syntetyczne (isTrusted = false) nie resetuje licznika", async () => {
+    const widok = await zamontuj();
+    await act(async () => {
+      await widok.result.current.unlock(HASLO);
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(4 * 60 * 1000);
+    });
+    act(() => {
+      // dispatchEvent ze skryptu daje isTrusted = false
+      for (const typ of ["pointerdown", "keydown", "wheel", "touchstart", "scroll"]) window.dispatchEvent(new Event(typ));
+    });
     await act(async () => {
       vi.advanceTimersByTime(61 * 1000);
     });

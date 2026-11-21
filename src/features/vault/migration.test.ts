@@ -20,14 +20,46 @@ describe("migracja sejfu", () => {
     expect(bezKomentarzy).toMatch(/updated_at timestamptz not null default now\(\)/i);
   });
 
-  it("włącza RLS i ma 4 polityki po auth.uid()", () => {
+  it("włącza RLS i ma 3 polityki po auth.uid(), bez DELETE (konto kasuje się kaskadą)", () => {
     expect(bezKomentarzy).toMatch(/alter table public\.vaults enable row level security/i);
-    for (const op of ["select", "insert", "update", "delete"]) {
+    for (const op of ["select", "insert", "update"]) {
       expect(bezKomentarzy).toMatch(new RegExp(`create policy "vaults_${op}_own" on public\\.vaults\\s+for ${op}`, "i"));
     }
+    expect(bezKomentarzy).not.toMatch(/vaults_delete_own/i);
+    expect(bezKomentarzy).not.toMatch(/for delete[\s\S]*?on public\.vaults|on public\.vaults\s+for delete/i);
     const polityki = bezKomentarzy.match(/create policy "vaults_[a-z]+_own"[\s\S]*?;/gi) ?? [];
-    expect(polityki).toHaveLength(4);
+    expect(polityki).toHaveLength(3);
     for (const p of polityki) expect(p).toMatch(/user_id = \(select auth\.uid\(\)\)/);
+    // authenticated bez prawa DELETE
+    expect(bezKomentarzy).toMatch(/grant select, insert, update on public\.vaults to authenticated;/i);
+    expect(bezKomentarzy).not.toMatch(/grant[^;]*delete[^;]*on public\.vaults to authenticated/i);
+  });
+
+  it("trigger blokuje zmianę typu pola na secret i z secret (także przez change_field_type)", () => {
+    const f = bezKomentarzy.match(/create function public\.page_fields_secret_type_guard\(\)[\s\S]*?\$\$;/i);
+    expect(f).not.toBeNull();
+    expect(f![0]).toMatch(/returns trigger/i);
+    expect(f![0]).toMatch(/language plpgsql/i);
+    expect(f![0]).toMatch(/security invoker/i);
+    expect(f![0]).toMatch(/set search_path = ''/i);
+    expect(f![0]).toMatch(/\(old\.type = 'secret' or new\.type = 'secret'\) and old\.type <> new\.type/i);
+    expect(f![0]).toMatch(/raise exception/i);
+    expect(bezKomentarzy).toMatch(
+      /create trigger \w+\s+before update of type on public\.page_fields\s+for each row execute function public\.page_fields_secret_type_guard\(\)/i,
+    );
+  });
+
+  it("trigger blokuje obniżenie vaults.generation", () => {
+    const f = bezKomentarzy.match(/create function public\.vaults_generation_guard\(\)[\s\S]*?\$\$;/i);
+    expect(f).not.toBeNull();
+    expect(f![0]).toMatch(/returns trigger/i);
+    expect(f![0]).toMatch(/security invoker/i);
+    expect(f![0]).toMatch(/set search_path = ''/i);
+    expect(f![0]).toMatch(/new\.generation < old\.generation/i);
+    expect(f![0]).toMatch(/raise exception/i);
+    expect(bezKomentarzy).toMatch(
+      /create trigger \w+\s+before update on public\.vaults\s+for each row execute function public\.vaults_generation_guard\(\)/i,
+    );
   });
 
   it("rozszerza check page_fields.type o 'secret'", () => {

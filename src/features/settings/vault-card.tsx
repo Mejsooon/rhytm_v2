@@ -226,6 +226,8 @@ function ZmianaHasla() {
         });
       }}
     >
+      {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
+      <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
       <div className="p-5">
         <h2 id={`${id}-haslo`} className="m-0 text-base font-semibold">
           Zmień hasło główne
@@ -294,6 +296,10 @@ function ZmianaHasla() {
             />
           </div>
         </div>
+        <p className="mt-3 mb-0 text-[13px] text-muted-foreground">
+          Zmiana hasła głównego nie zmienia klucza szyfrowania — stare kopie
+          zapasowe nadal otwiera stare hasło.
+        </p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
         <span

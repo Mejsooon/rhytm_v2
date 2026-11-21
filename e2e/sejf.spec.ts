@@ -16,9 +16,10 @@ test.describe("sejf", () => {
     // PBKDF2 600 000 iteracji ×3 (ustawienie, odblokowanie, ponowne ustawienie) + zapisy
     test.setTimeout(120_000);
 
-    // Unikalne hasła; „Tajne!…&” ma znaki zmieniane przez kodowanie URL, więc sprawdzamy też formę zakodowaną
+    // Unikalne hasła; hasło sekretu ma polskie znaki i znaki zmieniane przez kodowanie URL,
+    // więc sprawdzamy też formy zakodowane (URL, JSON, \uXXXX)
     const sufiks = randomBytes(6).toString("hex");
-    const haslo = `Tajne!${sufiks}&zbyt Dlugie-7`;
+    const haslo = `żółw-Tajne!${sufiks}&zbyt Dlugie-7`;
     const glowne = `Glowne-${sufiks}-Kl3ucz!Dluuugie`;
     const noweGlowne = `Nowe-${sufiks}-Gl0wne!Dluuugie`;
     const zlyGlowne = `Zle-${sufiks}-Haslo!Dluuugie9`;
@@ -29,15 +30,17 @@ test.describe("sejf", () => {
       encodeURIComponent(h),
       encodeURI(h),
       JSON.stringify(h).slice(1, -1),
+      h.replace(/[^\x00-\x7f]/g, (z) => `\\u${z.charCodeAt(0).toString(16).padStart(4, "0")}`),
     ]);
 
-    // Wszystkie żądania z całego testu: adres i treść (także binarna)
-    const zadania: { url: string; metoda: string; tresc: string }[] = [];
+    // Wszystkie żądania z całego testu: adres, nagłówki i treść (także binarna)
+    const zadania: { url: string; metoda: string; naglowki: string; tresc: string }[] = [];
     page.on("request", (zadanie) => {
       const bufor = zadanie.postDataBuffer();
       zadania.push({
         url: zadanie.url(),
         metoda: zadanie.method(),
+        naglowki: JSON.stringify(zadanie.headers()),
         tresc: bufor ? bufor.toString("utf8") + bufor.toString("latin1") : "",
       });
     });
@@ -46,10 +49,28 @@ test.describe("sejf", () => {
         for (const h of zakazane) {
           expect(z.url, `adres ${z.url} zawiera hasło`).not.toContain(h);
           expect(
+            z.naglowki,
+            `nagłówki ${z.metoda} ${z.url} zawierają hasło`,
+          ).not.toContain(h);
+          expect(
             z.tresc,
             `treść ${z.metoda} ${z.url} zawiera hasło`,
           ).not.toContain(h);
         }
+      }
+    }
+    // Trwałe magazyny przeglądarki (localStorage, sessionStorage, cookie) nie mają żadnego z haseł
+    async function sprawdzMagazyny() {
+      const magazyny = await page.evaluate(() =>
+        JSON.stringify({
+          local: Object.entries(localStorage),
+          session: Object.entries(sessionStorage),
+        }),
+      );
+      const ciasteczka = JSON.stringify(await page.context().cookies());
+      for (const h of zakazane) {
+        expect(magazyny, "localStorage/sessionStorage zawiera hasło").not.toContain(h);
+        expect(ciasteczka, "cookie zawiera hasło").not.toContain(h);
       }
     }
 
@@ -104,7 +125,7 @@ test.describe("sejf", () => {
     });
     await edycja.getByRole("textbox", { name: "Serwis" }).fill(serwis);
     await edycja.getByRole("textbox", { name: "Login" }).fill(login);
-    // Pole hasła ma type=password, więc nie jest „textbox” — szukamy po etykiecie
+    // Pole hasła (type=text maskowane CSS) szukamy po etykiecie
     await edycja.getByLabel("Hasło", { exact: true }).fill(haslo);
     await edycja.getByRole("button", { name: "Zapisz", exact: true }).click();
     const wiersz = page.getByRole("row").filter({ hasText: serwis });
@@ -158,6 +179,7 @@ test.describe("sejf", () => {
     await wiersz.getByRole("button", { name: "Pokaż hasło" }).click();
     await expect(wiersz.getByText(haslo, { exact: true })).toBeVisible();
     sprawdzZadania();
+    await sprawdzMagazyny();
 
     // Reset w Ustawienia → Sejf (po przeładowaniu sejf jest zablokowany; reset działa też zablokowany)
     await page.goto("/ustawienia/sejf");
@@ -220,6 +242,12 @@ test.describe("sejf", () => {
     expect(zadania.filter((z) => z.metoda === "POST").length).toBeGreaterThan(
       0,
     );
+    // Dowód, że zapis szyfrogramu przeszedł przez nasłuch: któreś żądanie niesie {"iv": …, "ct": …}
+    expect(
+      zadania.some((z) => z.tresc.includes('"iv"') && z.tresc.includes('"ct"')),
+      "żadne żądanie nie niosło szyfrogramu",
+    ).toBe(true);
     sprawdzZadania();
+    await sprawdzMagazyny();
   });
 });

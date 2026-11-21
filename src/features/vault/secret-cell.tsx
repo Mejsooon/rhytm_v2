@@ -30,6 +30,17 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
   React.useEffect(() => {
     statusRef.current = vault.status;
   }, [vault.status]);
+  // Zaplanowane czyszczenie schowka (bez skopiowanego tekstu): licznik 30 s i funkcja „wyczyść teraz”
+  const schowekRef = React.useRef<{ timer: ReturnType<typeof setTimeout>; wyczysc: () => void } | null>(null);
+  // Blokada sejfu przed upływem 30 s: czyścimy od razu (albo przy powrocie fokusu)
+  React.useEffect(() => {
+    if (!odblokowany) schowekRef.current?.wyczysc();
+  }, [odblokowany]);
+  // Odmontowanie komórki z zaplanowanym czyszczeniem: tak samo
+  React.useEffect(() => {
+    const plan = schowekRef;
+    return () => plan.current?.wyczysc();
+  }, []);
 
   // Blokada albo nowa wartość (np. po edycji) zrzuca tekst jawny i wynik sprawdzenia
   if (poprzedniStatus !== vault.status || poprzedniaWartosc !== value) {
@@ -65,8 +76,10 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
   return (
     <div className="flex items-center gap-0.5">
       <span
+        // Odsłonięte hasło nie trafia do tłumacza przeglądarki
+        translate="no"
         className={cn(
-          "min-w-0 flex-1 truncate tabular-nums",
+          "notranslate min-w-0 flex-1 truncate tabular-nums",
           pokazane ? "text-foreground" : "tracking-[.12em] text-soft-foreground",
         )}
       >
@@ -108,32 +121,33 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
             toast.error("Nie udało się skopiować.");
             return;
           }
-          // Timer trzyma tylko SHA-256 skopiowanego tekstu (do porównania ze schowkiem), nie sam tekst
-          let skrot: string;
           try {
-            skrot = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))));
             await navigator.clipboard.writeText(t);
           } catch {
             toast.error("Nie udało się skopiować.");
             return;
           }
           toast(`Skopiowano hasło ${serviceName}`, { description: "Schowek wyczyści się za 30 s." });
-          // Czyścimy schowek po 30 s (także po odmontowaniu komórki), ale nie nadpisujemy tego, co użytkownik skopiował w międzyczasie
-          setTimeout(async () => {
-            try {
-              if (typeof navigator.clipboard.readText === "function") {
-                const teraz = await navigator.clipboard.readText();
-                const skrotTeraz = btoa(
-                  String.fromCharCode(...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(teraz)))),
-                );
-                if (skrotTeraz === skrot) await navigator.clipboard.writeText("");
-              } else {
-                await navigator.clipboard.writeText("");
-              }
-            } catch {
-              // Schowek niedostępny albo brak zgody: nic więcej nie zrobimy
-            }
-          }, SCHOWEK_MS);
+          // Czyszczenie po 30 s; plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko z fokusem,
+          // więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie zastępuje stary plan.
+          if (schowekRef.current) clearTimeout(schowekRef.current.timer);
+          const plan = {
+            timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
+            wyczysc: () => {
+              clearTimeout(plan.timer);
+              if (schowekRef.current === plan) schowekRef.current = null;
+              const pusty = () => {
+                try {
+                  void navigator.clipboard.writeText("").catch(() => {});
+                } catch {
+                  // Schowek niedostępny: nic więcej nie zrobimy
+                }
+              };
+              if (document.hasFocus()) pusty();
+              else window.addEventListener("focus", pusty, { once: true });
+            },
+          };
+          schowekRef.current = plan;
         }}
         className="max-[799px]:size-11"
       >
@@ -143,7 +157,8 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
   );
 }
 
-// Pole Sekret w wierszu w trybie edycji (type="password" z „Pokaż”). Tekst jest sterowany z góry (stan
+// Pole Sekret w wierszu w trybie edycji: type="text" maskowane CSS (menedżery haseł nie traktują go jak
+// hasła do konta i go nie zapisują), „Pokaż” zdejmuje maskę. Tekst jest sterowany z góry (stan
 // RowEdit), więc nie trafia do stanu tabeli; wartość początkowa jest odszyfrowywana lokalnie po odblokowaniu.
 export function SecretEdit({
   fieldId,
@@ -190,11 +205,19 @@ export function SecretEdit({
 
   return (
     <div className="flex items-center gap-0.5">
+      {/* Bez atrybutu name; atrybuty data-* wyłączają 1Password, LastPass, Bitwarden i inne menedżery */}
       <input
-        type={odblokowany && pokaz ? "text" : "password"}
+        type="text"
         disabled={!odblokowany}
         autoComplete="off"
         spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+        data-1p-ignore=""
+        data-lpignore="true"
+        data-bwignore=""
+        data-form-type="other"
+        translate="no"
         aria-label={label}
         placeholder={odblokowany ? label : "Odblokuj sejf, żeby edytować"}
         value={odblokowany ? text : ""}
@@ -203,7 +226,7 @@ export function SecretEdit({
           if (e.key === "Enter") onSubmit();
           if (e.key === "Escape") onCancel();
         }}
-        className={cn(FIELD, "h-[30px] tabular-nums")}
+        className={cn(FIELD, "h-[30px] tabular-nums", !(odblokowany && pokaz) && "[-webkit-text-security:disc]")}
       />
       {odblokowany && (
         <Button

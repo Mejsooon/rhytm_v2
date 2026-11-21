@@ -42,6 +42,8 @@ export function VaultUnlockCard() {
           });
         }}
       >
+        {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
+        <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
         <span className="grid size-10 place-items-center rounded-lg border border-border bg-panel shadow-xs">
           <Lock aria-hidden="true" className="size-[18px]" />
         </span>

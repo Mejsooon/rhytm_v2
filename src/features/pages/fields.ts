@@ -140,7 +140,8 @@ export function normalizeValue(field: PageField, raw: unknown): CellValue {
     case "date":
       return typeof raw === "string" && dniOdEpoki(raw) !== null ? raw : null;
     case "secret":
-      return isSecretValue(raw) ? raw : null;
+      // Nowy obiekt tylko z czterema kluczami: nic dodatkowego (np. tekst jawny) nie trafia do bazy
+      return isSecretValue(raw) ? { v: 1, g: raw.g, iv: raw.iv, ct: raw.ct } : null;
     case "select":
     case "status": {
       if (typeof raw !== "string") return null;
