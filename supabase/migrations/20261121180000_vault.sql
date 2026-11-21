@@ -11,7 +11,7 @@ create table public.vaults (
   -- Klucz danych AES-GCM-256 owinięty kluczem z hasła głównego (base64) i jego IV 12 B (base64).
   wrapped_key text not null default '',
   wrap_iv text not null default '',
-  generation int not null default 1,
+  generation int not null default 1 check (generation >= 1),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -39,7 +39,7 @@ grant select, insert, update, delete on public.vaults to authenticated;
 grant all on public.vaults to service_role;
 
 -- Nowy typ pola: Sekret (wartość to szyfrogram {v, g, iv, ct} albo null).
-alter table public.page_fields drop constraint page_fields_type_check;
+alter table public.page_fields drop constraint if exists page_fields_type_check;
 alter table public.page_fields add constraint page_fields_type_check
   check (type in ('text', 'number', 'checkbox', 'url', 'select', 'status', 'date', 'rating', 'secret'));
 
@@ -49,7 +49,7 @@ returns int
 language sql
 stable
 security invoker
-set search_path = public
+set search_path = ''
 as $$
   select count(*)::int
   from public.page_fields as f
@@ -66,7 +66,7 @@ create function public.reset_vault()
 returns int
 language plpgsql
 security invoker
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_count int;

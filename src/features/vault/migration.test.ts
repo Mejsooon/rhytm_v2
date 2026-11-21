@@ -15,7 +15,7 @@ describe("migracja sejfu", () => {
     expect(bezKomentarzy).toMatch(/kdf jsonb not null default '\{\}'/i);
     expect(bezKomentarzy).toMatch(/wrapped_key text not null default ''/i);
     expect(bezKomentarzy).toMatch(/wrap_iv text not null default ''/i);
-    expect(bezKomentarzy).toMatch(/generation int not null default 1/i);
+    expect(bezKomentarzy).toMatch(/generation int not null default 1 check \(generation >= 1\)/i);
     expect(bezKomentarzy).toMatch(/created_at timestamptz not null default now\(\)/i);
     expect(bezKomentarzy).toMatch(/updated_at timestamptz not null default now\(\)/i);
   });
@@ -31,7 +31,7 @@ describe("migracja sejfu", () => {
   });
 
   it("rozszerza check page_fields.type o 'secret'", () => {
-    expect(bezKomentarzy).toMatch(/alter table public\.page_fields drop constraint page_fields_type_check/i);
+    expect(bezKomentarzy).toMatch(/alter table public\.page_fields drop constraint if exists page_fields_type_check/i);
     expect(bezKomentarzy).toMatch(/add constraint page_fields_type_check[\s\S]*?'rating', 'secret'\)/i);
   });
 
@@ -41,7 +41,7 @@ describe("migracja sejfu", () => {
       expect(m, nazwa).not.toBeNull();
       expect(m![0]).toMatch(/returns int/i);
       expect(m![0]).toMatch(/security invoker/i);
-      expect(m![0]).toMatch(/set search_path = public/i);
+      expect(m![0]).toMatch(/set search_path = ''/i);
     }
   });
 
