@@ -72,6 +72,43 @@ describe("menu kolumny", () => {
     expect(within(menu).queryByRole("menuitem", { name: /Pokaż w kalendarzu/ })).not.toBeInTheDocument();
   });
 
+  it("klasy z makiety CColumnMenu: .pop p-1, pole FIELD, pozycje .mi, separatory, Usuń pole czerwone", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    const menu = await otworzMenu(user, "Termin");
+    const dymek = menu.closest("[role=dialog]") as HTMLElement;
+    expect(dymek).toHaveClass("p-1", "rounded-lg", "shadow-lg");
+    expect(dymek).toHaveStyle({ width: "260px" });
+    expect(within(menu).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
+    for (const nazwa of ["Sortuj rosnąco", "Filtruj po tym polu", "Ukryj kolumnę", /Typ: Data/, /Pokaż w kalendarzu/]) {
+      expect(within(menu).getByRole("menuitem", { name: nazwa })).toHaveClass("min-h-8", "rounded-sm", "hover:bg-accent");
+    }
+    expect(within(menu).getByRole("menuitem", { name: "Usuń pole" })).toHaveClass("text-destructive-foreground");
+    expect(menu.querySelectorAll(".h-px.bg-border")).toHaveLength(3);
+    // Ikony pozycji to lucide (svg), nie znaki
+    expect(within(menu).getByRole("menuitem", { name: "Sortuj rosnąco" }).querySelector("svg")).not.toBeNull();
+    // Przełącznik „Pokaż w kalendarzu” jest w stanie włączonym (Termin ma show_in_calendar)
+    expect(within(menu).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }).querySelector("[data-on=true]")).not.toBeNull();
+    // Otwarte podmenu: .pop z p-1, szerokość 210 px, a pozycja rodzica podświetlona
+    await user.click(within(menu).getByRole("menuitem", { name: /Podsumowanie/ }));
+    const podmenu = screen.getByRole("menu", { name: "Podsumowanie" });
+    expect(podmenu).toHaveClass("rounded-lg", "border", "p-1", "shadow-lg", "w-[210px]");
+    expect(within(menu).getByRole("menuitem", { name: /^Podsumowanie/ })).toHaveClass("bg-accent");
+  });
+
+  it("menu kolumny przy prawej krawędzi otwiera się do środka", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    // Ostatnia kolumna tabeli: dymek pod nagłówkiem, wyrównany do lewej krawędzi przycisku i obsługiwany przez
+    // wykrywanie kolizji Radixa (przesuwa się do środka, zamiast wychodzić poza okno)
+    const zMenu = screen.getAllByRole("columnheader").filter((h) => within(h).queryByRole("button"));
+    await user.click(within(zMenu[zMenu.length - 1]).getByRole("button"));
+    const dymek = screen.getByRole("dialog", { name: /^Kolumna / });
+    expect(dymek.parentElement).toHaveAttribute("data-radix-popper-content-wrapper");
+    expect(dymek).toHaveAttribute("data-side", "bottom");
+    expect(dymek).toHaveAttribute("data-align", "start");
+  });
+
   it("pole tytułowe: Typ i Usuń pole są wyszarzone", async () => {
     const user = userEvent.setup();
     render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
@@ -218,11 +255,14 @@ describe("menu kolumny", () => {
       await user.click(within(menu).getByRole("menuitem", { name: "Podsumowanie Brak ›" }));
       const podmenu = screen.getByRole("menu", { name: "Podsumowanie" });
       expect(within(podmenu).getAllByRole("menuitem").map((e) => e.textContent)).toEqual([
-        "✓Brak",
+        "Brak",
         "Liczba wierszy",
         "Wypełnione",
         "Puste",
       ]);
+      // Wybrana pozycja ma ikonę ✓ po prawej (jak w makiecie), pozostałe jej nie mają
+      expect(within(podmenu).getByRole("menuitem", { name: "Brak" }).querySelector("svg")).not.toBeNull();
+      expect(within(podmenu).getByRole("menuitem", { name: "Puste" }).querySelector("svg")).toBeNull();
       await user.click(within(podmenu).getByRole("menuitem", { name: "Wypełnione" }));
       const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", {
@@ -241,7 +281,7 @@ describe("menu kolumny", () => {
         within(screen.getByRole("menu", { name: "Podsumowanie" }))
           .getAllByRole("menuitem")
           .map((e) => e.textContent),
-      ).toEqual(["Brak", "Liczba wierszy", "Wypełnione", "Puste", "✓Średnia", "Minimum", "Maksimum"]);
+      ).toEqual(["Brak", "Liczba wierszy", "Wypełnione", "Puste", "Średnia", "Minimum", "Maksimum"]);
     });
 
     it("podsumowanie z szablonu pokazuje swoją etykietę, a wybór go zastępuje", async () => {

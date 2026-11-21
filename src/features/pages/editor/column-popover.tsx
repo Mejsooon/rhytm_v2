@@ -2,7 +2,18 @@
 
 import * as React from "react";
 
-import { ActionPopover } from "@/components/controls";
+import { Check, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+
+import {
+  ActionPopover,
+  Button,
+  FIELD,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+} from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { EDITOR_TYPES, FIELD_TYPE_META, type FieldType, type PageField } from "../fields";
 import { OptionBadge } from "./cell-editor";
 
@@ -71,44 +82,47 @@ export function ColumnPopover({
     <ActionPopover
       open={open}
       onOpenChange={onOpenChange}
-      width={260}
+      width={268}
+      className="p-1"
       ariaLabel="Ustawienia kolumny"
       trigger={
+        // .colbtn: ikona typu 12 px jasnoszara, tło 5% przy hover i otwarciu
         <button
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] border-0 px-1 py-0.5 font-[inherit] font-medium whitespace-nowrap hover:bg-border hover:text-foreground max-[799px]:hidden ${
-            open ? "bg-border text-foreground" : "bg-transparent text-muted-foreground"
-          }`}
+          className={cn(
+            "-mx-1.5 -my-[3px] inline-flex cursor-pointer items-center gap-1.5 rounded-sm border-0 px-1.5 py-[3px] font-[inherit] font-medium whitespace-nowrap outline-none hover:bg-black/5 hover:text-foreground focus-visible:shadow-focus max-[799px]:hidden",
+            open ? "bg-black/5 text-foreground" : "bg-transparent text-muted-foreground",
+          )}
         >
-          <span aria-hidden="true" className="font-mono text-muted-foreground">
+          <span aria-hidden="true" className="min-w-3.5 text-xs font-semibold text-faint-foreground">
             {ikona}
           </span>
           {field.name}
         </button>
       }
     >
-      <input
-        type="text"
-        value={nazwa}
-        disabled={pending}
-        onChange={(e) => setNazwa(e.target.value)}
-        onBlur={zapiszNazwe}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            e.currentTarget.blur();
-          }
-        }}
-        placeholder="Nazwa kolumny"
-        aria-label="Nazwa kolumny"
-        className="box-border w-full rounded-md border border-input bg-white px-2 py-1.5 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
-      />
-
-      <div className="px-2 pt-3 pb-1 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-        Typ pola
+      <div className="p-1">
+        <input
+          type="text"
+          value={nazwa}
+          disabled={pending}
+          onChange={(e) => setNazwa(e.target.value)}
+          onBlur={zapiszNazwe}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
+          placeholder="Nazwa kolumny"
+          aria-label="Nazwa kolumny"
+          className={FIELD}
+        />
       </div>
+
+      <div className={MENU_LABEL}>Typ pola</div>
       {EDITOR_TYPES.map((t) => {
         // Wybór obejmuje też starsze pola typu select
         const aktualny =
@@ -122,28 +136,24 @@ export function ColumnPopover({
             onClick={() => {
               if (!aktualny) onPickType(t.type);
             }}
-            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 px-2 py-1.5 text-left font-[inherit] text-[13px] text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11 ${
-              aktualny ? "bg-active font-medium" : "bg-transparent"
-            }`}
+            className={cn(
+              MENU_ITEM,
+              "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent",
+              aktualny && "bg-accent",
+            )}
           >
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="w-[18px] font-mono text-muted-foreground">
-                {t.icon}
-              </span>
-              {t.label}
+            <span aria-hidden="true" className="w-5 flex-none text-center text-xs font-semibold text-muted-foreground">
+              {t.icon}
             </span>
-            <span aria-hidden="true" className="text-success">
-              {aktualny ? "✓" : ""}
-            </span>
+            <span className="flex-1">{t.label}</span>
+            {aktualny && <Check size={14} aria-hidden="true" className="flex-none" />}
           </button>
         );
       })}
 
       {jestWyborem && (
         <>
-          <div className="px-2 pt-3 pb-1.5 font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase">
-            Opcje
-          </div>
+          <div className={cn(MENU_LABEL, "pt-2.5")}>Opcje</div>
           <div className="flex flex-wrap gap-1 px-2">
             {opcje.map((o) => (
               <OptionBadge key={o.id} option={o}>
@@ -152,14 +162,14 @@ export function ColumnPopover({
                   aria-label={`Usuń opcję ${o.label}`}
                   disabled={pending}
                   onClick={() => onRemoveOption(o.id)}
-                  className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-70 max-[799px]:min-h-11 max-[799px]:min-w-11"
+                  className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-60 outline-none focus-visible:shadow-focus max-[799px]:min-h-11 max-[799px]:min-w-11"
                 >
                   ×
                 </button>
               </OptionBadge>
             ))}
           </div>
-          <div className="flex gap-1.5 px-2 pt-2">
+          <div className="flex gap-1.5 px-2 pt-2 pb-1">
             <input
               type="text"
               value={nowaOpcja}
@@ -173,47 +183,55 @@ export function ColumnPopover({
               }}
               placeholder="Nowa opcja…"
               aria-label="Nowa opcja"
-              className="box-border w-full min-w-0 rounded-md border border-input bg-white px-2 py-1.5 font-[inherit] text-[13px] text-foreground outline-none focus:border-primary max-[799px]:min-h-11"
+              className={FIELD}
             />
-            <button
-              type="button"
-              disabled={pending}
-              onClick={dodajOpcje}
-              className="cursor-pointer rounded-md border border-input bg-white px-2.5 py-[5px] font-[inherit] text-xs text-foreground hover:bg-panel disabled:opacity-50 max-[799px]:min-h-11"
-            >
+            <Button size="sm" disabled={pending} onClick={dodajOpcje}>
               Dodaj
-            </button>
+            </Button>
           </div>
         </>
       )}
 
-      <div className="mt-2.5 flex justify-between border-t border-border pt-1.5">
-        <button
-          type="button"
+      <div className={MENU_SEPARATOR} />
+      <div className="flex justify-between px-0.5">
+        <Button
+          variant="ghost"
+          size="xs"
           disabled={index === 0 || pending}
           aria-disabled={index === 0 || pending}
+          // Nazwa dostępna zostaje „← W lewo”, widoczna jest ikona strzałki
+          aria-label="← W lewo"
           onClick={() => onMove(-1)}
-          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+          className="max-[799px]:h-11"
         >
-          ← W lewo
-        </button>
-        <button
-          type="button"
+          <ChevronLeft size={14} aria-hidden="true" />W lewo
+        </Button>
+        <Button
+          variant="ghost"
+          size="xs"
           disabled={index === count - 1 || pending}
           aria-disabled={index === count - 1 || pending}
+          aria-label="W prawo →"
           onClick={() => onMove(1)}
-          className="cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-[inherit] text-xs text-soft-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+          className="max-[799px]:h-11"
         >
-          W prawo →
-        </button>
+          W prawo
+          <ChevronRight size={14} aria-hidden="true" />
+        </Button>
       </div>
+      <div className={MENU_SEPARATOR} />
       <button
         type="button"
         disabled={nieMoznaUsunac}
         aria-disabled={nieMoznaUsunac}
         onClick={onDelete}
-        className="mt-1 flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2 py-1.5 text-left font-[inherit] text-[13px] text-destructive-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:min-h-11"
+        className={cn(
+          MENU_ITEM,
+          MENU_ITEM_DANGER,
+          "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent",
+        )}
       >
+        <Trash2 size={14} aria-hidden="true" className="flex-none" />
         Usuń kolumnę
       </button>
     </ActionPopover>

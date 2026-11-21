@@ -114,6 +114,26 @@ describe("TableBlock", () => {
     expect(within(dymek).getByRole("button", { name: "Usuń kolumnę" })).toHaveProperty("disabled", false);
   });
 
+  it("dymek kolumny: klasy z CEmptyPage (.pop p-1, pole FIELD, pozycje .mi, przyciski xs)", async () => {
+    const user = userEvent.setup();
+    render(<TableBlock block={nowaTabela()} editable="cell" />);
+    await user.click(naglowek("Status"));
+    const dymek = await screen.findByRole("dialog", { name: "Ustawienia kolumny" });
+    expect(dymek).toHaveClass("p-1", "rounded-lg", "shadow-lg");
+    expect(dymek).toHaveStyle({ width: "268px" });
+    expect(within(dymek).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
+    expect(within(dymek).getByText("Typ pola")).toHaveClass("text-xs", "font-medium");
+    expect(within(dymek).getByRole("button", { name: /Tekst/ })).toHaveClass("min-h-8", "rounded-sm", "hover:bg-accent");
+    // Bieżący typ (Wybór) jest podświetlony i ma ikonę ✓ po prawej
+    expect(within(dymek).getByRole("button", { name: /Wybór/ })).toHaveClass("bg-accent");
+    expect(within(dymek).getByRole("button", { name: /Wybór/ }).querySelector("svg")).not.toBeNull();
+    expect(within(dymek).getByRole("textbox", { name: "Nowa opcja" })).toHaveClass("h-8");
+    expect(within(dymek).getByRole("button", { name: "Dodaj" })).toHaveClass("h-7", "border-input");
+    expect(within(dymek).getByRole("button", { name: "← W lewo" })).toHaveClass("h-6", "bg-transparent");
+    expect(within(dymek).getByRole("button", { name: "Usuń kolumnę" })).toHaveClass("text-destructive-foreground", "min-h-8");
+    expect(dymek.querySelectorAll(".h-px.bg-border")).toHaveLength(2);
+  });
+
   it("pole tytułowe ma wyłączone usuwanie i zmianę typu", async () => {
     const user = userEvent.setup();
     render(<TableBlock block={nowaTabela()} editable="cell" />);

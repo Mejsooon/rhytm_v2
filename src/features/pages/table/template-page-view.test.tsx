@@ -576,8 +576,17 @@ describe("TemplatePageView", () => {
       // „Anuluj” bez ramki (ghost, .btng z makiet)
       expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
       expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
-      expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:min-h-11");
+      expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-11");
       const okno = screen.getByRole("dialog", { name: "Nowe pole" });
+      // Okno jak .pop z CAddField: bez paddingu, lista typów po lewej, wybrany typ to biała pigułka
+      expect(okno).toHaveClass("p-0", "overflow-hidden", "rounded-lg");
+      expect(within(okno).getByRole("textbox", { name: "Szukaj typu" }).parentElement).toHaveClass("h-8", "rounded-md", "shadow-xs");
+      expect(within(okno).getByRole("textbox", { name: "Nazwa pola" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
+      expect(within(okno).getByRole("button", { name: "Tekst" })).toHaveClass("min-h-8", "justify-between", "bg-white");
+      expect(within(okno).getByRole("button", { name: "Liczba" })).toHaveClass("hover:bg-accent");
+      expect(within(okno).getByRole("button", { name: "Liczba" })).not.toHaveClass("bg-white");
+      expect(within(okno).getByText("Podstawowe")).toHaveClass("text-xs", "font-medium");
+      expect(within(okno).getByRole("button", { name: "Dodaj pole" })).toHaveClass("bg-primary", "max-[799px]:h-11");
       expect(within(okno).getByText("Podstawowe")).toBeInTheDocument();
       const typy = ["Tekst", "Liczba", "Checkbox", "URL", "Select", "Status", "Data", "Ocena"];
       for (const t of typy) expect(within(okno).getByRole("button", { name: t })).toBeInTheDocument();
