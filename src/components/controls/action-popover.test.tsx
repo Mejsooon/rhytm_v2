@@ -16,7 +16,7 @@ vi.mock("radix-ui", async (importOriginal) => {
 import { ActionPopover } from "./action-popover";
 
 describe("ActionPopover", () => {
-  it("dymek przy krawędzi okna przesuwa się do środka: Radix dostaje avoidCollisions i collisionPadding 8 px", () => {
+  it("przekazuje avoidCollisions i collisionPadding 8 do Radixa", () => {
     render(
       <ActionPopover open onOpenChange={() => {}} trigger={<button>Otwórz</button>}>
         <div>Treść</div>

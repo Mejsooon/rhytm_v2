@@ -30,9 +30,9 @@ import { NAZWY_PODSUMOWAN } from "./summary-cell";
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 // Ikona pozycji: lucide 16 px w kolorze muted-foreground
 const IKONA = "size-4 flex-none text-muted-foreground";
-// Podmenu (.pop): obok menu, odstęp 8 px; na telefonie pod pozycją
+// Podmenu (.pop): obok menu, odstęp 8 px (w prawo albo w lewo, gdy brakuje miejsca); na telefonie pod pozycją
 const PODMENU =
-  "absolute top-0 left-[calc(100%+12px)] z-10 w-[210px] rounded-lg border border-border bg-white bg-clip-padding p-1 shadow-lg max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
+  "absolute top-0 z-10 w-[210px] rounded-lg border border-border bg-white bg-clip-padding p-1 shadow-lg max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
 
 // Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Podsumowanie … ›”,
 // „Pokaż w kalendarzu” (tylko Data), „Ukryj kolumnę” i „Usuń pole”. Wyzwalaczem jest nagłówek kolumny;
@@ -71,6 +71,9 @@ export function ColumnMenu({
   onCloseAutoFocus?: (e: Event) => void;
 }) {
   const [podmenu, setPodmenu] = React.useState<"typ" | "podsumowanie" | null>(null);
+  // Strona otwarcia podmenu: w lewo, gdy menu stoi przy prawej krawędzi okna
+  const [wLewo, setWLewo] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
   const [nazwa, setNazwa] = React.useState(field.name);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(field.name);
   if (zrodloNazwy !== field.name) {
@@ -145,7 +148,7 @@ export function ColumnMenu({
         </button>
       }
     >
-      <div role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
+      <div ref={menuRef} role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
         <div className="p-1">
           <input
             type="text"
@@ -171,7 +174,12 @@ export function ColumnMenu({
             aria-label={`Typ: ${meta.label} ›`}
             aria-haspopup="menu"
             aria-expanded={podmenu === "typ"}
-            onClick={() => setPodmenu(podmenu === "typ" ? null : "typ")}
+            onClick={() => {
+              // Podmenu ma 210 px + odstęp 12 px; przy prawej krawędzi otwiera się w lewo
+              const rect = menuRef.current?.getBoundingClientRect();
+              setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+              setPodmenu(podmenu === "typ" ? null : "typ");
+            }}
             className={cn(POZYCJA, podmenu === "typ" && "bg-accent")}
           >
             {/* Znak typu w kolumnie ikon (16 px), jak lucide w pozostałych pozycjach */}
@@ -182,7 +190,7 @@ export function ColumnMenu({
             <ChevronRight size={14} aria-hidden="true" className="flex-none" />
           </button>
           {podmenu === "typ" && (
-            <div role="menu" aria-label="Typ pola" className={PODMENU}>
+            <div role="menu" aria-label="Typ pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
               <div className={MENU_LABEL}>Typ pola</div>
               {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
                 <button
@@ -231,7 +239,11 @@ export function ColumnMenu({
             aria-label={`Podsumowanie ${aktualne} ›`}
             aria-haspopup="menu"
             aria-expanded={podmenu === "podsumowanie"}
-            onClick={() => setPodmenu(podmenu === "podsumowanie" ? null : "podsumowanie")}
+            onClick={() => {
+              const rect = menuRef.current?.getBoundingClientRect();
+              setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+              setPodmenu(podmenu === "podsumowanie" ? null : "podsumowanie");
+            }}
             className={cn(POZYCJA, podmenu === "podsumowanie" && "bg-accent")}
           >
             <Sigma aria-hidden="true" className={IKONA} />
@@ -241,7 +253,7 @@ export function ColumnMenu({
             <ChevronRight size={14} aria-hidden="true" className="flex-none" />
           </button>
           {podmenu === "podsumowanie" && (
-            <div role="menu" aria-label="Podsumowanie" className={PODMENU}>
+            <div role="menu" aria-label="Podsumowanie" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
               <div className={MENU_LABEL}>Podsumowanie</div>
               {summaryOptions(field.type).map((kind) => {
                 const wybrane = summary ? summary.kind === kind : kind === "none";

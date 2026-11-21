@@ -1,6 +1,5 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import * as React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Przechwytuje propsy każdego Popover.Content Radixa (dymek filtra idzie przez ActionPopover)

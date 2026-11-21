@@ -207,7 +207,9 @@ describe("TemplatePageView", () => {
       const dlugi = "Bardzo długi tytuł książki ".repeat(10).trim();
       render(<TemplatePageView data={strona("books", "Books", [{ Tytuł: dlugi, Autor: "A" }])} />);
       const tekst = screen.getByText(dlugi);
-      expect(tekst).toHaveClass("truncate");
+      // Limit szerokości na elemencie wewnętrznym (max-w na td jest ignorowane przy table-layout:auto)
+      expect(tekst).toHaveClass("truncate", "max-w-[280px]");
+      expect(tekst.closest("td")?.className).not.toContain("max-w-");
       expect(tekst.closest("table")?.parentElement).toHaveClass("overflow-x-auto");
     });
 

@@ -166,10 +166,11 @@ describe("EditorView", () => {
     for (const nazwa of ["Akapit", "Zadanie", "Nowy blok"]) {
       expect(screen.getByRole(nazwa === "Nowy blok" ? "combobox" : "textbox", { name: nazwa })).toHaveClass(
         "rounded-md",
-        "focus:bg-black/[.02]",
-        "focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]",
+        "focus-visible:bg-black/[.02]",
+        "focus-visible:shadow-focus",
       );
     }
+    expect(screen.getByRole("combobox", { name: "Nowy blok" })).toHaveClass("text-soft-foreground");
     expect(screen.getAllByRole("button", { name: "Usuń blok" })[0].parentElement).toHaveClass("pr-9");
     expect(screen.getAllByRole("button", { name: "Usuń blok" })[0]).toHaveClass("w-6", "h-6", "rounded-[8px]");
     // Separator: linia 1 px w kolorze border

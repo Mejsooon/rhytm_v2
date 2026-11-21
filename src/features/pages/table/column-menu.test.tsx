@@ -176,6 +176,34 @@ describe("menu kolumny", () => {
     expect(screen.getByRole("columnheader", { name: /Pisarz/ })).toBeInTheDocument();
   });
 
+  describe("podmenu przy prawej krawędzi", () => {
+    async function podmenuTypu(prawaKrawedz: number) {
+      const spy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        x: 0, y: 0, width: 260, height: 300, top: 0, left: prawaKrawedz - 260, bottom: 300, right: prawaKrawedz,
+        toJSON: () => ({}),
+      } as DOMRect);
+      const user = userEvent.setup();
+      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      const menu = await otworzMenu(user, "Autor");
+      await user.click(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ }));
+      const podmenu = screen.getByRole("menu", { name: "Typ pola" });
+      spy.mockRestore();
+      return podmenu;
+    }
+
+    it("blisko prawej krawędzi otwiera się w lewo", async () => {
+      const podmenu = await podmenuTypu(window.innerWidth - 10);
+      expect(podmenu).toHaveClass("right-[calc(100%+12px)]");
+      expect(podmenu).not.toHaveClass("left-[calc(100%+12px)]");
+    });
+
+    it("z zapasem miejsca otwiera się w prawo", async () => {
+      const podmenu = await podmenuTypu(200);
+      expect(podmenu).toHaveClass("left-[calc(100%+12px)]");
+      expect(podmenu).not.toHaveClass("right-[calc(100%+12px)]");
+    });
+  });
+
   describe("typ", () => {
     it("bez strat zmienia od razu, bez okna", async () => {
       const user = userEvent.setup();

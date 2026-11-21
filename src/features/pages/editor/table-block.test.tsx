@@ -82,6 +82,13 @@ describe("TableBlock", () => {
     expect(screen.getByText("2 wiersze · 3 kolumny")).toBeTruthy();
   });
 
+  it("ramka tabeli przewija się poziomo bez warunku szerokości", () => {
+    render(<TableBlock block={nowaTabela()} editable="cell" />);
+    const ramka = screen.getAllByRole("columnheader")[0].closest("[class*='border-[1.5px]']");
+    expect(ramka).toHaveClass("overflow-x-auto");
+    expect(ramka?.className).not.toContain("max-[1100px]:overflow-x-auto");
+  });
+
   it("nazwa tabeli ma placeholder i zapisuje content.name po utracie fokusu", async () => {
     const user = userEvent.setup();
     const blok = nowaTabela();

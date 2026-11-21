@@ -89,7 +89,7 @@ export function CommandLine({
         aria-controls={menuOtwarte ? "menu-blokow" : undefined}
         aria-haspopup="listbox"
         aria-expanded={menuOtwarte}
-        className="min-w-0 flex-1 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]"
+        className="min-w-0 flex-1 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-soft-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus"
       />
       {menuOtwarte && (
         <SlashMenu

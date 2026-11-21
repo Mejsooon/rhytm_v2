@@ -126,7 +126,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   aria-label="Zmień ikonę"
                   className={`flex size-10 cursor-pointer items-center justify-center rounded-[10px] p-0 font-[inherit] max-[799px]:hidden ${
                     ikona === ""
-                      ? "border border-dashed border-black/[.18] bg-panel text-muted-foreground"
+                      ? "border border-dashed border-border-strong bg-panel text-muted-foreground"
                       : "border border-transparent bg-transparent text-foreground"
                   }`}
                 >

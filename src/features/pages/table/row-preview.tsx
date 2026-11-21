@@ -34,13 +34,13 @@ export function RowPreview({
     <tr onClick={onOpen} className="group/wiersz cursor-pointer [&:hover>td]:bg-black/[.02]">
       {fields.map((f) => {
         const v = normalizeValue(f, row.values[f.id]);
-        // Długie wartości są obcinane wielokropkiem (komórka ma max-w), a tabela przewija się poziomo
-        const td = "h-11 max-w-[280px] border-b border-border px-3 group-last/wiersz:border-b-0";
+        // Długie wartości są obcinane wielokropkiem (limit szerokości na elemencie wewnętrznym, bo max-w na td jest ignorowane przy table-layout:auto), a tabela przewija się poziomo
+        const td = "h-11 border-b border-border px-3 group-last/wiersz:border-b-0";
 
         if (f.isTitle) {
           return (
             <td key={f.id} className={`${td} font-medium`}>
-              <span className="block truncate">
+              <span className="block max-w-[280px] truncate">
                 {typeof v === "string" ? v : (f.config.empty_label ?? "Bez tytułu")}
               </span>
             </td>

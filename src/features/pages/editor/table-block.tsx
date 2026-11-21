@@ -475,8 +475,8 @@ export function TableBlock({
 
       {!blokTymczasowy && (
         <>
-          {/* .frame > .inner: ramka 1,5 px, promień 12 px; poniżej 1100 px tabela przewija się poziomo */}
-          <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white text-sm max-[1100px]:overflow-x-auto">
+          {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo */}
+          <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white text-sm overflow-x-auto">
             <div role="row" style={siatka} className="grid items-stretch rounded-t-[10px] border-b border-border bg-black/[.02]">
               {posortowanePola.map((f, i) => (
                 <div
