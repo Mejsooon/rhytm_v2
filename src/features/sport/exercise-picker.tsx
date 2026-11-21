@@ -3,20 +3,28 @@
 // „+ Ćwiczenie” z dymkiem wyszukiwania (GymLog.dc.html): ćwiczenia użytkownika + biblioteka bez już
 // dodanych, „+ Dodaj „…”” dla własnej nazwy, Enter wybiera pierwszy wynik, Esc zamyka.
 import { useState, type ReactElement } from "react";
+import { SearchIcon } from "lucide-react";
 
-import { ActionPopover, Button } from "@/components/controls";
+import {
+  ActionPopover,
+  Button,
+  MENU_ITEM,
+  MENU_SEPARATOR,
+  StatusBadge,
+} from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { searchExercises } from "./library";
 import type { ExerciseRow } from "./model";
 
-const POZYCJA =
-  "flex w-full cursor-pointer items-center justify-between gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-2 text-left text-[13px] text-foreground outline-none hover:bg-muted focus-visible:bg-muted max-[799px]:min-h-11 max-[799px]:text-sm";
+// Pozycja listy jak .ddopt z makiety: nazwa po lewej, odznaka po prawej
+const POZYCJA = cn(MENU_ITEM, "justify-between gap-2.5");
 
 export function ExercisePicker({
   exercises,
   excludeNames,
   onPick,
   side = "top",
-  trigger = <Button size="sm">+ Ćwiczenie</Button>,
+  trigger = <Button>+ Ćwiczenie</Button>,
 }: {
   exercises: ExerciseRow[];
   // Ćwiczenia już dodane do treningu
@@ -55,31 +63,36 @@ export function ExercisePicker({
       }}
       side={side}
       align="start"
-      width={300}
+      width={320}
+      className="p-1"
       ariaLabel="Dodaj ćwiczenie"
       trigger={trigger}
     >
-      <div className="flex flex-col gap-1.5">
-        <input
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            const v = e.currentTarget.value.trim();
-            const pierwszy = wyniki[0];
-            if (
-              pierwszy &&
-              pierwszy.name.toLowerCase().includes(v.toLowerCase())
-            )
-              wybierz(pierwszy.name);
-            else if (v) wybierz(v);
-          }}
-          placeholder="Szukaj albo wpisz własne…"
-          aria-label="Szukaj ćwiczenia"
-          className="box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm max-[799px]:h-11 max-[799px]:text-[15px] text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
-        />
+      <div className="flex flex-col">
+        {/* .igroup bez ramki, z linią pod spodem (CGymLog) */}
+        <label className="mb-1 flex h-8 items-center gap-2 border-b border-border px-[11px] text-muted-foreground transition-colors focus-within:border-ring max-[799px]:h-11">
+          <SearchIcon aria-hidden="true" className="size-4 flex-none" />
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              const v = e.currentTarget.value.trim();
+              const pierwszy = wyniki[0];
+              if (
+                pierwszy &&
+                pierwszy.name.toLowerCase().includes(v.toLowerCase())
+              )
+                wybierz(pierwszy.name);
+              else if (v) wybierz(v);
+            }}
+            placeholder="Szukaj albo wpisz własne…"
+            aria-label="Szukaj ćwiczenia"
+            className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
+          />
+        </label>
         <div className="flex max-h-[260px] flex-col overflow-y-auto">
           {wyniki.map((w) => (
             <button
@@ -89,23 +102,21 @@ export function ExercisePicker({
               onClick={() => wybierz(w.name)}
             >
               <span>{w.name}</span>
-              <span className="font-mono text-[11px] text-muted-foreground">
-                {w.group ?? ""}
-              </span>
+              {w.group && <StatusBadge tone="gray">{w.group}</StatusBadge>}
             </button>
           ))}
           {wlasne && (
-            <button
-              type="button"
-              className={`${POZYCJA} mt-1 pt-2.5`}
-              style={{ borderTop: "1px solid #f0f0f0" }}
-              onClick={() => wybierz(q.trim())}
-            >
-              <span>{`+ Dodaj „${q.trim()}”`}</span>
-              <span className="font-mono text-[11px] text-muted-foreground">
-                własne
-              </span>
-            </button>
+            <>
+              <div className={MENU_SEPARATOR} />
+              <button
+                type="button"
+                className={POZYCJA}
+                onClick={() => wybierz(q.trim())}
+              >
+                <span>{`+ Dodaj „${q.trim()}”`}</span>
+                <StatusBadge tone="outline">własne</StatusBadge>
+              </button>
+            </>
           )}
         </div>
       </div>

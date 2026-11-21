@@ -6,8 +6,8 @@ import { useState } from "react";
 
 import {
   Button,
-  Chip,
   DatePicker,
+  FIELD,
   FormDialog,
   Switch,
   TextField,
@@ -144,11 +144,16 @@ export function RunDialog({
       footer={
         <>
           {blad && (
-            <p role="alert" className="m-0 mr-auto text-xs text-destructive-foreground">
+            <p
+              role="alert"
+              className="m-0 mr-auto text-xs text-destructive-foreground"
+            >
               {blad}
             </p>
           )}
-          <Button variant="ghost" onClick={onClose}>Anuluj</Button>
+          <Button variant="ghost" onClick={onClose}>
+            Anuluj
+          </Button>
           <Button
             variant="primary"
             disabled={pending}
@@ -161,19 +166,27 @@ export function RunDialog({
     >
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Rodzaj biegu
+        {/* Tor .seg: szare tło, wybrany rodzaj to biała pigułka z cieniem (aria-pressed jak dotąd) */}
         <div
           role="group"
           aria-label="Rodzaj biegu"
-          className="flex flex-wrap gap-1.5"
+          className="inline-flex max-w-full flex-wrap gap-0.5 self-start rounded-md bg-muted p-0.5 font-normal"
         >
           {RODZAJE.map((r) => (
-            <Chip
+            <button
               key={r.kind}
-              selected={kind === r.kind}
+              type="button"
+              aria-pressed={kind === r.kind}
               onClick={() => setKind(r.kind)}
+              className={cn(
+                "inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-10",
+                kind === r.kind
+                  ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+                  : "bg-transparent text-muted-foreground hover:text-foreground",
+              )}
             >
               {r.label}
-            </Chip>
+            </button>
           ))}
         </div>
       </div>
@@ -204,7 +217,7 @@ export function RunDialog({
         </div>
         <TextField
           label="Dystans (km)"
-          className="font-mono"
+          className="tabular-nums"
           inputMode="decimal"
           autoComplete="off"
           value={dystans}
@@ -216,7 +229,7 @@ export function RunDialog({
       <div className="grid grid-cols-3 gap-3 max-[799px]:grid-cols-1">
         <TextField
           label="Czas"
-          className="font-mono"
+          className="tabular-nums"
           placeholder="h:mm:ss"
           autoComplete="off"
           value={czas}
@@ -227,7 +240,10 @@ export function RunDialog({
           Tempo
           <div
             data-testid="tempo"
-            className="rounded-md border border-input bg-panel px-[11px] py-[9px] font-mono text-sm font-normal"
+            className={cn(
+              FIELD,
+              "flex items-center bg-black/[.025] tabular-nums shadow-none",
+            )}
           >
             {tempo}
           </div>
@@ -236,7 +252,10 @@ export function RunDialog({
           Kcal
           <div
             data-testid="kcal"
-            className="rounded-md border border-input bg-panel px-[11px] py-[9px] font-mono text-sm font-normal"
+            className={cn(
+              FIELD,
+              "flex items-center bg-black/[.025] tabular-nums shadow-none",
+            )}
           >
             {kcalNaZywo !== null ? `≈ ${kcalNaZywo}` : "—"}
           </div>
@@ -251,22 +270,39 @@ export function RunDialog({
           </span>
         </span>
         <div className="flex flex-wrap gap-1">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-pressed={trudnosc === n}
-              onClick={() => setTrudnosc(trudnosc === n ? null : n)}
-              className={cn(
-                "size-8 cursor-pointer rounded-md border font-mono text-xs outline-none focus-visible:shadow-focus",
-                trudnosc === n
-                  ? "border-primary bg-primary text-white"
-                  : "border-input bg-white text-soft-foreground",
-              )}
-            >
-              {n}
-            </button>
-          ))}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
+            // Kolor skali zależy od wybranej trudności: 1–4 zielony, 5–7 bursztynowy, 8–10 czerwony
+            const wysoka = trudnosc !== null && trudnosc >= 8;
+            const srednia = trudnosc !== null && trudnosc >= 5 && trudnosc < 8;
+            let stan = "border-input bg-white text-soft-foreground shadow-xs";
+            if (trudnosc === n) {
+              stan = wysoka
+                ? "border-destructive bg-destructive text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]"
+                : srednia
+                  ? "border-warning bg-warning text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]"
+                  : "border-success bg-success text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]";
+            } else if (trudnosc !== null && n < trudnosc) {
+              stan = wysoka
+                ? "border-destructive/[.19] bg-destructive/[.09] text-soft-foreground"
+                : srednia
+                  ? "border-warning/[.19] bg-warning/[.09] text-soft-foreground"
+                  : "border-success/[.19] bg-success/[.09] text-soft-foreground";
+            }
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={trudnosc === n}
+                onClick={() => setTrudnosc(trudnosc === n ? null : n)}
+                className={cn(
+                  "size-8 cursor-pointer rounded-[10px] border text-[13px] font-medium tabular-nums outline-none focus-visible:shadow-focus",
+                  stan,
+                )}
+              >
+                {n}
+              </button>
+            );
+          })}
         </div>
         {bledy.difficulty && (
           <p className="m-0 text-xs font-normal text-destructive-foreground">
@@ -291,7 +327,7 @@ export function RunDialog({
         onChange={(e) => setNotatka(e.target.value)}
       />
 
-      <div className="flex items-center gap-2.5 text-[13px]">
+      <div className="flex items-center gap-2.5 text-sm">
         <Switch
           checked={wKalendarzu}
           onChange={setWKalendarzu}
@@ -300,7 +336,7 @@ export function RunDialog({
         Pokaż w kalendarzu głównym jako blok
       </div>
 
-      <p className="m-0 font-mono text-[11px] text-muted-foreground">
+      <p className="m-0 text-xs text-muted-foreground">
         Kcal z wagi w profilu. Bez czasu bieg zapisze się jako plan.
       </p>
     </FormDialog>

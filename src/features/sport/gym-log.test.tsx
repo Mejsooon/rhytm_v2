@@ -100,6 +100,73 @@ describe("GymLog — nagłówek i liczniki", () => {
   });
 });
 
+describe("GymLog — wygląd COSS", () => {
+  it("karta ćwiczenia to .card, 1RM w szarej odznace, liczniki w ramce 1,5 px", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(karta(WYC)).toHaveClass(
+      "rounded-xl",
+      "border-border",
+      "shadow-card",
+    );
+    expect(
+      within(karta(WYC)).getByText("1RM 84,5 kg · +2,5 kg vs ostatnio"),
+    ).toHaveClass("bg-muted", "h-[18px]");
+    expect(objetosc().parentElement?.parentElement).toHaveClass(
+      "border-[1.5px]",
+      "border-border-strong",
+    );
+  });
+
+  it("pola serii mają 30 px, a ✕ to ghost xs widoczny bez najechania", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(screen.getByLabelText(`${WYC}, seria 1 — ciężar`)).toHaveClass(
+      "h-[30px]",
+      "rounded-md",
+      "shadow-xs",
+    );
+    const usun = screen.getByRole("button", { name: `Usuń ${WYC}, seria 1` });
+    expect(usun).toHaveClass("h-6", "w-6", "bg-transparent");
+    expect(usun.className).not.toContain("opacity-0");
+  });
+
+  it("zrobiona seria ma zielony gradient, niezrobiona nie; REKORD to zielona odznaka", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(screen.getByTestId(`seria-${WYC}-1`)).toHaveClass(
+      "bg-gradient-to-r",
+      "from-success/[.06]",
+    );
+    expect(screen.getByTestId(`seria-${WYC}-4`).className).not.toContain(
+      "bg-gradient-to-r",
+    );
+    expect(screen.getByText("REKORD")).toHaveClass(
+      "bg-success-soft",
+      "text-success",
+    );
+  });
+
+  it("„+ Seria” i „Usuń ćwiczenie” to ghost sm, drugi na czerwono", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(
+      within(karta(WYC)).getByRole("button", { name: "+ Seria" }),
+    ).toHaveClass("h-7", "bg-transparent", "text-muted-foreground");
+    expect(
+      within(karta(WYC)).getByRole("button", { name: "Usuń ćwiczenie" }),
+    ).toHaveClass("text-destructive-foreground", "bg-transparent");
+  });
+
+  it("nagłówek to .topbar z okruszkami, przyciski w rozmiarze md", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(screen.getByText("Push · czw 19.11")).toHaveClass(
+      "font-medium",
+      "text-foreground",
+    );
+    expect(screen.getByRole("button", { name: "Zakończ trening" })).toHaveClass(
+      "h-8",
+      "bg-primary",
+    );
+  });
+});
+
 describe("GymLog — serie", () => {
   it("edycja kg i powtórzeń zmienia objętość na żywo, zapis po wyjściu z pola", async () => {
     render(<GymLog data={daneTreningu()} />);
@@ -291,6 +358,26 @@ describe("GymLog — picker ćwiczeń", () => {
     return screen.getByRole("dialog", { name: "Dodaj ćwiczenie" });
   }
 
+  it("dymek jak .pop: 320 px, p-1, grupa mięśniowa w szarej odznace, „własne” w obrysowanej", async () => {
+    render(<GymLog data={daneTreningu()} />);
+    const okno = await otworz();
+    expect(okno).toHaveClass("p-1");
+    expect(okno).toHaveStyle({ width: "320px" });
+    const pozycja = within(okno).getByRole("button", { name: /Martwy ciąg/ });
+    expect(pozycja).toHaveClass(
+      "min-h-8",
+      "justify-between",
+      "max-[799px]:min-h-11",
+    );
+    expect(pozycja.querySelector("span.bg-muted")).not.toBeNull();
+    await userEvent.type(
+      within(okno).getByLabelText("Szukaj ćwiczenia"),
+      "xyz",
+    );
+    const wlasne = within(okno).getByRole("button", { name: /\+ Dodaj „xyz”/ });
+    expect(wlasne.querySelector("span.bg-white")).toHaveTextContent("własne");
+  });
+
   it("lista bez dodanych ćwiczeń, wyszukiwanie filtruje", async () => {
     render(<GymLog data={daneTreningu()} />);
     const okno = await otworz();
@@ -450,8 +537,13 @@ describe("GymLog — zakończenie i szablon", () => {
     );
     const okno = screen.getByRole("dialog", { name: "Zapisz jako szablon" });
     const nazwa = within(okno).getByLabelText("Nazwa szablonu");
-    // „Anuluj” bez ramki (ghost, .btng z makiet)
-    expect(within(okno).getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    // „Anuluj” bez ramki (ghost, .btng z makiet), na telefonie 44 px
+    expect(within(okno).getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+      "max-[799px]:h-11",
+    );
     expect(nazwa).toHaveValue("Push");
     await userEvent.clear(nazwa);
     await userEvent.type(nazwa, "Push B");
