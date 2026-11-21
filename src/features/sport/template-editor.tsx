@@ -5,11 +5,27 @@
 // tabela ćwiczeń (serie −/+, powt., przerwa „m:ss”, ↑ ↓ ✕), „+ Ćwiczenie”, Zapisz / Anuluj / Usuń.
 // Okno czeka na serwer: przyciski są zablokowane w trakcie, a błąd zostaje na ekranie.
 // Jedno drzewo dla webu i telefonu — tabela przewija się poziomo w wąskim oknie.
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Button, Chip, TimePicker } from "@/components/controls";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  DumbbellIcon,
+  MinusIcon,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+
+import {
+  Button,
+  FIELD,
+  StatusBadge,
+  TextField,
+  TimePicker,
+} from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { deleteTemplate, saveTemplate } from "./actions";
 import { ExercisePicker } from "./exercise-picker";
@@ -33,12 +49,16 @@ type Wiersz = {
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const DNI = ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]; // indeks + 1 = dzień w weekdays
 const DOMYSLNA_GODZINA = "17:00";
+// Wiersz tabeli jak .exrow z makiety: 32 / 1fr / 126 / 96 / 96 / 108 px, odstęp 10 px
 const SIATKA =
-  "grid grid-cols-[28px_minmax(0,1fr)_128px_96px_96px_108px] items-center gap-2.5 max-[799px]:grid-cols-[28px_minmax(140px,1fr)_160px_96px_96px_148px]";
-const POLE =
-  "box-border w-full rounded-md border border-input bg-white font-mono text-sm text-foreground outline-none placeholder:text-faint-foreground focus:border-primary";
+  "grid grid-cols-[32px_minmax(0,1fr)_126px_96px_96px_108px] items-center gap-2.5 max-[799px]:grid-cols-[32px_minmax(140px,1fr)_160px_96px_96px_148px]";
+// Pole powtórzeń i przerwy: .inp 30 px (na telefonie 44 px z FIELD)
+const POLE = cn(FIELD, "h-[30px] tabular-nums");
+// Przycisk ikony .btng.ic.sm (28 px, na telefonie 44 px), fokus w środku przycisku
 const IKONA =
-  "inline-flex size-[30px] flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-soft-foreground hover:bg-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-35 max-[799px]:size-11";
+  "max-[799px]:size-11 focus-visible:shadow-focus-inset aria-disabled:opacity-35";
+// Przycisk serii w jednej ramce: bez własnej ramki i promienia, z linią oddzielającą
+const SERIA = cn(IKONA, "rounded-none border-0 border-black/[.08]");
 
 // Stan formularza z szablonu (albo pusty dla nowego)
 function stanPoczatkowy(template: TemplateWithItems | null) {
@@ -67,7 +87,6 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
   const [zapisuje, setZapisuje] = useState(false);
   const [blad, setBlad] = useState<string | null>(null);
   const licznik = useRef(0);
-  const nazwaId = useId();
 
   // Next 16 Activity zachowuje stan trasy: nowe dane z serwera (ponowne wejście) zaczynają formularz od nowa
   const [zrodlo, setZrodlo] = useState(data);
@@ -161,43 +180,42 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
   const przyciskZapisz = (
     <Button
       variant="primary"
-      size="sm"
       aria-disabled={valid ? "false" : "true"}
       disabled={zapisuje}
-      className={cn(
-        "max-[799px]:h-11",
-        !valid && "cursor-not-allowed opacity-45",
-      )}
       onClick={() => void zapisz()}
     >
       Zapisz szablon
     </Button>
   );
   const przyciskAnuluj = (
-    <Button asChild variant="ghost" size="sm" className="max-[799px]:h-11">
+    <Button asChild variant="ghost">
       <Link href="/sport/szablony">Anuluj</Link>
     </Button>
   );
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
-        <div className="min-w-0 font-mono text-[13px] text-muted-foreground">
+      {/* .topbar z okruszkami .crumb (CWorkoutTemplates) */}
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
+        <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
           <Link
             href="/sport"
-            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
-          </Link>{" "}
-          <span className="text-faint-foreground">/</span>{" "}
-          <Link
-            href="/sport/szablony"
-            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+          </Link>
+          <span aria-hidden="true">/</span>
+          {/* „Szablony treningów” jak mały przycisk ghost z makiety */}
+          <Button
+            asChild
+            variant="ghost"
+            size="xs"
+            className="-ml-[7px] text-sm font-normal text-muted-foreground hover:text-foreground max-[799px]:h-11"
           >
-            Szablony treningów
-          </Link>{" "}
-          <span className="text-faint-foreground">/</span>{" "}
-          <span className="text-foreground">{crumb}</span>
+            <Link href="/sport/szablony">Szablony treningów</Link>
+          </Button>
+          <span aria-hidden="true">/</span>
+          <span className="font-medium text-foreground">{crumb}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {przyciskAnuluj}
@@ -210,41 +228,23 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {template ? "Edytuj szablon" : "Nowy szablon"}
           </h1>
-          <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">{meta}</p>
+          <p className="m-0 mt-1.5 text-[13px] text-muted-foreground tabular-nums">
+            {meta}
+          </p>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[18px]">
-          <div className="grid grid-cols-2 gap-4 max-[799px]:grid-cols-1">
-            <div className="flex flex-col gap-1.5 text-[13px] font-medium">
-              <label htmlFor={nazwaId}>Nazwa szablonu</label>
-              <input
-                id={nazwaId}
-                type="text"
-                value={name}
-                maxLength={60}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                placeholder="Np. Push, Full body A"
-                aria-invalid={tried && nazwa === "" ? true : undefined}
-                aria-describedby={
-                  tried && nazwa === "" ? `${nazwaId}-blad` : undefined
-                }
-                className={cn(
-                  POLE,
-                  "px-2.5 py-2 font-sans",
-                  tried && nazwa === "" && "border-destructive",
-                )}
-              />
-              {tried && nazwa === "" && (
-                <span
-                  id={`${nazwaId}-blad`}
-                  className="text-xs font-normal text-destructive-foreground"
-                >
-                  Podaj nazwę.
-                </span>
-              )}
-            </div>
+        {/* .card z coss.css (jak Card): pola, tabela ćwiczeń i stopka .foot */}
+        <section className="relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+          <div className="grid grid-cols-2 gap-4 border-b border-black/[.08] px-6 py-5 max-[799px]:grid-cols-1 max-[799px]:px-[18px]">
+            <TextField
+              label="Nazwa szablonu"
+              type="text"
+              value={name}
+              maxLength={60}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Np. Push, Full body A"
+              error={tried && nazwa === "" ? "Podaj nazwę." : undefined}
+            />
             <div className="flex flex-col gap-1.5 text-[13px] font-medium">
               <span>
                 Dni tygodnia{" "}
@@ -253,27 +253,40 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 </span>
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
-                {DNI.map((etykieta, i) => {
-                  const dzien = i + 1;
-                  const wlaczony = days.includes(dzien);
-                  return (
-                    <Chip
-                      key={etykieta}
-                      selected={wlaczony}
-                      variant="solid"
-                      onClick={() =>
-                        setForm((f) => ({
-                          ...f,
-                          days: wlaczony
-                            ? f.days.filter((d) => d !== dzien)
-                            : [...f.days, dzien],
-                        }))
-                      }
-                    >
-                      {etykieta}
-                    </Chip>
-                  );
-                })}
+                {/* Tor .seg: szare tło, wybrany dzień to biała pigułka z cieniem (wielokrotny wybór, aria-pressed) */}
+                <div
+                  role="group"
+                  aria-label="Dni tygodnia"
+                  className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md bg-muted p-0.5 font-normal"
+                >
+                  {DNI.map((etykieta, i) => {
+                    const dzien = i + 1;
+                    const wlaczony = days.includes(dzien);
+                    return (
+                      <button
+                        key={etykieta}
+                        type="button"
+                        aria-pressed={wlaczony}
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            days: wlaczony
+                              ? f.days.filter((d) => d !== dzien)
+                              : [...f.days, dzien],
+                          }))
+                        }
+                        className={cn(
+                          "inline-flex h-7 w-9 cursor-pointer items-center justify-center rounded-[8px] border-0 px-0 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-10 max-[799px]:w-11",
+                          wlaczony
+                            ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+                            : "bg-transparent text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {etykieta}
+                      </button>
+                    );
+                  })}
+                </div>
                 {/* Godzina startu ma sens tylko, gdy szablon sam planuje treningi */}
                 {days.length > 0 && (
                   <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
@@ -290,19 +303,19 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col px-6 pt-2 pb-5 max-[799px]:px-[18px]">
             <div className="max-[799px]:-mx-[18px] max-[799px]:overflow-x-auto max-[799px]:px-[18px]">
               <div
                 className={cn(
                   SIATKA,
-                  "py-1 font-mono text-[11px] text-muted-foreground",
+                  "py-2 text-xs font-medium text-muted-foreground",
                 )}
               >
                 <span>#</span>
-                <span>ĆWICZENIE</span>
-                <span>SERIE</span>
-                <span>POWT.</span>
-                <span>PRZERWA</span>
+                <span>Ćwiczenie</span>
+                <span>Serie</span>
+                <span>Powt.</span>
+                <span>Przerwa</span>
                 <span />
               </div>
               {rows.map((r, i) => {
@@ -314,39 +327,46 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                     key={r.key}
                     data-testid="wiersz-cwiczenia"
                     data-name={r.name}
-                    className={cn(SIATKA, "border-b border-border py-2")}
+                    className={cn(SIATKA, "border-b border-black/[.06] py-2")}
                   >
-                    <span className="font-mono text-muted-foreground">{i + 1}</span>
+                    <StatusBadge tone="gray" className="w-[22px] tabular-nums">
+                      {i + 1}
+                    </StatusBadge>
                     <span className="min-w-0 truncate font-medium">
                       {r.name}
                     </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        className={IKONA}
+                    {/* Serie −/+ w jednej ramce (30 px) jak w makiecie */}
+                    <span className="inline-flex h-[30px] items-center justify-self-start overflow-hidden rounded-md border border-input bg-white shadow-xs">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
+                        className={cn(SERIA, "border-r")}
                         aria-label={`${r.name}: mniej serii`}
                         onClick={() =>
                           zmienWiersz(i, { sets: Math.max(1, r.sets - 1) })
                         }
                       >
-                        −
-                      </button>
+                        <MinusIcon aria-hidden="true" className="size-3.5" />
+                      </Button>
                       <span
                         data-testid={`serie-${r.name}`}
-                        className="w-6 text-center font-mono"
+                        className="w-[30px] text-center font-semibold tabular-nums"
                       >
                         {r.sets}
                       </span>
-                      <button
-                        type="button"
-                        className={IKONA}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
+                        className={cn(SERIA, "border-l")}
                         aria-label={`${r.name}: więcej serii`}
                         onClick={() =>
                           zmienWiersz(i, { sets: Math.min(10, r.sets + 1) })
                         }
                       >
-                        +
-                      </button>
+                        <PlusIcon aria-hidden="true" className="size-3.5" />
+                      </Button>
                     </span>
                     <input
                       type="text"
@@ -354,7 +374,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       maxLength={20}
                       onChange={(e) => zmienWiersz(i, { reps: e.target.value })}
                       aria-label={`${r.name}: powtórzenia`}
-                      className={cn(POLE, "px-2 py-[5px] max-[799px]:h-11")}
+                      className={POLE}
                     />
                     <input
                       type="text"
@@ -362,34 +382,39 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                       onChange={(e) => zmienWiersz(i, { rest: e.target.value })}
                       aria-label={`${r.name}: przerwa`}
                       aria-invalid={zla ? true : undefined}
-                      className={cn(
-                        POLE,
-                        "px-2 py-[5px] max-[799px]:h-11",
-                        zla && "border-destructive",
-                      )}
+                      className={POLE}
                     />
-                    <span className="inline-flex justify-end gap-1">
-                      <button
-                        type="button"
+                    <span className="inline-flex justify-end gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
                         className={IKONA}
                         aria-label={`Przesuń ${r.name} w górę`}
                         aria-disabled={pierwszy ? "true" : "false"}
                         onClick={() => przesun(i, -1)}
                       >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
+                        <ChevronUpIcon aria-hidden="true" className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
                         className={IKONA}
                         aria-label={`Przesuń ${r.name} w dół`}
                         aria-disabled={ostatni ? "true" : "false"}
                         onClick={() => przesun(i, 1)}
                       >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        className={cn(IKONA, "text-destructive-foreground")}
+                        <ChevronDownIcon aria-hidden="true" className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon
+                        className={cn(
+                          IKONA,
+                          "text-destructive-foreground hover:text-destructive-foreground",
+                        )}
                         aria-label={`Usuń ${r.name}`}
                         onClick={() =>
                           setForm((f) => ({
@@ -398,28 +423,40 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                           }))
                         }
                       >
-                        ✕
-                      </button>
+                        <XIcon aria-hidden="true" className="size-3.5" />
+                      </Button>
                     </span>
                   </div>
                 );
               })}
             </div>
             {rows.length === 0 && (
-              <p className="m-0 py-3.5 text-xs text-muted-foreground">
-                Brak ćwiczeń — dodaj pierwsze poniżej.
-              </p>
+              // .empty z ikoną w ramce (tekst bez zmian)
+              <div className="flex flex-col items-center gap-2 p-5 text-center">
+                <span className="grid size-10 place-items-center rounded-md border border-border bg-white text-muted-foreground shadow-xs">
+                  <DumbbellIcon aria-hidden="true" className="size-4" />
+                </span>
+                <p className="m-0 text-sm text-muted-foreground">
+                  Brak ćwiczeń — dodaj pierwsze poniżej.
+                </p>
+              </div>
             )}
             {tried && zlaPrzerwa && (
               <p className="m-0 pt-2 text-xs text-destructive-foreground">
                 Przerwa w formacie m:ss, np. 2:00.
               </p>
             )}
-            <div className="mt-3 self-start">
+            <div className="mt-3.5 self-start">
               <ExercisePicker
                 exercises={data.exercises}
                 excludeNames={rows.map((r) => r.name)}
                 side="bottom"
+                trigger={
+                  <Button aria-label="+ Ćwiczenie">
+                    <PlusIcon aria-hidden="true" className="size-4" />
+                    Ćwiczenie
+                  </Button>
+                }
                 onPick={(nazwaCwiczenia) => {
                   licznik.current += 1;
                   setForm((f) => ({
@@ -438,31 +475,34 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 }}
               />
             </div>
+            {blad && (
+              <p
+                role="alert"
+                className="m-0 pt-3 text-[13px] text-destructive-foreground"
+              >
+                {blad}
+              </p>
+            )}
+          </div>
+
+          {/* .foot: Zapisz / Anuluj po lewej, „Usuń szablon” (.btndo) po prawej */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 max-[799px]:px-[18px]">
+            <div className="flex gap-2">
+              {przyciskZapisz}
+              {przyciskAnuluj}
+            </div>
+            {template && (
+              <Button
+                variant="destructive-outline"
+                disabled={zapisuje}
+                onClick={() => void usun()}
+              >
+                <Trash2Icon aria-hidden="true" className="size-4" />
+                Usuń szablon
+              </Button>
+            )}
           </div>
         </section>
-
-        {blad && (
-          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
-            {blad}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-2">
-            {przyciskZapisz}
-            {przyciskAnuluj}
-          </div>
-          {template && (
-            <Button
-              size="sm"
-              disabled={zapisuje}
-              className="border-destructive-border text-destructive-foreground hover:text-destructive-foreground max-[799px]:h-11"
-              onClick={() => void usun()}
-            >
-              Usuń szablon
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );

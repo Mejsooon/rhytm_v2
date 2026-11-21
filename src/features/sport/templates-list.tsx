@@ -6,9 +6,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CircleCheckIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/controls";
+import { Button, StatusBadge } from "@/components/controls";
 import { createGymSession } from "./actions";
 import type { TemplatesData } from "./load-sport";
 import { formatLastUsed, plPlural } from "./model";
@@ -69,25 +70,24 @@ export function TemplatesList({
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-muted-foreground">
+      {/* .topbar z okruszkami .crumb (CWorkoutTemplates) */}
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Link
             href="/sport"
-            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
-          </Link>{" "}
-          <span className="text-faint-foreground">/</span>{" "}
-          <span className="text-foreground">Szablony treningów</span>
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="font-medium text-foreground">Szablony treningów</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            variant="primary"
-            size="sm"
-            className="max-[799px]:h-11"
-          >
-            <Link href="/sport/szablony/nowy">Nowy szablon</Link>
+          <Button asChild variant="primary">
+            <Link href="/sport/szablony/nowy">
+              <PlusIcon aria-hidden="true" className="size-4" />
+              Nowy szablon
+            </Link>
           </Button>
         </div>
       </header>
@@ -97,18 +97,23 @@ export function TemplatesList({
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             Szablony treningów
           </h1>
-          <p className="m-0 mt-1.5 text-muted-foreground">
+          <p className="m-0 mt-1.5 text-sm text-muted-foreground">
             Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z
             wypełnionymi ciężarami z ostatniego razu.
           </p>
         </div>
 
         {komunikat && (
+          // .alert.ok: zielona ramka, ikona i delikatne tło
           <div
             role="status"
-            className="rounded-lg border border-success-border bg-success-soft px-3.5 py-2.5 text-[13px] text-success"
+            className="flex items-center gap-2.5 rounded-lg border border-success-border bg-success/[.04] px-3.5 py-3 text-sm text-foreground"
           >
-            {komunikat}
+            <CircleCheckIcon
+              aria-hidden="true"
+              className="size-4 flex-none text-success"
+            />
+            <span>{komunikat}</span>
           </div>
         )}
 
@@ -122,49 +127,64 @@ export function TemplatesList({
               <section
                 key={t.id}
                 aria-labelledby={naglowekId}
-                className="flex flex-col gap-2.5 rounded-lg border border-border bg-white p-4 hover:border-border-strong"
+                // .card z coss.css (jak Card, ale jako region)
+                className="relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card"
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span id={naglowekId} className="text-base font-semibold">
+                <div className="flex items-center justify-between gap-3 px-6 pt-5">
+                  <span
+                    id={naglowekId}
+                    className="min-w-0 truncate text-base leading-[1.3] font-semibold"
+                  >
                     {t.name}
                   </span>
-                  <span className="font-mono text-[11px] text-muted-foreground">
+                  <StatusBadge tone="gray" className="shrink-0 tabular-nums">
                     {`ostatnio: ${formatLastUsed(t.last_used_at, data.profile.timezone)}`}
-                  </span>
+                  </StatusBadge>
                 </div>
-                <span className="font-mono text-xs text-muted-foreground">{meta}</span>
-                <p className="m-0 text-[13px] leading-[1.6] text-soft-foreground">
-                  {t.items.length
-                    ? t.items.map((i) => i.exerciseName).join(" · ")
-                    : "Brak ćwiczeń"}
-                </p>
-                <div className="mt-auto flex gap-2">
+                <div className="flex flex-1 flex-col gap-2 px-6 pt-2">
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {meta}
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {t.items.length ? (
+                      t.items.map((i, idx) => (
+                        <StatusBadge key={`${i.exerciseName}-${idx}`} tone="outline">
+                          {i.exerciseName}
+                        </StatusBadge>
+                      ))
+                    ) : (
+                      <StatusBadge tone="outline">Brak ćwiczeń</StatusBadge>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 px-6 pt-4 pb-5">
                   <Button
                     variant="primary"
                     size="sm"
-                    className="text-[13px] max-[799px]:h-11"
+                    className="max-[799px]:h-11"
                     disabled={startuje !== null}
                     aria-busy={startuje === t.id ? true : undefined}
                     onClick={() => void rozpocznij(t.id, t.start_time)}
                   >
                     Rozpocznij
                   </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="text-[13px] max-[799px]:h-11"
-                  >
+                  <Button asChild size="sm" className="max-[799px]:h-11">
                     <Link href={`/sport/szablony/${t.id}`}>Edytuj</Link>
                   </Button>
                 </div>
               </section>
             );
           })}
+          {/* .card z przerywaną ramką: ikona w ramce .empty-ic i podpis */}
           <Link
             href="/sport/szablony/nowy"
-            className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-white text-muted-foreground no-underline hover:text-foreground"
+            aria-label="+ Nowy szablon"
+            className="flex min-h-[190px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-transparent text-sm text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus"
           >
-            <span className="text-[22px] leading-none">+</span> Nowy szablon
+            <span className="grid size-10 place-items-center rounded-md border border-border bg-white text-muted-foreground shadow-xs">
+              <PlusIcon aria-hidden="true" className="size-4" />
+            </span>
+            Nowy szablon
           </Link>
         </div>
       </div>
