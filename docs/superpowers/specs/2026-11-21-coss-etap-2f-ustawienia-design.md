@@ -36,7 +36,8 @@ Konwencje COSS z poprzednich etapów: kontrolki z `@/components/controls` (`FIEL
 ## Decyzje Claude'a (do sprawdzenia przy czytaniu)
 - Kosz zostaje w Ogólnych (jest w §6.11 speca aplikacji), choć makieta COSS go nie pokazuje — w stylu pozostałych kart.
 - Karta listy kategorii nie ma makiety COSS — w stylu kart Ogólnych; zachowanie bez zmian.
-- Podtytuły zakładek bez makiety (Kategorie, Sejf) — z makiet, jeśli są; inaczej krótki opis w stylu Ogólnych, wypisany w tabeli „Do decyzji”.
+- Podtytuł ma tylko zakładka Ogólne — tak jak w makietach (`CSettingsAccount` i `CSettingsNotifications` nie mają podtytułu); pozostałe zakładki bez podtytułu.
+- Okno kategorii zostało już zrobione wg `CCategoryDialog` w etapie 2a — w 2f tylko sprawdzenie zgodności.
 
 ## Zostawione wykonawcy
 Dokładne odstępy, rozmiary i kolejność elementów — wg zrzutów makiet (`PW_CHANNEL=chrome pnpm mockups:shots CSettings` itd.).
