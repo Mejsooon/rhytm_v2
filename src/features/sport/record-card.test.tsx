@@ -25,6 +25,30 @@ describe("RecordCard", () => {
     expect(screen.getByText("REKORD")).toBeInTheDocument();
   });
 
+  it("odznaka: REKORD zielona, „bez rekordu” szara; dymek z odznaką REKORD", () => {
+    const dane = daneSportu();
+    render(
+      <RecordCard
+        exercises={dane.exercises}
+        setsHistory={dane.setsHistory}
+        profileWeight={72}
+        onNewGym={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("REKORD")).toHaveClass("bg-success-soft", "h-[22px]");
+    fireEvent.mouseEnter(
+      screen.getByRole("button", { name: "pt 06.11.2026: 81,5 kg" }),
+    );
+    expect(screen.getByText("bez rekordu")).toHaveClass("bg-muted", "h-[22px]");
+    fireEvent.mouseEnter(
+      screen.getByRole("button", { name: "czw 12.11.2026: 84,5 kg" }),
+    );
+    // Odznaka na karcie i w dymku
+    const rekordy = screen.getAllByText("REKORD");
+    expect(rekordy).toHaveLength(2);
+    expect(rekordy[1]).toHaveClass("bg-success-soft");
+  });
+
   it("niedokończony trening (np. przyszły z odhaczoną serią) nie jest punktem ani rekordem", () => {
     const dane = daneSportu();
     render(

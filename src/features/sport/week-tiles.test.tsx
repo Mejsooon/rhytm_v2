@@ -75,10 +75,44 @@ describe("WeekTiles", () => {
     wyrenderuj({ weeklyKmGoal: 18 });
     const slupki = screen.getAllByTestId("slupek");
     expect(slupki).toHaveLength(12);
-    expect(slupki[11].style.background).toBe("rgb(21, 128, 61)");
+    expect(slupki[11]).toHaveClass("bg-success");
     // Tydzień 9–15.11 (indeks 10): 18,4 km ≥ cel 18
-    expect(slupki[10].style.background).toBe("rgb(23, 23, 23)");
+    expect(slupki[10]).toHaveClass("bg-foreground");
     expect(slupki[10]).toHaveAttribute("title", "tydz. 46: 18,4");
-    expect(slupki[9].style.background).toBe("rgb(212, 212, 212)");
+    expect(slupki[9]).toHaveClass("bg-black/12");
+    expect(slupki[9]).toHaveClass("rounded-t-[4px]");
+  });
+
+  it("wybrany kafelek ma aria-pressed i dolną kreskę", async () => {
+    wyrenderuj();
+    expect(kafelek(/Km \/ tydz\./)).toHaveAttribute("aria-pressed", "true");
+    expect(kafelek(/Km \/ tydz\./)).toHaveClass(
+      "bg-white",
+      "shadow-[inset_0_-2px_0_var(--foreground)]",
+    );
+    expect(kafelek(/Treningi/)).toHaveAttribute("aria-pressed", "false");
+    expect(kafelek(/Treningi/)).toHaveClass("bg-black/[.025]");
+    expect(kafelek(/Treningi/)).not.toHaveClass(
+      "shadow-[inset_0_-2px_0_var(--foreground)]",
+    );
+    await userEvent.click(kafelek(/Treningi/));
+    expect(kafelek(/Treningi/)).toHaveClass(
+      "shadow-[inset_0_-2px_0_var(--foreground)]",
+    );
+    expect(kafelek(/Km \/ tydz\./)).not.toHaveClass(
+      "shadow-[inset_0_-2px_0_var(--foreground)]",
+    );
+  });
+
+  it("wykres bez danych nie ma NaN w wysokościach", async () => {
+    const dane = daneSportu();
+    render(<WeekTiles items={[]} today={dane.today} profile={dane.profile} />);
+    for (const nazwa of [/Km \/ tydz\./, /Śr\. tempo/, /Treningi/, /Kcal/]) {
+      await userEvent.click(kafelek(nazwa));
+      for (const slupek of screen.getAllByTestId("slupek")) {
+        expect(slupek.style.height).not.toContain("NaN");
+        expect(slupek.style.height).toBe("2px");
+      }
+    }
   });
 });
