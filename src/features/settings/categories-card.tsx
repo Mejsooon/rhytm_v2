@@ -161,7 +161,6 @@ export function CategoriesCard({
         </div>
       </CardHeader>
       <CardContent>
-
         <ul className="m-0 flex list-none flex-col p-0">
           {lista.map((k, i) => (
             <li
@@ -202,26 +201,37 @@ export function CategoriesCard({
                 {/* Stałe sloty: strzałki, „Ukryj”/„Pokaż” i „Usuń” w tych samych kolumnach w każdym wierszu */}
                 <span
                   data-slot="kolejnosc"
-                  className="flex w-[68px] flex-none items-center justify-end gap-1 max-[799px]:w-24"
+                  className="flex w-[68px] flex-none items-center gap-1 max-[799px]:w-[92px]"
                 >
-                  {i > 0 && (
-                    <Button
-                      icon
-                      aria-label="W górę"
-                      onClick={() => przesun(k.id, -1)}
-                    >
-                      ↑
-                    </Button>
-                  )}
-                  {i < lista.length - 1 && (
-                    <Button
-                      icon
-                      aria-label="W dół"
-                      onClick={() => przesun(k.id, 1)}
-                    >
-                      ↓
-                    </Button>
-                  )}
+                  {/* Dwa podsloty o stałej szerokości: ↑ zawsze po lewej, ↓ zawsze po prawej */}
+                  <span
+                    data-slot="w-gore"
+                    className="flex w-8 flex-none max-[799px]:w-11"
+                  >
+                    {i > 0 && (
+                      <Button
+                        icon
+                        aria-label="W górę"
+                        onClick={() => przesun(k.id, -1)}
+                      >
+                        ↑
+                      </Button>
+                    )}
+                  </span>
+                  <span
+                    data-slot="w-dol"
+                    className="flex w-8 flex-none max-[799px]:w-11"
+                  >
+                    {i < lista.length - 1 && (
+                      <Button
+                        icon
+                        aria-label="W dół"
+                        onClick={() => przesun(k.id, 1)}
+                      >
+                        ↓
+                      </Button>
+                    )}
+                  </span>
                 </span>
                 <span data-slot="ukryj" className="flex w-16 flex-none">
                   <Button

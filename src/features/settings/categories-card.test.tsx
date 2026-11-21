@@ -274,4 +274,22 @@ describe("CategoriesCard", () => {
     expect(nazwa).toHaveClass("truncate");
     expect(nazwa.parentElement).toHaveClass("min-w-0", "flex-1");
   });
+
+  it("pozycja strzałek: ↑ zawsze w lewym podslocie, ↓ w prawym", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    const podslot = (nazwa: string, slot: string) =>
+      wiersz(nazwa).querySelector(`[data-slot="${slot}"]`) as HTMLElement;
+    // Pierwszy wiersz: lewy pusty, prawy ma „W dół”
+    expect(podslot("Nauka", "w-gore")).toBeEmptyDOMElement();
+    expect(within(podslot("Nauka", "w-dol")).getByRole("button", { name: "W dół" })).toBeInTheDocument();
+    // Środkowy: obie
+    expect(within(podslot("Praca", "w-gore")).getByRole("button", { name: "W górę" })).toBeInTheDocument();
+    expect(within(podslot("Praca", "w-dol")).getByRole("button", { name: "W dół" })).toBeInTheDocument();
+    // Ostatni: lewy ma „W górę”, prawy pusty
+    expect(within(podslot("Sport", "w-gore")).getByRole("button", { name: "W górę" })).toBeInTheDocument();
+    expect(podslot("Sport", "w-dol")).toBeEmptyDOMElement();
+    // Szerokości podslotów: web 32 px, telefon 44 px
+    expect(podslot("Sport", "w-gore")).toHaveClass("w-8", "max-[799px]:w-11", "flex-none");
+    expect(podslot("Sport", "w-dol")).toHaveClass("w-8", "max-[799px]:w-11", "flex-none");
+  });
 });

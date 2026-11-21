@@ -117,7 +117,6 @@ export function TrashCard({
         </div>
       </CardHeader>
       <CardContent>
-
         {loadError && (
           <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
             Nie udało się wczytać kosza.
