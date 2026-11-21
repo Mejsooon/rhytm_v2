@@ -187,4 +187,32 @@ describe("ProfileCard", () => {
     expect(await screen.findByText("Podaj liczbę 30–250.")).toBeInTheDocument();
     expect(screen.queryByText("Zapisano ✓")).not.toBeInTheDocument();
   });
+
+  it("strefa czasowa: wyzwalacz pokazuje miasto i UTC", () => {
+    render(
+      <ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />,
+    );
+    const wyzwalacz = screen.getByRole("button", { name: "Strefa czasowa" });
+    expect(wyzwalacz).toHaveTextContent("Warszawa");
+    expect(wyzwalacz).toHaveTextContent("UTC+01:00");
+  });
+
+  it("waga i wzrost bez font-mono, z tabular-nums", () => {
+    render(
+      <ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />,
+    );
+    for (const nazwa of ["Waga (kg)", "Wzrost (cm)"]) {
+      const pole = screen.getByLabelText(nazwa);
+      expect(pole).toHaveClass("tabular-nums");
+      expect(pole).not.toHaveClass("font-mono");
+    }
+  });
+
+  it("Zapisz wyłączony ma opacity-[.64]", () => {
+    render(
+      <ProfileCard saved={zapisane} timezones={strefy} userId="u1" avatarUrl={null} />,
+    );
+    expect(zapisz()).toHaveClass("disabled:opacity-[.64]");
+    expect(zapisz()).not.toHaveClass("disabled:opacity-40");
+  });
 });

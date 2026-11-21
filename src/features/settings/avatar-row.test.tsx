@@ -198,4 +198,16 @@ describe("AvatarRow", () => {
     unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:podglad");
   });
+
+  it("Wgraj/Zmień z ikoną wysyłania", () => {
+    const { unmount } = render(
+      <AvatarRow userId="u1" avatarUrl={null} displayName="mejson" />,
+    );
+    let przycisk = screen.getByRole("button", { name: "Wgraj" });
+    expect(przycisk.querySelector("svg.lucide-upload")).toHaveAttribute("aria-hidden", "true");
+    unmount();
+    render(<AvatarRow userId="u1" avatarUrl="https://x/a.png" displayName="mejson" />);
+    przycisk = screen.getByRole("button", { name: "Zmień" });
+    expect(przycisk.querySelector("svg.lucide-upload")).toHaveAttribute("aria-hidden", "true");
+  });
 });

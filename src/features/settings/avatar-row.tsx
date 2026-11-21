@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { UploadIcon } from "lucide-react";
 
 import { Button } from "@/components/controls";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@/features/onboarding/avatar-upload";
 import { removeAvatar, saveAvatar } from "./actions";
 
-// Wiersz „Zdjęcie profilowe” u góry karty Profil (Settings.dc.html / MSettings.dc.html).
+// Wiersz „Zdjęcie profilowe” u góry karty Profil (CSettings.dc.html / MSettings.dc.html).
 // Zapis od razu po wyborze pliku — nie dotyka „Zapisz” na dole karty.
 export function AvatarRow({
   userId,
@@ -98,7 +99,7 @@ export function AvatarRow({
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
+    <div className="flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
       {zrodlo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -147,6 +148,7 @@ export function AvatarRow({
           disabled={pracuje}
           onClick={() => wejscie.current?.click()}
         >
+          <UploadIcon aria-hidden="true" className="size-4" />
           {maZdjecie ? "Zmień" : "Wgraj"}
         </Button>
       </span>

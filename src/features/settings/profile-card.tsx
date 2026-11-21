@@ -2,7 +2,15 @@
 
 import * as React from "react";
 
-import { Dropdown, TextField } from "@/components/controls";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Dropdown,
+  TextField,
+} from "@/components/controls";
 import { parseDecimal, profileSchema } from "@/features/profile/schemas";
 import { saveProfile } from "./actions";
 import { AvatarRow } from "./avatar-row";
@@ -16,7 +24,7 @@ export type ProfileValues = {
   cm: string;
 };
 
-// Karta „Profil” (Settings.dc.html): błędy pól na żywo, Zapisz tylko przy zmianach i bez błędów
+// Karta „Profil” (CSettings.dc.html): błędy pól na żywo, Zapisz tylko przy zmianach i bez błędów
 export function ProfileCard({
   saved,
   timezones,
@@ -79,19 +87,23 @@ export function ProfileCard({
   }
 
   return (
-    <section className="rounded-lg border border-border bg-white">
-      <div className="p-5">
-        <h2 className="m-0 text-base font-semibold">Profil</h2>
-        <p className="mt-1 mb-4 text-muted-foreground">
-          Waga i wzrost służą do liczenia kcal biegów.
-        </p>
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle as="h2">Profil</CardTitle>
+          <CardDescription>
+            Waga i wzrost służą do liczenia kcal biegów.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
         {/* Zdjęcie zapisuje się od razu, niezależnie od „Zapisz” poniżej; inicjał z zapisanej nazwy */}
         <AvatarRow
           userId={userId}
           avatarUrl={avatarUrl}
           displayName={saved.name}
         />
-        <div className="grid grid-cols-2 gap-3.5 max-[799px]:grid-cols-1">
+        <div className="grid grid-cols-2 gap-4 max-[799px]:grid-cols-1">
           <TextField
             label="Wyświetlana nazwa"
             type="text"
@@ -102,6 +114,7 @@ export function ProfileCard({
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium">Strefa czasowa</span>
             <Dropdown
+              variant="select"
               ariaLabel="Strefa czasowa"
               value={value.tz}
               onChange={(tz) => zmien({ tz })}
@@ -116,7 +129,7 @@ export function ProfileCard({
             label="Waga (kg)"
             type="text"
             inputMode="decimal"
-            className="font-mono"
+            className="tabular-nums"
             placeholder="np. 75"
             value={value.kg}
             error={errors.weight_kg}
@@ -126,14 +139,14 @@ export function ProfileCard({
             label="Wzrost (cm)"
             type="text"
             inputMode="numeric"
-            className="font-mono"
+            className="tabular-nums"
             placeholder="np. 180"
             value={value.cm}
             error={errors.height_cm}
             onChange={(e) => zmien({ cm: e.target.value })}
           />
         </div>
-      </div>
+      </CardContent>
       <CardFooter
         message={form.message}
         texts={{
@@ -151,6 +164,6 @@ export function ProfileCard({
         }}
         onSave={zapisz}
       />
-    </section>
+    </Card>
   );
 }

@@ -1,8 +1,8 @@
-import { Button } from "@/components/controls";
+import { Button, CardFooter as CossCardFooter } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import type { CardMessage } from "./use-card-form";
 
-// Stopka karty (.foot z Settings.dc.html): komunikat po lewej, „Cofnij” (tylko przy zmianach) i „Zapisz” po prawej
+// Stopka karty (.foot z CSettings.dc.html): komunikat po lewej, „Cofnij” (tylko przy zmianach) i „Zapisz” po prawej
 export function CardFooter({
   message,
   texts,
@@ -23,7 +23,7 @@ export function CardFooter({
   onSave: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
+    <CossCardFooter className="max-[799px]:flex-col max-[799px]:items-stretch">
       <span
         role="status"
         className={cn(
@@ -47,11 +47,11 @@ export function CardFooter({
           variant="primary"
           disabled={!canSave || saving}
           onClick={onSave}
-          className="disabled:opacity-40 max-[799px]:h-12"
+          className="disabled:opacity-[.64] max-[799px]:h-12"
         >
           Zapisz
         </Button>
       </span>
-    </div>
+    </CossCardFooter>
   );
 }
