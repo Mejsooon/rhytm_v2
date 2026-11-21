@@ -105,7 +105,7 @@ class Component extends DCLogic {
     for (let d = 1; d <= nd; d++) {
       const ds = y + '-' + p2(m + 1) + '-' + p2(d), on = ds === iso, today = ds === '2026-11-15';
       cal.push({ t: d, label: d + ' ' + MON[m], p: on ? 'true' : 'false', pick: () => this.setState({ iso: ds }),
-        s: on ? 'background:var(--primary);color:var(--primary-foreground);font-weight:600' : today ? 'background:var(--accent);color:var(--foreground);font-weight:600' : 'background:transparent;color:var(--foreground)' });
+        s: today ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:32px;height:32px;justify-self:center;align-self:center;border-radius:50%;line-height:1;letter-spacing:0;background:#dc2626;color:#ffffff;font-weight:600' + (on ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #262626' : '') : on ? 'background:var(--primary);color:var(--primary-foreground);font-weight:600' : 'background:transparent;color:var(--foreground)' });
     }
     const dd = Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(2026, 10, 15)) / 86400000);
     return {

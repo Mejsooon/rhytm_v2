@@ -39,11 +39,14 @@ function wyrenderuj(
 }
 
 describe("MCalendarWeek", () => {
-  it("lista ma 7 dni z plakietkami, dziś czarna", () => {
+  it("lista ma 7 dni z plakietkami, dziś: numer w czerwonym kółku", () => {
     wyrenderuj();
     expect(screen.getAllByRole("link", { name: /listopada$/ })).toHaveLength(7);
     const dzis = screen.getByRole("link", { name: "Wtorek 17 listopada" });
-    expect(dzis.className).toContain("bg-primary");
+    expect(dzis.querySelector("[data-dzis]")).toHaveClass(
+      "bg-destructive-strong",
+      "size-7",
+    );
     expect(dzis).toHaveAttribute(
       "href",
       "/kalendarz?widok=dzien&data=2026-11-17",

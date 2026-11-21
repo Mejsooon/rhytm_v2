@@ -170,7 +170,7 @@ export function TimeGrid({
                         data-dzis={jestDzis || undefined}
                         className={
                           jestDzis
-                            ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[13px] font-semibold text-primary-foreground"
+                            ? "inline-flex size-6 items-center justify-center rounded-full bg-destructive-strong text-[13px] leading-none font-semibold tracking-normal text-white tabular-nums"
                             : "text-[13px] font-semibold"
                         }
                       >
@@ -214,7 +214,7 @@ export function TimeGrid({
                   data-dzis={days[0] === today || undefined}
                   className={
                     days[0] === today
-                      ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[13px] font-semibold text-primary-foreground"
+                      ? "inline-flex size-6 items-center justify-center rounded-full bg-destructive-strong text-[13px] leading-none font-semibold tracking-normal text-white tabular-nums"
                       : "text-[13px] font-semibold"
                   }
                 >

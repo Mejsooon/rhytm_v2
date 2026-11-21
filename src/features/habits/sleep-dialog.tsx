@@ -163,11 +163,18 @@ function SleepForm({
       footer={
         <>
           {blad && (
-            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
+            <p
+              role="alert"
+              className="mr-auto text-xs text-destructive-foreground"
+            >
               {blad}
             </p>
           )}
-          <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
+          <Button
+            variant="ghost"
+            disabled={pending}
+            onClick={() => onOpenChange(false)}
+          >
             Anuluj
           </Button>
           <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
@@ -217,7 +224,9 @@ function SleepForm({
         className="flex items-center gap-4 rounded-lg border-[1.5px] border-border-strong bg-white px-3.5 py-3"
       >
         <div>
-          <div className="text-xs font-medium text-muted-foreground">Czas snu</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            Czas snu
+          </div>
           <div className="mt-1 text-[22px] font-semibold tabular-nums">
             {minuty === null ? "—" : formatDuration(minuty)}
           </div>
@@ -234,10 +243,7 @@ function SleepForm({
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     data-pasek-celu
-                    className={cn(
-                      "h-1.5 rounded-full",
-                      procent >= 100 ? "bg-success" : "bg-primary",
-                    )}
+                    className="h-1.5 rounded-full bg-success"
                     style={{ width: `${procent}%` }}
                   />
                 </div>
@@ -276,7 +282,9 @@ function SleepForm({
                     : "bg-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
-                <span className="text-sm font-medium tabular-nums">{wartosc}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {wartosc}
+                </span>
                 <span>{etykieta}</span>
               </button>
             );

@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// .prog z coss.css: tor 6 px, wypełnienie primary
+// .prog z coss.css: tor 6 px, wypełnienie zielone (success) jak na makietach COSS
 export function Progress({
   value,
   max = 100,
@@ -25,7 +25,7 @@ export function Progress({
       aria-valuemax={max}
       className={cn("h-1.5 overflow-hidden rounded-full bg-muted", className)}
     >
-      <div className="h-full bg-primary" style={{ width: `${procent}%` }} />
+      <div className="h-full bg-success" style={{ width: `${procent}%` }} />
     </div>
   );
 }

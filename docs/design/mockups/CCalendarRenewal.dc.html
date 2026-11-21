@@ -123,7 +123,7 @@ class Component extends DCLogic {
         hasNote: selB.id === 'kod', note: 'Najpierw migracje, potem UI. Okno „+ Pole” wg makiety.', rec: selB.rec ? 'co tydzień' : '', hasRec: !!selB.rec,
         delHref: selB.rec ? 'CScopeDialog.dc.html' : 'CDeleteBlockDialog.dc.html',
         dot: 'width:8px;height:8px;border-radius:50%;background:' + selB.color,
-        bar: 'height:6px;border-radius:999px;background:#262626;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+        bar: 'height:6px;border-radius:999px;background:#15803d;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
         style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
       };
     };
@@ -163,7 +163,7 @@ class Component extends DCLogic {
     counts.Subscriptions = 1;
     days.forEach((d) => {
       d.blocks = d.blocks.filter((b) => !hidden[b.cat]); if (hidden.Subscriptions) d.renewal = '';
-      d.numS = d.today ? 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#262626;color:#fafafa;font-weight:600;font-size:13px' : 'font-weight:600;font-size:13px';
+      d.numS = d.today ? 'display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:22px;height:22px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-weight:600;font-size:13px;line-height:1;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums' : 'font-weight:600;font-size:13px';
     });
     const selB = all.find((b) => b.id === this.state.sel && !hidden[b.cat]);
     let pop = null;

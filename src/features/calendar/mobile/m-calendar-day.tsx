@@ -121,15 +121,20 @@ export function MCalendarDay({
               aria-label={`${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`}
               aria-current={wybrany ? "date" : undefined}
               className={`flex h-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 ${
-                wybrany
-                  ? "bg-primary text-white"
-                  : dzien === today
-                    ? "bg-muted text-foreground"
-                    : "text-foreground"
+                wybrany ? "bg-primary text-white" : "text-foreground"
               }`}
             >
               <span className="text-[11px] opacity-75">{DNI_SKROT[numer]}</span>
-              <span className="font-mono text-base font-medium">{d}</span>
+              <span
+                data-dzis={dzien === today || undefined}
+                className={
+                  dzien === today
+                    ? "inline-flex size-6 items-center justify-center rounded-full bg-destructive-strong text-sm leading-none font-semibold tracking-normal text-white tabular-nums"
+                    : "font-mono text-base font-medium"
+                }
+              >
+                {d}
+              </span>
               {maBloki ? (
                 <span
                   data-testid={`kropka-${dzien}`}

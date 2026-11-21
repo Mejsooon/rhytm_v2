@@ -95,10 +95,7 @@ export function MonthCalendar({
             (d, i) => (
               <span
                 key={d}
-                className={cn(
-                  "px-2.5 py-2",
-                  i > 0 && "border-l border-border",
-                )}
+                className={cn("px-2.5 py-2", i > 0 && "border-l border-border")}
               >
                 {d}
               </span>
@@ -141,16 +138,14 @@ export function MonthCalendar({
                     className={cn(
                       "group relative box-border min-h-[86px] px-2 py-1.5",
                       c > 0 && "border-l border-border",
-                      wMiesiacu
-                        ? "cursor-pointer hover:bg-panel"
-                        : "bg-panel",
+                      wMiesiacu ? "cursor-pointer hover:bg-panel" : "bg-panel",
                     )}
                   >
                     <span
                       className={cn(
-                        "inline-block text-xs",
+                        "mb-1 inline-flex size-[22px] items-center justify-center rounded-full text-xs leading-none tracking-normal tabular-nums",
                         wMiesiacu && dzisiaj
-                          ? "rounded bg-success px-[5px] font-semibold text-white"
+                          ? "bg-destructive-strong font-semibold text-white"
                           : wMiesiacu
                             ? "font-medium text-foreground"
                             : "text-faint-foreground",

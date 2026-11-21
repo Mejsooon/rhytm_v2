@@ -165,7 +165,7 @@ class Component extends DCLogic {
           when: DOW[wd] + ' ' + String(sel.d).padStart(2, '0') + '.11.2026' + (isRen ? '' : ' · ' + (TIME[e[0]] || '')),
           isBlock: !isRen, isRenewal: isRen, amount: AMOUNT[e[0]] || '', tasks, doneN, total: tasks.length, empty: tasks.length === 0,
           dot: isRen ? 'display:none' : 'width:8px;height:8px;border-radius:50%;background:' + COL[e[1]],
-          bar: 'height:6px;border-radius:999px;background:#262626;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+          bar: 'height:6px;border-radius:999px;background:#15803d;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
           style: 'position:absolute;z-index:5;width:330px;' + vpos + 'left:' + (right ? 'calc(100% * ' + (wd + 1) + ' / 7 + 10px)' : 'calc(100% * ' + wd + ' / 7 - 340px)') + ';display:flex;flex-direction:column;gap:12px;font-size:14px;text-align:left'
         };
       }

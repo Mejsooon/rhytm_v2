@@ -74,14 +74,19 @@ export function MCalendarWeek({
             <Link
               href={`/kalendarz?widok=dzien&data=${dzien}`}
               aria-label={nazwa}
-              className={`flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl ${
-                dzien === today
-                  ? "bg-primary text-white"
-                  : "bg-muted text-foreground"
-              }`}
+              className="flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl bg-muted text-foreground"
             >
               <span className="text-[11px]">{DNI_SKROT[numer]}</span>
-              <span className="font-mono text-lg font-medium">{d}</span>
+              <span
+                data-dzis={dzien === today || undefined}
+                className={
+                  dzien === today
+                    ? "inline-flex size-7 items-center justify-center rounded-full bg-destructive-strong text-base leading-none font-semibold tracking-normal text-white tabular-nums"
+                    : "font-mono text-lg font-medium"
+                }
+              >
+                {d}
+              </span>
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
               {dzienne.length === 0 && treningi.length === 0 && (

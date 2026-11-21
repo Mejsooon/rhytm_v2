@@ -75,7 +75,7 @@ class Component extends DCLogic {
       const s = st[key] || base;
       const look = { done: 'background:#15803d;color:#fff;border:1px solid #15803d', skip: 'background:rgba(239,68,68,.1);color:#b91c1c;border:1px solid rgba(239,68,68,.16)', off: 'background:#fafafa;color:#a3a3a3;border:1px solid rgba(0,0,0,.08)', neutral: 'background:#fff;color:#a3a3a3;border:1px solid rgba(0,0,0,.08)', future: 'background:#fff;color:#a3a3a3;border:1px dashed rgba(0,0,0,.12)', out: 'background:transparent;color:#d4d4d4;border:1px solid transparent' }[s];
       return { n: String(n), lbl: n + ' — ' + ({ done: 'zrobione', skip: 'pominięte', off: 'bez nawyku', neutral: 'niezrobione', future: 'jeszcze nie', out: 'inny miesiąc' }[s]),
-        s: 'height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;box-sizing:border-box;cursor:' + (s === 'done' || s === 'skip' ? 'pointer' : 'default') + ';' + look + (isNov && n === 17 ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #262626' : ''),
+        s: 'height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;box-sizing:border-box;cursor:' + (s === 'done' || s === 'skip' ? 'pointer' : 'default') + ';' + look + (isNov && n === 17 ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #dc2626' : ''),
         toggle: () => { if (s === 'done' || s === 'skip') this.setState({ st: Object.assign({}, st, { [key]: s === 'done' ? 'skip' : 'done' }) }); } };
     });
     const S = this.state;

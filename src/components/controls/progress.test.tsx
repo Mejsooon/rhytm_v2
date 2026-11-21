@@ -9,6 +9,8 @@ describe("Progress", () => {
     const bar = screen.getByRole("progressbar", { name: "Zadania" });
     expect(bar).toHaveAttribute("aria-valuenow", "2");
     expect((bar.firstElementChild as HTMLElement).style.width).toBe("50%");
+    // Wypełnienie zielone jak na makietach COSS
+    expect(bar.firstElementChild).toHaveClass("bg-success");
   });
 
   it("przy max 0 szerokość to 0% bez NaN", () => {
