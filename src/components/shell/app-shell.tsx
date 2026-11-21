@@ -4,6 +4,7 @@ import { connection } from "next/server";
 
 import { loadPages } from "@/features/pages/load-pages";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
+import { VaultProvider } from "@/features/vault/vault-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
 import { TabBar } from "./tab-bar";
@@ -45,7 +46,7 @@ async function Powloka({
   const strony = await loadPages();
 
   return (
-    <>
+    <VaultProvider>
       <AppSidebar
         user={{ displayName, email, avatarUrl }}
         pages={strony}
@@ -55,7 +56,7 @@ async function Powloka({
         {children}
       </main>
       <TabBar />
-    </>
+    </VaultProvider>
   );
 }
 
