@@ -31,6 +31,18 @@ vi.mock("next/navigation", () => ({
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
 
+// Stan sejfu sterowany z testu (provider ma własne testy)
+const vault = vi.hoisted(() => ({
+  state: {} as Record<string, unknown>,
+  setup: vi.fn(),
+  unlock: vi.fn(),
+  lock: vi.fn(),
+  reset: vi.fn(),
+  countSecrets: vi.fn(),
+}));
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => vault.state }));
+vi.mock("@/features/vault/actions", () => ({ countSecrets: vault.countSecrets }));
+
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { buildTemplateBlocks, type TemplateKey } from "../templates";
@@ -139,6 +151,17 @@ function opcja(dane: LoadedPage, pole: string, etykieta: string) {
 describe("TemplatePageView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vault.state = {
+      status: "brak",
+      generation: null,
+      createdAt: null,
+      remainingMs: 0,
+      setup: vault.setup,
+      unlock: vault.unlock,
+      lock: vault.lock,
+      reset: vault.reset,
+    };
+    vault.countSecrets.mockResolvedValue({ ok: true, count: 4 });
     for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
     actions.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
       ok: true,
@@ -772,6 +795,120 @@ describe("TemplatePageView", () => {
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
       expect(within(stopka).getByText("2 linki")).toBeInTheDocument();
       expect(within(stopka).getByText("2 na żywo")).toBeInTheDocument();
+    });
+  });
+
+  // Passwords (CVaultSetup / CVault / CPasswords.dc.html)
+  describe("sejf (pole Sekret)", () => {
+    const SEKRET = { v: 1, g: 1, iv: "AAAAAAAAAAAAAAAA", ct: "AAAAAAAAAAAAAAAAAAAAAA==" };
+    const HASLA = [
+      { Serwis: "GitHub", Login: "mejsooon", Hasło: SEKRET, URL: "github.com" },
+      { Serwis: "Supabase", Login: "mejson@…", Hasło: SEKRET, URL: "supabase.com" },
+    ];
+
+    it("brak sejfu: widok ustawiania zamiast tabeli; Utwórz sejf nieaktywne do spełnienia 3 warunków", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getByRole("heading", { name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+      const utworz = screen.getByRole("button", { name: "Utwórz sejf" });
+      expect(utworz).toBeDisabled();
+
+      await user.type(screen.getByLabelText("Hasło główne"), "Dobre-haslo-glowne-1");
+      await user.type(screen.getByLabelText("Powtórz"), "Dobre-haslo-glowne-1");
+      // brak zgody
+      expect(utworz).toBeDisabled();
+      await user.click(screen.getByRole("checkbox"));
+      expect(utworz).toBeEnabled();
+    });
+
+    it("Hasła się różnią. pod Powtórz", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.type(screen.getByLabelText("Hasło główne"), "Dobre-haslo-glowne-1");
+      await user.type(screen.getByLabelText("Powtórz"), "Dobre-haslo");
+      expect(screen.getByText("Hasła się różnią.")).toBeInTheDocument();
+      await user.click(screen.getByRole("checkbox"));
+      expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeDisabled();
+    });
+
+    it("Anuluj: tabela z — nieustawiony sejf", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(screen.getByRole("button", { name: "Anuluj" }));
+      expect(screen.getByRole("table")).toBeInTheDocument();
+      expect(screen.getAllByText("— nieustawiony sejf")).toHaveLength(2);
+      expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
+    });
+
+    it("zablokowany: kolumna Sekret pokazuje zablokowane, karta Odblokuj", () => {
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getAllByText("zablokowane")).toHaveLength(2);
+      expect(screen.getByText("Sejf zablokowany")).toBeInTheDocument();
+      expect(screen.getByText("serwer widzi tylko szyfrogram")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Odblokuj sejf" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Odblokuj" })).toBeInTheDocument();
+      // tabela i karta pod nią
+      const tabela = screen.getByRole("table");
+      const karta = screen.getByRole("heading", { name: "Odblokuj sejf" });
+      expect(tabela.compareDocumentPosition(karta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByText("AES-GCM w przeglądarce")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
+    });
+
+    it("odblokowany: baner z blokada za 04:59 i Zablokuj teraz", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getByText("Sejf odblokowany")).toBeInTheDocument();
+      expect(screen.getByText("blokada za 04:59")).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Zablokuj teraz" }));
+      expect(vault.lock).toHaveBeenCalledTimes(1);
+    });
+
+    it("reset: przycisk aktywny dopiero po RESETUJ; liczba sekretów z odmianą", async () => {
+      const user = userEvent.setup();
+      vault.state = { ...vault.state, status: "zablokowany", generation: 1 };
+      vault.reset.mockResolvedValue({ ok: true, cleared: 4 });
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      await user.click(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" }));
+      const okno = await screen.findByRole("dialog", { name: "Zresetować sejf?" });
+      expect(await within(okno).findByText("4 sekrety")).toBeInTheDocument();
+      expect(within(okno).getByText("serwisy, loginy, URL-e")).toBeInTheDocument();
+      const zresetuj = within(okno).getByRole("button", { name: "Zresetuj sejf" });
+      expect(zresetuj).toHaveAttribute("aria-disabled", "true");
+      await user.click(zresetuj);
+      expect(vault.reset).not.toHaveBeenCalled();
+      await user.type(within(okno).getByPlaceholderText("RESETUJ"), "RESETUJ");
+      expect(zresetuj).toHaveAttribute("aria-disabled", "false");
+      await user.click(zresetuj);
+      expect(vault.reset).toHaveBeenCalledTimes(1);
+    });
+
+    it("strona bez pola secret nie pokazuje niczego z sejfu", () => {
+      render(<TemplatePageView data={strona("books", "Books", BOOKS)} />);
+      expect(screen.queryByText("AES-GCM w przeglądarce")).not.toBeInTheDocument();
+      expect(screen.queryByText("Sejf zablokowany")).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
+    });
+
+    it("nieobsługiwany: komunikat o nowoczesnej przeglądarce", () => {
+      vault.state = { ...vault.state, status: "nieobslugiwany" };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getByText("Sejf wymaga nowoczesnej przeglądarki i połączenia HTTPS.")).toBeInTheDocument();
+      expect(screen.getByRole("table")).toBeInTheDocument();
+    });
+
+    it("ładowanie: neutralnie, bez ustawiania, banera i karty", () => {
+      vault.state = { ...vault.state, status: "ladowanie" };
+      render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
+      expect(screen.getByRole("table")).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Sejf zablokowany")).not.toBeInTheDocument();
     });
   });
 });

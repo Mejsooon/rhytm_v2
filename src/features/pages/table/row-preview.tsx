@@ -3,6 +3,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
+import type { VaultState } from "@/features/vault/vault-provider";
 import { OptionBadge } from "../editor/cell-editor";
 import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
 import type { PageRow } from "../table-model";
@@ -14,6 +15,7 @@ export function RowPreview({
   fields,
   today,
   done,
+  sejf,
   onOpen,
   onEdit,
   onDelete,
@@ -23,6 +25,8 @@ export function RowPreview({
   today: string;
   // Opcja „zrobione” z karty najbliższego terminu — zrobione terminy nie są pilne
   done: { fieldId: string; optionId: string } | null;
+  // Stan sejfu — decyduje o tym, co pokazuje komórka Sekret
+  sejf?: VaultState["status"];
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -43,6 +47,23 @@ export function RowPreview({
               <span className="block max-w-[280px] truncate">
                 {typeof v === "string" ? v : (f.config.empty_label ?? "Bez tytułu")}
               </span>
+            </td>
+          );
+        }
+
+        // Sekret: nigdy nie pokazujemy szyfrogramu; Pokaż / Kopiuj dochodzą w osobnym zadaniu
+        if (f.type === "secret") {
+          return (
+            <td key={f.id} className={td}>
+              {sejf === "brak" ? (
+                <span className="text-faint-foreground italic">— nieustawiony sejf</span>
+              ) : v === null || (sejf !== "zablokowany" && sejf !== "odblokowany") ? (
+                <span className="text-faint-foreground">—</span>
+              ) : sejf === "zablokowany" ? (
+                <span className="text-faint-foreground italic">zablokowane</span>
+              ) : (
+                <span className="tracking-[.12em] text-soft-foreground">••••••••••••</span>
+              )}
             </td>
           );
         }

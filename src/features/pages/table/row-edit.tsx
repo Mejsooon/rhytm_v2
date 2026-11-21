@@ -97,6 +97,21 @@ export function RowEdit({
           );
         }
 
+        // Sekret: pole nieedytowalne tutaj, żeby tekst jawny nie trafił do stanu wiersza ani na serwer
+        if (f.type === "secret") {
+          return (
+            <td key={f.id} className={td}>
+              <input
+                type="password"
+                disabled
+                aria-label={f.name}
+                placeholder="Odblokuj sejf, żeby edytować"
+                className={cn(FIELD, "h-[30px]")}
+              />
+            </td>
+          );
+        }
+
         if (f.type === "checkbox") {
           return (
             <td key={f.id} className={td}>
