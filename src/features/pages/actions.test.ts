@@ -441,7 +441,7 @@ describe("pole Sekret", () => {
 
   it("updateRow odrzuca SecretValue z g różnym od vaults.generation", async () => {
     const w = await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 1 } });
-    expect(w).toEqual({ ok: false, message: INNA_KARTA });
+    expect(w).toEqual({ ok: false, message: INNA_KARTA, code: "stale_generation" });
     expect(tables.page_rows.update).not.toHaveBeenCalled();
   });
 
@@ -454,14 +454,14 @@ describe("pole Sekret", () => {
 
   it("updateRow: wiersz sejfu ze statusem reset — złe g to „innej karcie”, zgodne g to „odblokowany”", async () => {
     tables.vaults = fakeTable({ single: { status: "reset", generation: 3 } });
-    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA, code: "stale_generation" });
     expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 3 } })).toEqual({ ok: false, message: NIEZALOGOWANY });
     expect(tables.page_rows.update).not.toHaveBeenCalled();
   });
 
   it("addRow: wiersz sejfu ze statusem reset — złe g to „innej karcie”, zgodne g to „odblokowany”", async () => {
     tables.vaults = fakeTable({ single: { status: "reset", generation: 3 } });
-    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA, code: "stale_generation" });
     expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 3 } })).toEqual({ ok: false, message: NIEZALOGOWANY });
     expect(tables.page_rows.insert).not.toHaveBeenCalled();
   });
@@ -482,7 +482,7 @@ describe("pole Sekret", () => {
   it("addRow — to samo dla secret", async () => {
     tables.page_rows = fakeTable({ single: { id: WIERSZ, values: {}, position: 0, deleted_at: null } });
     expect(await addRow(BLOK, { [POLE_SEKRET]: "tajne" })).toEqual({ ok: false, message: NIEZALOGOWANY });
-    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 9 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 9 } })).toEqual({ ok: false, message: INNA_KARTA, code: "stale_generation" });
     expect(tables.page_rows.insert).not.toHaveBeenCalled();
 
     expect((await addRow(BLOK, { [POLE_SEKRET]: SEKRET })).ok).toBe(true);

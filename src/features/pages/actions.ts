@@ -7,7 +7,7 @@ import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { isSecretValue } from "@/features/vault/crypto";
 import { normalizeValue } from "./fields";
-import { BLAD_ZAPISU } from "./messages";
+import { BLAD_ZAPISU, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE } from "./messages";
 import type { CellValue, FieldConfig, FieldType, PageField } from "./fields";
 import type { BlockType, LoadedBlock } from "./load-page";
 import {
@@ -38,12 +38,11 @@ const BRAK_POLA = "Nie znaleziono pola.";
 const BRAK_WIERSZA = "Nie znaleziono wiersza.";
 const POLE_TYTULOWE_TYP = "Typu pola tytułowego nie można zmienić.";
 const BEZ_TYTULU = "Bez tytułu";
-const SEJF_ZABLOKOWANY = "Nie zapisano. Sejf musi być odblokowany.";
-const SEJF_INNA_KARTA = "Sejf zmienił się w innej karcie. Odblokuj go ponownie.";
 const SEKRET_TYP = "Nie można zmienić typu pola Sekret.";
 const SEKRET_TYLKO_SZABLON = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
 
-type Blad = { ok: false; message: string };
+// code: stale_generation = zapis Sekretu z inną generacją sejfu (klient blokuje sejf po kodzie, nie po treści)
+type Blad = { ok: false; message: string; code?: "stale_generation" };
 
 const szablonSchema = z.enum(TEMPLATE_KEYS);
 
@@ -751,7 +750,7 @@ export async function addRow(
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
-      if (surowaSekret.g !== sejf.generation) return { ok: false, message: SEJF_INNA_KARTA };
+      if (surowaSekret.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
       if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
     }
     let v = normalizeValue(pole, wartosci.data[p.id]);
@@ -855,7 +854,7 @@ export async function updateRow(
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
-      if (surowa.g !== sejf.generation) return { ok: false, message: SEJF_INNA_KARTA };
+      if (surowa.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
       if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
     }
     let v = normalizeValue(pole, surowa);

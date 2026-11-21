@@ -378,8 +378,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                     values={editing.values}
                     today={today}
                     onChange={store.setEditValue}
-                    onSave={(nadpisane) => void store.saveRow(nadpisane)}
+                    onSave={() => void store.saveRow()}
                     onCancel={store.cancelEdit}
+                    registerSecret={store.registerSecret}
                   />
                 ) : (
                   <RowPreview
@@ -407,8 +408,9 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
                   values={editing.values}
                   today={today}
                   onChange={store.setEditValue}
-                  onSave={(nadpisane) => void store.saveRow(nadpisane)}
+                  onSave={() => void store.saveRow()}
                   onCancel={store.cancelEdit}
+                  registerSecret={store.registerSecret}
                 />
               )}
             </tbody>

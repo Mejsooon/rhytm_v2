@@ -79,10 +79,12 @@ describe("SecretCell", () => {
     expect(await screen.findByText("jawne-haslo-A")).toBeInTheDocument();
     expect(screen.queryByText("jawne-haslo-B")).not.toBeInTheDocument();
     expect(screen.getAllByText("••••••••••••")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Ukryj hasło" })).toHaveAttribute("aria-pressed", "true");
+    // Stała etykieta „Pokaż hasło”, stan niesie aria-pressed
+    expect(pierwsza).toHaveAttribute("aria-pressed", "true");
     expect(druga).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getAllByRole("button", { name: "Pokaż hasło" })).toHaveLength(2);
     // Ponowny klik ukrywa
-    fireEvent.click(screen.getByRole("button", { name: "Ukryj hasło" }));
+    fireEvent.click(pierwsza);
     await waitFor(() => expect(screen.queryByText("jawne-haslo-A")).not.toBeInTheDocument());
   });
 
@@ -108,7 +110,8 @@ describe("SecretCell", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
     });
-    expect(write).toHaveBeenCalledWith("jawne-haslo-A");
+    // SHA-256 liczy się asynchronicznie (prawdziwy czas), stąd vi.waitFor
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
     expect(toast).toHaveBeenCalledWith("Skopiowano hasło GitHub", { description: "Schowek wyczyści się za 30 s." });
     // Toast nie zawiera tekstu jawnego
     expect(JSON.stringify(toast.mock.calls)).not.toContain("jawne-haslo-A");
@@ -120,7 +123,7 @@ describe("SecretCell", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
-    expect(write).toHaveBeenLastCalledWith("");
+    await vi.waitFor(() => expect(write).toHaveBeenLastCalledWith(""));
 
     // Użytkownik skopiował coś innego: schowka nie ruszamy
     write.mockClear();
@@ -128,11 +131,34 @@ describe("SecretCell", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
     });
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
+    // Dajemy czas na hash (prawdziwy), po czym sprawdzamy, że czyszczenia nie było
+    await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 50));
     expect(write).toHaveBeenCalledTimes(1);
     expect(write).not.toHaveBeenCalledWith("");
+  });
+
+  it("kopiuj: blokada w trakcie odszyfrowywania → nic nie trafia do schowka", async () => {
+    const write = vi.fn().mockResolvedValue(undefined);
+    schowek({ write });
+    const { rerender } = render(<SecretCell value={A} serviceName="GitHub" />);
+    await waitFor(() => expect(vault.state.decrypt).toHaveBeenCalledTimes(1));
+    let dokoncz: (t: string) => void = () => {};
+    (vault.state.decrypt as ReturnType<typeof vi.fn>).mockImplementationOnce(
+      () => new Promise<string>((r) => (dokoncz = r)),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
+    stan("zablokowany");
+    rerender(<SecretCell value={A} serviceName="GitHub" />);
+    await act(async () => dokoncz("jawne-haslo-A"));
+    expect(write).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("kopiuj bez readText: po 30 s wpisuje pusty tekst", async () => {
@@ -143,10 +169,11 @@ describe("SecretCell", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Kopiuj hasło" }));
     });
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith("jawne-haslo-A"));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
-    expect(write).toHaveBeenLastCalledWith("");
+    await vi.waitFor(() => expect(write).toHaveBeenLastCalledWith(""));
   });
 
   it("schowek niedostępny → Nie udało się skopiować.", async () => {

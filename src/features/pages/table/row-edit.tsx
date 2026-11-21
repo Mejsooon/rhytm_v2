@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { OptionBadge } from "../editor/cell-editor";
 import { normalizeValue, type PageField } from "../fields";
 import { SEJF_ZABLOKOWANY } from "../messages";
+import type { SecretRegistration } from "./use-table-store";
 
 // Wiersz w trybie edycji (CBooks / CProjects / CWebsites.dc.html, tło zieleni 4 %): pola tekstowe,
 // listy z plakietką i ✓, wybór daty, gwiazdki; „Zapisz” zapisuje, ✕ anuluje bez zapisu.
@@ -21,14 +22,16 @@ export function RowEdit({
   onChange,
   onSave,
   onCancel,
+  registerSecret,
 }: {
   fields: PageField[];
   values: Record<string, unknown>;
   today: IsoDate;
   onChange: (fieldId: string, value: unknown) => void;
-  // nadpisane: zaszyfrowane wartości pól Sekret zmienionych w tym wierszu (SecretValue albo null)
-  onSave: (nadpisane: Record<string, unknown>) => void;
+  onSave: () => void;
   onCancel: () => void;
+  // Rejestracja (store) flagi „hasło zmienione” i funkcji szyfrującej; null przy odmontowaniu
+  registerSecret: (r: SecretRegistration | null) => void;
 }) {
   const vault = useVault();
   // Tekst jawny pól Sekret żyje tylko tu (stan komponentu): nie trafia do stanu tabeli ani do serwera.
@@ -49,26 +52,34 @@ export function RowEdit({
     setTeksty((s) => (fieldId in s ? s : { ...s, [fieldId]: tekst }));
   }, []);
 
-  // „Zapisz”: pola Sekret zmienione przez użytkownika szyfrujemy tutaj, przed przekazaniem wyżej
-  async function zapisz() {
-    const nadpisane: Record<string, unknown> = {};
+  // Szyfruje pola Sekret zmienione przez użytkownika (tekst jawny nie opuszcza tego komponentu).
+  // Zwraca zaszyfrowane wartości albo null, gdy szyfrowanie się nie udało (sejf zablokowany).
+  async function szyfruj(): Promise<Record<string, unknown> | null> {
+    const zaszyfrowane: Record<string, unknown> = {};
     for (const f of fields) {
       if (f.type !== "secret" || !zmienione[f.id]) continue;
       const tekst = teksty[f.id] ?? "";
       if (tekst === "") {
-        nadpisane[f.id] = null;
+        zaszyfrowane[f.id] = null;
         continue;
       }
       try {
-        nadpisane[f.id] = await vault.encrypt(tekst);
+        zaszyfrowane[f.id] = await vault.encrypt(tekst);
       } catch {
         // Komunikat stały: nigdy z treścią błędu ani tekstem jawnym
         toast.error(SEJF_ZABLOKOWANY);
-        return;
+        return null;
       }
     }
-    onSave(nadpisane);
+    return zaszyfrowane;
   }
+
+  // Rejestrujemy w store tylko flagę „hasło zmienione” i funkcję szyfrującą (bez tekstu jawnego),
+  // żeby zapis przy przełączaniu wiersza / „Nowy wiersz” zapisał login i hasło razem
+  React.useEffect(() => {
+    registerSecret({ changed: Object.values(zmienione).some(Boolean), encrypt: szyfruj });
+    return () => registerSecret(null);
+  });
 
   return (
     <tr className="group/wiersz bg-success-soft/50">
@@ -157,7 +168,7 @@ export function RowEdit({
                   setZmienione((s) => ({ ...s, [f.id]: true }));
                 }}
                 onPrefill={uzupelnij}
-                onSubmit={() => void zapisz()}
+                onSubmit={onSave}
                 onCancel={onCancel}
               />
             </td>
@@ -201,7 +212,7 @@ export function RowEdit({
               value={tekst}
               onChange={(e) => onChange(f.id, e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") void zapisz();
+                if (e.key === "Enter") onSave();
                 if (e.key === "Escape") onCancel();
               }}
               placeholder={podpowiedz}
@@ -214,7 +225,7 @@ export function RowEdit({
         );
       })}
       <td className="h-11 border-b border-border px-3 text-right whitespace-nowrap group-last/wiersz:border-b-0">
-        <Button variant="primary" size="xs" onClick={() => void zapisz()}>
+        <Button variant="primary" size="xs" onClick={onSave}>
           Zapisz
         </Button>
         <Button variant="ghost" size="xs" icon aria-label="Anuluj" onClick={onCancel} className="ml-1 text-muted-foreground max-[799px]:size-11">

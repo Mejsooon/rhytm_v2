@@ -76,7 +76,7 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
         variant="ghost"
         size="xs"
         icon
-        aria-label={pokazane ? "Ukryj hasło" : "Pokaż hasło"}
+        aria-label="Pokaż hasło"
         aria-pressed={pokazane}
         onClick={async (e) => {
           // Klik w komórkę nie otwiera edycji wiersza
@@ -85,7 +85,7 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
             setTekst(null);
             return;
           }
-          const t = await vault.decrypt(value);
+          const t = await decrypt(value);
           if (statusRef.current !== "odblokowany") return;
           if (t === null) setCzytelny(false);
           else setTekst(t);
@@ -101,12 +101,17 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
         aria-label="Kopiuj hasło"
         onClick={async (e) => {
           e.stopPropagation();
-          const t = await vault.decrypt(value);
+          const t = await decrypt(value);
+          // Blokada w trakcie odszyfrowywania: nic nie trafia do schowka
+          if (statusRef.current !== "odblokowany") return;
           if (t === null) {
             toast.error("Nie udało się skopiować.");
             return;
           }
+          // Timer trzyma tylko SHA-256 skopiowanego tekstu (do porównania ze schowkiem), nie sam tekst
+          let skrot: string;
           try {
+            skrot = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))));
             await navigator.clipboard.writeText(t);
           } catch {
             toast.error("Nie udało się skopiować.");
@@ -117,7 +122,11 @@ export function SecretCell({ value, serviceName }: { value: unknown; serviceName
           setTimeout(async () => {
             try {
               if (typeof navigator.clipboard.readText === "function") {
-                if ((await navigator.clipboard.readText()) === t) await navigator.clipboard.writeText("");
+                const teraz = await navigator.clipboard.readText();
+                const skrotTeraz = btoa(
+                  String.fromCharCode(...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(teraz)))),
+                );
+                if (skrotTeraz === skrot) await navigator.clipboard.writeText("");
               } else {
                 await navigator.clipboard.writeText("");
               }
@@ -201,7 +210,7 @@ export function SecretEdit({
           variant="ghost"
           size="xs"
           icon
-          aria-label={pokaz ? "Ukryj hasło" : "Pokaż hasło"}
+          aria-label="Pokaż hasło"
           aria-pressed={pokaz}
           onClick={() => setPokaz(!pokaz)}
           className="max-[799px]:size-11"
