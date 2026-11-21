@@ -3,8 +3,9 @@
 //   1. it zooms in from a slight tilt,
 //   2. it slides to the right and the description appears on the left,
 //   3. each further part of the scroll fades to the next screen (Today → Calendar → Sport → Habits → Pages).
-// Narrow frames (under 900 px) put the text above the window; under 640 px the phone app is shown.
-// The mockups stay clickable. In the Framer canvas the first screen is shown without the scroll story.
+// Frames under 900 px put the text above the window. Under 640 px there is no pinned story: the five
+// screens of the phone app are listed one under another, each with its text, so nothing gets cut off.
+// The mockups are static pictures (no clicks). In the Framer canvas the first screen is shown without the story.
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { addPropertyControls, ControlType, RenderTarget } from "framer"
@@ -12,11 +13,11 @@ import { makeScreen, scopeCss } from "./DcMini.tsx"
 import { FILES, CSS } from "./CossMockups.ts"
 
 const STEPS = [
-    { desktop: "CToday", phone: "CMToday", label: "Today", title: "Your whole day on one screen.", text: "Time blocks, tasks, habits and the week in numbers. Click a block to see its tasks and tick them off.", hint: "Try it: click the green block." },
-    { desktop: "CCalendar", phone: "CMCalendarDay", label: "Calendar", title: "Plan the week in blocks.", text: "Day, week and month views with colour categories. Renewals from your pages show up on their date.", hint: "Try it: hide a category or open a block." },
-    { desktop: "CSport", phone: "CMSport", label: "Sport", title: "Runs and the gym, in one place.", text: "Distance, pace, sets and records on one calendar. A workout template turns a session into one click.", hint: "Try it: switch between Run and Gym." },
-    { desktop: "CHabits", phone: "CMHabits", label: "Habits and sleep", title: "Streaks you can actually see.", text: "Tick today's habits, log last night's sleep and watch a whole year of consistency in the heatmap.", hint: "Try it: tick a habit for today." },
-    { desktop: "CMain", phone: "CMPages", label: "Pages", title: "Pages for everything else.", text: "Subscriptions, books, projects and passwords. Tables with typed fields, and a vault encrypted in your browser.", hint: "Try it: open Books or Passwords in the sidebar." },
+    { desktop: "CToday", phone: "CMToday", label: "Today", title: "Your whole day on one screen.", text: "Time blocks, tasks, habits and the week in numbers, with the block you are in right now on top." },
+    { desktop: "CCalendar", phone: "CMCalendarDay", label: "Calendar", title: "Plan the week in blocks.", text: "Day, week and month views with colour categories. Renewals from your pages show up on their date." },
+    { desktop: "CSport", phone: "CMSport", label: "Sport", title: "Runs and the gym, in one place.", text: "Distance, pace, sets and records on one calendar. A workout template turns a session into one click." },
+    { desktop: "CHabits", phone: "CMHabits", label: "Habits and sleep", title: "Streaks you can actually see.", text: "Tick today's habits, log last night's sleep and watch a whole year of consistency in the heatmap." },
+    { desktop: "CMain", phone: "CMPages", label: "Pages", title: "Pages for everything else.", text: "Subscriptions, books, projects and passwords. Tables with typed fields, and a vault encrypted in your browser." },
 ]
 
 // scroll lengths, in screen heights
@@ -53,6 +54,10 @@ const Layer = React.memo(function Layer({ start, designW, designH, width, radius
         <div
             ref={host}
             style={{
+                pointerEvents: "none",
+                textAlign: "left",
+                lineHeight: "normal",
+                letterSpacing: "normal",
                 width,
                 height: designH * scale,
                 borderRadius: radius,
@@ -168,6 +173,29 @@ export default function AppPreview({ shadow, desktopHeight, style }: { shadow: b
     }
     const active = Math.max(0, Math.min(n - 1, Math.floor(stepF + 0.05)))
 
+    // phone: the screens one under another, no pinning
+    if (phone && !canvas) {
+        const pw = Math.min(W, 320)
+        return (
+            <div ref={wrap} style={{ ...style, width: "100%", display: "flex", flexDirection: "column", gap: 72, fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif' }}>
+                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap" />
+                {STEPS.map((s, i) => (
+                    <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12 }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, height: 28, padding: "0 12px 0 10px", borderRadius: 999, border: "1px solid #EAEAEA", background: "#fff", fontSize: 13, fontWeight: 500, color: "#404040" }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, background: "#15803D" }} />
+                            {String(i + 1).padStart(2, "0")} · {s.label}
+                        </div>
+                        <div style={{ fontSize: 26, lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", color: "#171717" }}>{s.title}</div>
+                        <div style={{ fontSize: 15, lineHeight: 1.5, color: "#666", maxWidth: 360 }}>{s.text}</div>
+                        <div style={{ marginTop: 16 }}>
+                            <Layer start={s.phone} designW={390} designH={844} width={pw} radius={32} shadow={shadow} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+
     const stageStyle: React.CSSProperties = manual
         ? { position: "absolute", left: 0, right: 0, top: Math.round(Math.max(0, Math.min(wrapH - vh, u * vh))), height: stageH }
         : { position: canvas ? "relative" : "sticky", top: 0, height: stageH }
@@ -181,14 +209,13 @@ export default function AppPreview({ shadow, desktopHeight, style }: { shadow: b
                     {STEPS.map((s, i) => {
                         const o = weight(i) * clamp((moveT - 0.55) / 0.45)
                         return (
-                            <div key={s.label} style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: side ? "center" : "flex-start", alignItems: side ? "flex-start" : "center", textAlign: side ? "left" : "center", gap: phone ? 10 : 14, opacity: o, transform: "translateY(" + (1 - o) * 20 + "px)", pointerEvents: o > 0.6 ? "auto" : "none" }}>
+                            <div key={s.label} style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: side ? "center" : "flex-start", alignItems: side ? "flex-start" : "center", textAlign: side ? "left" : "center", gap: phone ? 10 : 14, opacity: o, transform: "translateY(" + (1 - o) * 20 + "px)" }}>
                                 <div style={{ display: "inline-flex", alignItems: "center", gap: 8, height: 28, padding: "0 12px 0 10px", borderRadius: 999, border: "1px solid #EAEAEA", background: "#fff", fontSize: 13, fontWeight: 500, color: "#404040" }}>
                                     <span style={{ width: 8, height: 8, borderRadius: 2, background: "#15803D" }} />
                                     {String(i + 1).padStart(2, "0")} · {s.label}
                                 </div>
                                 <div style={{ fontSize: side ? Math.min(44, W * 0.032) : phone ? 26 : 32, lineHeight: 1.08, fontWeight: 600, letterSpacing: "-0.035em", color: "#171717", maxWidth: side ? 420 : 560 }}>{s.title}</div>
                                 <div style={{ fontSize: phone ? 15 : 17, lineHeight: 1.5, color: "#666", maxWidth: side ? 400 : 520 }}>{s.text}</div>
-                                {side && <div style={{ fontSize: 13, color: "#15803D", fontWeight: 500 }}>{s.hint}</div>}
                             </div>
                         )
                     })}
@@ -218,7 +245,7 @@ export default function AppPreview({ shadow, desktopHeight, style }: { shadow: b
                     {STEPS.map((s, i) => {
                         const o = canvas ? (i === 0 ? 1 : 0) : weight(i)
                         return (
-                            <div key={s.label} style={{ position: "absolute", inset: 0, opacity: o, transform: "translateY(" + (1 - o) * 16 + "px) scale(" + (0.985 + o * 0.015) + ")", pointerEvents: o > 0.6 ? "auto" : "none", zIndex: i === active ? 2 : 1 }}>
+                            <div key={s.label} style={{ position: "absolute", inset: 0, opacity: o, transform: "translateY(" + (1 - o) * 16 + "px) scale(" + (0.985 + o * 0.015) + ")", zIndex: i === active ? 2 : 1 }}>
                                 <Layer start={phone ? s.phone : s.desktop} designW={designW} designH={designH} width={bigW} radius={phone ? 36 : 16} shadow={shadow} />
                             </div>
                         )
