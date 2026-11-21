@@ -1,16 +1,21 @@
 "use client";
 
 import * as React from "react";
+import { Funnel, X } from "lucide-react";
 
 import {
   ActionPopover,
+  Button,
   Chip,
   DatePicker,
   Dropdown,
+  FIELD,
+  StatusBadge,
   TextField,
   type IsoDate,
 } from "@/components/controls";
 import type { PageField } from "../fields";
+import { cn } from "@/lib/utils";
 import { operatorsFor, type FilterCond } from "../table-model";
 
 // Nazwy operatorów w liście „Operator” (makieta: „jest”, „jest jednym z”, „≥”); dla Checkboxa
@@ -29,9 +34,9 @@ const NAZWY_OPERATOROW: Record<FilterCond["op"], string> = {
 };
 
 // Web: jeden wiersz siatki na warunek (jak w makiecie); telefon: warunek jako karta z polem i ✕ w jednym rzędzie
-const SIATKA = "flex flex-col gap-2 min-[800px]:gap-1.5";
+const SIATKA = "flex flex-col gap-2 min-[800px]:gap-3";
 const WARUNEK =
-  "grid items-center gap-1.5 min-[800px]:grid-cols-[54px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_30px] max-[799px]:grid-cols-[minmax(0,1fr)_44px] max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-border max-[799px]:p-2";
+  "grid items-center gap-1.5 min-[800px]:grid-cols-[48px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)_32px] max-[799px]:grid-cols-[minmax(0,1fr)_44px] max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-border max-[799px]:p-2";
 
 // Filtr tabeli z FilterPopover.dc.html: warunki „Gdzie … i …”, operatory zależne od typu pola,
 // licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako domyślny”. Zmiany idą do stanu klienta —
@@ -83,23 +88,27 @@ export function FilterPopover({
       onOpenChange={onOpenChange}
       align="end"
       ariaLabel="Filtr"
+      // Dymek wg .pop: padding 14 px (cn = twMerge nadpisuje domyślne 10 px)
+      className="p-3.5"
       trigger={
         <button
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`${triggerClassName} ${open ? "!bg-active" : ""}`}
+          // Otwarty filtr: tło jak aria-expanded na przycisku w makiecie (rgba(0,0,0,.04))
+          className={cn(triggerClassName, open && "bg-accent")}
         >
+          <Funnel aria-hidden="true" className="size-4 flex-none opacity-80" />
           {warunki.length > 0 ? `Filtruj · ${warunki.length}` : "Filtruj"}
         </button>
       }
     >
-      <div className="flex w-[min(540px,calc(100vw-48px))] flex-col gap-2.5 p-1">
+      <div className="flex w-[min(600px,calc(100vw-48px))] flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="font-semibold">Filtr</span>
-          <span className="font-mono text-xs text-muted-foreground">
+          <StatusBadge tone="gray" className="font-mono">
             {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
-          </span>
+          </StatusBadge>
         </div>
 
         <div className={SIATKA}>
@@ -109,7 +118,7 @@ export function FilterPopover({
             const nazwaWartosci = `Wartość warunku ${n + 1}`;
             return (
               <div key={i} className={WARUNEK}>
-                <span className="font-mono text-xs text-muted-foreground max-[799px]:col-span-2">
+                <span className="text-xs font-medium text-muted-foreground max-[799px]:col-span-2 min-[800px]:pr-1 min-[800px]:text-right">
                   {n === 0 ? "Gdzie" : "i"}
                 </span>
                 <div className="min-w-0 max-[799px]:order-1">
@@ -161,7 +170,7 @@ export function FilterPopover({
                     <div
                       role="group"
                       aria-label={nazwaWartosci}
-                      className="flex flex-wrap gap-1 rounded-md border border-input bg-white px-1.5 py-[5px]"
+                      className={cn(FIELD, "flex h-auto min-h-8 flex-wrap items-center gap-1 px-1.5 py-1 max-[799px]:h-auto max-[799px]:min-h-11")}
                     >
                       {opcje.map((o) => {
                         const wybrane = Array.isArray(c.value) && c.value.includes(o.id);
@@ -216,51 +225,50 @@ export function FilterPopover({
                   )}
                 </div>
 
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon
                   aria-label="Usuń warunek"
                   onClick={() => {
                     setSzkice({});
                     onChange(filters.filter((_, j) => j !== i));
                   }}
-                  className="cursor-pointer border-0 bg-transparent text-muted-foreground max-[799px]:order-2 max-[799px]:min-h-11"
+                  className="max-[799px]:order-2 max-[799px]:h-11 max-[799px]:w-11"
                 >
-                  ✕
-                </button>
+                  <X aria-hidden="true" className="size-4" />
+                </Button>
               </div>
             );
           })}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border pt-2.5">
-          <button
-            type="button"
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <Button
+            size="sm"
             onClick={() => dodaj(fields[0])}
-            className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11"
+            className="max-[799px]:h-11"
           >
             + Dodaj warunek
-          </button>
+          </Button>
           <div className="flex gap-2">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setSzkice({});
                 onChange([]);
               }}
-              className="cursor-pointer rounded-md border border-input bg-white px-3 py-[7px] font-[inherit] text-[13px] text-foreground max-[799px]:min-h-11"
+              className="max-[799px]:h-11"
             >
               Wyczyść
-            </button>
-            <button
-              type="button"
-              onClick={onSave}
-              className="cursor-pointer rounded-md border border-primary bg-primary px-3 py-[7px] font-[inherit] text-[13px] font-medium text-white max-[799px]:min-h-11"
-            >
+            </Button>
+            <Button variant="primary" size="sm" onClick={onSave} className="max-[799px]:h-11">
               Zapisz jako domyślny
-            </button>
+            </Button>
           </div>
         </div>
-        <p className="m-0 font-mono text-[11px] text-muted-foreground">
+        <p className="m-0 text-xs text-muted-foreground">
           Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.
         </p>
       </div>
