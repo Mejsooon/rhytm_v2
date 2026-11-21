@@ -42,7 +42,12 @@ describe("TemplateEditor — nowy szablon", () => {
     render(<TemplateEditor data={dane(true)} />);
     // „Anuluj” w nagłówku i pod formularzem bez ramki (ghost), na telefonie 44 px
     for (const anuluj of screen.getAllByRole("link", { name: "Anuluj" })) {
-      expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "max-[799px]:h-11");
+      expect(anuluj).toHaveClass(
+        "border-transparent",
+        "bg-transparent",
+        "h-8",
+        "max-[799px]:h-11",
+      );
     }
     expect(
       screen.getByText("Nowy szablon", { selector: "span" }),
@@ -107,10 +112,19 @@ describe("TemplateEditor — nowy szablon", () => {
       "aria-pressed",
       "true",
     );
-    // Zaznaczony dzień wypełniony na czarno jak w makiecie
+    // Zaznaczony dzień to biała pigułka w szarym torze (.seg z makiety)
     expect(screen.getByRole("button", { name: "Wt" })).toHaveClass(
-      "bg-primary",
-      "text-primary-foreground",
+      "bg-white",
+      "text-foreground",
+      "w-9",
+    );
+    expect(screen.getByRole("button", { name: "Pn" })).toHaveClass(
+      "max-[799px]:h-11",
+      "bg-transparent",
+      "text-muted-foreground",
+    );
+    expect(screen.getByRole("group", { name: "Dni tygodnia" })).toHaveClass(
+      "bg-muted",
     );
     expect(
       screen.getByRole("button", { name: "Godzina startu" }),
@@ -152,6 +166,65 @@ describe("TemplateEditor — nowy szablon", () => {
     expect(push).toHaveBeenCalledWith(
       `/sport/szablony?komunikat=dodano&nazwa=${encodeURIComponent("Nogi")}`,
     );
+  });
+});
+
+describe("TemplateEditor — wygląd COSS", () => {
+  it("pole nazwy jak .inp, przycisk „+ Ćwiczenie” md, tabela w karcie", () => {
+    render(<TemplateEditor data={dane()} />);
+    expect(screen.getByLabelText("Nazwa szablonu")).toHaveClass(
+      "h-8",
+      "shadow-xs",
+      "rounded-md",
+    );
+    const dodaj = screen.getByRole("button", { name: "+ Ćwiczenie" });
+    expect(dodaj).toHaveClass("h-8", "bg-white");
+    // Ikona plus i tekst „Ćwiczenie” jak w makiecie (domyślny trigger ExercisePicker)
+    expect(dodaj.querySelector("svg")).not.toBeNull();
+    expect(dodaj).toHaveTextContent("Ćwiczenie");
+    const wiersz = screen.getAllByTestId("wiersz-cwiczenia")[0];
+    // Numer w szarej odznace, długa nazwa ćwiczenia ucinana
+    expect(within(wiersz).getByText("1")).toHaveClass("bg-muted");
+    expect(within(wiersz).getByText(WYC)).toHaveClass("truncate", "min-w-0");
+    // Pola powtórzeń i przerwy 30 px
+    expect(screen.getByLabelText(`${WYC}: powtórzenia`)).toHaveClass(
+      "h-[30px]",
+      "shadow-xs",
+    );
+  });
+
+  it("serie w jednej ramce, ikony 28 px, ✕ na czerwono, „Usuń szablon” jak .btndo", () => {
+    render(<TemplateEditor data={dane()} />);
+    const mniej = screen.getByRole("button", { name: `${WYC}: mniej serii` });
+    expect(mniej).toHaveClass("w-7", "rounded-none");
+    expect(mniej.closest("[data-testid=stepper-serii]")).toHaveClass(
+      "max-[799px]:h-11",
+      "rounded-md",
+      "border",
+      "border-input",
+      "overflow-hidden",
+    );
+    expect(screen.getByRole("button", { name: `Usuń ${WYC}` })).toHaveClass(
+      "text-destructive-foreground",
+      "w-7",
+    );
+    expect(
+      screen.getByRole("button", { name: `Przesuń ${WYC} w górę` }),
+    ).toHaveClass("aria-disabled:opacity-35");
+    expect(screen.getByRole("button", { name: "Usuń szablon" })).toHaveClass(
+      "bg-white",
+      "border-input",
+      "text-destructive-foreground",
+      "h-8",
+    );
+  });
+
+  it("stopka z przyciskami jest w karcie (.foot)", () => {
+    render(<TemplateEditor data={dane()} />);
+    const stopka = screen
+      .getAllByRole("button", { name: "Zapisz szablon" })[1]
+      .closest("[data-testid=stopka-szablonu]");
+    expect(stopka).toHaveClass("border-t", "bg-black/[.025]");
   });
 });
 

@@ -4,18 +4,21 @@
 // objętość i serie, karty ćwiczeń z edycją serii (kg / powt. / ✓ / ✕), REKORD, linia 1RM i „+ Ćwiczenie”.
 // Stan serii trzyma use-gym-store — jeden na ekran, przekazany też do drzewa telefonu (MGym).
 // Oba drzewa są w DOM; przełącza je wyłącznie CSS (800 px).
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Trash2Icon, XIcon } from "lucide-react";
 
 import {
   Button,
   Checkbox,
+  FIELD,
   FormDialog,
-  MonoLabel,
+  StatusBadge,
   TextField,
 } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { weekdayOf } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
 import { finishWorkout, saveSessionAsTemplate } from "./actions";
@@ -34,15 +37,33 @@ import { isTempId, useGymStore } from "./use-gym-store";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-const POLE =
-  "box-border w-full rounded-md border border-input bg-white px-2 py-[5px] text-sm text-foreground outline-none placeholder:text-faint-foreground focus:border-primary disabled:bg-panel";
-const AKCJA_KARTY =
-  "mt-1.5 cursor-pointer rounded-md border-0 bg-transparent px-2 py-1.5 text-[13px] hover:bg-muted disabled:cursor-default disabled:opacity-50";
+// Pole serii jak .inp 30 px z makiety (wspólne FIELD, na telefonie 44 px)
+const POLE = cn(FIELD, "h-[30px] tabular-nums");
 
 export function GymLog({ data }: { data: WorkoutData }) {
   const router = useRouter();
   const { session, profile } = data;
   const sklep = useGymStore(data);
+  // Po „+ Seria”: czekamy, aż nowa seria dostanie id z serwera (pola są wtedy aktywne), i dajemy fokus jej polu kg
+  const fokusSerii = useRef<{ exerciseId: string; liczba: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    const cel = fokusSerii.current;
+    if (!cel) return;
+    const cw = sklep.exercises.find((e) => e.id === cel.exerciseId);
+    if (!cw) {
+      fokusSerii.current = null;
+      return;
+    }
+    const ostatnia = cw.sets[cw.sets.length - 1];
+    if (cw.sets.length <= cel.liczba || !ostatnia || isTempId(ostatnia.id))
+      return;
+    document
+      .querySelector<HTMLInputElement>(`[data-kg-serii="${ostatnia.id}"]`)
+      ?.focus();
+    fokusSerii.current = null;
+  }, [sklep.exercises]);
 
   const [konczy, setKonczy] = useState(false);
   const [oknoSzablonu, setOknoSzablonu] = useState(false);
@@ -141,20 +162,20 @@ export function GymLog({ data }: { data: WorkoutData }) {
         data-testid="web-gym"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-          <div className="font-mono text-[13px] text-muted-foreground">
+        {/* .topbar z okruszkami .crumb (CGymLog) */}
+        <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Link
               href={`/sport?miesiac=${data10.slice(0, 7)}`}
-              className="text-muted-foreground no-underline hover:text-foreground"
+              className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus"
             >
               Sport
-            </Link>{" "}
-            <span className="text-faint-foreground">/</span>{" "}
-            <span className="text-foreground">{`${session.title} · ${dzien} ${dd}.${mm}`}</span>
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="font-medium text-foreground">{`${session.title} · ${dzien} ${dd}.${mm}`}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
-              size="sm"
               onClick={() => {
                 setNazwaSzablonu(session.title);
                 setBladSzablonu(null);
@@ -165,7 +186,6 @@ export function GymLog({ data }: { data: WorkoutData }) {
             </Button>
             <Button
               variant="primary"
-              size="sm"
               disabled={konczy}
               onClick={() => void zakoncz()}
             >
@@ -180,21 +200,39 @@ export function GymLog({ data }: { data: WorkoutData }) {
               <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
                 {session.title}
               </h1>
-              <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
-                {podtytul}
-              </p>
-            </div>
-            <div className="grid grid-cols-[repeat(2,auto)] gap-px overflow-hidden rounded-lg border border-border bg-border">
-              <div className="bg-white px-4 py-2.5">
-                <MonoLabel className="block">Objętość</MonoLabel>
-                <div data-testid="objetosc" className="mt-1 font-mono text-lg">
-                  {`${formatVolume(sklep.volume)} kg`}
-                </div>
+              <div className="mt-2">
+                <StatusBadge tone="gray" size="lg" className="tabular-nums">
+                  {podtytul}
+                </StatusBadge>
               </div>
-              <div className="bg-white px-4 py-2.5">
-                <MonoLabel className="block">Serie</MonoLabel>
-                <div data-testid="serie" className="mt-1 font-mono text-lg">
-                  {`${sklep.doneCount} / ${sklep.totalCount}`}
+            </div>
+            {/* .frame > .inner: ramka 1,5 px z dwiema komórkami */}
+            <div className="rounded-xl p-[3px]">
+              <div
+                data-testid="podsumowanie-treningu"
+                className="grid grid-cols-[repeat(2,auto)] overflow-hidden rounded-xl border-[1.5px] border-border-strong bg-white"
+              >
+                <div className="px-[18px] py-2.5">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Objętość
+                  </div>
+                  <div
+                    data-testid="objetosc"
+                    className="mt-1 text-lg font-semibold tabular-nums"
+                  >
+                    {`${formatVolume(sklep.volume)} kg`}
+                  </div>
+                </div>
+                <div className="border-l border-border px-[18px] py-2.5">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Serie
+                  </div>
+                  <div
+                    data-testid="serie"
+                    className="mt-1 text-lg font-semibold tabular-nums"
+                  >
+                    {`${sklep.doneCount} / ${sklep.totalCount}`}
+                  </div>
                 </div>
               </div>
             </div>
@@ -236,61 +274,101 @@ export function GymLog({ data }: { data: WorkoutData }) {
               <section
                 key={cwiczenie.id}
                 aria-labelledby={naglowekId}
-                className="rounded-lg border border-border bg-white px-4 py-3.5"
+                // .card z coss.css (jak Card, ale jako region)
+                className="relative flex flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card"
               >
-                <div className="mb-1.5 flex items-baseline justify-between gap-2.5">
+                <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-2.5">
                   {tymczasowe ? (
-                    <span id={naglowekId} className="font-semibold">
+                    <span id={naglowekId} className="text-[15px] font-semibold">
                       {cwiczenie.name}
                     </span>
                   ) : (
                     <Link
                       id={naglowekId}
                       href={`/sport/cwiczenia/${cwiczenie.id}`}
-                      className="font-semibold text-foreground no-underline hover:text-black"
+                      className="text-[15px] font-semibold text-foreground no-underline outline-none hover:text-black focus-visible:shadow-focus"
                     >
                       {cwiczenie.name}
                     </Link>
                   )}
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <StatusBadge tone="gray" className="tabular-nums">
                     {linia1rm}
-                  </span>
+                  </StatusBadge>
                 </div>
-                <div className="grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 border-b border-border py-1 font-mono text-[11px] text-muted-foreground">
-                  <span>seria</span>
-                  <span>{zMasaCiala ? "kg (mc + dociążenie)" : "kg"}</span>
-                  <span>powt.</span>
-                  <span>✓</span>
-                </div>
-                {cwiczenie.sets.map((s, j) => {
-                  const etykieta = `${cwiczenie.name}, seria ${j + 1}`;
-                  const szkic = sklep.drafts.get(s.id);
-                  const zablokowana = isTempId(s.id);
-                  return (
-                    <div
-                      key={s.id}
-                      data-testid={`seria-${cwiczenie.name}-${j + 1}`}
-                      className={`group grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_44px_28px] items-center gap-2 py-1.5 font-mono ${s.done ? "text-muted-foreground" : ""}`}
-                    >
-                      <span>{j + 1}</span>
-                      {zMasaCiala ? (
-                        // Masa ciała z profilu + pole dociążenia (puste = bez dociążenia)
-                        <span className="flex min-w-0 items-center gap-1.5">
+                <div className="px-5">
+                  <div className="grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_32px_28px] gap-2 border-b border-border py-1.5 text-xs font-medium text-muted-foreground">
+                    <span>seria</span>
+                    <span>{zMasaCiala ? "kg (mc + dociążenie)" : "kg"}</span>
+                    <span>powt.</span>
+                    <span>✓</span>
+                    <span />
+                  </div>
+                  {cwiczenie.sets.map((s, j) => {
+                    const etykieta = `${cwiczenie.name}, seria ${j + 1}`;
+                    const szkic = sklep.drafts.get(s.id);
+                    const zablokowana = isTempId(s.id);
+                    return (
+                      <div
+                        key={s.id}
+                        data-testid={`seria-${cwiczenie.name}-${j + 1}`}
+                        // Zrobiona seria: zielony gradient z lewej jak w makiecie
+                        className={cn(
+                          "grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)_32px_28px] items-center gap-2 border-b border-black/5 py-1.5",
+                          s.done &&
+                            "bg-gradient-to-r from-success/[.06] to-transparent to-60%",
+                        )}
+                      >
+                        <StatusBadge tone="gray" className="w-6 tabular-nums">
+                          {j + 1}
+                        </StatusBadge>
+                        {zMasaCiala ? (
+                          // Masa ciała z profilu + pole dociążenia (puste = bez dociążenia); .igroup z makiety
                           <span
-                            title="Masa ciała z profilu"
-                            className="flex-none rounded border border-input bg-panel px-1.5 py-[3px] text-[11px] text-soft-foreground"
+                            className={cn(
+                              "flex h-[30px] min-w-0 items-center gap-2 rounded-md border border-input bg-white pr-[11px] pl-1 shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo",
+                              zablokowana && "cursor-not-allowed opacity-[.64]",
+                            )}
                           >
-                            mc
+                            <span
+                              title="Masa ciała z profilu"
+                              className="flex-none"
+                            >
+                              <StatusBadge tone="gray">mc</StatusBadge>
+                            </span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="+ kg"
+                              aria-label={`${etykieta} — dociążenie (kg)`}
+                              data-kg-serii={s.id}
+                              disabled={zablokowana}
+                              value={
+                                szkic?.kg ??
+                                (s.weight_kg === null || s.weight_kg === 0
+                                  ? ""
+                                  : formatKg(s.weight_kg))
+                              }
+                              onChange={(e) =>
+                                sklep.setDraft(s.id, "kg", e.target.value)
+                              }
+                              onBlur={() => void sklep.commitDraft(s.id, "kg")}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur();
+                              }}
+                              className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground tabular-nums outline-none placeholder:text-faint-foreground disabled:cursor-not-allowed"
+                            />
                           </span>
+                        ) : (
                           <input
                             type="text"
                             inputMode="decimal"
-                            placeholder="+ kg"
-                            aria-label={`${etykieta} — dociążenie (kg)`}
+                            placeholder="kg"
+                            aria-label={`${etykieta} — ciężar`}
+                            data-kg-serii={s.id}
                             disabled={zablokowana}
                             value={
                               szkic?.kg ??
-                              (s.weight_kg === null || s.weight_kg === 0
+                              (s.weight_kg === null
                                 ? ""
                                 : formatKg(s.weight_kg))
                             }
@@ -301,109 +379,103 @@ export function GymLog({ data }: { data: WorkoutData }) {
                             onKeyDown={(e) => {
                               if (e.key === "Enter") e.currentTarget.blur();
                             }}
-                            className={`${POLE} min-w-0`}
+                            className={POLE}
                           />
-                        </span>
-                      ) : (
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="kg"
-                          aria-label={`${etykieta} — ciężar`}
-                          disabled={zablokowana}
-                          value={
-                            szkic?.kg ??
-                            (s.weight_kg === null ? "" : formatKg(s.weight_kg))
-                          }
-                          onChange={(e) =>
-                            sklep.setDraft(s.id, "kg", e.target.value)
-                          }
-                          onBlur={() => void sklep.commitDraft(s.id, "kg")}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                          }}
-                          className={POLE}
-                        />
-                      )}
-                      <div className="relative">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="powt."
-                          aria-label={`${etykieta} — powtórzenia`}
-                          disabled={zablokowana}
-                          value={
-                            szkic?.reps ??
-                            (s.reps === null ? "" : String(s.reps))
-                          }
-                          onChange={(e) =>
-                            sklep.setDraft(s.id, "reps", e.target.value)
-                          }
-                          onBlur={() => void sklep.commitDraft(s.id, "reps")}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                          }}
-                          className={POLE}
-                        />
-                        {rekordowe.has(s.id) && (
-                          <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
-                            REKORD
-                          </span>
                         )}
-                      </div>
-                      <Checkbox
-                        checked={s.done}
-                        ariaLabel={`${etykieta} zrobiona`}
-                        disabled={zablokowana}
-                        onChange={() => void sklep.toggleDone(s.id)}
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Usuń ${etykieta}`}
-                        disabled={zablokowana}
-                        onClick={() => void sklep.deleteSet(s.id)}
-                        className="cursor-pointer border-0 bg-transparent p-1 text-faint-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-visible:opacity-100 disabled:cursor-default"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  );
-                })}
-                {zMasaCiala && (
-                  <div className="pt-1.5 font-mono text-[11px] text-muted-foreground">
-                    {profile.weightKg !== null ? (
-                      `mc = masa ciała ${formatKg(profile.weightKg)} kg z profilu · „+ kg” to dociążenie (opcjonalnie)`
-                    ) : (
-                      <>
-                        Uzupełnij wagę w profilu (
-                        <Link
-                          href="/ustawienia/ogolne"
-                          className="text-foreground underline"
+                        <div className="relative">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="powt."
+                            aria-label={`${etykieta} — powtórzenia`}
+                            disabled={zablokowana}
+                            value={
+                              szkic?.reps ??
+                              (s.reps === null ? "" : String(s.reps))
+                            }
+                            onChange={(e) =>
+                              sklep.setDraft(s.id, "reps", e.target.value)
+                            }
+                            onBlur={() => void sklep.commitDraft(s.id, "reps")}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") e.currentTarget.blur();
+                            }}
+                            className={POLE}
+                          />
+                          {rekordowe.has(s.id) && (
+                            <StatusBadge
+                              tone="green"
+                              className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2"
+                            >
+                              REKORD
+                            </StatusBadge>
+                          )}
+                        </div>
+                        <Checkbox
+                          checked={s.done}
+                          ariaLabel={`${etykieta} zrobiona`}
+                          disabled={zablokowana}
+                          onChange={() => void sklep.toggleDone(s.id)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          icon
+                          aria-label={`Usuń ${etykieta}`}
+                          disabled={zablokowana}
+                          onClick={() => void sklep.deleteSet(s.id)}
+                          className="text-faint-foreground hover:text-foreground"
                         >
-                          Ustawienia → Profil
-                        </Link>
-                        ), żeby liczyć objętość i rekordy.
-                      </>
-                    )}
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
+                          <XIcon aria-hidden="true" className="size-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {zMasaCiala && (
+                    <div className="pt-1.5 text-xs text-muted-foreground">
+                      {profile.weightKg !== null ? (
+                        `mc = masa ciała ${formatKg(profile.weightKg)} kg z profilu · „+ kg” to dociążenie (opcjonalnie)`
+                      ) : (
+                        <>
+                          Uzupełnij wagę w profilu (
+                          <Link
+                            href="/ustawienia/ogolne"
+                            className="text-foreground underline"
+                          >
+                            Ustawienia → Profil
+                          </Link>
+                          ), żeby liczyć objętość i rekordy.
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between px-3 pt-2 pb-2.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     disabled={tymczasowe}
-                    onClick={() => void sklep.addSet(cwiczenie.id)}
-                    className={`${AKCJA_KARTY} -ml-2 text-muted-foreground hover:text-foreground`}
+                    onClick={() => {
+                      fokusSerii.current = {
+                        exerciseId: cwiczenie.id,
+                        liczba: cwiczenie.sets.length,
+                      };
+                      void sklep.addSet(cwiczenie.id);
+                    }}
+                    className="text-muted-foreground"
                   >
                     + Seria
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     disabled={tymczasowe}
                     onClick={() => void sklep.removeExercise(cwiczenie.id)}
-                    className={`${AKCJA_KARTY} -mr-2 text-destructive-foreground`}
+                    className="text-destructive-foreground hover:text-destructive-foreground"
                   >
+                    <Trash2Icon aria-hidden="true" className="size-4" />
                     Usuń ćwiczenie
-                  </button>
+                  </Button>
                 </div>
               </section>
             );
@@ -432,6 +504,7 @@ export function GymLog({ data }: { data: WorkoutData }) {
               size="sm"
               disabled={zapisujeSzablon}
               onClick={() => setOknoSzablonu(false)}
+              className="max-[799px]:h-11"
             >
               Anuluj
             </Button>

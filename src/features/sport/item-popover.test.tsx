@@ -41,6 +41,20 @@ function statystyka(dymek: HTMLElement, etykieta: string) {
 }
 
 describe("ItemPopover", () => {
+  it("odznaka BIEG jest pomarańczowa, SIŁA szara, a dymek ma szerokość 310 px", () => {
+    const bieg = wyrenderuj("s:a1000000-0000-4000-8000-000000000015");
+    expect(bieg.dymek).toHaveClass("w-[310px]", "rounded-lg", "shadow-lg");
+    expect(within(bieg.dymek).getByText("BIEG")).toHaveClass(
+      "bg-warning-soft",
+      "text-warning-foreground",
+    );
+  });
+
+  it("odznaka SIŁA jest szara", () => {
+    const sila = wyrenderuj("s:a1000000-0000-4000-8000-000000000012");
+    expect(within(sila.dymek).getByText("SIŁA")).toHaveClass("bg-muted");
+  });
+
   it("bieg wykonany: Dystans / Czas / Tempo / Kcal / Trudność / Godzina i „Edytuj”", async () => {
     const w = wyrenderuj("s:a1000000-0000-4000-8000-000000000015");
     expect(w.dymek).toHaveTextContent("BIEG");

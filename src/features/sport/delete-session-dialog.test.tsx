@@ -74,8 +74,29 @@ describe("DeleteSessionDialog", () => {
       />,
     );
     // „Anuluj” bez ramki (ghost, .btng z makiet)
-    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
-    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+    );
+    expect(
+      screen.getByRole("button", { name: "Anuluj" }).className,
+    ).not.toContain("border-input");
+    // Rozmiar md: 32 px na webie i 44 px na telefonie (cel dotykowy)
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "h-8",
+      "max-[799px]:h-11",
+    );
+    // Okno w stylu .dlg: promień 16 px, ramka border, cień pop, szara stopka
+    expect(screen.getByRole("alertdialog")).toHaveClass(
+      "min-[800px]:rounded-xl",
+      "min-[800px]:border-border",
+      "min-[800px]:shadow-pop",
+    );
+    // Telefon: promień 16 px bez zmian
+    expect(screen.getByRole("alertdialog")).toHaveClass(
+      "max-[799px]:rounded-xl",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Nie znaleziono treningu.",

@@ -5,8 +5,9 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Dropdown, MonoLabel } from "@/components/controls";
+import { Dropdown, StatusBadge } from "@/components/controls";
 import { weekdayOf } from "@/features/calendar/view-range";
+import { cn } from "@/lib/utils";
 import type { SessionSets } from "./load-sport";
 import {
   effectiveKg,
@@ -88,14 +89,14 @@ export function RecordCard({
 
   if (!cwiczenie) {
     return (
-      <section className="flex flex-col items-start justify-center gap-2 rounded-lg border border-border bg-white px-4 py-3.5">
-        <p className="m-0 text-[13px] text-muted-foreground">
+      <section className="flex flex-col items-start justify-center gap-2 rounded-xl border border-border bg-white bg-clip-padding px-6 py-5 shadow-card">
+        <p className="m-0 text-sm text-muted-foreground">
           Brak treningów siłowych.
         </p>
         <button
           type="button"
           onClick={onNewGym}
-          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:shadow-focus"
+          className="cursor-pointer border-0 bg-transparent p-0 text-sm font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:shadow-focus"
         >
           + Trening siłowy
         </button>
@@ -175,9 +176,9 @@ export function RecordCard({
           />
         </div>
       )}
-      <section className="flex flex-1 flex-col rounded-lg border border-border bg-white px-4 py-3.5">
-        <div className="flex items-center justify-between">
-          <h2 className="m-0 text-[15px] font-semibold">
+      <section className="flex flex-1 flex-col rounded-xl border border-border bg-white bg-clip-padding px-6 pt-5 pb-5 shadow-card">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="m-0 text-base leading-[1.3] font-semibold">
             <Link
               href={`/sport/cwiczenia/${cwiczenie.id}`}
               className="text-foreground no-underline hover:underline"
@@ -185,26 +186,24 @@ export function RecordCard({
               {cwiczenie.name}
             </Link>
           </h2>
-          <span
-            className={
-              biezacy.rekord
-                ? "rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[11px] text-success"
-                : "rounded border border-input bg-panel px-1.5 py-px font-mono text-[11px] text-muted-foreground"
-            }
-          >
+          <StatusBadge tone={biezacy.rekord ? "green" : "gray"} size="lg">
             {biezacy.rekord ? "REKORD" : "bez rekordu"}
-          </span>
+          </StatusBadge>
         </div>
-        <div className="mt-3 flex items-end gap-6">
+        <div className="mt-3.5 flex items-end gap-6">
           <div>
-            <MonoLabel className="block">Szac. 1RM</MonoLabel>
-            <div className="mt-1 font-mono text-xl">{`${kg(biezacy.v)} kg`}</div>
+            <div className="text-xs font-medium text-muted-foreground">
+              Szac. 1RM
+            </div>
+            <div className="mt-1 text-xl font-semibold tabular-nums">{`${kg(biezacy.v)} kg`}</div>
           </div>
           <div>
-            <MonoLabel className="block">Najlepsza seria</MonoLabel>
-            <div className="mt-1 font-mono text-xl">{biezacy.seria}</div>
+            <div className="text-xs font-medium text-muted-foreground">
+              Najlepsza seria
+            </div>
+            <div className="mt-1 text-xl font-semibold tabular-nums">{biezacy.seria}</div>
           </div>
-          <div className="ml-auto pb-[3px] font-mono text-[11px] text-muted-foreground">
+          <div className="ml-auto pb-[3px] text-xs text-muted-foreground tabular-nums">
             {hov ? biezacy.when : `ostatnio: ${biezacy.when}`}
           </div>
         </div>
@@ -228,7 +227,7 @@ export function RecordCard({
                 y1="100"
                 x2="300"
                 y2="100"
-                stroke="#eaeaea"
+                stroke="rgba(0,0,0,.08)"
                 vectorEffect="non-scaling-stroke"
               />
               <line
@@ -236,7 +235,7 @@ export function RecordCard({
                 y1="55"
                 x2="300"
                 y2="55"
-                stroke="#f0f0f0"
+                stroke="rgba(0,0,0,.05)"
                 vectorEffect="non-scaling-stroke"
               />
               <line
@@ -244,7 +243,7 @@ export function RecordCard({
                 y1="10"
                 x2="300"
                 y2="10"
-                stroke="#f0f0f0"
+                stroke="rgba(0,0,0,.05)"
                 vectorEffect="non-scaling-stroke"
               />
               <polyline
@@ -252,7 +251,7 @@ export function RecordCard({
                   .map((p, i) => `${px(i).toFixed(1)},${py(p.v).toFixed(1)}`)
                   .join(" ")}
                 fill="none"
-                stroke="#171717"
+                stroke="#262626"
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -262,24 +261,29 @@ export function RecordCard({
             </svg>
             {hov && najechany !== null && (
               <div
-                className="pointer-events-none absolute top-1 bottom-2.5 w-0 border-l border-dashed border-ring"
+                className="pointer-events-none absolute top-1 bottom-2.5 w-0 border-l border-dashed border-black/[.24]"
                 style={{ left: `${(px(najechany) / 3).toFixed(2)}%` }}
               />
             )}
             {punkty.map((p, i) => {
               const wlaczony = najechany === i;
-              const kolor = p.rekord ? "#15803d" : "#171717";
               return (
                 <span
                   key={`kropka-${i}`}
-                  className="pointer-events-none absolute box-border -translate-x-1/2 -translate-y-1/2 rounded-full transition-[width,height] duration-[120ms]"
+                  className={cn(
+                    "pointer-events-none absolute box-border -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-[width,height] duration-[120ms]",
+                    p.rekord ? "border-success" : "border-foreground",
+                    wlaczony
+                      ? p.rekord
+                        ? "bg-success"
+                        : "bg-foreground"
+                      : "bg-white",
+                  )}
                   style={{
                     width: wlaczony ? 11 : 7,
                     height: wlaczony ? 11 : 7,
                     left: `${(px(i) / 3).toFixed(2)}%`,
                     top: `${py(p.v).toFixed(1)}px`,
-                    border: `2px solid ${kolor}`,
-                    background: wlaczony ? kolor : "#ffffff",
                   }}
                 />
               );
@@ -303,7 +307,7 @@ export function RecordCard({
           {hov && najechany !== null && (
             <div
               role="tooltip"
-              className="pointer-events-none absolute z-[5] rounded-lg border border-input bg-white px-2.5 py-2 whitespace-nowrap shadow-[0_8px_24px_rgba(0,0,0,.1)] [animation:rh-fade_.12s_ease-out]"
+              className="pointer-events-none absolute z-[5] rounded-lg border border-border bg-white px-2.5 py-2 whitespace-nowrap shadow-lg [animation:rh-fade_.12s_ease-out]"
               style={{
                 top: Math.round(
                   py(hov.v) < 55 ? 12 + py(hov.v) + 14 : 12 + py(hov.v) - 100,
@@ -313,35 +317,37 @@ export function RecordCard({
                   : { left: `calc(${px(najechany) / 3}% + 10px)` }),
               }}
             >
-              <div className="font-mono text-[11px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground tabular-nums">
                 {hov.when}
               </div>
-              <div className="mt-0.5 font-mono text-sm font-semibold">
+              <div className="mt-0.5 text-sm font-semibold tabular-nums">
                 {kg(hov.v)} kg{" "}
-                <span className="text-[11px] font-normal text-muted-foreground">
+                <span className="text-xs font-normal text-muted-foreground">
                   szac. 1RM
                 </span>
               </div>
-              <div className="mt-0.5 font-mono text-xs">seria {hov.seria}</div>
+              <div className="mt-0.5 text-xs tabular-nums">seria {hov.seria}</div>
               <div
-                className="mt-0.5 font-mono text-[11px]"
-                style={{
-                  color: poprzedni && roznica < 0 ? "#b91c1c" : "#15803d",
-                }}
+                className={cn(
+                  "mt-0.5 text-xs tabular-nums",
+                  poprzedni && roznica < 0
+                    ? "text-destructive-foreground"
+                    : "text-success",
+                )}
               >
                 {poprzedni
                   ? `${roznica >= 0 ? "+" : "−"}${kg(Math.abs(roznica))} kg vs poprz.`
                   : "pierwszy pomiar"}
               </div>
               {hov.rekord && (
-                <div className="mt-1.5 inline-block rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
+                <StatusBadge tone="green" className="mt-1.5">
                   REKORD
-                </div>
+                </StatusBadge>
               )}
             </div>
           )}
         </div>
-        <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
+        <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
           <span>{MIESIACE_KROTKO[punkty[0].miesiac - 1]}</span>
           <span>{MIESIACE_KROTKO[punkty[punkty.length - 1].miesiac - 1]}</span>
         </div>

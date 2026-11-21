@@ -38,9 +38,73 @@ describe("RunDialog", () => {
   it("„Anuluj” w stopce bez ramki (ghost), na telefonie 44 px", () => {
     wyrenderuj();
     const anuluj = screen.getByRole("button", { name: "Anuluj" });
-    expect(anuluj).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(anuluj).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+    );
     expect(anuluj.className).not.toContain("border-input");
     expect(anuluj).toHaveClass("max-[799px]:h-11");
+  });
+
+  it("„Anuluj” w oknie biegu ma na telefonie max-[799px]:h-11", () => {
+    wyrenderuj();
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "max-[799px]:h-11",
+    );
+  });
+
+  it("rodzaj biegu to tor .seg: wybrany jako biała pigułka, reszta bez tła", () => {
+    wyrenderuj();
+    expect(screen.getByRole("group", { name: "Rodzaj biegu" })).toHaveClass(
+      "bg-muted",
+      "rounded-md",
+    );
+    expect(screen.getByRole("button", { name: "Spokojny" })).toHaveClass(
+      "bg-white",
+      "shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]",
+    );
+    expect(screen.getByRole("button", { name: "Tempo" })).toHaveClass(
+      "bg-transparent",
+      "text-muted-foreground",
+    );
+  });
+
+  it("tempo i kcal to szare pola odczytu w rozmiarze pola (32 px, 44 px na telefonie)", () => {
+    wyrenderuj();
+    for (const id of ["tempo", "kcal"]) {
+      expect(screen.getByTestId(id)).toHaveClass(
+        "h-8",
+        "max-[799px]:h-11",
+        "bg-black/[.025]",
+        "shadow-none",
+        "tabular-nums",
+      );
+    }
+  });
+
+  it("trudność: wybrana ma kolor skali, niższe wartości jej odcień, wyższe są białe", async () => {
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("button", { name: "6" }));
+    expect(screen.getByRole("button", { name: "6" })).toHaveClass(
+      "bg-warning",
+      "border-warning",
+      "text-white",
+    );
+    expect(screen.getByRole("button", { name: "3" })).toHaveClass(
+      "bg-warning/[.09]",
+      "border-warning/[.19]",
+    );
+    expect(screen.getByRole("button", { name: "8" })).toHaveClass(
+      "bg-white",
+      "border-input",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "9" }));
+    expect(screen.getByRole("button", { name: "9" })).toHaveClass(
+      "bg-destructive",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(screen.getByRole("button", { name: "2" })).toHaveClass("bg-success");
   });
 
   it("nowy bieg: Spokojny, data i godzina z parametrów, pokaż w kalendarzu włączone", () => {

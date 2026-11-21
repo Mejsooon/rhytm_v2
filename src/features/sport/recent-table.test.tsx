@@ -39,6 +39,28 @@ describe("RecentTable", () => {
     expect(silownia).toHaveTextContent("652,5 kg");
   });
 
+  it("odznaki BIEG (warn) i SIŁA (sec), kolumny liczbowe tabular-nums po prawej", () => {
+    const dane = daneSportu();
+    render(
+      <RecentTable
+        items={dane.recent}
+        month="2026-11"
+        doneInMonth={5}
+        setsHistory={dane.setsHistory}
+        exercises={dane.exercises}
+        profileWeight={72}
+        onOpenRun={vi.fn()}
+      />,
+    );
+    const wiersze = screen.getAllByRole("row").slice(1);
+    expect(within(wiersze[1]).getByText("BIEG")).toHaveClass("bg-warning-soft");
+    expect(within(wiersze[2]).getByText("SIŁA")).toHaveClass("bg-muted");
+    const komorki = within(wiersze[1]).getAllByRole("cell");
+    for (const k of komorki.slice(2))
+      expect(k).toHaveClass("text-right", "tabular-nums");
+    expect(komorki[0]).toHaveClass("tabular-nums");
+  });
+
   it("objętość treningu liczy ćwiczenia z masą ciała wagą z profilu", () => {
     const dane = daneSportu();
     render(

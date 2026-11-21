@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowy bieg (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="CSidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Sport</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CWorkoutTemplates.dc.html" class="btn">Szablony</a><a href="CGymLog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg>Trening siłowy</a><a href="CRunDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy bieg</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
+      <div class="card" style="height: 520px"></div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px"><div class="card" style="height: 260px"></div><div class="card" style="height: 260px"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="rn-t" class="dlg" style="position: absolute; left: 50%; top: 50px; transform: translateX(-50%); width: min(560px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="rn-t" class="dlg-t">Nowy bieg</h2><p class="dlg-d">Tempo i kcal liczą się na żywo.</p></div><a href="CSport.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <div class="fld">Rodzaj biegu
+        <div class="seg" role="radiogroup" aria-label="Rodzaj biegu" style="align-self: flex-start"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{k.p}}" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <label class="fld">Data<input class="inp num" type="text" value="wt 17.11.2026"></label>
+        <label class="fld">Start<input class="inp num" type="text" value="16:00"></label>
+        <label class="fld">Dystans (km)<input class="inp num" type="text" value="{{km}}" onChange="{{onKm}}"></label>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <label class="fld">Czas<input class="inp num" type="text" value="{{time}}" onChange="{{onTime}}" placeholder="g:mm:ss"></label>
+        <div class="fld">Tempo<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{pace}}</div></div>
+        <div class="fld">Kcal<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{kcal}}</div></div>
+      </div>
+      <div class="fld"><span>Trudność <span class="hint">1 = bardzo lekko, 10 = maks</span></span>
+        <div role="radiogroup" aria-label="Trudność" style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{dots}}" as="d" hint-placeholder-count="10"><button type="button" role="radio" aria-checked="{{d.on}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.n}}</button></sc-for></div>
+      </div>
+      <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><input class="inp" type="text" placeholder="trasa, pogoda, samopoczucie"></label>
+      <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{cal}}" onChange="{{toggleCal}}">Pokaż w kalendarzu głównym jako blok</label>
+      <span class="hint">Kcal z wagi w profilu. Bez czasu bieg zapisze się jako plan.</span>
+    </div>
+    <div class="dlg-f"><a href="CSport.dc.html" class="btng">Anuluj</a><a href="CSport.dc.html" class="btnp">Zapisz bieg</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { diff: 6, cal: true, kind: 'Spokojny', km: '10,0', time: '0:56:40' }; }
+  renderVals() {
+    const d = this.state.diff;
+    const kind = this.state.kind;
+    const km = parseFloat(String(this.state.km).replace(',', '.'));
+    const parts = String(this.state.time).trim().split(':').map((x) => parseInt(x, 10));
+    const sec = parts.every((x) => !isNaN(x)) ? parts.reduce((a, x) => a * 60 + x, 0) : 0;
+    const ok = km > 0 && sec > 0;
+    const pps = ok ? sec / km : 0;
+    const paceMin = pps / 60;
+    const kcal = ok ? Math.round((3.5 + 0.2 * (1000 / paceMin)) * 72 * (sec / 60) / 1000 * 5) : 0;
+    const col = (n) => n >= 8 ? '#ef4444' : n >= 5 ? '#f59e0b' : '#15803d';
+    return {
+      kinds: ['Spokojny', 'Tempo', 'Interwały', 'Długi', 'Zawody'].map((t) => ({ t, p: t === kind ? 'true' : 'false', pick: () => this.setState({ kind: t }) })),
+      km: this.state.km, time: this.state.time,
+      onKm: (e) => this.setState({ km: e.target.value }), onTime: (e) => this.setState({ time: e.target.value }),
+      pace: ok ? Math.floor(pps / 60) + ':' + String(Math.round(pps % 60)).padStart(2, '0') + ' /km' : '—',
+      kcal: ok ? '≈ ' + kcal : '—',
+      dots: [1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: String(n), on: n === d ? 'true' : 'false', pick: () => this.setState({ diff: n }),
+        s: 'width:32px;height:32px;border-radius:10px;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer;' + (n === d ? 'background:' + col(n) + ';color:#fff;border:1px solid ' + col(n) + ';box-shadow:inset 0 1px 0 rgba(255,255,255,.2)' : n < d ? 'background:' + col(d) + '18;color:#404040;border:1px solid ' + col(d) + '30' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') })),
+      cal: this.state.cal, toggleCal: () => this.setState({ cal: !this.state.cal }) };
+  }
+}
+</script>
+</body>
+</html>

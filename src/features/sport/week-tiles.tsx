@@ -4,7 +4,7 @@
 // Kafelek jest przełącznikiem wykresu; linia celu tylko dla km i treningów przy włączonym celu.
 import { useState } from "react";
 
-import { MonoLabel } from "@/components/controls";
+import { StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   addDays,
@@ -130,7 +130,7 @@ export function WeekTiles({
   const liniaCelu = cel !== null ? wysokosc(cel) : 0;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-white">
+    <section className="overflow-hidden rounded-xl border border-border bg-white bg-clip-padding shadow-card">
       <div className="grid grid-cols-4 border-b border-border">
         {kafelki.map((k, i) => {
           const wlaczony = miara === k.klucz;
@@ -140,27 +140,32 @@ export function WeekTiles({
               type="button"
               aria-pressed={wlaczony}
               onClick={() => setMiara(k.klucz)}
+              // Wybrany: biały z dolną kreską w cieniu, więc fokus to obrys (nie cień)
               className={cn(
-                "cursor-pointer border-0 px-4 py-3.5 text-left outline-none focus-visible:shadow-focus-inset",
+                "relative cursor-pointer border-0 px-5 py-3.5 text-left outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
                 i > 0 && "border-l border-border",
                 wlaczony
-                  ? "bg-white shadow-[inset_0_-2px_0_#171717]"
-                  : "bg-panel",
+                  ? "bg-white shadow-[inset_0_-2px_0_var(--foreground)]"
+                  : "bg-black/[.025]",
               )}
             >
-              <MonoLabel className="block">{k.etykieta}</MonoLabel>
-              <div className="mt-1.5 font-mono text-xl text-foreground">
+              <div className="text-xs font-medium text-muted-foreground">
+                {k.etykieta}
+              </div>
+              <div className="mt-1.5 text-xl font-semibold text-foreground tabular-nums">
                 {k.wartosc}{" "}
-                <span className="text-xs text-muted-foreground">{k.dopisek}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {k.dopisek}
+                </span>
               </div>
             </button>
           );
         })}
       </div>
-      <div className="px-4 pt-3.5 pb-3">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <span className="text-[13px] font-medium">{tytul}</span>
-          <span className="font-mono text-[11px] text-muted-foreground">{notka}</span>
+      <div className="px-5 pt-4 pb-3.5">
+        <div className="mb-[18px] flex items-baseline justify-between gap-3">
+          <span className="text-sm font-semibold">{tytul}</span>
+          <span className="text-xs text-muted-foreground">{notka}</span>
         </div>
         <div className="relative flex h-[150px] items-end gap-2.5 border-b border-border">
           {cel !== null && (
@@ -170,11 +175,12 @@ export function WeekTiles({
                 className="absolute right-0 left-0 z-[1] border-t border-dashed border-success"
                 style={{ bottom: liniaCelu }}
               />
+              {/* Podpis celu jako odznaka; białe tło pod półprzezroczystym zielonym, by tekst był czytelny nad słupkiem */}
               <span
-                className="absolute right-0 z-[2] bg-white px-1 font-mono text-[10px] text-success"
+                className="absolute right-0 z-[2] flex rounded-sm bg-white"
                 style={{ bottom: liniaCelu + 4 }}
               >
-                {celTekst}
+                <StatusBadge tone="green">{celTekst}</StatusBadge>
               </span>
             </>
           )}
@@ -186,24 +192,24 @@ export function WeekTiles({
                 key={i}
                 data-testid="slupek"
                 title={`tydz. ${tygodnie[i].numer}: ${format(v)}`}
-                className="relative flex-1 rounded-t-[3px]"
-                style={{
-                  height: Math.max(2, v > 0 ? wysokosc(v) : 2),
-                  background: ostatni
-                    ? "#15803d"
+                className={cn(
+                  "relative flex-1 rounded-t-[4px]",
+                  ostatni
+                    ? "bg-success"
                     : trafiony
-                      ? "#171717"
-                      : "#d4d4d4",
-                }}
+                      ? "bg-foreground"
+                      : "bg-black/12",
+                )}
+                style={{ height: Math.max(2, v > 0 ? wysokosc(v) : 2) }}
               >
-                <span className="absolute -top-4 right-0 left-0 text-center font-mono text-[9px] whitespace-nowrap text-muted-foreground">
+                <span className="absolute -top-[17px] right-0 left-0 text-center text-[10px] whitespace-nowrap text-muted-foreground tabular-nums">
                   {v > 0 ? format(v) : ""}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-1.5 flex justify-between font-mono text-[10px] text-muted-foreground">
+        <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground tabular-nums">
           <span>tydz. {tygodnie[0].numer}</span>
           <span>tydz. {tygodnie[11].numer}</span>
         </div>

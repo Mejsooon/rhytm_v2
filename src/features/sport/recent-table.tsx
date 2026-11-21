@@ -4,6 +4,7 @@
 // Klik w wiersz otwiera trening: bieg — okno biegu, trening siłowy — ekran treningu.
 import { useRouter } from "next/navigation";
 
+import { StatusBadge } from "@/components/controls";
 import { MIESIACE } from "@/components/controls/calendar-math";
 import { weekdayOf } from "@/features/calendar/view-range";
 import type { RunRequest } from "./item-popover";
@@ -18,9 +19,10 @@ import {
 } from "./model";
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
-const KOMORKA = "border-b border-border px-4 py-2.5";
+// .td / .th z coss.css: wysokość 44 / 40, boczne wcięcie 24 px w pierwszej i ostatniej kolumnie
+const KOMORKA = "h-11 border-b border-border px-3 group-last/wiersz:border-b-0";
 const NAGLOWEK =
-  "border-b border-border px-4 py-2 font-medium text-muted-foreground";
+  "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground";
 
 export function RecentTable({
   items,
@@ -55,17 +57,20 @@ export function RecentTable({
   }
 
   return (
-    <section className="overflow-x-auto rounded-lg border border-border bg-white">
-      <div className="flex justify-between border-b border-border px-4 py-3">
-        <h2 className="m-0 text-[15px] font-semibold">Ostatnie treningi</h2>
-        <span className="font-mono text-xs text-muted-foreground">
+    <section className="overflow-hidden rounded-xl border border-border bg-white bg-clip-padding shadow-card">
+      <div className="flex items-center justify-between gap-3 px-6 pt-5 pb-3.5">
+        <h2 className="m-0 text-base leading-[1.3] font-semibold">
+          Ostatnie treningi
+        </h2>
+        <StatusBadge tone="gray" size="lg" className="tabular-nums">
           {`${MIESIACE[Number(month.slice(5, 7)) - 1]} · ${doneInMonth} wykonanych`}
-        </span>
+        </StatusBadge>
       </div>
-      <table className="w-full min-w-[640px] border-collapse text-[13px]">
+      <div className="overflow-x-auto border-t border-border">
+      <table className="w-full min-w-[640px] border-collapse text-sm">
         <thead>
-          <tr className="bg-panel">
-            <th scope="col" className={`${NAGLOWEK} text-left`}>
+          <tr>
+            <th scope="col" className={`${NAGLOWEK} pl-6 text-left`}>
               Data
             </th>
             <th scope="col" className={`${NAGLOWEK} text-left`}>
@@ -77,15 +82,15 @@ export function RecentTable({
             <th scope="col" className={`${NAGLOWEK} text-right`}>
               Tempo / objętość
             </th>
-            <th scope="col" className={`${NAGLOWEK} text-right`}>
+            <th scope="col" className={`${NAGLOWEK} pr-6 text-right`}>
               Trudność
             </th>
           </tr>
         </thead>
         <tbody>
           {wiersze.length === 0 && (
-            <tr>
-              <td colSpan={5} className={`${KOMORKA} text-muted-foreground`}>
+            <tr className="group/wiersz">
+              <td colSpan={5} className={`${KOMORKA} px-6 text-muted-foreground`}>
                 Brak wykonanych treningów.
               </td>
             </tr>
@@ -120,31 +125,31 @@ export function RecentTable({
                     otworz(item);
                   }
                 }}
-                className="cursor-pointer outline-none hover:bg-panel focus-visible:bg-panel"
+                className="group/wiersz cursor-pointer outline-none hover:bg-black/[.02] focus-visible:bg-black/[.02] focus-visible:shadow-focus-inset"
               >
-                <td className={`${KOMORKA} font-mono text-soft-foreground`}>
+                <td
+                  className={`${KOMORKA} pl-6 text-soft-foreground tabular-nums`}
+                >
                   {`${DNI[weekdayOf(item.date)]} ${dd}.${mm}`}
                 </td>
                 <td className={KOMORKA}>
-                  <span
-                    className={
-                      bieg
-                        ? "rounded border border-warning-border bg-warning-soft px-1.5 py-px font-mono text-[10px] text-warning-foreground"
-                        : "rounded border border-input bg-muted px-1.5 py-px font-mono text-[10px] text-soft-foreground"
-                    }
-                  >
+                  <StatusBadge tone={bieg ? "orange" : "gray"}>
                     {bieg ? "BIEG" : "SIŁA"}
-                  </span>{" "}
-                  <span className="ml-1.5">{item.title}</span>
+                  </StatusBadge>{" "}
+                  <span className="ml-1.5 font-medium">{item.title}</span>
                 </td>
-                <td className={`${KOMORKA} text-right font-mono`}>{wynik}</td>
                 <td
-                  className={`${KOMORKA} text-right font-mono text-soft-foreground`}
+                  className={`${KOMORKA} text-right font-medium tabular-nums`}
+                >
+                  {wynik}
+                </td>
+                <td
+                  className={`${KOMORKA} text-right text-soft-foreground tabular-nums`}
                 >
                   {dodatkowo}
                 </td>
                 <td
-                  className={`${KOMORKA} text-right font-mono text-muted-foreground`}
+                  className={`${KOMORKA} pr-6 text-right text-muted-foreground tabular-nums`}
                 >
                   {item.difficulty !== null ? `${item.difficulty}/10` : ""}
                 </td>
@@ -153,6 +158,7 @@ export function RecentTable({
           })}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }

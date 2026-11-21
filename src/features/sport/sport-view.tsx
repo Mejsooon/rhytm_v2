@@ -1,15 +1,24 @@
 "use client";
 
-// Ekran „Sport” na komputerze (Sport.dc.html): nagłówek z ‹ Dziś ›, filtrem i przyciskami,
+// Ekran „Sport” na komputerze (CSport.dc.html): .topbar z akcjami, wiersz ‹ Dziś › z filtrem .seg,
 // kalendarz miesiąca z „Σ tydz.”, legenda, kafelki z wykresem, karta rekordu i ostatnie treningi.
 // Telefon: MSport (drzewo obok webu, przełącza je wyłącznie CSS 800 px) i arkusz biegu MRunNew.
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
-import { ActionPopover, Button, Segment } from "@/components/controls";
+import {
+  ActionPopover,
+  Button,
+  MENU_ITEM,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+  Segment,
+} from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
+import { ModuleHeader } from "@/components/shell/module-header";
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { createGymSession, type GymSessionInput } from "./actions";
 import { DeleteSessionDialog } from "./delete-session-dialog";
@@ -18,7 +27,7 @@ import { MSport } from "./mobile/m-sport";
 import type { RunRequest } from "./item-popover";
 import type { SportMonthData } from "./load-sport";
 import type { SportItem } from "./model";
-import { MonthCalendar } from "./month-calendar";
+import { BIEG, MonthCalendar, SILA } from "./month-calendar";
 import { RecentTable } from "./recent-table";
 import { RecordCard } from "./record-card";
 import { RunDialog } from "./run-dialog";
@@ -27,8 +36,6 @@ import { WeekTiles } from "./week-tiles";
 type Filtr = "all" | "run" | "gym";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-const OPCJA =
-  "flex w-full cursor-pointer items-center rounded-md border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] text-foreground no-underline outline-none hover:bg-muted hover:text-foreground focus-visible:bg-muted";
 
 export function SportView({
   data,
@@ -296,27 +303,120 @@ export function SportView({
         data-testid="web-sport"
         className="flex min-w-0 flex-col max-[799px]:hidden"
       >
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-          <div className="flex items-center gap-2.5">
-            <Button asChild size="sm" className="px-2 py-1.5">
-              <Link href={`/sport?miesiac=${poprzedni}`} aria-label="Poprzedni">
-                ‹
-              </Link>
-            </Button>
-            <Button asChild size="sm" className="px-2.5 py-1.5">
-              <Link href={`/sport?miesiac=${today.slice(0, 7)}`}>Dziś</Link>
-            </Button>
-            <Button asChild size="sm" className="px-2 py-1.5">
-              <Link href={`/sport?miesiac=${nastepny}`} aria-label="Następny">
-                ›
-              </Link>
-            </Button>
-            <h1 className="m-0 ml-1.5 text-lg font-semibold">Sport</h1>
-            <span className="font-mono text-xs text-muted-foreground">
-              {`${MIESIACE[mies - 1]} ${rok}`}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        {/* .topbar z CSport: tytuł modułu i akcje (.btn, .btn, .btnp — 32 px) */}
+        <ModuleHeader
+          title="Sport"
+          webOnly
+          webAction={
+            <>
+              <Button asChild>
+                <Link href="/sport/szablony">Szablony</Link>
+              </Button>
+              <ActionPopover
+                open={menuSilowni}
+                onOpenChange={setMenuSilowni}
+                align="end"
+                width={220}
+                className="p-1"
+                trigger={<Button>+ Trening siłowy</Button>}
+              >
+                <div className="flex flex-col">
+                  <button
+                    type="button"
+                    className={MENU_ITEM}
+                    onClick={() =>
+                      void rozpocznijSilownie({
+                        date: today,
+                        start: godzinaTeraz(),
+                      })
+                    }
+                  >
+                    Pusty trening
+                  </button>
+                  {data.templates.length > 0 && (
+                    <>
+                      <div className={MENU_SEPARATOR} />
+                      <div className={MENU_LABEL}>Z szablonu</div>
+                      {data.templates.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={MENU_ITEM}
+                          onClick={() =>
+                            void rozpocznijSilownie({
+                              date: today,
+                              start: t.start_time.slice(0, 5),
+                              templateId: t.id,
+                            })
+                          }
+                        >
+                          {t.name}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  <div className={MENU_SEPARATOR} />
+                  <Link
+                    href="/sport/szablony"
+                    className={MENU_ITEM}
+                    onClick={() => setMenuSilowni(false)}
+                  >
+                    Szablony treningów…
+                  </Link>
+                </div>
+              </ActionPopover>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  otworzBieg({ date: today, start: godzinaTeraz() })
+                }
+              >
+                Nowy bieg
+              </Button>
+            </>
+          }
+        />
+
+        <div className="box-border flex w-full flex-col gap-5 px-6 pt-5 pb-6">
+          {/* Wiersz nawigacji: grupa ‹ Dziś › z miesiącem po lewej, filtr .seg po prawej */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="inline-flex">
+                <Button
+                  asChild
+                  icon
+                  className="rounded-r-none focus-visible:z-10"
+                >
+                  <Link
+                    href={`/sport?miesiac=${poprzedni}`}
+                    aria-label="Poprzedni"
+                  >
+                    <ChevronLeft size={16} aria-hidden="true" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  className="-ml-px rounded-none focus-visible:z-10"
+                >
+                  <Link href={`/sport?miesiac=${today.slice(0, 7)}`}>Dziś</Link>
+                </Button>
+                <Button
+                  asChild
+                  icon
+                  className="-ml-px rounded-l-none focus-visible:z-10"
+                >
+                  <Link
+                    href={`/sport?miesiac=${nastepny}`}
+                    aria-label="Następny"
+                  >
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </Link>
+                </Button>
+              </div>
+              <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
+                {`${MIESIACE[mies - 1]} ${rok}`}
+              </span>
+            </div>
             <Segment
               ariaLabel="Aktywność"
               value={filtr}
@@ -331,73 +431,8 @@ export function SportView({
                 { value: "gym", label: "Siłownia" },
               ]}
             />
-            <Button asChild size="sm">
-              <Link href="/sport/szablony">Szablony</Link>
-            </Button>
-            <ActionPopover
-              open={menuSilowni}
-              onOpenChange={setMenuSilowni}
-              align="end"
-              width={220}
-              trigger={<Button size="sm">+ Trening siłowy</Button>}
-            >
-              <div className="flex flex-col gap-px">
-                <button
-                  type="button"
-                  className={OPCJA}
-                  onClick={() =>
-                    void rozpocznijSilownie({
-                      date: today,
-                      start: godzinaTeraz(),
-                    })
-                  }
-                >
-                  Pusty trening
-                </button>
-                {data.templates.length > 0 && (
-                  <>
-                    <div className="mt-1 border-t border-border px-2.5 pt-2 pb-1 font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
-                      Z szablonu
-                    </div>
-                    {data.templates.map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        className={OPCJA}
-                        onClick={() =>
-                          void rozpocznijSilownie({
-                            date: today,
-                            start: t.start_time.slice(0, 5),
-                            templateId: t.id,
-                          })
-                        }
-                      >
-                        {t.name}
-                      </button>
-                    ))}
-                  </>
-                )}
-                <div className="my-1 border-t border-border" />
-                <Link
-                  href="/sport/szablony"
-                  className={OPCJA}
-                  onClick={() => setMenuSilowni(false)}
-                >
-                  Szablony treningów…
-                </Link>
-              </div>
-            </ActionPopover>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => otworzBieg({ date: today, start: godzinaTeraz() })}
-            >
-              Nowy bieg
-            </Button>
           </div>
-        </header>
 
-        <div className="box-border flex w-full flex-col gap-6 p-6">
           <MonthCalendar
             data={data}
             items={widoczne}
@@ -411,17 +446,24 @@ export function SportView({
             suspended={doUsuniecia !== null}
           />
 
-          <div className="-mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-muted-foreground">
-            <span>
-              <span className="mr-1.5 inline-block size-2.5 rounded-[3px] bg-warning align-[-1px]" />
+          {/* Legenda z makiety: kropki 8 px w kolorach danych (te same stałe co chipy kalendarza) */}
+          <div className="-mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="size-2 rounded-full"
+                style={{ background: BIEG }}
+              />
               Bieg
             </span>
-            <span>
-              <span className="mr-1.5 inline-block size-2.5 rounded-[3px] bg-[#404040] align-[-1px]" />
+            <span className="flex items-center gap-1.5">
+              <span
+                className="size-2 rounded-full"
+                style={{ background: SILA }}
+              />
               Siłownia
             </span>
-            <span>
-              <span className="mr-1.5 box-border inline-block size-2.5 rounded-[3px] border border-dashed border-border-strong align-[-2px]" />
+            <span className="flex items-center gap-1.5">
+              <span className="box-border h-2.5 w-3 rounded-[3px] border border-dashed border-muted-foreground" />
               Zaplanowany, bez danych
             </span>
           </div>

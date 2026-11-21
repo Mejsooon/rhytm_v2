@@ -4,7 +4,9 @@
 // statystyki, lista ćwiczeń, notatka oraz akcje. Stoi obok komórki dnia (position: absolute);
 // w prawych kolumnach otwiera się w lewo, w dolnych wierszach w górę.
 import Link from "next/link";
+import { X } from "lucide-react";
 
+import { Button, StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { weekdayOf } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -25,11 +27,10 @@ import {
 
 // Okno biegu (Task 5): edycja sesji albo nowy bieg w danym dniu i godzinie
 export type RunRequest =
-  { sessionId: string } | { date: IsoDate; start: string };
+  | { sessionId: string }
+  | { date: IsoDate; start: string };
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
-const ODZNAKA_BIEGU = "border border-warning-border bg-warning-soft text-warning-foreground";
-const ODZNAKA_SILY = "border border-input bg-muted text-soft-foreground";
 
 export function ItemPopover({
   item,
@@ -206,90 +207,104 @@ export function ItemPopover({
     });
   }
 
-  const akcja =
-    "inline-flex cursor-pointer items-center rounded-md px-3 py-[7px] text-[13px] whitespace-nowrap no-underline outline-none focus-visible:shadow-focus";
-  const glowna = `${akcja} border border-primary bg-primary font-medium text-white hover:bg-primary-hover hover:text-white`;
-
+  // Główna akcja dymka i „Usuń” to Button sm (.btnp sm / .btndo sm z makiety); link dostaje je przez asChild
   return (
     <div
       role="dialog"
       aria-label={item.title}
       className={cn(
-        "absolute z-20 box-border w-[300px] cursor-default rounded-xl border border-input bg-white px-4 py-3.5 text-left text-sm text-foreground shadow-[0_16px_48px_rgba(0,0,0,.16)]",
+        // .pop z makiety: szer. 310 px, promień 12 px, ramka border, cień shadow-lg
+        "absolute z-20 box-border w-[310px] cursor-default rounded-lg border border-border bg-white bg-clip-padding text-left text-sm text-foreground shadow-lg",
         openLeft ? "right-[calc(100%+6px)]" : "left-[calc(100%+6px)]",
         openUp ? "bottom-0" : "top-0",
       )}
     >
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "rounded px-1.5 py-px font-mono text-[10px]",
-            bieg ? ODZNAKA_BIEGU : ODZNAKA_SILY,
-          )}
-        >
-          {bieg ? "BIEG" : "SIŁA"}
-        </span>
-        <span className="font-mono text-[11px] whitespace-nowrap text-muted-foreground">
-          {item.planned ? "zaplanowany" : "wykonany"}
-          {item.showInCalendar && " · w kalendarzu"}
-        </span>
-        <button
-          type="button"
-          aria-label="Zamknij"
-          onClick={onClose}
-          className="ml-auto size-[26px] cursor-pointer rounded-md border border-input bg-white text-xs text-muted-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
-        >
-          ✕
-        </button>
-      </div>
-      <div className="mt-2 text-[15px] font-semibold">{item.title}</div>
-      <div className="mt-0.5 font-mono text-xs text-muted-foreground">{kiedy}</div>
+      <div className="px-4 pt-3.5">
+        <div className="flex items-center gap-2">
+          <StatusBadge tone={bieg ? "orange" : "gray"} size="lg">
+            {bieg ? "BIEG" : "SIŁA"}
+          </StatusBadge>
+          <span className="text-xs whitespace-nowrap text-muted-foreground">
+            {item.planned ? "zaplanowany" : "wykonany"}
+            {item.showInCalendar && " · w kalendarzu"}
+          </span>
+          <Button
+            variant="ghost"
+            size="xs"
+            icon
+            aria-label="Zamknij"
+            onClick={onClose}
+            className="ml-auto"
+          >
+            <X size={14} aria-hidden="true" />
+          </Button>
+        </div>
+        <div className="mt-2 text-base font-semibold">{item.title}</div>
+        <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+          {kiedy}
+        </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border">
-        {statystyki.map((st) => (
-          <div key={st.k} className="bg-white px-2.5 py-2">
-            <div className="font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
-              {st.k}
-            </div>
-            <div className="mt-0.5 font-mono text-sm font-medium">{st.v}</div>
-          </div>
-        ))}
-      </div>
-
-      {lista.length > 0 && (
-        <div className="mt-3 flex flex-col gap-1 text-xs">
-          {lista.map((c, i) => (
-            <div key={i} className="flex gap-2">
-              <span className="min-w-0 flex-1 truncate">{c.n}</span>
-              <span className="font-mono text-muted-foreground">{c.v}</span>
+        {/* .frame>.inner: ramka 1,5 px border-strong, promień 12 px, siatka 2 kolumn */}
+        <div className="mt-3 grid grid-cols-2 overflow-hidden rounded-lg border-[1.5px] border-border-strong bg-white">
+          {statystyki.map((st, j) => (
+            <div
+              key={st.k}
+              className={cn(
+                "px-2.5 py-2",
+                j % 2 === 1 && "border-l border-border",
+                j > 1 && "border-t border-border",
+              )}
+            >
+              <div className="text-[11px] font-medium text-muted-foreground">
+                {st.k}
+              </div>
+              <div className="mt-0.5 text-sm font-semibold tabular-nums">
+                {st.v}
+              </div>
             </div>
           ))}
         </div>
-      )}
 
-      {item.note && (
-        <div className="mt-3 rounded-md bg-panel px-2.5 py-2 text-xs text-soft-foreground">
-          {item.note}
-        </div>
-      )}
+        {lista.length > 0 && (
+          <div className="mt-3 flex flex-col gap-1.5 text-[13px]">
+            {lista.map((c, i) => (
+              <div key={i} className="flex gap-2">
+                <span className="min-w-0 flex-1 truncate">{c.n}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {c.v}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
-      <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+        {item.note && (
+          <div className="mt-3 rounded-lg border border-border bg-black/[.02] px-2.5 py-2 text-[13px]">
+            {item.note}
+          </div>
+        )}
+      </div>
+
+      {/* Stopka z makiety: szare tło, górna kreska, zaokrąglone dolne rogi */}
+      <div className="mt-3.5 flex items-center gap-2 rounded-b-[11px] border-t border-border bg-black/[.025] px-4 py-3">
         {bieg ? (
-          <button
-            type="button"
-            className={glowna}
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onOpenRun({ sessionId: item.sessionId ?? "" })}
           >
             {item.planned ? "Uzupełnij dane" : "Edytuj"}
-          </button>
+          </Button>
         ) : item.sessionId ? (
-          <Link href={`/sport/trening/${item.sessionId}`} className={glowna}>
-            {item.planned ? "Rozpocznij" : "Otwórz trening"}
-          </Link>
+          <Button variant="primary" size="sm" asChild>
+            <Link href={`/sport/trening/${item.sessionId}`}>
+              {item.planned ? "Rozpocznij" : "Otwórz trening"}
+            </Link>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className={glowna}
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() =>
               onStartGym({
                 date: item.date,
@@ -299,15 +314,15 @@ export function ItemPopover({
             }
           >
             Rozpocznij
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="destructive-outline"
+          size="sm"
           onClick={() => onDelete(item)}
-          className={`${akcja} border border-input bg-white text-destructive-foreground hover:bg-panel`}
         >
           Usuń
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -8,16 +8,21 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { PencilIcon } from "lucide-react";
 
 import {
   Button,
+  Card,
+  CardHeader,
+  CardTitle,
   FormDialog,
-  MonoLabel,
   Segment,
+  StatusBadge,
   Switch,
   TextField,
 } from "@/components/controls";
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
+import { cn } from "@/lib/utils";
 import { renameExercise, setExerciseBodyweight } from "./actions";
 import type { ExerciseData } from "./load-sport";
 import {
@@ -197,28 +202,29 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
   }
 
   const pierwsza = sesje[0];
-  const podtytul =
-    sesje.length === 0
-      ? "Brak treningów"
-      : `${plPlural(sesje.length, "trening", "treningi", "treningów")} · od ${pierwsza.dzien.slice(8, 10)}.${pierwsza.dzien.slice(5, 7)}.${pierwsza.dzien.slice(0, 4)}${data.templateName ? ` · w szablonie „${data.templateName}”` : ""}`;
 
   return (
     <div className="flex min-w-0 flex-col">
-      <header className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3 max-[799px]:px-4">
-        <div className="font-mono text-[13px] text-muted-foreground">
+      {/* .topbar z okruszkami .crumb (CExerciseDetail) */}
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
+        <nav
+          aria-label="Okruszki"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground"
+        >
           <Link
             href="/sport"
-            className="text-muted-foreground no-underline hover:text-foreground max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
+            className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"
           >
             Sport
-          </Link>{" "}
-          <span className="text-faint-foreground">/</span> <span>Ćwiczenia</span>{" "}
-          <span className="text-faint-foreground">/</span>{" "}
-          <span className="text-foreground">{exercise.name}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span>Ćwiczenia</span>
+          <span aria-hidden="true">/</span>
+          <span className="font-medium text-foreground">{exercise.name}</span>
+        </nav>
+        <div className="flex flex-wrap items-center gap-2">
           {/* Etykieta obok przełącznika; na telefonie pole stuknięcia ≥ 44 px */}
-          <div className="flex items-center gap-2 text-[13px] text-soft-foreground max-[799px]:min-h-11">
+          <div className="flex items-center gap-2 text-sm max-[799px]:min-h-11">
             <Switch
               checked={zMasaCiala}
               onChange={(v) => void przelaczMaseCiala(v)}
@@ -234,14 +240,13 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
             </span>
           </div>
           <Button
-            size="sm"
-            className="max-[799px]:h-11"
             onClick={() => {
               setNazwa(exercise.name);
               setBlad(null);
               setDialogOtwarty(true);
             }}
           >
+            <PencilIcon aria-hidden="true" className="size-4" />
             Zmień nazwę
           </Button>
         </div>
@@ -252,53 +257,78 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {exercise.name}
           </h1>
-          <p className="m-0 mt-1.5 font-mono text-xs text-muted-foreground">
-            {podtytul}
-          </p>
+          {/* Podtytuł jako odznaki .bdg lg: liczba treningów, data pierwszego, szablon */}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {sesje.length === 0 ? (
+              <StatusBadge tone="gray" size="lg">
+                Brak treningów
+              </StatusBadge>
+            ) : (
+              <>
+                <StatusBadge tone="gray" size="lg">
+                  {plPlural(sesje.length, "trening", "treningi", "treningów")}
+                </StatusBadge>
+                <StatusBadge tone="gray" size="lg" className="tabular-nums">
+                  {`od ${pierwsza.dzien.slice(8, 10)}.${pierwsza.dzien.slice(5, 7)}.${pierwsza.dzien.slice(0, 4)}`}
+                </StatusBadge>
+                {data.templateName && (
+                  <StatusBadge tone="outline" size="lg">
+                    {`w szablonie „${data.templateName}”`}
+                  </StatusBadge>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-border bg-border max-[799px]:grid-cols-2">
-          <div className="bg-white px-[18px] py-4">
-            <MonoLabel>Szac. 1RM</MonoLabel>
-            <div className="mt-2 font-mono text-[26px]">
+        <div className="grid grid-cols-4 gap-3 max-[799px]:grid-cols-2">
+          <Card className="min-w-0 px-[18px] py-4">
+            <span className="block text-xs font-medium text-muted-foreground">
+              Szac. 1RM
+            </span>
+            <div className="mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
               {najlepszy1rm === null ? (
                 "—"
               ) : (
                 <>
                   {kg(najlepszy1rm)}{" "}
-                  <span className="text-sm text-muted-foreground">kg</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    kg
+                  </span>
                 </>
               )}
             </div>
-          </div>
-          <div className="bg-white px-[18px] py-4">
-            <MonoLabel>Najcięższa seria</MonoLabel>
-            <div className="mt-2 font-mono text-[26px]">
+          </Card>
+          <Card className="min-w-0 px-[18px] py-4">
+            <span className="block text-xs font-medium text-muted-foreground">
+              Najcięższa seria
+            </span>
+            <div className="mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
               {najciezsza === null
                 ? "—"
                 : `${formatKg(najciezsza.kg, zMasaCiala)} × ${najciezsza.reps}`}
             </div>
-          </div>
-          <div className="bg-white px-[18px] py-4">
-            <MonoLabel>Najwięcej powt.</MonoLabel>
-            <div className="mt-2 font-mono text-[26px]">
+          </Card>
+          <Card className="min-w-0 px-[18px] py-4">
+            <span className="block text-xs font-medium text-muted-foreground">
+              Najwięcej powt.
+            </span>
+            <div className="mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
               {najwiecejPowt === null
                 ? "—"
                 : `${formatKg(najwiecejPowt.kg, zMasaCiala)} × ${najwiecejPowt.reps}`}
             </div>
-          </div>
-          <div className="bg-white px-[18px] py-4">
-            <MonoLabel>8 tygodni</MonoLabel>
+          </Card>
+          <Card className="min-w-0 px-[18px] py-4">
+            <span className="block text-xs font-medium text-muted-foreground">
+              8 tygodni
+            </span>
             <div
-              className="mt-2 font-mono text-[26px]"
-              style={{
-                color:
-                  zmiana === null || zmiana === 0
-                    ? undefined
-                    : zmiana > 0
-                      ? "#15803d"
-                      : "#b91c1c",
-              }}
+              className={cn(
+                "mt-2 text-[26px] font-semibold tracking-[-0.02em] tabular-nums",
+                zmiana !== null && zmiana > 0 && "text-success",
+                zmiana !== null && zmiana < 0 && "text-destructive-foreground",
+              )}
             >
               {zmiana === null
                 ? "—"
@@ -306,17 +336,14 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
                   ? "0 kg"
                   : `${zmiana > 0 ? "+" : "−"}${formatKg(Math.abs(zmiana))} kg`}
             </div>
-          </div>
+          </Card>
         </div>
 
-        <section
-          aria-labelledby="wykres-1rm"
-          className="rounded-lg border border-border bg-white p-4"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <h2 id="wykres-1rm" className="m-0 text-[15px] font-semibold">
+        <Card role="region" aria-labelledby="wykres-1rm">
+          <CardHeader className="items-center">
+            <CardTitle as="h2" id="wykres-1rm">
               Szacowany 1RM
-            </h2>
+            </CardTitle>
             <Segment
               ariaLabel="Zakres wykresu"
               value={okno}
@@ -326,128 +353,169 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
                 { value: "8t", label: "8 tyg." },
               ]}
             />
-          </div>
-          {punkty.length === 0 ? (
-            <p className="m-0 mt-4 text-[13px] text-muted-foreground">
-              Brak danych w tym okresie.
-            </p>
-          ) : (
-            <svg
-              viewBox="0 0 620 200"
-              width="100%"
-              height="220"
-              role="img"
-              aria-label={`Szacowany 1RM: od ${kg(punkty[0].v as number)} do ${kg(punkty[punkty.length - 1].v as number)} kg w ${plPlural(punkty.length, "sesji", "sesjach", "sesjach")}`}
-              className="mt-2.5 block"
-            >
-              <line x1="0" y1="170" x2="620" y2="170" stroke="#eaeaea" />
-              <line x1="0" y1="95" x2="620" y2="95" stroke="#f0f0f0" />
-              <line x1="0" y1="20" x2="620" y2="20" stroke="#f0f0f0" />
-              {[170, 95, 20].map((y) => (
-                <text
-                  key={y}
-                  x="600"
-                  y={y - 4}
-                  fontSize="10"
-                  fill="#6b6b6b"
-                  fontFamily="Geist Mono, ui-monospace, monospace"
-                  textAnchor="end"
-                >
-                  {formatKg(
-                    Math.round(dolna + ((170 - y) / 150) * (gorna - dolna)),
-                  )}
-                </text>
-              ))}
-              <polyline
-                points={punkty
-                  .map(
-                    (p, i) =>
-                      `${px(i).toFixed(1)},${py(p.v as number).toFixed(1)}`,
-                  )
-                  .join(" ")}
-                fill="none"
-                stroke="#171717"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-              {punkty.map((p, i) => (
-                <circle
-                  key={p.id}
-                  data-testid="punkt-wykresu"
-                  cx={px(i)}
-                  cy={py(p.v as number)}
-                  r={p.rekord ? 5 : 3}
-                  fill={p.rekord ? "#15803d" : "#171717"}
-                >
-                  <title>{`${etykietaDnia(p.dzien)}: ${kg(p.v as number)} kg (seria ${p.seria})`}</title>
-                </circle>
-              ))}
-            </svg>
-          )}
-        </section>
-
-        <section
-          aria-labelledby="historia-cwiczenia"
-          className="overflow-x-auto rounded-lg border border-border bg-white"
-        >
-          <div className="border-b border-border px-4 py-3">
-            <h2
-              id="historia-cwiczenia"
-              className="m-0 text-[15px] font-semibold"
-            >
-              Historia
-            </h2>
-          </div>
-          {wiersze.length === 0 ? (
-            <p className="m-0 px-4 py-3.5 text-[13px] text-muted-foreground">
-              Brak zrobionych serii tego ćwiczenia.
-            </p>
-          ) : (
-            <table className="w-full min-w-[520px] border-collapse text-[13px]">
-              <thead>
-                <tr className="bg-panel">
-                  {["Data", "Najlepsza seria", "Szac. 1RM"].map((t) => (
-                    <th
-                      key={t}
-                      scope="col"
-                      className="border-b border-border px-3.5 py-2.5 text-left font-medium whitespace-nowrap text-muted-foreground"
-                    >
-                      {t}
-                    </th>
-                  ))}
-                  <th
-                    scope="col"
-                    className="border-b border-border px-3.5 py-2.5"
+          </CardHeader>
+          <div className="px-6 pt-3 pb-5">
+            {punkty.length === 0 ? (
+              <p className="m-0 text-sm text-muted-foreground">
+                Brak danych w tym okresie.
+              </p>
+            ) : (
+              <svg
+                viewBox="0 0 620 200"
+                width="100%"
+                height="220"
+                role="img"
+                aria-label={`Szacowany 1RM: od ${kg(punkty[0].v as number)} do ${kg(punkty[punkty.length - 1].v as number)} kg w ${plPlural(punkty.length, "sesji", "sesjach", "sesjach")}`}
+                className="block"
+              >
+                {/* Siatka jak w makiecie: dół pełny, dwie linie kreskowane */}
+                <line
+                  x1="0"
+                  y1="170"
+                  x2="620"
+                  y2="170"
+                  stroke="rgba(0,0,0,.08)"
+                />
+                <line
+                  x1="0"
+                  y1="110"
+                  x2="620"
+                  y2="110"
+                  stroke="rgba(0,0,0,.05)"
+                  strokeDasharray="4 4"
+                />
+                <line
+                  x1="0"
+                  y1="50"
+                  x2="620"
+                  y2="50"
+                  stroke="rgba(0,0,0,.05)"
+                  strokeDasharray="4 4"
+                />
+                {[170, 110, 50].map((y) => (
+                  <text
+                    key={y}
+                    x="612"
+                    y={y - 4}
+                    fontSize="11"
+                    fill="#686868"
+                    fontFamily="Inter, sans-serif"
+                    textAnchor="end"
                   >
-                    <span className="sr-only">Rekord</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {wiersze.map((s) => (
-                  <tr key={s.id}>
-                    <td className="border-b border-border px-3.5 py-[11px] font-mono text-soft-foreground">
-                      {etykietaDnia(s.dzien)}
-                    </td>
-                    <td className="border-b border-border px-3.5 py-[11px] font-mono">
-                      {s.seria}
-                    </td>
-                    <td className="border-b border-border px-3.5 py-[11px] font-mono">
-                      {s.v === null ? "—" : `${kg(s.v)} kg`}
-                    </td>
-                    <td className="border-b border-border px-3.5 py-[11px]">
-                      {s.rekord && (
-                        <span className="rounded border border-success-border bg-success-soft px-1.5 py-px font-mono text-[10px] text-success">
-                          REKORD
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+                    {formatKg(
+                      Math.round(dolna + ((170 - y) / 150) * (gorna - dolna)),
+                    )}
+                  </text>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+                {/* Obszar pod linią (od dwóch punktów) */}
+                {punkty.length > 1 && (
+                  <polygon
+                    points={`${px(0).toFixed(1)},170 ${punkty
+                      .map(
+                        (p, i) =>
+                          `${px(i).toFixed(1)},${py(p.v as number).toFixed(1)}`,
+                      )
+                      .join(" ")} ${px(punkty.length - 1).toFixed(1)},170`}
+                    fill="rgba(38,38,38,.04)"
+                  />
+                )}
+                <polyline
+                  points={punkty
+                    .map(
+                      (p, i) =>
+                        `${px(i).toFixed(1)},${py(p.v as number).toFixed(1)}`,
+                    )
+                    .join(" ")}
+                  fill="none"
+                  stroke="#262626"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+                {punkty.map((p, i) => (
+                  <circle
+                    key={p.id}
+                    data-testid="punkt-wykresu"
+                    cx={px(i)}
+                    cy={py(p.v as number)}
+                    r={p.rekord ? 5 : 3.5}
+                    fill={p.rekord ? "#15803d" : "#fff"}
+                    stroke={p.rekord ? "#fff" : "#262626"}
+                    strokeWidth="2"
+                  >
+                    <title>{`${etykietaDnia(p.dzien)}: ${kg(p.v as number)} kg (seria ${p.seria})`}</title>
+                  </circle>
+                ))}
+              </svg>
+            )}
+          </div>
+        </Card>
+
+        <Card
+          role="region"
+          aria-labelledby="historia-cwiczenia"
+          className="overflow-hidden"
+        >
+          <CardHeader className="pb-3.5">
+            <CardTitle as="h2" id="historia-cwiczenia">
+              Historia
+            </CardTitle>
+          </CardHeader>
+          <div className="overflow-x-auto border-t border-border">
+            {wiersze.length === 0 ? (
+              <p className="m-0 px-6 py-3.5 text-sm text-muted-foreground">
+                Brak zrobionych serii tego ćwiczenia.
+              </p>
+            ) : (
+              <table className="w-full min-w-[520px] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    {["Data", "Najlepsza seria", "Szac. 1RM"].map((t, i) => (
+                      <th
+                        key={t}
+                        scope="col"
+                        className={cn(
+                          "h-10 border-b border-border px-3 text-left font-medium whitespace-nowrap text-muted-foreground",
+                          i === 0 && "pl-6",
+                        )}
+                      >
+                        {t}
+                      </th>
+                    ))}
+                    <th
+                      scope="col"
+                      className="h-10 border-b border-border pr-6 pl-3"
+                    >
+                      <span className="sr-only">Rekord</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wiersze.map((s) => (
+                    <tr
+                      key={s.id}
+                      className="group/wiersz hover:bg-black/[.02]"
+                    >
+                      <td className="h-11 border-b border-border pr-3 pl-6 text-soft-foreground tabular-nums group-last/wiersz:border-b-0">
+                        {etykietaDnia(s.dzien)}
+                      </td>
+                      <td className="h-11 border-b border-border px-3 font-medium tabular-nums group-last/wiersz:border-b-0">
+                        {s.seria}
+                      </td>
+                      <td className="h-11 border-b border-border px-3 tabular-nums group-last/wiersz:border-b-0">
+                        {s.v === null ? "—" : `${kg(s.v)} kg`}
+                      </td>
+                      <td className="h-11 border-b border-border pr-6 pl-3 text-right group-last/wiersz:border-b-0">
+                        {s.rekord && (
+                          <StatusBadge tone="green">REKORD</StatusBadge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </Card>
       </div>
 
       <FormDialog
