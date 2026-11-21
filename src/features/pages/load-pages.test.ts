@@ -57,13 +57,29 @@ describe("loadPages", () => {
     );
     await loadPages();
     expect(rpc).toHaveBeenCalledWith("claim_pending_pages", {
-      p_available: ["Books", "Projects", "Websites"],
+      p_available: ["Books", "Projects", "Websites", "Passwords"],
     });
     const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
     expect(utworzenia).toHaveLength(1);
     expect(utworzenia[0][1]).toMatchObject({
       p_title: "Projects",
       p_template_key: "projects",
+    });
+  });
+
+  it("onboarding z Passwords tworzy stronę passwords", async () => {
+    rpc.mockImplementation(async (nazwa: string) =>
+      nazwa === "claim_pending_pages"
+        ? { data: ["Passwords"], error: null }
+        : { data: STRONA, error: null },
+    );
+    await loadPages();
+    const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
+    expect(utworzenia).toHaveLength(1);
+    expect(utworzenia[0][1]).toMatchObject({
+      p_title: "Passwords",
+      p_icon: "🔒",
+      p_template_key: "passwords",
     });
   });
 

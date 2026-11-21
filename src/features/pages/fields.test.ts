@@ -225,3 +225,30 @@ describe("nextOptionId", () => {
     expect(nextOptionId([], "a")).toBeNull();
   });
 });
+
+describe("Sekret", () => {
+  const wartosc = { v: 1, g: 1, iv: "A".repeat(16), ct: "B".repeat(24) };
+
+  it("meta: ikona KeyRound i etykieta Sekret", () => {
+    expect(FIELD_TYPE_META.secret.label).toBe("Sekret");
+    expect(FIELD_TYPE_META.secret.Icon).toBeTruthy();
+  });
+
+  it("normalizeValue: null albo SecretValue, inaczej null", () => {
+    expect(normalizeValue(pole("secret"), wartosc)).toEqual(wartosc);
+    expect(normalizeValue(pole("secret"), null)).toBeNull();
+    expect(normalizeValue(pole("secret"), "tekst")).toBeNull();
+    expect(normalizeValue(pole("secret"), { ...wartosc, v: 2 })).toBeNull();
+    expect(normalizeValue(pole("secret"), 5)).toBeNull();
+  });
+
+  it("formatValue nigdy nie zwraca szyfrogramu; convertValue z i na secret daje null", () => {
+    expect(formatValue(pole("secret"), wartosc)).toBe("");
+    expect(convertValue(pole("secret"), "text", wartosc, [])).toBeNull();
+    expect(convertValue(pole("text"), "secret", "abc", [])).toBeNull();
+  });
+
+  it("edytor nie ma typu Sekret", () => {
+    expect(EDITOR_TYPES.some((t) => (t.type as string) === "secret")).toBe(false);
+  });
+});

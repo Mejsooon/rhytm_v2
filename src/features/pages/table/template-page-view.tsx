@@ -34,6 +34,7 @@ const NAZWA_SZABLONU = {
   books: "Book tracker",
   projects: TEMPLATES.projects.name,
   websites: TEMPLATES.websites.name,
+  passwords: TEMPLATES.passwords.name,
 };
 
 // Zastępczy blok, gdy strona nie ma tabeli (stała — nowy obiekt w renderze zapętliłby resync magazynu)

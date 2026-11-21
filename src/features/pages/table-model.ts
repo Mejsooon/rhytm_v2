@@ -104,6 +104,9 @@ export function operatorsFor(type: FieldType): FilterCond["op"][] {
       return ["contains", "empty"];
     case "date":
       return ["before", "after", "empty"];
+    // Sekret: serwer i widok widzą tylko szyfrogram, więc można filtrować jedynie puste / niepuste
+    case "secret":
+      return ["empty", "not_empty"];
   }
 }
 
@@ -122,6 +125,8 @@ export function visibleRows(
   for (const cond of filtry) {
     const field = poId.get(cond.field_id);
     if (!field) continue;
+    // Sekret: poza pusty / niepusty żaden operator nie ma sensu (nic nie porównujemy z szyfrogramem)
+    if (field.type === "secret" && cond.op !== "empty" && cond.op !== "not_empty") continue;
     wynik = wynik.filter((r) => {
       const v = normalizeValue(field, r.values[field.id]);
       switch (cond.op) {
@@ -158,7 +163,8 @@ export function visibleRows(
     });
   }
 
-  const klucze = settings.sort.filter((k) => poId.has(k.field_id));
+  // Sort po Sekrecie jest niedostępny: takie klucze są pomijane (zostaje kolejność position)
+  const klucze = settings.sort.filter((k) => poId.has(k.field_id) && poId.get(k.field_id)?.type !== "secret");
   return wynik.slice().sort((a, b) => {
     for (const k of klucze) {
       const field = poId.get(k.field_id) as PageField;
@@ -200,6 +206,9 @@ export function summaryOptions(type: FieldType): SummaryKind[] {
     case "select":
     case "status":
       return ["none", "count", "filled", "empty"];
+    // Sekret: tylko „wypełnione” / „puste”
+    case "secret":
+      return ["none", "filled", "empty"];
   }
 }
 

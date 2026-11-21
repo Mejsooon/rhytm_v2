@@ -415,3 +415,100 @@ describe("loadTrash", () => {
     });
   });
 });
+
+// ---------- Sekret (sejf) ----------
+
+describe("pole Sekret", () => {
+  const POLE_SEKRET = "a3000000-0000-4000-8000-000000000009";
+  const polaZSekretem = [
+    ...pola,
+    { id: POLE_SEKRET, name: "Hasło", type: "secret", config: {}, position: 2, is_title: false },
+  ];
+  const SEKRET = { v: 1 as const, g: 2, iv: "A".repeat(16), ct: "A".repeat(24) };
+  const NIEZALOGOWANY = "Nie zapisano. Sejf musi być odblokowany.";
+  const INNA_KARTA = "Sejf zmienił się w innej karcie. Odblokuj go ponownie.";
+
+  beforeEach(() => {
+    tables.page_fields = fakeTable({ data: polaZSekretem });
+    tables.vaults = fakeTable({ single: { status: "active", generation: 2 } });
+  });
+
+  it("updateRow odrzuca string w polu secret", async () => {
+    const w = await updateRow(WIERSZ, { [POLE_SEKRET]: "tajne-haslo" });
+    expect(w).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+
+  it("updateRow odrzuca SecretValue z g różnym od vaults.generation", async () => {
+    const w = await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 1 } });
+    expect(w).toEqual({ ok: false, message: INNA_KARTA });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+
+  it("updateRow odrzuca SecretValue, gdy sejf nie jest aktywny", async () => {
+    tables.vaults = fakeTable({ single: null });
+    const w = await updateRow(WIERSZ, { [POLE_SEKRET]: SEKRET });
+    expect(w).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+
+  it("updateRow przyjmuje null i SecretValue z aktualnym g", async () => {
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: SEKRET })).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenLastCalledWith({
+      values: { [POLE_TYTUL]: "Dune", [POLE_SEKRET]: SEKRET },
+    });
+    // null nie wymaga nawet odczytu sejfu
+    tables.vaults = fakeTable({ single: null });
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: null })).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenLastCalledWith({
+      values: { [POLE_TYTUL]: "Dune", [POLE_SEKRET]: null },
+    });
+  });
+
+  it("addRow — to samo dla secret", async () => {
+    tables.page_rows = fakeTable({ single: { id: WIERSZ, values: {}, position: 0, deleted_at: null } });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: "tajne" })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 9 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+
+    expect((await addRow(BLOK, { [POLE_SEKRET]: SEKRET })).ok).toBe(true);
+    expect(tables.page_rows.insert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ values: { [POLE_TYTUL]: "Bez nazwy", [POLE_SEKRET]: SEKRET } }),
+    );
+    expect((await addRow(BLOK, { [POLE_SEKRET]: null })).ok).toBe(true);
+  });
+
+  it("changeFieldType z i na secret zwraca błąd", async () => {
+    // Na secret
+    tables.page_fields = fakeTable({ single: { is_title: false, type: "text" } });
+    expect(await changeFieldType(POLE_LICZBA, "secret", {}, {})).toEqual({
+      ok: false,
+      message: "Nie można zmienić typu pola Sekret.",
+    });
+    // Z secret
+    tables.page_fields = fakeTable({ single: { is_title: false, type: "secret" } });
+    expect(await changeFieldType(POLE_SEKRET, "text", {}, {})).toEqual({
+      ok: false,
+      message: "Nie można zmienić typu pola Sekret.",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("addField secret na stronie bez szablonu zwraca błąd", async () => {
+    const BLAD = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
+    for (const klucz of [null, "empty"]) {
+      tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: klucz } } });
+      const w = await addField(BLOK, { name: "Hasło", type: "secret", config: {} });
+      expect(w).toEqual({ ok: false, message: BLAD });
+    }
+    expect(tables.page_fields.insert).not.toHaveBeenCalled();
+
+    // Strona z szablonu przyjmuje pole Sekret
+    tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: "passwords" } } });
+    tables.page_fields = fakeTable({
+      single: { id: POLE_SEKRET, name: "Hasło", type: "secret", config: {}, position: 3, is_title: false },
+    });
+    const w = await addField(BLOK, { name: "Hasło", type: "secret", config: {} });
+    expect(w.ok).toBe(true);
+  });
+});

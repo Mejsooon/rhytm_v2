@@ -26,11 +26,13 @@ export function NewPageView() {
   const szablon = TEMPLATES[wybrany];
   const nazwa = nazwaWlasna ?? szablon.name;
   const szukane = fraza.trim().toLowerCase();
+  // Passwords powstaje z onboardingu (sejf), nie z wyboru szablonu na tej liście
   const widoczne = TEMPLATE_KEYS.filter(
     (k) =>
-      szukane === "" ||
+      k !== "passwords" &&
+      (szukane === "" ||
       TEMPLATES[k].name.toLowerCase().includes(szukane) ||
-      TEMPLATES[k].desc.toLowerCase().includes(szukane),
+      TEMPLATES[k].desc.toLowerCase().includes(szukane)),
   );
 
   React.useEffect(() => {

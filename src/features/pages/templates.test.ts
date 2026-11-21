@@ -164,6 +164,32 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
   });
 
   it("mapuje nazwy z onboardingu", () => {
-    expect(PENDING_TO_TEMPLATE).toEqual({ Books: "books", Projects: "projects", Websites: "websites" });
+    expect(PENDING_TO_TEMPLATE).toEqual({
+      Books: "books",
+      Projects: "projects",
+      Websites: "websites",
+      Passwords: "passwords",
+    });
+  });
+});
+
+describe("szablon passwords", () => {
+  it("szablon passwords ma Serwis/Login/Hasło(secret)/URL", () => {
+    expect(TEMPLATES.passwords.name).toBe("Passwords");
+    expect(TEMPLATES.passwords.icon).toBe("🔒");
+    const [blok] = buildTemplateBlocks("passwords", (() => {
+      let n = 0;
+      return () => `id-${++n}`;
+    })());
+    expect(blok.fields.map((f) => [f.name, f.type, f.is_title])).toEqual([
+      ["Serwis", "text", true],
+      ["Login", "text", false],
+      ["Hasło", "secret", false],
+      ["URL", "url", false],
+    ]);
+    expect(blok.fields[0].config.empty_label).toBe("Bez nazwy");
+    const ustawienia = blok.content.settings as { pinned_cards: unknown[]; column_summaries: object };
+    expect(ustawienia.pinned_cards).toEqual([]);
+    expect(ustawienia.column_summaries).toEqual({});
   });
 });

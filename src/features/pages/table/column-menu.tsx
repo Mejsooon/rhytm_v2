@@ -192,7 +192,8 @@ export function ColumnMenu({
           {podmenu === "typ" && (
             <div role="menu" aria-label="Typ pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
               <div className={MENU_LABEL}>Typ pola</div>
-              {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
+              {/* Sekret wybiera się tylko przy dodawaniu pola; zmiana typu z i na Sekret jest zablokowana */}
+              {(Object.keys(FIELD_TYPE_META) as FieldType[]).filter((t) => t !== "secret").map((t) => (
                 <button
                   key={t}
                   type="button"

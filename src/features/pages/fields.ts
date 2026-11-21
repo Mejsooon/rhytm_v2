@@ -6,6 +6,7 @@ import {
   CircleDot,
   Contrast,
   Hash,
+  KeyRound,
   Link,
   SquareCheck,
   Star,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import type { IsoDate } from "@/components/controls";
+import { isSecretValue, type SecretValue } from "@/features/vault/crypto";
 
 export type FieldType =
   | "text"
@@ -22,7 +24,8 @@ export type FieldType =
   | "select"
   | "status"
   | "date"
-  | "rating";
+  | "rating"
+  | "secret";
 
 export type FieldOption = { id: string; label: string; color: string };
 
@@ -44,7 +47,8 @@ export type PageField = {
   isTitle: boolean;
 };
 
-export type CellValue = string | number | boolean | null;
+// Sekret to szyfrogram {v, g, iv, ct}; serwer i tabela nigdy nie widzą tekstu jawnego
+export type CellValue = string | number | boolean | SecretValue | null;
 
 // Ikony nagłówków i etykiety z makiet (AddField). Icon to ikona lucide z makiet (web);
 // icon to dawny znak, który zostaje dla telefonu (mobile/ czyta go bez zmian wyglądu).
@@ -60,6 +64,7 @@ export const FIELD_TYPE_META: Record<
   status: { icon: "◐", Icon: Contrast, label: "Status" },
   date: { icon: "▦", Icon: Calendar, label: "Data" },
   rating: { icon: "★", Icon: Star, label: "Ocena" },
+  secret: { icon: "🔑", Icon: KeyRound, label: "Sekret" },
 };
 
 // „Typ pola” w edytorze (EmptyPage): Wybór = status z kolorowymi plakietkami
@@ -134,6 +139,8 @@ export function normalizeValue(field: PageField, raw: unknown): CellValue {
     }
     case "date":
       return typeof raw === "string" && dniOdEpoki(raw) !== null ? raw : null;
+    case "secret":
+      return isSecretValue(raw) ? raw : null;
     case "select":
     case "status": {
       if (typeof raw !== "string") return null;
@@ -148,6 +155,9 @@ export function formatValue(field: PageField, raw: unknown): string {
   const v = normalizeValue(field, raw);
   if (v === null) return "";
   switch (field.type) {
+    // Szyfrogram nigdy nie trafia do tekstu komórki
+    case "secret":
+      return "";
     case "text":
       return String(v);
     case "number": {
@@ -182,6 +192,8 @@ export function convertValue(
 ): CellValue {
   const v = normalizeValue(from, raw);
   if (v === null) return null;
+  // Typu Sekret nie zmienia się w żadną stronę (szyfrogramu nie da się przeliczyć)
+  if (from.type === "secret" || to === "secret") return null;
 
   // Tekstowa postać wartości źródłowej
   let tekst: string;

@@ -4,7 +4,7 @@ import { PALETA } from "./fields";
 import type { FieldConfig, FieldType } from "./fields";
 import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
 
-export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites"] as const;
+export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites", "passwords"] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 // Dokładnie kształt jsonb, który przyjmuje create_page(p_title, p_icon, p_template_key, p_blocks)
@@ -229,6 +229,22 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
     },
   },
+  // Hasła: pola z makiety CVault; Hasło to Sekret (szyfrogram), bez kart i podsumowań
+  passwords: {
+    name: "Passwords",
+    icon: "🔒",
+    desc: "Hasła szyfrowane w przeglądarce. Serwer widzi tylko szyfrogram.",
+    extra: "Hasło główne ustawisz przy pierwszym otwarciu.",
+    fields: [
+      { key: "service", name: "Serwis", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
+      { key: "login", name: "Login", type: "text" },
+      { key: "password", name: "Hasło", type: "secret" },
+      { key: "url", name: "URL", type: "url" },
+    ],
+    cards: [],
+    sort: [],
+    summaries: {},
+  },
 };
 
 // Nazwy z profiles.pending_pages (onboarding) -> szablon
@@ -236,6 +252,7 @@ export const PENDING_TO_TEMPLATE: Record<string, TemplateKey> = {
   Books: "books",
   Projects: "projects",
   Websites: "websites",
+  Passwords: "passwords",
 };
 
 // Blok tabeli z szablonu: pola z nowymi id, a ustawienia (sort, karty, podsumowania) wskazują te id

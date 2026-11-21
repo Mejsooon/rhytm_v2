@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { formatValue } from "./fields";
 import type { PageField } from "./fields";
 import {
   computeCard,
@@ -470,5 +471,43 @@ describe("editorFooter", () => {
     expect(editorFooter(num, rows)).toBe("15,5");
     expect(editorFooter(chk, rows)).toBe("2 / 3");
     expect(editorFooter(txt, rows)).toBeNull();
+  });
+});
+
+describe("pole Sekret w tabeli", () => {
+  const sekret: PageField = { id: "s", name: "Hasło", type: "secret", config: {}, position: 1, isTitle: false };
+  const tytul: PageField = { id: "t", name: "Serwis", type: "text", config: {}, position: 0, isTitle: true };
+  const fields = [tytul, sekret];
+  const wartosc = { v: 1, g: 1, iv: "A".repeat(16), ct: "B".repeat(24) };
+  const rows: PageRow[] = [
+    { id: "r1", values: { t: "b", s: wartosc }, position: 0, deletedAt: null },
+    { id: "r2", values: { t: "a", s: null }, position: 1, deletedAt: null },
+    { id: "r3", values: { t: "c", s: "tekst jawny" }, position: 2, deletedAt: null },
+  ];
+
+  it("filtr/sort/podsumowanie: secret tylko pusty/niepusty, cellText pusty", () => {
+    expect(operatorsFor("secret")).toEqual(["empty", "not_empty"]);
+    expect(summaryOptions("secret")).toEqual(["none", "filled", "empty"]);
+
+    const pusty = visibleRows(fields, rows, { ...bezUstawien, filters: [{ field_id: "s", op: "empty" }] });
+    expect(pusty.map((r) => r.id)).toEqual(["r2", "r3"]);
+    const niepusty = visibleRows(fields, rows, { ...bezUstawien, filters: [{ field_id: "s", op: "not_empty" }] });
+    expect(niepusty.map((r) => r.id)).toEqual(["r1"]);
+    // Inne operatory są ignorowane — nic nie jest porównywane z szyfrogramem
+    const zaDuzo = visibleRows(fields, rows, {
+      ...bezUstawien,
+      filters: [{ field_id: "s", op: "contains", value: "B" }],
+    });
+    expect(zaDuzo).toHaveLength(3);
+
+    // Sort po Sekrecie nie zmienia kolejności
+    const posortowane = visibleRows(fields, rows, { ...bezUstawien, sort: [{ field_id: "s", dir: "desc" }] });
+    expect(posortowane.map((r) => r.id)).toEqual(["r1", "r2", "r3"]);
+
+    expect(summarize(sekret, rows, { kind: "filled" }, TODAY)).toBe("1 wypełniony");
+    expect(summarize(sekret, rows, { kind: "empty" }, TODAY)).toBe("2 puste");
+
+    expect(formatValue(sekret, wartosc)).toBe("");
+    expect(formatValue(sekret, null)).toBe("");
   });
 });
