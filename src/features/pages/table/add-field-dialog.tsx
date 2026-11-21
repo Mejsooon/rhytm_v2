@@ -20,6 +20,10 @@ const TYPY: { type: FieldType; icon: string; name: string; desc: string; defName
   { type: "rating", icon: "★", name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
 
+// Wybrany typ: biała pigułka z cieniem; fokus zostawia cień i dodaje obrys
+const WYBRANY_TYP =
+  "bg-white shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] hover:bg-white focus-visible:shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid";
+
 // Gotowe opcje Statusu (kolory jak w szablonach: szary, niebieski, zielony)
 const OPCJE_STATUSU = [
   { label: "Do zrobienia", color: PALETA[7] },
@@ -133,7 +137,7 @@ export function AddFieldDialog({
               className={cn(
                 "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-0 px-2 text-left text-sm text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:min-h-11",
                 t.type === typ
-                  ? "bg-white shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] hover:bg-white focus-visible:shadow-[0_0_0_1px_rgba(0,0,0,.1),0_1px_2px_rgba(0,0,0,.05)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
+                  ? WYBRANY_TYP
                   : "bg-transparent",
               )}
             >

@@ -96,17 +96,15 @@ describe("menu kolumny", () => {
     expect(within(menu).getByRole("menuitem", { name: /^Podsumowanie/ })).toHaveClass("bg-accent");
   });
 
-  it("menu kolumny przy prawej krawędzi otwiera się do środka", async () => {
+  // Przesuwanie do środka przy krawędzi okna sprawdza action-popover.test.tsx (avoidCollisions, collisionPadding)
+  it("menu ostatniej kolumny otwiera się pod nagłówkiem w dymku Radixa", async () => {
     const user = userEvent.setup();
     render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
-    // Ostatnia kolumna tabeli: dymek pod nagłówkiem, wyrównany do lewej krawędzi przycisku i obsługiwany przez
-    // wykrywanie kolizji Radixa (przesuwa się do środka, zamiast wychodzić poza okno)
     const zMenu = screen.getAllByRole("columnheader").filter((h) => within(h).queryByRole("button"));
     await user.click(within(zMenu[zMenu.length - 1]).getByRole("button"));
     const dymek = screen.getByRole("dialog", { name: /^Kolumna / });
     expect(dymek.parentElement).toHaveAttribute("data-radix-popper-content-wrapper");
     expect(dymek).toHaveAttribute("data-side", "bottom");
-    expect(dymek).toHaveAttribute("data-align", "start");
   });
 
   it("pole tytułowe: Typ i Usuń pole są wyszarzone", async () => {
