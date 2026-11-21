@@ -235,4 +235,43 @@ describe("CategoriesCard", () => {
     rerender(<CategoriesCard categories={kategorie.slice(0, 1)} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
+
+  it("systemowa jako StatusBadge", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    const odznaka = within(wiersz("Sport")).getByText("systemowa");
+    expect(odznaka).toHaveClass("bg-muted", "font-medium", "rounded-sm");
+    expect(odznaka.className).not.toContain("font-mono");
+  });
+
+  it("akcje wyrównane: strzałki kolejności w stałym miejscu w każdym wierszu", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    for (const nazwa of ["Nauka", "Praca", "Sport"]) {
+      const li = wiersz(nazwa);
+      // Slot strzałek ma stałą szerokość, także gdy strzałki brak (pierwsza/ostatnia)
+      const slot = li.querySelector('[data-slot="kolejnosc"]');
+      expect(slot).not.toBeNull();
+      expect(slot).toHaveClass("w-[68px]", "flex-none");
+      expect(li.querySelector('[data-slot="ukryj"]')).toHaveClass("w-16");
+      expect(li.querySelector('[data-slot="usun"]')).toHaveClass("w-16");
+    }
+    // Przyciski domyślnego rozmiaru (md), „Usuń” jak w karcie Profil
+    expect(
+      within(wiersz("Praca")).getByRole("button", { name: "Usuń" }),
+    ).toHaveClass("h-8", "text-destructive-foreground", "border-input");
+    expect(
+      within(wiersz("Praca")).getByRole("button", { name: "Ukryj" }),
+    ).toHaveClass("h-8");
+  });
+
+  it("długa nazwa kategorii skraca się", () => {
+    const dluga = "Bardzo długa nazwa kategorii ".repeat(10).trim();
+    render(
+      <CategoriesCard
+        categories={[{ ...kategorie[0], id: "kd", name: dluga }]}
+      />,
+    );
+    const nazwa = within(wiersz(dluga)).getByRole("button", { name: dluga });
+    expect(nazwa).toHaveClass("truncate");
+    expect(nazwa.parentElement).toHaveClass("min-w-0", "flex-1");
+  });
 });
