@@ -36,7 +36,7 @@ body{margin:0;background:#ffffff}
       <section class="card">
         <div class="card-p" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
           <label class="fld">Nazwa szablonu<input class="inp" type="text" value="{{d.name}}" onChange="{{onName}}" placeholder="Np. Push, Full body A" aria-invalid="{{nameInv}}"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj nazwę.</span></sc-if></label>
-          <div class="fld"><span>Dni tygodnia <span class="hint">opcjonalnie — pojawi się w kalendarzu Sport</span></span><div class="seg" role="group" aria-label="Dni tygodnia" style="align-self: flex-start"><sc-for list="{{days}}" as="dy" hint-placeholder-count="7"><button type="button" aria-pressed="{{dy.p}}" onClick="{{dy.pick}}" style="width: 36px">{{dy.t}}</button></sc-for></div></div>
+          <div class="fld"><span>Dni tygodnia <span class="hint">opcjonalnie — pojawi się w kalendarzu Sport</span></span><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px"><div class="seg" role="group" aria-label="Dni tygodnia"><sc-for list="{{days}}" as="dy" hint-placeholder-count="7"><button type="button" aria-pressed="{{dy.p}}" onClick="{{dy.pick}}" style="width: 36px">{{dy.t}}</button></sc-for></div><sc-if value="{{hasDays}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; font-size: 12px; font-weight: 400; color: #686868">o<span class="igroup num" role="button" tabindex="0" aria-label="Godzina startu" style="cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span style="color: var(--foreground); font-size: 14px">17:00</span></span></span></sc-if></div></div>
         </div>
         <div style="padding: 8px 24px 20px">
           <div class="exrow" style="font-size: 12px; font-weight: 500; color: #686868; padding: 8px 0"><span>#</span><span>Ćwiczenie</span><span>Serie</span><span>Powt.</span><span>Przerwa</span><span></span></div>
@@ -97,7 +97,7 @@ class Component extends DCLogic {
       d: D, crumb: S.isNew ? 'Nowy szablon' : 'Edycja: ' + (D.name || 'bez nazwy'),
       editTitle: S.isNew ? 'Nowy szablon' : 'Edytuj szablon',
       editMeta: pl(D.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(D.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii'),
-      onName: (e) => setD({ name: e.target.value }), nameErr, nameInv: nameErr ? 'true' : 'false',
+      onName: (e) => setD({ name: e.target.value }), nameErr, hasDays: D.days.length > 0, nameInv: nameErr ? 'true' : 'false',
       days: WD.map((w, i) => { const on = D.days.indexOf(i) >= 0; return { t: w, p: on ? 'true' : 'false', pick: () => setD({ days: on ? D.days.filter((x) => x !== i) : D.days.concat([i]) }) }; }),
       rows: D.ex.map((e, i) => ({ n: i + 1, name: e.name, sets: e.sets, reps: e.reps, rest: e.rest,
         lessLbl: e.name + ': mniej serii', moreLbl: e.name + ': więcej serii', repsLbl: e.name + ': powtórzenia', restLbl: e.name + ': przerwa', upLbl: 'Przesuń ' + e.name + ' w górę', downLbl: 'Przesuń ' + e.name + ' w dół', delLbl: 'Usuń ' + e.name,

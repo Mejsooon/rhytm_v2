@@ -18,17 +18,32 @@ body{margin:0;background:#ffffff}
 <div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
   <div class="sb-col"><dc-import name="CSidebar" active="kalendarz" min-height="1000" hint-size="100%,1000px"></dc-import></div>
   <main class="main">
-    <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Kalendarz</b></nav>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><nav class="seg" aria-label="Widok"><a href="CCalendarDay.dc.html">Dzień</a><a href="CCalendar.dc.html">Tydzień</a><a href="CCalendarMonth.dc.html" aria-current="page">Miesiąc</a></nav><a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a></div>
-    </header>
-    <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
-      <div style="display: flex; align-items: center; gap: 10px"><div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni miesiąc" onClick="{{prev}}" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" onClick="{{today}}" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny miesiąc" onClick="{{next}}" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><h1 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600">{{monthLabel}}</h1><span class="bdg sec num">{{summary}}</span></div>
-      <div role="group" aria-label="Pokaż kategorie" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
-        <span class="lbl" style="margin-right: 4px">Pokaż</span>
-        <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}" style="{{c.s}}"><span style="{{c.dot}}"></span>{{c.name}} <span class="bdg sec num" style="height: 16px; min-width: 16px; font-size: 11px">{{c.count}}</span></button></sc-for>
-        <a href="CCategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+    <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni miesiąc" onClick="{{prev}}" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" onClick="{{today}}" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny miesiąc" onClick="{{next}}" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+        <h1 style="margin: 0 0 0 8px; font-size: 16px; font-weight: 600">{{monthLabel}}</h1>
+        <span class="bdg sec num">{{summary}}</span>
       </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <div style="position: relative">
+          <button type="button" class="btn" aria-expanded="{{catsOpen}}" aria-haspopup="true" onClick="{{toggleCats}}">
+            <span aria-hidden="true" style="display: inline-flex"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d}}"></span></sc-for></span>
+            Kategorie <span class="bdg sec num">{{catsCount}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{catsOpenB}}" hint-placeholder-val="{{false}}">
+            <div role="menu" aria-label="Kategorie" class="pop" style="position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; width: 230px; padding: 4px; display: flex; flex-direction: column">
+              <div class="mi-lbl">Pokaż w kalendarzu</div>
+              <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" role="menuitemcheckbox" class="mi" aria-checked="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cbx" aria-checked="{{c.pressed}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{c.dot}}"></span><span style="{{c.nameS}}">{{c.name}}</span></button></sc-for>
+              <div class="mi-sep"></div>
+              <a href="CCategoryDialog.dc.html" class="mi" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+            </div>
+          </sc-if>
+        </div>
+        <nav class="seg" aria-label="Widok"><a href="CCalendarDay.dc.html">Dzień</a><a href="CCalendar.dc.html">Tydzień</a><a href="CCalendarMonth.dc.html" aria-current="page">Miesiąc</a></nav>
+        <a href="CBlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+      </div>
+    </header>
+    <div style="padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 14px">
       <div class="frame" style="min-width: 760px"><div class="inner" style="overflow: visible">
         <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-bottom: 1px solid rgba(0,0,0,.08); font-size: 12px; font-weight: 500; color: #686868"><span style="padding: 8px 10px">pon</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">wt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">śr</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">czw</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">pt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">sob</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">nd</span></div>
         <div style="position: relative">
@@ -170,7 +185,21 @@ class Component extends DCLogic {
         };
       }
     }
-    return { cats: catList(counts), cells, summary: off === 0 ? shown + ' wpisów widocznych' : 'brak wpisów w makiecie',
+    const catsM = CATDEF.map((c) => {
+      const on = !hidden[c[0]];
+      return {
+        name: c[0], pressed: on ? 'true' : 'false', on, color: c[1],
+        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
+        nameS: on ? '' : 'color:#686868',
+        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
+      };
+    });
+    const visM = catsM.filter((c) => c.on);
+    const openC = !!this.state.catsOpen;
+    return { cats: catsM, catsOpen: openC ? 'true' : 'false', catsOpenB: openC, toggleCats: () => this.setState({ catsOpen: !openC }),
+      catsCount: visM.length + '/' + catsM.length,
+      dots: visM.filter((c) => c.color).slice(0, 4).map((c, i) => 'width:9px;height:9px;border-radius:50%;border:1.5px solid #ffffff;background:' + c.color + (i ? ';margin-left:-4px' : '')),
+      cells, summary: off === 0 ? shown + ' wpisów widocznych' : 'brak wpisów w makiecie',
       monthLabel: MONTHS[tm] + ' ' + ty,
       prev: () => this.setState({ off: off - 1, sel: null, add: null }), next: () => this.setState({ off: off + 1, sel: null, add: null }), today: () => this.setState({ off: 0 }), hasPop: !!pop, pop, close: () => this.setState({ sel: null }), closeAdd: () => this.setState({ add: null }) };
   }

@@ -18,7 +18,7 @@ body{margin:0;background:#ffffff}
   <div class="sb-col"><dc-import name="CSidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main class="main">
     <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Nawyki i sen</b></nav>
+      <h1 class="h-title">Nawyki i sen</h1>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="CSleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="CHabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
     </header>
     <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
@@ -31,9 +31,9 @@ body{margin:0;background:#ffffff}
     <div class="dlg-h"><div><h2 id="sl-t" class="dlg-t">Wpis snu</h2><p class="dlg-d">Noc z poniedziałku na wtorek</p></div><a href="CHabits.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
     <div class="dlg-b">
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
-        <label class="fld">Data pobudki<input class="inp num" type="text" value="17.11.2026"></label>
-        <label class="fld">Zasnąłem<input class="inp num" type="text" value="{{from}}" onChange="{{onFrom}}"></label>
-        <label class="fld">Wstałem<input class="inp num" type="text" value="{{to}}" onChange="{{onTo}}"></label>
+        <label class="fld">Data pobudki<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="wt 17.11.2026"></span></label>
+        <label class="fld">Zasnąłem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{from}}" onChange="{{onFrom}}"></span></label>
+        <label class="fld">Wstałem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{to}}" onChange="{{onTo}}"></span></label>
       </div>
       <div class="frame"><div class="inner" style="display: flex; align-items: center; gap: 16px; padding: 12px 14px">
         <div><div class="lbl">Czas snu</div><div class="num" style="font-size: 22px; font-weight: 600; margin-top: 4px">{{dur}}</div></div>

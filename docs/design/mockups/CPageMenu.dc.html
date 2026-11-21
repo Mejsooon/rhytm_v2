@@ -46,9 +46,9 @@ body{margin:0;background:#ffffff}
   </sc-if>
   <sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}">
   <div aria-hidden="true" class="backdrop"></div>
-  <div role="alertdialog" aria-modal="true" aria-labelledby="pd-t" class="dlg" style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); width: min(440px, calc(100% - 32px))">
-    <div class="dlg-h"><div><h2 id="pd-t" class="dlg-t">Usunąć stronę „{{name}}”?</h2><p class="dlg-d">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p></div><button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{cancelDel}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
-    <div class="dlg-f"><button type="button" class="btng" onClick="{{cancelDel}}">Anuluj</button><button type="button" class="btnd" onClick="{{doDel}}">Usuń</button></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="pd-t" class="dlg" style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); width: min(400px, calc(100% - 32px))">
+    <div class="dlg-h" style="padding-bottom: 20px"><div><h2 id="pd-t" class="dlg-t">Usunąć stronę „{{name}}”?</h2><p class="dlg-d">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p></div></div>
+    <div class="dlg-f"><button type="button" class="btng" onClick="{{cancelDel}}">Anuluj</button><button type="button" class="btnd" onClick="{{doDel}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</button></div>
   </div>
   </sc-if>
   <sc-if value="{{toastOpen}}" hint-placeholder-val="{{false}}">
