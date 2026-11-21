@@ -13,6 +13,9 @@ describe("TypeChangeDialog", () => {
     render(<TypeChangeDialog lost={lost} onConfirm={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByText("Zmienić typ pola?")).toBeTruthy();
     expect(screen.getByText(tekst)).toBeTruthy();
+    // .dlg: tekst 14 px, okno z promieniem 12 px i cieniem pop, szara stopka
+    expect(screen.getByText(tekst)).toHaveClass("text-sm");
+    expect(screen.getByRole("dialog")).toHaveClass("rounded-xl", "min-[800px]:shadow-pop", "min-[800px]:border-border");
   });
 
   it("Anuluj i Zmień typ wołają odpowiednie wywołania", async () => {

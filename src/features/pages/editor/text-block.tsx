@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-// Akapit i nagłówek edytowane w miejscu (EmptyPage.dc.html: .ed-in, 20/600 dla nagłówka).
+// Akapit i nagłówek edytowane w miejscu (CEmptyPage.dc.html: .ed-in — promień 6 px, fokus: tło .02 i obrys 2 px; 20/600 dla nagłówka).
 // Zapis po utracie fokusu, tylko gdy tekst się zmienił.
 export function TextBlock({
   variant,
@@ -34,7 +34,7 @@ export function TextBlock({
         onBlur={przyUtracieFokusu}
         placeholder="Nagłówek"
         aria-label="Nagłówek"
-        className="w-full min-w-0 border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:text-faint-foreground"
+        className="w-full min-w-0 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]"
       />
     );
   }
@@ -47,7 +47,7 @@ export function TextBlock({
       onBlur={przyUtracieFokusu}
       placeholder="Pusty akapit"
       aria-label="Akapit"
-      className="block w-full min-w-0 resize-none border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-foreground outline-none [field-sizing:content] placeholder:text-faint-foreground"
+      className="block w-full min-w-0 resize-none rounded-md border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-foreground outline-none [field-sizing:content] placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]"
     />
   );
 }

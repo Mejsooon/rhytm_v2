@@ -22,7 +22,7 @@ import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
 import { useEditorStore } from "./use-editor-store";
 
-// Edytor bloków strony bez szablonu (EmptyPage.dc.html): ikona, tytuł, bloki, linia poleceń,
+// Edytor bloków strony bez szablonu (CEmptyPage.dc.html): ikona, tytuł, bloki, linia poleceń,
 // szybki start i link do szablonów. Telefon dostaje ten sam układ w jednej kolumnie.
 // `pages` — cała lista stron dla „Przenieś wyżej / niżej” w menu strony na telefonie.
 export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSummary[] }) {
@@ -124,9 +124,9 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 <button
                   type="button"
                   aria-label="Zmień ikonę"
-                  className={`flex size-10 cursor-pointer items-center justify-center rounded-lg p-0 font-[inherit] max-[799px]:hidden ${
+                  className={`flex size-10 cursor-pointer items-center justify-center rounded-[10px] p-0 font-[inherit] max-[799px]:hidden ${
                     ikona === ""
-                      ? "border border-dashed border-border-strong bg-panel text-muted-foreground"
+                      ? "border border-dashed border-black/[.18] bg-panel text-muted-foreground"
                       : "border border-transparent bg-transparent text-foreground"
                   }`}
                 >
@@ -153,7 +153,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           </div>
 
           {store.blocks.map((b) => (
-            <div key={b.id} className="group relative pr-8">
+            <div key={b.id} className="group relative pr-9">
               {b.type === "heading" && (
                 <TextBlock
                   variant="heading"
@@ -182,19 +182,22 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 />
               )}
               {b.type === "divider" && (
-                <hr className="my-3 border-0 border-t border-border" />
+                <hr className="my-3 h-px border-0 bg-border" />
               )}
               {b.type === "table" && (
                 <TableBlock block={b} editable="cell" today={data.today} />
               )}
-              <button
-                type="button"
+              {/* .blk-act.btng.ic.xs: pojawia się po najechaniu lub fokusie; na telefonie zawsze, 44 px */}
+              <Button
+                variant="ghost"
+                size="xs"
+                icon
                 aria-label="Usuń blok"
                 onClick={() => void store.remove(b.id)}
-                className="absolute top-1 right-0 inline-flex cursor-pointer rounded-md border-0 bg-transparent p-[5px] text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:bg-destructive-soft focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:items-center max-[799px]:justify-center max-[799px]:opacity-100"
+                className="absolute top-1 right-0 text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:opacity-100"
               >
                 <Trash2 size={14} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           ))}
 
@@ -207,14 +210,14 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           {pusta && (
             <div className="flex flex-col gap-3 max-[799px]:hidden">
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="mr-1 font-mono text-xs text-muted-foreground">
+                <span className="mr-1 text-[13px] text-muted-foreground">
                   albo zacznij od:
                 </span>
                 {QUICK_START.map((q) => (
                   <Chip key={q.type} onClick={() => void store.add(q.type)}>
                     <span
                       aria-hidden="true"
-                      className="font-mono text-muted-foreground"
+                      className="text-xs font-semibold text-muted-foreground"
                     >
                       {q.icon}
                     </span>
@@ -222,9 +225,9 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   </Chip>
                 ))}
               </div>
-              <p className="mt-6 mb-0 font-mono text-xs text-muted-foreground">
+              <p className="mt-6 mb-0 text-[13px] text-muted-foreground">
                 Wolisz gotowca?{" "}
-                <Link href="/strony/nowa" className="text-soft-foreground">
+                <Link href="/strony/nowa" className="font-medium text-foreground underline-offset-[3px]">
                   Użyj szablonu →
                 </Link>
               </p>

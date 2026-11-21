@@ -82,6 +82,7 @@ describe("EditorView", () => {
     render(<EditorView data={dane([])} />);
     const przycisk = screen.getByRole("button", { name: "Zmień ikonę" });
     expect(przycisk.className).toContain("border-dashed");
+    expect(przycisk).toHaveClass("rounded-[10px]", "bg-panel");
     await user.click(przycisk);
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
@@ -127,6 +128,56 @@ describe("EditorView", () => {
     expect(await screen.findByRole("textbox", { name: "Nagłówek" })).toBeInTheDocument();
   });
 
+  it("menu „/” ma klasy .pop i obsługuje strzałki/Enter/Esc", async () => {
+    const user = userEvent.setup();
+    render(<EditorView data={dane([])} />);
+    await user.type(screen.getByRole("combobox", { name: "Nowy blok" }), "/");
+    const menu = screen.getByRole("listbox", { name: "Bloki" });
+    // .pop: promień 12 px, ramka border, cień lg, padding 4 px, szerokość 330 px
+    expect(menu).toHaveClass("rounded-xl", "border-border", "shadow-lg", "p-1", "w-[330px]");
+    const pozycje = screen.getAllByRole("option");
+    // MENU_ITEM: aktywna pozycja ma tło accent (aria-selected), wysokość 44 px
+    expect(pozycje[0]).toHaveClass("min-h-11", "rounded-sm");
+    expect(pozycje[0]).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{ArrowDown}");
+    expect(pozycje[1]).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{ArrowUp}");
+    expect(pozycje[0]).toHaveAttribute("aria-selected", "true");
+    // Stopka ze skrótami jako .kbd
+    expect(menu.querySelectorAll("kbd")).toHaveLength(4);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox", { name: "Bloki" })).toBeNull();
+    await user.clear(screen.getByRole("combobox", { name: "Nowy blok" }));
+    await user.type(screen.getByRole("combobox", { name: "Nowy blok" }), "/");
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(addBlock).toHaveBeenCalledWith("p1", "table", undefined));
+  });
+
+  it("pola edytora mają styl .ed-in, a blok ma prawy odstęp 36 px i kosz jak .btng.xs", () => {
+    const { container } = render(
+      <EditorView
+        data={dane([
+          blok("a", "text", 0, { text: "Ala" }),
+          blok("z", "todo", 1, { text: "Kup", done: false }),
+          blok("d", "divider", 2),
+        ])}
+      />,
+    );
+    for (const nazwa of ["Akapit", "Zadanie", "Nowy blok"]) {
+      expect(screen.getByRole(nazwa === "Nowy blok" ? "combobox" : "textbox", { name: nazwa })).toHaveClass(
+        "rounded-md",
+        "focus:bg-black/[.02]",
+        "focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]",
+      );
+    }
+    expect(screen.getAllByRole("button", { name: "Usuń blok" })[0].parentElement).toHaveClass("pr-9");
+    expect(screen.getAllByRole("button", { name: "Usuń blok" })[0]).toHaveClass("w-6", "h-6", "rounded-[8px]");
+    // Separator: linia 1 px w kolorze border
+    expect(container.querySelector("hr")).toHaveClass("h-px", "bg-border");
+    // Przycisk „+” to ikona w .btn.ic.sm
+    expect(screen.getAllByRole("button", { name: "Wstaw blok" })[0]).toHaveClass("w-7", "border-input");
+  });
+
   it("Esc zamyka menu", async () => {
     const user = userEvent.setup();
     render(<EditorView data={dane([])} />);
@@ -166,6 +217,9 @@ describe("EditorView", () => {
       expect(screen.getByRole("button", { name: new RegExp(n) })).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: "Użyj szablonu →" })).toHaveAttribute("href", "/strony/nowa");
+    // Podpowiedź i link bez czcionki mono, link jak w makiecie (foreground, 500)
+    expect(screen.getByText("albo zacznij od:")).not.toHaveClass("font-mono");
+    expect(screen.getByRole("link", { name: "Użyj szablonu →" })).toHaveClass("font-medium", "text-foreground");
     await user.click(screen.getByRole("button", { name: /Tekst/ }));
     await waitFor(() => expect(screen.queryByText("albo zacznij od:")).toBeNull());
     expect(screen.queryByText(/Wolisz gotowca/)).toBeNull();

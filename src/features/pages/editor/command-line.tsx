@@ -2,6 +2,9 @@
 
 import * as React from "react";
 
+import { Plus } from "lucide-react";
+
+import { Button } from "@/components/controls";
 import { filterSlash, type SlashItem } from "../blocks";
 import { SlashMenu } from "./slash-menu";
 
@@ -55,8 +58,10 @@ export function CommandLine({
 
   return (
     <div className="relative flex items-center gap-2">
-      <button
-        type="button"
+      {/* .btn.ic.sm: 28 px, ramka input, cień; na telefonie 44 px jak dotąd */}
+      <Button
+        icon
+        size="sm"
         aria-label="Wstaw blok"
         onClick={() => {
           setWartosc("/");
@@ -64,10 +69,10 @@ export function CommandLine({
           setZamkniete(false);
           poleRef.current?.focus();
         }}
-        className="inline-flex size-6 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 font-[inherit] text-[15px] leading-none text-muted-foreground hover:bg-muted hover:text-foreground max-[799px]:size-11"
+        className="max-[799px]:size-11"
       >
-        +
-      </button>
+        <Plus size={16} aria-hidden="true" />
+      </Button>
       <input
         ref={poleRef}
         type="text"
@@ -84,7 +89,7 @@ export function CommandLine({
         aria-controls={menuOtwarte ? "menu-blokow" : undefined}
         aria-haspopup="listbox"
         aria-expanded={menuOtwarte}
-        className="min-w-0 flex-1 border-0 bg-transparent py-1.5 font-[inherit] text-soft-foreground outline-none placeholder:text-faint-foreground"
+        className="min-w-0 flex-1 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]"
       />
       {menuOtwarte && (
         <SlashMenu

@@ -50,7 +50,7 @@ export function TypeChangeDialog({
         </>
       }
     >
-      <p className="m-0 text-[13px] leading-normal text-muted-foreground">
+      <p className="m-0 text-sm leading-normal text-muted-foreground">
         {wartosci(lost)} nie da się przenieść i zostaną wyczyszczone.
       </p>
     </FormDialog>
