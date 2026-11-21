@@ -95,9 +95,105 @@ describe("ExerciseDetail", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Wyciskanie na ławce" }),
     ).toBeInTheDocument();
+    // Podtytuł to odznaki (.bdg lg z makiety): szara, szara, z ramką
+    expect(screen.getByText("4 treningi")).toHaveClass("bg-muted", "h-[22px]");
+    expect(screen.getByText("od 10.09.2026")).toHaveClass(
+      "bg-muted",
+      "tabular-nums",
+    );
+    expect(screen.getByText("w szablonie „Push”")).toHaveClass(
+      "border-input",
+      "bg-white",
+    );
+  });
+
+  it("kafelki i karty jak w makiecie: Card z cieniem, etykieta .lbl, liczba 26 px", () => {
+    render(<ExerciseDetail data={dane()} />);
+    const k = kafelek("Szac. 1RM");
+    expect(k).toHaveClass("rounded-xl", "shadow-card", "bg-white");
+    expect(screen.getAllByText("Szac. 1RM")[0]).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-muted-foreground",
+    );
+    expect(k.querySelector(".text-\\[26px\\]")).toHaveClass(
+      "font-semibold",
+      "tabular-nums",
+    );
+    // zielony przyrost z tokenu, nie z hexa w style
+    expect(kafelek("8 tygodni").querySelector(".text-success")).not.toBeNull();
+    for (const nazwa of ["Szacowany 1RM", "Historia"]) {
+      const sekcja = screen
+        .getByRole("heading", { name: nazwa })
+        .closest("[role=region]");
+      expect(sekcja).toHaveClass("rounded-xl", "shadow-card");
+    }
+  });
+
+  it("wykres: siatka kreskowana, obszar pod linią, punkty białe z obwódką, rekord zielony", () => {
+    const { container } = render(<ExerciseDetail data={dane()} />);
+    const svg = screen.getByRole("img", { name: /Szacowany 1RM/ });
+    expect(svg.querySelectorAll("line[stroke-dasharray='4 4']")).toHaveLength(
+      2,
+    );
+    expect(svg.querySelector("polygon")).toHaveAttribute(
+      "fill",
+      "rgba(38,38,38,.04)",
+    );
+    expect(svg.querySelector("polyline")).toHaveAttribute("stroke", "#262626");
+    const kropki = screen.getAllByTestId("punkt-wykresu");
+    // 8 tyg.: B 15.10 nie wchodzi, C 05.11 (rekord) i D 12.11, + 24.09? — ostatni punkt to zwykły, rekord ma r=5
+    const rekord = kropki.find((c) => c.getAttribute("r") === "5");
+    expect(rekord).toHaveAttribute("fill", "#15803d");
+    expect(rekord).toHaveAttribute("stroke", "#fff");
+    const zwykly = kropki.find((c) => c.getAttribute("r") === "3.5");
+    expect(zwykly).toHaveAttribute("fill", "#fff");
+    expect(zwykly).toHaveAttribute("stroke", "#262626");
+    expect(container.querySelector("text")).toHaveAttribute(
+      "font-family",
+      "Inter, sans-serif",
+    );
+  });
+
+  it("wykres z jednym pomiarem nie ma NaN w points", () => {
+    const d = dane({
+      history: [
+        sesja("sa", "2026-11-12", [
+          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, 70, 5, true),
+        ]),
+      ],
+    });
+    render(<ExerciseDetail data={d} />);
+    const svg = screen.getByRole("img", { name: /Szacowany 1RM/ });
+    expect(svg.querySelector("polyline")?.getAttribute("points")).not.toMatch(
+      /NaN/,
+    );
     expect(
-      screen.getByText("4 treningi · od 10.09.2026 · w szablonie „Push”"),
-    ).toBeInTheDocument();
+      svg.querySelector("polygon")?.getAttribute("points") ?? "",
+    ).not.toMatch(/NaN/);
+    expect(svg.innerHTML).not.toMatch(/NaN/);
+    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(1);
+  });
+
+  it("historia: tabela z nagłówkami 40 px, wierszami 44 px i odznaką REKORD", () => {
+    render(<ExerciseDetail data={dane()} />);
+    const tabela = screen.getByRole("table");
+    expect(tabela).toHaveClass("text-sm");
+    expect(screen.getByRole("columnheader", { name: "Data" })).toHaveClass(
+      "h-10",
+      "pl-6",
+      "text-muted-foreground",
+    );
+    const wiersze = within(tabela).getAllByRole("row");
+    expect(within(wiersze[2]).getAllByRole("cell")[0]).toHaveClass(
+      "h-11",
+      "tabular-nums",
+      "text-soft-foreground",
+    );
+    expect(within(wiersze[2]).getByText("REKORD")).toHaveClass(
+      "bg-success-soft",
+      "text-success",
+    );
   });
 
   it("przyszły / niedokończony trening nie liczy się do historii, wykresu, kafelków ani REKORDU", () => {
@@ -124,9 +220,7 @@ describe("ExerciseDetail", () => {
         }}
       />,
     );
-    expect(
-      screen.getByText("4 treningi · od 10.09.2026 · w szablonie „Push”"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("4 treningi")).toBeInTheDocument();
     expect(kafelek("Szac. 1RM")).toHaveTextContent("84,5 kg");
     expect(kafelek("8 tygodni")).toHaveTextContent("+4,5 kg");
     expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(punktyPrzed);
@@ -135,7 +229,8 @@ describe("ExerciseDetail", () => {
 
   it("podtytuł bez szablonu nie ma fragmentu „w szablonie”", () => {
     render(<ExerciseDetail data={dane({ templateName: null })} />);
-    expect(screen.getByText("4 treningi · od 10.09.2026")).toBeInTheDocument();
+    expect(screen.getByText("od 10.09.2026")).toBeInTheDocument();
+    expect(screen.queryByText(/w szablonie/)).not.toBeInTheDocument();
   });
 
   it("sesja tylko z masą ciała: „mc × n”, bez 1RM, punktu wykresu i REKORDU", () => {
@@ -240,8 +335,14 @@ describe("ExerciseDetail", () => {
     const pole = screen.getByRole("textbox", { name: "Nazwa ćwiczenia" });
     expect(pole).toHaveValue("Wyciskanie na ławce");
     // „Anuluj” bez ramki (ghost, .btng z makiet), na telefonie 44 px
-    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
-    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-11");
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+    );
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "max-[799px]:h-11",
+    );
     await user.clear(pole);
     await user.type(pole, "Wyciskanie sztangi");
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
