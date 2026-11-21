@@ -310,4 +310,15 @@ describe("PageMenu", () => {
       unmount();
     }
   });
+
+  it("okno usuwania jak .dlg ze wzoru Sportu: zwarte 400 px, cień pop, szara stopka, ikona kosza", async () => {
+    const { DeletePageDialog } = await import("./delete-page-dialog");
+    render(<DeletePageDialog page={strona("b", "Books", { rowCount: 3 })} open onOpenChange={vi.fn()} onDeleted={vi.fn()} />);
+    const okno = screen.getByRole("dialog");
+    expect(okno.className).toContain("min-[800px]:shadow-pop");
+    expect(okno.className).toContain("w-[min(400px,calc(100%-32px))]");
+    const usun = within(okno).getByRole("button", { name: "Usuń" });
+    expect(usun.querySelector("svg")).not.toBeNull();
+    expect(usun.parentElement?.className).toContain("min-[800px]:bg-black/[.025]");
+  });
 });

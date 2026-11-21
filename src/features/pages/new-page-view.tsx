@@ -2,18 +2,18 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { Info, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, MonoLabel } from "@/components/controls";
+import { Button, FIELD, StatusBadge } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { createPageFromTemplate } from "./actions";
 import { FIELD_TYPE_META } from "./fields";
 import { BLAD_ZAPISU } from "./messages";
 import { PageIcon } from "./page-icon";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
-const AKCENT = "#15803d";
-// Wybór szablonu nowej strony (NewPage.dc.html): okno 920 px nad przyciemnionym tłem,
+// Wybór szablonu nowej strony (CNewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
 // po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
 export function NewPageView() {
   const router = useRouter();
@@ -58,41 +58,47 @@ export function NewPageView() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/25">
+    // .backdrop z coss.css na webie; telefon bez zmian
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/[.32] backdrop-blur-[4px] max-[799px]:bg-black/25 max-[799px]:backdrop-blur-none">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="np-title"
-        className="mx-auto mt-[72px] mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-input bg-white text-sm text-foreground shadow-[0_24px_80px_rgba(0,0,0,.25)] max-[799px]:mt-4"
+        // .dlg: promień 16 px, ramka border, cień pop; 64 px od góry jak w makiecie
+        className="mx-auto mt-16 mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop max-[799px]:mt-4"
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 id="np-title" className="m-0 text-base font-semibold">
+        {/* .dlg-h */}
+        <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
+          <h2 id="np-title" className="m-0 text-lg leading-[1.3] font-semibold">
             Nowa strona
           </h2>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            icon
             aria-label="Zamknij"
             onClick={() => router.back()}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted-foreground hover:text-foreground min-[800px]:size-8"
+            className="max-[799px]:size-11"
           >
-            <X size={16} aria-hidden="true" />
-          </button>
+            <X aria-hidden="true" className="size-4" />
+          </Button>
         </div>
 
         <div className="flex flex-wrap">
-          <div className="flex min-w-0 flex-[999_1_380px] flex-col gap-3.5 px-5 py-[18px]">
-            <label className="flex items-center gap-2 rounded-md border border-border bg-panel px-2.5 py-[7px] text-muted-foreground">
-              <Search size={15} aria-hidden="true" />
+          <div className="flex min-w-0 flex-[999_1_380px] flex-col gap-3.5 px-6 pt-1 pb-5">
+            {/* .igroup: 32 px, cień xs, fokus ring + halo na całej grupie */}
+            <label className="flex h-8 items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11">
+              <Search size={16} aria-hidden="true" />
               <input
                 type="text"
                 value={fraza}
                 onChange={(e) => setFraza(e.target.value)}
                 placeholder="Szukaj szablonu…"
                 aria-label="Szukaj szablonu"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none"
+                className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
               />
             </label>
-            <MonoLabel>Szablony</MonoLabel>
+            <div className="text-xs font-medium text-muted-foreground">Szablony</div>
             <div className="grid grid-cols-2 gap-2.5">
               {widoczne.map((klucz) => {
                 const t = TEMPLATES[klucz];
@@ -103,47 +109,46 @@ export function NewPageView() {
                     type="button"
                     aria-pressed={zaznaczony}
                     onClick={() => setWybrany(klucz)}
-                    style={{ borderColor: zaznaczony ? AKCENT : "#eaeaea" }}
-                    className={`flex min-h-[92px] cursor-pointer flex-col items-start gap-1.5 rounded-lg border p-3.5 text-left font-[inherit] ${
-                      zaznaczony ? "bg-muted" : "bg-white"
-                    }`}
+                    // Zaznaczona: cień zaznaczenia w style, więc fokus jako obrys zamiast shadow-focus
+                    style={zaznaczony ? { boxShadow: "0 0 0 3px rgba(38,38,38,.12)" } : undefined}
+                    className={cn(
+                      "flex min-h-[92px] cursor-pointer flex-col items-start gap-1.5 rounded-xl border bg-white p-3.5 text-left font-[inherit] text-sm text-foreground shadow-xs transition-[border-color,box-shadow,background-color] duration-150 hover:bg-panel",
+                      zaznaczony
+                        ? "border-primary outline-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
+                        : "border-border outline-none focus-visible:shadow-focus",
+                    )}
                   >
-                    <span className="flex items-center gap-2 font-medium text-foreground">
-                      <span className="text-muted-foreground">
+                    <span className="flex items-center gap-2 font-medium">
+                      <span className="grid size-[26px] place-items-center rounded-[7px] bg-muted text-muted-foreground">
                         <PageIcon icon={t.icon} size={16} />
                       </span>
                       {t.name}
                     </span>
-                    <span className="text-xs leading-[1.4] text-muted-foreground">{t.desc}</span>
+                    <span className="text-[13px] leading-[1.45] text-muted-foreground">{t.desc}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-l border-border bg-panel px-5 py-[18px] max-[799px]:border-t max-[799px]:border-l-0">
-            <MonoLabel>Pola, które powstaną</MonoLabel>
+          <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-l border-border bg-panel px-6 pt-1 pb-5 max-[799px]:border-t max-[799px]:border-l-0">
+            <div className="text-xs font-medium text-muted-foreground">Pola, które powstaną</div>
             <div className="text-lg font-semibold">{szablon.name}</div>
-            <div className="overflow-hidden rounded-lg border border-border">
+            {/* .frame > .inner: ramka 1,5 px, promień 12 px */}
+            <div className="overflow-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white">
               {wybrany !== "empty" &&
                 szablon.fields.map((pole) => (
                   <div
                     key={pole.key}
-                    className="flex items-center justify-between gap-2.5 border-b border-border px-3 py-[9px]"
+                    className="flex items-center justify-between gap-2.5 border-b border-black/[.06] px-3 py-[9px] text-sm"
                   >
                     <span>{pole.name}</span>
-                    <span
-                      className="rounded border border-input px-1.5 py-px font-mono text-[11px] whitespace-nowrap"
-                      style={{
-                        color:
-                          pole.type === "rating" || pole.config?.show_in_calendar
-                            ? AKCENT
-                            : "#666666",
-                      }}
+                    <StatusBadge
+                      tone={pole.type === "rating" || pole.config?.show_in_calendar ? "green" : "outline"}
                     >
                       {FIELD_TYPE_META[pole.type].label}
                       {pole.config?.show_in_calendar ? " · w kalendarzu" : ""}
-                    </span>
+                    </StatusBadge>
                   </div>
                 ))}
               {wybrany === "empty" && (
@@ -152,24 +157,35 @@ export function NewPageView() {
                 </div>
               )}
             </div>
-            <div className="font-mono text-xs leading-normal whitespace-pre-line text-muted-foreground">
-              {szablon.extra}
-            </div>
+            {/* .alert.info: osobna karta na każdą linię opisu szablonu */}
+            {szablon.extra
+              .split("\n")
+              .filter((linia) => linia !== "")
+              .map((linia) => (
+                <div
+                  key={linia}
+                  className="flex items-start gap-2.5 rounded-xl border border-info-border bg-info/[.04] px-3.5 py-3 text-[13px]"
+                >
+                  <Info size={16} aria-hidden="true" className="mt-px flex-none" />
+                  <span>{linia}</span>
+                </div>
+              ))}
             <div className="flex-1" />
-            <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
               Nazwa strony
               <input
                 type="text"
                 value={nazwa}
                 maxLength={200}
                 onChange={(e) => setNazwaWlasna(e.target.value)}
-                className="rounded-md border border-input bg-panel px-2.5 py-2 text-sm text-foreground outline-none focus:border-primary"
+                className={FIELD}
               />
             </label>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
+        {/* .dlg-f: szara stopka */}
+        <div className="flex flex-wrap items-center justify-end gap-2 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-4">
           <Button variant="ghost" onClick={() => router.back()}>Anuluj</Button>
           <Button variant="primary" onClick={utworz} disabled={trwa}>
             Utwórz stronę
