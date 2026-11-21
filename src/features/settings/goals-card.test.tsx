@@ -190,4 +190,31 @@ describe("GoalsCard", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("cel snu: szeroki stepper, granice 5:00 i 11:00 wyłączają przyciski", () => {
+    const { unmount } = render(<GoalsCard saved={{ ...zapisane, sleep: 300 }} />);
+    expect(screen.getByRole("group", { name: "Cel snu" })).toHaveClass("w-full");
+    expect(screen.getByText("5:00")).not.toHaveClass("font-mono");
+    expect(screen.getByRole("button", { name: "Zmniejsz Cel snu" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zwiększ Cel snu" })).toBeEnabled();
+    unmount();
+    render(<GoalsCard saved={{ ...zapisane, sleep: 660 }} />);
+    expect(screen.getByRole("button", { name: "Zwiększ Cel snu" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zmniejsz Cel snu" })).toBeEnabled();
+  });
+
+  it("waluta: wyzwalacz PLN zł", () => {
+    render(<GoalsCard saved={zapisane} />);
+    const wyzwalacz = screen.getByRole("button", { name: "Waluta stron" });
+    expect(wyzwalacz).toHaveTextContent("PLN");
+    expect(wyzwalacz).toHaveTextContent("zł");
+  });
+
+  it("liczby celów bez font-mono", () => {
+    render(<GoalsCard saved={zapisane} />);
+    const pole = screen.getByRole("textbox", { name: "Treningi w tygodniu" });
+    expect(pole).toHaveClass("tabular-nums", "text-right");
+    expect(pole).not.toHaveClass("font-mono");
+    expect(screen.getByText("wył.")).not.toHaveClass("font-mono");
+  });
 });
