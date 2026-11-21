@@ -452,6 +452,20 @@ describe("pole Sekret", () => {
     expect(tables.page_rows.update).not.toHaveBeenCalled();
   });
 
+  it("updateRow: wiersz sejfu ze statusem reset — złe g to „innej karcie”, zgodne g to „odblokowany”", async () => {
+    tables.vaults = fakeTable({ single: { status: "reset", generation: 3 } });
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: { ...SEKRET, g: 3 } })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+
+  it("addRow: wiersz sejfu ze statusem reset — złe g to „innej karcie”, zgodne g to „odblokowany”", async () => {
+    tables.vaults = fakeTable({ single: { status: "reset", generation: 3 } });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 2 } })).toEqual({ ok: false, message: INNA_KARTA });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: { ...SEKRET, g: 3 } })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
   it("updateRow przyjmuje null i SecretValue z aktualnym g", async () => {
     expect(await updateRow(WIERSZ, { [POLE_SEKRET]: SEKRET })).toEqual({ ok: true });
     expect(tables.page_rows.update).toHaveBeenLastCalledWith({

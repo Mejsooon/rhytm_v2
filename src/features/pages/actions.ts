@@ -747,10 +747,12 @@ export async function addRow(
     const surowaSekret = wartosci.data[p.id];
     if (pole.type === "secret" && surowaSekret !== null && surowaSekret !== undefined) {
       // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
-      if (!isSecretValue(surowaSekret) || sejf === null || sejf.status !== "active") {
+      if (!isSecretValue(surowaSekret) || sejf === null) {
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
+      // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
       if (surowaSekret.g !== sejf.generation) return { ok: false, message: SEJF_INNA_KARTA };
+      if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
     }
     let v = normalizeValue(pole, wartosci.data[p.id]);
     if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;
@@ -849,10 +851,12 @@ export async function updateRow(
     };
     if (pole.type === "secret" && surowa !== null && surowa !== undefined) {
       // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
-      if (!isSecretValue(surowa) || sejf === null || sejf.status !== "active") {
+      if (!isSecretValue(surowa) || sejf === null) {
         return { ok: false, message: SEJF_ZABLOKOWANY };
       }
+      // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
       if (surowa.g !== sejf.generation) return { ok: false, message: SEJF_INNA_KARTA };
+      if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
     }
     let v = normalizeValue(pole, surowa);
     if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;

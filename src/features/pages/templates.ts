@@ -233,8 +233,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   passwords: {
     name: "Passwords",
     icon: "🔒",
-    desc: "Hasła szyfrowane w przeglądarce. Serwer widzi tylko szyfrogram.",
-    extra: "Hasło główne ustawisz przy pierwszym otwarciu.",
+    desc: "Hasła szyfrowane w przeglądarce hasłem głównym.",
+    extra: "Przy pierwszym otwarciu ustawisz hasło główne sejfu.",
     fields: [
       { key: "service", name: "Serwis", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       { key: "login", name: "Login", type: "text" },
