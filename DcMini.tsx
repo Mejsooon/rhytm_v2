@@ -53,7 +53,13 @@ export function parse(name: string, html: string, DCLogic: any): Parsed {
         } catch (e) {}
     }
     const code = (sm ? sm[2] : "class Component extends DCLogic { renderVals() { return {} } }").replace(/document\.getElementById\(/g, "__dcGet(")
-    const Comp = new Function("DCLogic", "React", "__dcGet", code + "\n;return Component;")(DCLogic, React, (id: string) => (DCLogic.root ? DCLogic.root.getElementById(id) : null))
+    const Comp = new Function("DCLogic", "React", "__dcGet", code + "\n;return Component;")(DCLogic, React, (id: string) => {
+        for (const r of DCLogic.roots || []) {
+            const el = r.getElementById(id)
+            if (el) return el
+        }
+        return null
+    })
     cache[name] = { tpl: toTree(doc.body), css, Comp, defaults }
     return cache[name]
 }
@@ -198,7 +204,7 @@ export function render(nodes: Node[], scope: any[], ctx: any, keyPrefix = "", pa
 // one mockup on screen (a full screen or an imported part like the sidebar)
 export function makeScreen(files: Record<string, string>) {
     class DCLogic extends React.Component<any, any> {
-        static root: any = null
+        static roots: any[] = []
         constructor(props: any) {
             super(props)
             this.state = this.state || {}
