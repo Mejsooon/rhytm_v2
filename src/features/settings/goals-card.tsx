@@ -2,14 +2,13 @@
 
 import * as React from "react";
 
-import { Check } from "lucide-react";
-
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Dropdown,
   StatusBadge,
   Stepper,
@@ -122,7 +121,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
   }
 
   return (
-    <Card>
+    <Card data-testid="karta-cele">
       <CardHeader>
         <div>
           <CardTitle as="h2">Cele</CardTitle>
@@ -168,21 +167,11 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
               ] as const
             ).map((cel) => (
               <div key={cel.key} className="flex min-h-8 items-center gap-2">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={cel.on}
-                  aria-label={cel.label}
-                  onClick={() => przelacz(cel.key)}
-                  className={cn(
-                    "inline-flex size-4 flex-none cursor-pointer items-center justify-center rounded-[4px] border p-0 shadow-xs outline-none focus-visible:shadow-focus",
-                    cel.on
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-white text-transparent",
-                  )}
-                >
-                  <Check className="size-3" strokeWidth={2.5} />
-                </button>
+                <Checkbox
+                  checked={cel.on}
+                  ariaLabel={cel.label}
+                  onChange={() => przelacz(cel.key)}
+                />
                 <span className="min-w-0 flex-1 text-[13px]">{cel.label}</span>
                 {cel.on ? (
                   <div className="w-[72px] flex-none [&_label]:sr-only">

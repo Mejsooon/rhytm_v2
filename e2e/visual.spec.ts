@@ -396,7 +396,7 @@ test.describe("ekrany z sesją", () => {
     await page.goto("/ustawienia/kategorie");
     await expect(
       page
-        .locator("section")
+        .getByTestId("karta-kategorie")
         .getByRole("heading", { name: "Kategorie kalendarza" }),
     ).toBeVisible();
     await zrzut(page, "ustawienia-kategorie", projekt);

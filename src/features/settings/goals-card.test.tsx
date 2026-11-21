@@ -217,4 +217,10 @@ describe("GoalsCard", () => {
     expect(pole).not.toHaveClass("font-mono");
     expect(screen.getByText("wył.")).not.toHaveClass("font-mono");
   });
+
+  it("checkboxy celów treningowych: wspólna kontrolka z polem dotyku 44 px na telefonie", () => {
+    render(<GoalsCard saved={zapisane} />);
+    const pole = screen.getByRole("checkbox", { name: "Treningi w tygodniu" });
+    expect(pole).toHaveClass("max-[799px]:before:-inset-3.5", "size-4");
+  });
 });

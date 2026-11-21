@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
+import { Card, CardContent } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
@@ -144,9 +145,11 @@ export default async function ZakladkaPage({
           ) : tab.slug === "sejf" ? (
             <VaultCard />
           ) : (
-            <div className="rounded-xl border bg-white px-6 py-10 text-center text-muted-foreground shadow-card">
-              Ta zakładka powstanie w kolejnym etapie.
-            </div>
+            <Card>
+              <CardContent className="py-10 text-center text-muted-foreground">
+                Ta zakładka powstanie w kolejnym etapie.
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

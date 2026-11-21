@@ -32,9 +32,7 @@ test.describe("ustawienia ogólne", () => {
     ).toBe(true);
 
     // Karta Profil: nazwa → komunikat o zmianach → zapis
-    const profil = page.locator("section", {
-      has: page.getByRole("heading", { name: "Profil", exact: true }),
-    });
+    const profil = page.getByTestId("karta-profil");
     // Wiersz zdjęcia profilowego bez zdjęcia (samo wgrywanie wymaga Storage, którego CI nie ma)
     await expect(
       profil.getByText("Bez zdjęcia pokażemy inicjały"),
@@ -61,9 +59,7 @@ test.describe("ustawienia ogólne", () => {
     }
 
     // Karta Cele: cel snu 8:00 → „+” → 8:15 → zapis
-    const cele = page.locator("section", {
-      has: page.getByRole("heading", { name: "Cele", exact: true }),
-    });
+    const cele = page.getByTestId("karta-cele");
     await expect(cele.getByText("8:00", { exact: true })).toBeVisible();
     await cele.getByRole("button", { name: "Zwiększ Cel snu" }).click();
     await expect(cele.getByText("8:15", { exact: true })).toBeVisible();
@@ -73,17 +69,12 @@ test.describe("ustawienia ogólne", () => {
 
     await page.reload();
     await expect(
-      page
-        .locator("section", {
-          has: page.getByRole("heading", { name: "Cele", exact: true }),
-        })
+      page.getByTestId("karta-cele")
         .getByText("8:15", { exact: true }),
     ).toBeVisible();
 
     // Cele treningowe: nowe konto ma oba włączone (3 treningi, 25 km) → wyłączamy km, treningi 5 → zapis
-    const cele2 = page.locator("section", {
-      has: page.getByRole("heading", { name: "Cele", exact: true }),
-    });
+    const cele2 = page.getByTestId("karta-cele");
     await expect(
       cele2.getByRole("checkbox", { name: "Treningi w tygodniu" }),
     ).toHaveAttribute("aria-checked", "true");
@@ -110,9 +101,7 @@ test.describe("ustawienia ogólne", () => {
     await expect(cele2.getByText(/Zapisano ✓/)).toBeVisible();
 
     await page.reload();
-    const cele3 = page.locator("section", {
-      has: page.getByRole("heading", { name: "Cele", exact: true }),
-    });
+    const cele3 = page.getByTestId("karta-cele");
     await expect(
       cele3.getByRole("textbox", { name: "Treningi w tygodniu" }),
     ).toHaveValue("5");
@@ -131,9 +120,7 @@ test.describe("ustawienia ogólne", () => {
     await cele3.getByRole("button", { name: "Cofnij" }).click();
 
     // Waga poza zakresem: błąd i nieaktywny „Zapisz”
-    const profil2 = page.locator("section", {
-      has: page.getByRole("heading", { name: "Profil", exact: true }),
-    });
+    const profil2 = page.getByTestId("karta-profil");
     await profil2.getByLabel("Waga (kg)").fill("20");
     await expect(profil2.getByText("Podaj liczbę 30–250.")).toBeVisible();
     await expect(

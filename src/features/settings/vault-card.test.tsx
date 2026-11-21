@@ -170,6 +170,14 @@ describe("VaultCard", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("karty Sejfu to ta sama rodzina co pozostałe: rounded-xl i shadow-card", async () => {
+    zSejfem();
+    await zamontuj();
+    for (const id of ["karta-sejf", "karta-sejf-haslo", "karta-sejf-strefa"]) {
+      expect(screen.getByTestId(id)).toHaveClass("rounded-xl", "shadow-card");
+    }
+  });
+
   it("zmiana hasła: złe obecne → błąd; dobre → sukces i stare hasło nie odblokowuje", async () => {
     const user = userEvent.setup();
     zSejfem();

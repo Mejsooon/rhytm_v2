@@ -87,7 +87,7 @@ export function ProfileCard({
   }
 
   return (
-    <Card>
+    <Card data-testid="karta-profil">
       <CardHeader>
         <div>
           <CardTitle as="h2">Profil</CardTitle>

@@ -107,7 +107,7 @@ export function TrashCard({
   const pusty = strony.length === 0 && wiersze.length === 0;
 
   return (
-    <Card id="kosz" className="scroll-mt-6">
+    <Card id="kosz" data-testid="karta-kosz" className="scroll-mt-6">
       <CardHeader>
         <div>
           <CardTitle as="h2">Kosz</CardTitle>

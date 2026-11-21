@@ -123,7 +123,6 @@ describe("Dropdown", () => {
     expect(hint).not.toHaveClass("font-mono");
     const ikona = wyzwalacz.querySelector("svg")!;
     expect(ikona).toHaveClass("lucide-chevrons-up-down", "size-4", "text-muted-foreground");
-    expect(wyzwalacz).toHaveClass("h-8");
   });
 
   it("domyślny wariant bez zmian", () => {

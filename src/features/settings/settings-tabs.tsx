@@ -35,7 +35,7 @@ export function SettingsTabs({ active }: { active: SettingsTabSlug }) {
             href={`/ustawienia/${tab.slug}`}
             aria-current={aktywna ? "page" : undefined}
             className={cn(
-              "flex items-center rounded-lg px-2.5 whitespace-nowrap font-medium no-underline min-[800px]:h-8 max-[799px]:flex max-[799px]:min-h-11 max-[799px]:flex-none max-[799px]:items-center max-[799px]:px-3.5",
+              "flex items-center rounded-lg px-2.5 whitespace-nowrap font-medium no-underline min-[800px]:h-8 max-[799px]:min-h-11 max-[799px]:flex-none max-[799px]:px-3.5",
               aktywna
                 ? "bg-active text-foreground"
                 : "text-muted-foreground hover:bg-hover hover:text-foreground",

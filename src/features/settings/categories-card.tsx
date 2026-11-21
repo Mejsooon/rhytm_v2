@@ -151,7 +151,7 @@ export function CategoriesCard({
   }
 
   return (
-    <Card>
+    <Card data-testid="karta-kategorie">
       <CardHeader>
         <div>
           <CardTitle as="h2">Kategorie kalendarza</CardTitle>
