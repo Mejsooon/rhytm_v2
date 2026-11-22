@@ -158,4 +158,32 @@ describe("StepDone", () => {
     );
     expect(push).toHaveBeenCalledWith("/onboarding/3");
   });
+
+  // Wygląd wg COnboardingDone
+  it("wygląd: logo 40 px, karta podsumowania z ✓ w zielonym kółku i „Zmień” w wierszu", () => {
+    render(<StepDone draft={draft} now={NOW} />);
+    const web = within(screen.getByTestId("done-web"));
+    expect(screen.getAllByRole("img", { name: "rhytm" })[0]).toHaveAttribute(
+      "width",
+      "40",
+    );
+    const karta = web.getByText("Profil").closest("div.shadow-card")!;
+    expect(karta).not.toBeNull();
+    expect(karta.querySelectorAll("span.bg-success\\/10")).toHaveLength(5);
+    const zmien = web.getByRole("button", { name: "Zmień: Strony" });
+    expect(zmien.textContent).toBe("Zmień");
+    expect(zmien.className).toContain("bg-transparent");
+  });
+
+  it("skrót: Ctrl i K w Kbd", () => {
+    render(<StepDone draft={draft} now={NOW} />);
+    const web = within(screen.getByTestId("done-web"));
+    expect(web.getByText("Ctrl")).toHaveClass("bg-muted");
+    expect(web.getByText("K").tagName).toBe("KBD");
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<StepDone draft={draft} now={NOW} />);
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
 });

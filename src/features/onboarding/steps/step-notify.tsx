@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Bell, Check, Smartphone } from "lucide-react";
 
-import { Button, StatusBadge, Switch } from "@/components/controls";
+import { Button, Card, StatusBadge, Switch } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { REMINDERS, type OnboardingDraft } from "../model";
 import { StepHeader } from "./step-header";
@@ -83,54 +83,47 @@ export function StepNotify({
         data-testid="notify-web"
         className="flex flex-col gap-5 max-[799px]:hidden"
       >
-        <div className="flex items-center gap-3 rounded-md border border-input p-3.5">
-          <Bell
+        <Card className="flex-row items-center gap-3 px-4 py-3.5">
+          <span
             aria-hidden="true"
-            className="size-[18px] flex-none text-soft-foreground"
-            strokeWidth={1.5}
-          />
+            className="grid size-8 flex-none place-items-center rounded-lg bg-muted"
+          >
+            <Bell className="size-4 text-soft-foreground" strokeWidth={2} />
+          </span>
           <span className="flex flex-1 flex-col gap-0.5">
             <span className="font-medium">Powiadomienia w przeglądarce</span>
-            <span className="text-[13px] text-muted-foreground">{tekstWeb}</span>
+            <span className="text-[13px] text-muted-foreground">
+              {tekstWeb}
+            </span>
           </span>
           {notify.perm ? (
             <>
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-success">
-                <Check
-                  aria-hidden="true"
-                  className="size-3.5"
-                  strokeWidth={1.5}
-                />
+              <StatusBadge tone="green" size="lg">
+                <Check aria-hidden="true" className="size-3" strokeWidth={3} />
                 Włączone
-              </span>
-              <Button
-                variant="ghost"
-                onClick={cofnij}
-                className="ml-1 h-8 px-3 py-0 text-[13px]"
-              >
+              </StatusBadge>
+              <Button variant="ghost" size="sm" onClick={cofnij}>
                 Anuluj
               </Button>
             </>
           ) : (
-            <Button
-              variant="primary"
-              onClick={() => void zezwol()}
-              className="h-9 py-0"
-            >
+            <Button variant="primary" onClick={() => void zezwol()}>
               Zezwól
             </Button>
           )}
-        </div>
+        </Card>
 
-        <div className="flex flex-col border-t border-border">
+        <Card className="px-4">
           {REMINDERS.map((r) => (
             <div
               key={r.key}
-              className="flex min-h-14 items-center gap-3 border-b border-border"
+              className="flex min-h-[58px] items-center gap-3 border-b border-border last:border-b-0"
             >
               <span className="flex flex-1 flex-col gap-0.5">
                 <span className="font-medium">{r.title}</span>
-                <span className="text-[13px] text-muted-foreground">{r.when}</span>
+                <span className="text-[13px] text-muted-foreground">
+                  {r.when}
+                </span>
               </span>
               <Switch
                 checked={notify[r.key]}
@@ -141,13 +134,14 @@ export function StepNotify({
               />
             </div>
           ))}
-        </div>
+        </Card>
 
-        <div className="flex items-start gap-2 rounded-lg bg-panel px-3 py-2.5 text-[13px] text-soft-foreground">
+        {/* Niebieska informacja (.alert.info): tokeny info */}
+        <div className="flex items-start gap-2.5 rounded-xl border border-info-border bg-info/[.04] px-3.5 py-3 text-sm">
           <Smartphone
             aria-hidden="true"
-            className="size-4 flex-none text-muted-foreground"
-            strokeWidth={1.5}
+            className="mt-0.5 size-4 flex-none text-info"
+            strokeWidth={2}
           />
           <span>
             Na telefonie dodaj rhytm do ekranu głównego, żeby dostawać push
@@ -170,7 +164,9 @@ export function StepNotify({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-medium">Powiadomienia</span>
-            <span className="text-xs text-muted-foreground">{tekstTelefon}</span>
+            <span className="text-xs text-muted-foreground">
+              {tekstTelefon}
+            </span>
           </span>
           {notify.perm ? (
             <span className="flex flex-col items-end gap-0.5">
@@ -206,7 +202,7 @@ export function StepNotify({
             >
               <span className="min-w-0 flex-1">
                 <span className="block">{r.title}</span>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground tabular-nums">
                   {r.when}
                 </span>
               </span>
