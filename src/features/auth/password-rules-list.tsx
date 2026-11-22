@@ -4,7 +4,7 @@ import { checkPasswordRules } from "@/lib/auth/password-rules";
 export type LeakStatus = "unknown" | "ok" | "leaked";
 
 // Trzy reguły hasła z CRegister.dc.html: kółko 14 px z ramką (niespełniona) albo zielone z ✓ (spełniona).
-// Znak ○ zostaje w DOM (niewidoczny), żeby tekst reguły dalej mówił o stanie.
+// Kółko i ✓ są czysto wizualne (aria-hidden); stan dla czytników niesie ukryty tekst „spełnione” / „niespełnione”.
 export function PasswordRulesList({
   password,
   leak,
@@ -34,11 +34,12 @@ export function PasswordRulesList({
         >
           <span
             aria-hidden="true"
-            className={`inline-grid size-3.5 place-items-center rounded-full text-[9px] font-bold ${p.ok ? "bg-success text-white" : "text-transparent shadow-[inset_0_0_0_1px_rgba(0,0,0,.18)]"}`}
+            className={`inline-grid size-3.5 place-items-center rounded-full text-[9px] font-bold ${p.ok ? "bg-success text-white" : "shadow-[inset_0_0_0_1px_rgba(0,0,0,.18)]"}`}
           >
-            {p.ok ? "✓" : "○"}
+            {p.ok ? "✓" : ""}
           </span>
           {p.tekst}
+          <span className="sr-only">{p.ok ? ": spełnione" : ": niespełnione"}</span>
         </li>
       ))}
     </ul>

@@ -35,7 +35,7 @@ describe("NewPasswordForm", () => {
     render(<NewPasswordForm />);
     await wpiszHaslo(user, "rytm2026dobre");
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "✓",
+      ": spełnione",
     );
   });
 
@@ -46,7 +46,7 @@ describe("NewPasswordForm", () => {
     await wpiszHaslo(user, "rytm2026dobre");
     expect(checkPasswordLeak).toHaveBeenCalled();
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "○",
+      ": niespełnione",
     );
   });
 
@@ -62,6 +62,6 @@ describe("NewPasswordForm", () => {
       "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
     );
     expect(screen.getByLabelText("Nowe hasło")).toHaveValue("rytm2026dobre");
-    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("✓");
+    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent(": spełnione");
   });
 });

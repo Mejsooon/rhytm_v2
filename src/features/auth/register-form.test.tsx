@@ -22,6 +22,7 @@ vi.mock("./actions", () => ({
 import { checkPasswordLeak, signUp } from "./actions";
 import { RegisterForm } from "./register-form";
 
+// Kolor wariantu telefonu (PhoneStrengthBar zostaje na hexach do Etapu 3)
 const KOLOR_OK = "#15803d";
 
 async function wpiszHaslo(
@@ -45,8 +46,8 @@ describe("RegisterForm", () => {
     const user = userEvent.setup();
     render(<RegisterForm />);
     await wpiszHaslo(user, "rytm2026");
-    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("○");
-    expect(screen.getByText(/litery i cyfry/)).toHaveTextContent("✓");
+    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent(": niespełnione");
+    expect(screen.getByText(/litery i cyfry/)).toHaveTextContent(": spełnione");
   });
 
   it("wyciek (checkPasswordLeak → true): reguła ○ i blokada wysyłki", async () => {
@@ -58,7 +59,7 @@ describe("RegisterForm", () => {
     await wpiszHaslo(user, "haslo12345");
     await user.click(screen.getByRole("checkbox"));
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "○",
+      ": niespełnione",
     );
     const przycisk = screen.getByRole("button", { name: "Utwórz konto" });
     expect(przycisk).toHaveAttribute("aria-disabled", "true");
@@ -66,14 +67,14 @@ describe("RegisterForm", () => {
     expect(signUp).not.toHaveBeenCalled();
   });
 
-  it("pasek siły ma 4 segmenty; rytmtygodnia2026x → wszystkie #15803d", async () => {
+  it("pasek siły ma 4 segmenty; rytmtygodnia2026x → wszystkie bg-success", async () => {
     const user = userEvent.setup();
     render(<RegisterForm />);
     await wpiszHaslo(user, "rytmtygodnia2026x");
     const segmenty = screen.getAllByTestId("strength-segment");
     expect(segmenty).toHaveLength(4);
     for (const s of segmenty)
-      expect(s).toHaveStyle({ backgroundColor: KOLOR_OK });
+      expect(s).toHaveClass("bg-success");
   });
 
   it("bez zgody „Utwórz konto” ma aria-disabled i nie wysyła; linki do regulaminu i prywatności", async () => {
@@ -183,7 +184,7 @@ describe("RegisterForm", () => {
     await wpiszHaslo(user, "rytm2026dobre");
     expect(checkPasswordLeak).toHaveBeenCalled();
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "○",
+      ": niespełnione",
     );
     expect(
       screen.queryByText("To hasło wyciekło w innym serwisie. Wybierz inne."),
@@ -209,7 +210,7 @@ describe("RegisterForm", () => {
       "Potwierdź, że nie jesteś botem",
     );
     expect(screen.getByLabelText("Hasło")).toHaveValue("rytm2026dobre");
-    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("✓");
+    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent(": spełnione");
   });
 
   it("pasek siły hasła i lista reguł wg CRegister bez font-mono", async () => {

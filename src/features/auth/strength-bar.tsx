@@ -1,5 +1,12 @@
-// Pasek siły hasła: 4 segmenty po 6 px (CRegister.dc.html). Kolor wypełnionych segmentów zależy od wyniku 0–4.
-const KOLORY = ["rgba(0,0,0,.08)", "#ef4444", "#f59e0b", "#15803d", "#15803d"] as const;
+// Pasek siły hasła: 4 segmenty po 6 px (CRegister.dc.html). Kolor wypełnionych segmentów zależy od wyniku 1–4
+// (klasy jako pełne literały, żeby Tailwind je widział); tor to bg-border-soft (rgba(0,0,0,.06)).
+const KOLORY = [
+  "",
+  "bg-destructive",
+  "bg-warning",
+  "bg-success",
+  "bg-success",
+] as const;
 
 export function StrengthBar({
   score,
@@ -18,8 +25,7 @@ export function StrengthBar({
         <span
           key={i}
           data-testid="strength-segment"
-          className="h-1.5 flex-1 rounded-full"
-          style={{ backgroundColor: i < score ? KOLORY[score] : "rgba(0,0,0,.06)" }}
+          className={`h-1.5 flex-1 rounded-full ${i < score ? KOLORY[score] : "bg-border-soft"}`}
         />
       ))}
     </div>
