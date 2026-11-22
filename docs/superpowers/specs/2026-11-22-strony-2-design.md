@@ -30,6 +30,7 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
 3. **Karty statystyk ustawiane przez użytkownika.**
    - Nad tabelą: „+ karta”, okno z wyborem pola, sposobu liczenia (lista zależna od typu pola) i napisu.
    - Na karcie: menu z edycją, usunięciem i zmianą kolejności.
+   - **Szerokość karty** zmienia się przeciągnięciem prawej krawędzi (jak bloki w Notion), a z klawiatury strzałkami ←/→ na uchwycie, co 20 px. Najmniejsza szerokość to 180 px. Górnej granicy nie ma, karta najwyżej wypełnia rząd (`max-width: 100%`). Karty zawijają się do następnego rzędu, gdy się nie mieszczą. Szerokość zapisuje się w karcie (`pinned_cards[].width`, w px). Brak wartości oznacza domyślną szerokość. Na telefonie karty mają pełną szerokość, a przeciągania nie ma.
    - Sposoby liczenia: te, które już istnieją w modelu, czyli `count_option`, `count_option_of_total`, `count_option_in_year`, `avg`, `nearest_date`, `count_distinct`. Nowych sposobów liczenia nie dodajemy.
 4. **Moduł Hasła.**
    - Stały ekran w sekcji Moduły paska bocznego (obok Kalendarza i Sportu) oraz w ustawieniach modułów, jeśli takie są.
