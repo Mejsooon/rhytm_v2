@@ -103,4 +103,31 @@ describe("LoginForm", () => {
       przed,
     );
   });
+
+  it("nagłówek 20 px/600 i opis muted wg makiety", () => {
+    render(<LoginForm />);
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(h1).toHaveClass("text-xl", "font-semibold");
+    expect(h1).not.toHaveClass("text-[22px]");
+    const opis = screen.getByText(
+      "Kalendarz, sport, nawyki i Twoje strony w jednym miejscu.",
+    ).parentElement;
+    expect(opis).toHaveClass("text-muted-foreground");
+  });
+
+  it("przycisk główny i Google 36 px jak w makiecie", () => {
+    render(<LoginForm />);
+    expect(screen.getByRole("button", { name: "Zaloguj się" })).toHaveClass("h-9");
+    expect(
+      screen.getByRole("button", { name: /Zaloguj się przez Google/ }),
+    ).toHaveClass("h-9");
+  });
+
+  it("etykiety pól i link „Nie pamiętasz hasła?” bez font-mono", () => {
+    const { container } = render(<LoginForm />);
+    expect(container.querySelector(".font-mono")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Nie pamiętasz hasła?" }),
+    ).not.toHaveClass("font-mono");
+  });
 });

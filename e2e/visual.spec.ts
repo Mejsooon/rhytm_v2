@@ -51,25 +51,25 @@ const EKRANY_PUBLICZNE = [
     ekran: "logowanie",
     sciezka: "/logowanie",
     tekst: /Zaloguj się do rhytm|Witaj z powrotem/,
-    makieta: "Login / MLogin",
+    makieta: "CLogin / CMLogin",
   },
   {
     ekran: "rejestracja",
     sciezka: "/rejestracja",
     tekst: "Załóż konto",
-    makieta: "Register / MRegister",
+    makieta: "CRegister / CMRegister",
   },
   {
     ekran: "reset-hasla",
     sciezka: "/reset-hasla",
     tekst: /Nie pamiętasz hasła\?|Reset hasła/,
-    makieta: "Forgot / MForgot",
+    makieta: "CForgot / CMForgot",
   },
   {
     ekran: "link-wygasl",
     sciezka: "/link-wygasl",
     tekst: "Link wygasł",
-    makieta: "EmailConfirmed (stan „Link wygasł”)",
+    makieta: "CEmailConfirmed (stan „Link wygasł”)",
   },
 ];
 
@@ -83,7 +83,7 @@ for (const { ekran, sciezka, tekst, makieta } of EKRANY_PUBLICZNE) {
   });
 }
 
-test("zrzut 404 dla gościa (makieta NotFound)", async ({ page }, info) => {
+test("zrzut 404 dla gościa (makieta CNotFound)", async ({ page }, info) => {
   // /dev/* przechodzi przez proxy bez logowania, więc zwykła 404 pokazuje się gościowi bez przekierowania
   const odpowiedz = await page.goto("/dev/nie-ma-takiej-strony");
   expect(odpowiedz?.status()).toBe(404);
@@ -93,7 +93,7 @@ test("zrzut 404 dla gościa (makieta NotFound)", async ({ page }, info) => {
   await zrzut(page, "404", info.project.name);
 });
 
-test("zrzut /potwierdzono (makieta EmailConfirmed)", async ({ page }, info) => {
+test("zrzut /potwierdzono (makieta CEmailConfirmed)", async ({ page }, info) => {
   await page.goto("/potwierdzono");
   await expect(
     page.getByRole("heading", { name: "E-mail potwierdzony" }),
@@ -229,7 +229,7 @@ test.describe("ekrany z sesją", () => {
     }
   });
 
-  test("zrzuty /onboarding/1–7 (makiety Onboarding… / MOnboarding)", async ({
+  test("zrzuty /onboarding/1–7 (makiety COnboarding… / CMOnboarding)", async ({
     page,
   }, info) => {
     const email = uniqueEmail(info.project.name);
@@ -237,7 +237,7 @@ test.describe("ekrany z sesją", () => {
     await createUserAtOnboardingEnd(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/onboarding\/7$/);
-    // Makiety: Onboarding (1), OnboardingRole (2), OnboardingGoals (3), OnboardingSource (4), OnboardingPages (5), OnboardingNotify (6), OnboardingDone (7)
+    // Makiety: COnboarding (1), COnboardingRole (2), COnboardingGoals (3), COnboardingSource (4), COnboardingPages (5), COnboardingNotify (6), COnboardingDone (7)
     for (const krok of [1, 2, 3, 4, 5, 6, 7]) {
       await page.goto(`/onboarding/${krok}`);
       await expect(
@@ -262,7 +262,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-ogolne", info.project.name);
   });
 
-  test("zrzut 404 po zalogowaniu (makieta NotFound)", async ({
+  test("zrzut 404 po zalogowaniu (makieta CNotFound)", async ({
     page,
   }, info) => {
     const email = uniqueEmail(info.project.name);

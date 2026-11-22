@@ -1,3 +1,4 @@
+import { Card, StatusBadge } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
 import {
@@ -6,21 +7,7 @@ import {
   type OnboardingDraft,
 } from "./model";
 
-// Stałe przepisane ze wspólnego skryptu makiet (Onboarding.dc.html, `pv`)
-const CAT: Record<string, string> = {
-  Studia: "#0070f3",
-  Projekty: "#15803d",
-  Praca: "#7c3aed",
-  Sport: "#c2410c",
-  Dom: "#a16207",
-};
-const TINT: Record<string, [string, string]> = {
-  Studia: ["#eff6ff", "#bfdbfe"],
-  Projekty: ["#f0fdf4", "#bbf7d0"],
-  Praca: ["#f5f3ff", "#ddd6fe"],
-  Sport: ["#fff7ed", "#fed7aa"],
-  Dom: ["#fefce8", "#fde68a"],
-};
+// Kolory kategorii bierzemy z modelu (categoriesForRoles), tu tylko przykładowe bloki
 // [godzina, minuta, tytuł, licznik]
 const BL: Record<string, [number, number, string, string]> = {
   Studia: [8, 0, "Matematyka — ćwiczenia", "0/3"],
@@ -30,8 +17,8 @@ const BL: Record<string, [number, number, string, string]> = {
   Dom: [19, 0, "Zakupy i pranie", "0/2"],
 };
 
-// Zielony obrys podświetlanej części podglądu (HI z makiety)
-const OBRYS = "rounded-lg shadow-[0_0_0_2px_#15803d]";
+// Zielony obrys podświetlanej części podglądu (HI z makiety: biała obwódka 2 px + zielony pierścień)
+const OBRYS = "rounded-[10px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success)]";
 
 const DNI = [
   "Niedziela",
@@ -110,8 +97,8 @@ function Awatar({
   className: string;
 }) {
   if (avatarUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={avatarUrl}
         alt=""
@@ -122,7 +109,7 @@ function Awatar({
   return (
     <span
       className={cn(
-        "grid flex-none place-items-center rounded-full bg-primary font-medium text-white",
+        "grid flex-none place-items-center rounded-full bg-primary font-medium text-primary-foreground",
         className,
       )}
     >
@@ -145,14 +132,15 @@ export function LivePreview({
 }) {
   const nazwa = draft.name.trim() || "Ty";
   const ini = inicjaly(nazwa);
-  const kategorie = categoriesForRoles(draft.roles).map((c) => c.name);
+  const kategorie = categoriesForRoles(draft.roles);
   const strony = effectivePages(draft);
 
   const bloki = kategorie
-    .map((c) => {
-      const [h, m, tytul, licznik] = BL[c];
+    .map((k) => {
+      const [h, m, tytul, licznik] = BL[k.name];
       return {
-        c,
+        c: k.name,
+        color: k.color,
         h,
         m,
         godzina: formatClockTime(h, m, draft.clock),
@@ -179,203 +167,221 @@ export function LivePreview({
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-8 flex overflow-hidden rounded-xl border border-input bg-white text-xs shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+      className="absolute inset-0 overflow-hidden bg-black/[.025] tabular-nums"
     >
-      <div className="box-border flex w-44 flex-none flex-col gap-0.5 border-r border-border bg-panel px-2 py-3">
-        <div
-          data-testid="pv-profile"
-          data-highlighted={String(obrysProfil)}
-          className={cn("flex items-center gap-2 p-1.5", obrysProfil && OBRYS)}
-        >
-          <Awatar
-            inicjalyTekst={ini}
-            avatarUrl={avatarUrl}
-            className="size-6 text-[10px]"
-          />
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium whitespace-nowrap">
-              {nazwa}
+      <Card className="absolute inset-8 flex-row overflow-hidden text-[13px] shadow-lg">
+        <div className="box-border flex w-[180px] flex-none flex-col gap-0.5 border-r border-border-soft bg-panel px-2 py-2.5">
+          <div
+            data-testid="pv-profile"
+            data-highlighted={String(obrysProfil)}
+            className={cn(
+              "flex items-center gap-2 p-1.5",
+              obrysProfil && OBRYS,
+            )}
+          >
+            <Awatar
+              inicjalyTekst={ini}
+              avatarUrl={avatarUrl}
+              className="size-6 text-[10px]"
+            />
+            <span className="flex min-w-0 flex-col leading-[1.3]">
+              <span className="truncate font-medium whitespace-nowrap">
+                {nazwa}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {draft.timezone}
+              </span>
             </span>
-            <span className="text-[11px] text-muted-foreground">{draft.timezone}</span>
-          </span>
-        </div>
-        <div className="px-2 pt-3 pb-1 text-[11px] text-muted-foreground">Moduły</div>
-        <div className="flex h-7 items-center rounded-md bg-white px-2 font-medium shadow-[inset_0_0_0_1px_#eaeaea]">
-          Dziś
-        </div>
-        {["Kalendarz", "Sport", "Nawyki i sen"].map((n) => (
-          <div key={n} className="flex h-7 items-center px-2 text-soft-foreground">
-            {n}
           </div>
-        ))}
-        <div
-          data-testid="pv-pages"
-          data-highlighted={String(obrysStrony)}
-          className={cn("mt-2 py-1", obrysStrony && OBRYS)}
-        >
-          <div className="px-2 pb-1 text-[11px] text-muted-foreground">Strony</div>
-          {strony.map((p) => (
-            <div key={p} className="flex h-7 items-center px-2 text-soft-foreground">
-              {p}
-            </div>
-          ))}
-          {strony.length === 0 && (
-            <div className="flex h-7 items-center px-2 text-faint-foreground">
-              Brak stron
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="relative min-w-0 flex-1 p-4">
-        <div className="text-sm font-medium">{dzien}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">{tydzien}</div>
-        <div
-          data-testid="pv-cats"
-          data-highlighted={String(obrysKategorie)}
-          className={cn(
-            "mt-3 flex flex-wrap gap-1.5 p-1",
-            obrysKategorie && OBRYS,
-          )}
-        >
-          {kategorie.map((c) => (
-            <span
-              key={c}
-              className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-white px-2 text-soft-foreground"
-            >
-              <span
-                className="size-2 rounded-full"
-                style={{ background: CAT[c] }}
-              />
-              {c}
-            </span>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-col gap-1.5">
-          {bloki.map((b) => (
+          <div className="px-2 pt-3 pb-1 text-[11px] font-medium text-muted-foreground">
+            Moduły
+          </div>
+          <div className="flex h-7 items-center rounded-[8px] bg-black/[.05] px-2 font-medium">
+            Dziś
+          </div>
+          {["Kalendarz", "Sport", "Nawyki i sen"].map((n) => (
             <div
-              key={b.c}
-              data-testid="pv-block"
-              className="flex items-stretch gap-2"
+              key={n}
+              className="flex h-7 items-center px-2 font-medium text-soft-foreground"
             >
-              <span className="w-[52px] flex-none pt-1.5 font-mono text-[11px] text-muted-foreground">
-                {b.godzina}
-              </span>
-              <div
-                className="box-border flex h-8 flex-1 items-center justify-between gap-2 rounded-md border px-2.5"
-                style={{ background: TINT[b.c][0], borderColor: TINT[b.c][1] }}
-              >
-                <span className="font-medium">{b.tytul}</span>
-                <span className="font-mono text-[11px] text-soft-foreground">
-                  {b.licznik}
-                </span>
-              </div>
+              {n}
             </div>
           ))}
-        </div>
-        {dymek && (
-          <div className="absolute top-4 right-4 flex w-60 gap-2.5 rounded-md border border-input bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.10)] outline-2 outline-offset-2 outline-success">
-            <span className="grid size-6 flex-none place-items-center rounded-md bg-primary">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 48 48"
-                aria-hidden="true"
+          <div
+            data-testid="pv-pages"
+            data-highlighted={String(obrysStrony)}
+            className={cn("mt-2 py-1", obrysStrony && OBRYS)}
+          >
+            <div className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">
+              Strony
+            </div>
+            {strony.map((p) => (
+              <div
+                key={p}
+                className="flex h-7 items-center px-2 font-medium text-soft-foreground"
               >
-                <rect
-                  x="4"
-                  y="4"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                />
-                <rect
-                  x="18"
-                  y="4"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.55"
-                />
-                <rect
-                  x="32"
-                  y="4"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.25"
-                />
-                <rect
-                  x="4"
-                  y="18"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.55"
-                />
-                <rect
-                  x="18"
-                  y="18"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.25"
-                />
-                <rect
-                  x="32"
-                  y="18"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#4ade80"
-                />
-                <rect
-                  x="4"
-                  y="32"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.25"
-                />
-                <rect
-                  x="18"
-                  y="32"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                />
-                <rect
-                  x="32"
-                  y="32"
-                  width="11"
-                  height="11"
-                  rx="3"
-                  fill="#ffffff"
-                  opacity="0.55"
-                />
-              </svg>
-            </span>
-            <span className="flex flex-col gap-0.5">
-              <span className="font-medium">
-                Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}
-              </span>
-              <span className="text-soft-foreground">
-                Start o{" "}
-                {pierwszy
-                  ? pierwszy.godzina
-                  : formatClockTime(8, 0, draft.clock)}
-              </span>
-            </span>
+                {p}
+              </div>
+            ))}
+            {strony.length === 0 && (
+              <div className="flex h-7 items-center px-2 text-faint-foreground">
+                Brak stron
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+
+        <div className="relative min-w-0 flex-1 p-4">
+          <div className="text-[15px] font-semibold">{dzien}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{tydzien}</div>
+          <div
+            data-testid="pv-cats"
+            data-highlighted={String(obrysKategorie)}
+            className={cn(
+              "mt-3 flex flex-wrap gap-1.5 p-1",
+              obrysKategorie && OBRYS,
+            )}
+          >
+            {kategorie.map((k) => (
+              <StatusBadge key={k.name} tone="outline" size="lg">
+                <span
+                  className="size-2 flex-none rounded-full"
+                  style={{ background: k.color }}
+                />
+                {k.name}
+              </StatusBadge>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-col gap-1.5">
+            {bloki.map((b) => (
+              <div
+                key={b.c}
+                data-testid="pv-block"
+                className="flex items-stretch gap-2"
+              >
+                <span className="w-[54px] flex-none pt-2 text-xs text-muted-foreground">
+                  {b.godzina}
+                </span>
+                <div
+                  className="box-border flex h-[34px] flex-1 items-center justify-between gap-2 rounded-[8px] border px-2.5"
+                  // CATEGORY_COLORS to 6-znakowe hexy, więc dopisek "12"/"4d" to alfa (#rrggbbaa)
+                  style={{
+                    background: b.color + "12",
+                    borderColor: b.color + "4d",
+                  }}
+                >
+                  <span className="font-medium">{b.tytul}</span>
+                  <span className="text-xs text-soft-foreground">
+                    {b.licznik}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {dymek && (
+            <div className="absolute top-4 right-4 box-border flex w-[250px] items-start gap-3 rounded-lg border border-border bg-white px-3 py-2.5 text-[13px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success),0_10px_15px_-3px_rgba(0,0,0,.08)]">
+              <span className="grid size-6 flex-none place-items-center rounded-md bg-primary">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <rect
+                    x="4"
+                    y="4"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                  />
+                  <rect
+                    x="18"
+                    y="4"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.55"
+                  />
+                  <rect
+                    x="32"
+                    y="4"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.25"
+                  />
+                  <rect
+                    x="4"
+                    y="18"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.55"
+                  />
+                  <rect
+                    x="18"
+                    y="18"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.25"
+                  />
+                  <rect
+                    x="32"
+                    y="18"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#4ade80"
+                  />
+                  <rect
+                    x="4"
+                    y="32"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.25"
+                  />
+                  <rect
+                    x="18"
+                    y="32"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                  />
+                  <rect
+                    x="32"
+                    y="32"
+                    width="11"
+                    height="11"
+                    rx="3"
+                    fill="#ffffff"
+                    opacity="0.55"
+                  />
+                </svg>
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="font-medium">
+                  Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}
+                </span>
+                <span className="text-muted-foreground">
+                  Start o{" "}
+                  {pierwszy
+                    ? pierwszy.godzina
+                    : formatClockTime(8, 0, draft.clock)}
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

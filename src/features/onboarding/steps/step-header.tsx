@@ -1,4 +1,5 @@
-// Nagłówek kroku: tytuł 24/32 i podtytuł (web), na telefonie tytuł 26 px
+// Nagłówek kroku wg COnboarding: tytuł 24/32 (600, -0.02em) i opis muted 14 px (web),
+// na telefonie tytuł 26 px
 export function StepHeader({
   title,
   subtitle,
@@ -8,10 +9,10 @@ export function StepHeader({
 }) {
   return (
     <div>
-      <h1 className="m-0 text-2xl leading-8 font-medium tracking-[-0.01em] max-[799px]:text-[26px]">
+      <h1 className="m-0 text-2xl leading-8 font-semibold tracking-[-0.02em] max-[799px]:text-[26px]">
         {title}
       </h1>
-      <p className="m-0 mt-2 text-soft-foreground max-[799px]:mt-1.5">{subtitle}</p>
+      <p className="m-0 mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
 }

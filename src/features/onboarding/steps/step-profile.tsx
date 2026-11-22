@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { UploadIcon } from "lucide-react";
 
 import { Button, Dropdown, Segment, TextField } from "@/components/controls";
 import { timezoneOptions } from "@/lib/time/timezones";
@@ -116,6 +117,7 @@ export function StepProfile({
       />
 
       <div className="flex flex-col gap-1.5">
+        {/* Wiersz zdjęcia jak w Ustawieniach (AvatarRow): 56 px, podpis, przycisk z ikoną po prawej */}
         <div className="flex items-center gap-4 max-[799px]:gap-3.5">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -125,7 +127,7 @@ export function StepProfile({
               className="size-14 flex-none rounded-full object-cover max-[799px]:size-16"
             />
           ) : (
-            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-white max-[799px]:size-16 max-[799px]:border max-[799px]:border-input max-[799px]:bg-active max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-foreground">
+            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-primary-foreground max-[799px]:size-16 max-[799px]:border max-[799px]:border-input max-[799px]:bg-active max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-foreground">
               {inicjaly(draft.name)}
             </span>
           )}
@@ -136,11 +138,14 @@ export function StepProfile({
             </span>
           </div>
           <Button
-            size="sm"
-            className="ml-auto h-9 max-[799px]:h-11 max-[799px]:px-3.5"
+            className="ml-auto max-[799px]:px-3.5"
             disabled={wgrywanie}
             onClick={() => wejscie.current?.click()}
           >
+            <UploadIcon
+              aria-hidden="true"
+              className="size-4 max-[799px]:hidden"
+            />
             {wgrywanie ? "Wgrywanie…" : "Wgraj"}
           </Button>
           <input
@@ -173,16 +178,18 @@ export function StepProfile({
         {/* Web: „Europe/Warsaw (UTC+01:00)” */}
         <div className="max-[799px]:hidden">
           <Dropdown
+            variant="select"
             ariaLabel="Strefa czasowa"
             value={draft.timezone}
             onChange={(timezone) => onChange({ ...draft, timezone })}
             options={opcje.map((o) => ({
               value: o.value,
-              label: `${o.value} (${o.offset})`,
+              label: o.value,
+              hint: `(${o.offset})`,
             }))}
           />
         </div>
-        {/* Telefon: miasto + dopisek mono z przesunięciem */}
+        {/* Telefon: miasto + dopisek z przesunięciem */}
         <div className="min-[800px]:hidden">
           <Dropdown
             ariaLabel="Strefa czasowa"
@@ -205,6 +212,7 @@ export function StepProfile({
       <div className="flex flex-col gap-2 text-[13px] font-medium">
         <span>Tydzień zaczyna się od</span>
         <Segment
+          fill
           ariaLabel="Początek tygodnia"
           value={draft.weekStart}
           onChange={(weekStart) => onChange({ ...draft, weekStart })}
@@ -218,6 +226,7 @@ export function StepProfile({
       <div className="flex flex-col gap-2 text-[13px] font-medium">
         <span>Format godziny</span>
         <Segment
+          fill
           ariaLabel="Format godziny"
           value={draft.clock}
           onChange={(clock) => onChange({ ...draft, clock })}

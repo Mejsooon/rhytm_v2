@@ -1,11 +1,11 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
-import { Button } from "@/components/controls";
+import { Button, StatusBadge } from "@/components/controls";
 import { signOut } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 import { completeOnboarding, saveOnboardingStep } from "./actions";
@@ -20,15 +20,14 @@ const KROKI = [1, 2, 3, 4, 5, 6, 7] as const;
 function Wyloguj({ className }: { className?: string }) {
   return (
     <form action={signOut}>
-      <button
+      <Button
         type="submit"
-        className={cn(
-          "cursor-pointer border-0 bg-transparent text-soft-foreground hover:text-foreground",
-          className,
-        )}
+        variant="ghost"
+        size="sm"
+        className={cn("text-muted-foreground", className)}
       >
         Wyloguj
-      </button>
+      </Button>
     </form>
   );
 }
@@ -171,11 +170,12 @@ export function OnboardingWizard({
     <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.45] text-foreground tabular-nums min-[800px]:bg-panel">
       {/* Nagłówek web */}
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
-        <RhytmLogo size={24} withWordmark />
-        <span className="ml-auto font-mono text-xs text-muted-foreground">
+        <RhytmLogo size={24} withWordmark className="gap-2" />
+        {/* Szara odznaka kroku (.bdg.sec.lg z COnboarding), „Wyloguj” jak .btng.sm */}
+        <StatusBadge tone="gray" size="lg" className="ml-auto tabular-nums">
           Krok {step} z 7
-        </span>
-        <Wyloguj className="ml-4 p-0 text-[13px]" />
+        </StatusBadge>
+        <Wyloguj className="ml-2" />
       </header>
 
       {/* Nagłówek telefon */}
@@ -202,12 +202,13 @@ export function OnboardingWizard({
         <span className="flex-1 text-center font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
           Krok {step} z 7
         </span>
-        <Wyloguj className="inline-flex h-11 items-center px-3 text-sm text-muted-foreground" />
+        {/* Telefon: układ bez zmian, cel dotykowy 44 px (nadpisuje max-[799px]:h-10 z Button sm) */}
+        <Wyloguj className="max-[799px]:h-11 max-[799px]:px-3" />
       </header>
 
       <div className="flex min-h-0 flex-1 items-center justify-center min-[800px]:px-6 min-[800px]:pb-10">
-        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
-          {/* Pasek postępu: 7 segmentów po 4 px */}
+        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:bg-clip-padding min-[800px]:shadow-card">
+          {/* Pasek postępu: 7 segmentów po 4 px (web: pełne zaokrąglenie, wypełnienie jak w AuthShell) */}
           <div
             role="progressbar"
             aria-label="Postęp onboardingu"
@@ -220,17 +221,17 @@ export function OnboardingWizard({
               <span
                 key={k}
                 className={cn(
-                  "h-1 rounded-sm",
-                  k <= step ? "bg-primary" : "bg-input",
+                  "h-1 rounded-sm min-[800px]:rounded-full",
+                  k <= step ? "bg-primary" : "bg-input min-[800px]:bg-border",
                 )}
               />
             ))}
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-[520px_1fr] max-[1100px]:grid-cols-1">
-            <div className="flex min-h-0 flex-col px-5 pt-4 pb-0 min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-6">
+            <div className="flex min-h-0 flex-col">
               {/* Bez paska przewijania (komentarz do makiety OnboardingGoals); kółko i gładzik dalej przewijają */}
-              <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-6 [scrollbar-width:none] min-[800px]:pb-0 [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pt-4 pb-6 [scrollbar-width:none] min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-5 [&::-webkit-scrollbar]:hidden">
                 <Widok
                   draft={draft}
                   onChange={setDraft}
@@ -244,15 +245,20 @@ export function OnboardingWizard({
 
               <div
                 data-testid="wizard-footer"
-                className="flex flex-none flex-col gap-2 border-t border-border bg-white pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:-mx-5 max-[799px]:px-5 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:pt-5 min-[800px]:pb-0"
+                className="flex flex-none flex-col gap-2 border-t border-border bg-white px-5 pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:bg-black/[.025] min-[800px]:px-10 min-[800px]:py-3.5"
               >
                 {/* Web: „Wstecz” w stopce; na telefonie jest w nagłówku */}
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   onClick={wstecz}
                   disabled={step === 1 || pending}
                   className="max-[799px]:hidden"
                 >
+                  <ChevronLeft
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2}
+                  />
                   Wstecz
                 </Button>
                 <span className="flex-1 max-[799px]:hidden" />
@@ -273,6 +279,12 @@ export function OnboardingWizard({
                   className="max-[799px]:order-1 max-[799px]:w-full"
                 >
                   {ostatni ? "Przejdź do Dziś" : "Dalej"}
+                  {/* Strzałka tylko na webie; przycisk telefonu zostaje bez zmian */}
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="size-4 max-[799px]:hidden"
+                    strokeWidth={2}
+                  />
                 </Button>
                 {blad && (
                   <p
@@ -285,7 +297,7 @@ export function OnboardingWizard({
               </div>
             </div>
 
-            <div className="relative overflow-hidden border-l border-border bg-muted max-[1100px]:hidden">
+            <div className="relative overflow-hidden border-l border-border max-[1100px]:hidden">
               <LivePreview
                 draft={draft}
                 step={step}

@@ -101,7 +101,11 @@ describe("StepNotify", () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":true');
     // „Anuluj” bez ramki (ghost, .btng z makiet)
-    expect(web().getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
+    expect(web().getByRole("button", { name: "Anuluj" })).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "hover:bg-accent",
+    );
     await userEvent.click(web().getByRole("button", { name: "Anuluj" }));
     expect(web().getByRole("button", { name: "Zezwól" })).toBeInTheDocument();
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":false');
@@ -126,5 +130,61 @@ describe("StepNotify", () => {
       .getByRole("switch", { name: "Przed blokiem" })
       .closest("[data-reminder-row]");
     expect(wiersz).toHaveClass("opacity-[.55]");
+  });
+
+  // Wygląd wg COnboardingNotify
+  it("wygląd: karta powiadomień z ikoną w szarym polu i przyciskiem „Zezwól”", () => {
+    render(<Probe />);
+    const karta = web()
+      .getByText("Powiadomienia w przeglądarce")
+      .closest("div.shadow-card");
+    expect(karta).not.toBeNull();
+    expect(karta!.querySelector("svg.lucide-bell")).not.toBeNull();
+    expect(web().getByRole("button", { name: "Zezwól" }).className).toContain(
+      "bg-primary",
+    );
+  });
+
+  it("wygląd: po zgodzie plakietka „Włączone” i ghost „Anuluj”", async () => {
+    vi.stubGlobal("Notification", {
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+    });
+    render(<Probe />);
+    await userEvent.click(web().getByRole("button", { name: "Zezwól" }));
+    expect(await web().findByText("Włączone")).toHaveClass("bg-success-soft");
+    expect(web().getByRole("button", { name: "Anuluj" }).className).toContain(
+      "bg-transparent",
+    );
+  });
+
+  it("wygląd: przełączniki w jednej karcie z separatorami bez ostatniego", () => {
+    render(<Probe />);
+    const wiersze = web()
+      .getAllByRole("switch")
+      .map((s) => s.parentElement!);
+    expect(wiersze).toHaveLength(4);
+    expect(wiersze[0].parentElement).toHaveClass("shadow-card");
+    expect(wiersze[0]).toHaveClass("border-b");
+    expect(wiersze[3]).toHaveClass("last:border-b-0");
+    expect(wiersze[3]).toHaveClass("min-h-[58px]");
+  });
+
+  it("wygląd: niebieska informacja z tokenów info", () => {
+    render(<Probe />);
+    const info = web()
+      .getByText(/dodaj rhytm do ekranu głównego/)
+      .closest("div");
+    expect(info!.className).toContain("border-info-border");
+    expect(info!.className).toContain("bg-info/[.04]");
+    expect(info!).toHaveClass("rounded-lg");
+    expect(info!).not.toHaveClass("rounded-xl");
+    expect(info!.querySelector("svg.lucide-smartphone")).toHaveClass(
+      "text-info",
+    );
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<Probe />);
+    expect(container.innerHTML).not.toContain("font-mono");
   });
 });

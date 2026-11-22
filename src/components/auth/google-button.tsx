@@ -1,7 +1,7 @@
 import { Button } from "@/components/controls/button";
 import { cn } from "@/lib/utils";
 
-// Przycisk Google — submit własnego <form action={signInWithGoogle}> (osobnego od formularza hasła).
+// Przycisk Google (CLogin: outline, 36 px, ikona 16 px) — submit własnego <form action={signInWithGoogle}> (osobnego od formularza hasła).
 // Etykieta i ikona zależą od szerokości (web / telefon) — tylko CSS.
 export function GoogleButton({
   className,
@@ -13,15 +13,16 @@ export function GoogleButton({
   return (
     <Button
       type="submit"
+      size="lg"
       className={cn(
-        "w-full min-h-10 gap-2.5 leading-[1.21] max-[799px]:text-[15px]",
+        "w-full gap-2 leading-[1.21] max-[799px]:gap-2.5 max-[799px]:text-[15px]",
         className,
       )}
     >
-      {/* Web: kolorowe „G” z Login.dc.html */}
+      {/* Web: kolorowe „G” z CLogin.dc.html */}
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 48 48"
         aria-hidden="true"
         className="max-[799px]:hidden"

@@ -105,4 +105,35 @@ describe("ResetSteps", () => {
     expect(ponownie).toBeEnabled();
     vi.useRealTimers();
   });
+
+  it("reset: progress 3 segmenty i stopka ‹ Wróć do logowania w pasku stopki", async () => {
+    const user = userEvent.setup();
+    render(<ResetSteps />);
+    const pasek = screen.getByTestId("auth-progress");
+    expect(pasek.children).toHaveLength(3);
+    // Krok 1: jeden segment wypełniony
+    expect(pasek.children[0]).toHaveClass("bg-foreground");
+    expect(pasek.children[1]).toHaveClass("bg-border");
+    const wroc = screen.getByRole("link", { name: "Wróć do logowania" });
+    expect(wroc).toHaveAttribute("href", "/logowanie");
+    expect(wroc.closest(".border-t")).not.toBeNull();
+    expect(wroc.closest(".border-t")).toHaveClass("bg-black/[.025]");
+
+    await user.type(screen.getByLabelText("E-mail"), "ala@przyklad.pl");
+    await user.click(screen.getByRole("button", { name: "Wyślij link" }));
+    await screen.findByText("krok 2 / 3");
+    // Krok 2: dwa segmenty wypełnione
+    const pasek2 = screen.getByTestId("auth-progress");
+    expect(pasek2.children[1]).toHaveClass("bg-foreground");
+    expect(pasek2.children[2]).toHaveClass("bg-border");
+  });
+
+  it("reset: bez font-mono, nagłówek wyśrodkowany 20 px/600 (krok 1)", () => {
+    const { container } = render(<ResetSteps />);
+    expect(container.querySelector(".font-mono")).toBeNull();
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(h1).toHaveClass("text-xl", "font-semibold");
+    expect(h1).not.toHaveClass("text-[22px]");
+    expect(screen.getByRole("button", { name: "Wyślij link" })).toHaveClass("h-9");
+  });
 });

@@ -9,7 +9,7 @@ import { TextField } from "@/components/controls/field";
 
 import { resendLink, type AuthFormState } from "./actions";
 
-// Ekran „Link wygasł” (EmailConfirmed.dc.html, drugi stan): pole e-mail i „Wyślij nowy link”.
+// Treść ekranu „Link wygasł” (CEmailConfirmed.dc.html, prawa karta): pole e-mail i „Wyślij nowy link”. Ramkę konta (AuthShell) dokłada strona.
 // Po wysłaniu zawsze ten sam tekst — nie zdradzamy, czy adres ma konto.
 export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   const [wyslano, setWyslano] = useState(false);
@@ -18,14 +18,10 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
 
   return (
     <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-      <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
-        <CircleAlert
-          aria-hidden="true"
-          className="size-5 text-destructive-foreground"
-          strokeWidth={2}
-        />
+      <span className="flex size-10 items-center justify-center rounded-[10px] border border-destructive-border bg-destructive-soft text-destructive-foreground shadow-xs">
+        <CircleAlert aria-hidden="true" className="size-5" strokeWidth={2} />
       </span>
-      <h1 className="m-0 text-[22px] font-semibold">Link wygasł</h1>
+      <h1 className="m-0 text-xl font-semibold">Link wygasł</h1>
       <p className="m-0 leading-normal text-muted-foreground">
         Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
         adres.
@@ -65,12 +61,16 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
           />
           <TurnstileWidget resetKey={wynik} />
           {wynik.status === "error" && wynik.message && (
-            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
+            <p
+              role="alert"
+              className="m-0 text-[13px] text-destructive-foreground"
+            >
               {wynik.message}
             </p>
           )}
           <Button
             type="submit"
+            size="lg"
             disabled={pending}
             className="w-full leading-[1.21] max-[799px]:text-[15px]"
           >

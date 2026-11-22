@@ -37,6 +37,7 @@ function UtworzKonto({ gotowe }: { gotowe: boolean }) {
     <Button
       type="submit"
       variant="primary"
+      size="lg"
       disabled={pending}
       aria-disabled={!gotowe}
       onClick={(e) => {
@@ -95,11 +96,11 @@ export function RegisterForm() {
     // Kontener z kolejnością bloków; Google to osobny <form> (Enter w polach wysyła rejestrację hasłem).
     // Na telefonie (MRegister.dc.html) nie ma przycisku Google ani separatora.
     <div className="flex flex-1 flex-col gap-4 max-[799px]:gap-5">
-      <div className="order-1">
-        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
+      <div className="order-1 min-[800px]:mb-1">
+        <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px]">
           Załóż konto
         </h1>
-        <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:text-[13px]">
+        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px]">
           <span className="max-[799px]:hidden">
             Wyślemy link, żeby potwierdzić Twój e-mail.
           </span>
@@ -165,18 +166,18 @@ export function RegisterForm() {
               setLeak("unknown");
             }}
           />
-          <StrengthBar score={silaHasla} className="mt-4 max-[799px]:mt-2.5" />
+          <StrengthBar score={silaHasla} className="mt-2 max-[799px]:mt-2.5" />
           <PhoneStrengthBar password={password} className="mt-2.5" />
           {/* Na telefonie nie ma listy reguł — powód blokady wysyłki musi być widoczny tutaj */}
           {leak === "leaked" && (
-            <p className="m-0 mt-1.5 font-mono text-[11px] text-destructive-foreground min-[800px]:hidden">
+            <p className="m-0 mt-1.5 text-[11px] text-destructive-foreground min-[800px]:hidden">
               To hasło wyciekło w innym serwisie. Wybierz inne.
             </p>
           )}
           <PasswordRulesList
             password={password}
             leak={leak}
-            className="mt-2.5 max-[799px]:hidden"
+            className="mt-2 max-[799px]:hidden"
           />
         </div>
 
@@ -215,11 +216,11 @@ export function RegisterForm() {
         </div>
       </form>
 
-      <p className="order-5 m-0 text-center text-[13px] text-muted-foreground max-[799px]:text-sm">
+      <p className="order-5 m-0 text-center text-sm text-muted-foreground">
         Masz już konto?{" "}
         <Link
           href="/logowanie"
-          className="text-foreground underline hover:text-black max-[799px]:font-semibold max-[799px]:no-underline"
+          className="font-medium text-foreground underline max-[799px]:font-semibold max-[799px]:no-underline"
         >
           Zaloguj się
         </Link>

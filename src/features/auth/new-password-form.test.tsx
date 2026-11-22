@@ -35,7 +35,7 @@ describe("NewPasswordForm", () => {
     render(<NewPasswordForm />);
     await wpiszHaslo(user, "rytm2026dobre");
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "✓",
+      ": spełnione",
     );
   });
 
@@ -46,7 +46,7 @@ describe("NewPasswordForm", () => {
     await wpiszHaslo(user, "rytm2026dobre");
     expect(checkPasswordLeak).toHaveBeenCalled();
     expect(screen.getByText(/nie ma go w bazie wycieków/)).toHaveTextContent(
-      "○",
+      ": niespełnione",
     );
   });
 
@@ -62,6 +62,26 @@ describe("NewPasswordForm", () => {
       "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
     );
     expect(screen.getByLabelText("Nowe hasło")).toHaveValue("rytm2026dobre");
-    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("✓");
+    expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent(": spełnione");
+  });
+
+  it("nowe hasło: bez font-mono, nagłówek 20 px/600, przycisk 36 px", () => {
+    const { container } = render(<NewPasswordForm />);
+    expect(container.querySelector(".font-mono")).toBeNull();
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(h1).toHaveClass("text-xl", "font-semibold");
+    expect(h1).not.toHaveClass("text-[22px]");
+    expect(
+      screen.getByRole("button", { name: "Zapisz i zaloguj się" }),
+    ).toHaveClass("h-9");
+    expect(
+      screen.getByText("Hasło do konta nie otwiera sejfu. Sejf ma osobne hasło główne.")
+        .closest("p"),
+    ).toHaveClass(
+      "rounded-lg",
+      "bg-info/[.04]",
+      "border-info-border",
+      "text-sm",
+    );
   });
 });

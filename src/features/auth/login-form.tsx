@@ -33,12 +33,12 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
     // Google to osobny <form> obok formularza hasła, więc Enter w polach zawsze wysyła logowanie hasłem.
     <div className="flex flex-1 flex-col gap-4 max-[799px]:gap-3.5">
       {/* Tytuł: web „Zaloguj się do rhytm”, telefon „Witaj z powrotem” */}
-      <div className="order-1 max-[799px]:mb-3.5 max-[799px]:text-center">
-        <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] max-[799px]:text-[28px]">
+      <div className="order-1 min-[800px]:mb-1 max-[799px]:mb-3.5 max-[799px]:text-center">
+        <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px]">
           <span className="max-[799px]:hidden">Zaloguj się do rhytm</span>
           <span className="min-[800px]:hidden">Witaj z powrotem</span>
         </h1>
-        <p className="mt-1.5 mb-0 text-muted-foreground max-[799px]:text-[13px]">
+        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px]">
           <span className="max-[799px]:hidden">
             Kalendarz, sport, nawyki i Twoje strony w jednym miejscu.
           </span>
@@ -83,7 +83,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           rightLink={
             <Link
               href="/reset-hasla"
-              className="text-muted-foreground underline hover:text-black max-[799px]:text-sm max-[799px]:text-soft-foreground max-[799px]:no-underline"
+              className="text-muted-foreground underline hover:text-foreground max-[799px]:text-sm max-[799px]:text-soft-foreground max-[799px]:no-underline"
             >
               Nie pamiętasz hasła?
             </Link>
@@ -101,6 +101,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           <Button
             type="submit"
             variant="primary"
+            size="lg"
             disabled={pending}
             className="w-full leading-[1.21] max-[799px]:text-[15px]"
           >
@@ -109,12 +110,12 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
         </div>
       </form>
 
-      <p className="order-8 m-0 text-center text-[13px] text-muted-foreground max-[799px]:mt-auto max-[799px]:text-sm">
+      <p className="order-8 m-0 text-center text-sm text-muted-foreground max-[799px]:mt-auto">
         <span className="max-[799px]:hidden">
           Nie masz konta?{" "}
           <Link
             href="/rejestracja"
-            className="text-foreground underline hover:text-black"
+            className="font-medium text-foreground underline"
           >
             Zarejestruj się
           </Link>

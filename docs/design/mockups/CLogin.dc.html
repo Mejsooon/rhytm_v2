@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Logowanie (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #262626; font-family: 'Inter', system-ui, sans-serif; font-size: 14px">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px">
+    <div style="display: flex; align-items: center; gap: 8px"><svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg><span style="font-weight: 600; letter-spacing: -0.03em; font-size: 16px">rhytm</span></div>
+    <a href="CRegister.dc.html" class="btn">Załóż konto</a>
+  </header>
+
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px">
+    <form class="card" style="width: 100%; max-width: 400px">
+      <div class="card-h" style="flex-direction: column; align-items: stretch; gap: 0; padding-top: 28px">
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.015em">Zaloguj się do rhytm</h1>
+        <p class="card-d">Kalendarz, sport, nawyki i Twoje strony w jednym miejscu.</p>
+      </div>
+      <div class="card-p" style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 28px">
+        <a href="CToday.dc.html" class="btn lg" style="width: 100%"><svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true" style="opacity: 1"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"></path><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"></path><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"></path><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"></path></svg>Zaloguj się przez Google</a>
+        <div style="display: flex; align-items: center; gap: 12px; color: #686868; font-size: 12px"><span class="sep" style="flex: 1"></span>lub e-mailem<span class="sep" style="flex: 1"></span></div>
+        <label class="fld">E-mail<input class="inp" type="email" placeholder="ty@example.com" autocomplete="email"></label>
+        <div class="fld">
+          <span style="display: flex; justify-content: space-between; align-items: center"><label for="cl-pw">Hasło</label><a href="CForgot.dc.html" style="font-weight: 400; color: #686868; font-size: 13px">Nie pamiętasz hasła?</a></span>
+          <span class="igroup" style="padding-right: 3px"><input id="cl-pw" type="{{pwType}}" value="hasło-przykładowe" autocomplete="current-password"><button type="button" class="btng ic xs" aria-label="{{pwLbl}}" aria-pressed="{{pwShown}}" onClick="{{togglePw}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span>
+        </div>
+        <div class="alert ok" style="align-items: center; padding: 10px 12px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+          <span style="flex: 1">Weryfikacja zakończona</span>
+          <span class="bdg out">Turnstile</span>
+        </div>
+        <a href="CToday.dc.html" class="btnp lg" style="width: 100%">Zaloguj się</a>
+        <p style="margin: 0; text-align: center; color: #686868">Nie masz konta? <a href="CRegister.dc.html" style="color: #262626; font-weight: 500">Zarejestruj się</a></p>
+      </div>
+    </form>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const shown = !!(this.state && this.state.pw);
+    return {
+      pwType: shown ? 'text' : 'password',
+      pwShown: shown ? 'true' : 'false',
+      pwLbl: shown ? 'Ukryj hasło' : 'Pokaż hasło',
+      togglePw: () => this.setState({ pw: !shown })
+    };
+  }
+}
+</script>
+</body>
+</html>

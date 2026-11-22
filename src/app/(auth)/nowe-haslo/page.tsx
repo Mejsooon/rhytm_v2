@@ -28,14 +28,16 @@ async function Ekran() {
     return (
       <AuthShell
         headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-        width={362}
+        footer={
+          <span className="text-xs">Nowy link będzie ważny 1 godzinę.</span>
+        }
       >
         <LinkExpired type="recovery" />
       </AuthShell>
     );
   }
   return (
-    <AuthShell headerNote="krok 3 / 3" width={322}>
+    <AuthShell headerNote="krok 3 / 3" progress={{ step: 3, total: 3 }}>
       <NewPasswordForm />
     </AuthShell>
   );

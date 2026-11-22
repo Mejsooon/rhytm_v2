@@ -215,6 +215,125 @@ describe("OnboardingWizard", () => {
     expect(stopka.getByRole("button", { name: "Wstecz" })).toBeEnabled();
   });
 
+  it("pasek górny: „Krok N z 7” jako szara odznaka bez font-mono, „Wyloguj” po prawej", () => {
+    pokaz(3);
+    // Pierwszy w DOM jest nagłówek web (drugi to nagłówek telefonu)
+    const odznaka = screen.getAllByText("Krok 3 z 7")[0];
+    expect(odznaka).toHaveClass("bg-muted", "ml-auto");
+    expect(odznaka).not.toHaveClass("font-mono");
+    const naglowek = odznaka.closest("header") as HTMLElement;
+    const wyloguj = within(naglowek).getByRole("button", { name: "Wyloguj" });
+    // „Wyloguj” jest za odznaką, na końcu paska
+    expect(
+      odznaka.compareDocumentPosition(wyloguj) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(naglowek.lastElementChild).toContainElement(wyloguj);
+  });
+
+  it("„Wyloguj” to wspólny Button ghost sm (web 28 px), a na telefonie zostaje 44 px; logo web z gap-2", () => {
+    pokaz(3);
+    const [web, telefon] = screen.getAllByRole("button", { name: "Wyloguj" });
+    expect(web).toHaveAttribute("type", "submit");
+    expect(web).toHaveClass(
+      "h-7",
+      "bg-transparent",
+      "text-muted-foreground",
+      "hover:bg-accent",
+    );
+    expect(telefon).toHaveAttribute("type", "submit");
+    expect(telefon).toHaveClass("max-[799px]:h-11", "text-muted-foreground");
+    expect(telefon).not.toHaveClass("max-[799px]:h-10");
+    const logo = document.querySelector("header svg")?.parentElement;
+    expect(logo).toHaveClass("gap-2");
+    expect(logo).not.toHaveClass("gap-2.5");
+  });
+
+  it("7 segmentów postępu, wypełnione do bieżącego kroku", () => {
+    pokaz(3);
+    const pasek = screen.getByRole("progressbar");
+    expect(pasek).toHaveAttribute("aria-label", "Postęp onboardingu");
+    expect(pasek).toHaveAttribute("aria-valuemin", "1");
+    expect(pasek).toHaveAttribute("aria-valuemax", "7");
+    expect(pasek).toHaveAttribute("aria-valuenow", "3");
+    const segmenty = Array.from(pasek.children);
+    expect(segmenty).toHaveLength(7);
+    expect(segmenty.map((s) => s.classList.contains("bg-primary"))).toEqual([
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    // Segmenty web: pełne zaokrąglenie jak w AuthShell
+    expect(segmenty[0]).toHaveClass("min-[800px]:rounded-full");
+  });
+
+  it("stopka: „Wstecz” ghost z ChevronLeft, „Dalej” primary z ChevronRight", () => {
+    const stopka = pokaz(3);
+    const wstecz = stopka.getByRole("button", { name: "Wstecz" });
+    expect(wstecz).toHaveClass("bg-transparent");
+    expect(wstecz.querySelector("svg.lucide-chevron-left")).not.toBeNull();
+    const dalej = stopka.getByRole("button", { name: "Dalej" });
+    expect(dalej).toHaveClass("bg-primary");
+    expect(dalej.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+    // Stopka web: pasek oddzielony linią, na całą szerokość kolumny
+    expect(screen.getByTestId("wizard-footer")).toHaveClass(
+      "border-t",
+      "min-[800px]:bg-black/[.025]",
+    );
+  });
+
+  it("stopka w ostatnim kroku: „Przejdź do Dziś” primary z ChevronRight", () => {
+    const stopka = pokaz(7);
+    const koniec = stopka.getByRole("button", { name: "Przejdź do Dziś" });
+    expect(koniec).toHaveClass("bg-primary");
+    expect(koniec.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+  });
+
+  it("ramka web: tło panel, karta 1120×720 z cieniem, kolumna kroku 520 px", () => {
+    const { container } = render(
+      <OnboardingWizard
+        step={1}
+        initialDraft={draft}
+        avatarUrl={null}
+        now={NOW}
+        userId="u1"
+      />,
+    );
+    expect(container.firstElementChild).toHaveClass("min-[800px]:bg-panel");
+    const karta = screen.getByRole("progressbar").parentElement as HTMLElement;
+    expect(karta).toHaveClass(
+      "max-w-[1120px]",
+      "min-[800px]:h-[720px]",
+      "min-[800px]:shadow-card",
+    );
+    expect(
+      screen.getByTestId("wizard-footer").parentElement?.parentElement,
+    ).toHaveClass("grid-cols-[520px_1fr]");
+  });
+
+  it("telefon bez zmian: klasy max-[799px]: nagłówka, stopki i przycisków", () => {
+    pokaz(2);
+    const stopka = screen.getByTestId("wizard-footer");
+    expect(stopka).toHaveClass("max-[799px]:sticky", "max-[799px]:bottom-0");
+    const dalej = within(stopka).getByRole("button", { name: "Dalej" });
+    expect(dalej).toHaveClass("max-[799px]:w-full", "max-[799px]:order-1");
+    // „Wstecz” w stopce znika na telefonie, w nagłówku telefonu jest osobny
+    expect(within(stopka).getByRole("button", { name: "Wstecz" })).toHaveClass(
+      "max-[799px]:hidden",
+    );
+    const naglowekTel = screen.getAllByText("Krok 2 z 7")[1].closest("header");
+    expect(naglowekTel).toHaveClass("min-[800px]:hidden");
+    expect(
+      within(naglowekTel as HTMLElement).getByRole("button", {
+        name: "Wstecz",
+      }),
+    ).toHaveClass("size-11");
+  });
+
   it("nowy initialDraft z serwera zastępuje lokalny szkic", () => {
     const { rerender } = render(
       <OnboardingWizard

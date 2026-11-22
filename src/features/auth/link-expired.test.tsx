@@ -62,4 +62,29 @@ describe("LinkExpired", () => {
       ),
     ).not.toBeInTheDocument();
   });
+
+  it("kafelek ikony w tonie błędu, przycisk „Wyślij nowy link” outline, sama treść bez ramki konta", () => {
+    const { container } = render(<LinkExpired type="recovery" />);
+    const kafelek = container.querySelector("svg.lucide")?.parentElement;
+    expect(kafelek).toHaveClass(
+      "size-10",
+      "bg-destructive-soft",
+      "border-destructive-border",
+      "text-destructive-foreground",
+    );
+    const przycisk = screen.getByRole("button", { name: "Wyślij nowy link" });
+    expect(przycisk).toHaveClass("border-input", "bg-white", "h-9");
+    // Ramka (nagłówek, stopka) należy do strony, nie do komponentu
+    expect(
+      screen.queryByText("Nowy link będzie ważny 1 godzinę."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Zaloguj się" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass(
+      "text-xl",
+      "font-semibold",
+    );
+    expect(container.querySelector(".font-mono")).toBeNull();
+  });
 });

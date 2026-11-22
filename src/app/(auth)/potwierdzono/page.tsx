@@ -7,22 +7,18 @@ import { Button } from "@/components/controls/button";
 
 export const metadata: Metadata = { title: "E-mail potwierdzony — rhytm" };
 
-// Stan „E-mail potwierdzony” (EmailConfirmed.dc.html). Statyczny — do /onboarding prowadzi zwykły link.
+// Stan „E-mail potwierdzony” (CEmailConfirmed.dc.html, lewa karta). Statyczny — do /onboarding prowadzi zwykły link.
 export default function PotwierdzonoPage() {
   return (
     <AuthShell
       headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-      width={362}
+      footer={<span className="text-xs">Link był jednorazowy i już wygasł.</span>}
     >
       <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-        <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
-          <Check
-            aria-hidden="true"
-            className="size-5 text-success"
-            strokeWidth={2}
-          />
+        <span className="flex size-10 items-center justify-center rounded-[10px] border border-success-border bg-success-soft text-success shadow-xs">
+          <Check aria-hidden="true" className="size-5" strokeWidth={2} />
         </span>
-        <h1 className="m-0 text-[22px] font-semibold">E-mail potwierdzony</h1>
+        <h1 className="m-0 text-xl font-semibold">E-mail potwierdzony</h1>
         <p className="m-0 leading-normal text-muted-foreground">
           Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około
           minuty.
@@ -30,13 +26,11 @@ export default function PotwierdzonoPage() {
         <Button
           asChild
           variant="primary"
+          size="lg"
           className="w-full leading-[1.21] max-[799px]:text-[15px]"
         >
           <Link href="/onboarding">Dalej</Link>
         </Button>
-        <p className="m-0 font-mono text-[11px] text-muted-foreground">
-          Link był jednorazowy i już wygasł.
-        </p>
       </div>
     </AuthShell>
   );

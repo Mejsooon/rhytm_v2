@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { SOURCES, type OnboardingDraft } from "../model";
 import { StepHeader } from "./step-header";
 
-// Ikony 16 px z makiety OnboardingSource (obrys #525252, 1.5)
+// Ikony 16 px z makiety COnboardingSource (obrys muted, grubość 2)
 const IKONY: Record<string, React.ReactNode> = {
   friend: (
     <>
@@ -70,7 +70,7 @@ const IKONY: Record<string, React.ReactNode> = {
 };
 
 // Krok 4: skąd o nas usłyszałeś — jeden wybór, klik wybranego odznacza.
-// Web: karty 2 kol. 48 px z ikonami; telefon: chipy.
+// Web: karty 2 kol. 44 px z ikonami; telefon: chipy.
 export function StepSource({
   draft,
   onChange,
@@ -110,9 +110,9 @@ export function StepSource({
               aria-pressed={wlaczone}
               onClick={() => wybierz(zrodlo.key)}
               className={cn(
-                "box-border flex h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-white px-3.5 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus",
+                "box-border flex h-11 w-full cursor-pointer items-center gap-3 rounded-lg border border-border bg-white bg-clip-padding px-3.5 text-left text-foreground shadow-xs transition-[border-color,background-color,box-shadow] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus",
                 wlaczone &&
-                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
+                  "border-black/[.24] bg-black/[.025] shadow-[0_0_0_1px_rgba(0,0,0,.12)] hover:bg-black/[.025]",
               )}
             >
               <svg
@@ -120,12 +120,12 @@ export function StepSource({
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#525252"
-                strokeWidth="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
-                className="flex-none"
+                className="flex-none text-muted-foreground"
               >
                 {IKONY[zrodlo.key]}
               </svg>

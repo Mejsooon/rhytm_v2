@@ -3,77 +3,10 @@
 import { Check, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { RhytmLogo } from "@/components/brand/rhytm-logo";
+import { Button, Card, Kbd } from "@/components/controls";
 import { timezoneOptions } from "@/lib/time/timezones";
 import { buildSummary, type OnboardingDraft } from "../model";
-
-const LOGO = (
-  <svg
-    width="40"
-    height="40"
-    viewBox="0 0 48 48"
-    role="img"
-    aria-label="rhytm"
-    className="flex-none"
-  >
-    <rect x="4" y="4" width="11" height="11" rx="3" fill="#171717" />
-    <rect
-      x="18"
-      y="4"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.55"
-    />
-    <rect
-      x="32"
-      y="4"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.25"
-    />
-    <rect
-      x="4"
-      y="18"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.55"
-    />
-    <rect
-      x="18"
-      y="18"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.25"
-    />
-    <rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d" />
-    <rect
-      x="4"
-      y="32"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.25"
-    />
-    <rect x="18" y="32" width="11" height="11" rx="3" fill="#171717" />
-    <rect
-      x="32"
-      y="32"
-      width="11"
-      height="11"
-      rx="3"
-      fill="#171717"
-      opacity="0.55"
-    />
-  </svg>
-);
 
 // Krok 7: podsumowanie (OnboardingDone + MOnboarding). Przycisk „Przejdź do Dziś” jest w stopce kreatora.
 export function StepDone({
@@ -95,15 +28,15 @@ export function StepDone({
   return (
     <>
       <div className="flex flex-col gap-4 max-[799px]:items-center max-[799px]:gap-3 max-[799px]:pt-2 max-[799px]:text-center">
-        <span className="max-[799px]:hidden">{LOGO}</span>
+        <RhytmLogo size={40} className="max-[799px]:hidden" />
         <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
           <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
         </span>
         <div>
-          <h1 className="m-0 text-[28px] leading-9 font-medium tracking-[-0.01em] max-[799px]:text-[26px] max-[799px]:leading-8">
+          <h1 className="m-0 text-[28px] leading-9 font-semibold tracking-[-0.01em] max-[799px]:text-[26px] max-[799px]:leading-8">
             Gotowe, {imie}
           </h1>
-          <p className="m-0 mt-2 text-soft-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px] max-[799px]:text-muted-foreground">
+          <p className="m-0 mt-1.5 text-muted-foreground max-[799px]:text-[13px]">
             <span className="max-[799px]:hidden">
               Twój rhytm jest ułożony. Oto co przygotowaliśmy
             </span>
@@ -114,42 +47,44 @@ export function StepDone({
         </div>
       </div>
 
-      <dl
+      <div
         data-testid="done-web"
-        className="m-0 border-t border-border max-[799px]:hidden"
+        className="flex flex-col gap-5 max-[799px]:hidden"
       >
-        {webWiersze.map((w) => (
-          <div
-            key={w.key}
-            className="grid min-h-12 grid-cols-[24px_128px_1fr_auto] items-center gap-2 border-b border-border"
-          >
-            <Check
-              aria-hidden="true"
-              className="size-4 text-success"
-              strokeWidth={1.5}
-            />
-            <dt className="text-[13px] text-muted-foreground">{w.key}</dt>
-            <dd className="m-0 font-medium">{w.value}</dd>
-            <button
-              type="button"
-              aria-label={`Zmień: ${w.key}`}
-              onClick={() => router.push(`/onboarding/${w.step}`)}
-              className="cursor-pointer border-0 bg-transparent p-0 text-[13px] text-soft-foreground hover:text-success"
-            >
-              Zmień
-            </button>
-          </div>
-        ))}
-        <div className="flex items-center gap-2 pt-5 text-[13px] text-soft-foreground">
+        <Card className="px-4">
+          <dl className="m-0">
+            {webWiersze.map((w) => (
+              <div
+                key={w.key}
+                className="grid min-h-12 grid-cols-[24px_128px_1fr_auto] items-center gap-2 border-b border-border last:border-b-0"
+              >
+                <span
+                  aria-hidden="true"
+                  className="grid size-5 place-items-center rounded-full bg-success/10 text-success"
+                >
+                  <Check className="size-3" strokeWidth={3} />
+                </span>
+                <dt className="text-[13px] text-muted-foreground">{w.key}</dt>
+                <dd className="m-0 font-medium">{w.value}</dd>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  aria-label={`Zmień: ${w.key}`}
+                  onClick={() => router.push(`/onboarding/${w.step}`)}
+                  className="text-muted-foreground"
+                >
+                  Zmień
+                </Button>
+              </div>
+            ))}
+          </dl>
+        </Card>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           Pierwszy blok dodasz skrótem
-          <kbd className="rounded border border-b-2 border-input bg-white px-1.5 font-mono text-xs text-soft-foreground">
-            Ctrl
-          </kbd>
-          <kbd className="rounded border border-b-2 border-input bg-white px-1.5 font-mono text-xs text-soft-foreground">
-            K
-          </kbd>
+          <Kbd>Ctrl</Kbd>
+          <Kbd>K</Kbd>
         </div>
-      </dl>
+      </div>
 
       <div
         data-testid="done-phone"

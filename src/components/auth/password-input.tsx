@@ -7,8 +7,8 @@ import { FIELD } from "@/components/controls/field";
 import { cn } from "@/lib/utils";
 
 // Pole hasła z przyciskiem „Pokaż hasło” / „Ukryj hasło”.
-// Układ siatką: web — etykieta i link w jednym wierszu nad polem (Login.dc.html),
-// telefon — link pod polem, wyrównany do prawej (MLogin.dc.html). Jeden link w DOM, różnice tylko CSS.
+// Układ siatką: web — etykieta i link w jednym wierszu nad polem (CLogin.dc.html),
+// telefon — link pod polem, wyrównany do prawej (MCLogin.dc.html). Jeden link w DOM, różnice tylko CSS.
 export function PasswordInput({
   name,
   label,
@@ -80,7 +80,7 @@ export function PasswordInput({
           aria-label={shown ? "Ukryj hasło" : "Pokaż hasło"}
           aria-pressed={shown}
           onClick={() => setShown((v) => !v)}
-          className="absolute top-1 right-1 flex cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.5 text-muted-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:top-0 max-[799px]:right-0 max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:p-0"
+          className="absolute top-1 right-1 flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:top-0 max-[799px]:right-0 max-[799px]:size-11 max-[799px]:rounded-md"
         >
           {shown ? (
             <EyeOff

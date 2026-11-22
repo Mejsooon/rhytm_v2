@@ -12,7 +12,7 @@ import {
 import { StepHeader } from "./step-header";
 
 // Krok 5: szablony stron (OnboardingPages + MOnboarding).
-// Web: karty z kwadratem 18 px; telefon: karty z polem 24 px i zielonym zaznaczeniem.
+// Web: karty z kwadratem 16 px i plakietkami pól; telefon: karty z polem 24 px i zielonym zaznaczeniem.
 export function StepPages({
   draft,
   onChange,
@@ -64,34 +64,39 @@ export function StepPages({
               aria-pressed={wlaczona}
               onClick={() => przelacz(strona.key)}
               className={cn(
-                "box-border flex w-full cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-success",
+                // Karta wyboru jak .opt z makiety (ten sam wzór co cele w kroku 3)
+                "box-border flex w-full cursor-pointer items-start gap-3 rounded-lg border border-border bg-white bg-clip-padding px-3.5 py-3 text-left text-foreground shadow-xs transition-[border-color,background-color,box-shadow] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus",
                 wlaczona &&
-                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
+                  "min-[800px]:border-black/[.24] min-[800px]:bg-black/[.025] min-[800px]:shadow-[0_0_0_1px_rgba(0,0,0,.12)] min-[800px]:hover:bg-black/[.025]",
               )}
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border border-border-strong",
-                  wlaczona && "border-primary bg-primary text-white",
+                  "mt-0.5 inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
+                  wlaczona
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-white text-transparent",
                 )}
               >
-                {wlaczona && <Check className="size-3" strokeWidth={1.5} />}
+                <Check className="size-3" strokeWidth={3} />
               </span>
               <span className="flex flex-1 flex-col gap-0.5">
                 <span className="flex items-center gap-2">
                   <span className="font-medium">{strona.name}</span>
                   {polecane.includes(strona.key) && (
-                    <span className="text-xs text-success">
-                      z Twoich celów
-                    </span>
+                    <StatusBadge tone="green">z Twoich celów</StatusBadge>
                   )}
                 </span>
                 <span className="text-[13px] text-muted-foreground">
                   {strona.desc}
                 </span>
-                <span className="font-mono text-[11px] text-faint-foreground">
-                  {strona.fields}
+                <span className="mt-1 flex flex-wrap gap-1">
+                  {strona.fields.split(" · ").map((pole) => (
+                    <StatusBadge key={pole} tone="gray">
+                      {pole}
+                    </StatusBadge>
+                  ))}
                 </span>
               </span>
             </button>
@@ -138,7 +143,7 @@ export function StepPages({
                 <span className="text-[13px] text-muted-foreground">
                   {strona.desc}
                 </span>
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground tabular-nums">
                   {strona.fields}
                 </span>
               </span>

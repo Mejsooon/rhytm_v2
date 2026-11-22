@@ -90,4 +90,24 @@ describe("StepPages", () => {
       screen.getByText(/Dodamy te strony do listy Stron/),
     ).toBeInTheDocument();
   });
+
+  // Wygląd wg COnboardingPages
+  it("wygląd: karty szablonów jak .opt, kwadracik 16 px, pola jako szare plakietki", () => {
+    render(<Probe />);
+    const subs = web().getByRole("button", { name: /Subscriptions/ });
+    const books = web().getByRole("button", { name: /Books/ });
+    expect(subs.className).toContain("min-[800px]:bg-black/[.025]");
+    expect(books.className).not.toContain("min-[800px]:bg-black/[.025]");
+    expect(subs.querySelector("span.size-4[aria-hidden]")).not.toBeNull();
+    expect(web().getByText("Kwota cykliczna")).toHaveClass("bg-muted");
+    expect(web().getByText("Data odnowienia")).toBeInTheDocument();
+    expect(web().getAllByText("z Twoich celów")[0]).toHaveClass(
+      "bg-success-soft",
+    );
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<Probe />);
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
 });
