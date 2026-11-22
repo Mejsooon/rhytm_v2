@@ -63,7 +63,7 @@ export function NewPasswordForm() {
         <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px] max-[799px]:tracking-[-0.02em]">
           Ustaw nowe hasło
         </h1>
-        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:text-[13px]">
+        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px]">
           Po zmianie wylogujemy Cię z innych urządzeń.
         </p>
       </div>
