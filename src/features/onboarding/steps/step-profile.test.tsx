@@ -181,4 +181,29 @@ describe("StepProfile", () => {
     expect(onChange).not.toHaveBeenCalled();
     vi.restoreAllMocks();
   });
+
+  // Wygląd wg COnboarding
+  it("wygląd: wiersz zdjęcia z ikoną w przycisku, strefa jako Dropdown select z hintem UTC", () => {
+    pokaz();
+    const wgraj = screen.getByRole("button", { name: "Wgraj" });
+    expect(wgraj.querySelector("svg")).not.toBeNull();
+    const [webowy] = screen.getAllByRole("button", { name: "Strefa czasowa" });
+    expect(webowy).toHaveTextContent("Europe/Warsaw (UTC+01:00)");
+    expect(webowy.querySelector("svg.lucide-chevrons-up-down")).not.toBeNull();
+    expect(screen.getByText("(UTC+01:00)")).toHaveClass("tabular-nums");
+  });
+
+  it("wygląd: segmenty tygodnia i godziny wypełniają szerokość kolumny", () => {
+    pokaz();
+    for (const nazwa of ["Początek tygodnia", "Format godziny"]) {
+      const grupa = screen.getByRole("radiogroup", { name: nazwa });
+      expect(grupa).toHaveClass("w-full");
+      expect(grupa).toHaveClass("flex");
+    }
+  });
+
+  it("bez font-mono", () => {
+    const { container } = pokaz();
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
 });

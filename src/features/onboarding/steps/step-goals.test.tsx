@@ -268,4 +268,30 @@ describe("StepGoals", () => {
       "true",
     );
   });
+
+  // Wygląd wg COnboardingGoals
+  it("wygląd: karty celów z kwadracikiem 16 px; zablokowane z kłódką jak zaznaczone", () => {
+    render(<Probe initial={start} />);
+    const stala = screen.getByRole("button", { name: /^Plan tygodnia/ });
+    const wolna = screen.getByRole("button", { name: /^Hasła/ });
+    expect(stala.className).toContain("min-[800px]:bg-black/[.025]");
+    expect(wolna.className).not.toContain("min-[800px]:bg-black/[.025]");
+    expect(stala.querySelector("svg.lucide-lock")).not.toBeNull();
+    expect(stala.querySelector("span.size-4")).not.toBeNull();
+  });
+
+  it("wygląd: pola liczb z tabular-nums, cel snu jako Stepper wide w połowie kolumny", () => {
+    render(<Probe initial={start} />);
+    expect(
+      screen.getByLabelText("Treningi w tygodniu", { selector: "input" }),
+    ).toHaveClass("tabular-nums");
+    const sen = screen.getByRole("group", { name: "Cel snu" });
+    expect(sen).toHaveClass("h-8");
+    expect(sen.parentElement).toHaveClass("min-[800px]:w-1/2");
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<Probe initial={{ ...start, kmOn: true }} />);
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
 });

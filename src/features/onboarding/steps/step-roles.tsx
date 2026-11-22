@@ -1,6 +1,6 @@
 import { CalendarDays, Check } from "lucide-react";
 
-import { Checkbox, TextField } from "@/components/controls";
+import { Checkbox, StatusBadge, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import {
   ROLES,
@@ -48,24 +48,25 @@ export function StepRoles({
               aria-pressed={wlaczona}
               onClick={() => przelacz(rola.key)}
               className={cn(
-                "box-border flex w-full cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus",
+                "box-border flex w-full cursor-pointer items-start gap-3 rounded-lg border border-border bg-white bg-clip-padding px-3.5 py-3 text-left text-foreground shadow-xs transition-[border-color,background-color,box-shadow] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus",
                 wlaczona &&
-                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
+                  "border-black/[.24] bg-black/[.025] shadow-[0_0_0_1px_rgba(0,0,0,.12)] hover:bg-black/[.025]",
                 i === ROLES.length - 1 &&
                   ROLES.length % 2 === 1 &&
                   "col-span-2",
               )}
             >
+              {/* Kwadracik jak .cbx (16 px); to ozdoba w przycisku, stan niesie aria-pressed */}
               <span
                 aria-hidden="true"
                 className={cn(
-                  "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px]",
+                  "mt-0.5 inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
                   wlaczona
-                    ? "border-primary bg-primary text-white"
-                    : "border-border-strong bg-white text-transparent",
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-white text-transparent",
                 )}
               >
-                <Check className="size-3" strokeWidth={2} />
+                <Check className="size-3" strokeWidth={3} />
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="font-medium">{rola.title}</span>
@@ -107,7 +108,9 @@ export function StepRoles({
           label={
             <>
               Kierunek studiów{" "}
-              <span className="font-normal text-muted-foreground">opcjonalnie</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                opcjonalnie
+              </span>
             </>
           }
           value={draft.studyField}
@@ -117,19 +120,37 @@ export function StepRoles({
         />
       )}
 
-      {/* Web: jedna linia */}
-      <div className="flex items-center gap-2 rounded-lg bg-panel px-3 py-2.5 text-[13px] text-soft-foreground max-[799px]:hidden">
+      {/* Web (.alert z makiety): „W kalendarzu:” i plakietki kategorii */}
+      <div
+        data-testid="roles-calendar-web"
+        className="flex items-center gap-2.5 rounded-lg border border-border bg-black/[.02] px-3.5 py-3 text-sm max-[799px]:hidden"
+      >
         <CalendarDays
           aria-hidden="true"
           className="size-4 flex-none text-muted-foreground"
-          strokeWidth={1.5}
+          strokeWidth={2}
         />
-        <span>W kalendarzu: {kategorie.map((k) => k.name).join(", ")}</span>
+        <span className="flex-1">W kalendarzu:</span>
+        <span className="flex flex-wrap justify-end gap-1">
+          {kategorie.map((k) => (
+            <StatusBadge key={k.name} tone="outline">
+              <span
+                aria-hidden="true"
+                className="size-2 flex-none rounded-full"
+                style={{ background: k.color }}
+              />
+              {k.name}
+            </StatusBadge>
+          ))}
+        </span>
       </div>
 
       {/* Telefon: chipy kategorii */}
-      <div className="flex flex-wrap items-center gap-1.5 min-[800px]:hidden">
-        <span className="mr-0.5 font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
+      <div
+        data-testid="roles-calendar-phone"
+        className="flex flex-wrap items-center gap-1.5 min-[800px]:hidden"
+      >
+        <span className="mr-0.5 text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
           W kalendarzu
         </span>
         {kategorie.map((k) => (

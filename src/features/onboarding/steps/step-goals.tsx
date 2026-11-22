@@ -119,8 +119,7 @@ export function StepGoals({
   ];
 
   return (
-    // Web: odstępy 14 px, żeby krok mieścił się bez przewijania (OnboardingGoals); telefon jak w kolumnie kreatora
-    <div className="flex flex-col gap-5 min-[800px]:gap-3.5">
+    <div className="flex flex-col gap-5">
       <StepHeader
         title="Co chcesz ogarnąć w rhytm?"
         subtitle="Na tej podstawie przygotujemy startowe strony i cele"
@@ -140,25 +139,31 @@ export function StepGoals({
               title={staly ? "Zawsze włączone" : undefined}
               onClick={() => onChange(toggleGoal(draft, cel.key))}
               className={cn(
-                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-input bg-white px-3.5 py-3 text-left min-[800px]:py-2.5 text-foreground transition-colors outline-none hover:border-ring focus-visible:shadow-focus max-[799px]:flex-col-reverse max-[799px]:gap-1",
+                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-lg border border-border bg-white bg-clip-padding px-3.5 py-3 text-left text-foreground shadow-xs transition-[border-color,background-color,box-shadow] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus min-[800px]:px-3 min-[800px]:py-2.5 max-[799px]:flex-col-reverse max-[799px]:gap-1 max-[799px]:rounded-md max-[799px]:border-input max-[799px]:shadow-none max-[799px]:hover:border-ring max-[799px]:hover:bg-white",
+                // Web: zaznaczona i zablokowana jak .opt[aria-pressed] z makiety
+                wlaczony &&
+                  "min-[800px]:border-black/[.24] min-[800px]:bg-black/[.025] min-[800px]:shadow-[0_0_0_1px_rgba(0,0,0,.12)] min-[800px]:hover:bg-black/[.025]",
+                // Telefon: jak dotąd (ciemna ramka; zablokowana na szarym tle)
                 wlaczony &&
                   !staly &&
-                  "border-primary shadow-[inset_0_0_0_1px_#171717] hover:border-primary",
-                staly && "cursor-default bg-panel hover:border-input",
+                  "max-[799px]:border-primary max-[799px]:shadow-[inset_0_0_0_1px_var(--primary)] max-[799px]:hover:border-primary",
+                staly &&
+                  "cursor-default max-[799px]:bg-panel max-[799px]:hover:border-input max-[799px]:hover:bg-panel",
               )}
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "mt-px inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px] max-[799px]:hidden",
-                  staly
-                    ? "border-input bg-muted text-muted-foreground"
-                    : wlaczony
-                      ? "border-primary bg-primary text-white"
-                      : "border-border-strong bg-white text-transparent",
+                  "mt-0.5 inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs max-[799px]:hidden",
+                  wlaczony
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-white text-transparent",
                 )}
               >
-                <Ikona className="size-3" strokeWidth={2} />
+                <Ikona
+                  className={staly ? "size-[11px]" : "size-3"}
+                  strokeWidth={staly ? 2.5 : 3}
+                />
               </span>
               <span className="flex w-full flex-col gap-0.5">
                 <span className="flex items-center justify-between gap-2">
@@ -193,10 +198,10 @@ export function StepGoals({
       </p>
 
       <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm">
-        {/* Web: etykieta z podpowiedzią; telefon: etykieta mono jak .lbl w MOnboarding */}
-        <span className="max-[799px]:font-mono max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-muted-foreground max-[799px]:uppercase">
+        {/* Web: etykieta z podpowiedzią (hint 12 px); telefon: mała etykieta wersalikami jak .lbl w MOnboarding */}
+        <span className="max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-muted-foreground max-[799px]:uppercase">
           Cele treningowe{" "}
-          <span className="font-normal text-muted-foreground">
+          <span className="text-xs font-normal text-muted-foreground max-[799px]:text-[11px]">
             · włącz jeden albo oba
           </span>
         </span>
@@ -214,20 +219,20 @@ export function StepGoals({
                 role="checkbox"
                 aria-checked={cel.on}
                 onClick={cel.przelacz}
-                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left font-medium text-foreground outline-none focus-visible:shadow-focus max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3 max-[799px]:font-normal"
+                className="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left text-sm font-normal text-foreground outline-none focus-visible:shadow-focus max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:gap-3"
               >
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px] max-[799px]:size-6 max-[799px]:rounded-[7px]",
+                    "inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs max-[799px]:size-6 max-[799px]:rounded-[7px] max-[799px]:border-[1.5px] max-[799px]:shadow-none",
                     cel.on
-                      ? "border-primary bg-primary text-white max-[799px]:border-success max-[799px]:bg-success"
-                      : "border-border-strong bg-white text-transparent",
+                      ? "border-primary bg-primary text-primary-foreground max-[799px]:border-success max-[799px]:bg-success max-[799px]:text-white"
+                      : "border-input bg-white text-transparent max-[799px]:border-border-strong",
                   )}
                 >
                   <Check
                     className="size-3 max-[799px]:size-4"
-                    strokeWidth={2.5}
+                    strokeWidth={3}
                   />
                 </span>
                 {cel.label}
@@ -238,7 +243,7 @@ export function StepGoals({
                   label={cel.label}
                   type="text"
                   inputMode="numeric"
-                  className="font-mono disabled:bg-panel disabled:text-faint-foreground"
+                  className="tabular-nums disabled:bg-panel"
                   disabled={!cel.on}
                   value={cel.on ? cel.pole : "—"}
                   error={cel.on ? cel.blad : undefined}
@@ -249,6 +254,7 @@ export function StepGoals({
               <div className="min-[800px]:hidden">
                 {cel.on ? (
                   <Stepper
+                    wide
                     ariaLabel={cel.label}
                     value={cel.licznik}
                     onDec={() => cel.krok(-1)}
@@ -257,7 +263,7 @@ export function StepGoals({
                     incDisabled={cel.incDisabled}
                   />
                 ) : (
-                  <span className="font-mono text-[13px] font-normal text-faint-foreground">
+                  <span className="text-[13px] font-normal text-faint-foreground">
                     wyłączony
                   </span>
                 )}
@@ -274,26 +280,30 @@ export function StepGoals({
           </p>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3 text-[13px] font-medium max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-input max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
+      {/* Web: etykieta nad licznikiem na połowie kolumny (.fld z max-width 50%); telefon: wiersz w ramce jak dotąd */}
+      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:flex-row max-[799px]:items-center max-[799px]:justify-between max-[799px]:gap-3 max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-input max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
         <span>Cel snu</span>
-        <Stepper
-          ariaLabel="Cel snu"
-          value={formatSleep(draft.sleepGoalMin)}
-          onDec={() =>
-            onChange({
-              ...draft,
-              sleepGoalMin: stepSleep(draft.sleepGoalMin, -1),
-            })
-          }
-          onInc={() =>
-            onChange({
-              ...draft,
-              sleepGoalMin: stepSleep(draft.sleepGoalMin, 1),
-            })
-          }
-          decDisabled={draft.sleepGoalMin <= 300}
-          incDisabled={draft.sleepGoalMin >= 660}
-        />
+        <div className="min-[800px]:w-1/2">
+          <Stepper
+            wide
+            ariaLabel="Cel snu"
+            value={formatSleep(draft.sleepGoalMin)}
+            onDec={() =>
+              onChange({
+                ...draft,
+                sleepGoalMin: stepSleep(draft.sleepGoalMin, -1),
+              })
+            }
+            onInc={() =>
+              onChange({
+                ...draft,
+                sleepGoalMin: stepSleep(draft.sleepGoalMin, 1),
+              })
+            }
+            decDisabled={draft.sleepGoalMin <= 300}
+            incDisabled={draft.sleepGoalMin >= 660}
+          />
+        </div>
       </div>
     </div>
   );

@@ -72,4 +72,26 @@ describe("StepSource", () => {
       "true",
     );
   });
+
+  // Wygląd wg COnboardingSource
+  it("wygląd: karty 44 px z ikoną muted, wybrana z ciemniejszą ramką i tłem", async () => {
+    render(<Probe />);
+    const karta = web().getByRole("button", { name: "TikTok" });
+    expect(karta).toHaveClass("h-11");
+    expect(karta).toHaveClass("rounded-lg");
+    const ikona = karta.querySelector("svg");
+    expect(ikona).toHaveAttribute("stroke", "currentColor");
+    expect(ikona).toHaveAttribute("stroke-width", "2");
+    expect(ikona).toHaveClass("text-muted-foreground");
+    expect(karta.className).not.toContain("bg-black/[.025]");
+    await userEvent.click(karta);
+    expect(
+      web().getByRole("button", { name: "TikTok" }).className,
+    ).toContain("bg-black/[.025]");
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<Probe />);
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
 });

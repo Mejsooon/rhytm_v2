@@ -44,24 +44,59 @@ describe("StepRoles", () => {
     const web = within(screen.getByTestId("roles-web"));
     await userEvent.click(web.getByRole("button", { name: /Student/ }));
     expect(screen.getByLabelText(/Kierunek studiów/)).toBeInTheDocument();
-    expect(screen.getByText("W kalendarzu: Studia")).toBeInTheDocument();
+    const kalendarz = within(screen.getByTestId("roles-calendar-web"));
+    expect(kalendarz.getByText("W kalendarzu:")).toBeInTheDocument();
+    expect(kalendarz.getByText("Studia")).toBeInTheDocument();
   });
 
   it("odznaczenie wszystkiego: „W kalendarzu: Dom”", async () => {
     render(<Probe initial={{ ...start, roles: ["student", "sport"] }} />);
-    expect(screen.getByText("W kalendarzu: Studia, Sport")).toBeInTheDocument();
+    const kalendarz = within(screen.getByTestId("roles-calendar-web"));
+    expect(kalendarz.getByText("Studia")).toBeInTheDocument();
+    expect(kalendarz.getByText("Sport")).toBeInTheDocument();
     const web = within(screen.getByTestId("roles-web"));
     await userEvent.click(web.getByRole("button", { name: /Student/ }));
     await userEvent.click(
       web.getByRole("button", { name: /Trenuję regularnie/ }),
     );
-    expect(screen.getByText("W kalendarzu: Dom")).toBeInTheDocument();
+    const kalendarzPo = within(screen.getByTestId("roles-calendar-web"));
+    expect(kalendarzPo.getByText("Dom")).toBeInTheDocument();
+    expect(kalendarzPo.queryByText("Studia")).not.toBeInTheDocument();
   });
 
   it("wariant telefonu: Checkbox przełącza rolę", async () => {
     render(<Probe initial={start} />);
     const tel = within(screen.getByTestId("roles-phone"));
     await userEvent.click(tel.getByRole("checkbox", { name: /Pracuję/ }));
-    expect(screen.getByText("W kalendarzu: Praca")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("roles-calendar-web")).getByText("Praca"),
+    ).toBeInTheDocument();
+  });
+
+  // Wygląd wg COnboardingRole
+  it("wygląd: karty wyboru z kwadracikiem 16 px, zaznaczona ma ciemniejszą ramkę i tło", () => {
+    render(<Probe initial={{ ...start, roles: ["student"] }} />);
+    const web = within(screen.getByTestId("roles-web"));
+    const wlaczona = web.getByRole("button", { name: /Student/ });
+    const wylaczona = web.getByRole("button", { name: /Pracuję/ });
+    expect(wlaczona).toHaveClass("rounded-lg");
+    expect(wlaczona.className).toContain("bg-black/[.025]");
+    expect(wylaczona.className).not.toContain("bg-black/[.025]");
+    expect(wlaczona.querySelector("span.size-4")).not.toBeNull();
+    expect(wlaczona.querySelector("span.size-4")).toHaveClass("bg-primary");
+    expect(wylaczona.querySelector("span.size-4")).not.toHaveClass("bg-primary");
+  });
+
+  it("wygląd: „W kalendarzu:” z plakietkami kategorii w ramce", () => {
+    render(<Probe initial={{ ...start, roles: ["student", "sport"] }} />);
+    const ramka = screen.getByTestId("roles-calendar-web");
+    expect(ramka).toHaveClass("rounded-lg");
+    expect(ramka).toHaveClass("border");
+    expect(within(ramka).getAllByText(/^(Studia|Sport)$/)).toHaveLength(2);
+  });
+
+  it("bez font-mono", () => {
+    const { container } = render(<Probe initial={start} />);
+    expect(container.innerHTML).not.toContain("font-mono");
   });
 });

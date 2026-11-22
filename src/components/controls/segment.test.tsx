@@ -62,4 +62,34 @@ describe("Segment", () => {
     await userEvent.keyboard("{ArrowLeft}");
     expect(onChange).toHaveBeenLastCalledWith("mon");
   });
+
+  it("fill: kontener i przyciski na pełną szerokość, domyślnie bez zmian", () => {
+    const { rerender } = render(
+      <Segment
+        ariaLabel="Tydzień"
+        value="mon"
+        onChange={() => {}}
+        options={[
+          { value: "mon", label: "Pn" },
+          { value: "sun", label: "Nd" },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("radiogroup")).toHaveClass("inline-flex", "w-max");
+    expect(screen.getByRole("radio", { name: "Pn" })).not.toHaveClass("flex-1");
+    rerender(
+      <Segment
+        fill
+        ariaLabel="Tydzień"
+        value="mon"
+        onChange={() => {}}
+        options={[
+          { value: "mon", label: "Pn" },
+          { value: "sun", label: "Nd" },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("radiogroup")).toHaveClass("flex", "w-full");
+    expect(screen.getByRole("radio", { name: "Pn" })).toHaveClass("flex-1");
+  });
 });
