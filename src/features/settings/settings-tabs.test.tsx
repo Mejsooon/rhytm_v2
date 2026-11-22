@@ -30,4 +30,33 @@ describe("SettingsTabs", () => {
       "aria-current",
     );
   });
+
+  it("SETTINGS_TABS: tylko Ogólne ma podtytuł z makiety", () => {
+    expect(SETTINGS_TABS.find((t) => t.slug === "ogolne")?.description).toBe(
+      "Profil, cele i podstawowe preferencje aplikacji.",
+    );
+    const reszta = SETTINGS_TABS.filter((t) => t.slug !== "ogolne");
+    for (const t of reszta) {
+      expect(t.description).toBeUndefined();
+    }
+  });
+
+  it("zakładka: wysokość 32 px, zaokrąglenie 8 px, aktywna z tłem i aria-current", () => {
+    render(<SettingsTabs active="ogolne" />);
+    const aktywna = screen.getByRole("link", { name: "Ogólne" });
+    expect(aktywna).toHaveAttribute("aria-current", "page");
+    expect(aktywna).toHaveClass("min-[800px]:h-8", "rounded-lg", "font-medium", "bg-active");
+    const nieaktywna = screen.getByRole("link", { name: "Sejf" });
+    expect(nieaktywna).toHaveClass("min-[800px]:h-8", "rounded-lg", "font-medium", "hover:bg-hover");
+    expect(nieaktywna).not.toHaveClass("bg-active");
+  });
+
+  it("telefon: pasek przewijany i cele 44 px", () => {
+    render(<SettingsTabs active="ogolne" />);
+    const nav = screen.getByRole("navigation", { name: "Sekcje ustawień" });
+    expect(nav).toHaveClass("max-[799px]:overflow-x-auto");
+    expect(screen.getByRole("link", { name: "Sejf" })).toHaveClass(
+      "max-[799px]:min-h-11",
+    );
+  });
 });

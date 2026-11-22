@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { UploadIcon } from "lucide-react";
 
 import { Button } from "@/components/controls";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@/features/onboarding/avatar-upload";
 import { removeAvatar, saveAvatar } from "./actions";
 
-// Wiersz „Zdjęcie profilowe” u góry karty Profil (Settings.dc.html / MSettings.dc.html).
+// Wiersz „Zdjęcie profilowe” u góry karty Profil (CSettings.dc.html / MSettings.dc.html).
 // Zapis od razu po wyborze pliku — nie dotyka „Zapisz” na dole karty.
 export function AvatarRow({
   userId,
@@ -98,7 +99,7 @@ export function AvatarRow({
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
+    <div className="flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
       {zrodlo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -109,7 +110,7 @@ export function AvatarRow({
       ) : (
         <span
           aria-hidden="true"
-          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-input bg-active text-xl font-semibold text-foreground"
+          className="box-border flex size-14 flex-none items-center justify-center rounded-full border border-border bg-muted text-xl font-semibold text-foreground"
         >
           {inicjal}
         </span>
@@ -117,13 +118,13 @@ export function AvatarRow({
       <span className="min-w-0 flex-[1_1_200px]">
         <span className="block font-medium">Zdjęcie profilowe</span>
         {blad ? (
-          <span role="alert" className="text-[13px] text-destructive-foreground">
+          <span role="alert" className="text-sm text-destructive-foreground">
             {blad}
           </span>
         ) : zapisano ? (
-          <span className="text-[13px] text-success">Zapisano ✓</span>
+          <span className="text-sm text-success">Zapisano ✓</span>
         ) : (
-          <span className="text-[13px] text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {maZdjecie
               ? "PNG, JPG albo WebP, do 2 MB"
               : "Bez zdjęcia pokażemy inicjały"}
@@ -133,8 +134,7 @@ export function AvatarRow({
       <span className="flex gap-2">
         {maZdjecie && (
           <Button
-            size="sm"
-            className="max-[799px]:h-11 max-[799px]:px-3.5"
+            variant="destructive-outline"
             disabled={pracuje}
             onClick={usun}
           >
@@ -142,11 +142,10 @@ export function AvatarRow({
           </Button>
         )}
         <Button
-          size="sm"
-          className="max-[799px]:h-11 max-[799px]:px-3.5"
           disabled={pracuje}
           onClick={() => wejscie.current?.click()}
         >
+          <UploadIcon aria-hidden="true" className="size-4" />
           {maZdjecie ? "Zmień" : "Wgraj"}
         </Button>
       </span>

@@ -2,9 +2,18 @@
 
 import * as React from "react";
 
-import { Check } from "lucide-react";
-
-import { Dropdown, Stepper, TextField } from "@/components/controls";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Dropdown,
+  StatusBadge,
+  Stepper,
+  TextField,
+} from "@/components/controls";
 import { goalsSchema, parseDecimal } from "@/features/profile/schemas";
 import { cn } from "@/lib/utils";
 import { saveGoals } from "./actions";
@@ -112,16 +121,21 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
   }
 
   return (
-    <section className="rounded-lg border border-border bg-white">
-      <div className="p-5">
-        <h2 className="m-0 text-base font-semibold">Cele</h2>
-        <p className="mt-1 mb-4 text-muted-foreground">
-          Pokazywane na ekranie Dziś, w Sporcie i przy śnie.
-        </p>
-        <div className="grid grid-cols-2 gap-3.5 max-[799px]:grid-cols-1">
+    <Card data-testid="karta-cele">
+      <CardHeader>
+        <div>
+          <CardTitle as="h2">Cele</CardTitle>
+          <CardDescription>
+            Pokazywane na ekranie Dziś, w Sporcie i przy śnie.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4 max-[799px]:grid-cols-1">
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium">Cel snu</span>
             <Stepper
+              wide
               ariaLabel="Cel snu"
               value={sen}
               decDisabled={value.sleep <= MIN_SNU}
@@ -152,22 +166,12 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                 },
               ] as const
             ).map((cel) => (
-              <div key={cel.key} className="flex min-h-9 items-center gap-2">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={cel.on}
-                  aria-label={cel.label}
-                  onClick={() => przelacz(cel.key)}
-                  className={cn(
-                    "inline-flex size-[18px] flex-none cursor-pointer items-center justify-center rounded-[5px] border p-0 outline-none focus-visible:shadow-focus",
-                    cel.on
-                      ? "border-primary bg-primary text-white"
-                      : "border-border-strong bg-white text-transparent",
-                  )}
-                >
-                  <Check className="size-3" strokeWidth={2.5} />
-                </button>
+              <div key={cel.key} className="flex min-h-8 items-center gap-2">
+                <Checkbox
+                  checked={cel.on}
+                  ariaLabel={cel.label}
+                  onChange={() => przelacz(cel.key)}
+                />
                 <span className="min-w-0 flex-1 text-[13px]">{cel.label}</span>
                 {cel.on ? (
                   <div className="w-[72px] flex-none [&_label]:sr-only">
@@ -176,7 +180,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                       type="text"
                       inputMode="numeric"
                       className={cn(
-                        "text-right font-mono",
+                        "text-right tabular-nums",
                         bladCelu && "border-destructive",
                       )}
                       value={cel.val}
@@ -194,9 +198,9 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                     />
                   </div>
                 ) : (
-                  <span className="w-[72px] flex-none text-right font-mono text-xs text-faint-foreground">
+                  <StatusBadge tone="gray" className="w-[72px] flex-none">
                     wył.
-                  </span>
+                  </StatusBadge>
                 )}
               </div>
             ))}
@@ -212,6 +216,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium">Waluta stron</span>
             <Dropdown
+              variant="select"
               ariaLabel="Waluta stron"
               value={value.cur}
               onChange={(cur) => zmien({ cur })}
@@ -223,6 +228,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
               Tydzień zaczyna się w
             </span>
             <Dropdown
+              variant="select"
               ariaLabel="Początek tygodnia"
               value={value.week}
               onChange={(week) => zmien({ week })}
@@ -230,7 +236,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
             />
           </div>
         </div>
-      </div>
+      </CardContent>
       <CardFooter
         message={form.message}
         texts={{
@@ -248,6 +254,6 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
         }}
         onSave={zapisz}
       />
-    </section>
+    </Card>
   );
 }

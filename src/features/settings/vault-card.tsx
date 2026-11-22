@@ -3,7 +3,17 @@
 import * as React from "react";
 import { Lock, TriangleAlert } from "lucide-react";
 
-import { Button, StatusBadge, TextField } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  StatusBadge,
+  TextField,
+} from "@/components/controls";
 import {
   masterPasswordStrength,
   MASTER_MIN_STRENGTH,
@@ -20,7 +30,6 @@ const ETYKIETY = [
   "Mocne",
   "Bardzo mocne",
 ] as const;
-const KARTA = "rounded-lg border border-border bg-white";
 const ZLE_HASLO = "Nieprawidłowe hasło główne.";
 
 // Zakładka Ustawienia → Sejf (styl CSettingsAccount.dc.html): stan sejfu, zmiana hasła głównego,
@@ -51,17 +60,23 @@ export function VaultCard() {
 
   return (
     <>
-      <section aria-labelledby={`${id}-sejf`} className={KARTA}>
-        <div className="p-5 pb-2">
-          <h2 id={`${id}-sejf`} className="m-0 text-base font-semibold">
-            Sejf
-          </h2>
-          <p className="mt-1 mb-0 text-muted-foreground">
-            Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko
-            szyfrogram.
-          </p>
-        </div>
-        <div className="px-5 pb-2">
+      <Card
+        role="region"
+        aria-labelledby={`${id}-sejf`}
+        data-testid="karta-sejf"
+      >
+        <CardHeader>
+          <div>
+            <CardTitle as="h2" id={`${id}-sejf`}>
+              Sejf
+            </CardTitle>
+            <CardDescription>
+              Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko
+              szyfrogram.
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="py-2">
           {status === "ladowanie" && (
             <div
               role="status"
@@ -124,33 +139,36 @@ export function VaultCard() {
               )}
             </div>
           )}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {(status === "zablokowany" || status === "odblokowany") && (
         <>
           <ZmianaHasla />
 
-          <section
+          <Card
+            role="region"
             aria-labelledby={`${id}-strefa`}
-            className="rounded-lg border border-destructive-border bg-white"
+            data-testid="karta-sejf-strefa"
+            className="border-destructive-border"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 p-5 max-[799px]:flex-col max-[799px]:items-stretch">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 max-[799px]:flex-col max-[799px]:items-stretch">
               <div>
-                <h2
+                <CardTitle
+                  as="h2"
                   id={`${id}-strefa`}
-                  className="m-0 flex items-center gap-2 text-base font-semibold text-destructive-foreground"
+                  className="flex items-center gap-2 text-destructive-foreground"
                 >
                   <TriangleAlert
                     aria-hidden="true"
                     className="size-4 flex-none"
                   />
                   Strefa niebezpieczna
-                </h2>
-                <p className="mt-1 mb-0 text-muted-foreground">
+                </CardTitle>
+                <CardDescription>
                   Reset usuwa wszystkie zapisane sekrety. Serwisy, loginy i
                   URL-e zostają.
-                </p>
+                </CardDescription>
               </div>
               <Button
                 variant="destructive-outline"
@@ -159,8 +177,8 @@ export function VaultCard() {
               >
                 Zresetuj sejf
               </Button>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         </>
       )}
       <VaultResetDialog open={reset} onOpenChange={setReset} />
@@ -206,7 +224,6 @@ function ZmianaHasla() {
   return (
     <form
       aria-labelledby={`${id}-haslo`}
-      className={KARTA}
       onSubmit={(e) => {
         e.preventDefault();
         if (!mozna) return;
@@ -227,103 +244,117 @@ function ZmianaHasla() {
       }}
     >
       {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
-      <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
-      <div className="p-5">
-        <h2 id={`${id}-haslo`} className="m-0 text-base font-semibold">
-          Zmień hasło główne
-        </h2>
-        <p className="mt-1 mb-4 text-muted-foreground">
-          Hasło główne nie jest hasłem do konta. Zapisane sekrety zostają bez
-          zmian.
-        </p>
-        <div className="flex flex-col gap-3.5">
-          <TextField
-            label="Obecne hasło główne"
-            type="password"
-            autoComplete="current-password"
-            value={obecne}
-            onChange={(e) => {
-              setObecne(e.target.value);
-              setBlad(null);
-              setZmieniono(false);
-            }}
-            error={blad === ZLE_HASLO ? blad : undefined}
-          />
-          <div className="grid grid-cols-2 gap-3 max-[799px]:grid-cols-1">
-            <div className="flex flex-col gap-1.5">
-              <TextField
-                label="Nowe hasło główne"
-                type="password"
-                autoComplete="new-password"
-                value={nowe}
-                onChange={(e) => {
-                  setNowe(e.target.value);
-                  setZmieniono(false);
-                }}
-                aria-describedby={`${id}-sila`}
-              />
-              <div id={`${id}-sila`}>
-                <div className="flex gap-1">
-                  {[0, 1, 2, 3].map((i) => (
-                    <span
-                      key={i}
-                      data-segment=""
-                      className={cn(
-                        "h-1 flex-1 rounded-sm",
-                        i < sila ? kolorPaska : "bg-black/[.08]",
-                      )}
-                    />
-                  ))}
-                </div>
-                <div
-                  aria-live="polite"
-                  className={cn("mt-1.5 text-xs", kolorTekstu)}
-                >
-                  {ETYKIETY[sila]}
-                </div>
-              </div>
-            </div>
+      <input
+        type="text"
+        autoComplete="username"
+        value="Sejf rhytm (hasło główne)"
+        readOnly
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+      <Card data-testid="karta-sejf-haslo">
+        <CardHeader>
+          <div>
+            <CardTitle as="h2" id={`${id}-haslo`}>
+              Zmień hasło główne
+            </CardTitle>
+            <CardDescription>
+              Hasło główne nie jest hasłem do konta. Zapisane sekrety zostają
+              bez zmian.
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-3.5">
             <TextField
-              label="Powtórz nowe hasło"
+              label="Obecne hasło główne"
               type="password"
-              autoComplete="new-password"
-              value={powtorz}
+              autoComplete="current-password"
+              value={obecne}
               onChange={(e) => {
-                setPowtorz(e.target.value);
+                setObecne(e.target.value);
+                setBlad(null);
                 setZmieniono(false);
               }}
-              error={roznia ? "Hasła się różnią." : undefined}
+              error={blad === ZLE_HASLO ? blad : undefined}
             />
+            <div className="grid grid-cols-2 gap-3 max-[799px]:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label="Nowe hasło główne"
+                  type="password"
+                  autoComplete="new-password"
+                  value={nowe}
+                  onChange={(e) => {
+                    setNowe(e.target.value);
+                    setZmieniono(false);
+                  }}
+                  aria-describedby={`${id}-sila`}
+                />
+                <div id={`${id}-sila`}>
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span
+                        key={i}
+                        data-segment=""
+                        className={cn(
+                          "h-1 flex-1 rounded-sm",
+                          i < sila ? kolorPaska : "bg-black/[.08]",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    aria-live="polite"
+                    className={cn("mt-1.5 text-xs", kolorTekstu)}
+                  >
+                    {ETYKIETY[sila]}
+                  </div>
+                </div>
+              </div>
+              <TextField
+                label="Powtórz nowe hasło"
+                type="password"
+                autoComplete="new-password"
+                value={powtorz}
+                onChange={(e) => {
+                  setPowtorz(e.target.value);
+                  setZmieniono(false);
+                }}
+                error={roznia ? "Hasła się różnią." : undefined}
+              />
+            </div>
           </div>
-        </div>
-        <p className="mt-3 mb-0 text-[13px] text-muted-foreground">
-          Zmiana hasła głównego nie zmienia klucza szyfrowania — stare kopie
-          zapasowe nadal otwiera stare hasło.
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
-        <span
-          role={bladStopki ? "alert" : "status"}
-          className={cn(
-            "text-[13px]",
-            bladStopki
-              ? "text-destructive-foreground"
-              : zmieniono
-                ? "text-success"
-                : "text-muted-foreground",
-          )}
-        >
-          {komunikat}
-        </span>
-        <Button
-          variant="primary"
-          type="submit"
-          disabled={!mozna}
-          className="max-[799px]:h-12"
-        >
-          Zmień hasło
-        </Button>
-      </div>
+          <p className="mt-3 mb-0 text-[13px] text-muted-foreground">
+            Zmiana hasła głównego nie zmienia klucza szyfrowania — stare kopie
+            zapasowe nadal otwiera stare hasło.
+          </p>
+        </CardContent>
+        <CardFooter className="max-[799px]:flex-col max-[799px]:items-stretch">
+          <span
+            role={bladStopki ? "alert" : "status"}
+            className={cn(
+              "text-[13px]",
+              bladStopki
+                ? "text-destructive-foreground"
+                : zmieniono
+                  ? "text-success"
+                  : "text-muted-foreground",
+            )}
+          >
+            {komunikat}
+          </span>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={!mozna}
+            className="max-[799px]:h-12"
+          >
+            Zmień hasło
+          </Button>
+        </CardFooter>
+      </Card>
     </form>
   );
 }

@@ -1,11 +1,21 @@
 "use client";
 
 // Karta „Kategorie kalendarza” (Ustawienia → Kategorie kalendarza): kolejność, ukrywanie,
-// edycja nazwy i koloru oraz usuwanie. Układ i styl jak pozostałe karty z Settings.dc.html
-// (makiety samej karty nie ma, więc wiersze są po mojemu w tej samej estetyce).
+// edycja nazwy i koloru oraz usuwanie. Makiety karty nie ma, więc styl jak karty Profil i Cele
+// z CSettings.dc.html (.card, wiersze z separatorem, stopka .foot).
 import * as React from "react";
 
-import { Button, FormDialog } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  FormDialog,
+  StatusBadge,
+} from "@/components/controls";
 import {
   deleteCategory,
   moveCategory,
@@ -25,10 +35,6 @@ export type SettingsCategory = {
   is_system: boolean;
   hidden: boolean;
 };
-
-// Wygląd 36 px; 44 px pola dotyku dzięki ::after wystającemu o 5 px nad i pod
-const PRZYCISK =
-  "relative inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
 export function CategoriesCard({
   categories,
@@ -145,19 +151,22 @@ export function CategoriesCard({
   }
 
   return (
-    <section className="rounded-lg border border-border bg-white">
-      <div className="p-5">
-        <h2 className="m-0 text-base font-semibold">Kategorie kalendarza</h2>
-        <p className="mt-1 mb-4 text-muted-foreground">
-          Kolory i kolejność kategorii w kalendarzu.
-        </p>
-
+    <Card data-testid="karta-kategorie">
+      <CardHeader>
+        <div>
+          <CardTitle as="h2">Kategorie kalendarza</CardTitle>
+          <CardDescription>
+            Kolory i kolejność kategorii w kalendarzu.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
         <ul className="m-0 flex list-none flex-col p-0">
           {lista.map((k, i) => (
             <li
               key={k.id}
               aria-label={k.name}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border py-2 first:border-t-0 max-[799px]:py-2.5"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border py-2.5 first:border-t-0"
             >
               <span
                 aria-hidden="true"
@@ -182,56 +191,70 @@ export function CategoriesCard({
                   </button>
                 )}
                 {k.is_system && (
-                  <span className="flex-none rounded-[4px] border border-input bg-muted px-[7px] py-0.5 font-mono text-[11px] text-muted-foreground">
+                  <StatusBadge tone="gray" className="flex-none">
                     systemowa
-                  </span>
+                  </StatusBadge>
                 )}
               </span>
 
-              <span className="flex flex-none items-center gap-1.5 max-[799px]:w-full max-[799px]:justify-end max-[799px]:pb-[5px]">
-                {i > 0 ? (
-                  <button
-                    type="button"
-                    aria-label="W górę"
-                    className={cn(PRZYCISK, "w-9 px-0")}
-                    onClick={() => przesun(k.id, -1)}
-                  >
-                    ↑
-                  </button>
-                ) : (
-                  <span aria-hidden="true" className="w-9" />
-                )}
-                {i < lista.length - 1 ? (
-                  <button
-                    type="button"
-                    aria-label="W dół"
-                    className={cn(PRZYCISK, "w-9 px-0")}
-                    onClick={() => przesun(k.id, 1)}
-                  >
-                    ↓
-                  </button>
-                ) : (
-                  <span aria-hidden="true" className="w-9" />
-                )}
-                <button
-                  type="button"
-                  className={PRZYCISK}
-                  onClick={() => przelaczUkrycie(k)}
+              <span className="flex flex-none items-center gap-1.5 max-[799px]:w-full max-[799px]:justify-end">
+                {/* Stałe sloty: strzałki, „Ukryj”/„Pokaż” i „Usuń” w tych samych kolumnach w każdym wierszu */}
+                <span
+                  data-slot="kolejnosc"
+                  className="flex w-[68px] flex-none items-center gap-1 max-[799px]:w-[92px]"
                 >
-                  {k.hidden ? "Pokaż" : "Ukryj"}
-                </button>
-                {!k.is_system && (
-                  <button
-                    type="button"
-                    className={cn(PRZYCISK, "text-destructive-foreground")}
-                    onClick={() => {
-                      setBladUsuwania("");
-                      setDialog({ typ: "usun", category: k });
-                    }}
+                  {/* Dwa podsloty o stałej szerokości: ↑ zawsze po lewej, ↓ zawsze po prawej */}
+                  <span
+                    data-slot="w-gore"
+                    className="flex w-8 flex-none max-[799px]:w-11"
                   >
-                    Usuń
-                  </button>
-                )}
+                    {i > 0 && (
+                      <Button
+                        icon
+                        aria-label="W górę"
+                        onClick={() => przesun(k.id, -1)}
+                      >
+                        ↑
+                      </Button>
+                    )}
+                  </span>
+                  <span
+                    data-slot="w-dol"
+                    className="flex w-8 flex-none max-[799px]:w-11"
+                  >
+                    {i < lista.length - 1 && (
+                      <Button
+                        icon
+                        aria-label="W dół"
+                        onClick={() => przesun(k.id, 1)}
+                      >
+                        ↓
+                      </Button>
+                    )}
+                  </span>
+                </span>
+                <span data-slot="ukryj" className="flex w-16 flex-none">
+                  <Button
+                    className="w-full"
+                    onClick={() => przelaczUkrycie(k)}
+                  >
+                    {k.hidden ? "Pokaż" : "Ukryj"}
+                  </Button>
+                </span>
+                <span data-slot="usun" className="flex w-16 flex-none">
+                  {!k.is_system && (
+                    <Button
+                      variant="destructive-outline"
+                      className="w-full"
+                      onClick={() => {
+                        setBladUsuwania("");
+                        setDialog({ typ: "usun", category: k });
+                      }}
+                    >
+                      Usuń
+                    </Button>
+                  )}
+                </span>
               </span>
             </li>
           ))}
@@ -242,9 +265,9 @@ export function CategoriesCard({
             {blad}
           </p>
         )}
-      </div>
+      </CardContent>
 
-      <div className="flex items-center justify-between gap-2.5 rounded-b-lg border-t border-border bg-panel px-5 py-3 max-[799px]:flex-col max-[799px]:items-stretch">
+      <CardFooter className="max-[799px]:flex-col max-[799px]:items-stretch">
         <span className="text-[13px] text-muted-foreground">
           Ukryte kategorie znikają z kalendarza, ale zostają tutaj.
         </span>
@@ -254,7 +277,7 @@ export function CategoriesCard({
         >
           + Kategoria
         </Button>
-      </div>
+      </CardFooter>
 
       {(dialog?.typ === "nowa" || dialog?.typ === "edycja") && (
         <CategoryDialog
@@ -295,6 +318,6 @@ export function CategoriesCard({
           </p>
         </FormDialog>
       )}
-    </section>
+    </Card>
   );
 }

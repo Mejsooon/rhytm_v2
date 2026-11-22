@@ -1,7 +1,7 @@
 "use client";
 
 // Karta „Kosz” (Ustawienia → Ogólne): usunięte strony i wiersze z 30 dniami na przywrócenie.
-// Makiety karty nie ma, więc układ jest po mojemu w estetyce pozostałych kart z Settings.dc.html.
+// Makiety karty nie ma, więc styl jak karty Profil i Cele z CSettings.dc.html (.card, wiersze z separatorem).
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -10,11 +10,16 @@ import {
   restoreRow,
   type TrashData,
 } from "@/features/pages/actions";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/controls";
 import { BLAD_ZAPISU } from "@/features/pages/messages";
 import { rowsForm } from "@/features/pages/rows-label";
-
-const PRZYCISK =
-  "relative inline-flex h-9 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white px-2.5 text-[13px] text-foreground outline-none hover:bg-panel focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40 after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-['']";
 
 const DZIEN_MS = 24 * 60 * 60 * 1000;
 
@@ -102,16 +107,16 @@ export function TrashCard({
   const pusty = strony.length === 0 && wiersze.length === 0;
 
   return (
-    <section
-      id="kosz"
-      className="scroll-mt-6 rounded-lg border border-border bg-white"
-    >
-      <div className="p-5">
-        <h2 className="m-0 text-base font-semibold">Kosz</h2>
-        <p className="mt-1 mb-4 text-muted-foreground">
-          Usunięte strony i wiersze zostają tu przez 30 dni.
-        </p>
-
+    <Card id="kosz" data-testid="karta-kosz" className="scroll-mt-6">
+      <CardHeader>
+        <div>
+          <CardTitle as="h2">Kosz</CardTitle>
+          <CardDescription>
+            Usunięte strony i wiersze zostają tu przez 30 dni.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
         {loadError && (
           <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
             Nie udało się wczytać kosza.
@@ -123,7 +128,7 @@ export function TrashCard({
 
         {strony.length > 0 && (
           <section aria-label="Strony" className="mb-4 last:mb-0">
-            <h3 className="m-0 mb-1 font-mono text-[11px] font-normal tracking-[0.06em] text-muted-foreground uppercase">
+            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground">
               Strony
             </h3>
             <ul className="m-0 flex list-none flex-col p-0">
@@ -133,21 +138,17 @@ export function TrashCard({
                   <li
                     key={s.id}
                     aria-label={nazwa}
-                    className="flex items-center gap-3 border-t border-border py-2 first:border-t-0"
+                    className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0"
                   >
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate font-medium">{nazwa}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {opis(s.deletedAt)}
                       </span>
                     </span>
-                    <button
-                      type="button"
-                      className={PRZYCISK}
-                      onClick={() => void przywrocStrone(s)}
-                    >
+                    <Button onClick={() => void przywrocStrone(s)}>
                       Przywróć
-                    </button>
+                    </Button>
                   </li>
                 );
               })}
@@ -157,7 +158,7 @@ export function TrashCard({
 
         {wiersze.length > 0 && (
           <section aria-label="Wiersze" className="mb-4 last:mb-0">
-            <h3 className="m-0 mb-1 font-mono text-[11px] font-normal tracking-[0.06em] text-muted-foreground uppercase">
+            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground">
               Wiersze
             </h3>
             <ul className="m-0 flex list-none flex-col p-0">
@@ -165,28 +166,24 @@ export function TrashCard({
                 <li
                   key={w.id}
                   aria-label={w.title}
-                  className="flex items-center gap-3 border-t border-border py-2 first:border-t-0"
+                  className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-medium">{w.title}</span>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {w.pageTitle.trim() === "" ? "Bez tytułu" : w.pageTitle} ·{" "}
                       {opis(w.deletedAt)}
                     </span>
                   </span>
-                  <button
-                    type="button"
-                    className={PRZYCISK}
-                    onClick={() => void przywrocWiersz(w)}
-                  >
+                  <Button onClick={() => void przywrocWiersz(w)}>
                     Przywróć
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           </section>
         )}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

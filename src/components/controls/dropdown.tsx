@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Popover } from "radix-ui";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { FIELD } from "./field";
@@ -27,6 +27,7 @@ export function Dropdown<T extends string>({
   ariaLabel,
   width,
   compact = false,
+  variant = "menu",
 }: {
   value: T | null;
   onChange: (v: T) => void;
@@ -36,6 +37,8 @@ export function Dropdown<T extends string>({
   width?: number;
   // Mały przycisk 28 px szerokości treści (btnBase z Books.dc.html, tryb edycji wiersza)
   compact?: boolean;
+  // "select" = .dd z coss.css (pole formularza): ikona góra-dół i podpowiedź wybranej opcji w wyzwalaczu
+  variant?: "menu" | "select";
 }) {
   const [open, setOpen] = React.useState(false);
   const [aktywny, setAktywny] = React.useState(0);
@@ -103,15 +106,32 @@ export function Dropdown<T extends string>({
                 {wybrana.badge.label}
               </StatusBadge>
             ) : (
-              <span>{wybrana.label}</span>
+              <span>
+                {wybrana.label}
+                {variant === "select" && wybrana.hint && (
+                  <>
+                    {" "}
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {wybrana.hint}
+                    </span>
+                  </>
+                )}
+              </span>
             )
           ) : (
             <span className="text-faint-foreground">{placeholder}</span>
           )}
-          <ChevronDownIcon
-            aria-hidden="true"
-            className="size-3 flex-none text-muted-foreground"
-          />
+          {variant === "select" ? (
+            <ChevronsUpDownIcon
+              aria-hidden="true"
+              className="size-4 flex-none text-muted-foreground"
+            />
+          ) : (
+            <ChevronDownIcon
+              aria-hidden="true"
+              className="size-3 flex-none text-muted-foreground"
+            />
+          )}
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -164,7 +184,12 @@ export function Dropdown<T extends string>({
                   )}
                   <span className="flex items-center gap-2">
                     {opcja.hint && (
-                      <span className="font-mono text-xs font-normal text-muted-foreground">
+                      <span
+                        className={cn(
+                          "text-xs font-normal text-muted-foreground",
+                          variant === "select" ? "tabular-nums" : "font-mono",
+                        )}
+                      >
                         {opcja.hint}
                       </span>
                     )}

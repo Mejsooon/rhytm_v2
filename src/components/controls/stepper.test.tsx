@@ -57,4 +57,29 @@ describe("Stepper", () => {
       );
     }
   });
+
+  it("wide: jedna ramka na pełną szerokość, wartość bez font-mono", () => {
+    ustaw({ wide: true });
+    const grupa = screen.getByRole("group", { name: "Cel tygodniowy" });
+    expect(grupa).toHaveClass("h-8", "w-full", "border", "overflow-hidden");
+    const wartosc = screen.getByText("25 km");
+    expect(wartosc).toHaveClass("tabular-nums", "flex-1", "justify-center");
+    expect(wartosc).not.toHaveClass("font-mono");
+    expect(
+      screen.getByRole("button", { name: "Zmniejsz Cel tygodniowy" }),
+    ).toHaveClass("border-r");
+    expect(
+      screen.getByRole("button", { name: "Zwiększ Cel tygodniowy" }),
+    ).toHaveClass("border-l");
+  });
+
+  it("domyślny wariant bez zmian", () => {
+    ustaw();
+    expect(screen.getByRole("group", { name: "Cel tygodniowy" }).className).toBe(
+      "flex items-center gap-1.5 max-[799px]:inline-flex max-[799px]:gap-0 max-[799px]:overflow-hidden max-[799px]:rounded-md max-[799px]:border max-[799px]:border-input max-[799px]:shadow-xs",
+    );
+    expect(screen.getByText("25 km").className).toBe(
+      "inline-flex h-7 min-w-16 items-center justify-center rounded-md border border-input bg-white px-3 font-mono text-sm text-foreground shadow-xs max-[799px]:h-11 max-[799px]:min-w-12 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-2 max-[799px]:font-sans max-[799px]:tabular-nums max-[799px]:shadow-none",
+    );
+  });
 });

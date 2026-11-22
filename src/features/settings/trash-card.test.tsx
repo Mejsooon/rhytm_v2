@@ -121,4 +121,33 @@ describe("TrashCard", () => {
     await user.click(screen.getByRole("button", { name: "Przywróć" }));
     expect(screen.getByText("Kosz jest pusty.")).toBeInTheDocument();
   });
+
+  it("nagłówki sekcji i daty bez font-mono", () => {
+    const { container } = render(<TrashCard pages={strony} rows={wiersze} />);
+    const strony_h = screen.getByRole("heading", { name: "Strony" });
+    expect(strony_h).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
+    expect(strony_h.className).not.toMatch(/uppercase|font-mono|tracking/);
+    const data = within(screen.getByRole("listitem", { name: "Books" })).getByText(
+      "usunięto 09.11.2026 · zostało 20 dni",
+    );
+    expect(data).toHaveClass("text-xs", "text-muted-foreground", "tabular-nums");
+    expect(container.innerHTML).not.toContain("font-mono");
+  });
+
+  it("długi tytuł skraca się (truncate), przycisk Przywróć zostaje w wierszu", () => {
+    const dlugi = "Bardzo długi tytuł strony ".repeat(12).trim();
+    render(
+      <TrashCard
+        pages={[{ id: "p9", title: dlugi, deletedAt: "2026-11-09T10:00:00Z" }]}
+        rows={[]}
+      />,
+    );
+    const li = screen.getByRole("listitem", { name: dlugi });
+    const tytul = within(li).getByText(dlugi);
+    expect(tytul).toHaveClass("truncate");
+    expect(tytul.parentElement).toHaveClass("min-w-0", "flex-1");
+    const przycisk = within(li).getByRole("button", { name: "Przywróć" });
+    expect(przycisk).toHaveClass("flex-none", "whitespace-nowrap");
+    expect(li).not.toHaveClass("flex-wrap");
+  });
 });

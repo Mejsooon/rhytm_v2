@@ -235,4 +235,61 @@ describe("CategoriesCard", () => {
     rerender(<CategoriesCard categories={kategorie.slice(0, 1)} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
+
+  it("systemowa jako StatusBadge", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    const odznaka = within(wiersz("Sport")).getByText("systemowa");
+    expect(odznaka).toHaveClass("bg-muted", "font-medium", "rounded-sm");
+    expect(odznaka.className).not.toContain("font-mono");
+  });
+
+  it("akcje wyrównane: strzałki kolejności w stałym miejscu w każdym wierszu", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    for (const nazwa of ["Nauka", "Praca", "Sport"]) {
+      const li = wiersz(nazwa);
+      // Slot strzałek ma stałą szerokość, także gdy strzałki brak (pierwsza/ostatnia)
+      const slot = li.querySelector('[data-slot="kolejnosc"]');
+      expect(slot).not.toBeNull();
+      expect(slot).toHaveClass("w-[68px]", "flex-none");
+      expect(li.querySelector('[data-slot="ukryj"]')).toHaveClass("w-16");
+      expect(li.querySelector('[data-slot="usun"]')).toHaveClass("w-16");
+    }
+    // Przyciski domyślnego rozmiaru (md), „Usuń” jak w karcie Profil
+    expect(
+      within(wiersz("Praca")).getByRole("button", { name: "Usuń" }),
+    ).toHaveClass("h-8", "text-destructive-foreground", "border-input");
+    expect(
+      within(wiersz("Praca")).getByRole("button", { name: "Ukryj" }),
+    ).toHaveClass("h-8");
+  });
+
+  it("długa nazwa kategorii skraca się", () => {
+    const dluga = "Bardzo długa nazwa kategorii ".repeat(10).trim();
+    render(
+      <CategoriesCard
+        categories={[{ ...kategorie[0], id: "kd", name: dluga }]}
+      />,
+    );
+    const nazwa = within(wiersz(dluga)).getByRole("button", { name: dluga });
+    expect(nazwa).toHaveClass("truncate");
+    expect(nazwa.parentElement).toHaveClass("min-w-0", "flex-1");
+  });
+
+  it("pozycja strzałek: ↑ zawsze w lewym podslocie, ↓ w prawym", () => {
+    render(<CategoriesCard categories={kategorie} />);
+    const podslot = (nazwa: string, slot: string) =>
+      wiersz(nazwa).querySelector(`[data-slot="${slot}"]`) as HTMLElement;
+    // Pierwszy wiersz: lewy pusty, prawy ma „W dół”
+    expect(podslot("Nauka", "w-gore")).toBeEmptyDOMElement();
+    expect(within(podslot("Nauka", "w-dol")).getByRole("button", { name: "W dół" })).toBeInTheDocument();
+    // Środkowy: obie
+    expect(within(podslot("Praca", "w-gore")).getByRole("button", { name: "W górę" })).toBeInTheDocument();
+    expect(within(podslot("Praca", "w-dol")).getByRole("button", { name: "W dół" })).toBeInTheDocument();
+    // Ostatni: lewy ma „W górę”, prawy pusty
+    expect(within(podslot("Sport", "w-gore")).getByRole("button", { name: "W górę" })).toBeInTheDocument();
+    expect(podslot("Sport", "w-dol")).toBeEmptyDOMElement();
+    // Szerokości podslotów: web 32 px, telefon 44 px
+    expect(podslot("Sport", "w-gore")).toHaveClass("w-8", "max-[799px]:w-11", "flex-none");
+    expect(podslot("Sport", "w-dol")).toHaveClass("w-8", "max-[799px]:w-11", "flex-none");
+  });
 });
