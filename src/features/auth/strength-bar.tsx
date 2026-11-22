@@ -1,5 +1,5 @@
-// Pasek siły hasła: 4 segmenty (Register.dc.html). Kolor wypełnionych segmentów zależy od wyniku 0–4.
-const KOLORY = ["#e0e0e0", "#b91c1c", "#c2410c", "#15803d", "#15803d"] as const;
+// Pasek siły hasła: 4 segmenty po 6 px (CRegister.dc.html). Kolor wypełnionych segmentów zależy od wyniku 0–4.
+const KOLORY = ["rgba(0,0,0,.08)", "#ef4444", "#f59e0b", "#15803d", "#15803d"] as const;
 
 export function StrengthBar({
   score,
@@ -18,8 +18,8 @@ export function StrengthBar({
         <span
           key={i}
           data-testid="strength-segment"
-          className="h-1 flex-1 rounded-[2px]"
-          style={{ backgroundColor: i < score ? KOLORY[score] : "#eaeaea" }}
+          className="h-1.5 flex-1 rounded-full"
+          style={{ backgroundColor: i < score ? KOLORY[score] : "rgba(0,0,0,.06)" }}
         />
       ))}
     </div>
@@ -73,7 +73,7 @@ export function PhoneStrengthBar({
       </div>
       <span
         data-testid="pw-hint"
-        className="font-mono text-[11px] font-normal text-muted-foreground"
+        className="text-[11px] font-normal text-muted-foreground"
       >
         {password
           ? `${OPISY_TELEFON[score]} hasło`

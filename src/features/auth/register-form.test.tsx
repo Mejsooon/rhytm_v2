@@ -211,4 +211,18 @@ describe("RegisterForm", () => {
     expect(screen.getByLabelText("Hasło")).toHaveValue("rytm2026dobre");
     expect(screen.getByText(/co najmniej 10 znaków/)).toHaveTextContent("✓");
   });
+
+  it("pasek siły hasła i lista reguł wg CRegister bez font-mono", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<RegisterForm />);
+    await user.type(screen.getByLabelText("Hasło"), "rytm2026ab");
+    expect(container.querySelector(".font-mono")).toBeNull();
+    // Segmenty paska 6 px (h-1.5), lista reguł 13 px
+    for (const s of screen.getAllByTestId("strength-segment"))
+      expect(s).toHaveClass("h-1.5", "rounded-full");
+    expect(screen.getByText(/co najmniej 10 znaków/).closest("ul")).toHaveClass(
+      "text-[13px]",
+    );
+    expect(screen.getByRole("button", { name: "Utwórz konto" })).toHaveClass("h-9");
+  });
 });
