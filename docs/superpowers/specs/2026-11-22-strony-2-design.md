@@ -130,7 +130,13 @@ Wcześniejsze decyzje Mejsona w tej rozmowie:
   - opcję „zrobione” przy `nearest_date`, przy czym pole tytułu dobiera się samo, bo to tytuł tabeli.
 
   Jednostki w trzech formach nie są ustawiane w oknie. Karty użytkownika pokazują samą liczbę, a karty z szablonów zachowują swoje jednostki. W napisie działa znacznik roku: przy `count_option_in_year` domyślny napis to „… w {year}”, a „{year}” wyświetla się jako bieżący rok. Dzięki temu usuniętą kartę „Przeczytane w 2026” da się odtworzyć ręcznie.
-- **Onboarding.** W kroku 3 cel „Hasła — Szyfrowany sejf” jest zawsze zaznaczony i zablokowany (z kłódką), tak jak Plan tygodnia, Treningi oraz Nawyki i sen. W kroku 5 Hasła znikają ze stron do wyboru. Moduł Hasła jest zawsze dostępny. Podpowiedź kroku 3 brzmi „Plan tygodnia, treningi, nawyki i sen oraz hasła są zawsze włączone.”. Podgląd na żywo pokazuje Hasła w Modułach. Zapisane w `pending_pages` „Passwords” jest pomijane bez błędu.
+- **Onboarding (decyzja Mejsona).**
+  - Krok 3 nie ma już kafelków celów, ani zablokowanych (Plan tygodnia, Treningi, Nawyki i sen, Hasła), ani kafelków stron (Subskrypcje, Projekty, Książki). Kafelki stron dublowały krok 5.
+  - Zamiast nich krok 3 ma linijkę „Zawsze masz: Plan tygodnia · Treningi · Nawyki i sen · Hasła” oraz cele treningowe i cel snu, jak dziś.
+  - Tytuł kroku 3 to „Twoje cele”, a podtytuł „Zmienisz je później w Ustawieniach.”.
+  - Krok 5 nie ma plakietki „z Twoich celów” ani wstępnego zaznaczenia według celów (`recommendedPages`). Podtytuł: „Dodamy te strony do sidebaru. Każdą zmienisz albo usuniesz później.”. Hasła znikają ze stron do wyboru.
+  - Kolumna `profiles.goals` zostaje w bazie, ale nowe konta jej nie wypełniają. Nic poza onboardingiem jej nie czyta (sprawdzone w kodzie).
+  - Podgląd na żywo pokazuje Hasła w Modułach. Zapisane w `pending_pages` „Passwords” jest pomijane bez błędu.
 - **Telefon.** Moduł Hasła musi być osiągalny z telefonu już w tym projekcie, inaczej po migracji hasła znikną z telefonu. Na telefonie Hasła pojawiają się jako pozycja modułu na górze listy Strony (`m-pages`). Dopracowanie należy do Etapu 3.
 - **Kolumna `template_key`** zostaje w bazie tylko jako informacja, z jakiego szablonu powstała strona. Nie wpływa już na wygląd. Stronę systemową haseł oznacza osobna kolumna (np. `is_system`), a nie `template_key`.
 
