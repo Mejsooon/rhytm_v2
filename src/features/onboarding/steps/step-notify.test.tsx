@@ -176,6 +176,8 @@ describe("StepNotify", () => {
       .closest("div");
     expect(info!.className).toContain("border-info-border");
     expect(info!.className).toContain("bg-info/[.04]");
+    expect(info!).toHaveClass("rounded-lg");
+    expect(info!).not.toHaveClass("rounded-xl");
     expect(info!.querySelector("svg.lucide-smartphone")).toHaveClass(
       "text-info",
     );

@@ -25,7 +25,16 @@ async function Ekran() {
   const zResetu = user != null && znacznikResetuPasuje(znacznik, user.id);
 
   if (!zResetu) {
-    return <LinkExpired type="recovery" />;
+    return (
+      <AuthShell
+        headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+        footer={
+          <span className="text-xs">Nowy link będzie ważny 1 godzinę.</span>
+        }
+      >
+        <LinkExpired type="recovery" />
+      </AuthShell>
+    );
   }
   return (
     <AuthShell headerNote="krok 3 / 3" progress={{ step: 3, total: 3 }}>

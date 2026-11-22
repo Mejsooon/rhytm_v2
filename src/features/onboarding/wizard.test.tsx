@@ -231,6 +231,24 @@ describe("OnboardingWizard", () => {
     expect(naglowek.lastElementChild).toContainElement(wyloguj);
   });
 
+  it("„Wyloguj” to wspólny Button ghost sm (web 28 px), a na telefonie zostaje 44 px; logo web z gap-2", () => {
+    pokaz(3);
+    const [web, telefon] = screen.getAllByRole("button", { name: "Wyloguj" });
+    expect(web).toHaveAttribute("type", "submit");
+    expect(web).toHaveClass(
+      "h-7",
+      "bg-transparent",
+      "text-muted-foreground",
+      "hover:bg-accent",
+    );
+    expect(telefon).toHaveAttribute("type", "submit");
+    expect(telefon).toHaveClass("max-[799px]:h-11", "text-muted-foreground");
+    expect(telefon).not.toHaveClass("max-[799px]:h-10");
+    const logo = document.querySelector("header svg")?.parentElement;
+    expect(logo).toHaveClass("gap-2");
+    expect(logo).not.toHaveClass("gap-2.5");
+  });
+
   it("7 segmentów postępu, wypełnione do bieżącego kroku", () => {
     pokaz(3);
     const pasek = screen.getByRole("progressbar");

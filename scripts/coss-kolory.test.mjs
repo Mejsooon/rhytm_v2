@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapClass, mapSource } from "./coss-kolory.mjs";
+import { mapClass, mapSource, RE_HEX_ARB } from "./coss-kolory.mjs";
 
 describe("coss-kolory", () => {
   it("mapuje podstawowe klasy", () => {
@@ -27,5 +27,14 @@ describe("coss-kolory", () => {
     expect(mapSource('toHaveClass("bg-[#171717]", "text-white")')).toBe(
       'toHaveClass("bg-primary", "text-white")',
     );
+  });
+
+  it("wykrywa hex w wartościach arbitralnych (np. shadow), nie ruszając tokenów", () => {
+    const wykryj = (z) => Array.from(z.matchAll(RE_HEX_ARB), (m) => m[0]);
+    expect(wykryj('className="shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--success)]"')).toEqual([
+      "shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--success)]",
+    ]);
+    expect(wykryj('className="shadow-[0_0_0_2px_var(--background)] bg-primary"')).toEqual([]);
+    expect(wykryj('const x = "#fff"; className="p-2"')).toEqual([]);
   });
 });

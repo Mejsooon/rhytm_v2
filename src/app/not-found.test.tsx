@@ -32,6 +32,15 @@ describe("404", () => {
     expect(container.querySelector(".font-mono")).toBeNull();
   });
 
+  it("dokładnie jeden h1, a bieżący okruszek ma aria-current", () => {
+    render(<NotFound />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByText("404", { selector: "nav b" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
   it("liczba 404 bez font-mono, rozmiar wg makiety", () => {
     render(<NotFound />);
     const liczba = screen.getByText("404", { selector: "span" });

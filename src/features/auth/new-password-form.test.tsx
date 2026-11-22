@@ -77,6 +77,11 @@ describe("NewPasswordForm", () => {
     expect(
       screen.getByText("Hasło do konta nie otwiera sejfu. Sejf ma osobne hasło główne.")
         .closest("p"),
-    ).toHaveClass("bg-info-soft", "border-info-border");
+    ).toHaveClass(
+      "rounded-lg",
+      "bg-info/[.04]",
+      "border-info-border",
+      "text-sm",
+    );
   });
 });

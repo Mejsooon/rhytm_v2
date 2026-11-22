@@ -186,10 +186,36 @@ describe("LivePreview", () => {
     const chip = screen.getByTestId("pv-cats").firstElementChild as HTMLElement;
     expect(chip).toHaveClass("h-[22px]", "border-input", "bg-white");
     expect(chip.firstElementChild).toHaveStyle({
-      background: "rgb(59, 130, 246)",
+      // Studia z modelu (CATEGORY_COLORS) #0070f3
+      background: "rgb(0, 112, 243)",
     });
     // Bez font-mono w treści podglądu
     expect(container.querySelector(".font-mono")).toBeNull();
+  });
+
+  it("kolory kategorii pochodzą z modelu: kropki i bloki", () => {
+    pokaz(draft);
+    const kropki = Array.from(
+      screen.getByTestId("pv-cats").querySelectorAll("span.rounded-full"),
+    ).map((k) => (k as HTMLElement).style.background);
+    // Studia #0070f3, Sport #c2410c
+    expect(kropki).toEqual(["rgb(0, 112, 243)", "rgb(194, 65, 12)"]);
+    const blok = screen.getAllByTestId("pv-block")[1].querySelector(
+      "div.rounded-\\[8px\\]",
+    ) as HTMLElement;
+    expect(blok.getAttribute("style")).toContain("194, 65, 12");
+  });
+
+  it("obrys i dymek używają tokenu tła zamiast #fff", () => {
+    const { unmount } = pokaz(draft, 1);
+    const profil = screen.getByTestId("pv-profile");
+    expect(profil.className).toContain("var(--background)");
+    expect(profil.className).not.toContain("#fff");
+    unmount();
+    pokaz(draft, 6);
+    const dymek = screen.getByText(/Za 10 min/).closest("div.absolute");
+    expect(dymek?.className).toContain("var(--background)");
+    expect(dymek?.className).not.toContain("#fff");
   });
 
   it("cały podgląd jest aria-hidden", () => {

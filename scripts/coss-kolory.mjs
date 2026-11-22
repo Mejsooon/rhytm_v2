@@ -49,6 +49,12 @@ const RE_PROMIEN = new RegExp(
   "g",
 );
 
+// Hex w dowolnej wartości arbitralnej (np. shadow-[0_0_0_2px_#fff]) — tylko wykrywamy, nie mapujemy
+export const RE_HEX_ARB = new RegExp(
+  String.raw`(?<!${ZNAK})${ZNAK}*-\[[^\]\s"'\u0060]*#[0-9a-fA-F]{3,8}(?![0-9a-zA-Z])[^\]\s"'\u0060]*\]`,
+  "g",
+);
+
 export function mapSource(src) {
   return src
     .replace(RE_HEX, (cale, warianty, wykrz, prefiks, strona = "", hex, alfa = "") => {
@@ -100,6 +106,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     }
     const biezace = sprawdz ? zrodlo : mapSource(zrodlo);
     for (const m of biezace.matchAll(RE_HEX)) pozostalosci.push(`${plik}: ${m[0]}`);
+    // wartości arbitralne z hexem; pomijamy te, które już wypisał RE_HEX
+    for (const m of biezace.matchAll(RE_HEX_ARB)) {
+      if (!new RegExp(RE_HEX.source).test(m[0])) pozostalosci.push(`${plik}: ${m[0]}`);
+    }
   }
   if (!sprawdz) console.log(`Zmienione pliki: ${zmienione}`);
   if (sprawdz) {

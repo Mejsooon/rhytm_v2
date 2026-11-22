@@ -20,15 +20,14 @@ const KROKI = [1, 2, 3, 4, 5, 6, 7] as const;
 function Wyloguj({ className }: { className?: string }) {
   return (
     <form action={signOut}>
-      <button
+      <Button
         type="submit"
-        className={cn(
-          "cursor-pointer border-0 bg-transparent text-muted-foreground outline-none hover:text-foreground focus-visible:shadow-focus",
-          className,
-        )}
+        variant="ghost"
+        size="sm"
+        className={cn("text-muted-foreground", className)}
       >
         Wyloguj
-      </button>
+      </Button>
     </form>
   );
 }
@@ -171,12 +170,12 @@ export function OnboardingWizard({
     <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.45] text-foreground tabular-nums min-[800px]:bg-panel">
       {/* Nagłówek web */}
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
-        <RhytmLogo size={24} withWordmark />
+        <RhytmLogo size={24} withWordmark className="gap-2" />
         {/* Szara odznaka kroku (.bdg.sec.lg z COnboarding), „Wyloguj” jak .btng.sm */}
         <StatusBadge tone="gray" size="lg" className="ml-auto tabular-nums">
           Krok {step} z 7
         </StatusBadge>
-        <Wyloguj className="ml-2 inline-flex h-7 items-center rounded-md px-[9px] text-sm font-medium hover:bg-accent" />
+        <Wyloguj className="ml-2" />
       </header>
 
       {/* Nagłówek telefon */}
@@ -203,7 +202,8 @@ export function OnboardingWizard({
         <span className="flex-1 text-center font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
           Krok {step} z 7
         </span>
-        <Wyloguj className="inline-flex h-11 items-center px-3 text-sm text-muted-foreground" />
+        {/* Telefon: układ bez zmian, cel dotykowy 44 px (nadpisuje max-[799px]:h-10 z Button sm) */}
+        <Wyloguj className="max-[799px]:h-11 max-[799px]:px-3" />
       </header>
 
       <div className="flex min-h-0 flex-1 items-center justify-center min-[800px]:px-6 min-[800px]:pb-10">

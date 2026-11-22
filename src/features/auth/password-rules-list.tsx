@@ -34,7 +34,7 @@ export function PasswordRulesList({
         >
           <span
             aria-hidden="true"
-            className={`inline-grid size-3.5 place-items-center rounded-full text-[9px] font-bold ${p.ok ? "bg-success text-white" : "shadow-[inset_0_0_0_1px_rgba(0,0,0,.18)]"}`}
+            className={`inline-grid size-3.5 place-items-center rounded-full text-[9px] font-bold ${p.ok ? "bg-success text-white" : "shadow-[inset_0_0_0_1px_var(--border-strong)]"}`}
           >
             {p.ok ? "✓" : ""}
           </span>

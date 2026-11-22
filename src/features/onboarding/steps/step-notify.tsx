@@ -137,7 +137,7 @@ export function StepNotify({
         </Card>
 
         {/* Niebieska informacja (.alert.info): tokeny info */}
-        <div className="flex items-start gap-2.5 rounded-xl border border-info-border bg-info/[.04] px-3.5 py-3 text-sm">
+        <div className="flex items-start gap-2.5 rounded-lg border border-info-border bg-info/[.04] px-3.5 py-3 text-sm">
           <Smartphone
             aria-hidden="true"
             className="mt-0.5 size-4 flex-none text-info"

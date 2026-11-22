@@ -167,6 +167,11 @@ describe("StepDone", () => {
       "width",
       "40",
     );
+    // Logo to wspólny RhytmLogo, a nie skopiowany SVG
+    const logo = screen.getAllByRole("img", { name: "rhytm" })[0];
+    expect(logo).toHaveAttribute("height", "40");
+    expect(logo.querySelector(".fill-foreground")).not.toBeNull();
+    expect(logo.parentElement).toHaveClass("max-[799px]:hidden");
     const karta = web.getByText("Profil").closest("div.shadow-card")!;
     expect(karta).not.toBeNull();
     expect(karta.querySelectorAll("span.bg-success\\/10")).toHaveLength(5);

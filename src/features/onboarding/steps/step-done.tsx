@@ -3,37 +3,10 @@
 import { Check, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { Button, Card, Kbd } from "@/components/controls";
 import { timezoneOptions } from "@/lib/time/timezones";
 import { buildSummary, type OnboardingDraft } from "../model";
-
-const LOGO = (
-  <svg
-    width="40"
-    height="40"
-    viewBox="0 0 48 48"
-    role="img"
-    aria-label="rhytm"
-    className="flex-none fill-primary"
-  >
-    <rect x="4" y="4" width="11" height="11" rx="3" />
-    <rect x="18" y="4" width="11" height="11" rx="3" opacity="0.55" />
-    <rect x="32" y="4" width="11" height="11" rx="3" opacity="0.25" />
-    <rect x="4" y="18" width="11" height="11" rx="3" opacity="0.55" />
-    <rect x="18" y="18" width="11" height="11" rx="3" opacity="0.25" />
-    <rect
-      x="32"
-      y="18"
-      width="11"
-      height="11"
-      rx="3"
-      className="fill-success"
-    />
-    <rect x="4" y="32" width="11" height="11" rx="3" opacity="0.25" />
-    <rect x="18" y="32" width="11" height="11" rx="3" />
-    <rect x="32" y="32" width="11" height="11" rx="3" opacity="0.55" />
-  </svg>
-);
 
 // Krok 7: podsumowanie (OnboardingDone + MOnboarding). Przycisk „Przejdź do Dziś” jest w stopce kreatora.
 export function StepDone({
@@ -55,7 +28,7 @@ export function StepDone({
   return (
     <>
       <div className="flex flex-col gap-4 max-[799px]:items-center max-[799px]:gap-3 max-[799px]:pt-2 max-[799px]:text-center">
-        <span className="max-[799px]:hidden">{LOGO}</span>
+        <RhytmLogo size={40} className="max-[799px]:hidden" />
         <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
           <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
         </span>

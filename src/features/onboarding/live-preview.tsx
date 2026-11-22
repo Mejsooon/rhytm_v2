@@ -7,14 +7,7 @@ import {
   type OnboardingDraft,
 } from "./model";
 
-// Stałe przepisane z makiety COnbPreview.dc.html
-const CAT: Record<string, string> = {
-  Studia: "#3b82f6",
-  Projekty: "#15803d",
-  Praca: "#8b5cf6",
-  Sport: "#f59e0b",
-  Dom: "#eab308",
-};
+// Kolory kategorii bierzemy z modelu (categoriesForRoles), tu tylko przykładowe bloki
 // [godzina, minuta, tytuł, licznik]
 const BL: Record<string, [number, number, string, string]> = {
   Studia: [8, 0, "Matematyka — ćwiczenia", "0/3"],
@@ -25,7 +18,7 @@ const BL: Record<string, [number, number, string, string]> = {
 };
 
 // Zielony obrys podświetlanej części podglądu (HI z makiety: biała obwódka 2 px + zielony pierścień)
-const OBRYS = "rounded-[10px] shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--success)]";
+const OBRYS = "rounded-[10px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success)]";
 
 const DNI = [
   "Niedziela",
@@ -139,14 +132,15 @@ export function LivePreview({
 }) {
   const nazwa = draft.name.trim() || "Ty";
   const ini = inicjaly(nazwa);
-  const kategorie = categoriesForRoles(draft.roles).map((c) => c.name);
+  const kategorie = categoriesForRoles(draft.roles);
   const strony = effectivePages(draft);
 
   const bloki = kategorie
-    .map((c) => {
-      const [h, m, tytul, licznik] = BL[c];
+    .map((k) => {
+      const [h, m, tytul, licznik] = BL[k.name];
       return {
-        c,
+        c: k.name,
+        color: k.color,
         h,
         m,
         godzina: formatClockTime(h, m, draft.clock),
@@ -248,13 +242,13 @@ export function LivePreview({
               obrysKategorie && OBRYS,
             )}
           >
-            {kategorie.map((c) => (
-              <StatusBadge key={c} tone="outline" size="lg">
+            {kategorie.map((k) => (
+              <StatusBadge key={k.name} tone="outline" size="lg">
                 <span
                   className="size-2 flex-none rounded-full"
-                  style={{ background: CAT[c] }}
+                  style={{ background: k.color }}
                 />
-                {c}
+                {k.name}
               </StatusBadge>
             ))}
           </div>
@@ -270,9 +264,10 @@ export function LivePreview({
                 </span>
                 <div
                   className="box-border flex h-[34px] flex-1 items-center justify-between gap-2 rounded-[8px] border px-2.5"
+                  // CATEGORY_COLORS to 6-znakowe hexy, więc dopisek "12"/"4d" to alfa (#rrggbbaa)
                   style={{
-                    background: CAT[b.c] + "12",
-                    borderColor: CAT[b.c] + "4d",
+                    background: b.color + "12",
+                    borderColor: b.color + "4d",
                   }}
                 >
                   <span className="font-medium">{b.tytul}</span>
@@ -284,7 +279,7 @@ export function LivePreview({
             ))}
           </div>
           {dymek && (
-            <div className="absolute top-4 right-4 box-border flex w-[250px] items-start gap-3 rounded-lg border border-border bg-white px-3 py-2.5 text-[13px] shadow-[0_0_0_2px_#fff,0_0_0_4px_var(--success),0_10px_15px_-3px_rgba(0,0,0,.08)]">
+            <div className="absolute top-4 right-4 box-border flex w-[250px] items-start gap-3 rounded-lg border border-border bg-white px-3 py-2.5 text-[13px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success),0_10px_15px_-3px_rgba(0,0,0,.08)]">
               <span className="grid size-6 flex-none place-items-center rounded-md bg-primary">
                 <svg
                   width="14"

@@ -18,7 +18,9 @@ export default function NotFound() {
         >
           <span>rhytm</span>
           <span aria-hidden="true">/</span>
-          <b className="font-medium text-foreground">404</b>
+          <b aria-current="page" className="font-medium text-foreground">
+            404
+          </b>
         </nav>
       </header>
       <div className="flex flex-1 items-center justify-center px-6 py-12">

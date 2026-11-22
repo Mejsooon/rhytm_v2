@@ -3,14 +3,13 @@
 import { CircleAlert } from "lucide-react";
 import { useState, useTransition } from "react";
 
-import { AuthShell } from "@/components/auth/auth-shell";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { Button } from "@/components/controls/button";
 import { TextField } from "@/components/controls/field";
 
 import { resendLink, type AuthFormState } from "./actions";
 
-// Ekran „Link wygasł” (CEmailConfirmed.dc.html, prawa karta) razem z ramką konta, bo stopka jest częścią karty: pole e-mail i „Wyślij nowy link”.
+// Treść ekranu „Link wygasł” (CEmailConfirmed.dc.html, prawa karta): pole e-mail i „Wyślij nowy link”. Ramkę konta (AuthShell) dokłada strona.
 // Po wysłaniu zawsze ten sam tekst — nie zdradzamy, czy adres ma konto.
 export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   const [wyslano, setWyslano] = useState(false);
@@ -18,74 +17,67 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   const [wynik, setWynik] = useState<AuthFormState>({ status: "idle" });
 
   return (
-    <AuthShell
-      headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-      footer={
-        <span className="text-xs">Nowy link będzie ważny 1 godzinę.</span>
-      }
-    >
-      <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-        <span className="flex size-10 items-center justify-center rounded-[10px] border border-destructive-border bg-destructive-soft text-destructive-foreground shadow-xs">
-          <CircleAlert aria-hidden="true" className="size-5" strokeWidth={2} />
-        </span>
-        <h1 className="m-0 text-xl font-semibold">Link wygasł</h1>
-        <p className="m-0 leading-normal text-muted-foreground">
-          Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
-          adres.
+    <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
+      <span className="flex size-10 items-center justify-center rounded-[10px] border border-destructive-border bg-destructive-soft text-destructive-foreground shadow-xs">
+        <CircleAlert aria-hidden="true" className="size-5" strokeWidth={2} />
+      </span>
+      <h1 className="m-0 text-xl font-semibold">Link wygasł</h1>
+      <p className="m-0 leading-normal text-muted-foreground">
+        Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
+        adres.
+      </p>
+      {wyslano ? (
+        <p role="status" className="m-0 leading-normal text-muted-foreground">
+          Jeśli konto z tym adresem istnieje, wysłaliśmy nowy link.
         </p>
-        {wyslano ? (
-          <p role="status" className="m-0 leading-normal text-muted-foreground">
-            Jeśli konto z tym adresem istnieje, wysłaliśmy nowy link.
-          </p>
-        ) : (
-          <form
-            className="flex w-full flex-col gap-4 text-left"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const dane = new FormData(e.currentTarget);
-              const email = String(dane.get("email") ?? "");
-              const token = dane.get("cf-turnstile-response");
-              startTransition(async () => {
-                const odpowiedz = await resendLink(
-                  type,
-                  email,
-                  typeof token === "string" ? token : null,
-                );
-                setWynik(odpowiedz);
-                if (odpowiedz.status === "success") setWyslano(true);
-              });
-            }}
-          >
-            <TextField
-              label="E-mail"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="ty@example.com"
-              required
-              className="leading-[1.21]"
-              error={wynik.fieldErrors?.email}
-            />
-            <TurnstileWidget resetKey={wynik} />
-            {wynik.status === "error" && wynik.message && (
-              <p
-                role="alert"
-                className="m-0 text-[13px] text-destructive-foreground"
-              >
-                {wynik.message}
-              </p>
-            )}
-            <Button
-              type="submit"
-              size="lg"
-              disabled={pending}
-              className="w-full leading-[1.21] max-[799px]:text-[15px]"
+      ) : (
+        <form
+          className="flex w-full flex-col gap-4 text-left"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const dane = new FormData(e.currentTarget);
+            const email = String(dane.get("email") ?? "");
+            const token = dane.get("cf-turnstile-response");
+            startTransition(async () => {
+              const odpowiedz = await resendLink(
+                type,
+                email,
+                typeof token === "string" ? token : null,
+              );
+              setWynik(odpowiedz);
+              if (odpowiedz.status === "success") setWyslano(true);
+            });
+          }}
+        >
+          <TextField
+            label="E-mail"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="ty@example.com"
+            required
+            className="leading-[1.21]"
+            error={wynik.fieldErrors?.email}
+          />
+          <TurnstileWidget resetKey={wynik} />
+          {wynik.status === "error" && wynik.message && (
+            <p
+              role="alert"
+              className="m-0 text-[13px] text-destructive-foreground"
             >
-              Wyślij nowy link
-            </Button>
-          </form>
-        )}
-      </div>
-    </AuthShell>
+              {wynik.message}
+            </p>
+          )}
+          <Button
+            type="submit"
+            size="lg"
+            disabled={pending}
+            className="w-full leading-[1.21] max-[799px]:text-[15px]"
+          >
+            Wyślij nowy link
+          </Button>
+        </form>
+      )}
+    </div>
   );
 }

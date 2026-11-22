@@ -88,7 +88,7 @@ export function NewPasswordForm() {
       />
 
       {/* Notka w stylu .alert.info z makiety */}
-      <p className="m-0 flex items-start gap-2.5 rounded-xl border border-info-border bg-info-soft px-3.5 py-3 leading-normal">
+      <p className="m-0 flex items-start gap-2.5 rounded-lg border border-info-border bg-info/[.04] px-3.5 py-3 text-sm leading-normal">
         <Info
           aria-hidden="true"
           className="mt-0.5 size-4 flex-none text-info"
