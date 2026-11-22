@@ -5,12 +5,13 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { Button } from "@/components/controls/button";
+import { cn } from "@/lib/utils";
 
 import type { AuthFormState } from "./actions";
 
 // Stan „Sprawdź skrzynkę”: ikona, tekst, „Wyślij ponownie” z odliczaniem.
 // kind="signup" — Register.dc.html (koperta, tekst o potwierdzeniu);
-// kind="reset" — Forgot.dc.html / MForgot.dc.html (zielony „ptaszek” tylko na telefonie, własny tekst i slot `before`).
+// kind="reset" — CForgot.dc.html / MForgot.dc.html (zielony „ptaszek” tylko na telefonie, własny tekst i slot `before`).
 export function CheckInbox({
   onResend,
   cooldownSeconds = 60,
@@ -81,19 +82,20 @@ export function CheckInbox({
           : "flex flex-col items-center gap-3.5 text-center max-[799px]:mt-6"
       }
     >
-      {reset ? (
+      {reset && (
         <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
           <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
         </span>
-      ) : (
-        <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">
-          <Mail
-            aria-hidden="true"
-            className="size-5 text-foreground"
-            strokeWidth={2}
-          />
-        </span>
       )}
+      {/* Kafelek ikony 40 px (.empty-ic z makiety); w resecie na telefonie zastępuje go większy „ptaszek” */}
+      <span
+        className={cn(
+          "flex size-10 items-center justify-center rounded-[10px] border border-border bg-white text-muted-foreground shadow-xs",
+          reset && "max-[799px]:hidden",
+        )}
+      >
+        <Mail aria-hidden="true" className="size-5" strokeWidth={2} />
+      </span>
       <div
         className={
           reset
@@ -136,13 +138,13 @@ export function CheckInbox({
           disabled={pozostalo > 0 || wysylanie}
           className={
             reset
-              ? "px-3 py-2 font-normal max-[799px]:w-full max-[799px]:border-0"
-              : "px-3 py-2 font-normal"
+              ? "max-[799px]:w-full max-[799px]:border-0"
+              : undefined
           }
         >
           Wyślij ponownie
           {pozostalo > 0 && (
-            <span className="font-mono text-muted-foreground">{licznik}</span>
+            <span className="tabular-nums text-muted-foreground">{licznik}</span>
           )}
         </Button>
         {blad && (

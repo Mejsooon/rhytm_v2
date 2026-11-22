@@ -145,4 +145,15 @@ describe("CheckInbox", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(przycisk).toBeDisabled();
   });
+
+  it("sprawdź skrzynkę: kafelek ikony 40 px, licznik bez font-mono", () => {
+    const { container } = render(<CheckInbox onResend={sukces} />);
+    expect(container.querySelector("svg")?.parentElement).toHaveClass(
+      "size-10",
+      "rounded-[10px]",
+    );
+    uplyw(1);
+    expect(container.querySelector(".font-mono")).toBeNull();
+    expect(screen.getByText("0:59")).toHaveClass("tabular-nums");
+  });
 });

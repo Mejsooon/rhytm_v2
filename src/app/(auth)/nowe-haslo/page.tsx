@@ -25,16 +25,10 @@ async function Ekran() {
   const zResetu = user != null && znacznikResetuPasuje(znacznik, user.id);
 
   if (!zResetu) {
-    return (
-      <AuthShell
-        headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-      >
-        <LinkExpired type="recovery" />
-      </AuthShell>
-    );
+    return <LinkExpired type="recovery" />;
   }
   return (
-    <AuthShell headerNote="krok 3 / 3">
+    <AuthShell headerNote="krok 3 / 3" progress={{ step: 3, total: 3 }}>
       <NewPasswordForm />
     </AuthShell>
   );

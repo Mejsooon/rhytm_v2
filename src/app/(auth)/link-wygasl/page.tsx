@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { AuthShell } from "@/components/auth/auth-shell";
 import { LinkExpired } from "@/features/auth/link-expired";
 
 export const metadata: Metadata = { title: "Link wygasł — rhytm" };
@@ -19,12 +18,10 @@ async function Ekran({
 
 export default function LinkWygaslPage(props: PageProps<"/link-wygasl">) {
   return (
-    <AuthShell
-      headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+    <Suspense
+      fallback={<div className="min-h-dvh bg-white min-[800px]:bg-panel" />}
     >
-      <Suspense fallback={null}>
-        <Ekran searchParams={props.searchParams} />
-      </Suspense>
-    </AuthShell>
+      <Ekran searchParams={props.searchParams} />
+    </Suspense>
   );
 }
