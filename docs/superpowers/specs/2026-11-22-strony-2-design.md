@@ -130,7 +130,7 @@ Wcześniejsze decyzje Mejsona w tej rozmowie:
   - opcję „zrobione” przy `nearest_date`, przy czym pole tytułu dobiera się samo, bo to tytuł tabeli.
 
   Jednostki w trzech formach nie są ustawiane w oknie. Karty użytkownika pokazują samą liczbę, a karty z szablonów zachowują swoje jednostki. W napisie działa znacznik roku: przy `count_option_in_year` domyślny napis to „… w {year}”, a „{year}” wyświetla się jako bieżący rok. Dzięki temu usuniętą kartę „Przeczytane w 2026” da się odtworzyć ręcznie.
-- **Onboarding.** Hasła znikają z wyborów kreatora: z celu „Hasła — Szyfrowany sejf” w kroku 3 i ze stron w kroku 5. Moduł Hasła jest zawsze dostępny. Podpowiedź kroku 3 brzmi „Plan tygodnia, treningi, nawyki i sen oraz hasła są zawsze włączone.”. Podgląd na żywo pokazuje Hasła w Modułach. Zapisane w `pending_pages` „Passwords” jest pomijane bez błędu.
+- **Onboarding.** W kroku 3 cel „Hasła — Szyfrowany sejf” jest zawsze zaznaczony i zablokowany (z kłódką), tak jak Plan tygodnia, Treningi oraz Nawyki i sen. W kroku 5 Hasła znikają ze stron do wyboru. Moduł Hasła jest zawsze dostępny. Podpowiedź kroku 3 brzmi „Plan tygodnia, treningi, nawyki i sen oraz hasła są zawsze włączone.”. Podgląd na żywo pokazuje Hasła w Modułach. Zapisane w `pending_pages` „Passwords” jest pomijane bez błędu.
 - **Telefon.** Moduł Hasła musi być osiągalny z telefonu już w tym projekcie, inaczej po migracji hasła znikną z telefonu. Na telefonie Hasła pojawiają się jako pozycja modułu na górze listy Strony (`m-pages`). Dopracowanie należy do Etapu 3.
 - **Kolumna `template_key`** zostaje w bazie tylko jako informacja, z jakiego szablonu powstała strona. Nie wpływa już na wygląd. Stronę systemową haseł oznacza osobna kolumna (np. `is_system`), a nie `template_key`.
 
