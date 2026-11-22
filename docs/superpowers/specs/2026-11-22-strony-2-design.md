@@ -26,6 +26,7 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
 2. **Strony z szablonów wyglądają jak zwykłe strony.**
    - Widok `TemplatePageView` znika. Każda strona, także z szablonu, renderuje się edytorem bloków.
    - Szablon (Książki, Projekty, Strony WWW, Pusta) to tylko zawartość startowa: strona z jednym blokiem tabeli z gotowymi kolumnami, przykładowymi wierszami, kartami, sortem i podsumowaniami.
+   - Opisy szablonów w oknie „Nowa strona” mają kilka słów. Pusta strona: „Zacznij od zera”, Books: „Twoje książki”, Projects: „Twoje projekty”, Websites: „Twoje strony WWW”.
    - Po utworzeniu strona niczym nie różni się od pustej strony z tabelą. Można dopisać tekst, dodać drugą tabelę i zmienić każdą kolumnę i kartę.
 3. **Karty statystyk ustawiane przez użytkownika.**
    - Nad tabelą: „+ karta”, okno z wyborem pola, sposobu liczenia (lista zależna od typu pola) i napisu.
@@ -40,7 +41,20 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
    - Filtrowanie, sort i wyszukiwanie po jawnych kolumnach (Serwis, Login, URL, Kategoria) działają przy zamkniętym sejfie.
    - Szablon „Hasła” znika z okna „Nowa strona”.
    - Typ kolumny „Hasło (zaszyfrowane)” znika z wyboru typu w zwykłych tabelach.
-5. **Przeniesienie istniejących danych (migracja).**
+5. **Ikony stron: tylko czarne ikony Lucide** (decyzja Mejsona z 2026-11-22).
+   - Emoji i kolory ikon znikają. Każda ikona strony to ikona liniowa Lucide w kolorze tekstu (`currentColor`), bez wyboru koloru.
+   - Do wyboru jest cały zestaw Lucide z `lucide-react` (~2000 ikon). Nazwy są takie same jak na lucide.dev i w przeglądarkach typu Flowmance.
+   - Wybór ikony to okno z wyszukiwarką i siatką 8 kolumn, bez zakładek Emoji/Ikony i bez kolorów. Ikonę da się też usunąć.
+   - Wyszukiwanie działa po angielskiej nazwie i tagach Lucide oraz po polskich słowach dla najczęstszych ikon (lista słów jak w dzisiejszym `page-icons.ts`, przeniesiona na nazwy Lucide).
+   - Ikony ładują się dynamicznie (`lucide-react/dynamic`), więc paczka aplikacji nie rośnie o cały zestaw. Pełna lista nazw do wyszukiwarki ładuje się dopiero po otwarciu okna wyboru.
+   - Zapis w `pages.icon` ma postać `lucide:<nazwa>`. Pusta wartość oznacza ikonę domyślną (tabela).
+   - **Migracja:**
+     - emoji zamieniają się na najbliższe ikony według stałej mapy, np. 📚 → `book-open`, 💳 → `wallet`, 🔒 → `lock`, 🚀 → `rocket`, 🌐 → `globe`;
+     - `lucide:<nazwa>:<kolor>` zamienia się na `lucide:<nazwa>`;
+     - emoji spoza mapy daje pustą ikonę, czyli domyślną tabelę.
+   - Szablony dostają czarne ikony: Books `book-open`, Projects `rocket`, Websites `globe`, Pusta strona `table`. Moduł Hasła ma ikonę `lock`.
+   - Makiety: `S2PageIcon` i `S2IconPicker` na kanwie. W makiecie jest ~170 ikon, w aplikacji cały zestaw.
+6. **Przeniesienie istniejących danych (migracja).**
    - Strony z szablonów zostają tymi samymi stronami. Ich blok tabeli już dziś trzyma kolumny, wiersze i ustawienia (`page_blocks.content.settings`), więc zmienia się głównie sposób wyświetlania.
    - **Stan produkcji sprawdzony 2026-11-22** (tylko struktura, bez wartości):
      - jest jedna strona z szablonu „Hasła”, z kolumnami Serwis (tekst, tytuł), Login (tekst), Hasło (secret) i URL (url) oraz 2 wierszami;
@@ -53,7 +67,7 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
      - Jeśli użytkownik nie ma żadnej strony „Hasła”, strona systemowa powstaje przy pierwszym wejściu do modułu.
    - **Kolumny „secret” poza modułem.** Migracja przerywa się, jeśli jakakolwiek zwykła tabela ma kolumnę „secret”. Na produkcji takich nie ma. Od tej pory baza blokuje typ „secret” poza stroną systemową, więc zwykła tabela nie musi obsługiwać sejfu.
    - Migracja ma test na lokalnej bazie w CI (`supabase test db`). Test sprawdza: pasujący układ, przerwanie przy niepasującym układzie i przerwanie przy kolumnie „secret” poza modułem.
-6. **Makiety na start.**
+7. **Makiety na start.**
    - Przed kodem powstaje nowa strona „Strony 2.0” na kanwie „Rhytm Design”, w stylu COSS. Ekrany:
      1. uniwersalna strona z tabelą: Książki z kartami, paskiem tabeli, „+” w nagłówku kolumn i „+ Nowy”;
      2. okno „+ karta”;
