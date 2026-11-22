@@ -3,50 +3,57 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
+import { Button, Card, StatusBadge } from "@/components/controls";
 import { cn } from "@/lib/utils";
 
-// Szerokość karty z literałami klas — Tailwind musi je widzieć w kodzie
+// Szerokość karty (łącznie z ramką i paddingiem, box-border): wszystkie makiety konta
+// (CLogin, CRegister, CForgot, CEmailConfirmed) mają 400 px. Klucze zostają, bo strony
+// przekazują `width`; literały klas — Tailwind musi je widzieć w kodzie.
 const SZEROKOSC_KARTY = {
-  380: "min-[800px]:max-w-[380px]",
+  380: "min-[800px]:max-w-[400px]",
   400: "min-[800px]:max-w-[400px]",
-  // Karty z makiet Forgot / EmailConfirmed mają box-sizing: border-box (380 / 420 px łącznie z ramką i paddingiem 28)
-  322: "min-[800px]:max-w-[322px]",
-  362: "min-[800px]:max-w-[362px]",
+  322: "min-[800px]:max-w-[400px]",
+  362: "min-[800px]:max-w-[400px]",
 } as const;
 
 // Wspólny układ ekranów konta.
-// Od 800 px: tło #fafafa z siatką 48 px, nagłówek z logo i akcją, karta na środku (Login.dc.html).
-// Poniżej 800 px: białe tło, bez karty i siatki, logo nad treścią (MLogin.dc.html).
+// Od 800 px: tło panel (#fafafa) bez siatki, nagłówek z logo i akcją, karta na środku (CLogin.dc.html).
+// Poniżej 800 px: białe tło, bez karty, logo nad treścią (MLogin.dc.html).
 // Przełączanie wyłącznie klasami CSS — bez matchMedia, żeby hydratacja nie migotała.
 export function AuthShell({
   headerAction,
   headerNote,
+  footer,
+  progress,
   width = 380,
   phoneBack,
   children,
 }: {
   headerAction?: { href: string; label: string };
-  // Web: mała etykieta mono po prawej zamiast akcji, np. „krok 1 / 3” (Forgot.dc.html)
+  // Web: szara odznaka po prawej zamiast akcji, np. „krok 1 / 3” (CForgot.dc.html)
   headerNote?: string;
+  // Web: szary pasek stopki na dole karty (.foot z CForgot / CEmailConfirmed)
+  footer?: ReactNode;
+  // Web: segmenty postępu nad kartą (CForgot); aria-hidden — krok mówi headerNote
+  progress?: { step: number; total: number };
   // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (MRegister.dc.html)
   phoneBack?: string;
   width?: keyof typeof SZEROKOSC_KARTY;
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.21] text-foreground min-[800px]:bg-panel min-[800px]:bg-[linear-gradient(#eeeeee_1px,transparent_1px),linear-gradient(90deg,#eeeeee_1px,transparent_1px)] min-[800px]:bg-[length:48px_48px]">
+    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.21] text-foreground min-[800px]:bg-panel">
       <header className="flex items-center justify-between px-6 py-4 max-[799px]:hidden">
-        <RhytmLogo size={26} withWordmark />
+        <RhytmLogo size={24} withWordmark className="gap-2" />
         {headerAction && (
-          <Link
-            href={headerAction.href}
-            className="rounded-md border border-input bg-white px-3 py-1.5 text-foreground no-underline hover:text-black"
-          >
-            {headerAction.label}
-          </Link>
+          <Button asChild variant="secondary" size="md">
+            <Link href={headerAction.href}>{headerAction.label}</Link>
+          </Button>
         )}
         {headerNote && (
-          <span className="font-mono text-xs text-muted-foreground">{headerNote}</span>
+          <StatusBadge tone="gray" size="lg" className="tabular-nums">
+            {headerNote}
+          </StatusBadge>
         )}
       </header>
 
@@ -67,22 +74,46 @@ export function AuthShell({
       )}
 
       <main className="flex flex-1 items-center justify-center p-6 max-[799px]:items-stretch max-[799px]:p-0">
-        <div
-          className={cn(
-            "box-content flex w-full flex-col gap-4 rounded-xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_rgba(0,0,0,.04)]",
-            SZEROKOSC_KARTY[width],
-            // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
-            "max-[799px]:box-border max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",
-            phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
+        <div className="flex w-full flex-col gap-3 max-[799px]:flex-1 min-[800px]:max-w-[400px]">
+          {progress && (
+            <div
+              data-testid="auth-progress"
+              aria-hidden="true"
+              className="flex gap-1 max-[799px]:hidden"
+            >
+              {Array.from({ length: progress.total }, (_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-1 flex-1 rounded-full",
+                    i < progress.step ? "bg-foreground" : "bg-border",
+                  )}
+                />
+              ))}
+            </div>
           )}
-        >
-          {!phoneBack && (
-            <RhytmLogo
-              size={48}
-              className="mb-3.5 justify-center min-[800px]:hidden"
-            />
-          )}
-          {children}
+          <Card
+            className={cn(
+              "box-border w-full gap-4 p-7",
+              SZEROKOSC_KARTY[width],
+              // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
+              "max-[799px]:flex-1 max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",
+              phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
+            )}
+          >
+            {!phoneBack && (
+              <RhytmLogo
+                size={48}
+                className="mb-3.5 justify-center min-[800px]:hidden"
+              />
+            )}
+            {children}
+            {footer && (
+              <div className="-mx-7 -mb-7 flex items-center justify-center rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 text-center text-[13px] text-muted-foreground max-[799px]:mx-0 max-[799px]:mb-0 max-[799px]:mt-4 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0">
+                {footer}
+              </div>
+            )}
+          </Card>
         </div>
       </main>
     </div>
