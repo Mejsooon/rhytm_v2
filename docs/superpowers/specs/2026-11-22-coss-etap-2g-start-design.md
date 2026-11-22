@@ -11,9 +11,9 @@ Ekrany przed wejściem do aplikacji (logowanie, rejestracja, reset hasła, potwi
 | Logowanie | `CLogin` | `src/app/(auth)/logowanie`, `src/features/auth/login-form.tsx`, `src/components/auth/*` |
 | Rejestracja | `CRegister` | `src/app/(auth)/rejestracja`, `register-form.tsx` |
 | Reset hasła (prośba) | `CForgot` | `src/app/(auth)/reset-hasla` |
-| E-mail potwierdzony | `CEmailConfirmed` | `src/app/(auth)/potwierdzono` |
+| E-mail potwierdzony i „Link wygasł” | `CEmailConfirmed` (dwie karty: lewa = potwierdzono, prawa = link wygasł) | `src/app/(auth)/potwierdzono`, `src/app/(auth)/link-wygasl`, `link-expired.tsx` |
 | 404 | `CNotFound` | `src/app/not-found.tsx` |
-| „Sprawdź skrzynkę”, „Link wygasł”, „Nowe hasło” | brak — styl karty z `CForgot`/`CEmailConfirmed` (decyzja Claude'a) | `check-inbox.tsx`, `link-expired.tsx`, `src/app/(auth)/nowe-haslo` |
+| „Sprawdź skrzynkę”, „Nowe hasło” | brak — styl karty z `CForgot`/`CEmailConfirmed` (decyzja Claude'a) | `check-inbox.tsx`, `new-password-form.tsx`, `src/app/(auth)/nowe-haslo` |
 | Onboarding (7 kroków) i podgląd | `COnboarding`, `COnboardingRole`, `COnboardingSource`, `COnboardingGoals`, `COnboardingPages`, `COnboardingNotify`, `COnboardingDone`, `COnbPreview` | `src/app/(onboarding)`, `src/features/onboarding/*` |
 
 Wspólny układ ekranów konta: logo „rhytm” w lewym górnym rogu, przycisk w prawym („Załóż konto” / „Zaloguj się”), karta ~400 px na środku. Onboarding: pasek górny (logo, „Krok N z 7”, „Wyloguj”), ramka z 7-segmentowym paskiem postępu, kolumna kroku z nagłówkiem i stopką „Wstecz / Dalej”, podgląd na żywo po prawej.
