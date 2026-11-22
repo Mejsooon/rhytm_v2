@@ -158,6 +158,40 @@ describe("LivePreview", () => {
     expect(screen.getByText("Brak stron")).toBeInTheDocument();
   });
 
+  it("podgląd: karta z sidebarem (Moduły/Strony) i planem dnia wg COnbPreview", () => {
+    const { container } = pokaz(draft);
+    // Tło podglądu i karta wewnątrz (inset 32 px, cień lg)
+    const tlo = container.firstElementChild as HTMLElement;
+    expect(tlo).toHaveClass("bg-black/[.025]");
+    const karta = tlo.firstElementChild as HTMLElement;
+    expect(karta).toHaveClass(
+      "absolute",
+      "inset-8",
+      "shadow-lg",
+      "text-[13px]",
+    );
+    // Sidebar 180 px z sekcjami Moduły i Strony
+    expect(screen.getByText("Moduły")).toBeInTheDocument();
+    expect(screen.getByText("Strony")).toBeInTheDocument();
+    expect(screen.getByText("Moduły").parentElement).toHaveClass(
+      "w-[180px]",
+      "bg-panel",
+    );
+    expect(screen.getByText("Dziś")).toHaveClass("bg-black/[.05]");
+    // Plan dnia: tytuł 15/600, chip kategorii jako szara/obrysowa odznaka z kropką
+    expect(screen.getByText("Wtorek, 17 listopada")).toHaveClass(
+      "text-[15px]",
+      "font-semibold",
+    );
+    const chip = screen.getByTestId("pv-cats").firstElementChild as HTMLElement;
+    expect(chip).toHaveClass("h-[22px]", "border-input", "bg-white");
+    expect(chip.firstElementChild).toHaveStyle({
+      background: "rgb(59, 130, 246)",
+    });
+    // Bez font-mono w treści podglądu
+    expect(container.querySelector(".font-mono")).toBeNull();
+  });
+
   it("cały podgląd jest aria-hidden", () => {
     const { container } = pokaz(draft);
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
