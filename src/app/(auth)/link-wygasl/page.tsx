@@ -21,7 +21,6 @@ export default function LinkWygaslPage(props: PageProps<"/link-wygasl">) {
   return (
     <AuthShell
       headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-      width={362}
     >
       <Suspense fallback={null}>
         <Ekran searchParams={props.searchParams} />

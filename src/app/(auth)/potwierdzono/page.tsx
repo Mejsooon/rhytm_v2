@@ -12,7 +12,6 @@ export default function PotwierdzonoPage() {
   return (
     <AuthShell
       headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
-      width={362}
     >
       <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
         <span className="flex size-11 items-center justify-center rounded-md border border-border bg-panel">

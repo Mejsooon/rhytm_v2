@@ -35,6 +35,8 @@ describe("AuthShell", () => {
     const karta = screen.getByText("treść");
     expect(karta).toHaveClass("rounded-xl", "border-border", "shadow-card");
     expect(karta.className).not.toContain("rgba(");
+    // Padding jak w makietach: 24 px poziomo, 28 px pionowo
+    expect(karta).toHaveClass("px-6", "py-7");
   });
 
   it("footer renderuje pasek stopki karty", () => {

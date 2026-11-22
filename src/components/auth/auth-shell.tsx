@@ -6,16 +6,6 @@ import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { Button, Card, StatusBadge } from "@/components/controls";
 import { cn } from "@/lib/utils";
 
-// Szerokość karty (łącznie z ramką i paddingiem, box-border): wszystkie makiety konta
-// (CLogin, CRegister, CForgot, CEmailConfirmed) mają 400 px. Klucze zostają, bo strony
-// przekazują `width`; literały klas — Tailwind musi je widzieć w kodzie.
-const SZEROKOSC_KARTY = {
-  380: "min-[800px]:max-w-[400px]",
-  400: "min-[800px]:max-w-[400px]",
-  322: "min-[800px]:max-w-[400px]",
-  362: "min-[800px]:max-w-[400px]",
-} as const;
-
 // Wspólny układ ekranów konta.
 // Od 800 px: tło panel (#fafafa) bez siatki, nagłówek z logo i akcją, karta na środku (CLogin.dc.html).
 // Poniżej 800 px: białe tło, bez karty, logo nad treścią (MLogin.dc.html).
@@ -25,7 +15,6 @@ export function AuthShell({
   headerNote,
   footer,
   progress,
-  width = 380,
   phoneBack,
   children,
 }: {
@@ -38,7 +27,6 @@ export function AuthShell({
   progress?: { step: number; total: number };
   // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (MRegister.dc.html)
   phoneBack?: string;
-  width?: keyof typeof SZEROKOSC_KARTY;
   children: ReactNode;
 }) {
   return (
@@ -94,8 +82,7 @@ export function AuthShell({
           )}
           <Card
             className={cn(
-              "box-border w-full gap-4 p-7",
-              SZEROKOSC_KARTY[width],
+              "box-border w-full gap-4 px-6 py-7",
               // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
               "max-[799px]:flex-1 max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",
               phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
@@ -109,7 +96,7 @@ export function AuthShell({
             )}
             {children}
             {footer && (
-              <div className="-mx-7 -mb-7 flex items-center justify-center rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 text-center text-[13px] text-muted-foreground max-[799px]:mx-0 max-[799px]:mb-0 max-[799px]:mt-4 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0">
+              <div className="-mx-6 -mb-7 flex items-center justify-center rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 text-center text-[13px] text-muted-foreground max-[799px]:mx-0 max-[799px]:mb-0 max-[799px]:mt-4 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0">
                 {footer}
               </div>
             )}

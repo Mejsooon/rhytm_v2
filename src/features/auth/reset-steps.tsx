@@ -40,7 +40,6 @@ export function ResetSteps() {
 
   return (
     <AuthShell
-      width={322}
       headerNote={`krok ${krok} / 3`}
       phoneBack="/logowanie"
     >
