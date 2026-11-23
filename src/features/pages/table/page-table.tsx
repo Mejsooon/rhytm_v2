@@ -1,13 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Ellipsis, Eye, ListX, Plus } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   ActionPopover,
   Button,
+  FIELD,
   MENU_ITEM,
+  MENU_ITEM_DANGER,
+  MENU_LABEL,
+  MENU_SEPARATOR,
   StatusBadge,
   type IsoDate,
 } from "@/components/controls";
@@ -41,8 +45,16 @@ const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64
 // Jeden blok tabeli (S2Books.dc.html): przypięte karty, pasek z nazwą tabeli, plakietką sortu, „Filtruj”
 // i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, podgląd / tryb edycji wiersza, stopka
 // z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką. Na telefonie wiersz edytuje się w arkuszu.
-// Działa tylko na danych bloku — bez tytułu strony i sejfu.
-export function PageTable({ block, today }: { block: LoadedBlock; today: IsoDate }) {
+// Działa tylko na danych bloku — bez tytułu strony i sejfu. `onRemove` (z edytora) usuwa cały blok tabeli.
+export function PageTable({
+  block,
+  today,
+  onRemove,
+}: {
+  block: LoadedBlock;
+  today: IsoDate;
+  onRemove?: () => void;
+}) {
   const store = useTableStore(block);
   const { fields, rows, settings, editing } = store;
 
@@ -74,7 +86,8 @@ export function PageTable({ block, today }: { block: LoadedBlock; today: IsoDate
   const widoczneWiersze = visibleRows(fields, rows, settings, store.tempFilters);
   // Filtr w edycji (stan klienta) albo zapisany domyślny
   const filtry = store.tempFilters ?? settings.filters;
-  const liczbaUkrytych = fields.filter((f) => ukryte.has(f.id)).length;
+  // Pola, po których można jeszcze dodać sortowanie (bez tych już w sorcie)
+  const wolneDoSortu = fields.filter((f) => !settings.sort.some((k) => k.field_id === f.id));
   // Plakietka „Sort: Status, Przeczytana” — nazwy pól sortu w kolejności kluczy
   const polaSortu = settings.sort
     .map((s) => fields.find((f) => f.id === s.field_id)?.name)
@@ -150,43 +163,158 @@ export function PageTable({ block, today }: { block: LoadedBlock; today: IsoDate
             open={menuTabeli}
             onOpenChange={setMenuTabeli}
             align="end"
-            width={240}
+            width={300}
             className="p-1"
             ariaLabel="Ustawienia tabeli"
             trigger={
-              <Button size="sm" icon aria-label="Menu tabeli" aria-expanded={menuTabeli} className="aria-expanded:bg-accent">
+              <Button
+                size="sm"
+                icon
+                aria-label="Menu tabeli"
+                aria-expanded={menuTabeli}
+                className="aria-expanded:bg-accent"
+              >
                 <Ellipsis aria-hidden="true" className="size-4" />
               </Button>
             }
           >
-            <div role="menu" aria-label="Menu tabeli">
-              <button
-                type="button"
-                role="menuitem"
-                disabled={liczbaUkrytych === 0}
-                onClick={() => {
-                  setMenuTabeli(false);
-                  void store.patchSettings({ hidden_field_ids: [] });
+            {/* S2TableMenu.dc.html: nazwa tabeli, sortowanie, widoczne kolumny i „Usuń tabelę” */}
+            <div className="p-1">
+              <input
+                type="text"
+                value={szkicNazwy}
+                onChange={(e) => setSzkicNazwy(e.target.value)}
+                onBlur={() => void store.renameTable(szkicNazwy)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
                 }}
-                className={POZYCJA}
-              >
-                <Eye aria-hidden="true" className="size-4 flex-none text-muted-foreground" />
-                <span className="flex-1">Pokaż ukryte kolumny ({liczbaUkrytych})</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                disabled={settings.sort.length === 0}
-                onClick={() => {
-                  setMenuTabeli(false);
-                  void store.patchSettings({ sort: [] });
-                }}
-                className={POZYCJA}
-              >
-                <ListX aria-hidden="true" className="size-4 flex-none text-muted-foreground" />
-                <span className="flex-1">Wyczyść sort</span>
-              </button>
+                placeholder="Tabela bez nazwy"
+                aria-label="Nazwa tabeli"
+                className={FIELD}
+              />
             </div>
+            <div className={cn(MENU_LABEL, "pt-2")}>Sortowanie</div>
+            {settings.sort.map((klucz, i) => {
+              const pole = fields.find((f) => f.id === klucz.field_id);
+              if (!pole) return null;
+              return (
+                <div
+                  key={klucz.field_id}
+                  className="flex min-h-9 items-center gap-1.5 py-0.5 pr-1 pl-2.5"
+                >
+                  <span className="flex-1">{pole.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    aria-label={`Odwróć kierunek: ${pole.name}`}
+                    onClick={() =>
+                      void store.patchSettings({
+                        sort: settings.sort.map((k, j) =>
+                          j === i
+                            ? {
+                                field_id: k.field_id,
+                                dir: k.dir === "asc" ? "desc" : "asc",
+                              }
+                            : k,
+                        ),
+                      })
+                    }
+                  >
+                    {klucz.dir === "asc" ? "A → Z" : "Z → A"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    icon
+                    aria-label={`Usuń sortowanie: ${pole.name}`}
+                    onClick={() =>
+                      void store.patchSettings({
+                        sort: settings.sort.filter((_, j) => j !== i),
+                      })
+                    }
+                  >
+                    <X aria-hidden="true" className="size-3.5" />
+                  </Button>
+                </div>
+              );
+            })}
+            {settings.sort.length === 0 && (
+              <div className="px-2.5 py-1.5 text-[13px] text-muted-foreground">
+                Wiersze w kolejności dodania.
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={wolneDoSortu.length === 0}
+              onClick={() =>
+                void store.patchSettings({
+                  sort: [
+                    ...settings.sort,
+                    { field_id: wolneDoSortu[0].id, dir: "asc" },
+                  ],
+                })
+              }
+              className={POZYCJA}
+            >
+              <Plus aria-hidden="true" className="size-4 flex-none" />
+              <span className="flex-1">Dodaj sortowanie</span>
+            </button>
+            <div className={MENU_SEPARATOR} />
+            <div className={MENU_LABEL}>Widoczne kolumny</div>
+            {fields.map((f, i) => {
+              const widoczna = !ukryte.has(f.id);
+              // Pierwszej kolumny (tytułu) i ostatniej widocznej nie da się ukryć
+              const zablokowana =
+                i === 0 || (widoczna && widocznePola.length === 1);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  aria-pressed={widoczna}
+                  disabled={zablokowana}
+                  onClick={() =>
+                    void store.patchSettings({
+                      hidden_field_ids: widoczna
+                        ? [...settings.hidden_field_ids, f.id]
+                        : settings.hidden_field_ids.filter((id) => id !== f.id),
+                    })
+                  }
+                  className={cn(POZYCJA, !widoczna && "text-muted-foreground")}
+                >
+                  <span className="flex-1">{f.name}</span>
+                  {widoczna ? (
+                    <Eye
+                      aria-hidden="true"
+                      className="size-4 flex-none opacity-70"
+                    />
+                  ) : (
+                    <EyeOff
+                      aria-hidden="true"
+                      className="size-4 flex-none opacity-35"
+                    />
+                  )}
+                </button>
+              );
+            })}
+            {onRemove && (
+              <>
+                <div className={MENU_SEPARATOR} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuTabeli(false);
+                    onRemove();
+                  }}
+                  className={cn(POZYCJA, MENU_ITEM_DANGER)}
+                >
+                  <Trash2 aria-hidden="true" className="size-4 flex-none" />
+                  <span className="flex-1">Usuń tabelę</span>
+                </button>
+              </>
+            )}
           </ActionPopover>
         </div>
       </div>
@@ -259,11 +387,7 @@ export function PageTable({ block, today }: { block: LoadedBlock; today: IsoDate
                       onAddOption={(etykieta) => void store.addOption(f, etykieta)}
                       onRemoveOption={(id) => void store.removeOption(f, id)}
                     />
-                    {f.type === "date" && f.config.show_in_calendar === true && (
-                      <StatusBadge tone="green" className="ml-1.5 align-middle">
-                        w kalendarzu
-                      </StatusBadge>
-                    )}
+                    {/* Bez plakietki „w kalendarzu” w nagłówku: S2Projects pokazuje Termin bez niej (stan jest w menu kolumny) */}
                   </th>
                 );
               })}

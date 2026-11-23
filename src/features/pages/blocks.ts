@@ -12,7 +12,7 @@ export type SlashItem = {
 
 export const SLASH_ITEMS: SlashItem[] = [
   { type: "table", icon: "▦", name: "Tabela", desc: "Wiersze i kolumny z typami pól", kw: "tabela table baza database" },
-  { type: "todo", icon: "☑", name: "Lista zadań", desc: "Punkty do odhaczenia", kw: "lista zadania todo checkbox" },
+  { type: "todo", icon: "✓", name: "Lista zadań", desc: "Punkty do odhaczenia", kw: "lista zadania todo checkbox" },
   { type: "heading", icon: "H", name: "Nagłówek", desc: "Tytuł sekcji", kw: "naglowek heading tytul sekcja" },
   { type: "text", icon: "¶", name: "Tekst", desc: "Zwykły akapit", kw: "tekst text akapit" },
   { type: "divider", icon: "—", name: "Separator", desc: "Pozioma linia", kw: "separator linia divider hr" },

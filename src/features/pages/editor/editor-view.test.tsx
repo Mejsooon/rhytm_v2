@@ -380,9 +380,13 @@ describe("EditorView", () => {
     await user.click(trafienie);
     expect(updateBlockContent).toHaveBeenCalledWith("z", { text: "Kup", done: true });
   });
-  it("nagłówek web ma okruszki i menu strony „⋯” zamiast „Szablony”", async () => {
+  it("nagłówek web ma okruszki i menu strony „⋯”; „Szablony” tylko przy pustej stronie (S2EmptyPage)", async () => {
     const user = userEvent.setup();
-    render(<EditorView data={dane([], "Books")} />);
+    const { unmount } = render(<EditorView data={dane([], "Bez tytułu")} />);
+    const pustyNaglowek = screen.getAllByRole("banner")[0];
+    expect(within(pustyNaglowek).getByRole("link", { name: "Szablony" })).toHaveAttribute("href", "/strony/nowa");
+    unmount();
+    render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Books")} />);
     const naglowek = screen.getAllByRole("banner")[0];
     expect(naglowek.textContent).toContain("Strony");
     expect(within(naglowek).getByRole("heading", { level: 1, name: "Books" })).toBeInTheDocument();

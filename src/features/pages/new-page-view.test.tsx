@@ -78,7 +78,8 @@ describe("NewPageView", () => {
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Books");
 
     await user.click(screen.getByRole("button", { name: /Projects/ }));
-    expect(screen.getByText("Data · w kalendarzu")).toBeInTheDocument();
+    // S2NewPage: Termin to zwykła „Data”, bez dopisku o kalendarzu
+    expect(screen.queryByText(/· w kalendarzu/)).toBeNull();
     expect(screen.getByText("Terminy trafią do kalendarza głównego.")).toBeInTheDocument();
   });
 
@@ -151,7 +152,7 @@ describe("NewPageView", () => {
     const user = userEvent.setup();
     render(<NewPageView />);
     await user.click(screen.getByRole("button", { name: /Projects/ }));
-    expect(screen.getByText("Data · w kalendarzu")).toHaveClass("bg-success-soft", "text-success");
+    expect(screen.getByText("Data", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
     expect(screen.getByText("Tekst", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
     expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");

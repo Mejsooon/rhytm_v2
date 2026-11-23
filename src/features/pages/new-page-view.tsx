@@ -13,7 +13,7 @@ import { BLAD_ZAPISU } from "./messages";
 import { PageIcon } from "./page-icon";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
-// Wybór szablonu nowej strony (CNewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
+// Wybór szablonu nowej strony (S2NewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
 // po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
 export function NewPageView() {
   const router = useRouter();
@@ -119,14 +119,14 @@ export function NewPageView() {
                     // Zaznaczona: cień zaznaczenia w style, więc fokus jako obrys zamiast shadow-focus
                     style={zaznaczony ? { boxShadow: "0 0 0 3px rgba(38,38,38,.12)" } : undefined}
                     className={cn(
-                      "flex min-h-[92px] cursor-pointer flex-col items-start gap-1.5 rounded-xl border bg-white p-3.5 text-left font-[inherit] text-sm text-foreground shadow-xs transition-[border-color,box-shadow,background-color] duration-150 hover:bg-panel",
+                      "flex min-h-[60px] cursor-pointer flex-col items-start gap-0.5 rounded-xl border bg-white px-3 py-2.5 text-left font-[inherit] text-sm text-foreground shadow-xs transition-[border-color,box-shadow,background-color] duration-150 hover:bg-panel",
                       zaznaczony
                         ? "border-primary outline-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
                         : "border-border outline-none focus-visible:shadow-focus",
                     )}
                   >
                     <span className="flex items-center gap-2 font-medium">
-                      <span className="grid size-[26px] place-items-center rounded-[7px] bg-muted text-muted-foreground">
+                      <span className="grid size-[26px] place-items-center rounded-[7px] bg-black/[.04] text-foreground">
                         <PageIcon icon={t.icon} size={16} />
                       </span>
                       {t.name}
@@ -137,7 +137,8 @@ export function NewPageView() {
                         </StatusBadge>
                       )}
                     </span>
-                    <span className="text-[13px] leading-[1.45] text-muted-foreground">{t.desc}</span>
+                    {/* Opis pod nazwą, wcięty o ikonę (26 px + 8 px odstępu) */}
+                    <span className="pl-[34px] text-[13px] leading-[1.4] text-muted-foreground">{t.desc}</span>
                   </button>
                 );
               })}
@@ -162,15 +163,9 @@ export function NewPageView() {
                     className="flex items-center justify-between gap-2.5 border-b border-black/[.06] px-3 py-[9px] text-sm"
                   >
                     <span>{pole.name}</span>
-                    <StatusBadge
-                      tone={
-                        pole.type === "rating" || pole.type === "secret" || pole.config?.show_in_calendar
-                          ? "green"
-                          : "outline"
-                      }
-                    >
+                    {/* S2NewPage: zielona tylko Ocena; Termin w Projects to zwykła „Data” (o kalendarzu mówi opis pod listą) */}
+                    <StatusBadge tone={pole.type === "rating" || pole.type === "secret" ? "green" : "outline"}>
                       {FIELD_TYPE_META[pole.type].label}
-                      {pole.config?.show_in_calendar ? " · w kalendarzu" : ""}
                     </StatusBadge>
                   </div>
                 ))}

@@ -185,16 +185,44 @@ describe("PageTable", () => {
       expect(actions.updateBlockContent).not.toHaveBeenCalled();
     });
 
-    it("„⋯”: „Wyczyść sort” czyści sort i plakietkę", async () => {
+    it("„⋯” (S2TableMenu): odwrócenie i usunięcie sortu, dodanie sortowania", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const przeczytana = b.fields.find((f) => f.name === "Przeczytana")!;
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const menu = screen.getByRole("menu", { name: "Menu tabeli" });
-      expect(within(menu).getByRole("menuitem", { name: "Pokaż ukryte kolumny (0)" })).toBeDisabled();
-      await user.click(within(menu).getByRole("menuitem", { name: "Wyczyść sort" }));
-      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { sort: [] });
+      const menu = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      expect(within(menu).getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+      expect(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }).textContent).toBe("A → Z");
+      await user.click(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }));
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
+        sort: [
+          { field_id: status.id, dir: "desc" },
+          { field_id: przeczytana.id, dir: "desc" },
+        ],
+      });
+      await user.click(within(menu).getByRole("button", { name: "Usuń sortowanie: Status" }));
+      await user.click(within(menu).getByRole("button", { name: "Usuń sortowanie: Przeczytana" }));
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { sort: [] });
       expect(screen.queryByText(/^Sort:/)).not.toBeInTheDocument();
+      expect(within(menu).getByText("Wiersze w kolejności dodania.")).toBeInTheDocument();
+      await user.click(within(menu).getByRole("button", { name: "Dodaj sortowanie" }));
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { sort: [{ field_id: b.fields[0].id, dir: "asc" }] });
+    });
+
+    it("„⋯”: „Usuń tabelę” woła onRemove; bez onRemove pozycji nie ma", async () => {
+      const user = userEvent.setup();
+      const usun = vi.fn();
+      const { unmount } = render(<PageTable block={blok("books", BOOKS)} today={TODAY} onRemove={usun} />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      await user.click(await screen.findByRole("button", { name: "Usuń tabelę" }));
+      expect(usun).toHaveBeenCalledTimes(1);
+      unmount();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      expect(screen.queryByRole("button", { name: "Usuń tabelę" })).not.toBeInTheDocument();
     });
   });
 
@@ -265,7 +293,7 @@ describe("PageTable", () => {
       expect(tytuly()).toEqual(["Zero to One", "Diuna", "Deep Work"]);
     });
 
-    it("ukrycie kolumny i „Pokaż ukryte kolumny (1)” w menu „⋯”", async () => {
+    it("ukrycie kolumny i ponowne pokazanie w „Widoczne kolumny” menu „⋯”", async () => {
       const user = userEvent.setup();
       const b = blok("projects", PROJECTS);
       render(<PageTable block={b} today={TODAY} />);
@@ -275,7 +303,10 @@ describe("PageTable", () => {
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { hidden_field_ids: [repo.id] });
       expect(screen.queryByRole("columnheader", { name: /Repo/ })).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      await user.click(screen.getByRole("menuitem", { name: "Pokaż ukryte kolumny (1)" }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      // Pierwszej kolumny nie da się ukryć; ukryta Repo ma aria-pressed=false
+      expect(within(ustawienia).getByRole("button", { name: "Nazwa", pressed: true })).toBeDisabled();
+      await user.click(within(ustawienia).getByRole("button", { name: "Repo", pressed: false }));
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [] });
       expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
     });

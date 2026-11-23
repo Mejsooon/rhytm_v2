@@ -621,7 +621,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "kalendarz-sport", projekt);
   });
 
-  test("zrzuty /strony (makiety NewPage, EmptyPage, Books, ColumnMenu, FilterPopover, MPages, MEditor)", async ({
+  test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, MPages, MEditor)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
@@ -651,12 +651,46 @@ test.describe("ekrany z sesją", () => {
       await expect(page.getByText("Filtr", { exact: true })).toBeVisible();
       await zrzut(page, "strony-filtr", projekt);
       await page.keyboard.press("Escape");
+      // Menu „⋯” tabeli (S2TableMenu)
+      await page.getByRole("button", { name: "Menu tabeli" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Ustawienia tabeli" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-menu-tabeli", projekt);
+      await page.keyboard.press("Escape");
+      // Menu strony „⋯” w nagłówku (S2PageMenu)
+      await page
+        .getByRole("button", { name: "Menu strony", exact: true })
+        .click();
+      await expect(
+        page.getByRole("menu", { name: "Strona Books" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-menu-strony", projekt);
+      await page.keyboard.press("Escape");
+      // Schowany pasek boczny (S2SidebarCollapsed); potem z powrotem, żeby dalsze zrzuty miały pasek
+      await page.keyboard.press("Control+\\");
+      await expect(
+        page.getByRole("button", { name: "Pokaż pasek boczny" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-books-schowany-pasek", projekt);
+      await page.keyboard.press("Control+\\");
+      await expect(
+        page.getByRole("navigation", { name: "Główna nawigacja" }),
+      ).toBeVisible();
     }
 
     // Edytor z tabelą (EmptyPage / MEditor)
     await page.goto("/strony");
     await page.getByRole("button", { name: "Nowa strona" }).first().click();
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
+    // Pusta strona przed pierwszym blokiem (S2EmptyPage): szybki start na webie, „Wstaw tabelę” na telefonie
+    if (projekt === "web")
+      await expect(page.getByText("albo zacznij od:")).toBeVisible();
+    else
+      await expect(
+        page.getByRole("button", { name: "Wstaw tabelę" }),
+      ).toBeVisible();
+    await zrzut(page, "strony-pusta", projekt);
     if (projekt === "web") {
       await page.getByLabel("Nazwa strony").fill("Plan tygodnia");
       await page.getByLabel("Nazwa strony").blur();

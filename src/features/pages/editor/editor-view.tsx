@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { LayoutGrid, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ActionPopover, Button, Chip } from "@/components/controls";
@@ -103,16 +103,29 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           webParent="Strony"
           phoneLabel="Strony"
           webAction={
-            // .btn.ic z S2Books.dc.html: kwadratowy przycisk 32 px z „⋯” (S2PageMenu.dc.html)
-            <PageMenu
-              page={stronaWMenu}
-              pages={pagesStore.pages}
-              store={pagesStore}
-              // „Zmień nazwę” przenosi fokus na tytuł; dymek oddaje fokus przyciskowi, więc chwilę później
-              onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
-              triggerLabel="Menu strony"
-              triggerClassName="relative inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-btn outline-none transition-[box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus aria-expanded:bg-accent [&_svg]:opacity-80"
-            />
+            <>
+              {/* S2EmptyPage.dc.html: pusta strona ma w nagłówku „Szablony” (.btn) przed menu strony */}
+              {pusta && (
+                <Button asChild>
+                  <Link href="/strony/nowa">
+                    <LayoutGrid size={16} aria-hidden="true" />
+                    Szablony
+                  </Link>
+                </Button>
+              )}
+              {/* .btn.ic z S2Books.dc.html: kwadratowy przycisk 32 px z „⋯” (S2PageMenu.dc.html) */}
+              <PageMenu
+                page={stronaWMenu}
+                pages={pagesStore.pages}
+                store={pagesStore}
+                // „Zmień nazwę” przenosi fokus na tytuł; dymek oddaje fokus przyciskowi, więc chwilę później
+                onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
+                triggerLabel="Menu strony"
+                // Przycisk stoi przy prawej krawędzi okna, więc dymek wyrównany do jego końca
+                align="end"
+                triggerClassName="relative inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-btn outline-none transition-[box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus aria-expanded:bg-accent [&_svg]:opacity-80"
+              />
+            </>
           }
         />
       </div>
@@ -196,7 +209,12 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 <hr className="my-3 h-px border-0 bg-border" />
               )}
               {b.type === "table" && (
-                <PageTable block={b} today={data.today} />
+                <PageTable
+                  block={b}
+                  today={data.today}
+                  // „Usuń tabelę” w menu „⋯” tabeli (S2TableMenu) usuwa blok jak kosz obok
+                  onRemove={() => void store.remove(b.id)}
+                />
               )}
               {/* .blk-act.btng.ic.xs: pojawia się po najechaniu lub fokusie; na telefonie zawsze, 44 px */}
               <Button

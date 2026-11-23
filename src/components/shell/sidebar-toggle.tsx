@@ -29,9 +29,11 @@ export function SidebarToggle({ placement }: { placement: "sidebar" | "header" }
       size={placement === "sidebar" ? "xs" : "sm"}
       icon
       aria-label={etykieta}
-      title={`${etykieta} (${skrot})`}
+      // Podpowiedź jak w makiecie: „Schowaj pasek boczny · Ctrl+\”
+      title={`${etykieta} · ${skrot}`}
       onClick={toggle}
-      className="max-[799px]:hidden"
+      // Szara ikona (#686868); w pasku bocznym przycisk wysunięty 4 px w prawo jak w S2Sidebar
+      className={placement === "sidebar" ? "-mr-1 text-muted-foreground max-[799px]:hidden" : "text-muted-foreground max-[799px]:hidden"}
     >
       <Ikona size={16} aria-hidden="true" />
     </Button>

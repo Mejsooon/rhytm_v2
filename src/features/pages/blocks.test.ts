@@ -28,6 +28,6 @@ describe("menu „/”", () => {
 
   it("QUICK_START to 4 chipy", () => {
     expect(QUICK_START.map((q) => q.label)).toEqual(["Tabela", "Lista zadań", "Nagłówek", "Tekst"]);
-    expect(QUICK_START.map((q) => q.icon)).toEqual(["▦", "☑", "H", "¶"]);
+    expect(QUICK_START.map((q) => q.icon)).toEqual(["▦", "✓", "H", "¶"]);
   });
 });
