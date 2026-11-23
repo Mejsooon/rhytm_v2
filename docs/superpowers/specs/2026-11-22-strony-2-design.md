@@ -1,6 +1,6 @@
 # Strony 2.0 — projekt
 
-Data: 2026-11-22. Zatwierdzenie: Mejson (do akceptacji).
+Data: 2026-11-22, uzupełnienie 2026-11-23 (sekcja „Zmiany po makietach”). Zatwierdzenie: Mejson zatwierdził wersję z 2026-11-22, uzupełnienie do akceptacji.
 
 ## Cel i powód
 
@@ -19,7 +19,7 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
    - ukrywanie kolumn;
    - podsumowanie pod kolumną do wyboru;
    - wyróżnienie najbliższego terminu;
-   - panel edycji wiersza (web) i arkusz wiersza (telefon);
+   - edycja w komórkach (web, punkt 8) i arkusz wiersza (telefon);
    - menu kolumny.
 
    Dodawanie kolumny przez „+” w nagłówku kolumn i wiersza przez „+ Nowy” pod tabelą, jak dziś w bloku tabeli. Przycisków „+ Pole” i „Nowy wiersz” w nagłówku strony już nie ma.
@@ -75,7 +75,7 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
      4. Projekty w tym samym układzie;
      5. moduł Hasła w dwóch stanach, zablokowany i odblokowany, z pozycją w pasku bocznym;
      6. „Nowa strona” bez szablonu Hasła.
-   - Mejson zatwierdza makiety. Potem trafiają na stronę „Web Design (COSS UI)” jako wiążące, a CBooks, CProjects, CWebsites i CPasswords idą do archiwum.
+   - Mejson zatwierdził makiety (2026-11-22/23). Wiążący jest cały zestaw S2* ze strony „Strony 2.0” na kanwie (opis w punkcie 15). Stare CBooks, CProjects, CWebsites, CPasswords, CVault, CMain, CEmptyPage, CNewPage, CColumnMenu, CFilterPopover, CAddField i CSidebar idą do archiwum.
    - Wersje telefonowe powstają w Etapie 3.
 
 ## Poza zakresem (non-goals)
@@ -83,7 +83,8 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
 - Nowe typy pól, widoki (tablica, galeria), relacje między tabelami, formuły i nowe sposoby liczenia kart.
 - Wygląd telefonu w układzie CM*. Telefon ma działać, czyli mieć arkusz wiersza i cele dotykowe ≥ 44 px, ale jego dopracowanie należy do Etapu 3.
 - Udostępnianie haseł, import i eksport haseł, generator haseł.
-- Zmiany w kalendarzu, sporcie, nawykach i Dziś. Kalendarz dziś nie czyta tabel stron (`show_in_calendar` w polu daty Projektów nie ma jeszcze odbiorcy). Tak zostaje, a pokazanie terminów w kalendarzu to osobny przyszły temat.
+- **Subscriptions** (decyzja Mejsona z 2026-11-23). Pełne Subscriptions z makiety S2Main to osobny projekt po przeprojektowaniu Dziś: nowy typ pola „kwota cykliczna” z przełącznikiem mies./rok, liczenie sumy w kartach z przeliczeniem cyklu i odnowienia w kalendarzu. W Stronach 2.0 szablonu Subscriptions nie ma, a makiety S2Main, S2ColumnMenu i S2FilterPopover pokazują tylko wygląd tabeli i menu.
+- Zmiany w kalendarzu, sporcie, nawykach i Dziś (przeprojektowanie Dziś to osobny projekt po Stronach 2.0). Kalendarz dziś nie czyta tabel stron (`show_in_calendar` w polu daty Projektów nie ma jeszcze odbiorcy). Tak zostaje, a pokazanie terminów w kalendarzu to osobny przyszły temat.
 
 ## Anty-cele
 
@@ -118,6 +119,56 @@ Wcześniejsze decyzje Mejsona w tej rozmowie:
 - Commity tylko na gałęzi, scalenie po „scal do main”.
 - Zero-knowledge sejfu bez zmian: serwer nigdy nie widzi jawnego hasła ani notatki.
 
+## Zmiany po makietach (2026-11-22/23)
+
+Ustalone z Mejsonem na makietach S2 po zatwierdzeniu pierwszej wersji specu. Gdzie zmieniają punkty 1–7, wygrywają te poniżej.
+
+8. **Edycja w komórkach, jak w Notion (web).**
+   - Nie ma trybu edycji wiersza ani przycisków „Edytuj” i „Zapisz”. Panel wiersza na webie znika (`row-edit`, `row-preview`). Telefon zostaje przy arkuszu wiersza.
+   - Tekst, liczba i URL: komórka jest stale polem tekstowym wyglądającym jak zwykły tekst. Jedno kliknięcie stawia kursor w miejscu kliknięcia. Zapis idzie przy pisaniu (z opóźnieniem jak dziś w edytorze bloków). Enter i Esc kończą edycję. Pole w komórce nie ma własnej ramki ani obwódki fokusu, a komórka w edycji ma niebieską obwódkę.
+   - Lista wyboru i status: kliknięcie otwiera okienko pod komórką. Drugie kliknięcie w tę samą komórkę albo kliknięcie obok je zamyka. Wybór zapisuje od razu.
+   - Data: kliknięcie otwiera kalendarz pod komórką, tak samo jak wyżej. Są skróty „Dziś” i „Wyczyść”.
+   - Ocena: gwiazdki klika się od razu. Ponowne kliknięcie tej samej gwiazdki zeruje ocenę.
+   - Checkbox: kliknięcie przełącza.
+   - Usunięcie wiersza: kosz widoczny po najechaniu na wiersz.
+   - „+ Nowy” pod tabelą dodaje pusty wiersz i ustawia kursor w pierwszej kolumnie.
+9. **Opcje w polach wyboru (select i status) zmienia się z komórki.**
+   - Na górze okienka jest pole „Szukaj lub dodaj opcję…”. Wpisany tekst zawęża listę. Gdy takiej opcji nie ma, na dole jest „+ Utwórz «nazwa»”. Enter tworzy opcję i od razu ją wybiera. Nowa opcja jest szara.
+   - Każda opcja ma „⋯” widoczne po najechaniu. Otwiera w tym samym okienku panel: nazwa (Enter albo „Gotowe” zapisuje, zmiana przechodzi na wszystkie wiersze), kolor, „Usuń opcję” (wiersze z tą opcją zostają puste, bez potwierdzenia i bez dopisku o liczbie wierszy), „Wstecz”.
+   - Kolory to obecna paleta 8 kolorów (`PALETA`) plus „bez koloru”, z polskimi nazwami.
+10. **Szerokość kolumn i przewijanie tabeli.**
+    - Prawa krawędź nagłówka kolumny to uchwyt (niebieska kreska po najechaniu). Przeciąganie zmienia szerokość tylko tej kolumny. Z klawiatury: strzałki ←/→ na uchwycie, co 20 px. Najmniejsza szerokość 80 px, bez górnej granicy.
+    - Szerokości zapisują się w ustawieniach bloku tabeli (`content.settings`), obok sortu i filtrów. Brak wartości oznacza szerokość domyślną dla typu pola.
+    - Tabela ma stały układ kolumn (`table-layout: fixed`). Ostatnia kolumna, z „+” do dodania pola, wypełnia resztę ramki. Gdy kolumny są szersze niż ramka, tabela przewija się w poziomie, a na dole ramki jest cienki suwak.
+11. **Karty statystyk.** Wygląd i zachowanie jak w punkcie 3, we wszystkich tabelach: menu karty, uchwyt szerokości i „+ Karta” na końcu rzędu.
+12. **Moduł Hasła w tej samej tabeli.**
+    - Edycja w komórkach jak w punkcie 8. Hasło i Notatka są ukryte kropkami. Przy wierszu po najechaniu: oczko (pokaż/ukryj w tym wierszu) i kopiowanie hasła.
+    - Przy zamkniętym sejfie tabela jest tylko do odczytu, a komórki szyfrowane pokazują „zablokowane”.
+    - Opcje Kategorii w okienku „Kategorie” i w komórkach to ta sama lista.
+    - Pasek górny modułu ma tylko „Zablokuj teraz”. Nowy wiersz dodaje „+ Nowy” pod tabelą.
+13. **Chowany pasek boczny (web).**
+    - W nagłówku paska bocznego, obok „rhytm”, jest przycisk „Schowaj pasek boczny”. Po schowaniu treść zajmuje całą szerokość, a w górnym pasku przed okruszkami pojawia się „Pokaż pasek boczny”.
+    - Skrót Ctrl+\ (⌘+\ na Macu) przełącza pasek. Stan zapamiętuje przeglądarka (`localStorage`), więc zostaje po odświeżeniu.
+    - Na telefonie bez zmian.
+14. **Onboarding bez Subscriptions.** Do czasu projektu Subscriptions krok 5 nie pokazuje Subscriptions, bo aplikacja nie ma takiego szablonu (dziś wybór jest po cichu pomijany). Zapisane w `pending_pages` „Subscriptions” jest pomijane bez błędu, tak jak „Passwords”.
+15. **Wiążące makiety (strona „Strony 2.0” na kanwie).**
+    - Strony i tabele: S2Books, S2Projects, S2Websites, S2EmptyPage, S2NewPage, S2AddField, S2CardDialog, S2CardMenu, S2TableMenu, S2ColumnMenu, S2FilterPopover, S2PageMenu.
+    - Hasła: S2Passwords, S2Vault, S2VaultSetup, S2VaultReset.
+    - Powłoka i komponenty: S2Sidebar, S2SidebarCollapsed, S2IconPicker, S2PageIcon, S2OnbPreview.
+    - Onboarding: S2Onboarding*.
+    - S2Today i S2EmptyToday należą do projektu Dziś, S2Main do projektu Subscriptions.
+    - Przed planem kopie makiet trafiają do `docs/design/mockups` w repo.
+
+## Kolejność wdrożenia (decyzja Mejsona z 2026-11-23)
+
+Każdy krok to osobna gałąź, osobny plan i scalenie po „scal do main”:
+
+1. **Fundament stron i powłoka:** jeden blok tabeli, szablony jako zawartość startowa, przeniesienie istniejących stron, ikony Lucide (punkt 5), chowany pasek boczny (punkt 13). Migracja danych najpierw na kopii bazy w CI.
+2. **Tabela jak w Notion:** punkty 1, 3 i 8–11 (edycja w komórkach, opcje, szerokości kolumn, przewijanie, karty, menu kolumny, filtr, sort, podsumowania).
+3. **Hasła i onboarding:** punkty 4, 6 (część haseł), 12 i 14 oraz zmiany onboardingu z „Decyzji Claude”, z osobnym przeglądem bezpieczeństwa.
+
+Po Stronach 2.0: projekt Dziś (wariant F, pusty stan, zadania tylko w blokach), potem Subscriptions, potem telefon (Etap 3).
+
 ## Decyzje Claude (do sprawdzenia przez Mejsona)
 
 - **Przyciski tabeli należą do tabeli, nie do strony.** Strona może mieć kilka tabel. Nad każdą tabelą stoją jej karty, a pod nimi pasek z nazwą tabeli, „Filtruj” i menu „⋯” (ukryte kolumny, sort, usuń tabelę). Dokładny wygląd ustalą makiety.
@@ -138,10 +189,14 @@ Wcześniejsze decyzje Mejsona w tej rozmowie:
   - Kolumna `profiles.goals` zostaje w bazie, ale nowe konta jej nie wypełniają. Nic poza onboardingiem jej nie czyta (sprawdzone w kodzie).
   - Podgląd na żywo pokazuje Hasła w Modułach. W kroku 3 podświetla nowy blok „Ten tydzień” nad planem dnia, wzorowany na statystykach tygodnia z ekranu Dziś (CToday). Blok ma zakres dat i kafelki: Treningi „0 / N”, Bieg „0,0 / N km” i Śr. sen „— / X h”. Każdy kafelek ma mały podpis, dużą liczbę z szarym „/ cel” i 7 kresek dni tygodnia. Wyłączony cel znika, a pozostałe kafelki wypełniają rząd. Lista stron podświetla się tylko w kroku 5. Zapisane w `pending_pages` „Passwords” jest pomijane bez błędu.
 - **Telefon.** Moduł Hasła musi być osiągalny z telefonu już w tym projekcie, inaczej po migracji hasła znikną z telefonu. Na telefonie Hasła pojawiają się jako pozycja modułu na górze listy Strony (`m-pages`). Dopracowanie należy do Etapu 3.
+- **Uzupełnienie z 2026-11-23 (moje decyzje):**
+  - panel wiersza na webie znika całkiem, bo edycja w komórkach go zastępuje (punkt 8);
+  - kolory opcji to obecna paleta 8 kolorów, a nie 6 kolorów z makiety, żeby istniejące opcje nie wymagały migracji (punkt 9);
+  - Subscriptions znika z kroku 5 onboardingu do czasu własnego projektu (punkt 14).
 - **Kolumna `template_key`** zostaje w bazie tylko jako informacja, z jakiego szablonu powstała strona. Nie wpływa już na wygląd. Stronę systemową haseł oznacza osobna kolumna (np. `is_system`), a nie `template_key`.
 
 ## Zostawione wykonawcy
 
-- Podział na zadania i kolejność. Sensowna kolejność: makiety → blok tabeli → przejście stron z szablonów → karty użytkownika → moduł Hasła z migracją.
+- Podział każdego z trzech kroków na zadania.
 - Nazwy komponentów i plików, struktura ustawień w `content.settings`, kształt wyzwalaczy SQL.
 - Teksty pomocnicze w oknach (krótkie, po polsku, w tonie reszty aplikacji).
