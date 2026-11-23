@@ -72,4 +72,15 @@ describe("SidebarStateProvider", () => {
     fireEvent.keyDown(window, { key: "\\", metaKey: true });
     expect(screen.getByTestId("stan")).toHaveTextContent("schowany");
   });
+
+  it("powtórzone zdarzenie (przytrzymany skrót) nie przełącza ponownie", () => {
+    render(
+      <SidebarStateProvider initialCollapsed={false}>
+        <Sonda />
+      </SidebarStateProvider>,
+    );
+    fireEvent.keyDown(window, { key: "\\", ctrlKey: true });
+    fireEvent.keyDown(window, { key: "\\", ctrlKey: true, repeat: true });
+    expect(screen.getByTestId("stan")).toHaveTextContent("schowany");
+  });
 });

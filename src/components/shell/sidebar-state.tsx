@@ -24,18 +24,25 @@ export function SidebarStateProvider({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = React.useState(initialCollapsed);
+  const collapsedRef = React.useRef(initialCollapsed);
 
+  // Ciasteczko zapisujemy poza updaterem stanu (updater ma być czysty)
   const toggle = React.useCallback(() => {
-    setCollapsed((poprzedni) => {
-      const nowy = !poprzedni;
-      document.cookie = `rhytm_sidebar=${nowy ? "collapsed" : "open"}; path=/; max-age=31536000; samesite=lax`;
-      return nowy;
-    });
+    const nowy = !collapsedRef.current;
+    collapsedRef.current = nowy;
+    document.cookie = `rhytm_sidebar=${nowy ? "collapsed" : "open"}; path=/; max-age=31536000; samesite=lax`;
+    document.documentElement.dataset.sidebar = nowy ? "collapsed" : "open";
+    setCollapsed(nowy);
   }, []);
 
   React.useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "\\") {
+        // Przytrzymany skrót nie ma migać paskiem w kółko
+        if (e.repeat) {
+          e.preventDefault();
+          return;
+        }
         // Także w polu tekstowym — skrót ma pierwszeństwo, a pole zostaje bez zmian
         e.preventDefault();
         toggle();

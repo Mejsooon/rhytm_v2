@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
+import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
   MonoLabel,
@@ -102,6 +103,8 @@ export function CalendarHeader({
     <>
       <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-border px-4 py-2.5 max-[799px]:hidden">
         <div className="flex items-center gap-1.5">
+          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
+          <SidebarToggle placement="header" />
           {/* Grupa ‹ Dziś ›: przyciski sklejone, zaokrąglone tylko skrajne rogi; fokus nad sąsiadem */}
           <div className="inline-flex">
             <Button
