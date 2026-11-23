@@ -74,16 +74,26 @@ const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64
 // `module="passwords"` (moduł Hasła, S2Passwords.dc.html): stałe kolumny (menu kolumny zablokowane, bez „+”
 // dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
 // jest tylko do odczytu (bez „+ Nowy”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
+// W module nazwa tabeli nie jest pokazywana (S2Passwords nie ma paska nazwy); w jej miejscu `moduleTools`.
 export function PageTable({
   block,
   today,
   onRemove,
   module,
+  moduleTools,
 }: {
   block: LoadedBlock;
   today: IsoDate;
   onRemove?: () => void;
   module?: "passwords";
+  // Tylko w trybie modułu: zawartość paska po lewej (w miejscu nazwy tabeli), np. podpis i „Kategorie”.
+  // Dostaje te same funkcje magazynu co komórki, więc opcje Kategorii nie rozjeżdżają się z tabelą.
+  moduleTools?: (api: {
+    fields: PageField[];
+    readOnly: boolean;
+    createOption: (field: PageField, label: string) => Promise<string | null>;
+    removeOption: (field: PageField, optionId: string) => Promise<boolean>;
+  }) => React.ReactNode;
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
@@ -312,25 +322,32 @@ export function PageTable({
 
       {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-        <input
-          type="text"
-          value={szkicNazwy}
-          onChange={(e) => setSzkicNazwy(e.target.value)}
-          // Moduł przy zamkniętym sejfie: nazwa tylko do odczytu
-          readOnly={tylkoOdczyt}
-          onBlur={() => {
-            if (!tylkoOdczyt) void store.renameTable(szkicNazwy);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              e.currentTarget.blur();
-            }
-          }}
-          placeholder="Tabela bez nazwy"
-          aria-label="Nazwa tabeli"
-          className="min-w-0 flex-1 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
-        />
+        {modul ? (
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            {moduleTools?.({
+              fields,
+              readOnly: tylkoOdczyt,
+              createOption: store.createOption,
+              removeOption: store.removeOption,
+            })}
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={szkicNazwy}
+            onChange={(e) => setSzkicNazwy(e.target.value)}
+            onBlur={() => void store.renameTable(szkicNazwy)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
+            placeholder="Tabela bez nazwy"
+            aria-label="Nazwa tabeli"
+            className="min-w-0 flex-1 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
+          />
+        )}
         <div className="flex flex-wrap items-center gap-2">
           {polaSortu.length > 0 && <StatusBadge tone="gray">Sort: {polaSortu.join(", ")}</StatusBadge>}
           <FilterPopover
@@ -354,7 +371,7 @@ export function PageTable({
             open={menuTabeli}
             onOpenChange={(o) => {
               // Zamknięcie menu (Esc, klik obok) zapisuje szkic nazwy z pola w menu
-              if (!o && !tylkoOdczyt) void store.renameTable(szkicNazwy);
+              if (!o && !modul) void store.renameTable(szkicNazwy);
               setMenuTabeli(o);
             }}
             align="end"
@@ -374,25 +391,27 @@ export function PageTable({
             }
           >
             {/* S2TableMenu.dc.html: nazwa tabeli, sortowanie, widoczne kolumny i „Usuń tabelę” */}
-            <div className="p-1">
-              <input
-                type="text"
-                value={szkicNazwy}
-                onChange={(e) => setSzkicNazwy(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
-                    e.preventDefault();
-                    if (!tylkoOdczyt) void store.renameTable(szkicNazwy);
-                  }
-                }}
-                placeholder="Tabela bez nazwy"
-                aria-label="Nazwa tabeli"
-                readOnly={tylkoOdczyt}
-                className={FIELD}
-              />
-            </div>
-            <div className={cn(MENU_LABEL, "pt-2")}>Sortowanie</div>
+            {/* W module nazwy tabeli się nie zmienia */}
+            {!modul && (
+              <div className="p-1">
+                <input
+                  type="text"
+                  value={szkicNazwy}
+                  onChange={(e) => setSzkicNazwy(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
+                      e.preventDefault();
+                      void store.renameTable(szkicNazwy);
+                    }
+                  }}
+                  placeholder="Tabela bez nazwy"
+                  aria-label="Nazwa tabeli"
+                  className={FIELD}
+                />
+              </div>
+            )}
+            <div className={cn(MENU_LABEL, modul ? "pt-1" : "pt-2")}>Sortowanie</div>
             {settings.sort.map((klucz, i) => {
               const pole = fields.find((f) => f.id === klucz.field_id);
               if (!pole) return null;

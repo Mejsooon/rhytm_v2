@@ -16,7 +16,7 @@ describe("VaultUnlockCard", () => {
   it("teksty z makiety, pole current-password", () => {
     render(<VaultUnlockCard />);
     expect(screen.getByText("Hasło główne sejfu, nie hasło do konta.")).toBeInTheDocument();
-    expect(screen.getByText("Klucz zostaje tylko w pamięci tej karty. Blokada po 5 min bezczynności.")).toBeInTheDocument();
+    expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
     const pole = screen.getByLabelText("Hasło główne");
     expect(pole).toHaveAttribute("type", "password");
     expect(pole).toHaveAttribute("autocomplete", "current-password");

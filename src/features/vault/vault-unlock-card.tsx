@@ -7,7 +7,7 @@ import { Button } from "@/components/controls";
 import { VaultResetDialog } from "./vault-reset-dialog";
 import { useVault } from "./vault-provider";
 
-// Karta „Odblokuj sejf” (CVault.dc.html): hasło główne, „Odblokuj”, podpowiedź i link do resetu.
+// Karta „Odblokuj sejf” (S2Vault.dc.html): hasło główne, „Odblokuj”, podpowiedź i link do resetu.
 // Hasło żyje tylko w stanie pola i jest czyszczone zaraz po wysłaniu.
 export function VaultUnlockCard() {
   const { unlock } = useVault();
@@ -82,7 +82,7 @@ export function VaultUnlockCard() {
           Odblokuj
         </Button>
         <p className="m-0 text-xs leading-normal text-muted-foreground">
-          Klucz zostaje tylko w pamięci tej karty. Blokada po 5 min bezczynności.
+          Blokada po 5 min bezczynności.
         </p>
       </form>
       <div className="flex border-t border-border bg-black/[.025] px-4 py-3 min-[800px]:rounded-b-[11px]">

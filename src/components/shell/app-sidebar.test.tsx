@@ -66,14 +66,14 @@ describe("AppSidebar", () => {
     movePage.mockResolvedValue({ ok: true });
   });
 
-  it("pokazuje wyszukiwarkę z keycapem, sekcje, 4 moduły, Ustawienia i inicjał", () => {
+  it("pokazuje wyszukiwarkę z keycapem, sekcje, 5 modułów, Ustawienia i inicjał", () => {
     render(<AppSidebar user={uzytkownik} />);
     expect(screen.getByText("Szukaj…")).toBeInTheDocument();
     // Skrót jako Kbd (.kbd z coss.css)
     expect(screen.getByText("⌘K").tagName).toBe("KBD");
     expect(screen.getByText("Moduły")).toBeInTheDocument();
     expect(screen.getByText("Strony")).toBeInTheDocument();
-    for (const nazwa of ["Dziś", "Kalendarz", "Sport", "Nawyki i sen"]) {
+    for (const nazwa of ["Dziś", "Kalendarz", "Sport", "Nawyki i sen", "Hasła"]) {
       expect(screen.getByRole("link", { name: nazwa })).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: "Ustawienia" })).toHaveAttribute(
@@ -82,6 +82,19 @@ describe("AppSidebar", () => {
     );
     expect(screen.getByText("M")).toBeInTheDocument();
     expect(screen.getByText("Nowa strona")).toBeInTheDocument();
+  });
+
+  it("„Hasła” jest w Modułach po „Nawykach i śnie”, prowadzi do /hasla i jest aktywne na tej ścieżce", () => {
+    sciezka = "/hasla";
+    render(<AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0)]} />);
+    const hasla = screen.getByRole("link", { name: "Hasła" });
+    expect(hasla).toHaveAttribute("href", "/hasla");
+    expect(hasla).toHaveAttribute("aria-current", "page");
+    const nawyki = screen.getByRole("link", { name: "Nawyki i sen" });
+    expect(nawyki.compareDocumentPosition(hasla) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Przed sekcją stron
+    const alfa = screen.getByRole("link", { name: "Alfa" });
+    expect(hasla.compareDocumentPosition(alfa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("oznacza aktywny moduł aria-current na /kalendarz", () => {

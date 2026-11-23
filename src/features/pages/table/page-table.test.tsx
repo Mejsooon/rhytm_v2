@@ -1328,14 +1328,36 @@ describe("PageTable", () => {
       expect(writeText).toHaveBeenLastCalledWith("");
     });
 
-    it("zamknięty sejf: nazwa tabeli i opcje Kategorii tylko do odczytu", async () => {
+    it("moduł: bez nazwy tabeli (pasek i menu „⋯”), `moduleTools` w miejscu nazwy z funkcjami magazynu", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          moduleTools={({ readOnly }) => <span>Narzędzia modułu {readOnly ? "tylko do odczytu" : "edycja"}</span>}
+        />,
+      );
+      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+      expect(screen.getByText("Narzędzia modułu edycja")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      expect(screen.getByText("Sortowanie")).toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+    });
+
+    it("zamknięty sejf: `moduleTools` dostaje readOnly, a opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
       stanSejfu("zablokowany");
       const user = userEvent.setup();
-      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
-      const nazwa = screen.getAllByRole("textbox", { name: "Nazwa tabeli" })[0];
-      expect(nazwa).toHaveAttribute("readonly");
-      await user.type(nazwa, "x");
-      act(() => nazwa.blur());
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          moduleTools={({ readOnly }) => <span>{readOnly ? "tylko do odczytu" : "edycja"}</span>}
+        />,
+      );
+      expect(screen.getByText("tylko do odczytu")).toBeInTheDocument();
       const menu = await otworzMenu(user, "Kategoria");
       expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
       expect(within(menu).queryByRole("button", { name: /Usuń opcję/ })).not.toBeInTheDocument();

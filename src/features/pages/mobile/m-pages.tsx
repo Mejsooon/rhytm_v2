@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRight, Plus, Search, Settings } from "lucide-react";
+import { ChevronRight, Lock, Plus, Search, Settings } from "lucide-react";
 
 import { MonoLabel } from "@/components/controls";
 import { useCreateBlankPage } from "../use-create-blank-page";
@@ -21,6 +21,8 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
     const tytul = p.title.trim() === "" ? "Bez tytułu" : p.title;
     return szukane === "" || tytul.toLowerCase().includes(szukane);
   });
+  // Moduł Hasła zawsze na górze listy (poza sekcjami stron); fraza „has…” go zostawia
+  const pokazHasla = szukane === "" || "hasła".includes(szukane);
   const ulubione = pasujace.filter((p) => p.favorite);
   const pozostale = pasujace.filter((p) => !p.favorite);
 
@@ -67,6 +69,27 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
           />
         </label>
 
+        {pokazHasla && (
+          <div className="overflow-hidden rounded-xl border border-border bg-white">
+            <Link
+              href="/hasla"
+              className="flex min-h-[60px] items-center gap-3 px-3.5 text-foreground no-underline hover:bg-panel"
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-9 flex-none items-center justify-center rounded-[9px] bg-muted text-muted-foreground"
+              >
+                <Lock size={18} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">Hasła</span>
+                <span className="font-mono text-xs text-muted-foreground">moduł · szyfrowane</span>
+              </span>
+              <ChevronRight size={16} aria-hidden="true" className="flex-none text-faint-foreground" />
+            </Link>
+          </div>
+        )}
+
         {sekcje.map(
           ({ nazwa, lista }) =>
             lista.length > 0 && (
@@ -103,7 +126,7 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
             ),
         )}
 
-        {szukane !== "" && pasujace.length === 0 && (
+        {szukane !== "" && pasujace.length === 0 && !pokazHasla && (
           <p className="m-0 text-center text-[13px] text-muted-foreground">Nic nie znaleziono.</p>
         )}
 
