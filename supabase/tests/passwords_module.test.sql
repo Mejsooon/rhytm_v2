@@ -1,5 +1,5 @@
 begin;
-select plan(64);
+select plan(72);
 
 -- Użytkownicy: C (strona systemowa przez ensure), D (pasujący stary układ), E (inny układ), F (dwie strony), G (bez stron).
 insert into auth.users (id, email)
@@ -106,6 +106,19 @@ select throws_ok(
   format('select public.reorder_fields(%L, array(select f.id from public.page_fields as f where f.block_id = %L order by f.position desc))',
     current_setting('test.sys_block'), current_setting('test.sys_block')),
   'P0001', 'Kolumny modułu Hasła są stałe: można zmienić tylko ich ustawienia', 'reorder_fields w module odrzucone');
+-- Pola nie wyjdą ze strony modułu ani do niej nie wejdą; id i tytuł są stałe.
+select throws_ok(
+  format('update public.page_fields set block_id = %L where id = %L', current_setting('test.reg_block'), current_setting('test.f_haslo')),
+  'P0001', 'Kolumny modułu Hasła są stałe: można zmienić tylko ich ustawienia', 'przeniesienie pola Hasło na zwykłą stronę odrzucone');
+select throws_ok(
+  format('update public.page_fields set block_id = %L where id = %L', current_setting('test.sys_block'), current_setting('test.reg_field')),
+  'P0001', 'Kolumny modułu Hasła są stałe: można zmienić tylko ich ustawienia', 'przeniesienie zwykłego pola do modułu odrzucone');
+select throws_ok(
+  format('update public.page_fields set is_title = true where id = %L', current_setting('test.f_haslo')),
+  'P0001', 'Kolumny modułu Hasła są stałe: można zmienić tylko ich ustawienia', 'zmiana tytułu w module odrzucona');
+select throws_ok(
+  format('update public.page_fields set id = gen_random_uuid() where id = %L', current_setting('test.f_haslo')),
+  'P0001', 'Kolumny modułu Hasła są stałe: można zmienić tylko ich ustawienia', 'zmiana id pola Hasło odrzucona');
 select lives_ok(
   format('update public.page_fields set config = ''{"options":[{"id":"o1","label":"Praca","color":"blue"}]}''::jsonb where id = %L',
     current_setting('test.f_kat')),
@@ -149,6 +162,21 @@ select throws_ok(
 select throws_ok(
   format('delete from public.page_blocks where id = %L', current_setting('test.sys_block')),
   'P0001', 'Bloku strony Hasła nie można usunąć', 'usunięcie bloku modułu odrzucone');
+select throws_ok(
+  format('update public.page_blocks set page_id = %L where id = %L', current_setting('test.reg'), current_setting('test.sys_block')),
+  'P0001', 'Bloku strony Hasła nie można usunąć, przenieść ani zmienić jego typu', 'przeniesienie bloku modułu na zwykłą stronę odrzucone');
+select throws_ok(
+  format('update public.page_blocks set page_id = %L where id = %L', current_setting('test.sys'), current_setting('test.reg_block')),
+  'P0001', 'Bloku strony Hasła nie można usunąć, przenieść ani zmienić jego typu', 'przeniesienie zwykłego bloku na stronę Hasła odrzucone');
+-- Cudzy moduł: D nie doda pola ani bloku do strony Hasła użytkownika C (wyzwalacz albo RLS).
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000d","role":"authenticated"}', true);
+select throws_ok(
+  format('insert into public.page_fields (block_id, name, type) values (%L, ''X'', ''secret'')', current_setting('test.sys_block')),
+  null, null, 'D nie doda pola Sekret do modułu C');
+select throws_ok(
+  format('insert into public.page_blocks (page_id, type) values (%L, ''text'')', current_setting('test.sys')),
+  null, null, 'D nie doda bloku do strony Hasła C');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
 select lives_ok(
   format('update public.page_blocks set content = jsonb_set(content, ''{settings,column_widths}'', ''{"x":120}''::jsonb) where id = %L',
     current_setting('test.sys_block')),

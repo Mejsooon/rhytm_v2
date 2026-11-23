@@ -177,7 +177,8 @@ begin
       join public.pages as p on p.id = b.page_id
       where b.id in (old.block_id, new.block_id) and p.is_system
     ) then
-      if new.name is distinct from old.name
+      if new.id is distinct from old.id
+        or new.name is distinct from old.name
         or new.type is distinct from old.type
         or new.position is distinct from old.position
         or new.is_title is distinct from old.is_title
