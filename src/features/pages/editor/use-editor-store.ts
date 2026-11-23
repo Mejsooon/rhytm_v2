@@ -218,7 +218,7 @@ export function useEditorStore(pageId: string, initial: LoadedBlock[]) {
             return;
           }
           // Kopia tabeli w magazynie edytora pamięta stan z wczytania strony (zmiany wierszy i kolumn
-          // żyły tylko w TableBlock), więc pobieramy świeże dane — resync podmieni wiersze i kolumny
+          // żyły tylko w PageTable), więc pobieramy świeże dane — resync podmieni wiersze i kolumny
           if (usuwany.type === "table") router.refresh();
         },
       },

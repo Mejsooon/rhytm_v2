@@ -24,7 +24,7 @@ import {
   MENU_SEPARATOR,
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import { OptionBadge } from "../editor/cell-editor";
+import { OptionBadge } from "./option-badge";
 import { FIELD_TYPE_META, type FieldType, type PageField } from "../fields";
 import { summaryOptions, type ColumnSummary, type SummaryKind } from "../table-model";
 import { NAZWY_PODSUMOWAN } from "./summary-cell";

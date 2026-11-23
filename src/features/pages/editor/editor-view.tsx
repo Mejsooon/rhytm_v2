@@ -11,19 +11,21 @@ import { renamePage, setPageIcon } from "../actions";
 import { usePagesStore } from "../use-pages-store";
 import { IconPicker } from "../icon-picker";
 import { PageIcon } from "../page-icon";
+import { PageMenu } from "../page-menu";
 import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
 import { CommandLine } from "./command-line";
+import { PageTable } from "../table/page-table";
 import { MEditor } from "./mobile/m-editor";
-import { TableBlock } from "./table-block";
 import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
 import { useEditorStore } from "./use-editor-store";
 
-// Edytor bloków strony bez szablonu (CEmptyPage.dc.html): ikona, tytuł, bloki, linia poleceń,
-// szybki start i link do szablonów. Telefon dostaje ten sam układ w jednej kolumnie.
+// Edytor bloków każdej strony poza Hasłami (S2Books / S2EmptyPage.dc.html): okruszki z menu strony „⋯”,
+// ikona, tytuł, bloki (tabela to PageTable), linia poleceń, szybki start i link do szablonów.
+// Telefon dostaje ten sam układ w jednej kolumnie.
 // `pages` — cała lista stron dla „Przenieś wyżej / niżej” w menu strony na telefonie.
 export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSummary[] }) {
   const { page } = data;
@@ -34,6 +36,8 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
     [pages, page],
   );
   const pagesStore = usePagesStore(listaStron);
+  // Strona z magazynu (ulubione, ikona i nazwa zmienione w menu strony)
+  const stronaWMenu = pagesStore.pages.find((p) => p.id === page.id) ?? page;
   const tytulRef = React.useRef<HTMLInputElement>(null);
 
   // Tytuł i ikona: lokalny szkic + ostatnia zapisana wartość (resync przy nowych danych z serwera)
@@ -99,15 +103,22 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           webParent="Strony"
           phoneLabel="Strony"
           webAction={
-            <Button asChild size="sm">
-              <Link href="/strony/nowa">Szablony</Link>
-            </Button>
+            // .btn.ic z S2Books.dc.html: kwadratowy przycisk 32 px z „⋯” (S2PageMenu.dc.html)
+            <PageMenu
+              page={stronaWMenu}
+              pages={pagesStore.pages}
+              store={pagesStore}
+              // „Zmień nazwę” przenosi fokus na tytuł; dymek oddaje fokus przyciskowi, więc chwilę później
+              onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
+              triggerLabel="Menu strony"
+              triggerClassName="relative inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-btn outline-none transition-[box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus aria-expanded:bg-accent [&_svg]:opacity-80"
+            />
           }
         />
       </div>
       <MEditor
         store={store}
-        page={pagesStore.pages.find((p) => p.id === page.id) ?? page}
+        page={stronaWMenu}
         pages={pagesStore.pages}
         pagesStore={pagesStore}
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
@@ -138,7 +149,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
             </ActionPopover>
             {/* Telefon: sama ikona przy tytule; zmienia się ją w menu strony („Zmień ikonę”), więc z pagesStore */}
             <span className="text-foreground min-[800px]:hidden">
-              <PageIcon icon={(pagesStore.pages.find((p) => p.id === page.id) ?? page).icon} size={28} />
+              <PageIcon icon={stronaWMenu.icon} size={28} />
             </span>
             <input
               ref={tytulRef}
@@ -185,7 +196,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 <hr className="my-3 h-px border-0 bg-border" />
               )}
               {b.type === "table" && (
-                <TableBlock block={b} editable="cell" today={data.today} />
+                <PageTable block={b} today={data.today} />
               )}
               {/* .blk-act.btng.ic.xs: pojawia się po najechaniu lub fokusie; na telefonie zawsze, 44 px */}
               <Button

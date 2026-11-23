@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,6 +17,19 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+// Akcje tabeli (PageTable) — wszystkie udane
+const tabelowe = vi.hoisted(() => ({
+  addField: vi.fn(),
+  addRow: vi.fn(),
+  changeFieldType: vi.fn(),
+  deleteField: vi.fn(),
+  updateField: vi.fn(),
+  deleteRow: vi.fn(),
+  restoreRow: vi.fn(),
+  saveTableSettings: vi.fn(),
+  updateRow: vi.fn(),
+  reorderFields: vi.fn(),
+}));
 vi.mock("../actions", () => ({
   addBlock,
   updateBlockContent,
@@ -24,9 +37,14 @@ vi.mock("../actions", () => ({
   restoreBlock,
   renamePage,
   setPageIcon,
+  ...tabelowe,
 }));
+// RowEdit czyta stan sejfu (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 
 import type { LoadedBlock, LoadedPage } from "../load-page";
+import { buildTemplateBlocks } from "../templates";
+import { stronaTestowa } from "../table/test-page";
 import { EditorView } from "./editor-view";
 
 function blok(id: string, type: LoadedBlock["type"], position: number, content = {}): LoadedBlock {
@@ -59,6 +77,7 @@ describe("EditorView", () => {
     deleteBlock.mockResolvedValue({ ok: true });
     restoreBlock.mockResolvedValue({ ok: true });
     setPageIcon.mockResolvedValue({ ok: true });
+    for (const a of Object.values(tabelowe)) a.mockResolvedValue({ ok: true });
     addBlock.mockImplementation(async (_id: string, type: LoadedBlock["type"], text?: string) => ({
       ok: true,
       block: blok("srv-1", type, 0, type === "todo" ? { text: text ?? "", done: false } : { text: text ?? "" }),
@@ -360,5 +379,67 @@ describe("EditorView", () => {
     expect(trafienie).toHaveClass("size-11");
     await user.click(trafienie);
     expect(updateBlockContent).toHaveBeenCalledWith("z", { text: "Kup", done: true });
+  });
+  it("nagłówek web ma okruszki i menu strony „⋯” zamiast „Szablony”", async () => {
+    const user = userEvent.setup();
+    render(<EditorView data={dane([], "Books")} />);
+    const naglowek = screen.getAllByRole("banner")[0];
+    expect(naglowek.textContent).toContain("Strony");
+    expect(within(naglowek).getByRole("heading", { level: 1, name: "Books" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Szablony" })).toBeNull();
+    const menu = within(naglowek).getByRole("button", { name: "Menu strony" });
+    // .btn.ic: kwadratowy przycisk 32 px
+    expect(menu).toHaveClass("size-8", "border-input");
+    await user.click(menu);
+    expect(await screen.findByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
+  });
+
+  it("strona z szablonu Books pokazuje blok tekstu i tabelę z kartami", () => {
+    let n = 0;
+    const [tekst, tabela] = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
+    const d = stronaTestowa("books", "Books", [{ Tytuł: "Diuna", Status: "Czytam" }]);
+    const bloki: LoadedBlock[] = [
+      { id: tekst.id, type: "text", position: 0, content: tekst.content, fields: [], rows: [] },
+      { ...d.blocks[0], id: tabela.id, position: 1 },
+    ];
+    render(<EditorView data={{ ...d, blocks: bloki }} />);
+    expect(screen.getByRole("textbox", { name: "Akapit" })).toHaveValue("Co czytam, co przeczytałem i co chcę przeczytać.");
+    expect(screen.getByTestId("przypiete-karty").children).toHaveLength(3);
+    expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+    expect(screen.getByRole("row", { name: /Diuna/ })).toBeInTheDocument();
+  });
+
+  it("dwie tabele: ukrycie kolumny i filtr działają tylko w swoim bloku (Review Focus 2)", async () => {
+    const user = userEvent.setup();
+    const ksiazki = [
+      { Tytuł: "Diuna", Autor: "Frank Herbert", Status: "Czytam" },
+      { Tytuł: "Deep Work", Autor: "Cal Newport", Status: "Przeczytane" },
+    ];
+    const d = stronaTestowa("books", "Books", ksiazki);
+    // Te same pola w obu blokach (to samo id pól) — stan musi i tak zostać przy swoim bloku
+    const pierwsza = { ...d.blocks[0], id: "t1", position: 0 };
+    const druga = { ...d.blocks[0], id: "t2", position: 1, content: { ...d.blocks[0].content, name: "Druga" } };
+    render(<EditorView data={{ ...d, blocks: [pierwsza, druga] }} />);
+    const tabela = (i: number) => screen.getAllByRole("table")[i];
+    const naglowki = (i: number) => within(tabela(i)).getAllByRole("columnheader").map((h) => h.textContent);
+    const tytuly = (i: number) =>
+      within(tabela(i)).getAllByRole("row").slice(1, -1).map((r) => r.querySelector("td")?.textContent);
+    const naglowkiDrugiej = naglowki(1);
+
+    // Ukrycie „Autor” w pierwszej tabeli
+    await user.click(within(within(tabela(0)).getByRole("columnheader", { name: /Autor/ })).getByRole("button", { name: /Autor/ }));
+    await user.click(within(screen.getByRole("menu", { name: "Kolumna Autor" })).getByRole("menuitem", { name: "Ukryj kolumnę" }));
+    expect(tabelowe.saveTableSettings).toHaveBeenCalledWith("t1", { hidden_field_ids: [expect.any(String)] });
+    expect(within(tabela(0)).queryByRole("columnheader", { name: /Autor/ })).toBeNull();
+    expect(naglowki(1)).toEqual(naglowkiDrugiej);
+
+    // Filtr w drugiej tabeli
+    await user.click(screen.getAllByRole("button", { name: "Filtruj" })[1]);
+    const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+    await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+    await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
+    expect(tytuly(1)).toEqual(["Deep Work"]);
+    expect(tytuly(0)).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.textContent)).toEqual(["Filtruj", "Filtruj · 1"]);
   });
 });

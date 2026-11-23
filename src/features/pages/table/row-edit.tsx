@@ -8,7 +8,7 @@ import { Button, Checkbox, DatePicker, Dropdown, FIELD, StatusBadge, type IsoDat
 import { SecretEdit } from "@/features/vault/secret-cell";
 import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
-import { OptionBadge } from "../editor/cell-editor";
+import { OptionBadge } from "./option-badge";
 import { normalizeValue, type PageField } from "../fields";
 import { SEJF_ZABLOKOWANY } from "../messages";
 import type { SecretRegistration } from "./use-table-store";
