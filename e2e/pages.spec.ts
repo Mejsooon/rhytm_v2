@@ -14,10 +14,8 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // Nowy wiersz: tytuł, status Czytam, Zapisz
-    await page
-      .getByRole("button", { name: "Nowy wiersz", exact: true })
-      .click();
+    // Nowy wiersz: „+ Nowy” pod tabelą, tytuł, status Czytam, Zapisz
+    await page.getByRole("button", { name: "Nowy", exact: true }).click();
     const edycja = page.getByRole("row").filter({
       has: page.getByRole("textbox", { name: "Tytuł" }),
     });
@@ -77,31 +75,73 @@ test.describe("strony", () => {
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
     await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
 
-    // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
-    await expect(page.getByRole("columnheader")).toHaveCount(3, {
+    // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id):
+    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)
+    await expect(page.getByRole("columnheader")).toHaveCount(4, {
       timeout: 20_000,
     });
     const naglowek = page.getByRole("columnheader");
-    const okno = page.getByRole("dialog", { name: "Ustawienia kolumny" });
+    const menuKolumny = page.getByRole("dialog", { name: "Kolumna Status" });
 
-    // Status → Tekst: puste wiersze, więc bez potwierdzenia i bez strat
+    // Status → Tekst przez menu kolumny („Typ”): puste wiersze, więc bez potwierdzenia i bez strat
     await naglowek.getByRole("button", { name: "Status", exact: true }).click();
-    await okno.getByRole("button", { name: "Tekst", exact: true }).click();
+    await menuKolumny.getByRole("menuitem", { name: /^Typ:/ }).click();
+    await page
+      .getByRole("menu", { name: "Typ pola" })
+      .getByRole("menuitem", { name: "Tekst", exact: true })
+      .click();
     await expect(
       page.getByRole("dialog", { name: "Zmienić typ pola?" }),
     ).toHaveCount(0);
-    await page.keyboard.press("Escape");
+    await expect(menuKolumny).toHaveCount(0);
 
-    // Wartość „5” w komórce tekstowej, potem typ Liczba → stopka „Suma 5”
-    const komorka = page
-      .getByRole("textbox", { name: "Status", exact: true })
-      .first();
-    await komorka.fill("5");
-    await komorka.press("Enter");
+    // Nowy wiersz („+ Nowy”): wartość „5” w polu tekstowym, Zapisz
+    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    const edycja = page.getByRole("row").filter({
+      has: page.getByRole("textbox", { name: "Status", exact: true }),
+    });
+    await edycja.getByRole("textbox", { name: "Status", exact: true }).fill("5");
+    await edycja.getByRole("button", { name: "Zapisz", exact: true }).click();
+    await expect(edycja).toHaveCount(0);
     await page.waitForLoadState("networkidle");
+
+    // Typ Liczba, podsumowanie „Suma” → stopka pokazuje 5
     await naglowek.getByRole("button", { name: "Status", exact: true }).click();
-    await okno.getByRole("button", { name: "Liczba", exact: true }).click();
-    await expect(page.getByText(/^Suma 5/)).toBeVisible();
+    await menuKolumny.getByRole("menuitem", { name: /^Typ:/ }).click();
+    await page
+      .getByRole("menu", { name: "Typ pola" })
+      .getByRole("menuitem", { name: "Liczba", exact: true })
+      .click();
+    await expect(menuKolumny).toHaveCount(0);
+    await naglowek.getByRole("button", { name: "Status", exact: true }).click();
+    await menuKolumny.getByRole("menuitem", { name: /^Podsumowanie/ }).click();
+    await page
+      .getByRole("menu", { name: "Podsumowanie" })
+      .getByRole("menuitem", { name: "Suma", exact: true })
+      .click();
+    await expect(
+      page.locator("tfoot").getByRole("cell", { name: "5", exact: true }),
+    ).toBeVisible();
+  });
+
+  test("ikona strony: „Zmień ikonę” → „rakieta” → rocket → ikona w sidebarze", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+
+    // Ikona z szablonu Books to book-open; wybieramy rakietę z wyszukiwarki ikon
+    const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
+    await expect(wSidebarze.locator("svg.lucide-book-open")).toBeVisible();
+    await page.getByRole("button", { name: "Zmień ikonę", exact: true }).click();
+    await page.getByRole("textbox", { name: "Szukaj ikony" }).fill("rakieta");
+    await page.getByRole("button", { name: "rocket", exact: true }).click();
+
+    // Zapis `lucide:rocket` widać po odświeżeniu: ikona ładuje się dynamicznie
+    await expect(wSidebarze.locator("svg.lucide-rocket")).toBeVisible();
+    await page.reload();
+    await expect(wSidebarze.locator("svg.lucide-rocket")).toBeVisible();
   });
 
   test("kosz: usunięcie strony → znika z sidebaru → Ustawienia → Kosz → Przywróć → wraca", async ({
@@ -113,7 +153,7 @@ test.describe("strony", () => {
 
     const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
     await expect(wSidebarze).toBeVisible();
-    await page.getByRole("button", { name: "Menu strony Books" }).click();
+    await page.getByRole("button", { name: "Menu strony", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
     const potwierdzenie = page.getByRole("dialog", { name: /Usunąć stronę/ });
     await expect(potwierdzenie).toBeVisible();

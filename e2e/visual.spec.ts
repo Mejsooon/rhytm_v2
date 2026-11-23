@@ -668,11 +668,10 @@ test.describe("ekrany z sesją", () => {
       await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
     }
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
-    await expect(
-      page.getByRole(projekt === "web" ? "columnheader" : "button", {
-        name: projekt === "web" ? /./ : /Kolumna .* — ustawienia/,
-      }),
-    ).toHaveCount(3, { timeout: 20_000 });
+    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę); ta sama tabela na webie i telefonie
+    await expect(page.getByRole("columnheader")).toHaveCount(4, {
+      timeout: 20_000,
+    });
     await zrzut(page, "strony-edytor", projekt);
 
     // Lista stron na telefonie (MPages); na webie to samo trasa pokazuje stronę z sidebarem
