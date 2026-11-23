@@ -137,7 +137,7 @@ export function PageTable({
   const sumaSzerokosci = szerokosci.reduce((a, b) => a + b, 0);
 
   // Kolumna ukryta albo usunięta w trakcie przeciągania: uchwyt znika bez pointerup, więc zerujemy szkic
-  // (wzorzec jak przy nazwie tabeli; ref czyści kolejny pointerdown)
+  // (wzorzec jak przy nazwie tabeli; ref czyści pierwszy ruch bez wciśniętego przycisku albo kolejny pointerdown)
   if (przeciaganie && !widocznePola.some((f) => f.id === przeciaganie.id)) setPrzeciaganie(null);
 
   // Zapis szerokości jednej kolumny: cała mapa column_widths (patch ustawień scala się płytko), bez śmieci z bazy
@@ -488,6 +488,12 @@ export function PageTable({
                       }}
                       onPointerMove={(e) => {
                         if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        // Ruch bez wciśniętego przycisku (np. po zniknięciu uchwytu w trakcie): kończymy bez zapisu
+                        if (e.buttons === 0) {
+                          start.current = null;
+                          setPrzeciaganie(null);
+                          return;
+                        }
                         const szer = Math.min(
                           4000,
                           Math.max(MIN_SZEROKOSC_KOLUMNY, Math.round(start.current.szer + e.clientX - start.current.x)),

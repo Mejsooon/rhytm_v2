@@ -811,12 +811,12 @@ describe("PageTable", () => {
       uchwyt.releasePointerCapture = vi.fn();
       const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
-      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560, buttons: 1 });
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("280px");
-      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 100 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 100, buttons: 1 });
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("80px");
       expect(actions.saveTableSettings).not.toHaveBeenCalled();
-      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 530 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 530, buttons: 1 });
       fireEvent.pointerUp(uchwyt, { pointerId: 1, clientX: 530 });
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 250 } });
@@ -831,21 +831,44 @@ describe("PageTable", () => {
       const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
       const kol = kolumny[b.fields.indexOf(autor)];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
-      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540, buttons: 1 });
       fireEvent.pointerCancel(uchwyt, { pointerId: 1 });
       expect(kol.style.width).toBe("220px");
-      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700, buttons: 1 });
       expect(kol.style.width).toBe("220px");
       expect(actions.saveTableSettings).not.toHaveBeenCalled();
       fireEvent.pointerDown(uchwyt, { pointerId: 2, clientX: 500, button: 0 });
-      fireEvent.pointerMove(uchwyt, { pointerId: 3, clientX: 900 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 3, clientX: 900, buttons: 1 });
       expect(kol.style.width).toBe("220px");
-      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 540 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 540, buttons: 1 });
       fireEvent.lostPointerCapture(uchwyt, { pointerId: 2 });
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 260 } });
-      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 900 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 900, buttons: 1 });
       expect(kol.style.width).toBe("260px");
+    });
+
+    it("ruch bez wciśniętego przycisku kończy przeciąganie bez zapisu i nie zmienia szerokości", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[])[b.fields.indexOf(autor)];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0, buttons: 1 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 600, buttons: 0 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700, buttons: 1 });
+      expect(kol.style.width).toBe("220px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("wyzwalacz menu kolumny ucina długą nazwę: max-w-full, min-w-0 i truncate", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      render(<PageTable block={b} today={TODAY} />);
+      const przycisk = within(naglowek("Autor")).getByRole("button", { name: /Autor/ });
+      expect(przycisk).toHaveClass("max-w-full", "min-w-0");
+      expect(within(przycisk).getByText("Autor")).toHaveClass("min-w-0", "truncate");
     });
 
     it("klik bez ruchu nie zapisuje i daje uchwytowi fokus", () => {
