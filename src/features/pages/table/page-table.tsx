@@ -27,9 +27,8 @@ import { ColumnMenu } from "./column-menu";
 import { FilterPopover } from "./filter-popover";
 import { MRowSheet } from "./mobile/m-row-sheet";
 import { PinnedCards } from "./pinned-cards";
-import { RowEdit } from "./row-edit";
-import { RowPreview } from "./row-preview";
 import { SummaryCell } from "./summary-cell";
+import { TableCell } from "./table-cell";
 import { PREFIKS_TYMCZASOWY, useTableStore } from "./use-table-store";
 
 // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
@@ -43,8 +42,9 @@ const PRZYCISK_FILTRA =
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 
 // Jeden blok tabeli (S2Books.dc.html): przypięte karty, pasek z nazwą tabeli, plakietką sortu, „Filtruj”
-// i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, podgląd / tryb edycji wiersza, stopka
-// z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką. Na telefonie wiersz edytuje się w arkuszu.
+// i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
+// jak w Notion, kosz po najechaniu, stopka z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką.
+// Na telefonie dotknięcie wiersza otwiera arkusz.
 // Działa tylko na danych bloku — bez tytułu strony i sejfu. `onRemove` (z edytora) usuwa cały blok tabeli.
 export function PageTable({
   block,
@@ -58,8 +58,11 @@ export function PageTable({
   const store = useTableStore(block);
   const { fields, rows, settings, editing } = store;
 
-  // Edycja w arkuszu (telefon) zamiast w wierszu tabeli
+  // Edycja w arkuszu (telefon); na webie komórki edytują się wprost
   const [wArkuszu, setWArkuszu] = React.useState(false);
+  // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
+  const [dodawanie, setDodawanie] = React.useState(false);
+  const [nowyId, setNowyId] = React.useState<string | null>(null);
   // Otwarte menu kolumny (id pola), filtr, menu „⋯” i zmiana typu czekająca na potwierdzenie (ze stratą wartości)
   const [menuPola, setMenuPola] = React.useState<string | null>(null);
   const [filtrOtwarty, setFiltrOtwarty] = React.useState(false);
@@ -105,9 +108,17 @@ export function PageTable({
     return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
   }
 
-  function nowyWiersz() {
-    setWArkuszu(naTelefonie());
-    void store.addRowDraft();
+  // Telefon: szkic w arkuszu, jak dotąd. Web: wiersz najpierw na serwerze, potem kursor w tytule.
+  async function nowyWiersz() {
+    if (naTelefonie()) {
+      setWArkuszu(true);
+      void store.addRowDraft();
+      return;
+    }
+    setDodawanie(true);
+    const id = await store.addRowInline();
+    setDodawanie(false);
+    if (id !== null) setNowyId(id);
   }
 
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
@@ -404,50 +415,48 @@ export function PageTable({
             </tr>
           </thead>
           <tbody>
-            {widoczneWiersze.map((r) =>
-              editing?.rowId === r.id && !wArkuszu ? (
-                <RowEdit
-                  key={r.id}
-                  fields={widocznePola}
-                  values={editing.values}
-                  today={today}
-                  onChange={store.setEditValue}
-                  onSave={() => void store.saveRow()}
-                  onCancel={store.cancelEdit}
-                  registerSecret={store.registerSecret}
-                />
-              ) : (
-                <RowPreview
-                  key={r.id}
-                  row={r}
-                  fields={widocznePola}
-                  today={today}
-                  done={zrobione}
-                  onOpen={() => {
-                    // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
-                    if (editing?.rowId === r.id) return;
-                    setWArkuszu(naTelefonie());
-                    void store.startEdit(r);
-                  }}
-                  onEdit={() => {
-                    setWArkuszu(naTelefonie());
-                    void store.startEdit(r);
-                  }}
-                  onDelete={() => void store.removeRow(r)}
-                />
-              ),
-            )}
-            {editing?.rowId === null && !wArkuszu && (
-              <RowEdit
-                fields={widocznePola}
-                values={editing.values}
-                today={today}
-                onChange={store.setEditValue}
-                onSave={() => void store.saveRow()}
-                onCancel={store.cancelEdit}
-                registerSecret={store.registerSecret}
-              />
-            )}
+            {widoczneWiersze.map((r) => (
+              <tr
+                key={r.id}
+                // Telefon: dotknięcie wiersza otwiera arkusz zamiast zmieniać komórkę (sprawdzamy w chwili dotknięcia)
+                onClickCapture={(e) => {
+                  if (!naTelefonie()) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
+                  if (editing?.rowId === r.id) return;
+                  setWArkuszu(true);
+                  void store.startEdit(r);
+                }}
+                // Na telefonie pola i przyciski komórek nie łapią dotyku: dostaje go wiersz
+                className="group/wiersz max-[799px]:cursor-pointer max-[799px]:[&_a]:pointer-events-none max-[799px]:[&_button]:pointer-events-none max-[799px]:[&_input]:pointer-events-none"
+              >
+                {widocznePola.map((f) => (
+                  <TableCell
+                    key={f.id}
+                    row={r}
+                    field={f}
+                    today={today}
+                    done={zrobione}
+                    autoFocus={f.isTitle && r.id === nowyId}
+                    onSave={(v) => void store.updateCell(r, f, v)}
+                  />
+                ))}
+                {/* Kosz pod „+”: widoczny po najechaniu na wiersz i przy fokusie w wierszu (.row-del) */}
+                <td className="h-11 border-b border-border px-1.5 text-right whitespace-nowrap group-last/wiersz:border-b-0">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    icon
+                    aria-label="Usuń wiersz"
+                    onClick={() => void store.removeRow(r)}
+                    className="text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:hidden"
+                  >
+                    <Trash2 aria-hidden="true" className="size-3.5" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
           <tfoot>
             {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn */}
@@ -475,7 +484,13 @@ export function PageTable({
 
       {/* „+ Nowy” pod ramką (.btng.sm, szary tekst) */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={nowyWiersz} className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={dodawanie}
+          onClick={() => void nowyWiersz()}
+          className="text-muted-foreground"
+        >
           <Plus aria-hidden="true" className="size-4" />
           Nowy
         </Button>

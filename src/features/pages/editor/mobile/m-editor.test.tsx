@@ -249,7 +249,8 @@ describe("MEditor (telefon)", () => {
     window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
     const user = userEvent.setup();
     render(<EditorView data={dane([tabela()])} />);
-    await user.click(screen.getByText("Zadanie"));
+    // Tytuł w tabeli to pole komórki; dotknięcie na telefonie otwiera arkusz
+    await user.click(screen.getByDisplayValue("Zadanie"));
     const arkusz = await screen.findByRole("dialog", { name: "Zadanie" });
     await user.type(within(arkusz).getByRole("textbox", { name: "Nazwa" }), "!");
     await user.click(within(arkusz).getByRole("button", { name: "Zapisz" }));

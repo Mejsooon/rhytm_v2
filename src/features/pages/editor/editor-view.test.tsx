@@ -427,7 +427,7 @@ describe("EditorView", () => {
     const tabela = (i: number) => screen.getAllByRole("table")[i];
     const naglowki = (i: number) => within(tabela(i)).getAllByRole("columnheader").map((h) => h.textContent);
     const tytuly = (i: number) =>
-      within(tabela(i)).getAllByRole("row").slice(1, -1).map((r) => r.querySelector("td")?.textContent);
+      within(tabela(i)).getAllByRole("row").slice(1, -1).map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
     const naglowkiDrugiej = naglowki(1);
 
     // Ukrycie „Autor” w pierwszej tabeli
