@@ -196,4 +196,31 @@ describe("SecretTableCell", () => {
     await waitFor(() => expect(screen.getByLabelText("Hasło")).toHaveAttribute("type", "password"));
     expect(screen.getByLabelText("Hasło")).toHaveAttribute("autocomplete", "new-password");
   });
+
+  it("zamaskowane pole blokuje kopiowanie i wycinanie; odsłonięte nie", async () => {
+    komorka(A);
+    fireEvent.click(screen.getByRole("button", { name: "Hasło: zaszyfrowane" }));
+    const pole = await screen.findByRole("textbox", { name: "Hasło" });
+    expect(fireEvent.copy(pole)).toBe(false);
+    expect(fireEvent.cut(pole)).toBe(false);
+  });
+
+  it("odsłonięte pole pozwala kopiować", async () => {
+    komorka(A, { revealed: true });
+    fireEvent.click(await screen.findByRole("button", { name: "Hasło: zaszyfrowane" }));
+    const pole = await screen.findByRole("textbox", { name: "Hasło" });
+    expect(fireEvent.copy(pole)).toBe(true);
+  });
+
+  it("brak sejfu przy niepustej wartości: „— nieustawiony sejf”", () => {
+    stan("brak");
+    komorka(A);
+    expect(screen.getByText("— nieustawiony sejf")).toBeInTheDocument();
+  });
+
+  it("bez akcji modułu: bez oczka i kopiowania", () => {
+    komorka(A);
+    expect(screen.queryByRole("button", { name: "Pokaż hasło" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kopiuj hasło" })).not.toBeInTheDocument();
+  });
 });

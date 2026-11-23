@@ -183,6 +183,13 @@ export function MRowSheet({
                     const t = e.target.value;
                     setTeksty((m) => ({ ...m, [f.id]: t }));
                   }}
+                  // Zamaskowanego tekstu nie da się skopiować ani wyciąć (jak w zwykłym polu hasła)
+                  onCopy={(e) => {
+                    if (!pokazany) e.preventDefault();
+                  }}
+                  onCut={(e) => {
+                    if (!pokazany) e.preventDefault();
+                  }}
                   className={cn(FIELD, "notranslate h-11 flex-1 tabular-nums", !pokazany && "[-webkit-text-security:disc]")}
                 />
                 {odblokowany && (

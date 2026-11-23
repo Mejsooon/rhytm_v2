@@ -45,6 +45,8 @@ export function TableCell({
   autoFocus = false,
   readOnly = false,
   revealed = false,
+  onToggleReveal,
+  onCopied,
   onSave,
   onFocused,
   onCreateOption,
@@ -62,6 +64,9 @@ export function TableCell({
   readOnly?: boolean;
   // Sekret: odsłonięty oczkiem wiersza (tekst zamiast maski)
   revealed?: boolean;
+  // Sekret w module Hasła: oczko wiersza i informacja o skopiowaniu (komórka sama zapisuje schowek)
+  onToggleReveal?: () => void;
+  onCopied?: () => void;
   onSave: (value: unknown) => void;
   // Wołane po fokusie pola (np. by wyczyścić „kursor w nowym wierszu”)
   onFocused?: () => void;
@@ -125,7 +130,15 @@ export function TableCell({
   if (field.type === "secret") {
     return (
       <td className={cn(TD, "p-0", !readOnly && OBWODKA)}>
-        <SecretTableCell row={row} field={field} readOnly={readOnly} revealed={revealed} onSave={onSave} />
+        <SecretTableCell
+          row={row}
+          field={field}
+          readOnly={readOnly}
+          revealed={revealed}
+          onSave={onSave}
+          onToggleReveal={onToggleReveal}
+          onCopied={onCopied}
+        />
       </td>
     );
   }

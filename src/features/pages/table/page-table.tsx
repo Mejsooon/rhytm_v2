@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Ellipsis, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,7 +15,6 @@ import {
   StatusBadge,
   type IsoDate,
 } from "@/components/controls";
-import { isSecretValue } from "@/features/vault/crypto";
 import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
 
@@ -94,8 +93,6 @@ export function PageTable({
   const odblokowany = vault.status === "odblokowany";
   // Moduł przy zamkniętym sejfie: nic się nie edytuje
   const tylkoOdczyt = modul && !odblokowany;
-  // Kolumna Hasło modułu (dla „Kopiuj hasło”); nazwy kolumn modułu są stałe
-  const poleHasla = modul ? fields.find((f) => f.type === "secret" && f.name === "Hasło") : undefined;
 
   // Wiersze z odsłoniętymi sekretami (oczko); same id, bez tekstu. Blokada sejfu chowa wszystko.
   const [odsloniete, setOdsloniete] = React.useState<string[]>([]);
@@ -115,14 +112,25 @@ export function PageTable({
   React.useEffect(() => {
     if (!odblokowany) schowekRef.current?.wyczysc();
   }, [odblokowany]);
-  // Odmontowanie tabeli z zaplanowanym czyszczeniem: tak samo
+  // Odmontowanie tabeli z zaplanowanym czyszczeniem: tak samo (kopiowanie kończące się po odmontowaniu
+  // widzi `zamontowana` i czyści od razu)
+  const zamontowana = React.useRef(true);
   React.useEffect(() => {
     const plan = schowekRef;
-    return () => plan.current?.wyczysc();
+    zamontowana.current = true;
+    return () => {
+      zamontowana.current = false;
+      plan.current?.wyczysc();
+    };
   }, []);
 
   // Edycja w arkuszu (telefon); na webie komórki edytują się wprost
   const [wArkuszu, setWArkuszu] = React.useState(false);
+  // Moduł: zamknięty sejf kończy edycję w arkuszu (po odblokowaniu arkusz nie wraca sam ze starym szkicem)
+  if (tylkoOdczyt && (wArkuszu || editing !== null)) {
+    setWArkuszu(false);
+    if (editing !== null) store.cancelEdit();
+  }
   // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
   const [dodawanie, setDodawanie] = React.useState(false);
   const [nowyId, setNowyId] = React.useState<string | null>(null);
@@ -308,7 +316,11 @@ export function PageTable({
           type="text"
           value={szkicNazwy}
           onChange={(e) => setSzkicNazwy(e.target.value)}
-          onBlur={() => void store.renameTable(szkicNazwy)}
+          // Moduł przy zamkniętym sejfie: nazwa tylko do odczytu
+          readOnly={tylkoOdczyt}
+          onBlur={() => {
+            if (!tylkoOdczyt) void store.renameTable(szkicNazwy);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -342,7 +354,7 @@ export function PageTable({
             open={menuTabeli}
             onOpenChange={(o) => {
               // Zamknięcie menu (Esc, klik obok) zapisuje szkic nazwy z pola w menu
-              if (!o) void store.renameTable(szkicNazwy);
+              if (!o && !tylkoOdczyt) void store.renameTable(szkicNazwy);
               setMenuTabeli(o);
             }}
             align="end"
@@ -371,11 +383,12 @@ export function PageTable({
                   if (e.key === "Enter") {
                     // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
                     e.preventDefault();
-                    void store.renameTable(szkicNazwy);
+                    if (!tylkoOdczyt) void store.renameTable(szkicNazwy);
                   }
                 }}
                 placeholder="Tabela bez nazwy"
                 aria-label="Nazwa tabeli"
+                readOnly={tylkoOdczyt}
                 className={FIELD}
               />
             </div>
@@ -504,11 +517,10 @@ export function PageTable({
 
       {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
       <div className={RAMKA_PRZEWIJANA}>
-        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” i kosza; w module 112 px na „Akcje”),
-            nie węższa niż ramka */}
+        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” albo „Akcje” z koszem), nie węższa niż ramka */}
         <table
           className="border-collapse text-sm"
-          style={{ tableLayout: "fixed", width: sumaSzerokosci + (modul ? 112 : 56), minWidth: "100%" }}
+          style={{ tableLayout: "fixed", width: sumaSzerokosci + 56, minWidth: "100%" }}
         >
           <colgroup>
             {widocznePola.map((f, i) => (
@@ -583,8 +595,9 @@ export function PageTable({
                       // Kolumna tytułu się nie przesuwa i nic nie wchodzi przed nią (jak w store.moveField)
                       firstColumn={f.isTitle || indeks === 0 || fields[indeks - 1].isTitle}
                       lastColumn={f.isTitle || indeks === fields.length - 1 || fields[indeks + 1].isTitle}
-                      onAddOption={(etykieta) => void store.addOption(f, etykieta)}
-                      onRemoveOption={(id) => void store.removeOption(f, id)}
+                      // Moduł przy zamkniętym sejfie: opcji (Kategorii) nie zmienia się
+                      onAddOption={tylkoOdczyt ? undefined : (etykieta) => void store.addOption(f, etykieta)}
+                      onRemoveOption={tylkoOdczyt ? undefined : (id) => void store.removeOption(f, id)}
                     />
                     {/* Uchwyt szerokości: przeciąganie (pointer events) albo ←/→ co 20 px; min. 80 px */}
                     <div
@@ -716,6 +729,50 @@ export function PageTable({
                     autoFocus={f.isTitle && r.id === nowyId}
                     readOnly={tylkoOdczyt}
                     revealed={odsloniete.includes(r.id)}
+                    // Moduł: oczko w komórkach sekretów odsłania sekrety całego wiersza, kopiowanie planuje czyszczenie
+                    onToggleReveal={
+                      modul
+                        ? () => setOdsloniete((l) => (l.includes(r.id) ? l.filter((id) => id !== r.id) : [...l, r.id]))
+                        : undefined
+                    }
+                    onCopied={
+                      modul
+                        ? () => {
+                            // Czyszczenie schowka: plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko
+                            // z fokusem, więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie
+                            // zastępuje stary plan. Nie sprawdzamy, co jest w schowku (readText wymaga uprawnienia),
+                            // więc czyszczenie nadpisuje go bezwarunkowo.
+                            if (schowekRef.current) clearTimeout(schowekRef.current.timer);
+                            const plan = {
+                              timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
+                              wyczysc: () => {
+                                clearTimeout(plan.timer);
+                                if (schowekRef.current === plan) schowekRef.current = null;
+                                const pusty = () => {
+                                  try {
+                                    void navigator.clipboard.writeText("").catch(() => {});
+                                  } catch {
+                                    // Schowek niedostępny: nic więcej nie zrobimy
+                                  }
+                                };
+                                if (document.hasFocus()) pusty();
+                                else window.addEventListener("focus", pusty, { once: true });
+                              },
+                            };
+                            schowekRef.current = plan;
+                            // Sejf zablokował się albo tabela zniknęła w trakcie zapisu do schowka: czyścimy od razu
+                            if (statusRef.current !== "odblokowany" || !zamontowana.current) {
+                              plan.wyczysc();
+                              return;
+                            }
+                            const serwis =
+                              tytulowe && typeof r.values[tytulowe.id] === "string" ? (r.values[tytulowe.id] as string) : "";
+                            toast(f.name === "Hasło" ? `Skopiowano hasło ${serwis}`.trim() : `Skopiowano: ${f.name}`, {
+                              description: "Schowek wyczyści się za 30 s.",
+                            });
+                          }
+                        : undefined
+                    }
                     onSave={(v) => void store.updateCell(r, f, v)}
                     onCreateOption={(etykieta) => store.createOption(f, etykieta)}
                     onUpdateOption={(id, patch) => void store.updateOption(f, id, patch)}
@@ -724,81 +781,9 @@ export function PageTable({
                     onFocused={f.isTitle && r.id === nowyId ? () => setNowyId(null) : undefined}
                   />
                 ))}
-                {/* Kosz pod „+”: widoczny po najechaniu na wiersz i przy fokusie w wierszu (.row-del).
-                    W module („Akcje”) przed koszem oczko i „Kopiuj hasło”; przy zamkniętym sejfie nic. */}
+                {/* Kosz pod „+” (w module pod „Akcje”): widoczny po najechaniu na wiersz i przy fokusie w wierszu
+                    (.row-del); w module przy zamkniętym sejfie go nie ma */}
                 <td className="h-11 border-b border-border px-1.5 text-right whitespace-nowrap group-last/wiersz:border-b-0">
-                  {modul && odblokowany && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        icon
-                        aria-label={odsloniete.includes(r.id) ? "Ukryj hasło" : "Pokaż hasło"}
-                        aria-pressed={odsloniete.includes(r.id)}
-                        onClick={() =>
-                          setOdsloniete((l) => (l.includes(r.id) ? l.filter((id) => id !== r.id) : [...l, r.id]))
-                        }
-                        className={cn(AKCJA_WIERSZA, "aria-pressed:opacity-100")}
-                      >
-                        {odsloniete.includes(r.id) ? (
-                          <EyeOff aria-hidden="true" className="size-3.5" />
-                        ) : (
-                          <Eye aria-hidden="true" className="size-3.5" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        icon
-                        aria-label="Kopiuj hasło"
-                        disabled={!poleHasla || !isSecretValue(r.values[poleHasla.id])}
-                        onClick={async () => {
-                          const haslo = poleHasla ? r.values[poleHasla.id] : null;
-                          if (!isSecretValue(haslo)) return;
-                          // Odszyfrowanie lokalne; tekst jawny żyje tylko w tej funkcji
-                          const t = await vault.decrypt(haslo);
-                          // Blokada w trakcie odszyfrowywania: nic nie trafia do schowka
-                          if (statusRef.current !== "odblokowany") return;
-                          if (t === null) {
-                            toast.error("Nie udało się skopiować.");
-                            return;
-                          }
-                          try {
-                            await navigator.clipboard.writeText(t);
-                          } catch {
-                            toast.error("Nie udało się skopiować.");
-                            return;
-                          }
-                          const serwis = tytulowe && typeof r.values[tytulowe.id] === "string" ? (r.values[tytulowe.id] as string) : "";
-                          toast(`Skopiowano hasło ${serwis}`.trim(), { description: "Schowek wyczyści się za 30 s." });
-                          // Czyszczenie po 30 s; plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko
-                          // z fokusem, więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie
-                          // zastępuje stary plan.
-                          if (schowekRef.current) clearTimeout(schowekRef.current.timer);
-                          const plan = {
-                            timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
-                            wyczysc: () => {
-                              clearTimeout(plan.timer);
-                              if (schowekRef.current === plan) schowekRef.current = null;
-                              const pusty = () => {
-                                try {
-                                  void navigator.clipboard.writeText("").catch(() => {});
-                                } catch {
-                                  // Schowek niedostępny: nic więcej nie zrobimy
-                                }
-                              };
-                              if (document.hasFocus()) pusty();
-                              else window.addEventListener("focus", pusty, { once: true });
-                            },
-                          };
-                          schowekRef.current = plan;
-                        }}
-                        className={AKCJA_WIERSZA}
-                      >
-                        <Copy aria-hidden="true" className="size-3.5" />
-                      </Button>
-                    </>
-                  )}
                   {!tylkoOdczyt && (
                     <Button
                       variant="ghost"
@@ -867,7 +852,7 @@ export function PageTable({
       )}
 
       <MRowSheet
-        open={editing !== null && wArkuszu && !tylkoOdczyt}
+        open={editing !== null && wArkuszu}
         title={tytulArkusza}
         fields={widocznePola}
         values={editing?.values ?? {}}

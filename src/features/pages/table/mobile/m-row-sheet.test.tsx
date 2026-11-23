@@ -148,4 +148,13 @@ describe("MRowSheet: Sekret", () => {
     act(() => vi.advanceTimersByTime(30_000));
     expect(writeText).toHaveBeenLastCalledWith("");
   });
+
+  it("zamaskowane pole blokuje kopiowanie i wycinanie; po oczku nie", () => {
+    arkusz();
+    const pole = screen.getByRole("textbox", { name: "Hasło" });
+    expect(fireEvent.copy(pole)).toBe(false);
+    expect(fireEvent.cut(pole)).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Pokaż: Hasło" }));
+    expect(fireEvent.copy(pole)).toBe(true);
+  });
 });
