@@ -8,7 +8,8 @@ import { IKONY_POLECANE, parsePageIcon } from "./page-icons";
 // do czasu załadowania (i dla nieznanej nazwy) też tabela.
 export function PageIcon({ icon, size = 16 }: { icon: string; size?: number }) {
   const nazwa = parsePageIcon(icon);
-  const Polecana = nazwa === null ? undefined : IKONY_POLECANE[nazwa];
+  // hasOwn: nazwy z prototypu Object (np. „constructor”) przechodzą regex, ale nie są ikonami
+  const Polecana = nazwa !== null && Object.hasOwn(IKONY_POLECANE, nazwa) ? IKONY_POLECANE[nazwa] : undefined;
 
   return (
     <span

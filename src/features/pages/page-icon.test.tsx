@@ -34,5 +34,14 @@ describe("PageIcon", () => {
 
   it("każda nazwa z ICON_KEYWORDS ma wpis w IKONY_POLECANE", () => {
     for (const [nazwa] of ICON_KEYWORDS) expect(IKONY_POLECANE[nazwa], nazwa).toBeDefined();
+    expect(Object.keys(IKONY_POLECANE).length).toBe(ICON_KEYWORDS.length);
+  });
+
+  it("nazwy z prototypu Object (lucide:constructor, lucide:to-string) renderują się bez błędu", () => {
+    for (const icon of ["lucide:constructor", "lucide:to-string", "lucide:has-own-property"]) {
+      const { container, unmount } = render(<PageIcon icon={icon} size={16} />);
+      expect(container.querySelector("svg")).not.toBeNull();
+      unmount();
+    }
   });
 });
