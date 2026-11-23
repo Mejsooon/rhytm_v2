@@ -36,7 +36,6 @@ function dane(tasks: TaskRow[]): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-11-01T10:00:00Z",
     },
     today: "2026-11-17",
     nowMin: 600,
@@ -49,7 +48,6 @@ function dane(tasks: TaskRow[]): TodayData {
     checks: new Map(),
     sleepLogs: [],
     sportItems: [],
-    counts: { blocks: 0, habits: 0, workouts: 0, sleepLogs: 0 },
   };
 }
 

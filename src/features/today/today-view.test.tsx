@@ -2,14 +2,23 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createBlock, changeOccurrence, createCategory, refresh, toggleTask } =
-  vi.hoisted(() => ({
-    createBlock: vi.fn(),
-    changeOccurrence: vi.fn(),
-    createCategory: vi.fn(),
-    refresh: vi.fn(),
-    toggleTask: vi.fn(),
-  }));
+const {
+  createBlock,
+  changeOccurrence,
+  createCategory,
+  refresh,
+  toggleTask,
+  setHabitCheck,
+  createHabit,
+} = vi.hoisted(() => ({
+  createBlock: vi.fn(),
+  changeOccurrence: vi.fn(),
+  createCategory: vi.fn(),
+  refresh: vi.fn(),
+  toggleTask: vi.fn(),
+  setHabitCheck: vi.fn(),
+  createHabit: vi.fn(),
+}));
 vi.mock("@/features/calendar/actions", () => ({
   createBlock,
   changeOccurrence,
@@ -20,16 +29,22 @@ vi.mock("@/features/tasks/actions", () => ({
   addTask: vi.fn(),
   deleteTask: vi.fn(),
 }));
+vi.mock("@/features/habits/actions", () => ({
+  setHabitCheck,
+  createHabit,
+  updateHabit: vi.fn(),
+}));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, push: vi.fn() }),
 }));
 
+import type { Habit } from "@/features/habits/model";
 import type { TodayData } from "./load-today";
 import { TodayView } from "./today-view";
 
 // Wtorek 17.11.2026, 10:20, tydzień od poniedziałku 16.11
-function dane(counts: TodayData["counts"]): TodayData {
+function dane(): TodayData {
   return {
     profile: {
       timezone: "Europe/Warsaw",
@@ -42,7 +57,6 @@ function dane(counts: TodayData["counts"]): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-11-01T10:00:00Z",
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -80,12 +94,27 @@ function dane(counts: TodayData["counts"]): TodayData {
     checks: new Map(),
     sleepLogs: [],
     sportItems: [],
-    counts,
   };
 }
 
-const wszystko = { blocks: 2, habits: 1, workouts: 1, sleepLogs: 1 };
-const nic = { blocks: 0, habits: 0, workouts: 0, sleepLogs: 0 };
+// Nawyk codzienny od 1.11
+function nawyk(id: string, name: string): Habit {
+  return {
+    id,
+    name,
+    remindAt: null,
+    showOnToday: true,
+    createdAt: "2026-11-01T10:00:00Z",
+    schedules: [
+      {
+        validFrom: "2026-11-01",
+        type: "daily",
+        weekdays: [],
+        timesPerWeek: null,
+      },
+    ],
+  };
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -99,7 +128,7 @@ afterEach(() => {
 
 describe("TodayView", () => {
   it("pełny widok: nagłówek: sam tytuł „Dziś” (bez „Moduły /”) z odznaką „wtorek · 17.11.2026” i „tydz. 47” oraz karta „Ten tydzień”", () => {
-    render(<TodayView data={dane(wszystko)} name="Mejson" />);
+    render(<TodayView data={dane()} name="Mejson" />);
     // Drzewo web (telefon ma własne testy w mobile/m-today.test.tsx)
     const web = within(screen.getByTestId("web-dzis"));
     expect(web.getByRole("heading", { name: "Dziś" })).toBeInTheDocument();
@@ -118,25 +147,85 @@ describe("TodayView", () => {
     expect(
       web.getByRole("heading", { name: "Ten tydzień" }),
     ).toBeInTheDocument();
-    // Kafelek „Zadania” z weekTiles: 1 z 2 zadań tygodnia, dziś 1/1
-    expect(web.getByText("1/2")).toBeInTheDocument();
-    expect(web.getByText("50% · dziś 1/1")).toBeInTheDocument();
+    // Kolejność sekcji jak w S2Today: Ten tydzień, Nawyki na dziś, Plan dnia
+    expect(
+      web.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual(["Ten tydzień", "Nawyki na dziś", "Plan dnia"]);
+    // Ten tydzień: 4 paski (cel km 25 włączony, treningi bez celu)
+    expect(
+      web.getAllByTestId("wiersz-tygodnia").map((w) => w.textContent),
+    ).toEqual([
+      "Treningi0—",
+      "Bieg0 / 25 kmjeszcze 25 km",
+      "Nawyki0 % dni z celem—",
+      "Sen— / 8:00 śr.brak wpisów",
+    ]);
     expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
-  it("nowe konto bez niczego widzi pełny układ z zerami (bez stanu pustego)", () => {
-    const d = dane(nic);
-    d.profile.createdAt = "2026-11-14T10:00:00Z";
+  it("nowe konto bez niczego widzi pełny układ z zerami: kafelek „Utwórz nowy nawyk” i „Dodaj pierwszy blok”", () => {
+    const d = dane();
+    d.tasks = [];
     render(<TodayView data={d} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
+    expect(web.getByRole("heading", { name: "Ten tydzień" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Ten tydzień" }),
+      web.getByRole("button", { name: "Utwórz nowy nawyk" }),
+    ).toBeInTheDocument();
+    expect(web.getByText("24 h wolne")).toBeInTheDocument();
+    expect(
+      web.getByRole("button", { name: "Dodaj pierwszy blok" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
+  it("nawyk na dziś: klik odhacza od razu (kafelek, licznik, pasek „Nawyki”), błąd nie występuje", async () => {
+    setHabitCheck.mockResolvedValue({ ok: true });
+    const d = dane();
+    d.habits = [nawyk("h1", "Czytanie"), nawyk("h2", "Woda 2 l")];
+    render(<TodayView data={d} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
+    expect(web.getByTestId("licznik-nawykow")).toHaveTextContent("0 / 2");
+    const czytanie = web.getByRole("button", { name: /Czytanie/ });
+    expect(czytanie).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(czytanie);
+    expect(setHabitCheck).toHaveBeenCalledWith("h1", "2026-11-17", true);
+    expect(czytanie).toHaveAttribute("aria-pressed", "true");
+    expect(web.getByTestId("licznik-nawykow")).toHaveTextContent("1 / 2");
+    expect(czytanie).toHaveTextContent("1 dzień z rzędu");
+  });
+
+  it("nawyki są, ale żaden nie przypada na dziś: kafelek „Utwórz nowy nawyk” otwiera okno, zamknięcie odświeża", async () => {
+    const d = dane();
+    d.habits = [{ ...nawyk("h1", "Ukryty"), showOnToday: false }];
+    render(<TodayView data={d} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
+    expect(web.queryByTestId("licznik-nawykow")).not.toBeInTheDocument();
+    await userEvent.click(
+      web.getByRole("button", { name: "Utwórz nowy nawyk" }),
+    );
+    const okno = await screen.findByRole("dialog", { name: "Nowy nawyk" });
+    await userEvent.click(within(okno).getByRole("button", { name: "Anuluj" }));
+    expect(
+      screen.queryByRole("dialog", { name: "Nowy nawyk" }),
+    ).not.toBeInTheDocument();
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("„Dodaj pierwszy blok” otwiera to samo okno co „Nowy blok” (najbliższa pełna godzina)", async () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj pierwszy blok" }),
+    );
+    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
+      "11:00",
+    );
+  });
+
   it("„Nowy blok” otwiera okno bloku na dziś, na najbliższą pełną godzinę, a zapis odświeża stronę", async () => {
     createBlock.mockResolvedValue({ ok: true, id: "b9" });
-    render(<TodayView data={dane(wszystko)} name="Mejson" />);
+    render(<TodayView data={dane()} name="Mejson" />);
     await userEvent.click(screen.getByRole("button", { name: "Nowy blok" }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(
@@ -168,7 +257,7 @@ describe("TodayView", () => {
   it("„Nowy blok” bierze bieżącą godzinę, a nie tę z chwili wczytania strony", async () => {
     // Strona wczytana o 10:20, kliknięcie o 14:05
     vi.setSystemTime(new Date("2026-11-17T13:05:00Z"));
-    render(<TodayView data={dane(wszystko)} name="Mejson" />);
+    render(<TodayView data={dane()} name="Mejson" />);
     await userEvent.click(screen.getByRole("button", { name: "Nowy blok" }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
@@ -177,7 +266,7 @@ describe("TodayView", () => {
   });
 
   it("„Nowy blok” w stanie pustym też otwiera okno, Anuluj zamyka bez odświeżania", async () => {
-    render(<TodayView data={dane(nic)} name="Mejson" />);
+    render(<TodayView data={dane()} name="Mejson" />);
     await userEvent.click(
       screen.getAllByRole("button", { name: "Nowy blok" })[0],
     );
@@ -187,9 +276,9 @@ describe("TodayView", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("odhaczenie zadania w dymku bloku zmienia od razu „x/y” na osi i kafelek „Zadania”", async () => {
+  it("odhaczenie zadania w dymku bloku zmienia od razu „x/y” na liście i kafelek „Zadania” telefonu", async () => {
     toggleTask.mockResolvedValue({ ok: true });
-    const d = dane(wszystko);
+    const d = dane();
     d.occurrencesToday = [
       {
         key: "b1:2026-11-17",
@@ -220,9 +309,6 @@ describe("TodayView", () => {
     });
     render(<TodayView data={d} name="Mejson" />);
     const web = within(screen.getByTestId("web-dzis"));
-    // Tydzień: 1 z 3, dziś 1/2; blok 0/1
-    expect(web.getByText("1/3")).toBeInTheDocument();
-    expect(web.getByText("33% · dziś 1/2")).toBeInTheDocument();
     const blok = web.getByRole("button", { name: /rhytm — kod/ });
     expect(within(blok).getByText("0/1")).toBeInTheDocument();
 
@@ -232,8 +318,6 @@ describe("TodayView", () => {
     });
     await userEvent.click(within(dymek).getByLabelText("Testy RLS"));
     expect(within(blok).getByText("1/1")).toBeInTheDocument();
-    expect(web.getByText("2/3")).toBeInTheDocument();
-    expect(web.getByText("67% · dziś 2/2")).toBeInTheDocument();
     // Telefon liczy z tych samych danych: kafelek „Zadania” dziś 2/2
     expect(
       within(screen.getByTestId("m-dzis")).getByRole("link", {
@@ -246,14 +330,15 @@ describe("TodayView", () => {
     vi.useFakeTimers();
     // 10:20:45 — następna pełna minuta za 15 s
     vi.setSystemTime(new Date("2026-11-17T09:20:45Z"));
-    const d = dane(wszystko);
+    const d = dane();
+    // Blok 10:00–10:22: „Teraz” na webie znika o 10:22
     d.occurrencesToday = [
       {
         key: "b1:2026-11-17",
         blockId: "b1",
         date: "2026-11-17",
         startMin: 10 * 60,
-        durationMin: 120,
+        durationMin: 22,
         title: "rhytm — kod",
         categoryId: null,
         note: null,
@@ -266,22 +351,23 @@ describe("TodayView", () => {
     render(<TodayView data={d} name="Mejson" />);
     const web = within(screen.getByTestId("web-dzis"));
     const tel = within(screen.getByTestId("m-dzis"));
-    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
-    expect(tel.getByText("10:00–12:00 · zostało 100 min")).toBeInTheDocument();
+    const blok = () => web.getByRole("button", { name: /rhytm — kod/ });
+    expect(within(blok()).getByText("Teraz")).toBeInTheDocument();
+    expect(tel.getByText("10:00–10:22 · zostało 2 min")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(14_999);
     });
-    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
+    expect(tel.getByText("10:00–10:22 · zostało 2 min")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:21");
-    expect(tel.getByText("10:00–12:00 · zostało 99 min")).toBeInTheDocument();
+    expect(tel.getByText("10:00–10:22 · zostało 1 min")).toBeInTheDocument();
+    expect(within(blok()).getByText("Teraz")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(60_000);
     });
-    expect(web.getByTestId("etykieta-teraz")).toHaveTextContent("10:22");
+    expect(within(blok()).queryByText("Teraz")).not.toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
 
     // Przeskok za północ (Warszawa): następny tik widzi inny dzień → jedno odświeżenie
@@ -293,7 +379,7 @@ describe("TodayView", () => {
   });
 
   it("pływający „+” otwiera arkusz „Szybko dodaj”, a „Zamknij” go zamyka", async () => {
-    render(<TodayView data={dane(wszystko)} name="Mejson" />);
+    render(<TodayView data={dane()} name="Mejson" />);
     await userEvent.click(screen.getByRole("button", { name: "Szybko dodaj" }));
     const arkusz = await screen.findByRole("dialog", { name: "Szybko dodaj" });
     // Domyślny rodzaj to „Blok”; chipy liczą się od dziś i teraz z profilu (wtorek 10:20 → Dziś = 11:00, Pn 23.11)

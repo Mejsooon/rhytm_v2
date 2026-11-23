@@ -219,8 +219,9 @@ test.describe("onboarding", () => {
 
     await page.getByRole("button", { name: "Przejdź do Dziś" }).click();
     await expect(page).toHaveURL(/\/dzis$/);
+    // Dziś bez stanu pustego: od razu pełny układ (web i telefon mają „Plan dnia”)
     await expect(
-      widoczny(page.getByText("Witaj w rhytm, Mejson")),
+      widoczny(page.getByRole("heading", { name: "Plan dnia" })),
     ).toBeVisible();
 
     // Po ukończeniu kreator nie jest już dostępny

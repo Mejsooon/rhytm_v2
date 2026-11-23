@@ -45,7 +45,6 @@ export type TodayData = {
     weeklyKmGoal: number;
     workoutsGoalOn: boolean;
     weeklyWorkoutsGoal: number;
-    createdAt: string;
   };
   today: IsoDate;
   nowMin: number;
@@ -62,13 +61,6 @@ export type TodayData = {
   sleepLogs: SleepLog[];
   // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
   sportItems: SportItem[];
-  // Liczba rekordów z całej historii (do stanu pustego „pierwsze kroki”)
-  counts: {
-    blocks: number;
-    habits: number;
-    workouts: number;
-    sleepLogs: number;
-  };
 };
 
 export async function loadToday(
@@ -80,7 +72,7 @@ export async function loadToday(
   const { data: p, error: blad } = await supabase
     .from("profiles")
     .select(
-      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, created_at",
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -99,7 +91,6 @@ export async function loadToday(
     weeklyKmGoal: p?.weekly_km_goal ?? DOMYSLNY_CEL_KM,
     workoutsGoalOn: p?.workouts_goal_on ?? false,
     weeklyWorkoutsGoal: p?.weekly_workouts_goal ?? DOMYSLNY_CEL_TRENINGOW,
-    createdAt: p?.created_at ?? now.toISOString(),
   };
 
   const today = todayIso(timezone, now);
@@ -107,18 +98,12 @@ export async function loadToday(
   const weekStartDate = weekStart(today, startTygodnia);
   const koniecTygodnia = addDays(weekStartDate, 6);
 
-  const naLiczbe = { count: "exact" as const, head: true };
-
   const [
     kalendarz,
     nawykiRes,
     wersjeRes,
     odhaczenia,
     senRes,
-    liczbaBlokowRes,
-    liczbaNawykowRes,
-    liczbaTreningowRes,
-    liczbaSnuRes,
   ] = await Promise.all([
     // Bloki, wyjątki, zadania tygodnia, kategorie i treningi tygodnia (wszystkie)
     loadCalendar(
@@ -153,25 +138,10 @@ export async function loadToday(
       .gte("date", weekStartDate)
       .lte("date", koniecTygodnia)
       .order("date", { ascending: true }),
-    supabase.from("blocks").select("id", naLiczbe).eq("user_id", userId),
-    supabase.from("habits").select("id", naLiczbe).eq("user_id", userId),
-    supabase
-      .from("sport_sessions")
-      .select("id", naLiczbe)
-      .eq("user_id", userId),
-    supabase.from("sleep_logs").select("date", naLiczbe).eq("user_id", userId),
   ]);
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
-  for (const wynik of [
-    nawykiRes,
-    wersjeRes,
-    senRes,
-    liczbaBlokowRes,
-    liczbaNawykowRes,
-    liczbaTreningowRes,
-    liczbaSnuRes,
-  ]) {
+  for (const wynik of [nawykiRes, wersjeRes, senRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
@@ -207,11 +177,5 @@ export async function loadToday(
     checks,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
     sportItems: kalendarz.sport,
-    counts: {
-      blocks: liczbaBlokowRes.count ?? 0,
-      habits: liczbaNawykowRes.count ?? 0,
-      workouts: liczbaTreningowRes.count ?? 0,
-      sleepLogs: liczbaSnuRes.count ?? 0,
-    },
   };
 }

@@ -1,5 +1,4 @@
 import {
-  fireEvent,
   render,
   screen,
   waitFor,
@@ -108,7 +107,6 @@ function dane(nadpisz: Partial<TodayData> = {}): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-11-01T10:00:00Z",
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -139,10 +137,11 @@ function dane(nadpisz: Partial<TodayData> = {}): TodayData {
     checks: new Map(),
     sleepLogs: [],
     sportItems: [biegPlan],
-    counts: { blocks: 2, habits: 1, workouts: 1, sleepLogs: 1 },
     ...nadpisz,
   };
 }
+
+const onNewBlock = vi.fn();
 
 // DayPlan z prawdziwym magazynem Dziś (jak w TodayView)
 function Plan({ d }: { d: TodayData }) {
@@ -152,6 +151,7 @@ function Plan({ d }: { d: TodayData }) {
       data={data}
       nowMin={data.nowMin}
       applyOptimistic={applyOptimistic}
+      onNewBlock={onNewBlock}
     />
   );
 }
@@ -166,119 +166,117 @@ afterEach(() => {
 });
 
 describe("DayPlan", () => {
-  it("nagłówek „Plan dnia” z liczbą wpisów i podpowiedzią", () => {
+  it("nagłówek „Plan dnia” z zakresem doby i liczbą wpisów (trening się liczy)", () => {
     render(<Plan d={dane()} />);
     expect(
       screen.getByRole("heading", { name: "Plan dnia" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "3 bloki · kliknij blok, żeby zobaczyć zadania, albo puste miejsce, żeby dodać",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("00:00–24:00 · 3 bloki")).toBeInTheDocument();
   });
 
-  it("blok ma ramkę w kolorze kategorii i bez paska", async () => {
+  it("lista: przerwy przed, między i po wpisach, nakładki bez przerwy, na końcu wiersz 23:00", () => {
+    render(<Plan d={dane()} />);
+    const lista = screen.getByTestId("plan-dnia-lista");
+    const wiersze = Array.from(lista.children).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "00:008 h wolne",
+      expect.stringMatching(/^08:00Matematyka/),
+      // Matematyka 08:00–09:30 i rhytm — kod 10:00–12:30
+      "09:3030 min wolne",
+      expect.stringMatching(/^10:00rhytm — kod/),
+      "12:303 h 30 min wolne",
+      expect.stringMatching(/^16:00Bieg 10 km/),
+      "17:007 h wolne",
+      "23:00",
+    ]);
+    // ≥ 3 h: wysoka przerwa, krótsza — niska
+    const przerwy = within(lista).getAllByTestId("przerwa");
+    expect(przerwy[0]).toHaveClass("min-h-[84px]");
+    expect(przerwy[1]).toHaveClass("min-h-[30px]");
+    // Bez siatki z osią, czerwonej linii i przewijania
+    expect(screen.queryByTestId("os-dnia")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("linia-teraz")).not.toBeInTheDocument();
+  });
+
+  it("blok: tło i ramka w kolorze kategorii, „HH:MM–HH:MM · Kategoria”, odznaka „x/y”", () => {
     const d = dane();
     d.categories = [{ ...d.categories[0], color: "#3b82f6" }];
     render(<Plan d={d} />);
     const blok = screen.getByRole("button", { name: /Matematyka/ });
-    // Tło kolor+12, ramka 1 px kolor+4d ze wszystkich stron (bez paska 3 px po lewej), bez cienia inset
-    expect(blok.style.background).toMatch(/#3b82f612|rgba\(59, 130, 246, 0\.07\d*\)/);
-    expect(blok.style.border).toMatch(/1px solid (#3b82f64d|rgba\(59, 130, 246, 0\.3\d*\))/);
-    expect(blok.style.borderLeftWidth).toBe("1px");
-    expect(blok.style.boxShadow).not.toContain("inset");
-    expect(blok).toHaveClass("rounded-md", "px-2.5", "py-1.5", "text-sm");
-    // Zaznaczony: pierścień 2 px biały + 4 px kolor+66
-    await userEvent.click(blok);
-    expect(
-      screen.getByRole("button", { name: /Matematyka/, pressed: true }).style
-        .boxShadow,
-    ).toMatch(
-      /(0 0 0 2px #fff|rgb\(255, 255, 255\) 0px 0px 0px 2px), (0 0 0 4px #3b82f666|rgba\(59, 130, 246, 0\.4\d*\) 0px 0px 0px 4px)/,
+    // Tło kolor+12, ramka 1 px kolor+4d (jak w kalendarzu)
+    expect(blok.style.background).toMatch(
+      /#3b82f612|rgba\(59, 130, 246, 0\.07\d*\)/,
     );
+    expect(blok.style.border).toMatch(
+      /1px solid (#3b82f64d|rgba\(59, 130, 246, 0\.3\d*\))/,
+    );
+    expect(blok).toHaveClass("rounded-[8px]", "px-2.5", "py-1.5", "text-[13px]");
+    expect(blok).toHaveTextContent("08:00–09:30 · Projekty");
+    // Matematyka nie ma zadań → bez odznaki; rhytm — kod ma 1 z 3
+    expect(blok.textContent).not.toMatch(/\d\/\d/);
+    expect(
+      within(screen.getByRole("button", { name: /rhytm — kod/ })).getByText(
+        "1/3",
+      ),
+    ).toBeInTheDocument();
   });
 
-  it("zaznaczony blok ma fokus niezależny od pierścienia zaznaczenia", async () => {
+  it("trwający blok ma „Teraz” i pierścień, inne nie", () => {
+    render(<Plan d={dane()} />);
+    const trwajacy = screen.getByRole("button", { name: /rhytm — kod/ });
+    expect(within(trwajacy).getByText("Teraz")).toBeInTheDocument();
+    expect(trwajacy.style.boxShadow).toMatch(/3px/);
+    const inny = screen.getByRole("button", { name: /Matematyka/ });
+    expect(within(inny).queryByText("Teraz")).not.toBeInTheDocument();
+    expect(inny.style.boxShadow).toBe("");
+  });
+
+  it("bez trwającego bloku nie ma „Teraz”", () => {
+    render(<Plan d={dane({ nowMin: 7 * 60 })} />);
+    expect(screen.queryByText("Teraz")).not.toBeInTheDocument();
+  });
+
+  it("zaznaczony blok ma pierścień i fokus jako outline z odstępem", async () => {
     render(<Plan d={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: /Matematyka/ }));
     const blok = screen.getByRole("button", {
       name: /Matematyka/,
       pressed: true,
     });
-    // Pierścień zaznaczenia siedzi w inline boxShadow, więc fokus to outline z odstępem
-    expect(blok.style.boxShadow).toMatch(
-      /0 0 0 4px #15803d66|0px 0px 0px 4px/,
-    );
+    expect(blok.style.boxShadow).toMatch(/0 0 0 4px #15803d66|0px 0px 0px 4px/);
     expect(blok).toHaveClass(
       "focus-visible:outline-solid",
       "focus-visible:outline-2",
       "focus-visible:outline-offset-2",
       "focus-visible:outline-ring",
     );
-    expect(blok.className).not.toContain("shadow-focus");
-    // Zaznaczony leży nad sąsiadami, fokus jeszcze wyżej; linia „teraz” (z-3) nad obydwoma
-    expect(blok).toHaveClass("z-[1]", "focus-visible:z-[2]");
-    expect(screen.getByTestId("linia-teraz")).toHaveClass("z-[3]");
   });
 
-  it("oś przewija się na trwający blok, „Teraz” jest na nim, czerwona linia na 10:20", () => {
-    render(<Plan d={dane()} />);
-    // 48 px na godzinę: 10:00 → 480 px
-    expect(screen.getByTestId("os-dnia").scrollTop).toBe(480);
-    const trwajacy = screen.getByRole("button", { name: /rhytm — kod/ });
-    expect(within(trwajacy).getByText("Teraz")).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("button", { name: /Matematyka/ })).queryByText(
-        "Teraz",
-      ),
-    ).not.toBeInTheDocument();
-    expect(within(trwajacy).getByText("1/3")).toBeInTheDocument();
-    expect(screen.getByTestId("linia-teraz")).toHaveStyle({
-      top: `${(620 / 60) * 48}px`,
-    });
-    expect(screen.getByTestId("etykieta-teraz")).toHaveTextContent("10:20");
-    // Etykieta godziny ma tło #dc2626 (destructive-strong), linia zostaje destructive
-    expect(screen.getByTestId("etykieta-teraz")).toHaveClass("bg-destructive-strong");
-    expect(screen.getByTestId("linia-teraz")).toHaveClass("border-destructive");
-  });
-
-  it("bez trwającego bloku oś przewija się na 06:00", () => {
-    render(<Plan d={dane({ nowMin: 7 * 60 })} />);
-    expect(screen.getByTestId("os-dnia").scrollTop).toBe(6 * 48);
-    expect(screen.queryByText("Teraz")).not.toBeInTheDocument();
-  });
-
-  it("blok 60-minutowy jest w jednej linii: tytuł i „16:00–17:00” w tym samym wierszu, bez drugiej linii", () => {
-    render(<Plan d={dane()} />);
-    const link = screen.getByRole("link", { name: /Bieg 10 km/ });
-    // Jedna linia: jedyny potomek to wiersz z tytułem i godzinami
-    expect(link.children).toHaveLength(1);
-    const wiersz = link.children[0] as HTMLElement;
-    expect(within(wiersz).getByText("Bieg 10 km")).toBeInTheDocument();
-    expect(within(wiersz).getByText("16:00–17:00")).toBeInTheDocument();
-    expect(link).not.toHaveTextContent("Sport");
-    expect(link).toHaveClass("justify-center", "py-0");
-  });
-
-  it("trening „plan” jest linkiem do podglądu na /sport", () => {
+  it("trening „plan” jest linkiem do podglądu na /sport z „· Sport”", () => {
     render(<Plan d={dane()} />);
     const link = screen.getByRole("link", { name: /Bieg 10 km/ });
     expect(link).toHaveAttribute(
       "href",
       "/sport?miesiac=2026-11&wybrany=t:tp1:2026-11-17",
     );
+    expect(link).toHaveTextContent("16:00–17:00 · Sport");
     expect(within(link).getByText("plan")).toBeInTheDocument();
   });
 
-  it("klik w blok otwiera dymek; odhaczenie zadania zmienia „x/y” na osi od razu", async () => {
+  it("wykonany trening ma odznakę „zrobione”", () => {
+    render(<Plan d={dane({ sportItems: [{ ...biegPlan, planned: false }] })} />);
+    const link = screen.getByRole("link", { name: /Bieg 10 km/ });
+    expect(within(link).getByText("zrobione")).toBeInTheDocument();
+  });
+
+  it("klik w blok otwiera dymek; odhaczenie zadania zmienia „x/y” na liście od razu", async () => {
     toggleTask.mockResolvedValue({ ok: true });
     render(<Plan d={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: /rhytm — kod/ }));
     const dymek = await screen.findByRole("dialog", {
       name: "Szczegóły bloku",
     });
-    // Blok zajmuje całą szerokość osi, więc dymek otwiera się pod blokiem (nie w prawo, poza stronę)
+    // Blok zajmuje całą szerokość listy, więc dymek otwiera się pod blokiem (nie w prawo, poza stronę)
     expect(dymek).toHaveAttribute("data-side", "bottom");
     await userEvent.click(within(dymek).getByLabelText("Zadanie t2"));
     expect(toggleTask).toHaveBeenCalledWith({ id: "t2", done: true });
@@ -381,54 +379,13 @@ describe("DayPlan", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("przeciągnięcie po pustej osi pokazuje zakres i otwiera „Nowy blok” na ten czas (jak w kalendarzu)", async () => {
-    render(<Plan d={dane()} />);
-    // Przewijana oś ma w jsdom zerowy prostokąt (puszczenie byłoby „poza siatką”)
-    const os = screen.getByTestId("os-dnia");
-    os.getBoundingClientRect = () => new DOMRect(0, 0, 800, 2000);
-    const siatka = screen.getByTestId("siatka-dnia");
-    // 48 px na godzinę: 432 px = 9:00, 624 px = 13:00
-    fireEvent.pointerDown(siatka, {
-      clientX: 300,
-      clientY: 432,
-      button: 0,
-      pointerId: 1,
-    });
-    fireEvent.pointerMove(siatka, {
-      buttons: 1,
-      clientX: 300,
-      clientY: 624,
-      pointerId: 1,
-    });
-    expect(screen.getByTestId("podglad-przeciagania")).toHaveTextContent(
-      "Nowy blok · 09:00–13:00",
-    );
-    fireEvent.pointerUp(siatka, { clientX: 300, clientY: 624, pointerId: 1 });
-    // Klik, który przeglądarka wysyła zaraz po przeciągnięciu, nie otwiera „Nowego wpisu”
-    fireEvent.click(siatka, { clientX: 300, clientY: 624 });
-    expect(
-      screen.queryByTestId("podglad-przeciagania"),
-    ).not.toBeInTheDocument();
-    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
-    expect(within(okno).getByText(/09:00/)).toBeInTheDocument();
-    expect(within(okno).getByText(/13:00/)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("dialog", { name: "Nowy wpis" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("klik w pusty slot (co 30 min) otwiera „Nowy wpis”; „Blok” otwiera okno na tę godzinę, zapis odświeża plan", async () => {
+  it("klik w przerwę otwiera „Nowy blok” od pełnej godziny w górę, 60 min; zapis odświeża plan", async () => {
     createBlock.mockResolvedValue({ ok: true, id: "b9" });
     render(<Plan d={dane()} />);
-    // 24 px na półgodzinę: 640 px → 26. półgodzina = 13:00
-    fireEvent.click(screen.getByTestId("siatka-dnia"), { clientY: 640 });
-    const dymek = await screen.findByRole("dialog", { name: "Nowy wpis" });
-    expect(within(dymek).getByText("wt 17.11 · 13:00")).toBeInTheDocument();
-    expect(within(dymek).getByRole("link", { name: /Bieg/ })).toHaveAttribute(
-      "href",
-      "/sport?nowy=bieg&data=2026-11-17&godzina=13:00",
+    // Przerwa 12:30–16:00 → od 13:00
+    await userEvent.click(
+      screen.getByRole("button", { name: "3 h 30 min wolne" }),
     );
-    await userEvent.click(within(dymek).getByRole("button", { name: /Blok/ }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
       "13:00",
@@ -436,12 +393,13 @@ describe("DayPlan", () => {
     expect(within(okno).getByRole("button", { name: "Do" })).toHaveTextContent(
       "14:00",
     );
-    await userEvent.type(within(okno).getByLabelText("Tytuł"), "Algebra");
+    await userEvent.type(within(okno).getByLabelText("Tytuł"), "Lunch");
     await userEvent.click(
       within(okno).getByRole("button", { name: "Zapisz blok" }),
     );
     expect(createBlock).toHaveBeenCalledWith(
       expect.objectContaining({
+        title: "Lunch",
         date: "2026-11-17",
         startMin: 13 * 60,
         durationMin: 60,
@@ -451,15 +409,34 @@ describe("DayPlan", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("ponowny klik w ten sam slot zamyka „Nowy wpis”", async () => {
-    render(<Plan d={dane()} />);
-    fireEvent.click(screen.getByTestId("siatka-dnia"), { clientY: 640 });
-    await screen.findByRole("dialog", { name: "Nowy wpis" });
-    fireEvent.click(screen.getByTestId("siatka-dnia"), { clientY: 640 });
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("dialog", { name: "Nowy wpis" }),
-      ).not.toBeInTheDocument(),
+  it("przerwa od 23:30 otwiera blok najpóźniej o 23:00", async () => {
+    render(
+      <Plan
+        d={dane({
+          occurrencesToday: [wystapienie("b1", 0, 23 * 60 + 30, "Długi")],
+          sportItems: [],
+        })}
+      />,
     );
+    await userEvent.click(screen.getByRole("button", { name: "30 min wolne" }));
+    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
+      "23:00",
+    );
+  });
+
+  it("pusty dzień: „24 h wolne”, zachęta i „Dodaj pierwszy blok”, potem 23:00", async () => {
+    render(<Plan d={dane({ occurrencesToday: [], sportItems: [] })} />);
+    expect(screen.getByText("00:00–24:00 · 0 bloków")).toBeInTheDocument();
+    const lista = screen.getByTestId("plan-dnia-lista");
+    expect(Array.from(lista.children).map((w) => w.textContent)).toEqual([
+      "00:0024 h wolne",
+      "Nie masz jeszcze bloków na dziś.Dodaj pierwszy blok",
+      "23:00",
+    ]);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj pierwszy blok" }),
+    );
+    expect(onNewBlock).toHaveBeenCalled();
   });
 });

@@ -50,7 +50,7 @@ test.describe("powłoka aplikacji", () => {
 
     // Powłoka dociąga się strumieniem (Suspense) — dopiero po treści modułu <main> jest ostateczny.
     // Wcześniejszy wstrzyknięty element zniknąłby przy podmianie, a strona nie dałaby się przewinąć.
-    const tresc = page.getByText("Plan dnia jest pusty");
+    const tresc = page.getByText("Nie masz jeszcze bloków na dziś.");
     await expect(tresc).toBeVisible();
     const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
     await expect(sidebar).toBeVisible();
@@ -95,7 +95,7 @@ test.describe("powłoka aplikacji", () => {
 
     // Stan siedzi w ciasteczku czytanym na serwerze — po odświeżeniu pasek dalej schowany
     await page.reload();
-    await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
+    await expect(page.getByText("Nie masz jeszcze bloków na dziś.")).toBeVisible();
     await expect(nawigacja).toBeHidden();
 
     await page.keyboard.press("Control+\\");

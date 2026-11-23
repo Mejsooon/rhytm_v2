@@ -93,7 +93,6 @@ function dane(): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-11-01T10:00:00Z",
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -206,7 +205,6 @@ function dane(): TodayData {
         durationS: null,
       }),
     ],
-    counts: { blocks: 3, habits: 5, workouts: 2, sleepLogs: 1 },
   };
 }
 

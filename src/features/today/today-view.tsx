@@ -1,7 +1,7 @@
 "use client";
 
-// Ekran Dziś (Today.dc.html web).
-// Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
+// Ekran Dziś (S2Today web).
+// Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, „Nawyki na dziś” i plan dnia.
 // Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,11 +17,13 @@ import {
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { DNI_PELNE } from "@/features/calendar/mobile/pl";
 import { weekdayOf } from "@/features/calendar/view-range";
+import { HabitDialog } from "@/features/habits/habit-dialog";
 import { DayPlan } from "./day-plan";
 import type { TodayData } from "./load-today";
 import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
-import { isoWeekNumber, weekTiles } from "./model";
+import { isoWeekNumber, todayHabits, weekBars } from "./model";
+import { TodayHabits } from "./today-habits";
 import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
 
@@ -36,8 +38,8 @@ export function TodayView({
   avatarUrl?: string | null;
 }) {
   const router = useRouter();
-  // Dane z optymistycznymi zmianami: plan dnia, „Zadania na dziś” i karta tygodnia
-  // liczą się z tych samych zadań, więc odhaczenie zmienia je naraz
+  // Dane z optymistycznymi zmianami: plan dnia („x/y”) liczy się z tych samych zadań co dymek
+  // bloku, a nawyki i karta tygodnia z tych samych odhaczeń, więc klik zmienia je naraz
   const { data, applyOptimistic, toggleHabit } = useTodayStore(daneSerwera);
   const { profile, today } = data;
   const { timezone } = profile;
@@ -73,6 +75,8 @@ export function TodayView({
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
   // Otwarty arkusz szybkiego dodawania MQuickAdd (pływający „+” na telefonie)
   const [szybkieDodawanie, setSzybkieDodawanie] = useState(false);
+  // Otwarte okno nowego nawyku (kafelek „Utwórz nowy nawyk”)
+  const [nowyNawyk, setNowyNawyk] = useState(false);
 
   // „Nowy blok”: dziś, najbliższa pełna godzina (najpóźniej 23:00), 60 min — jak w kalendarzu.
   // Dzień i godzina liczone w chwili kliknięcia, w strefie profilu (strona mogła być otwarta długo).
@@ -118,7 +122,7 @@ export function TodayView({
   const dzien = weekdayOf(today);
   const [rok, miesiac, dzienMiesiaca] = today.split("-");
 
-  const kafelki = weekTiles({
+  const paski = weekBars({
     today,
     nowMin: teraz,
     weekStartDate: data.weekStartDate,
@@ -187,24 +191,44 @@ export function TodayView({
         />
 
         <div className="box-border flex w-full flex-col gap-6 p-6">
-          {/* 1. Statystyki tygodnia */}
-          <WeekCard
-            tiles={kafelki}
-            weekStartDate={data.weekStartDate}
-            today={today}
-            clock={profile.clock}
+          {/* 1. Cele tygodnia (4 paski) */}
+          <WeekCard bars={paski} weekStartDate={data.weekStartDate} />
+
+          {/* 2. Nawyki na dziś (kafelki z passą) */}
+          <TodayHabits
+            habits={todayHabits({
+              today,
+              weekStart: profile.weekStart,
+              habits: data.habits,
+              checks: data.checks,
+            })}
+            onToggle={(habitId) => void toggleHabit(habitId, today)}
+            onCreate={() => setNowyNawyk(true)}
           />
 
-          {/* 2. Plan dnia (oś 00–24) */}
+          {/* 3. Plan dnia (lista 00–24 z przerwami) */}
           <DayPlan
             data={data}
             nowMin={teraz}
             applyOptimistic={applyOptimistic}
+            onNewBlock={otworzNowyBlok}
           />
         </div>
       </div>
 
       {oknoBloku}
+      {/* Okno nowego nawyku z modułu Nawyki; akcja odświeża /dzis, a refresh dociąga dane od razu */}
+      <HabitDialog
+        open={nowyNawyk}
+        onOpenChange={(otwarte) => {
+          if (otwarte) return;
+          setNowyNawyk(false);
+          router.refresh();
+        }}
+        weekStart={profile.weekStart}
+        clock={profile.clock}
+        today={today}
+      />
     </>
   );
 }
