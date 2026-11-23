@@ -822,6 +822,59 @@ describe("PageTable", () => {
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 250 } });
     });
 
+    it("pointercancel i lostpointercapture czyszczą stan: cancel bez zapisu, lost z zapisem", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kol = kolumny[b.fields.indexOf(autor)];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540 });
+      fireEvent.pointerCancel(uchwyt, { pointerId: 1 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700 });
+      expect(kol.style.width).toBe("220px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      fireEvent.pointerDown(uchwyt, { pointerId: 2, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 3, clientX: 900 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 540 });
+      fireEvent.lostPointerCapture(uchwyt, { pointerId: 2 });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 260 } });
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 900 });
+      expect(kol.style.width).toBe("260px");
+    });
+
+    it("klik bez ruchu nie zapisuje i daje uchwytowi fokus", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerUp(uchwyt, { pointerId: 1, clientX: 500 });
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(uchwyt).toHaveFocus();
+    });
+
+    it("dwie strzałki z rzędu dają 240 i 260, a zapis zachowuje inne wpisy mapy", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 1));
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const z: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [tytul.id]: 350.5 } } },
+      };
+      render(<PageTable block={z} today={TODAY} />);
+      screen.getByRole("separator", { name: /Autor/ }).focus();
+      await user.keyboard("{ArrowRight}{ArrowRight}");
+      expect(actions.saveTableSettings).toHaveBeenNthCalledWith(1, b.id, { column_widths: { [tytul.id]: 351, [autor.id]: 240 } });
+      expect(actions.saveTableSettings).toHaveBeenNthCalledWith(2, b.id, { column_widths: { [tytul.id]: 351, [autor.id]: 260 } });
+    });
+
     it("ramka ma przewijanie poziome", () => {
       const b = blok("books", BOOKS.slice(0, 1));
       const { container } = render(<PageTable block={b} today={TODAY} />);

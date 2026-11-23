@@ -94,7 +94,7 @@ export function PageTable({
   // Przeciąganie uchwytu kolumny: w trakcie szerokość jest tylko lokalna (stan do rysowania, ref do zapisu),
   // zapis idzie raz po puszczeniu
   const [przeciaganie, setPrzeciaganie] = React.useState<{ id: string; szer: number } | null>(null);
-  const start = React.useRef<{ x: number; szer: number; aktualna: number } | null>(null);
+  const start = React.useRef<{ pointerId: number; x: number; szer: number; aktualna: number } | null>(null);
 
   // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
   const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
@@ -128,16 +128,23 @@ export function PageTable({
   const szerokosci = widocznePola.map((f) => {
     if (przeciaganie?.id === f.id) return przeciaganie.szer;
     const zapisana = settings.column_widths[f.id];
-    if (typeof zapisana === "number" && Number.isFinite(zapisana) && zapisana >= MIN_SZEROKOSC_KOLUMNY) return zapisana;
+    // Wartość z bazy: całkowita i przycięta do 4000, żeby zapis przez strzałki nigdy nie zwężał ani nie łamał schematu
+    if (typeof zapisana === "number" && Number.isFinite(zapisana) && zapisana >= MIN_SZEROKOSC_KOLUMNY) {
+      return Math.min(4000, Math.round(zapisana));
+    }
     return f.isTitle ? SZEROKOSC_TYTULU : DOMYSLNA_SZEROKOSC[f.type];
   });
   const sumaSzerokosci = szerokosci.reduce((a, b) => a + b, 0);
+
+  // Kolumna ukryta albo usunięta w trakcie przeciągania: uchwyt znika bez pointerup, więc zerujemy szkic
+  // (wzorzec jak przy nazwie tabeli; ref czyści kolejny pointerdown)
+  if (przeciaganie && !widocznePola.some((f) => f.id === przeciaganie.id)) setPrzeciaganie(null);
 
   // Zapis szerokości jednej kolumny: cała mapa column_widths (patch ustawień scala się płytko), bez śmieci z bazy
   function zapiszSzerokosc(id: string, szer: number) {
     const mapa: Record<string, number> = {};
     for (const [k, v] of Object.entries(settings.column_widths)) {
-      if (Number.isInteger(v) && v >= MIN_SZEROKOSC_KOLUMNY && v <= 4000) mapa[k] = v;
+      if (typeof v === "number" && Number.isFinite(v) && v >= MIN_SZEROKOSC_KOLUMNY) mapa[k] = Math.min(4000, Math.round(v));
     }
     mapa[id] = szer;
     void store.patchSettings({ column_widths: mapa });
@@ -468,12 +475,19 @@ export function PageTable({
                       onPointerDown={(e) => {
                         if (e.button !== 0) return;
                         e.preventDefault();
+                        // preventDefault wyłącza domyślny fokus, a strzałki mają działać zaraz po kliknięciu
+                        e.currentTarget.focus();
                         e.currentTarget.setPointerCapture(e.pointerId);
-                        start.current = { x: e.clientX, szer: szerokosci[kolumna], aktualna: szerokosci[kolumna] };
+                        start.current = {
+                          pointerId: e.pointerId,
+                          x: e.clientX,
+                          szer: szerokosci[kolumna],
+                          aktualna: szerokosci[kolumna],
+                        };
                         setPrzeciaganie({ id: f.id, szer: szerokosci[kolumna] });
                       }}
                       onPointerMove={(e) => {
-                        if (!start.current) return;
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
                         const szer = Math.min(
                           4000,
                           Math.max(MIN_SZEROKOSC_KOLUMNY, Math.round(start.current.szer + e.clientX - start.current.x)),
@@ -482,14 +496,23 @@ export function PageTable({
                         setPrzeciaganie({ id: f.id, szer });
                       }}
                       onPointerUp={(e) => {
-                        if (!start.current) return;
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        const { szer, aktualna } = start.current;
+                        start.current = null;
+                        setPrzeciaganie(null);
                         e.currentTarget.releasePointerCapture?.(e.pointerId);
+                        if (aktualna !== szer) zapiszSzerokosc(f.id, aktualna);
+                      }}
+                      // Przeglądarka zerwała capture bez pointerup: kończymy jak puszczenie (zapis, jeśli była zmiana)
+                      onLostPointerCapture={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
                         const { szer, aktualna } = start.current;
                         start.current = null;
                         setPrzeciaganie(null);
                         if (aktualna !== szer) zapiszSzerokosc(f.id, aktualna);
                       }}
-                      onPointerCancel={() => {
+                      onPointerCancel={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
                         start.current = null;
                         setPrzeciaganie(null);
                       }}

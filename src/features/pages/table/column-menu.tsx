@@ -167,7 +167,7 @@ export function ColumnMenu({
             aria-hidden="true"
             className="mr-1.5 inline align-[-2px] text-faint-foreground"
           />
-          {field.name}
+          <span className="inline-block max-w-[calc(100%-20px)] truncate align-bottom">{field.name}</span>
         </button>
       }
     >
