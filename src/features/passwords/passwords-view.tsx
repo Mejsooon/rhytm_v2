@@ -63,9 +63,9 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           )
         }
       />
-      {/* Treść: max 1160 px; przy zamkniętym sejfie sama karta „Odblokuj sejf” na środku */}
+      {/* Treść na całą szerokość (decyzja Mejsona, jak S2Books); przy zamkniętym sejfie sama karta „Odblokuj sejf” na środku */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-[1160px] min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
+        <div className="flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
           <div>
             {/* Tytuł z ikoną tylko na webie: telefon ma duży tytuł w nagłówku */}
             <div className="flex items-center gap-2.5 max-[799px]:hidden">
