@@ -11,7 +11,7 @@ export function stronaTestowa(
   wiersze: Record<string, unknown>[],
 ): LoadedPage {
   let n = 0;
-  const [b] = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
+  const b = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
   const fields = b.fields.map((f, i) => ({
     id: f.id,
     name: f.name,

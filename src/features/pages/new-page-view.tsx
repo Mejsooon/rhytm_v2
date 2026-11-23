@@ -76,7 +76,7 @@ export function NewPageView() {
             </h2>
             {/* .dlg-d: opis okna, 14 px, kolor muted, 4 px od tytułu */}
             <p id="np-desc" className="mt-1 mb-0 text-sm text-muted-foreground">
-              Wybierz szablon albo zacznij od pustej tabeli.
+              Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.
             </p>
           </div>
           <Button
@@ -176,7 +176,7 @@ export function NewPageView() {
                 ))}
               {wybrany === "empty" && (
                 <div className="px-3 py-3.5 text-[13px] text-muted-foreground">
-                  Tylko kolumna „Nazwa”. Pola dodajesz przyciskiem „+ Pole”.
+                  Tylko kolumna „Nazwa”. Kolejne dodasz przyciskiem „+” w nagłówku tabeli.
                 </div>
               )}
             </div>

@@ -29,7 +29,7 @@ const bezUstawien: TableSettings = {
 
 // Szablon z id pól i opcji, jak po create_page
 function szablon(key: "books" | "projects" | "websites") {
-  const [blok] = buildTemplateBlocks(key, seqId());
+  const blok = buildTemplateBlocks(key, seqId()).find((b) => b.type === "table")!;
   const fields: PageField[] = blok.fields.map((f, i) => ({
     id: f.id,
     name: f.name,

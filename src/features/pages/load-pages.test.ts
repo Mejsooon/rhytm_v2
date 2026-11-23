@@ -78,7 +78,7 @@ describe("loadPages", () => {
     expect(utworzenia).toHaveLength(1);
     expect(utworzenia[0][1]).toMatchObject({
       p_title: "Passwords",
-      p_icon: "🔒",
+      p_icon: "lucide:lock",
       p_template_key: "passwords",
     });
   });

@@ -59,7 +59,7 @@ const NOWY_SEKRET = { v: 1, g: 1, iv: btoa("iv-nowy-12bB"), ct: btoa("nowy-szyfr
 // Strona z szablonu z wierszami podanymi po nazwach pól i etykietach opcji (dane z makiet)
 function strona(key: TemplateKey, title: string, wiersze: Record<string, unknown>[]): LoadedPage {
   let n = 0;
-  const [b] = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
+  const b = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
   const fields = b.fields.map((f, i) => ({
     id: f.id,
     name: f.name,

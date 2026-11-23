@@ -126,7 +126,7 @@ describe("strony", () => {
     );
     expect(rpc).toHaveBeenCalledWith("create_page", {
       p_title: "Books",
-      p_icon: "📚",
+      p_icon: "lucide:book-open",
       p_template_key: "books",
       p_blocks: oczekiwane,
     });
