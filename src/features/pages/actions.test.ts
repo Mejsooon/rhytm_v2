@@ -530,16 +530,17 @@ describe("pole Sekret", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("addField secret na stronie bez szablonu zwraca błąd", async () => {
-    const BLAD = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
-    for (const klucz of [null, "empty"]) {
+  it("addField secret poza stroną Hasła zwraca błąd", async () => {
+    const BLAD = "Pole Sekret jest dostępne tylko na stronie Hasła.";
+    // Sejf ma tylko widok strony Hasła — inne strony (także z szablonu) nie dostają pola Sekret
+    for (const klucz of [null, "empty", "books", "projects", "websites"]) {
       tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: klucz } } });
       const w = await addField(BLOK, { name: "Hasło", type: "secret", config: {} });
       expect(w).toEqual({ ok: false, message: BLAD });
     }
     expect(tables.page_fields.insert).not.toHaveBeenCalled();
 
-    // Strona z szablonu przyjmuje pole Sekret
+    // Strona Hasła przyjmuje pole Sekret
     tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: "passwords" } } });
     tables.page_fields = fakeTable({
       single: { id: POLE_SEKRET, name: "Hasło", type: "secret", config: {}, position: 3, is_title: false },

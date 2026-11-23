@@ -235,7 +235,8 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             }}
             triggerClassName={btn}
           />
-          <AddFieldDialog allowSecret={page.templateKey !== null && page.templateKey !== "empty"} onAdd={(input) => void store.addField(input)} />
+          {/* Nowy Sekret tylko na stronie Hasła (jak addField na serwerze) */}
+          <AddFieldDialog allowSecret={page.templateKey === "passwords"} onAdd={(input) => void store.addField(input)} />
           <Button variant="primary" onClick={nowyWiersz}>
             <Plus aria-hidden="true" className="size-4" />
             Nowy wiersz

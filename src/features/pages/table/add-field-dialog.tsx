@@ -20,7 +20,7 @@ const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; def
   { type: "rating", Icon: FIELD_TYPE_META.rating.Icon, name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
 
-// Grupa „Bezpieczne” z AddField.dc.html: Sekret (szyfrowany w przeglądarce), tylko na stronach z szablonu
+// Grupa „Bezpieczne” z AddField.dc.html: Sekret (szyfrowany w przeglądarce), tylko na stronie Hasła
 const TYP_SEKRET = {
   type: "secret" as const,
   Icon: FIELD_TYPE_META.secret.Icon,

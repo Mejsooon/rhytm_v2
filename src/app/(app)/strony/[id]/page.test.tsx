@@ -28,10 +28,22 @@ async function wyrenderujWewnetrzny(id: string) {
   return wewnetrzny.type(wewnetrzny.props);
 }
 
-function dane(templateKey: string | null) {
+// Blok tabeli z jednym polem danego typu
+function tabela(typ: string) {
+  return {
+    id: "t1",
+    type: "table",
+    position: 0,
+    content: {},
+    fields: [{ id: "f1", name: "Pole", type: typ, config: {}, position: 0, isTitle: false }],
+    rows: [],
+  };
+}
+
+function dane(templateKey: string | null, blocks: unknown[] = []) {
   return {
     page: { id: "p1", title: "Strona", icon: "", favorite: false, templateKey, position: 0, rowCount: 0, createdAt: "" },
-    blocks: [],
+    blocks,
     today: "2026-11-23",
     currency: "PLN",
   };
@@ -58,5 +70,15 @@ describe("/strony/[id] (Review Focus 4)", () => {
       loadPage.mockResolvedValue(dane(klucz));
       expect((await wyrenderujWewnetrzny("p1")).type).toBe(EditorView);
     }
+  });
+
+  it("strona z polem Sekret (np. dawne Books z dodanym Sekretem) zostaje w TemplatePageView z sejfem", async () => {
+    loadPage.mockResolvedValue(dane("books", [{ id: "a", type: "text", position: 0, content: {}, fields: [], rows: [] }, tabela("secret")]));
+    expect((await wyrenderujWewnetrzny("p1")).type).toBe(TemplatePageView);
+  });
+
+  it("strona Books z tabelą bez pola Sekret idzie do EditorView", async () => {
+    loadPage.mockResolvedValue(dane("books", [tabela("text")]));
+    expect((await wyrenderujWewnetrzny("p1")).type).toBe(EditorView);
   });
 });
