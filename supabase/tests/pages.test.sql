@@ -234,7 +234,9 @@ select lives_ok(
 -- create_page bez ikony zostawia pustą (jako zalogowany A)
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
-select is((select p.icon from public.pages as p where p.id = public.create_page('X', null, null, '[]'::jsonb)), '',
+-- Strona powstaje w osobnym zapytaniu (jak wyżej), bo snapshot zapytania nie widzi wiersza dodanego przez funkcję w tym samym zapytaniu.
+select set_config('test.page_no_icon', public.create_page('X', null, null, '[]'::jsonb)::text, true);
+select is((select p.icon from public.pages as p where p.id = current_setting('test.page_no_icon')::uuid), '',
   'create_page bez ikony → pusta');
 reset role;
 
