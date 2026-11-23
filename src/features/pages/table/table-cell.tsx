@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { OptionBadge } from "./option-badge";
 import { OptionPicker } from "./option-picker";
+import { SecretTableCell } from "./secret-table-cell";
 import {
   formatValue,
   isUrgent,
@@ -34,12 +35,16 @@ const OBWODKA =
 // Jedna komórka tabeli edytowana wprost, jak w Notion (S2Books.dc.html). Tekst, liczba i link to stałe
 // pole bez ramki: zapis po 600 ms przerwy oraz od razu przy Enter, Esc, wyjściu i odmontowaniu.
 // Gwiazdki, checkbox i data zapisują od razu. Select i status pokazują plakietkę (klik otwiera okienko opcji).
+// Sekret to SecretTableCell (szyfrowanie przy zapisie). `readOnly` (moduł Hasła przy zamkniętym sejfie)
+// pokazuje wartość jako zwykły tekst, bez edycji.
 export function TableCell({
   row,
   field,
   today,
   done,
   autoFocus = false,
+  readOnly = false,
+  revealed = false,
   onSave,
   onFocused,
   onCreateOption,
@@ -53,6 +58,10 @@ export function TableCell({
   done: { fieldId: string; optionId: string } | null;
   // Kursor w tej komórce (tytuł nowego wiersza po „+ Nowy”)
   autoFocus?: boolean;
+  // Komórka bez edycji (zwykły tekst)
+  readOnly?: boolean;
+  // Sekret: odsłonięty oczkiem wiersza (tekst zamiast maski)
+  revealed?: boolean;
   onSave: (value: unknown) => void;
   // Wołane po fokusie pola (np. by wyczyścić „kursor w nowym wierszu”)
   onFocused?: () => void;
@@ -112,15 +121,20 @@ export function TableCell({
     if (tekst !== null) zapisz.current(tekst);
   }
 
-  // Sekret: tylko do odczytu (kropki); szyfrogramu nigdy nie pokazujemy
+  // Sekret: maska, oczko i edycja z szyfrowaniem (szyfrogramu nigdy nie pokazujemy)
   if (field.type === "secret") {
     return (
-      <td className={cn(TD, "px-3 text-soft-foreground")}>
-        {v === null ? (
-          <span className="text-faint-foreground">—</span>
-        ) : (
-          "••••••••"
-        )}
+      <td className={cn(TD, "p-0", !readOnly && OBWODKA)}>
+        <SecretTableCell row={row} field={field} readOnly={readOnly} revealed={revealed} onSave={onSave} />
+      </td>
+    );
+  }
+
+  // Tylko do odczytu: wartość jako zwykły tekst (S2Passwords, zablokowany sejf)
+  if (readOnly) {
+    return (
+      <td className={cn(TD, "px-3 text-soft-foreground", field.isTitle && "font-medium")}>
+        {formatValue(field, v) || "—"}
       </td>
     );
   }

@@ -25,6 +25,8 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
+import type { PageField } from "../fields";
+import { ColumnMenu } from "./column-menu";
 import { PageTable } from "./page-table";
 import { DZIS, stronaTestowa } from "./test-page";
 
@@ -469,5 +471,52 @@ describe("menu kolumny", () => {
     const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
     await waitFor(() => expect(actions.updateField).toHaveBeenCalledWith(autor.id, { name: "Pisarz" }));
     expect(actions.updateField).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("menu kolumny zablokowanej (moduł Hasła)", () => {
+  function menu(field: PageField) {
+    const wywolania = { onHide: vi.fn(), onSort: vi.fn(), onRename: vi.fn(), onDelete: vi.fn() };
+    render(
+      <ColumnMenu
+        field={field}
+        open
+        onOpenChange={() => {}}
+        canHide
+        summary={undefined}
+        locked
+        onRename={wywolania.onRename}
+        onPickType={() => {}}
+        onSort={wywolania.onSort}
+        onFilter={() => {}}
+        onSummary={() => {}}
+        onToggleCalendar={() => {}}
+        onHide={wywolania.onHide}
+        onDelete={wywolania.onDelete}
+        onMoveLeft={() => {}}
+        onMoveRight={() => {}}
+      />,
+    );
+    return wywolania;
+  }
+
+  it("bez zmiany nazwy, typu, przesuwania i usuwania; ukrywanie, sort, filtr i podsumowanie zostają", async () => {
+    const user = userEvent.setup();
+    const { onHide } = menu({ id: "f-login", name: "Login", type: "text", config: {}, position: 1, isTitle: false });
+    const m = screen.getByRole("menu", { name: "Kolumna Login" });
+    expect(within(m).queryByRole("textbox", { name: "Nazwa kolumny" })).not.toBeInTheDocument();
+    expect(within(m).queryByRole("menuitem", { name: /Typ:/ })).not.toBeInTheDocument();
+    expect(within(m).queryByRole("menuitem", { name: /Przesuń/ })).not.toBeInTheDocument();
+    expect(within(m).queryByRole("menuitem", { name: /Usuń pole/ })).not.toBeInTheDocument();
+    expect(within(m).getByRole("menuitem", { name: /Sortuj rosnąco/ })).toBeInTheDocument();
+    expect(within(m).getByRole("menuitem", { name: /Filtruj po tym polu/ })).toBeInTheDocument();
+    expect(within(m).getByRole("menuitem", { name: /Podsumowanie/ })).toBeInTheDocument();
+    await user.click(within(m).getByRole("menuitem", { name: /Ukryj kolumnę/ }));
+    expect(onHide).toHaveBeenCalled();
+  });
+
+  it("kolumna Sekret ma plakietkę „szyfr.” w nagłówku", () => {
+    menu({ id: "f-haslo", name: "Hasło", type: "secret", config: {}, position: 2, isTitle: false });
+    expect(screen.getByRole("button", { name: /Hasło/, expanded: true })).toHaveTextContent("szyfr.");
   });
 });

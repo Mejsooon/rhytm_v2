@@ -6,6 +6,9 @@ import type { PageField } from "../fields";
 import type { PageRow } from "../table-model";
 import { TableCell } from "./table-cell";
 
+// Sekret czyta stan sejfu (VaultProvider jest w powłoce aplikacji); tu sejf jest zamknięty
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "zablokowany" }) }));
+
 const TODAY = "2026-11-15";
 
 function pole(
@@ -358,12 +361,44 @@ describe("TableCell", () => {
     expect(within(container).getByText("Czytam")).toBeInTheDocument();
   });
 
-  it("sekret jest tylko do odczytu (bez pola tekstowego)", () => {
+  it("sekret przy zamkniętym sejfie: „zablokowane”, bez pola tekstowego", () => {
     komorka(
       pole("secret", { name: "Hasło" }),
       wiersz({ v: 1, g: 1, iv: "a", ct: "b" }),
     );
+    expect(screen.getByText("zablokowane")).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("readOnly: wartość jako tekst, bez pola i przycisków", () => {
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <TableCell
+              row={{ id: "row-1", values: { f1: "GitHub", f2: "o1" }, position: 0, deletedAt: null }}
+              field={pole("text", { name: "Serwis" })}
+              today={TODAY}
+              done={null}
+              readOnly
+              onSave={vi.fn()}
+            />
+            <TableCell
+              row={{ id: "row-1", values: { f1: "GitHub", f2: "o1" }, position: 0, deletedAt: null }}
+              field={pole("select", { id: "f2", name: "Kategoria", config: { options: [{ id: "o1", label: "Praca", color: "" }] } })}
+              today={TODAY}
+              done={null}
+              readOnly
+              onSave={vi.fn()}
+            />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    expect(screen.getByText("GitHub")).toBeInTheDocument();
+    expect(screen.getByText("Praca")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   describe("select i status: okienko opcji", () => {
