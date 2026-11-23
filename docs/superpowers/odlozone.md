@@ -128,3 +128,12 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Task 9: minor (deferred): stanWBazie w e2e ignoruje error zapytania; expect.poll timeout 5 s < actionTimeout 10 s; brak asercji trwałości „Cofnij” w Books.
 - Task 9: minor (deferred): removeOption — cofnięcie wierszy/ustawień bez warunku „nadal z tej zmiany” przy równoległym zapisie; Promise.all wszystko-albo-nic bez resynchronizacji; settings z domknięcia przy dwóch removeOption w jednym renderze.
 - Przegląd końcowy (odłożone): M1 utrata szkicu przy zamknięciu karty w 600 ms; M4 rerender całej tabeli przy zapisie komórki (memo); pozostałe Minor z final-review kroku 2; onBlur odpina przy alt-tab; dwie identyczne karty przy edycji po treści.
+
+## Strony 2.0 krok 3 (Hasła i onboarding) — odłożone drobne uwagi (stan 2026-11-23)
+- A1: na telefonie `/hasla` nie zaznacza zakładki „Strony” w dolnym pasku (`tab-bar.tsx`). Do Etapu 3 (telefon).
+- A4: brak testu pgTAP warunku wstępnego migracji (przerwanie przy polu Sekret poza modułem); „dwie karty naraz” sprawdzone tylko sekwencyjnie (`ensure_passwords_page` ma blokadę doradczą i unikalny indeks).
+- B4: brak strażnika `page_rows`: właściciel przez bezpośrednie API może przenieść wiersz z modułu (`block_id`) albo wpisać jawny string pod pole Hasło. Obrona w głąb: wyzwalacz na `page_rows` (zakaz zmiany `block_id` przy stronie systemowej, kształt `SecretValue` pod polem secret).
+- B5: warunek wstępny migracji pomija pola Sekret na stronach Passwords w koszu; po przywróceniu z kosza byłby Sekret poza modułem. Na produkcji takich stron nie ma.
+- B6 (informacyjnie): treść błędu wyzwalacza zdradza 1 bit, czy cudzy UUID to blok modułu. Praktycznie nieosiągalne.
+- Z zadania 3: status „ladowanie” chwilowo pokazuje „zablokowane”; arkusz telefonu odszyfrowuje sekrety od razu po otwarciu; klik w trakcie szyfrowania otwiera starą wartość; brak testu kopiowania z dwóch wierszy.
+- Z zadania 5: `m-row-sheet.test` raz zachował się niestabilnie.

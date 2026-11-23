@@ -235,7 +235,6 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
     },
   },
-
 };
 
 // Nazwy z profiles.pending_pages (onboarding) -> szablon
