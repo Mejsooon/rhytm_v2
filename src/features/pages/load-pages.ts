@@ -71,6 +71,8 @@ export const loadPages = cache(async (): Promise<PageSummary[]> => {
     .select("id, title, icon, favorite, template_key, position, page_blocks(page_rows(count))")
     .eq("user_id", user.id)
     .is("deleted_at", null)
+    // Strona systemowa (moduł Hasła) nie należy do listy stron
+    .eq("is_system", false)
     .is("page_blocks.deleted_at", null)
     .is("page_blocks.page_rows.deleted_at", null)
     .order("position", { ascending: true });

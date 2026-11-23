@@ -15,7 +15,6 @@ describe("ikony szablonów", () => {
     expect(TEMPLATES.books.icon).toBe("lucide:book-open");
     expect(TEMPLATES.projects.icon).toBe("lucide:rocket");
     expect(TEMPLATES.websites.icon).toBe("lucide:globe");
-    expect(TEMPLATES.passwords.icon).toBe("lucide:lock");
     for (const klucz of TEMPLATE_KEYS) {
       expect(parsePageIcon(TEMPLATES[klucz].icon)).not.toBeNull();
     }
@@ -46,12 +45,6 @@ describe("blok startowy z opisem", () => {
     expect(buildTemplateBlocks("websites", seqId())[0].content).toEqual({
       text: "Strony klientów: URL, klient, status.",
     });
-  });
-
-  it("passwords: tylko tabela, bez intro", () => {
-    const bloki = buildTemplateBlocks("passwords", seqId());
-    expect(TEMPLATES.passwords.intro).toBe("");
-    expect(bloki.map((b) => b.type)).toEqual(["table"]);
   });
 
   it("empty: strona bez żadnych bloków (decyzja po kroku 2 — szybki start w edytorze)", () => {
@@ -204,25 +197,13 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
       Books: "books",
       Projects: "projects",
       Websites: "websites",
-      Passwords: "passwords",
     });
   });
 });
 
-describe("szablon passwords", () => {
-  it("szablon passwords ma Serwis/Login/Hasło(secret)/URL", () => {
-    expect(TEMPLATES.passwords.name).toBe("Passwords");
-    expect(TEMPLATES.passwords.icon).toBe("lucide:lock");
-    const blok = buildTemplateBlocks("passwords", seqId())[0];
-    expect(blok.fields.map((f) => [f.name, f.type, f.is_title])).toEqual([
-      ["Serwis", "text", true],
-      ["Login", "text", false],
-      ["Hasło", "secret", false],
-      ["URL", "url", false],
-    ]);
-    expect(blok.fields[0].config.empty_label).toBe("Bez nazwy");
-    const ustawienia = blok.content.settings as { pinned_cards: unknown[]; column_summaries: object };
-    expect(ustawienia.pinned_cards).toEqual([]);
-    expect(ustawienia.column_summaries).toEqual({});
+describe("Hasła to moduł, nie szablon", () => {
+  it("TEMPLATE_KEYS nie zawiera passwords", () => {
+    expect(TEMPLATE_KEYS).toEqual(["empty", "books", "projects", "websites"]);
   });
 });
+

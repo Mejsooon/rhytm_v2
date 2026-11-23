@@ -36,7 +36,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../../actions", () => actions);
-// RowEdit / arkusz wiersza czytają stan sejfu (VaultProvider jest w powłoce aplikacji)
+// Arkusz wiersza może czytać stan sejfu (VaultProvider jest w powłoce aplikacji)
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 
 import type { PageField } from "../../fields";
@@ -58,6 +58,7 @@ function dane(bloki: LoadedBlock[]): LoadedPage {
       position: 0,
       rowCount: 0,
       createdAt: "2026-11-19T10:00:00Z",
+      isSystem: false,
     },
     blocks: bloki,
     today: "2026-11-19",

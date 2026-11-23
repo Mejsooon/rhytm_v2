@@ -25,8 +25,8 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
-import { TemplatePageView } from "./template-page-view";
-import { stronaTestowa } from "./test-page";
+import { PageTable } from "./page-table";
+import { DZIS, stronaTestowa } from "./test-page";
 
 const BOOKS = [
   { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
@@ -39,6 +39,15 @@ const PROJECTS = [
   { Nazwa: "NetScope", Status: "Do zrobienia", Obszar: "Własne", Termin: "2027-02-15" },
 ];
 
+// Wiersz po wartości pola edycji (tytuły i teksty to pola input, nie tekst komórki)
+function wiersz(tekst: string) {
+  const tr = screen
+    .getAllByRole("row")
+    .find((r) => Array.from(r.querySelectorAll("input")).some((i) => i.value.includes(tekst)));
+  if (!tr) throw new Error(`Brak wiersza ${tekst}`);
+  return tr;
+}
+
 function naglowek(nazwa: string) {
   return screen.getByRole("columnheader", { name: new RegExp(nazwa) });
 }
@@ -50,13 +59,14 @@ async function otworzMenu(user: ReturnType<typeof userEvent.setup>, nazwa: strin
 
 describe("menu kolumny", () => {
   beforeEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
     vi.clearAllMocks();
     for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
   });
 
   it("klik w nagłówek otwiera menu z pozycjami z makiety", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Autor");
     expect(within(menu).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveValue("Autor");
     expect(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ })).toBeInTheDocument();
@@ -76,7 +86,7 @@ describe("menu kolumny", () => {
 
   it("klasy z makiety CColumnMenu: .pop p-1, pole FIELD, pozycje .mi, separatory, Usuń pole czerwone", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+    render(<PageTable block={(stronaTestowa("projects", "Projects", PROJECTS)).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Termin");
     const dymek = menu.closest("[role=dialog]") as HTMLElement;
     expect(dymek).toHaveClass("p-1", "rounded-lg", "shadow-lg");
@@ -101,83 +111,104 @@ describe("menu kolumny", () => {
   // Przesuwanie do środka przy krawędzi okna sprawdza action-popover.test.tsx (avoidCollisions, collisionPadding)
   it("menu ostatniej kolumny otwiera się pod nagłówkiem w dymku Radixa", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
-    const zMenu = screen.getAllByRole("columnheader").filter((h) => within(h).queryByRole("button"));
-    await user.click(within(zMenu[zMenu.length - 1]).getByRole("button"));
+    render(<PageTable block={(stronaTestowa("projects", "Projects", PROJECTS)).blocks[0]} today={DZIS} />);
+    // Kolumny z menu mają przycisk aria-haspopup=menu (ostatni nagłówek to „+” dodające pole)
+    const zMenu = screen
+      .getAllByRole("columnheader")
+      .filter((h) => h.querySelector("button[aria-haspopup='menu']"));
+    await user.click(within(zMenu[zMenu.length - 1]).getByRole("button", { name: /Repo/ }));
     const dymek = screen.getByRole("dialog", { name: /^Kolumna / });
     expect(dymek.parentElement).toHaveAttribute("data-radix-popper-content-wrapper");
     expect(dymek).toHaveAttribute("data-side", "bottom");
   });
 
-  it("bez onMove… i onAddOption menu nie ma „Przesuń…” ani sekcji „Opcje” (widok szablonu)", async () => {
+  // PageTable podaje onMove… i onAddOption, więc menu ma „Przesuń…” i dla Wyboru sekcję „Opcje”;
+  // kolumna tytułu nie da się przesunąć (obie pozycje wyłączone), a pole tekstowe nie ma sekcji „Opcje”
+  it("menu w PageTable ma „Przesuń…” i sekcję „Opcje” tylko dla Wyboru; tytuł się nie przesuwa", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Status");
-    expect(within(menu).queryByRole("menuitem", { name: /Przesuń/ })).not.toBeInTheDocument();
-    expect(within(menu).queryByText("Opcje")).not.toBeInTheDocument();
-    expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Przesuń w lewo/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Przesuń w prawo/ })).toBeInTheDocument();
+    expect(within(menu).getByText("Opcje")).toBeInTheDocument();
+    expect(within(menu).getByRole("textbox", { name: "Nowa opcja" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    const menuTytulu = await otworzMenu(user, "Tytuł");
+    expect(within(menuTytulu).getByRole("menuitem", { name: /Przesuń w lewo/ })).toBeDisabled();
+    expect(within(menuTytulu).getByRole("menuitem", { name: /Przesuń w prawo/ })).toBeDisabled();
+    await user.keyboard("{Escape}");
+    const menuAutora = await otworzMenu(user, "Autor");
+    expect(within(menuAutora).queryByText("Opcje")).not.toBeInTheDocument();
+    expect(within(menuAutora).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
   });
 
   it("pole tytułowe: Typ i Usuń pole są wyszarzone", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Tytuł");
     expect(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ })).toBeDisabled();
     expect(within(menu).getByRole("menuitem", { name: "Usuń pole" })).toBeDisabled();
-    expect(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" })).toBeEnabled();
+    // PageTable nie pozwala ukryć kolumny tytułu (canHide), więc „Ukryj kolumnę” też jest wyszarzone
+    expect(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" })).toBeDisabled();
   });
 
-  it("sortowanie zapisuje settings.sort jednym kluczem i zmienia metadane", async () => {
+  it("sortowanie zapisuje settings.sort jednym kluczem i zmienia plakietkę „Sort: …” w pasku tabeli", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
-    render(<TemplatePageView data={dane} />);
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Autor");
     await user.click(within(menu).getByRole("menuitem", { name: "Sortuj malejąco" }));
     const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", {
       sort: [{ field_id: autor.id, dir: "desc" }],
     });
-    expect(screen.getByText(/· sort: autor$/)).toBeInTheDocument();
+    expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
     const tytuly = screen
       .getAllByRole("row")
       .slice(1, -1)
-      .map((r) => r.querySelector("td")?.textContent);
+      .map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
     expect(tytuly).toEqual(["Clean Code", "Atomic Habits", "Diuna", "Deep Work"]);
   });
 
-  it("Ukryj kolumnę: kolumna znika, „· 1 ukryte” ją przywraca", async () => {
+  it("Ukryj kolumnę: kolumna znika, „Widoczne kolumny” w menu tabeli ją przywraca", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("projects", "Projects", PROJECTS);
-    render(<TemplatePageView data={dane} />);
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Repo");
     await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
     const repo = dane.blocks[0].fields.find((f) => f.name === "Repo")!;
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { hidden_field_ids: [repo.id] });
     expect(screen.queryByRole("columnheader", { name: /Repo/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "· 1 ukryte" }));
+    await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+    const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+    await user.click(within(ustawienia).getByRole("button", { name: "Repo", pressed: false }));
     expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { hidden_field_ids: [] });
     expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /ukryte/ })).not.toBeInTheDocument();
+    expect(within(ustawienia).getByRole("button", { name: "Repo", pressed: true })).toBeInTheDocument();
   });
 
-  it("Data: „Pokaż w kalendarzu” przełącza config i znaczek w nagłówku", async () => {
+  it("Data: „Pokaż w kalendarzu” przełącza config i stan przełącznika w menu kolumny", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("projects", "Projects", PROJECTS);
-    render(<TemplatePageView data={dane} />);
-    expect(within(naglowek("Termin")).getByText("w kalendarzu")).toBeInTheDocument();
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
+    // Znaczka „w kalendarzu” w nagłówku kolumny już nie ma (krok 2); stan pokazuje przełącznik w menu kolumny
+    expect(within(naglowek("Termin")).queryByText("w kalendarzu")).not.toBeInTheDocument();
     const menu = await otworzMenu(user, "Termin");
+    expect(within(menu).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }).querySelector("[data-on=true]")).not.toBeNull();
     await user.click(within(menu).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }));
     const termin = dane.blocks[0].fields.find((f) => f.name === "Termin")!;
     expect(actions.updateField).toHaveBeenCalledWith(termin.id, {
       config: { ...termin.config, show_in_calendar: false },
     });
-    expect(within(naglowek("Termin")).queryByText("w kalendarzu")).not.toBeInTheDocument();
+    // Po ponownym otwarciu menu przełącznik jest wyłączony
+    const menu2 = await otworzMenu(user, "Termin");
+    expect(within(menu2).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }).querySelector("[data-on=true]")).toBeNull();
   });
 
   it("zmiana nazwy zapisuje updateField", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
-    render(<TemplatePageView data={dane} />);
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Autor");
     const pole = within(menu).getByRole("textbox", { name: "Nazwa kolumny" });
     await user.clear(pole);
@@ -194,7 +225,7 @@ describe("menu kolumny", () => {
         toJSON: () => ({}),
       } as DOMRect);
       const user = userEvent.setup();
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ }));
       const podmenu = screen.getByRole("menu", { name: "Typ pola" });
@@ -219,7 +250,7 @@ describe("menu kolumny", () => {
     it("bez strat zmienia od razu, bez okna", async () => {
       const user = userEvent.setup();
       const dane = stronaTestowa("projects", "Projects", PROJECTS);
-      render(<TemplatePageView data={dane} />);
+      render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Repo");
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
       await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
@@ -233,7 +264,7 @@ describe("menu kolumny", () => {
 
     it("ze stratą pyta o potwierdzenie i dopiero po nim zapisuje", async () => {
       const user = userEvent.setup();
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: Tekst/ }));
       await user.click(screen.getByRole("menuitem", { name: /Liczba/ }));
@@ -250,7 +281,7 @@ describe("menu kolumny", () => {
     it("błąd zapisu cofa typ kolumny i pokazuje toast", async () => {
       const user = userEvent.setup();
       actions.changeFieldType.mockResolvedValue({ ok: false, message: "x" });
-      render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+      render(<PageTable block={(stronaTestowa("projects", "Projects", PROJECTS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Repo");
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
       await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
@@ -264,21 +295,22 @@ describe("menu kolumny", () => {
     it("usuwa kolumnę od razu i czyści ślady w ustawieniach", async () => {
       const user = userEvent.setup();
       const dane = stronaTestowa("books", "Books", BOOKS);
-      render(<TemplatePageView data={dane} />);
+      render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
       // Szablon Books sortuje po statusie i dacie przeczytania
-      expect(screen.getByText(/sort: status, przeczytana$/)).toBeInTheDocument();
+      expect(screen.getByText("Sort: Status, Przeczytana")).toBeInTheDocument();
       const menu = await otworzMenu(user, "Przeczytana");
       await user.click(within(menu).getByRole("menuitem", { name: "Usuń pole" }));
       const pole = dane.blocks[0].fields.find((f) => f.name === "Przeczytana")!;
       expect(actions.deleteField).toHaveBeenCalledWith(pole.id);
       expect(screen.queryByRole("columnheader", { name: /Przeczytana/ })).not.toBeInTheDocument();
-      expect(screen.getByText(/4 wiersze · 4 pola · .* sort: status$/)).toBeInTheDocument();
+      expect(screen.getByText("Sort: Status")).toBeInTheDocument();
+      expect(within(screen.getAllByRole("row").at(-1) as HTMLElement).getByText("4 wiersze")).toBeInTheDocument();
     });
 
     it("błąd cofa kolumnę i pokazuje toast", async () => {
       const user = userEvent.setup();
       actions.deleteField.mockResolvedValue({ ok: false, message: "x" });
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Usuń pole" }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
@@ -290,7 +322,7 @@ describe("menu kolumny", () => {
     it("wybór rodzaju zapisuje column_summaries i liczy stopkę z wierszy po filtrze", async () => {
       const user = userEvent.setup();
       const dane = stronaTestowa("books", "Books", BOOKS);
-      render(<TemplatePageView data={dane} />);
+      render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Podsumowanie Brak ›" }));
       const podmenu = screen.getByRole("menu", { name: "Podsumowanie" });
@@ -314,7 +346,7 @@ describe("menu kolumny", () => {
 
     it("liczby: opcje podsumowania z summaryOptions, bieżące z szablonu to „Średnia”", async () => {
       const user = userEvent.setup();
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Ocena");
       await user.click(within(menu).getByRole("menuitem", { name: "Podsumowanie Średnia ›" }));
       expect(
@@ -328,7 +360,7 @@ describe("menu kolumny", () => {
       const user = userEvent.setup();
       const dane = stronaTestowa("books", "Books", BOOKS);
       const przeczytana = dane.blocks[0].fields.find((f) => f.name === "Przeczytana")!;
-      render(<TemplatePageView data={dane} />);
+      render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
       // Szablon Books ma w stopce „Przeczytana” licznik „w roku”
       const menu = await otworzMenu(user, "Przeczytana");
       const pozycja = within(menu).getByRole("menuitem", { name: /^Podsumowanie/ });
@@ -342,7 +374,7 @@ describe("menu kolumny", () => {
 
   it("„Filtruj po tym polu” otwiera filtr z warunkiem dla pola", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Autor");
     await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
     const filtr = await screen.findByRole("dialog", { name: "Filtr" });
@@ -356,18 +388,18 @@ describe("menu kolumny", () => {
       const user = userEvent.setup();
       let odrzuc!: (v: { ok: false; message: string }) => void;
       actions.deleteField.mockReturnValue(new Promise((r) => (odrzuc = r)));
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Przeczytana");
       await user.click(within(menu).getByRole("menuitem", { name: "Usuń pole" }));
       expect(screen.queryByRole("columnheader", { name: /Przeczytana/ })).not.toBeInTheDocument();
 
       const menuAutora = await otworzMenu(user, "Autor");
       await user.click(within(menuAutora).getByRole("menuitem", { name: "Sortuj rosnąco" }));
-      expect(screen.getByText(/· sort: autor$/)).toBeInTheDocument();
+      expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
 
       await act(async () => odrzuc({ ok: false, message: "x" }));
       expect(screen.getByRole("columnheader", { name: /Przeczytana/ })).toBeInTheDocument();
-      expect(screen.getByText(/· sort: autor$/)).toBeInTheDocument();
+      expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
       expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
     });
 
@@ -375,7 +407,7 @@ describe("menu kolumny", () => {
       const user = userEvent.setup();
       let odrzuc!: (v: { ok: false; message: string }) => void;
       actions.deleteField.mockReturnValue(new Promise((r) => (odrzuc = r)));
-      render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
       expect(await screen.findByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
@@ -391,28 +423,30 @@ describe("menu kolumny", () => {
       const user = userEvent.setup();
       let odrzuc!: (v: { ok: false; message: string }) => void;
       actions.changeFieldType.mockReturnValue(new Promise((r) => (odrzuc = r)));
-      render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
+      render(<PageTable block={(stronaTestowa("projects", "Projects", PROJECTS)).blocks[0]} today={DZIS} />);
       const menu = await otworzMenu(user, "Repo");
       await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
       await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
 
-      await user.click(within(screen.getAllByRole("row").find((r) => r.textContent?.includes("rhytm v3")) as HTMLElement).getByRole("button", { name: "Edytuj wiersz" }));
-      await user.type(screen.getByRole("textbox", { name: "Repo" }), "!");
-      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      // Komórki edytują się wprost: pole Repo w wierszu „rhytm v3”, zapis przy wyjściu z komórki (Enter)
+      await user.type(within(wiersz("rhytm v3")).getByRole("textbox", { name: "Repo" }), "!{Enter}");
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
 
       await act(async () => odrzuc({ ok: false, message: "x" }));
       expect(naglowek("Repo").querySelector("svg[aria-hidden='true']")).not.toBeNull();
       expect(within(naglowek("Repo")).queryByText("↗")).toBeNull();
-      expect(screen.getByText(/rhytm-v3!/)).toBeInTheDocument();
+      expect(within(wiersz("rhytm v3")).getByRole("textbox", { name: "Repo" })).toHaveValue("Mejsooon/rhytm-v3!");
     });
   });
 
   it("zmiana typu przy wierszu czekającym na serwer pokazuje toast zamiast milczeć", async () => {
     const user = userEvent.setup();
     actions.addRow.mockReturnValue(new Promise(() => {}));
-    render(<TemplatePageView data={stronaTestowa("projects", "Projects", PROJECTS)} />);
-    await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+    render(<PageTable block={(stronaTestowa("projects", "Projects", PROJECTS)).blocks[0]} today={DZIS} />);
+    // Na webie „Nowy” dodaje wiersz wprost na serwerze (bez tymczasowego id), więc wiersz czekający
+    // na serwer powstaje tylko w arkuszu telefonu (poniżej 800 px): „Nowy” → nazwa → „Zapisz”
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    await user.click(screen.getByRole("button", { name: "Nowy" }));
     await user.type(screen.getByRole("textbox", { name: "Nazwa" }), "Nowy");
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
     const menu = await otworzMenu(user, "Repo");
@@ -420,12 +454,13 @@ describe("menu kolumny", () => {
     await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
     expect(toast.error).toHaveBeenCalledWith("Poczekaj, aż wiersze się zapiszą.");
     expect(actions.changeFieldType).not.toHaveBeenCalled();
+    delete (window as { matchMedia?: unknown }).matchMedia;
   });
 
   it("nazwa kolumny zapisuje się też przy zamknięciu menu bez blur", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
-    render(<TemplatePageView data={dane} />);
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const menu = await otworzMenu(user, "Autor");
     const pole = within(menu).getByRole("textbox", { name: "Nazwa kolumny" });
     await user.clear(pole);

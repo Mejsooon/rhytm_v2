@@ -1,22 +1,23 @@
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { notFound, loadPage, loadPages } = vi.hoisted(() => ({
+const { notFound, redirect, loadPage, loadPages } = vi.hoisted(() => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
+  }),
+  redirect: vi.fn(() => {
+    throw new Error("NEXT_REDIRECT");
   }),
   loadPage: vi.fn(),
   loadPages: vi.fn(),
 }));
-vi.mock("next/navigation", () => ({ notFound }));
+vi.mock("next/navigation", () => ({ notFound, redirect }));
 vi.mock("next/server", () => ({ connection: vi.fn(async () => {}) }));
 vi.mock("@/features/pages/load-page", () => ({ loadPage }));
 vi.mock("@/features/pages/load-pages", () => ({ loadPages }));
 vi.mock("@/features/pages/editor/editor-view", () => ({ EditorView: () => null }));
-vi.mock("@/features/pages/table/template-page-view", () => ({ TemplatePageView: () => null }));
 
 import { EditorView } from "@/features/pages/editor/editor-view";
-import { TemplatePageView } from "@/features/pages/table/template-page-view";
 import StronaPage from "./page";
 
 // Strona opakowuje dane w Suspense; wywołujemy wewnętrzny komponent serwerowy wprost
@@ -40,9 +41,9 @@ function tabela(typ: string) {
   };
 }
 
-function dane(templateKey: string | null, blocks: unknown[] = []) {
+function dane(templateKey: string | null, blocks: unknown[] = [], isSystem = false) {
   return {
-    page: { id: "p1", title: "Strona", icon: "", favorite: false, templateKey, position: 0, rowCount: 0, createdAt: "" },
+    page: { id: "p1", title: "Strona", icon: "", favorite: false, templateKey, position: 0, rowCount: 0, createdAt: "", isSystem },
     blocks,
     today: "2026-11-23",
     currency: "PLN",
@@ -60,9 +61,10 @@ describe("/strony/[id] (Review Focus 4)", () => {
     await expect(wyrenderujWewnetrzny("x")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
-  it("strona Hasła („passwords”) zostaje w TemplatePageView", async () => {
-    loadPage.mockResolvedValue(dane("passwords"));
-    expect((await wyrenderujWewnetrzny("p1")).type).toBe(TemplatePageView);
+  it("strona systemowa (moduł Hasła) przekierowuje na /hasla", async () => {
+    loadPage.mockResolvedValue(dane(null, [], true));
+    await expect(wyrenderujWewnetrzny("p1")).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/hasla");
   });
 
   it("strony z pozostałych szablonów i bez szablonu idą do EditorView", async () => {
@@ -72,9 +74,9 @@ describe("/strony/[id] (Review Focus 4)", () => {
     }
   });
 
-  it("strona z polem Sekret (np. dawne Books z dodanym Sekretem) zostaje w TemplatePageView z sejfem", async () => {
-    loadPage.mockResolvedValue(dane("books", [{ id: "a", type: "text", position: 0, content: {}, fields: [], rows: [] }, tabela("secret")]));
-    expect((await wyrenderujWewnetrzny("p1")).type).toBe(TemplatePageView);
+  it("zwykła strona zawsze idzie do EditorView (Sekret istnieje tylko w module Hasła)", async () => {
+    loadPage.mockResolvedValue(dane("books", [tabela("secret")]));
+    expect((await wyrenderujWewnetrzny("p1")).type).toBe(EditorView);
   });
 
   it("strona Books z tabelą bez pola Sekret idzie do EditorView", async () => {

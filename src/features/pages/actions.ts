@@ -520,20 +520,8 @@ export async function addField(
   if (!nazwa.success) return { ok: false, message: nazwa.error.issues[0].message };
   if (!typ.success || !config.success) return { ok: false, message: BLAD_ZAPISU };
 
-  // Pole Sekret tylko na stronie Hasła — tylko jej widok ma sejf (inne strony są w edytorze bloków)
-  if (typ.data === "secret") {
-    const { data: blokSekretu, error: bladBloku } = await supabase
-      .from("page_blocks")
-      .select("id, pages!inner(template_key)")
-      .eq("id", blockId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
-    if (!blokSekretu) return { ok: false, message: BRAK_BLOKU };
-    if (blokSekretu.pages?.template_key !== "passwords") {
-      return { ok: false, message: SEKRET_TYLKO_HASLA };
-    }
-  }
+  // Pole Sekret istnieje tylko w module Hasła (baza i tak odrzuca je poza stroną systemową)
+  if (typ.data === "secret") return { ok: false, message: SEKRET_TYLKO_HASLA };
 
   const { data: ostatnie, error: bladPozycji } = await supabase
     .from("page_fields")

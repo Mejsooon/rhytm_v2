@@ -49,6 +49,12 @@ beforeEach(() => {
 });
 
 describe("loadPages", () => {
+  it("lista stron pomija stronę systemową (moduł Hasła)", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    await loadPages();
+    expect(tables.pages.eq).toHaveBeenCalledWith("is_system", false);
+  });
+
   it("claim_pending_pages → ['Projects'] tworzy jedną stronę z szablonu projects", async () => {
     rpc.mockImplementation(async (nazwa: string) =>
       nazwa === "claim_pending_pages"
@@ -57,7 +63,7 @@ describe("loadPages", () => {
     );
     await loadPages();
     expect(rpc).toHaveBeenCalledWith("claim_pending_pages", {
-      p_available: ["Books", "Projects", "Websites", "Passwords"],
+      p_available: ["Books", "Projects", "Websites"],
     });
     const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
     expect(utworzenia).toHaveLength(1);
@@ -67,20 +73,12 @@ describe("loadPages", () => {
     });
   });
 
-  it("onboarding z Passwords tworzy stronę passwords", async () => {
-    rpc.mockImplementation(async (nazwa: string) =>
-      nazwa === "claim_pending_pages"
-        ? { data: ["Passwords"], error: null }
-        : { data: STRONA, error: null },
-    );
+  it("Passwords i Subscriptions w pending_pages nie są pobierane (moduł i osobny projekt)", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
     await loadPages();
-    const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
-    expect(utworzenia).toHaveLength(1);
-    expect(utworzenia[0][1]).toMatchObject({
-      p_title: "Passwords",
-      p_icon: "lucide:lock",
-      p_template_key: "passwords",
-    });
+    const claim = rpc.mock.calls.find((c) => c[0] === "claim_pending_pages");
+    expect(claim?.[1].p_available).not.toContain("Passwords");
+    expect(claim?.[1].p_available).not.toContain("Subscriptions");
   });
 
   it("przy pustym claim_pending_pages nie woła create_page", async () => {

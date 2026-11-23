@@ -20,7 +20,7 @@ export type LoadedBlock = {
 };
 
 export type LoadedPage = {
-  page: PageSummary & { createdAt: string };
+  page: PageSummary & { createdAt: string; isSystem: boolean };
   blocks: LoadedBlock[];
   today: IsoDate;
   currency: string;
@@ -40,7 +40,7 @@ export async function loadPage(id: string): Promise<LoadedPage | null> {
   const [stronaRes, profilRes, blokiRes] = await Promise.all([
     supabase
       .from("pages")
-      .select("id, title, icon, favorite, template_key, position, created_at")
+      .select("id, title, icon, favorite, template_key, position, created_at, is_system")
       .eq("id", id)
       .eq("user_id", user.id)
       .is("deleted_at", null)
@@ -134,6 +134,7 @@ export async function loadPage(id: string): Promise<LoadedPage | null> {
         .filter((b) => b.type === "table")
         .reduce((n, b) => n + b.rows.length, 0),
       createdAt: strona.created_at ?? "",
+      isSystem: strona.is_system === true,
     },
     blocks,
     today: todayIso(timezone),
