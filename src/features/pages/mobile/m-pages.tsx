@@ -90,7 +90,7 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
                           {strona.title.trim() === "" ? "Bez tytułu" : strona.title}
                         </span>
                         <span className="font-mono text-xs text-muted-foreground">
-                          {strona.templateKey === null && strona.rowCount === 0
+                          {(strona.templateKey === null || strona.templateKey === "empty") && strona.rowCount === 0
                             ? "pusta strona"
                             : rowsLabel(strona.rowCount)}
                         </span>

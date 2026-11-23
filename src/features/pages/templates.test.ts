@@ -48,12 +48,15 @@ describe("blok startowy z opisem", () => {
     });
   });
 
-  it("empty i passwords: tylko tabela, bez intro", () => {
-    for (const klucz of ["empty", "passwords"] as const) {
-      const bloki = buildTemplateBlocks(klucz, seqId());
-      expect(TEMPLATES[klucz].intro).toBe("");
-      expect(bloki.map((b) => b.type)).toEqual(["table"]);
-    }
+  it("passwords: tylko tabela, bez intro", () => {
+    const bloki = buildTemplateBlocks("passwords", seqId());
+    expect(TEMPLATES.passwords.intro).toBe("");
+    expect(bloki.map((b) => b.type)).toEqual(["table"]);
+  });
+
+  it("empty: strona bez żadnych bloków (decyzja po kroku 2 — szybki start w edytorze)", () => {
+    expect(TEMPLATES.empty.intro).toBe("");
+    expect(buildTemplateBlocks("empty", seqId())).toEqual([]);
   });
 });
 
@@ -94,7 +97,7 @@ describe("buildTemplateBlocks", () => {
     expect(blok.rows).toEqual([]);
   });
 
-  it.each(["empty", "books", "projects", "websites"] as const)(
+  it.each(["books", "projects", "websites"] as const)(
     "%s: id w ustawieniach wskazują pola i opcje z bloku",
     (key) => {
       const blok = buildTemplateBlocks(key, seqId()).find((b) => b.type === "table")!;
@@ -161,13 +164,6 @@ describe("buildTemplateBlocks", () => {
       "Wycena",
       "Wstrzymana",
     ]);
-  });
-
-  it("empty: tylko tytułowe pole Nazwa, bez nazwy tabeli", () => {
-    const blok = buildTemplateBlocks("empty", seqId()).find((b) => b.type === "table")!;
-    expect(blok.fields).toHaveLength(1);
-    expect(blok.fields[0]).toMatchObject({ name: "Nazwa", type: "text", is_title: true });
-    expect(blok.content.name).toBe("");
   });
 
   it("kolory opcji mieszczą się w palecie 8 kolorów", () => {

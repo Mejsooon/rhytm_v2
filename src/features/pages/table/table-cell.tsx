@@ -308,7 +308,8 @@ export function TableCell({
         TD,
         "relative cursor-text p-0",
         OBWODKA,
-        field.isTitle ? "font-medium text-foreground" : "text-soft-foreground",
+        // Tekst wszystkich kolumn ciemny (decyzja po kroku 2); tytuł dodatkowo pogrubiony
+        field.isTitle ? "font-medium text-foreground" : "text-foreground",
         (field.type === "number" || field.type === "url") && "tabular-nums",
       )}
     >
@@ -361,7 +362,8 @@ export function TableCell({
           href={adres}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute top-1/2 left-3 block max-w-[calc(100%-24px)] -translate-y-1/2 truncate rounded-sm text-soft-foreground underline decoration-black/20 underline-offset-[3px] outline-none hover:text-foreground focus-visible:shadow-focus"
+          // Wygląda jak zwykły tekst (S2Websites), podkreślenie dopiero po najechaniu
+          className="absolute top-1/2 left-3 block max-w-[calc(100%-24px)] -translate-y-1/2 truncate rounded-sm text-foreground decoration-black/30 underline-offset-[3px] outline-none hover:underline focus-visible:shadow-focus"
         >
           {tekstWidoku}
         </a>

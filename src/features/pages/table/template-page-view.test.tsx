@@ -48,6 +48,7 @@ vi.mock("@/features/vault/actions", () => ({ countSecrets: vault.countSecrets })
 
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
+import type { FieldConfig } from "../fields";
 import { buildTemplateBlocks, type TemplateKey } from "../templates";
 import { TemplatePageView } from "./template-page-view";
 
@@ -59,7 +60,14 @@ const NOWY_SEKRET = { v: 1, g: 1, iv: btoa("iv-nowy-12bB"), ct: btoa("nowy-szyfr
 // Strona z szablonu z wierszami podanymi po nazwach pól i etykietach opcji (dane z makiet)
 function strona(key: TemplateKey, title: string, wiersze: Record<string, unknown>[]): LoadedPage {
   let n = 0;
-  const b = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
+  // „Pusta strona” nie ma już tabeli: w testach jej odpowiednik to tabela z samym polem „Nazwa”
+  const b =
+    key === "empty"
+      ? {
+          content: { name: "", settings: { sort: [], filters: [], hidden_field_ids: [], column_summaries: {}, pinned_cards: [], column_widths: {} } },
+          fields: [{ id: "00000000-0000-4000-8000-000000000001", name: "Nazwa", type: "text" as const, config: { empty_label: "Bez tytułu" } as FieldConfig, is_title: true }],
+        }
+      : buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
   const fields = b.fields.map((f, i) => ({
     id: f.id,
     name: f.name,

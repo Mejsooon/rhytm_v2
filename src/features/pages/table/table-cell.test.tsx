@@ -223,6 +223,22 @@ describe("TableCell", () => {
       await user.type(pole_, "/y{Enter}");
       expect(onSave).toHaveBeenCalledWith("https://github.com/x/y");
     });
+
+    it("link wygląda jak zwykły tekst i podkreśla się dopiero po najechaniu", () => {
+      komorka(pole("url", { name: "Repo" }), wiersz("https://github.com/x"));
+      const link = screen.getByRole("link", { name: "github.com/x" });
+      expect(link).toHaveClass("text-foreground", "hover:underline");
+      expect(link.className.split(" ")).not.toContain("underline");
+    });
+  });
+
+  describe("kolor tekstu", () => {
+    it("tekst kolumny innej niż tytuł jest ciemny, nie szary", () => {
+      komorka(pole("text", { name: "Autor" }), wiersz("Herbert"));
+      const td = screen.getByRole("textbox", { name: "Autor" }).closest("td");
+      expect(td).toHaveClass("text-foreground");
+      expect(td?.className).not.toContain("text-soft-foreground");
+    });
   });
 
   describe("ocena", () => {

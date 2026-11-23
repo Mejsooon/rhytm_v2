@@ -62,7 +62,7 @@ describe("NewPageView", () => {
     const user = userEvent.setup();
     render(<NewPageView />);
     // Domyślnie Pusta strona
-    expect(screen.getByText("Tylko kolumna „Nazwa”. Kolejne dodasz przyciskiem „+” w nagłówku tabeli.")).toBeInTheDocument();
+    expect(screen.getByText("Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz z szybkiego startu albo wpisując „/”.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Books/ }));
     const lista = screen.getByText("Pola, które powstaną").parentElement!;
