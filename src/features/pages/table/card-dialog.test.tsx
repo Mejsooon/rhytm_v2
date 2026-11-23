@@ -328,4 +328,44 @@ describe("CardDialog", () => {
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(onCancel).toHaveBeenCalled();
   });
+
+  it("edycja karty z „{year}” zachowuje surowy znacznik, a podgląd pokazuje rok", async () => {
+    const user = userEvent.setup();
+    const status = pole("Status");
+    const przeczytane = status.config.options!.find(
+      (o) => o.label === "Przeczytane",
+    )!;
+    const { onSave } = pokaz({
+      label: "Przeczytane w {year}",
+      field_id: status.id,
+      aggregation: "count_option_in_year",
+      option_id: przeczytane.id,
+      date_field_id: pole("Przeczytana").id,
+    });
+    expect(
+      within(screen.getByTestId("podglad-karty")).getByText(
+        "Przeczytane w 2026",
+      ),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+    expect((onSave.mock.calls[0][0] as PinnedCard).label).toBe(
+      "Przeczytane w {year}",
+    );
+  });
+
+  it("zmiana sposobu liczenia gubi unit, a znikła opcja czyści napis", async () => {
+    const user = userEvent.setup();
+    const status = pole("Status");
+    const { onSave } = pokaz({
+      label: "Stara",
+      field_id: status.id,
+      aggregation: "count_option",
+      option_id: "nie-ma",
+      unit: ["a", "b", "c"],
+    });
+    expect((screen.getByLabelText("Napis") as HTMLInputElement).value).toBe("");
+    await user.click(screen.getByRole("radio", { name: /^Ile z wszystkich/ }));
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+    expect((onSave.mock.calls[0][0] as PinnedCard).unit).toBeUndefined();
+  });
 });

@@ -275,4 +275,13 @@ describe("PinnedCards: szerokość, menu i kolejność", () => {
       screen.getByRole("menuitem", { name: "Przesuń w lewo" }),
     ).toBeTruthy();
   });
+
+  it("przy 20 kartach „Dodaj kartę” jest wyłączone z podpowiedzią o limicie", () => {
+    pokaz(Array.from({ length: 20 }, () => A));
+    const przycisk = screen.getByRole("button", { name: "Dodaj kartę" });
+    expect((przycisk as HTMLButtonElement).disabled).toBe(true);
+    expect(przycisk.getAttribute("title")).toBe(
+      "Tabela może mieć najwyżej 20 kart.",
+    );
+  });
 });

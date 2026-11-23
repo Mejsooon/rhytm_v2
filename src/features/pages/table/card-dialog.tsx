@@ -131,6 +131,10 @@ export function CardDialog({
     // Rok liczony bez kolumny daty nie działa: wracamy do pierwszego sposobu
     if (sposob === "count_option_in_year" && dataKarty === "")
       sposob = sposoby[0].key;
+    // Zapisana opcja już nie istnieje: jak przy nietrafionej kolumnie czyścimy też napis
+    const opcjaZniknela =
+      initial?.option_id !== undefined &&
+      !opcje.some((o) => o.id === initial.option_id);
     return {
       fieldId: pole?.id ?? "",
       agg: sposob,
@@ -143,7 +147,7 @@ export function CardDialog({
         statusPola?.config.options?.find(
           (o) => o.id === initial?.done_option_id,
         )?.id ?? "",
-      label: trafiona && initial ? initial.label : "",
+      label: trafiona && initial && !opcjaZniknela ? initial.label : "",
     };
   });
 
@@ -192,7 +196,9 @@ export function CardDialog({
       if (w.doneId !== "") karta.done_option_id = w.doneId;
     }
     if (initial?.width !== undefined) karta.width = initial.width;
-    if (initial?.unit !== undefined) karta.unit = initial.unit;
+    // Odmiana jednostki ma sens tylko dla tego samego sposobu liczenia
+    if (initial?.unit !== undefined && initial.aggregation === sposob)
+      karta.unit = initial.unit;
   }
   const wynik = karta ? computeCard(karta, fields, rows, today) : null;
   const mozeDodac =
@@ -410,6 +416,7 @@ export function CardDialog({
               id="karta-napis"
               type="text"
               className={FIELD}
+              maxLength={80}
               value={w.label}
               placeholder={napisDomyslny}
               aria-describedby="karta-napis-podpowiedz"
