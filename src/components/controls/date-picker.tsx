@@ -102,7 +102,7 @@ export function DatePicker({
           aria-haspopup="dialog"
           className={cn(
             variant === "bare"
-              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-soft-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
+              ? "inline-flex min-h-5 cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 font-[inherit] text-[13px] text-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
               : cn(
                   // .igroup: ramka input, promień 10 px, cień xs, ikona muted, tekst sans z cyframi tabelarycznymi
                   "inline-flex min-w-0 cursor-pointer items-center rounded-md border border-input bg-white bg-clip-padding text-left text-foreground tabular-nums shadow-xs outline-none transition-[box-shadow,border-color] duration-150 focus-visible:shadow-focus aria-expanded:border-ring aria-expanded:shadow-halo",
