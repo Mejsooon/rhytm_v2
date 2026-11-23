@@ -56,9 +56,9 @@ export function PinnedCards({
   today: string;
   // Zapis całej listy kart
   onChange: (next: PinnedCard[]) => void;
-  // Okno nowej karty i okno edycji karty o danym indeksie
-  onAdd: () => void;
-  onEdit: (index: number) => void;
+  // Okno nowej karty i okno edycji karty o danym indeksie; brak = brak przycisku „Dodaj kartę” i pozycji „Edytuj kartę”
+  onAdd?: () => void;
+  onEdit?: (index: number) => void;
 }) {
   // Przeciąganie uchwytu: szkic szerokości w stanie, a start (wskaźnik, x, szerokość, ostatnia) w refie
   const [przeciaganie, setPrzeciaganie] = React.useState<{
@@ -145,21 +145,23 @@ export function PinnedCards({
                 }
               >
                 <div role="menu" aria-label="Menu karty">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={POZYCJA}
-                    onClick={() => {
-                      setMenu(null);
-                      onEdit(i);
-                    }}
-                  >
-                    <Pencil
-                      aria-hidden="true"
-                      className="size-4 flex-none text-muted-foreground"
-                    />
-                    <span className="flex-1">Edytuj kartę</span>
-                  </button>
+                  {onEdit && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={POZYCJA}
+                      onClick={() => {
+                        setMenu(null);
+                        onEdit(i);
+                      }}
+                    >
+                      <Pencil
+                        aria-hidden="true"
+                        className="size-4 flex-none text-muted-foreground"
+                      />
+                      <span className="flex-1">Edytuj kartę</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
@@ -378,15 +380,17 @@ export function PinnedCards({
         );
       })}
       {/* „Karta” na końcu rzędu (.addcard): widoczna także przy 0 kart */}
-      <button
-        type="button"
-        aria-label="Dodaj kartę"
-        onClick={onAdd}
-        className="flex min-h-[88px] flex-[0_0_140px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-black/[.16] bg-transparent text-sm font-medium text-muted-foreground outline-none transition-colors hover:border-black/[.24] hover:bg-black/[.02] hover:text-foreground focus-visible:shadow-focus max-[799px]:w-full max-[799px]:flex-[1_1_100%]"
-      >
-        <Plus aria-hidden="true" size={16} />
-        Karta
-      </button>
+      {onAdd && (
+        <button
+          type="button"
+          aria-label="Dodaj kartę"
+          onClick={onAdd}
+          className="flex min-h-[88px] flex-[0_0_140px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-black/[.16] bg-transparent text-sm font-medium text-muted-foreground outline-none transition-colors hover:border-black/[.24] hover:bg-black/[.02] hover:text-foreground focus-visible:shadow-focus max-[799px]:w-full max-[799px]:flex-[1_1_100%]"
+        >
+          <Plus aria-hidden="true" size={16} />
+          Karta
+        </button>
+      )}
     </div>
   );
 }

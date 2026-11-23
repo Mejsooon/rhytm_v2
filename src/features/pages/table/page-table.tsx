@@ -30,6 +30,7 @@ import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
 import { operatorsFor, visibleRows } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
+import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
 import { FilterPopover } from "./filter-popover";
 import { MRowSheet } from "./mobile/m-row-sheet";
@@ -96,6 +97,8 @@ export function PageTable({
   const [przeciaganie, setPrzeciaganie] = React.useState<{ id: string; szer: number } | null>(null);
   const start = React.useRef<{ pointerId: number; x: number; szer: number; aktualna: number } | null>(null);
 
+  // Okno karty: index null = nowa karta, liczba = edycja karty o tym indeksie
+  const [oknoKarty, setOknoKarty] = React.useState<{ index: number | null } | null>(null);
   // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
   const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(store.tableName);
@@ -185,10 +188,31 @@ export function PageTable({
         rows={widoczneWiersze}
         today={today}
         onChange={(next) => void store.patchSettings({ pinned_cards: next })}
-        // Okno karty (nowa i edycja) dochodzi w zadaniu 7
-        onAdd={() => {}}
-        onEdit={() => {}}
+        onAdd={() => setOknoKarty({ index: null })}
+        onEdit={(index) => setOknoKarty({ index })}
       />
+      {/* Okno karty montujemy dopiero po otwarciu, żeby każde zaczynało od stanu startowego */}
+      {oknoKarty && (
+        <CardDialog
+          open
+          tableName={store.tableName}
+          fields={fields}
+          rows={widoczneWiersze}
+          today={today}
+          initial={oknoKarty.index === null ? null : (settings.pinned_cards[oknoKarty.index] ?? null)}
+          onCancel={() => setOknoKarty(null)}
+          onSave={(karta) => {
+            // Nowa karta na końcu listy; edycja podmienia kartę pod indeksem
+            const index = oknoKarty.index;
+            const next =
+              index === null
+                ? [...settings.pinned_cards, karta]
+                : settings.pinned_cards.map((c, j) => (j === index ? karta : c));
+            void store.patchSettings({ pinned_cards: next });
+            setOknoKarty(null);
+          }}
+        />
+      )}
 
       {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">

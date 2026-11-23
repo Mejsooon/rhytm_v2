@@ -936,4 +936,39 @@ describe("PageTable", () => {
       expect(actions.addRow).not.toHaveBeenCalled();
     });
   });
+
+  describe("okno karty", () => {
+    it("„Dodaj kartę” zapisuje nową kartę na końcu listy", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Dodaj kartę" }));
+      const okno = screen.getByRole("dialog");
+      await user.click(within(within(okno).getByRole("radiogroup", { name: "Kolumna" })).getByRole("radio", { name: "Autor" }));
+      await user.click(within(okno).getByRole("button", { name: "Dodaj kartę" }));
+      const [blokId, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(blokId).toBe(b.id);
+      expect(zmiany.pinned_cards).toHaveLength(4);
+      expect(zmiany.pinned_cards[3]).toMatchObject({ label: "Autor", aggregation: "count_distinct" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("„Edytuj kartę” podmienia kartę pod indeksem i zachowuje szerokość", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      (b.content.settings as { pinned_cards: { width?: number }[] }).pinned_cards[1].width = 300;
+      render(<PageTable block={b} today={TODAY} />);
+      const menuKarty = screen.getAllByRole("button", { name: "Menu karty" })[1];
+      await user.click(menuKarty);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      const okno = screen.getByRole("dialog");
+      expect(within(okno).getByRole("heading", { name: "Edytuj kartę" })).toBeInTheDocument();
+      await user.clear(within(okno).getByLabelText("Napis"));
+      await user.type(within(okno).getByLabelText("Napis"), "Moja ocena");
+      await user.click(within(okno).getByRole("button", { name: "Zapisz" }));
+      const [, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(zmiany.pinned_cards).toHaveLength(3);
+      expect(zmiany.pinned_cards[1]).toMatchObject({ label: "Moja ocena", width: 300 });
+    });
+  });
 });

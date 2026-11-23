@@ -256,4 +256,23 @@ describe("PinnedCards: szerokość, menu i kolejność", () => {
     await user.click(screen.getByRole("button", { name: "Dodaj kartę" }));
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
+
+  it("bez onAdd nie ma przycisku „Dodaj kartę”, a bez onEdit nie ma pozycji „Edytuj kartę”", async () => {
+    const user = userEvent.setup();
+    render(
+      <PinnedCards
+        cards={[A]}
+        fields={POLA}
+        rows={[]}
+        today="2026-11-15"
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Dodaj kartę" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Menu karty" }));
+    expect(screen.queryByRole("menuitem", { name: "Edytuj kartę" })).toBeNull();
+    expect(
+      screen.getByRole("menuitem", { name: "Przesuń w lewo" }),
+    ).toBeTruthy();
+  });
 });

@@ -300,9 +300,7 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
           rows={widoczneWiersze}
           today={today}
           onChange={(next) => void store.patchSettings({ pinned_cards: next })}
-          // Okno karty (nowa i edycja) dochodzi w zadaniu 7
-          onAdd={() => {}}
-          onEdit={() => {}}
+          // Hasła nie mają okna karty: bez onAdd i onEdit nie ma „Dodaj kartę” ani „Edytuj kartę”
         />
         )}
 
