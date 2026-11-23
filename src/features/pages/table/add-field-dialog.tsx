@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Search, type LucideIcon } from "lucide-react";
+import { Plus, Search, type LucideIcon } from "lucide-react";
 
 import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL, StatusBadge } from "@/components/controls";
 import { cn } from "@/lib/utils";
@@ -42,12 +42,15 @@ const OPCJE_STATUSU = [
 
 // Okno „Nowe pole” (AddField.dc.html) przy przycisku „+ Pole”: lista typów z wyszukiwarką
 // po lewej, po prawej nazwa pola (domyślna z typu), opis i ustawienia typu.
+// iconTrigger: wyzwalaczem jest sam „+” w ostatnim nagłówku tabeli (.addcol z S2Books.dc.html).
 export function AddFieldDialog({
   allowSecret = false,
+  iconTrigger = false,
   onAdd,
 }: {
   // Typ Sekret tylko na stronie z szablonu (nie na „Pustej stronie”)
   allowSecret?: boolean;
+  iconTrigger?: boolean;
   onAdd: (input: { name: string; type: FieldType; config: FieldConfig }) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -121,9 +124,21 @@ export function AddFieldDialog({
       // .pop bez paddingu: lewa kolumna z listą typów sięga krawędzi okna
       className="overflow-hidden p-0"
       trigger={
-        <Button aria-expanded={open} className="aria-expanded:bg-accent">
-          + Pole
-        </Button>
+        iconTrigger ? (
+          // .addcol: na całą szerokość komórki, min. 38 px, jasnoszary „+”, tło 4 % przy najechaniu
+          <button
+            type="button"
+            aria-label="Dodaj kolumnę"
+            aria-expanded={open}
+            className="grid min-h-[38px] w-full cursor-pointer place-items-center rounded-md border-0 bg-transparent text-faint-foreground outline-none hover:bg-black/[.04] hover:text-foreground focus-visible:shadow-focus aria-expanded:bg-black/[.04] max-[799px]:min-h-11"
+          >
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        ) : (
+          <Button aria-expanded={open} className="aria-expanded:bg-accent">
+            + Pole
+          </Button>
+        )
       }
     >
       <div className="flex w-[min(660px,calc(100vw-48px))] flex-wrap">

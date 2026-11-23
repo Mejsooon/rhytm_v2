@@ -12,16 +12,20 @@ import {
   changeFieldType,
   deleteField,
   deleteRow,
+  reorderFields,
   restoreRow,
   saveTableSettings,
+  updateBlockContent,
   updateField,
   updateRow,
 } from "../actions";
 import {
+  PALETA,
   normalizeValue,
   planTypeChange,
   type CellValue,
   type FieldConfig,
+  type FieldOption,
   type FieldType,
   type PageField,
 } from "../fields";
@@ -103,6 +107,14 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   if (zrodloUstawien !== block.content.settings) {
     setZrodloUstawien(block.content.settings);
     setSettings((s) => (ustawieniaWToku.current > 0 ? s : zSerwera));
+  }
+  // Nazwa tabeli z content.name; nowa nazwa z serwera zastępuje lokalną
+  const nazwaZSerwera = typeof block.content.name === "string" ? block.content.name : "";
+  const [tableName, setTableName] = useState(nazwaZSerwera);
+  const [zrodloNazwy, setZrodloNazwy] = useState(nazwaZSerwera);
+  if (zrodloNazwy !== nazwaZSerwera) {
+    setZrodloNazwy(nazwaZSerwera);
+    setTableName(nazwaZSerwera);
   }
 
   const posortowanePola = [...fields].sort((a, b) => a.position - b.position);
@@ -427,8 +439,77 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return true;
   }
 
+  // Nazwa tabeli (content.name): od razu lokalnie, zapis z zachowaniem content.settings; błąd cofa
+  async function renameTable(name: string): Promise<boolean> {
+    if (name === tableName) return true;
+    const poprzednia = tableName;
+    setTableName(name);
+    let udane = false;
+    try {
+      udane = (await updateBlockContent(block.id, { ...block.content, name })).ok;
+    } catch {
+      udane = false;
+    }
+    if (!udane) {
+      setTableName(poprzednia);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
+  }
+
+  // Przesunięcie kolumny o jedno miejsce; kolejność zapisuje jedno RPC (jak w edytorze)
+  async function moveField(field: PageField, dir: -1 | 1): Promise<boolean> {
+    // Kolumny bez prawdziwego id nie wejdą jeszcze w kolejność na serwerze
+    if (posortowanePola.some((f) => f.id.startsWith(PREFIKS_TYMCZASOWY))) return false;
+    const i = posortowanePola.findIndex((f) => f.id === field.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= posortowanePola.length) return false;
+    const nowaKolejnosc = [...posortowanePola];
+    [nowaKolejnosc[i], nowaKolejnosc[j]] = [nowaKolejnosc[j], nowaKolejnosc[i]];
+    const poprzednie = fields;
+    setFields(nowaKolejnosc.map((f, indeks) => ({ ...f, position: indeks })));
+    polaWToku.current += 1;
+    let udane = false;
+    try {
+      udane = (await reorderFields(block.id, nowaKolejnosc.map((f) => f.id))).ok;
+    } catch {
+      udane = false;
+    }
+    polaWToku.current -= 1;
+    if (!udane) {
+      setFields(poprzednie);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
+  }
+
+  // Nowa opcja Wyboru: kolor to następny z PALETA; etykieta już istniejąca (bez wielkości liter) nic nie robi
+  async function addOption(field: PageField, label: string): Promise<boolean> {
+    const etykieta = label.trim();
+    const opcje = field.config.options ?? [];
+    if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
+      return false;
+    }
+    const nowa: FieldOption = {
+      id: crypto.randomUUID(),
+      label: etykieta,
+      color: PALETA[opcje.length % PALETA.length],
+    };
+    return patchField(field, { config: { ...field.config, options: [...opcje, nowa] } });
+  }
+
+  // Usunięcie opcji Wyboru; opcja domyślna nowego wiersza znika razem z nią
+  async function removeOption(field: PageField, optionId: string): Promise<boolean> {
+    const config: FieldConfig = {
+      ...field.config,
+      options: (field.config.options ?? []).filter((o) => o.id !== optionId),
+    };
+    if (config.default_option === optionId) delete config.default_option;
+    return patchField(field, { config });
+  }
+
   // Zmiana nazwy albo konfiguracji pola (np. „Pokaż w kalendarzu”): od razu lokalnie, błąd cofa
-  async function patchField(field: PageField, patch: { name?: string; config?: FieldConfig }) {
+  async function patchField(field: PageField, patch: { name?: string; config?: FieldConfig }): Promise<boolean> {
     setFields((l) => l.map((f) => (f.id === field.id ? { ...f, ...patch } : f)));
     polaWToku.current += 1;
     let udane = false;
@@ -452,6 +533,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       );
       toast.error(BLAD_ZAPISU);
     }
+    return udane;
   }
 
   // „Usuń pole”: kolumna znika od razu razem ze śladami w ustawieniach (jak w RPC delete_field);
@@ -545,5 +627,10 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     applyTypeChange,
     patchField,
     removeField,
+    tableName,
+    renameTable,
+    moveField,
+    addOption,
+    removeOption,
   };
 }

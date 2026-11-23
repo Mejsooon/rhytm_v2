@@ -109,6 +109,15 @@ describe("menu kolumny", () => {
     expect(dymek).toHaveAttribute("data-side", "bottom");
   });
 
+  it("bez onMove… i onAddOption menu nie ma „Przesuń…” ani sekcji „Opcje” (widok szablonu)", async () => {
+    const user = userEvent.setup();
+    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    const menu = await otworzMenu(user, "Status");
+    expect(within(menu).queryByRole("menuitem", { name: /Przesuń/ })).not.toBeInTheDocument();
+    expect(within(menu).queryByText("Opcje")).not.toBeInTheDocument();
+    expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
+  });
+
   it("pole tytułowe: Typ i Usuń pole są wyszarzone", async () => {
     const user = userEvent.setup();
     render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);

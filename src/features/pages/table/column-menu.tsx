@@ -4,6 +4,8 @@ import * as React from "react";
 import {
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
+  ArrowLeft,
+  ArrowRight,
   Calendar,
   Check,
   ChevronRight,
@@ -22,6 +24,7 @@ import {
   MENU_SEPARATOR,
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
+import { OptionBadge } from "../editor/cell-editor";
 import { FIELD_TYPE_META, type FieldType, type PageField } from "../fields";
 import { summaryOptions, type ColumnSummary, type SummaryKind } from "../table-model";
 import { NAZWY_PODSUMOWAN } from "./summary-cell";
@@ -37,6 +40,7 @@ const PODMENU =
 // Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Podsumowanie … ›”,
 // „Pokaż w kalendarzu” (tylko Data), „Ukryj kolumnę” i „Usuń pole”. Wyzwalaczem jest nagłówek kolumny;
 // podmenu (typy, podsumowania) otwierają się obok menu, na telefonie pod pozycją.
+// Opcjonalnie (blok PageTable): „Przesuń w lewo / w prawo” i dla Wyboru sekcja „Opcje” z polem „Nowa opcja…”.
 export function ColumnMenu({
   field,
   open,
@@ -52,6 +56,12 @@ export function ColumnMenu({
   onHide,
   onDelete,
   onCloseAutoFocus,
+  onMoveLeft,
+  onMoveRight,
+  firstColumn = false,
+  lastColumn = false,
+  onAddOption,
+  onRemoveOption,
 }: {
   field: PageField;
   open: boolean;
@@ -69,6 +79,14 @@ export function ColumnMenu({
   onDelete: () => void;
   // Pozwala wyłączyć zwrot fokusu na nagłówek (gdy zaraz otwiera się filtr)
   onCloseAutoFocus?: (e: Event) => void;
+  // Przesuwanie kolumny (bez nich pozycji „Przesuń…” nie ma); skrajne kolumny mają jedną z nich wyłączoną
+  onMoveLeft?: () => void;
+  onMoveRight?: () => void;
+  firstColumn?: boolean;
+  lastColumn?: boolean;
+  // Edycja opcji Wyboru w menu (bez nich sekcji „Opcje” nie ma)
+  onAddOption?: (label: string) => void;
+  onRemoveOption?: (optionId: string) => void;
 }) {
   const [podmenu, setPodmenu] = React.useState<"typ" | "podsumowanie" | null>(null);
   // Strona otwarcia podmenu: w lewo, gdy menu stoi przy prawej krawędzi okna
@@ -81,7 +99,10 @@ export function ColumnMenu({
     setNazwa(field.name);
   }
 
+  const [nowaOpcja, setNowaOpcja] = React.useState("");
+
   const meta = FIELD_TYPE_META[field.type];
+  const jestWyborem = field.type === "select" || field.type === "status";
   const wKalendarzu = field.config.show_in_calendar === true;
 
   // Aktualne podsumowanie: rodzaj ogólny albo szablonowe (licznik opcji / roku) z własną etykietą
@@ -221,6 +242,46 @@ export function ColumnMenu({
           )}
         </div>
 
+        {jestWyborem && onAddOption && (
+          <>
+            <div className={MENU_SEPARATOR} />
+            <div className={MENU_LABEL}>Opcje</div>
+            <div className="flex flex-wrap gap-1 px-2">
+              {(field.config.options ?? []).map((o) => (
+                <OptionBadge key={o.id} option={o}>
+                  <button
+                    type="button"
+                    aria-label={`Usuń opcję ${o.label}`}
+                    onClick={() => onRemoveOption?.(o.id)}
+                    className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-60 outline-none focus-visible:shadow-focus max-[799px]:min-h-11 max-[799px]:min-w-11"
+                  >
+                    ×
+                  </button>
+                </OptionBadge>
+              ))}
+            </div>
+            <div className="px-1 pt-2 pb-1">
+              {/* Enter dodaje opcję i czyści pole; menu zostaje otwarte */}
+              <input
+                type="text"
+                value={nowaOpcja}
+                onChange={(e) => setNowaOpcja(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (nowaOpcja.trim() === "") return;
+                    onAddOption(nowaOpcja.trim());
+                    setNowaOpcja("");
+                  }
+                }}
+                placeholder="Nowa opcja…"
+                aria-label="Nowa opcja"
+                className={FIELD}
+              />
+            </div>
+          </>
+        )}
+
         <div className={MENU_SEPARATOR} />
         {/* Szyfrogramu nie da się sortować: kolumna Sekret nie ma sortowania */}
         {field.type !== "secret" && (
@@ -302,6 +363,18 @@ export function ColumnMenu({
                 )}
               />
             </span>
+          </button>
+        )}
+        {onMoveLeft && (
+          <button type="button" role="menuitem" disabled={firstColumn} onClick={() => wykonaj(onMoveLeft)} className={POZYCJA}>
+            <ArrowLeft aria-hidden="true" className={IKONA} />
+            <span className="flex-1">Przesuń w lewo</span>
+          </button>
+        )}
+        {onMoveRight && (
+          <button type="button" role="menuitem" disabled={lastColumn} onClick={() => wykonaj(onMoveRight)} className={POZYCJA}>
+            <ArrowRight aria-hidden="true" className={IKONA} />
+            <span className="flex-1">Przesuń w prawo</span>
           </button>
         )}
         <button
