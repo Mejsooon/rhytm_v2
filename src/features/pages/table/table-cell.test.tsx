@@ -300,6 +300,40 @@ describe("TableCell", () => {
     });
   });
 
+  describe("data: klik w puste miejsce komórki", () => {
+    it("przy otwartym kalendarzu zamyka go i nie otwiera ponownie; przy zamkniętym otwiera", async () => {
+      const { container } = komorka(
+        pole("date", { name: "Termin", config: { show_in_calendar: true } }),
+        wiersz("2026-11-16"),
+      );
+      const wyzwalacz = screen.getByRole("button", { name: "Termin" });
+      // Puste miejsce komórki: div z wyzwalaczem (nie sam przycisk)
+      const puste = container.querySelector("td > div") as HTMLElement;
+
+      // Zamknięty: klik w puste miejsce otwiera
+      fireEvent.pointerDown(puste);
+      fireEvent.click(puste);
+      expect(wyzwalacz).toHaveAttribute("aria-expanded", "true");
+      expect(await screen.findByRole("dialog")).toBeInTheDocument();
+      // Radix podpina nasłuch pointerdown poza treścią po setTimeout(0)
+      await act(() => new Promise((r) => setTimeout(r, 10)));
+
+      // Otwarty: pointerdown + click w to samo puste miejsce zamyka i zostaje zamknięty
+      fireEvent.pointerDown(puste);
+      // Radix (popover 1.3.x) zamyka dymek dopiero na click poza treścią, więc w onClick komórki
+      // aria-expanded jest jeszcze true, a programowy click() wyzwalacza zamyka, nie otwiera ponownie
+      fireEvent.click(puste);
+      await act(() => new Promise((r) => setTimeout(r, 10)));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(wyzwalacz).toHaveAttribute("aria-expanded", "false");
+
+      // Po zamknięciu klik w puste miejsce znów otwiera
+      fireEvent.pointerDown(puste);
+      fireEvent.click(puste);
+      expect(wyzwalacz).toHaveAttribute("aria-expanded", "true");
+    });
+  });
+
   it("status pokazuje plakietkę opcji", () => {
     const f = pole("status", {
       config: { options: [{ id: "o1", label: "Czytam", color: "#0070f3" }] },

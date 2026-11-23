@@ -34,7 +34,7 @@ export function SummaryCell({
   return (
     <td
       // Stopka jak w S2Books.dc.html: padding 8 × 12 px (wiersz ok. 37 px), linia nad komórką, liczby do prawej; średnia wyróżniona
-      className={`border-t py-2 border-border px-3 tabular-nums ${field.type === "number" ? "text-right" : ""} ${
+      className={`border-t border-border px-3 py-2 tabular-nums ${field.type === "number" ? "text-right" : ""} ${
         summary?.kind === "avg" ? "font-semibold text-foreground" : "text-muted-foreground"
       }`}
     >
