@@ -856,6 +856,35 @@ describe("weekBars", () => {
     expect(wynik[1].percent).toBe(25);
   });
 
+  it("Bieg tuż pod celem: nie „cel osiągnięty”, brakujące km w górę do 0,1, pasek < 100", () => {
+    const wynik = weekBars(
+      wejscie({
+        kmGoalOn: true,
+        weeklyKmGoal: 25,
+        sportItems: [trening("r1", { distanceKm: 24.96, durationS: 7200 })],
+      }),
+    );
+    expect(wynik[1].right).toBe("jeszcze 0,1 km");
+    expect(wynik[1].percent).toBe(99);
+    const ulamek = weekBars(
+      wejscie({
+        kmGoalOn: true,
+        weeklyKmGoal: 10,
+        sportItems: [trening("r1", { distanceKm: 3.04, durationS: 900 })],
+      }),
+    );
+    // 10 − 3,04 = 6,96 → 7
+    expect(ulamek[1].right).toBe("jeszcze 7 km");
+    const rowno = weekBars(
+      wejscie({
+        kmGoalOn: true,
+        weeklyKmGoal: 25,
+        sportItems: [trening("r1", { distanceKm: 25, durationS: 7200 })],
+      }),
+    );
+    expect(rowno[1]).toMatchObject({ right: "cel osiągnięty", percent: 100 });
+  });
+
   it("cel wyłączony: sama wartość, pusty pasek, „—”; sen bez wpisów", () => {
     const wynik = weekBars(
       wejscie({
@@ -1084,6 +1113,21 @@ describe("dayPlanRows", () => {
     expect(
       wiersze.map((w) => (w.type === "gap" ? `gap${w.startMin}` : w.item.key)),
     ).toEqual(["gap0", "a", "b", "c", "gap780", "d", "gap800"]);
+  });
+  it("blok od 00:00 nie ma przerwy przed sobą; wpis ucięty do 1440 nie ma przerwy po sobie", () => {
+    const wiersze = dayPlanRows([wpis("a", 0, 60), wpis("b", 1380, 1440)]);
+    expect(
+      wiersze.map((w) => (w.type === "gap" ? w.label : w.item.key)),
+    ).toEqual(["a", "22 h wolne", "b"]);
+    expect(wiersze[1]).toMatchObject({
+      startMin: 60,
+      endMin: 1380,
+      time: "01:00",
+    });
+    // Cała doba jednym wpisem: bez przerw
+    expect(dayPlanRows([wpis("c", 0, 1440)]).map((w) => w.type)).toEqual([
+      "item",
+    ]);
   });
 });
 

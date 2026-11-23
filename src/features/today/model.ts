@@ -481,10 +481,15 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
   const treningiCel = input.workoutsGoalOn;
   const treningiBrakuje = Math.max(0, t.workouts.total - t.workouts.done);
 
-  // Bieg: cel wyłączony (goalKm null) → sama liczba km
+  // Bieg: cel wyłączony (goalKm null) → sama liczba km. „Cel osiągnięty” tylko przy surowym
+  // km ≥ cel (24,96 z 25 to jeszcze nie cel); brakujące km zaokrąglone w górę do 0,1
+  // (odjęcie 1e-9 chroni przed błędem ułamków, np. 15,000000000000002 → 15,1)
   const biegCel = t.run.goalKm;
+  const biegOsiagniety = biegCel !== null && t.run.km >= biegCel;
   const biegBrakuje =
-    biegCel === null ? 0 : Math.round((biegCel - t.run.km) * 10) / 10;
+    biegCel === null || biegOsiagniety
+      ? 0
+      : Math.ceil((biegCel - t.run.km) * 10 - 1e-9) / 10;
 
   // Sen: średnia wobec celu, nie więcej niż 100 %
   const sen = t.sleep;
@@ -505,13 +510,19 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
       label: "Bieg",
       value: km(t.run.km),
       unit: biegCel === null ? "km" : `/ ${km(biegCel)} km`,
-      percent: biegCel === null ? 0 : procent(t.run.km, biegCel),
+      // Przed celem pasek najwyżej 99 % (zaokrąglenie nie może udawać pełnego paska)
+      percent:
+        biegCel === null
+          ? 0
+          : biegOsiagniety
+            ? procent(t.run.km, biegCel)
+            : Math.min(99, procent(t.run.km, biegCel)),
       right:
         biegCel === null
           ? "—"
-          : biegBrakuje <= 0
+          : biegOsiagniety
             ? "cel osiągnięty"
-            : `jeszcze ${km(biegBrakuje)} km`,
+            : `jeszcze ${km(Math.max(0.1, biegBrakuje))} km`,
     },
     {
       label: "Nawyki",
