@@ -26,4 +26,14 @@ describe("ActionPopover", () => {
     expect(zlapane.props?.avoidCollisions).toBe(true);
     expect(zlapane.props?.collisionPadding).toBe(8);
   });
+
+  it("przekazuje onEscapeKeyDown do Radixa", () => {
+    const f = vi.fn();
+    render(
+      <ActionPopover open onOpenChange={() => {}} onEscapeKeyDown={f} trigger={<button>Otwórz</button>}>
+        <div>Treść</div>
+      </ActionPopover>,
+    );
+    expect(zlapane.props?.onEscapeKeyDown).toBe(f);
+  });
 });

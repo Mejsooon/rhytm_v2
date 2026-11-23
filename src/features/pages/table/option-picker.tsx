@@ -24,6 +24,7 @@ export function OptionPicker({
   onCreate,
   onUpdate,
   onRemove,
+  panelRef,
 }: {
   field: PageField;
   value: string | null;
@@ -31,6 +32,11 @@ export function OptionPicker({
   onCreate: (label: string) => Promise<string | null>;
   onUpdate: (id: string, patch: { label?: string; color?: string }) => void;
   onRemove: (id: string) => void;
+  // Wskaźnik „panel edycji jest otwarty”, dla Esc obsługiwanego przez okienko (Radix łapie Esc na document)
+  panelRef?: React.MutableRefObject<{
+    otwarty: boolean;
+    wstecz: () => void;
+  } | null>;
 }) {
   const opcje = field.config.options ?? [];
   // Wpisany tekst, opcja w panelu (null = lista) i szkic jej nazwy
@@ -41,9 +47,21 @@ export function OptionPicker({
   const [najechana, setNajechana] = React.useState<string | null>(null);
 
   const szukane = q.trim();
-  const pasujace = opcje.filter((o) => o.label.toLowerCase().includes(szukane.toLowerCase()));
-  const dokladna = opcje.find((o) => o.label.toLowerCase() === szukane.toLowerCase());
+  const pasujace = opcje.filter((o) =>
+    o.label.toLowerCase().includes(szukane.toLowerCase()),
+  );
+  const dokladna = opcje.find(
+    (o) => o.label.toLowerCase() === szukane.toLowerCase(),
+  );
   const edytowana = opcje.find((o) => o.id === edytowanaId);
+  // Okienko pyta o to przy Esc: w panelu Esc cofa do listy zamiast zamykać
+  React.useEffect(() => {
+    if (panelRef)
+      panelRef.current = {
+        otwarty: edytowana !== undefined,
+        wstecz: () => setEdytowanaId(null),
+      };
+  });
 
   // Wybór bieżącej opcji ją czyści
   function wybierz(id: string) {
@@ -59,7 +77,8 @@ export function OptionPicker({
   // Panel: zapis nazwy (tylko gdy niepusta i zmieniona), potem powrót do listy
   function zapiszNazwe() {
     const nowa = nazwa.trim();
-    if (edytowana && nowa !== "" && nowa !== edytowana.label) onUpdate(edytowana.id, { label: nowa });
+    if (edytowana && nowa !== "" && nowa !== edytowana.label)
+      onUpdate(edytowana.id, { label: nowa });
     setEdytowanaId(null);
   }
 
@@ -69,13 +88,6 @@ export function OptionPicker({
         role="group"
         aria-label="Edycja opcji"
         className="flex flex-col gap-1"
-        // Esc w panelu to „Wstecz”: wraca do listy, okienko zostaje
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.stopPropagation();
-            setEdytowanaId(null);
-          }
-        }}
       >
         <input
           type="text"
@@ -91,7 +103,9 @@ export function OptionPicker({
           }}
           className={POLE}
         />
-        <div className="px-1 pt-2 pb-0.5 text-xs font-medium text-muted-foreground">Kolor</div>
+        <div className="px-1 pt-2 pb-0.5 text-xs font-medium text-muted-foreground">
+          Kolor
+        </div>
         {KOLORY_OPCJI.map((k) => (
           <button
             key={k.name}
@@ -101,8 +115,12 @@ export function OptionPicker({
             onClick={() => onUpdate(edytowana.id, { color: k.color })}
             className={POZYCJA}
           >
-            <OptionBadge option={{ ...edytowana, color: k.color, label: k.name }} />
-            {edytowana.color === k.color && <Check aria-hidden="true" className="ml-auto size-4" />}
+            <OptionBadge
+              option={{ ...edytowana, color: k.color, label: k.name }}
+            />
+            {edytowana.color === k.color && (
+              <Check aria-hidden="true" className="ml-auto size-4" />
+            )}
           </button>
         ))}
         <div className="mt-1 border-t border-border pt-1">
@@ -119,7 +137,11 @@ export function OptionPicker({
           </button>
         </div>
         <div className="flex justify-between gap-2 pt-0.5">
-          <Button variant="ghost" size="sm" onClick={() => setEdytowanaId(null)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEdytowanaId(null)}
+          >
             Wstecz
           </Button>
           <Button size="sm" onClick={zapiszNazwe}>
@@ -152,7 +174,11 @@ export function OptionPicker({
       </div>
       <div className="relative">
         {/* Lista zawiera same opcje (role="option"); „⋯” leży obok, w osobnej warstwie nad końcem wierszy */}
-        <div role="listbox" aria-label={`Opcje: ${field.name}`} className="flex flex-col">
+        <div
+          role="listbox"
+          aria-label={`Opcje: ${field.name}`}
+          className="flex flex-col"
+        >
           {pasujace.map((o) => (
             <button
               key={o.id}
@@ -162,16 +188,25 @@ export function OptionPicker({
               onClick={() => wybierz(o.id)}
               onMouseEnter={() => setNajechana(o.id)}
               onMouseLeave={() => setNajechana(null)}
+              onFocus={() => setNajechana(o.id)}
+              onBlur={() => setNajechana(null)}
               className={`${POZYCJA} h-8 pr-9`}
             >
-              <OptionBadge option={o} />
-              {o.id === value && <Check aria-hidden="true" className="ml-auto size-4" />}
+              <span className="flex min-w-0">
+                <OptionBadge option={o} />
+              </span>
+              {o.id === value && (
+                <Check aria-hidden="true" className="ml-auto size-4" />
+              )}
             </button>
           ))}
         </div>
         <div className="pointer-events-none absolute inset-0 flex flex-col">
           {pasujace.map((o) => (
-            <div key={o.id} className="flex h-8 shrink-0 items-center justify-end">
+            <div
+              key={o.id}
+              className="flex h-8 shrink-0 items-center justify-end"
+            >
               {/* „⋯” widoczne po najechaniu i przy fokusie (.optmenu) */}
               <Button
                 variant="ghost"

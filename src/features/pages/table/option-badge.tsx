@@ -26,8 +26,8 @@ export function OptionBadge({
   // Bez koloru: szara plakietka z obrysem (jak odznaka outline)
   if (option.color === "") {
     return (
-      <span className="inline-flex h-[18px] items-center justify-center gap-1 rounded-sm border border-input bg-white px-[5px] text-xs leading-none font-medium whitespace-nowrap text-[#404040]">
-        {option.label}
+      <span className="inline-flex max-w-full min-w-0 h-[18px] items-center justify-center gap-1 rounded-sm border border-input bg-white px-[5px] text-xs leading-none font-medium whitespace-nowrap text-[#404040]">
+        <span className="truncate">{option.label}</span>
         {children}
       </span>
     );
@@ -36,10 +36,10 @@ export function OptionBadge({
   const tlo = TLA_PLAKIETEK[kolor] ?? { tlo: `${option.color}14` };
   return (
     <span
-      className="inline-flex h-[18px] items-center justify-center gap-1 rounded-sm border border-transparent px-[5px] text-xs leading-none font-medium whitespace-nowrap"
+      className="inline-flex max-w-full min-w-0 h-[18px] items-center justify-center gap-1 rounded-sm border border-transparent px-[5px] text-xs leading-none font-medium whitespace-nowrap"
       style={{ color: tlo.tekst ?? option.color, background: tlo.tlo }}
     >
-      {option.label}
+      <span className="truncate">{option.label}</span>
       {children}
     </span>
   );

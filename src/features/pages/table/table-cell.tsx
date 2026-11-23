@@ -2,20 +2,34 @@
 
 import * as React from "react";
 
-import { ActionPopover, Checkbox, DatePicker, StatusBadge, type IsoDate } from "@/components/controls";
+import {
+  ActionPopover,
+  Checkbox,
+  DatePicker,
+  StatusBadge,
+  type IsoDate,
+} from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { OptionBadge } from "./option-badge";
 import { OptionPicker } from "./option-picker";
-import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
+import {
+  formatValue,
+  isUrgent,
+  normalizeValue,
+  relativeDue,
+  type PageField,
+} from "../fields";
 import type { PageRow } from "../table-model";
 
 // Przerwa w pisaniu, po której szkic tekstu trafia do zapisu
 const OPOZNIENIE_ZAPISU = 600;
 
 // Komórka .td z S2Books.dc.html: wiersz 44 px, dolna linia (bez niej w ostatnim wierszu), najechanie podświetla o 2 %
-const TD = "h-11 border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02]";
+const TD =
+  "h-11 border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02]";
 // Komórka w edycji (.celltxt:focus-within): niebieska obwódka do środka i białe tło
-const OBWODKA = "focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]";
+const OBWODKA =
+  "focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]";
 
 // Jedna komórka tabeli edytowana wprost, jak w Notion (S2Books.dc.html). Tekst, liczba i link to stałe
 // pole bez ramki: zapis po 600 ms przerwy oraz od razu przy Enter, Esc, wyjściu i odmontowaniu.
@@ -44,7 +58,10 @@ export function TableCell({
   onFocused?: () => void;
   // Opcje select/status tworzone, zmieniane i usuwane z okienka komórki
   onCreateOption?: (label: string) => Promise<string | null>;
-  onUpdateOption?: (id: string, patch: { label?: string; color?: string }) => void;
+  onUpdateOption?: (
+    id: string,
+    patch: { label?: string; color?: string },
+  ) => void;
   onRemoveOption?: (id: string) => void;
 }) {
   const v = normalizeValue(field, row.values[field.id]);
@@ -55,6 +72,10 @@ export function TableCell({
   const poleRef = React.useRef<HTMLInputElement>(null);
   // Okienko opcji (select i status)
   const [okienko, setOkienko] = React.useState(false);
+  const panelOpcji = React.useRef<{
+    otwarty: boolean;
+    wstecz: () => void;
+  } | null>(null);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   // Wpisany, a jeszcze niezapisany tekst (null = nic do zapisu) i najnowsze onSave — dla zapisu przy odmontowaniu
   const niezapisany = React.useRef<string | null>(null);
@@ -95,7 +116,11 @@ export function TableCell({
   if (field.type === "secret") {
     return (
       <td className={cn(TD, "px-3 text-soft-foreground")}>
-        {v === null ? <span className="text-faint-foreground">—</span> : "••••••••"}
+        {v === null ? (
+          <span className="text-faint-foreground">—</span>
+        ) : (
+          "••••••••"
+        )}
       </td>
     );
   }
@@ -115,6 +140,13 @@ export function TableCell({
           onOpenChange={setOkienko}
           width={240}
           className="p-1"
+          // Esc w panelu edycji opcji wraca do listy, dopiero drugi zamyka okienko
+          onEscapeKeyDown={(e) => {
+            if (panelOpcji.current?.otwarty) {
+              e.preventDefault();
+              panelOpcji.current.wstecz();
+            }
+          }}
           ariaLabel={field.name}
           trigger={
             <button
@@ -122,18 +154,27 @@ export function TableCell({
               aria-label={field.name}
               className="flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
             >
-              {opcja ? <OptionBadge option={opcja} /> : <span className="text-faint-foreground">—</span>}
+              {opcja ? (
+                <span className="flex min-w-0">
+                  <OptionBadge option={opcja} />
+                </span>
+              ) : (
+                <span className="text-faint-foreground">—</span>
+              )}
             </button>
           }
         >
           <OptionPicker
+            panelRef={panelOpcji}
             field={field}
             value={typeof v === "string" ? v : null}
             onPick={(id) => {
               onSave(id);
               setOkienko(false);
             }}
-            onCreate={(label) => onCreateOption?.(label) ?? Promise.resolve(null)}
+            onCreate={(label) =>
+              onCreateOption?.(label) ?? Promise.resolve(null)
+            }
             onUpdate={(id, patch) => onUpdateOption?.(id, patch)}
             onRemove={(id) => onRemoveOption?.(id)}
           />
@@ -146,7 +187,11 @@ export function TableCell({
     const ocena = typeof v === "number" ? v : 0;
     return (
       <td className={cn(TD, "px-3")}>
-        <span role="group" aria-label={field.name} className="inline-flex gap-px">
+        <span
+          role="group"
+          aria-label={field.name}
+          className="inline-flex gap-px"
+        >
           {[1, 2, 3, 4, 5].map((k) => (
             <button
               key={k}
@@ -171,15 +216,23 @@ export function TableCell({
   if (field.type === "checkbox") {
     return (
       <td className={cn(TD, "px-3")}>
-        <Checkbox checked={v === true} ariaLabel={field.name} onChange={(c) => onSave(c)} />
+        <Checkbox
+          checked={v === true}
+          ariaLabel={field.name}
+          onChange={(c) => onSave(c)}
+        />
       </td>
     );
   }
 
   if (field.type === "date") {
-    const zrobiony = done !== null && row.values[done.fieldId] === done.optionId;
+    const zrobiony =
+      done !== null && row.values[done.fieldId] === done.optionId;
     // Termin w kalendarzu pokazuje też czas do terminu; pilny to czerwona odznaka (.bdg.bad)
-    const wzgledna = typeof v === "string" && field.config.show_in_calendar === true ? relativeDue(v, today).text : "";
+    const wzgledna =
+      typeof v === "string" && field.config.show_in_calendar === true
+        ? relativeDue(v, today).text
+        : "";
     const pilny = typeof v === "string" && isUrgent(v, today, zrobiony);
     return (
       // Otwarty kalendarz (aria-expanded na wyzwalaczu) też daje niebieską obwódkę komórki
@@ -214,11 +267,24 @@ export function TableCell({
   }
 
   // Tekst, liczba i link: stałe pole bez ramki, wyglądające jak tekst
-  const tekstWidoku = field.type === "text" ? (typeof v === "string" ? v : "") : formatValue(field, v);
+  const tekstWidoku =
+    field.type === "text"
+      ? typeof v === "string"
+        ? v
+        : ""
+      : formatValue(field, v);
   const tekstEdycji =
-    v === null ? "" : field.type === "number" ? String(v).replace(".", ",") : String(v);
+    v === null
+      ? ""
+      : field.type === "number"
+        ? String(v).replace(".", ",")
+        : String(v);
   const adres =
-    field.type === "url" && typeof v === "string" ? (/^https?:\/\//i.test(v) ? v : `https://${v}`) : null;
+    field.type === "url" && typeof v === "string"
+      ? /^https?:\/\//i.test(v)
+        ? v
+        : `https://${v}`
+      : null;
   // Link poza edycją leży nad polem: klik w link otwiera adres, klik obok stawia kursor w polu
   const pokazLink = adres !== null && szkic === null;
 
@@ -238,7 +304,9 @@ export function TableCell({
         inputMode={field.type === "number" ? "decimal" : undefined}
         aria-label={field.name}
         value={szkic ?? tekstWidoku}
-        placeholder={field.isTitle ? (field.config.empty_label ?? "Bez tytułu") : "—"}
+        placeholder={
+          field.isTitle ? (field.config.empty_label ?? "Bez tytułu") : "—"
+        }
         onFocus={() => {
           setSzkic(tekstEdycji);
           onFocused?.();
@@ -247,10 +315,15 @@ export function TableCell({
           const t = e.target.value;
           setSzkic(t);
           // Niepoprawna liczba nie idzie do zapisu: po wyjściu komórka wraca do poprzedniej wartości
-          const zla = field.type === "number" && t.trim() !== "" && normalizeValue(field, t) === null;
+          const zla =
+            field.type === "number" &&
+            t.trim() !== "" &&
+            normalizeValue(field, t) === null;
           niezapisany.current = zla ? null : t;
           if (timer.current) clearTimeout(timer.current);
-          timer.current = zla ? null : setTimeout(zapiszSzkic, OPOZNIENIE_ZAPISU);
+          timer.current = zla
+            ? null
+            : setTimeout(zapiszSzkic, OPOZNIENIE_ZAPISU);
         }}
         onBlur={() => {
           zapiszSzkic();

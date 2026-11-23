@@ -8,8 +8,19 @@ import { TableCell } from "./table-cell";
 
 const TODAY = "2026-11-15";
 
-function pole(type: PageField["type"], extra: Partial<PageField> = {}): PageField {
-  return { id: "f1", name: "Pole", type, config: {}, position: 0, isTitle: false, ...extra };
+function pole(
+  type: PageField["type"],
+  extra: Partial<PageField> = {},
+): PageField {
+  return {
+    id: "f1",
+    name: "Pole",
+    type,
+    config: {},
+    position: 0,
+    isTitle: false,
+    ...extra,
+  };
 }
 
 function wiersz(v: unknown): PageRow {
@@ -17,12 +28,24 @@ function wiersz(v: unknown): PageRow {
 }
 
 // Komórka to <td>, więc renderujemy ją w tabeli
-function komorka(field: PageField, row: PageRow, onSave = vi.fn(), autoFocus = false) {
+function komorka(
+  field: PageField,
+  row: PageRow,
+  onSave = vi.fn(),
+  autoFocus = false,
+) {
   const wynik = render(
     <table>
       <tbody>
         <tr>
-          <TableCell row={row} field={field} today={TODAY} done={null} autoFocus={autoFocus} onSave={onSave} />
+          <TableCell
+            row={row}
+            field={field}
+            today={TODAY}
+            done={null}
+            autoFocus={autoFocus}
+            onSave={onSave}
+          />
         </tr>
       </tbody>
     </table>,
@@ -34,7 +57,10 @@ describe("TableCell", () => {
   describe("tekst", () => {
     it("wpisanie „Diuna” i od razu wyjście daje jedno onSave(„Diuna”)", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("text", { name: "Tytuł", isTitle: true }), wiersz(null));
+      const { onSave } = komorka(
+        pole("text", { name: "Tytuł", isTitle: true }),
+        wiersz(null),
+      );
       const pole_ = screen.getByRole("textbox", { name: "Tytuł" });
       await user.type(pole_, "Diuna");
       await user.tab();
@@ -99,7 +125,13 @@ describe("TableCell", () => {
         <table>
           <tbody>
             <tr>
-              <TableCell row={wiersz(v)} field={f} today={TODAY} done={null} onSave={onSave} />
+              <TableCell
+                row={wiersz(v)}
+                field={f}
+                today={TODAY}
+                done={null}
+                onSave={onSave}
+              />
             </tr>
           </tbody>
         </table>
@@ -122,20 +154,38 @@ describe("TableCell", () => {
     });
 
     it("autoFocus stawia kursor w komórce", () => {
-      komorka(pole("text", { name: "Tytuł", isTitle: true }), wiersz(null), vi.fn(), true);
+      komorka(
+        pole("text", { name: "Tytuł", isTitle: true }),
+        wiersz(null),
+        vi.fn(),
+        true,
+      );
       expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveFocus();
     });
 
     it("pusty tytuł ma podpowiedź z empty_label", () => {
-      komorka(pole("text", { name: "Tytuł", isTitle: true, config: { empty_label: "Bez nazwy" } }), wiersz(null));
-      expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveAttribute("placeholder", "Bez nazwy");
+      komorka(
+        pole("text", {
+          name: "Tytuł",
+          isTitle: true,
+          config: { empty_label: "Bez nazwy" },
+        }),
+        wiersz(null),
+      );
+      expect(screen.getByRole("textbox", { name: "Tytuł" })).toHaveAttribute(
+        "placeholder",
+        "Bez nazwy",
+      );
     });
   });
 
   describe("liczba", () => {
     it("poza edycją pokazuje format, w edycji surową liczbę; zapis przekazuje tekst", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("number", { config: { number_format: "pln" } }), wiersz(12.5));
+      const { onSave } = komorka(
+        pole("number", { config: { number_format: "pln" } }),
+        wiersz(12.5),
+      );
       const pole_ = screen.getByRole("textbox", { name: "Pole" });
       expect(pole_).toHaveValue("12,50 zł");
       await user.click(pole_);
@@ -160,7 +210,10 @@ describe("TableCell", () => {
   describe("link", () => {
     it("poza edycją pokazuje link, w edycji pole z adresem", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("url", { name: "Repo" }), wiersz("https://github.com/x"));
+      const { onSave } = komorka(
+        pole("url", { name: "Repo" }),
+        wiersz("https://github.com/x"),
+      );
       const link = screen.getByRole("link", { name: "github.com/x" });
       expect(link).toHaveAttribute("href", "https://github.com/x");
       const pole_ = screen.getByRole("textbox", { name: "Repo" });
@@ -182,8 +235,13 @@ describe("TableCell", () => {
 
     it("klik innej gwiazdki ustawia ocenę", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("rating", { name: "Ocena" }), wiersz(null));
-      expect(screen.getByRole("button", { name: "Ocena 2 na 5" })).toHaveAttribute("aria-pressed", "false");
+      const { onSave } = komorka(
+        pole("rating", { name: "Ocena" }),
+        wiersz(null),
+      );
+      expect(
+        screen.getByRole("button", { name: "Ocena 2 na 5" }),
+      ).toHaveAttribute("aria-pressed", "false");
       await user.click(screen.getByRole("button", { name: "Ocena 2 na 5" }));
       expect(onSave).toHaveBeenCalledWith(2);
     });
@@ -191,7 +249,10 @@ describe("TableCell", () => {
 
   it("checkbox zmienia wartość na true", async () => {
     const user = userEvent.setup();
-    const { onSave } = komorka(pole("checkbox", { name: "Gotowe" }), wiersz(null));
+    const { onSave } = komorka(
+      pole("checkbox", { name: "Gotowe" }),
+      wiersz(null),
+    );
     await user.click(screen.getByRole("checkbox", { name: "Gotowe" }));
     expect(onSave).toHaveBeenCalledWith(true);
   });
@@ -199,7 +260,10 @@ describe("TableCell", () => {
   describe("data", () => {
     it("„Dziś” daje onSave(today)", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("date", { name: "Przeczytana" }), wiersz(null));
+      const { onSave } = komorka(
+        pole("date", { name: "Przeczytana" }),
+        wiersz(null),
+      );
       await user.click(screen.getByRole("button", { name: "Przeczytana" }));
       await user.click(await screen.findByRole("button", { name: "Dziś" }));
       expect(onSave).toHaveBeenCalledWith(TODAY);
@@ -219,13 +283,18 @@ describe("TableCell", () => {
   });
 
   it("status pokazuje plakietkę opcji", () => {
-    const f = pole("status", { config: { options: [{ id: "o1", label: "Czytam", color: "#0070f3" }] } });
+    const f = pole("status", {
+      config: { options: [{ id: "o1", label: "Czytam", color: "#0070f3" }] },
+    });
     const { container } = komorka(f, wiersz("o1"));
     expect(within(container).getByText("Czytam")).toBeInTheDocument();
   });
 
   it("sekret jest tylko do odczytu (bez pola tekstowego)", () => {
-    komorka(pole("secret", { name: "Hasło" }), wiersz({ v: 1, g: 1, iv: "a", ct: "b" }));
+    komorka(
+      pole("secret", { name: "Hasło" }),
+      wiersz({ v: 1, g: 1, iv: "a", ct: "b" }),
+    );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
@@ -237,29 +306,83 @@ describe("TableCell", () => {
 
     it("klik otwiera okienko, wybór zapisuje i zamyka, drugi klik w wyzwalacz też zamyka", async () => {
       const user = userEvent.setup();
-      const { onSave } = komorka(pole("status", { name: "Status", config: { options: opcje } }), wiersz(null));
+      const { onSave } = komorka(
+        pole("status", { name: "Status", config: { options: opcje } }),
+        wiersz(null),
+      );
       const wyzwalacz = screen.getByRole("button", { name: "Status" });
       await user.click(wyzwalacz);
       await user.click(screen.getByRole("option", { name: "Czytam" }));
       expect(onSave).toHaveBeenCalledWith("o1");
-      expect(screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).not.toBeInTheDocument();
       await user.click(wyzwalacz);
-      expect(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).toBeInTheDocument();
       await user.click(wyzwalacz);
-      expect(screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).not.toBeInTheDocument();
     });
 
     it("select pokazuje kolor opcji (bez obrysu), a zmiana koloru zmienia plakietkę", () => {
-      const sel = pole("select", { name: "Obszar", config: { options: [{ id: "c", label: "Czerwona", color: "#b91c1c" }] } });
+      const sel = pole("select", {
+        name: "Obszar",
+        config: { options: [{ id: "c", label: "Czerwona", color: "#b91c1c" }] },
+      });
       komorka(sel, wiersz("c"));
       const plakietka = screen.getByText("Czerwona");
-      expect(plakietka).toHaveStyle({ color: "#b91c1c" });
-      expect(plakietka).not.toHaveClass("border-input");
+      expect(plakietka.parentElement).toHaveStyle({ color: "#b91c1c" });
+      expect(plakietka.parentElement).not.toHaveClass("border-input");
+    });
+
+    it("Esc w panelu edycji wraca do listy (okienko zostaje), drugi Esc zamyka okienko", async () => {
+      const user = userEvent.setup();
+      komorka(
+        pole("status", { name: "Status", config: { options: opcje } }),
+        wiersz("o1"),
+      );
+      await user.click(screen.getByRole("button", { name: "Status" }));
+      await user.click(screen.getByRole("button", { name: "Opcje: Czytam" }));
+      expect(
+        screen.getByRole("group", { name: "Edycja opcji" }),
+      ).toBeInTheDocument();
+      await user.keyboard("{Escape}");
+      expect(
+        screen.queryByRole("group", { name: "Edycja opcji" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).toBeInTheDocument();
+      await user.keyboard("{Escape}");
+      expect(
+        screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("długa nazwa opcji jest ucinana w komórce", () => {
+      const dluga = {
+        id: "d",
+        label: "Bardzo długa nazwa opcji która nie mieści się w kolumnie",
+        color: "#0070f3",
+      };
+      komorka(
+        pole("status", { name: "Status", config: { options: [dluga] } }),
+        wiersz("d"),
+      );
+      expect(screen.getByText(dluga.label)).toHaveClass("truncate");
     });
 
     it("opcja bez koloru renderuje się jako szara plakietka z obrysem", () => {
-      komorka(pole("status", { name: "Status", config: { options: opcje } }), wiersz("o2"));
-      expect(screen.getByText("Bez barwy")).toHaveClass("border-input");
+      komorka(
+        pole("status", { name: "Status", config: { options: opcje } }),
+        wiersz("o2"),
+      );
+      expect(screen.getByText("Bez barwy").parentElement).toHaveClass(
+        "border-input",
+      );
     });
   });
 });
