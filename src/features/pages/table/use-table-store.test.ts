@@ -137,6 +137,122 @@ describe("useTableStore", () => {
     });
   });
 
+  describe("runda poprawek 1", () => {
+    it("A→B i B→C w toku, oba padają: komórka wraca do A (potwierdzonej przez serwer)", async () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const doB = odroczona<{ ok: boolean; message?: string }>();
+      const doC = odroczona<{ ok: boolean; message?: string }>();
+      actions.updateRow.mockReturnValueOnce(doB.obietnica).mockReturnValueOnce(doC.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      let pB: Promise<boolean> | undefined;
+      let pC: Promise<boolean> | undefined;
+      act(() => {
+        pB = result.current.updateCell(result.current.rows[0], autor, "B");
+      });
+      act(() => {
+        pC = result.current.updateCell(result.current.rows[0], autor, "C");
+      });
+      expect(result.current.rows[0].values[autor.id]).toBe("C");
+      await act(async () => {
+        doB.rozwiaz({ ok: false, message: "x" });
+        await pB;
+      });
+      // B padło, ale komórka ma już C (zapis w toku) — zostaje
+      expect(result.current.rows[0].values[autor.id]).toBe("C");
+      await act(async () => {
+        doC.rozwiaz({ ok: false, message: "x" });
+        await pC;
+      });
+      expect(result.current.rows[0].values[autor.id]).toBe("James Clear");
+    });
+
+    it("A→B się zapisuje, B→C pada: komórka wraca do B", async () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      actions.updateRow.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.updateCell(result.current.rows[0], autor, "B");
+      });
+      await act(async () => {
+        await result.current.updateCell(result.current.rows[0], autor, "C");
+      });
+      expect(result.current.rows[0].values[autor.id]).toBe("B");
+    });
+
+    it("dwa szybkie createOption przed rerenderem: obie opcje w ostatnim zapisie", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const { result } = renderHook(() => useTableStore(b));
+      const sklep = result.current;
+      let id1: string | null | undefined;
+      let id2: string | null | undefined;
+      await act(async () => {
+        const p1 = sklep.createOption(status, "Porzucone");
+        const p2 = sklep.createOption(status, "Wstrzymane");
+        [id1, id2] = await Promise.all([p1, p2]);
+      });
+      expect(id1).not.toBeNull();
+      expect(id2).not.toBeNull();
+      const ostatni = actions.updateField.mock.calls.at(-1)![1] as { config: { options: { label: string }[] } };
+      expect(ostatni.config.options.map((o) => o.label)).toEqual([
+        "Czytam",
+        "Przeczytane",
+        "Chcę przeczytać",
+        "Porzucone",
+        "Wstrzymane",
+      ]);
+      const opcje = result.current.fields.find((f) => f.id === status.id)!.config.options!;
+      expect(opcje.map((o) => o.label)).toContain("Wstrzymane");
+      expect(opcje).toHaveLength(5);
+    });
+
+    it("patchField X pada, Y (zbudowane na X) się zapisuje: UI ma stan z Y", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const zapisX = odroczona<{ ok: boolean; message?: string }>();
+      const zapisY = odroczona<{ ok: boolean; message?: string }>();
+      actions.updateField.mockReturnValueOnce(zapisX.obietnica).mockReturnValueOnce(zapisY.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      const configX = { ...status.config, show_in_calendar: true };
+      const configY = { ...configX, empty_label: "Y" };
+      let pX: Promise<boolean> | undefined;
+      let pY: Promise<boolean> | undefined;
+      act(() => {
+        pX = result.current.patchField(status, { config: configX });
+      });
+      act(() => {
+        pY = result.current.patchField(status, { config: configY });
+      });
+      await act(async () => {
+        zapisX.rozwiaz({ ok: false, message: "x" });
+        await pX;
+      });
+      await act(async () => {
+        zapisY.rozwiaz({ ok: true });
+        await pY;
+      });
+      expect(result.current.fields.find((f) => f.id === status.id)!.config).toBe(configY);
+      expect(toast.error).toHaveBeenCalledTimes(1);
+    });
+
+    it("patchField X się zapisuje, Y pada: UI wraca do X, nie do stanu sprzed X", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      actions.updateField.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      const configX = { ...status.config, show_in_calendar: true };
+      await act(async () => {
+        await result.current.patchField(status, { config: configX });
+      });
+      await act(async () => {
+        await result.current.patchField(status, { config: { ...configX, empty_label: "Y" } });
+      });
+      expect(result.current.fields.find((f) => f.id === status.id)!.config).toEqual(configX);
+    });
+  });
+
   describe("addRowInline", () => {
     it("zwraca prawdziwe id, a wiersz ma opcję domyślną", async () => {
       const b = blok();
