@@ -17,7 +17,6 @@ const draft: OnboardingDraft = {
   clock: "24",
   roles: ["student"],
   studyField: "",
-  goals: ["proj"],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,
@@ -25,7 +24,7 @@ const draft: OnboardingDraft = {
   sleepGoalMin: 480,
   source: null,
   sourceOther: "",
-  pages: null,
+  pages: ["Projects"],
   notify: {
     perm: false,
     before: true,
@@ -77,29 +76,16 @@ describe("StepDone", () => {
 
   it("wiersz „Cele treningowe” z odmianą, oba cele i „Zmień” do kroku 3", async () => {
     const { rerender } = render(
-      <StepDone
-        draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 1 }}
-        now={NOW}
-      />,
+      <StepDone draft={{ ...draft, weeklyWorkouts: 1 }} now={NOW} />,
     );
     expect(
       within(screen.getByTestId("done-web")).getByText("1 trening / tydz."),
     ).toBeInTheDocument();
-    rerender(
-      <StepDone
-        draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 4 }}
-        now={NOW}
-      />,
-    );
+    rerender(<StepDone draft={{ ...draft, weeklyWorkouts: 4 }} now={NOW} />);
     expect(
       within(screen.getByTestId("done-phone")).getByText("4 treningi / tydz."),
     ).toBeInTheDocument();
-    rerender(
-      <StepDone
-        draft={{ ...draft, goals: ["sport"], weeklyWorkouts: 7 }}
-        now={NOW}
-      />,
-    );
+    rerender(<StepDone draft={{ ...draft, weeklyWorkouts: 7 }} now={NOW} />);
     expect(
       within(screen.getByTestId("done-web")).getByText("7 treningów / tydz."),
     ).toBeInTheDocument();
@@ -107,7 +93,6 @@ describe("StepDone", () => {
       <StepDone
         draft={{
           ...draft,
-          goals: ["sport"],
           workoutsOn: false,
           kmOn: true,
           weeklyKm: 22.5,
@@ -122,7 +107,6 @@ describe("StepDone", () => {
       <StepDone
         draft={{
           ...draft,
-          goals: ["sport"],
           workoutsOn: false,
           kmOn: true,
           weeklyKm: 25,
@@ -137,7 +121,6 @@ describe("StepDone", () => {
       <StepDone
         draft={{
           ...draft,
-          goals: ["sport"],
           workoutsOn: true,
           kmOn: true,
           weeklyWorkouts: 3,

@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  GOALS,
-  PAGE_TEMPLATES,
-  ROLES,
-  SOURCES,
-} from "@/features/onboarding/model";
+import { PAGE_TEMPLATES, ROLES, SOURCES } from "@/features/onboarding/model";
 import { safeTimezone } from "@/lib/time/timezones";
 
 // "72,5" -> 72.5, "" -> null, "abc" -> NaN
@@ -16,7 +11,6 @@ export function parseDecimal(raw: string): number | null {
 
 // Klucze z modelu onboardingu, żeby nie przepisywać ich drugi raz
 const roleKey = z.enum(ROLES.map((r) => r.key) as [string, ...string[]]);
-const goalKey = z.enum(GOALS.map((g) => g.key) as [string, ...string[]]);
 const pageKey = z.enum(
   PAGE_TEMPLATES.map((p) => p.key) as [string, ...string[]],
 );
@@ -122,9 +116,6 @@ export const onboardingStepSchemas = {
   }),
   3: z
     .object({
-      goals: z
-        .array(goalKey)
-        .refine(bezDuplikatow, "Cele nie mogą się powtarzać."),
       workouts_goal_on: z.boolean(),
       km_goal_on: z.boolean(),
       weekly_workouts_goal: z

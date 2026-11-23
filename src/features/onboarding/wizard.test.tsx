@@ -25,7 +25,6 @@ const draft: OnboardingDraft = {
   clock: "24",
   roles: ["student", "sport"],
   studyField: "",
-  goals: ["plan"],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,

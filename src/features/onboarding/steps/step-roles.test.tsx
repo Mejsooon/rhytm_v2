@@ -14,7 +14,6 @@ const start: OnboardingDraft = {
   clock: "24",
   roles: [],
   studyField: "",
-  goals: [],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,
@@ -84,7 +83,9 @@ describe("StepRoles", () => {
     expect(wylaczona.className).not.toContain("bg-black/[.025]");
     expect(wlaczona.querySelector("span.size-4")).not.toBeNull();
     expect(wlaczona.querySelector("span.size-4")).toHaveClass("bg-primary");
-    expect(wylaczona.querySelector("span.size-4")).not.toHaveClass("bg-primary");
+    expect(wylaczona.querySelector("span.size-4")).not.toHaveClass(
+      "bg-primary",
+    );
   });
 
   it("wygląd: „W kalendarzu:” z plakietkami kategorii w ramce", () => {

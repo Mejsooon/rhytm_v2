@@ -1,20 +1,7 @@
 // Model onboardingu: stałe z makiet i czysta logika kroków (bez Reacta i bazy).
 
 export type RoleKey = "student" | "work" | "free" | "sport" | "other";
-export type GoalKey =
-  | "plan"
-  | "sport"
-  | "habits"
-  | "subs"
-  | "pass"
-  | "proj"
-  | "books";
-export type PageKey =
-  | "Subscriptions"
-  | "Projects"
-  | "Books"
-  | "Websites"
-  | "Passwords";
+export type PageKey = "Projects" | "Books" | "Websites";
 export type SourceKey =
   | "friend"
   | "uni"
@@ -43,50 +30,6 @@ export const ROLES: { key: RoleKey; title: string; desc: string }[] = [
   { key: "other", title: "Coś innego", desc: "Kategorie ułożysz sam" },
 ];
 
-// OnboardingGoals (page = strona włączana razem z celem)
-export const GOALS: {
-  key: GoalKey;
-  title: string;
-  desc: string;
-  page: PageKey | null;
-}[] = [
-  {
-    key: "plan",
-    title: "Plan tygodnia",
-    desc: "Bloki z zadaniami w środku",
-    page: null,
-  },
-  { key: "sport", title: "Treningi", desc: "Biegi i siłownia", page: null },
-  {
-    key: "habits",
-    title: "Nawyki i sen",
-    desc: "Codzienne odhaczanie",
-    page: null,
-  },
-  {
-    key: "subs",
-    title: "Subskrypcje",
-    desc: "Sumy i odnowienia",
-    page: "Subscriptions",
-  },
-  { key: "pass", title: "Hasła", desc: "Szyfrowany sejf", page: "Passwords" },
-  {
-    key: "proj",
-    title: "Projekty",
-    desc: "Statusy i terminy",
-    page: "Projects",
-  },
-  {
-    key: "books",
-    title: "Książki",
-    desc: "Co czytasz i co dalej",
-    page: "Books",
-  },
-];
-
-// Cele bazowe: zawsze włączone, nie da się ich odznaczyć (kłódka w makiecie)
-export const LOCKED_GOALS: GoalKey[] = ["plan", "sport", "habits"];
-
 // OnboardingPages (kolejność = kolejność w sidebarze)
 export const PAGE_TEMPLATES: {
   key: PageKey;
@@ -94,12 +37,6 @@ export const PAGE_TEMPLATES: {
   desc: string;
   fields: string;
 }[] = [
-  {
-    key: "Subscriptions",
-    name: "Subscriptions",
-    desc: "Sumy miesięczne i roczne, odnowienia w kalendarzu",
-    fields: "Kwota cykliczna · Data odnowienia · Aktywna",
-  },
   {
     key: "Projects",
     name: "Projects",
@@ -117,12 +54,6 @@ export const PAGE_TEMPLATES: {
     name: "Websites",
     desc: "Zakładki z kategoriami",
     fields: "URL · Select · Checkbox",
-  },
-  {
-    key: "Passwords",
-    name: "Passwords",
-    desc: "Hasło główne ustawisz przy pierwszym otwarciu",
-    fields: "Sekret · URL · Login",
   },
 ];
 
@@ -168,7 +99,6 @@ export type OnboardingDraft = {
   clock: "24" | "12";
   roles: RoleKey[];
   studyField: string;
-  goals: GoalKey[];
   // Dwa niezależne cele treningowe (co najmniej jeden włączony); liczby zostają w szkicu po wyłączeniu
   workoutsOn: boolean;
   kmOn: boolean;
@@ -177,7 +107,7 @@ export type OnboardingDraft = {
   sleepGoalMin: number;
   source: SourceKey | null;
   sourceOther: string;
-  // null = użytkownik jeszcze nie ruszał stron, bierzemy polecone z celów
+  // Strony wybrane w kroku 5 (na starcie nic nie jest zaznaczone)
   pages: PageKey[] | null;
   notify: { perm: boolean } & Record<ReminderKey, boolean>;
 };
@@ -200,41 +130,9 @@ export function categoriesForRoles(
   }));
 }
 
-// Strony polecone z celów (w kolejności PAGE_TEMPLATES)
-export function recommendedPages(goals: GoalKey[]): PageKey[] {
-  const strony = GOALS.filter((g) => g.page && goals.includes(g.key)).map(
-    (g) => g.page as PageKey,
-  );
-  return PAGE_TEMPLATES.map((t) => t.key).filter((k) => strony.includes(k));
-}
-
+// Strony wybrane w kroku 5; bez wyboru (null) nie dodajemy żadnej
 export function effectivePages(draft: OnboardingDraft): PageKey[] {
-  return draft.pages ?? recommendedPages(draft.goals);
-}
-
-// Przełącza cel; jeśli cel ma stronę, włącza/wyłącza ją razem z nim (jak w makiecie web)
-export function toggleGoal(
-  draft: OnboardingDraft,
-  goal: GoalKey,
-): OnboardingDraft {
-  if (LOCKED_GOALS.includes(goal)) return draft;
-  const wlaczony = draft.goals.includes(goal);
-  const goals = wlaczony
-    ? draft.goals.filter((g) => g !== goal)
-    : [...draft.goals, goal];
-
-  const strona = GOALS.find((g) => g.key === goal)?.page ?? null;
-  if (!strona) return { ...draft, goals };
-
-  // Stan stron zostaje zamrożony na aktualnie widocznych, potem zmieniamy jedną
-  const biezace = effectivePages(draft);
-  const nowe = wlaczony
-    ? biezace.filter((p) => p !== strona)
-    : [...biezace, strona];
-  const pages = PAGE_TEMPLATES.map((t) => t.key).filter((k) =>
-    nowe.includes(k),
-  );
-  return { ...draft, goals, pages };
+  return draft.pages ?? [];
 }
 
 // Licznik kilometrów: co 5, zakres 5–150 (nieliczba z pola web wraca do 25).
@@ -368,7 +266,6 @@ export function stepPayload(
     case 3:
       // Zapisujemy oba przełączniki i obie liczby; zła liczba wyłączonego celu wraca do wartości domyślnej
       return {
-        goals: draft.goals,
         workouts_goal_on: draft.workoutsOn,
         km_goal_on: draft.kmOn,
         weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts)

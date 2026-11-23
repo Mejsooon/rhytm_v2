@@ -81,7 +81,6 @@ describe("saveOnboardingStep", () => {
 
   it("krok 3 zapisuje przełączniki celów i obie liczby", async () => {
     const krok3 = {
-      goals: ["sport"],
       workouts_goal_on: true,
       km_goal_on: true,
       weekly_workouts_goal: 4,
@@ -96,7 +95,6 @@ describe("saveOnboardingStep", () => {
 
   it("krok 3 z 15 treningami → komunikat, bez zapisu", async () => {
     const wynik = await saveOnboardingStep(3, {
-      goals: ["sport"],
       workouts_goal_on: true,
       km_goal_on: false,
       weekly_workouts_goal: 15,
@@ -109,7 +107,6 @@ describe("saveOnboardingStep", () => {
 
   it("krok 3 z oboma celami wyłączonymi → komunikat, bez zapisu", async () => {
     const wynik = await saveOnboardingStep(3, {
-      goals: ["sport"],
       workouts_goal_on: false,
       km_goal_on: false,
       weekly_workouts_goal: 3,

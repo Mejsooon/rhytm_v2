@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import {
   PAGE_TEMPLATES,
   effectivePages,
-  recommendedPages,
   type OnboardingDraft,
   type PageKey,
 } from "../model";
@@ -21,7 +20,6 @@ export function StepPages({
   onChange: (next: OnboardingDraft) => void;
 }) {
   const wybrane = effectivePages(draft);
-  const polecane = recommendedPages(draft.goals);
 
   function przelacz(key: PageKey) {
     const nowe = wybrane.includes(key)
@@ -39,13 +37,13 @@ export function StepPages({
       <div className="max-[799px]:hidden">
         <StepHeader
           title="Od czego zaczynasz?"
-          subtitle="Dodamy te strony do sidebaru. Zaznaczyliśmy je na podstawie Twoich celów"
+          subtitle="Dodamy te strony do sidebaru. Każdą zmienisz albo usuniesz później."
         />
       </div>
       <div className="min-[800px]:hidden">
         <StepHeader
           title="Od czego zaczynasz?"
-          subtitle="Dodamy te strony do listy Stron. Zaznaczyliśmy je na podstawie Twoich celów."
+          subtitle="Dodamy te strony do listy Stron. Każdą zmienisz albo usuniesz później."
         />
       </div>
 
@@ -84,9 +82,6 @@ export function StepPages({
               <span className="flex flex-1 flex-col gap-0.5">
                 <span className="flex items-center gap-2">
                   <span className="font-medium">{strona.name}</span>
-                  {polecane.includes(strona.key) && (
-                    <StatusBadge tone="green">z Twoich celów</StatusBadge>
-                  )}
                 </span>
                 <span className="text-[13px] text-muted-foreground">
                   {strona.desc}
@@ -136,9 +131,6 @@ export function StepPages({
               <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{strona.name}</span>
-                  {polecane.includes(strona.key) && (
-                    <StatusBadge tone="green">z Twoich celów</StatusBadge>
-                  )}
                 </span>
                 <span className="text-[13px] text-muted-foreground">
                   {strona.desc}

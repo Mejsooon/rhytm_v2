@@ -88,11 +88,10 @@ async function createUser(
         clock: "24",
         roles: ["student", "sport"],
         study_field: "Informatyka",
-        goals: ["sport", "subs"],
         weekly_km_goal: 30,
         sleep_goal_min: 480,
         referral_source: "friend",
-        pending_pages: ["Subscriptions"],
+        pending_pages: [],
         onboarding_step: 7,
       })
       .eq("user_id", data.user.id);
