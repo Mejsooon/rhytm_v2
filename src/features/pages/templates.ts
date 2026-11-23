@@ -312,6 +312,9 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     column_widths: {},
   };
 
+  // Pusta strona: bez bloków — edytor pokazuje szybki start „albo zacznij od:” (decyzja po kroku 2)
+  if (key === "empty") return [];
+
   const bloki: CreatePageBlock[] = [];
   // Zdanie pod tytułem to zwykły blok tekstu przed tabelą
   if (tpl.intro !== "") {
@@ -320,8 +323,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
   bloki.push({
     id: newId(),
     type: "table",
-    // Pusta strona: tabela bez nazwy (w edytorze placeholder „Tabela bez nazwy”)
-    content: { name: key === "empty" ? "" : tpl.name, settings },
+    content: { name: tpl.name, settings },
     fields,
     rows: [],
   });

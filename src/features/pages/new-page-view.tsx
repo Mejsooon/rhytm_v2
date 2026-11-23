@@ -171,7 +171,7 @@ export function NewPageView() {
                 ))}
               {wybrany === "empty" && (
                 <div className="px-3 py-3.5 text-[13px] text-muted-foreground">
-                  Tylko kolumna „Nazwa”. Kolejne dodasz przyciskiem „+” w nagłówku tabeli.
+                  Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz z szybkiego startu albo wpisując „/”.
                 </div>
               )}
             </div>

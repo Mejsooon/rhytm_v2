@@ -1,5 +1,6 @@
 // Dane testowe stron z szablonów (wspólne dla testów menu kolumny i filtra)
 import type { LoadedPage } from "../load-page";
+import type { FieldConfig } from "../fields";
 import { buildTemplateBlocks, type TemplateKey } from "../templates";
 
 export const DZIS = "2026-11-15";
@@ -11,7 +12,14 @@ export function stronaTestowa(
   wiersze: Record<string, unknown>[],
 ): LoadedPage {
   let n = 0;
-  const b = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
+  // „Pusta strona” nie ma już tabeli: w testach jej odpowiednik to tabela z samym polem „Nazwa”
+  const b =
+    key === "empty"
+      ? {
+          content: { name: "", settings: { sort: [], filters: [], hidden_field_ids: [], column_summaries: {}, pinned_cards: [], column_widths: {} } },
+          fields: [{ id: "00000000-0000-4000-8000-000000000001", name: "Nazwa", type: "text" as const, config: { empty_label: "Bez tytułu" } as FieldConfig, is_title: true }],
+        }
+      : buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
   const fields = b.fields.map((f, i) => ({
     id: f.id,
     name: f.name,
