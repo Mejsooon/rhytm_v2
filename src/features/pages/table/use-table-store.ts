@@ -62,12 +62,12 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     filters: Array.isArray(surowe.filters) ? surowe.filters : [],
     hidden_field_ids: Array.isArray(surowe.hidden_field_ids) ? surowe.hidden_field_ids : [],
     column_summaries:
-      surowe.column_summaries && typeof surowe.column_summaries === "object"
+      surowe.column_summaries && typeof surowe.column_summaries === "object" && !Array.isArray(surowe.column_summaries)
         ? surowe.column_summaries
         : {},
     pinned_cards: Array.isArray(surowe.pinned_cards) ? surowe.pinned_cards : [],
     column_widths:
-      surowe.column_widths && typeof surowe.column_widths === "object"
+      surowe.column_widths && typeof surowe.column_widths === "object" && !Array.isArray(surowe.column_widths)
         ? surowe.column_widths
         : {},
   };
@@ -303,6 +303,82 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return udane;
   }
 
+  // Zapis jednej komórki (edycja w tabeli): wartość przez normalizeValue, pusty tytuł → empty_label.
+  // Od razu lokalnie; błąd cofa tylko tę komórkę (o ile nikt jej w międzyczasie nie zmienił).
+  // Wiersz z tymczasowym id → false bez zapisu; wartość bez zmian → true bez zapisu.
+  async function updateCell(row: PageRow, field: PageField, value: unknown): Promise<boolean> {
+    if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return false;
+    let v = normalizeValue(field, value);
+    if (field.isTitle && v === null) v = field.config.empty_label ?? "Bez tytułu";
+    const biezacy = rows.find((r) => r.id === row.id) ?? row;
+    const poprzednia = biezacy.values[field.id];
+    if (Object.is(v, normalizeValue(field, poprzednia))) return true;
+
+    setRows((l) => l.map((r) => (r.id === row.id ? { ...r, values: { ...r.values, [field.id]: v } } : r)));
+    // Zapis w toku: dane z serwera w trakcie nie nadpiszą tej komórki
+    const wToku = wierszeWToku.current.get(row.id) ?? { n: 0, zmiany: {} };
+    wToku.n += 1;
+    wToku.zmiany[field.id] = v;
+    wierszeWToku.current.set(row.id, wToku);
+    let udane = false;
+    let nieAktualnySejf = false;
+    try {
+      const wynik = await updateRow(row.id, { [field.id]: v });
+      udane = wynik.ok;
+      nieAktualnySejf = !wynik.ok && wynik.code === "stale_generation";
+    } catch {
+      udane = false;
+    }
+    wToku.n -= 1;
+    if (wToku.n === 0) wierszeWToku.current.delete(row.id);
+    if (!udane) {
+      // Inne zapisy tego wiersza w toku nie przywrócą odrzuconej wartości z danych serwera
+      if (wToku.n > 0 && Object.is(wToku.zmiany[field.id], v)) wToku.zmiany[field.id] = poprzednia;
+      setRows((l) =>
+        l.map((r) =>
+          r.id === row.id && Object.is(r.values[field.id], v)
+            ? { ...r, values: { ...r.values, [field.id]: poprzednia } }
+            : r,
+        ),
+      );
+      if (nieAktualnySejf) {
+        // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
+        onStaleGeneration?.();
+        toast.error(SEJF_ZMIENIL_SIE);
+      } else {
+        toast.error(BLAD_ZAPISU);
+      }
+    }
+    return udane;
+  }
+
+  // „+ Nowy” w tabeli: wiersz od razu na serwerze (z opcjami domyślnymi pól, jak addRowDraft),
+  // bez tymczasowego id. Zwraca id nowego wiersza albo null (toast pokazany).
+  async function addRowInline(): Promise<string | null> {
+    const values: Record<string, unknown> = {};
+    for (const f of fields) {
+      if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
+      const domyslna = f.config.default_option;
+      if (domyslna !== undefined && (f.config.options ?? []).some((o) => o.id === domyslna)) {
+        values[f.id] = domyslna;
+      }
+    }
+    let wynik: Awaited<ReturnType<typeof addRow>> | null = null;
+    try {
+      wynik = await addRow(block.id, values);
+    } catch {
+      wynik = null;
+    }
+    if (!wynik || !wynik.ok) {
+      toast.error(BLAD_ZAPISU);
+      return null;
+    }
+    const prawdziwy = wynik.row;
+    // Odświeżenie danych mogło już dodać ten wiersz — bez duplikatów
+    setRows((l) => (l.some((r) => r.id === prawdziwy.id) ? l : [...l, prawdziwy]));
+    return prawdziwy.id;
+  }
+
   // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow)
   async function removeRow(row: PageRow) {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
@@ -476,17 +552,28 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return udane;
   }
 
-  // Przesunięcie kolumny o jedno miejsce; kolejność zapisuje jedno RPC (jak w edytorze)
+  // Przesunięcie kolumny o jedno miejsce; kolejność zapisuje jedno RPC (jak w edytorze).
+  // Kolumna tytułu stoi zawsze pierwsza: nie przesuwa się i nic nie wchodzi przed nią.
+  // Lokalnie zamieniają się tylko pozycje dwóch pól — błąd cofa tylko je (np. zmiana nazwy w trakcie zostaje).
   async function moveField(field: PageField, dir: -1 | 1): Promise<boolean> {
     // Kolumny bez prawdziwego id nie wejdą jeszcze w kolejność na serwerze
     if (posortowanePola.some((f) => f.id.startsWith(PREFIKS_TYMCZASOWY))) return false;
     const i = posortowanePola.findIndex((f) => f.id === field.id);
     const j = i + dir;
     if (i < 0 || j < 0 || j >= posortowanePola.length) return false;
+    const a = posortowanePola[i];
+    const b = posortowanePola[j];
+    if (a.isTitle || b.isTitle) return false;
     const nowaKolejnosc = [...posortowanePola];
     [nowaKolejnosc[i], nowaKolejnosc[j]] = [nowaKolejnosc[j], nowaKolejnosc[i]];
-    const poprzednie = fields;
-    setFields(nowaKolejnosc.map((f, indeks) => ({ ...f, position: indeks })));
+    // Równe pozycje (stare dane) nie dałyby zamiany — wtedy b dostaje pozycję o jeden obok
+    const pozycjaA = b.position === a.position ? a.position + dir : b.position;
+    const pozycjaB = a.position;
+    setFields((l) =>
+      l.map((f) =>
+        f.id === a.id ? { ...f, position: pozycjaA } : f.id === b.id ? { ...f, position: pozycjaB } : f,
+      ),
+    );
     polaWToku.current += 1;
     let udane = false;
     try {
@@ -496,10 +583,60 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     }
     polaWToku.current -= 1;
     if (!udane) {
-      setFields(poprzednie);
+      // Cofamy tylko pozycje tych dwóch pól, o ile nadal są z tej zamiany
+      setFields((l) =>
+        l.map((f) =>
+          f.id === a.id && f.position === pozycjaA
+            ? { ...f, position: a.position }
+            : f.id === b.id && f.position === pozycjaB
+              ? { ...f, position: b.position }
+              : f,
+        ),
+      );
       toast.error(BLAD_ZAPISU);
     }
     return udane;
+  }
+
+  // Nowa opcja z okienka opcji: szara (#525252), etykieta przycięta. Pusta nazwa albo duplikat
+  // (bez wielkości liter) → null bez zapisu. Zwraca id nowej opcji albo null przy błędzie zapisu.
+  async function createOption(field: PageField, label: string): Promise<string | null> {
+    const pole = fields.find((f) => f.id === field.id) ?? field;
+    const etykieta = label.trim();
+    const opcje = pole.config.options ?? [];
+    if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
+      return null;
+    }
+    // Szary to ostatni kolor PALETA (#525252)
+    const nowa: FieldOption = { id: crypto.randomUUID(), label: etykieta, color: PALETA[7] };
+    const udane = await patchField(pole, { config: { ...pole.config, options: [...opcje, nowa] } });
+    return udane ? nowa.id : null;
+  }
+
+  // Zmiana etykiety albo koloru opcji (wiersze trzymają id, więc się nie zmieniają).
+  // Pusta albo zduplikowana nazwa (bez wielkości liter, wśród innych opcji) → false bez zapisu.
+  async function updateOption(
+    field: PageField,
+    optionId: string,
+    patch: { label?: string; color?: string },
+  ): Promise<boolean> {
+    const pole = fields.find((f) => f.id === field.id) ?? field;
+    const opcje = pole.config.options ?? [];
+    if (!opcje.some((o) => o.id === optionId)) return false;
+    const zmiana: { label?: string; color?: string } = {};
+    if (patch.label !== undefined) {
+      const etykieta = patch.label.trim();
+      if (
+        etykieta === "" ||
+        opcje.some((o) => o.id !== optionId && o.label.trim().toLowerCase() === etykieta.toLowerCase())
+      ) {
+        return false;
+      }
+      zmiana.label = etykieta;
+    }
+    if (patch.color !== undefined) zmiana.color = patch.color;
+    const noweOpcje = opcje.map((o) => (o.id === optionId ? { ...o, ...zmiana } : o));
+    return patchField(pole, { config: { ...pole.config, options: noweOpcje } });
   }
 
   // Nowa opcja Wyboru: kolor to następny z PALETA; etykieta już istniejąca (bez wielkości liter) nic nie robi
@@ -722,6 +859,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       sekretRef.current = r;
     },
     addRowDraft,
+    addRowInline,
+    updateCell,
     setEditValue,
     cancelEdit,
     saveRow,
@@ -737,6 +876,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     renameTable,
     moveField,
     addOption,
+    createOption,
+    updateOption,
     removeOption,
   };
 }

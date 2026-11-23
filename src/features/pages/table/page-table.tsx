@@ -387,8 +387,9 @@ export function PageTable({
                       onDelete={() => void store.removeField(f)}
                       onMoveLeft={() => void store.moveField(f, -1)}
                       onMoveRight={() => void store.moveField(f, 1)}
-                      firstColumn={indeks === 0}
-                      lastColumn={indeks === fields.length - 1}
+                      // Kolumna tytułu się nie przesuwa i nic nie wchodzi przed nią (jak w store.moveField)
+                      firstColumn={f.isTitle || indeks === 0 || fields[indeks - 1].isTitle}
+                      lastColumn={f.isTitle || indeks === fields.length - 1 || fields[indeks + 1].isTitle}
                       onAddOption={(etykieta) => void store.addOption(f, etykieta)}
                       onRemoveOption={(id) => void store.removeOption(f, id)}
                     />

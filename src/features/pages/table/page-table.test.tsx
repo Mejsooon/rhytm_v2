@@ -327,14 +327,17 @@ describe("PageTable", () => {
       expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
     });
 
-    it("kolumna przesunięta na pozycję 0 da się ukryć i przywrócić z „⋯”", async () => {
+    it("kolumna na pozycji 0 (stare dane z serwera) da się ukryć i przywrócić z „⋯”", async () => {
       const user = userEvent.setup();
-      const b = blok("books", BOOKS);
+      const zSzablonu = blok("books", BOOKS);
+      // Przesuwanie nie stawia już niczego przed tytułem, więc taka kolejność przychodzi tylko z serwera
+      const b = {
+        ...zSzablonu,
+        fields: zSzablonu.fields.map((f) => (f.name === "Autor" ? { ...f, position: -1 } : f)),
+      };
       render(<PageTable block={b} today={TODAY} />);
-      let menu = await otworzMenu(user, "Autor");
-      await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" }));
       expect(screen.getAllByRole("columnheader")[0].textContent).toBe("Autor");
-      menu = await otworzMenu(user, "Autor");
+      const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
       const autor = b.fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [autor.id] });
@@ -392,7 +395,6 @@ describe("PageTable", () => {
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
       const menu = await otworzMenu(user, "Autor");
-      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeEnabled();
       await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" }));
       const [tytul, autor, status, ...reszta] = b.fields.map((f) => f.id);
       expect(actions.reorderFields).toHaveBeenCalledWith(b.id, [tytul, status, autor, ...reszta]);
@@ -408,6 +410,21 @@ describe("PageTable", () => {
       await user.keyboard("{Escape}");
       menu = await otworzMenu(user, "Przeczytana");
       expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeDisabled();
+    });
+
+    it("kolumna tytułu ma wyłączone oba przesunięcia, kolumna tuż za nią „Przesuń w lewo”", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      let menu = await otworzMenu(user, "Tytuł");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeDisabled();
+      await user.keyboard("{Escape}");
+      menu = await otworzMenu(user, "Autor");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeEnabled();
+      await user.keyboard("{Escape}");
+      menu = await otworzMenu(user, "Status");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeEnabled();
     });
 
     it("błąd przesunięcia przywraca kolejność i pokazuje toast", async () => {
