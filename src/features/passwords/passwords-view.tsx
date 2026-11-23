@@ -59,7 +59,8 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           )
         }
       />
-      {/* Treść: max 1160 px; warstwa blokady zakrywa całą treść, karta stoi 160 px od góry (S2Vault) */}
+      {/* Treść: max 1160 px; warstwa blokady zakrywa całą treść, karta stoi pod paskiem wyszukiwarki i segmentu
+          (odstępstwo od 160 px z S2Vault: przy zamkniętym sejfie szukanie i filtr muszą być klikalne) */}
       <div className="relative flex min-w-0 flex-1 flex-col">
         <div className="mx-auto flex w-full max-w-[1160px] min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
           <div>
@@ -176,7 +177,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         {vault.status === "zablokowany" && (
           // Warstwa tylko rozmywa: nie łapie kliknięć, więc wyszukiwanie, segment, sort i filtr działają przy
           // zamkniętym sejfie (tabela jest wtedy tylko do odczytu); klikalna jest sama karta
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-white/60 px-4 pt-40 backdrop-blur-[3px] max-[799px]:pt-16">
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-white/60 px-4 pt-[248px] backdrop-blur-[3px] max-[799px]:pt-[232px]">
             <div className="pointer-events-auto w-full">
               <VaultUnlockCard />
             </div>
