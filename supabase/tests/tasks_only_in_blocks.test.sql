@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(20);
 
 insert into auth.users (id, email)
 values
@@ -10,8 +10,10 @@ values
 select col_not_null('public', 'tasks', 'block_id', 'tasks.block_id jest NOT NULL');
 select col_not_null('public', 'tasks', 'occurrence_date', 'tasks.occurrence_date jest NOT NULL');
 select hasnt_trigger('public', 'blocks', 'blocks_detach_tasks_before_delete', 'wyzwalacz odpinania zniknął');
+select hasnt_function('public', 'detach_tasks_before_block_delete', 'funkcja odpinania zniknęła');
 select is(
-  (select count(*) from pg_constraint where conname = 'tasks_block_occurrence_check'),
+  (select count(*) from pg_constraint
+   where conname = 'tasks_block_occurrence_check' and conrelid = 'public.tasks'::regclass),
   0::bigint, 'constraint tasks_block_occurrence_check zniknął');
 
 -- B: blok z zadaniem (do testu RLS).
@@ -29,6 +31,8 @@ values
   ('a3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Seria zmieniana',
     '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"daily"}'),
   ('a4000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Seria do jednego dnia',
+    '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"daily"}'),
+  ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Seria na wybrane dni',
     '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"daily"}');
 
 insert into public.tasks (user_id, title, block_id, occurrence_date, due_date)
@@ -45,7 +49,11 @@ values
   ('00000000-0000-0000-0000-00000000000a', 'Z4', 'a3000000-0000-0000-0000-00000000000a', '2026-12-14', '2026-12-14'),
   -- J: wzorzec zmieniony na pojedynczy blok w dniu p_from (8.12).
   ('00000000-0000-0000-0000-00000000000a', 'J1', 'a4000000-0000-0000-0000-00000000000a', '2026-12-08', '2026-12-08'),
-  ('00000000-0000-0000-0000-00000000000a', 'J2', 'a4000000-0000-0000-0000-00000000000a', '2026-12-09', '2026-12-09');
+  ('00000000-0000-0000-0000-00000000000a', 'J2', 'a4000000-0000-0000-0000-00000000000a', '2026-12-09', '2026-12-09'),
+  -- C: wzorzec custom pn + śr do 23.12; śr 9.12 należy do wzorca, czw 10.12 nie, pn 28.12 jest po until.
+  ('00000000-0000-0000-0000-00000000000a', 'C1', 'a5000000-0000-0000-0000-00000000000a', '2026-12-09', '2026-12-09'),
+  ('00000000-0000-0000-0000-00000000000a', 'C2', 'a5000000-0000-0000-0000-00000000000a', '2026-12-10', '2026-12-10'),
+  ('00000000-0000-0000-0000-00000000000a', 'C3', 'a5000000-0000-0000-0000-00000000000a', '2026-12-28', '2026-12-28');
 
 -- Zadanie bez bloku (jako superuser, żeby RLS nie wyprzedził błędu NOT NULL).
 select throws_ok(
@@ -114,6 +122,24 @@ select is(
 select is(
   (select count(*) from public.tasks as t where t.title = 'J2'),
   0::bigint, 'pozostałe zadania usunięte przy zmianie na pojedynczy blok');
+
+-- Zmiana wzorca na custom (pn + śr, do 23.12) od 8.12.
+create temp table split_c on commit drop as
+select public.split_block_series(
+  'a5000000-0000-0000-0000-00000000000a', '2026-12-08',
+  '{"recurrence":{"freq":"custom","byWeekday":[1,3],"until":"2026-12-23"}}', false
+) as new_id;
+grant select on split_c to authenticated;
+select is(
+  (select (t.block_id = (select new_id from split_c) and t.due_date = '2026-12-09')::int
+   from public.tasks as t where t.title = 'C1'),
+  1, 'custom: zadanie z dnia ze wzorca (środa) przechodzi do nowej serii');
+select is(
+  (select count(*) from public.tasks as t where t.title = 'C2'),
+  0::bigint, 'custom: zadanie z dnia poza wzorcem (czwartek) usunięte');
+select is(
+  (select count(*) from public.tasks as t where t.title = 'C3'),
+  0::bigint, 'custom: zadanie po until usunięte');
 
 select * from finish();
 rollback;
