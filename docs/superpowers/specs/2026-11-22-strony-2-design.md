@@ -163,8 +163,8 @@ Ustalone z Mejsonem na makietach S2 po zatwierdzeniu pierwszej wersji specu. Gdz
 
 Każdy krok to osobna gałąź, osobny plan i scalenie po „scal do main”:
 
-1. **Fundament stron i powłoka:** jeden blok tabeli, szablony jako zawartość startowa, przeniesienie istniejących stron, ikony Lucide (punkt 5), chowany pasek boczny (punkt 13). Migracja danych najpierw na kopii bazy w CI.
-2. **Tabela jak w Notion:** punkty 1, 3 i 8–11 (edycja w komórkach, opcje, szerokości kolumn, przewijanie, karty, menu kolumny, filtr, sort, podsumowania).
+1. **Fundament stron i powłoka:** jeden blok tabeli z funkcjami dzisiejszego widoku szablonu (punkt 1: karty do odczytu, filtr, sort, ukrywanie, podsumowania, menu kolumny, najbliższy termin), szablony jako zawartość startowa (punkt 2), przeniesienie istniejących stron, ikony Lucide (punkt 5), chowany pasek boczny (punkt 13). Wiersze edytuje się w tym kroku jeszcze trybem edycji wiersza, jak dziś w Books. Strona „Hasła” zostaje na starym widoku do kroku 3, bo trzyma sejf. Migracja danych najpierw na kopii bazy w CI.
+2. **Tabela jak w Notion:** punkty 3 i 8–11 (edycja w komórkach zamiast trybu wiersza, opcje, szerokości kolumn, przewijanie, karty użytkownika z „+ Karta” i szerokością).
 3. **Hasła i onboarding:** punkty 4, 6 (część haseł), 12 i 14 oraz zmiany onboardingu z „Decyzji Claude”, z osobnym przeglądem bezpieczeństwa.
 
 Po Stronach 2.0: projekt Dziś (wariant F, pusty stan, zadania tylko w blokach), potem Subscriptions, potem telefon (Etap 3).
