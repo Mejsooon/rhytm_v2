@@ -100,6 +100,7 @@ const pinnedCard = z.object({
   title_field_id: z.string().optional(),
   done_option_id: z.string().optional(),
   unit: unit.optional(),
+  width: z.number().int().min(180).max(4000).optional(),
 });
 
 export const tableSettingsPatchSchema = z.object({
@@ -108,6 +109,7 @@ export const tableSettingsPatchSchema = z.object({
   hidden_field_ids: z.array(z.string()).max(200).optional(),
   column_summaries: z.record(z.string(), columnSummary).optional(),
   pinned_cards: z.array(pinnedCard).max(20).optional(),
+  column_widths: z.record(z.string(), z.number().int().min(80).max(4000)).optional(),
 });
 
 export const rowValuesSchema = z.record(z.string(), z.unknown());

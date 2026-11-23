@@ -66,6 +66,10 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         ? surowe.column_summaries
         : {},
     pinned_cards: Array.isArray(surowe.pinned_cards) ? surowe.pinned_cards : [],
+    column_widths:
+      surowe.column_widths && typeof surowe.column_widths === "object"
+        ? surowe.column_widths
+        : {},
   };
 
   const [fields, setFields] = useState<PageField[]>(block.fields);

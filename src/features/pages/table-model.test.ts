@@ -25,6 +25,7 @@ const bezUstawien: TableSettings = {
   hidden_field_ids: [],
   column_summaries: {},
   pinned_cards: [],
+  column_widths: {},
 };
 
 // Szablon z id pól i opcji, jak po create_page
