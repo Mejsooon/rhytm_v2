@@ -1,12 +1,14 @@
 import { Table } from "lucide-react";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 
-import { parsePageIcon } from "./page-icons";
+import { IKONY_POLECANE, parsePageIcon } from "./page-icons";
 
-// Ikona strony: `lucide:<nazwa>` → ikona Lucide ładowana dynamicznie w kolorze tekstu wokół;
-// brak ikony, stary zapis albo śmieci → domyślna tabela. Do czasu załadowania (i dla nieznanej nazwy) też tabela.
+// Ikona strony: `lucide:<nazwa>` → ikona Lucide w kolorze tekstu wokół. Polecane ikony są importowane statycznie
+// (od razu, bez migania), pozostałe ładują się dynamicznie. Brak ikony, stary zapis albo śmieci → domyślna tabela;
+// do czasu załadowania (i dla nieznanej nazwy) też tabela.
 export function PageIcon({ icon, size = 16 }: { icon: string; size?: number }) {
   const nazwa = parsePageIcon(icon);
+  const Polecana = nazwa === null ? undefined : IKONY_POLECANE[nazwa];
 
   return (
     <span
@@ -17,6 +19,8 @@ export function PageIcon({ icon, size = 16 }: { icon: string; size?: number }) {
     >
       {nazwa === null ? (
         <Table size={size} strokeWidth={2} color="currentColor" className="block" />
+      ) : Polecana !== undefined ? (
+        <Polecana size={size} strokeWidth={2} color="currentColor" className="block" />
       ) : (
         <DynamicIcon
           name={nazwa as IconName}

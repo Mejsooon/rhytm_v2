@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { PageIcon } from "./page-icon";
+import { ICON_KEYWORDS, IKONY_POLECANE } from "./page-icons";
 
 describe("PageIcon", () => {
   it("nieprawidłowy zapis → od razu ikona tabeli (svg lucide-table), bez błędu w konsoli", () => {
@@ -23,5 +24,15 @@ describe("PageIcon", () => {
     const wrapper = container.querySelector("[data-page-icon]");
     expect(wrapper?.getAttribute("data-page-icon")).toBe("rocket");
     expect(container.querySelector("svg")).not.toBeNull();
+  });
+
+  it("polecana ikona (lucide:book-open) od pierwszego renderu to svg lucide-book-open, bez tabeli", () => {
+    const { container } = render(<PageIcon icon="lucide:book-open" size={16} />);
+    expect(container.querySelector("svg.lucide-book-open")).not.toBeNull();
+    expect(container.querySelector("svg.lucide-table")).toBeNull();
+  });
+
+  it("każda nazwa z ICON_KEYWORDS ma wpis w IKONY_POLECANE", () => {
+    for (const [nazwa] of ICON_KEYWORDS) expect(IKONY_POLECANE[nazwa], nazwa).toBeDefined();
   });
 });
