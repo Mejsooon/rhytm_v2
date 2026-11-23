@@ -124,28 +124,14 @@ describe("TodayView", () => {
     expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
-  it("przed pierwszymi krokami (konto młodsze niż 7 dni) zostaje EmptyToday", () => {
-    const d = dane({ blocks: 1, habits: 1, workouts: 0, sleepLogs: 0 });
+  it("nowe konto bez niczego widzi pełny układ z zerami (bez stanu pustego)", () => {
+    const d = dane(nic);
     d.profile.createdAt = "2026-11-14T10:00:00Z";
     render(<TodayView data={d} name="Mejson" />);
-    expect(screen.getByText("Witaj w rhytm, Mejson")).toBeInTheDocument();
-    expect(screen.getByText("2 / 4")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Ten tydzień" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("konto starsze niż 7 dni z jednym blokiem pokazuje pełny widok", () => {
-    // Konto z 01.11, dziś 17.11 → 16 dni
-    render(
-      <TodayView
-        data={dane({ blocks: 1, habits: 0, workouts: 0, sleepLogs: 0 })}
-        name="Mejson"
-      />,
-    );
     expect(
       screen.getByRole("heading", { name: "Ten tydzień" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
   it("„Nowy blok” otwiera okno bloku na dziś, na najbliższą pełną godzinę, a zapis odświeża stronę", async () => {

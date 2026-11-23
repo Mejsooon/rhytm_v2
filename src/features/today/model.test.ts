@@ -10,12 +10,15 @@ import type { SleepLog } from "@/features/habits/sleep";
 import type { SportItem } from "@/features/sport/model";
 import type { TaskRow } from "@/features/tasks/model";
 import {
+  blocksCountLabel,
   dayPlan,
+  dayPlanRows,
+  todayHabits,
+  weekBars,
   isoWeekNumber,
   nowItem,
   parseQuickRun,
   quickWhenOptions,
-  showFullToday,
   todayTiles,
   weekStart,
   weekTiles,
@@ -765,40 +768,332 @@ describe("parseQuickRun", () => {
   });
 });
 
-describe("showFullToday", () => {
-  const wszystkie = { blocks: 1, habits: 1, workouts: 1, sleepLogs: 1 };
+describe("weekBars", () => {
+  it("cztery wiersze z gotowymi tekstami wg makiety", () => {
+    const wynik = weekBars(
+      wejscie({
+        workoutsGoalOn: true,
+        weeklyWorkoutsGoal: 4,
+        kmGoalOn: true,
+        weeklyKmGoal: 25,
+        sportItems: [
+          trening("r1", { distanceKm: 10, durationS: 3600 }),
+          trening("g1", { kind: "gym", date: PN }),
+        ],
+        sleepLogs: [
+          sen("2026-11-17", "22:00", "06:30"), // 8:30 ≥ cel
+          sen("2026-11-16", "00:30", "07:20"), // 6:50 < cel
+        ],
+      }),
+    );
+    expect(wynik.map((w) => w.label)).toEqual([
+      "Treningi",
+      "Bieg",
+      "Nawyki",
+      "Sen",
+    ]);
+    expect(wynik[0]).toEqual({
+      label: "Treningi",
+      value: "2",
+      unit: "/ 4",
+      percent: 50,
+      right: "jeszcze 2",
+    });
+    expect(wynik[1]).toEqual({
+      label: "Bieg",
+      value: "10",
+      unit: "/ 25 km",
+      percent: 40,
+      right: "jeszcze 15 km",
+    });
+    // brak dni z planem → „0 %”
+    expect(wynik[2]).toEqual({
+      label: "Nawyki",
+      value: "0 %",
+      unit: "dni z celem",
+      percent: 0,
+      right: "—",
+    });
+    // średnia (510 + 410) / 2 = 460 min = 7:40, cel 8:00 → 96 %
+    expect(wynik[3]).toEqual({
+      label: "Sen",
+      value: "7:40",
+      unit: "/ 8:00 śr.",
+      percent: 96,
+      right: "1 z 2 nocy ≥ cel",
+    });
+  });
 
-  it("4 kroki albo blok i konto starsze niż 7 dni", () => {
+  it("cel osiągnięty, km z przecinkiem, pasek ograniczony do 100", () => {
+    const wynik = weekBars(
+      wejscie({
+        workoutsGoalOn: true,
+        weeklyWorkoutsGoal: 1,
+        kmGoalOn: true,
+        weeklyKmGoal: 7.5,
+        sportItems: [trening("r1", { distanceKm: 9, durationS: 3000 })],
+        sleepLogs: [sen("2026-11-17", "22:00", "08:00")],
+      }),
+    );
+    expect(wynik[0].right).toBe("cel osiągnięty");
+    expect(wynik[0].percent).toBe(100);
+    expect(wynik[1].unit).toBe("/ 7,5 km");
+    expect(wynik[1].right).toBe("cel osiągnięty");
+    expect(wynik[1].percent).toBe(100);
+    expect(wynik[3].percent).toBe(100);
+  });
+
+  it("km z ułamkiem w „jeszcze N km”", () => {
+    const wynik = weekBars(
+      wejscie({
+        kmGoalOn: true,
+        weeklyKmGoal: 10,
+        sportItems: [trening("r1", { distanceKm: 2.5, durationS: 900 })],
+      }),
+    );
+    expect(wynik[1].value).toBe("2,5");
+    expect(wynik[1].right).toBe("jeszcze 7,5 km");
+    expect(wynik[1].percent).toBe(25);
+  });
+
+  it("cel wyłączony: sama wartość, pusty pasek, „—”; sen bez wpisów", () => {
+    const wynik = weekBars(
+      wejscie({
+        sportItems: [trening("r1", { distanceKm: 10, durationS: 3600 })],
+      }),
+    );
+    expect(wynik[0]).toMatchObject({
+      value: "1",
+      unit: "",
+      percent: 0,
+      right: "—",
+    });
+    expect(wynik[1]).toMatchObject({
+      value: "10",
+      unit: "km",
+      percent: 0,
+      right: "—",
+    });
+    expect(wynik[3]).toEqual({
+      label: "Sen",
+      value: "—",
+      unit: "/ 8:00 śr.",
+      percent: 0,
+      right: "brak wpisów",
+    });
+  });
+
+  it("Nawyki: procent z weekTiles", () => {
+    const wynik = weekBars(
+      wejscie({
+        habits: [nawyk("h1", PN)],
+        checks: new Map([["h1", new Set(["2026-11-16", "2026-11-17"])]]),
+      }),
+    );
+    // pn, wt zrobione, śr (dziś) nie → 2/3 = 67 %
+    expect(wynik[2]).toMatchObject({ value: "67 %", percent: 67 });
+  });
+});
+
+describe("todayHabits", () => {
+  const tpt: Habit = {
+    ...nawyk("x", "2026-01-01"),
+    schedules: [
+      {
+        validFrom: "2026-01-01",
+        type: "times_per_week",
+        weekdays: [],
+        timesPerWeek: 2,
+      },
+    ],
+  };
+  // środa 18.11 ma numer 3; nawyk tylko pn
+  const tylkoPn: Habit = {
+    ...nawyk("pn", "2026-01-01"),
+    schedules: [
+      {
+        validFrom: "2026-01-01",
+        type: "weekdays",
+        weekdays: [1],
+        timesPerWeek: null,
+      },
+    ],
+  };
+  const przyszly = nawyk("p", "2026-12-01");
+
+  it("zaplanowane dziś + X/tydz., w kolejności wejścia, z passą i etykietą", () => {
+    const codzienny = nawyk("d", "2026-01-01");
+    const wynik = todayHabits({
+      today: DZIS,
+      weekStart: "mon",
+      habits: [codzienny, tylkoPn, tpt, przyszly],
+      checks: new Map([
+        ["d", new Set(["2026-11-15", "2026-11-16", "2026-11-17", DZIS])],
+        ["x", new Set(["2026-11-17"])],
+      ]),
+    });
+    expect(wynik.map((h) => h.id)).toEqual(["d", "x"]);
+    // 18, 17, 16, 15 odhaczone; 14 nie → passa 4 (dziś odhaczone)
+    expect(wynik[0]).toEqual({
+      id: "d",
+      name: "d",
+      done: true,
+      streak: { value: 4, unit: "days" },
+      streakLabel: "4 dni z rzędu",
+      hot: true,
+    });
+    // X/tydz.: 1 odhaczenie z 2 w bieżącym tygodniu (niespełniony nie przerywa), wcześniej brak
+    expect(wynik[1]).toMatchObject({
+      done: false,
+      streak: { value: 0, unit: "weeks" },
+      streakLabel: "zacznij passę",
+      hot: false,
+    });
+  });
+
+  it("etykiety: 1 dzień, tygodnie, próg „hot” przy 3", () => {
+    const d = nawyk("d", "2026-01-01");
+    const jeden = todayHabits({
+      today: DZIS,
+      weekStart: "mon",
+      habits: [d],
+      checks: new Map([["d", new Set(["2026-11-17"])]]),
+    })[0];
+    expect(jeden.streakLabel).toBe("1 dzień z rzędu");
+    expect(jeden.hot).toBe(false);
+    const trzy = todayHabits({
+      today: DZIS,
+      weekStart: "mon",
+      habits: [d],
+      checks: new Map([
+        ["d", new Set(["2026-11-15", "2026-11-16", "2026-11-17"])],
+      ]),
+    })[0];
+    expect(trzy.streakLabel).toBe("3 dni z rzędu");
+    expect(trzy.hot).toBe(true);
+    // X/tydz. spełnione w bieżącym tygodniu (pn, wt) → 1 tydzień
+    const tyg = todayHabits({
+      today: DZIS,
+      weekStart: "mon",
+      habits: [tpt],
+      checks: new Map([["x", new Set(["2026-11-16", "2026-11-17"])]]),
+    })[0];
+    expect(tyg.streak).toEqual({ value: 1, unit: "weeks" });
+    expect(tyg.streakLabel).toBe("1 tyg. z rzędu");
+  });
+
+  it("dzień zaplanowany tylko w poniedziałek pojawia się w poniedziałek", () => {
+    const wynik = todayHabits({
+      today: PN,
+      weekStart: "mon",
+      habits: [tylkoPn],
+      checks: new Map(),
+    });
+    expect(wynik.map((h) => h.id)).toEqual(["pn"]);
+  });
+});
+
+function wpis(key: string, startMin: number, endMin: number): PlanItem {
+  return {
+    key,
+    kind: "block",
+    title: key,
+    startMin,
+    endMin,
+    color: "#000",
+    categoryName: null,
+    planned: false,
+    tasksDone: 0,
+    tasksTotal: 0,
+    occurrence: null,
+    sportKey: null,
+  };
+}
+
+describe("dayPlanRows", () => {
+  it("pusty dzień: jedna przerwa 24 h, duża", () => {
+    expect(dayPlanRows([])).toEqual([
+      {
+        type: "gap",
+        startMin: 0,
+        endMin: 1440,
+        time: "00:00",
+        label: "24 h wolne",
+        big: true,
+      },
+    ]);
+  });
+
+  it("przerwy przed, między i po wpisach z etykietami i progiem 180 min", () => {
+    const a = wpis("a", 8 * 60, 9 * 60 + 30);
+    const b = wpis("b", 10 * 60, 11 * 60);
+    const c = wpis("c", 11 * 60, 12 * 60); // bez przerwy po b
+    const wiersze = dayPlanRows([a, b, c]);
     expect(
-      showFullToday(
-        { ...wszystkie, sleepLogs: 0 },
-        "2026-11-16T10:00:00Z",
-        DZIS,
-      ),
-    ).toBe(false);
-    expect(showFullToday(wszystkie, "2026-11-16T10:00:00Z", DZIS)).toBe(true);
+      wiersze.map((w) => (w.type === "gap" ? w.label : w.item.key)),
+    ).toEqual(["8 h wolne", "a", "30 min wolne", "b", "c", "12 h wolne"]);
+    const pierwsza = wiersze[0];
+    expect(pierwsza).toMatchObject({ big: true, time: "00:00" });
+    expect(wiersze[2]).toMatchObject({ big: false, time: "09:30" });
+    expect(wiersze[5]).toMatchObject({
+      startMin: 720,
+      endMin: 1440,
+      time: "12:00",
+    });
+  });
+
+  it("etykiety „1 h”, „1 h 30 min”, 179 min nie jest duża, 180 jest", () => {
+    const wiersze = dayPlanRows([
+      wpis("a", 60, 120),
+      wpis("b", 180, 240), // przerwa 60
+      wpis("c", 330, 1440), // przerwa 90
+    ]);
+    const przerwy = wiersze.filter((w) => w.type === "gap");
+    expect(przerwy.map((w) => w.label)).toEqual([
+      "1 h wolne",
+      "1 h wolne",
+      "1 h 30 min wolne",
+    ]);
+    const graniczne = dayPlanRows([wpis("a", 179, 1440)])[0];
+    expect(graniczne).toMatchObject({ label: "2 h 59 min wolne", big: false });
+    const trzy = dayPlanRows([wpis("a", 180, 1440)])[0];
+    expect(trzy).toMatchObject({ label: "3 h wolne", big: true });
+  });
+
+  it("nakładki łączą się: wpis wewnątrz dłuższego nie tworzy przerwy", () => {
+    const wiersze = dayPlanRows([
+      wpis("a", 600, 720),
+      wpis("b", 630, 660), // wewnątrz a
+      wpis("c", 700, 780), // zachodzi na koniec a
+      wpis("d", 790, 800),
+    ]);
     expect(
-      showFullToday(
-        { blocks: 1, habits: 0, workouts: 0, sleepLogs: 0 },
-        "2026-11-10T10:00:00Z",
-        DZIS,
-      ),
-    ).toBe(true);
-    // równo 7 dni to jeszcze nie „starsze niż 7 dni”
+      wiersze.map((w) => (w.type === "gap" ? `gap${w.startMin}` : w.item.key)),
+    ).toEqual(["gap0", "a", "b", "c", "gap780", "d", "gap800"]);
+  });
+});
+
+describe("blocksCountLabel", () => {
+  it("odmiana", () => {
     expect(
-      showFullToday(
-        { blocks: 1, habits: 0, workouts: 0, sleepLogs: 0 },
-        "2026-11-11T10:00:00Z",
-        DZIS,
+      [0, 1, 2, 4, 5, 11, 12, 14, 15, 21, 22, 24, 25, 112].map(
+        blocksCountLabel,
       ),
-    ).toBe(false);
-    // stare konto bez bloku zostaje w stanie pustym
-    expect(
-      showFullToday(
-        { blocks: 0, habits: 1, workouts: 1, sleepLogs: 1 },
-        "2026-01-01T10:00:00Z",
-        DZIS,
-      ),
-    ).toBe(false);
+    ).toEqual([
+      "0 bloków",
+      "1 blok",
+      "2 bloki",
+      "4 bloki",
+      "5 bloków",
+      "11 bloków",
+      "12 bloków",
+      "14 bloków",
+      "15 bloków",
+      "21 bloków",
+      "22 bloki",
+      "24 bloki",
+      "25 bloków",
+      "112 bloków",
+    ]);
   });
 });

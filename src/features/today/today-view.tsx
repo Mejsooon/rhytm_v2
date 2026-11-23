@@ -1,6 +1,6 @@
 "use client";
 
-// Ekran Dziś (Today.dc.html web; EmptyToday.dc.html przed pierwszymi krokami).
+// Ekran Dziś (Today.dc.html web).
 // Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, plan dnia i „Zadania na dziś”.
 // Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useEffect, useState } from "react";
@@ -15,15 +15,13 @@ import {
   type BlockDialogInitial,
 } from "@/features/calendar/block-dialog";
 import { minutesNow } from "@/features/calendar/load-calendar";
-import { DNI_PELNE, MIESIACE_DOP } from "@/features/calendar/mobile/pl";
+import { DNI_PELNE } from "@/features/calendar/mobile/pl";
 import { weekdayOf } from "@/features/calendar/view-range";
 import { DayPlan } from "./day-plan";
-import { EmptyToday } from "./empty-today";
-import { firstSteps } from "./first-steps";
 import type { TodayData } from "./load-today";
 import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
-import { isoWeekNumber, showFullToday, weekTiles } from "./model";
+import { isoWeekNumber, weekTiles } from "./model";
 import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
 
@@ -119,23 +117,6 @@ export function TodayView({
 
   const dzien = weekdayOf(today);
   const [rok, miesiac, dzienMiesiaca] = today.split("-");
-
-  // Stan pusty: dopóki nie ma pierwszych kroków (Ruling „EmptyToday → pełne Dziś”)
-  if (!showFullToday(data.counts, profile.createdAt, today)) {
-    // „Wtorek · 17 listopada” nad tytułem na telefonie
-    const etykieta = `${DNI_PELNE[dzien]} · ${Number(dzienMiesiaca)} ${MIESIACE_DOP[Number(miesiac) - 1]}`;
-    return (
-      <>
-        <ModuleHeader
-          title="Dziś"
-          phoneLabel={etykieta}
-          webAction={przyciskNowyBlok}
-        />
-        <EmptyToday name={name} steps={firstSteps(data.counts)} />
-        {oknoBloku}
-      </>
-    );
-  }
 
   const kafelki = weekTiles({
     today,

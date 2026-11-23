@@ -5,7 +5,14 @@ import type { IsoDate } from "@/components/controls/calendar-math";
 import type { CategoryRow } from "@/features/calendar/load-calendar";
 import type { Occurrence } from "@/features/calendar/occurrences";
 import { addDays, viewRange } from "@/features/calendar/view-range";
-import { dayStats, type Checks, type Habit } from "@/features/habits/model";
+import {
+  currentStreak,
+  dayStats,
+  isPlanned,
+  scheduleOn,
+  type Checks,
+  type Habit,
+} from "@/features/habits/model";
 import { sleepMinutes, type SleepLog } from "@/features/habits/sleep";
 import {
   SPORT_COLOR,
@@ -275,7 +282,7 @@ export function dayPlan(
     const kat = categories.find((k) => k.id === o.categoryId) ?? null;
     // Zadania wystąpienia są przypięte do ORYGINALNEJ daty. Occurrence nie ma osobnego pola
     // na nią — jest tylko w kluczu `${blockId}:${date}` (occurrences.ts), więc bierzemy
-    // ostatnie 10 znaków, tak samo jak pinTask w tasks/model.ts. `o.date` to data po przesunięciu.
+    // ostatnie 10 znaków, a nie pole zadania `occurrence_date` w nowej dacie. `o.date` to data po przesunięciu.
     const postep = occurrenceProgress(tasks, o.blockId, o.key.slice(-10));
     wynik.push({
       key: o.key,
@@ -447,28 +454,177 @@ export function parseQuickRun(text: string): {
   return { distanceKm, kind };
 }
 
-// Pełne Dziś zamiast stanu pustego: wszystkie 4 pierwsze kroki zrobione
-// albo jest choć jeden blok i konto jest starsze niż 7 dni
-export function showFullToday(
-  counts: {
-    blocks: number;
-    habits: number;
-    workouts: number;
-    sleepLogs: number;
-  },
-  accountCreatedAt: string,
-  today: IsoDate,
-): boolean {
-  if (
-    counts.blocks > 0 &&
-    counts.habits > 0 &&
-    counts.workouts > 0 &&
-    counts.sleepLogs > 0
-  ) {
-    return true;
+// Karta „Ten tydzień” (wariant F): 4 wiersze z gotowymi tekstami. Liczy z `weekTiles`,
+// więc dostaje to samo wejście. `percent` to pasek 0–100.
+export type WeekBar = {
+  label: "Treningi" | "Bieg" | "Nawyki" | "Sen";
+  value: string; // duża liczba, np. „2”, „10”, „78 %”, „7:25”
+  unit: string; // szary dopisek, np. „/ 4”, „/ 25 km”, „dni z celem”
+  percent: number;
+  right: string; // prawa kolumna
+};
+
+export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
+  const t = weekTiles(input);
+  // Pasek: zaokrąglony procent z zakresu 0–100 (cel 0 → pusty pasek)
+  const procent = (czesc: number, calosc: number) =>
+    calosc <= 0
+      ? 0
+      : Math.min(100, Math.max(0, Math.round((czesc / calosc) * 100)));
+  // Km bez zbędnego zera, z przecinkiem: „10”, „7,5”
+  const km = (v: number) => String(Math.round(v * 10) / 10).replace(".", ",");
+  // Czas „h:mm”
+  const hmm = (minuty: number) =>
+    `${Math.floor(minuty / 60)}:${String(minuty % 60).padStart(2, "0")}`;
+
+  // Treningi: cel wyłączony → sama liczba wykonanych
+  const treningiCel = input.workoutsGoalOn;
+  const treningiBrakuje = Math.max(0, t.workouts.total - t.workouts.done);
+
+  // Bieg: cel wyłączony (goalKm null) → sama liczba km
+  const biegCel = t.run.goalKm;
+  const biegBrakuje =
+    biegCel === null ? 0 : Math.round((biegCel - t.run.km) * 10) / 10;
+
+  // Sen: średnia wobec celu, nie więcej niż 100 %
+  const sen = t.sleep;
+
+  return [
+    {
+      label: "Treningi",
+      value: String(t.workouts.done),
+      unit: treningiCel ? `/ ${t.workouts.total}` : "",
+      percent: treningiCel ? procent(t.workouts.done, t.workouts.total) : 0,
+      right: !treningiCel
+        ? "—"
+        : treningiBrakuje === 0
+          ? "cel osiągnięty"
+          : `jeszcze ${treningiBrakuje}`,
+    },
+    {
+      label: "Bieg",
+      value: km(t.run.km),
+      unit: biegCel === null ? "km" : `/ ${km(biegCel)} km`,
+      percent: biegCel === null ? 0 : procent(t.run.km, biegCel),
+      right:
+        biegCel === null
+          ? "—"
+          : biegBrakuje <= 0
+            ? "cel osiągnięty"
+            : `jeszcze ${km(biegBrakuje)} km`,
+    },
+    {
+      label: "Nawyki",
+      value: `${t.habits.percent ?? 0} %`,
+      unit: "dni z celem",
+      percent: procent(t.habits.percent ?? 0, 100),
+      right: "—",
+    },
+    {
+      label: "Sen",
+      value: sen.avgMin === null ? "—" : hmm(sen.avgMin),
+      unit: `/ ${hmm(sen.goalMin)} śr.`,
+      percent: sen.avgMin === null ? 0 : procent(sen.avgMin, sen.goalMin),
+      right:
+        sen.nights === 0
+          ? "brak wpisów"
+          : `${sen.nightsAtGoal} z ${sen.nights} nocy ≥ cel`,
+    },
+  ];
+}
+
+export type TodayHabit = {
+  id: string;
+  name: string;
+  done: boolean;
+  streak: { value: number; unit: "days" | "weeks" };
+  streakLabel: string;
+  hot: boolean; // passa ≥ 3: płomień w kolorze #c2410c
+};
+
+// Nawyki na dziś: zaplanowane na dziś (codziennie / dni tygodnia) i X/tydz.,
+// w kolejności z wejścia (jak w module Nawyki)
+export function todayHabits(input: {
+  today: IsoDate;
+  weekStart: "mon" | "sun";
+  habits: Habit[];
+  checks: Checks;
+}): TodayHabit[] {
+  const wynik: TodayHabit[] = [];
+  for (const h of input.habits) {
+    const wersja = scheduleOn(h, input.today);
+    if (wersja === null) continue;
+    if (wersja.type !== "times_per_week" && !isPlanned(h, input.today)) {
+      continue;
+    }
+    const passa = currentStreak(h, input.checks, input.today, input.weekStart);
+    const v = passa.value;
+    const etykieta =
+      v === 0
+        ? "zacznij passę"
+        : passa.unit === "weeks"
+          ? `${v} tyg. z rzędu`
+          : v === 1
+            ? "1 dzień z rzędu"
+            : `${v} dni z rzędu`;
+    wynik.push({
+      id: h.id,
+      name: h.name,
+      done: input.checks.get(h.id)?.has(input.today) ?? false,
+      streak: { value: v, unit: passa.unit },
+      streakLabel: etykieta,
+      hot: v >= 3,
+    });
   }
-  // Wiek konta w dniach: od dnia założenia (data z timestampu) do dziś
-  const dzienZalozenia = accountCreatedAt.slice(0, 10);
-  const wiekDni = (Date.parse(today) - Date.parse(dzienZalozenia)) / 86400000;
-  return counts.blocks > 0 && wiekDni > 7;
+  return wynik;
+}
+
+export type DayPlanRow =
+  | {
+      type: "gap";
+      startMin: number;
+      endMin: number;
+      time: string; // „HH:MM” początku przerwy
+      label: string; // „30 min wolne”, „1 h wolne”, „1 h 30 min wolne”, „24 h wolne”
+      big: boolean; // ≥ 180 min
+    }
+  | { type: "item"; item: PlanItem };
+
+// Wiersze planu dnia: wpisy (z `dayPlan`, rosnąco po starcie) poprzedzielane przerwami.
+// Przerwa to odcinek 0–1440 bez żadnego wpisu; nakładające się wpisy łączą się w jedno pokrycie.
+export function dayPlanRows(plan: PlanItem[]): DayPlanRow[] {
+  const wiersze: DayPlanRow[] = [];
+  let pokryte = 0;
+  // Dodaje przerwę [od, do) jako wiersz z gotowym tekstem
+  const przerwa = (od: number, do_: number) => {
+    const minuty = do_ - od;
+    const h = Math.floor(minuty / 60);
+    const m = minuty % 60;
+    wiersze.push({
+      type: "gap",
+      startMin: od,
+      endMin: do_,
+      time: `${String(Math.floor(od / 60)).padStart(2, "0")}:${String(od % 60).padStart(2, "0")}`,
+      label: `${h > 0 ? `${h} h` : ""}${h > 0 && m > 0 ? " " : ""}${m > 0 ? `${m} min` : ""} wolne`,
+      big: minuty >= 180,
+    });
+  };
+  for (const item of plan) {
+    if (item.startMin > pokryte) przerwa(pokryte, item.startMin);
+    wiersze.push({ type: "item", item });
+    pokryte = Math.max(pokryte, item.endMin);
+  }
+  if (pokryte < 1440) przerwa(pokryte, 1440);
+  return wiersze;
+}
+
+// „0 bloków”, „1 blok”, „2 bloki”, „5 bloków”, „12 bloków”, „22 bloki”
+export function blocksCountLabel(n: number): string {
+  if (n === 1) return "1 blok";
+  const reszta10 = n % 10;
+  const reszta100 = n % 100;
+  if (reszta10 >= 2 && reszta10 <= 4 && (reszta100 < 12 || reszta100 > 14)) {
+    return `${n} bloki`;
+  }
+  return `${n} bloków`;
 }

@@ -48,8 +48,8 @@ const zadanie = (o: Record<string, unknown>) => ({
   title: "z",
   done: false,
   due_date: null,
-  block_id: null,
-  occurrence_date: null,
+  block_id: "bx",
+  occurrence_date: "2026-11-19",
   position: 0,
   ...o,
 });
