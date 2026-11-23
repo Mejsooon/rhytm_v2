@@ -179,7 +179,16 @@ export function PageTable({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <PinnedCards cards={settings.pinned_cards} fields={fields} rows={widoczneWiersze} today={today} />
+      <PinnedCards
+        cards={settings.pinned_cards}
+        fields={fields}
+        rows={widoczneWiersze}
+        today={today}
+        onChange={(next) => void store.patchSettings({ pinned_cards: next })}
+        // Okno karty (nowa i edycja) dochodzi w zadaniu 7
+        onAdd={() => {}}
+        onEdit={() => {}}
+      />
 
       {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">

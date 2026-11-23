@@ -126,7 +126,8 @@ describe("PageTable", () => {
         rows: [],
       };
       render(<PageTable block={block} today={TODAY} />);
-      expect(screen.getByTestId("przypiete-karty").children).toHaveLength(3);
+      // Trzy karty i przycisk „Karta” na końcu rzędu
+      expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
       expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
       expect(within(stopka).getByText("0 wierszy")).toBeInTheDocument();
@@ -266,7 +267,9 @@ describe("PageTable", () => {
 
     it("Pusta strona: bez kart", () => {
       render(<PageTable block={blok("empty", [{ Nazwa: "A" }])} today={TODAY} />);
-      expect(screen.queryByTestId("przypiete-karty")).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId("karta")).toHaveLength(0);
+      // Przycisk dodawania karty jest widoczny także bez kart
+      expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
   });
 
