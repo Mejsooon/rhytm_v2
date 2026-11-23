@@ -161,7 +161,11 @@ export function PageTable({
           />
           <ActionPopover
             open={menuTabeli}
-            onOpenChange={setMenuTabeli}
+            onOpenChange={(o) => {
+              // Zamknięcie menu (Esc, klik obok) zapisuje szkic nazwy z pola w menu
+              if (!o) void store.renameTable(szkicNazwy);
+              setMenuTabeli(o);
+            }}
             align="end"
             width={300}
             className="p-1"
@@ -184,11 +188,11 @@ export function PageTable({
                 type="text"
                 value={szkicNazwy}
                 onChange={(e) => setSzkicNazwy(e.target.value)}
-                onBlur={() => void store.renameTable(szkicNazwy)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
                     e.preventDefault();
-                    e.currentTarget.blur();
+                    void store.renameTable(szkicNazwy);
                   }
                 }}
                 placeholder="Tabela bez nazwy"
@@ -418,7 +422,8 @@ export function PageTable({
                   today={today}
                   done={zrobione}
                   onOpen={() => {
-                    if (editing?.rowId === r.id || r.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+                    // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
+                    if (editing?.rowId === r.id) return;
                     setWArkuszu(naTelefonie());
                     void store.startEdit(r);
                   }}

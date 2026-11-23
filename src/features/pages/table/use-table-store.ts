@@ -85,6 +85,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // Rejestracja pól Sekret z otwartego RowEdit i blokada drugiego zapisu w trakcie szyfrowania / zapisu
   const sekretRef = useRef<SecretRegistration | null>(null);
   const zapisujeRef = useRef(false);
+  // Tymczasowe id wiersza klikniętego w trakcie zapisu (edycja czeka na prawdziwe id)
+  const edycjaPoZapisie = useRef<string | null>(null);
 
   if (zrodloPol !== block.fields) {
     setZrodloPol(block.fields);
@@ -139,7 +141,12 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // Tryb edycji istniejącego wiersza (tylko jeden naraz; wiersz bez prawdziwego id czeka)
   async function startEdit(row: PageRow) {
-    if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+    // Wiersz jeszcze się zapisuje: klik nie ginie — edycja otworzy się, gdy serwer zwróci prawdziwe id
+    if (row.id.startsWith(PREFIKS_TYMCZASOWY)) {
+      edycjaPoZapisie.current = row.id;
+      return;
+    }
+    edycjaPoZapisie.current = null;
     if (szkicZmieniony() && !(await zapiszSzkic())) return;
     setEditing({ rowId: row.id, values: { ...row.values }, original: { ...row.values } });
   }
@@ -215,6 +222,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         wynik = null;
       }
       if (!wynik || !wynik.ok) {
+        if (edycjaPoZapisie.current === tymczasoweId) edycjaPoZapisie.current = null;
         setRows((l) => l.filter((r) => r.id !== tymczasoweId));
         // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
         if (wynik && !wynik.ok && wynik.code === "stale_generation") {
@@ -238,6 +246,13 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
           ? bezDuplikatu.map((r) => (r.id === tymczasoweId ? prawdziwy : r))
           : [...bezDuplikatu, prawdziwy];
       });
+      // Klik w wiersz w trakcie zapisu: otwieramy edycję już z prawdziwym id (o ile nic innego nie jest edytowane)
+      if (edycjaPoZapisie.current === tymczasoweId) {
+        edycjaPoZapisie.current = null;
+        setEditing(
+          (cur) => cur ?? { rowId: prawdziwy.id, values: { ...prawdziwy.values }, original: { ...prawdziwy.values } },
+        );
+      }
       return true;
     }
 

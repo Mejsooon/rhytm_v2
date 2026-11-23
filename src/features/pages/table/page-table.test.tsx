@@ -211,6 +211,22 @@ describe("PageTable", () => {
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { sort: [{ field_id: b.fields[0].id, dir: "asc" }] });
     });
 
+    it("„⋯”: nazwa z pola w menu zapisuje się Enterem i przy zamknięciu menu (Esc)", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      const menu = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      const pole = within(menu).getByRole("textbox", { name: "Nazwa tabeli" });
+      await user.clear(pole);
+      await user.type(pole, "Lektury");
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ustawienia tabeli" })).toBeNull());
+      expect(actions.updateBlockContent).toHaveBeenCalledTimes(1);
+      expect(actions.updateBlockContent).toHaveBeenCalledWith(b.id, expect.objectContaining({ name: "Lektury" }));
+      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Lektury");
+    });
+
     it("„⋯”: „Usuń tabelę” woła onRemove; bez onRemove pozycji nie ma", async () => {
       const user = userEvent.setup();
       const usun = vi.fn();
@@ -553,6 +569,31 @@ describe("PageTable", () => {
       expect(actions.addRow).toHaveBeenCalledWith(b.id, expect.objectContaining({ [tytul.id]: "Bez tytułu" }));
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
       expect(within(stopka).getByText("12 wierszy")).toBeInTheDocument();
+    });
+
+    it("klik w wiersz w trakcie zapisu otwiera edycję, gdy serwer zwróci prawdziwe id (e2e pages.spec:10)", async () => {
+      const user = userEvent.setup();
+      let odpowiedz: (v: unknown) => void = () => {};
+      actions.addRow.mockImplementation(
+        (_b: string, values: Record<string, unknown>) =>
+          new Promise((resolve) => {
+            odpowiedz = () => resolve({ ok: true, row: { id: "srv-9", values, position: 99, deletedAt: null } });
+          }),
+      );
+      render(<PageTable block={blok("books", [])} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.type(within(edycja()).getByRole("textbox", { name: "Tytuł" }), "Diuna");
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      // Wiersz ma jeszcze tymczasowe id — klik nie może zginąć
+      await user.click(screen.getByText("Diuna", { exact: true }));
+      expect(screen.queryByRole("textbox", { name: "Tytuł" })).toBeNull();
+      await act(async () => {
+        odpowiedz(null);
+      });
+      expect(within(edycja()).getByRole("textbox", { name: "Tytuł" })).toHaveValue("Diuna");
+      await user.click(within(edycja()).getByRole("button", { name: "Ocena 4 na 5" }));
+      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      expect(actions.updateRow).toHaveBeenCalledWith("srv-9", expect.objectContaining({}));
     });
 
     it("usunięcie: wiersz znika, toast „Usunięto · Cofnij” przywraca", async () => {
