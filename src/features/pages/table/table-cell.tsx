@@ -122,16 +122,7 @@ export function TableCell({
               aria-label={field.name}
               className="flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
             >
-              {opcja ? (
-                field.type === "status" ? (
-                  <OptionBadge option={opcja} />
-                ) : (
-                  // Select: odznaka z ramką (.bdg.out, „Obszar” z S2Projects.dc.html)
-                  <StatusBadge tone="outline">{opcja.label}</StatusBadge>
-                )
-              ) : (
-                <span className="text-faint-foreground">—</span>
-              )}
+              {opcja ? <OptionBadge option={opcja} /> : <span className="text-faint-foreground">—</span>}
             </button>
           }
         >

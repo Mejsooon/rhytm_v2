@@ -35,6 +35,26 @@ describe("OptionPicker", () => {
     expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Czytam"]);
   });
 
+  it("lista ma strukturę listbox: w listbox są same opcje, a „⋯” leży poza nim", () => {
+    okienko();
+    const lista = screen.getByRole("listbox");
+    expect(lista.querySelectorAll("button:not([role=option]), input")).toHaveLength(0);
+    expect(screen.getAllByRole("button", { name: /^Opcje: / })).toHaveLength(3);
+    for (const b of screen.getAllByRole("button", { name: /^Opcje: / })) expect(lista).not.toContainElement(b);
+  });
+
+  it("opcja select z kolorem pokazuje ten kolor, a „Bez koloru” ma obrys", () => {
+    const select: PageField = {
+      ...POLE,
+      type: "select",
+      config: { options: [{ id: "a", label: "Czerwona", color: "#b91c1c" }, { id: "b", label: "Goła", color: "" }] },
+    };
+    render(<OptionPicker field={select} value={null} onPick={vi.fn()} onCreate={vi.fn()} onUpdate={vi.fn()} onRemove={vi.fn()} />);
+    expect(screen.getByText("Czerwona")).toHaveStyle({ color: "#b91c1c" });
+    expect(screen.getByText("Czerwona")).not.toHaveClass("border-input");
+    expect(screen.getByText("Goła")).toHaveClass("border-input");
+  });
+
   it("pole ma autofokus", () => {
     okienko();
     expect(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" })).toHaveFocus();
@@ -123,6 +143,18 @@ describe("OptionPicker", () => {
       await user.click(screen.getByRole("button", { name: "Usuń opcję" }));
       expect(p.onRemove).toHaveBeenCalledWith("o2");
       expect(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" })).toBeInTheDocument();
+    });
+
+    it("Esc w panelu wraca do listy bez zapisu i nie propaguje się wyżej", async () => {
+      const user = userEvent.setup();
+      const zewnetrzny = vi.fn();
+      const p = await panel(user);
+      document.addEventListener("keydown", zewnetrzny);
+      await user.type(screen.getByRole("textbox", { name: "Nazwa opcji" }), "x{Escape}");
+      document.removeEventListener("keydown", zewnetrzny);
+      expect(p.onUpdate).not.toHaveBeenCalled();
+      expect(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" })).toBeInTheDocument();
+      expect(zewnetrzny.mock.calls.some(([e]) => (e as KeyboardEvent).key === "Escape")).toBe(false);
     });
 
     it("„Wstecz” wraca bez zapisu", async () => {

@@ -249,6 +249,14 @@ describe("TableCell", () => {
       expect(screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" })).not.toBeInTheDocument();
     });
 
+    it("select pokazuje kolor opcji (bez obrysu), a zmiana koloru zmienia plakietkę", () => {
+      const sel = pole("select", { name: "Obszar", config: { options: [{ id: "c", label: "Czerwona", color: "#b91c1c" }] } });
+      komorka(sel, wiersz("c"));
+      const plakietka = screen.getByText("Czerwona");
+      expect(plakietka).toHaveStyle({ color: "#b91c1c" });
+      expect(plakietka).not.toHaveClass("border-input");
+    });
+
     it("opcja bez koloru renderuje się jako szara plakietka z obrysem", () => {
       komorka(pole("status", { name: "Status", config: { options: opcje } }), wiersz("o2"));
       expect(screen.getByText("Bez barwy")).toHaveClass("border-input");

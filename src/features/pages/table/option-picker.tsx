@@ -37,6 +37,8 @@ export function OptionPicker({
   const [q, setQ] = React.useState("");
   const [edytowanaId, setEdytowanaId] = React.useState<string | null>(null);
   const [nazwa, setNazwa] = React.useState("");
+  // Opcja pod kursorem: jej „⋯” jest widoczne (warstwa „⋯” nie dziedziczy najechania z wiersza)
+  const [najechana, setNajechana] = React.useState<string | null>(null);
 
   const szukane = q.trim();
   const pasujace = opcje.filter((o) => o.label.toLowerCase().includes(szukane.toLowerCase()));
@@ -63,7 +65,18 @@ export function OptionPicker({
 
   if (edytowana) {
     return (
-      <div role="group" aria-label="Edycja opcji" className="flex flex-col gap-1">
+      <div
+        role="group"
+        aria-label="Edycja opcji"
+        className="flex flex-col gap-1"
+        // Esc w panelu to „Wstecz”: wraca do listy, okienko zostaje
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            setEdytowanaId(null);
+          }
+        }}
+      >
         <input
           type="text"
           autoFocus
@@ -118,7 +131,7 @@ export function OptionPicker({
   }
 
   return (
-    <div role="listbox" aria-label={field.name} className="flex flex-col">
+    <div role="group" aria-label={field.name} className="flex flex-col">
       <div className="px-1 pt-1 pb-1.5">
         <input
           type="text"
@@ -137,34 +150,46 @@ export function OptionPicker({
           className={POLE}
         />
       </div>
-      {pasujace.map((o) => (
-        <div key={o.id} className="group/opcja flex items-center gap-0.5">
-          <button
-            type="button"
-            role="option"
-            aria-selected={o.id === value}
-            onClick={() => wybierz(o.id)}
-            className={`${POZYCJA} min-w-0 flex-1`}
-          >
-            {field.type === "status" ? <OptionBadge option={o} /> : <StatusBadge tone="outline">{o.label}</StatusBadge>}
-            {o.id === value && <Check aria-hidden="true" className="ml-auto size-4" />}
-          </button>
-          {/* „⋯” widoczne po najechaniu i przy fokusie (.optmenu) */}
-          <Button
-            variant="ghost"
-            size="xs"
-            icon
-            aria-label={`Opcje: ${o.label}`}
-            onClick={() => {
-              setNazwa(o.label);
-              setEdytowanaId(o.id);
-            }}
-            className="opacity-0 group-hover/opcja:opacity-100 focus-visible:opacity-100"
-          >
-            <span aria-hidden="true">⋯</span>
-          </Button>
+      <div className="relative">
+        {/* Lista zawiera same opcje (role="option"); „⋯” leży obok, w osobnej warstwie nad końcem wierszy */}
+        <div role="listbox" aria-label={`Opcje: ${field.name}`} className="flex flex-col">
+          {pasujace.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="option"
+              aria-selected={o.id === value}
+              onClick={() => wybierz(o.id)}
+              onMouseEnter={() => setNajechana(o.id)}
+              onMouseLeave={() => setNajechana(null)}
+              className={`${POZYCJA} h-8 pr-9`}
+            >
+              <OptionBadge option={o} />
+              {o.id === value && <Check aria-hidden="true" className="ml-auto size-4" />}
+            </button>
+          ))}
         </div>
-      ))}
+        <div className="pointer-events-none absolute inset-0 flex flex-col">
+          {pasujace.map((o) => (
+            <div key={o.id} className="flex h-8 shrink-0 items-center justify-end">
+              {/* „⋯” widoczne po najechaniu i przy fokusie (.optmenu) */}
+              <Button
+                variant="ghost"
+                size="xs"
+                icon
+                aria-label={`Opcje: ${o.label}`}
+                onClick={() => {
+                  setNazwa(o.label);
+                  setEdytowanaId(o.id);
+                }}
+                className={`pointer-events-auto hover:opacity-100 focus-visible:opacity-100 ${najechana === o.id ? "opacity-100" : "opacity-0"}`}
+              >
+                <span aria-hidden="true">⋯</span>
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
       {szukane !== "" && !dokladna && (
         <button
           type="button"
