@@ -33,13 +33,13 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-Gałąź `feat/strony-2-poprawki`, wypchnięta, na razie tylko z decyzjami w specu. To pakiet poprawek po kroku 2 według sekcji „Decyzje po kroku 2” w specu Stron 2.0:
-1. `DatePicker` wszędzie według makiet S2: dymek 256 px, dni bezszeryfowe 13 px, dzisiejszy dzień z szarym tłem zamiast ramki. Kontrolka jest współdzielona przez Kalendarz, Sport, Nawyki i tabele.
-2. Tekst we wszystkich kolumnach tabeli jest ciemny. Szare zostają tylko puste komórki („—”) i dopiski, np. czas do terminu.
-3. URL w komórce wygląda jak zwykły tekst, podkreśla się po najechaniu i dalej otwiera adres.
-4. „Pusta strona” z wyboru szablonu tworzy stronę bez tabeli, z szybkim startem „albo zacznij od:”.
+Gałąź `feat/strony-2-poprawki` czeka na „scal do main”. Zawiera pakiet poprawek po kroku 2, zgodny z sekcją „Decyzje po kroku 2” w specu Stron 2.0:
+- `DatePicker` według makiet S2;
+- ciemny tekst w kolumnach;
+- URL jak zwykły tekst;
+- „Pusta strona” bez tabeli.
 
-Tryb pracy: Claude robi to sam, potem jeden przegląd całej gałęzi, CI, „Do decyzji” i scalenie po „scal do main”.
+Na tej gałęzi są też `CLAUDE.md` i ten plik. Po scaleniu przenieś ten pakiet do „Zrobione”.
 
 ## Dalej (kolejność ustalona z Mejsonem)
 

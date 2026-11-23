@@ -166,7 +166,6 @@ describe("buildTemplateBlocks", () => {
     ]);
   });
 
-
   it("kolory opcji mieszczą się w palecie 8 kolorów", () => {
     for (const key of ["books", "projects", "websites"] as const) {
       for (const f of buildTemplateBlocks(key, seqId()).find((b) => b.type === "table")!.fields) {

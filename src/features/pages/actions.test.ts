@@ -132,6 +132,16 @@ describe("strony", () => {
     });
   });
 
+  it("createPageFromTemplate('empty') tworzy stronę bez bloków (szybki start w edytorze)", async () => {
+    await createPageFromTemplate("empty", "");
+    expect(rpc).toHaveBeenCalledWith("create_page", {
+      p_title: "Pusta strona",
+      p_icon: "lucide:table",
+      p_template_key: "empty",
+      p_blocks: [],
+    });
+  });
+
   it("createPageFromTemplate zostawia własny tytuł", async () => {
     await createPageFromTemplate("projects", "Moje projekty");
     expect(rpc.mock.calls[0][1]).toMatchObject({ p_title: "Moje projekty", p_template_key: "projects" });
