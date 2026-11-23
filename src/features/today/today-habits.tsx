@@ -1,4 +1,4 @@
-// „Nawyki na dziś” wg S2Today: siatka kafelków (4 kolumny, ≤1100 px: 2). Kafelek to przycisk
+// „Nawyki na dziś” wg S2Today: siatka kafelków (zawsze 4 kolumny, jak w makiecie). Kafelek to przycisk
 // aria-pressed z nazwą, polem odhaczenia i passą. Bez nawyków na dziś jeden przerywany kafelek
 // „Utwórz nowy nawyk” (S2EmptyToday). Lista przychodzi gotowa z `todayHabits` (model.ts).
 import { Check, Flame, Plus } from "lucide-react";
@@ -40,7 +40,7 @@ export function TodayHabits({
           </span>
         )}
       </div>
-      <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
+      <div className="grid grid-cols-4 gap-3">
         {habits.length === 0 ? (
           // Przerywana ramka, bez cienia, treść w rzędzie na środku, min. 74 px, szary tekst
           <button

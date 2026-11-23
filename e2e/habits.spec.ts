@@ -7,7 +7,6 @@ import {
   wpisySnu,
   zalozKontoNawykow,
   zasiejNawyk,
-  zasiejSen,
 } from "./helpers/nawyki";
 
 // Nawyki działają na „dziś” w strefie profilu (Europe/Warsaw), więc dane zasiewamy względem prawdziwego dziś (helpers/nawyki.ts).
@@ -219,30 +218,38 @@ test.describe("nawyki i sen (telefon)", () => {
   });
 });
 
-test.describe("Dziś: pierwsze kroki z prawdziwymi licznikami", () => {
+test.describe("Dziś: nawyki na dziś (web)", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("nawyk i wpis snu zaliczają kroki; „Dodaj” otwiera okna przez ?nowy=", async ({
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+  });
+
+  test("bez nawyków: „Utwórz nowy nawyk” → okno → zapis → kafelek „zacznij passę” → klik odhacza", async ({
     page,
   }, info) => {
-    const userId = await zalozKontoNawykow(page, info.project.name);
-    await expect(page.getByText("0 / 4")).toBeVisible();
-
-    await page.getByRole("link", { name: /Dodaj nawyk/ }).click();
-    await expect(page).toHaveURL(/\/nawyki$/);
-    await expect(
-      page.getByRole("dialog", { name: "Nowy nawyk" }),
-    ).toBeVisible();
-
+    await zalozKontoNawykow(page, info.project.name);
     await page.goto("/dzis");
-    await page.getByRole("link", { name: /Wpisz ostatnią noc/ }).click();
-    await expect(page).toHaveURL(/\/nawyki$/);
-    await expect(page.getByRole("dialog", { name: "Wpis snu" })).toBeVisible();
+    const nawyki = page
+      .getByTestId("web-dzis")
+      .getByRole("region", { name: "Nawyki na dziś" });
 
-    await zasiejNawyk(userId, { name: "Woda" });
-    await zasiejSen(userId, 0, "23:00", "07:00");
-    await page.goto("/dzis");
-    await expect(page.getByText("2 / 4")).toBeVisible();
+    await nawyki.getByRole("button", { name: "Utwórz nowy nawyk" }).click();
+    const okno = page.getByRole("dialog", { name: "Nowy nawyk" });
+    await okno.getByLabel("Nazwa").fill("Woda");
+    await okno.getByRole("button", { name: "Dodaj nawyk" }).click();
+    await expect(okno).toBeHidden();
+
+    const woda = nawyki.getByRole("button", { name: /Woda/ });
+    await expect(woda).toContainText("zacznij passę");
+    await expect(woda).toHaveAttribute("aria-pressed", "false");
+    await expect(nawyki).toContainText("0 / 1");
+
+    const zapis = poZapisie(page);
+    await woda.click();
+    await expect(woda).toHaveAttribute("aria-pressed", "true");
+    await expect(nawyki).toContainText("1 / 1");
+    await zapis;
   });
 });

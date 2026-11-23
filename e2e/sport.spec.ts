@@ -17,7 +17,7 @@ test.describe("sport (web)", () => {
     test.skip(info.project.name !== "web", "układ webowy");
   });
 
-  test("„Nowy bieg” 10 km w 58:00 → tempo 5:48 → bieg w kalendarzu Sportu i głównym, krok na Dziś", async ({
+  test("„Nowy bieg” 10 km w 58:00 → tempo 5:48 → bieg w kalendarzu Sportu i głównym, plan dnia na Dziś", async ({
     page,
   }, info) => {
     await zalozKontoNawykow(page, info.project.name);
@@ -53,9 +53,17 @@ test.describe("sport (web)", () => {
     await expect(page).toHaveURL(/\/sport\?miesiac=.*&wybrany=s:/);
     await expect(page.getByRole("dialog", { name: "Spokojny" })).toBeVisible();
 
-    // Dziś: krok „Zapisz trening” zrobiony (jedyny z czterech)
+    // Dziś: wykonany bieg na liście planu dnia z odznaką „zrobione”, link do /sport
     await page.goto("/dzis");
-    await expect(page.getByText("1 / 4").first()).toBeVisible();
+    const trening = page
+      .getByTestId("web-dzis")
+      .getByTestId("plan-dnia-lista")
+      .getByRole("link", { name: /Spokojny/ });
+    await expect(trening).toContainText("zrobione");
+    await expect(trening).toHaveAttribute(
+      "href",
+      new RegExp(`^/sport\\?miesiac=${dzis.slice(0, 7)}&wybrany=s:`),
+    );
   });
 
   test("szablon „Push” → plan w kalendarzu → Rozpocznij → ciężary puste → ✓ → Zakończ → drugi start z ciężarami z ostatniego razu", async ({

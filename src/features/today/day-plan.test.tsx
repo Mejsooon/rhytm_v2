@@ -425,6 +425,23 @@ describe("DayPlan", () => {
     );
   });
 
+  it("wpis od 23:00 lub później: bez pustego wiersza 23:00 na końcu", () => {
+    render(
+      <Plan
+        d={dane({
+          occurrencesToday: [wystapienie("b1", 23 * 60, 60, "Czytanie")],
+          sportItems: [],
+        })}
+      />,
+    );
+    const lista = screen.getByTestId("plan-dnia-lista");
+    const wiersze = Array.from(lista.children).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "00:0023 h wolne",
+      expect.stringMatching(/^23:00Czytanie/),
+    ]);
+  });
+
   it("pusty dzień: „24 h wolne”, zachęta i „Dodaj pierwszy blok”, potem 23:00", async () => {
     render(<Plan d={dane({ occurrencesToday: [], sportItems: [] })} />);
     expect(screen.getByText("00:00–24:00 · 0 bloków")).toBeInTheDocument();
