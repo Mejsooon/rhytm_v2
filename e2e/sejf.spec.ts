@@ -222,7 +222,7 @@ test.describe("sejf", () => {
     await expect(wiersz).toHaveCount(1);
     await szukaj.fill("");
 
-    // „Zablokuj teraz” → zablokowane, hasło znika z DOM
+    // „Zablokuj teraz” → karta odblokowania, hasło i tabela znikają z DOM
     await wiersz.getByRole("button", { name: "Pokaż hasło" }).click();
     await expect(wiersz.getByText(haslo, { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Zablokuj teraz" }).click();
@@ -232,40 +232,19 @@ test.describe("sejf", () => {
     await expect(
       page.getByText("Blokada po 5 min bezczynności."),
     ).toBeVisible();
-    await expect(
-      page.getByText("zablokowane", { exact: true }).first(),
-    ).toBeVisible();
     await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
     await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
 
-    // Zamknięty sejf: tabela tylko do odczytu, ale wyszukiwanie i segment działają po jawnych kolumnach
+    // Zamknięty sejf: sama karta na środku, bez tabeli, wyszukiwarki i „Kategorie”
+    await expect(wiersz).toHaveCount(0);
+    await expect(page.getByText(serwis, { exact: true })).toHaveCount(0);
+    await expect(szukaj).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Nowy", exact: true }),
     ).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Kategorie", exact: true }),
-    ).toBeDisabled();
-    await expect(wiersz).toHaveCount(1);
-    // Tylko do odczytu: Serwis to zwykły tekst, nie pole
-    await expect(wiersz.getByText(serwis, { exact: true })).toBeVisible();
-    // Karta „Odblokuj sejf” stoi pod paskiem, więc segment klika się zwyczajnie
-    const segment = page.getByRole("group", { name: "Kategoria" });
-    await segment.getByRole("button", { name: "Bank", exact: true }).click();
-    await expect(
-      segment.getByRole("button", { name: "Bank", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(wiersz).toHaveCount(1);
-    await szukaj.fill("nie-ma-takiego-serwisu");
-    await expect(wiersz).toHaveCount(0);
-    await szukaj.fill(serwis.toLowerCase());
-    await expect(wiersz).toHaveCount(1);
-    await segment
-      .getByRole("button", { name: "Wszystkie", exact: true })
-      .click();
-    await expect(
-      segment.getByRole("button", { name: "Wszystkie", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await szukaj.fill("");
+    ).toHaveCount(0);
 
     // Odblokowanie: najpierw puste pole, potem złe hasło, potem dobre
     const karta = page.getByRole("region", { name: "Odblokuj sejf" });
@@ -288,6 +267,21 @@ test.describe("sejf", () => {
       timeout: 20_000,
     });
     await expect(karta).toHaveCount(0);
+
+    // Po odblokowaniu tabela wraca; segment „Kategoria” zawęża po jawnej kolumnie
+    await expect(wiersz).toHaveCount(1);
+    const segment = page.getByRole("group", { name: "Kategoria" });
+    await segment.getByRole("button", { name: "Bank", exact: true }).click();
+    await expect(
+      segment.getByRole("button", { name: "Bank", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersz).toHaveCount(1);
+    await szukaj.fill("nie-ma-takiego-serwisu");
+    await expect(wiersz).toHaveCount(0);
+    await szukaj.fill(serwis.toLowerCase());
+    await expect(wiersz).toHaveCount(1);
+    await segment.getByRole("button", { name: "Wszystkie", exact: true }).click();
+    await szukaj.fill("");
 
     // Oczko po ponownym odblokowaniu
     await wiersz.getByRole("button", { name: "Pokaż hasło" }).click();

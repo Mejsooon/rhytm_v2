@@ -120,14 +120,15 @@ describe("PasswordsView", () => {
     expect(vault.lock).toHaveBeenCalledTimes(1);
   });
 
-  it("zablokowany: tabela tylko do odczytu, karta „Odblokuj sejf”, bez „Zablokuj teraz” i banera", () => {
+  it("zablokowany: sama karta „Odblokuj sejf”, bez tabeli, paska, „Zablokuj teraz” i banera", () => {
     vault.state = { status: "zablokowany", remainingMs: 0 };
-    tabela.readOnly = true;
     pokaz();
     expect(screen.getByRole("heading", { name: "Odblokuj sejf" })).toBeInTheDocument();
     expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
-    expect(screen.getByTestId("tabela")).toBeInTheDocument();
+    expect(screen.queryByTestId("tabela")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Szukaj" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kategorie" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sejf odblokowany")).not.toBeInTheDocument();
   });
@@ -162,9 +163,7 @@ describe("PasswordsView", () => {
     expect(screen.getByText("Szyfrowane")).toBeInTheDocument();
   });
 
-  it("pasek: „Szukaj” zawęża po Serwis, Login i URL, ignoruje sekrety i działa przy zamkniętym sejfie", async () => {
-    vault.state = { status: "zablokowany", remainingMs: 0 };
-    tabela.readOnly = true;
+  it("pasek: „Szukaj” zawęża po Serwis, Login i URL i ignoruje sekrety", async () => {
     const user = userEvent.setup();
     pokaz();
     const lista = () => within(screen.getByRole("list", { name: "Wiersze" })).queryAllByRole("listitem").map((e) => e.textContent);
@@ -211,11 +210,11 @@ describe("PasswordsView", () => {
     expect(tabela.removeOption).toHaveBeenCalledWith(expect.objectContaining({ id: "f-kat" }), "k1");
   });
 
-  it("zamknięty sejf: „Kategorie” wyłączone", () => {
-    vault.state = { status: "zablokowany", remainingMs: 0 };
-    tabela.readOnly = true;
+  it("ładowanie sejfu: ani tabeli, ani karty odblokowania", () => {
+    vault.state = { status: "ladowanie", remainingMs: 0 };
     pokaz();
-    expect(screen.getByRole("button", { name: "Kategorie" })).toBeDisabled();
+    expect(screen.queryByTestId("tabela")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
   });
 
   it("bez bloku tabeli: komunikat zamiast tabeli", () => {

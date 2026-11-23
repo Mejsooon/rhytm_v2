@@ -18,13 +18,14 @@ import { CategoriesPopover } from "./categories-popover";
 // Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html): nagłówek z okruszkami „Moduły / Hasła”
 // i „Zablokuj teraz”, plakietka „Szyfrowane” i tabela modułu. Stan sejfu:
 // - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu),
-// - zablokowany: tabela tylko do odczytu pod rozmytą warstwą z kartą „Odblokuj sejf”,
+// - ladowanie: sama głowa strony, bez tabeli (nie mignie tabela przed sprawdzeniem sejfu),
+// - zablokowany: sama karta „Odblokuj sejf” na środku; tabela pojawia się dopiero po wpisaniu hasła (decyzja Mejsona),
 // - odblokowany: tabela edytowalna i baner z odliczaniem,
 // - nieobslugiwany: baner z komunikatem i tabela tylko do odczytu.
 // Pasek nad tabelą (`moduleTools`): wyszukiwarka „Szukaj”, segment „Kategoria”, podpis „Kolumny modułu są stałe”
 // i „Kategorie” (opcje Kategorii muszą iść przez ten sam magazyn co komórki tabeli). Wyszukiwanie i segment to
 // tymczasowy stan klienta (nie jest zapisywany), a tabela stosuje go przez `moduleRowFilter`; działa po jawnych
-// kolumnach Serwis, Login, URL i Kategoria, więc także przy zamkniętym sejfie.
+// kolumnach Serwis, Login, URL i Kategoria (sekretów nie przeszukuje).
 export function PasswordsView({ data }: { data: LoadedPage }) {
   const vault = useVault();
   const blok = data.blocks.find((b) => b.type === "table");
@@ -44,6 +45,8 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
 
   const odblokowany = vault.status === "odblokowany";
   const ustawianie = vault.status === "brak" && !anulowano;
+  // Zamknięty sejf albo jeszcze nieznany stan: bez tabeli
+  const bezTabeli = vault.status === "zablokowany" || vault.status === "ladowanie";
 
   return (
     <>
@@ -59,9 +62,8 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           )
         }
       />
-      {/* Treść: max 1160 px; warstwa blokady zakrywa całą treść, karta stoi pod paskiem wyszukiwarki i segmentu
-          (odstępstwo od 160 px z S2Vault: przy zamkniętym sejfie szukanie i filtr muszą być klikalne) */}
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      {/* Treść: max 1160 px; przy zamkniętym sejfie sama karta „Odblokuj sejf” na środku */}
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="mx-auto flex w-full max-w-[1160px] min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
           <div>
             {/* Tytuł z ikoną tylko na webie: telefon ma duży tytuł w nagłówku */}
@@ -85,9 +87,9 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
 
           {ustawianie && <VaultSetup onCancel={() => setAnulowano(true)} />}
 
-          {!ustawianie && !blok && <EmptyModule>Nie udało się wczytać tabeli haseł. Odśwież stronę.</EmptyModule>}
+          {!bezTabeli && !ustawianie && !blok && <EmptyModule>Nie udało się wczytać tabeli haseł. Odśwież stronę.</EmptyModule>}
 
-          {!ustawianie && blok && (
+          {!bezTabeli && !ustawianie && blok && (
             <>
               {vault.status === "brak" && (
                 <div>
@@ -175,12 +177,8 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         </div>
 
         {vault.status === "zablokowany" && (
-          // Warstwa tylko rozmywa: nie łapie kliknięć, więc wyszukiwanie, segment, sort i filtr działają przy
-          // zamkniętym sejfie (tabela jest wtedy tylko do odczytu); klikalna jest sama karta
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-white/60 px-4 pt-[248px] backdrop-blur-[3px] max-[799px]:pt-[232px]">
-            <div className="pointer-events-auto w-full">
-              <VaultUnlockCard />
-            </div>
+          <div className="flex flex-1 items-center justify-center px-4 pb-16 max-[799px]:items-start max-[799px]:pt-8">
+            <VaultUnlockCard />
           </div>
         )}
       </div>
