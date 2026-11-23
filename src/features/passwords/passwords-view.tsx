@@ -174,8 +174,12 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         </div>
 
         {vault.status === "zablokowany" && (
-          <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/60 px-4 pt-40 backdrop-blur-[3px] max-[799px]:pt-16">
-            <VaultUnlockCard />
+          // Warstwa tylko rozmywa: nie łapie kliknięć, więc wyszukiwanie, segment, sort i filtr działają przy
+          // zamkniętym sejfie (tabela jest wtedy tylko do odczytu); klikalna jest sama karta
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-white/60 px-4 pt-40 backdrop-blur-[3px] max-[799px]:pt-16">
+            <div className="pointer-events-auto w-full">
+              <VaultUnlockCard />
+            </div>
           </div>
         )}
       </div>
