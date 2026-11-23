@@ -763,10 +763,13 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     ustawieniaWToku.current += 1;
     let udane = false;
     try {
+      // Server Actions idą na serwer po kolei, w kolejności wywołań: najpierw pole (opcja znika z listy),
+      // potem ustawienia, na końcu wiersze — błąd pola nie zostawia na serwerze wyczyszczonych wierszy
+      // z opcją nadal na liście
       const wyniki = await Promise.all([
-        ...zapisywaneWiersze.map((id) => updateRow(id, { [field.id]: null })),
-        ...(Object.keys(zmianyUstawien).length > 0 ? [saveTableSettings(block.id, zmianyUstawien)] : []),
         updateField(field.id, { config }),
+        ...(Object.keys(zmianyUstawien).length > 0 ? [saveTableSettings(block.id, zmianyUstawien)] : []),
+        ...zapisywaneWiersze.map((id) => updateRow(id, { [field.id]: null })),
       ]);
       udane = wyniki.every((w) => w.ok);
     } catch {

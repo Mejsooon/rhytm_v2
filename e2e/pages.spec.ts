@@ -44,7 +44,7 @@ test.describe("strony", () => {
     await expect(tytul).not.toBeFocused();
 
     // Status: okienko opcji → „Szukaj lub dodaj opcję” → wybór „Czytam”
-    const status = wiersz.getByRole("button", { name: "Status", exact: true });
+    const status = wiersz.getByRole("button", { name: /^Status: / });
     await status.click();
     await page
       .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
@@ -119,7 +119,7 @@ test.describe("strony", () => {
     await page.getByRole("button", { name: "Nowy", exact: true }).click();
     const wiersz = page.locator("tbody tr");
     await expect(wiersz).toHaveCount(1);
-    const status = wiersz.getByRole("button", { name: "Status", exact: true });
+    const status = wiersz.getByRole("button", { name: /^Status: / });
     await expect(status).toHaveText("Chcę przeczytać");
 
     // „Utwórz «Porzucone»”: nowa (szara) opcja od razu trafia do komórki, okienko się zamyka

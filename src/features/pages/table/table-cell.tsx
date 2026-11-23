@@ -151,7 +151,8 @@ export function TableCell({
           trigger={
             <button
               type="button"
-              aria-label={field.name}
+              // Czytnik ekranu słyszy pole i wartość („Status: Czytam”), bo etykieta zastępuje treść przycisku
+              aria-label={`${field.name}: ${opcja?.label ?? "puste"}`}
               className="flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
             >
               {opcja ? (
@@ -254,7 +255,8 @@ export function TableCell({
         >
           <DatePicker
             variant="bare"
-            ariaLabel={field.name}
+            // Pole i data dla czytnika ekranu („Termin: 20.11.2026”), jak w komórce wyboru
+            ariaLabel={`${field.name}: ${typeof v === "string" ? formatValue(field, v) : "puste"}`}
             placeholder="—"
             today={today}
             value={typeof v === "string" ? (v as IsoDate) : null}

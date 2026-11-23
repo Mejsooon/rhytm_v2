@@ -459,6 +459,21 @@ describe("useTableStore", () => {
       expect(result.current.rows.every((r) => r.values[status.id] !== czytam.id)).toBe(true);
       expect(actions.updateRow).toHaveBeenCalledWith(result.current.rows[1].id, { [status.id]: null });
     });
+
+    it("removeOption wysyła najpierw pole, potem wiersze", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeOption(result.current.fields.find((f) => f.id === status.id)!, czytam.id);
+      });
+      expect(actions.updateField).toHaveBeenCalledTimes(1);
+      expect(actions.updateRow).toHaveBeenCalledWith("row-1", { [status.id]: null });
+      // Kolejność wywołań (= kolejność na serwerze): pole przed każdym wierszem
+      const pole = actions.updateField.mock.invocationCallOrder[0];
+      for (const wiersz of actions.updateRow.mock.invocationCallOrder) expect(pole).toBeLessThan(wiersz);
+    });
   });
 
   describe("moveField", () => {

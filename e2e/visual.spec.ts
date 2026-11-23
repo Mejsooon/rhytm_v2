@@ -688,7 +688,7 @@ test.describe("ekrany z sesją", () => {
       await expect(page.locator("tbody tr")).toHaveCount(1);
       await page
         .locator("tbody tr")
-        .getByRole("button", { name: "Status", exact: true })
+        .getByRole("button", { name: /^Status: / })
         .click();
       await expect(
         page.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),

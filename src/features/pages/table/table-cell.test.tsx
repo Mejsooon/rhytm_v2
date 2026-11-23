@@ -264,7 +264,7 @@ describe("TableCell", () => {
         pole("date", { name: "Przeczytana" }),
         wiersz(null),
       );
-      await user.click(screen.getByRole("button", { name: "Przeczytana" }));
+      await user.click(screen.getByRole("button", { name: "Przeczytana: puste" }));
       await user.click(await screen.findByRole("button", { name: "Dziś" }));
       expect(onSave).toHaveBeenCalledWith(TODAY);
     });
@@ -276,7 +276,7 @@ describe("TableCell", () => {
         wiersz("2026-11-16"),
       );
       expect(screen.getByText("jutro")).toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: "Termin" }));
+      await user.click(screen.getByRole("button", { name: "Termin: 16.11.2026" }));
       await user.click(await screen.findByRole("button", { name: "Wyczyść" }));
       expect(onSave).toHaveBeenCalledWith(null);
     });
@@ -287,7 +287,7 @@ describe("TableCell", () => {
         pole("date", { name: "Termin", config: { show_in_calendar: true } }),
         wiersz("2026-11-16"),
       );
-      const wyzwalacz = screen.getByRole("button", { name: "Termin" });
+      const wyzwalacz = screen.getByRole("button", { name: "Termin: 16.11.2026" });
       expect(wyzwalacz.querySelector(".font-mono")).toBeNull();
       // Wyzwalacz nie rozciąga się na całą komórkę, gdy obok stoi czas do terminu
       expect(wyzwalacz).toHaveClass("flex-none");
@@ -306,7 +306,7 @@ describe("TableCell", () => {
         pole("date", { name: "Termin", config: { show_in_calendar: true } }),
         wiersz("2026-11-16"),
       );
-      const wyzwalacz = screen.getByRole("button", { name: "Termin" });
+      const wyzwalacz = screen.getByRole("button", { name: "Termin: 16.11.2026" });
       // Puste miejsce komórki: div z wyzwalaczem (nie sam przycisk)
       const puste = container.querySelector("td > div") as HTMLElement;
 
@@ -362,7 +362,8 @@ describe("TableCell", () => {
         pole("status", { name: "Status", config: { options: opcje } }),
         wiersz(null),
       );
-      const wyzwalacz = screen.getByRole("button", { name: "Status" });
+      // Czytnik ekranu słyszy pole i wartość (pusta komórka: „puste”)
+      const wyzwalacz = screen.getByRole("button", { name: "Status: puste" });
       await user.click(wyzwalacz);
       await user.click(screen.getByRole("option", { name: "Czytam" }));
       expect(onSave).toHaveBeenCalledWith("o1");
@@ -396,7 +397,7 @@ describe("TableCell", () => {
         pole("status", { name: "Status", config: { options: opcje } }),
         wiersz("o1"),
       );
-      await user.click(screen.getByRole("button", { name: "Status" }));
+      await user.click(screen.getByRole("button", { name: "Status: Czytam" }));
       await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
       expect(
         screen.getByRole("group", { name: "Edycja opcji" }),

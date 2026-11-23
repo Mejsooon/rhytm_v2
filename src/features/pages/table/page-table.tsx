@@ -28,7 +28,7 @@ import {
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
-import { operatorsFor, visibleRows } from "../table-model";
+import { operatorsFor, visibleRows, type PinnedCard } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
@@ -80,6 +80,10 @@ export function PageTable({
   // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
   const [dodawanie, setDodawanie] = React.useState(false);
   const [nowyId, setNowyId] = React.useState<string | null>(null);
+  // Wiersz z fokusem albo świeżo dodany („przypięty”) i kolejność wierszy (id) z chwili przypięcia.
+  // Dopóki fokus jest w wierszach tabeli, kolejność stoi w miejscu, a przypięty wiersz nie znika przez filtr:
+  // zapis w trakcie pisania nie przesuwa ani nie chowa wiersza (React przenosząc węzeł DOM gubi fokus).
+  const [przypiety, setPrzypiety] = React.useState<{ id: string; kolejnosc: string[] } | null>(null);
   // Otwarte menu kolumny (id pola), filtr, menu „⋯” i zmiana typu czekająca na potwierdzenie (ze stratą wartości)
   const [menuPola, setMenuPola] = React.useState<string | null>(null);
   const [filtrOtwarty, setFiltrOtwarty] = React.useState(false);
@@ -97,8 +101,9 @@ export function PageTable({
   const [przeciaganie, setPrzeciaganie] = React.useState<{ id: string; szer: number } | null>(null);
   const start = React.useRef<{ pointerId: number; x: number; szer: number; aktualna: number } | null>(null);
 
-  // Okno karty: index null = nowa karta, liczba = edycja karty o tym indeksie
-  const [oknoKarty, setOknoKarty] = React.useState<{ index: number | null } | null>(null);
+  // Okno karty: karta null = nowa karta, inaczej edycja tej karty (obiekt z chwili otwarcia, nie indeks —
+  // lista może się zmienić przy otwartym oknie, np. „Cofnij” usunięcia karty)
+  const [oknoKarty, setOknoKarty] = React.useState<{ karta: PinnedCard | null } | null>(null);
   // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
   const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(store.tableName);
@@ -110,7 +115,23 @@ export function PageTable({
   const zywe = rows.filter((r) => r.deletedAt === null);
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
-  const widoczneWiersze = visibleRows(fields, rows, settings, store.tempFilters);
+  // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
+  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters);
+  // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
+  if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
+  let widoczneWiersze = wedlugUstawien;
+  if (przypiety && zywe.some((r) => r.id === przypiety.id)) {
+    const poId = new Map(zywe.map((r) => [r.id, r]));
+    const wFiltrze = new Set(wedlugUstawien.map((r) => r.id));
+    // Wiersze z zapamiętanej kolejności: te, które nadal spełniają filtr, i zawsze przypięty
+    const zamrozone = przypiety.kolejnosc.flatMap((id) => {
+      const r = poId.get(id);
+      return r && (id === przypiety.id || wFiltrze.has(id)) ? [r] : [];
+    });
+    const wZamrozonych = new Set(zamrozone.map((r) => r.id));
+    // Wiersze, które dopiero teraz spełniają filtr (np. „Cofnij” usunięcia), dochodzą na końcu
+    widoczneWiersze = [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
+  }
   // Filtr w edycji (stan klienta) albo zapisany domyślny
   const filtry = store.tempFilters ?? settings.filters;
   // Pola, po których można jeszcze dodać sortowanie (bez tych już w sorcie)
@@ -166,9 +187,14 @@ export function PageTable({
       return;
     }
     setDodawanie(true);
+    // Kolejność widoczna w chwili kliknięcia; nowy wiersz stanie na jej końcu, także gdy filtr go odrzuca
+    const kolejnosc = widoczneWiersze.map((r) => r.id);
     const id = await store.addRowInline();
     setDodawanie(false);
-    if (id !== null) setNowyId(id);
+    if (id !== null) {
+      setNowyId(id);
+      setPrzypiety({ id, kolejnosc: [...kolejnosc, id] });
+    }
   }
 
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
@@ -188,8 +214,8 @@ export function PageTable({
         rows={widoczneWiersze}
         today={today}
         onChange={(next) => void store.patchSettings({ pinned_cards: next })}
-        onAdd={() => setOknoKarty({ index: null })}
-        onEdit={(index) => setOknoKarty({ index })}
+        onAdd={() => setOknoKarty({ karta: null })}
+        onEdit={(index) => setOknoKarty({ karta: settings.pinned_cards[index] ?? null })}
       />
       {/* Okno karty montujemy dopiero po otwarciu, żeby każde zaczynało od stanu startowego */}
       {oknoKarty && (
@@ -199,16 +225,32 @@ export function PageTable({
           fields={fields}
           rows={widoczneWiersze}
           today={today}
-          initial={oknoKarty.index === null ? null : (settings.pinned_cards[oknoKarty.index] ?? null)}
+          initial={oknoKarty.karta}
           onCancel={() => setOknoKarty(null)}
           onSave={(karta) => {
-            // Nowa karta na końcu listy; edycja podmienia kartę pod indeksem
-            const index = oknoKarty.index;
-            const next =
-              index === null
-                ? [...settings.pinned_cards, karta]
-                : settings.pinned_cards.map((c, j) => (j === index ? karta : c));
-            void store.patchSettings({ pinned_cards: next });
+            const edytowana = oknoKarty.karta;
+            // Nowa karta na końcu listy
+            if (edytowana === null) {
+              void store.patchSettings({ pinned_cards: [...settings.pinned_cards, karta] });
+              setOknoKarty(null);
+              return;
+            }
+            // Edycja: karta szukana w aktualnej liście — ten sam obiekt, a po odświeżeniu z serwera
+            // (nowe obiekty) karta o tej samej treści
+            let index = settings.pinned_cards.indexOf(edytowana);
+            if (index === -1) {
+              const tresc = JSON.stringify(edytowana);
+              index = settings.pinned_cards.findIndex((c) => JSON.stringify(c) === tresc);
+            }
+            // Karty już nie ma (usunięta przy otwartym oknie): nie dodajemy jej z powrotem
+            if (index === -1) {
+              toast.error("Tej karty już nie ma.");
+              setOknoKarty(null);
+              return;
+            }
+            void store.patchSettings({
+              pinned_cards: settings.pinned_cards.map((c, j) => (j === index ? karta : c)),
+            });
             setOknoKarty(null);
           }}
         />
@@ -588,6 +630,23 @@ export function PageTable({
                   if (editing?.rowId === r.id) return;
                   setWArkuszu(true);
                   void store.startEdit(r);
+                }}
+                // Fokus w wierszu przypina go (pozycja i widoczność). Przejście z innego wiersza zostawia
+                // zapamiętaną kolejność, żeby przeliczenie nie przeniosło w DOM wiersza z fokusem.
+                onFocus={() => {
+                  setPrzypiety((p) =>
+                    p?.id === r.id
+                      ? p
+                      : { id: r.id, kolejnosc: p ? p.kolejnosc : widoczneWiersze.map((w) => w.id) },
+                  );
+                }}
+                // Wyjście fokusu z wierszy tabeli: widok liczy się znów wg filtra i sortu.
+                // Fokus w okienku komórki (portal) wraca tu przez onFocus z drzewa Reacta.
+                onBlur={(e) => {
+                  const cel = e.relatedTarget;
+                  if (cel instanceof Node && e.currentTarget.contains(cel)) return;
+                  if (cel instanceof Element && cel.closest("tr")?.parentElement === e.currentTarget.parentElement) return;
+                  setPrzypiety(null);
                 }}
                 // Na telefonie pola i przyciski komórek nie łapią dotyku: dostaje go wiersz
                 className="group/wiersz max-[799px]:cursor-pointer max-[799px]:[&_a]:pointer-events-none max-[799px]:[&_button]:pointer-events-none max-[799px]:[&_input]:pointer-events-none"

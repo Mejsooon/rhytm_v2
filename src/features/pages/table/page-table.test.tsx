@@ -489,7 +489,7 @@ describe("PageTable", () => {
       (b.content.settings as { filters: unknown[] }).filters = [{ field_id: status.id, op: "in", value: [czytam] }];
       render(<PageTable block={b} today={TODAY} />);
       expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
-      await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: "Status" }));
+      await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: /^Status: / }));
       await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
       const nazwa = screen.getByRole("textbox", { name: "Nazwa opcji" });
       await user.clear(nazwa);
@@ -499,7 +499,7 @@ describe("PageTable", () => {
       expect(patch.config.options.find((o: { id: string }) => o.id === czytam).label).toBe("W trakcie");
       // Wiersze zostają widoczne (filtr trzyma id opcji), komórka pokazuje nową nazwę
       expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
-      expect(within(wiersz("Atomic Habits")).getByRole("button", { name: "Status" })).toHaveTextContent("W trakcie");
+      expect(within(wiersz("Atomic Habits")).getByRole("button", { name: /^Status: / })).toHaveTextContent("W trakcie");
     });
 
     describe("usunięcie opcji z odwołaniami", () => {
@@ -624,14 +624,14 @@ describe("PageTable", () => {
       const b = blok("books", BOOKS);
       const status = b.fields.find((f) => f.name === "Status")!;
       render(<PageTable block={b} today={TODAY} />);
-      await user.click(within(wiersz("Clean Code")).getByRole("button", { name: "Status" }));
+      await user.click(within(wiersz("Clean Code")).getByRole("button", { name: /^Status: / }));
       await user.type(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }), "Porzucone");
       await user.click(screen.getByRole("button", { name: "Utwórz «Porzucone»" }));
       // Id nowej opcji z zapisu pola; komórka (wołająca onSave z polem sprzed utworzenia) zapisuje właśnie je
       const zapisPola = actions.updateField.mock.calls.at(-1)![1] as { config: { options: { id: string; label: string }[] } };
       const nowa = zapisPola.config.options.find((o) => o.label === "Porzucone")!;
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-11", { [status.id]: nowa.id }));
-      expect(within(wiersz("Clean Code")).getByRole("button", { name: "Status" })).toHaveTextContent("Porzucone");
+      expect(within(wiersz("Clean Code")).getByRole("button", { name: /^Status: / })).toHaveTextContent("Porzucone");
     });
 
     it("bez trybu edycji wiersza: nie ma „Edytuj” ani „Zapisz”", () => {
@@ -711,6 +711,62 @@ describe("PageTable", () => {
       await user.clear(wartosc);
       expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true);
       expect(wartosc).toHaveFocus();
+    });
+
+    it("sort po tytule: zapis w trakcie pisania nie przesuwa wiersza ani nie zabiera fokusu; po wyjściu wiersz trafia na swoje miejsce", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(3, 6));
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const ustawienia = b.content.settings as { sort: unknown[]; filters: unknown[] };
+      ustawienia.sort = [{ field_id: tytul.id, dir: "asc" }];
+      ustawienia.filters = [];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Deep Work", "Diuna", "Zero to One"]);
+      const pole = within(wiersz("Deep Work")).getByRole("textbox", { name: "Tytuł" });
+      await user.click(pole);
+      await user.keyboard("{Home}Zzz");
+      // Zapis po 600 ms przerwy: magazyn ma już nowy tytuł, a wiersz stoi na swoim miejscu z fokusem
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-1", { [tytul.id]: "ZzzDeep Work" }), {
+        timeout: 2000,
+      });
+      expect(tytuly()).toEqual(["ZzzDeep Work", "Diuna", "Zero to One"]);
+      expect(pole).toHaveFocus();
+      // Dalsze znaki trafiają do tego samego pola
+      await user.keyboard("!");
+      expect(pole).toHaveValue("Zzz!Deep Work");
+      // Wyjście fokusu: widok liczy się znów wg sortu
+      act(() => pole.blur());
+      await waitFor(() => expect(tytuly()).toEqual(["Diuna", "Zero to One", "Zzz!Deep Work"]));
+    });
+
+    it("„Nowy” przy filtrze, który odrzuca nowy wiersz: wiersz widoczny z kursorem w tytule, po wyjściu znika", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      const ustawienia = b.content.settings as { sort: unknown[]; filters: unknown[] };
+      ustawienia.sort = [];
+      ustawienia.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      const { rerender } = render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      // Nowy wiersz („Chcę przeczytać”) nie spełnia filtra, a mimo to stoi na końcu z kursorem w tytule
+      await waitFor(() => expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation", ""]));
+      const pole = screen.getAllByRole("textbox", { name: "Tytuł" })[2];
+      expect(pole).toHaveFocus();
+      await user.type(pole, "Nowa{Enter}");
+      // Wyjście fokusu: wiersz znika zgodnie z filtrem
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      // nowyId wyczyszczony: gdy wiersz wróci do widoku (bez filtra), komórka nie kradnie fokusu
+      const nowy = { id: "srv-1", values: { [status.id]: status.config.default_option }, position: 99, deletedAt: null };
+      rerender(
+        <PageTable
+          block={{ ...b, rows: [...b.rows, nowy], content: { ...b.content, settings: { ...ustawienia, filters: [] } } }}
+          today={TODAY}
+        />,
+      );
+      expect(tytuly()).toHaveLength(12);
+      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => i === document.activeElement)).toBe(false);
     });
 
     it("błąd „Nowy” nie dodaje wiersza i pokazuje toast", async () => {
@@ -984,6 +1040,41 @@ describe("PageTable", () => {
       const [, zmiany] = actions.saveTableSettings.mock.calls[0];
       expect(zmiany.pinned_cards).toHaveLength(3);
       expect(zmiany.pinned_cards[1]).toMatchObject({ label: "Moja ocena", width: 300 });
+    });
+
+    it("lista kart zmieniona przy otwartym oknie: zapis trafia w edytowaną kartę, a usuniętej nie dodaje", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const ustawienia = b.content.settings as { pinned_cards: { label: string }[] };
+      const { rerender } = render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getAllByRole("button", { name: "Menu karty" })[1]);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      // Odświeżenie z serwera przy otwartym oknie: bez pierwszej karty, nowe obiekty
+      const bezPierwszej = JSON.parse(JSON.stringify(ustawienia.pinned_cards.slice(1)));
+      rerender(
+        <PageTable block={{ ...b, content: { ...b.content, settings: { ...ustawienia, pinned_cards: bezPierwszej } } }} today={TODAY} />,
+      );
+      const okno = screen.getByRole("dialog");
+      await user.clear(within(okno).getByLabelText("Napis"));
+      await user.type(within(okno).getByLabelText("Napis"), "Moja ocena");
+      await user.click(within(okno).getByRole("button", { name: "Zapisz" }));
+      const [, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(zmiany.pinned_cards).toHaveLength(2);
+      expect(zmiany.pinned_cards[0]).toMatchObject({ label: "Moja ocena" });
+      expect(zmiany.pinned_cards[1]).toEqual(bezPierwszej[1]);
+
+      // Edytowana karta znika przy otwartym oknie: „Zapisz” niczego nie dodaje
+      actions.saveTableSettings.mockClear();
+      await user.click(screen.getAllByRole("button", { name: "Menu karty" })[1]);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      const tylkoPierwsza = JSON.parse(JSON.stringify(ustawienia.pinned_cards.slice(0, 1)));
+      rerender(
+        <PageTable block={{ ...b, content: { ...b.content, settings: { ...ustawienia, pinned_cards: tylkoPierwsza } } }} today={TODAY} />,
+      );
+      await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Zapisz" }));
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith("Tej karty już nie ma.");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
 });
