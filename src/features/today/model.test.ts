@@ -982,6 +982,20 @@ describe("todayHabits", () => {
     expect(tyg.streakLabel).toBe("1 tyg. z rzędu");
   });
 
+  it("pomija nawyki z wyłączonym „pokaż na Dziś”", () => {
+    const wynik = todayHabits({
+      today: DZIS,
+      weekStart: "mon",
+      habits: [
+        nawyk("a", "2026-01-01"),
+        { ...nawyk("b", "2026-01-01"), showOnToday: false },
+        { ...tpt, showOnToday: false },
+      ],
+      checks: new Map(),
+    });
+    expect(wynik.map((h) => h.id)).toEqual(["a"]);
+  });
+
   it("dzień zaplanowany tylko w poniedziałek pojawia się w poniedziałek", () => {
     const wynik = todayHabits({
       today: PN,

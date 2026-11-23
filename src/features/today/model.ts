@@ -542,7 +542,7 @@ export type TodayHabit = {
   hot: boolean; // passa ≥ 3: płomień w kolorze #c2410c
 };
 
-// Nawyki na dziś: zaplanowane na dziś (codziennie / dni tygodnia) i X/tydz.,
+// Nawyki na dziś (z włączonym „pokaż na Dziś”): zaplanowane na dziś (codziennie / dni tygodnia) i X/tydz.,
 // w kolejności z wejścia (jak w module Nawyki)
 export function todayHabits(input: {
   today: IsoDate;
@@ -552,6 +552,8 @@ export function todayHabits(input: {
 }): TodayHabit[] {
   const wynik: TodayHabit[] = [];
   for (const h of input.habits) {
+    // Nawyk ukryty w module Nawyki („pokaż na Dziś” wyłączone) nie trafia na listę
+    if (!h.showOnToday) continue;
     const wersja = scheduleOn(h, input.today);
     if (wersja === null) continue;
     if (wersja.type !== "times_per_week" && !isPlanned(h, input.today)) {
