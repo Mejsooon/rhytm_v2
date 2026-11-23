@@ -163,7 +163,7 @@ describe("PageMenu", () => {
     expect(screen.getByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    await user.click(screen.getByRole("button", { name: "Ikona book-open" }));
+    await user.click(screen.getByRole("button", { name: "book-open" }));
     expect(setPageIcon).toHaveBeenCalledWith("b", "lucide:book-open");
     expect(screen.getByTestId("ikona")).toHaveTextContent("lucide:book-open");
     expect(screen.queryByRole("group", { name: "Wybór ikony" })).toBeNull();
@@ -172,7 +172,7 @@ describe("PageMenu", () => {
   it("ikona Lucide i „Usuń” zapisują `lucide:…` i ''", async () => {
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    await user.click(screen.getByRole("button", { name: "Ikona rocket" }));
+    await user.click(screen.getByRole("button", { name: "rocket" }));
     expect(setPageIcon).toHaveBeenLastCalledWith("b", "lucide:rocket");
 
     await user.click(screen.getByRole("button", { name: "Menu strony Books" }));

@@ -86,7 +86,7 @@ describe("EditorView", () => {
     await user.click(przycisk);
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
-    await user.click(screen.getByRole("button", { name: "Ikona book-open" }));
+    await user.click(screen.getByRole("button", { name: "book-open" }));
     expect(setPageIcon).toHaveBeenCalledWith("p1", "lucide:book-open");
     expect(screen.getByRole("button", { name: "Zmień ikonę" }).querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
     expect(screen.getByRole("button", { name: "Zmień ikonę" }).className).not.toContain("border-dashed");

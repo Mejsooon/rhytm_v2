@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import { Search } from "lucide-react";
-import { iconNames } from "lucide-react/dynamic";
 
 import { Button } from "@/components/controls";
 
 import { PageIcon } from "./page-icon";
 import { parsePageIcon, searchIcons } from "./page-icons";
 
-// Tymczasowy wybór ikony (pełny picker przepisuje Task 3): „Usuń”, wyszukiwarka i siatka ikon Lucide.
+// Okno wyboru ikony: wyszukiwarka (polskie słowa i angielskie nazwy Lucide), siatka 8 kolumn, „Usuń”.
 // `value` i `onPick` — tekst z `pages.icon` (`lucide:<nazwa>` albo '' po „Usuń”).
 export function IconPicker({
   value,
@@ -21,7 +20,25 @@ export function IconPicker({
   const obecna = parsePageIcon(value);
   const [fraza, setFraza] = React.useState("");
 
-  const { names: ikony } = searchIcons(fraza, iconNames, 120);
+  // Pełna lista nazw Lucide (~2000) ładuje się dopiero po zamontowaniu, żeby nie ciążyła w paczce startowej.
+  // Do tego czasu `wszystkie` jest puste, więc wyszukiwanie działa tylko na polecanych (ICON_KEYWORDS).
+  const [wszystkie, setWszystkie] = React.useState<readonly string[]>([]);
+  React.useEffect(() => {
+    let anulowano = false;
+    import("lucide-react/dynamic").then((modul) => {
+      if (!anulowano) setWszystkie(modul.iconNames);
+    });
+    return () => {
+      anulowano = true;
+    };
+  }, []);
+
+  const { names: ikony, more } = searchIcons(fraza, wszystkie, 120);
+
+  // Licznik w nagłówku: przy pustej frazie liczba wszystkich ikon (gdy znana), inaczej liczba trafień
+  let licznik = "";
+  if (fraza.trim() !== "") licznik = `${ikony.length}${more ? "+" : ""} wyników`;
+  else if (wszystkie.length > 0) licznik = `${wszystkie.length} ikon`;
 
   // Komórka siatki: 32 px, promień 8 px; zaznaczona — ramka rgba(0,0,0,.18) i tło rgba(0,0,0,.05)
   const klasaKomorki = (zaznaczona: boolean) =>
@@ -33,6 +50,8 @@ export function IconPicker({
   return (
     <div role="group" aria-label="Wybór ikony" className="box-border flex w-full flex-col gap-2 text-sm text-foreground">
       <div className="flex items-center gap-2">
+        <span className="font-semibold">Ikona</span>
+        <span className="text-xs text-muted-foreground tabular-nums">{licznik}</span>
         <span className="flex-1" />
         <Button
           variant="ghost"
@@ -51,7 +70,7 @@ export function IconPicker({
           type="text"
           value={fraza}
           onChange={(e) => setFraza(e.target.value)}
-          placeholder="Szukaj ikony…"
+          placeholder="Szukaj ikony (po polsku lub angielsku)…"
           aria-label="Szukaj ikony"
           className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
         />
@@ -63,7 +82,8 @@ export function IconPicker({
             <button
               key={nazwa}
               type="button"
-              aria-label={`Ikona ${nazwa}`}
+              aria-label={nazwa}
+              title={nazwa}
               aria-pressed={obecna === nazwa}
               onClick={() => onPick(`lucide:${nazwa}`)}
               className={klasaKomorki(obecna === nazwa)}
@@ -79,6 +99,10 @@ export function IconPicker({
           </div>
         )}
       </div>
+
+      <p className="m-0 text-xs font-normal text-muted-foreground">
+        {more ? "Wpisz dokładniej, żeby zawęzić" : "Cały zestaw Lucide, wszystkie ikony w kolorze tekstu."}
+      </p>
     </div>
   );
 }
