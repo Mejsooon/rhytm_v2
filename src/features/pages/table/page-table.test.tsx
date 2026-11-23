@@ -619,6 +619,21 @@ describe("PageTable", () => {
   });
 
   describe("wiersze", () => {
+    it("„Utwórz «Porzucone»” w komórce Status zapisuje id nowej opcji i pokazuje ją w komórce", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(within(wiersz("Clean Code")).getByRole("button", { name: "Status" }));
+      await user.type(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }), "Porzucone");
+      await user.click(screen.getByRole("button", { name: "Utwórz «Porzucone»" }));
+      // Id nowej opcji z zapisu pola; komórka (wołająca onSave z polem sprzed utworzenia) zapisuje właśnie je
+      const zapisPola = actions.updateField.mock.calls.at(-1)![1] as { config: { options: { id: string; label: string }[] } };
+      const nowa = zapisPola.config.options.find((o) => o.label === "Porzucone")!;
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-11", { [status.id]: nowa.id }));
+      expect(within(wiersz("Clean Code")).getByRole("button", { name: "Status" })).toHaveTextContent("Porzucone");
+    });
+
     it("bez trybu edycji wiersza: nie ma „Edytuj” ani „Zapisz”", () => {
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       expect(screen.queryByRole("button", { name: /Edytuj/ })).not.toBeInTheDocument();

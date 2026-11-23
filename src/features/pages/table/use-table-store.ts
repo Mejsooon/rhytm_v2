@@ -3,7 +3,7 @@
 // Stan tabeli strony z szablonu: pola, wiersze, ustawienia, filtr tymczasowy i edytowany wiersz.
 // Każda zmiana od razu zmienia widok; błąd zapisu cofa ją i pokazuje toast. Nowe dane z serwera
 // zastępują kopię bez gubienia wierszy/pól tymczasowych i zapisów w toku (wzorzec „poprzednie props”).
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -132,6 +132,15 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   }
 
   const posortowanePola = [...fields].sort((a, b) => a.position - b.position);
+
+  // Najnowsze pola i wiersze dla wywołań ze starego domknięcia (np. komórka po „Utwórz «nazwa»”
+  // woła updateCell z renderu sprzed utworzenia opcji)
+  const polaRef = useRef(fields);
+  const wierszeRef = useRef(rows);
+  useEffect(() => {
+    polaRef.current = fields;
+    wierszeRef.current = rows;
+  });
 
   // Otwarty szkic różni się od wartości z chwili otwarcia (nowy wiersz: od wartości startowych)
   function szkicZmieniony(): boolean {
@@ -316,11 +325,15 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // Wiersz z tymczasowym id → false bez zapisu; wartość bez zmian → true bez zapisu.
   async function updateCell(row: PageRow, field: PageField, value: unknown): Promise<boolean> {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return false;
-    let v = normalizeValue(field, value);
-    if (field.isTitle && v === null) v = field.config.empty_label ?? "Bez tytułu";
-    const biezacy = rows.find((r) => r.id === row.id) ?? row;
+    // Pole z najnowszego stanu (config z zapisu w toku albo z ostatniego renderu), nie przekazany
+    // obiekt: inaczej opcja utworzona przed chwilą nie przeszłaby przez normalizeValue
+    const aktualne = polaRef.current.find((f) => f.id === field.id) ?? field;
+    const pole: PageField = { ...aktualne, config: zapisyPol.current.get(field.id)?.config ?? aktualne.config };
+    let v = normalizeValue(pole, value);
+    if (pole.isTitle && v === null) v = pole.config.empty_label ?? "Bez tytułu";
+    const biezacy = wierszeRef.current.find((r) => r.id === row.id) ?? row;
     const poprzednia = biezacy.values[field.id];
-    if (Object.is(v, normalizeValue(field, poprzednia))) return true;
+    if (Object.is(v, normalizeValue(pole, poprzednia))) return true;
 
     setRows((l) => l.map((r) => (r.id === row.id ? { ...r, values: { ...r.values, [field.id]: v } } : r)));
     // Zapis w toku: dane z serwera w trakcie nie nadpiszą tej komórki
@@ -798,6 +811,13 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     if (udane) {
       if (patch.config !== undefined) zapis.zatwierdzonyConfig = patch.config;
       if (patch.name !== undefined) zapis.zatwierdzonaNazwa = patch.name;
+      // Ostatni zapis pola: polaRef dostaje config od razu (updateCell zaraz po createOption
+      // może przyjść przed rerenderem)
+      if (zapis.n === 0) {
+        polaRef.current = polaRef.current.map((f) =>
+          f.id === field.id ? { ...f, ...patch } : f,
+        );
+      }
       return true;
     }
     // Kolejne zmiany w toku budują już na potwierdzonym configu, nie na odrzuconym

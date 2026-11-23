@@ -171,11 +171,6 @@ test.describe("strony", () => {
     page,
   }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
-    // Znany błąd aplikacji (bieg CI 45204486264): po „Utwórz” komórka dostaje „—” zamiast nowej opcji.
-    // TableCell woła onSave z polem sprzed utworzenia opcji, więc updateCell (normalizeValue)
-    // nie zna nowego id i zapisuje null. Gdy błąd zostanie naprawiony, ten test zacznie „nieoczekiwanie
-    // przechodzić” — wtedy usuń test.fail().
-    test.fail();
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
