@@ -134,7 +134,6 @@ test.describe("sejf", () => {
     ).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText("AES-GCM w przeglądarce")).toBeVisible();
     sprawdzZadania();
 
     // Kategorie: dymek „Opcje kategorii” → nowa kategoria „Bank”

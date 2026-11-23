@@ -115,12 +115,13 @@ test.describe("onboarding", () => {
     await page.goto("/onboarding/7");
     await expect(page).toHaveURL(/\/onboarding\/4$/);
     await page.goto("/onboarding/3");
+    // Wybory z kroku 3 zostały zapisane: treningi włączone, kilometry wyłączone
     await expect(
-      page.getByRole("button", { name: /^Subskrypcje/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("checkbox", { name: "Treningi w tygodniu" }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect(
-      page.getByRole("button", { name: /^Treningi/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
+    ).toHaveAttribute("aria-checked", "false");
     if (mobile) {
       await expect(licznik.getByText("4", { exact: true })).toBeVisible();
     } else {
