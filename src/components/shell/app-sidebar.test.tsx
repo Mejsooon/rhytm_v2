@@ -301,23 +301,22 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Przenieś wyżej / niżej")).toBeNull();
   });
 
-  it("wiersz pokazuje ikonę strony: emoji, ikonę w kolorze albo domyślną tabelę", () => {
+  it("wiersz pokazuje ikonę strony: ikonę Lucide albo domyślną tabelę", () => {
     render(
       <AppSidebar
         user={uzytkownik}
         pages={[
-          strona("a", "Alfa", 0, { icon: "📚" }),
-          strona("b", "Beta", 1, { icon: "lucide:rocket:blue" }),
+          strona("a", "Alfa", 0, { icon: "lucide:book-open" }),
+          strona("b", "Beta", 1, { icon: "lucide:rocket" }),
           strona("c", "Gamma", 2, { icon: "" }),
         ]}
       />,
     );
     const ikona = (nazwa: string) =>
       screen.getByRole("link", { name: nazwa }).querySelector("[data-page-icon]")?.getAttribute("data-page-icon");
-    expect(ikona("Alfa")).toBe("📚");
-    expect(ikona("Beta")).toBe("rocket:blue");
+    expect(ikona("Alfa")).toBe("book-open");
+    expect(ikona("Beta")).toBe("rocket");
     expect(ikona("Gamma")).toBe("table");
-    expect(screen.getByRole("link", { name: "Beta" }).querySelector("svg")).toHaveAttribute("stroke", "#0070f3");
   });
 
   it("bez ulubionych w trakcie przeciągania pojawia się „Ulubione” ze strefą upuszczenia; upuszczenie dodaje do ulubionych", () => {

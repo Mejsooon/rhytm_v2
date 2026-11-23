@@ -15,8 +15,9 @@ describe("ikony szablonów", () => {
     expect(TEMPLATES.projects.icon).toBe("lucide:rocket:blue");
     expect(TEMPLATES.websites.icon).toBe("lucide:globe:teal");
     expect(TEMPLATES.empty.icon).toBe("");
+    // Ikony szablonów w nowym formacie `lucide:<nazwa>` dostaje Task 4; do tego czasu parsePageIcon daje null (ikona domyślna)
     for (const klucz of ["books", "projects", "websites"] as const) {
-      expect(parsePageIcon(TEMPLATES[klucz].icon)).not.toBeNull();
+      expect(parsePageIcon(TEMPLATES[klucz].icon)).toBeNull();
     }
   });
 });

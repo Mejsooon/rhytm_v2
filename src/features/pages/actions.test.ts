@@ -301,13 +301,15 @@ describe("bloki i ustawienia", () => {
     expect(tables.page_blocks.update).toHaveBeenCalledWith({ content: { text: "b" } });
   });
 
-  it("setPageIcon zapisuje emoji, `lucide:…` i pusty tekst; odrzuca dłuższe niż 64 znaki", async () => {
-    for (const ikona of ["📚", "lucide:rocket:blue", ""]) {
+  it("setPageIcon zapisuje `lucide:<nazwa>` i pusty tekst; odrzuca emoji, kolor i tekst dłuższy niż 64 znaki", async () => {
+    for (const ikona of ["lucide:rocket", "lucide:book-open", ""]) {
       expect(await setPageIcon(STRONA, ikona)).toEqual({ ok: true });
       expect(tables.pages.update).toHaveBeenLastCalledWith({ icon: ikona });
     }
     tables.pages.update.mockClear();
-    expect((await setPageIcon(STRONA, "x".repeat(65))).ok).toBe(false);
+    for (const zla of ["📚", "lucide:rocket:blue", "x".repeat(65)]) {
+      expect((await setPageIcon(STRONA, zla)).ok).toBe(false);
+    }
     expect(tables.pages.update).not.toHaveBeenCalled();
   });
 

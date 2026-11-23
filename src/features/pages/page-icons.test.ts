@@ -1,76 +1,77 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  EMOJI,
-  ICON_COLORS,
-  ICON_NAMES,
-  matchesIconQuery,
-  parsePageIcon,
-  serializePageIcon,
-} from "./page-icons";
+import { ICON_KEYWORDS, parsePageIcon, searchIcons } from "./page-icons";
+import { pageIconSchema } from "./schemas";
 
-describe("listy z IconPicker.dc.html", () => {
-  it("56 emoji, 37 ikon, 8 kolorów w kolejności z makiety", () => {
-    expect(EMOJI).toHaveLength(56);
-    expect(ICON_NAMES).toHaveLength(37);
-    expect(EMOJI[0]).toEqual(["📚", "książki books czytanie biblioteka"]);
-    expect(ICON_NAMES[0]).toEqual(["table", "tabela table"]);
-    expect(ICON_NAMES.at(-1)).toEqual(["flag", "flaga cel"]);
-    expect(ICON_COLORS.map((k) => [k.key, k.hex, k.label])).toEqual([
-      ["gray", "#525252", "Szary"],
-      ["blue", "#0070f3", "Niebieski"],
-      ["green", "#15803d", "Zielony"],
-      ["purple", "#7c3aed", "Fioletowy"],
-      ["orange", "#c2410c", "Pomarańczowy"],
-      ["red", "#b91c1c", "Czerwony"],
-      ["teal", "#0e7490", "Morski"],
-      ["yellow", "#a16207", "Żółty"],
-    ]);
+// Mały „cały zestaw” do testów wyszukiwania (zamiast 2000 nazw z lucide-react/dynamic)
+const ALL = ["arrow-up", "arrow-down", "arrow-left", "arrow-right", "arrow-big-up", "arrows-up-from-line", "book-open", "book", "rocket", "table"];
+
+describe("ICON_KEYWORDS", () => {
+  it("ok. 60 polecanych ikon, nazwy bez duplikatów, w poprawnym formacie", () => {
+    expect(ICON_KEYWORDS.length).toBeGreaterThanOrEqual(55);
+    expect(ICON_KEYWORDS.length).toBeLessThanOrEqual(65);
+    const nazwy = ICON_KEYWORDS.map(([n]) => n);
+    expect(new Set(nazwy).size).toBe(nazwy.length);
+    for (const n of nazwy) expect(parsePageIcon(`lucide:${n}`)).toBe(n);
+  });
+
+  it("zawiera ikony z mapy emoji z migracji i szablonów", () => {
+    const nazwy = ICON_KEYWORDS.map(([n]) => n);
+    for (const n of ["book-open", "wallet", "lock", "rocket", "globe", "table"]) expect(nazwy).toContain(n);
   });
 });
 
 describe("parsePageIcon", () => {
-  it("emoji z listy → emoji", () => {
-    expect(parsePageIcon("📚")).toEqual({ kind: "emoji", v: "📚" });
-    expect(parsePageIcon("⚙️")).toEqual({ kind: "emoji", v: "⚙️" });
+  it("lucide:<nazwa> → nazwa", () => {
+    expect(parsePageIcon("lucide:book-open")).toBe("book-open");
+    expect(parsePageIcon("lucide:gamepad-2")).toBe("gamepad-2");
   });
 
-  it("lucide:<nazwa>:<kolor> → ikona", () => {
-    expect(parsePageIcon("lucide:rocket:blue")).toEqual({ kind: "icon", v: "rocket", color: "blue" });
-    expect(parsePageIcon("lucide:book-open:teal")).toEqual({ kind: "icon", v: "book-open", color: "teal" });
-  });
-
-  it("puste, nieznana nazwa albo kolor i stare znaczki → null (domyślna ikona)", () => {
-    for (const zle of ["", "lucide:rakieta:blue", "lucide:rocket:pink", "lucide:rocket", "lucide::blue", "▦", "★", "⚙", "abc"]) {
+  it("stary format z kolorem, emoji, puste i śmieci → null", () => {
+    for (const zle of ["lucide:star:gray", "📚", "", "▦", "lucide:", "lucide:Star", "lucide:a--b", "lucide:-a", "abc"]) {
       expect(parsePageIcon(zle)).toBeNull();
     }
   });
 });
 
-describe("serializePageIcon", () => {
-  it("odwrotność parsePageIcon", () => {
-    expect(serializePageIcon({ kind: "emoji", v: "📚" })).toBe("📚");
-    expect(serializePageIcon({ kind: "icon", v: "globe", color: "teal" })).toBe("lucide:globe:teal");
-    expect(serializePageIcon(null)).toBe("");
-    expect(parsePageIcon(serializePageIcon({ kind: "icon", v: "key", color: "yellow" }))).toEqual({
-      kind: "icon",
-      v: "key",
-      color: "yellow",
-    });
+describe("searchIcons", () => {
+  it("puste zapytanie → polecane ikony", () => {
+    expect(searchIcons("", ["a", "b"], 120).names).toEqual(ICON_KEYWORDS.map(([n]) => n));
+    expect(searchIcons("   ", ["a", "b"], 120).more).toBe(false);
+  });
+
+  it("polskie słowa (bez wielkości liter i polskich znaków) idą przed nazwą", () => {
+    expect(searchIcons("książ", ALL, 120).names[0]).toBe("book-open");
+    expect(searchIcons("KSIAZ", ALL, 120).names[0]).toBe("book-open");
+  });
+
+  it("podciąg nazwy z całego zestawu, bez duplikatów, trafienia ze słów przed trafieniami z nazwy", () => {
+    const { names } = searchIcons("rocket", ALL, 120);
+    expect(names).toEqual(["rocket"]);
+    const book = searchIcons("book", ALL, 120).names;
+    expect(book).toEqual([...new Set(book)]);
+    expect(book).toContain("book");
+    expect(book).toContain("book-open");
+  });
+
+  it("limit: więcej trafień niż limit → more=true i dokładnie limit nazw", () => {
+    const wynik = searchIcons("arrow", ALL, 5);
+    expect(wynik).toEqual({ names: expect.any(Array), more: true });
+    expect(wynik.names).toHaveLength(5);
+    expect(searchIcons("arrow", ALL, 120).more).toBe(false);
+  });
+
+  it("brak trafień → pusta lista", () => {
+    expect(searchIcons("xyzxyz", ALL, 120)).toEqual({ names: [], more: false });
   });
 });
 
-describe("matchesIconQuery", () => {
-  it("pusta fraza pasuje do wszystkiego", () => {
-    expect(matchesIconQuery("książki books", "")).toBe(true);
-    expect(matchesIconQuery("książki books", "   ")).toBe(true);
-  });
-
-  it("bez polskich znaków i bez wielkości liter", () => {
-    expect(matchesIconQuery("książki books czytanie", "ksiazki")).toBe(true);
-    expect(matchesIconQuery("książki books czytanie", "KSIĄŻ")).toBe(true);
-    expect(matchesIconQuery("pieniądze finanse", "pieniadze")).toBe(true);
-    expect(matchesIconQuery("słońce dzień", "slonce")).toBe(true);
-    expect(matchesIconQuery("kawa coffee", "herbata")).toBe(false);
+describe("pageIconSchema", () => {
+  it("'' i lucide:<nazwa> przechodzą; emoji, kolor i za długie nie", () => {
+    expect(pageIconSchema.safeParse("").success).toBe(true);
+    expect(pageIconSchema.safeParse("lucide:rocket").success).toBe(true);
+    expect(pageIconSchema.safeParse("📚").success).toBe(false);
+    expect(pageIconSchema.safeParse("lucide:star:gray").success).toBe(false);
+    expect(pageIconSchema.safeParse(`lucide:${"a".repeat(60)}`).success).toBe(false);
   });
 });

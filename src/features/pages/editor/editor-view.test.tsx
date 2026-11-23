@@ -86,9 +86,9 @@ describe("EditorView", () => {
     await user.click(przycisk);
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
-    await user.click(screen.getByRole("button", { name: "Emoji książki books" }));
-    expect(setPageIcon).toHaveBeenCalledWith("p1", "📚");
-    expect(screen.getByRole("button", { name: "Zmień ikonę" })).toHaveTextContent("📚");
+    await user.click(screen.getByRole("button", { name: "Ikona book-open" }));
+    expect(setPageIcon).toHaveBeenCalledWith("p1", "lucide:book-open");
+    expect(screen.getByRole("button", { name: "Zmień ikonę" }).querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
     expect(screen.getByRole("button", { name: "Zmień ikonę" }).className).not.toContain("border-dashed");
 
     setPageIcon.mockResolvedValue({ ok: false, message: "x" });
@@ -96,7 +96,7 @@ describe("EditorView", () => {
     await user.click(screen.getByRole("button", { name: "Usuń" }));
     expect(setPageIcon).toHaveBeenLastCalledWith("p1", "");
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(screen.getByRole("button", { name: "Zmień ikonę" })).toHaveTextContent("📚");
+    expect(screen.getByRole("button", { name: "Zmień ikonę" }).querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
   });
 
   it("pusty tytuł pokazuje w ścieżce „Bez tytułu”", async () => {

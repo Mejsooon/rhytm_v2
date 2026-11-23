@@ -1,77 +1,102 @@
-// Ikony stron jak w Notion (IconPicker.dc.html, PageIcon.dc.html). W `pages.icon` zapisujemy:
-// emoji → sam znak, ikonę liniową → `lucide:<nazwa>:<kolor>`, brak → '' (domyślna tabela).
-// Listy przepisane 1:1 z makiety: [znak albo nazwa, słowa do wyszukiwania].
+// Ikony stron: w `pages.icon` zapisujemy tylko `lucide:<nazwa>` albo '' (brak → domyślna tabela).
+// Nazwa musi należeć do `iconNames` z `lucide-react/dynamic`.
 
-export const EMOJI = [
-  ["📚", "książki books czytanie biblioteka"], ["📖", "książka book czytanie"], ["📝", "notatki notes pisanie"], ["📁", "folder projekty"],
-  ["🗂️", "teczka archiwum dokumenty"], ["💼", "praca work biznes"], ["💻", "komputer laptop kod programowanie"], ["🌐", "internet strony www web"],
-  ["🚀", "start projekt rakieta launch"], ["🎯", "cel cele target"], ["💡", "pomysł pomysly idea"], ["🧠", "nauka mózg wiedza"],
-  ["🎓", "studia szkoła uczelnia nauka"], ["📅", "kalendarz plan data"], ["✅", "zadania todo zrobione"], ["⭐", "ulubione gwiazda star"],
-  ["❤️", "serce zdrowie miłość"], ["💪", "siłownia trening siła gym"], ["🏃", "bieganie bieg sport run"], ["🚴", "rower kolarstwo"],
-  ["🧘", "joga medytacja spokój"], ["😴", "sen spanie noc"], ["🍎", "jedzenie dieta zdrowie owoc"], ["☕", "kawa coffee"],
-  ["🍕", "jedzenie pizza food"], ["🎬", "filmy seriale kino film"], ["🎵", "muzyka music"], ["🎮", "gry gaming"],
-  ["📷", "zdjęcia foto aparat"], ["🎨", "sztuka design projektowanie"], ["✈️", "podróże samolot travel"], ["🏠", "dom mieszkanie home"],
-  ["🚗", "samochód auto car"], ["🌱", "rośliny ogród rozwój"], ["🔥", "ogień streak passa"], ["⚡", "energia szybko"],
-  ["💰", "pieniądze finanse budżet"], ["💳", "subskrypcje płatności karta"], ["🔒", "hasła bezpieczeństwo kłódka"], ["🔑", "klucz hasła"],
-  ["🛒", "zakupy sklep"], ["🎁", "prezenty prezent"], ["👥", "ludzie zespół kontakty"], ["👤", "osoba profil"],
-  ["📈", "wykres wzrost statystyki"], ["📊", "statystyki dane raport"], ["🔧", "narzędzia naprawa"], ["⚙️", "ustawienia"],
-  ["🏆", "osiągnięcia nagroda puchar"], ["🌍", "świat podróże ziemia"], ["☀️", "słońce dzień"], ["🌙", "noc księżyc"],
-  ["🐶", "pies zwierzęta"], ["🎉", "impreza święto"], ["📦", "paczka dostawa"], ["🧾", "rachunki faktury"],
-] as const satisfies readonly (readonly [string, string])[];
-
-export const ICON_NAMES = [
-  ["table", "tabela table"], ["book-open", "książka czytanie book"], ["bookmark", "zakładka bookmark"], ["file-text", "dokument notatki plik"],
-  ["folder", "folder projekty"], ["briefcase", "praca biznes"], ["code", "kod programowanie code"], ["globe", "strony www internet świat"],
-  ["rocket", "start projekt rakieta"], ["target", "cel cele"], ["lightbulb", "pomysł idea"], ["graduation-cap", "nauka studia szkoła"],
-  ["calendar", "kalendarz plan"], ["check-square", "zadania todo"], ["star", "ulubione gwiazda"], ["heart", "zdrowie serce"],
-  ["dumbbell", "siłownia trening"], ["activity", "bieganie sport aktywność"], ["moon", "sen noc"], ["sun", "dzień słońce"],
-  ["leaf", "natura rośliny"], ["flame", "ogień streak"], ["zap", "energia"], ["coffee", "kawa"],
-  ["film", "filmy seriale kino"], ["music", "muzyka"], ["camera", "zdjęcia foto"], ["plane", "podróże samolot"],
-  ["home", "dom mieszkanie"], ["car", "samochód auto"], ["wallet", "pieniądze subskrypcje finanse portfel"], ["shopping-cart", "zakupy koszyk"],
-  ["lock", "hasła kłódka bezpieczeństwo"], ["key", "klucz hasła"], ["users", "ludzie zespół"], ["smile", "nastrój uśmiech"],
+// Polecane ikony (pokazywane w pickerze przy pustym zapytaniu): [nazwa Lucide, polskie słowa do wyszukiwania].
+// Nazwy z mapy emoji → Lucide z migracji 20261123100000 plus kilka ikon z dawnej listy ikon.
+export const ICON_KEYWORDS: readonly (readonly [string, string])[] = [
+  ["book-open", "książki books czytanie biblioteka książka book"],
+  ["book", "książka book czytanie"],
+  ["notebook-pen", "notatki notes pisanie"],
+  ["folder", "folder projekty"],
+  ["folder-archive", "teczka archiwum dokumenty"],
+  ["briefcase", "praca work biznes"],
+  ["laptop", "komputer laptop kod programowanie"],
+  ["globe", "internet strony www web świat"],
+  ["rocket", "start projekt rakieta launch"],
+  ["target", "cel cele target"],
+  ["lightbulb", "pomysł pomysly idea"],
+  ["brain", "nauka mózg wiedza"],
+  ["graduation-cap", "studia szkoła uczelnia nauka"],
+  ["calendar", "kalendarz plan data"],
+  ["circle-check", "zadania todo zrobione"],
+  ["star", "ulubione gwiazda star"],
+  ["heart", "serce zdrowie miłość"],
+  ["dumbbell", "siłownia trening siła gym"],
+  ["footprints", "bieganie bieg sport run"],
+  ["bike", "rower kolarstwo"],
+  ["flower-2", "joga medytacja spokój"],
+  ["bed", "sen spanie noc"],
+  ["apple", "jedzenie dieta zdrowie owoc"],
+  ["coffee", "kawa coffee"],
+  ["pizza", "jedzenie pizza food"],
+  ["clapperboard", "filmy seriale kino film"],
+  ["music", "muzyka music"],
+  ["gamepad-2", "gry gaming"],
+  ["camera", "zdjęcia foto aparat"],
+  ["palette", "sztuka design projektowanie"],
+  ["plane", "podróże samolot travel"],
+  ["house", "dom mieszkanie home"],
+  ["car", "samochód auto car"],
+  ["sprout", "rośliny ogród rozwój"],
+  ["flame", "ogień streak passa"],
+  ["zap", "energia szybko"],
+  ["coins", "pieniądze finanse budżet"],
+  ["wallet", "subskrypcje płatności karta portfel"],
+  ["lock", "hasła bezpieczeństwo kłódka"],
+  ["key", "klucz hasła"],
+  ["shopping-cart", "zakupy sklep koszyk"],
+  ["gift", "prezenty prezent"],
+  ["users", "ludzie zespół kontakty"],
+  ["user", "osoba profil"],
+  ["trending-up", "wykres wzrost statystyki"],
+  ["chart-column", "statystyki dane raport"],
+  ["wrench", "narzędzia naprawa"],
+  ["settings", "ustawienia"],
+  ["trophy", "osiągnięcia nagroda puchar"],
+  ["earth", "świat podróże ziemia"],
+  ["sun", "słońce dzień"],
+  ["moon", "noc księżyc"],
+  ["dog", "pies zwierzęta"],
+  ["party-popper", "impreza święto"],
+  ["package", "paczka dostawa"],
+  ["receipt", "rachunki faktury"],
+  ["table", "tabela table"],
+  ["bookmark", "zakładka bookmark"],
+  ["file-text", "dokument notatki plik"],
+  ["activity", "aktywność sport"],
+  ["smile", "nastrój uśmiech"],
   ["flag", "flaga cel"],
-] as const satisfies readonly (readonly [string, string])[];
+];
 
-export const ICON_COLORS = [
-  { key: "gray", hex: "#525252", label: "Szary" },
-  { key: "blue", hex: "#0070f3", label: "Niebieski" },
-  { key: "green", hex: "#15803d", label: "Zielony" },
-  { key: "purple", hex: "#7c3aed", label: "Fioletowy" },
-  { key: "orange", hex: "#c2410c", label: "Pomarańczowy" },
-  { key: "red", hex: "#b91c1c", label: "Czerwony" },
-  { key: "teal", hex: "#0e7490", label: "Morski" },
-  { key: "yellow", hex: "#a16207", label: "Żółty" },
-] as const;
-
-export type IconName = (typeof ICON_NAMES)[number][0];
-export type IconColor = (typeof ICON_COLORS)[number]["key"];
-export type ParsedPageIcon =
-  | { kind: "emoji"; v: string }
-  | { kind: "icon"; v: IconName; color: IconColor }
-  | null;
-
-// Tekst z bazy → ikona; wszystko spoza formatu (np. stare znaczki „▦ ★”) → null, czyli ikona domyślna
-export function parsePageIcon(raw: string): ParsedPageIcon {
-  if (EMOJI.some(([e]) => e === raw)) return { kind: "emoji", v: raw };
-  const czesci = raw.split(":");
-  if (czesci.length !== 3 || czesci[0] !== "lucide") return null;
-  const nazwa = ICON_NAMES.find(([n]) => n === czesci[1])?.[0];
-  const kolor = ICON_COLORS.find((k) => k.key === czesci[2])?.key;
-  if (nazwa === undefined || kolor === undefined) return null;
-  return { kind: "icon", v: nazwa, color: kolor };
+// Tekst z bazy → nazwa ikony Lucide; wszystko spoza formatu (stare emoji, kolory, śmieci) → null,
+// czyli ikona domyślna. Regex jak w constraincie `pages_icon_format`.
+export function parsePageIcon(raw: string): string | null {
+  const dopasowanie = /^lucide:([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(raw);
+  return dopasowanie === null ? null : dopasowanie[1];
 }
 
-// Ikona → tekst do zapisu w `pages.icon`
-export function serializePageIcon(icon: ParsedPageIcon): string {
-  if (icon === null) return "";
-  if (icon.kind === "emoji") return icon.v;
-  return `lucide:${icon.v}:${icon.color}`;
-}
+// Wyszukiwanie w pickerze: bez wielkości liter i polskich znaków („ksiazki” znajduje „książki”).
+// Najpierw trafienia z polskich słów polecanych ikon, potem z nazwy w całym zestawie (bez duplikatów).
+// `more` = trafień jest więcej niż `limit`. Puste zapytanie → polecane ikony.
+export function searchIcons(
+  query: string,
+  all: readonly string[],
+  limit: number,
+): { names: string[]; more: boolean } {
+  const fraza = query.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l");
+  if (fraza === "") {
+    const polecane = ICON_KEYWORDS.map(([nazwa]) => nazwa);
+    return { names: polecane.slice(0, limit), more: polecane.length > limit };
+  }
 
-// Wyszukiwanie w pickerze: bez wielkości liter i polskich znaków („ksiazki” znajduje „książki”)
-export function matchesIconQuery(keywords: string, query: string): boolean {
-  const bezZnakow = (s: string) =>
-    s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l");
-  const fraza = bezZnakow(query);
-  return fraza === "" || bezZnakow(keywords).includes(fraza);
+  const trafione = new Set<string>();
+  for (const [nazwa, slowa] of ICON_KEYWORDS) {
+    const slowaBezZnakow = slowa.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l");
+    if (slowaBezZnakow.includes(fraza)) trafione.add(nazwa);
+  }
+  for (const nazwa of all) {
+    if (nazwa.includes(fraza)) trafione.add(nazwa);
+  }
+  const wszystkie = [...trafione];
+  return { names: wszystkie.slice(0, limit), more: wszystkie.length > limit };
 }

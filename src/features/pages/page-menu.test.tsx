@@ -155,7 +155,7 @@ describe("PageMenu", () => {
     expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,b,c");
   });
 
-  it("„Zmień ikonę” otwiera IconPicker; emoji ustawia ikonę, „Wróć do menu” wraca", async () => {
+  it("„Zmień ikonę” otwiera IconPicker; wybór ustawia ikonę, „Wróć do menu” wraca", async () => {
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
@@ -163,19 +163,17 @@ describe("PageMenu", () => {
     expect(screen.getByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    await user.click(screen.getByRole("button", { name: "Emoji książki books" }));
-    expect(setPageIcon).toHaveBeenCalledWith("b", "📚");
-    expect(screen.getByTestId("ikona")).toHaveTextContent("📚");
+    await user.click(screen.getByRole("button", { name: "Ikona book-open" }));
+    expect(setPageIcon).toHaveBeenCalledWith("b", "lucide:book-open");
+    expect(screen.getByTestId("ikona")).toHaveTextContent("lucide:book-open");
     expect(screen.queryByRole("group", { name: "Wybór ikony" })).toBeNull();
   });
 
-  it("ikona liniowa w kolorze i „Usuń” zapisują `lucide:…` i ''", async () => {
+  it("ikona Lucide i „Usuń” zapisują `lucide:…` i ''", async () => {
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
-    await user.click(screen.getByRole("button", { name: "Ikony" }));
-    await user.click(screen.getByRole("button", { name: "Zielony" }));
-    await user.click(screen.getByRole("button", { name: "Ikona start projekt" }));
-    expect(setPageIcon).toHaveBeenLastCalledWith("b", "lucide:rocket:green");
+    await user.click(screen.getByRole("button", { name: "Ikona rocket" }));
+    expect(setPageIcon).toHaveBeenLastCalledWith("b", "lucide:rocket");
 
     await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
     await user.click(screen.getByRole("menuitem", { name: /Zmień ikonę/ }));
