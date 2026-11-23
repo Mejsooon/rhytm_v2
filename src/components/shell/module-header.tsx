@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 
 import { MonoLabel } from "@/components/controls";
+import { SidebarToggle } from "./sidebar-toggle";
 
 // Nagłówek modułu. Oba warianty są w DOM, przełącza je wyłącznie CSS (800 px):
 // - web: .topbar z coss.css; moduły (bez webParent) pokazują sam tytuł .h-title
@@ -39,6 +40,8 @@ export function ModuleHeader({
       {/* .topbar: min-height 36 px liczone bez paddingu (box-content), padding 10px 24px */}
       <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
+          <SidebarToggle placement="header" />
           {webParent ? (
             // .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

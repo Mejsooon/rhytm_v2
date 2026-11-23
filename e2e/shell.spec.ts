@@ -74,6 +74,34 @@ test.describe("powłoka aplikacji", () => {
     expect(ramka.height).toBe(900);
   });
 
+  test("pasek boczny chowa się przyciskiem, zostaje schowany po odświeżeniu i wraca przez Ctrl+\\ (web)", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "pasek boczny chowa się tylko na webie");
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    const nawigacja = page.getByRole("navigation", { name: "Główna nawigacja" });
+    await expect(nawigacja).toBeVisible();
+
+    await page.getByRole("button", { name: "Schowaj pasek boczny" }).click();
+    await expect(nawigacja).toBeHidden();
+    await expect(
+      page.getByRole("button", { name: "Pokaż pasek boczny" }),
+    ).toBeVisible();
+
+    // Stan siedzi w ciasteczku czytanym na serwerze — po odświeżeniu pasek dalej schowany
+    await page.reload();
+    await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
+    await expect(nawigacja).toBeHidden();
+
+    await page.keyboard.press("Control+\\");
+    await expect(nawigacja).toBeVisible();
+  });
+
   test("dolny pasek jest przyklejony do dołu i wskazuje aktywny moduł (telefon)", async ({
     page,
   }, info) => {

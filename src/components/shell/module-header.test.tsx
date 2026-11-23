@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ModuleHeader } from "./module-header";
+import { SidebarStateProvider } from "./sidebar-state";
 
 describe("ModuleHeader", () => {
   it("web i telefon mają h1 z tytułem modułu (każdy widoczny tylko w swojej szerokości)", () => {
@@ -48,5 +49,29 @@ describe("ModuleHeader", () => {
     expect(meta.parentElement).not.toContainElement(
       screen.getByRole("button", { name: "Nowy blok" }),
     );
+  });
+
+  it("przy schowanym pasku web ma przycisk „Pokaż pasek boczny” przed tytułem", () => {
+    render(
+      <SidebarStateProvider initialCollapsed>
+        <ModuleHeader title="Dziś" />
+      </SidebarStateProvider>,
+    );
+    const przycisk = screen.getByRole("button", { name: "Pokaż pasek boczny" });
+    const tytul = screen
+      .getAllByRole("heading", { level: 1, name: "Dziś" })
+      .find((h) => h.closest("header")?.classList.contains("max-[799px]:hidden"))!;
+    expect(
+      przycisk.compareDocumentPosition(tytul) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("przy rozwiniętym pasku web nie ma przycisku „Pokaż pasek boczny”", () => {
+    render(
+      <SidebarStateProvider initialCollapsed={false}>
+        <ModuleHeader title="Dziś" />
+      </SidebarStateProvider>,
+    );
+    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny" })).toBeNull();
   });
 });
