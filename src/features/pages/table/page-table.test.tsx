@@ -381,6 +381,92 @@ describe("PageTable", () => {
       expect(patch.config.options).toHaveLength(status.config.options!.length - 1);
     });
 
+    describe("usunięcie opcji z odwołaniami", () => {
+      // Books z zapisanym filtrem „Status jest jednym z: Przeczytane”
+      function booksZFiltrem() {
+        const b = blok("books", BOOKS);
+        const status = b.fields.find((f) => f.name === "Status")!;
+        const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!.id;
+        const ustawienia = b.content.settings as { filters: unknown[] };
+        ustawienia.filters = [{ field_id: status.id, op: "in", value: [przeczytane] }];
+        return { b, status, przeczytane };
+      }
+
+      it("„Przeczytane”: puste wartości wierszy, bez karty, podsumowań i warunku filtra", async () => {
+        const user = userEvent.setup();
+        const { b, status, przeczytane } = booksZFiltrem();
+        const data = b.fields.find((f) => f.name === "Przeczytana")!;
+        const wierszeZOpcja = b.rows.filter((r) => r.values[status.id] === przeczytane).map((r) => r.id);
+        render(<PageTable block={b} today={TODAY} />);
+        expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+        expect(karta("Przeczytane w 2026")).toBeInTheDocument();
+
+        const menu = await otworzMenu(user, "Status");
+        await user.click(within(menu).getByRole("button", { name: "Usuń opcję Przeczytane" }));
+
+        // Wiersze: każdy z tą opcją dostaje pustą wartość
+        expect(wierszeZOpcja).toHaveLength(7);
+        expect(actions.updateRow).toHaveBeenCalledTimes(7);
+        for (const id of wierszeZOpcja) expect(actions.updateRow).toHaveBeenCalledWith(id, { [status.id]: null });
+        // Ustawienia: bez warunku filtra, karty liczącej opcję i podsumowań na niej (Status i „w roku” z where)
+        const [blokId, zmiany] = actions.saveTableSettings.mock.calls[0];
+        expect(blokId).toBe(b.id);
+        expect(zmiany.filters).toEqual([]);
+        expect(zmiany.pinned_cards.map((c: { label: string }) => c.label)).toEqual(["Czytam teraz", "Średnia ocena"]);
+        expect(zmiany.column_summaries[status.id]).toBeUndefined();
+        expect(zmiany.column_summaries[data.id]).toBeUndefined();
+        // Pole: bez opcji
+        const [poleId, patch] = actions.updateField.mock.calls[0];
+        expect(poleId).toBe(status.id);
+        expect(patch.config.options.map((o: { id: string }) => o.id)).not.toContain(przeczytane);
+
+        // Widok od razu
+        expect(screen.queryByText("Przeczytane w 2026", { selector: "div" })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
+        expect(within(wiersz("Deep Work")).queryByText("Przeczytane")).not.toBeInTheDocument();
+        const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
+        expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+        expect(within(stopka).queryByText("7 przeczytanych")).not.toBeInTheDocument();
+        expect(within(stopka).queryByText("6 w tym roku")).not.toBeInTheDocument();
+      });
+
+      it("warunek tymczasowy na tej opcji też znika", async () => {
+        const user = userEvent.setup();
+        const b = blok("books", BOOKS);
+        render(<PageTable block={b} today={TODAY} />);
+        await user.click(screen.getByRole("button", { name: "Filtruj" }));
+        const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+        await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+        await user.click(within(filtr).getByRole("button", { name: "Pole warunku 1" }));
+        await user.click(within(screen.getByRole("listbox", { name: "Pole warunku 1" })).getByRole("option", { name: /Status/ }));
+        await user.click(within(filtr).getByRole("button", { name: "Przeczytane" }));
+        expect(tytuly()).toHaveLength(7);
+        await user.keyboard("{Escape}");
+        const menu = await otworzMenu(user, "Status");
+        await user.click(within(menu).getByRole("button", { name: "Usuń opcję Przeczytane" }));
+        expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
+        expect(tytuly()).toHaveLength(11);
+      });
+
+      it("błąd zapisu cofa wszystko: wartości, kartę, podsumowania, filtr i opcję", async () => {
+        actions.updateField.mockResolvedValue({ ok: false, message: "x" });
+        const user = userEvent.setup();
+        const { b } = booksZFiltrem();
+        render(<PageTable block={b} today={TODAY} />);
+        const menu = await otworzMenu(user, "Status");
+        await user.click(within(menu).getByRole("button", { name: "Usuń opcję Przeczytane" }));
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+        expect(within(menu).getByRole("button", { name: "Usuń opcję Przeczytane" })).toBeInTheDocument();
+        expect(karta("Przeczytane w 2026")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+        expect(within(wiersz("Deep Work")).getByText("Przeczytane")).toBeInTheDocument();
+        const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
+        expect(within(stopka).getByText("7 przeczytanych")).toBeInTheDocument();
+        expect(within(stopka).getByText("6 w tym roku")).toBeInTheDocument();
+        expect(tytuly()).toHaveLength(7);
+      });
+    });
+
     it("kolumna tekstowa nie ma sekcji „Opcje”", async () => {
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);

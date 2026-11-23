@@ -498,14 +498,101 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return patchField(field, { config: { ...field.config, options: [...opcje, nowa] } });
   }
 
-  // Usunięcie opcji Wyboru; opcja domyślna nowego wiersza znika razem z nią
+  // Usunięcie opcji Wyboru razem ze wszystkimi odwołaniami, w jednej optymistycznej zmianie:
+  // wiersze z tą opcją stają się puste, znikają karty, podsumowania i warunki filtrów na tej opcji,
+  // a na końcu sama opcja (i opcja domyślna nowego wiersza). Błąd któregokolwiek zapisu cofa wszystko.
   async function removeOption(field: PageField, optionId: string): Promise<boolean> {
     const config: FieldConfig = {
       ...field.config,
       options: (field.config.options ?? []).filter((o) => o.id !== optionId),
     };
     if (config.default_option === optionId) delete config.default_option;
-    return patchField(field, { config });
+
+    // Warunek „jest jednym z” traci tę opcję; bez żadnej opcji znika cały warunek
+    const bezOpcji = (warunki: FilterCond[]) =>
+      warunki.flatMap((c) => {
+        if (c.field_id !== field.id || !Array.isArray(c.value) || !c.value.includes(optionId)) return [c];
+        const reszta = (c.value as string[]).filter((v) => v !== optionId);
+        return reszta.length > 0 ? [{ ...c, value: reszta }] : [];
+      });
+    const noweFiltry = bezOpcji(settings.filters);
+    const noweKarty = settings.pinned_cards.filter(
+      (c) => c.option_id !== optionId && c.done_option_id !== optionId,
+    );
+    const nowePodsumowania = Object.fromEntries(
+      Object.entries(settings.column_summaries).filter(
+        ([, p]) => p.option_id !== optionId && p.where?.option_id !== optionId,
+      ),
+    );
+    // Zapisujemy tylko klucze ustawień, które naprawdę się zmieniają
+    const zmianyUstawien: Partial<TableSettings> = {};
+    if (JSON.stringify(noweFiltry) !== JSON.stringify(settings.filters)) zmianyUstawien.filters = noweFiltry;
+    if (noweKarty.length !== settings.pinned_cards.length) zmianyUstawien.pinned_cards = noweKarty;
+    if (Object.keys(nowePodsumowania).length !== Object.keys(settings.column_summaries).length) {
+      zmianyUstawien.column_summaries = nowePodsumowania;
+    }
+    const poprzednieUstawienia: Partial<TableSettings> = {};
+    for (const k of Object.keys(zmianyUstawien) as (keyof TableSettings)[]) {
+      (poprzednieUstawienia as Record<string, unknown>)[k] = settings[k];
+    }
+    const poprzednieTymczasowe = tempFilters;
+    const dotknieteWiersze = rows.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
+
+    // Od razu lokalnie
+    setFields((l) => l.map((f) => (f.id === field.id ? { ...f, config } : f)));
+    setRows((l) =>
+      l.map((r) => (dotknieteWiersze.includes(r.id) ? { ...r, values: { ...r.values, [field.id]: null } } : r)),
+    );
+    setSettings((s) => ({ ...s, ...zmianyUstawien }));
+    setTempFilters((t) => (t ? bezOpcji(t) : t));
+
+    // Zapisy w toku: dane z serwera w trakcie nie nadpiszą zmiany
+    const zapisywaneWiersze = dotknieteWiersze.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
+    for (const id of zapisywaneWiersze) {
+      const wToku = wierszeWToku.current.get(id) ?? { n: 0, zmiany: {} };
+      wToku.n += 1;
+      wToku.zmiany[field.id] = null;
+      wierszeWToku.current.set(id, wToku);
+    }
+    polaWToku.current += 1;
+    ustawieniaWToku.current += 1;
+    let udane = false;
+    try {
+      const wyniki = await Promise.all([
+        ...zapisywaneWiersze.map((id) => updateRow(id, { [field.id]: null })),
+        ...(Object.keys(zmianyUstawien).length > 0 ? [saveTableSettings(block.id, zmianyUstawien)] : []),
+        updateField(field.id, { config }),
+      ]);
+      udane = wyniki.every((w) => w.ok);
+    } catch {
+      udane = false;
+    }
+    for (const id of zapisywaneWiersze) {
+      const wToku = wierszeWToku.current.get(id);
+      if (!wToku) continue;
+      wToku.n -= 1;
+      if (wToku.n === 0) wierszeWToku.current.delete(id);
+    }
+    polaWToku.current -= 1;
+    ustawieniaWToku.current -= 1;
+
+    if (!udane) {
+      // Cofamy tylko to, co nadal jest z tej zmiany
+      setFields((l) =>
+        l.map((f) => (f.id === field.id && f.config === config ? { ...f, config: field.config } : f)),
+      );
+      setRows((l) =>
+        l.map((r) =>
+          dotknieteWiersze.includes(r.id) && r.values[field.id] === null
+            ? { ...r, values: { ...r.values, [field.id]: optionId } }
+            : r,
+        ),
+      );
+      setSettings((s) => ({ ...s, ...poprzednieUstawienia }));
+      setTempFilters(poprzednieTymczasowe);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
   }
 
   // Zmiana nazwy albo konfiguracji pola (np. „Pokaż w kalendarzu”): od razu lokalnie, błąd cofa
