@@ -23,6 +23,15 @@ export function OptionBadge({
   option: FieldOption;
   children?: React.ReactNode;
 }) {
+  // Bez koloru: szara plakietka z obrysem (jak odznaka outline)
+  if (option.color === "") {
+    return (
+      <span className="inline-flex h-[18px] items-center justify-center gap-1 rounded-sm border border-input bg-white px-[5px] text-xs leading-none font-medium whitespace-nowrap text-[#404040]">
+        {option.label}
+        {children}
+      </span>
+    );
+  }
   const kolor = option.color.toLowerCase();
   const tlo = TLA_PLAKIETEK[kolor] ?? { tlo: `${option.color}14` };
   return (

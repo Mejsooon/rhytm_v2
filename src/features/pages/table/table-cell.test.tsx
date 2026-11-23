@@ -228,4 +228,30 @@ describe("TableCell", () => {
     komorka(pole("secret", { name: "Hasło" }), wiersz({ v: 1, g: 1, iv: "a", ct: "b" }));
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
+
+  describe("select i status: okienko opcji", () => {
+    const opcje = [
+      { id: "o1", label: "Czytam", color: "#0070f3" },
+      { id: "o2", label: "Bez barwy", color: "" },
+    ];
+
+    it("klik otwiera okienko, wybór zapisuje i zamyka, drugi klik w wyzwalacz też zamyka", async () => {
+      const user = userEvent.setup();
+      const { onSave } = komorka(pole("status", { name: "Status", config: { options: opcje } }), wiersz(null));
+      const wyzwalacz = screen.getByRole("button", { name: "Status" });
+      await user.click(wyzwalacz);
+      await user.click(screen.getByRole("option", { name: "Czytam" }));
+      expect(onSave).toHaveBeenCalledWith("o1");
+      expect(screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" })).not.toBeInTheDocument();
+      await user.click(wyzwalacz);
+      expect(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" })).toBeInTheDocument();
+      await user.click(wyzwalacz);
+      expect(screen.queryByRole("textbox", { name: "Szukaj lub dodaj opcję" })).not.toBeInTheDocument();
+    });
+
+    it("opcja bez koloru renderuje się jako szara plakietka z obrysem", () => {
+      komorka(pole("status", { name: "Status", config: { options: opcje } }), wiersz("o2"));
+      expect(screen.getByText("Bez barwy")).toHaveClass("border-input");
+    });
+  });
 });

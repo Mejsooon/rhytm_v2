@@ -440,6 +440,11 @@ export function PageTable({
                     done={zrobione}
                     autoFocus={f.isTitle && r.id === nowyId}
                     onSave={(v) => void store.updateCell(r, f, v)}
+                    onCreateOption={(etykieta) => store.createOption(f, etykieta)}
+                    onUpdateOption={(id, patch) => void store.updateOption(f, id, patch)}
+                    onRemoveOption={(id) => void store.removeOption(f, id)}
+                    // Kursor w nowym wierszu ustawiamy raz: po pierwszym fokusie komórka nie kradnie go przy zmianie filtra czy sortu
+                    onFocused={f.isTitle && r.id === nowyId ? () => setNowyId(null) : undefined}
                   />
                 ))}
                 {/* Kosz pod „+”: widoczny po najechaniu na wiersz i przy fokusie w wierszu (.row-del) */}

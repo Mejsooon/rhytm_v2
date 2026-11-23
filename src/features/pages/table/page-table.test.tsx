@@ -478,6 +478,27 @@ describe("PageTable", () => {
       expect(patch.config.options).toHaveLength(status.config.options!.length - 1);
     });
 
+    it("zmiana nazwy opcji z okienka komórki zostawia wiersz pod filtrem „in” i pokazuje nową nazwę", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      (b.content.settings as { filters: unknown[] }).filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: "Status" }));
+      await user.click(screen.getByRole("button", { name: "Opcje: Czytam" }));
+      const nazwa = screen.getByRole("textbox", { name: "Nazwa opcji" });
+      await user.clear(nazwa);
+      await user.type(nazwa, "W trakcie{Enter}");
+      const [poleId, patch] = actions.updateField.mock.calls[0];
+      expect(poleId).toBe(status.id);
+      expect(patch.config.options.find((o: { id: string }) => o.id === czytam).label).toBe("W trakcie");
+      // Wiersze zostają widoczne (filtr trzyma id opcji), komórka pokazuje nową nazwę
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      expect(within(wiersz("Atomic Habits")).getByRole("button", { name: "Status" })).toHaveTextContent("W trakcie");
+    });
+
     describe("usunięcie opcji z odwołaniami", () => {
       // Books z zapisanym filtrem „Status jest jednym z: Przeczytane”
       function booksZFiltrem() {
@@ -653,6 +674,25 @@ describe("PageTable", () => {
       expect(pole).toHaveValue("");
       await user.type(pole!, "Diuna{Enter}");
       expect(actions.updateRow).toHaveBeenCalledWith("srv-1", { [tytul.id]: "Diuna" });
+    });
+
+    it("kursor w nowym wierszu ustawia się raz: po zmianie filtra komórka nie kradnie fokusu", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      const nowaKomorka = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
+      expect(nowaKomorka).toBeDefined();
+      await user.click(screen.getByRole("button", { name: "Filtruj" }));
+      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+      const wartosc = within(filtr).getByRole("textbox", { name: "Wartość warunku 1" });
+      // Warunek ukrywa nowy (pusty) wiersz, a po wyczyszczeniu wiersz wraca jako świeżo zamontowana komórka
+      await user.type(wartosc, "deep");
+      expect(nowaKomorka).not.toBeInTheDocument();
+      await user.clear(wartosc);
+      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true);
+      expect(wartosc).toHaveFocus();
     });
 
     it("błąd „Nowy” nie dodaje wiersza i pokazuje toast", async () => {

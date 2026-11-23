@@ -2,9 +2,10 @@
 
 import * as React from "react";
 
-import { Checkbox, DatePicker, StatusBadge, type IsoDate } from "@/components/controls";
+import { ActionPopover, Checkbox, DatePicker, StatusBadge, type IsoDate } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { OptionBadge } from "./option-badge";
+import { OptionPicker } from "./option-picker";
 import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
 import type { PageRow } from "../table-model";
 
@@ -18,7 +19,7 @@ const OBWODKA = "focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_rgba
 
 // Jedna komórka tabeli edytowana wprost, jak w Notion (S2Books.dc.html). Tekst, liczba i link to stałe
 // pole bez ramki: zapis po 600 ms przerwy oraz od razu przy Enter, Esc, wyjściu i odmontowaniu.
-// Gwiazdki, checkbox i data zapisują od razu. Select i status pokazują plakietkę (okienko opcji: onOpenOptions).
+// Gwiazdki, checkbox i data zapisują od razu. Select i status pokazują plakietkę (klik otwiera okienko opcji).
 export function TableCell({
   row,
   field,
@@ -26,7 +27,10 @@ export function TableCell({
   done,
   autoFocus = false,
   onSave,
-  onOpenOptions,
+  onFocused,
+  onCreateOption,
+  onUpdateOption,
+  onRemoveOption,
 }: {
   row: PageRow;
   field: PageField;
@@ -36,7 +40,12 @@ export function TableCell({
   // Kursor w tej komórce (tytuł nowego wiersza po „+ Nowy”)
   autoFocus?: boolean;
   onSave: (value: unknown) => void;
-  onOpenOptions?: () => void;
+  // Wołane po fokusie pola (np. by wyczyścić „kursor w nowym wierszu”)
+  onFocused?: () => void;
+  // Opcje select/status tworzone, zmieniane i usuwane z okienka komórki
+  onCreateOption?: (label: string) => Promise<string | null>;
+  onUpdateOption?: (id: string, patch: { label?: string; color?: string }) => void;
+  onRemoveOption?: (id: string) => void;
 }) {
   const v = normalizeValue(field, row.values[field.id]);
 
@@ -44,6 +53,8 @@ export function TableCell({
   // Dopóki komórka ma fokus, nowa wartość z serwera nie nadpisuje tego, co się pisze.
   const [szkic, setSzkic] = React.useState<string | null>(null);
   const poleRef = React.useRef<HTMLInputElement>(null);
+  // Okienko opcji (select i status)
+  const [okienko, setOkienko] = React.useState(false);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   // Wpisany, a jeszcze niezapisany tekst (null = nic do zapisu) i najnowsze onSave — dla zapisu przy odmontowaniu
   const niezapisany = React.useRef<string | null>(null);
@@ -92,18 +103,50 @@ export function TableCell({
   if (field.type === "status" || field.type === "select") {
     const opcja = (field.config.options ?? []).find((o) => o.id === v);
     return (
-      // Okienko opcji (wyzwalacz) dochodzi w zadaniu 4
-      <td onClick={onOpenOptions} className={cn(TD, "cursor-default px-3")}>
-        {opcja ? (
-          field.type === "status" ? (
-            <OptionBadge option={opcja} />
-          ) : (
-            // Select: odznaka z ramką (.bdg.out, „Obszar” z S2Projects.dc.html)
-            <StatusBadge tone="outline">{opcja.label}</StatusBadge>
-          )
-        ) : (
-          <span className="text-faint-foreground">—</span>
+      // Otwarte okienko (aria-expanded na wyzwalaczu) daje niebieską obwódkę komórki, jak w edycji
+      <td
+        className={cn(
+          TD,
+          "p-0 has-[[aria-expanded=true]]:bg-white has-[[aria-expanded=true]]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]",
         )}
+      >
+        <ActionPopover
+          open={okienko}
+          onOpenChange={setOkienko}
+          width={240}
+          className="p-1"
+          ariaLabel={field.name}
+          trigger={
+            <button
+              type="button"
+              aria-label={field.name}
+              className="flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
+            >
+              {opcja ? (
+                field.type === "status" ? (
+                  <OptionBadge option={opcja} />
+                ) : (
+                  // Select: odznaka z ramką (.bdg.out, „Obszar” z S2Projects.dc.html)
+                  <StatusBadge tone="outline">{opcja.label}</StatusBadge>
+                )
+              ) : (
+                <span className="text-faint-foreground">—</span>
+              )}
+            </button>
+          }
+        >
+          <OptionPicker
+            field={field}
+            value={typeof v === "string" ? v : null}
+            onPick={(id) => {
+              onSave(id);
+              setOkienko(false);
+            }}
+            onCreate={(label) => onCreateOption?.(label) ?? Promise.resolve(null)}
+            onUpdate={(id, patch) => onUpdateOption?.(id, patch)}
+            onRemove={(id) => onRemoveOption?.(id)}
+          />
+        </ActionPopover>
       </td>
     );
   }
@@ -205,7 +248,10 @@ export function TableCell({
         aria-label={field.name}
         value={szkic ?? tekstWidoku}
         placeholder={field.isTitle ? (field.config.empty_label ?? "Bez tytułu") : "—"}
-        onFocus={() => setSzkic(tekstEdycji)}
+        onFocus={() => {
+          setSzkic(tekstEdycji);
+          onFocused?.();
+        }}
         onChange={(e) => {
           const t = e.target.value;
           setSzkic(t);
