@@ -89,7 +89,6 @@ export async function saveOnboardingStep(
     zapis = await supabase
       .from("profiles")
       .update({
-        goals: d.goals,
         workouts_goal_on: d.workouts_goal_on,
         km_goal_on: d.km_goal_on,
         weekly_workouts_goal: d.weekly_workouts_goal,

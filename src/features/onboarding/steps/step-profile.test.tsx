@@ -23,7 +23,6 @@ const draft: OnboardingDraft = {
   clock: "24",
   roles: [],
   studyField: "",
-  goals: [],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,

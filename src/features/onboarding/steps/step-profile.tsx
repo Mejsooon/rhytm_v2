@@ -158,7 +158,10 @@ export function StepProfile({
           />
         </div>
         {blad && (
-          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
+          <p
+            role="alert"
+            className="m-0 text-[13px] text-destructive-foreground"
+          >
             {blad}
           </p>
         )}

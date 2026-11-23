@@ -1,24 +1,21 @@
-import { Check, Lock } from "lucide-react";
+import { Check } from "lucide-react";
 import * as React from "react";
 
 import { Stepper, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import {
-  GOALS,
-  LOCKED_GOALS,
   formatKm,
   formatSleep,
   goalInRange,
   stepKm,
   stepSleep,
   stepWorkouts,
-  toggleGoal,
   type OnboardingDraft,
 } from "../model";
 
 import { StepHeader } from "./step-header";
 
-// Krok 3: cele (OnboardingGoals + MOnboarding). Web: karty z polem po lewej, telefon: kafelki 2×N z polem po prawej.
+// Krok 3: cele (OnboardingGoals + MOnboarding): tylko cele treningowe i cel snu, bez kafelków modułów.
 export function StepGoals({
   draft,
   onChange,
@@ -121,80 +118,12 @@ export function StepGoals({
   return (
     <div className="flex flex-col gap-5">
       <StepHeader
-        title="Co chcesz ogarnąć w rhytm?"
-        subtitle="Na tej podstawie przygotujemy startowe strony i cele"
+        title="Twoje cele"
+        subtitle="Zmienisz je później w Ustawieniach."
       />
-
-      <div className="grid grid-cols-2 gap-2 min-[800px]:gap-1.5">
-        {GOALS.map((cel) => {
-          const staly = LOCKED_GOALS.includes(cel.key);
-          const wlaczony = staly || draft.goals.includes(cel.key);
-          const Ikona = staly ? Lock : Check;
-          return (
-            <button
-              key={cel.key}
-              type="button"
-              aria-pressed={wlaczony}
-              aria-disabled={staly || undefined}
-              title={staly ? "Zawsze włączone" : undefined}
-              onClick={() => onChange(toggleGoal(draft, cel.key))}
-              className={cn(
-                "box-border flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-lg border border-border bg-white bg-clip-padding px-3.5 py-3 text-left text-foreground shadow-xs transition-[border-color,background-color,box-shadow] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus min-[800px]:px-3 min-[800px]:py-2.5 max-[799px]:flex-col-reverse max-[799px]:gap-1 max-[799px]:rounded-md max-[799px]:border-input max-[799px]:shadow-none max-[799px]:hover:border-ring max-[799px]:hover:bg-white",
-                // Web: zaznaczona i zablokowana jak .opt[aria-pressed] z makiety
-                wlaczony &&
-                  "min-[800px]:border-black/[.24] min-[800px]:bg-black/[.025] min-[800px]:shadow-[0_0_0_1px_rgba(0,0,0,.12)] min-[800px]:hover:bg-black/[.025]",
-                // Telefon: jak dotąd (ciemna ramka; zablokowana na szarym tle)
-                wlaczony &&
-                  !staly &&
-                  "max-[799px]:border-primary max-[799px]:shadow-[inset_0_0_0_1px_var(--primary)] max-[799px]:hover:border-primary",
-                staly &&
-                  "cursor-default max-[799px]:bg-panel max-[799px]:hover:border-input max-[799px]:hover:bg-panel",
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "mt-0.5 inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs max-[799px]:hidden",
-                  wlaczony
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-white text-transparent",
-                )}
-              >
-                <Ikona
-                  className={staly ? "size-[11px]" : "size-3"}
-                  strokeWidth={staly ? 2.5 : 3}
-                />
-              </span>
-              <span className="flex w-full flex-col gap-0.5">
-                <span className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{cel.title}</span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "hidden size-6 flex-none items-center justify-center rounded-[7px] border-[1.5px] max-[799px]:inline-flex",
-                      staly
-                        ? "border-input bg-muted text-muted-foreground"
-                        : wlaczony
-                          ? "border-success bg-success text-white"
-                          : "border-border-strong bg-white text-transparent",
-                    )}
-                  >
-                    <Ikona
-                      className={staly ? "size-3.5" : "size-4"}
-                      strokeWidth={staly ? 2 : 3}
-                    />
-                  </span>
-                </span>
-                <span className="text-[13px] text-muted-foreground max-[799px]:text-xs">
-                  {cel.desc}
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="-mt-2 text-[13px] text-muted-foreground max-[799px]:-mt-1">
-        Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.
+      <p className="m-0 text-[13px] text-muted-foreground">
+        <span className="font-medium text-foreground">Zawsze masz:</span> Plan
+        tygodnia · Treningi · Nawyki i sen · Hasła
       </p>
 
       <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm">

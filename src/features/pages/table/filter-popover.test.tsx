@@ -36,8 +36,8 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
-import { TemplatePageView } from "./template-page-view";
-import { stronaTestowa } from "./test-page";
+import { PageTable } from "./page-table";
+import { DZIS, stronaTestowa } from "./test-page";
 
 const BOOKS = [
   { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
@@ -47,12 +47,12 @@ const BOOKS = [
   { Tytuł: "Clean Code", Autor: "Robert C. Martin", Status: "Chcę przeczytać" },
 ];
 
-// Tytuły widoczne w tabeli (bez nagłówka i stopki)
+// Tytuły widoczne w tabeli (bez nagłówka i stopki); tytuł wiersza siedzi w polu edycji
 function tytuly() {
   return screen
     .getAllByRole("row")
     .slice(1, -1)
-    .map((r) => r.querySelector("td")?.textContent);
+    .map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
 }
 
 async function otworzFiltr(user: ReturnType<typeof userEvent.setup>, nazwa = "Filtruj") {
@@ -73,7 +73,7 @@ describe("filtr tabeli", () => {
 
   it("pusty filtr: licznik „5 z 5 wierszy”, dopisek, przycisk bez liczby", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     expect(within(filtr).getByText("5 z 5 wierszy")).toBeInTheDocument();
     expect(within(filtr).getByText("Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("filtr tabeli", () => {
 
   it("bez warunków pokazuje komunikat, po dodaniu warunku znika", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     expect(within(filtr).getByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeInTheDocument();
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
@@ -92,7 +92,7 @@ describe("filtr tabeli", () => {
   it("filtr przy prawej krawędzi otwiera się do środka: dymek filtra dostaje avoidCollisions i collisionPadding 8 px, wyrównanie do prawej", async () => {
     const user = userEvent.setup();
     zlapane.propsy.length = 0;
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     await otworzFiltr(user);
     const dymek = zlapane.propsy.find((p) => p["aria-label"] === "Filtr");
     expect(dymek?.avoidCollisions).toBe(true);
@@ -102,7 +102,7 @@ describe("filtr tabeli", () => {
 
   it("wygląd COSS: dymek z paddingiem 14 px, wyzwalacz podświetlony, licznik jako plakietka, przyciski z kontrolki Button", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const wyzwalacz = screen.getByRole("button", { name: "Filtruj" });
     expect(wyzwalacz.className).not.toContain("bg-accent");
     const filtr = await otworzFiltr(user);
@@ -127,7 +127,7 @@ describe("filtr tabeli", () => {
 
   it("„+ Dodaj warunek” dodaje „Gdzie …”, tekst zawęża tabelę, licznik i przycisk się aktualizują", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     expect(within(filtr).getByText("Gdzie")).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("filtr tabeli", () => {
 
   it("drugi warunek jest łączony „i”, ✕ go usuwa", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
@@ -152,7 +152,7 @@ describe("filtr tabeli", () => {
 
   it("Status: operatory „jest jednym z” / „jest puste”, wartość to chipy opcji", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await wybierz(user, "Pole warunku 1", "Status");
@@ -172,7 +172,7 @@ describe("filtr tabeli", () => {
 
   it("Ocena: operatory ≥ / ≤ i pole liczby z przecinkiem dziesiętnym", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await wybierz(user, "Pole warunku 1", "Ocena");
@@ -189,7 +189,7 @@ describe("filtr tabeli", () => {
 
   it("Data: operatory przed / po / jest puste i wybór daty", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await wybierz(user, "Pole warunku 1", "Przeczytana");
@@ -208,7 +208,7 @@ describe("filtr tabeli", () => {
 
   it("karty i podsumowania liczą się z wierszy po filtrze", async () => {
     const user = userEvent.setup();
-    render(<TemplatePageView data={stronaTestowa("books", "Books", BOOKS)} />);
+    render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await wybierz(user, "Pole warunku 1", "Status");
@@ -226,7 +226,7 @@ describe("filtr tabeli", () => {
     const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!;
     const zapisany = [{ field_id: status.id, op: "in", value: [przeczytane.id] }];
     (dane.blocks[0].content as { settings: { filters: unknown[] } }).settings.filters = zapisany;
-    render(<TemplatePageView data={dane} />);
+    render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     expect(tytuly().sort()).toEqual(["Deep Work", "Diuna", "Sapiens"]);
 
     const filtr = await otworzFiltr(user, "Filtruj · 1");
@@ -243,7 +243,7 @@ describe("filtr tabeli", () => {
   it("„Zapisz jako domyślny” zapisuje bieżące warunki, po odświeżeniu filtr dalej działa", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
-    const { rerender } = render(<TemplatePageView data={dane} />);
+    const { rerender } = render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
@@ -256,7 +256,7 @@ describe("filtr tabeli", () => {
     // Odświeżone dane z serwera mają już zapisany filtr
     const odswiezone = stronaTestowa("books", "Books", BOOKS);
     (odswiezone.blocks[0].content as { settings: { filters: unknown[] } }).settings.filters = zapisane;
-    rerender(<TemplatePageView data={odswiezone} />);
+    rerender(<PageTable block={(odswiezone).blocks[0]} today={DZIS} />);
     await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
   });

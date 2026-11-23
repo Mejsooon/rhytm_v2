@@ -4,6 +4,7 @@ import { formatClockTime } from "@/lib/time/timezones";
 import {
   categoriesForRoles,
   effectivePages,
+  formatKm,
   type OnboardingDraft,
 } from "./model";
 
@@ -18,7 +19,8 @@ const BL: Record<string, [number, number, string, string]> = {
 };
 
 // Zielony obrys podświetlanej części podglądu (HI z makiety: biała obwódka 2 px + zielony pierścień)
-const OBRYS = "rounded-[10px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success)]";
+const OBRYS =
+  "rounded-[10px] shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--success)]";
 
 const DNI = [
   "Niedziela",
@@ -152,16 +154,38 @@ export function LivePreview({
 
   const { y, m, d } = dataWStrefie(now, draft.timezone);
   const dzien = `${DNI[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${d} ${MIESIACE[m - 1]}`;
+  const zakres = zakresTygodnia(y, m, d, draft.weekStart);
   const tydzien =
     "Tydzień " +
     (draft.weekStart === "sun" ? "od niedzieli" : "od poniedziałku") +
-    ` · ${zakresTygodnia(y, m, d, draft.weekStart)} · zegar ${draft.clock === "12" ? "12 h" : "24 h"}`;
+    ` · ${zakres} · zegar ${draft.clock === "12" ? "12 h" : "24 h"}`;
+
+  // Kafelki bloku „Ten tydzień” z celów kroku 3 (wyłączony cel znika), same zera
+  const kafelki: { label: string; value: string; of: string }[] = [];
+  if (draft.workoutsOn)
+    kafelki.push({
+      label: "Treningi",
+      value: "0",
+      of: `/ ${Number.isFinite(draft.weeklyWorkouts) ? draft.weeklyWorkouts : "—"}`,
+    });
+  if (draft.kmOn)
+    kafelki.push({
+      label: "Bieg",
+      value: "0,0",
+      of: `/ ${Number.isFinite(draft.weeklyKm) ? formatKm(draft.weeklyKm) : "—"} km`,
+    });
+  kafelki.push({
+    label: "Śr. sen",
+    value: "—",
+    of: `/ ${String(draft.sleepGoalMin / 60).replace(".", ",")} h`,
+  });
 
   const pierwszy = bloki[0];
   const dymek = step === 6 && draft.notify.perm && draft.notify.before;
 
   const obrysProfil = step === 1;
-  const obrysStrony = step === 3 || step === 5;
+  const obrysStrony = step === 5;
+  const obrysCele = step === 3;
   const obrysKategorie = step === 2;
 
   return (
@@ -199,7 +223,7 @@ export function LivePreview({
           <div className="flex h-7 items-center rounded-[8px] bg-black/[.05] px-2 font-medium">
             Dziś
           </div>
-          {["Kalendarz", "Sport", "Nawyki i sen"].map((n) => (
+          {["Kalendarz", "Sport", "Nawyki i sen", "Hasła"].map((n) => (
             <div
               key={n}
               className="flex h-7 items-center px-2 font-medium text-soft-foreground"
@@ -234,6 +258,48 @@ export function LivePreview({
         <div className="relative min-w-0 flex-1 p-4">
           <div className="text-[15px] font-semibold">{dzien}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">{tydzien}</div>
+          <div
+            data-testid="pv-goals"
+            data-highlighted={String(obrysCele)}
+            className={cn("mt-3 p-1.5", obrysCele && OBRYS)}
+          >
+            <div className="flex items-baseline justify-between px-0.5 pb-1.5">
+              <span className="text-xs font-semibold">Ten tydzień</span>
+              <span className="text-[11px] text-muted-foreground">
+                {zakres}
+              </span>
+            </div>
+            <div className="grid grid-flow-col auto-cols-fr gap-1.5">
+              {kafelki.map((k) => (
+                <div
+                  key={k.label}
+                  data-testid="pv-goal"
+                  className="min-w-0 rounded-[10px] border border-border bg-white px-2.5 pt-2 pb-[9px] shadow-xs"
+                >
+                  <div className="text-[11px] whitespace-nowrap text-muted-foreground">
+                    {k.label}
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap">
+                    <span className="text-[17px] font-semibold tracking-[-0.02em]">
+                      {k.value}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {" "}
+                      {k.of}
+                    </span>
+                  </div>
+                  <div className="mt-[7px] grid grid-cols-7 gap-0.5">
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                      <span
+                        key={i}
+                        className="h-[3px] rounded-[2px] bg-black/[.08]"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           <div
             data-testid="pv-cats"
             data-highlighted={String(obrysKategorie)}

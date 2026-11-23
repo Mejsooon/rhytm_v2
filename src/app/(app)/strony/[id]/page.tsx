@@ -1,11 +1,10 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { EditorView } from "@/features/pages/editor/editor-view";
 import { loadPage } from "@/features/pages/load-page";
 import { loadPages } from "@/features/pages/load-pages";
-import { TemplatePageView } from "@/features/pages/table/template-page-view";
 
 async function Strona({ params }: { params: Promise<{ id: string }> }) {
   await connection();
@@ -14,10 +13,8 @@ async function Strona({ params }: { params: Promise<{ id: string }> }) {
   const [dane, strony] = await Promise.all([loadPage(id), loadPages()]);
   if (!dane) notFound();
 
-  // Hasła i każda strona z polem Sekret (np. starsze Books z dodanym Sekretem) potrzebują sejfu,
-  // który ma tylko widok szablonu; każda inna strona to edytor bloków
-  const maSekret = dane.blocks.some((b) => b.fields.some((f) => f.type === "secret"));
-  if (dane.page.templateKey === "passwords" || maSekret) return <TemplatePageView data={dane} pages={strony} />;
+  // Strona systemowa to moduł Hasła — ma własny adres
+  if (dane.page.isSystem) redirect("/hasla");
   return <EditorView data={dane} pages={strony} />;
 }
 

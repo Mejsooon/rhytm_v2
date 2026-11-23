@@ -1,6 +1,6 @@
 # Stan projektu rhytm (aktualizuj na koniec każdego etapu)
 
-Ostatnia aktualizacja: 2026-11-23.
+Ostatnia aktualizacja: 2026-11-23 (krok 3 Stron 2.0).
 
 ## Czym jest rhytm
 
@@ -34,23 +34,17 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-- **Gałąź `docs/dziennik`:** dziennik sesji w `docs/superpowers/dziennik/` (wpisy 16–23.11 odtworzone z historii) i reguła dziennika w `CLAUDE.md`. Czeka na „scal do main”.
-- **Pakiet poprawek po kroku 2 jest już w main** (merge `feeece8`): `DatePicker` według makiet S2, ciemny tekst w kolumnach, URL jak tekst, „Pusta strona” bez tabeli.
+- **Strony 2.0, krok 3** (gałąź `feat/strony-2-krok-3`, plan `plans/2026-11-23-strony-2-krok-3.md`): Hasła jako moduł systemowy `/hasla` i onboarding. Gotowe, CI zielone, przegląd końcowy bez Critical/Important. Czeka na „scal do main”; potem Mejson robi `db push` migracji `20261125100000_passwords_module.sql`.
 
 ## Dalej (kolejność ustalona z Mejsonem)
 
-1. **Opcjonalnie, przed krokiem 3:** podział dużych plików `src/features/pages/table/page-table.tsx` i `use-table-store.ts`.
-2. **Strony 2.0, krok 3: Hasła i onboarding.** Spec, punkty 4, 6 (część haseł), 12 i 14 oraz zmiany onboardingu z „Decyzji Claude”.
-   - Hasła stają się stałym modułem w pasku bocznym, z tą samą tabelą i Notatką oraz Kategorią.
-   - Strona systemowa ma migrację z testem pgTAP.
-   - Etap wymaga osobnego przeglądu bezpieczeństwa.
-   - Stary `TemplatePageView`, `RowEdit` i `RowPreview` znikają.
-3. **Projekt Dziś:**
+1. **Opcjonalnie:** podział dużych plików `src/features/pages/table/page-table.tsx` i `use-table-store.ts`.
+2. **Projekt Dziś:**
    - wariant F według makiety S2Today i pusty stan S2EmptyToday;
    - zadania tylko w blokach: zadania bez bloku są usuwane całkowicie, w bazie `NOT NULL` (na produkcji jest 6 zadań bez bloku — decyzja Mejsona przed migracją);
    - szczegóły w `docs/superpowers/odlozone.md`, sekcja „Poprawki webu — Dziś”.
-4. **Subscriptions:** osobny projekt, opisany w specu Stron 2.0 w „Poza zakresem”.
-5. **Etap 3: telefon** według makiet CM* na kanwie.
+3. **Subscriptions:** osobny projekt, opisany w specu Stron 2.0 w „Poza zakresem”.
+4. **Etap 3: telefon** według makiet CM* na kanwie.
 
 ## Ważne miejsca w kodzie
 

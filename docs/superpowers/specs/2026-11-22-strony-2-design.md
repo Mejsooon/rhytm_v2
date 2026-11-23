@@ -38,7 +38,8 @@ Mejson chce, żeby to było uniwersalne. Książki mają wyglądać jak zwykła 
    - Stałe kolumny: Serwis (tytuł), Login, Hasło (zaszyfrowane), URL, Notatka (zaszyfrowana, nowa), Kategoria (nowa; lista do wyboru z własnymi opcjami, jawna).
    - Kolumn nie da się dodać, usunąć ani zmienić ich typu. Opcje Kategorii można dodawać, zmieniać i usuwać.
    - Działa na obecnym sejfie: hasło główne, odblokowanie, reset.
-   - Filtrowanie, sort i wyszukiwanie po jawnych kolumnach (Serwis, Login, URL, Kategoria) działają przy zamkniętym sejfie.
+   - Filtrowanie, sort i wyszukiwanie po jawnych kolumnach (Serwis, Login, URL, Kategoria) działają po odblokowaniu.
+   - **Zmiana Mejsona (2026-11-23):** przy zamkniętym sejfie strona pokazuje tylko kartę „Odblokuj sejf” na środku, bez tabeli; tabela pojawia się dopiero po wpisaniu hasła.
    - Szablon „Hasła” znika z okna „Nowa strona”.
    - Typ kolumny „Hasło (zaszyfrowane)” znika z wyboru typu w zwykłych tabelach.
 5. **Ikony stron: tylko czarne ikony Lucide** (decyzja Mejsona z 2026-11-22).

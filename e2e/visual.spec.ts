@@ -97,7 +97,9 @@ test("zrzut 404 dla gościa (makieta CNotFound)", async ({ page }, info) => {
   await zrzut(page, "404", info.project.name);
 });
 
-test("zrzut /potwierdzono (makieta CEmailConfirmed)", async ({ page }, info) => {
+test("zrzut /potwierdzono (makieta CEmailConfirmed)", async ({
+  page,
+}, info) => {
   await page.goto("/potwierdzono");
   await expect(
     page.getByRole("heading", { name: "E-mail potwierdzony" }),
@@ -625,6 +627,68 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "kalendarz-sport", projekt);
   });
 
+  test("zrzuty /hasla (makiety S2VaultSetup, S2Passwords, S2Vault)", async ({
+    page,
+  }, info) => {
+    test.skip(
+      info.project.name !== "web",
+      "układ webowy; telefon należy do Etapu 3",
+    );
+    // PBKDF2 przy ustawieniu sejfu
+    test.setTimeout(90_000);
+    const projekt = info.project.name;
+    await zalozKontoStron(page, projekt);
+
+    // Ustawianie hasła głównego (S2VaultSetup)
+    await page.goto("/hasla");
+    const ustawianie = page.getByRole("form", {
+      name: "Ustaw hasło główne sejfu",
+    });
+    await expect(ustawianie).toBeVisible();
+    await zrzut(page, "hasla-ustawianie", projekt);
+    const glowne = `Glowne-${Date.now()}-Kl3ucz!Dluuugie`;
+    await ustawianie.getByLabel("Hasło główne", { exact: true }).fill(glowne);
+    await ustawianie.getByLabel("Powtórz", { exact: true }).fill(glowne);
+    await ustawianie
+      .getByRole("checkbox", {
+        name: "Rozumiem, że zapomnianego hasła głównego nie da się odzyskać.",
+      })
+      .click();
+    await ustawianie.getByRole("button", { name: "Utwórz sejf" }).click();
+    await expect(
+      page.getByText("Sejf odblokowany", { exact: true }),
+    ).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // Wiersz z hasłem (S2Passwords: odblokowany)
+    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    const wiersz = page.locator("tbody tr");
+    await expect(wiersz).toHaveCount(1);
+    const serwis = wiersz.getByRole("textbox", { name: "Serwis", exact: true });
+    await serwis.fill("GitHub");
+    await serwis.press("Enter");
+    const login = wiersz.getByRole("textbox", { name: "Login", exact: true });
+    await login.fill("mejson");
+    await login.press("Enter");
+    await wiersz.getByRole("button", { name: "Hasło: puste" }).click();
+    const haslo = wiersz.getByRole("textbox", { name: "Hasło", exact: true });
+    await haslo.fill("Przykladowe-Haslo-1!");
+    await haslo.press("Enter");
+    await expect(
+      wiersz.getByRole("button", { name: "Hasło: zaszyfrowane" }),
+    ).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await zrzut(page, "hasla-odblokowane", projekt);
+
+    // Zablokowany sejf (S2Vault): sama karta „Odblokuj sejf” na środku, bez tabeli
+    await page.getByRole("button", { name: "Zablokuj teraz" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Odblokuj sejf" }),
+    ).toBeVisible();
+    await zrzut(page, "hasla-zablokowane", projekt);
+  });
+
   test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, S2CardMenu, S2CardDialog, MPages, MEditor)", async ({
     page,
   }, info) => {
@@ -703,17 +767,27 @@ test.describe("ekrany z sesją", () => {
       const karta = page.getByTestId("karta").first();
       await karta.hover();
       await karta.getByRole("button", { name: "Menu karty" }).click();
-      await expect(page.getByRole("menu", { name: "Menu karty" })).toBeVisible();
+      await expect(
+        page.getByRole("menu", { name: "Menu karty" }),
+      ).toBeVisible();
       await zrzut(page, "strony-menu-karty", projekt);
       await page.keyboard.press("Escape");
-      await expect(page.getByRole("menu", { name: "Menu karty" })).toHaveCount(0);
+      await expect(page.getByRole("menu", { name: "Menu karty" })).toHaveCount(
+        0,
+      );
 
       // Okno nowej karty (S2CardDialog)
-      await page.getByRole("button", { name: "Dodaj kartę", exact: true }).click();
-      await expect(page.getByRole("dialog", { name: "Nowa karta" })).toBeVisible();
+      await page
+        .getByRole("button", { name: "Dodaj kartę", exact: true })
+        .click();
+      await expect(
+        page.getByRole("dialog", { name: "Nowa karta" }),
+      ).toBeVisible();
       await zrzut(page, "strony-okno-karty", projekt);
       await page.keyboard.press("Escape");
-      await expect(page.getByRole("dialog", { name: "Nowa karta" })).toHaveCount(0);
+      await expect(
+        page.getByRole("dialog", { name: "Nowa karta" }),
+      ).toHaveCount(0);
     }
 
     // Edytor z tabelą (EmptyPage / MEditor). Na webie „Nowa strona” prowadzi do wyboru szablonu,

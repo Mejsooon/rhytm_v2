@@ -1,10 +1,8 @@
 import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
 import {
-  LOCKED_GOALS,
-  type GoalKey,
+  PAGE_TEMPLATES,
   type OnboardingDraft,
-  type PageKey,
   type RoleKey,
   type SourceKey,
 } from "./model";
@@ -28,13 +26,6 @@ export function loadDraft(
     clock: profile.clock === "12" ? "12" : "24",
     roles: (profile.roles ?? []) as RoleKey[],
     studyField: profile.study_field ?? "",
-    // Cele bazowe zawsze na początku, potem zapisane dodatkowe
-    goals: [
-      ...LOCKED_GOALS,
-      ...((profile.goals ?? []) as GoalKey[]).filter(
-        (g) => !LOCKED_GOALS.includes(g),
-      ),
-    ],
     // Nowy profil ma oba cele włączone (domyślne w bazie)
     workoutsOn: profile.workouts_goal_on,
     kmOn: profile.km_goal_on,
@@ -44,10 +35,13 @@ export function loadDraft(
     source: (profile.referral_source as SourceKey | null) ?? null,
     sourceOther: profile.referral_other ?? "",
     // null = użytkownik nie ruszał stron; [] = świadomie wybrał zero stron
+    // Stare nazwy (Passwords, Subscriptions) z dawnych szkiców odpadają
     pages:
       profile.pending_pages === null
         ? null
-        : (profile.pending_pages as PageKey[]),
+        : PAGE_TEMPLATES.map((t) => t.key).filter((k) =>
+            (profile.pending_pages as string[]).includes(k),
+          ),
     notify: notify
       ? {
           perm: notify.push_enabled,

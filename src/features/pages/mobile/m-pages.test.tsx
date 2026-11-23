@@ -32,6 +32,27 @@ describe("MPages", () => {
     createBlankPage.mockResolvedValue({ ok: true, id: "nowa" });
   });
 
+  it("„Hasła” to pozycja na górze listy, przed „Ulubione”, prowadzi do /hasla", () => {
+    render(<MPages pages={STRONY} />);
+    const hasla = screen.getByRole("link", { name: /Hasła/ });
+    expect(hasla).toHaveAttribute("href", "/hasla");
+    const ulubione = screen.getByText("Ulubione");
+    expect(hasla.compareDocumentPosition(ulubione) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Nie wchodzi do żadnej z sekcji stron
+    expect(within(screen.getByText("Wszystkie strony").closest("section")!).queryByText("Hasła")).toBeNull();
+  });
+
+  it("wyszukiwarka chowa „Hasła”, gdy fraza nie pasuje, i pokazuje je dla „has”", async () => {
+    const user = userEvent.setup();
+    render(<MPages pages={STRONY} />);
+    await user.type(screen.getByRole("searchbox", { name: "Szukaj stron" }), "proj");
+    expect(screen.queryByRole("link", { name: /Hasła/ })).toBeNull();
+    await user.clear(screen.getByRole("searchbox", { name: "Szukaj stron" }));
+    await user.type(screen.getByRole("searchbox", { name: "Szukaj stron" }), "has");
+    expect(screen.getByRole("link", { name: /Hasła/ })).toBeInTheDocument();
+    expect(screen.queryByText("Nic nie znaleziono.")).toBeNull();
+  });
+
   it("„Ulubione” zawiera tylko ulubione, „Wszystkie strony” — pozostałe", () => {
     render(<MPages pages={STRONY} />);
     const ulubione = screen.getByText("Ulubione").closest("section")!;

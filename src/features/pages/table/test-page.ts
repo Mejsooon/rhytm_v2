@@ -48,6 +48,7 @@ export function stronaTestowa(
       position: 0,
       rowCount: rows.length,
       createdAt: "2026-11-01T10:00:00Z",
+      isSystem: false,
     },
     blocks: [{ id: "blok-1", type: "table", position: 0, content: b.content, fields, rows }],
     today: DZIS,

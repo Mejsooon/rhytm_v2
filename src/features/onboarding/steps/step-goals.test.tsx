@@ -14,7 +14,6 @@ const start: OnboardingDraft = {
   clock: "24",
   roles: [],
   studyField: "",
-  goals: ["sport", "habits"],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,
@@ -107,31 +106,26 @@ describe("StepGoals", () => {
     ).toHaveValue("3");
   });
 
-  it("cele bazowe są zablokowane i zawsze zaznaczone", async () => {
-    render(<Probe initial={{ ...start, goals: [] }} />);
-    for (const nazwa of [/^Plan tygodnia/, /^Treningi/, /^Nawyki i sen/]) {
-      const karta = screen.getByRole("button", { name: nazwa });
-      expect(karta).toHaveAttribute("aria-pressed", "true");
-      expect(karta).toHaveAttribute("aria-disabled", "true");
-      await userEvent.click(karta);
-      expect(karta).toHaveAttribute("aria-pressed", "true");
-    }
-    expect(screen.getByText(/^Cele treningowe/)).toBeInTheDocument();
-    expect(screen.getByText("Cel snu")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.",
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it("cel dodatkowy da się odznaczyć", async () => {
+  it("teksty kroku 3 i brak kafelków celów", () => {
     render(<Probe initial={start} />);
-    const karta = screen.getByRole("button", { name: /^Książki/ });
-    expect(karta).not.toHaveAttribute("aria-disabled");
-    const przed = karta.getAttribute("aria-pressed");
-    await userEvent.click(karta);
-    expect(karta.getAttribute("aria-pressed")).not.toBe(przed);
+    expect(
+      screen.getByRole("heading", { name: "Twoje cele" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Zmienisz je później w Ustawieniach."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Zawsze masz:")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Plan tygodnia · Treningi · Nawyki i sen · Hasła/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("· włącz jeden albo oba")).toBeInTheDocument();
+    expect(screen.getByText("Cel snu")).toBeInTheDocument();
+    // Żadnych kafelków celów (to były przyciski z aria-pressed)
+    expect(
+      screen.queryByRole("button", { pressed: true }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Subskrypcje|Książki|Projekty/)).toBeNull();
+    expect(screen.queryByText(/Co chcesz ogarnąć/)).toBeNull();
   });
 
   it("treningi co 1 w zakresie 1–14", async () => {
@@ -258,26 +252,6 @@ describe("StepGoals", () => {
       }),
     );
     expect(screen.getByText("150 km")).toBeInTheDocument();
-  });
-
-  it("wybór celu z stroną włącza stronę w szkicu", async () => {
-    render(<Probe initial={start} />);
-    await userEvent.click(screen.getByRole("button", { name: /Subskrypcje/ }));
-    expect(screen.getByRole("button", { name: /Subskrypcje/ })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-  });
-
-  // Wygląd wg COnboardingGoals
-  it("wygląd: karty celów z kwadracikiem 16 px; zablokowane z kłódką jak zaznaczone", () => {
-    render(<Probe initial={start} />);
-    const stala = screen.getByRole("button", { name: /^Plan tygodnia/ });
-    const wolna = screen.getByRole("button", { name: /^Hasła/ });
-    expect(stala.className).toContain("min-[800px]:bg-black/[.025]");
-    expect(wolna.className).not.toContain("min-[800px]:bg-black/[.025]");
-    expect(stala.querySelector("svg.lucide-lock")).not.toBeNull();
-    expect(stala.querySelector("span.size-4")).not.toBeNull();
   });
 
   it("wygląd: pola liczb z tabular-nums, cel snu jako Stepper wide w połowie kolumny", () => {

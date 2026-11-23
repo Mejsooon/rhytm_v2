@@ -20,8 +20,9 @@ const { toast } = vi.hoisted(() => ({
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
-// Sejf (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają
-vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
+// Sejf (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają, moduł Hasła ustawia stan sam
+const vault = vi.hoisted(() => ({ state: { status: "ladowanie" } as Record<string, unknown> }));
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => vault.state }));
 
 import { PALETA } from "../fields";
 import type { LoadedBlock } from "../load-page";
@@ -102,6 +103,7 @@ function telefon() {
 describe("PageTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vault.state = { status: "ladowanie" };
     for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
     actions.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
       ok: true,
@@ -1074,6 +1076,348 @@ describe("PageTable", () => {
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Zapisz" }));
       expect(actions.saveTableSettings).not.toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalledWith("Tej karty już nie ma.");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+  describe("moduł Hasła", () => {
+    // Szyfrogramy w poprawnym kształcie; „tekst jawny” zwraca atrapa decrypt
+    const IV = btoa("iv-dwanascie");
+    const A = { v: 1, g: 1, iv: IV, ct: btoa("szyfrogram-A-szesnascie") };
+    const NOTATKA = { v: 1, g: 1, iv: IV, ct: btoa("szyfrogram-N-szesnascie") };
+    const NOWY = { v: 1, g: 1, iv: IV, ct: btoa("szyfrogram-nowy-szesnascie") };
+    const JAWNE: Record<string, string> = { [A.ct]: "jawne-haslo-A", [NOTATKA.ct]: "jawna-notatka", [NOWY.ct]: "nowe-tajne" };
+
+    function stanSejfu(status: string) {
+      vault.state = {
+        status,
+        decrypt: vi.fn(async (v: { ct: string }) => JAWNE[v.ct] ?? null),
+        encrypt: vi.fn(async () => NOWY),
+        onStaleGeneration: vi.fn(),
+      };
+    }
+
+    // Stałe kolumny modułu: Serwis, Login, Hasło, URL, Kategoria, Notatka
+    function blokHasel(): LoadedBlock {
+      const pola = [
+        { id: "f-serwis", name: "Serwis", type: "text" as const, config: { empty_label: "Bez nazwy" }, isTitle: true },
+        { id: "f-login", name: "Login", type: "text" as const, config: {}, isTitle: false },
+        { id: "f-haslo", name: "Hasło", type: "secret" as const, config: {}, isTitle: false },
+        { id: "f-url", name: "URL", type: "url" as const, config: {}, isTitle: false },
+        { id: "f-kat", name: "Kategoria", type: "select" as const, config: { options: [{ id: "k1", label: "Praca", color: "" }] }, isTitle: false },
+        { id: "f-notatka", name: "Notatka", type: "secret" as const, config: {}, isTitle: false },
+      ].map((f, i) => ({ ...f, position: i }));
+      return {
+        id: "blok-hasla",
+        type: "table",
+        position: 0,
+        content: { name: "Hasła", settings: { sort: [], filters: [], hidden_field_ids: [], column_summaries: {}, pinned_cards: [], column_widths: {} } },
+        fields: pola,
+        rows: [
+          {
+            id: "row-1",
+            values: { "f-serwis": "GitHub", "f-login": "mejson", "f-haslo": A, "f-url": "github.com", "f-kat": "k1", "f-notatka": NOTATKA },
+            position: 0,
+            deletedAt: null,
+          },
+        ],
+      };
+    }
+
+    beforeEach(() => {
+      vi.stubGlobal("CSS", { supports: () => true });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it("odblokowany: kolumna „Akcje”, plakietki „szyfr.”, bez „+” dodającego kolumnę", () => {
+      stanSejfu("odblokowany");
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      expect(screen.getByRole("columnheader", { name: "Akcje" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Dodaj kolumnę" })).not.toBeInTheDocument();
+      expect(screen.getAllByText("szyfr.")).toHaveLength(2);
+      const w = wiersz("GitHub");
+      // Oczko i kopiowanie w komórkach sekretów (S2Passwords), w ostatniej kolumnie sam kosz
+      const komorkaHasla = within(w).getByRole("button", { name: "Hasło: zaszyfrowane" }).closest("td")!;
+      expect(within(komorkaHasla).getByRole("button", { name: "Pokaż hasło" })).toBeInTheDocument();
+      expect(within(komorkaHasla).getByRole("button", { name: "Kopiuj hasło" })).toBeInTheDocument();
+      const komorkaNotatki = within(w).getByRole("button", { name: "Notatka: zaszyfrowane" }).closest("td")!;
+      expect(within(komorkaNotatki).getByRole("button", { name: "Pokaż: Notatka" })).toBeInTheDocument();
+      expect(within(komorkaNotatki).getByRole("button", { name: "Kopiuj: Notatka" })).toBeInTheDocument();
+      const ostatnia = w.querySelectorAll("td")[w.querySelectorAll("td").length - 1];
+      expect(within(ostatnia).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual(["Usuń wiersz"]);
+      // Szerokość jak w zwykłej tabeli: suma kolumn + 56 px
+      const tabela = screen.getByRole("table");
+      const suma = Array.from(tabela.querySelectorAll("col")).reduce((a, c) => a + (parseInt(c.style.width) || 0), 0);
+      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      expect(screen.getByRole("button", { name: "Nowy" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
+    });
+
+    it("moduleRowFilter zawęża wiersze także przy zamkniętym sejfie i zgłasza liczbę wierszy; w zwykłej tabeli jest ignorowany", () => {
+      stanSejfu("zablokowany");
+      const liczba = vi.fn();
+      const { unmount } = render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          onLiveRowCount={liczba}
+          moduleRowFilter={(r) => r.values["f-serwis"] === "Nie ma takiego"}
+        />,
+      );
+      expect(screen.queryByDisplayValue("GitHub")).not.toBeInTheDocument();
+      expect(liczba).toHaveBeenCalledWith(1);
+      unmount();
+      render(<PageTable block={blokHasel()} today={TODAY} moduleRowFilter={() => false} />);
+      expect(screen.getByDisplayValue("GitHub")).toBeInTheDocument();
+    });
+
+    it("menu kolumny modułu jest zablokowane: bez „Usuń pole”, z „Ukryj kolumnę”", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      const menu = await otworzMenu(user, "Login");
+      expect(within(menu).queryByRole("menuitem", { name: /Usuń pole/ })).not.toBeInTheDocument();
+      expect(within(menu).queryByRole("menuitem", { name: /Przesuń/ })).not.toBeInTheDocument();
+      expect(within(menu).getByRole("menuitem", { name: /Ukryj kolumnę/ })).toBeInTheDocument();
+    });
+
+    it("zapis sekretu: encrypt i updateRow z SecretValue, nigdy z tekstem jawnym", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Hasło: zaszyfrowane" }));
+      const pole = await screen.findByRole("textbox", { name: "Hasło" });
+      await user.clear(pole);
+      await user.type(pole, "nowe-tajne{Enter}");
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-1", { "f-haslo": NOWY }));
+      expect(vault.state.encrypt).toHaveBeenCalledWith("nowe-tajne");
+      expect(JSON.stringify(actions.updateRow.mock.calls)).not.toContain("nowe-tajne");
+      expect(JSON.stringify(actions.updateRow.mock.calls)).not.toContain("jawne-haslo-A");
+    });
+
+    it("pusty sekret zapisuje null", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Hasło: zaszyfrowane" }));
+      await user.clear(await screen.findByRole("textbox", { name: "Hasło" }));
+      await user.keyboard("{Enter}");
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-1", { "f-haslo": null }));
+      expect(vault.state.encrypt).not.toHaveBeenCalled();
+    });
+
+    it("Review Focus 2: stale_generation woła vault.onStaleGeneration i cofa komórkę", async () => {
+      stanSejfu("odblokowany");
+      actions.updateRow.mockResolvedValue({ ok: false, code: "stale_generation" });
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Hasło: zaszyfrowane" }));
+      const pole = await screen.findByRole("textbox", { name: "Hasło" });
+      await user.clear(pole);
+      await user.type(pole, "nowe-tajne{Enter}");
+      await waitFor(() => expect(vault.state.onStaleGeneration).toHaveBeenCalled());
+      expect(toast.error).toHaveBeenCalledWith("Sejf zmienił się w innej karcie. Odblokuj go ponownie.");
+      // Komórka wróciła do starego szyfrogramu: oczko pokazuje stare hasło
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Pokaż hasło" }));
+      expect(await screen.findByText("jawne-haslo-A")).toBeInTheDocument();
+      expect(screen.queryByText("nowe-tajne")).not.toBeInTheDocument();
+    });
+
+    it("oczko pokazuje i chowa odszyfrowane sekrety wiersza", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      expect(document.body.innerHTML).not.toContain("jawne-haslo-A");
+      const oczko = within(wiersz("GitHub")).getByRole("button", { name: "Pokaż hasło" });
+      await user.click(oczko);
+      expect(await screen.findByText("jawne-haslo-A")).toBeInTheDocument();
+      expect(screen.getByText("jawna-notatka")).toBeInTheDocument();
+      await user.click(within(wiersz("GitHub")).getByRole("button", { name: "Ukryj hasło" }));
+      expect(screen.queryByText("jawne-haslo-A")).not.toBeInTheDocument();
+    });
+
+    // Schowek z atrapą zapisu i fokusem okna
+    function schowek(focus = true) {
+      const writeText = vi.fn<(t: string) => Promise<void>>(async () => {});
+      vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+      vi.spyOn(document, "hasFocus").mockReturnValue(focus);
+      return writeText;
+    }
+
+    it("kopiowanie: schowek z hasłem, toast i czyszczenie po 30 s", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      vi.useFakeTimers();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
+      expect(writeText).toHaveBeenCalledWith("jawne-haslo-A");
+      expect(toast).toHaveBeenCalledWith("Skopiowano hasło GitHub", { description: "Schowek wyczyści się za 30 s." });
+      expect(JSON.stringify(toast.mock.calls)).not.toContain("jawne-haslo-A");
+      act(() => vi.advanceTimersByTime(29_000));
+      expect(writeText).toHaveBeenCalledTimes(1);
+      act(() => vi.advanceTimersByTime(1_000));
+      expect(writeText).toHaveBeenLastCalledWith("");
+    });
+
+    it("„Kopiuj: Notatka” kopiuje wartość tej komórki", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj: Notatka" }));
+      });
+      expect(writeText).toHaveBeenCalledWith("jawna-notatka");
+      expect(toast).toHaveBeenCalledWith("Skopiowano: Notatka", { description: "Schowek wyczyści się za 30 s." });
+    });
+
+    it("blokada w trakcie odszyfrowania: nic nie trafia do schowka", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      let rozwiaz!: (t: string) => void;
+      vault.state.decrypt = vi.fn(() => new Promise<string>((r) => (rozwiaz = r)));
+      const { rerender } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      stanSejfu("zablokowany");
+      rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => rozwiaz("jawne-haslo-A"));
+      expect(writeText).not.toHaveBeenCalled();
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it("blokada w trakcie zapisu do schowka czyści go od razu, bez toastu", async () => {
+      stanSejfu("odblokowany");
+      let zapisano!: () => void;
+      const writeText = vi.fn((t: string) => (t === "" ? Promise.resolve() : new Promise<void>((r) => (zapisano = r))));
+      vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+      vi.spyOn(document, "hasFocus").mockReturnValue(true);
+      const { rerender } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
+      expect(writeText).toHaveBeenCalledWith("jawne-haslo-A");
+      stanSejfu("zablokowany");
+      rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => zapisano());
+      expect(writeText).toHaveBeenLastCalledWith("");
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it("blokada przed upływem 30 s czyści schowek od razu", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      const { rerender } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
+      expect(writeText).toHaveBeenCalledTimes(1);
+      stanSejfu("zablokowany");
+      rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      expect(writeText).toHaveBeenLastCalledWith("");
+    });
+
+    it("odmontowanie tabeli czyści schowek od razu", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      const { unmount } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
+      unmount();
+      expect(writeText).toHaveBeenLastCalledWith("");
+    });
+
+    it("bez fokusu okna czyszczenie czeka na powrót do karty", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek(false);
+      vi.useFakeTimers();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
+      act(() => vi.advanceTimersByTime(30_000));
+      expect(writeText).toHaveBeenCalledTimes(1);
+      act(() => {
+        window.dispatchEvent(new Event("focus"));
+      });
+      expect(writeText).toHaveBeenLastCalledWith("");
+    });
+
+    it("moduł: bez nazwy tabeli (pasek i menu „⋯”), `moduleTools` w miejscu nazwy z funkcjami magazynu", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          moduleTools={({ readOnly }) => <span>Narzędzia modułu {readOnly ? "tylko do odczytu" : "edycja"}</span>}
+        />,
+      );
+      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+      expect(screen.getByText("Narzędzia modułu edycja")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      expect(screen.getByText("Sortowanie")).toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+    });
+
+    it("zamknięty sejf: `moduleTools` dostaje readOnly, a opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
+      stanSejfu("zablokowany");
+      const user = userEvent.setup();
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          moduleTools={({ readOnly }) => <span>{readOnly ? "tylko do odczytu" : "edycja"}</span>}
+        />,
+      );
+      expect(screen.getByText("tylko do odczytu")).toBeInTheDocument();
+      const menu = await otworzMenu(user, "Kategoria");
+      expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
+      expect(within(menu).queryByRole("button", { name: /Usuń opcję/ })).not.toBeInTheDocument();
+      expect(actions.updateBlockContent).not.toHaveBeenCalled();
+    });
+
+    it("telefon: blokada zamyka arkusz, a po odblokowaniu nie wraca sam", async () => {
+      stanSejfu("odblokowany");
+      telefon();
+      const user = userEvent.setup();
+      const { rerender } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await user.click(within(wiersz("GitHub")).getByRole("textbox", { name: "Login" }));
+      expect(screen.getByRole("dialog", { name: "GitHub" })).toBeInTheDocument();
+      stanSejfu("zablokowany");
+      rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      stanSejfu("odblokowany");
+      rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("zamknięty sejf: tylko do odczytu, bez „Nowy”, kosza i kopiowania; sekrety „zablokowane”", () => {
+      stanSejfu("zablokowany");
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      expect(screen.queryByRole("button", { name: "Nowy" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Usuń wiersz" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Kopiuj hasło" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Pokaż hasło" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Serwis" })).not.toBeInTheDocument();
+      expect(screen.getByText("GitHub")).toBeInTheDocument();
+      expect(screen.getAllByText("zablokowane")).toHaveLength(2);
+      // Karty i sort zostają
+      expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
+    });
+
+    it("zamknięty sejf na telefonie: dotknięcie wiersza nie otwiera arkusza", async () => {
+      stanSejfu("zablokowany");
+      telefon();
+      const user = userEvent.setup();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
+      await user.click(screen.getByText("GitHub"));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });

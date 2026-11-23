@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LivePreview } from "./live-preview";
 import type { OnboardingDraft } from "./model";
@@ -13,7 +13,6 @@ const draft: OnboardingDraft = {
   clock: "24",
   roles: ["student", "sport"],
   studyField: "Cyberbezpieczeństwo",
-  goals: ["plan", "sport", "habits", "subs", "proj"],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,
@@ -21,7 +20,7 @@ const draft: OnboardingDraft = {
   sleepGoalMin: 480,
   source: null,
   sourceOther: "",
-  pages: ["Subscriptions", "Projects"],
+  pages: ["Books", "Projects"],
   notify: {
     perm: true,
     before: true,
@@ -53,7 +52,7 @@ describe("LivePreview", () => {
       "08:00Matematyka — ćwiczenia0/3",
       "17:00Bieg 10 km",
     ]);
-    expect(screen.getByText("Subscriptions")).toBeInTheDocument();
+    expect(screen.getByText("Books")).toBeInTheDocument();
     expect(screen.getByText("Projects")).toBeInTheDocument();
   });
 
@@ -120,9 +119,13 @@ describe("LivePreview", () => {
     );
   });
 
-  it("obrys listy stron w krokach 3 i 5", () => {
+  it("obrys listy stron tylko w kroku 5, bloku „Ten tydzień” tylko w kroku 3", () => {
     const { unmount } = pokaz(draft, 3);
     expect(screen.getByTestId("pv-pages")).toHaveAttribute(
+      "data-highlighted",
+      "false",
+    );
+    expect(screen.getByTestId("pv-goals")).toHaveAttribute(
       "data-highlighted",
       "true",
     );
@@ -132,6 +135,47 @@ describe("LivePreview", () => {
       "data-highlighted",
       "true",
     );
+    expect(screen.getByTestId("pv-goals")).toHaveAttribute(
+      "data-highlighted",
+      "false",
+    );
+  });
+
+  it("Moduły: Dziś, Kalendarz, Sport, Nawyki i sen, Hasła", () => {
+    pokaz(draft);
+    const sidebar = screen.getByText("Moduły").parentElement as HTMLElement;
+    for (const n of ["Dziś", "Kalendarz", "Sport", "Nawyki i sen", "Hasła"])
+      expect(within(sidebar).getByText(n)).toBeInTheDocument();
+  });
+
+  it("„Ten tydzień”: zakres dat i kafelki z celów (km wyłączone → brak „Bieg”)", () => {
+    pokaz(draft, 3);
+    const blok = screen.getByTestId("pv-goals");
+    expect(blok).toHaveTextContent("Ten tydzień");
+    expect(blok).toHaveTextContent("16–22.11");
+    const kafelki = screen.getAllByTestId("pv-goal");
+    expect(kafelki.map((k) => k.textContent)).toEqual([
+      "Treningi0 / 3",
+      "Śr. sen— / 8 h",
+    ]);
+    expect(kafelki[0].querySelectorAll(".grid-cols-7 > span")).toHaveLength(7);
+  });
+
+  it("„Ten tydzień”: oba cele i niecałe godziny snu", () => {
+    pokaz({ ...draft, kmOn: true, weeklyKm: 22.5, sleepGoalMin: 465 }, 3);
+    expect(screen.getAllByTestId("pv-goal").map((k) => k.textContent)).toEqual([
+      "Treningi0 / 3",
+      "Bieg0,0 / 22,5 km",
+      "Śr. sen— / 7,75 h",
+    ]);
+  });
+
+  it("„Ten tydzień”: wyłączone treningi znikają", () => {
+    pokaz({ ...draft, workoutsOn: false, kmOn: true }, 3);
+    expect(screen.getAllByTestId("pv-goal").map((k) => k.textContent)).toEqual([
+      "Bieg0,0 / 25 km",
+      "Śr. sen— / 8 h",
+    ]);
   });
 
   it("krok 6 z perm i before: dymek", () => {
@@ -200,9 +244,9 @@ describe("LivePreview", () => {
     ).map((k) => (k as HTMLElement).style.background);
     // Studia #0070f3, Sport #c2410c
     expect(kropki).toEqual(["rgb(0, 112, 243)", "rgb(194, 65, 12)"]);
-    const blok = screen.getAllByTestId("pv-block")[1].querySelector(
-      "div.rounded-\\[8px\\]",
-    ) as HTMLElement;
+    const blok = screen
+      .getAllByTestId("pv-block")[1]
+      .querySelector("div.rounded-\\[8px\\]") as HTMLElement;
     expect(blok.getAttribute("style")).toContain("194, 65, 12");
   });
 

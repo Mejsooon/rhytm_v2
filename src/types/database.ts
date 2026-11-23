@@ -519,6 +519,7 @@ export type Database = {
           favorite: boolean;
           icon: string;
           id: string;
+          is_system: boolean;
           position: number;
           template_key: string | null;
           title: string;
@@ -530,6 +531,7 @@ export type Database = {
           favorite?: boolean;
           icon?: string;
           id?: string;
+          is_system?: boolean;
           position?: number;
           template_key?: string | null;
           title?: string;
@@ -541,6 +543,7 @@ export type Database = {
           favorite?: boolean;
           icon?: string;
           id?: string;
+          is_system?: boolean;
           position?: number;
           template_key?: string | null;
           title?: string;
@@ -984,6 +987,10 @@ export type Database = {
       };
       duplicate_page: {
         Args: { p_page_id: string };
+        Returns: string;
+      };
+      ensure_passwords_page: {
+        Args: Record<PropertyKey, never>;
         Returns: string;
       };
       move_category: {

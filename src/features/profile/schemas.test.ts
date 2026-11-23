@@ -251,7 +251,6 @@ describe("onboardingStepSchemas", () => {
     ).toBe(false);
   });
   const krok3 = {
-    goals: ["plan"],
     workouts_goal_on: true,
     km_goal_on: true,
     weekly_workouts_goal: 3,
@@ -293,7 +292,7 @@ describe("onboardingStepSchemas", () => {
       expect(komunikaty(wynik)).toEqual(["Podaj liczbę 1–300."]);
     }
   });
-  it("krok 3: odrzuca oba cele treningowe wyłączone i nieznany cel", () => {
+  it("krok 3: odrzuca oba cele treningowe wyłączone", () => {
     expect(
       komunikaty(
         onboardingStepSchemas[3].safeParse({
@@ -303,9 +302,14 @@ describe("onboardingStepSchemas", () => {
         }),
       ),
     ).toEqual(["Włącz co najmniej jeden cel."]);
-    expect(
-      onboardingStepSchemas[3].safeParse({ ...krok3, goals: ["nope"] }).success,
-    ).toBe(false);
+  });
+  it("krok 3: dawne pole goals jest pomijane", () => {
+    const wynik = onboardingStepSchemas[3].safeParse({
+      ...krok3,
+      goals: ["plan"],
+    });
+    expect(wynik.success).toBe(true);
+    expect(wynik.data).not.toHaveProperty("goals");
   });
   it('krok 4: referral_other zostaje tylko dla "other"', () => {
     const inny = onboardingStepSchemas[4].parse({
@@ -337,6 +341,13 @@ describe("onboardingStepSchemas", () => {
         referral_other: "",
       }).success,
     ).toBe(false);
+  });
+  it("krok 5: odrzuca Passwords i Subscriptions (tylko 3 szablony)", () => {
+    for (const nazwa of ["Passwords", "Subscriptions"]) {
+      expect(
+        onboardingStepSchemas[5].safeParse({ pending_pages: [nazwa] }).success,
+      ).toBe(false);
+    }
   });
   it("krok 5: przyjmuje podzbiór stron, odrzuca nieznaną", () => {
     expect(

@@ -70,7 +70,9 @@ export function StepRoles({
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="font-medium">{rola.title}</span>
-                <span className="text-[13px] text-muted-foreground">{rola.desc}</span>
+                <span className="text-[13px] text-muted-foreground">
+                  {rola.desc}
+                </span>
               </span>
             </button>
           );

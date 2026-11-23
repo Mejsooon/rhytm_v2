@@ -14,7 +14,6 @@ const start: OnboardingDraft = {
   clock: "24",
   roles: [],
   studyField: "",
-  goals: [],
   workoutsOn: true,
   kmOn: false,
   weeklyWorkouts: 3,
@@ -85,9 +84,9 @@ describe("StepSource", () => {
     expect(ikona).toHaveClass("text-muted-foreground");
     expect(karta.className).not.toContain("bg-black/[.025]");
     await userEvent.click(karta);
-    expect(
-      web().getByRole("button", { name: "TikTok" }).className,
-    ).toContain("bg-black/[.025]");
+    expect(web().getByRole("button", { name: "TikTok" }).className).toContain(
+      "bg-black/[.025]",
+    );
   });
 
   it("bez font-mono", () => {

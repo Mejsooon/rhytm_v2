@@ -42,7 +42,6 @@ describe("loadDraft", () => {
       clock: "24",
       roles: [],
       studyField: "",
-      goals: ["plan", "sport", "habits"],
       workoutsOn: true,
       kmOn: true,
       weeklyWorkouts: 3,
@@ -104,13 +103,32 @@ describe("loadDraft", () => {
     expect(loadDraft({ ...pusty, pending_pages: [] }, null).pages).toEqual([]);
   });
 
+  it("stare goals w profilu są ignorowane (szkic nie ma pola goals)", () => {
+    const draft = loadDraft({ ...pusty, goals: ["subs", "pass"] }, null);
+    expect(draft).not.toHaveProperty("goals");
+  });
+
+  it("stare pending_pages z Passwords i Subscriptions odpadają, znane zostają w kolejności szablonów", () => {
+    expect(
+      loadDraft(
+        {
+          ...pusty,
+          pending_pages: ["Passwords", "Websites", "Subscriptions", "Books"],
+        },
+        null,
+      ).pages,
+    ).toEqual(["Books", "Websites"]);
+    expect(
+      loadDraft({ ...pusty, pending_pages: ["Passwords"] }, null).pages,
+    ).toEqual([]);
+  });
+
   it("zapisane wartości profilu i ustawień powiadomień", () => {
     const draft = loadDraft(
       {
         ...pusty,
         display_name: "Ala",
         roles: ["student"],
-        goals: ["books", "plan"],
         weekly_km_goal: 40,
         sleep_goal_min: 450,
         referral_source: "other",
@@ -131,8 +149,6 @@ describe("loadDraft", () => {
     expect(draft).toMatchObject({
       name: "Ala",
       roles: ["student"],
-      // Cele bazowe zawsze z przodu, bez duplikatów
-      goals: ["plan", "sport", "habits", "books"],
       weeklyKm: 40,
       sleepGoalMin: 450,
       source: "other",

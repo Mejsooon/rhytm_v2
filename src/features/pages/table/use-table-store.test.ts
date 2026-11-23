@@ -253,6 +253,26 @@ describe("useTableStore", () => {
     });
   });
 
+  describe("saveRow z sekretami z arkusza", () => {
+    it("wysyła szyfrogramy podane przez arkusz razem ze zmienionymi polami", async () => {
+      const b = blok();
+      const sv = { v: 1, g: 1, iv: btoa("iv-dwanascie"), ct: btoa("szyfrogram-A-szesnascie") };
+      const sekret = { id: "f-sekret", name: "Hasło", type: "secret" as const, config: {}, position: 99, isTitle: false };
+      const zSekretem = { ...b, fields: [...b.fields, sekret] };
+      const { result } = renderHook(() => useTableStore(zSekretem));
+      await act(async () => {
+        await result.current.startEdit(result.current.rows[0]);
+      });
+      let wynik: boolean | undefined;
+      await act(async () => {
+        wynik = await result.current.saveRow({ "f-sekret": sv });
+      });
+      expect(wynik).toBe(true);
+      expect(actions.updateRow).toHaveBeenCalledWith("row-1", { "f-sekret": sv });
+      expect(result.current.rows[0].values["f-sekret"]).toEqual(sv);
+    });
+  });
+
   describe("addRowInline", () => {
     it("zwraca prawdziwe id, a wiersz ma opcję domyślną", async () => {
       const b = blok();

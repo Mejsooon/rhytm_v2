@@ -15,6 +15,7 @@ import {
   StatusBadge,
   type IsoDate,
 } from "@/components/controls";
+import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
 
 import {
@@ -28,7 +29,7 @@ import {
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
-import { operatorsFor, visibleRows, type PinnedCard } from "../table-model";
+import { operatorsFor, visibleRows, type PageRow, type PinnedCard } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
@@ -55,6 +56,13 @@ const UCHWYT_KOLUMNY =
 const RAMKA_PRZEWIJANA =
   "overflow-x-auto overflow-y-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
 
+// Po tylu ms od skopiowania hasła czyścimy schowek
+const SCHOWEK_MS = 30_000;
+
+// Przycisk akcji wiersza (.row-del): widoczny po najechaniu na wiersz i przy fokusie w wierszu; na telefonie ukryty
+const AKCJA_WIERSZA =
+  "opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 focus-visible:opacity-100 max-[799px]:hidden";
+
 // Pozycja menu „⋯”; wyłączona: opacity .64
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 
@@ -62,21 +70,85 @@ const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64
 // i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
 // jak w Notion, kosz po najechaniu, stopka z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką.
 // Na telefonie dotknięcie wiersza otwiera arkusz.
-// Działa tylko na danych bloku — bez tytułu strony i sejfu. `onRemove` (z edytora) usuwa cały blok tabeli.
+// Działa tylko na danych bloku — bez tytułu strony. `onRemove` (z edytora) usuwa cały blok tabeli.
+// `module="passwords"` (moduł Hasła, S2Passwords.dc.html): stałe kolumny (menu kolumny zablokowane, bez „+”
+// dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
+// jest tylko do odczytu (bez „+ Nowy”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
+// W module nazwa tabeli nie jest pokazywana (S2Passwords nie ma paska nazwy); w jej miejscu `moduleTools`.
 export function PageTable({
   block,
   today,
   onRemove,
+  module,
+  moduleTools,
+  moduleRowFilter,
+  onLiveRowCount,
 }: {
   block: LoadedBlock;
   today: IsoDate;
   onRemove?: () => void;
+  module?: "passwords";
+  // Tylko w trybie modułu: zawartość paska po lewej (w miejscu nazwy tabeli), np. podpis i „Kategorie”.
+  // Dostaje te same funkcje magazynu co komórki, więc opcje Kategorii nie rozjeżdżają się z tabelą.
+  moduleTools?: (api: {
+    fields: PageField[];
+    readOnly: boolean;
+    createOption: (field: PageField, label: string) => Promise<string | null>;
+    removeOption: (field: PageField, optionId: string) => Promise<boolean>;
+  }) => React.ReactNode;
+  // Tylko w trybie modułu: dodatkowy, tymczasowy warunek na wiersze (wyszukiwarka i segment Kategorii z paska).
+  // Stan zostaje u wywołującego (nie jest zapisywany), a warunek działa też przy zamkniętym sejfie;
+  // dostaje tylko pola i wartości jawnych kolumn (wartości sekretów to szyfrogramy).
+  moduleRowFilter?: (row: PageRow, fields: PageField[]) => boolean;
+  // Tylko w trybie modułu: liczba żywych wierszy (bez filtrów), np. do plakietki w nagłówku ekranu
+  onLiveRowCount?: (n: number) => void;
 }) {
-  const store = useTableStore(block);
+  const vault = useVault();
+  // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
+  const store = useTableStore(block, vault.onStaleGeneration);
   const { fields, rows, settings, editing } = store;
+  const modul = module === "passwords";
+  const odblokowany = vault.status === "odblokowany";
+  // Moduł przy zamkniętym sejfie: nic się nie edytuje
+  const tylkoOdczyt = modul && !odblokowany;
+
+  // Wiersze z odsłoniętymi sekretami (oczko); same id, bez tekstu. Blokada sejfu chowa wszystko.
+  const [odsloniete, setOdsloniete] = React.useState<string[]>([]);
+  const [poprzedniStatus, setPoprzedniStatus] = React.useState(vault.status);
+  if (poprzedniStatus !== vault.status) {
+    setPoprzedniStatus(vault.status);
+    setOdsloniete([]);
+  }
+  // Status widziany po await (po blokadzie nic nie trafia do schowka)
+  const statusRef = React.useRef(vault.status);
+  React.useEffect(() => {
+    statusRef.current = vault.status;
+  }, [vault.status]);
+  // Zaplanowane czyszczenie schowka (bez skopiowanego tekstu): licznik 30 s i funkcja „wyczyść teraz”
+  const schowekRef = React.useRef<{ timer: ReturnType<typeof setTimeout>; wyczysc: () => void } | null>(null);
+  // Blokada sejfu przed upływem 30 s: czyścimy od razu (albo przy powrocie fokusu)
+  React.useEffect(() => {
+    if (!odblokowany) schowekRef.current?.wyczysc();
+  }, [odblokowany]);
+  // Odmontowanie tabeli z zaplanowanym czyszczeniem: tak samo (kopiowanie kończące się po odmontowaniu
+  // widzi `zamontowana` i czyści od razu)
+  const zamontowana = React.useRef(true);
+  React.useEffect(() => {
+    const plan = schowekRef;
+    zamontowana.current = true;
+    return () => {
+      zamontowana.current = false;
+      plan.current?.wyczysc();
+    };
+  }, []);
 
   // Edycja w arkuszu (telefon); na webie komórki edytują się wprost
   const [wArkuszu, setWArkuszu] = React.useState(false);
+  // Moduł: zamknięty sejf kończy edycję w arkuszu (po odblokowaniu arkusz nie wraca sam ze starym szkicem)
+  if (tylkoOdczyt && (wArkuszu || editing !== null)) {
+    setWArkuszu(false);
+    if (editing !== null) store.cancelEdit();
+  }
   // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
   const [dodawanie, setDodawanie] = React.useState(false);
   const [nowyId, setNowyId] = React.useState<string | null>(null);
@@ -113,10 +185,16 @@ export function PageTable({
   }
 
   const zywe = rows.filter((r) => r.deletedAt === null);
+  const liczbaZywych = zywe.length;
+  React.useEffect(() => {
+    onLiveRowCount?.(liczbaZywych);
+  }, [onLiveRowCount, liczbaZywych]);
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
-  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters);
+  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters).filter(
+    (r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields),
+  );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
   let widoczneWiersze = wedlugUstawien;
@@ -258,21 +336,32 @@ export function PageTable({
 
       {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-        <input
-          type="text"
-          value={szkicNazwy}
-          onChange={(e) => setSzkicNazwy(e.target.value)}
-          onBlur={() => void store.renameTable(szkicNazwy)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              e.currentTarget.blur();
-            }
-          }}
-          placeholder="Tabela bez nazwy"
-          aria-label="Nazwa tabeli"
-          className="min-w-0 flex-1 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
-        />
+        {modul ? (
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            {moduleTools?.({
+              fields,
+              readOnly: tylkoOdczyt,
+              createOption: store.createOption,
+              removeOption: store.removeOption,
+            })}
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={szkicNazwy}
+            onChange={(e) => setSzkicNazwy(e.target.value)}
+            onBlur={() => void store.renameTable(szkicNazwy)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
+            placeholder="Tabela bez nazwy"
+            aria-label="Nazwa tabeli"
+            className="min-w-0 flex-1 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
+          />
+        )}
         <div className="flex flex-wrap items-center gap-2">
           {polaSortu.length > 0 && <StatusBadge tone="gray">Sort: {polaSortu.join(", ")}</StatusBadge>}
           <FilterPopover
@@ -296,7 +385,7 @@ export function PageTable({
             open={menuTabeli}
             onOpenChange={(o) => {
               // Zamknięcie menu (Esc, klik obok) zapisuje szkic nazwy z pola w menu
-              if (!o) void store.renameTable(szkicNazwy);
+              if (!o && !modul) void store.renameTable(szkicNazwy);
               setMenuTabeli(o);
             }}
             align="end"
@@ -316,24 +405,27 @@ export function PageTable({
             }
           >
             {/* S2TableMenu.dc.html: nazwa tabeli, sortowanie, widoczne kolumny i „Usuń tabelę” */}
-            <div className="p-1">
-              <input
-                type="text"
-                value={szkicNazwy}
-                onChange={(e) => setSzkicNazwy(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
-                    e.preventDefault();
-                    void store.renameTable(szkicNazwy);
-                  }
-                }}
-                placeholder="Tabela bez nazwy"
-                aria-label="Nazwa tabeli"
-                className={FIELD}
-              />
-            </div>
-            <div className={cn(MENU_LABEL, "pt-2")}>Sortowanie</div>
+            {/* W module nazwy tabeli się nie zmienia */}
+            {!modul && (
+              <div className="p-1">
+                <input
+                  type="text"
+                  value={szkicNazwy}
+                  onChange={(e) => setSzkicNazwy(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
+                      e.preventDefault();
+                      void store.renameTable(szkicNazwy);
+                    }
+                  }}
+                  placeholder="Tabela bez nazwy"
+                  aria-label="Nazwa tabeli"
+                  className={FIELD}
+                />
+              </div>
+            )}
+            <div className={cn(MENU_LABEL, modul ? "pt-1" : "pt-2")}>Sortowanie</div>
             {settings.sort.map((klucz, i) => {
               const pole = fields.find((f) => f.id === klucz.field_id);
               if (!pole) return null;
@@ -458,7 +550,7 @@ export function PageTable({
 
       {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
       <div className={RAMKA_PRZEWIJANA}>
-        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” i kosza), nie węższa niż ramka */}
+        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” albo „Akcje” z koszem), nie węższa niż ramka */}
         <table
           className="border-collapse text-sm"
           style={{ tableLayout: "fixed", width: sumaSzerokosci + 56, minWidth: "100%" }}
@@ -483,6 +575,8 @@ export function PageTable({
                   >
                     <ColumnMenu
                       field={f}
+                      // Kolumny modułu są stałe: bez zmiany nazwy, typu, przesuwania i usuwania
+                      locked={modul}
                       open={menuPola === f.id}
                       // Kolumna czekająca na odpowiedź serwera (tymczasowe id) nie ma jeszcze menu
                       onOpenChange={(o) => {
@@ -534,8 +628,9 @@ export function PageTable({
                       // Kolumna tytułu się nie przesuwa i nic nie wchodzi przed nią (jak w store.moveField)
                       firstColumn={f.isTitle || indeks === 0 || fields[indeks - 1].isTitle}
                       lastColumn={f.isTitle || indeks === fields.length - 1 || fields[indeks + 1].isTitle}
-                      onAddOption={(etykieta) => void store.addOption(f, etykieta)}
-                      onRemoveOption={(id) => void store.removeOption(f, id)}
+                      // Moduł przy zamkniętym sejfie: opcji (Kategorii) nie zmienia się
+                      onAddOption={tylkoOdczyt ? undefined : (etykieta) => void store.addOption(f, etykieta)}
+                      onRemoveOption={tylkoOdczyt ? undefined : (id) => void store.removeOption(f, id)}
                     />
                     {/* Uchwyt szerokości: przeciąganie (pointer events) albo ←/→ co 20 px; min. 80 px */}
                     <div
@@ -611,9 +706,14 @@ export function PageTable({
                   </th>
                 );
               })}
-              {/* Ostatni nagłówek: „+” otwiera „Nowe pole” (bez Sekretu); pod nim kolumna akcji wiersza */}
+              {/* Ostatni nagłówek: „+” otwiera „Nowe pole” (bez Sekretu); pod nim kolumna akcji wiersza.
+                  W module bez „+”: nagłówek „Akcje” tylko dla czytnika ekranu (S2Passwords) */}
               <th scope="col" className="h-10 border-b border-border px-1 text-left">
-                <AddFieldDialog iconTrigger allowSecret={false} onAdd={(input) => void store.addField(input)} />
+                {modul ? (
+                  <span className="sr-only">Akcje</span>
+                ) : (
+                  <AddFieldDialog iconTrigger allowSecret={false} onAdd={(input) => void store.addField(input)} />
+                )}
               </th>
             </tr>
           </thead>
@@ -623,7 +723,8 @@ export function PageTable({
                 key={r.id}
                 // Telefon: dotknięcie wiersza otwiera arkusz zamiast zmieniać komórkę (sprawdzamy w chwili dotknięcia)
                 onClickCapture={(e) => {
-                  if (!naTelefonie()) return;
+                  // Moduł przy zamkniętym sejfie: arkusz się nie otwiera
+                  if (!naTelefonie() || tylkoOdczyt) return;
                   e.preventDefault();
                   e.stopPropagation();
                   // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
@@ -659,6 +760,52 @@ export function PageTable({
                     today={today}
                     done={zrobione}
                     autoFocus={f.isTitle && r.id === nowyId}
+                    readOnly={tylkoOdczyt}
+                    revealed={odsloniete.includes(r.id)}
+                    // Moduł: oczko w komórkach sekretów odsłania sekrety całego wiersza, kopiowanie planuje czyszczenie
+                    onToggleReveal={
+                      modul
+                        ? () => setOdsloniete((l) => (l.includes(r.id) ? l.filter((id) => id !== r.id) : [...l, r.id]))
+                        : undefined
+                    }
+                    onCopied={
+                      modul
+                        ? () => {
+                            // Czyszczenie schowka: plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko
+                            // z fokusem, więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie
+                            // zastępuje stary plan. Nie sprawdzamy, co jest w schowku (readText wymaga uprawnienia),
+                            // więc czyszczenie nadpisuje go bezwarunkowo.
+                            if (schowekRef.current) clearTimeout(schowekRef.current.timer);
+                            const plan = {
+                              timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
+                              wyczysc: () => {
+                                clearTimeout(plan.timer);
+                                if (schowekRef.current === plan) schowekRef.current = null;
+                                const pusty = () => {
+                                  try {
+                                    void navigator.clipboard.writeText("").catch(() => {});
+                                  } catch {
+                                    // Schowek niedostępny: nic więcej nie zrobimy
+                                  }
+                                };
+                                if (document.hasFocus()) pusty();
+                                else window.addEventListener("focus", pusty, { once: true });
+                              },
+                            };
+                            schowekRef.current = plan;
+                            // Sejf zablokował się albo tabela zniknęła w trakcie zapisu do schowka: czyścimy od razu
+                            if (statusRef.current !== "odblokowany" || !zamontowana.current) {
+                              plan.wyczysc();
+                              return;
+                            }
+                            const serwis =
+                              tytulowe && typeof r.values[tytulowe.id] === "string" ? (r.values[tytulowe.id] as string) : "";
+                            toast(f.name === "Hasło" ? `Skopiowano hasło ${serwis}`.trim() : `Skopiowano: ${f.name}`, {
+                              description: "Schowek wyczyści się za 30 s.",
+                            });
+                          }
+                        : undefined
+                    }
                     onSave={(v) => void store.updateCell(r, f, v)}
                     onCreateOption={(etykieta) => store.createOption(f, etykieta)}
                     onUpdateOption={(id, patch) => void store.updateOption(f, id, patch)}
@@ -667,18 +814,21 @@ export function PageTable({
                     onFocused={f.isTitle && r.id === nowyId ? () => setNowyId(null) : undefined}
                   />
                 ))}
-                {/* Kosz pod „+”: widoczny po najechaniu na wiersz i przy fokusie w wierszu (.row-del) */}
+                {/* Kosz pod „+” (w module pod „Akcje”): widoczny po najechaniu na wiersz i przy fokusie w wierszu
+                    (.row-del); w module przy zamkniętym sejfie go nie ma */}
                 <td className="h-11 border-b border-border px-1.5 text-right whitespace-nowrap group-last/wiersz:border-b-0">
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    icon
-                    aria-label="Usuń wiersz"
-                    onClick={() => void store.removeRow(r)}
-                    className="text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:hidden"
-                  >
-                    <Trash2 aria-hidden="true" className="size-3.5" />
-                  </Button>
+                  {!tylkoOdczyt && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      icon
+                      aria-label="Usuń wiersz"
+                      onClick={() => void store.removeRow(r)}
+                      className={cn(AKCJA_WIERSZA, "text-destructive-foreground hover:text-destructive-foreground")}
+                    >
+                      <Trash2 aria-hidden="true" className="size-3.5" />
+                    </Button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -707,19 +857,21 @@ export function PageTable({
         </table>
       </div>
 
-      {/* „+ Nowy” pod ramką (.btng.sm, szary tekst) */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={dodawanie}
-          onClick={() => void nowyWiersz()}
-          className="text-muted-foreground"
-        >
-          <Plus aria-hidden="true" className="size-4" />
-          Nowy
-        </Button>
-      </div>
+      {/* „+ Nowy” pod ramką (.btng.sm, szary tekst); w module przy zamkniętym sejfie go nie ma */}
+      {!tylkoOdczyt && (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={dodawanie}
+            onClick={() => void nowyWiersz()}
+            className="text-muted-foreground"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            Nowy
+          </Button>
+        </div>
+      )}
 
       {zmianaTypu && (
         <TypeChangeDialog
@@ -739,7 +891,8 @@ export function PageTable({
         values={editing?.values ?? {}}
         today={today}
         onChange={store.setEditValue}
-        onSave={() => void store.saveRow()}
+        // Arkusz szyfruje zmienione sekrety sam i oddaje tylko szyfrogramy
+        onSave={(secrets) => void store.saveRow(secrets)}
         onCancel={store.cancelEdit}
         onDelete={edytowany ? () => void store.removeRow(edytowany) : undefined}
       />

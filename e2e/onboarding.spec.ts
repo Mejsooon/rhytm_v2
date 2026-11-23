@@ -64,10 +64,9 @@ test.describe("onboarding", () => {
 
     // Krok 3: cele; nowe konto ma oba cele treningowe włączone (3 treningi i 25 km / tydz.)
     await expect(page).toHaveURL(/\/onboarding\/3$/);
-    await page.getByRole("button", { name: /^Subskrypcje/ }).click();
     await expect(
-      page.getByRole("button", { name: /^Treningi/ }),
-    ).toHaveAttribute("aria-disabled", "true");
+      page.getByRole("heading", { name: "Twoje cele" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("checkbox", { name: "Treningi w tygodniu" }),
     ).toHaveAttribute("aria-checked", "true");
@@ -116,12 +115,13 @@ test.describe("onboarding", () => {
     await page.goto("/onboarding/7");
     await expect(page).toHaveURL(/\/onboarding\/4$/);
     await page.goto("/onboarding/3");
+    // Wybory z kroku 3 zostały zapisane: treningi włączone, kilometry wyłączone
     await expect(
-      page.getByRole("button", { name: /^Subskrypcje/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("checkbox", { name: "Treningi w tygodniu" }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect(
-      page.getByRole("button", { name: /^Treningi/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
+    ).toHaveAttribute("aria-checked", "false");
     if (mobile) {
       await expect(licznik.getByText("4", { exact: true })).toBeVisible();
     } else {
@@ -151,19 +151,23 @@ test.describe("onboarding", () => {
     await widoczny(page.getByLabel("Gdzie dokładnie?")).fill("podcast");
     await dalej(page).click();
 
-    // Krok 5: Subscriptions zaznaczone z celów
+    // Krok 5: nic nie jest zaznaczone na start; wybieramy Projects
     await expect(page).toHaveURL(/\/onboarding\/5$/);
     if (mobile) {
+      const strony = widoczny(page.getByTestId("pages-phone"));
+      await expect(strony.getByRole("checkbox", { checked: true })).toHaveCount(
+        0,
+      );
+      await strony.getByRole("checkbox", { name: /^Projects/ }).click();
       await expect(
-        widoczny(page.getByTestId("pages-phone")).getByRole("checkbox", {
-          name: /^Subscriptions/,
-        }),
+        strony.getByRole("checkbox", { name: /^Projects/ }),
       ).toBeChecked();
     } else {
+      const strony = widoczny(page.getByTestId("pages-web"));
+      await expect(strony.locator('[aria-pressed="true"]')).toHaveCount(0);
+      await strony.getByRole("button", { name: /^Projects/ }).click();
       await expect(
-        widoczny(page.getByTestId("pages-web")).getByRole("button", {
-          name: /^Subscriptions/,
-        }),
+        strony.getByRole("button", { name: /^Projects/ }),
       ).toHaveAttribute("aria-pressed", "true");
     }
     await dalej(page).click();
@@ -190,7 +194,7 @@ test.describe("onboarding", () => {
       page.getByTestId(mobile ? "done-phone" : "done-web"),
     );
     await expect(podsumowanie).toContainText("Studia, Sport");
-    await expect(podsumowanie).toContainText("Subscriptions");
+    await expect(podsumowanie).toContainText("Projects");
     await expect(podsumowanie).toContainText("4 treningi / tydz.");
 
     // „Zmień” przy Profilu → krok 1 z wpisanym imieniem, potem „Dalej” aż do 7
