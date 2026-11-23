@@ -236,9 +236,9 @@ test.describe("sejf", () => {
     await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
 
     // Zamknięty sejf: sama karta na środku, bez tabeli, wyszukiwarki i „Kategorie”
-    await expect(wiersz).toHaveCount(0);
-    await expect(page.getByText(serwis, { exact: true })).toHaveCount(0);
-    await expect(szukaj).toHaveCount(0);
+    await expect(page.locator("table")).toBeHidden();
+    await expect(page.getByText(serwis, { exact: true })).toBeHidden();
+    await expect(szukaj).toBeHidden();
     await expect(
       page.getByRole("button", { name: "Nowy", exact: true }),
     ).toHaveCount(0);
@@ -268,7 +268,7 @@ test.describe("sejf", () => {
     });
     await expect(karta).toHaveCount(0);
 
-    // Po odblokowaniu tabela wraca; segment „Kategoria” zawęża po jawnej kolumnie
+    // Po odblokowaniu tabela wraca z wierszem dodanym w tej sesji; segment „Kategoria” zawęża po jawnej kolumnie
     await expect(wiersz).toHaveCount(1);
     const segment = page.getByRole("group", { name: "Kategoria" });
     await segment.getByRole("button", { name: "Bank", exact: true }).click();

@@ -126,7 +126,8 @@ describe("PasswordsView", () => {
     expect(screen.getByRole("heading", { name: "Odblokuj sejf" })).toBeInTheDocument();
     expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
-    expect(screen.queryByTestId("tabela")).not.toBeInTheDocument();
+    // Tabela zostaje zamontowana (stan po odblokowaniu), ale jest ukryta razem z paskiem
+    expect(screen.getByTestId("tabela")).not.toBeVisible();
     expect(screen.queryByRole("textbox", { name: "Szukaj" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kategorie" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
@@ -213,7 +214,7 @@ describe("PasswordsView", () => {
   it("ładowanie sejfu: ani tabeli, ani karty odblokowania", () => {
     vault.state = { status: "ladowanie", remainingMs: 0 };
     pokaz();
-    expect(screen.queryByTestId("tabela")).not.toBeInTheDocument();
+    expect(screen.getByTestId("tabela")).not.toBeVisible();
     expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
   });
 

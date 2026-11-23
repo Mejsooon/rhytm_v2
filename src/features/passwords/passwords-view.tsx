@@ -45,7 +45,8 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
 
   const odblokowany = vault.status === "odblokowany";
   const ustawianie = vault.status === "brak" && !anulowano;
-  // Zamknięty sejf albo jeszcze nieznany stan: bez tabeli
+  // Zamknięty sejf albo jeszcze nieznany stan: tabela ukryta (`hidden`), ale zamontowana, żeby po odblokowaniu
+  // wróciła z wierszami dodanymi w tej sesji, a nie z danymi z chwili wczytania strony; sekrety czyści sama tabela
   const bezTabeli = vault.status === "zablokowany" || vault.status === "ladowanie";
 
   return (
@@ -87,10 +88,10 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
 
           {ustawianie && <VaultSetup onCancel={() => setAnulowano(true)} />}
 
-          {!bezTabeli && !ustawianie && !blok && <EmptyModule>Nie udało się wczytać tabeli haseł. Odśwież stronę.</EmptyModule>}
+          {!ustawianie && !blok && <EmptyModule>Nie udało się wczytać tabeli haseł. Odśwież stronę.</EmptyModule>}
 
-          {!bezTabeli && !ustawianie && blok && (
-            <>
+          {!ustawianie && blok && (
+            <div hidden={bezTabeli} className={cn("flex min-w-0 flex-col gap-5", bezTabeli && "hidden")}>
               {vault.status === "brak" && (
                 <div>
                   <Button variant="primary" onClick={() => setAnulowano(false)}>
@@ -172,7 +173,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   );
                 }}
               />
-            </>
+            </div>
           )}
         </div>
 
