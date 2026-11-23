@@ -29,7 +29,7 @@ import {
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
-import { operatorsFor, visibleRows, type PinnedCard } from "../table-model";
+import { operatorsFor, visibleRows, type PageRow, type PinnedCard } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
@@ -81,6 +81,8 @@ export function PageTable({
   onRemove,
   module,
   moduleTools,
+  moduleRowFilter,
+  onLiveRowCount,
 }: {
   block: LoadedBlock;
   today: IsoDate;
@@ -94,6 +96,12 @@ export function PageTable({
     createOption: (field: PageField, label: string) => Promise<string | null>;
     removeOption: (field: PageField, optionId: string) => Promise<boolean>;
   }) => React.ReactNode;
+  // Tylko w trybie modułu: dodatkowy, tymczasowy warunek na wiersze (wyszukiwarka i segment Kategorii z paska).
+  // Stan zostaje u wywołującego (nie jest zapisywany), a warunek działa też przy zamkniętym sejfie;
+  // dostaje tylko pola i wartości jawnych kolumn (wartości sekretów to szyfrogramy).
+  moduleRowFilter?: (row: PageRow, fields: PageField[]) => boolean;
+  // Tylko w trybie modułu: liczba żywych wierszy (bez filtrów), np. do plakietki w nagłówku ekranu
+  onLiveRowCount?: (n: number) => void;
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
@@ -177,10 +185,16 @@ export function PageTable({
   }
 
   const zywe = rows.filter((r) => r.deletedAt === null);
+  const liczbaZywych = zywe.length;
+  React.useEffect(() => {
+    onLiveRowCount?.(liczbaZywych);
+  }, [onLiveRowCount, liczbaZywych]);
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
-  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters);
+  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters).filter(
+    (r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields),
+  );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
   let widoczneWiersze = wedlugUstawien;

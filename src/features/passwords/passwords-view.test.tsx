@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,9 +23,13 @@ vi.mock("@/features/pages/table/page-table", () => ({
   PageTable: ({
     module,
     moduleTools,
+    moduleRowFilter,
+    onLiveRowCount,
   }: {
     module?: string;
     moduleTools?: (api: unknown) => React.ReactNode;
+    moduleRowFilter?: (row: unknown, fields: unknown[]) => boolean;
+    onLiveRowCount?: (n: number) => void;
   }) => {
     const pola = [
       { id: "f-serwis", name: "Serwis", type: "text", config: {}, position: 0, isTitle: true },
@@ -37,10 +42,34 @@ vi.mock("@/features/pages/table/page-table", () => ({
         isTitle: false,
       },
     ];
+    // Wiersze atrapy: sekret (Hasło) to szyfrogram, który wyszukiwarka ma ignorować
+    const wiersze = [
+      { id: "r1", values: { "f-serwis": "GitHub", "f-login": "mejson", "f-url": "github.com", "f-haslo": "sekretny-szyfrogram", "f-kat": "k1" }, position: 0, deletedAt: null },
+      { id: "r2", values: { "f-serwis": "Bank", "f-login": "jan", "f-url": "bank.pl", "f-kat": "k2" }, position: 1, deletedAt: null },
+      { id: "r3", values: { "f-serwis": "Poczta", "f-login": "anna", "f-kat": null }, position: 2, deletedAt: null },
+    ];
+    const pola2 = [
+      ...pola,
+      { id: "f-login", name: "Login", type: "text", config: {}, position: 1, isTitle: false },
+      { id: "f-url", name: "URL", type: "url", config: {}, position: 3, isTitle: false },
+      { id: "f-haslo", name: "Hasło", type: "secret", config: {}, position: 2, isTitle: false },
+    ];
+    pola2[1] = {
+      ...pola[1],
+      config: { options: [{ id: "k1", label: "Praca", color: "#525252" }, { id: "k2", label: "Bank", color: "#525252" }] },
+    };
+    React.useEffect(() => {
+      onLiveRowCount?.(wiersze.length);
+    }, [onLiveRowCount, wiersze.length]);
     return (
       <div data-testid="tabela" data-module={module}>
+        <ul aria-label="Wiersze">
+          {wiersze.filter((w) => !moduleRowFilter || moduleRowFilter(w, pola2)).map((w) => (
+            <li key={w.id}>{String(w.values["f-serwis"])}</li>
+          ))}
+        </ul>
         {moduleTools?.({
-          fields: pola,
+          fields: pola2,
           readOnly: tabela.readOnly,
           createOption: tabela.createOption,
           removeOption: tabela.removeOption,
@@ -124,6 +153,48 @@ describe("PasswordsView", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Sejf wymaga nowoczesnej przeglądarki i połączenia HTTPS.");
     expect(screen.getByTestId("tabela")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+  });
+
+  it("nagłówek: ikona, h1 „Hasła” i plakietki z liczbą haseł (odmiana) oraz „Szyfrowane”", () => {
+    pokaz();
+    expect(screen.getAllByRole("heading", { level: 1, name: "Hasła" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("3 hasła")).toBeInTheDocument();
+    expect(screen.getByText("Szyfrowane")).toBeInTheDocument();
+  });
+
+  it("pasek: „Szukaj” zawęża po Serwis, Login i URL, ignoruje sekrety i działa przy zamkniętym sejfie", async () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    tabela.readOnly = true;
+    const user = userEvent.setup();
+    pokaz();
+    const lista = () => within(screen.getByRole("list", { name: "Wiersze" })).queryAllByRole("listitem").map((e) => e.textContent);
+    expect(lista()).toEqual(["GitHub", "Bank", "Poczta"]);
+    const pole = screen.getByRole("textbox", { name: "Szukaj" });
+    expect(pole).toHaveAttribute("placeholder", "Szukaj serwisu lub loginu");
+    await user.type(pole, "MEJS");
+    expect(lista()).toEqual(["GitHub"]);
+    await user.clear(pole);
+    await user.type(pole, "bank.pl");
+    expect(lista()).toEqual(["Bank"]);
+    await user.clear(pole);
+    await user.type(pole, "szyfrogram");
+    expect(lista()).toEqual([]);
+  });
+
+  it("pasek: segment „Kategoria” (aria-pressed) zawęża po Kategorii, „Wszystkie” przywraca; łączy się z wyszukiwaniem", async () => {
+    const user = userEvent.setup();
+    pokaz();
+    const grupa = screen.getByRole("group", { name: "Kategoria" });
+    expect(within(grupa).getByRole("button", { name: "Wszystkie" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(grupa).getByRole("button", { name: "Bank" }));
+    expect(within(grupa).getByRole("button", { name: "Bank" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(grupa).getByRole("button", { name: "Wszystkie" })).toHaveAttribute("aria-pressed", "false");
+    const lista = () => within(screen.getByRole("list", { name: "Wiersze" })).queryAllByRole("listitem").map((e) => e.textContent);
+    expect(lista()).toEqual(["Bank"]);
+    await user.type(screen.getByRole("textbox", { name: "Szukaj" }), "git");
+    expect(lista()).toEqual([]);
+    await user.click(within(grupa).getByRole("button", { name: "Wszystkie" }));
+    expect(lista()).toEqual(["GitHub"]);
   });
 
   it("„Kategorie”: dodanie i usunięcie opcji idzie przez funkcje magazynu tabeli", async () => {

@@ -1155,6 +1155,25 @@ describe("PageTable", () => {
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
 
+    it("moduleRowFilter zawęża wiersze także przy zamkniętym sejfie i zgłasza liczbę wierszy; w zwykłej tabeli jest ignorowany", () => {
+      stanSejfu("zablokowany");
+      const liczba = vi.fn();
+      const { unmount } = render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          onLiveRowCount={liczba}
+          moduleRowFilter={(r) => r.values["f-serwis"] === "Nie ma takiego"}
+        />,
+      );
+      expect(screen.queryByDisplayValue("GitHub")).not.toBeInTheDocument();
+      expect(liczba).toHaveBeenCalledWith(1);
+      unmount();
+      render(<PageTable block={blokHasel()} today={TODAY} moduleRowFilter={() => false} />);
+      expect(screen.getByDisplayValue("GitHub")).toBeInTheDocument();
+    });
+
     it("menu kolumny modułu jest zablokowane: bez „Usuń pole”, z „Ukryj kolumnę”", async () => {
       stanSejfu("odblokowany");
       const user = userEvent.setup();

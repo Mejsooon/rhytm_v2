@@ -81,6 +81,21 @@ describe("loadPages", () => {
     expect(claim?.[1].p_available).not.toContain("Subscriptions");
   });
 
+  it("claim zwraca ['Passwords','Subscriptions','Books'] → dokładnie jedno create_page z szablonem books, bez błędu", async () => {
+    const blad = vi.spyOn(console, "error").mockImplementation(() => {});
+    rpc.mockImplementation(async (nazwa: string) =>
+      nazwa === "claim_pending_pages"
+        ? { data: ["Passwords", "Subscriptions", "Books"], error: null }
+        : { data: STRONA, error: null },
+    );
+    await loadPages();
+    const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
+    expect(utworzenia).toHaveLength(1);
+    expect(utworzenia[0][1]).toMatchObject({ p_title: "Books", p_template_key: "books" });
+    expect(blad).not.toHaveBeenCalled();
+    blad.mockRestore();
+  });
+
   it("przy pustym claim_pending_pages nie woła create_page", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
     await loadPages();
