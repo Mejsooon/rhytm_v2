@@ -177,6 +177,14 @@ Krok 1 scalony do main (adba866).
 - **Dochodzi do kroku 2:** „Nowa strona” w pasku bocznym otwiera wybór szablonu z opcją „Pusta strona” (S2NewPage), zamiast tworzyć pustą stronę.
 - Drobne uwagi z przeglądów kroku 1, odłożone do kroku 2: migające ikony przy ładowaniu (`DynamicIcon`) i jednorazowa funkcja `page_icon_lucide` zostawiona w bazie. Do tego rollback `moveField` cofa całą listę pól, a „Przesuń w lewo” pozwala przesunąć kolumnę przed tytuł.
 
+### Decyzje po kroku 2 (Mejson, 2026-11-23)
+
+Krok 2 scalony do main (d4a1564). Pakiet poprawek przed krokiem 3 (gałąź `feat/strony-2-poprawki`):
+- Kalendarz (`DatePicker`) wszędzie według makiet S2: dymek 256 px, dni bezszeryfowe 13 px, dzisiejszy dzień z szarym tłem zamiast ramki.
+- Tekst we wszystkich kolumnach tabeli jest ciemny. Szare zostają tylko puste komórki („—”) i dopiski (np. czas do terminu). Bez ustawienia „przygaszona”.
+- URL w komórce wygląda jak zwykły tekst, podkreśla się po najechaniu i dalej otwiera adres.
+- „Pusta strona” z wyboru szablonu tworzy stronę bez tabeli, z szybkim startem „albo zacznij od:”.
+
 Po Stronach 2.0: projekt Dziś (wariant F, pusty stan, zadania tylko w blokach), potem Subscriptions, potem telefon (Etap 3).
 
 ## Decyzje Claude (do sprawdzenia przez Mejsona)
