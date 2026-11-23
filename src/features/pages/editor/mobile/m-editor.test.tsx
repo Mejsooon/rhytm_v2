@@ -240,16 +240,18 @@ describe("MEditor (telefon)", () => {
   it("tabela przewija się poziomo", () => {
     render(<EditorView data={dane([tabela()])} />);
     const siatka = screen.getByRole("table");
-    // Kontener przewija się poziomo, a siatka ma minimalną szerokość (160 + 120 px na kolumnę)
+    // Kontener przewija się poziomo, a siatka ma szerokość sumy kolumn (tytuł 300 + status 180) plus 56 px
     expect(siatka.parentElement!.className).toContain("overflow-x-auto");
-    expect(siatka.style.minWidth).toBe("400px");
+    expect(siatka.style.width).toBe("536px");
+    expect(siatka.style.minWidth).toBe("100%");
   });
 
   it("stuknięcie wiersza tabeli otwiera arkusz wiersza; zapis zmienia wiersz", async () => {
     window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
     const user = userEvent.setup();
     render(<EditorView data={dane([tabela()])} />);
-    await user.click(screen.getByText("Zadanie"));
+    // Tytuł w tabeli to pole komórki; dotknięcie na telefonie otwiera arkusz
+    await user.click(screen.getByDisplayValue("Zadanie"));
     const arkusz = await screen.findByRole("dialog", { name: "Zadanie" });
     await user.type(within(arkusz).getByRole("textbox", { name: "Nazwa" }), "!");
     await user.click(within(arkusz).getByRole("button", { name: "Zapisz" }));

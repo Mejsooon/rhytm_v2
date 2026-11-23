@@ -368,6 +368,35 @@ describe("bloki i ustawienia", () => {
     });
   });
 
+  it("saveTableSettings przepuszcza column_widths i scala je z resztą ustawień", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "T", settings: { sort: [] } } },
+    });
+    const w = await saveTableSettings(BLOK, { column_widths: { a: 80, b: 4000 } });
+    expect(w).toEqual({ ok: true });
+    expect(tables.page_blocks.update).toHaveBeenCalledWith({
+      content: { name: "T", settings: { sort: [], column_widths: { a: 80, b: 4000 } } },
+    });
+  });
+
+  it("saveTableSettings odrzuca szerokości kolumn poza 80–4000 i niecałkowite", async () => {
+    tables.page_blocks = fakeTable({ single: { type: "table", content: { name: "T", settings: {} } } });
+    for (const zla of [79, 4001, 100.5]) {
+      const w = await saveTableSettings(BLOK, { column_widths: { a: zla } });
+      expect(w.ok).toBe(false);
+    }
+    expect(tables.page_blocks.update).not.toHaveBeenCalled();
+  });
+
+  it("saveTableSettings: szerokość karty 179 odrzucona, 180 przechodzi", async () => {
+    tables.page_blocks = fakeTable({ single: { type: "table", content: { name: "T", settings: {} } } });
+    const karta = { label: "Razem", field_id: POLE_LICZBA, aggregation: "avg" as const };
+    expect((await saveTableSettings(BLOK, { pinned_cards: [{ ...karta, width: 179 }] })).ok).toBe(false);
+    expect(tables.page_blocks.update).not.toHaveBeenCalled();
+    expect((await saveTableSettings(BLOK, { pinned_cards: [{ ...karta, width: 180 }] })).ok).toBe(true);
+    expect(tables.page_blocks.update).toHaveBeenCalledTimes(1);
+  });
+
   it("saveTableSettings odrzuca blok, który nie jest tabelą", async () => {
     tables.page_blocks = fakeTable({ single: { type: "text", content: {} } });
     const w = await saveTableSettings(BLOK, { sort: [] });

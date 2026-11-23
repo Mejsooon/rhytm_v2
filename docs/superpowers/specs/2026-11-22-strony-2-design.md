@@ -167,6 +167,16 @@ Każdy krok to osobna gałąź, osobny plan i scalenie po „scal do main”:
 2. **Tabela jak w Notion:** punkty 3 i 8–11 (edycja w komórkach zamiast trybu wiersza, opcje, szerokości kolumn, przewijanie, karty użytkownika z „+ Karta” i szerokością).
 3. **Hasła i onboarding:** punkty 4, 6 (część haseł), 12 i 14 oraz zmiany onboardingu z „Decyzji Claude”, z osobnym przeglądem bezpieczeństwa.
 
+### Decyzje po kroku 1 (Mejson, 2026-11-23)
+
+Krok 1 scalony do main (adba866).
+- „Usuń tabelę” w menu „⋯” działa bez potwierdzenia, bo usunięcie jest miękkie i ma „Cofnij”.
+- „Szablony” zostają w nagłówku pustej strony (S2EmptyPage).
+- Opis pod tytułem strony to zwykły tekst, nie szary. Makiety S2Books, S2Projects i S2Websites są poprawione.
+- Przesuwanie kolumn to pozycje „Przesuń w lewo” i „Przesuń w prawo” w menu kolumny, jak w kodzie. S2EmptyPage jest poprawiona.
+- **Dochodzi do kroku 2:** „Nowa strona” w pasku bocznym otwiera wybór szablonu z opcją „Pusta strona” (S2NewPage), zamiast tworzyć pustą stronę.
+- Drobne uwagi z przeglądów kroku 1, odłożone do kroku 2: migające ikony przy ładowaniu (`DynamicIcon`) i jednorazowa funkcja `page_icon_lucide` zostawiona w bazie. Do tego rollback `moveField` cofa całą listę pól, a „Przesuń w lewo” pozwala przesunąć kolumnę przed tytuł.
+
 Po Stronach 2.0: projekt Dziś (wariant F, pusty stan, zadania tylko w blokach), potem Subscriptions, potem telefon (Etap 3).
 
 ## Decyzje Claude (do sprawdzenia przez Mejsona)

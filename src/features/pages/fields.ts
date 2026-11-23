@@ -89,6 +89,38 @@ export const PALETA = [
   "#525252",
 ];
 
+// Kolory do wyboru w panelu opcji: „Bez koloru” i 8 kolorów PALETA (nazwy w tej samej kolejności)
+export const KOLORY_OPCJI: { color: string; name: string }[] = [
+  { color: "", name: "Bez koloru" },
+  { color: PALETA[0], name: "Niebieski" },
+  { color: PALETA[1], name: "Zielony" },
+  { color: PALETA[2], name: "Fioletowy" },
+  { color: PALETA[3], name: "Pomarańczowy" },
+  { color: PALETA[4], name: "Czerwony" },
+  { color: PALETA[5], name: "Turkusowy" },
+  { color: PALETA[6], name: "Żółty" },
+  { color: PALETA[7], name: "Szary" },
+];
+
+// Szerokości kolumn w px (tytuł osobno), gdy brak wpisu w column_widths
+export const SZEROKOSC_TYTULU = 300;
+export const DOMYSLNA_SZEROKOSC: Record<FieldType, number> = {
+  text: 220,
+  url: 220,
+  select: 180,
+  status: 180,
+  secret: 180,
+  date: 140,
+  rating: 130,
+  number: 120,
+  checkbox: 90,
+};
+export const MIN_SZEROKOSC_KOLUMNY = 80;
+
+// Szerokości kart podsumowań w px
+export const MIN_SZEROKOSC_KARTY = 180;
+export const DOMYSLNA_SZEROKOSC_KARTY = 220;
+
 // Liczba dni od 1970-01-01 dla poprawnej daty ISO albo null (bez strefy czasowej)
 function dniOdEpoki(iso: string): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);

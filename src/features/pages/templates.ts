@@ -309,6 +309,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     hidden_field_ids: [],
     column_summaries,
     pinned_cards,
+    column_widths: {},
   };
 
   const bloki: CreatePageBlock[] = [];
@@ -335,6 +336,7 @@ export function NEW_TABLE_BLOCK(newId: () => string): CreatePageBlock {
     hidden_field_ids: [],
     column_summaries: {},
     pinned_cards: [],
+    column_widths: {},
   };
   return {
     id: newId(),

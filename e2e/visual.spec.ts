@@ -21,7 +21,11 @@ import {
   zasiejSzablon,
   zasiejTrening,
 } from "./helpers/sport";
-import { utworzBooks, zalozKontoStron } from "./helpers/strony";
+import {
+  utworzBooks,
+  zalozKontoStron,
+  zasiejPustaStrone,
+} from "./helpers/strony";
 import {
   adminClient,
   createConfirmedUser,
@@ -621,11 +625,11 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "kalendarz-sport", projekt);
   });
 
-  test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, MPages, MEditor)", async ({
+  test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, S2CardMenu, S2CardDialog, MPages, MEditor)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
-    await zalozKontoStron(page, projekt);
+    const userId = await zalozKontoStron(page, projekt);
 
     // Wybór szablonu (NewPage)
     await page.goto("/strony/nowa");
@@ -677,11 +681,50 @@ test.describe("ekrany z sesją", () => {
       await expect(
         page.getByRole("navigation", { name: "Główna nawigacja" }),
       ).toBeVisible();
+
+      // Okienko opcji komórki Status (S2Books, tsel) w nowym wierszu
+      // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
+      await page.getByRole("button", { name: "Nowy", exact: true }).click();
+      await expect(page.locator("tbody tr")).toHaveCount(1);
+      await page
+        .locator("tbody tr")
+        .getByRole("button", { name: /^Status: / })
+        .click();
+      await expect(
+        page.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-okienko-opcji", projekt);
+      await page.keyboard.press("Escape");
+      await expect(
+        page.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
+      ).toHaveCount(0);
+
+      // Menu karty (S2CardMenu) na pierwszej karcie
+      const karta = page.getByTestId("karta").first();
+      await karta.hover();
+      await karta.getByRole("button", { name: "Menu karty" }).click();
+      await expect(page.getByRole("menu", { name: "Menu karty" })).toBeVisible();
+      await zrzut(page, "strony-menu-karty", projekt);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("menu", { name: "Menu karty" })).toHaveCount(0);
+
+      // Okno nowej karty (S2CardDialog)
+      await page.getByRole("button", { name: "Dodaj kartę", exact: true }).click();
+      await expect(page.getByRole("dialog", { name: "Nowa karta" })).toBeVisible();
+      await zrzut(page, "strony-okno-karty", projekt);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog", { name: "Nowa karta" })).toHaveCount(0);
     }
 
-    // Edytor z tabelą (EmptyPage / MEditor)
-    await page.goto("/strony");
-    await page.getByRole("button", { name: "Nowa strona" }).first().click();
+    // Edytor z tabelą (EmptyPage / MEditor). Na webie „Nowa strona” prowadzi do wyboru szablonu,
+    // więc pustą stronę edytora zakładamy przez API; telefon ma przycisk „Nowa strona” na liście
+    if (projekt === "web") {
+      const idStrony = await zasiejPustaStrone(userId);
+      await page.goto(`/strony/${idStrony}`);
+    } else {
+      await page.goto("/strony");
+      await page.getByRole("button", { name: "Nowa strona" }).first().click();
+    }
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     // Pusta strona przed pierwszym blokiem (S2EmptyPage): szybki start na webie, „Wstaw tabelę” na telefonie
     if (projekt === "web")

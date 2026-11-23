@@ -39,3 +39,19 @@ export async function utworzBooks(page: Page): Promise<void> {
     "Books",
   );
 }
+
+// Pusta strona edytora bloków (bez szablonu i bez bloków), jak dawne „Nowa strona” z paska.
+// Na webie pasek prowadzi teraz do wyboru szablonu, więc pustą stronę zakładamy przez API administratora.
+export async function zasiejPustaStrone(
+  userId: string,
+  tytul = "",
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from("pages")
+    .insert({ user_id: userId, title: tytul, icon: "" })
+    .select("id")
+    .single();
+  if (error || !data)
+    throw new Error(`Nie udało się zasiać pustej strony: ${error?.message}`);
+  return data.id as string;
+}

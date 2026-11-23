@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  DOMYSLNA_SZEROKOSC,
   EDITOR_TYPES,
   FIELD_TYPE_META,
+  KOLORY_OPCJI,
+  PALETA,
   convertValue,
   formatValue,
   isUrgent,
@@ -258,5 +261,36 @@ describe("Sekret", () => {
 
   it("edytor nie ma typu Sekret", () => {
     expect(EDITOR_TYPES.some((t) => (t.type as string) === "secret")).toBe(false);
+  });
+});
+
+describe("stałe tabeli", () => {
+  it("KOLORY_OPCJI to „Bez koloru” i 8 kolorów PALETA z polskimi nazwami", () => {
+    expect(KOLORY_OPCJI[0]).toEqual({ color: "", name: "Bez koloru" });
+    expect(KOLORY_OPCJI.slice(1).map((k) => k.color)).toEqual(PALETA);
+    expect(KOLORY_OPCJI.slice(1).map((k) => k.name)).toEqual([
+      "Niebieski",
+      "Zielony",
+      "Fioletowy",
+      "Pomarańczowy",
+      "Czerwony",
+      "Turkusowy",
+      "Żółty",
+      "Szary",
+    ]);
+  });
+
+  it("DOMYSLNA_SZEROKOSC ma wartości z ograniczeń", () => {
+    expect(DOMYSLNA_SZEROKOSC).toEqual({
+      text: 220,
+      url: 220,
+      select: 180,
+      status: 180,
+      secret: 180,
+      date: 140,
+      rating: 130,
+      number: 120,
+      checkbox: 90,
+    });
   });
 });

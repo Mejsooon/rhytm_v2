@@ -299,6 +299,8 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
           fields={fields}
           rows={widoczneWiersze}
           today={today}
+          onChange={(next) => void store.patchSettings({ pinned_cards: next })}
+          // Hasła nie mają okna karty: bez onAdd i onEdit nie ma „Dodaj kartę” ani „Edytuj kartę”
         />
         )}
 

@@ -94,13 +94,14 @@ describe("DatePicker", () => {
     expect(przycisk.className).not.toContain("font-mono");
   });
 
-  it("wariant „bare” (komórka tabeli) bez zmian: sama data mono, bez ikony", () => {
+  it("wariant „bare” (komórka tabeli): sama data bezszeryfowa z cyframi tabelarycznymi, bez ikony (S2Books)", () => {
     render(
       <DatePicker value="2026-11-17" onChange={vi.fn()} ariaLabel="Termin" variant="bare" />,
     );
     const przycisk = screen.getByRole("button", { name: "Termin" });
     expect(przycisk).toHaveTextContent(/^17\.11\.2026$/);
-    expect(przycisk.querySelector(".font-mono")).not.toBeNull();
+    expect(przycisk.querySelector(".font-mono")).toBeNull();
+    expect(screen.getByText("17.11.2026")).toHaveClass("tabular-nums", "truncate");
     expect(przycisk.querySelector("svg")).toBeNull();
   });
 

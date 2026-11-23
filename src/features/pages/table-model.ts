@@ -59,6 +59,8 @@ export type PinnedCard = {
   done_option_id?: string;
   // Odmiana rzeczownika pod liczbą (1 / 2-4 / 5+), np. książka, książki, książek
   unit?: [string, string, string];
+  // Szerokość karty w px (min. 180); brak = domyślna 220
+  width?: number;
 };
 
 // Podsumowanie kolumny: rodzaj ogólny albo licznik opcji / roku z własną odmianą rzeczownika
@@ -76,6 +78,8 @@ export type TableSettings = {
   hidden_field_ids: string[];
   column_summaries: Record<string, ColumnSummary>;
   pinned_cards: PinnedCard[];
+  // Szerokości kolumn w px (id pola → szerokość, min. 80); brak wpisu = domyślna
+  column_widths: Record<string, number>;
 };
 
 // Odmiana polska: 1 / 2-4 (poza 12-14) / reszta

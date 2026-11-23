@@ -1,5 +1,5 @@
 begin;
-select plan(66);
+select plan(57);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -216,19 +216,8 @@ select public.purge_trash();
 select is((select count(*) from public.pages where id in ('d1000000-0000-0000-0000-00000000000a', 'd2000000-0000-0000-0000-00000000000a')),
   1::bigint, 'purge_trash usuwa tylko strony starsze niż 30 dni');
 
--- Ikony stron w formacie lucide:<nazwa> (migracja 20261123100000).
-select is(public.page_icon_lucide('📚'), 'lucide:book-open', '📚 → book-open');
-select is(public.page_icon_lucide('🔒'), 'lucide:lock', '🔒 → lock');
-select is(public.page_icon_lucide('❤️'), 'lucide:heart', 'emoji z selektorem wariantu też z mapy');
-select is(public.page_icon_lucide('lucide:star:gray'), 'lucide:star', 'kolor znika');
-select is(public.page_icon_lucide('🐶'), 'lucide:dog', '🐶 z mapy');
-select is(public.page_icon_lucide('lucide:book-open'), 'lucide:book-open', 'nowy format zostaje');
-select matches(public.page_icon_lucide('lucide:book-open:gray'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
-  'lucide:book-open:gray (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
-select matches(public.page_icon_lucide('🔒'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
-  '🔒 (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
-select is(public.page_icon_lucide('xyz'), '', 'śmieci → domyślna');
-select is(public.page_icon_lucide(''), '', 'pusta zostaje pusta');
+-- Ikony stron: constraint pages_icon_format (migracja 20261123100000); funkcja page_icon_lucide usunięta (20261124100000).
+select hasnt_function('public', 'page_icon_lucide', ARRAY['text'], 'page_icon_lucide usunięta po konwersji ikon');
 select throws_ok(
   format('update public.pages set icon = %L where id = %L', '📚', 'd3000000-0000-0000-0000-00000000000a'),
   '23514', null, 'emoji odrzucone przez pages_icon_format');

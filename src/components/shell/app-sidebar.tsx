@@ -7,7 +7,6 @@ import { Plus, Search, Settings } from "lucide-react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { Button, FIELD, Kbd } from "@/components/controls";
-import { useCreateBlankPage } from "@/features/pages/use-create-blank-page";
 import type { PageSummary } from "@/features/pages/load-pages";
 import { PageIcon } from "@/features/pages/page-icon";
 import { PageMenu } from "@/features/pages/page-menu";
@@ -44,7 +43,6 @@ export function AppSidebar({
 }) {
   const sciezka = usePathname();
   const { collapsed } = useSidebarState();
-  const nowaStrona = useCreateBlankPage();
   const store = usePagesStore(pages);
   const strony = store.pages;
 
@@ -213,10 +211,13 @@ export function AppSidebar({
                     size="xs"
                     icon
                     aria-label="Dodaj stronę"
-                    onClick={nowaStrona}
+                    asChild
                     className="text-muted-foreground"
                   >
-                    <Plus size={16} aria-hidden="true" />
+                    {/* Wybór szablonu (albo pustej strony) jest na /strony/nowa */}
+                    <Link href="/strony/nowa">
+                      <Plus size={16} aria-hidden="true" />
+                    </Link>
                   </Button>
                 )}
               </div>
@@ -344,14 +345,10 @@ export function AppSidebar({
           );
         })}
       </div>
-      <button
-        type="button"
-        onClick={nowaStrona}
-        className={cn(POZYCJA, POZYCJA_ZWYKLA, "cursor-pointer border-0 bg-transparent text-left")}
-      >
+      <Link href="/strony/nowa" className={cn(POZYCJA, POZYCJA_ZWYKLA)}>
         <Plus size={16} aria-hidden="true" />
         Nowa strona
-      </button>
+      </Link>
 
       <div className="min-h-6 flex-1" />
       <Link

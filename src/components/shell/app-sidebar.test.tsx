@@ -145,15 +145,14 @@ describe("AppSidebar", () => {
     expect(linki[1]).toHaveClass("text-[rgba(38,38,38,.72)]");
   });
 
-  it.each([
-    ["Dodaj stronę", "button"],
-    ["Nowa strona", "button"],
-  ] as const)("„%s” tworzy stronę i przechodzi do /strony/{id}", async (nazwa, rola) => {
+  it.each(["Dodaj stronę", "Nowa strona"])("„%s” to link do wyboru szablonu i nie tworzy strony", async (nazwa) => {
     const user = userEvent.setup();
     render(<AppSidebar user={uzytkownik} />);
-    await user.click(screen.getByRole(rola, { name: nazwa }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/strony/nowa-id"));
-    expect(createBlankPage).toHaveBeenCalledTimes(1);
+    const link = screen.getByRole("link", { name: nazwa });
+    expect(link).toHaveAttribute("href", "/strony/nowa");
+    await user.click(link);
+    expect(createBlankPage).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("F2 na aktywnej stronie włącza edycję nazwy: Enter zapisuje, Esc anuluje", async () => {

@@ -259,8 +259,9 @@ describe("TemplatePageView", () => {
 
     it("strona-szablon bez wierszy i kart pokazuje stan pusty bez pustych ramek", () => {
       const { container } = render(<TemplatePageView data={strona("empty", "Notatki", [])} />);
-      // Bez kart nie ma siatki kart ani pustej ramki
-      expect(container.querySelector('[data-testid="przypiete-karty"]')).toBeNull();
+      // Bez kart nie ma pustej ramki karty, a strona z szablonu nie ma okna karty, więc i przycisku „Dodaj kartę”
+      expect(container.querySelector('[data-testid="karta"]')).toBeNull();
+      expect(screen.queryByRole("button", { name: "Dodaj kartę" })).not.toBeInTheDocument();
       // Tabela ma nagłówek i stopkę z „+ Nowy wiersz”, a w tbody nie ma pustych wierszy
       expect(screen.getByRole("columnheader", { name: /Nazwa/ })).toBeInTheDocument();
       expect(container.querySelectorAll("tbody tr")).toHaveLength(0);

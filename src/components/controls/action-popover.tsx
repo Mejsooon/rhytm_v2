@@ -25,6 +25,7 @@ export function ActionPopover({
   side = "bottom",
   ariaLabel,
   onCloseAutoFocus,
+  onEscapeKeyDown,
   className,
   children,
 }: {
@@ -38,6 +39,8 @@ export function ActionPopover({
   ariaLabel?: string;
   // Zwrot fokusu na wyzwalacz po zamknięciu; preventDefault wyłącza go (np. gdy zaraz otwiera się inny dymek)
   onCloseAutoFocus?: (e: Event) => void;
+  // Esc w dymku; preventDefault zostawia go otwarty (np. gdy Esc ma tylko cofnąć wewnętrzny panel)
+  onEscapeKeyDown?: (e: KeyboardEvent) => void;
   // Dodatkowe klasy treści; menu z pozycjami MENU_ITEM dają p-1 (jak .pop w coss.css)
   className?: string;
   children: React.ReactNode;
@@ -51,6 +54,7 @@ export function ActionPopover({
           side={side}
           aria-label={ariaLabel}
           onCloseAutoFocus={onCloseAutoFocus}
+          onEscapeKeyDown={onEscapeKeyDown}
           sideOffset={6}
           avoidCollisions
           collisionPadding={8}

@@ -159,15 +159,17 @@ export function ColumnMenu({
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          className="cursor-pointer rounded-sm border-0 bg-transparent p-0 font-[inherit] font-medium text-muted-foreground outline-none focus-visible:shadow-focus max-[799px]:min-h-11"
+          // .colbtn: padding 3 × 6 px zjedzony ujemnym marginesem, tło rgba(0,0,0,.05) i ciemny tekst po najechaniu;
+          // długa nazwa ucina się wielokropkiem w szerokości kolumny
+          className="-mx-1.5 -my-[3px] inline-flex max-w-[calc(100%+12px)] min-w-0 cursor-pointer items-center rounded-md border-0 bg-transparent px-1.5 py-[3px] font-[inherit] font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:shadow-focus aria-expanded:bg-black/5 aria-expanded:text-foreground max-[799px]:min-h-11"
         >
           {/* Ikona typu pola: 14 px, jasnoszara, odstęp 6 px jak w nagłówkach makiety */}
           <meta.Icon
             size={14}
             aria-hidden="true"
-            className="mr-1.5 inline align-[-2px] text-faint-foreground"
+            className="mr-1.5 flex-none text-faint-foreground"
           />
-          {field.name}
+          <span className="min-w-0 truncate">{field.name}</span>
         </button>
       }
     >

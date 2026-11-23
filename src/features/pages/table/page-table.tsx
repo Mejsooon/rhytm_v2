@@ -17,19 +17,26 @@ import {
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
 
-import { planTypeChange, type FieldType, type PageField } from "../fields";
+import {
+  DOMYSLNA_SZEROKOSC,
+  MIN_SZEROKOSC_KOLUMNY,
+  SZEROKOSC_TYTULU,
+  planTypeChange,
+  type FieldType,
+  type PageField,
+} from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
-import { operatorsFor, visibleRows } from "../table-model";
+import { operatorsFor, visibleRows, type PinnedCard } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
+import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
 import { FilterPopover } from "./filter-popover";
 import { MRowSheet } from "./mobile/m-row-sheet";
 import { PinnedCards } from "./pinned-cards";
-import { RowEdit } from "./row-edit";
-import { RowPreview } from "./row-preview";
 import { SummaryCell } from "./summary-cell";
+import { TableCell } from "./table-cell";
 import { PREFIKS_TYMCZASOWY, useTableStore } from "./use-table-store";
 
 // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
@@ -39,12 +46,22 @@ const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap
 const PRZYCISK_FILTRA =
   "relative inline-flex h-7 flex-none cursor-pointer items-center justify-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[9px] text-sm leading-none font-medium whitespace-nowrap text-foreground shadow-btn transition-[box-shadow,background-color] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus max-[799px]:h-10";
 
+// Uchwyt zmiany szerokości (.colrs): 8 px na prawej krawędzi nagłówka, niebieska kreska 2 px po najechaniu,
+// przy fokusie z klawiatury i w trakcie przeciągania (data-on); na telefonie bez uchwytu
+const UCHWYT_KOLUMNY =
+  "absolute top-0 -right-1 bottom-0 z-[3] w-2 cursor-col-resize touch-none outline-none after:absolute after:top-1.5 after:bottom-1.5 after:left-[3px] after:w-0.5 after:rounded-sm after:bg-transparent after:transition-colors after:duration-[120ms] after:content-[''] group-hover/kol:after:bg-[rgba(59,130,246,.6)] focus-visible:after:bg-[rgba(59,130,246,.6)] data-[on=true]:after:bg-[rgba(59,130,246,.6)] max-[799px]:hidden";
+
+// Ramka z poziomym przewijaniem i cienkim suwakiem (.tbl-wrap)
+const RAMKA_PRZEWIJANA =
+  "overflow-x-auto overflow-y-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
+
 // Pozycja menu „⋯”; wyłączona: opacity .64
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 
 // Jeden blok tabeli (S2Books.dc.html): przypięte karty, pasek z nazwą tabeli, plakietką sortu, „Filtruj”
-// i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, podgląd / tryb edycji wiersza, stopka
-// z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką. Na telefonie wiersz edytuje się w arkuszu.
+// i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
+// jak w Notion, kosz po najechaniu, stopka z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką.
+// Na telefonie dotknięcie wiersza otwiera arkusz.
 // Działa tylko na danych bloku — bez tytułu strony i sejfu. `onRemove` (z edytora) usuwa cały blok tabeli.
 export function PageTable({
   block,
@@ -58,8 +75,15 @@ export function PageTable({
   const store = useTableStore(block);
   const { fields, rows, settings, editing } = store;
 
-  // Edycja w arkuszu (telefon) zamiast w wierszu tabeli
+  // Edycja w arkuszu (telefon); na webie komórki edytują się wprost
   const [wArkuszu, setWArkuszu] = React.useState(false);
+  // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
+  const [dodawanie, setDodawanie] = React.useState(false);
+  const [nowyId, setNowyId] = React.useState<string | null>(null);
+  // Wiersz z fokusem albo świeżo dodany („przypięty”) i kolejność wierszy (id) z chwili przypięcia.
+  // Dopóki fokus jest w wierszach tabeli, kolejność stoi w miejscu, a przypięty wiersz nie znika przez filtr:
+  // zapis w trakcie pisania nie przesuwa ani nie chowa wiersza (React przenosząc węzeł DOM gubi fokus).
+  const [przypiety, setPrzypiety] = React.useState<{ id: string; kolejnosc: string[] } | null>(null);
   // Otwarte menu kolumny (id pola), filtr, menu „⋯” i zmiana typu czekająca na potwierdzenie (ze stratą wartości)
   const [menuPola, setMenuPola] = React.useState<string | null>(null);
   const [filtrOtwarty, setFiltrOtwarty] = React.useState(false);
@@ -72,6 +96,14 @@ export function PageTable({
   // „Filtruj po tym polu” zamyka menu i od razu otwiera filtr — bez zwrotu fokusu na nagłówek
   const bezZwrotuFokusu = React.useRef(false);
 
+  // Przeciąganie uchwytu kolumny: w trakcie szerokość jest tylko lokalna (stan do rysowania, ref do zapisu),
+  // zapis idzie raz po puszczeniu
+  const [przeciaganie, setPrzeciaganie] = React.useState<{ id: string; szer: number } | null>(null);
+  const start = React.useRef<{ pointerId: number; x: number; szer: number; aktualna: number } | null>(null);
+
+  // Okno karty: karta null = nowa karta, inaczej edycja tej karty (obiekt z chwili otwarcia, nie indeks —
+  // lista może się zmienić przy otwartym oknie, np. „Cofnij” usunięcia karty)
+  const [oknoKarty, setOknoKarty] = React.useState<{ karta: PinnedCard | null } | null>(null);
   // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
   const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(store.tableName);
@@ -83,7 +115,23 @@ export function PageTable({
   const zywe = rows.filter((r) => r.deletedAt === null);
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
-  const widoczneWiersze = visibleRows(fields, rows, settings, store.tempFilters);
+  // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
+  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters);
+  // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
+  if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
+  let widoczneWiersze = wedlugUstawien;
+  if (przypiety && zywe.some((r) => r.id === przypiety.id)) {
+    const poId = new Map(zywe.map((r) => [r.id, r]));
+    const wFiltrze = new Set(wedlugUstawien.map((r) => r.id));
+    // Wiersze z zapamiętanej kolejności: te, które nadal spełniają filtr, i zawsze przypięty
+    const zamrozone = przypiety.kolejnosc.flatMap((id) => {
+      const r = poId.get(id);
+      return r && (id === przypiety.id || wFiltrze.has(id)) ? [r] : [];
+    });
+    const wZamrozonych = new Set(zamrozone.map((r) => r.id));
+    // Wiersze, które dopiero teraz spełniają filtr (np. „Cofnij” usunięcia), dochodzą na końcu
+    widoczneWiersze = [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
+  }
   // Filtr w edycji (stan klienta) albo zapisany domyślny
   const filtry = store.tempFilters ?? settings.filters;
   // Pola, po których można jeszcze dodać sortowanie (bez tych już w sorcie)
@@ -100,14 +148,53 @@ export function PageTable({
       ? { fieldId: kartaTerminu.field_id, optionId: kartaTerminu.done_option_id }
       : null;
 
+  // Szerokość każdej widocznej kolumny: szkic z przeciągania, zapisana (tylko skończona i ≥ 80), inaczej domyślna wg typu
+  const szerokosci = widocznePola.map((f) => {
+    if (przeciaganie?.id === f.id) return przeciaganie.szer;
+    const zapisana = settings.column_widths[f.id];
+    // Wartość z bazy: całkowita i przycięta do 4000, żeby zapis przez strzałki nigdy nie zwężał ani nie łamał schematu
+    if (typeof zapisana === "number" && Number.isFinite(zapisana) && zapisana >= MIN_SZEROKOSC_KOLUMNY) {
+      return Math.min(4000, Math.round(zapisana));
+    }
+    return f.isTitle ? SZEROKOSC_TYTULU : DOMYSLNA_SZEROKOSC[f.type];
+  });
+  const sumaSzerokosci = szerokosci.reduce((a, b) => a + b, 0);
+
+  // Kolumna ukryta albo usunięta w trakcie przeciągania: uchwyt znika bez pointerup, więc zerujemy szkic
+  // (wzorzec jak przy nazwie tabeli; ref czyści pierwszy ruch bez wciśniętego przycisku albo kolejny pointerdown)
+  if (przeciaganie && !widocznePola.some((f) => f.id === przeciaganie.id)) setPrzeciaganie(null);
+
+  // Zapis szerokości jednej kolumny: cała mapa column_widths (patch ustawień scala się płytko), bez śmieci z bazy
+  function zapiszSzerokosc(id: string, szer: number) {
+    const mapa: Record<string, number> = {};
+    for (const [k, v] of Object.entries(settings.column_widths)) {
+      if (typeof v === "number" && Number.isFinite(v) && v >= MIN_SZEROKOSC_KOLUMNY) mapa[k] = Math.min(4000, Math.round(v));
+    }
+    mapa[id] = szer;
+    void store.patchSettings({ column_widths: mapa });
+  }
+
   // Telefon (poniżej 800 px) edytuje wiersz w arkuszu; sprawdzamy w chwili kliknięcia
   function naTelefonie() {
     return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
   }
 
-  function nowyWiersz() {
-    setWArkuszu(naTelefonie());
-    void store.addRowDraft();
+  // Telefon: szkic w arkuszu, jak dotąd. Web: wiersz najpierw na serwerze, potem kursor w tytule.
+  async function nowyWiersz() {
+    if (naTelefonie()) {
+      setWArkuszu(true);
+      void store.addRowDraft();
+      return;
+    }
+    setDodawanie(true);
+    // Kolejność widoczna w chwili kliknięcia; nowy wiersz stanie na jej końcu, także gdy filtr go odrzuca
+    const kolejnosc = widoczneWiersze.map((r) => r.id);
+    const id = await store.addRowInline();
+    setDodawanie(false);
+    if (id !== null) {
+      setNowyId(id);
+      setPrzypiety({ id, kolejnosc: [...kolejnosc, id] });
+    }
   }
 
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
@@ -121,7 +208,53 @@ export function PageTable({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <PinnedCards cards={settings.pinned_cards} fields={fields} rows={widoczneWiersze} today={today} />
+      <PinnedCards
+        cards={settings.pinned_cards}
+        fields={fields}
+        rows={widoczneWiersze}
+        today={today}
+        onChange={(next) => void store.patchSettings({ pinned_cards: next })}
+        onAdd={() => setOknoKarty({ karta: null })}
+        onEdit={(index) => setOknoKarty({ karta: settings.pinned_cards[index] ?? null })}
+      />
+      {/* Okno karty montujemy dopiero po otwarciu, żeby każde zaczynało od stanu startowego */}
+      {oknoKarty && (
+        <CardDialog
+          open
+          tableName={store.tableName}
+          fields={fields}
+          rows={widoczneWiersze}
+          today={today}
+          initial={oknoKarty.karta}
+          onCancel={() => setOknoKarty(null)}
+          onSave={(karta) => {
+            const edytowana = oknoKarty.karta;
+            // Nowa karta na końcu listy
+            if (edytowana === null) {
+              void store.patchSettings({ pinned_cards: [...settings.pinned_cards, karta] });
+              setOknoKarty(null);
+              return;
+            }
+            // Edycja: karta szukana w aktualnej liście — ten sam obiekt, a po odświeżeniu z serwera
+            // (nowe obiekty) karta o tej samej treści
+            let index = settings.pinned_cards.indexOf(edytowana);
+            if (index === -1) {
+              const tresc = JSON.stringify(edytowana);
+              index = settings.pinned_cards.findIndex((c) => JSON.stringify(c) === tresc);
+            }
+            // Karty już nie ma (usunięta przy otwartym oknie): nie dodajemy jej z powrotem
+            if (index === -1) {
+              toast.error("Tej karty już nie ma.");
+              setOknoKarty(null);
+              return;
+            }
+            void store.patchSettings({
+              pinned_cards: settings.pinned_cards.map((c, j) => (j === index ? karta : c)),
+            });
+            setOknoKarty(null);
+          }}
+        />
+      )}
 
       {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
@@ -324,18 +457,29 @@ export function PageTable({
       </div>
 
       {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
-      <div className="overflow-x-auto rounded-xl border-[1.5px] border-black/[.14] bg-white">
-        <table className="w-full border-collapse text-sm" style={{ minWidth: 120 * widocznePola.length + 160 }}>
+      <div className={RAMKA_PRZEWIJANA}>
+        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” i kosza), nie węższa niż ramka */}
+        <table
+          className="border-collapse text-sm"
+          style={{ tableLayout: "fixed", width: sumaSzerokosci + 56, minWidth: "100%" }}
+        >
+          <colgroup>
+            {widocznePola.map((f, i) => (
+              <col key={f.id} style={{ width: szerokosci[i] }} />
+            ))}
+            {/* Ostatnia kolumna („+” i kosz) bez szerokości: wypełnia ramkę */}
+            <col />
+          </colgroup>
           <thead>
             <tr>
-              {widocznePola.map((f) => {
+              {widocznePola.map((f, kolumna) => {
                 // Przesuwanie liczy się po wszystkich kolumnach (także ukrytych), jak kolejność na serwerze
                 const indeks = fields.indexOf(f);
                 return (
                   <th
                     key={f.id}
                     scope="col"
-                    className={`${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
+                    className={`group/kol relative ${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
                   >
                     <ColumnMenu
                       field={f}
@@ -387,73 +531,164 @@ export function PageTable({
                       onDelete={() => void store.removeField(f)}
                       onMoveLeft={() => void store.moveField(f, -1)}
                       onMoveRight={() => void store.moveField(f, 1)}
-                      firstColumn={indeks === 0}
-                      lastColumn={indeks === fields.length - 1}
+                      // Kolumna tytułu się nie przesuwa i nic nie wchodzi przed nią (jak w store.moveField)
+                      firstColumn={f.isTitle || indeks === 0 || fields[indeks - 1].isTitle}
+                      lastColumn={f.isTitle || indeks === fields.length - 1 || fields[indeks + 1].isTitle}
                       onAddOption={(etykieta) => void store.addOption(f, etykieta)}
                       onRemoveOption={(id) => void store.removeOption(f, id)}
+                    />
+                    {/* Uchwyt szerokości: przeciąganie (pointer events) albo ←/→ co 20 px; min. 80 px */}
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={`Zmień szerokość kolumny ${f.name} (strzałki w lewo i w prawo)`}
+                      aria-valuenow={szerokosci[kolumna]}
+                      aria-valuemin={MIN_SZEROKOSC_KOLUMNY}
+                      tabIndex={0}
+                      data-on={przeciaganie?.id === f.id}
+                      className={UCHWYT_KOLUMNY}
+                      onPointerDown={(e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        // preventDefault wyłącza domyślny fokus, a strzałki mają działać zaraz po kliknięciu
+                        e.currentTarget.focus();
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        start.current = {
+                          pointerId: e.pointerId,
+                          x: e.clientX,
+                          szer: szerokosci[kolumna],
+                          aktualna: szerokosci[kolumna],
+                        };
+                        setPrzeciaganie({ id: f.id, szer: szerokosci[kolumna] });
+                      }}
+                      onPointerMove={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        // Ruch bez wciśniętego przycisku (np. po zniknięciu uchwytu w trakcie): kończymy bez zapisu
+                        if (e.buttons === 0) {
+                          start.current = null;
+                          setPrzeciaganie(null);
+                          return;
+                        }
+                        const szer = Math.min(
+                          4000,
+                          Math.max(MIN_SZEROKOSC_KOLUMNY, Math.round(start.current.szer + e.clientX - start.current.x)),
+                        );
+                        start.current.aktualna = szer;
+                        setPrzeciaganie({ id: f.id, szer });
+                      }}
+                      onPointerUp={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        const { szer, aktualna } = start.current;
+                        start.current = null;
+                        setPrzeciaganie(null);
+                        e.currentTarget.releasePointerCapture?.(e.pointerId);
+                        if (aktualna !== szer) zapiszSzerokosc(f.id, aktualna);
+                      }}
+                      // Przeglądarka zerwała capture bez pointerup: kończymy jak puszczenie (zapis, jeśli była zmiana)
+                      onLostPointerCapture={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        const { szer, aktualna } = start.current;
+                        start.current = null;
+                        setPrzeciaganie(null);
+                        if (aktualna !== szer) zapiszSzerokosc(f.id, aktualna);
+                      }}
+                      onPointerCancel={(e) => {
+                        if (!start.current || start.current.pointerId !== e.pointerId) return;
+                        start.current = null;
+                        setPrzeciaganie(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+                        e.preventDefault();
+                        const nowa = Math.min(
+                          4000,
+                          Math.max(MIN_SZEROKOSC_KOLUMNY, szerokosci[kolumna] + (e.key === "ArrowRight" ? 20 : -20)),
+                        );
+                        if (nowa !== szerokosci[kolumna]) zapiszSzerokosc(f.id, nowa);
+                      }}
                     />
                     {/* Bez plakietki „w kalendarzu” w nagłówku: S2Projects pokazuje Termin bez niej (stan jest w menu kolumny) */}
                   </th>
                 );
               })}
               {/* Ostatni nagłówek: „+” otwiera „Nowe pole” (bez Sekretu); pod nim kolumna akcji wiersza */}
-              <th scope="col" className="h-10 w-[150px] border-b border-border px-1 text-left">
+              <th scope="col" className="h-10 border-b border-border px-1 text-left">
                 <AddFieldDialog iconTrigger allowSecret={false} onAdd={(input) => void store.addField(input)} />
               </th>
             </tr>
           </thead>
           <tbody>
-            {widoczneWiersze.map((r) =>
-              editing?.rowId === r.id && !wArkuszu ? (
-                <RowEdit
-                  key={r.id}
-                  fields={widocznePola}
-                  values={editing.values}
-                  today={today}
-                  onChange={store.setEditValue}
-                  onSave={() => void store.saveRow()}
-                  onCancel={store.cancelEdit}
-                  registerSecret={store.registerSecret}
-                />
-              ) : (
-                <RowPreview
-                  key={r.id}
-                  row={r}
-                  fields={widocznePola}
-                  today={today}
-                  done={zrobione}
-                  onOpen={() => {
-                    // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
-                    if (editing?.rowId === r.id) return;
-                    setWArkuszu(naTelefonie());
-                    void store.startEdit(r);
-                  }}
-                  onEdit={() => {
-                    setWArkuszu(naTelefonie());
-                    void store.startEdit(r);
-                  }}
-                  onDelete={() => void store.removeRow(r)}
-                />
-              ),
-            )}
-            {editing?.rowId === null && !wArkuszu && (
-              <RowEdit
-                fields={widocznePola}
-                values={editing.values}
-                today={today}
-                onChange={store.setEditValue}
-                onSave={() => void store.saveRow()}
-                onCancel={store.cancelEdit}
-                registerSecret={store.registerSecret}
-              />
-            )}
+            {widoczneWiersze.map((r) => (
+              <tr
+                key={r.id}
+                // Telefon: dotknięcie wiersza otwiera arkusz zamiast zmieniać komórkę (sprawdzamy w chwili dotknięcia)
+                onClickCapture={(e) => {
+                  if (!naTelefonie()) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
+                  if (editing?.rowId === r.id) return;
+                  setWArkuszu(true);
+                  void store.startEdit(r);
+                }}
+                // Fokus w wierszu przypina go (pozycja i widoczność). Przejście z innego wiersza zostawia
+                // zapamiętaną kolejność, żeby przeliczenie nie przeniosło w DOM wiersza z fokusem.
+                onFocus={() => {
+                  setPrzypiety((p) =>
+                    p?.id === r.id
+                      ? p
+                      : { id: r.id, kolejnosc: p ? p.kolejnosc : widoczneWiersze.map((w) => w.id) },
+                  );
+                }}
+                // Wyjście fokusu z wierszy tabeli: widok liczy się znów wg filtra i sortu.
+                // Fokus w okienku komórki (portal) wraca tu przez onFocus z drzewa Reacta.
+                onBlur={(e) => {
+                  const cel = e.relatedTarget;
+                  if (cel instanceof Node && e.currentTarget.contains(cel)) return;
+                  if (cel instanceof Element && cel.closest("tr")?.parentElement === e.currentTarget.parentElement) return;
+                  setPrzypiety(null);
+                }}
+                // Na telefonie pola i przyciski komórek nie łapią dotyku: dostaje go wiersz
+                className="group/wiersz max-[799px]:cursor-pointer max-[799px]:[&_a]:pointer-events-none max-[799px]:[&_button]:pointer-events-none max-[799px]:[&_input]:pointer-events-none"
+              >
+                {widocznePola.map((f) => (
+                  <TableCell
+                    key={f.id}
+                    row={r}
+                    field={f}
+                    today={today}
+                    done={zrobione}
+                    autoFocus={f.isTitle && r.id === nowyId}
+                    onSave={(v) => void store.updateCell(r, f, v)}
+                    onCreateOption={(etykieta) => store.createOption(f, etykieta)}
+                    onUpdateOption={(id, patch) => void store.updateOption(f, id, patch)}
+                    onRemoveOption={(id) => void store.removeOption(f, id)}
+                    // Kursor w nowym wierszu ustawiamy raz: po pierwszym fokusie komórka nie kradnie go przy zmianie filtra czy sortu
+                    onFocused={f.isTitle && r.id === nowyId ? () => setNowyId(null) : undefined}
+                  />
+                ))}
+                {/* Kosz pod „+”: widoczny po najechaniu na wiersz i przy fokusie w wierszu (.row-del) */}
+                <td className="h-11 border-b border-border px-1.5 text-right whitespace-nowrap group-last/wiersz:border-b-0">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    icon
+                    aria-label="Usuń wiersz"
+                    onClick={() => void store.removeRow(r)}
+                    className="text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:hidden"
+                  >
+                    <Trash2 aria-hidden="true" className="size-3.5" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
           <tfoot>
-            {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn */}
+            {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn; padding 8 × 12 px jak w S2Books */}
             <tr className="bg-black/[.02]">
               {widocznePola.map((f, i) =>
                 i === 0 ? (
-                  <td key={f.id} className="h-11 border-t border-border px-3 text-muted-foreground tabular-nums">
+                  <td key={f.id} className="border-t border-border px-3 py-2 text-muted-foreground tabular-nums">
                     {rowsLabel(widoczneWiersze.length)}
                   </td>
                 ) : (
@@ -466,7 +701,7 @@ export function PageTable({
                   />
                 ),
               )}
-              <td className="h-11 border-t border-border" />
+              <td className="border-t border-border" />
             </tr>
           </tfoot>
         </table>
@@ -474,7 +709,13 @@ export function PageTable({
 
       {/* „+ Nowy” pod ramką (.btng.sm, szary tekst) */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={nowyWiersz} className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={dodawanie}
+          onClick={() => void nowyWiersz()}
+          className="text-muted-foreground"
+        >
           <Plus aria-hidden="true" className="size-4" />
           Nowy
         </Button>

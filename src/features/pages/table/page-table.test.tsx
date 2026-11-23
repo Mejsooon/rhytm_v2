@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -20,7 +20,7 @@ const { toast } = vi.hoisted(() => ({
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
-// RowEdit czyta stan sejfu (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają
+// Sejf (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 
 import { PALETA } from "../fields";
@@ -62,8 +62,15 @@ function blok(key: TemplateKey, wiersze: Record<string, unknown>[]): LoadedBlock
   return stronaTestowa(key, "Strona", wiersze).blocks[0];
 }
 
+// Wiersz po tekście komórki albo wartości pola w komórce (tytuł i tekst to pola edycji)
 function wiersz(tekst: string) {
-  const tr = screen.getAllByRole("row").find((r) => r.textContent?.includes(tekst));
+  const tr = screen
+    .getAllByRole("row")
+    .find(
+      (r) =>
+        r.textContent?.includes(tekst) ||
+        Array.from(r.querySelectorAll("input")).some((i) => i.value.includes(tekst)),
+    );
   if (!tr) throw new Error(`Brak wiersza ${tekst}`);
   return tr;
 }
@@ -76,7 +83,7 @@ function tytuly() {
   return screen
     .getAllByRole("row")
     .slice(1, -1)
-    .map((r) => r.querySelector("td")?.textContent);
+    .map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
 }
 
 function naglowek(nazwa: string) {
@@ -86,12 +93,6 @@ function naglowek(nazwa: string) {
 async function otworzMenu(user: ReturnType<typeof userEvent.setup>, nazwa: string) {
   await user.click(within(naglowek(nazwa)).getByRole("button", { name: new RegExp(nazwa) }));
   return screen.getByRole("menu", { name: `Kolumna ${nazwa}` });
-}
-
-function edycja() {
-  const tr = document.querySelector('tr[class*="bg-success-soft"]');
-  if (!tr) throw new Error("Brak wiersza w edycji");
-  return tr as HTMLElement;
 }
 
 function telefon() {
@@ -125,7 +126,8 @@ describe("PageTable", () => {
         rows: [],
       };
       render(<PageTable block={block} today={TODAY} />);
-      expect(screen.getByTestId("przypiete-karty").children).toHaveLength(3);
+      // Trzy karty i przycisk „Karta” na końcu rzędu
+      expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
       expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
       expect(within(stopka).getByText("0 wierszy")).toBeInTheDocument();
@@ -265,7 +267,9 @@ describe("PageTable", () => {
 
     it("Pusta strona: bez kart", () => {
       render(<PageTable block={blok("empty", [{ Nazwa: "A" }])} today={TODAY} />);
-      expect(screen.queryByTestId("przypiete-karty")).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId("karta")).toHaveLength(0);
+      // Przycisk dodawania karty jest widoczny także bez kart
+      expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
   });
 
@@ -327,14 +331,17 @@ describe("PageTable", () => {
       expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
     });
 
-    it("kolumna przesunięta na pozycję 0 da się ukryć i przywrócić z „⋯”", async () => {
+    it("kolumna na pozycji 0 (stare dane z serwera) da się ukryć i przywrócić z „⋯”", async () => {
       const user = userEvent.setup();
-      const b = blok("books", BOOKS);
+      const zSzablonu = blok("books", BOOKS);
+      // Przesuwanie nie stawia już niczego przed tytułem, więc taka kolejność przychodzi tylko z serwera
+      const b = {
+        ...zSzablonu,
+        fields: zSzablonu.fields.map((f) => (f.name === "Autor" ? { ...f, position: -1 } : f)),
+      };
       render(<PageTable block={b} today={TODAY} />);
-      let menu = await otworzMenu(user, "Autor");
-      await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" }));
       expect(screen.getAllByRole("columnheader")[0].textContent).toBe("Autor");
-      menu = await otworzMenu(user, "Autor");
+      const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
       const autor = b.fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [autor.id] });
@@ -392,7 +399,6 @@ describe("PageTable", () => {
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
       const menu = await otworzMenu(user, "Autor");
-      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeEnabled();
       await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" }));
       const [tytul, autor, status, ...reszta] = b.fields.map((f) => f.id);
       expect(actions.reorderFields).toHaveBeenCalledWith(b.id, [tytul, status, autor, ...reszta]);
@@ -408,6 +414,21 @@ describe("PageTable", () => {
       await user.keyboard("{Escape}");
       menu = await otworzMenu(user, "Przeczytana");
       expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeDisabled();
+    });
+
+    it("kolumna tytułu ma wyłączone oba przesunięcia, kolumna tuż za nią „Przesuń w lewo”", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      let menu = await otworzMenu(user, "Tytuł");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeDisabled();
+      await user.keyboard("{Escape}");
+      menu = await otworzMenu(user, "Autor");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" })).toBeEnabled();
+      await user.keyboard("{Escape}");
+      menu = await otworzMenu(user, "Status");
+      expect(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" })).toBeEnabled();
     });
 
     it("błąd przesunięcia przywraca kolejność i pokazuje toast", async () => {
@@ -458,6 +479,27 @@ describe("PageTable", () => {
       expect(id).toBe(status.id);
       expect(patch.config.options.map((o: { label: string }) => o.label)).not.toContain("Czytam");
       expect(patch.config.options).toHaveLength(status.config.options!.length - 1);
+    });
+
+    it("zmiana nazwy opcji z okienka komórki zostawia wiersz pod filtrem „in” i pokazuje nową nazwę", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      (b.content.settings as { filters: unknown[] }).filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: /^Status: / }));
+      await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
+      const nazwa = screen.getByRole("textbox", { name: "Nazwa opcji" });
+      await user.clear(nazwa);
+      await user.type(nazwa, "W trakcie{Enter}");
+      const [poleId, patch] = actions.updateField.mock.calls[0];
+      expect(poleId).toBe(status.id);
+      expect(patch.config.options.find((o: { id: string }) => o.id === czytam).label).toBe("W trakcie");
+      // Wiersze zostają widoczne (filtr trzyma id opcji), komórka pokazuje nową nazwę
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      expect(within(wiersz("Atomic Habits")).getByRole("button", { name: /^Status: / })).toHaveTextContent("W trakcie");
     });
 
     describe("usunięcie opcji z odwołaniami", () => {
@@ -577,62 +619,171 @@ describe("PageTable", () => {
   });
 
   describe("wiersze", () => {
-    it("„Edytuj” otwiera tryb wiersza, „Zapisz” wysyła zmienione komórki", async () => {
+    it("„Utwórz «Porzucone»” w komórce Status zapisuje id nowej opcji i pokazuje ją w komórce", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(within(wiersz("Clean Code")).getByRole("button", { name: /^Status: / }));
+      await user.type(screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }), "Porzucone");
+      await user.click(screen.getByRole("button", { name: "Utwórz «Porzucone»" }));
+      // Id nowej opcji z zapisu pola; komórka (wołająca onSave z polem sprzed utworzenia) zapisuje właśnie je
+      const zapisPola = actions.updateField.mock.calls.at(-1)![1] as { config: { options: { id: string; label: string }[] } };
+      const nowa = zapisPola.config.options.find((o) => o.label === "Porzucone")!;
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-11", { [status.id]: nowa.id }));
+      expect(within(wiersz("Clean Code")).getByRole("button", { name: /^Status: / })).toHaveTextContent("Porzucone");
+    });
+
+    it("bez trybu edycji wiersza: nie ma „Edytuj” ani „Zapisz”", () => {
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      expect(screen.queryByRole("button", { name: /Edytuj/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Zapisz" })).not.toBeInTheDocument();
+    });
+
+    it("zmiana tekstu w komórce woła updateRow z jedną kolumną", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Edytuj wiersz" }));
-      expect(edycja()).toHaveClass("bg-success-soft/50");
-      await user.type(within(edycja()).getByRole("textbox", { name: "Autor" }), "!");
-      await user.click(screen.getByRole("button", { name: "Zapisz" }));
+      const pole = within(wiersz("Deep Work")).getByRole("textbox", { name: "Autor" });
+      await user.type(pole, "!");
+      await user.tab();
       const autor = b.fields.find((f) => f.name === "Autor")!;
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-4", { [autor.id]: "Cal Newport!" }));
-      expect(screen.getByText("Cal Newport!")).toBeInTheDocument();
+      expect(actions.updateRow).toHaveBeenCalledTimes(1);
+      expect(pole).toHaveValue("Cal Newport!");
     });
 
-    it("„+ Nowy”: szkic z opcją domyślną, pusty tytuł → „Bez tytułu”, stopka liczy wiersze", async () => {
+    it("gwiazdka zapisuje od razu", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
-      expect(within(edycja()).getByRole("button", { name: "Status" }).textContent).toContain("Chcę przeczytać");
-      await user.click(screen.getByRole("button", { name: "Zapisz" }));
-      const tytul = b.fields.find((f) => f.isTitle)!;
-      expect(actions.addRow).toHaveBeenCalledWith(b.id, expect.objectContaining({ [tytul.id]: "Bez tytułu" }));
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("12 wierszy")).toBeInTheDocument();
+      const ocena = b.fields.find((f) => f.name === "Ocena")!;
+      await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: "Ocena 3 na 5" }));
+      expect(actions.updateRow).toHaveBeenCalledWith("row-1", { [ocena.id]: 3 });
     });
 
-    it("klik w wiersz w trakcie zapisu otwiera edycję, gdy serwer zwróci prawdziwe id (e2e pages.spec:10)", async () => {
+    it("„Nowy” woła addRow z opcją domyślną, a kursor trafia do tytułu nowego wiersza", async () => {
       const user = userEvent.setup();
-      let odpowiedz: (v: unknown) => void = () => {};
+      let odpowiedz: () => void = () => {};
       actions.addRow.mockImplementation(
         (_b: string, values: Record<string, unknown>) =>
           new Promise((resolve) => {
-            odpowiedz = () => resolve({ ok: true, row: { id: "srv-9", values, position: 99, deletedAt: null } });
+            odpowiedz = () => resolve({ ok: true, row: { id: "srv-1", values, position: 99, deletedAt: null } });
           }),
       );
-      render(<PageTable block={blok("books", [])} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
-      await user.type(within(edycja()).getByRole("textbox", { name: "Tytuł" }), "Diuna");
-      await user.click(screen.getByRole("button", { name: "Zapisz" }));
-      // Wiersz ma jeszcze tymczasowe id — klik nie może zginąć
-      await user.click(screen.getByText("Diuna", { exact: true }));
-      expect(screen.queryByRole("textbox", { name: "Tytuł" })).toBeNull();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      const nowy = screen.getByRole("button", { name: "Nowy" });
+      await user.click(nowy);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const chce = status.config.options!.find((o) => o.label === "Chcę przeczytać")!.id;
+      expect(actions.addRow).toHaveBeenCalledWith(b.id, expect.objectContaining({ [status.id]: chce }));
+      // Do odpowiedzi serwera przycisk jest wyłączony
+      expect(nowy).toBeDisabled();
       await act(async () => {
-        odpowiedz(null);
+        odpowiedz();
       });
-      expect(within(edycja()).getByRole("textbox", { name: "Tytuł" })).toHaveValue("Diuna");
-      await user.click(within(edycja()).getByRole("button", { name: "Ocena 4 na 5" }));
-      await user.click(screen.getByRole("button", { name: "Zapisz" }));
-      expect(actions.updateRow).toHaveBeenCalledWith("srv-9", expect.objectContaining({}));
+      expect(nowy).toBeEnabled();
+      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
+      expect(within(stopka).getByText("12 wierszy")).toBeInTheDocument();
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const pole = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
+      expect(pole).toBeDefined();
+      expect(pole).toHaveValue("");
+      await user.type(pole!, "Diuna{Enter}");
+      expect(actions.updateRow).toHaveBeenCalledWith("srv-1", { [tytul.id]: "Diuna" });
     });
 
-    it("usunięcie: wiersz znika, toast „Usunięto · Cofnij” przywraca", async () => {
+    it("kursor w nowym wierszu ustawia się raz: po zmianie filtra komórka nie kradnie fokusu", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      const nowaKomorka = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
+      expect(nowaKomorka).toBeDefined();
+      await user.click(screen.getByRole("button", { name: "Filtruj" }));
+      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+      const wartosc = within(filtr).getByRole("textbox", { name: "Wartość warunku 1" });
+      // Warunek ukrywa nowy (pusty) wiersz, a po wyczyszczeniu wiersz wraca jako świeżo zamontowana komórka
+      await user.type(wartosc, "deep");
+      expect(nowaKomorka).not.toBeInTheDocument();
+      await user.clear(wartosc);
+      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true);
+      expect(wartosc).toHaveFocus();
+    });
+
+    it("sort po tytule: zapis w trakcie pisania nie przesuwa wiersza ani nie zabiera fokusu; po wyjściu wiersz trafia na swoje miejsce", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(3, 6));
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const ustawienia = b.content.settings as { sort: unknown[]; filters: unknown[] };
+      ustawienia.sort = [{ field_id: tytul.id, dir: "asc" }];
+      ustawienia.filters = [];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Deep Work", "Diuna", "Zero to One"]);
+      const pole = within(wiersz("Deep Work")).getByRole("textbox", { name: "Tytuł" });
+      await user.click(pole);
+      await user.keyboard("{Home}Zzz");
+      // Zapis po 600 ms przerwy: magazyn ma już nowy tytuł, a wiersz stoi na swoim miejscu z fokusem
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-1", { [tytul.id]: "ZzzDeep Work" }), {
+        timeout: 2000,
+      });
+      expect(tytuly()).toEqual(["ZzzDeep Work", "Diuna", "Zero to One"]);
+      expect(pole).toHaveFocus();
+      // Dalsze znaki trafiają do tego samego pola
+      await user.keyboard("!");
+      expect(pole).toHaveValue("Zzz!Deep Work");
+      // Wyjście fokusu: widok liczy się znów wg sortu
+      act(() => pole.blur());
+      await waitFor(() => expect(tytuly()).toEqual(["Diuna", "Zero to One", "Zzz!Deep Work"]));
+    });
+
+    it("„Nowy” przy filtrze, który odrzuca nowy wiersz: wiersz widoczny z kursorem w tytule, po wyjściu znika", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      const ustawienia = b.content.settings as { sort: unknown[]; filters: unknown[] };
+      ustawienia.sort = [];
+      ustawienia.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      const { rerender } = render(<PageTable block={b} today={TODAY} />);
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      // Nowy wiersz („Chcę przeczytać”) nie spełnia filtra, a mimo to stoi na końcu z kursorem w tytule
+      await waitFor(() => expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation", ""]));
+      const pole = screen.getAllByRole("textbox", { name: "Tytuł" })[2];
+      expect(pole).toHaveFocus();
+      await user.type(pole, "Nowa{Enter}");
+      // Wyjście fokusu: wiersz znika zgodnie z filtrem
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      // nowyId wyczyszczony: gdy wiersz wróci do widoku (bez filtra), komórka nie kradnie fokusu
+      const nowy = { id: "srv-1", values: { [status.id]: status.config.default_option }, position: 99, deletedAt: null };
+      rerender(
+        <PageTable
+          block={{ ...b, rows: [...b.rows, nowy], content: { ...b.content, settings: { ...ustawienia, filters: [] } } }}
+          today={TODAY}
+        />,
+      );
+      expect(tytuly()).toHaveLength(12);
+      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => i === document.activeElement)).toBe(false);
+    });
+
+    it("błąd „Nowy” nie dodaje wiersza i pokazuje toast", async () => {
+      actions.addRow.mockResolvedValue({ ok: false, message: "x" });
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
+      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
+      expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+    });
+
+    it("„Usuń wiersz”: wiersz znika, toast „Usunięto · Cofnij” przywraca", async () => {
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: "Usuń wiersz" }));
-      expect(screen.queryByText("Atomic Habits")).not.toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Atomic Habits")).not.toBeInTheDocument();
       expect(karta("Czytam teraz").textContent).toContain("1");
       expect(actions.deleteRow).toHaveBeenCalledWith("row-1");
       await waitFor(() => expect(toast).toHaveBeenCalledWith("Usunięto", expect.anything()));
@@ -642,7 +793,7 @@ describe("PageTable", () => {
         await opcje.action.onClick();
       });
       expect(actions.restoreRow).toHaveBeenCalledWith("row-1");
-      expect(screen.getByText("Atomic Habits")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Atomic Habits")).toBeInTheDocument();
     });
   });
 
@@ -657,15 +808,187 @@ describe("PageTable", () => {
     });
   });
 
+  describe("szerokość kolumn i przewijanie", () => {
+    it("domyślne szerokości z <col>: tytuł 300, ocena 130, a ostatnia kolumna bez szerokości", () => {
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const idx = (nazwa: string) => b.fields.findIndex((f) => f.name === nazwa);
+      expect(kolumny[idx("Tytuł")].style.width).toBe("300px");
+      expect(kolumny[idx("Ocena")].style.width).toBe("130px");
+      expect(kolumny[kolumny.length - 1].style.width).toBe("");
+    });
+
+    it("tabela ma width równy sumie szerokości plus 56 px i min-width: 100%", () => {
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const suma = kolumny.slice(0, -1).reduce((a, c) => a + parseInt(c.style.width, 10), 0);
+      const tabela = container.querySelector("table") as HTMLElement;
+      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      expect(tabela.style.minWidth).toBe("100%");
+      expect(tabela.style.tableLayout).toBe("fixed");
+    });
+
+    it("śmieciowe wartości z bazy (poniżej 80, nie liczba) dają szerokość domyślną", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const ocena = b.fields.find((f) => f.name === "Ocena")!;
+      const zle: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 10, [ocena.id]: "x" } } },
+      };
+      const { container } = render(<PageTable block={zle} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("220px");
+      expect(kolumny[b.fields.indexOf(ocena)].style.width).toBe("130px");
+    });
+
+    it("ArrowRight na uchwycie „Autor” zapisuje 240 i nie zmienia innych kolumn", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const uchwyt = screen.getByRole("separator", { name: "Zmień szerokość kolumny Autor (strzałki w lewo i w prawo)" });
+      expect(uchwyt).toHaveAttribute("aria-orientation", "vertical");
+      uchwyt.focus();
+      await user.keyboard("{ArrowRight}");
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 240 } });
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("240px");
+      expect(kolumny[0].style.width).toBe("300px");
+    });
+
+    it("ArrowLeft przy 80 zostaje na 80 bez zapisu, a przy 90 schodzi do 80", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const wazki: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 80 } } },
+      };
+      render(<PageTable block={wazki} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.focus();
+      await user.keyboard("{ArrowLeft}");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(uchwyt).toHaveAttribute("aria-valuenow", "80");
+    });
+
+    it("przeciąganie zmienia szerokość lokalnie, a zapis idzie raz po puszczeniu", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      uchwyt.releasePointerCapture = vi.fn();
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560, buttons: 1 });
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("280px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 100, buttons: 1 });
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("80px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 530, buttons: 1 });
+      fireEvent.pointerUp(uchwyt, { pointerId: 1, clientX: 530 });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 250 } });
+    });
+
+    it("pointercancel i lostpointercapture czyszczą stan: cancel bez zapisu, lost z zapisem", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kol = kolumny[b.fields.indexOf(autor)];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540, buttons: 1 });
+      fireEvent.pointerCancel(uchwyt, { pointerId: 1 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700, buttons: 1 });
+      expect(kol.style.width).toBe("220px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      fireEvent.pointerDown(uchwyt, { pointerId: 2, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 3, clientX: 900, buttons: 1 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 540, buttons: 1 });
+      fireEvent.lostPointerCapture(uchwyt, { pointerId: 2 });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 260 } });
+      fireEvent.pointerMove(uchwyt, { pointerId: 2, clientX: 900, buttons: 1 });
+      expect(kol.style.width).toBe("260px");
+    });
+
+    it("ruch bez wciśniętego przycisku kończy przeciąganie bez zapisu i nie zmienia szerokości", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[])[b.fields.indexOf(autor)];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0, buttons: 1 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 600, buttons: 0 });
+      expect(kol.style.width).toBe("220px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 700, buttons: 1 });
+      expect(kol.style.width).toBe("220px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("wyzwalacz menu kolumny ucina długą nazwę: max-w (z ujemnym marginesem .colbtn), min-w-0 i truncate", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      render(<PageTable block={b} today={TODAY} />);
+      const przycisk = within(naglowek("Autor")).getByRole("button", { name: /Autor/ });
+      expect(przycisk).toHaveClass("max-w-[calc(100%+12px)]", "min-w-0");
+      expect(within(przycisk).getByText("Autor")).toHaveClass("min-w-0", "truncate");
+    });
+
+    it("klik bez ruchu nie zapisuje i daje uchwytowi fokus", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerUp(uchwyt, { pointerId: 1, clientX: 500 });
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(uchwyt).toHaveFocus();
+    });
+
+    it("dwie strzałki z rzędu dają 240 i 260, a zapis zachowuje inne wpisy mapy", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 1));
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const z: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [tytul.id]: 350.5 } } },
+      };
+      render(<PageTable block={z} today={TODAY} />);
+      screen.getByRole("separator", { name: /Autor/ }).focus();
+      await user.keyboard("{ArrowRight}{ArrowRight}");
+      expect(actions.saveTableSettings).toHaveBeenNthCalledWith(1, b.id, { column_widths: { [tytul.id]: 351, [autor.id]: 240 } });
+      expect(actions.saveTableSettings).toHaveBeenNthCalledWith(2, b.id, { column_widths: { [tytul.id]: 351, [autor.id]: 260 } });
+    });
+
+    it("ramka ma przewijanie poziome", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      expect(container.querySelector("table")!.parentElement).toHaveClass("overflow-x-auto");
+    });
+  });
+
   describe("telefon", () => {
     it("stuknięcie wiersza otwiera arkusz; „Zapisz” zapisuje", async () => {
       telefon();
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(within(wiersz("Deep Work")).getByText("Cal Newport"));
+      await user.click(within(wiersz("Deep Work")).getByRole("button", { name: "Ocena 2 na 5" }));
       const arkusz = screen.getByRole("dialog", { name: "Deep Work" });
+      // Dotknięcie otwiera arkusz zamiast zmieniać komórkę
+      expect(actions.updateRow).not.toHaveBeenCalled();
       expect(within(arkusz).getByRole("button", { name: "Usuń wiersz" })).toBeInTheDocument();
-      expect(document.querySelector('tr[class*="bg-success-soft"]')).toBeNull();
       await user.type(within(arkusz).getByRole("textbox", { name: "Autor" }), "!");
       await user.click(within(arkusz).getByRole("button", { name: "Zapisz" }));
       await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-4", expect.anything()));
@@ -682,6 +1005,76 @@ describe("PageTable", () => {
       await user.click(within(arkusz).getByRole("button", { name: "Anuluj" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(actions.addRow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("okno karty", () => {
+    it("„Dodaj kartę” zapisuje nową kartę na końcu listy", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Dodaj kartę" }));
+      const okno = screen.getByRole("dialog");
+      await user.click(within(within(okno).getByRole("radiogroup", { name: "Kolumna" })).getByRole("radio", { name: "Autor" }));
+      await user.click(within(okno).getByRole("button", { name: "Dodaj kartę" }));
+      const [blokId, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(blokId).toBe(b.id);
+      expect(zmiany.pinned_cards).toHaveLength(4);
+      expect(zmiany.pinned_cards[3]).toMatchObject({ label: "Autor", aggregation: "count_distinct" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("„Edytuj kartę” podmienia kartę pod indeksem i zachowuje szerokość", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      (b.content.settings as { pinned_cards: { width?: number }[] }).pinned_cards[1].width = 300;
+      render(<PageTable block={b} today={TODAY} />);
+      const menuKarty = screen.getAllByRole("button", { name: "Menu karty" })[1];
+      await user.click(menuKarty);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      const okno = screen.getByRole("dialog");
+      expect(within(okno).getByRole("heading", { name: "Edytuj kartę" })).toBeInTheDocument();
+      await user.clear(within(okno).getByLabelText("Napis"));
+      await user.type(within(okno).getByLabelText("Napis"), "Moja ocena");
+      await user.click(within(okno).getByRole("button", { name: "Zapisz" }));
+      const [, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(zmiany.pinned_cards).toHaveLength(3);
+      expect(zmiany.pinned_cards[1]).toMatchObject({ label: "Moja ocena", width: 300 });
+    });
+
+    it("lista kart zmieniona przy otwartym oknie: zapis trafia w edytowaną kartę, a usuniętej nie dodaje", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      const ustawienia = b.content.settings as { pinned_cards: { label: string }[] };
+      const { rerender } = render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getAllByRole("button", { name: "Menu karty" })[1]);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      // Odświeżenie z serwera przy otwartym oknie: bez pierwszej karty, nowe obiekty
+      const bezPierwszej = JSON.parse(JSON.stringify(ustawienia.pinned_cards.slice(1)));
+      rerender(
+        <PageTable block={{ ...b, content: { ...b.content, settings: { ...ustawienia, pinned_cards: bezPierwszej } } }} today={TODAY} />,
+      );
+      const okno = screen.getByRole("dialog");
+      await user.clear(within(okno).getByLabelText("Napis"));
+      await user.type(within(okno).getByLabelText("Napis"), "Moja ocena");
+      await user.click(within(okno).getByRole("button", { name: "Zapisz" }));
+      const [, zmiany] = actions.saveTableSettings.mock.calls[0];
+      expect(zmiany.pinned_cards).toHaveLength(2);
+      expect(zmiany.pinned_cards[0]).toMatchObject({ label: "Moja ocena" });
+      expect(zmiany.pinned_cards[1]).toEqual(bezPierwszej[1]);
+
+      // Edytowana karta znika przy otwartym oknie: „Zapisz” niczego nie dodaje
+      actions.saveTableSettings.mockClear();
+      await user.click(screen.getAllByRole("button", { name: "Menu karty" })[1]);
+      await user.click(screen.getByRole("menuitem", { name: "Edytuj kartę" }));
+      const tylkoPierwsza = JSON.parse(JSON.stringify(ustawienia.pinned_cards.slice(0, 1)));
+      rerender(
+        <PageTable block={{ ...b, content: { ...b.content, settings: { ...ustawienia, pinned_cards: tylkoPierwsza } } }} today={TODAY} />,
+      );
+      await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Zapisz" }));
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith("Tej karty już nie ma.");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
 });
