@@ -240,9 +240,10 @@ describe("MEditor (telefon)", () => {
   it("tabela przewija się poziomo", () => {
     render(<EditorView data={dane([tabela()])} />);
     const siatka = screen.getByRole("table");
-    // Kontener przewija się poziomo, a siatka ma minimalną szerokość (160 + 120 px na kolumnę)
+    // Kontener przewija się poziomo, a siatka ma szerokość sumy kolumn (tytuł 300 + status 180) plus 56 px
     expect(siatka.parentElement!.className).toContain("overflow-x-auto");
-    expect(siatka.style.minWidth).toBe("400px");
+    expect(siatka.style.width).toBe("536px");
+    expect(siatka.style.minWidth).toBe("100%");
   });
 
   it("stuknięcie wiersza tabeli otwiera arkusz wiersza; zapis zmienia wiersz", async () => {

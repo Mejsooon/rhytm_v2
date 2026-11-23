@@ -26,7 +26,7 @@ const OPOZNIENIE_ZAPISU = 600;
 
 // Komórka .td z S2Books.dc.html: wiersz 44 px, dolna linia (bez niej w ostatnim wierszu), najechanie podświetla o 2 %
 const TD =
-  "h-11 border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02]";
+  "h-11 truncate border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02]";
 // Komórka w edycji (.celltxt:focus-within): niebieska obwódka do środka i białe tło
 const OBWODKA =
   "focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]";

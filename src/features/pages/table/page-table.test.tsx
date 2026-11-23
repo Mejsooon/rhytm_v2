@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -731,6 +731,101 @@ describe("PageTable", () => {
       expect(within(stopka).getByText("7 przeczytanych")).toBeInTheDocument();
       expect(within(stopka).getByText("śr. 4,1")).toBeInTheDocument();
       expect(within(stopka).getByText("6 w tym roku")).toBeInTheDocument();
+    });
+  });
+
+  describe("szerokość kolumn i przewijanie", () => {
+    it("domyślne szerokości z <col>: tytuł 300, ocena 130, a ostatnia kolumna bez szerokości", () => {
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const idx = (nazwa: string) => b.fields.findIndex((f) => f.name === nazwa);
+      expect(kolumny[idx("Tytuł")].style.width).toBe("300px");
+      expect(kolumny[idx("Ocena")].style.width).toBe("130px");
+      expect(kolumny[kolumny.length - 1].style.width).toBe("");
+    });
+
+    it("tabela ma width równy sumie szerokości plus 56 px i min-width: 100%", () => {
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const suma = kolumny.slice(0, -1).reduce((a, c) => a + parseInt(c.style.width, 10), 0);
+      const tabela = container.querySelector("table") as HTMLElement;
+      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      expect(tabela.style.minWidth).toBe("100%");
+      expect(tabela.style.tableLayout).toBe("fixed");
+    });
+
+    it("śmieciowe wartości z bazy (poniżej 80, nie liczba) dają szerokość domyślną", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const ocena = b.fields.find((f) => f.name === "Ocena")!;
+      const zle: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 10, [ocena.id]: "x" } } },
+      };
+      const { container } = render(<PageTable block={zle} today={TODAY} />);
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("220px");
+      expect(kolumny[b.fields.indexOf(ocena)].style.width).toBe("130px");
+    });
+
+    it("ArrowRight na uchwycie „Autor” zapisuje 240 i nie zmienia innych kolumn", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 2));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const uchwyt = screen.getByRole("separator", { name: "Zmień szerokość kolumny Autor (strzałki w lewo i w prawo)" });
+      expect(uchwyt).toHaveAttribute("aria-orientation", "vertical");
+      uchwyt.focus();
+      await user.keyboard("{ArrowRight}");
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 240 } });
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("240px");
+      expect(kolumny[0].style.width).toBe("300px");
+    });
+
+    it("ArrowLeft przy 80 zostaje na 80 bez zapisu, a przy 90 schodzi do 80", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const wazki: LoadedBlock = {
+        ...b,
+        content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 80 } } },
+      };
+      render(<PageTable block={wazki} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.focus();
+      await user.keyboard("{ArrowLeft}");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(uchwyt).toHaveAttribute("aria-valuenow", "80");
+    });
+
+    it("przeciąganie zmienia szerokość lokalnie, a zapis idzie raz po puszczeniu", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      const uchwyt = screen.getByRole("separator", { name: /Autor/ });
+      uchwyt.setPointerCapture = vi.fn();
+      uchwyt.releasePointerCapture = vi.fn();
+      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560 });
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("280px");
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 100 });
+      expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("80px");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 530 });
+      fireEvent.pointerUp(uchwyt, { pointerId: 1, clientX: 530 });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 250 } });
+    });
+
+    it("ramka ma przewijanie poziome", () => {
+      const b = blok("books", BOOKS.slice(0, 1));
+      const { container } = render(<PageTable block={b} today={TODAY} />);
+      expect(container.querySelector("table")!.parentElement).toHaveClass("overflow-x-auto");
     });
   });
 

@@ -17,7 +17,14 @@ import {
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
 
-import { planTypeChange, type FieldType, type PageField } from "../fields";
+import {
+  DOMYSLNA_SZEROKOSC,
+  MIN_SZEROKOSC_KOLUMNY,
+  SZEROKOSC_TYTULU,
+  planTypeChange,
+  type FieldType,
+  type PageField,
+} from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { rowsLabel } from "../rows-label";
@@ -37,6 +44,15 @@ const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap
 // Wyzwalacz „Filtruj” jak Button secondary sm (.btn.sm z coss.css): 28 px, cień btn, fokus shadow-focus
 const PRZYCISK_FILTRA =
   "relative inline-flex h-7 flex-none cursor-pointer items-center justify-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[9px] text-sm leading-none font-medium whitespace-nowrap text-foreground shadow-btn transition-[box-shadow,background-color] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus max-[799px]:h-10";
+
+// Uchwyt zmiany szerokości (.colrs): 8 px na prawej krawędzi nagłówka, niebieska kreska 2 px po najechaniu,
+// przy fokusie z klawiatury i w trakcie przeciągania (data-on); na telefonie bez uchwytu
+const UCHWYT_KOLUMNY =
+  "absolute top-0 -right-1 bottom-0 z-[3] w-2 cursor-col-resize touch-none outline-none after:absolute after:top-1.5 after:bottom-1.5 after:left-[3px] after:w-0.5 after:rounded-sm after:bg-transparent after:transition-colors after:duration-[120ms] after:content-[''] group-hover/kol:after:bg-[rgba(59,130,246,.6)] focus-visible:after:bg-[rgba(59,130,246,.6)] data-[on=true]:after:bg-[rgba(59,130,246,.6)] max-[799px]:hidden";
+
+// Ramka z poziomym przewijaniem i cienkim suwakiem (.tbl-wrap)
+const RAMKA_PRZEWIJANA =
+  "overflow-x-auto overflow-y-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
 
 // Pozycja menu „⋯”; wyłączona: opacity .64
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
@@ -75,6 +91,11 @@ export function PageTable({
   // „Filtruj po tym polu” zamyka menu i od razu otwiera filtr — bez zwrotu fokusu na nagłówek
   const bezZwrotuFokusu = React.useRef(false);
 
+  // Przeciąganie uchwytu kolumny: w trakcie szerokość jest tylko lokalna (stan do rysowania, ref do zapisu),
+  // zapis idzie raz po puszczeniu
+  const [przeciaganie, setPrzeciaganie] = React.useState<{ id: string; szer: number } | null>(null);
+  const start = React.useRef<{ x: number; szer: number; aktualna: number } | null>(null);
+
   // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
   const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
   const [zrodloNazwy, setZrodloNazwy] = React.useState(store.tableName);
@@ -102,6 +123,25 @@ export function PageTable({
     kartaTerminu?.done_option_id !== undefined
       ? { fieldId: kartaTerminu.field_id, optionId: kartaTerminu.done_option_id }
       : null;
+
+  // Szerokość każdej widocznej kolumny: szkic z przeciągania, zapisana (tylko skończona i ≥ 80), inaczej domyślna wg typu
+  const szerokosci = widocznePola.map((f) => {
+    if (przeciaganie?.id === f.id) return przeciaganie.szer;
+    const zapisana = settings.column_widths[f.id];
+    if (typeof zapisana === "number" && Number.isFinite(zapisana) && zapisana >= MIN_SZEROKOSC_KOLUMNY) return zapisana;
+    return f.isTitle ? SZEROKOSC_TYTULU : DOMYSLNA_SZEROKOSC[f.type];
+  });
+  const sumaSzerokosci = szerokosci.reduce((a, b) => a + b, 0);
+
+  // Zapis szerokości jednej kolumny: cała mapa column_widths (patch ustawień scala się płytko), bez śmieci z bazy
+  function zapiszSzerokosc(id: string, szer: number) {
+    const mapa: Record<string, number> = {};
+    for (const [k, v] of Object.entries(settings.column_widths)) {
+      if (Number.isInteger(v) && v >= MIN_SZEROKOSC_KOLUMNY && v <= 4000) mapa[k] = v;
+    }
+    mapa[id] = szer;
+    void store.patchSettings({ column_widths: mapa });
+  }
 
   // Telefon (poniżej 800 px) edytuje wiersz w arkuszu; sprawdzamy w chwili kliknięcia
   function naTelefonie() {
@@ -335,18 +375,29 @@ export function PageTable({
       </div>
 
       {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
-      <div className="overflow-x-auto rounded-xl border-[1.5px] border-black/[.14] bg-white">
-        <table className="w-full border-collapse text-sm" style={{ minWidth: 120 * widocznePola.length + 160 }}>
+      <div className={RAMKA_PRZEWIJANA}>
+        {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” i kosza), nie węższa niż ramka */}
+        <table
+          className="border-collapse text-sm"
+          style={{ tableLayout: "fixed", width: sumaSzerokosci + 56, minWidth: "100%" }}
+        >
+          <colgroup>
+            {widocznePola.map((f, i) => (
+              <col key={f.id} style={{ width: szerokosci[i] }} />
+            ))}
+            {/* Ostatnia kolumna („+” i kosz) bez szerokości: wypełnia ramkę */}
+            <col />
+          </colgroup>
           <thead>
             <tr>
-              {widocznePola.map((f) => {
+              {widocznePola.map((f, kolumna) => {
                 // Przesuwanie liczy się po wszystkich kolumnach (także ukrytych), jak kolejność na serwerze
                 const indeks = fields.indexOf(f);
                 return (
                   <th
                     key={f.id}
                     scope="col"
-                    className={`${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
+                    className={`group/kol relative ${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
                   >
                     <ColumnMenu
                       field={f}
@@ -404,12 +455,60 @@ export function PageTable({
                       onAddOption={(etykieta) => void store.addOption(f, etykieta)}
                       onRemoveOption={(id) => void store.removeOption(f, id)}
                     />
+                    {/* Uchwyt szerokości: przeciąganie (pointer events) albo ←/→ co 20 px; min. 80 px */}
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={`Zmień szerokość kolumny ${f.name} (strzałki w lewo i w prawo)`}
+                      aria-valuenow={szerokosci[kolumna]}
+                      aria-valuemin={MIN_SZEROKOSC_KOLUMNY}
+                      tabIndex={0}
+                      data-on={przeciaganie?.id === f.id}
+                      className={UCHWYT_KOLUMNY}
+                      onPointerDown={(e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        start.current = { x: e.clientX, szer: szerokosci[kolumna], aktualna: szerokosci[kolumna] };
+                        setPrzeciaganie({ id: f.id, szer: szerokosci[kolumna] });
+                      }}
+                      onPointerMove={(e) => {
+                        if (!start.current) return;
+                        const szer = Math.min(
+                          4000,
+                          Math.max(MIN_SZEROKOSC_KOLUMNY, Math.round(start.current.szer + e.clientX - start.current.x)),
+                        );
+                        start.current.aktualna = szer;
+                        setPrzeciaganie({ id: f.id, szer });
+                      }}
+                      onPointerUp={(e) => {
+                        if (!start.current) return;
+                        e.currentTarget.releasePointerCapture?.(e.pointerId);
+                        const { szer, aktualna } = start.current;
+                        start.current = null;
+                        setPrzeciaganie(null);
+                        if (aktualna !== szer) zapiszSzerokosc(f.id, aktualna);
+                      }}
+                      onPointerCancel={() => {
+                        start.current = null;
+                        setPrzeciaganie(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+                        e.preventDefault();
+                        const nowa = Math.min(
+                          4000,
+                          Math.max(MIN_SZEROKOSC_KOLUMNY, szerokosci[kolumna] + (e.key === "ArrowRight" ? 20 : -20)),
+                        );
+                        if (nowa !== szerokosci[kolumna]) zapiszSzerokosc(f.id, nowa);
+                      }}
+                    />
                     {/* Bez plakietki „w kalendarzu” w nagłówku: S2Projects pokazuje Termin bez niej (stan jest w menu kolumny) */}
                   </th>
                 );
               })}
               {/* Ostatni nagłówek: „+” otwiera „Nowe pole” (bez Sekretu); pod nim kolumna akcji wiersza */}
-              <th scope="col" className="h-10 w-[150px] border-b border-border px-1 text-left">
+              <th scope="col" className="h-10 border-b border-border px-1 text-left">
                 <AddFieldDialog iconTrigger allowSecret={false} onAdd={(input) => void store.addField(input)} />
               </th>
             </tr>
