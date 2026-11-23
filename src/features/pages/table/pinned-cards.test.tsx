@@ -167,6 +167,10 @@ describe("PinnedCards: szerokość, menu i kolejność", () => {
       expect(screen.getByRole("menuitem", { name: nazwa })).toBeInTheDocument();
     }
     expect(menu).toBeInTheDocument();
+    // Ikony jak w S2CardMenu (pen-line, chevrony, move-horizontal) i linia (.mi-sep) tuż przed „Usuń kartę”
+    expect(screen.getByRole("menuitem", { name: "Edytuj kartę" }).querySelector(".lucide-pen-line")).not.toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Domyślna szerokość" }).querySelector(".lucide-move-horizontal")).not.toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Usuń kartę" }).previousElementSibling).toHaveClass("h-px", "bg-border");
     await user.click(screen.getByRole("menuitem", { name: "Przesuń w prawo" }));
     expect(onChange).toHaveBeenCalledWith([B, A]);
   });

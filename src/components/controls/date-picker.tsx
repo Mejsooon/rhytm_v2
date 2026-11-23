@@ -45,7 +45,7 @@ export function DatePicker({
   min?: IsoDate;
   // Najpóźniejszy dozwolony dzień: późniejsze są zablokowane (także „Dziś”, gdy dziś > max)
   max?: IsoDate;
-  // „bare”: goły tekst mono bez ramki i strzałki (komórka tabeli z EmptyPage.dc.html)
+  // „bare”: goły tekst bez ramki i strzałki, krój i cyfry tabelaryczne jak w komórce .td.num z S2Books.dc.html
   variant?: "box" | "bare";
   // „sm”: przycisk 28 px, ikona 14 px i tekst 12 px sans (btnBase z Books.dc.html, tryb edycji wiersza)
   size?: "md" | "sm";
@@ -121,7 +121,7 @@ export function DatePicker({
           )}
           {value ? (
             variant === "bare" ? (
-              <span className="font-mono">{formatDatePl(value)}</span>
+              <span className="min-w-0 truncate tabular-nums">{formatDatePl(value)}</span>
             ) : (
               <span className="min-w-0 truncate">
                 {`${DNI_WYZWALACZ[new Date(`${value}T00:00:00Z`).getUTCDay()]} ${formatDatePl(value)}`}

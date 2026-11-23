@@ -625,11 +625,11 @@ export function PageTable({
             ))}
           </tbody>
           <tfoot>
-            {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn */}
+            {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn; padding 8 × 12 px jak w S2Books */}
             <tr className="bg-black/[.02]">
               {widocznePola.map((f, i) =>
                 i === 0 ? (
-                  <td key={f.id} className="h-11 border-t border-border px-3 text-muted-foreground tabular-nums">
+                  <td key={f.id} className="border-t border-border px-3 py-2 text-muted-foreground tabular-nums">
                     {rowsLabel(widoczneWiersze.length)}
                   </td>
                 ) : (
@@ -642,7 +642,7 @@ export function PageTable({
                   />
                 ),
               )}
-              <td className="h-11 border-t border-border" />
+              <td className="border-t border-border" />
             </tr>
           </tfoot>
         </table>

@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -54,8 +54,8 @@ describe("OptionPicker", () => {
     expect(
       lista.querySelectorAll("button:not([role=option]), input"),
     ).toHaveLength(0);
-    expect(screen.getAllByRole("button", { name: /^Opcje: / })).toHaveLength(3);
-    for (const b of screen.getAllByRole("button", { name: /^Opcje: / }))
+    expect(screen.getAllByRole("button", { name: /^Edytuj opcję / })).toHaveLength(3);
+    for (const b of screen.getAllByRole("button", { name: /^Edytuj opcję / }))
       expect(lista).not.toContainElement(b);
   });
 
@@ -91,7 +91,7 @@ describe("OptionPicker", () => {
 
   it("fokus na opcji pokazuje jej „⋯”", () => {
     okienko();
-    const przycisk = screen.getByRole("button", { name: "Opcje: Czytam" });
+    const przycisk = screen.getByRole("button", { name: "Edytuj opcję „Czytam”" });
     expect(przycisk).toHaveClass("opacity-0");
     act(() => screen.getByRole("option", { name: "Czytam" }).focus());
     expect(przycisk).toHaveClass("opacity-100");
@@ -137,9 +137,10 @@ describe("OptionPicker", () => {
       screen.getByRole("textbox", { name: "Szukaj lub dodaj opcję" }),
       "Porzucone",
     );
-    await user.click(
-      screen.getByRole("button", { name: "Utwórz «Porzucone»" }),
-    );
+    // Plakietka jak w S2Books: sama nazwa, bez cudzysłowów (te zostają w nazwie dostępnej przycisku)
+    const utworz = screen.getByRole("button", { name: "Utwórz «Porzucone»" });
+    expect(within(utworz).getByText("Porzucone")).toBeInTheDocument();
+    await user.click(utworz);
     expect(p.onCreate).toHaveBeenCalledWith("Porzucone");
     expect(p.onPick).toHaveBeenCalledWith("nowa");
   });
@@ -190,7 +191,7 @@ describe("OptionPicker", () => {
   describe("panel „Edycja opcji”", () => {
     async function panel(user: ReturnType<typeof userEvent.setup>) {
       const p = okienko();
-      await user.click(screen.getByRole("button", { name: "Opcje: Czytam" }));
+      await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
       return p;
     }
 

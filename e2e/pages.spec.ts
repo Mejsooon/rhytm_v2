@@ -137,7 +137,7 @@ test.describe("strony", () => {
     await status.click();
     const opcja = page.getByRole("option", { name: "Porzucone", exact: true });
     await opcja.hover();
-    await page.getByRole("button", { name: "Opcje: Porzucone" }).click();
+    await page.getByRole("button", { name: "Edytuj opcję „Porzucone”" }).click();
     const panel = page.getByRole("group", { name: "Edycja opcji" });
     await expect(panel).toBeVisible();
     await expect(panel.getByRole("textbox", { name: "Nazwa opcji" })).toHaveValue(

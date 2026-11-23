@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Ellipsis,
-  Pencil,
+  MoveHorizontal,
+  PenLine,
   Plus,
-  RotateCcw,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
   Card,
   MENU_ITEM,
   MENU_ITEM_DANGER,
+  MENU_SEPARATOR,
   StatusBadge,
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
@@ -155,10 +156,7 @@ export function PinnedCards({
                         onEdit(i);
                       }}
                     >
-                      <Pencil
-                        aria-hidden="true"
-                        className="size-4 flex-none text-muted-foreground"
-                      />
+                      <PenLine aria-hidden="true" className="size-4 flex-none" />
                       <span className="flex-1">Edytuj kartę</span>
                     </button>
                   )}
@@ -174,10 +172,7 @@ export function PinnedCards({
                       onChange(next);
                     }}
                   >
-                    <ArrowLeft
-                      aria-hidden="true"
-                      className="size-4 flex-none text-muted-foreground"
-                    />
+                    <ChevronLeft aria-hidden="true" className="size-4 flex-none" />
                     <span className="flex-1">Przesuń w lewo</span>
                   </button>
                   <button
@@ -192,10 +187,7 @@ export function PinnedCards({
                       onChange(next);
                     }}
                   >
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="size-4 flex-none text-muted-foreground"
-                    />
+                    <ChevronRight aria-hidden="true" className="size-4 flex-none" />
                     <span className="flex-1">Przesuń w prawo</span>
                   </button>
                   <button
@@ -211,12 +203,11 @@ export function PinnedCards({
                       onChange(cards.map((c, j) => (j === i ? bez : c)));
                     }}
                   >
-                    <RotateCcw
-                      aria-hidden="true"
-                      className="size-4 flex-none text-muted-foreground"
-                    />
+                    <MoveHorizontal aria-hidden="true" className="size-4 flex-none" />
                     <span className="flex-1">Domyślna szerokość</span>
                   </button>
+                  {/* Separator przed „Usuń kartę” (.mi-sep z S2CardMenu.dc.html) */}
+                  <div className={MENU_SEPARATOR} />
                   <button
                     type="button"
                     role="menuitem"

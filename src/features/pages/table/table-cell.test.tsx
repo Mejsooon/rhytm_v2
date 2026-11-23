@@ -280,6 +280,24 @@ describe("TableCell", () => {
       await user.click(await screen.findByRole("button", { name: "Wyczyść" }));
       expect(onSave).toHaveBeenCalledWith(null);
     });
+
+    it("data bez kroju mono; czas do terminu tuż za datą, a klik w niego też otwiera kalendarz (S2Projects)", async () => {
+      const user = userEvent.setup();
+      const { onSave } = komorka(
+        pole("date", { name: "Termin", config: { show_in_calendar: true } }),
+        wiersz("2026-11-16"),
+      );
+      const wyzwalacz = screen.getByRole("button", { name: "Termin" });
+      expect(wyzwalacz.querySelector(".font-mono")).toBeNull();
+      // Wyzwalacz nie rozciąga się na całą komórkę, gdy obok stoi czas do terminu
+      expect(wyzwalacz).toHaveClass("flex-none");
+      expect(wyzwalacz).not.toHaveClass("flex-1");
+      await user.click(screen.getByText("jutro"));
+      expect(wyzwalacz).toHaveAttribute("aria-expanded", "true");
+      // Klik w dymku (portal) nie zamyka go przez komórkę: wybór dnia zapisuje
+      await user.click(await screen.findByRole("button", { name: "Dziś" }));
+      expect(onSave).toHaveBeenCalledWith(TODAY);
+    });
   });
 
   it("status pokazuje plakietkę opcji", () => {
@@ -345,7 +363,7 @@ describe("TableCell", () => {
         wiersz("o1"),
       );
       await user.click(screen.getByRole("button", { name: "Status" }));
-      await user.click(screen.getByRole("button", { name: "Opcje: Czytam" }));
+      await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
       expect(
         screen.getByRole("group", { name: "Edycja opcji" }),
       ).toBeInTheDocument();

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Ellipsis, Plus, Trash2 } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import { KOLORY_OPCJI, type PageField } from "../fields";
@@ -87,7 +87,7 @@ export function OptionPicker({
       <div
         role="group"
         aria-label="Edycja opcji"
-        className="flex flex-col gap-1"
+        className="flex flex-col gap-1 p-1"
       >
         <input
           type="text"
@@ -212,14 +212,14 @@ export function OptionPicker({
                 variant="ghost"
                 size="xs"
                 icon
-                aria-label={`Opcje: ${o.label}`}
+                aria-label={`Edytuj opcję „${o.label}”`}
                 onClick={() => {
                   setNazwa(o.label);
                   setEdytowanaId(o.id);
                 }}
                 className={`pointer-events-auto hover:opacity-100 focus-visible:opacity-100 ${najechana === o.id ? "opacity-100" : "opacity-0"}`}
               >
-                <span aria-hidden="true">⋯</span>
+                <Ellipsis aria-hidden="true" className="size-3.5" />
               </Button>
             </div>
           ))}
@@ -234,7 +234,7 @@ export function OptionPicker({
         >
           <Plus aria-hidden="true" className="size-3.5" />
           Utwórz
-          <StatusBadge tone="gray">{`«${szukane}»`}</StatusBadge>
+          <StatusBadge tone="gray">{szukane}</StatusBadge>
         </button>
       )}
     </div>

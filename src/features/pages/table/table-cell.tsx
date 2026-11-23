@@ -239,10 +239,19 @@ export function TableCell({
       <td
         className={cn(
           TD,
-          "p-0 has-[[aria-expanded=true]]:bg-white has-[[aria-expanded=true]]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]",
+          "p-0 has-[[aria-expanded=true]]:bg-white has-[[aria-expanded=true]]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)] has-[:focus-visible]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]",
         )}
       >
-        <div className="flex h-11 items-center whitespace-nowrap">
+        {/* Czas do terminu stoi tuż za datą (odstęp 6 px, S2Projects.dc.html). Klik w puste miejsce komórki
+            otwiera kalendarz jak klik w datę; klik w dymku (portal poza tym divem w DOM) się nie liczy. */}
+        <div
+          className="flex h-11 cursor-pointer items-center gap-1.5 overflow-hidden pr-3 whitespace-nowrap"
+          onClick={(e) => {
+            const wyzwalacz = e.currentTarget.querySelector("button");
+            const cel = e.target as Node;
+            if (wyzwalacz && e.currentTarget.contains(cel) && !wyzwalacz.contains(cel)) wyzwalacz.click();
+          }}
+        >
           <DatePicker
             variant="bare"
             ariaLabel={field.name}
@@ -250,16 +259,19 @@ export function TableCell({
             today={today}
             value={typeof v === "string" ? (v as IsoDate) : null}
             onChange={(d) => onSave(d)}
-            // Wyzwalacz na całą komórkę; fokus z klawiatury jak komórka w edycji
-            className="h-11 min-w-0 flex-1 justify-start rounded-none pr-2 pl-3 text-sm tabular-nums focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
+            // Fokus z klawiatury obrysowuje całą komórkę (has-[:focus-visible] na td); bez czasu do terminu na całą szerokość
+            className={cn(
+              "h-11 min-w-0 justify-start rounded-none pl-3 text-sm tabular-nums focus-visible:shadow-none",
+              wzgledna ? "flex-none" : "flex-1",
+            )}
           />
           {wzgledna &&
             (pilny ? (
-              <StatusBadge tone="red" className="mr-3">
+              <StatusBadge tone="red" className="min-w-0">
                 {wzgledna}
               </StatusBadge>
             ) : (
-              <span className="mr-3 text-muted-foreground">{wzgledna}</span>
+              <span className="min-w-0 truncate text-muted-foreground">{wzgledna}</span>
             ))}
         </div>
       </td>

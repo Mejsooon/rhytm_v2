@@ -490,7 +490,7 @@ describe("PageTable", () => {
       render(<PageTable block={b} today={TODAY} />);
       expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
       await user.click(within(wiersz("Atomic Habits")).getByRole("button", { name: "Status" }));
-      await user.click(screen.getByRole("button", { name: "Opcje: Czytam" }));
+      await user.click(screen.getByRole("button", { name: "Edytuj opcję „Czytam”" }));
       const nazwa = screen.getByRole("textbox", { name: "Nazwa opcji" });
       await user.clear(nazwa);
       await user.type(nazwa, "W trakcie{Enter}");
@@ -881,11 +881,11 @@ describe("PageTable", () => {
       expect(actions.saveTableSettings).not.toHaveBeenCalled();
     });
 
-    it("wyzwalacz menu kolumny ucina długą nazwę: max-w-full, min-w-0 i truncate", () => {
+    it("wyzwalacz menu kolumny ucina długą nazwę: max-w (z ujemnym marginesem .colbtn), min-w-0 i truncate", () => {
       const b = blok("books", BOOKS.slice(0, 1));
       render(<PageTable block={b} today={TODAY} />);
       const przycisk = within(naglowek("Autor")).getByRole("button", { name: /Autor/ });
-      expect(przycisk).toHaveClass("max-w-full", "min-w-0");
+      expect(przycisk).toHaveClass("max-w-[calc(100%+12px)]", "min-w-0");
       expect(within(przycisk).getByText("Autor")).toHaveClass("min-w-0", "truncate");
     });
 

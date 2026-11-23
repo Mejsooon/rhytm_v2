@@ -33,8 +33,8 @@ export function SummaryCell({
   const tekst = summary ? summarize(field, rows, summary, today) : "";
   return (
     <td
-      // Stopka jak w makiecie: 44 px, linia nad komórką, liczby do prawej; średnia wyróżniona
-      className={`h-11 border-t border-border px-3 tabular-nums ${field.type === "number" ? "text-right" : ""} ${
+      // Stopka jak w S2Books.dc.html: padding 8 × 12 px (wiersz ok. 37 px), linia nad komórką, liczby do prawej; średnia wyróżniona
+      className={`border-t py-2 border-border px-3 tabular-nums ${field.type === "number" ? "text-right" : ""} ${
         summary?.kind === "avg" ? "font-semibold text-foreground" : "text-muted-foreground"
       }`}
     >
