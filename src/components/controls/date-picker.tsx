@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
@@ -19,8 +19,8 @@ const DNI_ND = ["nd", "pn", "wt", "śr", "cz", "pt", "sb"];
 // Skróty dnia tygodnia na wyzwalaczu („wt 17.11.2026” z CBlockDialog.dc.html); indeks = getUTCDay (0 = niedziela)
 const DNI_WYZWALACZ = ["nd", "pn", "wt", "śr", "czw", "pt", "sob"];
 
-// Wybór daty wg dp() z Books.dc.html: dymek 244 px, nagłówek z miesiącem, siatka 7 × 6,
-// stopka „Dziś” / „Wyczyść”. Wybór dnia zamyka dymek.
+// Wybór daty wg kalendarza z makiet S2 (S2Books.dc.html): dymek 256 px, nagłówek z miesiącem,
+// siatka 7 kolumn tylko z dniami miesiąca, stopka „Dziś” / „Wyczyść”. Wybór dnia zamyka dymek.
 // Wyzwalacz „box” jak .igroup z CBlockDialog.dc.html: ikona kalendarza po lewej i data sans z dniem tygodnia.
 export function DatePicker({
   value,
@@ -80,8 +80,11 @@ export function DatePicker({
     setOpen(false);
   }
 
+  // Pełne tygodnie z dniami tego miesiąca; tydzień w całości z następnego miesiąca odpada
   const siatka = open
-    ? buildMonthGrid(widok.rok, widok.miesiac, weekStart)
+    ? buildMonthGrid(widok.rok, widok.miesiac, weekStart).filter(
+        (_, i, wszystkie) => wszystkie.slice(i - (i % 7), i - (i % 7) + 7).some((c) => c.inMonth),
+      )
     : [];
   // „Dziś” jest blokowane, gdy dzisiejszy dzień leży poza zakresem min–max
   const dzisPozaZakresem =
@@ -91,7 +94,7 @@ export function DatePicker({
     <ActionPopover
       open={open}
       onOpenChange={zmienOtwarcie}
-      width={244}
+      width={256}
       trigger={
         <button
           type="button"
@@ -133,16 +136,16 @@ export function DatePicker({
         </button>
       }
     >
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2">
         <Button
           size="sm"
           icon
           aria-label="Poprzedni miesiąc"
           onClick={() => przesun(-1)}
         >
-          ‹
+          <ChevronLeft aria-hidden="true" className="size-4" />
         </Button>
-        <span className="text-[13px] font-semibold">
+        <span className="text-sm font-semibold">
           {monthTitlePl(widok.rok, widok.miesiac)}
         </span>
         <Button
@@ -151,38 +154,43 @@ export function DatePicker({
           aria-label="Następny miesiąc"
           onClick={() => przesun(1)}
         >
-          ›
+          <ChevronRight aria-hidden="true" className="size-4" />
         </Button>
       </div>
-      <div className="grid grid-cols-7 gap-0.5 pb-1 text-center font-mono text-[10px] text-muted-foreground">
+      <div className="grid grid-cols-7 gap-0.5 pb-1 text-center text-xs font-medium text-muted-foreground">
         {(weekStart === "mon" ? DNI_PN : DNI_ND).map((d) => (
           <span key={d}>{d}</span>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-0.5">
-        {siatka.map((c) => (
-          <button
-            key={c.date}
-            type="button"
-            aria-pressed={c.date === value}
-            disabled={
-              (min !== undefined && c.date < min) ||
-              (max !== undefined && c.date > max)
-            }
-            onClick={() => wybierz(c.date)}
-            className={cn(
-              "disabled:cursor-default disabled:text-faint-foreground disabled:hover:bg-transparent",
-              "h-[30px] cursor-pointer rounded-md border border-transparent bg-transparent p-0 font-mono text-xs text-foreground hover:bg-muted",
-              !c.inMonth && "text-faint-foreground",
-              c.date === dzis && "border-border-strong",
-              c.date === value && "bg-primary text-primary-foreground hover:bg-primary",
-            )}
-          >
-            {Number(c.date.slice(8))}
-          </button>
-        ))}
+        {siatka.map((c) =>
+          // Dni spoza miesiąca: puste miejsce w siatce (makieta), bez przycisku
+          !c.inMonth ? (
+            <span key={c.date} aria-hidden="true" />
+          ) : (
+            <button
+              key={c.date}
+              type="button"
+              aria-pressed={c.date === value}
+              disabled={
+                (min !== undefined && c.date < min) ||
+                (max !== undefined && c.date > max)
+              }
+              onClick={() => wybierz(c.date)}
+              className={cn(
+                "disabled:cursor-default disabled:text-faint-foreground disabled:hover:bg-transparent",
+                "h-[30px] cursor-pointer rounded-lg border-0 bg-transparent p-0 text-[13px] text-foreground tabular-nums hover:bg-muted",
+                // Dziś: szare tło i pogrubienie (makiety S2), wybrany dzień: czarne tło
+                c.date === dzis && "bg-black/5 font-semibold",
+                c.date === value && "bg-primary font-semibold text-primary-foreground hover:bg-primary",
+              )}
+            >
+              {Number(c.date.slice(8))}
+            </button>
+          ),
+        )}
       </div>
-      <div className="mt-1.5 flex justify-between border-t border-border pt-1.5">
+      <div className="mt-2 flex justify-between border-t border-border pt-2">
         <Button
           variant="ghost"
           size="xs"
@@ -191,7 +199,7 @@ export function DatePicker({
         >
           Dziś
         </Button>
-        <Button variant="ghost" size="xs" onClick={() => wybierz(null)}>
+        <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => wybierz(null)}>
           Wyczyść
         </Button>
       </div>

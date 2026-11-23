@@ -146,13 +146,16 @@ describe("DatePicker", () => {
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 
-  it("oznacza dziś obwódką, a wybrany dzień aria-pressed", async () => {
+  it("oznacza dziś szarym tłem (makiety S2), a wybrany dzień aria-pressed", async () => {
     const u = userEvent.setup();
     ustaw();
     await u.click(screen.getByRole("button", { name: "Termin" }));
-    expect(screen.getByRole("button", { name: "16" })).toHaveClass(
-      "border-border-strong",
-    );
+    const dzis = screen.getByRole("button", { name: "16" });
+    expect(dzis).toHaveClass("bg-black/5", "font-semibold");
+    expect(dzis.className).not.toContain("border-border-strong");
+    // Dni bezszeryfowe 13 px, bez mono
+    expect(dzis).toHaveClass("text-[13px]");
+    expect(dzis.className).not.toContain("font-mono");
     expect(screen.getByRole("button", { name: "20" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -161,6 +164,20 @@ describe("DatePicker", () => {
       "aria-pressed",
       "false",
     );
+  });
+});
+
+describe("DatePicker — wygląd z makiet S2", () => {
+  it("dymek ma 256 px, a dni spoza miesiąca nie są przyciskami", async () => {
+    const u = userEvent.setup();
+    render(
+      <DatePicker value="2026-11-20" onChange={vi.fn()} today="2026-11-16" ariaLabel="Termin" />,
+    );
+    await u.click(screen.getByRole("button", { name: "Termin" }));
+    expect(screen.getByRole("dialog")).toHaveStyle({ width: "256px" });
+    // Listopad 2026 ma 30 dni: jeden przycisk „1” (bez 1 grudnia) i brak „31”
+    expect(screen.getAllByRole("button", { name: "1" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "31" })).toBeNull();
   });
 });
 
