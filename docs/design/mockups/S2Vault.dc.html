@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Hasła zablokowane — Strony 2.0 (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.row-del{opacity:0;transition:opacity 120ms ease}
+tr:hover .row-del,.row-del:focus-visible{opacity:1}
+.cellc{cursor:default;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cellc:hover{background:rgba(0,0,0,.02)}
+.celltxt{cursor:text}
+.celltxt:focus-within{box-shadow:inset 0 0 0 2px rgba(59,130,246,.55);background:#fff}
+html body .cellinp::placeholder{color:#a3a3a3}
+html body input.cellinp,html body input.cellinp:hover,html body input.cellinp:focus,html body input.cellinp:focus-visible{outline:none !important;box-shadow:none !important;border:0 !important;background:transparent !important;border-radius:0 !important}
+html body .cellinp{display:block;width:100%;border:0;outline:0;background:transparent;padding:0;margin:0;height:auto;min-height:0;font:inherit;color:inherit;box-shadow:none;line-height:inherit}
+.optrow{display:flex;align-items:center;gap:2px}
+html body .optrow .optmenu{opacity:0;flex:none}
+html body .optrow:hover .optmenu,html body .optrow .optmenu:focus-visible{opacity:1}
+html body .frame>.inner.tbl-wrap{overflow-x:auto;overflow-y:hidden;max-width:100%}
+html body .main .frame{min-width:0;width:100%;max-width:100%}
+.tbl-wrap::-webkit-scrollbar{height:10px}
+.tbl-wrap::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:999px;border:2px solid #fff}
+.tbl-wrap::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.3)}
+.tbl-wrap::-webkit-scrollbar-track{background:transparent}
+.tbl-wrap{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.2) transparent}
+html body th.th{position:relative}
+.colrs{position:absolute;top:0;bottom:0;right:-4px;width:8px;cursor:col-resize;z-index:3}
+.colrs::after{content:"";position:absolute;top:6px;bottom:6px;left:3px;width:2px;border-radius:2px;background:transparent;transition:background 120ms ease}
+html body th.th:hover .colrs::after,.colrs:focus-visible::after,.colrs.on::after{background:rgba(59,130,246,.6)}
+.colrs:focus-visible{outline:none}
+.tcbx{width:16px;height:16px;border-radius:5px;border:1.5px solid rgba(0,0,0,.3);display:inline-grid;place-items:center;background:#fff;padding:0;cursor:pointer;box-sizing:border-box;vertical-align:middle}
+.tcbx[aria-checked="true"]{background:#262626;border-color:#262626;color:#fff}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="hasla" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Hasła</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><sc-if value="{{open}}" hint-placeholder-val="{{true}}"><button type="button" class="btn" onClick="{{lock}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Zablokuj teraz</button></sc-if></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="display: inline-flex; color: #262626" aria-hidden="true"><dc-import name="S2PageIcon" icon="lock" size="26" hint-size="26px,26px"></dc-import></span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Hasła</h1></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px"><span class="bdg sec lg num">{{countTxt}}</span><span class="bdg ok lg"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Szyfrowane</span></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><div class="igroup" style="width: 240px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg><input type="text" class="inp" value="{{q}}" onChange="{{onQ}}" placeholder="Szukaj serwisu lub loginu" aria-label="Szukaj"></div>
+        <div class="seg" role="group" aria-label="Kategoria"><sc-for list="{{cats}}" as="ct" hint-placeholder-count="4"><button type="button" aria-pressed="{{ct.p}}" onClick="{{ct.pick}}">{{ct.t}}</button></sc-for></div></div>
+        <div style="display: flex; align-items: center; gap: 8px"><span class="muted" style="font-size: 13px">Kolumny modułu są stałe</span><span style="position: relative; display: inline-flex"><button type="button" class="btn sm" onClick="{{toggleCats}}" aria-haspopup="dialog" aria-expanded="{{catsExp}}">Kategorie</button><sc-if value="{{catsOpen}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Kategorie haseł" class="pop" style="position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 260px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="mi-lbl" style="padding: 0">Opcje kategorii</div><div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{catOpts}}" as="co" hint-placeholder-count="3"><span class="bdg out">{{co.t}}<button type="button" aria-label="{{co.label}}" onClick="{{co.remove}}" style="background: none; border: 0; padding: 0 0 0 2px; cursor: pointer; color: inherit; font: inherit; opacity: .6">×</button></span></sc-for></div><div style="display: flex; gap: 6px"><input type="text" class="inp" value="{{newCat}}" onChange="{{onNewCat}}" placeholder="Nowa kategoria…" aria-label="Nowa kategoria" style="height: 32px"><button type="button" class="btn sm" onClick="{{addCat}}">Dodaj</button></div></div></sc-if></span></div>
+      </div>
+      <div class="frame"><div class="inner tbl-wrap">
+        <sc-if value="{{cellOpen}}" hint-placeholder-val="{{false}}"><div onClick="{{closeCell}}" style="position: fixed; inset: 0; z-index: 20"></div></sc-if><sc-if value="{{cdragging}}" hint-placeholder-val="{{false}}"><div onPointerMove="{{cdragMove}}" onPointerUp="{{cdragEnd}}" onPointerLeave="{{cdragEnd}}" style="position: fixed; inset: 0; z-index: 60; cursor: col-resize"></div></sc-if>
+        <table class="tbl" style="table-layout: fixed; {{tblS}}"><colgroup><col style="{{cw0}}"><col style="{{cw1}}"><col style="{{cw2}}"><col style="{{cw3}}"><col style="{{cw4}}"><col style="{{cw5}}"><col></colgroup>
+          <thead><tr><th scope="col" class="th" style="{{cw0}}"><span style="color: #a3a3a3; margin-right: 6px; font-size: 12px; font-weight: 600">Aa</span>Serwis<span class="{{crc0}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny Serwis (strzałki w lewo i w prawo)" onPointerDown="{{cg0}}" onKeyDown="{{ck0}}"></span></th><th scope="col" class="th" style="{{cw1}}"><span style="color: #a3a3a3; margin-right: 6px; font-size: 12px; font-weight: 600">Aa</span>Login<span class="{{crc1}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny Login (strzałki w lewo i w prawo)" onPointerDown="{{cg1}}" onKeyDown="{{ck1}}"></span></th><th scope="col" class="th" style="{{cw2}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"></path></svg>Hasło <span class="bdg ok" style="margin-left: 6px">szyfr.</span><span class="{{crc2}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny Hasło (strzałki w lewo i w prawo)" onPointerDown="{{cg2}}" onKeyDown="{{ck2}}"></span></th><th scope="col" class="th" style="{{cw3}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>URL<span class="{{crc3}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny URL (strzałki w lewo i w prawo)" onPointerDown="{{cg3}}" onKeyDown="{{ck3}}"></span></th><th scope="col" class="th" style="{{cw4}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="10"></circle><path d="M12 18a6 6 0 0 0 0-12v12z"></path></svg>Kategoria<span class="{{crc4}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny Kategoria (strzałki w lewo i w prawo)" onPointerDown="{{cg4}}" onKeyDown="{{ck4}}"></span></th><th scope="col" class="th" style="{{cw5}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><path d="M14 2v6h6M8 13h8M8 17h5"></path></svg>Notatka <span class="bdg ok" style="margin-left: 6px">szyfr.</span><span class="{{crc5}}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Zmień szerokość kolumny Notatka (strzałki w lewo i w prawo)" onPointerDown="{{cg5}}" onKeyDown="{{ck5}}"></span></th><th scope="col" class="th" style="padding: 0 4px; text-align: left"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Akcje</span><a class="addcol" style="display: none"></a></th></tr></thead>
+          <tbody>
+            <sc-for list="{{list}}" as="r" hint-placeholder-count="6"><tr style="{{r.rowS}}"><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6"><td class="{{c.cls}}" style="{{c.s}}" onClick="{{c.click}}"><sc-if value="{{c.isPlain}}" hint-placeholder-val="{{false}}">{{c.plain}}</sc-if><sc-if value="{{c.isText}}" hint-placeholder-val="{{true}}"><input class="cellinp" type="{{c.itype}}" value="{{c.raw}}" onChange="{{c.onIn}}" onFocus="{{c.focus}}" onKeyDown="{{c.key}}" placeholder="{{c.ph}}" aria-label="{{c.label}}" style="{{c.inS}}"></sc-if><sc-if value="{{c.isSecret}}" hint-placeholder-val="{{false}}"><span style="display: flex; align-items: center; gap: 4px"><input class="cellinp num" type="{{c.itype}}" value="{{c.raw}}" onChange="{{c.onIn}}" onFocus="{{c.focus}}" onKeyDown="{{c.key}}" placeholder="{{c.ph}}" aria-label="{{c.label}}" style="flex: 1; min-width: 0"><button type="button" class="row-del btng ic xs" aria-label="{{c.eyeLabel}}" aria-pressed="{{c.eyeP}}" onClick="{{c.eye}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button><button type="button" class="row-del btng ic xs" aria-label="Kopiuj hasło" onClick="{{c.keep}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></span></sc-if><sc-if value="{{c.isMoney}}" hint-placeholder-val="{{false}}"><span style="display: flex; align-items: center; gap: 4px; justify-content: flex-end"><input class="cellinp num" type="text" inputMode="decimal" value="{{c.raw}}" onChange="{{c.onIn}}" onFocus="{{c.focus}}" onKeyDown="{{c.key}}" onBlur="{{c.blur}}" placeholder="0,00" aria-label="{{c.label}}" style="text-align: right; flex: 1; min-width: 0"><span class="muted" style="font-size: 13px">zł</span><button type="button" class="btng xs" onClick="{{c.cyc}}" aria-label="{{c.cycLabel}}" style="color: #686868; padding: 0 4px">/ {{c.cycTxt}}</button></span></sc-if><sc-if value="{{c.isSel}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex"><span class="{{c.bs}}">{{c.txt}}</span><sc-if value="{{c.active}}" hint-placeholder-val="{{false}}"><sc-if value="{{c.p.open}}" hint-placeholder-val="{{false}}"><div onClick="{{c.keep}}" class="ddpop" style="right: auto; width: 240px"><sc-if value="{{c.p.list}}" hint-placeholder-val="{{true}}"><div role="listbox" aria-label="{{c.label}}"><div style="padding: 4px 4px 6px"><input class="inp" type="text" value="{{c.p.q}}" onChange="{{c.p.onQ}}" onKeyDown="{{c.p.qKey}}" placeholder="Szukaj lub dodaj opcję…" aria-label="Szukaj lub dodaj opcję" autofocus style="height: 30px; font-size: 13px"></div><sc-for list="{{c.p.opts}}" as="o" hint-placeholder-count="3"><div class="optrow"><button type="button" role="option" class="ddopt" aria-selected="{{o.p}}" onClick="{{o.pick}}" style="flex: 1; min-width: 0"><span class="{{o.bs}}">{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button><button type="button" class="optmenu btng ic xs" aria-label="{{o.menuLabel}}" onClick="{{o.menu}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></button></div></sc-for><sc-if value="{{c.p.canAdd}}" hint-placeholder-val="{{false}}"><button type="button" class="ddopt" onClick="{{c.p.add}}" style="justify-content: flex-start; gap: 8px; border-top: 1px solid rgba(0,0,0,.06); margin-top: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Utwórz</span><span class="bdg sec">{{c.p.addTxt}}</span></button></sc-if></div></sc-if><sc-if value="{{c.p.editing}}" hint-placeholder-val="{{false}}"><div role="group" aria-label="Edycja opcji" style="display: flex; flex-direction: column; gap: 4px; padding: 4px"><input class="inp" type="text" value="{{c.p.oeName}}" onChange="{{c.p.onOeName}}" onKeyDown="{{c.p.oeKey}}" aria-label="Nazwa opcji" autofocus style="height: 30px; font-size: 13px"><div class="lbl" style="padding: 8px 4px 2px">Kolor</div><sc-for list="{{c.p.colors}}" as="cc" hint-placeholder-count="6"><button type="button" class="ddopt" aria-pressed="{{cc.p}}" onClick="{{cc.pick}}"><span class="{{cc.bs}}">{{cc.t}}</span><sc-if value="{{cc.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for><div style="border-top: 1px solid rgba(0,0,0,.06); margin: 4px 0 0; padding-top: 4px"><button type="button" class="ddopt" onClick="{{c.p.oeDel}}" style="justify-content: flex-start; gap: 8px; color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń opcję</button></div><div style="display: flex; justify-content: space-between; gap: 8px; padding: 2px 0 0"><button type="button" class="btng sm" onClick="{{c.p.oeBack}}">Wstecz</button><button type="button" class="btnp sm" onClick="{{c.p.oeDone}}">Gotowe</button></div></div></sc-if></div></sc-if></sc-if></span></sc-if><sc-if value="{{c.isDate}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex; align-items: center; gap: 6px"><span class="num" style="{{c.txtS}}">{{c.txt}}</span><span class="{{c.aC}}">{{c.aT}}</span><sc-if value="{{c.active}}" hint-placeholder-val="{{false}}"><sc-if value="{{c.d.open}}" hint-placeholder-val="{{false}}"><div onClick="{{c.keep}}" role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; padding: 10px; width: 256px"><div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px"><button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" onClick="{{c.d.prev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-size: 14px; font-weight: 600">{{c.d.label}}</span><button type="button" class="btn ic sm" aria-label="Następny miesiąc" onClick="{{c.d.next}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 12px; font-weight: 500; color: #686868; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{c.d.cal}}" as="dc" hint-placeholder-count="35"><button type="button" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); margin-top: 8px; padding-top: 8px"><button type="button" class="btng xs" onClick="{{c.d.today}}">Dziś</button><button type="button" class="btng xs" onClick="{{c.d.clear}}" style="color: #686868">Wyczyść</button></div></div></sc-if></sc-if></span></sc-if><sc-if value="{{c.isRating}}" hint-placeholder-val="{{false}}"><span role="group" aria-label="{{c.label}}" style="display: inline-flex; gap: 1px"><sc-for list="{{c.stars}}" as="s" hint-placeholder-count="5"><button type="button" aria-label="{{s.label}}" aria-pressed="{{s.p}}" onClick="{{s.pick}}" style="{{s.s}}">★</button></sc-for></span></sc-if><sc-if value="{{c.isCheck}}" hint-placeholder-val="{{false}}"><button type="button" role="checkbox" class="tcbx" aria-checked="{{c.chk}}" aria-label="{{c.label}}" onClick="{{c.toggle}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-if></td></sc-for><td class="td" style="text-align: right; white-space: nowrap; padding: 0 6px"><button type="button" class="row-del btng ic xs" aria-label="Usuń wiersz" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></td></tr></sc-for>
+          </tbody>
+          <tfoot><tr style="background: rgba(0,0,0,.02)"><td colspan="7" class="num muted" style="padding: 8px 12px; border-top: 1px solid rgba(0,0,0,.08)">{{countTxt}}</td></tr></tfoot>
+        </table>
+      </div></div>
+      <div style="display: flex; align-items: center; gap: 12px"><button type="button" class="btng sm" onClick="{{addRow}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy</button></div>
+    </div>
+  </main>
+  <sc-if value="{{locked}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; inset: 0 0 0 auto; width: calc(100% - 240px); background: rgba(255,255,255,.6); backdrop-filter: blur(3px)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="unlock-t" class="dlg" style="position: absolute; left: calc(50% + 120px); top: 160px; transform: translateX(-50%); width: min(400px, calc(100% - 32px))">
+      <div class="dlg-b" style="padding-top: 24px; gap: 16px">
+        <span style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08); background: #fafafa; display: grid; place-items: center; box-shadow: 0 1px 2px rgba(0,0,0,.04)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span>
+        <div><h2 id="unlock-t" class="dlg-t">Odblokuj sejf</h2><p class="dlg-d">Hasło główne sejfu, nie hasło do konta.</p></div>
+        <label class="fld">Hasło główne<div class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><input type="password" value="{{upw}}" onInput="{{onUpw}}" onKeyDown="{{onUKey}}" autocomplete="off" aria-invalid="{{uErr}}"></div><sc-if value="{{uErrB}}" hint-placeholder-val="{{false}}"><span class="err">Wpisz hasło główne.</span></sc-if></label>
+        <button type="button" class="btnp" onClick="{{unlock}}" style="width: 100%">Odblokuj</button>
+        <p class="hint" style="margin: 0; line-height: 1.5">Blokada po 5 min bezczynności.</p>
+      </div>
+      <div class="dlg-f" style="justify-content: flex-start"><a href="S2VaultReset.dc.html" class="btng sm" style="color: #b91c1c; margin-left: -8px">Nie pamiętam hasła — zresetuj sejf</a></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div role="status" class="toast" style="position: absolute; right: 24px; bottom: 24px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><div><div style="font-weight: 500">Skopiowano hasło {{toastName}}</div><div class="muted" style="font-size: 13px">Schowek wyczyści się za 30 s.</div></div></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const open = S.open == null ? false : S.open;
+    const BASE = [
+      { id: 1, service: 'GitHub', login: 'mejsooon', plain: 'gh-[TWOJE HASŁO]', url: 'github.com', cat: 'Praca', note: 'kody 2FA w menedżerze' },
+      { id: 2, service: 'Supabase', login: 'mejson@…', plain: 'sb-[TWOJE HASŁO]', url: 'supabase.com', cat: 'Praca', note: '' },
+      { id: 3, service: 'Vercel', login: 'mejson@…', plain: 'vc-[TWOJE HASŁO]', url: 'vercel.com', cat: 'Praca', note: '' },
+      { id: 4, service: 'Uczelnia', login: 's000000', plain: 'us-[TWOJE HASŁO]', url: '[ADRES]', cat: 'Studia', note: 'PIN do legitymacji' }
+    ];
+    const R = S.rows || BASE;
+    const CAT = S.cat || 'Wszystkie';
+    const Q = (S.q || '').toLowerCase();
+    const TCOLS = [{"k": "service", "label": "Serwis", "type": "text", "ph": "Bez nazwy", "bold": true}, {"k": "login", "label": "Login", "type": "text", "ph": "—"}, {"k": "plain", "label": "Hasło", "type": "secret", "ph": "—"}, {"k": "url", "label": "URL", "type": "text", "ph": "—", "muted": true}, {"k": "cat", "label": "Kategoria", "type": "sel"}, {"k": "note", "label": "Notatka", "type": "secret", "ph": "—"}];
+    const TOPTS = Object.assign({}, {"cat": [["Praca", "bdg out"], ["Studia", "bdg out"], ["Prywatne", "bdg out"]]}, S.opts || {});
+    const TE = S.edit || null;
+    const TP = S.pick || null;
+    const TNEW = {"service": "", "login": "", "plain": "", "url": "", "cat": "", "note": ""};
+    const TAFTER = { locked: !open, filter: (r) => (CAT === 'Wszystkie' || r.cat === CAT) && (!Q || ((r.service || '') + ' ' + (r.login || '')).toLowerCase().indexOf(Q) >= 0) };
+    const TTODAY = '2026-11-15';
+    const TMONF = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const tp2 = (x) => String(x).padStart(2, '0');
+    const tfmt = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '—');
+    const tstop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const tclose = () => this.setState({ edit: null, pick: null, optq: '', optEdit: null, optName: undefined });
+    const tset = (id, patch, extra) => this.setState(Object.assign({ rows: R.map((x) => (x.id === id ? Object.assign({}, x, patch) : x)) }, extra || {}));
+    const TCLS = (k, v) => { const o = (TOPTS[k] || []).find((x) => x[0] === v); return o ? o[1] : 'bdg out'; };
+    const TCOLORS = [['Bez koloru', 'bdg out'], ['Szary', 'bdg sec'], ['Niebieski', 'bdg info'], ['Zielony', 'bdg ok'], ['Pomarańczowy', 'bdg warn'], ['Czerwony', 'bdg bad']];
+    const TRING = 'box-shadow: inset 0 0 0 2px rgba(59,130,246,.55); background: #fff; position: relative; z-index: 30; overflow: visible';
+    const tsel = (r, c) => {
+      const key = c.k, val = r[key];
+      const list0 = TOPTS[key] || [];
+      const opts = list0.map((x) => x[0]);
+      const setOpts = (arr) => Object.assign({}, TOPTS, { [key]: arr });
+      const q = S.optq || '';
+      const qt = q.trim();
+      const shown = opts.filter((o) => !qt || o.toLowerCase().includes(qt.toLowerCase()));
+      const canAdd = !!qt && !opts.some((o) => o.toLowerCase() === qt.toLowerCase());
+      const choose = (o, extraOpts) => tset(r.id, { [key]: o }, Object.assign({ edit: null, pick: null, optq: '', optEdit: null }, extraOpts ? { opts: extraOpts } : {}));
+      const OE = S.optEdit === undefined ? null : S.optEdit;
+      const OEN = OE === null ? '' : (S.optName === undefined ? OE : S.optName);
+      const rename = () => {
+        const nn = (OEN || '').trim();
+        if (!nn || nn === OE || opts.some((o) => o !== OE && o.toLowerCase() === nn.toLowerCase())) { this.setState({ optEdit: null, optName: undefined }); return; }
+        this.setState({ opts: setOpts(list0.map((x) => (x[0] === OE ? [nn, x[1]] : x))), rows: R.map((x) => (x[key] === OE ? Object.assign({}, x, { [key]: nn }) : x)), optEdit: null, optName: undefined });
+      };
+      return { open: true, list: OE === null, editing: OE !== null,
+        q, onQ: (e) => this.setState({ optq: e.target.value }),
+        qKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); if (canAdd) choose(qt, setOpts(list0.concat([[qt, 'bdg sec']]))); else if (shown.length) choose(shown[0]); } if (e.key === 'Escape') tclose(); },
+        canAdd, addTxt: qt, add: () => choose(qt, setOpts(list0.concat([[qt, 'bdg sec']]))),
+        opts: shown.map((o) => ({ t: o, bs: TCLS(key, o), p: o === val ? 'true' : 'false', on: o === val, pick: () => choose(o),
+          menuLabel: 'Edytuj opcję „' + o + '”', menu: (e) => { tstop(e); this.setState({ optEdit: o, optName: o }); } })),
+        oeName: OEN, onOeName: (e) => this.setState({ optName: e.target.value }),
+        oeKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); rename(); } if (e.key === 'Escape') this.setState({ optEdit: null, optName: undefined }); },
+        oeDone: rename, oeBack: () => this.setState({ optEdit: null, optName: undefined }),
+        colors: TCOLORS.map((cc) => ({ t: cc[0], bs: cc[1], on: TCLS(key, OE) === cc[1], p: TCLS(key, OE) === cc[1] ? 'true' : 'false',
+          pick: () => this.setState({ opts: setOpts(list0.map((x) => (x[0] === OE ? [x[0], cc[1]] : x))) }) })),
+        oeDel: () => this.setState({ opts: setOpts(list0.filter((x) => x[0] !== OE)), rows: R.map((x) => (x[key] === OE ? Object.assign({}, x, { [key]: '' }) : x)), optEdit: null, optName: undefined }) };
+    };
+    const tdate = (r, c) => {
+      const key = c.k, iso = r[key] || '';
+      const mo = (TP && TP.mo) || 0;
+      const b = iso || TTODAY;
+      const first = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1 + mo, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      const cal = [];
+      for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'visibility:hidden', pick: () => {} });
+      for (let d = 1; d <= nd; d++) {
+        const ds = first.getUTCFullYear() + '-' + tp2(first.getUTCMonth() + 1) + '-' + tp2(d);
+        const on = ds === iso;
+        cal.push({ t: String(d), s: 'height:30px;padding:0;border:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (on ? 'background:#262626;color:#fafafa;font-weight:600' : ds === TTODAY ? 'background:rgba(0,0,0,.05);color:#262626;font-weight:600' : 'background:transparent;color:#262626'),
+          pick: () => tset(r.id, { [key]: ds }, { edit: null, pick: null }) });
+      }
+      return { open: true, exp: 'true', toggle: () => {}, txt: iso ? tfmt(iso) : 'Wybierz datę', txtS: iso ? '' : 'color:#686868',
+        label: TMONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
+        prev: () => this.setState({ pick: { mo: mo - 1 } }), next: () => this.setState({ pick: { mo: mo + 1 } }), cal,
+        today: () => tset(r.id, { [key]: TTODAY }, { edit: null, pick: null }),
+        clear: () => tset(r.id, { [key]: '' }, { edit: null, pick: null }) };
+    };
+    const TVIS = TAFTER.filter ? R.filter(TAFTER.filter) : R;
+    const list = TVIS.map((r) => ({
+      rowS: TAFTER.rowS ? TAFTER.rowS(r) : '',
+      del: (e) => { tstop(e); this.setState({ rows: R.filter((x) => x.id !== r.id), edit: null, pick: null }); },
+      cells: TCOLS.map((c) => {
+        const t = c.type;
+        if (TAFTER.locked) return { label: c.label, isPlain: true, cls: 'td', s: 'font-weight: ' + (c.bold ? 500 : 400) + (t === 'secret' ? '; color: #a3a3a3; font-style: italic' : '; color: #525252'), plain: t === 'secret' ? (r[c.k] ? 'zablokowane' : '—') : t === 'check' ? '' : (r[c.k] || '—'), click: () => {} };
+        const active = !!(TE && TE.id === r.id && TE.k === c.k);
+        const pop = t === 'sel' || t === 'date';
+        const txt = t === 'text' || t === 'secret' || t === 'money';
+        const base = 'font-weight: ' + (c.bold ? 500 : 400) + ';' + (c.muted ? ' color: #525252;' : '') + (c.right ? ' text-align: right;' : '');
+        const o = { label: c.label, ph: c.ph || '', keep: tstop,
+          isText: t === 'text', isSecret: t === 'secret', isMoney: t === 'money', isSel: t === 'sel', isDate: t === 'date', isRating: t === 'rating', isCheck: t === 'check',
+          active, cls: 'td cellc' + (txt ? ' celltxt' : ''), s: base + (active && pop ? ' ' + TRING : ''),
+          click: pop ? (e) => { tstop(e); if (active) { tclose(); return; } this.setState({ edit: { id: r.id, k: c.k }, pick: { mo: 0 }, optq: '', optEdit: null, optName: undefined }); } : () => {} };
+        if (txt) {
+          const show = !!((S.shown || {})[r.id]);
+          Object.assign(o, { raw: r[c.k] || '', itype: t === 'secret' && !show ? 'password' : 'text', inS: c.mono ? 'font-variant-numeric: tabular-nums' : '',
+            onIn: (e) => tset(r.id, { [c.k]: e.target.value }),
+            focus: () => { if (TE) tclose(); },
+            key: (e) => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); if (e.target && e.target.blur) e.target.blur(); } },
+            blur: () => { if (TAFTER.money) tset(r.id, { [c.k]: TAFTER.money(r[c.k]) }); },
+            eye: (e) => { tstop(e); this.setState({ shown: Object.assign({}, S.shown || {}, { [r.id]: !show }) }); },
+            eyeLabel: show ? 'Ukryj hasło' : 'Pokaż hasło', eyeP: show ? 'true' : 'false',
+            cycTxt: r.cycle || 'mies.', cycLabel: 'Cykl: ' + (r.cycle || 'mies.') + ' (kliknij, aby zmienić)',
+            cyc: (e) => { tstop(e); tset(r.id, { cycle: r.cycle === 'rok' ? 'mies.' : 'rok' }); } });
+        }
+        if (t === 'sel') Object.assign(o, { bs: r[c.k] ? TCLS(c.k, r[c.k]) : 'hint', txt: r[c.k] || '—', p: active ? tsel(r, c) : {} });
+        if (t === 'date') { const a = TAFTER[c.k] ? TAFTER[c.k](r) : { t: '', c: '' }; Object.assign(o, { txt: tfmt(r[c.k]), txtS: '', aT: a.t, aC: a.c, d: active ? tdate(r, c) : {} }); }
+        if (t === 'rating') Object.assign(o, { stars: [1, 2, 3, 4, 5].map((n) => ({ label: 'Ocena ' + n + ' na 5', p: n <= (r[c.k] || 0) ? 'true' : 'false',
+          s: 'background:none;border:0;padding:0 1px;font-size:15px;line-height:1;cursor:pointer;color:' + (n <= (r[c.k] || 0) ? '#f59e0b' : 'rgba(0,0,0,.14)'),
+          pick: (e) => { tstop(e); tset(r.id, { [c.k]: (r[c.k] || 0) === n ? 0 : n }); } })) });
+        if (t === 'check') Object.assign(o, { on: r[c.k] !== false, chk: r[c.k] !== false ? 'true' : 'false', toggle: (e) => { tstop(e); tset(r.id, { [c.k]: r[c.k] === false }); } });
+        return o;
+      })
+    }));
+    const addRow = () => this.setState({ rows: R.concat([Object.assign({ id: Date.now() }, TNEW)]), edit: null, pick: null });
+    const CMIN = 80;
+    const CW = S.colW || [180, 170, 220, 170, 140, 220];
+    const CD = S.cdrag || null;
+    const setCW = (i, w) => this.setState({ colW: CW.map((x, j) => (j === i ? Math.max(CMIN, Math.round(w)) : x)) });
+    const COL = { cellOpen: !!TE, closeCell: tclose, cdragging: !!CD, tblS: 'width: ' + (CW.reduce((a, b) => a + b, 0) + 56) + 'px; min-width: 100%; max-width: none',
+      cdragMove: (e) => { if (CD) setCW(CD.i, CD.w0 + (e.clientX - CD.x0)); }, cdragEnd: () => { if (CD) this.setState({ cdrag: null }); } };
+    CW.forEach((w, i) => {
+      COL['cw' + i] = 'width: ' + w + 'px; min-width: ' + w + 'px; max-width: ' + w + 'px';
+      COL['crc' + i] = 'colrs' + (CD && CD.i === i ? ' on' : '');
+      COL['cg' + i] = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.setState({ cdrag: { i, x0: e.clientX, w0: CW[i] } }); };
+      COL['ck' + i] = (e) => { if (e.key === 'ArrowLeft') { e.preventDefault(); setCW(i, CW[i] - 20); } if (e.key === 'ArrowRight') { e.preventDefault(); setCW(i, CW[i] + 20); } };
+    });
+    const CO = (TOPTS.cat || []).map((x) => x[0]);
+    const upw = S.upw != null ? S.upw : 'przykład';
+    const unlock = () => { if (!upw.trim()) { this.setState({ uErr: true }); return; } this.setState({ open: true, uErr: false }); };
+    const n = TVIS.length;
+    return { ...COL, list, addRow,
+      open, locked: !open,
+      catsOpen: !!S.catsOpen, catsExp: S.catsOpen ? 'true' : 'false', toggleCats: () => this.setState({ catsOpen: !S.catsOpen }),
+      catOpts: CO.map((c) => ({ t: c, label: 'Usuń kategorię ' + c, remove: () => this.setState({ opts: Object.assign({}, TOPTS, { cat: TOPTS.cat.filter((x) => x[0] !== c) }), cat: CAT === c ? 'Wszystkie' : CAT }) })),
+      newCat: S.newCat || '', onNewCat: (e) => this.setState({ newCat: e.target.value }),
+      addCat: () => { const v = (S.newCat || '').trim(); if (v && CO.indexOf(v) < 0) this.setState({ opts: Object.assign({}, TOPTS, { cat: (TOPTS.cat || []).concat([[v, 'bdg out']]) }), newCat: '' }); },
+      q: S.q || '', onQ: (e) => this.setState({ q: e.target.value }),
+      cats: ['Wszystkie'].concat(CO).map((c) => ({ t: c, p: c === CAT ? 'true' : 'false', pick: () => this.setState({ cat: c }) })),
+      countTxt: n + (n === 1 ? ' wiersz' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? ' wiersze' : ' wierszy'),
+      lock: () => this.setState({ open: false, shown: null, toast: null }), unlock,
+      upw, onUpw: (e) => this.setState({ upw: e.target.value, uErr: false }), onUKey: (e) => { if (e.key === 'Enter') unlock(); },
+      uErr: S.uErr ? 'true' : 'false', uErrB: !!S.uErr,
+      toast: !!S.toast, toastName: S.toast || '' };
+  }
+}
+</script>
+</body>
+</html>

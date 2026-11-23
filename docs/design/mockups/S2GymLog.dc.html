@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trening siłowy (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 1200px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="1200" hint-size="100%,1200px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Sport</span><span aria-hidden="true">/</span><b>Push · czw 19.11</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><button type="button" class="btn">Zapisz jako szablon</button><a href="S2Sport.dc.html" class="btnp">Zakończ trening</a></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Push</h1><div style="display: flex; gap: 6px; margin-top: 8px"><span class="bdg sec lg num">czw 19.11.2026 · 15:00–16:30 · z szablonu „Push”</span></div></div>
+        <div class="frame" style="padding: 3px"><div class="inner" style="display: grid; grid-template-columns: repeat(2, auto)">
+          <div style="padding: 10px 18px"><div class="lbl">Objętość</div><div class="num" style="font-size: 18px; font-weight: 600; margin-top: 4px">{{vol}}</div></div>
+          <div style="padding: 10px 18px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Serie</div><div class="num" style="font-size: 18px; font-weight: 600; margin-top: 4px">{{sets}}</div></div>
+        </div></div>
+      </div>
+      <sc-for list="{{items}}" as="e" hint-placeholder-count="4">
+        <section class="card">
+          <div class="card-h" style="align-items: center; padding: 16px 20px 10px">
+            <a href="S2ExerciseDetail.dc.html" style="font-weight: 600; font-size: 15px; text-decoration: none; color: #262626">{{e.name}}</a>
+            <span style="display: flex; gap: 6px"><span class="bdg sec num">{{e.line}}</span><sc-if value="{{e.hasNote}}" hint-placeholder-val="{{true}}"><span class="bdg out">{{e.note}}</span></sc-if></span>
+          </div>
+          <div style="padding: 0 20px">
+            <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 32px 28px; gap: 8px; font-size: 12px; font-weight: 500; color: #686868; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.08)"><span>seria</span><span>{{e.kgHead}}</span><span>powt.</span><span>✓</span><span></span></div>
+            <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
+              <div style="{{s.rowS}}"><span class="bdg sec num" style="width: 24px">{{s.n}}</span><sc-if value="{{s.isKg}}" hint-placeholder-val="{{true}}"><input class="inp num" type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="kg" aria-label="{{s.kgLabel}}" style="height: 30px"></sc-if><sc-if value="{{s.isBw}}" hint-placeholder-val="{{false}}"><span class="igroup" style="height: 30px; padding-left: 4px"><span class="bdg sec" title="Masa ciała z profilu">mc</span><input type="text" inputMode="decimal" value="{{s.kg}}" onChange="{{s.onKg}}" placeholder="+ kg" aria-label="{{s.addLabel}}" class="num"></span></sc-if><input class="inp num" type="text" inputMode="numeric" value="{{s.reps}}" onChange="{{s.onReps}}" placeholder="powt." aria-label="{{s.repsLabel}}" style="height: 30px"><input type="checkbox" checked="{{s.d}}" onChange="{{s.toggle}}" aria-label="{{s.doneLabel}}"><button type="button" class="btng ic xs" aria-label="{{s.delLabel}}" onClick="{{s.del}}" style="color: #a3a3a3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+            </sc-for>
+            <sc-if value="{{e.bw}}" hint-placeholder-val="{{false}}"><div class="hint" style="padding-top: 6px">mc = masa ciała {{bwKg}} kg z profilu · „+ kg” to dociążenie (opcjonalnie)</div></sc-if>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 10px"><button type="button" class="btng sm" onClick="{{e.addSet}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Seria</button><button type="button" class="btng sm" onClick="{{e.remove}}" style="color: #b91c1c"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń ćwiczenie</button></div>
+        </section>
+      </sc-for>
+      <div style="position: relative; align-self: flex-start">
+        <button type="button" class="btn" onClick="{{togglePicker}}" aria-haspopup="dialog" aria-expanded="{{pickExp}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ćwiczenie</button>
+        <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}">
+          <div role="dialog" aria-label="Dodaj ćwiczenie" class="pop" style="position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 20; width: 320px; padding: 4px; display: flex; flex-direction: column">
+            <label class="igroup" style="border: 0; box-shadow: none; border-bottom: 1px solid rgba(0,0,0,.08); border-radius: 0; margin-bottom: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onChange="{{onQ}}" onKeyDown="{{qKey}}" placeholder="Szukaj albo wpisz własne…" aria-label="Szukaj ćwiczenia"></label>
+            <div role="listbox" aria-label="Ćwiczenia" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column">
+              <sc-for list="{{lib}}" as="l" hint-placeholder-count="6"><button type="button" role="option" class="ddopt" onClick="{{l.pick}}"><span>{{l.t}}</span><span class="bdg sec">{{l.m}}</span></button></sc-for>
+              <sc-if value="{{custom}}" hint-placeholder-val="{{false}}"><div class="mi-sep"></div><button type="button" class="ddopt" onClick="{{addCustom}}"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Dodaj „{{q}}”</span><span class="bdg out">własne</span></button></sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    let n = 0;
+    const mkSet = (kg, reps, d) => ({ id: 's' + (n++), kg, reps, d: !!d });
+    const SEED = [
+      { id: 'e1', name: 'Wyciskanie na ławce', best: '82,5 kg', note: '+2,5 kg vs ostatnio', sets: [mkSet('70', '6', 1), mkSet('70', '6', 1), mkSet('72,5', '5', 1), mkSet('72,5', '4')] },
+      { id: 'e2', name: 'Wyciskanie hantli skos', best: '34 kg', note: 'jak ostatnio', sets: [mkSet('26', '10', 1), mkSet('26', '10', 1), mkSet('26', '9')] },
+      { id: 'e3', name: 'Pompki na poręczach', bw: true, best: '94,5 kg', note: 'masa ciała', sets: [mkSet('', '12', 1), mkSet('', '10'), mkSet('5', '8')] },
+      { id: 'e4', name: 'Wznosy bokiem', best: '—', note: 'nowe', sets: [mkSet('10', '15'), mkSet('10', '14'), mkSet('10', '12')] }
+    ];
+    const EX = S.ex || SEED;
+    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const save = (ex, extra) => this.setState(Object.assign({ ex }, extra || {}));
+    const updE = (id, fn) => save(EX.map((e) => (e.id === id ? fn(e) : e)));
+    const updS = (eid, sid, patch) => updE(eid, (e) => Object.assign({}, e, { sets: e.sets.map((s) => (s.id === sid ? Object.assign({}, s, patch) : s)) }));
+    const BW = 72;
+    const BW_LIB = ['podciąganie', 'pompki', 'pompki na poręczach', 'dipy', 'plank'];
+    const num = (v) => { const x = parseFloat(String(v || '').replace(',', '.')); return isNaN(x) ? 0 : x; };
+    let vol = 0, cnt = 0, all = 0;
+    const items = EX.map((e) => ({
+      name: e.name, best: e.best, note: e.note || 'nowe', line: '1RM ' + e.best + (/^[+−]/.test(e.note || '') ? ' · ' + e.note : ''), hasNote: !/^[+−]/.test(e.note || ''), bw: !!e.bw, kgHead: e.bw ? 'kg (mc + dociążenie)' : 'kg',
+      addSet: () => updE(e.id, (x) => { const last = x.sets[x.sets.length - 1]; return Object.assign({}, x, { sets: x.sets.concat([{ id: nid(), kg: last ? last.kg : '', reps: last ? last.reps : '', d: false }]) }); }),
+      remove: () => save(EX.filter((x) => x.id !== e.id)),
+      sets: e.sets.map((s, j) => {
+        all++; if (s.d) { cnt++; vol += ((e.bw ? BW : 0) + num(s.kg)) * num(s.reps); }
+        const lbl = e.name + ', seria ' + (j + 1);
+        return { n: String(j + 1), kg: s.kg, reps: s.reps, d: s.d, isKg: !e.bw, isBw: !!e.bw, addLabel: lbl + ' — dociążenie (kg)',
+          kgLabel: lbl + ' — ciężar', repsLabel: lbl + ' — powtórzenia', doneLabel: lbl + ' zrobiona', delLabel: 'Usuń ' + lbl,
+          onKg: (ev) => updS(e.id, s.id, { kg: ev.target.value }),
+          onReps: (ev) => updS(e.id, s.id, { reps: ev.target.value }),
+          toggle: () => updS(e.id, s.id, { d: !s.d }),
+          del: () => updE(e.id, (x) => Object.assign({}, x, { sets: x.sets.filter((y) => y.id !== s.id) })),
+          rowS: 'display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) 32px 28px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.05);' + (s.d ? 'background:linear-gradient(90deg,rgba(21,128,61,.06),transparent 60%)' : '') };
+      })
+    }));
+    const LIB = [['Wyciskanie żołnierskie', 'barki'], ['Wyciskanie hantli nad głowę', 'barki'], ['Rozpiętki na wyciągu', 'klatka'], ['Wyciskanie wąsko', 'triceps'], ['Prostowanie ramion na wyciągu', 'triceps'], ['Francuskie wyciskanie', 'triceps'], ['Pompki', 'klatka'], ['Przysiad ze sztangą', 'nogi'], ['Martwy ciąg', 'plecy'], ['Podciąganie', 'plecy'], ['Wiosłowanie sztangą', 'plecy'], ['Uginanie ramion', 'biceps']];
+    const q = S.q || '';
+    const ql = q.trim().toLowerCase();
+    const have = EX.map((e) => e.name.toLowerCase());
+    const addEx = (name) => save(EX.concat([{ id: nid(), name, bw: BW_LIB.indexOf(name.toLowerCase()) >= 0, best: '—', note: 'nowe', sets: [{ id: nid() + 'a', kg: '', reps: '', d: false }, { id: nid() + 'b', kg: '', reps: '', d: false }, { id: nid() + 'c', kg: '', reps: '', d: false }] }]), { pick: false, q: '' });
+    const lib = LIB.filter((l) => have.indexOf(l[0].toLowerCase()) < 0 && (!ql || (l[0] + ' ' + l[1]).toLowerCase().indexOf(ql) >= 0));
+    const pickOpen = !!S.pick;
+    return {
+      items, bwKg: String(BW), vol: Math.round(vol).toLocaleString('pl-PL') + ' kg', sets: cnt + ' / ' + all,
+      pickOpen, pickExp: pickOpen ? 'true' : 'false',
+      togglePicker: () => this.setState({ pick: !pickOpen, q: '' }),
+      q, onQ: (ev) => this.setState({ q: ev.target.value }),
+      qKey: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const v = (ev.target.value || '').trim(); const hit = lib[0]; if (hit && hit[0].toLowerCase().indexOf(v.toLowerCase()) >= 0) addEx(hit[0]); else if (v) addEx(v); } else if (ev.key === 'Escape') this.setState({ pick: false }); },
+      lib: lib.map((l) => ({ t: l[0], m: l[1], pick: () => addEx(l[0]) })),
+      custom: !!ql && !LIB.some((l) => l[0].toLowerCase() === ql),
+      addCustom: () => addEx(q.trim())
+    };
+  }
+}
+</script>
+</body>
+</html>

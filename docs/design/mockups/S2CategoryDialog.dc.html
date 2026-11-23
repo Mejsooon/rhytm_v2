@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowa kategoria (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Kalendarz</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><nav class="seg" aria-label="Widok"><a href="S2CalendarDay.dc.html">Dzień</a><a href="S2Calendar.dc.html" aria-current="page">Tydzień</a><a href="S2CalendarMonth.dc.html">Miesiąc</a></nav><a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6">
+      <div style="height: 32px; width: 520px; max-width: 100%; background: rgba(0,0,0,.04); border-radius: 10px"></div>
+      <div style="margin-top: 16px; height: 640px; border: 1px solid rgba(0,0,0,.08); border-radius: 16px; display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 47px, rgba(0,0,0,.05) 47px, rgba(0,0,0,.05) 48px)"><div></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="cat-t" class="dlg" style="position: absolute; left: 50%; top: 140px; transform: translateX(-50%); width: min(460px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="cat-t" class="dlg-t">Nowa kategoria</h2><p class="dlg-d">Kolor kropki w kalendarzu i w filtrach.</p></div><a href="{{back}}" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <label class="fld">Nazwa<input class="inp" type="text" value="{{name}}" onChange="{{onName}}"></label>
+      <div class="fld"><span>Kolor <span class="hint">wyblakłe są już zajęte, ale można je wybrać</span></span>
+        <div role="radiogroup" aria-label="Kolor" style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{colors}}" as="c" hint-placeholder-count="8"><button type="button" role="radio" aria-label="{{c.name}}" aria-checked="{{c.pressed}}" onClick="{{c.pick}}" style="{{c.s}}"></button></sc-for></div>
+      </div>
+      <div class="fld">Podgląd
+        <div class="frame"><div class="inner" style="display: flex; gap: 12px; align-items: center; font-weight: 400; padding: 12px">
+          <span class="chip" aria-pressed="true"><span class="dot" style="{{dot}}"></span>{{name}} <span class="bdg sec num" style="height: 16px; min-width: 16px; font-size: 11px">0</span></span>
+          <div style="{{prev}}"><div style="font-weight: 500">Angielski</div><div class="num" style="font-size: 12px; color: #525252">18:00–19:00</div></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="dlg-f"><a href="{{back}}" class="btng">Anuluj</a><a href="{{back}}" class="btnp">Dodaj kategorię</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { c: 5, name: 'Języki' }; }
+  renderVals() {
+    const cols = [['#0070f3', 'Niebieski'], ['#15803d', 'Zielony'], ['#7c3aed', 'Fioletowy'], ['#c2410c', 'Pomarańczowy'], ['#b91c1c', 'Czerwony'], ['#0e7490', 'Morski'], ['#a16207', 'Musztardowy'], ['#525252', 'Grafitowy']];
+    const used = [0, 1, 2, 3];
+    const c = this.state.c;
+    // powrót do okna/ekranu, z którego przyszliśmy — tylko ekrany COSS (C…)
+    let back = 'S2Calendar.dc.html';
+    try { const f = sessionStorage.getItem('rh-from-sub') || sessionStorage.getItem('rh-from'); if (f && /^S2[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
+    const col = cols[c][0];
+    return { colors: cols.map((x, i) => ({ name: x[1], pick: () => this.setState({ c: i }), pressed: c === i ? 'true' : 'false',
+      s: 'width:36px;height:36px;border-radius:10px;cursor:pointer;padding:0;background:' + (used.includes(i) && c !== i ? 'color-mix(in srgb, ' + x[0] + ' 35%, white)' : x[0]) + ';border:2px solid #fff;box-shadow:' + (c === i ? '0 0 0 2px ' + x[0] : 'inset 0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05)') })),
+      name: this.state.name, onName: (e) => this.setState({ name: e.target.value }),
+      dot: 'background:' + col, prev: 'flex:1;border-radius:10px;padding:7px 12px;background:' + col + '12;border:1px solid ' + col + '4d;box-shadow:none;font-size:14px', back };
+  }
+}
+</script>
+</body>
+</html>

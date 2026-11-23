@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>E-mail potwierdzony (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #262626; font-family: 'Inter', system-ui, sans-serif; font-size: 14px">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px">
+    <div style="display: flex; align-items: center; gap: 8px"><svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg><span style="font-weight: 600; letter-spacing: -0.03em; font-size: 16px">rhytm</span></div>
+    <a href="S2Login.dc.html" class="btn">Zaloguj się</a>
+  </header>
+  <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 24px; padding: 24px">
+    <div class="card" style="width: 100%; max-width: 400px">
+      <div class="empty" style="padding: 32px 28px 24px">
+        <span class="empty-ic" style="color: #15803d; background: rgba(21,128,61,.06); border-color: rgba(21,128,61,.2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        <h1 style="margin: 8px 0 0; font-size: 20px; font-weight: 600">E-mail potwierdzony</h1>
+        <p class="muted" style="margin: 0; line-height: 1.5">Konto jest aktywne. Za chwilę ustawimy profil i cele, zajmie to około minuty.</p>
+        <a href="S2Onboarding.dc.html" class="btnp lg" style="width: 100%; margin-top: 12px">Dalej</a>
+      </div>
+      <div class="foot" style="justify-content: center"><span class="hint">Link był jednorazowy i już wygasł.</span></div>
+    </div>
+    <div class="card" style="width: 100%; max-width: 400px">
+      <div class="empty" style="padding: 32px 28px 24px">
+        <span class="empty-ic" style="color: #b91c1c; background: rgba(239,68,68,.05); border-color: rgba(239,68,68,.2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg></span>
+        <h1 style="margin: 8px 0 0; font-size: 20px; font-weight: 600">Link wygasł</h1>
+        <p class="muted" style="margin: 0; line-height: 1.5">Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój adres.</p>
+        <button type="button" class="btn lg" style="width: 100%; margin-top: 12px" onClick="{{resend}}">{{resendLbl}}</button>
+      </div>
+      <div class="foot" style="justify-content: center"><span class="hint">{{resendNote}}</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sent = !!(this.state && this.state.sent);
+    return {
+      resend: () => this.setState({ sent: true }),
+      resendLbl: sent ? 'Wysłano nowy link' : 'Wyślij nowy link',
+      resendNote: sent ? 'Sprawdź skrzynkę, link ważny 1 godzinę.' : 'Nowy link będzie ważny 1 godzinę.'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Sidebar rhytm (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Główna nawigacja" style="box-sizing: border-box; min-height: min({{mh}}px, 100vh); height: 100%; width: 100%; background: #fafafa; padding: 8px; display: flex; flex-direction: column; gap: 2px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #262626">
+  <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px">
+    <svg width="22" height="22" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg>
+    <span style="font-weight: 600; flex: 1; letter-spacing: -0.03em; font-size: 15px">rhytm</span>
+    <a href="S2SidebarCollapsed.dc.html" class="btng ic xs" aria-label="Schowaj pasek boczny (Ctrl+\)" title="Schowaj pasek boczny · Ctrl+\" style="color: #686868; margin-right: -4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg></a>
+  </div>
+  <a href="S2CommandK.dc.html" class="igroup" style="text-decoration: none; margin: 4px 0 8px; color: #686868">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <span style="flex: 1">Szukaj…</span>
+    <span class="kbd">⌘K</span>
+  </a>
+
+  <div class="sb-g">Moduły</div>
+  <a href="S2Today.dc.html" style="{{s.dzis}}" onMouseEnter="{{en.dzis}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Dziś</a>
+  <a href="S2Calendar.dc.html" style="{{s.kalendarz}}" onMouseEnter="{{en.kalendarz}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Kalendarz</a>
+  <a href="S2Sport.dc.html" style="{{s.sport}}" onMouseEnter="{{en.sport}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>Sport</a>
+  <a href="S2Habits.dc.html" style="{{s.nawyki}}" onMouseEnter="{{en.nawyki}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>Nawyki i sen</a>
+  <a href="S2Passwords.dc.html" style="{{s.hasla}}" onMouseEnter="{{en.hasla}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>Hasła</a>
+
+  <sc-if value="{{hasFav}}" hint-placeholder-val="{{false}}">
+  <div class="sb-g" style="padding-top: 16px">Ulubione</div>
+  <sc-for list="{{favPages}}" as="p" hint-placeholder-count="0">
+  <div draggable="{{p.draggable}}" onDragStart="{{p.dragStart}}" onDragOver="{{p.dragOver}}" onDrop="{{p.drop}}" onDragEnd="{{dragEnd}}" style="{{p.rowS}}" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
+    <sc-if value="{{p.editing}}" hint-placeholder-val="{{false}}">
+      <input type="text" class="inp" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}" style="border-color: #a3a3a3; box-shadow: 0 0 0 3px rgba(163,163,163,.24)">
+    </sc-if>
+    <sc-if value="{{p.notEditing}}" hint-placeholder-val="{{true}}">
+      <a href="{{p.href}}" draggable="false" style="{{p.s}}">
+        <dc-import name="S2PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
+        <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
+      </a>
+      <sc-if value="{{p.showDots}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="btng ic xs" aria-label="{{p.menuLabel}}" aria-haspopup="menu" aria-expanded="{{p.menuExp}}" onClick="{{p.toggleMenu}}" style="position: absolute; right: 4px; top: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+      </sc-if>
+    </sc-if>
+    <sc-if value="{{p.menuOpen}}" hint-placeholder-val="{{false}}">
+      <div class="pop" style="position: absolute; left: 0; right: -24px; top: calc(100% + 4px); z-index: 30; padding: 4px">
+        <sc-if value="{{modeList}}" hint-placeholder-val="{{true}}">
+          <div role="menu" aria-label="{{p.menuLabel}}" style="display: flex; flex-direction: column">
+            <button type="button" role="menuitem" class="mi" onClick="{{startRename}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Zmień nazwę<span class="mi-sc">F2</span></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{showIcons}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>Zmień ikonę<svg class="mi-sc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{duplicate}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>Duplikuj</button>
+            <button type="button" role="menuitem" class="mi" onClick="{{toggleFav}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"></path></svg>{{favLabel}}</button>
+            <div class="mi-sep"></div>
+            <button type="button" role="menuitem" class="mi bad" onClick="{{askDelete}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń stronę</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{modeIcons}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 4px">
+            <div style="display: flex; align-items: center; gap: 6px"><button type="button" class="btng ic xs" aria-label="Wróć do menu" onClick="{{showList}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-weight: 500">Zmień ikonę</span></div>
+            <dc-import name="S2IconPicker" value="{{curIcon}}" on-pick="{{pickIcon}}" hint-size="100%,330px"></dc-import>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+  </sc-for>
+  </sc-if>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 4px 4px 8px">
+    <span style="font-size: 12px; font-weight: 500; color: #686868">Strony</span>
+    <a href="S2NewPage.dc.html" class="btng ic xs" aria-label="Dodaj stronę" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+  </div>
+  <sc-for list="{{otherPages}}" as="p" hint-placeholder-count="6">
+  <div draggable="{{p.draggable}}" onDragStart="{{p.dragStart}}" onDragOver="{{p.dragOver}}" onDrop="{{p.drop}}" onDragEnd="{{dragEnd}}" style="{{p.rowS}}" onMouseEnter="{{p.enter}}" onMouseLeave="{{lv}}">
+    <sc-if value="{{p.editing}}" hint-placeholder-val="{{false}}">
+      <input type="text" class="inp" aria-label="Nazwa strony" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" onBlur="{{saveName}}" style="border-color: #a3a3a3; box-shadow: 0 0 0 3px rgba(163,163,163,.24)">
+    </sc-if>
+    <sc-if value="{{p.notEditing}}" hint-placeholder-val="{{true}}">
+      <a href="{{p.href}}" draggable="false" style="{{p.s}}">
+        <dc-import name="S2PageIcon" icon="{{p.icon}}" size="16" fallback="{{p.fallback}}" hint-size="16px,16px"></dc-import>
+        <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.label}}</span>
+      </a>
+      <sc-if value="{{p.showDots}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="btng ic xs" aria-label="{{p.menuLabel}}" aria-haspopup="menu" aria-expanded="{{p.menuExp}}" onClick="{{p.toggleMenu}}" style="position: absolute; right: 4px; top: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+      </sc-if>
+    </sc-if>
+    <sc-if value="{{p.menuOpen}}" hint-placeholder-val="{{false}}">
+      <div class="pop" style="position: absolute; left: 0; right: -24px; top: calc(100% + 4px); z-index: 30; padding: 4px">
+        <sc-if value="{{modeList}}" hint-placeholder-val="{{true}}">
+          <div role="menu" aria-label="{{p.menuLabel}}" style="display: flex; flex-direction: column">
+            <button type="button" role="menuitem" class="mi" onClick="{{startRename}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Zmień nazwę<span class="mi-sc">F2</span></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{showIcons}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>Zmień ikonę<svg class="mi-sc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+            <button type="button" role="menuitem" class="mi" onClick="{{duplicate}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>Duplikuj</button>
+            <button type="button" role="menuitem" class="mi" onClick="{{toggleFav}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"></path></svg>{{favLabel}}</button>
+            <div class="mi-sep"></div>
+            <button type="button" role="menuitem" class="mi bad" onClick="{{askDelete}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń stronę</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{modeIcons}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 4px">
+            <div style="display: flex; align-items: center; gap: 6px"><button type="button" class="btng ic xs" aria-label="Wróć do menu" onClick="{{showList}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-weight: 500">Zmień ikonę</span></div>
+            <dc-import name="S2IconPicker" value="{{curIcon}}" on-pick="{{pickIcon}}" hint-size="100%,330px"></dc-import>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+  </sc-for>
+  <a href="S2NewPage.dc.html" class="sb-i"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowa strona</a>
+
+  <div style="flex: 1; min-height: 24px"></div>
+  <a href="S2Settings.dc.html" style="{{s.ustawienia}}" onMouseEnter="{{en.ustawienia}}" onMouseLeave="{{lv}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>Ustawienia</a>
+  <div style="position: relative; margin-top: 6px; border-top: 1px solid rgba(0,0,0,.06); padding-top: 6px">
+  <sc-if value="{{acctOpen}}" hint-placeholder-val="{{false}}">
+    <div role="menu" aria-label="Konto" class="pop" style="position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); z-index: 20; padding: 4px; display: flex; flex-direction: column">
+      <div class="mi-lbl" style="padding: 8px 8px 6px"><div style="font-weight: 500; color: #262626; font-size: 14px">Mejson</div><div style="font-weight: 400">mejson@example.com</div></div>
+      <div class="mi-sep"></div>
+      <a href="S2Settings.dc.html" role="menuitem" class="mi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Konto</a>
+      <a href="S2Login.dc.html" role="menuitem" class="mi bad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg>Wyloguj się</a>
+    </div>
+  </sc-if>
+  <button type="button" onClick="{{toggleAcct}}" aria-expanded="{{acctExp}}" aria-haspopup="menu" style="{{acctS}}">
+    <span class="avatar" style="width: 28px; height: 28px; font-size: 12px">M</span>
+    <span style="display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.3"><span style="font-weight: 500">Mejson</span><span style="font-size: 12px; color: #686868; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">mejson@example.com</span></span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg>
+  </button>
+  </div>
+  <sc-if value="{{anyMenu}}" hint-placeholder-val="{{false}}">
+    <button type="button" aria-label="Zamknij menu strony" tabindex="-1" onClick="{{closeMenu}}" style="position: fixed; inset: 0; z-index: 25; border: 0; padding: 0; margin: 0; background: transparent; cursor: default"></button>
+  </sc-if>
+  <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px">
+      <div class="backdrop" style="position: fixed"></div>
+      <div role="alertdialog" aria-label="Usuń stronę" class="dlg" style="position: relative; width: 400px; max-width: 100%">
+        <div class="dlg-h"><div><h2 class="dlg-t">{{confirmTitle}}</h2><p class="dlg-d" style="line-height: 1.5">{{confirmText}}</p></div></div>
+        <div class="dlg-f"><button type="button" class="btng" onClick="{{cancelDelete}}">Anuluj</button><button type="button" class="btnd" onClick="{{doDelete}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</button></div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{toastOpen}}" hint-placeholder-val="{{false}}">
+    <div role="status" class="toast" style="position: fixed; right: 24px; bottom: 24px; z-index: 45">
+      <span>Usunięto</span>
+      <button type="button" class="btn xs" onClick="{{undoDelete}}">Cofnij</button>
+    </div>
+  </sc-if>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"minHeight":{"editor":"int","default":900,"min":600,"max":2000,"unit":"px"},"active":{"editor":"enum","options":["dzis","kalendarz","sport","nawyki","subs","books","projects","websites","hasla","empty","ustawienia"],"default":"dzis"},"$preview":{"width":240,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const active = this.props.active ?? 'dzis';
+    const base = 'display:flex;align-items:center;gap:8px;height:32px;box-sizing:border-box;padding:0 8px;border-radius:8px;text-decoration:none;font-weight:500;';
+    const ON = 'background:rgba(0,0,0,.05);color:#262626;';
+    const HOV = 'background:rgba(0,0,0,.04);color:#262626;';
+    const OFF = 'color:rgba(38,38,38,.68);';
+    const keys = ['dzis', 'kalendarz', 'sport', 'nawyki', 'hasla', 'ustawienia'];
+    const s = {};
+    const en = {};
+    keys.forEach((k) => {
+      s[k] = base + (k === active ? ON : (st.hov === k ? HOV : OFF));
+      en[k] = () => this.setState({ hov: k });
+    });
+
+    // Strony: kolejność, nazwy, ikony, ulubione i kosz żyją w stanie, jak w aplikacji.
+    const START = [
+      { k: 'subs', href: 'S2Main.dc.html', name: 'Subscriptions', lock: false, rows: 13, icon: { kind: 'icon', v: 'wallet' } },
+      { k: 'books', href: 'S2Books.dc.html', name: 'Books', lock: false, rows: 11, icon: { kind: 'icon', v: 'book-open' } },
+      { k: 'projects', href: 'S2Projects.dc.html', name: 'Projects', lock: false, rows: 8, icon: { kind: 'icon', v: 'rocket' } },
+      { k: 'websites', href: 'S2Websites.dc.html', name: 'Websites', lock: false, rows: 4, icon: { kind: 'icon', v: 'globe' } },
+      { k: 'empty', href: 'S2EmptyPage.dc.html', name: '', lock: false, rows: 0 }
+    ];
+    const lista = st.list || START;
+    const zywe = lista.filter((p) => !(st.deleted || {})[p.k]);
+    const menu = st.menu || null;
+    const tryb = st.mode || 'list';
+    const otwarta = zywe.find((p) => p.k === menu) || null;
+    const nazwa = (p) => ((st.names || {})[p.k] ?? p.name) || 'Bez tytułu';
+    const odmiana = (n) => {
+      const d = n % 10;
+      const s100 = n % 100;
+      if (n === 1) return '1 wiersz trafi';
+      if (d >= 2 && d <= 4 && !(s100 >= 12 && s100 <= 14)) return n + ' wiersze trafią';
+      return n + ' wierszy trafi';
+    };
+    // Przeciąganie: strona upuszczona nad/pod inną stroną trafia w to miejsce.
+    const upusc = (cel, po) => {
+      const zrodlo = st.drag;
+      if (!zrodlo || zrodlo === cel) { this.setState({ drag: null, over: null }); return; }
+      const bez = lista.filter((x) => x.k !== zrodlo);
+      const i = bez.findIndex((x) => x.k === cel);
+      bez.splice(po ? i + 1 : i, 0, lista.find((x) => x.k === zrodlo));
+      // Upuszczenie w innej sekcji (Ulubione ↔ Strony) dodaje albo zdejmuje stronę z ulubionych.
+      const f = Object.assign({}, st.fav || {});
+      f[zrodlo] = !!f[cel];
+      this.setState({ list: bez, fav: f, drag: null, over: null });
+    };
+
+    const wiersze = zywe.map((p) => {
+      const ikona = (st.icons || {})[p.k] || p.icon || null;
+      const isActive = p.k === active;
+      const isOpen = p.k === menu;
+      const editing = st.renaming === p.k;
+      const hov = st.hov === p.k;
+      return {
+        href: p.href,
+        label: nazwa(p),
+        icon: ikona,
+        fallback: p.lock ? 'lock' : 'table',
+        fav: !!(st.fav || {})[p.k],
+        editing,
+        notEditing: !editing,
+        showDots: isActive || hov || isOpen,
+        menuOpen: isOpen,
+        menuExp: isOpen ? 'true' : 'false',
+        menuLabel: 'Menu strony ' + nazwa(p),
+        s: base + 'padding-right:32px;' + (isActive ? ON : (hov || isOpen ? HOV : OFF)),
+        draggable: editing ? 'false' : 'true',
+        rowS: 'position:relative;border-radius:8px;' + (st.drag === p.k ? 'opacity:.45;' : '') + (st.over && st.over.k === p.k && st.drag !== p.k ? (st.over.po ? 'box-shadow:inset 0 -2px 0 #262626;' : 'box-shadow:inset 0 2px 0 #262626;') : ''),
+        dragStart: (e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', p.k);
+          this.setState({ drag: p.k, menu: null });
+        },
+        dragOver: (e) => {
+          if (!st.drag) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          const r = e.currentTarget.getBoundingClientRect();
+          const po = e.clientY > r.top + r.height / 2;
+          if (!st.over || st.over.k !== p.k || st.over.po !== po) this.setState({ over: { k: p.k, po } });
+        },
+        drop: (e) => {
+          e.preventDefault();
+          upusc(p.k, !!(st.over && st.over.k === p.k && st.over.po));
+        },
+        enter: () => this.setState({ hov: p.k }),
+        toggleMenu: () => this.setState({ menu: isOpen ? null : p.k, mode: 'list' })
+      };
+    });
+
+    const zapisz = () => {
+      if (!st.renaming) return;
+      const n = Object.assign({}, st.names || {});
+      n[st.renaming] = (st.draft || '').trim();
+      this.setState({ names: n, renaming: null });
+    };
+    const ao = !!st.acct;
+    const usuwana = lista.find((p) => p.k === st.confirm) || null;
+
+    return {
+      s, en,
+      favPages: wiersze.filter((w) => w.fav),
+      otherPages: wiersze.filter((w) => !w.fav),
+      hasFav: wiersze.some((w) => w.fav),
+      lv: () => this.setState({ hov: null }),
+      dragEnd: () => this.setState({ drag: null, over: null }),
+      mh: this.props.minHeight ?? 900,
+      anyMenu: !!otwarta,
+      modeList: tryb === 'list',
+      modeIcons: tryb === 'icons',
+      closeMenu: () => this.setState({ menu: null, mode: 'list' }),
+      showIcons: () => this.setState({ mode: 'icons' }),
+      showList: () => this.setState({ mode: 'list' }),
+      curIcon: otwarta ? ((st.icons || {})[otwarta.k] || otwarta.icon || null) : null,
+      pickIcon: (v) => {
+        const ic = Object.assign({}, st.icons || {});
+        ic[menu] = v;
+        this.setState({ icons: ic, menu: null, mode: 'list' });
+      },
+      startRename: () => this.setState({ renaming: menu, draft: otwarta ? ((st.names || {})[otwarta.k] ?? otwarta.name) : '', menu: null }),
+      draft: st.draft || '',
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onDraftKey: (e) => {
+        if (e.key === 'Enter') zapisz();
+        if (e.key === 'Escape') this.setState({ renaming: null });
+      },
+      saveName: zapisz,
+      duplicate: () => {
+        if (!otwarta) return;
+        const kopia = Object.assign({}, otwarta, { k: otwarta.k + '-kopia-' + Date.now(), name: (((st.names || {})[otwarta.k] ?? otwarta.name) || 'Bez tytułu') + ' (kopia)' });
+        const nowa = lista.slice();
+        nowa.splice(lista.indexOf(otwarta) + 1, 0, kopia);
+        const ic = Object.assign({}, st.icons || {});
+        if (ic[otwarta.k] !== undefined) ic[kopia.k] = ic[otwarta.k];
+        this.setState({ list: nowa, icons: ic, menu: null });
+      },
+      favLabel: otwarta && (st.fav || {})[otwarta.k] ? 'Usuń z ulubionych' : 'Dodaj do ulubionych',
+      toggleFav: () => {
+        const f = Object.assign({}, st.fav || {});
+        f[menu] = !f[menu];
+        this.setState({ fav: f, menu: null });
+      },
+      askDelete: () => this.setState({ confirm: menu, menu: null }),
+      confirmOpen: !!usuwana,
+      confirmTitle: usuwana ? 'Usunąć stronę „' + nazwa(usuwana) + '”?' : '',
+      confirmText: usuwana ? (usuwana.rows > 0 ? odmiana(usuwana.rows) + ' do kosza na 30 dni. Daty z tej strony znikną z kalendarza.' : 'Strona trafi do kosza na 30 dni.') : '',
+      cancelDelete: () => this.setState({ confirm: null }),
+      doDelete: () => {
+        const d = Object.assign({}, st.deleted || {});
+        d[st.confirm] = true;
+        this.setState({ deleted: d, confirm: null, lastDeleted: st.confirm });
+      },
+      toastOpen: !!st.lastDeleted,
+      undoDelete: () => {
+        const d = Object.assign({}, st.deleted || {});
+        delete d[st.lastDeleted];
+        this.setState({ deleted: d, lastDeleted: null });
+      },
+      acctOpen: ao, acctExp: ao ? 'true' : 'false',
+      toggleAcct: () => this.setState({ acct: !ao }),
+      acctS: 'display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:8px;font:inherit;color:#262626;text-align:left;cursor:pointer;background:' + (ao ? 'rgba(0,0,0,.05)' : 'transparent')
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Powiadomienia (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.snav a{display:flex;align-items:center;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.nrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.nrow:last-child{border-bottom:0}
+[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}
+.tcell{height:30px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;color:#262626;cursor:pointer;padding:0}
+.tcell:hover{background:rgba(0,0,0,.04)}
+.tcell[aria-pressed="true"]{background:#262626;color:#fafafa;font-weight:600}
+.nrow[style*="opacity"] [aria-disabled="true"]{opacity:1}
+</style>
+</helmet>
+<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Powiadomienia</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px"><a href="S2Settings.dc.html">Ogólne</a><a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a><a href="S2Vault.dc.html">Sejf</a><a href="S2SettingsNotifications.dc.html" aria-current="page">Powiadomienia</a><a href="S2CategoryDialog.dc.html">Kategorie kalendarza</a></nav>
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Powiadomienia</h1>
+        <section class="card">
+          <div class="card-p" style="padding-top: 6px; padding-bottom: 6px">
+            <div class="nrow"><div><div style="font-weight: 500">Push na tym urządzeniu</div><div class="muted" style="font-size: 13px">{{pushSub}}</div></div><button type="button" class="sw" role="switch" aria-checked="{{pushOn}}" aria-label="Push na tym urządzeniu" onClick="{{togglePush}}"></button></div>
+            <sc-for list="{{kinds}}" as="k" hint-placeholder-count="3"><div class="nrow" style="{{k.rowS}}"><div><div style="font-weight: 500">{{k.t}}</div><div class="muted" style="font-size: 13px">{{k.d}}</div></div><button type="button" class="sw" role="switch" aria-checked="{{k.on}}" aria-disabled="{{k.dis}}" aria-label="{{k.t}}" onClick="{{k.toggle}}"></button></div></sc-for>
+            <div class="nrow"><div><div style="font-weight: 500; display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Cicha noc</div><div class="muted" style="font-size: 13px">{{quietSub}}</div></div><span style="display: flex; align-items: center; gap: 8px"><sc-if value="{{quietOnB}}" hint-placeholder-val="{{true}}"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{qf.toggle}}" aria-haspopup="dialog" aria-expanded="{{qf.exp}}" aria-label="Cicha noc od" style="width: auto; height: 30px; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{qf.txt}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{qf.open}}" hint-placeholder-val="{{false}}"><div class="pop" role="dialog" aria-label="Cicha noc od" style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="lbl">Godzina</div><div class="tgrid"><sc-for list="{{qf.hours}}" as="c" hint-placeholder-count="24"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div><div class="lbl">Minuty</div><div class="tgrid"><sc-for list="{{qf.mins}}" as="c" hint-placeholder-count="12"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">:{{c.t}}</button></sc-for></div><div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px"><button type="button" class="btn xs" onClick="{{qf.close}}">Gotowe</button></div></div></sc-if></span><span class="muted">–</span><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{qt.toggle}}" aria-haspopup="dialog" aria-expanded="{{qt.exp}}" aria-label="Cicha noc do" style="width: auto; height: 30px; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{qt.txt}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{qt.open}}" hint-placeholder-val="{{false}}"><div class="pop" role="dialog" aria-label="Cicha noc do" style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="lbl">Godzina</div><div class="tgrid"><sc-for list="{{qt.hours}}" as="c" hint-placeholder-count="24"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div><div class="lbl">Minuty</div><div class="tgrid"><sc-for list="{{qt.mins}}" as="c" hint-placeholder-count="12"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">:{{c.t}}</button></sc-for></div><div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px"><button type="button" class="btn xs" onClick="{{qt.close}}">Gotowe</button></div></div></sc-if></span></sc-if><button type="button" class="sw" role="switch" aria-checked="{{quietOn}}" aria-label="Cicha noc" onClick="{{toggleQuiet}}"></button></span></div>
+          </div>
+          <div class="foot" style="justify-content: space-between"><span role="status" style="{{testS}}">{{testMsg}}</span><button type="button" class="btn sm" onClick="{{sendTest}}" aria-disabled="{{testDis}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>Wyślij testowe</button></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Urządzenia</h2></div></div>
+          <div class="card-p" style="padding-top: 0">
+            <sc-for list="{{devices}}" as="dv" hint-placeholder-count="2"><div class="nrow"><div style="display: flex; gap: 12px; align-items: center"><span class="avatar" style="width: 32px; height: 32px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"></rect><path d="M12 18h.01"></path></svg></span><div><div style="font-weight: 500; display: flex; align-items: center; gap: 6px">{{dv.t}}<sc-if value="{{dv.me}}" hint-placeholder-val="{{false}}"><span class="bdg ok">TO</span></sc-if></div><div class="muted" style="font-size: 13px">{{dv.m}}</div></div></div><button type="button" class="{{dv.btnC}}" onClick="{{dv.toggle}}">{{dv.btn}}</button></div></sc-for>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Przypomnienia nawyków</h2></div></div>
+          <div class="card-p" style="padding-top: 0">
+            <sc-for list="{{habits}}" as="h" hint-placeholder-count="3"><div class="nrow" style="{{h.rowS}}"><div><div style="font-weight: 500">{{h.t}}</div><div class="muted" style="font-size: 13px">{{h.d}}</div></div><span style="display: flex; align-items: center; gap: 10px"><sc-if value="{{h.onB}}" hint-placeholder-val="{{true}}"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{h.tp.toggle}}" aria-haspopup="dialog" aria-expanded="{{h.tp.exp}}" aria-label="{{h.atLbl}}" style="width: auto; height: 30px; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{h.tp.txt}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{h.tp.open}}" hint-placeholder-val="{{false}}"><div class="pop" role="dialog" aria-label="{{h.atLbl}}" style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="lbl">Godzina</div><div class="tgrid"><sc-for list="{{h.tp.hours}}" as="c" hint-placeholder-count="24"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div><div class="lbl">Minuty</div><div class="tgrid"><sc-for list="{{h.tp.mins}}" as="c" hint-placeholder-count="12"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">:{{c.t}}</button></sc-for></div><div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px"><button type="button" class="btn xs" onClick="{{h.tp.close}}">Gotowe</button></div></div></sc-if></span></sc-if><sc-if value="{{h.offB}}" hint-placeholder-val="{{false}}"><span class="bdg sec">wyłączone</span></sc-if><button type="button" class="sw" role="switch" aria-checked="{{h.on}}" aria-disabled="{{h.dis}}" aria-label="{{h.swLbl}}" onClick="{{h.toggle}}"></button></span></div></sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2SettingsNotifications.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const push = S.push !== false;
+    const K = S.k || { hab: true, sub: false, block: true };
+    const KL = [['hab', 'Przypomnienia o nawykach', 'Wysyłane o godzinie ustawionej przy nawyku'], ['block', 'Start bloku w kalendarzu', '5 minut przed rozpoczęciem bloku'], ['sub', 'Odnowienia subskrypcji', 'Dzień przed odnowieniem, o 9:00']];
+    const quiet = S.quiet !== false, qFrom = S.qFrom || '23:00', qTo = S.qTo || '07:00';
+    const D = S.dev || { pc: true, ip: true };
+    const DL = [['pc', 'Chrome · Parrot OS', 'ostatnio: teraz', true], ['ip', 'Safari · iPhone (PWA)', 'ostatnio: wczoraj 21:14', false]];
+    const H = S.h || { w: ['12:00', true], s: ['20:30', true], e: ['18:00', false] };
+    const HL = [['w', 'Woda 2 l', 'codziennie'], ['s', 'Rozciąganie', 'pn, śr, pt, nd'], ['e', 'Angielski', '4× w tygodniu']];
+    const TP = S.tp || null;
+    const p2 = (x) => String(x).padStart(2, '0');
+    const mkTP = (id, val, set) => {
+      const open = TP === id;
+      const h = +val.slice(0, 2), m = +val.slice(3, 5);
+      return { open, exp: open ? 'true' : 'false', txt: val,
+        toggle: () => this.setState({ tp: open ? null : id }), close: () => this.setState({ tp: null }),
+        hours: Array.from({ length: 24 }, (_, i) => ({ t: p2(i), p: i === h ? 'true' : 'false', pick: () => set(p2(i) + ':' + p2(m), false) })),
+        mins: Array.from({ length: 12 }, (_, i) => ({ t: p2(i * 5), p: i * 5 === m ? 'true' : 'false', pick: () => set(p2(h) + ':' + p2(i * 5), true) })) };
+    };
+    const active = DL.filter((d) => D[d[0]]).length;
+    const canTest = push && active > 0;
+    const habOn = push && K.hab;
+    return {
+      pushOn: push ? 'true' : 'false', togglePush: () => this.setState({ push: !push, test: '' }),
+      pushSub: push ? 'Chrome · Parrot OS · włączone 12.11.2026' : 'Wyłączone — nie dostaniesz żadnych powiadomień na tym urządzeniu',
+      kinds: KL.map((k) => ({ t: k[1], d: k[2], on: K[k[0]] && push ? 'true' : 'false', dis: push ? 'false' : 'true', rowS: push ? '' : 'opacity:.55',
+        toggle: () => { if (push) this.setState({ k: Object.assign({}, K, { [k[0]]: !K[k[0]] }) }); } })),
+      quietOn: quiet ? 'true' : 'false', quietOnB: quiet, toggleQuiet: () => this.setState({ quiet: !quiet }),
+      quietSub: quiet ? 'Bez powiadomień ' + qFrom + '–' + qTo : 'Wyłączona — powiadomienia przychodzą całą dobę',
+      qf: mkTP('qf', qFrom, (v, done) => this.setState(Object.assign({ qFrom: v }, done ? { tp: null } : {}))),
+      qt: mkTP('qt', qTo, (v, done) => this.setState(Object.assign({ qTo: v }, done ? { tp: null } : {}))),
+      testDis: canTest ? 'false' : 'true',
+      sendTest: () => { if (canTest) this.setState({ test: 'Wysłano testowe powiadomienie na ' + active + (active === 1 ? ' urządzenie' : ' urządzenia') + ' ✓' }); },
+      testMsg: S.test || (canTest ? 'Na iPhonie push działa po dodaniu rhytm do ekranu głównego.' : 'Włącz push i co najmniej jedno urządzenie, żeby wysłać test.'),
+      testS: 'font-size:13px;color:' + (S.test ? '#15803d' : '#686868'),
+      devices: DL.map((d) => { const on = !!D[d[0]]; return { t: d[1], m: on ? d[2] : 'powiadomienia wyłączone', btn: on ? 'Wyłącz' : 'Włącz', btnC: on ? 'btn sm' : 'btnp sm', me: d[3],
+        toggle: () => this.setState({ dev: Object.assign({}, D, { [d[0]]: !on }), test: '' }) }; }),
+      habits: HL.map((h) => { const x = H[h[0]]; const on = x[1] && habOn; return { t: h[1], d: h[2], on: on ? 'true' : 'false', onB: on, offB: !on,
+        dis: habOn ? 'false' : 'true', rowS: habOn ? '' : 'opacity:.55', atLbl: h[1] + ' — godzina przypomnienia', swLbl: 'Przypomnienie: ' + h[1],
+        tp: mkTP('h-' + h[0], x[0], (v, done) => this.setState(Object.assign({ h: Object.assign({}, H, { [h[0]]: [v, x[1]] }) }, done ? { tp: null } : {}))),
+        toggle: () => { if (habOn) this.setState({ h: Object.assign({}, H, { [h[0]]: [x[0], !x[1]] }) }); } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

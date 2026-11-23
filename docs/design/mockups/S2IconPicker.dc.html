@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wybór ikony (czarne Lucide) — Strony 2.0</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ipk-cell:hover{background:rgba(0,0,0,.04)}
+</style>
+</helmet>
+<div role="dialog" aria-label="Wybór ikony" style="box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #262626; background: #ffffff">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <span style="font-weight: 600">Ikona</span>
+    <span class="muted num" style="font-size: 12px">{{countTxt}}</span>
+    <span style="flex: 1"></span>
+    <button type="button" class="btng xs" onClick="{{remove}}" style="color: #686868">Usuń</button>
+  </div>
+  <label class="igroup">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <input type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Szukaj ikony (po polsku lub angielsku)…" aria-label="Szukaj ikony">
+  </label>
+  <div style="max-height: 236px; overflow-y: auto; margin: 0 -2px; padding: 0 2px">
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px">
+      <sc-for list="{{icons}}" as="ik" hint-placeholder-count="24"><button type="button" class="ipk-cell" aria-label="{{ik.label}}" title="{{ik.name}}" onClick="{{ik.pick}}" style="{{ik.s}}"><dc-import name="S2PageIcon" icon="{{ik.name}}" size="18" hint-size="18px,18px"></dc-import></button></sc-for>
+    </div>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+      <div class="empty" style="padding: 16px 8px"><span style="font-size: 14px; font-weight: 500">Brak wyników</span><span class="hint">Spróbuj innego słowa.</span></div>
+    </sc-if>
+  </div>
+  <p class="hint" style="margin: 0">Cały zestaw Lucide, wszystkie ikony w kolorze tekstu.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"value":{"editor":null},"onPick":{"editor":null},"$preview":{"width":300,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const raw = this.props.value || null;
+    const val = typeof raw === 'string' ? raw : raw && raw.kind === 'icon' ? raw.v : null;
+    const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l');
+    const q = norm((st.q || '').trim());
+    const pick = (v) => { if (typeof this.props.onPick === 'function') this.props.onPick(v); };
+    // W makiecie ~170 ikon; w aplikacji pełna lista nazw z lucide-react (~2000) i ich tagi.
+    const IKONY = [["table", "tabela"], ["book-open", "książka czytanie książki"], ["book", "książka"], ["bookmark", "zakładka"], ["library", "biblioteka książki"], ["notebook-pen", "notatnik notatki"], ["file-text", "dokument notatki plik"], ["files", "pliki dokumenty"], ["folder", "folder projekty"], ["folder-open", "folder"], ["archive", "archiwum"], ["briefcase", "praca biznes"], ["building-2", "firma biuro"], ["code", "kod programowanie"], ["terminal", "terminal konsola kod"], ["git-branch", "git repozytorium"], ["database", "baza danych"], ["server", "serwer"], ["cpu", "procesor komputer"], ["monitor", "monitor komputer"], ["laptop", "laptop komputer"], ["smartphone", "telefon"], ["globe", "strony www internet świat"], ["link", "link"], ["rocket", "start projekt rakieta"], ["target", "cel cele"], ["lightbulb", "pomysł idea"], ["brain", "mózg nauka wiedza"], ["graduation-cap", "nauka studia szkoła"], ["school", "szkoła"], ["calendar", "kalendarz plan"], ["calendar-days", "kalendarz dni"], ["clock", "zegar czas"], ["alarm-clock", "budzik"], ["timer", "stoper"], ["hourglass", "klepsydra czas"], ["list-todo", "zadania lista todo"], ["square-check", "zadania zrobione"], ["check-circle", "zrobione"], ["circle-check", "zrobione"], ["list", "lista"], ["clipboard-list", "lista zadań"], ["kanban", "tablica kanban"], ["star", "ulubione gwiazda"], ["heart", "zdrowie serce"], ["heart-pulse", "zdrowie puls"], ["activity", "aktywność sport"], ["dumbbell", "siłownia trening"], ["bike", "rower"], ["footprints", "bieganie kroki"], ["trophy", "puchar nagroda osiągnięcia"], ["medal", "medal"], ["tent", "namiot biwak"], ["moon", "sen noc"], ["sun", "dzień słońce"], ["cloud-sun", "pogoda"], ["umbrella", "parasol"], ["snowflake", "zima śnieg"], ["leaf", "natura rośliny"], ["sprout", "rozwój rośliny ogród"], ["trees", "las drzewa"], ["flower-2", "kwiat"], ["flame", "ogień streak"], ["zap", "energia"], ["battery", "bateria"], ["coffee", "kawa"], ["cup-soda", "napój"], ["utensils", "jedzenie posiłki"], ["pizza", "pizza jedzenie"], ["apple", "jabłko dieta"], ["carrot", "warzywa dieta"], ["cake", "ciasto urodziny"], ["wine", "wino"], ["film", "filmy kino"], ["tv", "telewizja seriale"], ["clapperboard", "film"], ["music", "muzyka"], ["headphones", "słuchawki muzyka podcast"], ["mic", "mikrofon"], ["radio", "radio"], ["gamepad-2", "gry"], ["dice-5", "kości gry"], ["puzzle", "puzzle"], ["camera", "zdjęcia foto"], ["image", "obraz zdjęcie"], ["palette", "sztuka kolory"], ["paintbrush", "malowanie"], ["pen-tool", "projektowanie"], ["brush", "pędzel"], ["scissors", "nożyczki"], ["plane", "podróże samolot"], ["car", "samochód auto"], ["bus", "autobus"], ["train-front", "pociąg"], ["map", "mapa"], ["map-pin", "miejsce lokalizacja"], ["compass", "kompas"], ["home", "dom mieszkanie"], ["bed", "łóżko sen"], ["sofa", "kanapa"], ["lamp", "lampa"], ["key", "klucz hasła"], ["lock", "kłódka hasła"], ["shield", "ochrona"], ["shield-check", "bezpieczeństwo"], ["wallet", "portfel pieniądze subskrypcje"], ["credit-card", "karta płatności"], ["piggy-bank", "oszczędności skarbonka"], ["banknote", "pieniądze"], ["coins", "monety"], ["receipt", "rachunek faktury"], ["chart-line", "wykres"], ["chart-bar", "wykres statystyki"], ["chart-pie", "wykres"], ["trending-up", "wzrost"], ["percent", "procent"], ["calculator", "kalkulator"], ["shopping-cart", "zakupy koszyk"], ["shopping-bag", "zakupy"], ["gift", "prezent"], ["package", "paczka"], ["tag", "etykieta"], ["ticket", "bilet"], ["store", "sklep"], ["users", "ludzie zespół"], ["user", "osoba profil"], ["user-round", "osoba"], ["baby", "dziecko"], ["dog", "pies"], ["cat", "kot"], ["paw-print", "zwierzęta"], ["smile", "uśmiech nastrój"], ["laugh", "śmiech"], ["frown", "smutek"], ["message-circle", "wiadomość czat"], ["mail", "poczta email"], ["phone", "telefon"], ["send", "wyślij"], ["inbox", "skrzynka"], ["bell", "powiadomienia dzwonek"], ["megaphone", "ogłoszenie"], ["flag", "flaga cel"], ["bookmark-check", "zakładka"], ["pin", "pinezka"], ["anchor", "kotwica"], ["feather", "pióro"], ["sparkles", "iskry magia"], ["wand-sparkles", "magia"], ["crown", "korona"], ["gem", "klejnot"], ["diamond", "diament"], ["infinity", "nieskończoność"], ["atom", "atom nauka"], ["flask-conical", "chemia nauka"], ["microscope", "mikroskop nauka"], ["stethoscope", "lekarz zdrowie"], ["pill", "leki"], ["syringe", "szczepionka"], ["hammer", "młotek narzędzia"], ["wrench", "klucz narzędzia"], ["settings", "ustawienia"], ["sliders-horizontal", "ustawienia suwaki"], ["box", "pudełko"], ["layers", "warstwy"], ["layout-grid", "siatka"], ["grid-3x3", "siatka"], ["triangle", "trójkąt"], ["hexagon", "sześciokąt"], ["newspaper", "gazeta wiadomości"], ["pencil", "ołówek pisanie"], ["highlighter", "zakreślacz"], ["type", "tekst"], ["languages", "języki"], ["earth", "ziemia świat"]];
+    const cell = (sel) => 'height:32px;border-radius:8px;border:' + (sel ? '1px solid rgba(0,0,0,.18)' : '1px solid transparent') + ';background:' + (sel ? 'rgba(0,0,0,.05)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;font:inherit;cursor:pointer;padding:0;color:#262626';
+    const icons = IKONY.filter((i) => !q || norm(i[0] + ' ' + i[1]).indexOf(q) >= 0).map((i) => ({
+      name: i[0], label: 'Ikona ' + i[0], s: cell(val === i[0]), pick: () => pick({ kind: 'icon', v: i[0] })
+    }));
+    return {
+      q: st.q || '', onQ: (e) => this.setState({ q: e.target.value }),
+      remove: () => pick(null), icons, empty: icons.length === 0,
+      countTxt: q ? icons.length + ' wyników' : '~2000 ikon'
+    };
+  }
+}
+</script>
+</body>
+</html>

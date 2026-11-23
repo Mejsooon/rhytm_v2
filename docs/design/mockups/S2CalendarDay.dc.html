@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kalendarz — dzień (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="height: 100vh; min-height: 900px; flex-wrap: nowrap; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col" style="flex: 0 0 240px; height: 100%; position: static; overflow-y: auto"><dc-import name="S2Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0">
+    <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni dzień" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny dzień" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+        <h1 style="margin: 0 0 0 8px; font-size: 16px; font-weight: 600">Wtorek, 17 listopada</h1>
+        <span class="bdg sec num">{{summary}}</span>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <div style="position: relative">
+          <button type="button" class="btn" aria-expanded="{{catsOpen}}" aria-haspopup="true" onClick="{{toggleCats}}">
+            <span aria-hidden="true" style="display: inline-flex"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d}}"></span></sc-for></span>
+            Kategorie <span class="bdg sec num">{{catsCount}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{catsOpenB}}" hint-placeholder-val="{{false}}">
+            <div role="menu" aria-label="Kategorie" class="pop" style="position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; width: 230px; padding: 4px; display: flex; flex-direction: column">
+              <div class="mi-lbl">Pokaż w kalendarzu</div>
+              <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" role="menuitemcheckbox" class="mi" aria-checked="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cbx" aria-checked="{{c.pressed}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{c.dot}}"></span><span style="{{c.nameS}}">{{c.name}}</span></button></sc-for>
+              <div class="mi-sep"></div>
+              <a href="S2CategoryDialog.dc.html" class="mi" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+            </div>
+          </sc-if>
+        </div>
+        <nav class="seg" aria-label="Widok"><a href="S2CalendarDay.dc.html" aria-current="page">Dzień</a><a href="S2Calendar.dc.html">Tydzień</a><a href="S2CalendarMonth.dc.html">Miesiąc</a></nav>
+        <a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+      </div>
+    </header>
+    <div style="flex: 1 1 auto; min-height: 0; display: flex">
+      <div id="rh-siatka-dzien-c" style="flex: 1 1 auto; min-width: 0; overflow-y: auto">
+        <div style="position: sticky; top: 0; z-index: 4; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,.08); display: grid; grid-template-columns: 64px 1fr">
+          <div style="font-size: 11px; color: #686868; padding: 8px 6px; text-align: right; line-height: 1.2">cały<br>dzień</div>
+          <div style="border-left: 1px solid rgba(0,0,0,.06); padding: 6px 8px; min-height: 28px; display: flex; align-items: center; gap: 8px">
+            <span style="display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 24px; height: 24px; padding: 0; border-radius: 50%; background: #dc2626; color: #ffffff; font-weight: 600; font-size: 13px; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums">17</span>
+            <span style="font-size: 12px; font-weight: 500; color: #686868">wt</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 64px 1fr">
+          <div><sc-for list="{{hours}}" as="h" hint-placeholder-count="24"><div class="num" style="height: 52px; box-sizing: border-box; font-size: 11px; color: #686868; padding: 0 8px; text-align: right; transform: translateY(-7px)">{{h}}</div></sc-for></div>
+          <div style="{{colS}}" onClick="{{dayClick}}" onMouseMove="{{dayMove}}" onMouseLeave="{{dayLeave}}">
+            <sc-if value="{{hasGhost}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{ghostS}}">{{ghostT}}</div></sc-if>
+            <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5">
+              <!-- tytuł i opis bloku w jednej linii, nadmiar ucina wielokropek -->
+              <button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" title="{{b.full}}" style="{{b.style}}"><span style="display: flex; gap: 10px; align-items: center; width: 100%; min-width: 0; white-space: nowrap"><span style="flex: 0 1 auto; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis">{{b.title}}</span><span class="num" style="flex: 1 1 0; min-width: 0; font-size: 12px; color: #525252; overflow: hidden; text-overflow: ellipsis">{{b.meta}}</span><span class="bdg out num" style="flex: none; margin-left: auto">{{b.count}}</span></span></button>
+            </sc-for>
+            <div aria-hidden="true" style="{{nowLine}}"><span style="position: absolute; left: -5px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444"></span></div>
+            <!-- godzina „teraz” na czerwonej pigułce w kolumnie godzin (jak w aplikacji: biała na #dc2626, 11 px / 500) -->
+            <span class="num" aria-hidden="true" style="{{nowLabel}}">11:20</span>
+          <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+            <div role="dialog" aria-label="Szczegóły bloku" class="pop" style="{{pop.style}}">
+              <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0">
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #686868"><span style="{{pop.dot}}"></span>{{pop.cat}}</span>
+                  <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{pop.title}}</span>
+                  <span class="hint num">{{pop.when}}</span>
+                </div>
+                <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{close}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px">
+                <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Zadania</span><span class="hint num">{{pop.doneN}} z {{pop.total}}</span></div>
+                <div class="prog"><div style="{{pop.bar}}"></div></div>
+                <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><span class="hint" style="padding: 6px 0">Brak zadań w tym bloku.</span></sc-if>
+                <sc-for list="{{pop.tasks}}" as="t" hint-placeholder-count="3"><label style="{{t.s}}"><input type="checkbox" checked="{{t.done}}" onChange="{{t.toggle}}">{{t.title}}</label></sc-for>
+                <label class="igroup" style="height: 30px; margin-top: 2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><input type="text" placeholder="Dodaj zadanie" aria-label="Nowe zadanie" style="font-size: 13px"></label>
+              </div>
+              <sc-if value="{{pop.hasNote}}" hint-placeholder-val="{{true}}"><div style="padding: 0 16px"><div class="lbl">Notatka</div><p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #404040">{{pop.note}}</p></div></sc-if>
+              <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(0,0,0,.08); padding: 12px 16px; background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px">
+                <a href="S2BlockDialog.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</a>
+                <a href="{{pop.delHref}}" class="btndo sm">Usuń</a>
+                <sc-if value="{{pop.hasRec}}" hint-placeholder-val="{{false}}"><span class="bdg sec" style="margin-left: auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>{{pop.rec}}</span></sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{hasAdd}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="Nowy wpis" class="pop" style="{{add.style}}">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
+                <span style="font-size: 14px; font-weight: 600">Nowy wpis</span>
+                <span class="hint num">{{add.when}}</span>
+                <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+              </div>
+              <a href="S2BlockDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(21,128,61,.08); color: #15803d; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Blok</span><span class="hint">czas na zadania, z kategorią</span></span></a>
+              <a href="S2RunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
+              <a href="S2GymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">trening siłowy</span></span></a>
+            </div>
+          </sc-if>
+          </div>
+        </div>
+      </div>
+      <aside style="flex: 0 0 288px; border-left: 1px solid rgba(0,0,0,.08); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; background: #fafafa">
+        <section class="card" style="padding: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px"><span style="font-weight: 600; padding-left: 4px">Listopad 2026</span><span style="display: flex; gap: 2px"><button type="button" class="btng ic sm" aria-label="Poprzedni miesiąc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic sm" aria-label="Następny miesiąc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); font-size: 12px; font-weight: 500; color: #686868; text-align: center; margin-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{mini}}" as="m" hint-placeholder-count="42"><button type="button" aria-label="{{m.label}}" style="{{m.s}}">{{m.n}}</button></sc-for></div>
+        </section>
+        <section class="card">
+          <div class="card-h" style="padding: 14px 16px 0"><h2 class="card-t" style="font-size: 14px">Dzień w liczbach</h2></div>
+          <div style="padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between"><span class="muted">Zaplanowane</span><span class="num" style="font-weight: 500">{{planned}}</span></div>
+            <div style="display: flex; justify-content: space-between"><span class="muted">Wolne (8–20)</span><span class="num" style="font-weight: 500">{{free}}</span></div>
+            <div style="display: flex; justify-content: space-between"><span class="muted">Zadania</span><span class="num" style="font-weight: 500">2 / 15</span></div>
+            <div class="prog" role="progressbar" aria-label="Zadania wykonane" aria-valuemin="0" aria-valuemax="15" aria-valuenow="2" style="margin-top: 2px"><div style="width: 13%; height: 6px; border-radius: 999px; background: #15803d"></div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sel: 'b1', hidden: { Dom: true }, done: {} }; }
+  componentDidMount() {
+    try { sessionStorage.setItem('rh-from', 'S2CalendarDay.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {}
+    const el = document.getElementById('rh-siatka-dzien-c');
+    if (el) el.scrollTop = 6 * 52;
+  }
+  renderVals() {
+    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
+    const hidden = this.state.hidden;
+    const cats = CATDEF.map((c) => {
+      const on = !hidden[c[0]];
+      return {
+        name: c[0], pressed: on ? 'true' : 'false', on, color: c[1],
+        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
+        nameS: on ? '' : 'color:#686868',
+        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
+      };
+    });
+    const visibleCats = cats.filter((c) => c.on);
+    const openC = !!this.state.catsOpen;
+    const catsOut = {
+      cats, catsOpen: openC ? 'true' : 'false', catsOpenB: openC, toggleCats: () => this.setState({ catsOpen: !openC }),
+      catsCount: visibleCats.length + '/' + cats.length,
+      dots: visibleCats.filter((c) => c.color).slice(0, 4).map((c, i) => 'width:9px;height:9px;border-radius:50%;border:1.5px solid #ffffff;background:' + c.color + (i ? ';margin-left:-4px' : ''))
+    };
+    const mkTasks = (selB) => selB.tasks.map((t, k) => {
+      const key = selB.id + k;
+      const done = this.state.done[key] !== undefined ? this.state.done[key] : t[1];
+      return { title: t[0], done, toggle: () => this.setState({ done: Object.assign({}, this.state.done, { [key]: !done }) }), s: 'display:flex;align-items:center;gap:10px;min-height:30px;font-size:14px;cursor:pointer;' + (done ? 'color:#686868;text-decoration:line-through' : 'color:#262626') };
+    });
+    const mkPop = (selB, posStyle) => {
+      const tasks = mkTasks(selB);
+      const doneN = tasks.filter((t) => t.done).length;
+      return {
+        title: selB.title, cat: selB.cat, when: selB.day + ' · ' + selB.time, tasks, doneN, total: tasks.length, empty: tasks.length === 0,
+        hasNote: selB.id === 'kod', note: 'Najpierw migracje, potem UI. Okno „+ Pole” wg makiety.', rec: selB.rec ? 'co tydzień' : '', hasRec: !!selB.rec,
+        delHref: selB.rec ? 'S2ScopeDialog.dc.html' : 'S2DeleteBlockDialog.dc.html',
+        dot: 'width:8px;height:8px;border-radius:50%;background:' + selB.color,
+        bar: 'height:6px;border-radius:999px;background:#15803d;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
+        style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
+      };
+    };
+    const COL = { Studia: '#0070f3', Projekty: '#15803d', Praca: '#7c3aed', Sport: '#c2410c' };
+    const H = 52;
+    const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
+    const RAW = [
+      ['b0', 8, 9.5, 'Matematyka — ćwiczenia', 'Studia', '2/2', [['Zadania 4.1–4.6', true], ['Powtórka całek', true]], false],
+      ['b1', 10, 12.5, 'rhytm — kod', 'Projekty', '2/4', [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]], true],
+      ['b2', 13, 15, 'Systemy operacyjne', 'Studia', '0/3', [['Laby: procesy', false], ['Notatki z wykładu', false], ['Quiz', false]], false],
+      ['b3', 16, 17, 'Bieg 10 km', 'Sport', 'trening', [], false],
+      ['b4', 18.5, 20, 'Bazy danych — projekt', 'Studia', '0/3', [['Diagram ERD', false], ['Zapytania z aliasami AS', false], ['Opis części dokumentowej', false]], false]
+    ];
+    const vis = RAW.filter((b) => !hidden[b[4]]);
+    const blocks = vis.map((b) => {
+      const c = COL[b[4]];
+      const on = this.state.sel === b[0];
+      const meta = fmt(b[1]) + '–' + fmt(b[2]) + ' · ' + b[4];
+      return {
+        title: b[3], meta, count: b[5], full: b[3] + ' · ' + meta,
+        pressed: on ? 'true' : 'false', pick: () => this.setState({ sel: on ? null : b[0], add: null }),
+        style: 'position:absolute;left:8px;right:16px;top:' + Math.round(b[1] * H + 2) + 'px;height:' + Math.round((b[2] - b[1]) * H - 4) + 'px;box-sizing:border-box;display:flex;flex-direction:column;text-align:left;font:inherit;font-size:14px;line-height:1.3;color:#262626;cursor:pointer;border-radius:10px;padding:7px 12px;overflow:hidden;background:' + c + '12;border:1px solid ' + c + '4d;box-shadow:' + (on ? '0 0 0 2px #fff,0 0 0 4px ' + c + '66' : 'none')
+      };
+    });
+    const planned = vis.reduce((a, b) => a + (b[2] - b[1]), 0);
+    const hm = (x) => Math.floor(x) + ' h' + (x % 1 ? ' 30 min' : '');
+    // jak buildMonthGrid w aplikacji: zawsze 6 tygodni (42 dni) — listopad 2026 zaczyna się w niedzielę, więc 30.11 wypada w 6. tygodniu
+    const mini = Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(Date.UTC(2026, 10, 1 - 6 + i));
+      const inm = d.getUTCMonth() === 10;
+      const sel = inm && d.getUTCDate() === 17;
+      return { n: String(d.getUTCDate()), label: d.getUTCDate() + (inm ? ' listopada' : ''),
+        s: 'height:30px;border:0;border-radius:8px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#dc2626;color:#ffffff;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : inm ? 'background:transparent;color:#262626' : 'background:transparent;color:#a3a3a3') };
+    });
+    const selRaw = vis.find((b) => b[0] === this.state.sel);
+    const pop = selRaw ? mkPop({ id: selRaw[0] === 'b1' ? 'kod' : selRaw[0], title: selRaw[3], cat: selRaw[4], color: COL[selRaw[4]], day: 'wt 17.11', time: fmt(selRaw[1]) + '–' + fmt(selRaw[2]), tasks: selRaw[6], rec: selRaw[7] }, 'left:46%;max-width:calc(54% - 16px);top:' + Math.round(selRaw[1] * H) + 'px;') : null;
+    const ad = this.state.add;
+    const gh = this.state.ghost;
+    const skip = (e) => { const t = e && e.target; return !!(t && t.closest && t.closest('button,a,[role=dialog],label,input')); };
+    const slot = (e) => { const r = e.currentTarget.getBoundingClientRect(); return Math.max(0, Math.min(23, Math.floor((e.clientY - r.top) / (H / 2)) / 2)); };
+    const g = ad || gh;
+    const add = ad ? { when: 'wt 17.11 · ' + fmt(ad.start), style: 'position:absolute;z-index:6;left:46%;width:270px;top:' + Math.round(ad.start * H) + 'px;padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default' } : null;
+    const now = 11 + 20 / 60;
+    return Object.assign({}, catsOut, {
+      summary: vis.length + ' z ' + RAW.length + ' bloków',
+      hours: Array.from({ length: 24 }, (_, i) => (i === 0 ? '' : String(i).padStart(2, '0') + ':00')),
+      colS: 'position:relative;height:' + (24 * H) + 'px;border-left:1px solid rgba(0,0,0,.06);background-image:repeating-linear-gradient(to bottom,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px,transparent ' + H + 'px)',
+      blocks,
+      hasSel: !!pop, pop, close: () => this.setState({ sel: null }),
+      hasAdd: !!add, add, closeAdd: () => this.setState({ add: null }),
+      dayClick: (e) => { if (skip(e)) return; const s = slot(e); this.setState({ add: (ad && ad.start === s) ? null : { start: s }, sel: null }); },
+      dayMove: (e) => { if (skip(e)) { if (this.state.ghost) this.setState({ ghost: null }); return; } const s = slot(e); const o = this.state.ghost; if (!o || o.start !== s) this.setState({ ghost: { start: s } }); },
+      dayLeave: () => { if (this.state.ghost) this.setState({ ghost: null }); },
+      hasGhost: !!g,
+      ghostT: g ? '+ ' + fmt(g.start) + '–' + fmt(g.start + 1) : '',
+      ghostS: g ? 'position:absolute;left:8px;right:16px;top:' + Math.round(g.start * H + 2) + 'px;height:' + (H - 4) + 'px;box-sizing:border-box;border:1px dashed rgba(0,0,0,.24);border-radius:10px;background:rgba(0,0,0,.02);color:#686868;font-size:13px;font-weight:500;padding:7px 12px;pointer-events:none' : '',
+      nowLine: 'position:absolute;left:0;right:0;top:' + Math.round(now * H) + 'px;border-top:2px solid #ef4444;z-index:3;pointer-events:none',
+      nowLabel: 'position:absolute;left:-58px;top:' + (Math.round(now * H) - 10) + 'px;z-index:3;pointer-events:none;font-size:11px;font-weight:500;line-height:normal;color:#ffffff;background:#dc2626;border-radius:6px;padding:2px 5px',
+      mini,
+      planned: hm(planned), free: hm(Math.max(0, 12 - planned))
+    });
+  }
+}
+</script>
+</body>
+</html>

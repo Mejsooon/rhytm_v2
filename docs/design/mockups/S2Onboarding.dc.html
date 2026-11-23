@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Onboarding 1 — Profil (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid rgba(0,0,0,.1);border-radius:12px;background:#fff;background-clip:padding-box;box-shadow:0 1px 2px rgba(0,0,0,.05);font:inherit;color:#262626;cursor:pointer;box-sizing:border-box;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.opt:hover{background:#fafafa}
+.opt[aria-pressed="true"],.opt[aria-checked="true"]{border-color:rgba(0,0,0,.24);background:rgba(0,0,0,.025);box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.opt .cbx{margin-top:2px;pointer-events:none}
+.opt[aria-pressed="true"] .cbx,.opt[aria-checked="true"] .cbx{background:#262626;border-color:#262626;color:#fafafa}
+@media (max-width:1100px){.split{grid-template-columns:1fr !important}.pvside{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #262626; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+  <header style="height: 64px; display: flex; align-items: center; gap: 8px; padding: 0 24px">
+    <svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg><span style="font-weight: 600; font-size: 16px; letter-spacing: -0.03em">rhytm</span>
+    <span class="bdg sec lg" style="margin-left: auto">Krok 1 z 7</span>
+    <a href="S2Login.dc.html" class="btng sm" style="margin-left: 8px; color: #686868">Wyloguj</a>
+  </header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px 40px">
+    <div class="card" style="width: 100%; max-width: 1120px; height: 720px; overflow: hidden">
+      <div role="progressbar" aria-label="Postęp" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" style="display: flex; gap: 4px; padding: 16px 20px 0"><span style="flex: 1; height: 4px; border-radius: 999px; background: #262626"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span></div>
+      <div class="split" style="flex: 1; min-height: 0; display: grid; grid-template-columns: 520px 1fr">
+        <div style="display: flex; flex-direction: column; min-height: 0">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding: 32px 40px 20px">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em">Uzupełnij profil</h1><p class="muted" style="margin: 6px 0 0">Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach</p></div>
+            <div style="display: flex; align-items: center; gap: 16px">
+              <span class="avatar" style="width: 56px; height: 56px; font-size: 18px; background: #262626; color: #fafafa; box-shadow: none">{{initials}}</span>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Zdjęcie profilowe</span><span class="hint" style="font-size: 13px">Bez zdjęcia pokażemy inicjały</span></div>
+              <button type="button" class="btn" style="margin-left: auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>Wgraj</button>
+            </div>
+            <label class="fld">Imię lub pseudonim<input class="inp" type="text" value="{{nameVal}}" onChange="{{onName}}" autocomplete="nickname"></label>
+            <div class="fld"><span>Strefa czasowa</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{tzToggle}}" aria-haspopup="listbox" aria-expanded="{{tzExp}}" aria-label="Strefa czasowa"><span>{{tzTxt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{tzOpen}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Strefa czasowa"><sc-for list="{{tzOpts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span><span class="hint">Wykryta z przeglądarki</span></div>
+            <div class="fld"><span>Tydzień zaczyna się od</span><div class="seg" role="radiogroup" aria-label="Początek tygodnia" style="display: flex"><button type="button" role="radio" aria-checked="{{wkPn}}" aria-pressed="{{wkPn}}" onClick="{{setPn}}" style="flex: 1">Poniedziałku</button><button type="button" role="radio" aria-checked="{{wkNd}}" aria-pressed="{{wkNd}}" onClick="{{setNd}}" style="flex: 1">Niedzieli</button></div></div>
+            <div class="fld"><span>Format godziny</span><div class="seg" role="radiogroup" aria-label="Format godziny" style="display: flex"><button type="button" role="radio" aria-checked="{{c24}}" aria-pressed="{{c24}}" onClick="{{set24}}" style="flex: 1">24 h · 14:30</button><button type="button" role="radio" aria-checked="{{c12}}" aria-pressed="{{c12}}" onClick="{{set12}}" style="flex: 1">12 h · 2:30 PM</button></div></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 14px 40px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.02)">
+            <a class="btng" href="S2Register.dc.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Wstecz</a>
+            <span style="flex: 1"></span>
+
+            <a class="btnp" href="S2OnboardingRole.dc.html">Dalej<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </div>
+        <div class="pvside" style="position: relative; border-left: 1px solid rgba(0,0,0,.08); overflow: hidden"><dc-import name="S2OnbPreview" s="{{S}}" step="1" hint-size="100%,680px"></dc-import></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24' }; }
+  renderVals() {
+    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo', goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, notify: { perm: true, before: true, renew: true, weekly: true, habits: false } };
+    const S = Object.assign({}, D, this.state || {});
+    const v = (e) => (e && e.target ? e.target.value : e);
+    const nm = (S.name || '').trim() || 'Ty';
+    const TZ = [['Europe/Warsaw', 'Europe/Warsaw (UTC+01:00)'], ['Europe/London', 'Europe/London (UTC+00:00)'], ['Europe/Berlin', 'Europe/Berlin (UTC+01:00)'], ['America/New_York', 'America/New_York (UTC−05:00)']];
+    const open = !!this.state.tzOpen;
+    return { S, initials: nm.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(), nameVal: S.name, onName: (e) => this.setState({ name: v(e) }),
+      tzOpen: open, tzExp: open ? 'true' : 'false', tzToggle: () => this.setState({ tzOpen: !open }), tzTxt: (TZ.find((t) => t[0] === S.tz) || TZ[0])[1],
+      tzOpts: TZ.map((t) => ({ t: t[1], on: t[0] === S.tz, p: t[0] === S.tz ? 'true' : 'false', pick: () => this.setState({ tz: t[0], tzOpen: false }) })),
+      wkPn: S.week === 'pn' ? 'true' : 'false', wkNd: S.week === 'nd' ? 'true' : 'false', setPn: () => this.setState({ week: 'pn' }), setNd: () => this.setState({ week: 'nd' }),
+      c24: S.clock === '24' ? 'true' : 'false', c12: S.clock === '12' ? 'true' : 'false', set24: () => this.setState({ clock: '24' }), set12: () => this.setState({ clock: '12' }) };
+  }
+}
+</script>
+</body>
+</html>

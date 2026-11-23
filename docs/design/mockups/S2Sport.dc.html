@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Sport — miesiąc (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.sp-plus{float:right;color:#a3a3a3;display:flex;opacity:0}
+.sp-day:hover .sp-plus{opacity:1}
+.sp-day:hover{background:#fafafa}
+</style>
+</helmet>
+<div class="shell" style="min-height: 1460px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="1460" hint-size="100%,1460px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Sport</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2WorkoutTemplates.dc.html" class="btn">Szablony</a><a href="S2GymLog.dc.html" class="btn">+ Trening siłowy</a><a href="S2RunDialog.dc.html" class="btnp">Nowy bieg</a></div>
+    </header>
+    <div style="padding: 20px 24px 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+          <h1 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600">Sport</h1>
+          <span class="hint num">{{rangeLabel}}</span>
+        </div>
+        <div class="seg" role="group" aria-label="Aktywność"><sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div>
+      </div>
+      <div style="min-width: 760px"><div style="border: 1.5px solid rgba(0,0,0,.14); border-radius: 12px; background: #fff; overflow: visible">
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 92px; border-bottom: 1px solid rgba(0,0,0,.08); font-size: 12px; font-weight: 500; color: #686868">
+          <span style="padding: 8px 10px">pon</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">wt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">śr</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">czw</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">pt</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">sob</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06)">nd</span><span style="padding: 8px 10px; border-left: 1px solid rgba(0,0,0,.06); text-align: right">Σ tydz.</span>
+        </div>
+        <sc-for list="{{month}}" as="w" hint-placeholder-count="6">
+          <div style="{{w.rowS}}">
+            <sc-for list="{{w.days}}" as="d" hint-placeholder-count="7">
+              <div class="sp-day" style="{{d.s}}" onClick="{{d.add}}">
+                <span style="{{d.numS}}">{{d.num}}</span><sc-if value="{{d.canAdd}}" hint-placeholder-val="{{true}}"><span class="sp-plus" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span></sc-if>
+                <sc-for list="{{d.items}}" as="b" hint-placeholder-count="1"><button type="button" aria-pressed="{{b.pressed}}" aria-label="{{b.label}}" onClick="{{b.pick}}" style="{{b.chip}}"><span style="{{b.dot}}"></span>{{b.short}}</button></sc-for>
+                <sc-if value="{{d.hasPop}}" hint-placeholder-val="{{false}}">
+                  <div role="dialog" aria-label="{{d.pop.title}}" class="pop" style="{{d.pop.s}}">
+                    <div style="padding: 14px 16px 0">
+                      <div style="display: flex; align-items: center; gap: 8px">
+                        <span class="{{d.pop.badge}}">{{d.pop.type}}</span>
+                        <span class="hint" style="white-space: nowrap">{{d.pop.status}} · w kalendarzu</span>
+                        <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{close}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+                      </div>
+                      <div style="font-size: 16px; font-weight: 600; margin-top: 8px">{{d.pop.title}}</div>
+                      <div class="hint num" style="margin-top: 2px">{{d.pop.when}}</div>
+                      <div class="frame" style="margin-top: 12px"><div class="inner" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))">
+                        <sc-for list="{{d.pop.stats}}" as="st" hint-placeholder-count="4"><div style="{{st.cs}}"><div class="lbl" style="font-size: 11px">{{st.k}}</div><div class="num" style="font-size: 14px; font-weight: 600; margin-top: 2px">{{st.v}}</div></div></sc-for>
+                      </div></div>
+                      <sc-if value="{{d.pop.hasList}}" hint-placeholder-val="{{false}}"><div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px"><sc-for list="{{d.pop.list}}" as="ex" hint-placeholder-count="4"><div style="display: flex; gap: 8px"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ex.n}}</span><span class="num muted">{{ex.v}}</span></div></sc-for></div></sc-if>
+                      <sc-if value="{{d.pop.hasNote}}" hint-placeholder-val="{{false}}"><div class="alert" style="margin-top: 12px; padding: 8px 10px; font-size: 13px; background: rgba(0,0,0,.02)">{{d.pop.note}}</div></sc-if>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 16px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px">
+                      <a href="{{d.pop.href}}" class="btnp sm">{{d.pop.cta}}</a>
+                      <button type="button" class="btndo sm">Usuń</button>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{d.hasAdd}}" hint-placeholder-val="{{false}}">
+                  <div role="dialog" aria-label="Dodaj trening" class="pop" style="{{d.addS}}">
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
+                      <span style="font-size: 14px; font-weight: 600">Dodaj trening</span>
+                      <span class="hint num">{{d.addWhen}}</span>
+                      <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+                    </div>
+                    <a href="S2RunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
+                    <a href="S2GymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">pusty trening siłowy</span></span></a>
+                    <div class="mi-sep"></div>
+                    <div class="mi-lbl">Z szablonu</div>
+                    <div style="display: flex; gap: 6px; padding: 2px 8px 6px"><a href="S2GymLog.dc.html" class="chip">Push</a><a href="S2GymLog.dc.html" class="chip">Pull</a><a href="S2GymLog.dc.html" class="chip">Nogi</a></div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div style="border-left: 1px solid rgba(0,0,0,.06); padding: 8px 10px; text-align: right; font-size: 13px; background: rgba(0,0,0,.02)"><div class="num" style="font-weight: 600">{{w.km}}</div><div class="hint num" style="margin-top: 2px">{{w.count}}</div></div>
+          </div>
+        </sc-for>
+      </div></div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #686868; margin-top: -8px">
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b"></span>Bieg</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #525252"></span>Siłownia</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 10px; border-radius: 3px; border: 1px dashed #686868; box-sizing: border-box"></span>Zaplanowany, bez danych</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: stretch">
+        <section class="card" style="overflow: hidden">
+          <div role="tablist" aria-label="Metryka" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid rgba(0,0,0,.08)">
+            <sc-for list="{{tiles}}" as="ti" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{ti.pressed}}" onClick="{{ti.pick}}" style="{{ti.s}}"><div class="lbl">{{ti.label}}</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 6px; color: #262626">{{ti.value}} <span style="font-size: 12px; font-weight: 400; color: #686868">{{ti.sub}}</span></div></button></sc-for>
+          </div>
+          <div style="padding: 16px 20px 14px">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px"><span style="font-size: 14px; font-weight: 600">{{chart.title}}</span><span class="hint">{{chart.note}}</span></div>
+            <div style="position: relative; display: flex; align-items: flex-end; gap: 10px; height: 150px; border-bottom: 1px solid rgba(0,0,0,.08)">
+              <sc-if value="{{chart.hasGoal}}" hint-placeholder-val="{{true}}"><div style="{{chart.goalLine}}"></div><span class="bdg ok" style="{{chart.goalLabel}}">{{chart.goalText}}</span></sc-if>
+              <sc-for list="{{chart.bars}}" as="w" hint-placeholder-count="12"><div tabindex="0" aria-label="{{w.t}}" onMouseEnter="{{w.enter}}" onMouseLeave="{{w.leave}}" onFocus="{{w.enter}}" onBlur="{{w.leave}}" style="{{w.colS}}"><div style="{{w.s}}"><span class="num" style="{{w.vs}}">{{w.v}}</span></div><sc-if value="{{w.on}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{w.tipS}}"><div class="num" style="font-size: 11px; color: #686868">{{w.range}}</div><div class="num" style="font-size: 15px; font-weight: 600; margin-top: 2px">{{w.full}}</div><sc-if value="{{w.hasCmp}}" hint-placeholder-val="{{false}}"><div class="num" style="{{w.cmpS}}">{{w.cmp}}</div></sc-if></div></sc-if></div></sc-for>
+            </div>
+            <div class="num" style="display: flex; justify-content: space-between; font-size: 11px; color: #686868; margin-top: 6px"><span>tydz. 36</span><span>tydz. 47</span></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-h" style="align-items: center"><h2 class="card-t">Wyciskanie na ławce</h2><span class="{{rm.badgeC}}">{{rm.badge}}</span></div>
+          <div style="padding: 14px 24px 20px; display: flex; flex-direction: column; flex: 1">
+          <div style="display: flex; gap: 24px; align-items: flex-end">
+            <div><div class="lbl">Szac. 1RM</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 4px">{{rm.cur.v}} kg</div></div>
+            <div><div class="lbl">Najlepsza seria</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 4px">{{rm.cur.set}}</div></div>
+            <div class="hint num" style="margin-left: auto; padding-bottom: 3px">{{rm.cur.when}}</div>
+          </div>
+          <div style="position: relative; margin-top: auto; padding-top: 12px" onMouseLeave="{{rm.leave}}">
+            <div style="position: relative; height: 110px">
+              <svg viewBox="0 0 300 110" preserveAspectRatio="none" width="100%" height="110" role="img" aria-label="Szacowany 1RM rośnie z 72 do 82,5 kg w 8 tygodni" style="display: block; position: absolute; inset: 0">
+                <line x1="0" y1="100" x2="300" y2="100" stroke="rgba(0,0,0,.08)" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="55" x2="300" y2="55" stroke="rgba(0,0,0,.05)" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="10" x2="300" y2="10" stroke="rgba(0,0,0,.05)" vector-effect="non-scaling-stroke"></line>
+                <polyline points="{{rm.points}}" fill="none" stroke="#262626" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+              </svg>
+              <sc-if value="{{rm.hasHov}}" hint-placeholder-val="{{false}}"><div style="{{rm.guideS}}"></div></sc-if>
+              <sc-for list="{{rm.dots}}" as="pt" hint-placeholder-count="8"><span style="{{pt.s}}"></span></sc-for>
+              <sc-for list="{{rm.zones}}" as="z" hint-placeholder-count="8"><button type="button" aria-label="{{z.label}}" onMouseEnter="{{z.enter}}" onFocus="{{z.enter}}" onClick="{{z.enter}}" style="{{z.s}}"></button></sc-for>
+            </div>
+            <sc-if value="{{rm.hasHov}}" hint-placeholder-val="{{false}}">
+              <div role="tooltip" style="{{rm.tipS}}">
+                <div class="hint num">{{rm.hov.when}}</div>
+                <div class="num" style="font-size: 14px; font-weight: 600; margin-top: 2px">{{rm.hov.v}} kg <span style="font-size: 12px; font-weight: 400; color: #686868">szac. 1RM</span></div>
+                <div class="num" style="font-size: 12px; margin-top: 2px">seria {{rm.hov.set}}</div>
+                <div class="num" style="{{rm.hov.deltaS}}">{{rm.hov.delta}}</div>
+                <sc-if value="{{rm.hov.rec}}" hint-placeholder-val="{{false}}"><span class="bdg ok" style="margin-top: 6px">REKORD</span></sc-if>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #686868; margin-top: 4px"><span>wrz</span><span>lis</span></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" style="overflow: hidden">
+        <div class="card-h" style="align-items: center; padding-bottom: 14px"><h2 class="card-t">Ostatnie treningi</h2><span class="bdg sec lg num">listopad · {{doneCount}} wykonanych</span></div>
+        <div style="overflow-x: auto; border-top: 1px solid rgba(0,0,0,.08)">
+        <table class="tbl" style="min-width: 640px">
+          <thead><tr><th scope="col" class="th" style="padding-left: 24px">Data</th><th scope="col" class="th">Typ</th><th scope="col" class="th" style="text-align: right">Wynik</th><th scope="col" class="th" style="text-align: right">Tempo / objętość</th><th scope="col" class="th" style="text-align: right; padding-right: 24px">Trudność</th></tr></thead>
+          <tbody>
+            <sc-for list="{{sessions}}" as="r" hint-placeholder-count="6"><tr>
+              <td class="td num" style="padding-left: 24px; color: #525252">{{r.date}}</td>
+              <td class="td"><span class="{{r.badge}}">{{r.type}}</span> <span style="margin-left: 6px; font-weight: 500">{{r.name}}</span></td>
+              <td class="td num" style="text-align: right; font-weight: 500">{{r.main}}</td>
+              <td class="td num" style="text-align: right; color: #525252">{{r.sub}}</td>
+              <td class="td num" style="text-align: right; color: #686868; padding-right: 24px">{{r.diff}}</td>
+            </tr></sc-for>
+          </tbody>
+        </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { filter: 'all', sel: '15', metric: 'km', hov: null, add: null }; }
+  renderVals() {
+    const filter = this.state.filter;
+    const RUN = '#f59e0b';
+    const GYM = '#525252';
+    const all = [
+      [1, 'run', 9, 10, 'Spokojny', '8,0 km · 6:02/km', '8,0', false, 8, 'nd 01.11', '5/10'],
+      [3, 'run', 17, 17.5, 'Rozruch', '6,0 km · 5:55/km', '6,0', false, 6, 'wt 03.11', '4/10'],
+      [4, 'gym', 16, 17.5, 'Pull', '5 ćw. · 5 640 kg', 'Pull', false, 0, 'śr 04.11', '7/10'],
+      [6, 'gym', 16, 17.5, 'Pull', '5 ćw. · 5 980 kg', 'Pull', false, 0, 'pt 06.11', '7/10'],
+      [8, 'run', 10, 11, 'Spokojny', '10,0 km · 5:58/km', '10,0', false, 10, 'nd 08.11', '5/10'],
+      [10, 'run', 17, 18, 'Interwały', '6,4 km · 5:18/km', '6,4', false, 6.4, 'wt 10.11', '9/10'],
+      [12, 'gym', 16, 17.5, 'Push', '5 ćw. · 6 420 kg', 'Push', false, 0, 'czw 12.11', '8/10'],
+      [15, 'run', 9, 10.5, 'Długi bieg', '12,0 km · 5:51/km', '12,0', false, 12, 'nd 15.11', '7/10'],
+      [17, 'run', 16, 17, 'Bieg 10 km', 'plan · 10 km', '10 km', true, 0, 'wt 17.11', ''],
+      [19, 'gym', 15, 16.5, 'Push', 'plan · szablon Push', 'Push', true, 0, 'czw 19.11', ''],
+      [21, 'run', 10, 11.5, 'Długi bieg', 'plan · 14 km', '14 km', true, 0, 'sob 21.11', '']
+    ].filter((s) => filter === 'all' || s[1] === filter);
+    const done = all.filter((x) => !x[7]).slice().reverse();
+    const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
+    const monthStart = 26;
+    const rows = [];
+    for (let r = 0; r < 6; r++) {
+      const days = [];
+      let km = 0;
+      let count = 0;
+      for (let c = 0; c < 7; c++) {
+        const idx = r * 7 + c;
+        const inMonth = idx >= 6 && idx < 36;
+        const num = inMonth ? idx - 5 : (idx < 6 ? monthStart + idx : idx - 35);
+        const dayList = inMonth ? all.filter((s) => s[0] === num) : [];
+        const items = dayList.map((s) => {
+          const col = s[1] === 'run' ? RUN : GYM;
+          const on = this.state.sel === String(s[0]);
+          if (!s[7]) { km += s[8]; count += 1; }
+          return {
+            short: s[6], pressed: on ? 'true' : 'false', label: s[4] + ', ' + s[9],
+            dot: 'width:6px;height:6px;border-radius:50%;flex:none;background:' + col,
+            pick: () => this.setState({ sel: on ? null : String(s[0]), add: null }),
+            chip: 'display:flex;align-items:center;gap:6px;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums;border-radius:6px;padding:2px 6px;margin-top:4px;white-space:nowrap;overflow:hidden;color:#262626;background:' + (s[7] ? '#ffffff' : col + '14') + ';border:1px ' + (s[7] ? 'dashed ' + col : 'solid ' + col + '30') + (on ? ';box-shadow:0 0 0 2px ' + col + '55' : '')
+          };
+        });
+        const selS = dayList.find((s) => this.state.sel === String(s[0]));
+        let pop = null;
+        if (selS) {
+          const isRun = selS[1] === 'run';
+          const planned = selS[7];
+          const pace = isRun && !planned ? selS[5].split(' · ')[1].replace('/km', '') : '';
+          const paceMin = pace ? parseInt(pace.split(':')[0]) + parseInt(pace.split(':')[1]) / 60 : 0;
+          const durMin = isRun && !planned ? selS[8] * paceMin : 0;
+          const hms = (m) => { const t = Math.round(m * 60); const h = Math.floor(t / 3600); const mm = Math.floor((t % 3600) / 60); const ss = t % 60; return (h ? h + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
+          const kcal = durMin ? Math.round((3.5 + 0.2 * (1000 / paceMin)) * 72 * durMin / 1000 * 5) : 0;
+          const EX = {
+            Push: [['Wyciskanie na ławce', '72,5 × 5'], ['Wyciskanie hantli skos', '28 × 8'], ['Pompki na poręczach', 'mc × 10'], ['Wznosy bokiem', '10 × 15'], ['Francuskie wyciskanie', '25 × 10']],
+            Pull: [['Martwy ciąg', '110 × 5'], ['Podciąganie', 'mc × 8'], ['Wiosłowanie sztangą', '60 × 8'], ['Face pull', '20 × 15'], ['Uginanie hantli', '14 × 10']]
+          };
+          const vol = selS[5].split(' · ')[1] || '';
+          const stats0 = isRun
+            ? (planned ? [{ k: 'Plan', v: selS[6] }, { k: 'Start', v: fmt(selS[2]) }, { k: 'Tempo', v: '—' }, { k: 'Kcal', v: '—' }]
+                       : [{ k: 'Dystans', v: selS[6] + ' km' }, { k: 'Czas', v: hms(durMin) }, { k: 'Tempo', v: pace + ' /km' }, { k: 'Kcal', v: '≈ ' + kcal }, { k: 'Trudność', v: selS[10] }, { k: 'Godzina', v: fmt(selS[2]) }])
+            : (planned ? [{ k: 'Szablon', v: selS[4] }, { k: 'Start', v: fmt(selS[2]) }, { k: 'Ćwiczenia', v: '4' }, { k: 'Serie', v: '13' }]
+                       : [{ k: 'Ćwiczenia', v: '5' }, { k: 'Serie', v: '15 / 15' }, { k: 'Objętość', v: vol }, { k: 'Czas', v: '1:30:00' }, { k: 'Trudność', v: selS[10] }, { k: 'Rekordy', v: selS[0] === 12 ? '1' : '0' }]);
+          const stats = stats0.map((st, j) => Object.assign({}, st, { cs: 'padding:8px 10px;' + (j % 2 ? 'border-left:1px solid rgba(0,0,0,.08);' : '') + (j > 1 ? 'border-top:1px solid rgba(0,0,0,.08)' : '') }));
+          const NOTES = { 15: 'Ostatnie 2 km mocniej, nogi dobrze.', 10: '6 × 400 m, przerwa 90 s.', 12: 'Nowy rekord w wyciskaniu: 72,5 × 5.' };
+          pop = {
+            type: isRun ? 'BIEG' : 'SIŁA', status: planned ? 'zaplanowany' : 'wykonany', title: selS[4],
+            when: selS[9] + '.2026 · ' + fmt(selS[2]) + '–' + fmt(selS[3]),
+            badge: 'bdg lg ' + (isRun ? 'warn' : 'sec'),
+            stats, hasList: !isRun, list: !isRun ? (EX[selS[4]] || []).slice(0, planned ? 4 : 5).map((e) => ({ n: e[0], v: planned ? 'jak ostatnio' : e[1] })) : [],
+            hasNote: !!NOTES[selS[0]], note: NOTES[selS[0]] || '',
+            href: isRun ? 'S2RunDialog.dc.html' : 'S2GymLog.dc.html',
+            cta: isRun ? (planned ? 'Uzupełnij dane' : 'Edytuj') : (planned ? 'Rozpocznij' : 'Otwórz trening'),
+            s: 'position:absolute;z-index:20;width:310px;text-align:left;cursor:default;' + (c >= 4 ? 'right:calc(100% + 6px);' : 'left:calc(100% + 6px);') + (r >= 3 ? 'bottom:0;' : 'top:0;')
+          };
+        }
+        days.push({
+          num: String(num), items, hasPop: !!pop, pop: pop || { stats: [], list: [] },
+          canAdd: inMonth,
+          add: (e) => { const t = e && e.target; if (!inMonth || (t && t.closest && t.closest('button,a,[role=dialog]'))) return; this.setState({ add: this.state.add === num ? null : num, sel: null }); },
+          hasAdd: inMonth && this.state.add === num,
+          addWhen: ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'][c] + ' ' + String(num).padStart(2, '0') + '.11',
+          addS: 'position:absolute;z-index:20;width:250px;padding:4px;text-align:left;cursor:default;' + (c >= 4 ? 'right:calc(100% + 6px);' : 'left:calc(100% + 6px);') + (r >= 3 ? 'bottom:0;' : 'top:0;'),
+          s: 'position:relative;min-height:88px;padding:6px 6px;box-sizing:border-box;' + (inMonth ? 'cursor:pointer;' : '') + (c ? 'border-left:1px solid rgba(0,0,0,.06);' : '') + (inMonth ? '' : 'background:rgba(0,0,0,.018);'),
+          numS: 'display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:22px;height:22px;padding:0;margin-bottom:4px;border-radius:50%;font-size:12px;line-height:1;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums;' + (inMonth && num === 17 ? 'background:#dc2626;color:#ffffff;font-weight:600' : inMonth ? 'color:#262626;font-weight:500' : 'color:#a3a3a3')
+        });
+      }
+      rows.push({ days, rowS: 'display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 92px;' + (r < 5 ? 'border-bottom:1px solid rgba(0,0,0,.06)' : ''), km: km ? km.toFixed(1).replace('.', ',') + ' km' : '—', count: count ? count + ' tr.' : '' });
+    }
+    const km = [12, 15, 9, 18, 21, 17, 22, 26, 19, 24, 18.4, 0];
+    const metric = this.state.metric || 'km';
+    const mmss = (v) => Math.floor(v) + ':' + String(Math.round((v % 1) * 60)).padStart(2, '0');
+    const MET = {
+      km: { label: 'Km / tydz.', value: '0,0', sub: '/ 25', title: 'Kilometry tygodniowo', note: 'ostatnie 12 tyg. · cel 25 km', data: km, max: 30, goal: 25, goalText: 'cel 25 km', fmt: (v) => String(v).replace('.', ',') },
+      pace: { label: 'Śr. tempo', value: '5:42', sub: '/km', title: 'Średnie tempo biegów', note: 'wyższy słupek = szybciej', data: [6.08, 6.0, 5.97, 5.95, 5.9, 5.92, 5.83, 5.78, 5.85, 5.73, 5.7, 0], slow: 6.3, fast: 5.4, goal: 5.75, goalText: 'cel 5:45', fmt: mmss },
+      sessions: { label: 'Treningi', value: '0', sub: '/ 3 plan', title: 'Treningi tygodniowo', note: 'bieg + siłownia', data: [3, 3, 2, 4, 4, 3, 4, 5, 3, 4, 3, 0], max: 6, goal: 3, goalText: 'plan 3', fmt: (v) => String(v) },
+      kcal: { label: 'Kcal', value: '0', sub: '', title: 'Spalone kcal tygodniowo', note: 'biegi, wzór ACSM', data: [1650, 1980, 1240, 2310, 2640, 2150, 2810, 3260, 2390, 3020, 2280, 0], max: 3600, goal: null, goalText: '', fmt: (v) => v.toLocaleString('pl-PL') }
+    };
+    const RM = [['czw 25.09', 72.0, '60 × 6'], ['czw 02.10', 73.0, '62,5 × 6'], ['czw 09.10', 75.0, '65 × 5'], ['czw 16.10', 74.5, '62,5 × 7'],
+      ['czw 23.10', 77.5, '67,5 × 5'], ['czw 30.10', 79.0, '67,5 × 6'], ['czw 06.11', 80.5, '70 × 5'], ['czw 12.11', 82.5, '70 × 6']];
+    const kg = (v) => v.toFixed(1).replace('.', ',');
+    const px = (i) => 5 + i * (285 / (RM.length - 1));
+    const py = (v) => 100 - ((v - 70) / 14) * 90;
+    let best = 0;
+    const rmPts = RM.map((r, i) => { const rec = r[1] > best; best = Math.max(best, r[1]); return { i, when: r[0] + '.2026', v: kg(r[1]), raw: r[1], set: r[2], rec, x: px(i), y: py(r[1]) }; });
+    const hovI = this.state.hov;
+    const hovP = hovI == null ? null : rmPts[hovI];
+    const cur = hovP || rmPts[rmPts.length - 1];
+    const rm = {
+      points: rmPts.map((p) => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' '),
+      dots: rmPts.map((p) => {
+        const on = hovI === p.i, size = on ? 11 : 7, col = p.rec ? '#15803d' : '#262626';
+        return { s: 'position:absolute;pointer-events:none;box-sizing:border-box;border-radius:50%;width:' + size + 'px;height:' + size + 'px;left:' + (p.x / 3).toFixed(2) + '%;top:' + p.y.toFixed(1) + 'px;transform:translate(-50%,-50%);border:2px solid ' + col + ';background:' + (on ? col : '#ffffff') + ';transition:width .12s,height .12s' };
+      }),
+      zones: rmPts.map((p) => ({ label: p.when + ': ' + p.v + ' kg', enter: () => { if (this.state.hov !== p.i) this.setState({ hov: p.i }); },
+        s: 'position:absolute;top:0;bottom:0;padding:0;border:0;background:transparent;cursor:pointer;left:' + ((p.x - 285 / 14) / 3).toFixed(2) + '%;width:' + (285 / 7 / 3).toFixed(2) + '%' })),
+      guideS: hovP ? 'position:absolute;pointer-events:none;top:4px;bottom:10px;width:0;border-left:1px dashed rgba(0,0,0,.24);left:' + (hovP.x / 3).toFixed(2) + '%' : '',
+      leave: () => this.setState({ hov: null }),
+      hasHov: !!hovP,
+      hov: hovP ? Object.assign({}, hovP, {
+        delta: hovP.i ? (hovP.raw - RM[hovP.i - 1][1] >= 0 ? '+' : '−') + kg(Math.abs(hovP.raw - RM[hovP.i - 1][1])) + ' kg vs poprz.' : 'pierwszy pomiar',
+        deltaS: 'font-size:12px;margin-top:2px;color:' + (hovP.i && hovP.raw < RM[hovP.i - 1][1] ? '#b91c1c' : '#15803d')
+      }) : { rec: false },
+      tipS: hovP ? 'position:absolute;z-index:5;pointer-events:none;top:' + Math.round(hovP.y < 55 ? 12 + hovP.y + 14 : 12 + hovP.y - 100) + 'px;' + (hovP.i >= 5 ? 'right:calc(' + (100 - hovP.x / 3) + '% + 10px);' : 'left:calc(' + (hovP.x / 3) + '% + 10px);') + 'background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.08);padding:8px 10px;white-space:nowrap' : '',
+      cur: { v: cur.v, set: cur.set, when: hovP ? cur.when : 'ostatnio: ' + cur.when },
+      badge: cur.rec ? 'REKORD' : 'bez rekordu',
+      badgeC: 'bdg lg ' + (cur.rec ? 'ok' : 'sec')
+    };
+    return {
+      rm,
+      close: () => this.setState({ sel: null }),
+      closeAdd: () => this.setState({ add: null }),
+      rangeLabel: 'listopad 2026',
+      sessions: done.map((s) => ({ date: s[9], type: s[1] === 'run' ? 'BIEG' : 'SIŁA', name: s[4], main: s[1] === 'run' ? s[6] + ' km' : '5 ćw.', sub: s[5].split(' · ')[1], diff: s[10], badge: 'bdg ' + (s[1] === 'run' ? 'warn' : 'sec') })),
+      doneCount: done.length,
+      filters: [['all', 'Wszystko'], ['run', 'Bieg'], ['gym', 'Siłownia']].map((f) => ({ label: f[1], pressed: filter === f[0] ? 'true' : 'false', pick: () => this.setState({ filter: f[0] }) })),
+      month: rows,
+      tiles: Object.keys(MET).map((k, i) => {
+        const on = metric === k;
+        return { label: MET[k].label, value: MET[k].value, sub: MET[k].sub, pressed: on ? 'true' : 'false', pick: () => this.setState({ metric: k }),
+          s: 'text-align:left;border:0;padding:14px 20px;font:inherit;cursor:pointer;position:relative;' + (i ? 'border-left:1px solid rgba(0,0,0,.08);' : '') + (on ? 'background:#ffffff;box-shadow:inset 0 -2px 0 #262626' : 'background:rgba(0,0,0,.025)') };
+      }),
+      chart: (() => {
+        const m = MET[metric];
+        const max = m.max;
+        const h = (v) => metric === 'pace' ? Math.round(((m.slow - v) / (m.slow - m.fast)) * 140) : Math.round((v / max) * 140);
+        // najechanie (albo fokus z klawiatury) na tydzień: słupek ciemnieje, nad nim dymek z zakresem dat, wartością i porównaniem do celu
+        const hb = this.state.hovBar;
+        const UNIT = { km: ' km', pace: ' /km', sessions: ' tr.', kcal: ' kcal' };
+        const dd = (t) => { const d = new Date(t); return String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+        const bars = m.data.map((v, i) => {
+          const last = i === m.data.length - 1;
+          const hit = m.goal != null && (metric === 'pace' ? v && v <= m.goal : v >= m.goal);
+          const on = hb === i;
+          const bh = Math.max(2, v ? h(v) : 2);
+          const mon = Date.UTC(2026, 7, 31) + i * 7 * 86400000;
+          const cmp = !v ? 'brak treningów' : m.goal == null ? '' : hit ? 'cel osiągnięty' : metric === 'pace' ? 'o ' + mmss(v - m.goal) + ' wolniej niż cel' : 'do celu brakuje ' + m.fmt(Math.round((m.goal - v) * 10) / 10) + UNIT[metric];
+          const bg = last ? (on ? '#166534' : '#15803d') : hit ? (on ? '#000000' : '#262626') : (on ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.12)');
+          return { t: 'tydz. ' + (36 + i) + ': ' + m.fmt(v), v: v ? m.fmt(v) : '', on,
+            vs: 'position:absolute;left:0;right:0;top:-17px;text-align:center;font-size:10px;white-space:nowrap;color:' + (on ? '#262626' : '#686868') + (on ? ';font-weight:600' : ''),
+            enter: () => { if (this.state.hovBar !== i) this.setState({ hovBar: i }); },
+            leave: () => { if (this.state.hovBar === i) this.setState({ hovBar: null }); },
+            colS: 'position:relative;flex:1;align-self:stretch;display:flex;align-items:flex-end;cursor:default;outline:none;border-radius:6px 6px 0 0;margin:0 -3px;padding:0 3px;' + (on ? 'background:rgba(0,0,0,.035)' : ''),
+            s: 'position:relative;flex:1;border-radius:4px 4px 0 0;transition:background-color .12s;height:' + bh + 'px;background:' + bg,
+            range: 'tydz. ' + (36 + i) + ' · ' + dd(mon) + '–' + dd(mon + 6 * 86400000) + (last ? ' (bieżący)' : ''),
+            full: v ? m.fmt(v) + UNIT[metric] : '—',
+            hasCmp: !!cmp, cmp,
+            cmpS: 'font-size:12px;margin-top:2px;color:' + (!v || !m.goal ? '#686868' : hit ? '#15803d' : '#686868'),
+            tipS: 'position:absolute;z-index:5;pointer-events:none;bottom:' + (bh + 24) + 'px;' + (i >= m.data.length - 3 ? 'right:0;' : i <= 1 ? 'left:0;' : 'left:50%;transform:translateX(-50%);') + 'background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.08);padding:8px 10px;white-space:nowrap;text-align:left' };
+        });
+        const gb = m.goal != null ? h(m.goal) : 0;
+        return { title: m.title, note: m.note, bars, hasGoal: m.goal != null, goalText: m.goalText,
+          goalLine: 'position:absolute;left:0;right:0;bottom:' + gb + 'px;border-top:1px dashed #15803d;z-index:1',
+          goalLabel: 'position:absolute;right:0;bottom:' + (gb + 4) + 'px;z-index:2' };
+      })()
+    };
+  }
+}
+</script>
+</body>
+</html>

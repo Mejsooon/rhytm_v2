@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Onboarding — podgląd aplikacji (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100%; min-height: 700px; background: rgba(0,0,0,.025); overflow: hidden; font-family: 'Inter', system-ui, sans-serif; color: #262626">
+  <div class="card" style="position: absolute; inset: 32px; flex-direction: row; overflow: hidden; font-size: 13px; box-shadow: 0 10px 15px -3px rgba(0,0,0,.06), 0 4px 6px -4px rgba(0,0,0,.06)">
+    <div style="width: 180px; flex: none; background: #fafafa; border-right: 1px solid rgba(0,0,0,.06); padding: 10px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px">
+      <div style="{{pv.hProfile}}">
+        <span class="avatar" style="width: 24px; height: 24px; font-size: 10px; background: #262626; color: #fafafa; box-shadow: none">{{pv.initials}}</span>
+        <span style="display: flex; flex-direction: column; min-width: 0; line-height: 1.3"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{pv.name}}</span><span style="font-size: 11px; color: #686868">{{pv.tz}}</span></span>
+      </div>
+      <div style="font-size: 11px; font-weight: 500; color: #686868; padding: 12px 8px 4px">Moduły</div>
+      <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; border-radius: 8px; background: rgba(0,0,0,.05); font-weight: 500">Dziś</div>
+      <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: rgba(38,38,38,.68); font-weight: 500">Kalendarz</div>
+      <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: rgba(38,38,38,.68); font-weight: 500">Sport</div>
+      <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: rgba(38,38,38,.68); font-weight: 500">Nawyki i sen</div>
+      <div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: rgba(38,38,38,.68); font-weight: 500">Hasła</div>
+      <div style="{{pv.hPages}}">
+        <div style="font-size: 11px; font-weight: 500; color: #686868; padding: 0 8px 4px">Strony</div>
+        <sc-for list="{{pv.pages}}" as="p" hint-placeholder-count="2"><div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: rgba(38,38,38,.68); font-weight: 500">{{p}}</div></sc-for>
+        <sc-if value="{{pv.noPages}}" hint-placeholder-val="{{false}}"><div style="height: 28px; display: flex; align-items: center; padding: 0 8px; color: #a3a3a3">Brak stron</div></sc-if>
+      </div>
+    </div>
+    <div style="flex: 1; min-width: 0; padding: 16px; position: relative">
+      <div style="font-size: 15px; font-weight: 600">{{pv.day}}</div>
+      <div style="font-size: 12px; color: #686868; margin-top: 2px">{{pv.week}}</div>
+      <div style="{{pv.hGoals}}">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 2px 6px"><span style="font-size: 12px; font-weight: 600">Ten tydzień</span><span class="num" style="font-size: 11px; color: #686868">{{pv.weekRange}}</span></div>
+        <div style="display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px">
+          <sc-for list="{{pv.goals}}" as="gl" hint-placeholder-count="3"><div style="border: 1px solid rgba(0,0,0,.08); border-radius: 10px; background: #fff; padding: 8px 10px 9px; box-shadow: 0 1px 2px rgba(0,0,0,.04); min-width: 0"><div style="font-size: 11px; color: #686868; white-space: nowrap">{{gl.label}}</div><div class="num" style="margin-top: 2px; white-space: nowrap"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.02em">{{gl.value}}</span><span style="font-size: 11px; color: #686868"> {{gl.of}}</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 7px"><sc-for list="{{pv.days}}" as="d" hint-placeholder-count="7"><span style="height: 3px; border-radius: 2px; background: rgba(0,0,0,.08)"></span></sc-for></div></div></sc-for>
+        </div>
+      </div>
+      <div style="{{pv.hCats}}">
+        <sc-for list="{{pv.cats}}" as="c" hint-placeholder-count="3"><span class="bdg out lg"><span class="dot" style="{{c.dot}}"></span>{{c.name}}</span></sc-for>
+      </div>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{pv.blocks}}" as="b" hint-placeholder-count="4"><div style="display: flex; gap: 8px; align-items: stretch"><span class="num" style="width: 54px; flex: none; font-size: 12px; color: #686868; padding-top: 8px">{{b.t}}</span><div style="{{b.s}}"><span style="font-weight: 500">{{b.title}}</span><span class="num" style="font-size: 12px; color: #525252">{{b.meta}}</span></div></div></sc-for>
+      </div>
+      </div>
+      <sc-if value="{{pv.toast}}" hint-placeholder-val="{{false}}">
+        <div class="toast" style="position: absolute; right: 16px; top: 16px; width: 250px; box-sizing: border-box; align-items: flex-start; padding: 10px 12px; font-size: 13px; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #15803d, 0 10px 15px -3px rgba(0,0,0,.08)">
+          <span style="width: 24px; height: 24px; border-radius: 6px; background: #262626; display: grid; place-items: center; flex: none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="4" width="11" height="11" rx="3" fill="#ffffff"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#4ade80"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#ffffff"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#ffffff" opacity="0.55"></rect></svg></span>
+          <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{pv.toastTitle}}</span><span style="color: #686868">{{pv.toastText}}</span></span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"s":{"editor":null},"step":{"editor":"int","default":1,"min":1,"max":7},"$preview":{"width":600,"height":680}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo',
+      goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Projects: true }, notify: { perm: true, before: true, renew: true, weekly: true, habits: false } };
+    const S = Object.assign({}, D, this.props.s || {});
+    const step = Number(this.props.step ?? 1);
+    const HI = 'border-radius:10px;box-shadow:0 0 0 2px #fff,0 0 0 4px #15803d;';
+    const nm = (S.name || '').trim() || 'Ty';
+    const initials = nm.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    const t = (h, m) => S.clock === '12' ? ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM') : String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    const CAT = { Studia: '#3b82f6', Projekty: '#15803d', Praca: '#8b5cf6', Sport: '#f59e0b', Dom: '#eab308' };
+    const R = S.roles || {};
+    const catNames = [];
+    if (R.student) catNames.push('Studia');
+    if (R.work) catNames.push('Praca');
+    if (R.free) catNames.push('Projekty');
+    if (R.sport) catNames.push('Sport');
+    if (R.other || !catNames.length) catNames.push('Dom');
+    const cats = catNames.map((c) => ({ name: c, dot: 'background:' + CAT[c] }));
+    const BL = { Studia: [8, 0, 'Matematyka — ćwiczenia', '0/3'], Praca: [9, 0, 'Praca — spotkanie zespołu', '1/2'], Projekty: [11, 0, 'Projekt klienta', '2/4'], Sport: [17, 0, 'Bieg 10 km', ''], Dom: [19, 0, 'Zakupy i pranie', '0/2'] };
+    const blocks = catNames.map((c) => {
+      const b = BL[c];
+      return { t: t(b[0], b[1]), title: b[2], meta: b[3], s: 'flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;height:34px;padding:0 10px;border-radius:8px;box-sizing:border-box;background:' + CAT[c] + '12;border:1px solid ' + CAT[c] + '4d;box-shadow:none' };
+    }).sort((a, b) => a.t.localeCompare(b.t));
+    const P = S.pages || {};
+    const pages = ['Projects', 'Books', 'Websites'].filter((p) => P[p]);
+    const N = S.notify || {};
+    return {
+      pv: {
+        name: nm, initials, tz: S.tz,
+        day: 'Wtorek, 17 listopada',
+        week: 'Tydzień ' + (S.week === 'nd' ? 'od niedzieli · 15–21.11' : 'od poniedziałku · 16–22.11') + ' · zegar ' + (S.clock === '12' ? '12 h' : '24 h'),
+        cats, blocks, pages, noPages: pages.length === 0,
+        toast: step === 6 && !!N.perm && !!N.before,
+        toastTitle: 'Za 10 min · ' + (blocks[0] ? blocks[0].title : 'blok'),
+        toastText: 'Start o ' + (blocks[0] ? blocks[0].t : t(8, 0)),
+        hProfile: 'display:flex;align-items:center;gap:8px;padding:6px;' + (step === 1 ? HI : ''),
+        hPages: 'margin-top:8px;padding:4px 0;' + (step === 5 ? HI : ''),
+        hGoals: 'margin-top:12px;padding:6px;' + (step === 3 ? HI : ''),
+        weekRange: S.week === 'nd' ? '15–21.11' : '16–22.11', days: [1, 2, 3, 4, 5, 6, 7],
+        goals: [S.trOn !== false ? { label: 'Treningi', value: '0', of: '/ ' + (S.tr || '3') } : null, S.kmOn !== false ? { label: 'Bieg', value: '0,0', of: '/ ' + (S.km || '25') + ' km' } : null, { label: 'Śr. sen', value: '—', of: '/ ' + (S.sleep || '8 h') }].filter(Boolean),
+        hCats: 'margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;padding:4px;' + (step === 2 ? HI : '')
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

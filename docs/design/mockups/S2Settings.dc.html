@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ustawienia (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.snav a{display:flex;align-items:center;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+.row:last-child{border-bottom:0}
+</style>
+</helmet>
+<div class="shell" style="font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1180" hint-size="100%,1180px"></dc-import></div>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb">Ustawienia<span aria-hidden="true">/</span><b>Ogólne</b></div>
+    </header>
+
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <a href="S2Settings.dc.html" aria-current="page">Ogólne</a>
+        <a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a>
+        <a href="S2Vault.dc.html">Sejf</a>
+        <a href="S2SettingsNotifications.dc.html">Powiadomienia</a>
+        <a href="S2CategoryDialog.dc.html">Kategorie kalendarza</a>
+      </nav>
+
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Ogólne</h1><p class="muted" style="margin: 4px 0 0">Profil, cele i podstawowe preferencje aplikacji.</p></div>
+
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Profil</h2><p class="card-d">Waga i wzrost służą do liczenia kcal biegów.</p></div></div>
+          <div class="card-p" style="display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+              <span style="{{av.style}}" aria-hidden="true">{{av.txt}}<sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d4d4d4" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="9" r="3.5"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg></sc-if></span>
+              <span style="flex: 1 1 200px; min-width: 0"><span style="display: block; font-weight: 500">Zdjęcie profilowe</span><span style="{{av.subS}}">{{av.sub}}</span></span>
+              <span style="display: flex; gap: 8px"><sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><button type="button" class="btndo" onClick="{{av.del}}">Usuń</button></sc-if><button type="button" class="btn" onClick="{{av.pick}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>{{av.btn}}</button></span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+              <label class="fld">Wyświetlana nazwa<input class="inp" type="text" value="{{p.name}}" onChange="{{onP.name}}" aria-invalid="{{nameInv}}"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="err">Nazwa nie może być pusta.</span></sc-if></label>
+              <div class="fld"><span>Strefa czasowa</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.tz.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.tz.exp}}" aria-label="Strefa czasowa"><span>{{dd.tz.txt}} <span class="hint num">{{dd.tz.sub}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{dd.tz.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Strefa czasowa"><sc-for list="{{dd.tz.opts}}" as="o" hint-placeholder-count="6"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="hint num">{{o.sub}}</span></span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></div>
+              <label class="fld">Waga (kg)<input class="inp num" type="text" inputMode="decimal" value="{{p.kg}}" onChange="{{onP.kg}}" placeholder="np. 75" aria-invalid="{{kgInv}}"><sc-if value="{{kgErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj liczbę 30–250.</span></sc-if></label>
+              <label class="fld">Wzrost (cm)<input class="inp num" type="text" inputMode="numeric" value="{{p.cm}}" onChange="{{onP.cm}}" placeholder="np. 180" aria-invalid="{{cmInv}}"><sc-if value="{{cmErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj liczbę 120–230.</span></sc-if></label>
+            </div>
+          </div>
+          <div class="foot"><span style="{{pMsgS}}">{{pMsg}}</span><span style="display: flex; gap: 8px"><sc-if value="{{pDirty}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" onClick="{{pReset}}">Cofnij</button></sc-if><button type="button" class="btnp" onClick="{{pSave}}" aria-disabled="{{pDis}}">Zapisz</button></span></div>
+        </section>
+
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Cele</h2><p class="card-d">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p></div></div>
+          <div class="card-p" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+            <div class="fld"><span>Cel snu</span><span style="display: flex; align-items: center; height: 32px; border: 1px solid rgba(0,0,0,.1); border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.05); overflow: hidden"><button type="button" class="btng ic" aria-label="Krócej" onClick="{{sleepM}}" style="border-radius: 0; height: 30px; border-right: 1px solid rgba(0,0,0,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button><input class="num" type="text" value="{{g.sleep}}" readonly aria-label="Cel snu" style="flex: 1; min-width: 0; border: 0; outline: 0; text-align: center; font: inherit; font-size: 14px; color: #262626; background: transparent"><button type="button" class="btng ic" aria-label="Dłużej" onClick="{{sleepP}}" style="border-radius: 0; height: 30px; border-left: 1px solid rgba(0,0,0,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></span></div>
+            <div class="fld"><span>Cele treningowe</span><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 8px; min-height: 32px"><button type="button" role="checkbox" class="cbx" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button><span style="flex: 1; min-width: 0; font-weight: 400">{{t.lbl}}</span><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><input class="inp num" type="text" inputMode="numeric" value="{{t.val}}" onChange="{{t.onVal}}" aria-label="{{t.lbl}}" style="width: 72px; text-align: right"></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><span class="bdg sec" style="width: 72px">wył.</span></sc-if></span></sc-for><sc-if value="{{goalErr}}" hint-placeholder-val="{{false}}"><span class="err">{{goalErrTxt}}</span></sc-if></div>
+            <div class="fld"><span>Waluta stron</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.cur.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.cur.exp}}" aria-label="Waluta stron"><span>{{dd.cur.txt}} <span class="hint">{{dd.cur.sub}}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{dd.cur.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Waluta stron"><sc-for list="{{dd.cur.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}} <span class="hint">{{o.sub}}</span></span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></div>
+            <div class="fld"><span>Tydzień zaczyna się w</span><span style="position: relative; display: block"><button type="button" class="dd" onClick="{{dd.week.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.week.exp}}" aria-label="Początek tygodnia"><span>{{dd.week.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{dd.week.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Początek tygodnia"><sc-for list="{{dd.week.opts}}" as="o" hint-placeholder-count="2"><button type="button" class="ddopt" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></div>
+          </div>
+          <div class="foot"><span style="{{gMsgS}}">{{gMsg}}</span><span style="display: flex; gap: 8px"><sc-if value="{{gDirty}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" onClick="{{gReset}}">Cofnij</button></sc-if><button type="button" class="btnp" onClick="{{gSave}}" aria-disabled="{{gDis}}">Zapisz</button></span></div>
+        </section>
+
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Konto</h2></div></div>
+          <div class="card-p" style="padding-top: 6px; padding-bottom: 6px">
+            <div class="row"><div><div style="font-weight: 500">E-mail</div><div class="hint">{{mailLine}}</div></div><sc-if value="{{mailIdle}}" hint-placeholder-val="{{true}}"><button type="button" class="btn" onClick="{{mailOpen}}">Zmień</button></sc-if>
+              <sc-if value="{{mailEditing}}" hint-placeholder-val="{{false}}"><div style="flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start"><label style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 4px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nowy e-mail</span><input class="inp" type="email" value="{{mail}}" onChange="{{onMail}}" placeholder="nowy@adres.pl" aria-invalid="{{mailInv}}"><sc-if value="{{mailErr}}" hint-placeholder-val="{{false}}"><span class="err">To nie wygląda na adres e-mail.</span></sc-if></label><button type="button" class="btnp" onClick="{{mailSend}}">Wyślij link</button><button type="button" class="btng" onClick="{{mailCancel}}">Anuluj</button></div></sc-if></div>
+            <div class="row"><div><div style="font-weight: 500">Hasło do konta</div><div class="hint">zmienione 15.11.2026</div></div><a href="S2SettingsAccount.dc.html" class="btn">Zmień hasło</a></div>
+            <div class="row"><div><div style="font-weight: 500; display: flex; align-items: center; gap: 8px">Sesja <span class="bdg ok">Aktywna</span></div><div class="hint">Chrome · Parrot OS · teraz</div></div><a href="S2Login.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg>Wyloguj</a></div>
+          </div>
+        </section>
+
+        <section class="card" style="border-color: rgba(239,68,68,.24)">
+          <div class="card-h" style="padding-bottom: 20px"><div><h2 class="card-t">Usuń konto</h2><p class="card-d">Trwale usuwa konto, wszystkie strony, sejf i dane modułów. Tego nie da się cofnąć.</p></div></div>
+          <sc-if value="{{delIdle}}" hint-placeholder-val="{{true}}"><div class="foot" style="justify-content: flex-end; background: rgba(239,68,68,.04); border-top-color: rgba(239,68,68,.16)"><button type="button" class="btnd" onClick="{{delOpen}}">Usuń konto</button></div></sc-if>
+          <sc-if value="{{delAsk}}" hint-placeholder-val="{{false}}"><div class="foot" style="align-items: flex-end; background: rgba(239,68,68,.04); border-top-color: rgba(239,68,68,.16)"><label class="fld" style="flex: 1 1 240px; color: #b91c1c"><span>Wpisz <span class="kbd" style="background: #fff; color: #b91c1c; box-shadow: inset 0 0 0 1px rgba(239,68,68,.24)">USUŃ</span>, żeby potwierdzić</span><input class="inp" type="text" value="{{delTxt}}" onChange="{{onDel}}" placeholder="USUŃ" autocomplete="off"></label><span style="display: flex; gap: 8px"><button type="button" class="btng" onClick="{{delCancel}}">Anuluj</button><a href="S2Login.dc.html" class="btnd" aria-disabled="{{delDis}}" style="{{delS}}">Usuń konto na zawsze</a></span></div></sc-if>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1270}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2Settings.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const P0 = S.pSaved || { name: 'Mejson', tz: 'Europe/Warsaw', kg: '', cm: '' };
+    const P = S.p || P0;
+    const G0 = S.gSaved || { sleep: 480, trOn: true, kmOn: true, tr: '3', km: '25', cur: 'PLN', week: 'pn' };
+    const G = S.g || G0;
+    const same = (a, b) => Object.keys(a).every((k) => String(a[k]) === String(b[k]));
+    const n = (v) => parseFloat(String(v || '').replace(',', '.'));
+    const kgErr = P.kg !== '' && !(n(P.kg) >= 30 && n(P.kg) <= 250);
+    const cmErr = P.cm !== '' && !(n(P.cm) >= 120 && n(P.cm) <= 230);
+    const nameErr = !String(P.name).trim();
+    const trErr = G.trOn && !(n(G.tr) >= 1 && n(G.tr) <= 14 && Number.isInteger(n(G.tr)));
+    const kmErr = G.kmOn && !(n(G.km) >= 1 && n(G.km) <= 300);
+    const noGoal = !G.trOn && !G.kmOn;
+    const goalErr = noGoal || trErr || kmErr;
+    const goalErrTxt = noGoal ? 'Włącz co najmniej jeden cel.' : trErr ? 'Treningi: podaj liczbę 1–14.' : 'Kilometry: podaj liczbę 1–300.';
+    const pDirty = !same(P, P0), gDirty = !same(G, G0);
+    const pOk = pDirty && !kgErr && !cmErr && !nameErr, gOk = gDirty && !goalErr;
+    const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    const grey = 'font-size:14px;color:#686868', green = 'font-size:14px;color:#15803d;font-weight:500';
+    const mailState = S.mail || 'idle';
+    const mail = S.mailTxt || '';
+    const delTxt = S.delTxt || '';
+    const delOk = delTxt.trim().toUpperCase() === 'USUŃ';
+    const OPEN = S.dd || null;
+    const mkDD = (key, val, list, set) => {
+      const open = OPEN === key;
+      const cur = list.filter((o) => o[0] === val)[0] || list[0];
+      return { open, exp: open ? 'true' : 'false', txt: cur[1], sub: cur[2] || '',
+        toggle: () => this.setState({ dd: open ? null : key }),
+        opts: list.map((o) => ({ t: o[1], sub: o[2] || '', p: o[0] === val ? 'true' : 'false', on: o[0] === val, pick: () => set(o[0]) })) };
+    };
+    const dd = {
+      tz: mkDD('tz', P.tz, [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00'], ['Asia/Tokyo', 'Tokio', 'UTC+09:00']], (v) => this.setState({ p: Object.assign({}, P, { tz: v }), dd: null, pMsg: '' })),
+      cur: mkDD('cur', G.cur, [['PLN', 'PLN', 'zł'], ['EUR', 'EUR', '€'], ['USD', 'USD', '$'], ['GBP', 'GBP', '£']], (v) => this.setState({ g: Object.assign({}, G, { cur: v }), dd: null, gMsg: '' })),
+      week: mkDD('week', G.week, [['pn', 'Poniedziałek'], ['nd', 'Niedzielę']], (v) => this.setState({ g: Object.assign({}, G, { week: v }), dd: null, gMsg: '' }))
+    };
+    const onP = {};
+    ['name', 'tz', 'kg', 'cm'].forEach((k) => { onP[k] = (e) => this.setState({ p: Object.assign({}, P, { [k]: e.target.value }), pMsg: '' }); });
+    const avHas = !!S.avHas;
+    const av = {
+      has: avHas,
+      txt: avHas ? '' : 'M',
+      style: 'width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);' + (avHas ? 'background:#525252' : 'background:rgba(0,0,0,.04);color:#262626'),
+      sub: S.avMsg || (avHas ? 'PNG, JPG albo WebP, do 2 MB' : 'Bez zdjęcia pokażemy inicjały'),
+      subS: S.avMsg ? 'font-size:14px;color:#15803d' : 'font-size:14px;color:#686868',
+      btn: avHas ? 'Zmień' : 'Wgraj',
+      pick: () => this.setState({ avHas: true, avMsg: 'Zapisano' }),
+      del: () => this.setState({ avHas: false, avMsg: '' })
+    };
+    const mailErr = !!S.mailTried && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail);
+    return {
+      av, dd, p: P, onP, nameErr, kgErr, cmErr, pDirty,
+      nameInv: nameErr ? 'true' : 'false', kgInv: kgErr ? 'true' : 'false', cmInv: cmErr ? 'true' : 'false',
+      pDis: pOk ? 'false' : 'true',
+      pSave: () => { if (pOk) this.setState({ pSaved: P, p: null, pMsg: 'Zapisano' }); },
+      pReset: () => this.setState({ p: null, pMsg: '' }),
+      pMsg: S.pMsg || (pDirty ? 'Masz niezapisane zmiany.' : 'Waga i wzrost są opcjonalne.'), pMsgS: S.pMsg ? green : grey,
+      g: Object.assign({}, G, { sleep: hm(G.sleep) }), goalErr, gDirty,
+      goalErrTxt,
+      tg: [['tr', 'Treningi w tygodniu'], ['km', 'Kilometry biegu w tygodniu']].map((t) => {
+        const on = !!G[t[0] + 'On'];
+        return { lbl: t[1], on: on ? 'true' : 'false', isOn: on, off: !on, val: G[t[0]],
+          toggle: () => this.setState({ g: Object.assign({}, G, { [t[0] + 'On']: !on }), gMsg: '' }),
+          onVal: (e) => this.setState({ g: Object.assign({}, G, { [t[0]]: e.target.value }), gMsg: '' }) };
+      }),
+      sleepM: () => this.setState({ g: Object.assign({}, G, { sleep: Math.max(300, G.sleep - 15) }), gMsg: '' }),
+      sleepP: () => this.setState({ g: Object.assign({}, G, { sleep: Math.min(660, G.sleep + 15) }), gMsg: '' }),
+      gDis: gOk ? 'false' : 'true',
+      gSave: () => { if (gOk) this.setState({ gSaved: G, g: null, gMsg: 'Zapisano — cele zaktualizowane na ekranie Dziś' }); },
+      gReset: () => this.setState({ g: null, gMsg: '' }),
+      gMsg: S.gMsg || (gDirty ? 'Masz niezapisane zmiany.' : 'Waluta dotyczy pól „Kwota cykliczna”.'), gMsgS: S.gMsg ? green : grey,
+      mailIdle: mailState !== 'edit', mailEditing: mailState === 'edit', mail,
+      mailLine: mailState === 'sent' ? 'mejson@example.com · link potwierdzający wysłany na ' + S.mailTo : 'mejson@example.com · potwierdzony',
+      mailOpen: () => this.setState({ mail: 'edit', mailTxt: '', mailTried: false }),
+      onMail: (e) => this.setState({ mailTxt: e.target.value }),
+      mailErr, mailInv: mailErr ? 'true' : 'false',
+      mailSend: () => { if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) this.setState({ mail: 'sent', mailTo: mail }); else this.setState({ mailTried: true }); },
+      mailCancel: () => this.setState({ mail: 'idle' }),
+      delIdle: !S.del, delAsk: !!S.del, delTxt,
+      delOpen: () => this.setState({ del: true, delTxt: '' }), delCancel: () => this.setState({ del: false }),
+      onDel: (e) => this.setState({ delTxt: e.target.value }),
+      delDis: delOk ? 'false' : 'true',
+      delS: delOk ? '' : 'opacity:.64;pointer-events:none;box-shadow:none'
+    };
+  }
+}
+</script>
+</body>
+</html>

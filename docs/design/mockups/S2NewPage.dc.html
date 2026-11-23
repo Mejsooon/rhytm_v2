@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowa strona — Strony 2.0 (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.tpl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;font:inherit;font-size:14px;min-height:60px;background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 2px rgba(0,0,0,.04);color:#262626;transition:border-color .15s,box-shadow .15s}
+.tpl:hover{background:#fafafa}
+.tpl[aria-checked="true"]{border-color:#262626;box-shadow:0 0 0 3px rgba(38,38,38,.12)}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="subs" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Subscriptions</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2FilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="S2AddField.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><a href="S2Main.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%"><div><div style="display: flex; align-items: center; gap: 10px"><span style="display: inline-flex; color: #262626" aria-hidden="true"><dc-import name="S2PageIcon" icon="wallet" size="26" hint-size="26px,26px"></dc-import></span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1></div><p class="muted num" style="margin: 10px 0 0; font-size: 14px">13 wierszy · 5 pól · szablon „Subscription tracker”</p></div><div class="frame"><div class="inner"><table class="tbl" style="min-width: 760px"><thead><tr><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16"></path><path d="M22 9v7"></path><path d="M3.304 13h6.392"></path><circle cx="18.5" cy="12.5" r="3.5"></circle></svg>Nazwa</th><th scope="col" class="th" style="text-align: right"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><line x1="4" x2="20" y1="9" y2="9"></line><line x1="4" x2="20" y1="15" y2="15"></line><line x1="10" x2="8" y1="3" y2="21"></line><line x1="16" x2="14" y1="3" y2="21"></line></svg>Kwota cykliczna</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg>Data odnowienia</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="12" r="10"></circle></svg>Kategoria</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="m16 9-5.5 5.5L8 12"></path></svg>Aktywna</th></tr></thead><tbody><tr><td class="td" style="font-weight: 500">Netflix</td><td class="td num" style="text-align: right">43,00 <span class="muted">/ mies.</span></td><td class="td num">21.11.2026 <span class="muted" style="margin-left: 6px">za 6 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">YouTube Premium</td><td class="td num" style="text-align: right">29,99 <span class="muted">/ mies.</span></td><td class="td num">24.11.2026 <span class="muted" style="margin-left: 6px">za 9 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">iCloud+</td><td class="td num" style="text-align: right">4,99 <span class="muted">/ mies.</span></td><td class="td num">28.11.2026 <span class="muted" style="margin-left: 6px">za 13 dni</span></td><td class="td"><span class="bdg out">Chmura</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Siłownia — karnet</td><td class="td num" style="text-align: right">129,00 <span class="muted">/ mies.</span></td><td class="td num">01.12.2026 <span class="muted" style="margin-left: 6px">za 16 dni</span></td><td class="td"><span class="bdg out">Zdrowie</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Spotify</td><td class="td num" style="text-align: right">23,99 <span class="muted">/ mies.</span></td><td class="td num">02.12.2026 <span class="muted" style="margin-left: 6px">za 17 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Claude Pro</td><td class="td num" style="text-align: right">99,00 <span class="muted">/ mies.</span></td><td class="td num">05.12.2026 <span class="muted" style="margin-left: 6px">za 20 dni</span></td><td class="td"><span class="bdg out">Praca</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr></tbody></table></div></div></div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="np-t" class="dlg" style="position: absolute; left: 50%; top: 64px; transform: translateX(-50%); width: min(920px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="np-t" class="dlg-t">Nowa strona</h2><p class="dlg-d">Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.</p></div><a href="S2Main.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <div style="display: flex; flex-wrap: wrap; margin: -4px -24px -20px">
+        <div style="flex: 999 1 380px; min-width: 0; padding: 4px 24px 20px; display: flex; flex-direction: column; gap: 14px">
+          <div class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onInput="{{onQ}}" placeholder="Szukaj szablonu…" aria-label="Szukaj szablonu"></div>
+          <div class="lbl">Szablony</div>
+          <div role="radiogroup" aria-label="Szablon" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{templates}}" as="t" hint-placeholder-count="6">
+              <button type="button" role="radio" aria-checked="{{t.p}}" onClick="{{t.pick}}" class="tpl">
+                <span style="display: flex; align-items: center; gap: 8px; font-weight: 500"><span style="{{t.icS}}" aria-hidden="true"><dc-import name="S2PageIcon" icon="{{t.icon}}" size="16" hint-size="16px,16px"></dc-import></span>{{t.name}}<sc-if value="{{t.lock}}" hint-placeholder-val="{{false}}"><span class="bdg ok" style="margin-left: auto">szyfr.</span></sc-if></span>
+                <span style="font-size: 13px; color: #686868; line-height: 1.4; padding-left: 34px">{{t.desc}}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{none}}" hint-placeholder-val="{{false}}"><div class="empty" style="grid-column: 1 / -1; padding: 24px">Brak szablonu „{{q}}”.</div></sc-if>
+          </div>
+        </div>
+        <div style="flex: 1 1 300px; min-width: 0; border-left: 1px solid rgba(0,0,0,.08); padding: 4px 24px 20px; background: #fafafa; display: flex; flex-direction: column; gap: 12px">
+          <div class="lbl">Pola, które powstaną</div>
+          <div style="font-size: 18px; font-weight: 600">{{selName}}</div>
+          <div class="frame"><div class="inner">
+            <sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 14px"><span>{{f.n}}</span><span class="{{f.c}}">{{f.t}}</span></div>
+            </sc-for>
+            <sc-if value="{{emptyT}}" hint-placeholder-val="{{false}}"><div style="padding: 14px 12px; color: #686868; font-size: 13px">Tylko kolumna „Nazwa”. Kolejne dodasz przyciskiem „+” w nagłówku tabeli.</div></sc-if>
+          </div></div>
+          <sc-for list="{{extra}}" as="x" hint-placeholder-count="2"><div class="alert info" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg><span>{{x}}</span></div></sc-for>
+          <div style="flex: 1"></div>
+          <label class="fld">Nazwa strony<input class="inp" type="text" value="{{nameV}}" onChange="{{onName}}"></label>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-f"><a href="S2Main.dc.html" class="btng">Anuluj</a><a href="S2Books.dc.html" class="btnp">Utwórz stronę</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const picked = S.picked || 'books';
+    const q = S.q || '';
+    const ok = 'bdg ok', pl = 'bdg out';
+    const list = [
+      { id: 'empty', icon: 'table', name: 'Pusta strona', desc: 'Zacznij od zera', fields: [], extra: [] },
+      { id: 'books', icon: 'book-open', name: 'Books', desc: 'Twoje książki', fields: [['Tytuł', 'Tekst', pl], ['Autor', 'Tekst', pl], ['Status', 'Status', pl], ['Ocena', 'Ocena', ok], ['Przeczytana', 'Data', pl]], extra: ['Liczba przeczytanych w tym roku.'] },
+      { id: 'proj', icon: 'rocket', name: 'Projects', desc: 'Twoje projekty', fields: [['Nazwa', 'Tekst', pl], ['Status', 'Status', pl], ['Termin', 'Data', pl], ['Repo', 'URL', pl]], extra: ['Terminy trafią do kalendarza głównego.'] },
+      { id: 'web', icon: 'globe', name: 'Websites', desc: 'Twoje strony WWW', fields: [['Nazwa', 'Tekst', pl], ['URL', 'URL', pl], ['Klient', 'Tekst', pl], ['Status', 'Status', pl]], extra: [] },
+    ];
+    const sel = list.find((t) => t.id === picked) || list[1];
+    const shown = list.filter((t) => !q || (t.name + ' ' + t.desc).toLowerCase().includes(q.toLowerCase()));
+    return {
+      q, onQ: (e) => this.setState({ q: e.target.value }), none: shown.length === 0,
+      templates: shown.map((t) => ({ name: t.name, desc: t.desc, icon: t.icon, lock: !!t.lock, p: t.id === sel.id ? 'true' : 'false',
+        icS: 'width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:15px;background:' + 'rgba(0,0,0,.04);color:#262626',
+        pick: () => this.setState({ picked: t.id, name: null }) })),
+      selName: sel.name, emptyT: sel.fields.length === 0,
+      fields: sel.fields.map((f) => ({ n: f[0], t: f[1], c: f[2] })), extra: sel.extra,
+      nameV: S.name != null ? S.name : sel.name, onName: (e) => this.setState({ name: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>
