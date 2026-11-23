@@ -248,8 +248,10 @@ test.describe("sejf", () => {
     await expect(wiersz).toHaveCount(1);
     // Tylko do odczytu: Serwis to zwykły tekst, nie pole
     await expect(wiersz.getByText(serwis, { exact: true })).toBeVisible();
+    // Karta „Odblokuj sejf” (160 px od góry) zakrywa część paska, więc segment obsługujemy klawiaturą
     const segment = page.getByRole("group", { name: "Kategoria" });
-    await segment.getByRole("button", { name: "Bank", exact: true }).click();
+    await segment.getByRole("button", { name: "Bank", exact: true }).focus();
+    await page.keyboard.press("Enter");
     await expect(
       segment.getByRole("button", { name: "Bank", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -260,7 +262,11 @@ test.describe("sejf", () => {
     await expect(wiersz).toHaveCount(1);
     await segment
       .getByRole("button", { name: "Wszystkie", exact: true })
-      .click();
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      segment.getByRole("button", { name: "Wszystkie", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     await szukaj.fill("");
 
     // Odblokowanie: najpierw puste pole, potem złe hasło, potem dobre
