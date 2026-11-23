@@ -19,8 +19,6 @@ vi.mock("@/features/tasks/actions", () => ({
   toggleTask,
   addTask: vi.fn(),
   deleteTask: vi.fn(),
-  unpinTask: vi.fn(),
-  createStandaloneTask: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("next/navigation", () => ({
@@ -59,10 +57,10 @@ function dane(counts: TodayData["counts"]): TodayData {
         title: "Zrobione",
         done: true,
         due_date: "2026-11-17",
-        block_id: null,
+        block_id: "bx",
         position: 1,
         done_at: null,
-        occurrence_date: null,
+        occurrence_date: "2026-11-17",
         created_at: null,
       },
       {
@@ -71,10 +69,10 @@ function dane(counts: TodayData["counts"]): TodayData {
         title: "Niezrobione",
         done: false,
         due_date: "2026-11-18",
-        block_id: null,
+        block_id: "bx",
         position: 2,
         done_at: null,
-        occurrence_date: null,
+        occurrence_date: "2026-11-18",
         created_at: null,
       },
     ],
@@ -312,8 +310,8 @@ describe("TodayView", () => {
     render(<TodayView data={dane(wszystko)} name="Mejson" />);
     await userEvent.click(screen.getByRole("button", { name: "Szybko dodaj" }));
     const arkusz = await screen.findByRole("dialog", { name: "Szybko dodaj" });
-    // Chipy liczą się od dziś i teraz z profilu (wtorek 10:20 → Dziś = 11:00, Pn 23.11)
-    expect(within(arkusz).getByLabelText("Zadanie")).toBeInTheDocument();
+    // Domyślny rodzaj to „Blok”; chipy liczą się od dziś i teraz z profilu (wtorek 10:20 → Dziś = 11:00, Pn 23.11)
+    expect(within(arkusz).getByLabelText("Blok w kalendarzu")).toBeInTheDocument();
     expect(
       within(arkusz).getByRole("button", { name: "Pn 23.11" }),
     ).toBeInTheDocument();

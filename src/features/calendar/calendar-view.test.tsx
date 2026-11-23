@@ -35,7 +35,6 @@ vi.mock("@/features/tasks/actions", () => ({
   addTask: vi.fn(),
   toggleTask: vi.fn(),
   deleteTask: vi.fn(),
-  unpinTask: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));

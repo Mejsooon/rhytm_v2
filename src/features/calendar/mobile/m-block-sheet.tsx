@@ -198,7 +198,7 @@ export function MBlockSheet({
       done: false,
       done_at: null,
       due_date: initial.date,
-      block_id: initial.blockId ?? null,
+      block_id: initial.blockId ?? "",
       occurrence_date: dataOryginalna,
       position: Number.MAX_SAFE_INTEGER,
       created_at: null,

@@ -16,8 +16,8 @@ function zadanie(id: string, done: boolean): TaskRow {
     done,
     done_at: null,
     due_date: "2026-11-17",
-    block_id: null,
-    occurrence_date: null,
+    block_id: "b1",
+    occurrence_date: "2026-11-17",
     position: 0,
     created_at: null,
   };

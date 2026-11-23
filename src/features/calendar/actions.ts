@@ -203,7 +203,7 @@ export async function changeOccurrence(input: {
   }
 
   if (plan.kind === "deleteBlock") {
-    // Zadania odpina wyzwalacz w bazie
+    // Zadania usuwa klucz obcy w bazie (on delete cascade)
     const { data: usuniete, error } = await supabase
       .from("blocks")
       .delete()
@@ -242,11 +242,11 @@ export async function changeOccurrence(input: {
     if (error) return { ok: false, message: BLAD_ZAPISU };
   }
 
-  if (plan.kind === "detachTasksAndCancel") {
-    // Zadania tego wystąpienia stają się samodzielne (due_date zostaje), potem odwołujemy wystąpienie
+  if (plan.kind === "deleteTasksAndCancel") {
+    // Zadania tego wystąpienia są usuwane, potem odwołujemy wystąpienie
     const { error: blad1 } = await supabase
       .from("tasks")
-      .update({ block_id: null, occurrence_date: null })
+      .delete()
       .eq("block_id", block.id)
       .eq("occurrence_date", plan.date);
     if (blad1) return { ok: false, message: BLAD_ZAPISU };
@@ -311,18 +311,16 @@ export async function changeOccurrence(input: {
       return { ok: false, message: BLAD_ZAPISU };
     }
 
-    // Zadania z datami, które nie są już wystąpieniami zmienionej serii, stają się samodzielne
-    // (termin zostaje) — żeby żadne zadanie nie zniknęło z widoku.
+    // Zadania z datami, które nie są już wystąpieniami zmienionej serii, są usuwane
+    // (zadanie nie istnieje poza blokiem).
     if (zmiany.start_local !== undefined || zmiany.recurrence !== undefined) {
       const { data: zadania } = await supabase
         .from("tasks")
         .select("id, occurrence_date")
         .eq("block_id", block.id);
-      const przypiete = (zadania ?? []).filter(
-        (z) => z.occurrence_date !== null,
-      );
+      const przypiete = zadania ?? [];
       if (przypiete.length > 0) {
-        const daty = przypiete.map((z) => z.occurrence_date as string).sort();
+        const daty = przypiete.map((z) => z.occurrence_date).sort();
         const nowyBlok = {
           ...block,
           start_local: zmiany.start_local ?? block.start_local,
@@ -336,15 +334,15 @@ export async function changeOccurrence(input: {
             (o) => o.key.slice(-10),
           ),
         );
-        const doOdpiecia = przypiete
-          .filter((z) => !dniSerii.has(z.occurrence_date as string))
+        const doUsuniecia = przypiete
+          .filter((z) => !dniSerii.has(z.occurrence_date))
           .map((z) => z.id);
-        if (doOdpiecia.length > 0) {
-          const { error: bladOdpiecia } = await supabase
+        if (doUsuniecia.length > 0) {
+          const { error: bladUsuniecia } = await supabase
             .from("tasks")
-            .update({ block_id: null, occurrence_date: null })
-            .in("id", doOdpiecia);
-          if (bladOdpiecia) return { ok: false, message: BLAD_ZAPISU };
+            .delete()
+            .in("id", doUsuniecia);
+          if (bladUsuniecia) return { ok: false, message: BLAD_ZAPISU };
         }
       }
 

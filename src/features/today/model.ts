@@ -85,7 +85,7 @@ export function weekTiles(input: {
   const { today, nowMin, weekStartDate } = input;
   const koniec = addDays(weekStartDate, 6);
 
-  // Zadania: wszystkie z due_date w tygodniu (samodzielne i z wystąpień bloków);
+  // Zadania: wszystkie z due_date w tygodniu (każde należy do wystąpienia bloku);
   // zaległe sprzed tygodnia i bez daty się nie liczą
   let zadaniaZrobione = 0;
   let zadaniaWszystkie = 0;
@@ -371,7 +371,7 @@ export function todayTiles(input: {
   };
 }
 
-export type QuickKind = "task" | "block" | "run" | "habit";
+export type QuickKind = "block" | "run" | "habit";
 
 // Chipy „Kiedy” w szybkim dodawaniu, zależnie od typu
 export function quickWhenOptions(
@@ -386,15 +386,6 @@ export function quickWhenOptions(
   // Pierwszy dzień NASTĘPNEGO tygodnia wg week_start
   const nastepnyTydzien = addDays(weekStart(today, weekStartPref), 7);
   const etykieta = `${weekStartPref === "mon" ? "Pn" : "Nd"} ${nastepnyTydzien.slice(8, 10)}.${nastepnyTydzien.slice(5, 7)}`;
-
-  if (kind === "task") {
-    return [
-      { label: "Dziś", date: today, startMin: null },
-      { label: "Jutro", date: jutro, startMin: null },
-      { label: etykieta, date: nastepnyTydzien, startMin: null },
-      { label: "Bez daty", date: null, startMin: null },
-    ];
-  }
 
   // Blok i bieg: „Dziś” = następna pełna godzina; od 23:00 nie ma już pełnej godziny dziś,
   // więc chip daje jutro 08:00 (bez godzin po północy z dzisiejszą datą)

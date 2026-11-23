@@ -190,21 +190,6 @@ test.describe("ekrany z sesją", () => {
       throw new Error(`Nie udało się zasiać odhaczeń: ${error.message}`);
     for (let i = 0; i < 4; i++)
       await zasiejSen(userId, i, i % 2 === 0 ? "23:15" : "00:05", "07:00");
-    // Samodzielne zadania: na dziś, zaległe i bez daty
-    const { error: bladZadan } = await adminClient()
-      .from("tasks")
-      .insert([
-        { user_id: userId, title: "Oddać książkę", due_date: dzis },
-        {
-          user_id: userId,
-          title: "Zapłacić za internet",
-          due_date: przesunDate(dzis, -2),
-        },
-        { user_id: userId, title: "Kupić kalendarz", due_date: null },
-      ]);
-    if (bladZadan)
-      throw new Error(`Nie udało się zasiać zadań: ${bladZadan.message}`);
-
     await page.goto("/dzis");
     if (projekt === "web") {
       const web = page.getByTestId("web-dzis");

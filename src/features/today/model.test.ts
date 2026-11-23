@@ -31,8 +31,8 @@ function zadanie(id: string, nadpisz: Partial<TaskRow>): TaskRow {
     id,
     user_id: "u1",
     title: id,
-    block_id: null,
-    occurrence_date: null,
+    block_id: "bx",
+    occurrence_date: "2026-11-01",
     due_date: null,
     done: false,
     done_at: null,
@@ -724,24 +724,6 @@ describe("quickWhenOptions", () => {
       { label: "Jutro", date: "2026-11-19", startMin: 18 * 60 },
       { label: "Pn 23.11", date: "2026-11-23", startMin: 18 * 60 },
     ]);
-  });
-
-  it("zadanie ma „Bez daty”, tydzień od nd daje następną niedzielę", () => {
-    expect(quickWhenOptions("task", DZIS, 600, "mon")).toEqual([
-      { label: "Dziś", date: DZIS, startMin: null },
-      { label: "Jutro", date: "2026-11-19", startMin: null },
-      { label: "Pn 23.11", date: "2026-11-23", startMin: null },
-      { label: "Bez daty", date: null, startMin: null },
-    ]);
-    expect(quickWhenOptions("task", DZIS, 600, "sun")[2]).toEqual({
-      label: "Nd 22.11",
-      date: "2026-11-22",
-      startMin: null,
-    });
-    // w niedzielę przy tygodniu od nd „następna niedziela” to za tydzień
-    expect(quickWhenOptions("task", "2026-11-22", 600, "sun")[2].date).toBe(
-      "2026-11-29",
-    );
   });
 
   it("nawyk nie ma chipów", () => {

@@ -25,8 +25,6 @@ vi.mock("@/features/tasks/actions", () => ({
   toggleTask,
   addTask: vi.fn(),
   deleteTask: vi.fn(),
-  unpinTask: vi.fn(),
-  createStandaloneTask: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, push: vi.fn() }),

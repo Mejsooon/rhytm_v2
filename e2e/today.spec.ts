@@ -102,7 +102,7 @@ test.describe("Dziś (telefon)", () => {
     test.skip(info.project.name !== "mobile", "układ telefonu");
   });
 
-  test("„+” → Zadanie „Kupić mleko” „Jutro” → Dodaj → toast „Dodano”, zadanie w bazie z jutrzejszą datą", async ({
+  test("„+” → Blok „Kupić mleko” „Jutro” → Dodaj → toast „Dodano”, blok w bazie na jutro 09:00", async ({
     page,
   }, info) => {
     const { userId } = await zalozPelneDzis(page, info.project.name);
@@ -111,9 +111,9 @@ test.describe("Dziś (telefon)", () => {
 
     await m.getByRole("button", { name: "Szybko dodaj" }).click();
     const arkusz = page.getByRole("dialog", { name: "Szybko dodaj" });
-    // Domyślny rodzaj to „Zadanie”
+    // Domyślny rodzaj to „Blok” (rodzaju „Zadanie” nie ma)
     await expect(
-      arkusz.getByRole("radio", { name: "Zadanie" }),
+      arkusz.getByRole("radio", { name: "Blok" }),
     ).toHaveAttribute("aria-checked", "true");
     await arkusz.getByRole("textbox").fill("Kupić mleko");
     const chipJutro = arkusz
@@ -128,13 +128,13 @@ test.describe("Dziś (telefon)", () => {
     await expect
       .poll(async () => {
         const { data } = await adminClient()
-          .from("tasks")
-          .select("due_date, block_id, done")
+          .from("blocks")
+          .select("start_local, duration_min")
           .eq("user_id", userId)
           .eq("title", "Kupić mleko");
         return data ?? [];
       })
-      .toEqual([{ due_date: jutro, block_id: null, done: false }]);
+      .toEqual([{ start_local: `${jutro}T09:00:00`, duration_min: 60 }]);
   });
 
   test("nawyk odhaczony na Dziś → kafelek „Nawyki” 1/1, także po odświeżeniu", async ({
