@@ -1,5 +1,5 @@
 begin;
-select plan(64);
+select plan(66);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -223,6 +223,10 @@ select is(public.page_icon_lucide('❤️'), 'lucide:heart', 'emoji z selektorem
 select is(public.page_icon_lucide('lucide:star:gray'), 'lucide:star', 'kolor znika');
 select is(public.page_icon_lucide('🐶'), 'lucide:dog', '🐶 z mapy');
 select is(public.page_icon_lucide('lucide:book-open'), 'lucide:book-open', 'nowy format zostaje');
+select matches(public.page_icon_lucide('lucide:book-open:gray'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
+  'lucide:book-open:gray (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
+select matches(public.page_icon_lucide('🔒'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
+  '🔒 (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
 select is(public.page_icon_lucide('xyz'), '', 'śmieci → domyślna');
 select is(public.page_icon_lucide(''), '', 'pusta zostaje pusta');
 select throws_ok(

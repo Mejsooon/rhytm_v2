@@ -268,11 +268,11 @@ export function PageTable({
             </button>
             <div className={MENU_SEPARATOR} />
             <div className={MENU_LABEL}>Widoczne kolumny</div>
-            {fields.map((f, i) => {
+            {fields.map((f) => {
               const widoczna = !ukryte.has(f.id);
-              // Pierwszej kolumny (tytułu) i ostatniej widocznej nie da się ukryć
+              // Blokada dotyczy tylko ukrywania: kolumny tytułu i ostatniej widocznej. Ukrytą kolumnę zawsze da się przywrócić.
               const zablokowana =
-                i === 0 || (widoczna && widocznePola.length === 1);
+                widoczna && (f.isTitle || widocznePola.length === 1);
               return (
                 <button
                   key={f.id}
@@ -345,7 +345,8 @@ export function PageTable({
                         if (o && f.id.startsWith(PREFIKS_TYMCZASOWY)) return;
                         setMenuPola(o ? f.id : null);
                       }}
-                      canHide={widocznePola.length > 1}
+                      // Nie ukrywamy kolumny tytułu ani ostatniej widocznej
+                      canHide={widocznePola.length > 1 && !f.isTitle}
                       summary={settings.column_summaries[f.id]}
                       onCloseAutoFocus={(e) => {
                         if (bezZwrotuFokusu.current) {

@@ -25,9 +25,12 @@ export function IconPicker({
   const [wszystkie, setWszystkie] = React.useState<readonly string[]>([]);
   React.useEffect(() => {
     let anulowano = false;
-    import("lucide-react/dynamic").then((modul) => {
-      if (!anulowano) setWszystkie(modul.iconNames);
-    });
+    import("lucide-react/dynamic")
+      .then((modul) => {
+        if (!anulowano) setWszystkie(modul.iconNames);
+      })
+      // Brak sieci lub błąd ładowania: picker zostaje na polecanych ikonach
+      .catch(() => {});
     return () => {
       anulowano = true;
     };

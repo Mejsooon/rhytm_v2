@@ -320,11 +320,43 @@ describe("PageTable", () => {
       expect(screen.queryByRole("columnheader", { name: /Repo/ })).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
       const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      // Pierwszej kolumny nie da się ukryć; ukryta Repo ma aria-pressed=false
+      // Kolumny tytułu nie da się ukryć; ukryta Repo ma aria-pressed=false
       expect(within(ustawienia).getByRole("button", { name: "Nazwa", pressed: true })).toBeDisabled();
       await user.click(within(ustawienia).getByRole("button", { name: "Repo", pressed: false }));
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [] });
       expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
+    });
+
+    it("kolumna przesunięta na pozycję 0 da się ukryć i przywrócić z „⋯”", async () => {
+      const user = userEvent.setup();
+      const b = blok("books", BOOKS);
+      render(<PageTable block={b} today={TODAY} />);
+      let menu = await otworzMenu(user, "Autor");
+      await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w lewo" }));
+      expect(screen.getAllByRole("columnheader")[0].textContent).toBe("Autor");
+      menu = await otworzMenu(user, "Autor");
+      await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [autor.id] });
+      expect(screen.queryByRole("columnheader", { name: /Autor/ })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      const przycisk = within(ustawienia).getByRole("button", { name: "Autor", pressed: false });
+      expect(przycisk).toBeEnabled();
+      await user.click(przycisk);
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [] });
+      expect(screen.getByRole("columnheader", { name: /Autor/ })).toBeInTheDocument();
+    });
+
+    it("kolumny tytułu nie da się ukryć ani z menu kolumny, ani z listy „Widoczne kolumny”", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      const menu = await otworzMenu(user, "Tytuł");
+      expect(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" })).toBeDisabled();
+      await user.keyboard("{Escape}");
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
+      expect(within(ustawienia).getByRole("button", { name: "Tytuł", pressed: true })).toBeDisabled();
     });
 
     it("podsumowanie zapisuje column_summaries i liczy stopkę", async () => {
