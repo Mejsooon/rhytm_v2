@@ -35,17 +35,19 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-- **Gałąź `feat/strony-pelna-szerokosc`:** strony i Hasła na całą szerokość okna (bez limitu 1160 px, jak w makiecie S2Books). Czeka na „scal do main”.
+- Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
 
-## Dalej (kolejność ustalona z Mejsonem)
+## Dalej (kolejność ustalona z Mejsonem 2026-11-23; kroki 1–3 zamykają obecny etap aplikacji)
 
-1. **Opcjonalnie:** podział dużych plików `src/features/pages/table/page-table.tsx` i `use-table-store.ts`.
-2. **Projekt Dziś:**
+1. **Projekt Dziś:**
    - wariant F według makiety S2Today i pusty stan S2EmptyToday;
-   - zadania tylko w blokach: zadania bez bloku są usuwane całkowicie, w bazie `NOT NULL` (na produkcji jest 6 zadań bez bloku — decyzja Mejsona przed migracją);
+   - zadania tylko w blokach, w bazie `NOT NULL`;
+   - **decyzja Mejsona (2026-11-23):** 6 zadań bez bloku na produkcji usuwa migracja tego projektu (Mejson robi `db push`), nie ręczne kasowanie;
    - szczegóły w `docs/superpowers/odlozone.md`, sekcja „Poprawki webu — Dziś”.
-3. **Subscriptions:** osobny projekt, opisany w specu Stron 2.0 w „Poza zakresem”.
-4. **Etap 3: telefon** według makiet CM* na kanwie.
+2. **Etap 3: telefon** według makiet CM* na kanwie, prawdopodobnie w kilku pakietach. Zbiera odłożone uwagi oznaczone „Etap 3” w `odlozone.md` (m.in. edycja Sekretu na telefonie, zakładka Hasła w dolnym pasku, ujednolicone okna usuwania).
+3. **Sprzątanie odłożonych uwag webu** z `odlozone.md`: niestabilne e2e, drobne poprawki tabeli, obrona w głąb w bazie dla Haseł (strażnik `page_rows`). Jeden mały pakiet.
+4. **Opcjonalnie:** podział dużych plików `src/features/pages/table/page-table.tsx` i `use-table-store.ts` (tylko jeśli tabele będą dalej rozbudowywane).
+5. **Poza obecnym etapem — Subscriptions:** osobny projekt (nowa wersja), opisany w specu Stron 2.0 w „Poza zakresem”.
 
 ## Ważne miejsca w kodzie
 
