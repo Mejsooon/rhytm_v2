@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szukaj (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Dziś</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
+    </header>
+    <div aria-hidden="true" style="padding: 28px 24px; opacity: .6">
+      <div style="font-size: 24px; font-weight: 600">Dziś</div><div style="margin-top: 24px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div></div><div class="card" style="margin-top: 24px; height: 520px"></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-label="Szukaj" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(620px, calc(100% - 32px)); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.08); color: #686868">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="text" value="{{q}}" onChange="{{onQ}}" aria-label="Szukaj" placeholder="Szukaj stron, wierszy i akcji…" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
+      <span class="kbd">esc</span>
+    </label>
+    <div role="listbox" aria-label="Wyniki" style="padding: 4px 8px 8px; max-height: 440px; overflow: auto">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+        <div class="mi-lbl" style="padding-top: 10px">{{g.name}}</div>
+        <sc-for list="{{g.items}}" as="it" hint-placeholder-count="2">
+          <a href="{{it.href}}" class="mi" role="option" aria-selected="{{it.sel}}" onMouseEnter="{{it.enter}}" style="{{it.s}}">
+            <span style="color: #686868; display: flex">
+              <sc-if value="{{it.isRow}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18M9 10v11"></path></svg></sc-if>
+              <sc-if value="{{it.isMod}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></sc-if>
+              <sc-if value="{{it.isPage}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg></sc-if>
+              <sc-if value="{{it.isAct}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if>
+            </span>
+            <span style="flex: 1">{{it.a}}<b style="font-weight: 600">{{it.b}}</b>{{it.c}}</span>
+            <span class="hint num">{{it.meta}}</span>
+            <sc-if value="{{it.hasKey}}" hint-placeholder-val="{{false}}"><span class="kbd">{{it.key}}</span></sc-if>
+            <sc-if value="{{it.first}}" hint-placeholder-val="{{false}}"><span class="kbd">↵</span></sc-if>
+          </a>
+        </sc-for>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div class="empty"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span><span style="font-weight: 500">Brak wyników</span></div></sc-if>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.025); font-size: 12px; color: #686868">
+      <span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↑</span><span class="kbd">↓</span> wybierz</span><span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↵</span> otwórz</span><span style="margin-left: auto; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>sekrety nie są przeszukiwane</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { q: 'spo', sel: 0 }; }
+  renderVals() {
+    const q = this.state.q.trim().toLowerCase();
+    // [grupa, nazwa, opis, cel, rodzaj, skrót]
+    const ALL = [
+      ['Wiersze stron', 'Spotify', 'Subscriptions · 23,99 zł / mies.', 'S2Main.dc.html', 'row', ''],
+      ['Wiersze stron', 'Książka o sporcie', 'Books · Czytam', 'S2EmptyPage.dc.html', 'row', ''],
+      ['Moduły', 'Sport', 'moduł', 'S2Sport.dc.html', 'mod', ''],
+      ['Moduły', 'Kalendarz', 'moduł', 'S2Calendar.dc.html', 'mod', ''],
+      ['Strony', 'Subscriptions', '5 wierszy', 'S2Main.dc.html', 'page', ''],
+      ['Strony', 'Projects', '8 wierszy', 'S2Projects.dc.html', 'page', ''],
+      ['Akcje', 'Nowa strona', '', 'S2NewPage.dc.html', 'act', 'N'],
+      ['Akcje', 'Nowy blok', '', 'S2BlockDialog.dc.html', 'act', '']
+    ];
+    const hit = ALL.filter((r) => !q || r[1].toLowerCase().indexOf(q) >= 0 || r[0] === 'Akcje');
+    const groups = [];
+    hit.forEach((r, i) => {
+      let g = groups.find((x) => x.name === r[0]);
+      if (!g) { g = { name: r[0], items: [] }; groups.push(g); }
+      const idx = r[1].toLowerCase().indexOf(q);
+      const has = q && idx >= 0;
+      const on = i === this.state.sel;
+      g.items.push({ a: has ? r[1].slice(0, idx) : r[1], b: has ? r[1].slice(idx, idx + q.length) : '', c: has ? r[1].slice(idx + q.length) : '', meta: r[2], href: r[3],
+        isRow: r[4] === 'row', isMod: r[4] === 'mod', isPage: r[4] === 'page', isAct: r[4] === 'act',
+        key: r[5], hasKey: !!r[5],
+        sel: on ? 'true' : 'false', first: on, enter: () => this.setState({ sel: i }),
+        s: 'min-height:44px;' + (on ? 'background:rgba(0,0,0,.05)' : '') });
+    });
+    return { q: this.state.q, onQ: (e) => this.setState({ q: e.target.value, sel: 0 }), groups, empty: hit.length === 0 };
+  }
+}
+</script>
+</body>
+</html>

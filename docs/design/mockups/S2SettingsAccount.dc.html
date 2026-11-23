@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Konto i bezpieczeństwo (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.snav a{display:flex;align-items:center;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.nrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.nrow:last-child{border-bottom:0}
+[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.12);border-top-color:#262626;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div class="shell" style="min-height: 1060px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Konto i bezpieczeństwo</b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px"><a href="S2Settings.dc.html">Ogólne</a><a href="S2SettingsAccount.dc.html" aria-current="page">Konto i bezpieczeństwo</a><a href="S2VaultSetup.dc.html">Sejf</a><a href="S2SettingsNotifications.dc.html">Powiadomienia</a><a href="S2CategoryDialog.dc.html">Kategorie kalendarza</a></nav>
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Konto i bezpieczeństwo</h1>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Zmień hasło do konta</h2><p class="card-d">Hasło do konta nie otwiera sejfu.</p></div></div>
+          <div class="card-p" style="display: flex; flex-direction: column; gap: 14px">
+            <label class="fld">Obecne hasło<input class="inp" type="password" autocomplete="current-password" value="{{cur}}" onChange="{{onCur}}"></label>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+              <label class="fld">Nowe hasło<input class="inp" type="password" autocomplete="new-password" value="{{nw}}" onChange="{{onNw}}"><span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 2px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="{{b.s}}"></span></sc-for></span><span class="hint">{{strength}}</span></label>
+              <label class="fld">Powtórz<input class="inp" type="password" autocomplete="new-password" value="{{rep}}" onChange="{{onRep}}" aria-invalid="{{repInv}}"><span class="{{repC}}">{{repTxt}}</span></label>
+            </div>
+          </div>
+          <div class="foot" style="justify-content: space-between"><span style="{{pwMsgS}}">{{pwMsg}}</span><button type="button" class="btnp" onClick="{{pwSave}}" aria-disabled="{{pwDis}}">Zmień hasło</button></div>
+        </section>
+        <section class="card">
+          <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between"><div><h2 class="card-t">Sesje</h2><p class="card-d">{{sessCount}}</p></div><button type="button" class="btn sm" onClick="{{logoutAll}}" aria-disabled="{{allDis}}">Wyloguj wszystkie inne</button></div>
+          <div class="card-p" style="padding-top: 0">
+            <div class="nrow"><div style="display: flex; gap: 12px; align-items: center"><span class="avatar" style="width: 32px; height: 32px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></span><div><div style="font-weight: 500">Chrome · Parrot OS</div><div class="muted" style="font-size: 13px">Polska · teraz · ta sesja</div></div></div><span class="bdg ok">Aktualna</span></div>
+            <sc-for list="{{sessions}}" as="s" hint-placeholder-count="2"><div class="nrow"><div style="display: flex; gap: 12px; align-items: center"><span class="avatar" style="width: 32px; height: 32px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"></rect><path d="M12 18h.01"></path></svg></span><div><div style="font-weight: 500">{{s.t}}</div><div class="muted" style="font-size: 13px">{{s.m}}</div></div></div><button type="button" class="btng sm" onClick="{{s.out}}">Wyloguj</button></div></sc-for>
+            <p class="muted" style="margin: 0; padding: 14px 0 4px; font-size: 13px">„Wyloguj wszystkie inne” kończy sesje na wszystkich pozostałych urządzeniach i przeglądarkach. Tu zostaniesz zalogowany.</p>
+          </div>
+          <sc-if value="{{sessMsg}}" hint-placeholder-val="{{false}}"><div class="card-p" style="padding-top: 0"><div role="status" class="alert ok" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>{{sessMsgTxt}}</span></div></div></sc-if>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Eksport danych</h2><p class="card-d">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div></div>
+          <div class="foot" style="justify-content: space-between"><span style="display: inline-flex; align-items: center; gap: 8px"><sc-if value="{{busy}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span></sc-if><span class="num" style="{{expS}}">{{expTxt}}</span></span><button type="button" class="btn" onClick="{{exportNow}}" aria-disabled="{{busyS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>{{expBtn}}</button></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2SettingsAccount.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const cur = S.cur || '', nw = S.nw || '', rep = S.rep || '';
+    const score = (nw.length >= 10 ? 1 : 0) + (/[A-Z]/.test(nw) ? 1 : 0) + (/[0-9]/.test(nw) ? 1 : 0) + (/[^A-Za-z0-9]/.test(nw) ? 1 : 0);
+    const col = ['rgba(0,0,0,.08)', '#ef4444', '#f59e0b', '#eab308', '#15803d'][score];
+    const match = !!rep && rep === nw;
+    const ok = !!cur && nw.length >= 10 && match && nw !== cur;
+    const why = !cur ? 'Wpisz obecne hasło.' : nw.length < 10 ? 'Nowe hasło: min. 10 znaków.' : nw === cur ? 'Nowe hasło musi różnić się od obecnego.' : !match ? 'Hasła muszą być takie same.' : 'Gotowe — wylogujemy inne urządzenia.';
+    const SESS = [['ip', 'Safari · iPhone', 'wczoraj 21:14'], ['mac', 'Firefox · Windows 11', 'Lublin · 12.11 08:02']];
+    const out = S.out || {};
+    const left = SESS.filter((s) => !out[s[0]]);
+    const pl = (n) => n === 1 ? '1 aktywna sesja' : n + (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? ' aktywne sesje' : ' aktywnych sesji');
+    return {
+      cur, nw, rep,
+      onCur: (e) => this.setState({ cur: e.target.value, pwDone: false }), onNw: (e) => this.setState({ nw: e.target.value, pwDone: false }), onRep: (e) => this.setState({ rep: e.target.value, pwDone: false }),
+      bars: [0, 1, 2, 3].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (i < score ? col : 'rgba(0,0,0,.08)') })),
+      strength: nw ? ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'][score] + ' hasło' : '10+ znaków, wielka litera, cyfra, znak',
+      repTxt: !rep ? ' ' : match ? 'Hasła są takie same ✓' : 'Hasła się różnią', repC: !rep ? 'hint' : match ? 'ok' : 'err', repInv: rep && !match ? 'true' : 'false',
+      pwDis: ok ? 'false' : 'true',
+      pwSave: () => { if (ok) this.setState({ cur: '', nw: '', rep: '', pwDone: true, out: { ip: true, mac: true } }); },
+      pwMsg: S.pwDone ? 'Hasło zmienione ✓ Inne urządzenia zostały wylogowane.' : (cur || nw || rep ? why : 'Min. 10 znaków. Wylogujemy inne urządzenia.'),
+      pwMsgS: 'font-size:13px;color:' + (S.pwDone || ok ? '#15803d' : '#686868'),
+      sessions: left.map((s) => ({ t: s[1], m: s[2], out: () => this.setState({ out: Object.assign({}, out, { [s[0]]: true }), sessMsgTxt: 'Wylogowano: ' + s[1] }) })),
+      allDis: left.length ? 'false' : 'true', sessCount: pl(left.length + 1),
+      logoutAll: () => this.setState({ out: { ip: true, mac: true }, sessMsgTxt: 'Wylogowano wszystkie inne urządzenia ✓' }),
+      sessMsg: !!S.sessMsgTxt, sessMsgTxt: S.sessMsgTxt || '',
+      busy: S.exp === 'busy', busyS: S.exp === 'busy' ? 'true' : 'false',
+      expTxt: S.exp === 'busy' ? 'przygotowuję plik…' : S.exp === 'done' ? 'rhytm-export-2026-11-16.json · 2,4 MB · pobrano' : 'ostatni eksport: nigdy',
+      expS: 'font-size:12px;color:' + (S.exp === 'done' ? '#15803d' : '#686868'),
+      expBtn: S.exp === 'done' ? 'Pobierz ponownie' : 'Pobierz .json',
+      exportNow: () => { this.setState({ exp: 'busy' }); setTimeout(() => this.setState({ exp: 'done' }), 900); }
+    };
+  }
+}
+</script>
+</body>
+</html>

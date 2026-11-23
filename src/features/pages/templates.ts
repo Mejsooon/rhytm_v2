@@ -44,6 +44,8 @@ export type TemplateConfig = {
   name: string;
   icon: string;
   desc: string;
+  // Zdanie pod tytułem nowej strony (blok tekstu na początku); pusty tekst = bez bloku
+  intro: string;
   extra: string;
   fields: TemplateField[];
   cards: TemplateCard[];
@@ -61,8 +63,9 @@ const SZARY = PALETA[7];
 export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   empty: {
     name: "Pusta strona",
-    icon: "",
-    desc: "Tabela bez pól. Budujesz ją sama od zera.",
+    icon: "lucide:table",
+    desc: "Zacznij od zera",
+    intro: "",
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
@@ -73,9 +76,10 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   books: {
     name: "Books",
-    icon: "📚",
-    desc: "Status czytania, ocena, licznik przeczytanych.",
-    extra: "Σ Liczba przeczytanych w tym roku.",
+    icon: "lucide:book-open",
+    desc: "Twoje książki",
+    intro: "Co czytam, co przeczytałem i co chcę przeczytać.",
+    extra: "Liczba przeczytanych w tym roku.",
     fields: [
       { key: "title", name: "Tytuł", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
       { key: "author", name: "Autor", type: "text" },
@@ -123,9 +127,10 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   projects: {
     name: "Projects",
-    icon: "lucide:rocket:blue",
-    desc: "Status i termin, terminy w kalendarzu.",
-    extra: "↻ Terminy trafią do kalendarza głównego.",
+    icon: "lucide:rocket",
+    desc: "Twoje projekty",
+    intro: "Projekty na studia, własne i dla klientów.",
+    extra: "Terminy trafią do kalendarza głównego.",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       {
@@ -180,8 +185,9 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   },
   websites: {
     name: "Websites",
-    icon: "lucide:globe:teal",
-    desc: "Strony klientów: URL, klient, status.",
+    icon: "lucide:globe",
+    desc: "Twoje strony WWW",
+    intro: "Strony klientów: URL, klient, status.",
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
@@ -232,8 +238,9 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   // Hasła: pola z makiety CVault; Hasło to Sekret (szyfrogram), bez kart i podsumowań
   passwords: {
     name: "Passwords",
-    icon: "🔒",
+    icon: "lucide:lock",
     desc: "Hasła szyfrowane w przeglądarce hasłem głównym.",
+    intro: "",
     extra: "Przy pierwszym otwarciu ustawisz hasło główne sejfu.",
     fields: [
       { key: "service", name: "Serwis", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
@@ -304,16 +311,20 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     pinned_cards,
   };
 
-  return [
-    {
-      id: newId(),
-      type: "table",
-      // Pusta strona: tabela bez nazwy (w edytorze placeholder „Tabela bez nazwy”)
-      content: { name: key === "empty" ? "" : tpl.name, settings },
-      fields,
-      rows: [],
-    },
-  ];
+  const bloki: CreatePageBlock[] = [];
+  // Zdanie pod tytułem to zwykły blok tekstu przed tabelą
+  if (tpl.intro !== "") {
+    bloki.push({ id: newId(), type: "text", content: { text: tpl.intro }, fields: [], rows: [] });
+  }
+  bloki.push({
+    id: newId(),
+    type: "table",
+    // Pusta strona: tabela bez nazwy (w edytorze placeholder „Tabela bez nazwy”)
+    content: { name: key === "empty" ? "" : tpl.name, settings },
+    fields,
+    rows: [],
+  });
+  return bloki;
 }
 
 // Nowa tabela z menu „/” (spec 6.8): Nazwa, Status (Wybór), Data i dwa puste wiersze

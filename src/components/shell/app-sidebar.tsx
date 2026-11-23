@@ -20,6 +20,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AccountPopover, type SidebarUser } from "./account-popover";
 import { NAV_MODULES } from "./nav-items";
+import { useSidebarState } from "./sidebar-state";
+import { SidebarToggle } from "./sidebar-toggle";
 
 // Pozycja .sb-i z coss.css: 32 px, promień 8 px, 14 px / 500
 const POZYCJA =
@@ -41,6 +43,7 @@ export function AppSidebar({
   pages?: PageSummary[];
 }) {
   const sciezka = usePathname();
+  const { collapsed } = useSidebarState();
   const nowaStrona = useCreateBlankPage();
   const store = usePagesStore(pages);
   const strony = store.pages;
@@ -127,12 +130,17 @@ export function AppSidebar({
   return (
     <nav
       aria-label="Główna nawigacja"
-      className="sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border-soft bg-panel p-2 text-sm text-foreground min-[800px]:flex"
+      className={cn(
+        "sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border-soft bg-panel p-2 text-sm text-foreground",
+        // Schowany pasek znika tylko na webie; na telefonie nawigacja to dolny pasek
+        collapsed ? "min-[800px]:hidden" : "min-[800px]:flex",
+      )}
     >
       {/* Logo 22 px i nazwa 15 px / 600 w wierszu 40 px */}
       <div className="flex h-10 items-center gap-2 px-2">
         <RhytmLogo size={22} />
         <span className="flex-1 text-[15px] font-semibold tracking-[-0.03em]">rhytm</span>
+        <SidebarToggle placement="sidebar" />
       </div>
 
       {/* Wyszukiwarka (⌘K) — w tym etapie nieaktywna */}

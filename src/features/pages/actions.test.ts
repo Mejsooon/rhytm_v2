@@ -126,7 +126,7 @@ describe("strony", () => {
     );
     expect(rpc).toHaveBeenCalledWith("create_page", {
       p_title: "Books",
-      p_icon: "📚",
+      p_icon: "lucide:book-open",
       p_template_key: "books",
       p_blocks: oczekiwane,
     });
@@ -301,13 +301,15 @@ describe("bloki i ustawienia", () => {
     expect(tables.page_blocks.update).toHaveBeenCalledWith({ content: { text: "b" } });
   });
 
-  it("setPageIcon zapisuje emoji, `lucide:…` i pusty tekst; odrzuca dłuższe niż 64 znaki", async () => {
-    for (const ikona of ["📚", "lucide:rocket:blue", ""]) {
+  it("setPageIcon zapisuje `lucide:<nazwa>` i pusty tekst; odrzuca emoji, kolor i tekst dłuższy niż 64 znaki", async () => {
+    for (const ikona of ["lucide:rocket", "lucide:book-open", ""]) {
       expect(await setPageIcon(STRONA, ikona)).toEqual({ ok: true });
       expect(tables.pages.update).toHaveBeenLastCalledWith({ icon: ikona });
     }
     tables.pages.update.mockClear();
-    expect((await setPageIcon(STRONA, "x".repeat(65))).ok).toBe(false);
+    for (const zla of ["📚", "lucide:rocket:blue", "x".repeat(65)]) {
+      expect((await setPageIcon(STRONA, zla)).ok).toBe(false);
+    }
     expect(tables.pages.update).not.toHaveBeenCalled();
   });
 
@@ -528,16 +530,17 @@ describe("pole Sekret", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("addField secret na stronie bez szablonu zwraca błąd", async () => {
-    const BLAD = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
-    for (const klucz of [null, "empty"]) {
+  it("addField secret poza stroną Hasła zwraca błąd", async () => {
+    const BLAD = "Pole Sekret jest dostępne tylko na stronie Hasła.";
+    // Sejf ma tylko widok strony Hasła — inne strony (także z szablonu) nie dostają pola Sekret
+    for (const klucz of [null, "empty", "books", "projects", "websites"]) {
       tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: klucz } } });
       const w = await addField(BLOK, { name: "Hasło", type: "secret", config: {} });
       expect(w).toEqual({ ok: false, message: BLAD });
     }
     expect(tables.page_fields.insert).not.toHaveBeenCalled();
 
-    // Strona z szablonu przyjmuje pole Sekret
+    // Strona Hasła przyjmuje pole Sekret
     tables.page_blocks = fakeTable({ single: { id: BLOK, pages: { template_key: "passwords" } } });
     tables.page_fields = fakeTable({
       single: { id: POLE_SEKRET, name: "Hasło", type: "secret", config: {}, position: 3, is_title: false },

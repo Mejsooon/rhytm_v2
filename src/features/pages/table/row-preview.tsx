@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import { SecretCell } from "@/features/vault/secret-cell";
-import { OptionBadge } from "../editor/cell-editor";
+import { OptionBadge } from "./option-badge";
 import { formatValue, isUrgent, normalizeValue, relativeDue, type PageField } from "../fields";
 import type { PageRow } from "../table-model";
 

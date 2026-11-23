@@ -12,16 +12,20 @@ import {
   changeFieldType,
   deleteField,
   deleteRow,
+  reorderFields,
   restoreRow,
   saveTableSettings,
+  updateBlockContent,
   updateField,
   updateRow,
 } from "../actions";
 import {
+  PALETA,
   normalizeValue,
   planTypeChange,
   type CellValue,
   type FieldConfig,
+  type FieldOption,
   type FieldType,
   type PageField,
 } from "../fields";
@@ -81,6 +85,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // Rejestracja pól Sekret z otwartego RowEdit i blokada drugiego zapisu w trakcie szyfrowania / zapisu
   const sekretRef = useRef<SecretRegistration | null>(null);
   const zapisujeRef = useRef(false);
+  // Tymczasowe id wiersza klikniętego w trakcie zapisu (edycja czeka na prawdziwe id)
+  const edycjaPoZapisie = useRef<string | null>(null);
 
   if (zrodloPol !== block.fields) {
     setZrodloPol(block.fields);
@@ -103,6 +109,14 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   if (zrodloUstawien !== block.content.settings) {
     setZrodloUstawien(block.content.settings);
     setSettings((s) => (ustawieniaWToku.current > 0 ? s : zSerwera));
+  }
+  // Nazwa tabeli z content.name; nowa nazwa z serwera zastępuje lokalną
+  const nazwaZSerwera = typeof block.content.name === "string" ? block.content.name : "";
+  const [tableName, setTableName] = useState(nazwaZSerwera);
+  const [zrodloNazwy, setZrodloNazwy] = useState(nazwaZSerwera);
+  if (zrodloNazwy !== nazwaZSerwera) {
+    setZrodloNazwy(nazwaZSerwera);
+    setTableName(nazwaZSerwera);
   }
 
   const posortowanePola = [...fields].sort((a, b) => a.position - b.position);
@@ -127,7 +141,12 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // Tryb edycji istniejącego wiersza (tylko jeden naraz; wiersz bez prawdziwego id czeka)
   async function startEdit(row: PageRow) {
-    if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
+    // Wiersz jeszcze się zapisuje: klik nie ginie — edycja otworzy się, gdy serwer zwróci prawdziwe id
+    if (row.id.startsWith(PREFIKS_TYMCZASOWY)) {
+      edycjaPoZapisie.current = row.id;
+      return;
+    }
+    edycjaPoZapisie.current = null;
     if (szkicZmieniony() && !(await zapiszSzkic())) return;
     setEditing({ rowId: row.id, values: { ...row.values }, original: { ...row.values } });
   }
@@ -203,6 +222,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         wynik = null;
       }
       if (!wynik || !wynik.ok) {
+        if (edycjaPoZapisie.current === tymczasoweId) edycjaPoZapisie.current = null;
         setRows((l) => l.filter((r) => r.id !== tymczasoweId));
         // Inna generacja sejfu: blokujemy go i pokazujemy komunikat z serwera
         if (wynik && !wynik.ok && wynik.code === "stale_generation") {
@@ -226,6 +246,13 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
           ? bezDuplikatu.map((r) => (r.id === tymczasoweId ? prawdziwy : r))
           : [...bezDuplikatu, prawdziwy];
       });
+      // Klik w wiersz w trakcie zapisu: otwieramy edycję już z prawdziwym id (o ile nic innego nie jest edytowane)
+      if (edycjaPoZapisie.current === tymczasoweId) {
+        edycjaPoZapisie.current = null;
+        setEditing(
+          (cur) => cur ?? { rowId: prawdziwy.id, values: { ...prawdziwy.values }, original: { ...prawdziwy.values } },
+        );
+      }
       return true;
     }
 
@@ -427,8 +454,164 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return true;
   }
 
+  // Nazwa tabeli (content.name): od razu lokalnie, zapis z zachowaniem content.settings; błąd cofa
+  async function renameTable(name: string): Promise<boolean> {
+    if (name === tableName) return true;
+    const poprzednia = tableName;
+    setTableName(name);
+    let udane = false;
+    try {
+      udane = (await updateBlockContent(block.id, { ...block.content, name })).ok;
+    } catch {
+      udane = false;
+    }
+    if (!udane) {
+      setTableName(poprzednia);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
+  }
+
+  // Przesunięcie kolumny o jedno miejsce; kolejność zapisuje jedno RPC (jak w edytorze)
+  async function moveField(field: PageField, dir: -1 | 1): Promise<boolean> {
+    // Kolumny bez prawdziwego id nie wejdą jeszcze w kolejność na serwerze
+    if (posortowanePola.some((f) => f.id.startsWith(PREFIKS_TYMCZASOWY))) return false;
+    const i = posortowanePola.findIndex((f) => f.id === field.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= posortowanePola.length) return false;
+    const nowaKolejnosc = [...posortowanePola];
+    [nowaKolejnosc[i], nowaKolejnosc[j]] = [nowaKolejnosc[j], nowaKolejnosc[i]];
+    const poprzednie = fields;
+    setFields(nowaKolejnosc.map((f, indeks) => ({ ...f, position: indeks })));
+    polaWToku.current += 1;
+    let udane = false;
+    try {
+      udane = (await reorderFields(block.id, nowaKolejnosc.map((f) => f.id))).ok;
+    } catch {
+      udane = false;
+    }
+    polaWToku.current -= 1;
+    if (!udane) {
+      setFields(poprzednie);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
+  }
+
+  // Nowa opcja Wyboru: kolor to następny z PALETA; etykieta już istniejąca (bez wielkości liter) nic nie robi
+  async function addOption(field: PageField, label: string): Promise<boolean> {
+    const etykieta = label.trim();
+    const opcje = field.config.options ?? [];
+    if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
+      return false;
+    }
+    const nowa: FieldOption = {
+      id: crypto.randomUUID(),
+      label: etykieta,
+      color: PALETA[opcje.length % PALETA.length],
+    };
+    return patchField(field, { config: { ...field.config, options: [...opcje, nowa] } });
+  }
+
+  // Usunięcie opcji Wyboru razem ze wszystkimi odwołaniami, w jednej optymistycznej zmianie:
+  // wiersze z tą opcją stają się puste, znikają karty, podsumowania i warunki filtrów na tej opcji,
+  // a na końcu sama opcja (i opcja domyślna nowego wiersza). Błąd któregokolwiek zapisu cofa wszystko.
+  async function removeOption(field: PageField, optionId: string): Promise<boolean> {
+    const config: FieldConfig = {
+      ...field.config,
+      options: (field.config.options ?? []).filter((o) => o.id !== optionId),
+    };
+    if (config.default_option === optionId) delete config.default_option;
+
+    // Warunek „jest jednym z” traci tę opcję; bez żadnej opcji znika cały warunek
+    const bezOpcji = (warunki: FilterCond[]) =>
+      warunki.flatMap((c) => {
+        if (c.field_id !== field.id || !Array.isArray(c.value) || !c.value.includes(optionId)) return [c];
+        const reszta = (c.value as string[]).filter((v) => v !== optionId);
+        return reszta.length > 0 ? [{ ...c, value: reszta }] : [];
+      });
+    const noweFiltry = bezOpcji(settings.filters);
+    const noweKarty = settings.pinned_cards.filter(
+      (c) => c.option_id !== optionId && c.done_option_id !== optionId,
+    );
+    const nowePodsumowania = Object.fromEntries(
+      Object.entries(settings.column_summaries).filter(
+        ([, p]) => p.option_id !== optionId && p.where?.option_id !== optionId,
+      ),
+    );
+    // Zapisujemy tylko klucze ustawień, które naprawdę się zmieniają
+    const zmianyUstawien: Partial<TableSettings> = {};
+    if (JSON.stringify(noweFiltry) !== JSON.stringify(settings.filters)) zmianyUstawien.filters = noweFiltry;
+    if (noweKarty.length !== settings.pinned_cards.length) zmianyUstawien.pinned_cards = noweKarty;
+    if (Object.keys(nowePodsumowania).length !== Object.keys(settings.column_summaries).length) {
+      zmianyUstawien.column_summaries = nowePodsumowania;
+    }
+    const poprzednieUstawienia: Partial<TableSettings> = {};
+    for (const k of Object.keys(zmianyUstawien) as (keyof TableSettings)[]) {
+      (poprzednieUstawienia as Record<string, unknown>)[k] = settings[k];
+    }
+    const poprzednieTymczasowe = tempFilters;
+    const dotknieteWiersze = rows.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
+
+    // Od razu lokalnie
+    setFields((l) => l.map((f) => (f.id === field.id ? { ...f, config } : f)));
+    setRows((l) =>
+      l.map((r) => (dotknieteWiersze.includes(r.id) ? { ...r, values: { ...r.values, [field.id]: null } } : r)),
+    );
+    setSettings((s) => ({ ...s, ...zmianyUstawien }));
+    setTempFilters((t) => (t ? bezOpcji(t) : t));
+
+    // Zapisy w toku: dane z serwera w trakcie nie nadpiszą zmiany
+    const zapisywaneWiersze = dotknieteWiersze.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
+    for (const id of zapisywaneWiersze) {
+      const wToku = wierszeWToku.current.get(id) ?? { n: 0, zmiany: {} };
+      wToku.n += 1;
+      wToku.zmiany[field.id] = null;
+      wierszeWToku.current.set(id, wToku);
+    }
+    polaWToku.current += 1;
+    ustawieniaWToku.current += 1;
+    let udane = false;
+    try {
+      const wyniki = await Promise.all([
+        ...zapisywaneWiersze.map((id) => updateRow(id, { [field.id]: null })),
+        ...(Object.keys(zmianyUstawien).length > 0 ? [saveTableSettings(block.id, zmianyUstawien)] : []),
+        updateField(field.id, { config }),
+      ]);
+      udane = wyniki.every((w) => w.ok);
+    } catch {
+      udane = false;
+    }
+    for (const id of zapisywaneWiersze) {
+      const wToku = wierszeWToku.current.get(id);
+      if (!wToku) continue;
+      wToku.n -= 1;
+      if (wToku.n === 0) wierszeWToku.current.delete(id);
+    }
+    polaWToku.current -= 1;
+    ustawieniaWToku.current -= 1;
+
+    if (!udane) {
+      // Cofamy tylko to, co nadal jest z tej zmiany
+      setFields((l) =>
+        l.map((f) => (f.id === field.id && f.config === config ? { ...f, config: field.config } : f)),
+      );
+      setRows((l) =>
+        l.map((r) =>
+          dotknieteWiersze.includes(r.id) && r.values[field.id] === null
+            ? { ...r, values: { ...r.values, [field.id]: optionId } }
+            : r,
+        ),
+      );
+      setSettings((s) => ({ ...s, ...poprzednieUstawienia }));
+      setTempFilters(poprzednieTymczasowe);
+      toast.error(BLAD_ZAPISU);
+    }
+    return udane;
+  }
+
   // Zmiana nazwy albo konfiguracji pola (np. „Pokaż w kalendarzu”): od razu lokalnie, błąd cofa
-  async function patchField(field: PageField, patch: { name?: string; config?: FieldConfig }) {
+  async function patchField(field: PageField, patch: { name?: string; config?: FieldConfig }): Promise<boolean> {
     setFields((l) => l.map((f) => (f.id === field.id ? { ...f, ...patch } : f)));
     polaWToku.current += 1;
     let udane = false;
@@ -452,6 +635,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       );
       toast.error(BLAD_ZAPISU);
     }
+    return udane;
   }
 
   // „Usuń pole”: kolumna znika od razu razem ze śladami w ustawieniach (jak w RPC delete_field);
@@ -545,5 +729,10 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     applyTypeChange,
     patchField,
     removeField,
+    tableName,
+    renameTable,
+    moveField,
+    addOption,
+    removeOption,
   };
 }

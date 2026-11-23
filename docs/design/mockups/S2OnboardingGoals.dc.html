@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Onboarding 3 — Cele (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border:1px solid rgba(0,0,0,.1);border-radius:12px;background:#fff;background-clip:padding-box;box-shadow:0 1px 2px rgba(0,0,0,.05);font:inherit;color:#262626;cursor:pointer;box-sizing:border-box;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.opt:hover{background:#fafafa}
+.opt[aria-pressed="true"],.opt[aria-checked="true"]{border-color:rgba(0,0,0,.24);background:rgba(0,0,0,.025);box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.opt .cbx{margin-top:2px;pointer-events:none}
+.opt[aria-pressed="true"] .cbx,.opt[aria-checked="true"] .cbx{background:#262626;border-color:#262626;color:#fafafa}
+@media (max-width:1100px){.split{grid-template-columns:1fr !important}.pvside{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #262626; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+  <header style="height: 64px; display: flex; align-items: center; gap: 8px; padding: 0 24px">
+    <svg width="24" height="24" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg><span style="font-weight: 600; font-size: 16px; letter-spacing: -0.03em">rhytm</span>
+    <span class="bdg sec lg" style="margin-left: auto">Krok 3 z 7</span>
+    <a href="S2Login.dc.html" class="btng sm" style="margin-left: 8px; color: #686868">Wyloguj</a>
+  </header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px 40px">
+    <div class="card" style="width: 100%; max-width: 1120px; height: 720px; overflow: hidden">
+      <div role="progressbar" aria-label="Postęp" aria-valuemin="1" aria-valuemax="7" aria-valuenow="3" style="display: flex; gap: 4px; padding: 16px 20px 0"><span style="flex: 1; height: 4px; border-radius: 999px; background: #262626"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: #262626"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: #262626"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span><span style="flex: 1; height: 4px; border-radius: 999px; background: rgba(0,0,0,.08)"></span></div>
+      <div class="split" style="flex: 1; min-height: 0; display: grid; grid-template-columns: 520px 1fr">
+        <div style="display: flex; flex-direction: column; min-height: 0">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding: 32px 40px 20px">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em">Twoje cele</h1><p class="muted" style="margin: 6px 0 0">Zmienisz je później w Ustawieniach.</p></div>
+            <p class="muted" style="margin: 0; font-size: 13px"><span style="font-weight: 500; color: #262626">Zawsze masz:</span> Plan tygodnia · Treningi · Nawyki i sen · Hasła</p>
+            <div class="fld"><span>Cele treningowe <span class="hint">· włącz jeden albo oba</span></span><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px"><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><div style="display: flex; flex-direction: column; gap: 8px"><label style="display: flex; align-items: center; gap: 8px; font-weight: 400; cursor: pointer"><button type="button" class="cbx" role="checkbox" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button>{{t.lbl}}</label><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><input class="inp num" type="text" inputMode="numeric" value="{{t.val}}" onChange="{{t.onVal}}" aria-label="{{t.lbl}}"></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><input class="inp" type="text" value="—" aria-label="{{t.lbl}}" disabled style="opacity: .64; background: rgba(0,0,0,.02)"></sc-if></div></sc-for></div><sc-if value="{{noGoal}}" hint-placeholder-val="{{false}}"><span class="err">Włącz co najmniej jeden cel.</span></sc-if></div>
+            <label class="fld" style="max-width: 50%">Cel snu<input class="inp num" type="text" value="{{sleep}}" onChange="{{onSleep}}"></label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 14px 40px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.02)">
+            <a class="btng" href="S2OnboardingRole.dc.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Wstecz</a>
+            <span style="flex: 1"></span>
+            
+            <a class="btnp" href="S2OnboardingSource.dc.html">Dalej<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+          </div>
+        </div>
+        <div class="pvside" style="position: relative; border-left: 1px solid rgba(0,0,0,.08); overflow: hidden"><dc-import name="S2OnbPreview" s="{{S}}" step="3" hint-size="100%,680px"></dc-import></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, trOn: true, kmOn: true, tr: '3', km: '25', sleep: '8 h' }; }
+  renderVals() {
+    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo', goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, notify: { perm: true, before: true, renew: true, weekly: true, habits: false } };
+    const S = Object.assign({}, D, this.state || {});
+    const v = (e) => (e && e.target ? e.target.value : e);
+    const GO = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['pass', 'Hasła', 'Szyfrowany sejf', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
+    const G = S.goals || {};
+    const LOCKED = { plan: true, sport: true, habits: true, pass: true };
+    const goals = GO.map((g) => { const lk = !!LOCKED[g[0]]; const on = lk || !!G[g[0]]; return { title: g[1], desc: g[2], on: on ? 'true' : 'false', locked: lk ? 'true' : 'false', isLocked: lk, isFree: !lk, tip: lk ? 'Zawsze włączone' : '',
+      toggle: () => { if (lk) return; const ng = Object.assign({}, G, { [g[0]]: !on }); const np = Object.assign({}, S.pages); if (g[3]) np[g[3]] = !on; this.setState({ goals: ng, pages: np }); } }; });
+    const TG = [['tr', 'Treningi w tygodniu', '3'], ['km', 'Kilometry biegu w tygodniu', '25']];
+    const on = { tr: S.trOn !== false, km: S.kmOn !== false };
+    const tg = TG.map((t) => ({ lbl: t[1], on: on[t[0]] ? 'true' : 'false', off: !on[t[0]], isOn: on[t[0]], val: S[t[0]] || t[2],
+      toggle: () => this.setState({ [t[0] + 'On']: !on[t[0]] }), onVal: (e) => this.setState({ [t[0]]: v(e) }) }));
+    return { S, goals, tg, noGoal: !on.tr && !on.km, sleep: S.sleep || '8 h', onSleep: (e) => this.setState({ sleep: v(e) }) };
+  }
+}
+</script>
+</body>
+</html>

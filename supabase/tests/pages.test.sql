@@ -1,5 +1,5 @@
 begin;
-select plan(53);
+select plan(66);
 
 -- Użytkownicy A i B (profile tworzy trigger po rejestracji).
 insert into auth.users (id, email)
@@ -34,7 +34,7 @@ select is(has_function_privilege('anon', 'public.move_page(uuid[], uuid, boolean
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
 
-select set_config('test.page_a', public.create_page('Books', '▦', 'books',
+select set_config('test.page_a', public.create_page('Books', '', 'books',
   '[{"type":"table","content":{"name":"","settings":{}},"fields":[{"name":"Tytuł","type":"text","config":{},"is_title":true}],"rows":[{"values":{}}]}]'::jsonb)::text, true);
 
 select is((select count(*) from public.pages where id = current_setting('test.page_a')::uuid), 1::bigint, 'create_page tworzy stronę');
@@ -46,7 +46,7 @@ select is((select count(*) from public.page_rows as r join public.page_blocks as
     and r.user_id = '00000000-0000-0000-0000-00000000000a'), 1::bigint, 'create_page tworzy wiersz z user_id A');
 
 -- Id z klienta: blok i pole z podanym id, ustawienia wskazują to pole.
-select public.create_page('Z id', '▦', null,
+select public.create_page('Z id', '', null,
   '[{"id":"b1000000-0000-0000-0000-00000000000a","type":"table","content":{"settings":{"sort":[{"field_id":"f1000000-0000-0000-0000-00000000000a","dir":"asc"}]}},"fields":[{"id":"f1000000-0000-0000-0000-00000000000a","name":"Nazwa","type":"text","config":{},"is_title":true}],"rows":[]}]'::jsonb);
 select is((select count(*) from public.page_fields where id = 'f1000000-0000-0000-0000-00000000000a'), 1::bigint,
   'create_page używa id pola z klienta');
@@ -151,7 +151,7 @@ select is((select jsonb_array_length(b.content -> 'settings' -> 'sort') from pub
   where b.id = current_setting('test.block_a')::uuid), 1, 'delete_field zostawia sort po innym polu');
 
 -- duplicate_page strony bez tytułu
-select set_config('test.page_blank', public.create_page('', '▦', null, '[]'::jsonb)::text, true);
+select set_config('test.page_blank', public.create_page('', '', null, '[]'::jsonb)::text, true);
 select set_config('test.page_blank_copy', public.duplicate_page(current_setting('test.page_blank')::uuid)::text, true);
 select is((select title from public.pages where id = current_setting('test.page_blank_copy')::uuid),
   'Bez tytułu (kopia)', 'kopia strony bez tytułu to „Bez tytułu (kopia)”');
@@ -199,10 +199,10 @@ values ('d3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000
 select is((select p.icon from public.pages as p where p.id = 'd3000000-0000-0000-0000-00000000000a'), '',
   'domyślna ikona strony to pusty tekst');
 select lives_ok(
-  format('update public.pages set icon = %L where id = %L', repeat('x', 64), 'd3000000-0000-0000-0000-00000000000a'),
+  format('update public.pages set icon = %L where id = %L', 'lucide:' || repeat('x', 57), 'd3000000-0000-0000-0000-00000000000a'),
   'ikona 64 znaki przechodzi');
 select throws_ok(
-  format('update public.pages set icon = %L where id = %L', repeat('x', 65), 'd3000000-0000-0000-0000-00000000000a'),
+  format('update public.pages set icon = %L where id = %L', 'lucide:' || repeat('x', 58), 'd3000000-0000-0000-0000-00000000000a'),
   '23514', null, 'ikona dłuższa niż 64 znaki odrzucona');
 -- move_page wołane przez B nie zmieniło strony A (RLS)
 select is((select p.favorite from public.pages as p where p.id = current_setting('test.page_a')::uuid), true,
@@ -215,6 +215,34 @@ values
 select public.purge_trash();
 select is((select count(*) from public.pages where id in ('d1000000-0000-0000-0000-00000000000a', 'd2000000-0000-0000-0000-00000000000a')),
   1::bigint, 'purge_trash usuwa tylko strony starsze niż 30 dni');
+
+-- Ikony stron w formacie lucide:<nazwa> (migracja 20261123100000).
+select is(public.page_icon_lucide('📚'), 'lucide:book-open', '📚 → book-open');
+select is(public.page_icon_lucide('🔒'), 'lucide:lock', '🔒 → lock');
+select is(public.page_icon_lucide('❤️'), 'lucide:heart', 'emoji z selektorem wariantu też z mapy');
+select is(public.page_icon_lucide('lucide:star:gray'), 'lucide:star', 'kolor znika');
+select is(public.page_icon_lucide('🐶'), 'lucide:dog', '🐶 z mapy');
+select is(public.page_icon_lucide('lucide:book-open'), 'lucide:book-open', 'nowy format zostaje');
+select matches(public.page_icon_lucide('lucide:book-open:gray'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
+  'lucide:book-open:gray (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
+select matches(public.page_icon_lucide('🔒'), '^lucide:[a-z0-9]+(-[a-z0-9]+)*$',
+  '🔒 (jak na produkcji) → wartość spełniająca constraint pages_icon_format');
+select is(public.page_icon_lucide('xyz'), '', 'śmieci → domyślna');
+select is(public.page_icon_lucide(''), '', 'pusta zostaje pusta');
+select throws_ok(
+  format('update public.pages set icon = %L where id = %L', '📚', 'd3000000-0000-0000-0000-00000000000a'),
+  '23514', null, 'emoji odrzucone przez pages_icon_format');
+select lives_ok(
+  format('update public.pages set icon = %L where id = %L', 'lucide:rocket', 'd3000000-0000-0000-0000-00000000000a'),
+  'lucide:<nazwa> przyjęte');
+-- create_page bez ikony zostawia pustą (jako zalogowany A)
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+-- Strona powstaje w osobnym zapytaniu (jak wyżej), bo snapshot zapytania nie widzi wiersza dodanego przez funkcję w tym samym zapytaniu.
+select set_config('test.page_no_icon', public.create_page('X', null, null, '[]'::jsonb)::text, true);
+select is((select p.icon from public.pages as p where p.id = current_setting('test.page_no_icon')::uuid), '',
+  'create_page bez ikony → pusta');
+reset role;
 
 select * from finish();
 rollback;

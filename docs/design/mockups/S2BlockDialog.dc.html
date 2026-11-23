@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowy blok (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+</style>
+</helmet>
+<div class="shell" style="position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Kalendarz</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+        <nav class="seg" aria-label="Widok"><a href="S2CalendarDay.dc.html">Dzień</a><a href="S2Calendar.dc.html" aria-current="page">Tydzień</a><a href="S2CalendarMonth.dc.html">Miesiąc</a></nav>
+        <a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+      </div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6">
+      <div style="height: 32px; width: 520px; max-width: 100%; background: rgba(0,0,0,.04); border-radius: 10px"></div>
+      <div style="margin-top: 16px; height: 640px; border: 1px solid rgba(0,0,0,.08); border-radius: 16px; display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 47px, rgba(0,0,0,.05) 47px, rgba(0,0,0,.05) 48px)"><div></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="bd-title" class="dlg" style="position: absolute; left: 50%; top: 56px; transform: translateX(-50%); width: min(560px, calc(100% - 32px))">
+    <div class="dlg-h">
+      <div><h2 id="bd-title" class="dlg-t">Nowy blok</h2><p class="dlg-d">Zadania dodasz po zapisaniu, w dymku bloku.</p></div>
+      <a href="{{back}}" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a>
+    </div>
+    <div class="dlg-b">
+      <label class="fld">Tytuł<input class="inp" type="text" value="rhytm — kod"></label>
+      <div class="fld">Kategoria<div role="group" aria-label="Kategoria" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="4"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}"><span class="dot" style="{{c.dot}}"></span>{{c.label}}</button></sc-for>
+        <a href="S2CategoryDialog.dc.html" class="chip" style="color: #686868; border-style: dashed; box-shadow: none">+ Nowa</a>
+      </div></div>
+      <div style="display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 12px">
+        <label class="fld">Dzień<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="{{day}}" onChange="{{onDay}}"></span></label>
+        <label class="fld">Od<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{from}}" onChange="{{onFrom}}"></span></label>
+        <label class="fld">Do<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{to}}" onChange="{{onTo}}"></span></label>
+      </div>
+      <div class="fld">Powtarzanie
+        <div class="seg" role="radiogroup" aria-label="Powtarzanie" style="align-self: flex-start"><sc-for list="{{reps}}" as="r" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{r.pressed}}" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}">{{r.label}}</button></sc-for></div>
+        <sc-if value="{{weekly}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 400"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.on}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for><span class="hint" style="margin-left: 8px">do</span><span class="igroup num" style="width: 156px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="nd 31.01.2027" aria-label="Powtarzaj do"></span></div>
+        </sc-if>
+        <span class="hint">{{repInfo}} Każde powtórzenie ma własną, pustą listę zadań.</span>
+      </div>
+      <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><textarea class="inp" rows="2">Najpierw migracje, potem UI.</textarea></label>
+      <!-- przypomnienie jak w aplikacji: dzwonek, tekst, przełącznik (nowy blok: włączone) -->
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; color: #686868"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+        <span style="flex: 1">Przypomnij 10 min wcześniej</span>
+        <button type="button" class="sw" role="switch" aria-checked="{{remindS}}" aria-label="Przypomnienie" onClick="{{toggleRemind}}"></button>
+      </div>
+    </div>
+    <div class="dlg-f">
+      <a href="{{back}}" class="btng">Anuluj</a><a href="{{back}}" class="btnp">Zapisz blok</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { rep: 'weekly', cat: 'proj', days: { 1: true }, day: 'wt 17.11.2026', from: '10:00', to: '12:30', remind: true }; }
+  componentDidMount() {
+    try {
+      sessionStorage.setItem('rh-from-sub', 'S2BlockDialog.dc.html');
+      // zakres zaznaczony przeciągnięciem na osi „Dziś” (S2Today) wypełnia pola Dzień / Od / Do
+      const raw = sessionStorage.getItem('rh-new-range');
+      if (raw) {
+        sessionStorage.removeItem('rh-new-range');
+        const r = JSON.parse(raw);
+        if (r && typeof r.from === 'string' && typeof r.to === 'string') this.setState({ day: String(r.day || this.state.day), from: r.from, to: r.to });
+      }
+    } catch (e) {}
+  }
+  renderVals() {
+    const rep = this.state.rep;
+    let back = 'S2Calendar.dc.html';
+    try { const f = sessionStorage.getItem('rh-from'); if (f && /^S2[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
+    const opts = [['none','Nie powtarzaj'],['daily','Codziennie'],['weekdays','Dni robocze'],['weekly','Co tydzień'],['custom','Własne…']];
+    const cats = [['stud', 'Studia', '#0070f3'], ['proj', 'Projekty', '#15803d'], ['praca', 'Praca', '#7c3aed'], ['dom', 'Dom', '#c2410c']];
+    const days = this.state.days;
+    return {
+      back,
+      remindS: this.state.remind ? 'true' : 'false',
+      toggleRemind: () => this.setState({ remind: !this.state.remind }),
+      day: this.state.day, from: this.state.from, to: this.state.to,
+      onDay: (e) => this.setState({ day: e.target.value }),
+      onFrom: (e) => this.setState({ from: e.target.value }),
+      onTo: (e) => this.setState({ to: e.target.value }),
+      cats: cats.map((c) => ({ label: c[1], dot: 'background:' + c[2], pressed: this.state.cat === c[0] ? 'true' : 'false', pick: () => this.setState({ cat: c[0] }) })),
+      reps: opts.map((o) => ({ label: o[1], pressed: rep === o[0] ? 'true' : 'false', pick: () => this.setState({ rep: o[0] }) })),
+      weekly: rep === 'weekly' || rep === 'custom',
+      repInfo: rep === 'none' ? 'Jednorazowy blok.' : rep === 'daily' ? 'Każdego dnia, bez końca.' : rep === 'weekdays' ? 'Pon–pt, bez końca.' : 'Co tydzień we wtorki, do 31.01.2027.',
+      days: ['pn','wt','śr','cz','pt','sb','nd'].map((d, i) => ({ d, on: days[i] ? 'true' : 'false',
+        toggle: () => this.setState({ days: Object.assign({}, days, { [i]: !days[i] }) }),
+        s: 'width:36px;height:36px;border-radius:10px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;' + (days[i] ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 1px 2px rgba(38,38,38,.24)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

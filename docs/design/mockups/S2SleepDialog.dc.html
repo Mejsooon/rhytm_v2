@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wpis snu (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Nawyki i sen</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2SleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="S2HabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div></div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px"><div class="card" style="height: 420px"></div><div class="card" style="height: 420px"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="sl-t" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(480px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="sl-t" class="dlg-t">Wpis snu</h2><p class="dlg-d">Noc z poniedziałku na wtorek</p></div><a href="S2Habits.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <label class="fld">Data pobudki<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="wt 17.11.2026"></span></label>
+        <label class="fld">Zasnąłem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{from}}" onChange="{{onFrom}}"></span></label>
+        <label class="fld">Wstałem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{to}}" onChange="{{onTo}}"></span></label>
+      </div>
+      <div class="frame"><div class="inner" style="display: flex; align-items: center; gap: 16px; padding: 12px 14px">
+        <div><div class="lbl">Czas snu</div><div class="num" style="font-size: 22px; font-weight: 600; margin-top: 4px">{{dur}}</div></div>
+        <div style="flex: 1"><div class="prog"><div style="{{bar}}"></div></div><div class="hint num" style="margin-top: 6px">{{goalTxt}}</div></div>
+      </div></div>
+      <div class="fld">Samopoczucie
+        <div class="seg" role="radiogroup" aria-label="Samopoczucie" style="align-self: flex-start"><sc-for list="{{moods}}" as="m" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{m.on}}" aria-pressed="{{m.on}}" onClick="{{m.pick}}" style="width: 64px; height: 46px; flex-direction: column; gap: 0; padding: 0; font-size: 12px; font-weight: 400"><span class="num" style="font-size: 14px; font-weight: 500">{{m.n}}</span><span>{{m.l}}</span></button></sc-for></div>
+      </div>
+      <div class="fld">Co mogło wpłynąć
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; font-weight: 400"><sc-for list="{{tags}}" as="t" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{t.on}}" onClick="{{t.toggle}}">{{t.n}}</button></sc-for></div>
+      </div>
+      <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><input class="inp" type="text" placeholder="np. kawa po 18:00"></label>
+    </div>
+    <div class="dlg-f"><a href="S2Habits.dc.html" class="btng">Anuluj</a><a href="S2Habits.dc.html" class="btnp">Zapisz</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { from: '23:48', to: '07:00', mood: 4, tags: ['Ekran w łóżku'] }; }
+  renderVals() {
+    const toM = (t) => { const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+    const a = toM(this.state.from), b = toM(this.state.to);
+    const ok = a !== null && b !== null;
+    const mins = ok ? ((b - a + 1440) % 1440) : 0;
+    const pct = Math.min(100, Math.round(mins / 480 * 100));
+    const diff = 480 - mins;
+    return {
+      from: this.state.from, to: this.state.to,
+      onFrom: (e) => this.setState({ from: e.target.value }), onTo: (e) => this.setState({ to: e.target.value }),
+      dur: ok ? Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0') : '—',
+      bar: 'height:6px;border-radius:999px;width:' + pct + '%;background:#15803d',
+      goalTxt: !ok ? 'Wpisz godziny w formacie GG:MM' : diff > 0 ? pct + '% celu 8:00 · brakuje ' + diff + ' min' : 'Cel 8:00 osiągnięty' + (diff < 0 ? ' · +' + (-diff) + ' min' : ''),
+      moods: ['Źle', 'Słabo', 'OK', 'Dobrze', 'Super'].map((l, i) => { const n = i + 1; const on = this.state.mood === n; return { n: String(n), l, on: on ? 'true' : 'false', pick: () => this.setState({ mood: on ? null : n }) }; }),
+      tags: ['Kawa po 16', 'Ekran w łóżku', 'Trening', 'Alkohol', 'Stres'].map((n) => { const on = this.state.tags.includes(n); return { n, on: on ? 'true' : 'false', toggle: () => this.setState({ tags: on ? this.state.tags.filter((x) => x !== n) : this.state.tags.concat(n) }) }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

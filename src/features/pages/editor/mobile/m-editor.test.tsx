@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
   addBlock: vi.fn(),
@@ -24,6 +24,7 @@ const actions = vi.hoisted(() => ({
   restoreRow: vi.fn(),
   updateField: vi.fn(),
   updateRow: vi.fn(),
+  saveTableSettings: vi.fn(),
 }));
 const { toast, refresh } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
@@ -35,6 +36,8 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("../../actions", () => actions);
+// RowEdit / arkusz wiersza czytają stan sejfu (VaultProvider jest w powłoce aplikacji)
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 
 import type { PageField } from "../../fields";
 import type { LoadedBlock, LoadedPage } from "../../load-page";
@@ -84,6 +87,15 @@ function tabela(status: string | null = null): LoadedBlock {
   };
 }
 
+// Przycisk menu strony w nagłówku telefonu (web ma własny w okruszkach)
+function menuTelefonu() {
+  const przycisk = screen
+    .getAllByRole("button", { name: "Menu strony" })
+    .find((b) => b.closest("header")?.className.includes("min-[800px]:hidden"));
+  if (!przycisk) throw new Error("Brak menu strony na telefonie");
+  return przycisk;
+}
+
 describe("MEditor (telefon)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -92,6 +104,9 @@ describe("MEditor (telefon)", () => {
       ok: true,
       block: blok("srv-1", type, 0, type === "todo" ? { text: text ?? "", done: false } : { text: text ?? "" }),
     }));
+  });
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
   });
 
   it("pusty edytor pokazuje podpowiedź", () => {
@@ -201,7 +216,7 @@ describe("MEditor (telefon)", () => {
   it("menu strony jest dostępne na telefonie z pozycją Ulubione", async () => {
     const user = userEvent.setup();
     render(<EditorView data={dane([])} />);
-    await user.click(screen.getByRole("button", { name: "Menu strony" }));
+    await user.click(menuTelefonu());
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Dodaj do ulubionych")).toBeTruthy();
     expect(within(menu).getByText("Zmień nazwę")).toBeTruthy();
@@ -215,7 +230,7 @@ describe("MEditor (telefon)", () => {
     const d = dane([]);
     const inna = { ...d.page, id: "p0", title: "Inbox", position: 0 };
     render(<EditorView data={d} pages={[inna, { ...d.page, position: 1 }]} />);
-    await user.click(screen.getByRole("button", { name: "Menu strony" }));
+    await user.click(menuTelefonu());
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByRole("button", { name: "Przenieś niżej" })).toBeDisabled();
     await user.click(within(menu).getByRole("button", { name: "Przenieś wyżej" }));
@@ -224,79 +239,29 @@ describe("MEditor (telefon)", () => {
 
   it("tabela przewija się poziomo", () => {
     render(<EditorView data={dane([tabela()])} />);
-    const naglowek = screen.getAllByRole("row")[0];
-    // Kontener przewija się poziomo, a siatka ma minimalną szerokość (244 + 140 px na kolumnę)
-    expect(naglowek.parentElement!.className).toContain("overflow-x-auto");
-    expect(naglowek.style.minWidth).toBe("384px");
+    const siatka = screen.getByRole("table");
+    // Kontener przewija się poziomo, a siatka ma minimalną szerokość (160 + 120 px na kolumnę)
+    expect(siatka.parentElement!.className).toContain("overflow-x-auto");
+    expect(siatka.style.minWidth).toBe("400px");
   });
 
-  it("nagłówek kolumny otwiera arkusz „Kolumna” z kontrolkami", async () => {
+  it("stuknięcie wiersza tabeli otwiera arkusz wiersza; zapis zmienia wiersz", async () => {
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
     const user = userEvent.setup();
     render(<EditorView data={dane([tabela()])} />);
-    await user.click(screen.getByRole("button", { name: "Kolumna Status — ustawienia" }));
-    const arkusz = await screen.findByRole("dialog", { name: "Kolumna" });
-    expect(within(arkusz).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveProperty("value", "Status");
-    expect(within(arkusz).getByText("Typ pola")).toBeTruthy();
-    expect(within(arkusz).getByRole("button", { name: "Wybór" }).getAttribute("aria-pressed")).toBe("true");
-    expect(within(arkusz).getByRole("button", { name: "← W lewo" })).toBeTruthy();
-    expect(within(arkusz).getByRole("button", { name: "W prawo →" })).toBeTruthy();
-    expect(within(arkusz).getByRole("button", { name: "Usuń kolumnę" })).toBeTruthy();
-    // „Gotowe” jest w nagłówku arkusza (jak w makiecie), nie w stopce
-    const gotowe = within(arkusz).getByRole("button", { name: "Gotowe" });
-    expect(gotowe.closest("[class*='border-b']")?.contains(arkusz.querySelector("h2"))).toBe(true);
-    await user.click(gotowe);
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Kolumna" })).toBeNull());
+    await user.click(screen.getByText("Zadanie"));
+    const arkusz = await screen.findByRole("dialog", { name: "Zadanie" });
+    await user.type(within(arkusz).getByRole("textbox", { name: "Nazwa" }), "!");
+    await user.click(within(arkusz).getByRole("button", { name: "Zapisz" }));
+    await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("r1", expect.objectContaining({ f1: "Zadanie!" })));
   });
 
-  it("arkusz „Kolumna”: przesunięcie i usunięcie zapisują się, kolumna tytułowa się nie usuwa", async () => {
-    const user = userEvent.setup();
-    render(<EditorView data={dane([tabela()])} />);
-    await user.click(screen.getByRole("button", { name: "Kolumna Status — ustawienia" }));
-    let arkusz = await screen.findByRole("dialog", { name: "Kolumna" });
-    await user.click(within(arkusz).getByRole("button", { name: "← W lewo" }));
-    await waitFor(() => expect(actions.reorderFields).toHaveBeenCalledWith("t1", ["f2", "f1"]));
-    await user.click(within(arkusz).getByRole("button", { name: "Usuń kolumnę" }));
-    await waitFor(() => expect(actions.deleteField).toHaveBeenCalledWith("f2"));
-
-    await user.click(screen.getByRole("button", { name: "Kolumna Nazwa — ustawienia" }));
-    arkusz = await screen.findByRole("dialog", { name: "Kolumna" });
-    expect((within(arkusz).getByRole("button", { name: "Usuń kolumnę" }) as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it("stuknięcie komórki Wyboru przełącza opcje po kolei, po ostatniej pusta", async () => {
-    const user = userEvent.setup();
-    render(<EditorView data={dane([tabela()])} />);
-    const komorka = () => screen.getByRole("button", { name: /^Status: .*stuknij by zmienić$/ });
-    expect(komorka().getAttribute("aria-label")).toBe("Status: brak, stuknij by zmienić");
-
-    await user.click(komorka());
-    expect(komorka().getAttribute("aria-label")).toBe("Status: Do zrobienia, stuknij by zmienić");
-    await user.click(komorka());
-    expect(komorka().getAttribute("aria-label")).toBe("Status: W toku, stuknij by zmienić");
-    await user.click(komorka());
-    expect(komorka().getAttribute("aria-label")).toBe("Status: Zrobione, stuknij by zmienić");
-    await user.click(komorka());
-    expect(komorka().getAttribute("aria-label")).toBe("Status: brak, stuknij by zmienić");
-
-    await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(4));
-    expect(actions.updateRow.mock.calls.map((c) => c[1])).toEqual([
-      { f2: "o1" },
-      { f2: "o2" },
-      { f2: "o3" },
-      { f2: null },
-    ]);
-  });
   it("„Cofnij” po usunięciu tabeli odświeża dane, więc wraca tabela z wierszami z tej sesji", async () => {
     const user = userEvent.setup();
     const t = tabela();
-    actions.addRow.mockResolvedValue({
-      ok: true,
-      row: { id: "r2", values: { f1: "Nowe" }, position: 1, deletedAt: null },
-    });
     const { rerender } = render(<EditorView data={dane([t])} />);
-    await user.click(screen.getByRole("button", { name: "+ Nowy wiersz" }));
-    await waitFor(() => expect(actions.addRow).toHaveBeenCalled());
-    expect(screen.getByText("2 wiersze · 2 kolumny")).toBeTruthy();
+    const stopka = () => screen.getAllByRole("row").at(-1) as HTMLElement;
+    expect(within(stopka()).getByText("1 wiersz")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Usuń blok" }));
     await waitFor(() => expect(actions.deleteBlock).toHaveBeenCalledWith("t1"));
@@ -313,7 +278,7 @@ describe("MEditor (telefon)", () => {
       rows: [...t.rows, { id: "r2", values: { f1: "Nowe" }, position: 1, deletedAt: null }],
     };
     rerender(<EditorView data={dane([zSerwera])} />);
-    expect(screen.getByText("2 wiersze · 2 kolumny")).toBeTruthy();
+    expect(within(stopka()).getByText("2 wiersze")).toBeTruthy();
   });
 
   it("„Cofnij” po usunięciu bloku tekstu nie odświeża danych", async () => {

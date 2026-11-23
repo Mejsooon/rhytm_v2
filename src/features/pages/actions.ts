@@ -39,7 +39,7 @@ const BRAK_WIERSZA = "Nie znaleziono wiersza.";
 const POLE_TYTULOWE_TYP = "Typu pola tytułowego nie można zmienić.";
 const BEZ_TYTULU = "Bez tytułu";
 const SEKRET_TYP = "Nie można zmienić typu pola Sekret.";
-const SEKRET_TYLKO_SZABLON = "Pole Sekret jest dostępne tylko na stronach z szablonu.";
+const SEKRET_TYLKO_HASLA = "Pole Sekret jest dostępne tylko na stronie Hasła.";
 
 // code: stale_generation = zapis Sekretu z inną generacją sejfu (klient blokuje sejf po kodzie, nie po treści)
 type Blad = { ok: false; message: string; code?: "stale_generation" };
@@ -520,7 +520,7 @@ export async function addField(
   if (!nazwa.success) return { ok: false, message: nazwa.error.issues[0].message };
   if (!typ.success || !config.success) return { ok: false, message: BLAD_ZAPISU };
 
-  // Pole Sekret tylko w tabeli strony z szablonu (nie w edytorze bloków)
+  // Pole Sekret tylko na stronie Hasła — tylko jej widok ma sejf (inne strony są w edytorze bloków)
   if (typ.data === "secret") {
     const { data: blokSekretu, error: bladBloku } = await supabase
       .from("page_blocks")
@@ -530,9 +530,8 @@ export async function addField(
       .maybeSingle();
     if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
     if (!blokSekretu) return { ok: false, message: BRAK_BLOKU };
-    const kluczSzablonu = blokSekretu.pages?.template_key ?? null;
-    if (kluczSzablonu === null || kluczSzablonu === "empty") {
-      return { ok: false, message: SEKRET_TYLKO_SZABLON };
+    if (blokSekretu.pages?.template_key !== "passwords") {
+      return { ok: false, message: SEKRET_TYLKO_HASLA };
     }
   }
 

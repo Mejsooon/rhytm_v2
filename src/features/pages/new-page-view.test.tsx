@@ -35,15 +35,16 @@ describe("NewPageView", () => {
     expect(passwords?.textContent).toContain("Hasła szyfrowane w przeglądarce hasłem głównym.");
     // Odznaka tylko przy Passwords
     expect(screen.getAllByText("szyfr.")).toHaveLength(1);
-    expect(screen.getByText("Tabela bez pól. Budujesz ją sama od zera.")).toBeInTheDocument();
+    expect(screen.getByText("Zacznij od zera")).toBeInTheDocument();
+    expect(screen.getByText("Twoje książki")).toBeInTheDocument();
   });
 
   it("pokazuje podtytuł powiązany z oknem jako opis", () => {
     render(<NewPageView />);
-    const podtytul = screen.getByText("Wybierz szablon albo zacznij od pustej tabeli.");
+    const podtytul = screen.getByText("Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.");
     expect(podtytul).toBeVisible();
     expect(screen.getByRole("dialog", { name: "Nowa strona" })).toHaveAccessibleDescription(
-      "Wybierz szablon albo zacznij od pustej tabeli.",
+      "Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.",
     );
   });
 
@@ -61,7 +62,7 @@ describe("NewPageView", () => {
     const user = userEvent.setup();
     render(<NewPageView />);
     // Domyślnie Pusta strona
-    expect(screen.getByText("Tylko kolumna „Nazwa”. Pola dodajesz przyciskiem „+ Pole”.")).toBeInTheDocument();
+    expect(screen.getByText("Tylko kolumna „Nazwa”. Kolejne dodasz przyciskiem „+” w nagłówku tabeli.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Books/ }));
     const lista = screen.getByText("Pola, które powstaną").parentElement!;
@@ -73,12 +74,13 @@ describe("NewPageView", () => {
       "OcenaOcena",
       "PrzeczytanaData",
     ]);
-    expect(screen.getByText("Σ Liczba przeczytanych w tym roku.")).toBeInTheDocument();
+    expect(screen.getByText("Liczba przeczytanych w tym roku.")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Books");
 
     await user.click(screen.getByRole("button", { name: /Projects/ }));
-    expect(screen.getByText("Data · w kalendarzu")).toBeInTheDocument();
-    expect(screen.getByText("↻ Terminy trafią do kalendarza głównego.")).toBeInTheDocument();
+    // S2NewPage: Termin to zwykła „Data”, bez dopisku o kalendarzu
+    expect(screen.queryByText(/· w kalendarzu/)).toBeNull();
+    expect(screen.getByText("Terminy trafią do kalendarza głównego.")).toBeInTheDocument();
   });
 
   it("wyszukiwarka filtruje szablony", async () => {
@@ -150,7 +152,7 @@ describe("NewPageView", () => {
     const user = userEvent.setup();
     render(<NewPageView />);
     await user.click(screen.getByRole("button", { name: /Projects/ }));
-    expect(screen.getByText("Data · w kalendarzu")).toHaveClass("bg-success-soft", "text-success");
+    expect(screen.getByText("Data", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
     expect(screen.getByText("Tekst", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
     expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");

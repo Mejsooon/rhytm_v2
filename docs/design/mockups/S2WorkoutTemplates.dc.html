@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Szablony treningów (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.exrow{display:grid;grid-template-columns:32px minmax(0,1fr) 126px 96px 96px 108px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+</style>
+</helmet>
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Sport</span><span aria-hidden="true">/</span><b><sc-if value="{{isList}}" hint-placeholder-val="{{true}}">Szablony treningów</sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btng xs" onClick="{{cancel}}" style="color: #686868; font-weight: 400; margin-left: -7px">Szablony treningów</button><span aria-hidden="true" style="color: #686868; font-weight: 400"> / </span>{{crumb}}</sc-if></b></nav>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><sc-if value="{{isList}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{newT}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy szablon</button></sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" onClick="{{cancel}}">Anuluj</button><button type="button" class="btnp" onClick="{{saveT}}" aria-disabled="{{saveDis}}">Zapisz szablon</button></sc-if></div>
+    </header>
+    <div style="padding: 28px 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Szablony treningów</h1><p class="muted" style="margin: 6px 0 0">Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.</p></div>
+      <sc-if value="{{flash}}" hint-placeholder-val="{{false}}"><div role="status" class="alert ok" style="align-items: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #15803d; flex: none"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg><span>{{flashTxt}}</span></div></sc-if>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px">
+        <sc-for list="{{cards}}" as="t" hint-placeholder-count="3"><section class="card"><div class="card-h" style="align-items: center"><span class="card-t">{{t.name}}</span><span class="bdg sec num">{{t.last}}</span></div><div style="padding: 8px 24px 0; display: flex; flex-direction: column; gap: 8px; flex: 1"><span class="hint num">{{t.meta}}</span><div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{t.ex}}" as="x" hint-placeholder-count="4"><span class="bdg out">{{x}}</span></sc-for></div></div><div style="display: flex; gap: 8px; padding: 16px 24px 20px"><a href="S2GymLog.dc.html" class="btnp sm">Rozpocznij</a><button type="button" class="btn sm" onClick="{{t.edit}}">Edytuj</button></div></section></sc-for>
+        <button type="button" onClick="{{newT}}" class="card" style="min-height: 190px; border-style: dashed; box-shadow: none; align-items: center; justify-content: center; gap: 8px; font: inherit; color: #686868; cursor: pointer; background: transparent"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>Nowy szablon</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}">
+      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">{{editTitle}}</h1><p class="hint num" style="margin: 6px 0 0; font-size: 13px">{{editMeta}}</p></div>
+      <section class="card">
+        <div class="card-p" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
+          <label class="fld">Nazwa szablonu<input class="inp" type="text" value="{{d.name}}" onChange="{{onName}}" placeholder="Np. Push, Full body A" aria-invalid="{{nameInv}}"><sc-if value="{{nameErr}}" hint-placeholder-val="{{false}}"><span class="err">Podaj nazwę.</span></sc-if></label>
+          <div class="fld"><span>Dni tygodnia <span class="hint">opcjonalnie — pojawi się w kalendarzu Sport</span></span><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px"><div class="seg" role="group" aria-label="Dni tygodnia"><sc-for list="{{days}}" as="dy" hint-placeholder-count="7"><button type="button" aria-pressed="{{dy.p}}" onClick="{{dy.pick}}" style="width: 36px">{{dy.t}}</button></sc-for></div><sc-if value="{{hasDays}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; font-size: 12px; font-weight: 400; color: #686868">o<span class="igroup num" role="button" tabindex="0" aria-label="Godzina startu" style="cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span style="color: var(--foreground); font-size: 14px">17:00</span></span></span></sc-if></div></div>
+        </div>
+        <div style="padding: 8px 24px 20px">
+          <div class="exrow" style="font-size: 12px; font-weight: 500; color: #686868; padding: 8px 0"><span>#</span><span>Ćwiczenie</span><span>Serie</span><span>Powt.</span><span>Przerwa</span><span></span></div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4"><div class="exrow"><span class="bdg sec num" style="width: 22px">{{r.n}}</span><span style="font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.name}}</span><span style="display: inline-flex; align-items: center; height: 30px; border: 1px solid rgba(0,0,0,.1); border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.05); overflow: hidden; justify-self: start"><button type="button" class="btng ic sm" aria-label="{{r.lessLbl}}" onClick="{{r.less}}" style="border-radius: 0; border-right: 1px solid rgba(0,0,0,.08)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="num" style="width: 30px; text-align: center; font-weight: 600">{{r.sets}}</span><button type="button" class="btng ic sm" aria-label="{{r.moreLbl}}" onClick="{{r.more}}" style="border-radius: 0; border-left: 1px solid rgba(0,0,0,.08)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></span><input class="inp num" type="text" value="{{r.reps}}" onChange="{{r.onReps}}" aria-label="{{r.repsLbl}}" style="height: 30px"><input class="inp num" type="text" value="{{r.rest}}" onChange="{{r.onRest}}" aria-label="{{r.restLbl}}" style="height: 30px"><span style="display: inline-flex; gap: 2px; justify-content: flex-end"><button type="button" class="btng ic sm" aria-label="{{r.upLbl}}" aria-disabled="{{r.upDis}}" onClick="{{r.up}}" style="{{r.upS}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"></path></svg></button><button type="button" class="btng ic sm" aria-label="{{r.downLbl}}" aria-disabled="{{r.downDis}}" onClick="{{r.down}}" style="{{r.downS}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="btng ic sm" aria-label="{{r.delLbl}}" onClick="{{r.del}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span></div></sc-for>
+          <sc-if value="{{noRows}}" hint-placeholder-val="{{false}}"><div class="empty" style="padding: 20px"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="font-weight: 500">Brak ćwiczeń</span><span class="hint">Dodaj pierwsze przyciskiem poniżej.</span></div></sc-if>
+          <div style="position: relative; margin-top: 14px; display: inline-block">
+            <button type="button" class="btn" onClick="{{togglePicker}}" aria-haspopup="dialog" aria-expanded="{{pickExp}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ćwiczenie</button>
+            <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Dodaj ćwiczenie" class="pop" style="position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; width: 320px; padding: 4px; display: flex; flex-direction: column">
+              <label class="igroup" style="border: 0; box-shadow: none; border-bottom: 1px solid rgba(0,0,0,.08); border-radius: 0; margin-bottom: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onChange="{{onQ}}" onKeyDown="{{qKey}}" placeholder="Szukaj albo wpisz własne…" aria-label="Szukaj ćwiczenia"></label>
+              <div role="listbox" aria-label="Ćwiczenia" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column"><sc-for list="{{lib}}" as="l" hint-placeholder-count="6"><button type="button" role="option" class="ddopt" onClick="{{l.pick}}"><span>{{l.t}}</span><span class="bdg sec">{{l.m}}</span></button></sc-for>
+                <sc-if value="{{custom}}" hint-placeholder-val="{{false}}"><div class="mi-sep"></div><button type="button" class="ddopt" onClick="{{addCustom}}"><span>Dodaj „{{q}}”</span><span class="bdg out">własne</span></button></sc-if></div>
+            </div></sc-if>
+          </div>
+        </div>
+        <div class="foot"><span style="display: flex; gap: 8px"><button type="button" class="btnp" onClick="{{saveT}}" aria-disabled="{{saveDis}}">Zapisz szablon</button><button type="button" class="btng" onClick="{{cancel}}">Anuluj</button></span><sc-if value="{{canDelete}}" hint-placeholder-val="{{false}}"><button type="button" class="btndo" onClick="{{delT}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń szablon</button></sc-if></div>
+      </section>
+      </sc-if>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const ex = (name, sets, reps, rest) => ({ id: name, name, sets, reps, rest: rest || '2:00' });
+    const SEED = [
+      { id: 't1', name: 'Push', last: 'czw 12.11', days: [3], ex: [ex('Wyciskanie na ławce', 4, '5–6', '3:00'), ex('Wyciskanie hantli skos', 3, '8–10'), ex('Pompki na poręczach', 3, '10–12'), ex('Wznosy bokiem', 3, '12–15', '1:30')] },
+      { id: 't2', name: 'Pull', last: 'pt 06.11', days: [4], ex: [ex('Martwy ciąg', 3, '5', '3:00'), ex('Podciąganie', 3, '6–8'), ex('Wiosłowanie sztangą', 3, '8–10'), ex('Face pull', 3, '12–15', '1:30'), ex('Uginanie hantli', 3, '10–12', '1:30')] },
+      { id: 't3', name: 'Nogi', last: '—', days: [], ex: [ex('Przysiad', 4, '5–6', '3:00'), ex('Wykroki', 3, '10'), ex('Prostowanie nóg', 3, '12–15', '1:30'), ex('Łydki', 4, '15', '1:00')] }
+    ];
+    const T = S.list || SEED;
+    const D = S.draft || null;
+    const pl = (n, a, b, c) => n + ' ' + (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? b : c);
+    const WD = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+    const open = (t) => this.setState({ draft: JSON.parse(JSON.stringify(t)), isNew: false, pick: false, q: '', tried: false, flash: '' });
+    const out = { isList: !D, isEdit: !!D,
+      newT: () => this.setState({ draft: { id: 'n' + nid(), name: '', last: '—', days: [], ex: [] }, isNew: true, pick: false, q: '', tried: false, flash: '' }),
+      flash: !!S.flash, flashTxt: S.flash || '',
+      cards: T.map((t) => ({ name: t.name, last: 'ostatnio: ' + t.last, edit: () => open(t),
+        meta: pl(t.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(t.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii') + (t.days.length ? ' · ' + t.days.slice().sort().map((i) => WD[i]).join(', ') : ''),
+        ex: t.ex.length ? t.ex.map((e) => e.name) : ['Brak ćwiczeń'] })) };
+    if (!D) return out;
+    const setD = (patch, extra) => this.setState(Object.assign({ draft: Object.assign({}, D, patch) }, extra || {}));
+    const setEx = (i, patch) => setD({ ex: D.ex.map((e, j) => (j === i ? Object.assign({}, e, patch) : e)) });
+    const move = (i, dir) => { const j = i + dir; if (j < 0 || j >= D.ex.length) return; const a = D.ex.slice(); const t = a[i]; a[i] = a[j]; a[j] = t; setD({ ex: a }); };
+    const valid = !!D.name.trim() && D.ex.length > 0;
+    const LIB = [['Wyciskanie na ławce', 'klatka'], ['Wyciskanie hantli skos', 'klatka'], ['Wyciskanie żołnierskie', 'barki'], ['Wznosy bokiem', 'barki'], ['Rozpiętki na wyciągu', 'klatka'], ['Pompki na poręczach', 'triceps'], ['Francuskie wyciskanie', 'triceps'], ['Przysiad', 'nogi'], ['Martwy ciąg', 'plecy'], ['Podciąganie', 'plecy'], ['Wiosłowanie sztangą', 'plecy'], ['Face pull', 'barki'], ['Uginanie hantli', 'biceps'], ['Wykroki', 'nogi'], ['Hip thrust', 'pośladki'], ['Plank', 'brzuch']];
+    const q = S.q || '', ql = q.trim().toLowerCase();
+    const have = D.ex.map((e) => e.name.toLowerCase());
+    const lib = LIB.filter((l) => have.indexOf(l[0].toLowerCase()) < 0 && (!ql || (l[0] + ' ' + l[1]).toLowerCase().indexOf(ql) >= 0));
+    const addEx = (name) => setD({ ex: D.ex.concat([{ id: nid(), name, sets: 3, reps: '8–10', rest: '2:00' }]) }, { pick: false, q: '' });
+    const pickOpen = !!S.pick;
+    const nameErr = !!S.tried && !D.name.trim();
+    return Object.assign(out, {
+      d: D, crumb: S.isNew ? 'Nowy szablon' : 'Edycja: ' + (D.name || 'bez nazwy'),
+      editTitle: S.isNew ? 'Nowy szablon' : 'Edytuj szablon',
+      editMeta: pl(D.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(D.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii'),
+      onName: (e) => setD({ name: e.target.value }), nameErr, hasDays: D.days.length > 0, nameInv: nameErr ? 'true' : 'false',
+      days: WD.map((w, i) => { const on = D.days.indexOf(i) >= 0; return { t: w, p: on ? 'true' : 'false', pick: () => setD({ days: on ? D.days.filter((x) => x !== i) : D.days.concat([i]) }) }; }),
+      rows: D.ex.map((e, i) => ({ n: i + 1, name: e.name, sets: e.sets, reps: e.reps, rest: e.rest,
+        lessLbl: e.name + ': mniej serii', moreLbl: e.name + ': więcej serii', repsLbl: e.name + ': powtórzenia', restLbl: e.name + ': przerwa', upLbl: 'Przesuń ' + e.name + ' w górę', downLbl: 'Przesuń ' + e.name + ' w dół', delLbl: 'Usuń ' + e.name,
+        less: () => setEx(i, { sets: Math.max(1, e.sets - 1) }), more: () => setEx(i, { sets: Math.min(10, e.sets + 1) }),
+        onReps: (ev) => setEx(i, { reps: ev.target.value }), onRest: (ev) => setEx(i, { rest: ev.target.value }),
+        up: () => move(i, -1), down: () => move(i, 1), upDis: i === 0 ? 'true' : 'false', downDis: i === D.ex.length - 1 ? 'true' : 'false',
+        upS: i === 0 ? 'opacity:.35;cursor:not-allowed' : '', downS: i === D.ex.length - 1 ? 'opacity:.35;cursor:not-allowed' : '',
+        del: () => setD({ ex: D.ex.filter((_, j) => j !== i) }) })),
+      noRows: !D.ex.length,
+      pickOpen, pickExp: pickOpen ? 'true' : 'false', togglePicker: () => this.setState({ pick: !pickOpen, q: '' }),
+      q, onQ: (ev) => this.setState({ q: ev.target.value }),
+      qKey: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const v = (ev.target.value || '').trim(); if (lib[0] && lib[0][0].toLowerCase().indexOf(v.toLowerCase()) >= 0) addEx(lib[0][0]); else if (v) addEx(v); } else if (ev.key === 'Escape') this.setState({ pick: false }); },
+      lib: lib.map((l) => ({ t: l[0], m: l[1], pick: () => addEx(l[0]) })),
+      custom: !!ql && !LIB.some((l) => l[0].toLowerCase() === ql), addCustom: () => addEx(q.trim()),
+      saveDis: valid ? 'false' : 'true',
+      saveT: () => {
+        if (!valid) { this.setState({ tried: true }); return; }
+        const t = Object.assign({}, D, { name: D.name.trim() });
+        const exists = T.some((x) => x.id === t.id);
+        this.setState({ list: exists ? T.map((x) => (x.id === t.id ? t : x)) : T.concat([t]), draft: null, pick: false, flash: (exists ? 'Zapisano zmiany w szablonie „' : 'Dodano szablon „') + t.name + '”.' });
+      },
+      cancel: () => this.setState({ draft: null, pick: false }),
+      canDelete: !S.isNew,
+      delT: () => this.setState({ list: T.filter((x) => x.id !== D.id), draft: null, pick: false, flash: 'Usunięto szablon „' + D.name + '”.' })
+    });
+  }
+}
+</script>
+</body>
+</html>

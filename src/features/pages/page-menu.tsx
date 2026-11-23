@@ -46,6 +46,7 @@ export function PageMenu({
   sheet = false,
   triggerClassName,
   triggerLabel,
+  align = "start",
 }: {
   page: PageSummary;
   pages: PageSummary[];
@@ -55,6 +56,8 @@ export function PageMenu({
   triggerClassName?: string;
   // Własna etykieta przycisku (telefon: samo „Menu strony”); domyślnie z tytułem strony
   triggerLabel?: string;
+  // Wyrównanie dymku do przycisku: w sidebarze „start”, w nagłówku przy prawej krawędzi okna „end”
+  align?: "start" | "end";
 }) {
   const router = useRouter();
   const sciezka = usePathname();
@@ -260,7 +263,7 @@ export function PageMenu({
           onOpenChange={zmienOtwarcie}
           // Menu 240 px (.pop, padding 4 px); wybór ikony 300 px z odstępem 8 px jak w CSidebar
           width={widok === "ikony" ? 300 : 240}
-          align="start"
+          align={align}
           className={widok === "menu" ? "p-1" : "p-2"}
           ariaLabel={`Menu strony ${tytul}`}
         >

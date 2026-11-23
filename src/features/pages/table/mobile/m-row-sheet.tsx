@@ -9,7 +9,7 @@ import {
   TextField,
   type IsoDate,
 } from "@/components/controls";
-import { OptionBadge } from "../../editor/cell-editor";
+import { OptionBadge } from "../option-badge";
 import { normalizeValue, type PageField } from "../../fields";
 
 // Arkusz wiersza na telefonie (FormDialog poniżej 800 px): te same kontrolki co tryb edycji,

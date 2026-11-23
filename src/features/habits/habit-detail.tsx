@@ -11,6 +11,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 
+import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
   Card,
@@ -120,6 +121,8 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
         {/* .topbar z coss.css: okruszki .crumb (rodzic jako link, nazwa skracana wielokropkiem) i akcje */}
         <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5">
           <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
+            <SidebarToggle placement="header" />
             <Link
               href="/nawyki"
               className="flex-none rounded-sm text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus"

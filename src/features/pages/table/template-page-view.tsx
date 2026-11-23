@@ -6,6 +6,7 @@ import { ChevronLeft, Lock, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button, FormDialog, StatusBadge, TextField } from "@/components/controls";
+import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import { VaultBanner } from "@/features/vault/vault-banner";
 import { useVault } from "@/features/vault/vault-provider";
 import { VaultSetup } from "@/features/vault/vault-setup";
@@ -207,8 +208,12 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
 
       {/* .topbar: okruszki 14 px i akcje */}
       <header className="flex min-h-[57px] flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
-        <div className="text-sm text-muted-foreground max-[799px]:hidden">
-          Strony <span aria-hidden="true">/</span> <span className="font-medium text-foreground">{tytul}</span>
+        <div className="flex items-center gap-2.5 text-sm text-muted-foreground max-[799px]:hidden">
+          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
+          <SidebarToggle placement="header" />
+          <div>
+            Strony <span aria-hidden="true">/</span> <span className="font-medium text-foreground">{tytul}</span>
+          </div>
         </div>
         {!ustawianieSejfu && (
         <div className="flex flex-wrap items-center gap-2">
@@ -235,7 +240,8 @@ export function TemplatePageView({ data, pages }: { data: LoadedPage; pages?: Pa
             }}
             triggerClassName={btn}
           />
-          <AddFieldDialog allowSecret={page.templateKey !== null && page.templateKey !== "empty"} onAdd={(input) => void store.addField(input)} />
+          {/* Nowy Sekret tylko na stronie Hasła (jak addField na serwerze) */}
+          <AddFieldDialog allowSecret={page.templateKey === "passwords"} onAdd={(input) => void store.addField(input)} />
           <Button variant="primary" onClick={nowyWiersz}>
             <Plus aria-hidden="true" className="size-4" />
             Nowy wiersz

@@ -5,6 +5,8 @@ Implementacja ma wyglądać **identycznie** jak te ekrany.
 
 **Od 2026-11-20 wiążące są makiety COSS:** `C*.dc.html` (web) i `CM*.dc.html` (telefon), ze wspólnym
 arkuszem `coss/coss.css`. Stare pliki bez prefiksu `C` (web i `M*`) to **archiwum**, tylko do porównania.
+**Od 2026-11-23 dla Stron 2.0 wiążące są makiety `S2*.dc.html`** (spec `docs/superpowers/specs/2026-11-22-strony-2-design.md`, punkt 15). Wygrywają z odpowiednikami `C*`. `S2Today` i `S2EmptyToday` należą do projektu Dziś, a `S2Main` (Subscriptions) do projektu Subscriptions.
+
 Ekrany C* są kopiowane z kanwy etapami: każdy etap przejścia na COSS (spec
 `docs/superpowers/specs/2026-11-20-coss-ui-design.md`) dokłada makiety, których potrzebuje.
 

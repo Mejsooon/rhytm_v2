@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Dziś — nowe konto (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.bar{height:8px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.hr-row{display:grid;grid-template-columns:56px 1fr;min-height:48px;border-top:1px solid rgba(0,0,0,.06)}
+.blk{border-radius:8px;padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin:4px 0}
+.chk{display:flex;align-items:center;gap:10px;min-height:36px;font-size:14px}
+.hpill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font:inherit;font-size:14px;font-weight:500;color:#262626;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.hpill:hover{background:#fafafa}
+.htile{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px 16px;border-radius:12px;border:1px solid rgba(0,0,0,.1);background:#fff;font:inherit;font-size:14px;color:#262626;cursor:pointer;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.htile:hover{background:#fafafa}
+.hcbx{width:18px;height:18px;border-radius:6px;border:1.5px solid rgba(0,0,0,.3);display:grid;place-items:center;box-sizing:border-box}
+.gap{display:grid;grid-template-columns:56px 1fr;align-items:center;min-height:30px;border-top:1px solid rgba(0,0,0,.06)}.gap:first-child{border-top:0}.gap-big{min-height:84px;align-items:stretch}.gap-big>span:first-child{padding-top:8px}.gap-big>span:last-child{align-self:center}
+.gap>span:last-child{display:flex;align-items:center;gap:8px;color:#686868;font-size:12px}
+.gap>span:last-child::before,.gap>span:last-child::after{content:"";flex:1;border-top:1px dashed rgba(0,0,0,.14)}
+.wdot{width:14px;height:14px;border-radius:50%;display:inline-block;flex:none}
+@media (max-width:1100px){.cols{grid-template-columns:1fr !important}}
+</style>
+</helmet>
+<div class="shell" style="min-height: 800px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="800" hint-size="100%,800px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 10px"><h1 class="h-title">Dziś</h1><span class="bdg sec lg num">wtorek · 17.11.2026</span><span class="hint num">tydz. 47</span></div>
+      <a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+    </header>
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <section aria-labelledby="week-title" style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="week-title" class="card-t">Ten tydzień</h2><span class="hint num">pn 16 – nd 22.11</span></div>
+        <div class="card" style="padding: 8px 20px">
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; ">
+            <span style="font-weight: 500">Treningi</span>
+            <div class="bar"><span style="width: 0%"></span></div>
+            <span class="num"><b style="font-size: 16px; font-weight: 600">0</b> <span class="hint">/ 4</span></span>
+            <span class="hint num" style="text-align: right">jeszcze 4</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
+            <span style="font-weight: 500">Bieg</span>
+            <div class="bar"><span style="width: 0%"></span></div>
+            <span class="num"><b style="font-size: 16px; font-weight: 600">0</b> <span class="hint">/ 25 km</span></span>
+            <span class="hint num" style="text-align: right">jeszcze 25 km</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
+            <span style="font-weight: 500">Nawyki</span>
+            <div class="bar"><span style="width: 0%"></span></div>
+            <span class="num"><b style="font-size: 16px; font-weight: 600">0 %</b> <span class="hint">dni z celem</span></span>
+            <span class="hint num" style="text-align: right">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
+            <span style="font-weight: 500">Sen</span>
+            <div class="bar"><span style="width: 0%"></span></div>
+            <span class="num"><b style="font-size: 16px; font-weight: 600">—</b> <span class="hint">/ 8:00 śr.</span></span>
+            <span class="hint num" style="text-align: right">brak wpisów</span>
+          </div>
+        </div>
+      </section>
+      <section aria-labelledby="hab-title" style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="hab-title" class="card-t">Nawyki na dziś</h2></div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><a href="S2HabitDialog.dc.html" class="htile" style="border-style: dashed; box-shadow: none; flex-direction: row; align-items: center; justify-content: center; min-height: 74px; color: #686868; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Utwórz nowy nawyk</a></div>
+      </section>
+      <div class="cols" style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start">
+        <section aria-labelledby="plan-title" style="display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="plan-title" class="card-t">Plan dnia</h2><span class="hint">00:00–24:00 · 0 bloków</span></div>
+          <div class="frame"><div class="inner" style="padding: 10px 12px 4px">
+            <div class="gap gap-big" style="min-height: 84px"><span class="hint num">00:00</span><span class="num">24 h wolne</span></div>
+            <div style="display: grid; grid-template-columns: 56px 1fr; padding: 0 0 20px"><span></span><div style="display: flex; flex-direction: column; align-items: center; gap: 10px"><span class="hint">Nie masz jeszcze bloków na dziś.</span><a href="S2BlockDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Dodaj pierwszy blok</a></div></div>
+            <div class="hr-row" style="min-height: 40px"><span class="hint num" style="padding-top: 8px">23:00</span><div></div></div>
+          </div></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

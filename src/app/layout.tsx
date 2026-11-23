@@ -28,13 +28,21 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// Wykonuje się przed pierwszym malowaniem: zaznacza na <html>, że pasek boczny jest schowany,
+// żeby szkielet paska (fallback Suspense) nie mignął na przeładowaniu. Prawdziwy stan czyta AppShell.
+const SKRYPT_PASKA =
+  'if(/(?:^|; )rhytm_sidebar=collapsed/.test(document.cookie))document.documentElement.dataset.sidebar="collapsed"';
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pl"
+      // Skrypt poniżej dopisuje data-sidebar przed hydratacją
+      suppressHydrationWarning
       className={`${GeistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: SKRYPT_PASKA }} />
         {children}
         {/* Jedno miejsce na powiadomienia (toast) w całej aplikacji */}
         <Toaster />

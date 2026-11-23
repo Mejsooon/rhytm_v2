@@ -1,4 +1,5 @@
 import * as React from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
@@ -7,6 +8,7 @@ import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { VaultProvider } from "@/features/vault/vault-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
+import { SidebarStateProvider } from "./sidebar-state";
 import { TabBar } from "./tab-bar";
 
 // Czyta użytkownika i profil, a potem układa sidebar + <main> + dolny pasek.
@@ -44,18 +46,22 @@ async function Powloka({
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
   // Lista stron do sidebara (przy okazji zakłada strony z onboardingu)
   const strony = await loadPages();
+  // Stan paska bocznego z ciasteczka — czytany na serwerze, żeby schowany pasek nie mignął po odświeżeniu
+  const schowany = (await cookies()).get("rhytm_sidebar")?.value === "collapsed";
 
   return (
     <VaultProvider>
-      <AppSidebar
-        user={{ displayName, email, avatarUrl }}
-        pages={strony}
-      />
-      {/* Telefon: odstęp na dolny pasek i boczne wcięcia ekranu (notch w poziomie) */}
-      <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">
-        {children}
-      </main>
-      <TabBar />
+      <SidebarStateProvider initialCollapsed={schowany}>
+        <AppSidebar
+          user={{ displayName, email, avatarUrl }}
+          pages={strony}
+        />
+        {/* Telefon: odstęp na dolny pasek i boczne wcięcia ekranu (notch w poziomie) */}
+        <main className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) max-[799px]:pr-[env(safe-area-inset-right)] max-[799px]:pl-[env(safe-area-inset-left)] min-[800px]:pb-0">
+          {children}
+        </main>
+        <TabBar />
+      </SidebarStateProvider>
     </VaultProvider>
   );
 }
@@ -72,7 +78,11 @@ export function AppShell({
       <React.Suspense
         fallback={
           // Szkielet sidebara (web), żeby układ nie skakał podczas ładowania
-          <div className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block" />
+          // Gdy ciasteczko mówi „schowany” (data-sidebar ustawia skrypt w layoucie), szkielet jest ukryty
+          <div
+            data-testid="sidebar-skeleton"
+            className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block [html[data-sidebar=collapsed]_&]:min-[800px]:hidden"
+          />
         }
       >
         <Powloka requireUser={requireUser}>{children}</Powloka>

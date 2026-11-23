@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
+import { SidebarStateProvider } from "@/components/shell/sidebar-state";
 import { CalendarHeader } from "./calendar-header";
 
 beforeEach(() => vi.clearAllMocks());
@@ -146,5 +147,20 @@ describe("CalendarHeader", () => {
     expect(nowy.className).toContain("bg-primary");
     expect(nowy.className).toContain("h-8");
     expect(nowy.querySelector("svg")).not.toBeNull();
+  });
+
+  it("przy schowanym pasku bocznym web ma przycisk „Pokaż pasek boczny”", () => {
+    render(
+      <SidebarStateProvider initialCollapsed>
+        <CalendarHeader
+          view="tydzien"
+          date="2026-11-18"
+          today="2026-11-17"
+          weekStart="mon"
+          onNewBlock={vi.fn()}
+        />
+      </SidebarStateProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Pokaż pasek boczny" })).toBeInTheDocument();
   });
 });

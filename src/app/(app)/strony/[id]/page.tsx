@@ -14,8 +14,10 @@ async function Strona({ params }: { params: Promise<{ id: string }> }) {
   const [dane, strony] = await Promise.all([loadPage(id), loadPages()]);
   if (!dane) notFound();
 
-  // Strona z szablonu: tabela z kartami; reszta to edytor bloków
-  if (dane.page.templateKey !== null) return <TemplatePageView data={dane} pages={strony} />;
+  // Hasła i każda strona z polem Sekret (np. starsze Books z dodanym Sekretem) potrzebują sejfu,
+  // który ma tylko widok szablonu; każda inna strona to edytor bloków
+  const maSekret = dane.blocks.some((b) => b.fields.some((f) => f.type === "secret"));
+  if (dane.page.templateKey === "passwords" || maSekret) return <TemplatePageView data={dane} pages={strony} />;
   return <EditorView data={dane} pages={strony} />;
 }
 

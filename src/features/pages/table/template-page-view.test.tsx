@@ -59,7 +59,7 @@ const NOWY_SEKRET = { v: 1, g: 1, iv: btoa("iv-nowy-12bB"), ct: btoa("nowy-szyfr
 // Strona z szablonu z wierszami podanymi po nazwach pól i etykietach opcji (dane z makiet)
 function strona(key: TemplateKey, title: string, wiersze: Record<string, unknown>[]): LoadedPage {
   let n = 0;
-  const [b] = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
+  const b = buildTemplateBlocks(key, () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`).find((x) => x.type === "table")!;
   const fields = b.fields.map((f, i) => ({
     id: f.id,
     name: f.name,
@@ -1257,7 +1257,7 @@ describe("TemplatePageView", () => {
       expect(vault.encrypt).toHaveBeenCalledTimes(1);
     });
 
-    it("+ Pole: Sekret w grupie Bezpieczne tylko na stronie z szablonu", async () => {
+    it("+ Pole: Sekret w grupie Bezpieczne tylko na stronie Hasła", async () => {
       const user = userEvent.setup();
       vault.state = { ...vault.state, status: "odblokowany", generation: 1, remainingMs: 299000 };
       const { unmount } = render(<TemplatePageView data={strona("passwords", "Passwords", HASLA)} />);
@@ -1284,6 +1284,14 @@ describe("TemplatePageView", () => {
       const okno2 = await screen.findByRole("dialog", { name: "Nowe pole" });
       expect(within(okno2).queryByText("Bezpieczne")).not.toBeInTheDocument();
       expect(within(okno2).queryByRole("button", { name: /Sekret/ })).not.toBeInTheDocument();
+    });
+
+    it("+ Pole: strona Books (w tym widoku tylko z istniejącym Sekretem) nie oferuje nowego Sekretu", async () => {
+      const user = userEvent.setup();
+      render(<TemplatePageView data={strona("books", "Books", [])} />);
+      await user.click(screen.getByRole("button", { name: "+ Pole" }));
+      const okno = await screen.findByRole("dialog", { name: "Nowe pole" });
+      expect(within(okno).queryByRole("button", { name: /Sekret/ })).not.toBeInTheDocument();
     });
 
     it("menu kolumny secret: brak sortowania i zmiany typu", async () => {
