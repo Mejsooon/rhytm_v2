@@ -42,7 +42,7 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 1. **Projekt Dziś:**
    - wariant F według makiety S2Today i pusty stan S2EmptyToday;
    - zadania tylko w blokach, w bazie `NOT NULL`;
-   - **decyzja Mejsona (2026-11-23):** 6 zadań bez bloku na produkcji usuwa migracja tego projektu (Mejson robi `db push`), nie ręczne kasowanie;
+   - **decyzja Mejsona (2026-11-23):** 6 zadań bez bloku na produkcji usuwa migracja tego projektu (wykonuje ją Claude przez konektor Supabase po wyraźnym potwierdzeniu Mejsona, bo usuwa dane), nie ręczne kasowanie;
    - szczegóły w `docs/superpowers/odlozone.md`, sekcja „Poprawki webu — Dziś”.
 2. **Etap 3: telefon** według makiet CM* na kanwie, prawdopodobnie w kilku pakietach. Zbiera odłożone uwagi oznaczone „Etap 3” w `odlozone.md` (m.in. edycja Sekretu na telefonie, zakładka Hasła w dolnym pasku, ujednolicone okna usuwania).
 3. **Sprzątanie odłożonych uwag webu** z `odlozone.md`: niestabilne e2e, drobne poprawki tabeli, obrona w głąb w bazie dla Haseł (strażnik `page_rows`). Jeden mały pakiet.

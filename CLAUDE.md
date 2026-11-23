@@ -25,7 +25,12 @@ Każda rozmowa zaczyna się od przeczytania dwóch plików:
   - commit i push tylko na gałęziach `feat/*` albo `docs/*`, nigdy commit na `main` poza merge;
   - scalanie do `main` tylko po słowach Mejsona „scal do main”, przez `git merge --no-ff`, z testami na połączonym kodzie;
   - zdalne gałęzie usuwa Mejson.
-- **Migracje** (`pnpm exec supabase db push --remote`) uruchamia Mejson. Nie wysyłaj migracji na produkcję sam. Każda migracja ma test pgTAP w `supabase/tests/`.
+- **Migracje** na produkcję wykonuje Claude przez konektor Supabase (decyzja Mejsona z 2026-11-23). Każda migracja ma test pgTAP w `supabase/tests/`. Zasady:
+  - migracja idzie na produkcję dopiero po zielonym CI i po scaleniu do `main` („scal do main”), nigdy z gałęzi w trakcie pracy;
+  - przed wykonaniem Claude podaje, czy migracja idzie przed wdrożeniem kodu na Vercel, czy po nim, i trzyma się tej kolejności;
+  - **migracje usuwające dane** (DELETE, DROP z danymi, zawężenie typu) tylko po wyraźnym potwierdzeniu Mejsona w rozmowie;
+  - po wykonaniu `list_migrations` musi pokazać tę samą wersję co nazwa pliku w `supabase/migrations/`. Jeśli konektor nadał inną wersję, zmień nazwę pliku w repo na wersję z produkcji (commit na gałęzi `docs/*`), żeby `supabase db push` nie puścił jej drugi raz;
+  - jeśli konektor nie działa, migrację uruchamia Mejson (`pnpm exec supabase db push --remote`).
 - **Sekretów** (kluczy, haseł, tokenów) nie wpisuje się w czacie.
 - **Kod:**
   - płaski, bez funkcji pomocniczych skaczących po plikach;
