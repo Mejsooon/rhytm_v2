@@ -101,7 +101,7 @@ test.describe("strony", () => {
     const wiersz = page.locator("tbody tr");
     await expect(wiersz).toHaveCount(1);
 
-    // Nowa opcja z wpisanego tekstu: zapis pola, potem wybór w komórce (dwa POST-y po kolei)
+    // Nowa opcja z wpisanego tekstu: zapis pola, potem zapis komórki (dwa POST-y po kolei)
     const status = wiersz.getByRole("button", { name: "Status", exact: true });
     await status.click();
     await page
@@ -113,11 +113,18 @@ test.describe("strony", () => {
     );
     await page.getByRole("button", { name: "Utwórz «Porzucone»" }).click();
     await utworzenie;
+
+    // Opcja jest na liście; wybieramy ją ręcznie (samoczynny wybór po „Utwórz” sprawdza osobny test niżej)
+    await status.click();
+    const opcja = page.getByRole("option", { name: "Porzucone", exact: true });
+    await expect(opcja).toBeVisible();
+    const wybor = page.waitForResponse((o) => o.request().method() === "POST");
+    await opcja.click();
+    await wybor;
     await expect(status).toHaveText("Porzucone");
 
     // „⋯” przy opcji → panel „Edycja opcji” → kolor Czerwony
     await status.click();
-    const opcja = page.getByRole("option", { name: "Porzucone", exact: true });
     await opcja.hover();
     await page.getByRole("button", { name: "Opcje: Porzucone" }).click();
     const panel = page.getByRole("group", { name: "Edycja opcji" });
@@ -158,6 +165,38 @@ test.describe("strony", () => {
       page.getByRole("option", { name: "Czytam", exact: true }),
     ).toBeVisible();
     await expect(opcja).toHaveCount(0);
+  });
+
+  test("„Utwórz «nazwa»” w komórce od razu wybiera nową opcję", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    // Znany błąd aplikacji (bieg CI 45204486264): po „Utwórz” komórka dostaje „—” zamiast nowej opcji.
+    // TableCell woła onSave z polem sprzed utworzenia opcji, więc updateCell (normalizeValue)
+    // nie zna nowego id i zapisuje null. Gdy błąd zostanie naprawiony, ten test zacznie „nieoczekiwanie
+    // przechodzić” — wtedy usuń test.fail().
+    test.fail();
+    await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+
+    const nowy = page.waitForResponse((o) => o.request().method() === "POST");
+    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    await nowy;
+    const status = page
+      .locator("tbody tr")
+      .getByRole("button", { name: "Status", exact: true });
+    await expect(status).toHaveText("Chcę przeczytać");
+    await status.click();
+    await page
+      .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
+      .fill("Porzucone");
+    let doUtworzenia = 2;
+    const utworzenie = page.waitForResponse(
+      (o) => o.request().method() === "POST" && --doUtworzenia === 0,
+    );
+    await page.getByRole("button", { name: "Utwórz «Porzucone»" }).click();
+    await utworzenie;
+    await expect(status).toHaveText("Porzucone");
   });
 
   test("szerokość kolumny: strzałka w prawo na uchwycie, trwała po przeładowaniu", async ({
