@@ -30,16 +30,12 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
     - „Nowa strona” z paska bocznego otwiera wybór szablonu.
 
     Plan: `plans/2026-11-23-strony-2-krok-2.md`. Migracje wykonane na produkcji.
+  - **Pakiet poprawek** (merge `feeece8`): kalendarz według makiet, ciemny tekst w kolumnach, URL jak tekst, „Pusta strona” bez tabeli.
 
 ## W toku
 
-Gałąź `feat/strony-2-poprawki` czeka na „scal do main”. Zawiera pakiet poprawek po kroku 2, zgodny z sekcją „Decyzje po kroku 2” w specu Stron 2.0:
-- `DatePicker` według makiet S2;
-- ciemny tekst w kolumnach;
-- URL jak zwykły tekst;
-- „Pusta strona” bez tabeli.
-
-Na tej gałęzi są też `CLAUDE.md` i ten plik. Po scaleniu przenieś ten pakiet do „Zrobione”.
+- **Gałąź `docs/dziennik`:** dziennik sesji w `docs/superpowers/dziennik/` (wpisy 16–23.11 odtworzone z historii) i reguła dziennika w `CLAUDE.md`. Czeka na „scal do main”.
+- **Pakiet poprawek po kroku 2 jest już w main** (merge `feeece8`): `DatePicker` według makiet S2, ciemny tekst w kolumnach, URL jak tekst, „Pusta strona” bez tabeli.
 
 ## Dalej (kolejność ustalona z Mejsonem)
 

@@ -2,7 +2,21 @@
 
 # rhytm — zasady pracy z Mejsonem
 
-Każda rozmowa zaczyna się od przeczytania `docs/superpowers/stan-projektu.md`. Opisuje, co jest zrobione, co jest w toku i co dalej.
+Każda rozmowa zaczyna się od przeczytania dwóch plików:
+- `docs/superpowers/stan-projektu.md`: co jest zrobione, co jest w toku i co dalej;
+- najnowszego pliku w `docs/superpowers/dziennik/`, nie całego folderu.
+
+## Dziennik sesji
+
+- **Gdzie pisać:** do dzisiejszego pliku `docs/superpowers/dziennik/RRRR-MM-DD.md` (utwórz go, jeśli go nie ma).
+- **Kiedy:** nie czekaj na koniec rozmowy. Dopisz wpis po każdym skończonym kawałku pracy (zadanie, poprawka, scalenie) i przy zmianie tematu. Nie dopisuj go po każdej pojedynczej wiadomości, bo to kosztuje tokeny.
+- **Nagłówki wpisu:**
+  - Co zrobione (polecenia, pliki, funkcje);
+  - Decyzje (z uzasadnieniem);
+  - Otwarte wątki (do podjęcia następnym razem);
+  - Błędy (co poszło źle i jak to rozwiązano).
+- **Gałąź:** dziennik commitujesz na bieżącej gałęzi roboczej, nie na `main`.
+- **Stan projektu:** przy zmianie etapu albo gałęzi zaktualizuj też `stan-projektu.md`.
 
 ## Stałe zasady
 
