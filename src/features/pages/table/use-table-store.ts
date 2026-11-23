@@ -673,7 +673,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // Nowa opcja Wyboru: kolor to następny z PALETA; etykieta już istniejąca (bez wielkości liter) nic nie robi
   async function addOption(field: PageField, label: string): Promise<boolean> {
     const etykieta = label.trim();
-    const config = zapisyPol.current.get(field.id)?.config ?? field.config;
+    // Pole i config z najnowszego stanu (polaRef) albo z zapisu w toku, nie z przekazanego obiektu
+    const pole = polaRef.current.find((f) => f.id === field.id) ?? field;
+    const config = zapisyPol.current.get(field.id)?.config ?? pole.config;
     const opcje = config.options ?? [];
     if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
       return false;
@@ -683,16 +685,20 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       label: etykieta,
       color: PALETA[opcje.length % PALETA.length],
     };
-    return patchField(field, { config: { ...config, options: [...opcje, nowa] } });
+    return patchField(pole, { config: { ...config, options: [...opcje, nowa] } });
   }
 
   // Usunięcie opcji Wyboru razem ze wszystkimi odwołaniami, w jednej optymistycznej zmianie:
   // wiersze z tą opcją stają się puste, znikają karty, podsumowania i warunki filtrów na tej opcji,
   // a na końcu sama opcja (i opcja domyślna nowego wiersza). Błąd któregokolwiek zapisu cofa wszystko.
   async function removeOption(field: PageField, optionId: string): Promise<boolean> {
+    // Bazowy config z zapisu w toku albo z najnowszego stanu pola (nie z przekazanego obiektu),
+    // żeby świeżo utworzona opcja nie została nadpisana starą listą
+    const biezacePole = polaRef.current.find((f) => f.id === field.id) ?? field;
+    const bazowyConfig = zapisyPol.current.get(field.id)?.config ?? biezacePole.config;
     const config: FieldConfig = {
-      ...field.config,
-      options: (field.config.options ?? []).filter((o) => o.id !== optionId),
+      ...bazowyConfig,
+      options: (bazowyConfig.options ?? []).filter((o) => o.id !== optionId),
     };
     if (config.default_option === optionId) delete config.default_option;
 
@@ -724,7 +730,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       (poprzednieUstawienia as Record<string, unknown>)[k] = settings[k];
     }
     const poprzednieTymczasowe = tempFilters;
-    const dotknieteWiersze = rows.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
+    // Wiersze z najnowszego stanu (wierszeRef), nie z domknięcia
+    const dotknieteWiersze = wierszeRef.current.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
 
     // Od razu lokalnie
     setFields((l) => l.map((f) => (f.id === field.id ? { ...f, config } : f)));
@@ -742,6 +749,16 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       wToku.zmiany[field.id] = null;
       wierszeWToku.current.set(id, wToku);
     }
+    // Zapis pola zarejestrowany jak w patchField: kolejne zmiany opcji budują na tym configu
+    const zapisPola = zapisyPol.current.get(field.id) ?? {
+      n: 0,
+      config: biezacePole.config,
+      zatwierdzonyConfig: biezacePole.config,
+      zatwierdzonaNazwa: biezacePole.name,
+    };
+    zapisPola.config = config;
+    zapisPola.n += 1;
+    zapisyPol.current.set(field.id, zapisPola);
     polaWToku.current += 1;
     ustawieniaWToku.current += 1;
     let udane = false;
@@ -763,11 +780,24 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     }
     polaWToku.current -= 1;
     ustawieniaWToku.current -= 1;
+    zapisPola.n -= 1;
+    if (zapisPola.n === 0) zapisyPol.current.delete(field.id);
+    if (udane) {
+      zapisPola.zatwierdzonyConfig = config;
+      if (zapisPola.n === 0) {
+        polaRef.current = polaRef.current.map((f) => (f.id === field.id ? { ...f, config } : f));
+      }
+    } else if (zapisPola.config === config) {
+      // Kolejne zmiany w toku budują już na potwierdzonym configu, nie na odrzuconym
+      zapisPola.config = zapisPola.zatwierdzonyConfig;
+    }
 
     if (!udane) {
-      // Cofamy tylko to, co nadal jest z tej zmiany
+      // Cofamy tylko to, co nadal jest z tej zmiany, do ostatniego configu potwierdzonego przez serwer
       setFields((l) =>
-        l.map((f) => (f.id === field.id && f.config === config ? { ...f, config: field.config } : f)),
+        l.map((f) =>
+          f.id === field.id && f.config === config ? { ...f, config: zapisPola.zatwierdzonyConfig } : f,
+        ),
       );
       setRows((l) =>
         l.map((r) =>

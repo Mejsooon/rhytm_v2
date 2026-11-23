@@ -402,6 +402,65 @@ describe("useTableStore", () => {
     });
   });
 
+  describe("addOption i removeOption na najnowszym configu", () => {
+    it("createOption, a potem removeOption innej opcji ze starym obiektem pola zostawia nową opcję", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      const { result } = renderHook(() => useTableStore(b));
+      // Stary obiekt pola i stara funkcja (jak w domknięciu sprzed rerenderu)
+      const stary = result.current.fields.find((f) => f.id === status.id)!;
+      const staryRemove = result.current.removeOption;
+      let idNowej: string | null = null;
+      await act(async () => {
+        idNowej = await result.current.createOption(stary, "Porzucone");
+        await staryRemove(stary, czytam.id);
+      });
+      expect(idNowej).not.toBeNull();
+      const ostatni = actions.updateField.mock.calls.at(-1)!;
+      const opcje = (ostatni[1] as { config: { options: { id: string }[] } }).config.options;
+      expect(opcje.map((o) => o.id)).toContain(idNowej);
+      expect(opcje.map((o) => o.id)).not.toContain(czytam.id);
+      const wStanie = result.current.fields.find((f) => f.id === status.id)!.config.options!;
+      expect(wStanie.map((o) => o.id)).toContain(idNowej);
+      expect(wStanie.map((o) => o.id)).not.toContain(czytam.id);
+    });
+
+    it("dwa szybkie addOption przed rerenderem: obie opcje są w ostatnim zapisie", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const { result } = renderHook(() => useTableStore(b));
+      const stary = result.current.fields.find((f) => f.id === status.id)!;
+      const staryAdd = result.current.addOption;
+      await act(async () => {
+        await Promise.all([staryAdd(stary, "Pierwsza"), staryAdd(stary, "Druga")]);
+      });
+      expect(actions.updateField).toHaveBeenCalledTimes(2);
+      const ostatni = actions.updateField.mock.calls.at(-1)!;
+      const etykiety = (ostatni[1] as { config: { options: { label: string }[] } }).config.options.map((o) => o.label);
+      expect(etykiety).toEqual(expect.arrayContaining(["Pierwsza", "Druga"]));
+      expect(etykiety).toHaveLength(status.config.options!.length + 2);
+    });
+
+    it("removeOption czyści wiersze z najnowszego stanu, także ze starego domknięcia", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      const { result } = renderHook(() => useTableStore(b));
+      const stary = result.current.fields.find((f) => f.id === status.id)!;
+      const staryRemove = result.current.removeOption;
+      // Wiersz dodany po renderze, z którego pochodzi staryRemove, też ma zostać wyczyszczony
+      await act(async () => {
+        await result.current.updateCell(result.current.rows[1], status, czytam.id);
+      });
+      await act(async () => {
+        await staryRemove(stary, czytam.id);
+      });
+      expect(result.current.rows.every((r) => r.values[status.id] !== czytam.id)).toBe(true);
+      expect(actions.updateRow).toHaveBeenCalledWith(result.current.rows[1].id, { [status.id]: null });
+    });
+  });
+
   describe("moveField", () => {
     it("błąd serwera przy równoległej zmianie nazwy innego pola zostawia nową nazwę", async () => {
       const b = blok();
