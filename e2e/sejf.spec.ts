@@ -246,9 +246,8 @@ test.describe("sejf", () => {
       page.getByRole("button", { name: "Kategorie", exact: true }),
     ).toBeDisabled();
     await expect(wiersz).toHaveCount(1);
-    await expect(
-      wiersz.getByRole("textbox", { name: "Serwis", exact: true }),
-    ).toHaveValue(serwis);
+    // Tylko do odczytu: Serwis to zwykły tekst, nie pole
+    await expect(wiersz.getByText(serwis, { exact: true })).toBeVisible();
     const segment = page.getByRole("group", { name: "Kategoria" });
     await segment.getByRole("button", { name: "Bank", exact: true }).click();
     await expect(
