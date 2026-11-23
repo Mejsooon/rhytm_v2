@@ -34,7 +34,8 @@ export async function utworzBooks(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^Books/ }).click();
   await page.getByRole("button", { name: "Utwórz stronę" }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
-  await expect(
-    page.getByRole("heading", { name: "Books", level: 1 }),
-  ).toBeVisible();
+  // Tytuł jest polem „Nazwa strony” na webie i telefonie (h1 jest tylko w nagłówku webowym)
+  await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
+    "Books",
+  );
 }
