@@ -137,7 +137,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
         onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
       >
-        <div className="box-border flex w-full max-w-[1160px] flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:px-4 max-[799px]:pt-0 max-[799px]:pb-0">
+        <div className="box-border flex w-full min-w-0 flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:px-4 max-[799px]:pt-0 max-[799px]:pb-0">
           <div className="mb-2 flex items-center gap-3">
             <ActionPopover
               open={wyborIkony}

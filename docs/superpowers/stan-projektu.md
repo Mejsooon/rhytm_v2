@@ -31,10 +31,11 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
     Plan: `plans/2026-11-23-strony-2-krok-2.md`. Migracje wykonane na produkcji.
   - **Pakiet poprawek** (merge `feeece8`): kalendarz według makiet, ciemny tekst w kolumnach, URL jak tekst, „Pusta strona” bez tabeli.
+  - **Krok 3** (merge `a69a5b1`): Hasła jako moduł systemowy `/hasla` (strona `is_system`, stałe kolumny, przy zamkniętym sejfie sama karta „Odblokuj sejf”), nowy onboarding. Plan: `plans/2026-11-23-strony-2-krok-3.md`. Migracja `20261125100000_passwords_module.sql` wykonana na produkcji.
 
 ## W toku
 
-- **Strony 2.0, krok 3** (gałąź `feat/strony-2-krok-3`, plan `plans/2026-11-23-strony-2-krok-3.md`): Hasła jako moduł systemowy `/hasla` i onboarding. Gotowe, CI zielone, przegląd końcowy bez Critical/Important. Czeka na „scal do main”; potem Mejson robi `db push` migracji `20261125100000_passwords_module.sql`.
+- **Gałąź `feat/strony-pelna-szerokosc`:** strony i Hasła na całą szerokość okna (bez limitu 1160 px, jak w makiecie S2Books). Czeka na „scal do main”.
 
 ## Dalej (kolejność ustalona z Mejsonem)
 
