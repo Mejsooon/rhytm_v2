@@ -683,12 +683,11 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
 
       // Okienko opcji komórki Status (S2Books, tsel) w nowym wierszu
-      const nowy = page.waitForResponse((o) => o.request().method() === "POST");
+      // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
       await page.getByRole("button", { name: "Nowy", exact: true }).click();
-      await nowy;
+      await expect(page.locator("tbody tr")).toHaveCount(1);
       await page
         .locator("tbody tr")
-        .first()
         .getByRole("button", { name: "Status", exact: true })
         .click();
       await expect(

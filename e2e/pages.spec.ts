@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Response } from "@playwright/test";
+
+import { adminClient } from "./helpers/konto";
 
 import {
   utworzBooks,
@@ -7,8 +9,14 @@ import {
 } from "./helpers/strony";
 
 // Silnik stron: strona z szablonu Books, edytor z tabelą, kosz i telefon.
-// Tabela edytuje się wprost w komórkach; każdy zapis to akcja serwera (POST na adres strony),
-// więc po zmianie czekamy na odpowiedź POST, a potem sprawdzamy widok.
+// Tabela edytuje się wprost w komórkach. Zmiany widać od razu, a zapis to akcja serwera Next.
+// Gdy liczy się kolejność zapisów albo jest potem przeładowanie, czekamy na odpowiedź tej jednej akcji
+// (AKCJA_SERWERA); gdzie wystarczy, czekamy na stan widoku.
+
+// Odpowiedź akcji serwera Next: POST z nagłówkiem next-action (a nie dowolne żądanie POST)
+const AKCJA_SERWERA = (o: Response) =>
+  o.request().method() === "POST" &&
+  o.request().headers()["next-action"] !== undefined;
 test.describe("strony", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
@@ -20,19 +28,15 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // „+ Nowy” zakłada wiersz na serwerze i stawia kursor w komórce tytułu
-    const nowy = page.waitForResponse((o) => o.request().method() === "POST");
+    // „+ Nowy” zakłada wiersz na serwerze (pojawia się po odpowiedzi) i stawia kursor w komórce tytułu
     await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    await nowy;
     const wiersz = page.locator("tbody tr");
     await expect(wiersz).toHaveCount(1);
     const tytul = wiersz.getByRole("textbox", { name: "Tytuł", exact: true });
     await expect(tytul).toBeFocused();
 
     // Tytuł: wpis i Enter (zapis od razu, bez czekania 600 ms)
-    const zapisTytulu = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zapisTytulu = page.waitForResponse(AKCJA_SERWERA);
     await tytul.fill("Diuna");
     await tytul.press("Enter");
     await zapisTytulu;
@@ -45,9 +49,7 @@ test.describe("strony", () => {
     await page
       .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
       .fill("Czyt");
-    const zapisStatusu = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zapisStatusu = page.waitForResponse(AKCJA_SERWERA);
     await page.getByRole("option", { name: "Czytam", exact: true }).click();
     await zapisStatusu;
     await expect(status).toHaveText("Czytam");
@@ -58,9 +60,7 @@ test.describe("strony", () => {
 
     // Ocena: czwarta gwiazdka w komórce
     const gwiazdka = wiersz.getByRole("button", { name: "Ocena 4 na 5" });
-    const zapisOceny = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zapisOceny = page.waitForResponse(AKCJA_SERWERA);
     await gwiazdka.click();
     await zapisOceny;
     await expect(gwiazdka).toHaveAttribute("aria-pressed", "true");
@@ -70,61 +70,72 @@ test.describe("strony", () => {
 
     // Kosz „Usuń wiersz” → wiersz znika, „Cofnij” → wraca z tytułem i statusem
     await wiersz.hover();
-    const usuniecie = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
     await wiersz.getByRole("button", { name: "Usuń wiersz" }).click();
-    await usuniecie;
     await expect(wiersz).toHaveCount(0);
     await expect(karta).toHaveText(/Czytam teraz\s*0/);
-    const przywrocenie = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    // „Cofnij” pojawia się dopiero po zapisanym usunięciu
     await page.getByRole("button", { name: "Cofnij" }).click();
-    await przywrocenie;
     await expect(wiersz).toHaveCount(1);
     await expect(tytul).toHaveValue("Diuna");
     await expect(status).toHaveText("Czytam");
     await expect(karta).toHaveText(/Czytam teraz\s*1/);
   });
 
-  test("opcje z komórki: utworzenie „Porzucone”, zmiana koloru i usunięcie", async ({
+  test("opcje z komórki: „Utwórz «Porzucone»” od razu ją wybiera, zmiana koloru i usunięcie", async ({
     page,
   }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
-    await zalozKontoStron(page, info.project.name);
+    const userId = await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    const nowy = page.waitForResponse((o) => o.request().method() === "POST");
+    // Stan kolumny Status i wiersza w bazie: „Utwórz” i „Usuń opcję” wysyłają po dwie akcje
+    // (pole i komórka), więc zamiast liczyć odpowiedzi czekamy, aż baza pokaże ich wynik
+    async function stanWBazie() {
+      const { data: pola } = await adminClient()
+        .from("page_fields")
+        .select("id, config")
+        .eq("user_id", userId)
+        .eq("name", "Status");
+      const { data: wiersze } = await adminClient()
+        .from("page_rows")
+        .select("values")
+        .eq("user_id", userId)
+        .is("deleted_at", null);
+      const pole = pola?.[0] as
+        | { id: string; config: { options?: { id: string; label: string; color: string }[] } }
+        | undefined;
+      const opcja = pole?.config.options?.find((o) => o.label === "Porzucone");
+      const wartosc = pole
+        ? (wiersze?.[0]?.values as Record<string, unknown> | undefined)?.[pole.id]
+        : undefined;
+      return {
+        opcja: opcja?.color ?? "brak",
+        komorka:
+          opcja !== undefined && wartosc === opcja.id ? "Porzucone" : (wartosc ?? null),
+      };
+    }
+
+    // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
     await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    await nowy;
     const wiersz = page.locator("tbody tr");
     await expect(wiersz).toHaveCount(1);
-
-    // Nowa opcja z wpisanego tekstu: zapis pola, potem zapis komórki (dwa POST-y po kolei)
     const status = wiersz.getByRole("button", { name: "Status", exact: true });
-    await status.click();
-    await page
-      .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
-      .fill("Porzucone");
-    let doUtworzenia = 2;
-    const utworzenie = page.waitForResponse(
-      (o) => o.request().method() === "POST" && --doUtworzenia === 0,
-    );
-    await page.getByRole("button", { name: "Utwórz «Porzucone»" }).click();
-    await utworzenie;
+    await expect(status).toHaveText("Chcę przeczytać");
 
-    // Opcja jest na liście; wybieramy ją ręcznie (samoczynny wybór po „Utwórz” sprawdza osobny test niżej)
+    // „Utwórz «Porzucone»”: nowa (szara) opcja od razu trafia do komórki, okienko się zamyka
+    await status.click();
+    const szukaj = page.getByRole("textbox", { name: "Szukaj lub dodaj opcję" });
+    await szukaj.fill("Porzucone");
+    await page.getByRole("button", { name: "Utwórz «Porzucone»" }).click();
+    await expect(szukaj).toHaveCount(0);
+    await expect(status).toHaveText("Porzucone");
+    await expect
+      .poll(stanWBazie)
+      .toEqual({ opcja: "#525252", komorka: "Porzucone" });
+
+    // „⋯” przy opcji → panel „Edycja opcji” → kolor Czerwony (jedna akcja: zapis pola)
     await status.click();
     const opcja = page.getByRole("option", { name: "Porzucone", exact: true });
-    await expect(opcja).toBeVisible();
-    const wybor = page.waitForResponse((o) => o.request().method() === "POST");
-    await opcja.click();
-    await wybor;
-    await expect(status).toHaveText("Porzucone");
-
-    // „⋯” przy opcji → panel „Edycja opcji” → kolor Czerwony
-    await status.click();
     await opcja.hover();
     await page.getByRole("button", { name: "Opcje: Porzucone" }).click();
     const panel = page.getByRole("group", { name: "Edycja opcji" });
@@ -132,66 +143,35 @@ test.describe("strony", () => {
     await expect(panel.getByRole("textbox", { name: "Nazwa opcji" })).toHaveValue(
       "Porzucone",
     );
-    // Nowa opcja jest szara
     await expect(
       panel.getByRole("button", { name: "Szary", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
-    const zapisKoloru = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
     await panel.getByRole("button", { name: "Czerwony", exact: true }).click();
-    await zapisKoloru;
     await expect(
       panel.getByRole("button", { name: "Czerwony", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
+    // Kolor musi być zapisany przed usunięciem: inaczej spóźniony zapis koloru mógłby przywrócić opcję
+    await expect
+      .poll(stanWBazie)
+      .toEqual({ opcja: "#b91c1c", komorka: "Porzucone" });
 
-    // „Usuń opcję”: czyści komórkę i zapisuje pole (dwa POST-y równolegle), panel wraca do listy
-    let doUsuniecia = 2;
-    const usuniecie = page.waitForResponse(
-      (o) => o.request().method() === "POST" && --doUsuniecia === 0,
-    );
+    // „Usuń opcję”: komórka pustoszeje, panel wraca do listy, opcji nie ma
     await panel.getByRole("button", { name: "Usuń opcję" }).click();
-    await usuniecie;
     await expect(panel).toHaveCount(0);
     await expect(opcja).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(status).toHaveText("—");
+    await expect.poll(stanWBazie).toEqual({ opcja: "brak", komorka: null });
 
     // Po przeładowaniu opcji nadal nie ma, a pozostałe są
     await page.reload();
     await expect(wiersz).toHaveCount(1);
+    await expect(status).toHaveText("—");
     await status.click();
     await expect(
       page.getByRole("option", { name: "Czytam", exact: true }),
     ).toBeVisible();
     await expect(opcja).toHaveCount(0);
-  });
-
-  test("„Utwórz «nazwa»” w komórce od razu wybiera nową opcję", async ({
-    page,
-  }, info) => {
-    test.skip(info.project.name !== "web", "układ webowy");
-    await zalozKontoStron(page, info.project.name);
-    await utworzBooks(page);
-
-    const nowy = page.waitForResponse((o) => o.request().method() === "POST");
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    await nowy;
-    const status = page
-      .locator("tbody tr")
-      .getByRole("button", { name: "Status", exact: true });
-    await expect(status).toHaveText("Chcę przeczytać");
-    await status.click();
-    await page
-      .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
-      .fill("Porzucone");
-    let doUtworzenia = 2;
-    const utworzenie = page.waitForResponse(
-      (o) => o.request().method() === "POST" && --doUtworzenia === 0,
-    );
-    await page.getByRole("button", { name: "Utwórz «Porzucone»" }).click();
-    await utworzenie;
-    await expect(status).toHaveText("Porzucone");
   });
 
   test("szerokość kolumny: strzałka w prawo na uchwycie, trwała po przeładowaniu", async ({
@@ -207,7 +187,7 @@ test.describe("strony", () => {
     });
     await expect(uchwyt).toHaveAttribute("aria-valuenow", "220");
     await uchwyt.focus();
-    const zapis = page.waitForResponse((o) => o.request().method() === "POST");
+    const zapis = page.waitForResponse(AKCJA_SERWERA);
     await uchwyt.press("ArrowRight");
     await zapis;
     await expect(uchwyt).toHaveAttribute("aria-valuenow", "240");
@@ -228,9 +208,7 @@ test.describe("strony", () => {
     await expect(karta).toHaveCount(1);
     await karta.hover();
     await karta.getByRole("button", { name: "Menu karty" }).click();
-    const usuniecie = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const usuniecie = page.waitForResponse(AKCJA_SERWERA);
     await page
       .getByRole("menu", { name: "Menu karty" })
       .getByRole("menuitem", { name: "Usuń kartę" })
@@ -258,7 +236,7 @@ test.describe("strony", () => {
     await expect(okno.getByTestId("podglad-karty")).toHaveText(
       /Czytam teraz\s*0/,
     );
-    const dodanie = page.waitForResponse((o) => o.request().method() === "POST");
+    const dodanie = page.waitForResponse(AKCJA_SERWERA);
     await okno.getByRole("button", { name: "Dodaj kartę", exact: true }).click();
     await dodanie;
     await expect(okno).toHaveCount(0);
@@ -318,9 +296,7 @@ test.describe("strony", () => {
     // Status → Tekst przez menu kolumny („Typ”): puste wiersze, więc bez potwierdzenia i bez strat
     await naglowek.getByRole("button", { name: "Status", exact: true }).click();
     await menuKolumny.getByRole("menuitem", { name: /^Typ:/ }).click();
-    const zmianaNaTekst = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zmianaNaTekst = page.waitForResponse(AKCJA_SERWERA);
     await page
       .getByRole("menu", { name: "Typ pola" })
       .getByRole("menuitem", { name: "Tekst", exact: true })
@@ -332,16 +308,12 @@ test.describe("strony", () => {
     await expect(menuKolumny).toHaveCount(0);
 
     // „+ Nowy” → trzeci wiersz; w jego komórce Status wpisujemy „5” i Enter
-    const nowy = page.waitForResponse((o) => o.request().method() === "POST");
     await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    await nowy;
     await expect(wiersze).toHaveCount(3);
     const komorka = wiersze
       .nth(2)
       .getByRole("textbox", { name: "Status", exact: true });
-    const zapisKomorki = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zapisKomorki = page.waitForResponse(AKCJA_SERWERA);
     await komorka.fill("5");
     await komorka.press("Enter");
     await zapisKomorki;
@@ -350,9 +322,7 @@ test.describe("strony", () => {
     // Typ Liczba, podsumowanie „Suma” → stopka pokazuje 5
     await naglowek.getByRole("button", { name: "Status", exact: true }).click();
     await menuKolumny.getByRole("menuitem", { name: /^Typ:/ }).click();
-    const zmianaNaLiczbe = page.waitForResponse(
-      (o) => o.request().method() === "POST",
-    );
+    const zmianaNaLiczbe = page.waitForResponse(AKCJA_SERWERA);
     await page
       .getByRole("menu", { name: "Typ pola" })
       .getByRole("menuitem", { name: "Liczba", exact: true })
