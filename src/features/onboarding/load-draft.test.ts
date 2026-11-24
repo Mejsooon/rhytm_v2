@@ -10,6 +10,7 @@ const pusty: ProfileRow = {
   clock: null,
   created_at: null,
   currency: null,
+  deletion_requested_at: null,
   display_name: null,
   goals: null,
   height_cm: null,

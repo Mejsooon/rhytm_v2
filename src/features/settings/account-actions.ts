@@ -1,10 +1,12 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { matchesWord } from "@/components/controls/match-word";
 import { isPasswordPwned } from "@/lib/auth/hibp";
 import { newPasswordSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
@@ -222,4 +224,78 @@ export async function revokeSession(id: string): Promise<AccountResult> {
   if (data !== true) return { ok: false, message: "Ta sesja już wygasła." };
   revalidatePath("/ustawienia/konto");
   return { ok: true };
+}
+
+// „Usuń konto” (Ogólne): konto oznaczone do usunięcia, trwale usuwa je po 30 dniach pg_cron
+// (purge_deleted_accounts). Do tego czasu wystarczy się zalogować i przywrócić konto na /konto-usuniete.
+export async function requestAccountDeletion(
+  word: string,
+): Promise<{ ok: false; message: string }> {
+  // Słowo sprawdzamy ponownie na serwerze (wielkość liter i spacje na brzegach bez znaczenia)
+  if (typeof word !== "string" || !matchesWord(word, "USUŃ"))
+    return { ok: false, message: "Wpisz USUŃ, żeby potwierdzić." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  // Datę i tak nadaje wyzwalacz (now()). Zero zmienionych wierszy albo stara baza bez kolumny = błąd
+  const { data: profil, error } = await supabase
+    .from("profiles")
+    .update({ deletion_requested_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .select("avatar_path")
+    .maybeSingle();
+  if (error || !profil)
+    return {
+      ok: false,
+      message: "Nie udało się usunąć konta. Spróbuj ponownie.",
+    };
+
+  // Dalsze kroki bez sprawdzania błędów: konto jest już oznaczone.
+  // Urządzenia push przestają dostawać powiadomienia (tabela może jeszcze nie istnieć — klient bez typów)
+  const db = supabase as unknown as SupabaseClient;
+  await db.from("push_subscriptions").delete().eq("user_id", user.id);
+
+  // Zdjęcie profilowe usuwamy od razu: SQL w pg_cron nie usunie pliku ze Storage (decyzja C16)
+  if (profil.avatar_path) {
+    await supabase.storage.from("avatars").remove([profil.avatar_path]);
+    await supabase
+      .from("profiles")
+      .update({ avatar_path: null })
+      .eq("user_id", user.id);
+  }
+
+  // Wylogowanie ze wszystkich urządzeń
+  await supabase.auth.signOut({ scope: "global" });
+  redirect("/logowanie?konto=usuniete");
+}
+
+// „Przywróć konto” (/konto-usuniete): zdejmuje oznaczenie i wraca do aplikacji
+export async function restoreAccount(): Promise<{
+  ok: false;
+  message: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ deletion_requested_at: null })
+    .eq("user_id", user.id)
+    .select("user_id")
+    .maybeSingle();
+  if (error || !data)
+    return {
+      ok: false,
+      message: "Nie udało się przywrócić konta. Spróbuj ponownie.",
+    };
+
+  revalidatePath("/", "layout");
+  redirect("/dzis");
 }

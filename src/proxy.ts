@@ -15,22 +15,35 @@ export async function proxy(request: NextRequest) {
 
   const { response, user, supabase } = await updateSession(request);
 
-  // Status onboardingu czytamy jednym zapytaniem, tylko dla zalogowanego.
+  // Status onboardingu i prośbę o usunięcie konta czytamy jednym zapytaniem, tylko dla zalogowanego.
   // Błąd zapytania = stan nieznany (null): wtedy nie przekierowujemy według onboardingu.
   let isOnboarded: boolean | null = false;
+  let deletionRequestedAt: string | null = null;
   if (user) {
     const { data, error } = await supabase
       .from("profiles")
-      .select("onboarded_at")
+      .select("onboarded_at, deletion_requested_at")
       .eq("user_id", user.id)
       .maybeSingle();
-    isOnboarded = error ? null : data?.onboarded_at != null;
+    if (error?.code === "42703") {
+      // Stara baza bez kolumny deletion_requested_at: sam onboarding, konto nie jest usuwane
+      const { data: stary, error: bladStarego } = await supabase
+        .from("profiles")
+        .select("onboarded_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      isOnboarded = bladStarego ? null : stary?.onboarded_at != null;
+    } else {
+      isOnboarded = error ? null : data?.onboarded_at != null;
+      deletionRequestedAt = error ? null : (data?.deletion_requested_at ?? null);
+    }
   }
 
   const decyzja = resolveRoute({
     pathname: request.nextUrl.pathname,
     isLoggedIn: user != null,
     isOnboarded,
+    deletionRequestedAt,
   });
 
   if (!decyzja) {

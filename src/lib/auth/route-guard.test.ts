@@ -122,4 +122,73 @@ describe("resolveRoute", () => {
       redirect: "/onboarding",
     });
   });
+  describe("konto oznaczone do usunięcia", () => {
+    const usuwane = {
+      ...pelny,
+      deletionRequestedAt: "2026-11-24T10:00:00Z",
+    };
+
+    it("zalogowany z datą → /konto-usuniete z aplikacji, strony głównej, ekranów konta i onboardingu", () => {
+      for (const pathname of [
+        "/dzis",
+        "/ustawienia/ogolne",
+        "/",
+        "/logowanie",
+        "/onboarding",
+        "/onboarding/2",
+        "/api/inne",
+      ]) {
+        expect(resolveRoute({ pathname, ...usuwane })).toEqual({
+          redirect: "/konto-usuniete",
+        });
+      }
+      // Także bez ukończonego onboardingu
+      expect(
+        resolveRoute({
+          pathname: "/onboarding",
+          ...bezOnboardingu,
+          deletionRequestedAt: "2026-11-24T10:00:00Z",
+        }),
+      ).toEqual({ redirect: "/konto-usuniete" });
+    });
+
+    it("ekran przywracania, eksport i trasy publiczne przepuszczone", () => {
+      for (const pathname of [
+        "/konto-usuniete",
+        "/api/eksport",
+        "/auth/confirm",
+        "/regulamin",
+        "/icons/icon-192.png",
+      ]) {
+        expect(resolveRoute({ pathname, ...usuwane })).toBeNull();
+      }
+    });
+
+    it("/konto-usuniete bez daty → domyślna trasa, niezalogowany → /logowanie", () => {
+      expect(
+        resolveRoute({ pathname: "/konto-usuniete", ...pelny }),
+      ).toEqual({ redirect: "/dzis" });
+      expect(
+        resolveRoute({
+          pathname: "/konto-usuniete",
+          ...pelny,
+          deletionRequestedAt: null,
+        }),
+      ).toEqual({ redirect: "/dzis" });
+      expect(
+        resolveRoute({ pathname: "/konto-usuniete", ...bezOnboardingu }),
+      ).toEqual({ redirect: "/onboarding" });
+      expect(
+        resolveRoute({ pathname: "/konto-usuniete", ...wylogowany }),
+      ).toEqual({ redirect: "/logowanie" });
+      // Data bez sesji nie ma znaczenia
+      expect(
+        resolveRoute({
+          pathname: "/dzis",
+          ...wylogowany,
+          deletionRequestedAt: "2026-11-24T10:00:00Z",
+        }),
+      ).toEqual({ redirect: "/logowanie" });
+    });
+  });
 });

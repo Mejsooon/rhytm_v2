@@ -193,6 +193,62 @@ test.describe("ustawienia ogólne", () => {
     await konto.getByRole("button", { name: "Wyloguj" }).click();
     await expect(page).toHaveURL(/\/logowanie/);
   });
+
+  test("Usuń konto: wpisanie USUŃ → wylogowanie z komunikatem, logowanie → /konto-usuniete → „Przywróć konto”", async ({
+    page,
+  }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/ogolne");
+    const karta = page.getByTestId("karta-usun-konto");
+    await expect(
+      karta.getByText(/Konto zostanie usunięte po 30 dniach/),
+    ).toBeVisible();
+    await karta.getByRole("button", { name: "Usuń konto" }).click();
+    const potwierdz = karta.getByRole("button", { name: "Usuń konto" });
+    await expect(potwierdz).toHaveAttribute("aria-disabled", "true");
+    await karta.getByPlaceholder("USUŃ").fill("USUŃ");
+    await expect(potwierdz).toHaveAttribute("aria-disabled", "false");
+    await potwierdz.click();
+
+    // Wylogowany, komunikat o 30 dniach nad formularzem
+    await expect(page).toHaveURL(/\/logowanie\?konto=usuniete$/);
+    await expect(
+      page.getByText(
+        "Konto oznaczone do usunięcia. Przez 30 dni możesz je przywrócić — wystarczy się zalogować.",
+      ),
+    ).toBeVisible();
+
+    // Logowanie prowadzi na ekran przywracania; aplikacja jest zamknięta
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/konto-usuniete$/);
+    await expect(
+      page.getByRole("heading", { name: "Konto czeka na usunięcie" }),
+    ).toBeVisible();
+    await expect(page.getByText(email.toLowerCase())).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Pobierz dane (.json)" }),
+    ).toHaveAttribute("href", "/api/eksport");
+    await page.goto("/ustawienia/ogolne");
+    await expect(page).toHaveURL(/\/konto-usuniete$/);
+
+    // Przywrócenie → aplikacja, dane konta bez zmian
+    await page.getByRole("button", { name: "Przywróć konto" }).click();
+    await expect(page).toHaveURL(/\/dzis$/);
+    await page.goto("/ustawienia/ogolne");
+    await expect(page.getByLabel("Wyświetlana nazwa")).toHaveValue(
+      "Mejson E2E",
+    );
+    await expect(
+      page.getByTestId("karta-konto").getByText(`${email.toLowerCase()} · potwierdzony`),
+    ).toBeVisible();
+    await page.goto("/konto-usuniete");
+    await expect(page).toHaveURL(/\/dzis$/);
+  });
 });
 
 // Osobny kontekst przeglądarki = osobna sesja (inny user-agent → inny opis na liście sesji)

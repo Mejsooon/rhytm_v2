@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { AccountCard } from "@/features/settings/account-card";
 import { CategoriesCard } from "@/features/settings/categories-card";
+import { DeleteAccountCard } from "@/features/settings/delete-account-card";
 import { ExportCard } from "@/features/settings/export-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { PasswordCard } from "@/features/settings/password-card";
@@ -114,6 +115,7 @@ async function Ogolne({
         timeZone={strefa}
         loadError={!kosz.ok}
       />
+      <DeleteAccountCard />
     </>
   );
 }
