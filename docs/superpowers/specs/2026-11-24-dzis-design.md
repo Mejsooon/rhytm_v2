@@ -25,6 +25,7 @@ Data: 2026-11-24. Seria autonomiczna (zob. `CLAUDE.md`). Makiety wiążące: `do
 
 - Usunąć: `createStandaloneTask`, `pinTaskToOccurrence`, `unpinTask` (`src/features/tasks/actions.ts`); `groupStandaloneTasks`, `pinTask`, `unpinTask` (`src/features/tasks/model.ts`); „Odepnij” w `block-popover.tsx` i arkuszu telefonu, jeśli tam jest.
 - `src/features/calendar/actions.ts`: plan `detachTasksAndCancel` i odpinanie przy zamianie serii w blok jednorazowy → **usuwanie** tych zadań. Nazwa planu zmienia się na `deleteTasksAndCancel`. Teksty w oknach zakresu/usuwania, które mówią, że zadania „nie przepadają”, poprawić zgodnie z nowym zachowaniem.
+- `src/features/calendar/actions.ts`: przesunięcie bloku jednorazowego na inny dzień przenosi jego zadania razem z nim (`occurrence_date` i `due_date` = nowa data startu); zadania nie są wtedy usuwane. Okno usuwania bloku jednorazowego informuje, że zadania bloku zostaną usunięte razem z nim.
 - Telefon (minimum, pełny wygląd telefonu to Etap 3): w `m-quick-add` znika rodzaj „Zadanie”; w `m-today` znika sekcja zadań bez bloku. Typy `src/types/database.ts` dla `tasks` zgodne z bazą.
 
 ### C. Dziś na webie (S2Today)
@@ -37,7 +38,7 @@ Data: 2026-11-24. Seria autonomiczna (zob. `CLAUDE.md`). Makiety wiążące: `do
   - *Sen*: średni czas snu `h:mm` (brak → „—”) + „/ h:mm śr.”, pasek = średnia/cel (max 100 %), prawa kolumna „X z Y nocy ≥ cel” albo „brak wpisów”.
   - Cel wyłączony (`workoutsGoalOn` / `kmGoalOn` = false): sama wartość bez „/ cel”, pusty pasek, prawa kolumna „—”.
   - Zakres dat nad kartą jak dziś („pn 16 – nd 22.11”).
-- **Nawyki na dziś**: siatka 4 kolumn (≤1100 px: 2). Kafelek = przycisk `aria-pressed`, nazwa + pole odhaczenia, pod spodem passa:
+- **Nawyki na dziś**: siatka zawsze 4 kolumn (jak makieta). Kafelek = przycisk `aria-pressed`, nazwa + pole odhaczenia, pod spodem passa:
   - dni: „1 dzień z rzędu”, „N dni z rzędu”; tygodnie (X/tydz.): „N tyg. z rzędu”; 0 → „zacznij passę” bez ikony;
   - ikona płomienia (Lucide `Flame`) przy passie ≥ 1; od 3 kolor `#c2410c`, poniżej szary;
   - które nawyki: zaplanowane dziś + nawyki X/tydz.; licznik „odhaczone / wszystkie” w nagłówku sekcji;
@@ -46,8 +47,8 @@ Data: 2026-11-24. Seria autonomiczna (zob. `CLAUDE.md`). Makiety wiążące: `do
 - **Plan dnia**: nagłówek „Plan dnia” + „00:00–24:00 · N bloków” (odmiana: 1 blok, 2–4 bloki, 5+ bloków, 0 bloków). Ramka z listą:
   - wiersz godziny (56 px etykieta) z blokiem: tło i obramowanie koloru kategorii, tytuł, „HH:MM–HH:MM · Kategoria”, po prawej odznaka „x/y” zadań; trwający blok ma odznakę „Teraz” i pierścień; trening ma odznakę „plan” albo „zrobione”, prowadzi do `/sport` (tylko do odczytu);
   - przerwy: od 00:00 do pierwszego wpisu, między wpisami (gdy > 0 min) i od końca ostatniego wpisu do 24:00, z przerywaną linią i tekstem „N h M min wolne”/„N min wolne”/„N h wolne”; przerwa ≥ 3 h jest wysoka (`gap-big`);
-  - zawsze ostatni wiersz „23:00” (pusty);
-  - pusty dzień: jedna przerwa „24 h wolne”, pod nią „Nie masz jeszcze bloków na dziś.” i przycisk „Dodaj pierwszy blok”, potem wiersz 23:00;
+  - na końcu pusty wiersz „23:00” — tylko gdy żaden wiersz (przerwa ani wpis) nie startuje o 23:00 lub później;
+  - pusty dzień: jedna przerwa „24 h wolne”, pod nią „Nie masz jeszcze bloków na dziś.” i przycisk „Dodaj pierwszy blok”, potem pusty wiersz 23:00;
   - nakładające się wpisy idą po kolei według startu, bez przerw między nimi;
   - klik w blok otwiera istniejący `BlockPopover` (zadania, edycja, usuwanie); klik w przerwę otwiera „Nowy blok” od początku przerwy (pełna godzina w górę, max 23:00);
   - czerwona linia „teraz” i siatka z przeciąganiem znikają z Dziś (zostają w kalendarzu).
@@ -60,7 +61,7 @@ Data: 2026-11-24. Seria autonomiczna (zob. `CLAUDE.md`). Makiety wiążące: `do
 
 ## Kolejność wdrożenia
 
-Migracja idzie **po** wdrożeniu kodu na Vercel: nowy kod działa też na starej bazie (nie tworzy luźnych zadań, a ewentualne luźne zadania pomija), a stary kod na nowej bazie wywracałby się przy tworzeniu luźnych zadań.
+Migracja idzie **po** wdrożeniu kodu na Vercel: nowy kod działa też na starej bazie (nie tworzy luźnych zadań, a luźne zadania, które już istnieją, przez kilka minut przed migracją mogą liczyć się w licznikach telefonu; migracja je usuwa), a stary kod na nowej bazie wywracałby się przy tworzeniu luźnych zadań.
 
 ## Decyzje Claude (do „Do decyzji”)
 

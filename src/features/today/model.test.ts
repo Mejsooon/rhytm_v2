@@ -1060,7 +1060,6 @@ describe("dayPlanRows", () => {
         type: "gap",
         startMin: 0,
         endMin: 1440,
-        time: "00:00",
         label: "24 h wolne",
         big: true,
       },
@@ -1076,12 +1075,11 @@ describe("dayPlanRows", () => {
       wiersze.map((w) => (w.type === "gap" ? w.label : w.item.key)),
     ).toEqual(["8 h wolne", "a", "30 min wolne", "b", "c", "12 h wolne"]);
     const pierwsza = wiersze[0];
-    expect(pierwsza).toMatchObject({ big: true, time: "00:00" });
-    expect(wiersze[2]).toMatchObject({ big: false, time: "09:30" });
+    expect(pierwsza).toMatchObject({ big: true });
+    expect(wiersze[2]).toMatchObject({ big: false });
     expect(wiersze[5]).toMatchObject({
       startMin: 720,
       endMin: 1440,
-      time: "12:00",
     });
   });
 
@@ -1122,7 +1120,6 @@ describe("dayPlanRows", () => {
     expect(wiersze[1]).toMatchObject({
       startMin: 60,
       endMin: 1380,
-      time: "01:00",
     });
     // Cała doba jednym wpisem: bez przerw
     expect(dayPlanRows([wpis("c", 0, 1440)]).map((w) => w.type)).toEqual([

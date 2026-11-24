@@ -319,7 +319,20 @@ export async function changeOccurrence(input: {
         .select("id, occurrence_date")
         .eq("block_id", block.id);
       const przypiete = zadania ?? [];
-      if (przypiete.length > 0) {
+      // Blok jednorazowy przesunięty na inny dzień: zadania idą z nim
+      const przesunietyJednorazowy =
+        block.recurrence === null &&
+        zmiany.recurrence === undefined &&
+        dataStartu !== dataBloku;
+      if (przesunietyJednorazowy) {
+        if (przypiete.length > 0) {
+          const { error: bladPrzesuniecia } = await supabase
+            .from("tasks")
+            .update({ occurrence_date: dataStartu, due_date: dataStartu })
+            .eq("block_id", block.id);
+          if (bladPrzesuniecia) return { ok: false, message: BLAD_ZAPISU };
+        }
+      } else if (przypiete.length > 0) {
         const daty = przypiete.map((z) => z.occurrence_date).sort();
         const nowyBlok = {
           ...block,

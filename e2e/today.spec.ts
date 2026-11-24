@@ -115,7 +115,7 @@ test.describe("Dziś (web)", () => {
     const lista = web.getByTestId("plan-dnia-lista");
 
     // Ostatnia przerwa zaczyna się o 11:30 (koniec „Matematyki”) → blok od pełnej godziny w górę
-    await lista.getByRole("button", { name: /wolne$/ }).last().click();
+    await lista.getByRole("button", { name: /wolne, dodaj blok/ }).last().click();
     const okno = page.getByRole("dialog", { name: "Nowy blok" });
     await expect(okno.getByRole("button", { name: "Od" })).toHaveText(
       /12:00/,

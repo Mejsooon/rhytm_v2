@@ -328,6 +328,34 @@ describe("changeOccurrence", () => {
     ]);
   });
 
+  it("blok jednorazowy przesunięty na inny dzień → zadania idą z nim, delete niewołane", async () => {
+    tables.blocks = fakeTable({
+      data: [{ id: blok.id }],
+      single: { ...blok, recurrence: null, start_local: "2026-11-10T08:00:00" },
+    });
+    tables.tasks = fakeTable({
+      data: [
+        {
+          id: "f1000000-0000-4000-8000-000000000001",
+          occurrence_date: "2026-11-10",
+        },
+      ],
+    });
+    const w = await changeOccurrence({
+      blockId: blok.id,
+      date: "2026-11-10",
+      scope: "all",
+      patch: { date: "2026-11-12" },
+    });
+    expect(w.ok).toBe(true);
+    expect(tables.tasks.update).toHaveBeenCalledWith({
+      occurrence_date: "2026-11-12",
+      due_date: "2026-11-12",
+    });
+    expect(tables.tasks.eq).toHaveBeenCalledWith("block_id", blok.id);
+    expect(tables.tasks.delete).not.toHaveBeenCalled();
+  });
+
   it("zmiana bloku, której nikt nie widzi (0 wierszy) → ok: false", async () => {
     tables.blocks = fakeTable({ data: [], single: blok });
     const w = await changeOccurrence({

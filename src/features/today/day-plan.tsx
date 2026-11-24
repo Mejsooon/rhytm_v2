@@ -137,6 +137,7 @@ export function DayPlan({
                 <button
                   type="button"
                   title={`Dodaj blok od ${godz(start)}`}
+                  aria-label={`${w.label}, dodaj blok od ${godz(start)}`}
                   onClick={() => {
                     setWybrany(null);
                     setOkno({
@@ -269,9 +270,11 @@ export function DayPlan({
           </div>
         )}
 
-        {/* Ostatni, pusty wiersz 23:00 (min. 40 px) — pomijany, gdy wpis startuje o 23:00
-            lub później (inaczej byłyby dwa wiersze z godziną 23:00 albo 23:00 po 23:30) */}
-        {!plan.some((p) => p.startMin >= 23 * 60) && (
+        {/* Ostatni, pusty wiersz 23:00 (min. 40 px) — pomijany, gdy jakiś wiersz (przerwa albo wpis)
+            startuje o 23:00 lub później (inaczej byłyby dwa wiersze z godziną 23:00 albo 23:00 po 23:30) */}
+        {!wiersze.some(
+          (w) => (w.type === "gap" ? w.startMin : w.item.startMin) >= 23 * 60,
+        ) && (
           <div aria-hidden="true" className={`${wiersz} min-h-10`}>
             <span className="pt-2 text-xs text-muted-foreground tabular-nums">
               {godz(23 * 60)}

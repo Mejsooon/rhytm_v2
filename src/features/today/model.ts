@@ -597,7 +597,6 @@ export type DayPlanRow =
       type: "gap";
       startMin: number;
       endMin: number;
-      time: string; // „HH:MM” początku przerwy
       label: string; // „30 min wolne”, „1 h wolne”, „1 h 30 min wolne”, „24 h wolne”
       big: boolean; // ≥ 180 min
     }
@@ -617,7 +616,6 @@ export function dayPlanRows(plan: PlanItem[]): DayPlanRow[] {
       type: "gap",
       startMin: od,
       endMin: do_,
-      time: `${String(Math.floor(od / 60)).padStart(2, "0")}:${String(od % 60).padStart(2, "0")}`,
       label: `${h > 0 ? `${h} h` : ""}${h > 0 && m > 0 ? " " : ""}${m > 0 ? `${m} min` : ""} wolne`,
       big: minuty >= 180,
     });

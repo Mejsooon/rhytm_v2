@@ -49,6 +49,9 @@ describe("DeleteBlockDialog", () => {
     expect(
       screen.getByRole("alertdialog", { name: "Usunąć blok?" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Zadania bloku, jeśli są, zostaną usunięte razem z nim."),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(changeOccurrence).toHaveBeenCalledWith({
       blockId: "b1",

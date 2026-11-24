@@ -384,7 +384,7 @@ describe("DayPlan", () => {
     render(<Plan d={dane()} />);
     // Przerwa 12:30–16:00 → od 13:00
     await userEvent.click(
-      screen.getByRole("button", { name: "3 h 30 min wolne" }),
+      screen.getByRole("button", { name: "3 h 30 min wolne, dodaj blok od 13:00" }),
     );
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
@@ -418,7 +418,7 @@ describe("DayPlan", () => {
         })}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "30 min wolne" }));
+    await userEvent.click(screen.getByRole("button", { name: "30 min wolne, dodaj blok od 23:00" }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
       "23:00",
@@ -439,6 +439,42 @@ describe("DayPlan", () => {
     expect(wiersze).toEqual([
       "00:0023 h wolne",
       expect.stringMatching(/^23:00Czytanie/),
+    ]);
+  });
+
+  it("blok 22:00–23:30: przerwa 23:30 na końcu, bez dodatkowego wiersza 23:00", () => {
+    render(
+      <Plan
+        d={dane({
+          occurrencesToday: [wystapienie("b1", 22 * 60, 90, "Wieczór")],
+          sportItems: [],
+        })}
+      />,
+    );
+    const lista = screen.getByTestId("plan-dnia-lista");
+    const wiersze = Array.from(lista.children).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "00:0022 h wolne",
+      expect.stringMatching(/^22:00Wieczór/),
+      "23:3030 min wolne",
+    ]);
+  });
+
+  it("blok 22:00–23:00: jeden wiersz 23:00 (przerwa), bez drugiego pustego", () => {
+    render(
+      <Plan
+        d={dane({
+          occurrencesToday: [wystapienie("b1", 22 * 60, 60, "Wieczór")],
+          sportItems: [],
+        })}
+      />,
+    );
+    const lista = screen.getByTestId("plan-dnia-lista");
+    const wiersze = Array.from(lista.children).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "00:0022 h wolne",
+      expect.stringMatching(/^22:00Wieczór/),
+      "23:001 h wolne",
     ]);
   });
 

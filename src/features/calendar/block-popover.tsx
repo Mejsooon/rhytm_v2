@@ -190,7 +190,7 @@ export function BlockDetails({
                 </span>
                 <span className="min-w-0 break-words">{t.title}</span>
               </label>
-              {/* × na webie z myszą pojawiają się po najechaniu na wiersz lub przy fokusie w nim;
+              {/* × na webie z myszą pojawia się po najechaniu na wiersz lub przy fokusie w nim;
                   bez hovera (tablet dotykowy ≥ 800 px, telefon) jest widoczny stale */}
               <Button
                 variant="ghost"
