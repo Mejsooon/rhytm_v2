@@ -2,6 +2,8 @@
 
 // Okno zakresu zmiany wg ScopeDialog.dc.html: tylko to wystąpienie / to i następne / wszystkie.
 // Używane przy edycji i usuwaniu wystąpienia bloku cyklicznego.
+// Telefon (< 800 px) wg CMScopeSheet.dc.html: arkusz od dołu bez ✕, tytuł 20 px z podtytułem,
+// jedna karta z wierszami-radio 64 px i stopka w dwóch kolumnach (to samo drzewo DOM, różnice w klasach).
 import { useState } from "react";
 import { InfoIcon } from "lucide-react";
 
@@ -77,7 +79,10 @@ export function ScopeDialog({
     {
       value: "all",
       tytul: "Wszystkie wystąpienia",
-      opis: "Zmieni całą serię, także przeszłe tygodnie.",
+      opis:
+        intent === "delete"
+          ? "Usunie całą serię, także przeszłe tygodnie."
+          : "Zmieni całą serię, także przeszłe tygodnie.",
       wylaczona: Boolean(disableAll),
     },
   ];
@@ -92,14 +97,29 @@ export function ScopeDialog({
           : "Zmieniasz blok, który się powtarza"
       }
       description={subtitle}
+      phoneClose={false}
+      // Telefon: tytuł 20 px, podtytuł widoczny (muted, cyfry tabelaryczne), stopka w 2 kolumnach bez tła
+      titleClassName="max-[799px]:h-auto max-[799px]:text-xl"
+      descriptionClassName="max-[799px]:mt-1 max-[799px]:block max-[799px]:text-[13px] max-[799px]:tabular-nums"
+      footerClassName="max-[799px]:grid max-[799px]:grid-cols-2 max-[799px]:gap-2.5 max-[799px]:border-t-0 max-[799px]:bg-transparent max-[799px]:px-5 max-[799px]:pt-0 max-[799px]:pb-[max(20px,env(safe-area-inset-bottom))]"
       footer={
         <>
           {error && (
-            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
+            <p
+              role="alert"
+              className="mr-auto text-xs text-destructive-foreground max-[799px]:col-span-2"
+            >
               {error}
             </p>
           )}
-          <Button variant="ghost" onClick={onCancel}>Anuluj</Button>
+          {/* Telefon: „Anuluj” jak .btn z makiety (biały, z ramką) */}
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            className="max-[799px]:border-input max-[799px]:bg-white max-[799px]:shadow-btn"
+          >
+            Anuluj
+          </Button>
           <Button
             variant={intent === "delete" ? "destructive" : "primary"}
             disabled={pending || wszystkieWylaczone}
@@ -113,15 +133,18 @@ export function ScopeDialog({
       <div
         role="radiogroup"
         aria-label="Zakres zmiany"
-        className="flex flex-col gap-2"
+        className="flex flex-col gap-2 max-[799px]:gap-0 max-[799px]:overflow-hidden max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:bg-white max-[799px]:shadow-card"
       >
         {opcje.map((o) => (
-          // Karta opcji jak w CScopeDialog.dc.html: 12 px promienia, wybrana z ciemniejszą obwódką
+          // Karta opcji jak w CScopeDialog.dc.html: 12 px promienia, wybrana z ciemniejszą obwódką;
+          // telefon: wiersz m-row 64 px w jednej karcie, bez wyróżnienia wybranej (zaznacza ją radio)
           <label
             key={o.value}
             className={cn(
-              "flex items-start gap-3 rounded-lg border bg-clip-padding px-3.5 py-3 max-[799px]:min-h-11",
-              o.wylaczona ? "cursor-not-allowed opacity-[.64]" : "cursor-pointer",
+              "flex items-start gap-3 rounded-lg border bg-clip-padding px-3.5 py-3 max-[799px]:min-h-16 max-[799px]:rounded-none max-[799px]:border-x-0 max-[799px]:border-t-0 max-[799px]:border-b max-[799px]:border-border max-[799px]:bg-transparent max-[799px]:px-4 max-[799px]:shadow-none max-[799px]:last:border-b-0",
+              o.wylaczona
+                ? "cursor-not-allowed opacity-[.64]"
+                : "cursor-pointer",
               wybrany === o.value
                 ? "border-black/[.24] bg-black/[.025] shadow-[0_0_0_1px_rgba(0,0,0,.12)]"
                 : "border-input bg-white shadow-xs",
@@ -136,9 +159,11 @@ export function ScopeDialog({
               onChange={() => setWybrany(o.value)}
               className="m-0 mt-0.5 size-4 flex-none cursor-pointer appearance-none rounded-full border border-input bg-white shadow-xs outline-none checked:border-[5px] checked:border-primary focus-visible:shadow-focus disabled:cursor-not-allowed"
             />
-            <span>
+            <span className="min-w-0 flex-1">
               <span className="block font-medium">{o.tytul}</span>
-              <span className="text-[13px] text-muted-foreground">{o.opis}</span>
+              <span className="text-[13px] text-muted-foreground max-[799px]:text-xs">
+                {o.opis}
+              </span>
             </span>
           </label>
         ))}
@@ -157,9 +182,19 @@ export function ScopeDialog({
           aria-hidden="true"
           className="mt-px size-4 flex-none text-info max-[799px]:hidden"
         />
-        {intent === "delete"
-          ? "Zadania z usuniętych wystąpień zostaną usunięte razem z nimi."
-          : "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."}
+        {intent === "delete" ? (
+          <>
+            <span className="max-[799px]:hidden">
+              Zadania z usuniętych wystąpień zostaną usunięte razem z nimi.
+            </span>
+            {/* Telefon: tekst z CMScopeSheet / CMDeleteBlock */}
+            <span className="hidden max-[799px]:inline">
+              Usunięte wystąpienia znikną razem z zadaniami.
+            </span>
+          </>
+        ) : (
+          "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."
+        )}
       </p>
     </FormDialog>
   );

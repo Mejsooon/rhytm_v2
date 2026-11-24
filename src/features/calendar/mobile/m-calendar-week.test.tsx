@@ -53,6 +53,18 @@ describe("MCalendarWeek", () => {
     );
   });
 
+  it("odznaka dnia ma tło accent, a wpisy styl kategorii (tło 12, ramka 4d)", () => {
+    wyrenderuj();
+    const sroda = screen.getByRole("link", { name: "Środa 18 listopada" });
+    expect(sroda).toHaveClass("bg-accent");
+    const algebra = screen.getByRole("button", { name: /Algebra/ });
+    expect(algebra.style.background).toBe("rgba(0, 112, 243, 0.07)");
+    expect(algebra.style.border).toBe("1px solid rgba(0, 112, 243, 0.3)");
+    expect(screen.getByRole("button", { name: "Nowy wpis" })).toHaveClass(
+      "m-fab",
+    );
+  });
+
   it("dzień listuje bloki z godzinami", () => {
     wyrenderuj();
     const sekcja = screen.getByRole("region", { name: "Środa 18 listopada" });
@@ -82,7 +94,7 @@ describe("MCalendarWeek", () => {
   it("pływający „+” dodaje blok na wybrany dzień", async () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 540);
   });
 });

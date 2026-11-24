@@ -90,6 +90,39 @@ describe("MCalendarDay", () => {
     }
   });
 
+  it("pasek pod datą: zaplanowane, wolne (8–20) i zadania z danych dnia", () => {
+    const zadanie = (id: string, done: boolean) => ({
+      id,
+      user_id: "u1",
+      title: id,
+      done,
+      done_at: null,
+      due_date: "2026-11-18",
+      block_id: "b1",
+      occurrence_date: "2026-11-18",
+      position: 1,
+      created_at: null,
+    });
+    wyrenderuj({
+      // Algebra 10:00–12:00 (2 h) i blok 07:00–08:30, z czego do okna 8–20 wchodzi 30 min
+      occurrences: [
+        ...wystapienia,
+        wystapienie("b3:2026-11-18", "2026-11-18", 420, 90, "Rano", null),
+      ],
+      tasks: [zadanie("z1", true), zadanie("z2", false), zadanie("z3", false)],
+    });
+    expect(screen.getByTestId("m-pasek-dnia")).toHaveTextContent(
+      "Zaplanowane 3 h 30 min · wolne (8–20) 9 h 30 min · zadania 1/3",
+    );
+  });
+
+  it("pasek pod datą: pusty dzień to 0 h, wolne 12 h, zadania 0/0", () => {
+    wyrenderuj({ occurrences: [] });
+    expect(screen.getByTestId("m-pasek-dnia")).toHaveTextContent(
+      "Zaplanowane 0 h · wolne (8–20) 12 h · zadania 0/0",
+    );
+  });
+
   it("blok pokazuje godziny i kategorię, bez data-occurrence-key", () => {
     const { container } = wyrenderuj();
     expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent(
@@ -156,7 +189,7 @@ describe("MCalendarDay", () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
     fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
       { clientY: 10 * 56 },
     );
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 600);
@@ -165,7 +198,7 @@ describe("MCalendarDay", () => {
   it("pływający „+” dodaje blok na dzień", async () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 540);
   });
 
@@ -177,6 +210,45 @@ describe("MCalendarDay", () => {
     unmount();
     wyrenderuj();
     expect(screen.queryByTestId("linia-teraz")).toBeNull();
+  });
+
+  it("linia „teraz” ma kolor tokenu destructive i kropkę 10 px", () => {
+    wyrenderuj({ date: "2026-11-17", today: "2026-11-17" });
+    const linia = screen.getByTestId("linia-teraz");
+    expect(linia.className).toContain("bg-destructive");
+    expect(linia.className).not.toContain("bg-destructive-");
+    const kropka = linia.firstElementChild as HTMLElement;
+    expect(kropka.className).toContain("size-2.5");
+    expect(kropka.className).toContain("bg-destructive");
+  });
+
+  it("dziś niewybrane ma czerwone kółko, wybrany dzień to ciemny kafelek bez kółka", () => {
+    const { unmount } = wyrenderuj({ date: "2026-11-18", today: "2026-11-17" });
+    const dzis = screen.getByRole("link", { name: "Wtorek 17 listopada" });
+    expect(dzis.querySelector("[data-dzis]")!.className).toContain(
+      "bg-destructive-strong",
+    );
+    const wybrany = screen.getByRole("link", { name: "Środa 18 listopada" });
+    expect(wybrany.className).toContain("bg-primary");
+    unmount();
+    wyrenderuj({ date: "2026-11-17", today: "2026-11-17" });
+    const dzisWybrany = screen.getByRole("link", {
+      name: "Wtorek 17 listopada",
+    });
+    expect(dzisWybrany.className).toContain("bg-primary");
+    expect(dzisWybrany.querySelector("[data-dzis]")!.className).not.toContain(
+      "bg-destructive-strong",
+    );
+  });
+
+  it("blok ma tło kategorii 12 i ramkę 4d, a „+” to m-fab", () => {
+    wyrenderuj();
+    const blok = screen.getByRole("button", { name: /Algebra/ });
+    expect(blok.style.background).toBe("rgba(0, 112, 243, 0.07)");
+    expect(blok.style.border).toBe("1px solid rgba(0, 112, 243, 0.3)");
+    expect(screen.getByRole("button", { name: "Nowy wpis" })).toHaveClass(
+      "m-fab",
+    );
   });
 
   it("oś startuje przewinięta do 07:00", () => {

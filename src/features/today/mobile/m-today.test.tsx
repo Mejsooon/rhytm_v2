@@ -354,7 +354,7 @@ describe("MToday", () => {
     const arkusz = await screen.findByRole("dialog", { name: "Edytuj blok" });
     expect(within(arkusz).getByDisplayValue("rhytm — kod")).toBeInTheDocument();
     await userEvent.click(
-      within(arkusz).getByRole("button", { name: "Anuluj" }),
+      within(arkusz).getAllByRole("button", { name: "Anuluj" })[0],
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

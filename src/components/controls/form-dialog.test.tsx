@@ -90,7 +90,10 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
       </FormDialog>,
     );
     const okno = screen.getByRole("dialog", { name: "X" });
-    expect(okno).toHaveClass("max-[799px]:rounded-t-2xl", "max-[799px]:max-h-[88%]");
+    expect(okno).toHaveClass(
+      "max-[799px]:rounded-t-2xl",
+      "max-[799px]:max-h-[88%]",
+    );
     const tlo = document.querySelector("div.fixed.inset-0") as HTMLElement;
     expect(tlo.className).toContain("bg-black/[.32]");
     expect(tlo.className).toContain("max-[799px]:backdrop-blur-none");
@@ -99,12 +102,20 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
 
   it("stopka ma na telefonie dolny odstęp 28 px", () => {
     render(
-      <FormDialog open onOpenChange={() => {}} title="X" footer={<button>Dodaj</button>}>
+      <FormDialog
+        open
+        onOpenChange={() => {}}
+        title="X"
+        footer={<button>Dodaj</button>}
+      >
         <p>Treść</p>
       </FormDialog>,
     );
-    const stopka = screen.getByRole("button", { name: "Dodaj" }).parentElement as HTMLElement;
-    expect(stopka).toHaveClass("max-[799px]:pb-[max(28px,env(safe-area-inset-bottom))]");
+    const stopka = screen.getByRole("button", { name: "Dodaj" })
+      .parentElement as HTMLElement;
+    expect(stopka).toHaveClass(
+      "max-[799px]:pb-[max(28px,env(safe-area-inset-bottom))]",
+    );
     expect(stopka).not.toHaveClass("max-[799px]:hidden");
   });
 
@@ -117,7 +128,9 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
     const zamknij = screen.getByRole("button", { name: "Zamknij" });
     expect(zamknij).toHaveClass("max-[799px]:size-11");
     expect(zamknij).not.toHaveClass("max-[799px]:hidden");
-    expect(screen.queryByRole("button", { name: "Anuluj" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Anuluj" }),
+    ).not.toBeInTheDocument();
   });
 
   it("phoneHeader=actions: „Anuluj” woła onClick, przycisk główny w nagłówku, ✕ i stopka ukryte na telefonie", async () => {
@@ -139,16 +152,28 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
     expect(anuluj).toHaveClass("min-[800px]:hidden", "text-muted-foreground");
     await userEvent.click(anuluj);
     expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("button", { name: "Zapisz" }).parentElement).toHaveClass("min-[800px]:hidden");
-    expect(screen.getByRole("button", { name: "Zamknij" })).toHaveClass("max-[799px]:hidden");
-    expect(screen.getByRole("button", { name: "Utwórz" }).parentElement).toHaveClass("max-[799px]:hidden");
-    const naglowek = screen.getByRole("heading", { name: "Nowy blok" }).parentElement?.parentElement as HTMLElement;
+    expect(
+      screen.getByRole("button", { name: "Zapisz" }).parentElement,
+    ).toHaveClass("min-[800px]:hidden");
+    expect(screen.getByRole("button", { name: "Zamknij" })).toHaveClass(
+      "max-[799px]:hidden",
+    );
+    expect(
+      screen.getByRole("button", { name: "Utwórz" }).parentElement,
+    ).toHaveClass("max-[799px]:hidden");
+    const naglowek = screen.getByRole("heading", { name: "Nowy blok" })
+      .parentElement?.parentElement as HTMLElement;
     expect(naglowek).toHaveClass("max-[799px]:border-b");
   });
 
   it("web (≥ 800 px): klasy min-[800px]: okna, nagłówka i stopki bez zmian", () => {
     render(
-      <FormDialog open onOpenChange={() => {}} title="X" footer={<button>Zapisz</button>}>
+      <FormDialog
+        open
+        onOpenChange={() => {}}
+        title="X"
+        footer={<button>Zapisz</button>}
+      >
         <p>Treść</p>
       </FormDialog>,
     );
@@ -165,9 +190,11 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
       "min-[800px]:border-border",
       "min-[800px]:shadow-pop",
     ]);
-    expect(web(screen.getByRole("button", { name: "Zapisz" }).parentElement as Element)).toEqual([
-      "min-[800px]:rounded-b-[15px]",
-    ]);
+    expect(
+      web(
+        screen.getByRole("button", { name: "Zapisz" }).parentElement as Element,
+      ),
+    ).toEqual(["min-[800px]:rounded-b-[15px]"]);
   });
 });
 
@@ -229,7 +256,12 @@ describe("FormDialog z Dropdown w środku", () => {
 
   it("opis jest powiązany z oknem przez aria-describedby", () => {
     render(
-      <FormDialog open onOpenChange={() => {}} title="Nowy blok" description="Podpowiedź do okna">
+      <FormDialog
+        open
+        onOpenChange={() => {}}
+        title="Nowy blok"
+        description="Podpowiedź do okna"
+      >
         <p>Treść</p>
       </FormDialog>,
     );
@@ -247,10 +279,32 @@ describe("FormDialog z Dropdown w środku", () => {
         <p>Treść</p>
       </FormDialog>,
     );
-    expect(screen.getByRole("dialog", { name: "Nowy blok" })).not.toHaveAttribute("aria-describedby");
+    expect(
+      screen.getByRole("dialog", { name: "Nowy blok" }),
+    ).not.toHaveAttribute("aria-describedby");
     expect(blad).not.toHaveBeenCalled();
     expect(ostrzezenie).not.toHaveBeenCalled();
     blad.mockRestore();
     ostrzezenie.mockRestore();
+  });
+
+  it("headerStart stoi w nagłówku przed tytułem (telefon)", () => {
+    render(
+      <FormDialog
+        open
+        onOpenChange={() => {}}
+        title="Szczegóły"
+        headerStart={<span>Plakietka</span>}
+      >
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    const plakietka = screen.getByText("Plakietka");
+    const tytul = screen.getByRole("heading", { name: "Szczegóły" });
+    expect(
+      plakietka.compareDocumentPosition(tytul) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(plakietka.parentElement).toHaveClass("min-[800px]:hidden");
   });
 });

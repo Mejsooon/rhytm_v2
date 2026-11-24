@@ -11,6 +11,8 @@ export function Chip({
   dotColor,
   onClick,
   disabled = false,
+  className,
+  style,
   children,
 }: {
   selected?: boolean;
@@ -19,6 +21,9 @@ export function Chip({
   dotColor?: string;
   onClick?: () => void;
   disabled?: boolean;
+  // Dodatkowe klasy i styl (np. kolor kategorii z danych)
+  className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
   return (
@@ -27,6 +32,7 @@ export function Chip({
       aria-pressed={selected}
       disabled={disabled}
       onClick={onClick}
+      style={style}
       className={cn(
         // Tło po najechaniu tylko dla włączonego chipa (enabled:hover:…), więc wyłączony nie mruga
         "relative inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[8px] border bg-white px-[9px] text-sm font-medium whitespace-nowrap text-foreground shadow-xs transition-[box-shadow,background-color] duration-150 outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-9 max-[799px]:px-3.5 max-[799px]:after:absolute max-[799px]:after:-inset-y-[5px] max-[799px]:after:inset-x-0 max-[799px]:after:content-['']",
@@ -41,6 +47,7 @@ export function Chip({
         selected &&
           variant === "solid" &&
           "border-primary bg-primary text-primary-foreground shadow-none enabled:hover:bg-primary-hover",
+        className,
       )}
     >
       {dotColor && (

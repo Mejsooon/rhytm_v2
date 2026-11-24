@@ -80,11 +80,12 @@ describe("CalendarHeader", () => {
     expect(
       screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ }),
     ).toBeInTheDocument();
-    // Telefon: ikona „Kategorie”, bez „+” w nagłówku (nowy blok dodaje pływający przycisk)
-    expect(
-      screen.getByRole("button", { name: "Kategorie" }),
-    ).toBeInTheDocument();
+    // Telefon w tygodniu: bez „Kategorie” (jak w makiecie), „Nowy blok” jest na webie, „Nowy wpis” w nagłówku telefonu
+    expect(screen.queryByRole("button", { name: "Kategorie" })).toBeNull();
     expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByRole("button", { name: "Nowy wpis" })).toHaveLength(
       1,
     );
   });
@@ -106,22 +107,82 @@ describe("CalendarHeader", () => {
 
   it("Nowy blok woła callback", async () => {
     const { onNewBlock } = wyrenderuj();
-    await userEvent.click(screen.getByRole("button", { name: "Nowy blok" }));
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Nowy blok" })[0],
+    );
     expect(onNewBlock).toHaveBeenCalledTimes(1);
   });
 
-  it("telefon bierze mobileView: segment i strzałki działają na dniach", async () => {
+  it("telefon: segment to linki z aria-current przy aktualnym widoku; dzień bez strzałek", () => {
     wyrenderuj({ mobileView: "dzien" });
-    const segmenty = screen.getAllByRole("radiogroup", {
+    const nawigacja = screen.getByRole("navigation", {
       name: "Widok kalendarza",
     });
     expect(
-      segmenty[1].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Dzień");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Następny dzień" }),
+      within(nawigacja).getByRole("link", { name: "Dzień" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(nawigacja).getByRole("link", { name: "Tydzień" }),
+    ).not.toHaveAttribute("aria-current");
+    expect(
+      within(nawigacja).getByRole("link", { name: "Miesiąc" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=miesiac&data=2026-11-18");
+    expect(
+      screen.queryByRole("button", { name: "Następny dzień" }),
+    ).not.toBeInTheDocument();
+    // Telefon: „Szukaj” to link do /szukaj, a „Kategorie” otwiera okno
+    expect(screen.getByRole("link", { name: "Szukaj" })).toHaveAttribute(
+      "href",
+      "/szukaj",
     );
-    expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-19");
+    expect(screen.getByRole("button", { name: "Kategorie" })).toHaveAttribute(
+      "aria-haspopup",
+      "dialog",
+    );
+  });
+
+  it("telefon: tydzień ma etykietę, zakres dni, Szukaj, Nowy blok i strzałki", async () => {
+    const { onNewBlock } = wyrenderuj({ mobileView: "tydzien" });
+    expect(screen.getByText("2026 · tydzień 47")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "16–22 listopada" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Szukaj" })).toHaveAttribute(
+      "href",
+      "/szukaj",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
+    expect(onNewBlock).toHaveBeenCalledTimes(1);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Następny tydzień" }),
+    );
+    expect(push).toHaveBeenCalledWith(
+      "/kalendarz?widok=tydzien&data=2026-11-25",
+    );
+  });
+
+  it("telefon: tydzień na przełomie miesięcy pokazuje oba miesiące", () => {
+    wyrenderuj({ mobileView: "tydzien", date: "2026-12-02" });
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "30 listopada – 6 grudnia",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("telefon: miesiąc ma etykietę roku, nazwę i strzałki bez Szukaj i Kategorii", async () => {
+    wyrenderuj({ mobileView: "miesiac", view: "miesiac" });
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Listopad" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Szukaj" })).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Poprzedni miesiąc" }),
+    );
+    expect(push).toHaveBeenCalledWith(
+      "/kalendarz?widok=miesiac&data=2026-10-18",
+    );
   });
 
   it("wygląd COSS: zgrupowane ‹ Dziś ›, podtytuł jako szara plakietka, Nowy blok z ikoną", () => {
@@ -143,7 +204,7 @@ describe("CalendarHeader", () => {
     expect(plakietka.className).toContain("bg-muted");
     expect(plakietka.className).toContain("tabular-nums");
     // Nowy blok: .btnp z ikoną plusa, rozmiar md (32 px)
-    const nowy = screen.getByRole("button", { name: "Nowy blok" });
+    const nowy = screen.getAllByRole("button", { name: "Nowy blok" })[0];
     expect(nowy.className).toContain("bg-primary");
     expect(nowy.className).toContain("h-8");
     expect(nowy.querySelector("svg")).not.toBeNull();
@@ -161,6 +222,8 @@ describe("CalendarHeader", () => {
         />
       </SidebarStateProvider>,
     );
-    expect(screen.getByRole("button", { name: "Pokaż pasek boczny" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Pokaż pasek boczny" }),
+    ).toBeInTheDocument();
   });
 });

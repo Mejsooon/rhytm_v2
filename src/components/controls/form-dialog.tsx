@@ -29,9 +29,14 @@ export function FormDialog({
   children,
   footer,
   headerAction,
+  headerStart,
   phoneHeader = "close",
   phoneCancel,
   phoneSubmit,
+  phoneClose = true,
+  titleClassName,
+  descriptionClassName,
+  footerClassName,
 }: NaglowekTelefonu & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +49,14 @@ export function FormDialog({
   footer?: React.ReactNode;
   // Przycisk w nagłówku po prawej (telefon: np. „Gotowe” w arkuszu „Kolumna”)
   headerAction?: React.ReactNode;
+  // Telefon: treść przed tytułem w tym samym wierszu co ✕ (np. plakietka kategorii w szczegółach bloku)
+  headerStart?: React.ReactNode;
+  // Telefon: false chowa ✕ w nagłówku (arkusz zamykany nakładką, np. CMScopeSheet)
+  phoneClose?: boolean;
+  // Dodatkowe klasy tytułu, podtytułu i stopki (np. inny układ na telefonie)
+  titleClassName?: string;
+  descriptionClassName?: string;
+  footerClassName?: string;
 }) {
   const akcje = phoneHeader === "actions";
   return (
@@ -78,12 +91,32 @@ export function FormDialog({
                 {phoneCancel.label}
               </Button>
             )}
-            <div className={cn(akcje && "max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:text-center", !akcje && "max-[799px]:flex-1")}>
-              <Dialog.Title className={cn("m-0 text-lg leading-[1.3] font-semibold max-[799px]:flex max-[799px]:h-11 max-[799px]:items-center max-[799px]:text-lg", akcje && "max-[799px]:justify-center")}>
+            <div
+              className={cn(
+                akcje &&
+                  "max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:text-center",
+                !akcje && "max-[799px]:flex-1",
+              )}
+            >
+              {headerStart && (
+                <div className="min-[800px]:hidden">{headerStart}</div>
+              )}
+              <Dialog.Title
+                className={cn(
+                  "m-0 text-lg leading-[1.3] font-semibold max-[799px]:flex max-[799px]:h-11 max-[799px]:items-center max-[799px]:text-lg",
+                  akcje && "max-[799px]:justify-center",
+                  titleClassName,
+                )}
+              >
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description className="m-0 mt-1 text-sm text-muted-foreground max-[799px]:hidden">
+                <Dialog.Description
+                  className={cn(
+                    "m-0 mt-1 text-sm text-muted-foreground max-[799px]:hidden",
+                    descriptionClassName,
+                  )}
+                >
                   {description}
                 </Dialog.Description>
               )}
@@ -95,16 +128,18 @@ export function FormDialog({
                 size="sm"
                 icon
                 aria-label="Zamknij"
-                className={cn("max-[799px]:size-11", akcje && "max-[799px]:hidden")}
+                className={cn(
+                  "max-[799px]:size-11",
+                  (akcje || !phoneClose) && "max-[799px]:hidden",
+                )}
               >
-                <XIcon aria-hidden="true" className="size-4 max-[799px]:size-5" />
+                <XIcon
+                  aria-hidden="true"
+                  className="size-4 max-[799px]:size-5"
+                />
               </Button>
             </Dialog.Close>
-            {headerAction && (
-              <div className="flex-none">
-                {headerAction}
-              </div>
-            )}
+            {headerAction && <div className="flex-none">{headerAction}</div>}
             {akcje && phoneSubmit && (
               <div className="flex-none min-[800px]:hidden">{phoneSubmit}</div>
             )}
@@ -125,6 +160,7 @@ export function FormDialog({
                 "flex flex-none flex-wrap items-center justify-end gap-2 border-t border-border bg-black/[.025] px-6 py-4 min-[800px]:rounded-b-[15px] max-[799px]:pb-[max(28px,env(safe-area-inset-bottom))]",
                 // Przy nagłówku „actions” telefon nie ma stopki (przycisk główny jest w nagłówku)
                 akcje && "max-[799px]:hidden",
+                footerClassName,
               )}
             >
               {footer}

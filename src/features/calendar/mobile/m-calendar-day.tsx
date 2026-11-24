@@ -1,6 +1,6 @@
 "use client";
 
-// Dzień na telefonie wg MCalendarDayFull.dc.html: pasek tygodnia z kropkami, wiersz z datą, oś całej doby
+// Dzień na telefonie wg CMCalendarDay.dc.html: pasek tygodnia z kropkami, wiersz z datą, oś całej doby
 // (56 px na godzinę, start przewinięty do 07:00 albo do trwającego bloku), linia „teraz”,
 // stuknięcie pustego miejsca i pływający „+” dodają blok.
 // Pasek tygodnia i wiersz z datą stoją w miejscu; oś wypełnia resztę ekranu do dolnego paska
@@ -9,12 +9,14 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
+import { StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   SPORT_COLOR,
   sportItemHref,
   type SportItem,
 } from "@/features/sport/model";
+import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "../day-layout";
 import type { CategoryRow } from "../load-calendar";
@@ -37,6 +39,7 @@ export function MCalendarDay({
   sport = [],
   categories,
   clock,
+  tasks = [],
   onAdd,
   onBlockClick,
 }: {
@@ -50,6 +53,8 @@ export function MCalendarDay({
   sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
+  // Zadania kalendarza: pasek „Zaplanowane…” liczy z nich „zadania A/B” dnia
+  tasks?: TaskRow[];
   onAdd: (date: IsoDate, startMin: number) => void;
   // Stuknięcie bloku (klucz wystąpienia); szczegóły otwiera arkusz u rodzica
   onBlockClick: (key: string) => void;
@@ -74,6 +79,50 @@ export function MCalendarDay({
           (liczba % 100 < 12 || liczba % 100 > 14)
         ? "bloki"
         : "bloków";
+
+  // Pasek pod datą: zaplanowany czas (bloki i treningi bez dublowania nakładających się), wolny czas
+  // między 8:00 a 20:00 i zadania bloków dnia (wykonane/wszystkie)
+  const przedzialy = [...dnia, ...treningi]
+    .map((i) => ({
+      od: i.startMin,
+      do: i.startMin + Math.min(i.durationMin, 1440 - i.startMin),
+    }))
+    .sort((a, b) => a.od - b.od);
+  let zaplanowaneMin = 0;
+  let zajeteWDzienMin = 0;
+  let koniecScalonego = 0;
+  for (const p of przedzialy) {
+    const od = Math.max(p.od, koniecScalonego);
+    if (p.do <= od) continue;
+    zaplanowaneMin += p.do - od;
+    zajeteWDzienMin += Math.max(
+      0,
+      Math.min(p.do, 20 * 60) - Math.max(od, 8 * 60),
+    );
+    koniecScalonego = p.do;
+  }
+  const wolneMin = 12 * 60 - zajeteWDzienMin;
+  // „2 h 30 min”, „3 h”, „45 min”, „0 h”
+  const naGodziny = (min: number) =>
+    min === 0
+      ? "0 h"
+      : [
+          min >= 60 ? `${Math.floor(min / 60)} h` : null,
+          min % 60 > 0 ? `${min % 60} min` : null,
+        ]
+          .filter(Boolean)
+          .join(" ");
+  let zadanWykonanych = 0;
+  let zadanRazem = 0;
+  for (const o of dnia) {
+    const { done, total } = occurrenceProgress(
+      tasks,
+      o.blockId,
+      o.key.slice(o.blockId.length + 1),
+    );
+    zadanWykonanych += done;
+    zadanRazem += total;
+  }
 
   // Oś startuje na 07:00; w dzisiejszym dniu z trwającym blokiem na jego początku (z zapasem pół godziny)
   useEffect(() => {
@@ -120,17 +169,20 @@ export function MCalendarDay({
               href={`/kalendarz?widok=dzien&data=${dzien}`}
               aria-label={`${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`}
               aria-current={wybrany ? "date" : undefined}
-              className={`flex h-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 ${
-                wybrany ? "bg-primary text-white" : "text-foreground"
+              className={`flex h-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 no-underline ${
+                wybrany
+                  ? "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16)]"
+                  : "text-foreground"
               }`}
             >
               <span className="text-[11px] opacity-75">{DNI_SKROT[numer]}</span>
               <span
                 data-dzis={dzien === today || undefined}
                 className={
-                  dzien === today
+                  // Dziś (niewybrane): czerwone kółko 24 px; wybrany dzień to sam ciemny kafelek
+                  dzien === today && !wybrany
                     ? "inline-flex size-6 items-center justify-center rounded-full bg-destructive-strong text-sm leading-none font-semibold tracking-normal text-white tabular-nums"
-                    : "font-mono text-base font-medium"
+                    : "text-base font-medium tabular-nums"
                 }
               >
                 {d}
@@ -138,7 +190,7 @@ export function MCalendarDay({
               {maBloki ? (
                 <span
                   data-testid={`kropka-${dzien}`}
-                  className={`size-1 rounded-full ${wybrany ? "bg-white" : "bg-success"}`}
+                  className={`size-1 rounded-full ${wybrany ? "bg-primary-foreground" : "bg-success"}`}
                 />
               ) : (
                 <span className="size-1" />
@@ -150,11 +202,21 @@ export function MCalendarDay({
 
       <div
         data-testid="m-wiersz-daty"
-        className="flex flex-none items-center gap-2 border-t border-b border-t-border border-b-border px-4 py-1.5 text-[13px] text-muted-foreground"
+        className="flex flex-none items-center gap-2 border-y border-border px-4 py-2 text-[13px] text-muted-foreground"
       >
         <span>{tytul}</span>
         <span aria-hidden="true">·</span>
-        <span>{`${liczba} ${slowoBlok}`}</span>
+        <StatusBadge
+          tone="gray"
+          className="tabular-nums"
+        >{`${liczba} ${slowoBlok}`}</StatusBadge>
+      </div>
+
+      <div
+        data-testid="m-pasek-dnia"
+        className="flex-none border-b border-border px-4 py-2 text-xs text-muted-foreground tabular-nums"
+      >
+        {`Zaplanowane ${naGodziny(zaplanowaneMin)} · wolne (8–20) ${naGodziny(wolneMin)} · zadania ${zadanWykonanych}/${zadanRazem}`}
       </div>
 
       <div
@@ -170,7 +232,7 @@ export function MCalendarDay({
               className="absolute inset-x-0 flex items-start gap-2"
               style={{ top: godzina * WYSOKOSC_GODZINY }}
             >
-              <span className="w-10 -translate-y-[7px] text-right font-mono text-[11px] whitespace-nowrap text-faint-foreground">
+              <span className="w-10 -translate-y-[7px] text-right text-[11px] whitespace-nowrap text-muted-foreground tabular-nums">
                 {formatClockTime(godzina, 0, clock)}
               </span>
               <span className="flex-1 border-t border-border" />
@@ -180,7 +242,7 @@ export function MCalendarDay({
           {/* Puste miejsce na osi: stuknięcie dodaje blok o tej godzinie (z dokładnością do 30 min) */}
           <button
             type="button"
-            aria-label="Dodaj blok w wolnym miejscu"
+            aria-label="Dodaj wpis w wolnym miejscu"
             className="absolute top-0 right-0 bottom-0 left-12 cursor-pointer"
             onClick={(e) => {
               const gora = e.currentTarget.getBoundingClientRect().top;
@@ -211,14 +273,14 @@ export function MCalendarDay({
                 key={o.key}
                 type="button"
                 onClick={() => onBlockClick(o.key)}
-                className="absolute z-[2] box-border cursor-pointer rounded-lg px-2.5 text-left text-foreground"
+                className="absolute z-[2] box-border cursor-pointer rounded-[10px] px-2.5 text-left text-foreground"
                 style={{
                   top: (o.startMin / 60) * WYSOKOSC_GODZINY + 1,
                   height: wysokosc,
                   left: `calc(52px + (100% - 56px) * ${kolumna / kolumn})`,
                   width: `calc((100% - 56px) / ${kolumn})`,
-                  background: `${kolor}14`,
-                  borderLeft: `3px solid ${kolor}`,
+                  background: `${kolor}12`,
+                  border: `1px solid ${kolor}4d`,
                 }}
               >
                 {zapas > 0 && (
@@ -235,19 +297,19 @@ export function MCalendarDay({
                     data-testid="blok-jedna-linia"
                     className="flex h-full items-center gap-2 overflow-hidden"
                   >
-                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
+                    <span className="min-w-0 truncate text-sm leading-[18px] font-medium whitespace-nowrap">
                       {o.title}
                     </span>
-                    <span className="flex-none font-mono text-[11px] leading-4 whitespace-nowrap text-soft-foreground">
+                    <span className="flex-none text-xs leading-4 whitespace-nowrap text-muted-foreground tabular-nums">
                       {godziny}
                     </span>
                   </span>
                 ) : (
                   <span className="flex h-full flex-col gap-0.5 overflow-hidden py-1.5">
-                    <span className="min-w-0 truncate text-sm leading-[18px] font-semibold">
+                    <span className="min-w-0 truncate text-sm leading-[18px] font-medium">
                       {o.title}
                     </span>
-                    <span className="truncate font-mono text-[11px] leading-4 text-soft-foreground">
+                    <span className="truncate text-xs leading-4 text-muted-foreground tabular-nums">
                       {`${godziny} · ${kategoria?.name ?? "Bez kategorii"}`}
                     </span>
                   </span>
@@ -272,13 +334,13 @@ export function MCalendarDay({
                 key={i.key}
                 href={sportItemHref(i)}
                 data-planned={i.planned || undefined}
-                className="absolute z-[2] box-border rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:shadow-focus"
+                className={`absolute z-[2] box-border rounded-[10px] px-2.5 text-left text-foreground outline-none focus-visible:shadow-focus ${i.planned ? "bg-background" : ""}`}
                 style={{
                   top: (i.startMin / 60) * WYSOKOSC_GODZINY + 1,
                   height: wysokosc,
                   left: `calc(52px + (100% - 56px) * ${kolumna / kolumn})`,
                   width: `calc((100% - 56px) / ${kolumn})`,
-                  background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                  background: i.planned ? undefined : `${SPORT_COLOR}12`,
                   border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
                   borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
                 }}
@@ -293,10 +355,10 @@ export function MCalendarDay({
                 <span
                   className={`flex h-full overflow-hidden ${czas < 60 ? "items-center gap-2" : "flex-col gap-0.5 py-1.5"}`}
                 >
-                  <span className="min-w-0 truncate text-sm leading-[18px] font-semibold whitespace-nowrap">
+                  <span className="min-w-0 truncate text-sm leading-[18px] font-medium whitespace-nowrap">
                     {i.title}
                   </span>
-                  <span className="flex-none truncate font-mono text-[11px] leading-4 whitespace-nowrap text-soft-foreground">
+                  <span className="flex-none truncate text-xs leading-4 whitespace-nowrap text-muted-foreground tabular-nums">
                     {czas < 60 ? godziny : `${godziny} · Sport`}
                   </span>
                 </span>
@@ -319,12 +381,11 @@ export function MCalendarDay({
 
       <button
         type="button"
-        aria-label="Dodaj blok"
+        aria-label="Nowy wpis"
         onClick={() => onAdd(date, startPlusa)}
-        // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
-        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        className="m-fab"
       >
-        <Plus size={26} aria-hidden="true" />
+        <Plus size={24} aria-hidden="true" />
       </button>
     </div>
   );

@@ -4,17 +4,18 @@
 // Web (CCalendar.dc.html): przycisk .btn „Kategorie 3/4 ⌄” z kropkami widocznych kategorii; menu .pop
 // z etykietą „Pokaż w kalendarzu”, polami .cbx (menuitemcheckbox), separatorem i „+ Kategoria”.
 // Esc zamyka, fokus wraca na przycisk.
-// Telefon (MCalendarDayFull.dc.html): ikona „Kategorie” (44 px) otwiera dolny arkusz
-// z przełącznikiem przy każdej kategorii i „+ Kategoria”.
+// Telefon (CMCalendarDay.dc.html): ikona „Kategorie” (44 px) otwiera dolny arkusz (FormDialog)
+// z przełącznikiem przy każdej kategorii i wierszem „Kategoria” z ikoną plusa.
 // Ukrywanie działa tak samo jak dawne chipy: `onToggle` dostaje kategorię, rodzic zapisuje optymistycznie.
 // Pod kategoriami stoją źródła odnowień subskrypcji (S2Calendar: „Subscriptions” z przerywanym
 // kwadratem zamiast kropki); licznik liczy też je, kropki na przycisku tylko kategorie.
-import { useRef, useState } from "react";
-import { CheckIcon, ChevronDown, ListFilter, Plus, XIcon } from "lucide-react";
-import { Dialog, DropdownMenu } from "radix-ui";
+import { useEffect, useRef, useState } from "react";
+import { CheckIcon, ChevronDown, ListFilter, Plus } from "lucide-react";
+import { DropdownMenu } from "radix-ui";
 
 import {
   Button,
+  FormDialog,
   MENU_ITEM,
   MENU_LABEL,
   MENU_SEPARATOR,
@@ -40,8 +41,7 @@ export function CategoryFilters({
   onToggleSource?: (source: RenewalSource) => void;
 }) {
   const widoczne = categories.filter((k) => !k.hidden);
-  const widoczneRazem =
-    widoczne.length + sources.filter((z) => z.shown).length;
+  const widoczneRazem = widoczne.length + sources.filter((z) => z.shown).length;
   const wszystkie = categories.length + sources.length;
   const przycisk = useRef<HTMLButtonElement>(null);
   // „+ Kategoria” otwiera okno dopiero po zamknięciu menu, gdy fokus jest już na przycisku,
@@ -217,116 +217,101 @@ export function CategorySheet({
   onToggleSource?: (source: RenewalSource) => void;
 }) {
   const [otwarty, setOtwarty] = useState(false);
-  const przycisk = useRef<HTMLButtonElement>(null);
+  const przycisk = useRef<HTMLButtonElement | null>(null);
   // Jak w menu web: okno nowej kategorii otwiera się po zamknięciu arkusza
   const otworzOkno = useRef(false);
 
+  // Po zamknięciu arkusza z „Kategoria”: fokus wraca na ikonę, potem otwiera się okno nowej kategorii
+  useEffect(() => {
+    if (otwarty || !otworzOkno.current) return;
+    otworzOkno.current = false;
+    przycisk.current?.focus();
+    onAdd();
+  }, [otwarty, onAdd]);
+
   return (
-    <Dialog.Root open={otwarty} onOpenChange={setOtwarty}>
-      <Dialog.Trigger asChild>
-        <button
-          ref={przycisk}
-          type="button"
-          aria-label="Kategorie"
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
-        >
-          <ListFilter size={21} aria-hidden="true" />
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content
-          aria-describedby={undefined}
-          onCloseAutoFocus={(e) => {
-            if (!otworzOkno.current) return;
-            otworzOkno.current = false;
-            e.preventDefault();
-            przycisk.current?.focus();
-            onAdd();
-          }}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white pb-[max(24px,env(safe-area-inset-bottom))] text-[15px] text-foreground shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
-        >
-          <span
-            aria-hidden="true"
-            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong"
-          />
-          <div className="flex flex-none items-center py-1.5 pr-2 pl-4">
-            <Dialog.Title className="m-0 flex-1 text-[17px] font-semibold">
-              Kategorie
-            </Dialog.Title>
-            <Dialog.Close
-              aria-label="Zamknij"
-              className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
-            >
-              <XIcon size={20} aria-hidden="true" />
-            </Dialog.Close>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {categories.map((kategoria) => (
-              // Cały wiersz 52 px przełącza kategorię; stuknięcie w sam przełącznik obsługuje on sam
-              // (sprawdzamy cel kliknięcia, żeby nie przełączyć dwa razy)
-              <div
-                key={kategoria.id}
-                data-testid={`wiersz-kategorii-${kategoria.id}`}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).closest("[role=switch]"))
-                    return;
-                  onToggle(kategoria);
-                }}
-                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-border px-4"
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 flex-none rounded-full"
-                  style={{ background: kategoria.color }}
-                />
-                <span className="min-w-0 flex-1 truncate">
-                  {kategoria.name}
-                </span>
-                <Switch
-                  checked={!kategoria.hidden}
-                  onChange={() => onToggle(kategoria)}
-                  ariaLabel={`Pokaż kategorię ${kategoria.name}`}
-                />
-              </div>
-            ))}
-            {sources.map((zrodlo) => (
-              <div
-                key={zrodlo.fieldId}
-                data-testid={`wiersz-zrodla-${zrodlo.fieldId}`}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).closest("[role=switch]"))
-                    return;
-                  onToggleSource(zrodlo);
-                }}
-                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-border px-4"
-              >
-                <span
-                  aria-hidden="true"
-                  className="box-border h-2 w-2.5 flex-none rounded-[2px] border border-dashed"
-                  style={{ borderColor: zrodlo.shown ? "#404040" : "#a3a3a3" }}
-                />
-                <span className="min-w-0 flex-1 truncate">{zrodlo.name}</span>
-                <Switch
-                  checked={zrodlo.shown}
-                  onChange={() => onToggleSource(zrodlo)}
-                  ariaLabel={`Pokaż odnowienia ${zrodlo.name}`}
-                />
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                otworzOkno.current = true;
-                setOtwarty(false);
+    <>
+      <Button
+        variant="ghost"
+        icon
+        aria-label="Kategorie"
+        aria-haspopup="dialog"
+        onClick={(e) => {
+          // Zapamiętany przycisk dostaje fokus po zamknięciu arkusza
+          przycisk.current = e.currentTarget;
+          setOtwarty(true);
+        }}
+      >
+        <ListFilter size={20} aria-hidden="true" />
+      </Button>
+      <FormDialog open={otwarty} onOpenChange={setOtwarty} title="Kategorie">
+        {/* Wiersze na pełną szerokość arkusza (m-row sam daje odstęp 16 px) */}
+        <div className="-mx-5 -mb-5 border-t border-border">
+          {categories.map((kategoria) => (
+            // Cały wiersz przełącza kategorię; stuknięcie w sam przełącznik obsługuje on sam
+            // (sprawdzamy cel kliknięcia, żeby nie przełączyć dwa razy)
+            <div
+              key={kategoria.id}
+              data-testid={`wiersz-kategorii-${kategoria.id}`}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("[role=switch]")) return;
+                onToggle(kategoria);
               }}
-              className="flex min-h-[52px] w-full cursor-pointer items-center px-4 text-left text-muted-foreground"
+              className="m-row cursor-pointer"
             >
-              + Kategoria
-            </button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+              <span
+                aria-hidden="true"
+                className="size-2.5 flex-none rounded-full"
+                style={{ background: kategoria.color }}
+              />
+              <span className="min-w-0 flex-1 truncate">{kategoria.name}</span>
+              <Switch
+                checked={!kategoria.hidden}
+                onChange={() => onToggle(kategoria)}
+                ariaLabel={`Pokaż kategorię ${kategoria.name}`}
+              />
+            </div>
+          ))}
+          {sources.map((zrodlo) => (
+            <div
+              key={zrodlo.fieldId}
+              data-testid={`wiersz-zrodla-${zrodlo.fieldId}`}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("[role=switch]")) return;
+                onToggleSource(zrodlo);
+              }}
+              className="m-row cursor-pointer"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "box-border h-2 w-2.5 flex-none rounded-[2px] border border-dashed",
+                  zrodlo.shown
+                    ? "border-foreground"
+                    : "border-muted-foreground",
+                )}
+              />
+              <span className="min-w-0 flex-1 truncate">{zrodlo.name}</span>
+              <Switch
+                checked={zrodlo.shown}
+                onChange={() => onToggleSource(zrodlo)}
+                ariaLabel={`Pokaż odnowienia ${zrodlo.name}`}
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              otworzOkno.current = true;
+              setOtwarty(false);
+            }}
+            className="m-row w-full cursor-pointer text-left text-muted-foreground"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Kategoria
+          </button>
+        </div>
+      </FormDialog>
+    </>
   );
 }

@@ -164,11 +164,11 @@ describe("MBlockSheet", () => {
       screen.getByRole("textbox", { name: "Nazwa bloku" }),
       "Bieg",
     );
-    await userEvent.click(screen.getByRole("radio", { name: "Własne" }));
+    await userEvent.click(screen.getByRole("button", { name: "Własne…" }));
     const zapis = screen.getByRole("button", { name: "Zapisz blok" });
     expect(zapis).toBeEnabled();
     // Domyślnie zaznaczony jest dzień z daty (wtorek); zdjęcie go zostawia pustą listę
-    await userEvent.click(screen.getByRole("button", { name: "Dzień wt" }));
+    await userEvent.click(screen.getByRole("button", { name: "wt" }));
     expect(zapis).toBeDisabled();
   });
 
@@ -247,7 +247,7 @@ describe("MBlockSheet", () => {
       recurrence: { freq: "weekly", until: "2026-11-10" },
     });
     expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeDisabled();
-    await userEvent.click(screen.getByRole("radio", { name: "Nie" }));
+    await userEvent.click(screen.getByRole("button", { name: "Nie" }));
     expect(screen.getByRole("button", { name: "Zapisz blok" })).toBeEnabled();
   });
 
@@ -297,7 +297,7 @@ describe("MBlockSheet", () => {
     expect(
       screen.queryByRole("button", { name: "Powtarzaj do" }),
     ).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: "Co tydzień" }));
+    await userEvent.click(screen.getByRole("button", { name: "Co tydzień" }));
     const doKiedy = screen.getByRole("button", { name: "Powtarzaj do" });
     expect(doKiedy).toHaveTextContent("bez końca");
     await userEvent.click(doKiedy);
@@ -358,6 +358,104 @@ describe("MBlockSheet", () => {
       screen.getByText(
         "Zmiana dnia działa dla tego wystąpienia albo dla całej serii tygodniowej.",
       ),
+    ).toBeInTheDocument();
+  });
+
+  it("nagłówek arkusza: „Anuluj” zamyka, „Zapisz” po lewej stronie tytułu „Nowy blok”", async () => {
+    const { onDone } = wyrenderuj();
+    expect(
+      screen.getByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Zapisz blok" }),
+    ).toHaveTextContent("Zapisz");
+    await userEvent.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it("data „Dzień” bez przecinka: „wt 17.11.2026”", () => {
+    wyrenderuj();
+    expect(screen.getByRole("button", { name: "Dzień" })).toHaveTextContent(
+      "wt 17.11.2026",
+    );
+  });
+
+  it("wybrana kategoria dostaje kolor z danych (tło, ramka, pierścień)", async () => {
+    wyrenderuj();
+    await userEvent.click(screen.getByRole("button", { name: "Sport" }));
+    const chip = screen.getByRole("button", { name: "Sport" });
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+    // #c2410c = rgb(194, 65, 12); pierścień w 40% krycia (66)
+    expect(chip.style.boxShadow).toContain("rgba(194, 65, 12, 0.4)");
+  });
+
+  it("opis reguły pod powtarzaniem: tekst z recurrence-text", async () => {
+    wyrenderuj();
+    expect(screen.getByText(/^Jednorazowy blok\./)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Co tydzień" }));
+    expect(
+      screen.getByText(/^Co tydzień we wtorki, bez końca\./),
+    ).toBeInTheDocument();
+  });
+
+  it("notatka trafia do createBlock", async () => {
+    wyrenderuj();
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Nazwa bloku" }),
+      "Bieg",
+    );
+    await userEvent.type(screen.getByLabelText("Notatka"), "Nad Zalewem");
+    await userEvent.click(screen.getByRole("button", { name: "Zapisz blok" }));
+    await waitFor(() => expect(createBlock).toHaveBeenCalled());
+    expect(createBlock.mock.calls[0][0].note).toBe("Nad Zalewem");
+  });
+
+  it("„Usuń blok” jest tylko w edycji; blok jednorazowy pyta „Usunąć blok?” i usuwa", async () => {
+    const { unmount } = render(
+      <MBlockSheet
+        mode="create"
+        initial={NOWY}
+        categories={KATEGORIE}
+        clock="24"
+        weekStart="mon"
+        today="2026-11-17"
+        onDone={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Usuń blok" }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    const { onDone } = wyrenderuj("edit", {
+      ...NOWY,
+      title: "Algebra",
+      blockId: "b2",
+      occurrenceDate: "2026-11-17",
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Usuń blok" }));
+    expect(
+      await screen.findByRole("alertdialog", { name: "Usunąć blok?" }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(changeOccurrence).toHaveBeenCalledWith({
+      blockId: "b2",
+      date: "2026-11-17",
+      scope: "all",
+      delete: true,
+    });
+  });
+
+  it("„Usuń blok” cyklicznego otwiera okno zakresu; „Anuluj” wraca do arkusza", async () => {
+    wyrenderuj("edit", CYKLICZNY);
+    await userEvent.click(screen.getByRole("button", { name: "Usuń blok" }));
+    expect(
+      screen.getByRole("dialog", { name: "Usuwasz blok, który się powtarza" }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
+    expect(
+      screen.getByRole("dialog", { name: "Edytuj blok" }),
     ).toBeInTheDocument();
   });
 });

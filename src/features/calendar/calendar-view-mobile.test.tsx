@@ -80,16 +80,19 @@ describe("CalendarView na telefonie", () => {
     );
     expect(screen.getByTestId("m-os-dnia")).toBeInTheDocument();
     expect(screen.getByTestId("kolumna-2026-11-18")).toBeInTheDocument();
-    // Segment w nagłówku telefonu pokazuje „Dzień”
-    const segmenty = screen.getAllByRole("radiogroup", {
+    // Segment web zostaje przy „Tydzień”, a nagłówek telefonu (linki) wskazuje „Dzień”
+    const segmentWeb = screen.getByRole("radiogroup", {
+      name: "Widok kalendarza",
+    });
+    expect(segmentWeb.querySelector('[aria-checked="true"]')).toHaveTextContent(
+      "Tydzień",
+    );
+    const nawigacja = screen.getByRole("navigation", {
       name: "Widok kalendarza",
     });
     expect(
-      segmenty[0].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Tydzień");
-    expect(
-      segmenty[1].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Dzień");
+      within(nawigacja).getByRole("link", { name: "Dzień" }),
+    ).toHaveAttribute("aria-current", "page");
   });
 
   it("z jawnym widokiem tygodnia telefon pokazuje listę tygodnia", () => {
@@ -131,7 +134,7 @@ describe("CalendarView na telefonie", () => {
     expect(arkusz).toHaveTextContent("Algebra");
   });
 
-  it("stuknięcie pustej osi o 10:00 otwiera okno nowego bloku z 10:00", async () => {
+  it("stuknięcie pustej osi o 10:00 otwiera „Nowy wpis” z 10:00; „Blok” prowadzi do arkusza nowego bloku", async () => {
     render(
       <CalendarView
         view="dzien"
@@ -142,33 +145,170 @@ describe("CalendarView na telefonie", () => {
       />,
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
       { clientY: 10 * 56 },
     );
+    const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
+    expect(wpis).toHaveTextContent("śr 18.11 · 10:00");
+    await userEvent.click(within(wpis).getByRole("button", { name: /^Blok/ }));
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
-    expect(okno).toHaveTextContent("10:00");
-    expect(okno).toHaveTextContent("18.11.2026");
-  });
-
-  it("telefon: „Nowy blok” to arkusz MBlockSheet (nagłówek z Zapisz), nie okno web", async () => {
-    render(
-      <CalendarView
-        view="dzien"
-        date="2026-11-18"
-        today="2026-11-17"
-        nowMinutes={600}
-        data={dane()}
-      />,
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
-      { clientY: 10 * 56 },
-    );
-    const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(screen.queryByRole("dialog", { name: "Nowy wpis" })).toBeNull();
+    // Telefon: arkusz MBlockSheet (nagłówek z Zapisz), nie okno web
     expect(
       within(okno).getByRole("button", { name: "Zapisz blok" }),
     ).toBeInTheDocument();
     expect(within(okno).getByText("Czas trwania: 1 h")).toBeInTheDocument();
+    expect(okno).toHaveTextContent("10:00");
+    expect(okno).toHaveTextContent("18.11.2026");
+  });
+
+  it("„Nowy wpis” na telefonie: Bieg i Trening siłowy to linki do Sportu z datą i godziną", async () => {
+    render(
+      <CalendarView
+        view="dzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
+      { clientY: 10 * 56 },
+    );
+    const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
+    expect(within(wpis).getByRole("link", { name: /^Bieg/ })).toHaveAttribute(
+      "href",
+      "/sport?nowy=bieg&data=2026-11-18&godzina=10:00",
+    );
+    expect(
+      within(wpis).getByRole("link", { name: /^Trening siłowy/ }),
+    ).toHaveAttribute(
+      "href",
+      "/sport?nowy=silownia&data=2026-11-18&godzina=10:00",
+    );
+    await userEvent.click(within(wpis).getByRole("button", { name: "Anuluj" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("pływający „Dodaj blok” otwiera „Nowy wpis” na dziś i najbliższą pełną godzinę", async () => {
+    render(
+      <CalendarView
+        view="dzien"
+        date="2026-11-18"
+        today="2026-11-18"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Nowy wpis" }),
+    ).toHaveTextContent("śr 18.11 · 11:00");
+  });
+
+  it("tydzień: „Nowy wpis” (+) w nagłówku telefonu otwiera „Nowy wpis”", async () => {
+    render(
+      <CalendarView
+        view="tydzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    // „+” w nagłówku tygodnia na telefonie i pływający przycisk widoku mają nazwę „Nowy wpis”
+    const przyciski = screen.getAllByRole("button", { name: "Nowy wpis" });
+    await userEvent.click(przyciski[0]);
+    expect(
+      await screen.findByRole("dialog", { name: "Nowy wpis" }),
+    ).toHaveTextContent("wt 17.11 · 11:00");
+  });
+
+  it("szczegóły bloku na telefonie mają jeden ✕; stuknięcie bloku w tygodniu i miesiącu też je otwiera", async () => {
+    const { unmount } = render(
+      <CalendarView
+        view="dzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    const mobilny = screen
+      .getAllByRole("button", { name: /Algebra/ })
+      .find((b) => !b.hasAttribute("data-occurrence-key"))!;
+    await userEvent.click(mobilny);
+    const arkusz = await screen.findByRole("dialog", {
+      name: "Szczegóły bloku",
+    });
+    expect(
+      within(arkusz).getAllByRole("button", { name: "Zamknij" }),
+    ).toHaveLength(1);
+    expect(arkusz).toHaveTextContent("Studia");
+    unmount();
+
+    render(
+      <CalendarView
+        view="tydzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    const wTygodniu = screen
+      .getAllByRole("button", { name: /Algebra/ })
+      .find((b) => !b.hasAttribute("data-occurrence-key"))!;
+    await userEvent.click(wTygodniu);
+    expect(
+      await screen.findByRole("dialog", { name: "Szczegóły bloku" }),
+    ).toHaveTextContent("Algebra");
+  });
+
+  it("„Usuń” w szczegółach jednorazowego bloku pyta „Usunąć blok?”, cyklicznego o zakres", async () => {
+    const cykliczne = dane();
+    cykliczne.blocks[0].recurrence = { freq: "weekly" };
+    const { unmount } = render(
+      <CalendarView
+        view="dzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    await userEvent.click(
+      screen
+        .getAllByRole("button", { name: /Algebra/ })
+        .find((b) => !b.hasAttribute("data-occurrence-key"))!,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Usuń" }));
+    expect(
+      await screen.findByRole("alertdialog", { name: "Usunąć blok?" }),
+    ).toBeInTheDocument();
+    unmount();
+
+    render(
+      <CalendarView
+        view="dzien"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={cykliczne}
+      />,
+    );
+    await userEvent.click(
+      screen
+        .getAllByRole("button", { name: /Algebra/ })
+        .find((b) => !b.hasAttribute("data-occurrence-key"))!,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Usuń" }));
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Usuwasz blok, który się powtarza",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("ikona „Kategorie” otwiera arkusz; przełącznik ukrywa kategorię tą samą akcją co web", async () => {
@@ -193,7 +333,7 @@ describe("CalendarView na telefonie", () => {
     ).toHaveAttribute("aria-checked", "false");
   });
 
-  it("„+ Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
+  it("„Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
     render(
       <CalendarView
         view="dzien"
@@ -205,11 +345,18 @@ describe("CalendarView na telefonie", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     await userEvent.click(
-      await screen.findByRole("button", { name: "+ Kategoria" }),
+      await screen.findByRole("button", { name: "Kategoria" }),
     );
+    const arkusz = await screen.findByRole("dialog", {
+      name: "Nowa kategoria",
+    });
+    // Telefon: arkusz MCategorySheet (nagłówek z „Dodaj”, siatka kolorów), nie okno web
     expect(
-      await screen.findByRole("dialog", { name: "Nowa kategoria" }),
-    ).toBeInTheDocument();
+      within(arkusz).getAllByRole("button", { name: "Dodaj" })[0],
+    ).toBeDisabled();
+    expect(
+      within(arkusz).getByRole("radio", { name: "Niebieski" }),
+    ).toHaveAttribute("aria-checked", "false");
   });
 
   it("nagłówek telefonu bez „+”; dzień wypełnia ekran nad dolnym paskiem", () => {
@@ -227,11 +374,34 @@ describe("CalendarView na telefonie", () => {
       1,
     );
     expect(
-      screen.getByRole("button", { name: "Dodaj blok" }),
+      screen.getByRole("button", { name: "Nowy wpis" }),
     ).toBeInTheDocument();
     expect((container.firstElementChild as HTMLElement).className).toContain(
       "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]",
     );
+  });
+
+  it("miesiąc na telefonie: „Brak bloków — dodaj” w pustym dniu otwiera „Nowy wpis” na ten dzień", async () => {
+    render(
+      <CalendarView
+        view="miesiac"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "20 listopada" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Brak bloków — dodaj" }),
+    );
+    // Makieta CMCalendarMonth: „dodaj” prowadzi do „Nowy wpis”, a wiersz „Blok” do arkusza bloku
+    const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
+    await userEvent.click(within(wpis).getByRole("button", { name: /^Blok/ }));
+    const arkusz = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(
+      within(arkusz).getByRole("button", { name: "Dzień" }),
+    ).toHaveTextContent("20.11");
   });
 
   it("telefon: „Edytuj” w szczegółach bloku otwiera arkusz edycji", async () => {
@@ -286,7 +456,7 @@ describe("CalendarView na telefonie", () => {
       ).toHaveTextContent("18.11");
       expect(within(arkusz).getByText("09:00")).toBeInTheDocument();
       await userEvent.click(
-        within(arkusz).getByRole("button", { name: "Anuluj" }),
+        within(arkusz).getAllByRole("button", { name: "Anuluj" })[0],
       );
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(replace).toHaveBeenCalledWith("/kalendarz?data=2026-11-18", {

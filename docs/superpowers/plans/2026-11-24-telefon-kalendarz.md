@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (wiersze CMCalendar*, CMBlockSheet), uwagi „kalendarz” i decyzje. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMCalendarDay.dc.html` (z arkuszem kategorii: stan `catsOpen`), `CMCalendarWeek.dc.html`, `CMCalendarMonth.dc.html`, `CMBlockSheet.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMCalendarDay CMCalendarWeek CMCalendarMonth CMBlockSheet`.
+**Makiety (wiążące):** `docs/design/mockups/CMCalendarDay.dc.html` (z arkuszem kategorii: stan `catsOpen`), `CMCalendarWeek.dc.html`, `CMCalendarMonth.dc.html`, `CMBlockSheet.dc.html` (tweak `edit` = tryb edycji), a od 24.11 także `CMBlockDetail.dc.html`, `CMScopeSheet.dc.html`, `CMDeleteBlock.dc.html`, `CMNewEntry.dc.html`, `CMCategorySheet.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMCalendarDay CMCalendarWeek CMCalendarMonth CMBlockSheet`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4 (`@utility` `m-*` z pakietu fundament), kontrolki `@/components/controls`, Vitest, Playwright (CI).
 
@@ -25,7 +25,7 @@
 - Kolory kategorii to dane: tło `kolor + "12"`, ramka `kolor + "4d"`, pierścień wyboru `0 0 0 2px #fff, 0 0 0 4px kolor + "66"`.
 - Usuń `font-mono` i etykiety wersalikami z plików telefonu kalendarza. Hexy UI zamień na tokeny.
 - Po każdym zadaniu `pnpm -s test`, `pnpm -s typecheck` i `pnpm -s lint`. Testy e2e telefonu (`e2e/calendar.spec.ts`, projekt `mobile`) aktualizuj przy zmianie tekstu albo roli.
-- Bez migracji. Odnowienia subskrypcji na telefonie robi pakiet `subskrypcje`, nie ten.
+- Bez migracji. Odnowienia subskrypcji na telefonie (plakietki ↻ w dniu/tygodniu/miesiącu i CMRenewalSheet) robi pakiet `subskrypcje`, nie ten.
 
 ## Task 1: Dzień (CMCalendarDay) i arkusz kategorii
 
@@ -75,14 +75,27 @@
     - Dzień: `igroup` z ikoną kalendarza i datą „nd 15.11.2026”, **bez przecinka** (było „nd, 15.11.2026”);
     - Od / Do: `m-step` ±;
     - „Czas trwania: …” jako `.hint`;
-  - „Powtarzanie”: `.seg` na całą szerokość;
+  - „Powtarzanie”: chipy (Nie, Codziennie, Co tydzień, Dni robocze, Własne…); przy „Własne…” siatka 7 dni; przy powtarzaniu karta „Powtarzaj do” (chip „do DD.MM.RRRR” / „bez końca”) i `.hint` z opisem reguły (jak `recurrence-text.ts`);
+  - „Notatka”: `textarea` 16 px, placeholder „Opcjonalnie”;
+  - karta „Przypomnij 5 min wcześniej” z przełącznikiem (bez zmian logiki);
+  - tryb edycji: tytuł „Edytuj blok” i na dole `btndo` „Usuń blok” (otwiera usuwanie: jednorazowy → `ConfirmDialog`, cykliczny → okno zakresu);
   - „Zadania w bloku · N”: karta z wierszami (`cbx`, tytuł, „Usuń zadanie” 44 px muted) i wierszem dodawania „Dodaj zadanie…” (Enter dodaje).
-- [ ] Szczegóły istniejącego bloku (tryb podglądu w arkuszu, jeśli jest): `Progress` i checkboxy w tokenach COSS, nie czarne (odłożone Etap 1 Task 8).
-- [ ] `scope-dialog.tsx` na telefonie: radio jak `input[type=radio]` z `coss.css` (16 px, wiersz 44 px), bez własnego stylu (odłożone 2a Task 4).
+- [ ] `scope-dialog.tsx` na telefonie według CMScopeSheet: arkusz od dołu, tytuł 20 px „Zmieniasz blok, który się powtarza” + podtytuł (tytuł · reguła · co się zmienia), karta z wierszami-radio 64 px (tytuł 500 + `.hint` opisu), stopka 2 kolumny „Anuluj” (`btn`) · „Zapisz zmianę” (`btnp`); radio jak `input[type=radio]` z `coss.css` (odłożone 2a Task 4). Przy usuwaniu serii ten sam układ z tytułem „Usuwasz blok, który się powtarza”, dopiskiem „Zadania z odhaczonych wystąpień nie przepadają.” i `btnd` „Usuń” (CMDeleteBlock z `cykliczny`).
 - [ ] Testy: aktualizacja formatu daty, nagłówek z „Anuluj”/„Zapisz”, dodawanie i usuwanie zadania bez zmian.
 - [ ] Commit: `feat(telefon): arkusz bloku według CMBlockSheet`.
 
-## Task 4 (koordynator): przegląd, CI, scalenie, dziennik
+## Task 4: Szczegóły bloku, nowy wpis, nowa kategoria, dzień w liczbach
+
+**Files:** `src/features/calendar/block-popover.tsx` (gałąź telefonu) albo nowy `mobile/m-block-detail.tsx` (+ test), `src/features/calendar/new-entry-popover.tsx` (gałąź telefonu, + test), kod okna nowej kategorii (`grep -rn "Nowa kategoria" src`), `mobile/m-calendar-day.tsx`.
+
+- [ ] Szczegóły bloku na telefonie według CMBlockDetail: arkusz od dołu (jeden ✕), plakietka kategorii (tło/ramka/kropka koloru), tytuł 22/600, „dzień · od–do · czas” muted, reguła powtarzania `.hint`; „Zadania · X z N” — karta z checkboxami `cbx` (odhaczone przekreślone, muted) i wierszem „Dodaj zadanie…”; „Notatka”; stopka 2 kolumny „Usuń” (`btndo`) · „Edytuj” (`btn`). `Progress` i checkboxy w tokenach COSS, nie czarne (odłożone Etap 1 Task 8). Stuknięcie bloku w dniu/tygodniu/miesiącu otwiera ten arkusz.
+- [ ] FAB i „Nowy blok” w nagłówku tygodnia otwierają na telefonie arkusz „Nowy wpis” według CMNewEntry (karta z trzema wierszami 64 px: Blok · Bieg · Trening siłowy, z awatarem ikony, opisem `.hint` i chevronem; „Anuluj” `btng`). Wiersze prowadzą tam, gdzie dziś prowadzi `new-entry-popover` na webie. Stuknięcie pustego miejsca na osi dnia też otwiera „Nowy wpis”.
+- [ ] Nowa kategoria na telefonie według CMCategorySheet: arkusz z nagłówkiem „Anuluj · Nowa kategoria · Dodaj”, pole „Nazwa” (błąd „Nazwa nie może być pusta.”), siatka 4×2 kolorów (zajęte wyblakłe), „Podgląd” bloku z paskiem koloru.
+- [ ] Dzień: pod wierszem daty pasek „Zaplanowane X · wolne (8–20) Y · zadania A/B” (12 px muted, `num`), liczone z danych dnia.
+- [ ] Testy zachowania; e2e mobile przy zmianie ról/tekstów.
+- [ ] Commit: `feat(telefon): szczegóły bloku, nowy wpis i kategoria według CM`.
+
+## Task 5 (koordynator): przegląd, CI, scalenie, dziennik
 
 **Files:** `docs/superpowers/plans/2026-11-24-telefon-kalendarz.md` (kopia), `odlozone.md`, dziennik, `stan-projektu.md`, `e2e/visual.spec.ts`.
 

@@ -79,7 +79,7 @@ class Component extends DCLogic {
       rec,
       sub: rec ? '„Bieg 10 km” · co tydzień w niedziele · 16:00–17:00' : '„Matematyka — ćwiczenia” · nd 15.11 · 13:00–14:30',
       opts: O.map((o) => ({ t: o[1], d: o[2], on: o[0] === pick, pick: () => this.setState({ pick: o[0] }) })),
-      note: rec ? 'Zadania z odhaczonych wystąpień nie przepadają.' : 'Blok zniknie z kalendarza razem z zadaniami.'
+      note: rec ? 'Usunięte wystąpienia znikną razem z zadaniami.' : 'Blok zniknie z kalendarza razem z zadaniami.'
     };
   }
 }
