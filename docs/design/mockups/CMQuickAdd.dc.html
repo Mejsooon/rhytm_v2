@@ -62,11 +62,11 @@ html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px
     <div class="m-grab"></div>
     <div class="dlg-h" style="padding:8px 8px 8px 20px;align-items:center"><h2 class="dlg-t" style="flex:1">Szybko dodaj</h2><a href="CMToday.dc.html" class="btng ic" aria-label="Zamknij"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
     <div class="dlg-b" style="padding:4px 20px 20px">
-      <div class="seg" style="display:flex" role="group" aria-label="Rodzaj"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="4"><button type="button" style="flex:1" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      <div class="seg" style="display:flex" role="group" aria-label="Rodzaj"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="3"><button type="button" style="flex:1" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
       <label class="fld" style="font-weight:400"><span class="lbl">{{fieldLbl}}</span><input class="inp" type="text" placeholder="{{ph}}"></label>
-      <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Kiedy</span>
+      <sc-if value="{{hasWhen}}" hint-placeholder-val="{{true}}"><div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Kiedy</span>
         <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px"><sc-for list="{{whens}}" as="w" hint-placeholder-count="4"><button type="button" class="chip" style="flex:none" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div>
-      </div>
+      </div></sc-if>
       <sc-if value="{{isBlock}}" hint-placeholder-val="{{false}}"><a href="CMBlockSheet.dc.html" class="m-row" style="padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span style="flex:1">Pełny formularz bloku (kategoria, zadania, powtarzanie)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
       <sc-if value="{{isRun}}" hint-placeholder-val="{{false}}"><a href="CMRunNew.dc.html" class="m-row" style="padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span style="flex:1">Pełny formularz biegu (dystans, tempo)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
     </div>
@@ -78,13 +78,14 @@ html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px
 class Component extends DCLogic {
   renderVals() {
     const S = this.state || {};
-    const k = S.k || 'task', w = S.w || 'Dziś';
-    const K = [['task', 'Zadanie', 'Co jest do zrobienia?', 'Zadanie'], ['block', 'Blok', 'Nazwa bloku, np. Nauka SQL', 'Blok w kalendarzu'], ['run', 'Bieg', 'Np. 8 km spokojnie', 'Bieg'], ['habit', 'Nawyk', 'Np. Woda 2 l', 'Nawyk']];
+    const k = S.k || 'block', w = S.w || 'Dziś';
+    // Zadanie zawsze należy do bloku: dodaje się je w arkuszu bloku, nie tutaj.
+    const K = [['block', 'Blok', 'Nazwa bloku, np. Nauka SQL', 'Blok w kalendarzu'], ['run', 'Bieg', 'Np. 8 km spokojnie', 'Bieg'], ['habit', 'Nawyk', 'Np. Woda 2 l', 'Nawyk']];
     const cur = K.filter((x) => x[0] === k)[0];
     return {
       kinds: K.map((x) => ({ t: x[1], p: x[0] === k ? 'true' : 'false', pick: () => this.setState({ k: x[0] }) })),
-      ph: cur[2], fieldLbl: cur[3], isBlock: k === 'block', isRun: k === 'run',
-      whens: ['Dziś', 'Dziś 18:00', 'Jutro', 'Pn 16.11', 'Bez daty'].map((t) => ({ t, p: t === w ? 'true' : 'false', pick: () => this.setState({ w: t }) }))
+      ph: cur[2], fieldLbl: cur[3], isBlock: k === 'block', isRun: k === 'run', hasWhen: k !== 'habit',
+      whens: ['Dziś', 'Dziś 18:00', 'Jutro', 'Pn 16.11'].map((t) => ({ t, p: t === w ? 'true' : 'false', pick: () => this.setState({ w: t }) }))
     };
   }
 }
