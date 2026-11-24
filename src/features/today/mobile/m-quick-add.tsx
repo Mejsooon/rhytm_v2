@@ -1,7 +1,7 @@
 "use client";
 
 // Arkusz szybkiego dodawania na telefonie wg MQuickAdd.dc.html (pływający „+” w MToday).
-// Segment Zadanie / Blok / Bieg / Nawyk, jedno pole, chipy „Kiedy” zależne od typu
+// Segment Blok / Bieg / Nawyk, jedno pole, chipy „Kiedy” zależne od typu
 // (quickWhenOptions w model.ts) i „Dodaj”. Zapis nie jest optymistyczny: pending, błąd zostaje
 // w arkuszu, a po sukcesie arkusz się zamyka, pokazuje toast „Dodano” i odświeża Dziś.
 import { useRef, useState } from "react";
@@ -17,7 +17,6 @@ import { createBlock } from "@/features/calendar/actions";
 import type { CategoryRow } from "@/features/calendar/load-calendar";
 import { createHabit } from "@/features/habits/actions";
 import { saveRun } from "@/features/sport/actions";
-import { createStandaloneTask } from "@/features/tasks/actions";
 import type { ActionResult } from "@/lib/action-result";
 import { parseQuickRun, quickWhenOptions, type QuickKind } from "../model";
 
@@ -30,12 +29,6 @@ const RODZAJE: {
   pole: string;
   placeholder: string;
 }[] = [
-  {
-    value: "task",
-    label: "Zadanie",
-    pole: "Zadanie",
-    placeholder: "Co jest do zrobienia?",
-  },
   {
     value: "block",
     label: "Blok",
@@ -76,7 +69,7 @@ export function MQuickAdd({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [rodzaj, setRodzaj] = useState<QuickKind>("task");
+  const [rodzaj, setRodzaj] = useState<QuickKind>("block");
   const [tekst, setTekst] = useState("");
   // Wybrany chip po etykiecie: zmiana typu zostawia „Jutro”, a chipa, którego już nie ma, zastępuje pierwszy
   const [kiedy, setKiedy] = useState("Dziś");
@@ -104,12 +97,7 @@ export function MQuickAdd({
     setBlad("");
     let wynik: ActionResult;
     try {
-      if (rodzaj === "task") {
-        wynik = await createStandaloneTask({
-          title: tytul,
-          dueDate: wybrana?.date ?? null,
-        });
-      } else if (rodzaj === "block") {
+      if (rodzaj === "block") {
         // Pierwsza niesystemowa i nieukryta kategoria wg pozycji; bez takiej blok jest bez kategorii
         const kategoria =
           categories

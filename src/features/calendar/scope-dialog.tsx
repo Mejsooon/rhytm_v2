@@ -157,7 +157,9 @@ export function ScopeDialog({
           aria-hidden="true"
           className="mt-px size-4 flex-none text-info max-[799px]:hidden"
         />
-        Zadania z odhaczonych wystąpień nie przepadają.
+        {intent === "delete"
+          ? "Zadania z usuniętych wystąpień zostaną usunięte razem z nimi."
+          : "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."}
       </p>
     </FormDialog>
   );

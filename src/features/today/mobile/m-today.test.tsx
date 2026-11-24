@@ -17,8 +17,6 @@ vi.mock("@/features/tasks/actions", () => ({
   toggleTask,
   addTask: vi.fn(),
   deleteTask: vi.fn(),
-  unpinTask: vi.fn(),
-  createStandaloneTask: vi.fn(),
 }));
 vi.mock("@/features/habits/actions", () => ({ setHabitCheck }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
@@ -49,10 +47,10 @@ function zadanie(
     title,
     done,
     due_date: "2026-11-17",
-    block_id: null,
+    block_id: "bx",
     position: 1,
     done_at: null,
-    occurrence_date: null,
+    occurrence_date: "2026-11-17",
     created_at: null,
     ...nadpisz,
   };
@@ -95,7 +93,6 @@ function dane(): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-11-01T10:00:00Z",
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -208,7 +205,6 @@ function dane(): TodayData {
         durationS: null,
       }),
     ],
-    counts: { blocks: 3, habits: 5, workouts: 2, sleepLogs: 1 },
   };
 }
 

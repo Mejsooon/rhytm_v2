@@ -48,8 +48,8 @@ const zadanie = (o: Record<string, unknown>) => ({
   title: "z",
   done: false,
   due_date: null,
-  block_id: null,
-  occurrence_date: null,
+  block_id: "bx",
+  occurrence_date: "2026-11-19",
   position: 0,
   ...o,
 });
@@ -89,7 +89,6 @@ describe("loadToday", () => {
       weeklyKmGoal: 30,
       workoutsGoalOn: true,
       weeklyWorkoutsGoal: 3,
-      createdAt: "2026-10-01T10:00:00Z",
     });
   });
 
@@ -268,28 +267,6 @@ describe("loadToday", () => {
     const wynik = await loadToday(supabase, "u1", TERAZ);
     expect(wynik.occurrencesToday.map((o) => o.blockId)).toEqual(["b1"]);
     expect(wynik.categories.map((k) => k.id)).toEqual(["c1"]);
-  });
-
-  it("liczniki z całej historii: bloki, nawyki, treningi, wpisy snu", async () => {
-    const { supabase, zapytania } = klient({
-      profiles: [PROFIL],
-      blocks: [{ data: [] }, { count: 3 }],
-      habits: [{ data: [] }, { count: 2 }],
-      sport_sessions: [{ data: [] }, { count: 5 }],
-      sleep_logs: [{ data: [] }, { count: 7 }],
-    });
-    const wynik = await loadToday(supabase, "u1", TERAZ);
-    expect(wynik.counts).toEqual({
-      blocks: 3,
-      habits: 2,
-      workouts: 5,
-      sleepLogs: 7,
-    });
-    const licznikBlokow = zapytania.filter((z) => z.tabela === "blocks")[1].q;
-    expect(licznikBlokow.select).toHaveBeenCalledWith("id", {
-      count: "exact",
-      head: true,
-    });
   });
 
   it("błąd zapytania rzuca wyjątek", async () => {

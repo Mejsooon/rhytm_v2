@@ -118,6 +118,9 @@ export function DeleteBlockDialog({
             <Dialog.Description className="m-0 mt-1 text-[13px] text-muted-foreground min-[800px]:text-sm">
               {opis}
             </Dialog.Description>
+            <p className="m-0 mt-2 text-[13px] text-muted-foreground min-[800px]:text-sm">
+              Zadania bloku, jeśli są, zostaną usunięte razem z nim.
+            </p>
           </div>
           {blad && (
             <p

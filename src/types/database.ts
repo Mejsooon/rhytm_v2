@@ -790,37 +790,37 @@ export type Database = {
       };
       tasks: {
         Row: {
-          block_id: string | null;
+          block_id: string;
           created_at: string | null;
           done: boolean;
           done_at: string | null;
           due_date: string | null;
           id: string;
-          occurrence_date: string | null;
+          occurrence_date: string;
           position: number;
           title: string;
           user_id: string;
         };
         Insert: {
-          block_id?: string | null;
+          block_id: string;
           created_at?: string | null;
           done?: boolean;
           done_at?: string | null;
           due_date?: string | null;
           id?: string;
-          occurrence_date?: string | null;
+          occurrence_date: string;
           position?: number;
           title: string;
           user_id: string;
         };
         Update: {
-          block_id?: string | null;
+          block_id?: string;
           created_at?: string | null;
           done?: boolean;
           done_at?: string | null;
           due_date?: string | null;
           id?: string;
-          occurrence_date?: string | null;
+          occurrence_date?: string;
           position?: number;
           title?: string;
           user_id?: string;

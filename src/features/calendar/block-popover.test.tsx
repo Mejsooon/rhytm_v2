@@ -2,12 +2,11 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addTask, toggleTask, deleteTask, unpinTask, toastError } = vi.hoisted(
+const { addTask, toggleTask, deleteTask, toastError } = vi.hoisted(
   () => ({
     addTask: vi.fn(),
     toggleTask: vi.fn(),
     deleteTask: vi.fn(),
-    unpinTask: vi.fn(),
     toastError: vi.fn(),
   }),
 );
@@ -15,7 +14,6 @@ vi.mock("@/features/tasks/actions", () => ({
   addTask,
   toggleTask,
   deleteTask,
-  unpinTask,
 }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 
@@ -121,7 +119,6 @@ beforeEach(() => {
   addTask.mockResolvedValue({ ok: true });
   toggleTask.mockResolvedValue({ ok: true });
   deleteTask.mockResolvedValue({ ok: true });
-  unpinTask.mockResolvedValue({ ok: true });
 });
 
 describe("BlockPopover", () => {
@@ -215,9 +212,9 @@ describe("BlockPopover", () => {
     expect(toastError).toHaveBeenCalled();
   });
 
-  it("przyciski ⋯ i × przy zadaniu na webie z myszą widać po najechaniu/fokusie w wierszu, bez hovera (tablet, telefon) stale", () => {
+  it("przycisk × przy zadaniu na webie z myszą widać po najechaniu/fokusie w wierszu, bez hovera (tablet, telefon) stale", () => {
     wyrenderuj();
-    for (const nazwa of ["Opcje zadania Szablony", "Usuń zadanie Szablony"]) {
+    for (const nazwa of ["Usuń zadanie Szablony"]) {
       const przycisk = screen.getByRole("button", { name: nazwa });
       // Chowanie tylko tam, gdzie jest hover — tablet dotykowy ≥ 800 px widzi przyciski stale
       expect(przycisk).not.toHaveClass("min-[800px]:opacity-0");
@@ -239,22 +236,13 @@ describe("BlockPopover", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("× usuwa zadanie, a Odepnij je odpina", async () => {
+  it("× usuwa zadanie", async () => {
     wyrenderuj();
     await userEvent.click(
       screen.getByRole("button", { name: "Usuń zadanie Szablony" }),
     );
     expect(screen.queryByText("Szablony")).not.toBeInTheDocument();
     expect(deleteTask).toHaveBeenCalledWith({ id: "t2" });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Opcje zadania Testy RLS" }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Odepnij zadanie Testy RLS" }),
-    );
-    expect(screen.queryByText("Testy RLS")).not.toBeInTheDocument();
-    expect(unpinTask).toHaveBeenCalledWith({ taskId: "t3" });
   });
 
   it("blok cykliczny pokazuje znaczek, a Usuń i Edytuj wołają callbacki", async () => {

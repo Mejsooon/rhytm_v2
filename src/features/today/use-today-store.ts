@@ -1,9 +1,9 @@
 "use client";
 
 // Stan ekranu Dziś po stronie klienta z optymistycznymi zmianami (wzorzec jak useCalendarStore).
-// Plan dnia („x/y” bloków), „Zadania na dziś” i karta „Ten tydzień” liczą się z tych samych
-// `data.tasks`, więc jedno odhaczenie zmienia od razu wszystkie trzy miejsca. Odhaczenia nawyków
-// (telefon) zmieniają `data.checks` — listę nawyków i kafelek „Nawyki”.
+// Plan dnia („x/y” bloków), dymek bloku i kafelki telefonu liczą się z tych samych `data.tasks`,
+// więc jedno odhaczenie zmienia od razu wszystkie miejsca. Odhaczenia nawyków (web i telefon)
+// zmieniają `data.checks` — kafelki/listę nawyków i pasek „Nawyki”.
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { IsoDate } from "@/components/controls/calendar-math";
@@ -76,7 +76,7 @@ export function useTodayStore(initial: TodayData) {
 
   const data = biezacy.oczekujace.reduce((d, o) => o.zmiana(d), biezacy.baza);
 
-  // Odhaczenie nawyku dziś (telefon): od razu lista, seria i kafelek, błąd cofa zmianę z toastem.
+  // Odhaczenie nawyku dziś (web i telefon): od razu kafelek, seria i pasek, błąd cofa zmianę z toastem.
   // Klik odwraca to, co użytkownik właśnie widzi; zmiana ustawia stan wprost (nie odwraca),
   // więc nałożona drugi raz na bazę daje ten sam wynik.
   function toggleHabit(habitId: string, date: IsoDate) {

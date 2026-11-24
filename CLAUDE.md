@@ -24,6 +24,7 @@ Każda rozmowa zaczyna się od przeczytania dwóch plików:
 - **Git:**
   - commit i push tylko na gałęziach `feat/*` albo `docs/*`, nigdy commit na `main` poza merge;
   - scalanie do `main` tylko po słowach Mejsona „scal do main”, przez `git merge --no-ff`, z testami na połączonym kodzie;
+  - **wyjątek: seria autonomiczna z 2026-11-24.** Mejson zlecił projekty Dziś → Subscriptions (pełne, z odnowieniami w kalendarzu) → sprzątanie odłożonych uwag webu → Etap 3 (telefon) bez swojego udziału. W tej serii Claude sam scala do `main` po zielonym CI (lokalne testy + CI na GitHubie) i od razu zaczyna następny projekt. Decyzje, które normalnie należałyby do Mejsona, Claude podejmuje sam i zapisuje w „Do decyzji” z kosztem pomyłki. Mejson z góry potwierdził usunięcie 6 zadań bez bloku w migracji Dziś. Po zakończeniu serii wraca zwykła zasada „scal do main”;
   - zdalne gałęzie usuwa Mejson.
 - **Migracje** na produkcję wykonuje Claude przez konektor Supabase (decyzja Mejsona z 2026-11-23). Każda migracja ma test pgTAP w `supabase/tests/`. Zasady:
   - migracja idzie na produkcję dopiero po zielonym CI i po scaleniu do `main` („scal do main”), nigdy z gałęzi w trakcie pracy;

@@ -43,7 +43,7 @@ describe("ScopeDialog", () => {
       screen.getByText("Zmieni całą serię, także przeszłe tygodnie."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Zadania z odhaczonych wystąpień nie przepadają."),
+      screen.getByText("Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."),
     ).toBeInTheDocument();
   });
 
@@ -95,6 +95,11 @@ describe("ScopeDialog", () => {
     expect(
       screen.getByText("Nie udało się zapisać. Spróbuj ponownie."),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Zadania z usuniętych wystąpień zostaną usunięte razem z nimi.",
+      ),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(onPick).toHaveBeenCalledWith("this");
   });
@@ -142,7 +147,7 @@ describe("ScopeDialog", () => {
       "checked:border-primary",
     );
     const info = screen.getByText(
-      "Zadania z odhaczonych wystąpień nie przepadają.",
+      "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte.",
     );
     expect(info).toHaveClass("border-info-border", "rounded-lg", "text-[13px]");
     expect(info).not.toHaveClass("font-mono");

@@ -222,7 +222,7 @@ describe("changeOccurrence", () => {
     });
   });
 
-  it("this + delete → zadania samodzielne, potem wyjątek cancelled", async () => {
+  it("this + delete → zadania usunięte, potem wyjątek cancelled", async () => {
     const w = await changeOccurrence({
       blockId: "b1000000-0000-4000-8000-000000000001",
       date: "2026-11-10",
@@ -230,10 +230,12 @@ describe("changeOccurrence", () => {
       delete: true,
     });
     expect(w.ok).toBe(true);
-    expect(tables.tasks.update).toHaveBeenCalledWith({
-      block_id: null,
-      occurrence_date: null,
-    });
+    expect(tables.tasks.delete).toHaveBeenCalled();
+    expect(tables.tasks.eq).toHaveBeenCalledWith(
+      "occurrence_date",
+      "2026-11-10",
+    );
+    expect(tables.tasks.update).not.toHaveBeenCalled();
     expect(tables.block_exceptions.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         block_id: "b1000000-0000-4000-8000-000000000001",
@@ -300,7 +302,7 @@ describe("changeOccurrence", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("all ze zmianą powtarzalności odpina zadania spoza nowej serii", async () => {
+  it("all ze zmianą powtarzalności usuwa zadania spoza nowej serii", async () => {
     tables.tasks = fakeTable({
       data: [
         {
@@ -319,13 +321,39 @@ describe("changeOccurrence", () => {
       scope: "all",
       patch: { recurrence: { freq: "weekdays" } },
     });
-    expect(tables.tasks.update).toHaveBeenCalledWith({
-      block_id: null,
-      occurrence_date: null,
-    });
+    expect(tables.tasks.delete).toHaveBeenCalled();
+    expect(tables.tasks.update).not.toHaveBeenCalled();
     expect(tables.tasks.in).toHaveBeenCalledWith("id", [
       "f2000000-0000-4000-8000-000000000002",
     ]);
+  });
+
+  it("blok jednorazowy przesunięty na inny dzień → zadania idą z nim, delete niewołane", async () => {
+    tables.blocks = fakeTable({
+      data: [{ id: blok.id }],
+      single: { ...blok, recurrence: null, start_local: "2026-11-10T08:00:00" },
+    });
+    tables.tasks = fakeTable({
+      data: [
+        {
+          id: "f1000000-0000-4000-8000-000000000001",
+          occurrence_date: "2026-11-10",
+        },
+      ],
+    });
+    const w = await changeOccurrence({
+      blockId: blok.id,
+      date: "2026-11-10",
+      scope: "all",
+      patch: { date: "2026-11-12" },
+    });
+    expect(w.ok).toBe(true);
+    expect(tables.tasks.update).toHaveBeenCalledWith({
+      occurrence_date: "2026-11-12",
+      due_date: "2026-11-12",
+    });
+    expect(tables.tasks.eq).toHaveBeenCalledWith("block_id", blok.id);
+    expect(tables.tasks.delete).not.toHaveBeenCalled();
   });
 
   it("zmiana bloku, której nikt nie widzi (0 wierszy) → ok: false", async () => {

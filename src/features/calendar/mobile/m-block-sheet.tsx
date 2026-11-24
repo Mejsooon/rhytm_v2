@@ -190,15 +190,17 @@ export function MBlockSheet({
       return;
     }
     // Edycja: zadanie trafia do wystąpienia od razu, bez czekania na „Zapisz”
+    const idBloku = initial.blockId;
+    if (!idBloku) return;
     licznikTymczasowych.current += 1;
     const tymczasowe: TaskRow = {
-      id: `${PREFIKS_TYMCZASOWY}${initial.blockId}-${licznikTymczasowych.current}`,
+      id: `${PREFIKS_TYMCZASOWY}${idBloku}-${licznikTymczasowych.current}`,
       user_id: "",
       title: tytul,
       done: false,
       done_at: null,
       due_date: initial.date,
-      block_id: initial.blockId ?? null,
+      block_id: idBloku,
       occurrence_date: dataOryginalna,
       position: Number.MAX_SAFE_INTEGER,
       created_at: null,
@@ -207,7 +209,7 @@ export function MBlockSheet({
       (d) => ({ ...d, tasks: [...d.tasks, tymczasowe] }),
       () =>
         addTask({
-          blockId: initial.blockId ?? "",
+          blockId: idBloku,
           date: dataOryginalna,
           title: tytul,
         }),

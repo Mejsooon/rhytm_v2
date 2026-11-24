@@ -19,12 +19,9 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 
 import {
   addTask,
-  createStandaloneTask,
   deleteTask,
-  pinTaskToOccurrence,
   renameTask,
   toggleTask,
-  unpinTask,
 } from "./actions";
 
 const BLAD = "Nie udało się zapisać. Spróbuj ponownie.";
@@ -148,57 +145,6 @@ describe("akcje zadań", () => {
       "id",
       "f1000000-0000-4000-8000-000000000001",
     );
-  });
-
-  it("createStandaloneTask zapisuje termin albo null", async () => {
-    await createStandaloneTask({ title: "Zakupy", dueDate: "2026-11-20" });
-    expect(tables.tasks.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: "u1",
-        title: "Zakupy",
-        due_date: "2026-11-20",
-        block_id: null,
-      }),
-    );
-    await createStandaloneTask({ title: "Zakupy", dueDate: null });
-    expect(tables.tasks.insert).toHaveBeenLastCalledWith(
-      expect.objectContaining({ due_date: null }),
-    );
-  });
-
-  it("pinTaskToOccurrence zapisuje block_id, occurrence_date i due_date", async () => {
-    const w = await pinTaskToOccurrence({
-      taskId: "f1000000-0000-4000-8000-000000000001",
-      blockId: "b1000000-0000-4000-8000-000000000001",
-      date: "2026-11-10",
-    });
-    expect(w.ok).toBe(true);
-    expect(tables.tasks.update).toHaveBeenCalledWith({
-      block_id: "b1000000-0000-4000-8000-000000000001",
-      occurrence_date: "2026-11-10",
-      due_date: "2026-11-10",
-    });
-  });
-
-  it("pinTaskToOccurrence do nieistniejącego bloku → ok: false", async () => {
-    tables.blocks = fakeTable({ single: null });
-    expect(
-      (
-        await pinTaskToOccurrence({
-          taskId: "f1000000-0000-4000-8000-000000000001",
-          blockId: "e0000000-0000-4000-8000-000000000000",
-          date: "2026-11-10",
-        })
-      ).ok,
-    ).toBe(false);
-  });
-
-  it("unpinTask zeruje block_id i occurrence_date, termin zostaje", async () => {
-    await unpinTask({ taskId: "f1000000-0000-4000-8000-000000000001" });
-    expect(tables.tasks.update).toHaveBeenCalledWith({
-      block_id: null,
-      occurrence_date: null,
-    });
   });
 
   it("brak dopasowanego wiersza (RLS / zły id) → ok: false", async () => {

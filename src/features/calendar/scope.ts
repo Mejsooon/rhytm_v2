@@ -34,7 +34,7 @@ export type ScopePlan =
       patch: Record<string, unknown>;
       delete: boolean;
     }
-  | { kind: "detachTasksAndCancel"; date: IsoDate }
+  | { kind: "deleteTasksAndCancel"; date: IsoDate }
   // Zmiana niemożliwa (np. inny dzień dla serii codziennej) — akcja zwraca komunikat
   | { kind: "reject"; message: string };
 
@@ -122,7 +122,7 @@ export function planScopeChange(input: {
   // Zakres "to wystąpienie"
   if (scope === "this") {
     if (usun) {
-      return { kind: "detachTasksAndCancel", date: dataOryginalna };
+      return { kind: "deleteTasksAndCancel", date: dataOryginalna };
     }
     const dzien = patch.date ?? occurrence.date;
     const minuty = patch.startMin ?? occurrence.startMin;

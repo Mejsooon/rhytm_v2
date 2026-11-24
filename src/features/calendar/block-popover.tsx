@@ -4,7 +4,7 @@
 // BlockDetails to sama treść (użyje jej też arkusz na telefonie), BlockPopover dokłada
 // Radix Popover zakotwiczony przy klikniętym bloku.
 import { useEffect, useRef, useState } from "react";
-import { CheckIcon, Ellipsis, Plus, X } from "lucide-react";
+import { CheckIcon, Plus, X } from "lucide-react";
 
 import { Button, Progress, StatusBadge } from "@/components/controls";
 import {
@@ -12,17 +12,8 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
-import {
-  addTask,
-  deleteTask,
-  toggleTask,
-  unpinTask,
-} from "@/features/tasks/actions";
-import {
-  occurrenceProgress,
-  unpinTask as unpinTaskFields,
-  type TaskRow,
-} from "@/features/tasks/model";
+import { addTask, deleteTask, toggleTask } from "@/features/tasks/actions";
+import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import type { CategoryRow } from "./load-calendar";
@@ -66,7 +57,6 @@ export function BlockDetails({
   onClose,
 }: Wlasciwosci & { onClose: () => void }) {
   const [nowy, setNowy] = useState("");
-  const [otwarteMenu, setOtwarteMenu] = useState<string | null>(null);
   const licznikTymczasowych = useRef(0);
 
   // Oryginalna data wystąpienia siedzi w kluczu (blok mógł zostać przesunięty)
@@ -102,20 +92,6 @@ export function BlockDetails({
     void applyOptimistic(
       (d) => ({ ...d, tasks: d.tasks.filter((t) => t.id !== zadanie.id) }),
       () => deleteTask({ id: zadanie.id }),
-    );
-  }
-
-  // Odpięte zadanie zostaje z terminem, ale znika z bloku (staje się samodzielne)
-  function odepnij(zadanie: TaskRow) {
-    setOtwarteMenu(null);
-    void applyOptimistic(
-      (d) => ({
-        ...d,
-        tasks: d.tasks.map((t) =>
-          t.id === zadanie.id ? { ...t, ...unpinTaskFields(zadanie) } : t,
-        ),
-      }),
-      () => unpinTask({ taskId: zadanie.id }),
     );
   }
 
@@ -214,32 +190,8 @@ export function BlockDetails({
                 </span>
                 <span className="min-w-0 break-words">{t.title}</span>
               </label>
-              {/* ⋯ i × na webie z myszą pojawiają się po najechaniu na wiersz lub przy fokusie w nim;
-                  bez hovera (tablet dotykowy ≥ 800 px, telefon) są widoczne stale */}
-              {otwarteMenu === t.id && (
-                <Button
-                  size="xs"
-                  aria-label={`Odepnij zadanie ${t.title}`}
-                  onClick={() => odepnij(t)}
-                  className="font-normal text-soft-foreground max-[799px]:h-11"
-                >
-                  Odepnij
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="xs"
-                icon
-                aria-label={`Opcje zadania ${t.title}`}
-                aria-expanded={otwarteMenu === t.id}
-                disabled={tymczasowe}
-                onClick={() =>
-                  setOtwarteMenu(otwarteMenu === t.id ? null : t.id)
-                }
-                className="text-muted-foreground max-[799px]:size-11 min-[800px]:[@media(hover:hover)]:opacity-0 min-[800px]:group-hover:opacity-100 min-[800px]:group-focus-within:opacity-100 focus-visible:opacity-100"
-              >
-                <Ellipsis size={14} aria-hidden="true" />
-              </Button>
+              {/* × na webie z myszą pojawia się po najechaniu na wiersz lub przy fokusie w nim;
+                  bez hovera (tablet dotykowy ≥ 800 px, telefon) jest widoczny stale */}
               <Button
                 variant="ghost"
                 size="xs"

@@ -1,23 +1,20 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  createStandaloneTask,
   createBlock,
   saveRun,
   createHabit,
   refresh,
   toastSuccess,
 } = vi.hoisted(() => ({
-  createStandaloneTask: vi.fn(),
   createBlock: vi.fn(),
   saveRun: vi.fn(),
   createHabit: vi.fn(),
   refresh: vi.fn(),
   toastSuccess: vi.fn(),
 }));
-vi.mock("@/features/tasks/actions", () => ({ createStandaloneTask }));
 vi.mock("@/features/calendar/actions", () => ({ createBlock }));
 vi.mock("@/features/sport/actions", () => ({ saveRun }));
 vi.mock("@/features/habits/actions", () => ({ createHabit }));
@@ -60,7 +57,6 @@ function chipy() {
 }
 
 beforeEach(() => {
-  createStandaloneTask.mockResolvedValue({ ok: true });
   createBlock.mockResolvedValue({ ok: true });
   saveRun.mockResolvedValue({ ok: true });
   createHabit.mockResolvedValue({ ok: true });
@@ -74,13 +70,9 @@ describe("MQuickAdd", () => {
     expect(
       screen.getByRole("dialog", { name: "Szybko dodaj" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Zadanie")).toHaveAttribute(
-      "placeholder",
-      "Co jest do zrobienia?",
-    );
-    expect(chipy()).toEqual(["Dziś", "Jutro", "Pn 23.11", "Bez daty"]);
-
-    await user.click(screen.getByRole("radio", { name: "Blok" }));
+    // Domyślny rodzaj to „Blok”; rodzaju „Zadanie” nie ma (zadanie należy do bloku)
+    expect(screen.queryByRole("radio", { name: "Zadanie" })).toBeNull();
+    expect(screen.getByRole("radio", { name: "Blok" })).toBeChecked();
     expect(screen.getByLabelText("Blok w kalendarzu")).toHaveAttribute(
       "placeholder",
       "Nazwa bloku, np. Nauka SQL",
@@ -109,41 +101,10 @@ describe("MQuickAdd", () => {
     pokaz();
     const dodaj = screen.getByRole("button", { name: "Dodaj" });
     expect(dodaj).toBeDisabled();
-    await user.type(screen.getByLabelText("Zadanie"), "   ");
+    await user.type(screen.getByLabelText("Blok w kalendarzu"), "   ");
     expect(dodaj).toBeDisabled();
-    await user.type(screen.getByLabelText("Zadanie"), "Pranie");
+    await user.type(screen.getByLabelText("Blok w kalendarzu"), "Pranie");
     expect(dodaj).toBeEnabled();
-  });
-
-  it("zadanie „Jutro” zapisuje jutrzejszą datę, zamyka, toast i odświeża", async () => {
-    const user = userEvent.setup();
-    const onClose = pokaz();
-    await user.type(screen.getByLabelText("Zadanie"), " Pranie ");
-    await user.click(screen.getByRole("button", { name: "Jutro" }));
-    expect(screen.getByRole("button", { name: "Jutro" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await user.click(screen.getByRole("button", { name: "Dodaj" }));
-    expect(createStandaloneTask).toHaveBeenCalledWith({
-      title: "Pranie",
-      dueDate: "2026-11-18",
-    });
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(toastSuccess).toHaveBeenCalledWith("Dodano");
-    expect(refresh).toHaveBeenCalled();
-  });
-
-  it("zadanie „Bez daty” zapisuje null", async () => {
-    const user = userEvent.setup();
-    pokaz();
-    await user.type(screen.getByLabelText("Zadanie"), "Pranie");
-    await user.click(screen.getByRole("button", { name: "Bez daty" }));
-    await user.click(screen.getByRole("button", { name: "Dodaj" }));
-    expect(createStandaloneTask).toHaveBeenCalledWith({
-      title: "Pranie",
-      dueDate: null,
-    });
   });
 
   it("blok „Dziś 18:00” → 18:00–19:00 z pierwszą widoczną kategorią", async () => {
@@ -199,13 +160,13 @@ describe("MQuickAdd", () => {
   });
 
   it("błąd zostaje w arkuszu", async () => {
-    createStandaloneTask.mockResolvedValue({
+    createBlock.mockResolvedValue({
       ok: false,
       message: "Nie udało się zapisać. Spróbuj ponownie.",
     });
     const user = userEvent.setup();
     const onClose = pokaz();
-    await user.type(screen.getByLabelText("Zadanie"), "Pranie");
+    await user.type(screen.getByLabelText("Blok w kalendarzu"), "Pranie");
     await user.click(screen.getByRole("button", { name: "Dodaj" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Nie udało się zapisać. Spróbuj ponownie.",

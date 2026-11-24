@@ -12,9 +12,8 @@ import {
 import { zasiejBieg } from "./helpers/sport";
 
 // Dziś pracuje na prawdziwym „dziś” w strefie profilu (Europe/Warsaw), więc dane zasiewamy względem niego.
-// Pełne Dziś (zamiast EmptyToday) wymaga wszystkich czterech pierwszych kroków: blok, nawyk, trening i wpis snu.
 
-// Konto z czterema krokami: blok „Matematyka” dziś 10:00–11:30 z dwoma zadaniami, nawyk „Czytanie”
+// Konto z danymi: blok „Matematyka” dziś 10:00–11:30 z dwoma zadaniami, nawyk „Czytanie”
 // (codziennie), bieg dziś o 07:00 i wpis snu z ostatniej nocy. Po zasianiu strona Dziś jest wczytana na nowo.
 async function zalozPelneDzis(page: Page, projekt: string) {
   const userId = await zalozKontoNawykow(page, projekt);
@@ -42,33 +41,30 @@ test.describe("Dziś (web)", () => {
     test.skip(info.project.name !== "web", "układ webowy");
   });
 
-  test("blok z 2 zadaniami → dymek na planie dnia → odhaczenie → „1/2” na osi i w kafelku „Zadania”, także po odświeżeniu", async ({
+  test("blok z 2 zadaniami → dymek na planie dnia → odhaczenie → „1/2” na liście, także po odświeżeniu", async ({
     page,
   }, info) => {
     const { blokId } = await zalozPelneDzis(page, info.project.name);
     const web = page.getByTestId("web-dzis");
 
-    // Cztery kroki zrobione → pełne Dziś, nie EmptyToday
     await expect(web.getByRole("heading", { name: "Plan dnia" })).toBeVisible();
     await expect(
       web.getByRole("heading", { name: "Ten tydzień" }),
     ).toBeVisible();
 
-    const os = web.getByTestId("os-dnia");
-    // Trening na osi planu dnia: link do jego podglądu na /sport
-    await expect(os.getByRole("link", { name: /Spokojny/ })).toHaveAttribute(
+    const lista = web.getByTestId("plan-dnia-lista");
+    // Wykonany trening na liście planu dnia: link do jego podglądu na /sport z odznaką „zrobione”
+    const trening = lista.getByRole("link", { name: /Spokojny/ });
+    await expect(trening).toHaveAttribute(
       "href",
       /^\/sport\?miesiac=\d{4}-\d{2}&wybrany=/,
     );
+    await expect(trening).toContainText("zrobione");
 
     // Blok po kluczu wystąpienia (przy otwartym dymku też dostępny)
-    const blok = os.locator(`[data-occurrence-key^="${blokId}"]`);
-    const kafelekZadan = web
-      .getByTestId("kafelek-tygodnia")
-      .filter({ hasText: "Zadania" });
+    const blok = lista.locator(`[data-occurrence-key^="${blokId}"]`);
     await expect(blok).toContainText("Matematyka");
     await expect(blok).toContainText("0/2");
-    await expect(kafelekZadan).toContainText("0/2");
 
     await blok.click();
     const dymek = page.getByRole("dialog", { name: "Szczegóły bloku" });
@@ -78,19 +74,68 @@ test.describe("Dziś (web)", () => {
     await dymek.getByRole("checkbox", { name: "Powtórka wzorów" }).check();
     await expect(dymek).toContainText("1 z 2");
     await expect(blok).toContainText("1/2");
-    await expect(kafelekZadan).toContainText("1/2");
-    await expect(kafelekZadan).toContainText("50% · dziś 1/2");
     await zapis;
 
     await page.reload();
     await expect(blok).toContainText("1/2");
-    await expect(kafelekZadan).toContainText("50% · dziś 1/2");
     await blok.click();
     await expect(
       page
         .getByRole("dialog", { name: "Szczegóły bloku" })
         .getByRole("checkbox", { name: "Powtórka wzorów" }),
     ).toBeChecked();
+  });
+
+  test("kafelek nawyku „Czytanie” → odhaczony, licznik „1 / 1”, także po odświeżeniu", async ({
+    page,
+  }, info) => {
+    await zalozPelneDzis(page, info.project.name);
+    const web = page.getByTestId("web-dzis");
+    const nawyki = web.getByRole("region", { name: "Nawyki na dziś" });
+    const czytanie = nawyki.getByRole("button", { name: /Czytanie/ });
+    await expect(czytanie).toHaveAttribute("aria-pressed", "false");
+    await expect(nawyki).toContainText("0 / 1");
+
+    const zapis = poZapisie(page);
+    await czytanie.click();
+    await expect(czytanie).toHaveAttribute("aria-pressed", "true");
+    await expect(nawyki).toContainText("1 / 1");
+    await zapis;
+
+    await page.reload();
+    await expect(czytanie).toHaveAttribute("aria-pressed", "true");
+    await expect(nawyki).toContainText("1 / 1");
+  });
+
+  test("klik w przerwę po ostatnim bloku → „Nowy blok” od 12:00 → zapis → blok na liście i w bazie", async ({
+    page,
+  }, info) => {
+    const { userId } = await zalozPelneDzis(page, info.project.name);
+    const web = page.getByTestId("web-dzis");
+    const lista = web.getByTestId("plan-dnia-lista");
+
+    // Ostatnia przerwa zaczyna się o 11:30 (koniec „Matematyki”) → blok od pełnej godziny w górę
+    await lista.getByRole("button", { name: /wolne, dodaj blok/ }).last().click();
+    const okno = page.getByRole("dialog", { name: "Nowy blok" });
+    await expect(okno.getByRole("button", { name: "Od" })).toHaveText(
+      /12:00/,
+    );
+    await okno.getByLabel("Tytuł").fill("Algebra");
+    await okno.getByRole("button", { name: "Zapisz blok" }).click();
+    await expect(okno).toBeHidden();
+    await expect(lista).toContainText("Algebra");
+    await expect
+      .poll(async () => {
+        const { data } = await adminClient()
+          .from("blocks")
+          .select("start_local, duration_min")
+          .eq("user_id", userId)
+          .eq("title", "Algebra");
+        return data ?? [];
+      })
+      .toEqual([
+        { start_local: `${dzisWarszawa()}T12:00:00`, duration_min: 60 },
+      ]);
   });
 });
 
@@ -102,7 +147,7 @@ test.describe("Dziś (telefon)", () => {
     test.skip(info.project.name !== "mobile", "układ telefonu");
   });
 
-  test("„+” → Zadanie „Kupić mleko” „Jutro” → Dodaj → toast „Dodano”, zadanie w bazie z jutrzejszą datą", async ({
+  test("„+” → Blok „Kupić mleko” „Jutro” → Dodaj → toast „Dodano”, blok w bazie na jutro 09:00", async ({
     page,
   }, info) => {
     const { userId } = await zalozPelneDzis(page, info.project.name);
@@ -111,9 +156,9 @@ test.describe("Dziś (telefon)", () => {
 
     await m.getByRole("button", { name: "Szybko dodaj" }).click();
     const arkusz = page.getByRole("dialog", { name: "Szybko dodaj" });
-    // Domyślny rodzaj to „Zadanie”
+    // Domyślny rodzaj to „Blok” (rodzaju „Zadanie” nie ma)
     await expect(
-      arkusz.getByRole("radio", { name: "Zadanie" }),
+      arkusz.getByRole("radio", { name: "Blok" }),
     ).toHaveAttribute("aria-checked", "true");
     await arkusz.getByRole("textbox").fill("Kupić mleko");
     const chipJutro = arkusz
@@ -128,13 +173,13 @@ test.describe("Dziś (telefon)", () => {
     await expect
       .poll(async () => {
         const { data } = await adminClient()
-          .from("tasks")
-          .select("due_date, block_id, done")
+          .from("blocks")
+          .select("start_local, duration_min")
           .eq("user_id", userId)
           .eq("title", "Kupić mleko");
         return data ?? [];
       })
-      .toEqual([{ due_date: jutro, block_id: null, done: false }]);
+      .toEqual([{ start_local: `${jutro}T09:00:00`, duration_min: 60 }]);
   });
 
   test("nawyk odhaczony na Dziś → kafelek „Nawyki” 1/1, także po odświeżeniu", async ({

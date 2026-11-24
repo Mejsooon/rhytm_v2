@@ -120,23 +120,30 @@ test("zrzut /dev/kontrolki (bez makiety)", async ({ page }, info) => {
 test.describe("ekrany z sesją", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("zrzut /dzis, pusty (makieta EmptyToday)", async ({ page }, info) => {
+  test("zrzut /dzis, pusty (makieta S2EmptyToday)", async ({ page }, info) => {
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createConfirmedUser(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
-    await expect(page.getByText("Plan dnia jest pusty")).toBeVisible();
+    // Web: pełny układ z zerami i zachętą w planie dnia; telefon: własny pusty plan
+    await expect(
+      page.getByText(
+        info.project.name === "web"
+          ? "Nie masz jeszcze bloków na dziś."
+          : "Plan dnia jest pusty",
+      ),
+    ).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
   });
 
-  test("zrzuty /dzis, pełne (makiety Today, MToday, MQuickAdd)", async ({
+  test("zrzuty /dzis, pełne (makiety S2Today, MToday, MQuickAdd)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
     const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
     const dzis = dzisWarszawa();
-    // Wszystkie cztery pierwsze kroki: bloki dnia (jeden z zadaniami), nawyki, bieg i siłownia, sen z kilku nocy
+    // Bloki dnia (jeden z zadaniami), nawyki, bieg i siłownia, sen z kilku nocy
     const matematyka = await zasiejBlok(userId, {
       title: "Matematyka",
       date: dzis,
@@ -190,21 +197,6 @@ test.describe("ekrany z sesją", () => {
       throw new Error(`Nie udało się zasiać odhaczeń: ${error.message}`);
     for (let i = 0; i < 4; i++)
       await zasiejSen(userId, i, i % 2 === 0 ? "23:15" : "00:05", "07:00");
-    // Samodzielne zadania: na dziś, zaległe i bez daty
-    const { error: bladZadan } = await adminClient()
-      .from("tasks")
-      .insert([
-        { user_id: userId, title: "Oddać książkę", due_date: dzis },
-        {
-          user_id: userId,
-          title: "Zapłacić za internet",
-          due_date: przesunDate(dzis, -2),
-        },
-        { user_id: userId, title: "Kupić kalendarz", due_date: null },
-      ]);
-    if (bladZadan)
-      throw new Error(`Nie udało się zasiać zadań: ${bladZadan.message}`);
-
     await page.goto("/dzis");
     if (projekt === "web") {
       const web = page.getByTestId("web-dzis");
@@ -215,7 +207,7 @@ test.describe("ekrany z sesją", () => {
 
       // Dymek bloku na planie dnia (ten sam co w kalendarzu)
       await web
-        .getByTestId("os-dnia")
+        .getByTestId("plan-dnia-lista")
         .locator(`[data-occurrence-key^="${matematyka}"]`)
         .click();
       await expect(

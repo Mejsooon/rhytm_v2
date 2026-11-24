@@ -91,7 +91,7 @@ describe("planScopeChange", () => {
     }
   });
 
-  it("cykliczny + this + usunięcie -> detachTasksAndCancel", () => {
+  it("cykliczny + this + usunięcie -> deleteTasksAndCancel", () => {
     const b = blok({ recurrence: { freq: "weekly" } });
     const plan = planScopeChange({
       block: b,
@@ -99,7 +99,7 @@ describe("planScopeChange", () => {
       scope: "this",
       delete: true,
     });
-    expect(plan).toEqual({ kind: "detachTasksAndCancel", date: "2026-11-17" });
+    expect(plan).toEqual({ kind: "deleteTasksAndCancel", date: "2026-11-17" });
   });
 
   it("following na pierwszym wystąpieniu -> updateBlock / deleteBlock", () => {

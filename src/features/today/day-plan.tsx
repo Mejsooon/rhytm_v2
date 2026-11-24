@@ -1,38 +1,30 @@
 "use client";
 
-// „Plan dnia” na Dziś (web, Today.dc.html): oś 00–24 (48 px na godzinę, widać 06–22),
-// bloki dnia z „x/y” zadań i „Teraz”, treningi (tylko do odczytu, link do /sport),
-// czerwona linia aktualnej godziny. Dymki i okna są te same co w kalendarzu.
-import { useEffect, useRef, useState } from "react";
+// „Plan dnia” na Dziś (web, S2Today): lista na całą dobę — wiersze bloków i treningów
+// poprzedzielane przerwami „N h wolne”, na końcu pusty wiersz 23:00. Klik w blok otwiera
+// dymek z zadaniami (ten sam co w kalendarzu), klik w przerwę — „Nowy blok” od jej początku.
+// Trening jest tylko do odczytu i prowadzi do /sport.
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
-import { StatusBadge } from "@/components/controls";
+import { Button, StatusBadge } from "@/components/controls";
 import {
   BlockDialog,
   type BlockDialogInitial,
 } from "@/features/calendar/block-dialog";
 import { BlockPopover } from "@/features/calendar/block-popover";
-import { layoutDay } from "@/features/calendar/day-layout";
 import { DeleteBlockDialog } from "@/features/calendar/delete-block-dialog";
-import { NewEntryPopover } from "@/features/calendar/new-entry-popover";
-import { useGridDrag } from "@/features/calendar/use-grid-drag";
 import type { Occurrence } from "@/features/calendar/occurrences";
 import { sportItemHref } from "@/features/sport/model";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import type { TodayData } from "./load-today";
-import { dayPlan, nowItem } from "./model";
+import { blocksCountLabel, dayPlan, dayPlanRows, nowItem } from "./model";
 import type { TodayChange } from "./use-today-store";
 
-// Wysokość godziny i widoczna część osi (06–22) jak w makiecie
-const GODZINA = 48;
-const WYSOKOSC_OKNA = 816;
-// Półgodzina = 24 px; klik w pusty slot wybiera półgodzinę (jak w makiecie)
-const POLGODZINA = GODZINA / 2;
-
 type Okno =
-  | { typ: "wpis"; startMin: number }
   | { typ: "blok"; mode: "create" | "edit"; initial: BlockDialogInitial }
   | { typ: "usun"; occurrence: Occurrence };
 
@@ -40,6 +32,7 @@ export function DayPlan({
   data,
   nowMin: teraz,
   applyOptimistic,
+  onNewBlock,
 }: {
   data: TodayData;
   // Bieżąca minuta w strefie profilu (zegar co minutę w TodayView)
@@ -48,6 +41,8 @@ export function DayPlan({
     zmiana: TodayChange,
     akcja: () => Promise<ActionResult>,
   ) => Promise<boolean>;
+  // „Dodaj pierwszy blok” w pustym dniu — to samo okno co „Nowy blok” w nagłówku
+  onNewBlock: () => void;
 }) {
   const router = useRouter();
   const { today, profile } = data;
@@ -60,72 +55,15 @@ export function DayPlan({
     data.sportItems,
     today,
   );
+  const wiersze = dayPlanRows(plan);
   const trwajacy = nowItem(plan, teraz);
-  // Nakładające się wpisy dzielą szerokość (jak w siatce kalendarza)
-  const uklad = layoutDay(
-    plan.map((p) => ({
-      key: p.key,
-      startMin: p.startMin,
-      durationMin: p.endMin - p.startMin,
-    })),
-  );
 
   // Wybrany blok (klucz wystąpienia) z otwartym dymkiem
   const [wybrany, setWybrany] = useState<string | null>(null);
   const [okno, setOkno] = useState<Okno | null>(null);
-  const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
-  // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
-  const [duchMyszy, setDuchMyszy] = useState<number | null>(null);
-
-  // Przy otwarciu: na trwający blok, a gdy go nie ma — na 06:00 (tylko przy montażu)
-  const os = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const odMinuty = trwajacy ? trwajacy.startMin : 6 * 60;
-    if (os.current) os.current.scrollTop = (odMinuty / 60) * GODZINA;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Przeciąganie po pustej osi zaznacza zakres i otwiera „Nowy blok” na ten czas (jak w kalendarzu)
-  const { podglad, zacznij, tlumKlik } = useGridDrag({
-    korzen: os,
-    wysokoscGodziny: GODZINA,
-    onRange: (zakres) => {
-      setWybrany(null);
-      setOkno({
-        typ: "blok",
-        mode: "create",
-        initial: {
-          title: "",
-          categoryId: null,
-          date: zakres.date,
-          startMin: zakres.startMin,
-          durationMin: zakres.durationMin,
-          recurrence: null,
-          note: "",
-          remind: true,
-        },
-      });
-    },
-  });
 
   const wybraneWystapienie =
     plan.find((p) => p.key === wybrany)?.occurrence ?? null;
-
-  // Półgodzina (0–47) pod wskaźnikiem
-  const polgodzinaZ = (e: React.MouseEvent<HTMLElement>) =>
-    Math.max(
-      0,
-      Math.min(
-        47,
-        Math.floor(
-          (e.clientY - e.currentTarget.getBoundingClientRect().top) /
-            POLGODZINA,
-        ),
-      ),
-    );
-  // Klik w blok, link treningu, dymek albo pole nie jest klikiem w pusty slot
-  const wPusteMiejsce = (e: React.MouseEvent<HTMLElement>) =>
-    !(e.target as HTMLElement).closest("button,a,[role=dialog],label,input");
 
   const godz = (minuty: number) =>
     formatClockTime(Math.floor(minuty / 60), minuty % 60, clock);
@@ -157,234 +95,198 @@ export function DayPlan({
     });
   }
 
-  // Liczba wpisów osi — jak w makiecie („5 bloków” liczy też trening „Bieg 10 km”): 1 blok; 2–4, 22–24… bloki (ale 12–14 bloków); reszta bloków
-  const n = plan.length;
-  const napisBlokow =
-    n === 1
-      ? "1 blok"
-      : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
-        ? `${n} bloki`
-        : `${n} bloków`;
-
-  // Aktywny slot (otwarty „Nowy wpis”) ma pierwszeństwo przed duchem myszy
-  const duch = podglad
-    ? null
-    : okno?.typ === "wpis"
-      ? okno.startMin
-      : duchMyszy;
-  const duchAktywny = okno?.typ === "wpis";
+  // Wiersz z etykietą godziny w kolumnie 56 px (.hr-row / .gap), linia rgba(0,0,0,.06) nad nim
+  const wiersz =
+    "grid grid-cols-[56px_1fr] border-t border-black/[.06] first:border-t-0";
 
   return (
     <section aria-labelledby="plan-dnia" className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-baseline justify-between">
         {/* .card-t */}
         <h2 id="plan-dnia" className="m-0 text-base leading-[1.3] font-semibold">
           Plan dnia
         </h2>
+        {/* Liczba wpisów jak w makiecie („4 bloki” liczy też trening) */}
         <span className="text-xs text-muted-foreground">
-          {`${napisBlokow} · kliknij blok, żeby zobaczyć zadania, albo puste miejsce, żeby dodać`}
+          {`00:00–24:00 · ${blocksCountLabel(plan.length)}`}
         </span>
       </div>
+      {/* .frame > .inner: ramka 1,5 px rgba(0,0,0,.14), promień 12 px, padding 10/12/4;
+          interlinia „normal” jak w makiecie (wiersz z blokiem mieści się w ~48 px) */}
       <div
-        ref={os}
-        data-testid="os-dnia"
-        // .frame > .inner: ramka 1,5 px rgba(0,0,0,.14), promień 12 px
-        className={`overflow-y-auto rounded-lg border-[1.5px] border-black/[.14] bg-white${podglad ? " select-none" : ""}`}
-        style={{
-          height: WYSOKOSC_OKNA,
-          cursor: podglad ? "crosshair" : undefined,
-        }}
+        data-testid="plan-dnia-lista"
+        className="overflow-hidden rounded-lg border-[1.5px] border-black/[.14] bg-white px-3 pt-2.5 pb-1 leading-[normal]"
       >
-        <div
-          data-testid="siatka-dnia"
-          // Jedyna „kolumna” osi: z niej useGridDrag czyta dzień i górną krawędź
-          data-kolumna={today}
-          className="relative cursor-pointer"
-          style={{
-            height: 24 * GODZINA,
-            backgroundImage: `repeating-linear-gradient(to bottom, #ffffff 0, #ffffff ${GODZINA - 1}px, rgba(0,0,0,.05) ${GODZINA - 1}px, rgba(0,0,0,.05) ${GODZINA}px)`,
-          }}
-          // Klik zaraz po przeciągnięciu nie otwiera „Nowego wpisu”
-          onClickCapture={tlumKlik}
-          onPointerDown={(e) => {
-            if (!wPusteMiejsce(e)) return;
-            zacznij(e, "create");
-          }}
-          onClick={(e) => {
-            if (!wPusteMiejsce(e)) return;
-            const startMin = polgodzinaZ(e) * 30;
-            setWybrany(null);
-            // Klik w ten sam slot zamyka „Nowy wpis”, w inny go przenosi
-            setOkno((o) =>
-              o?.typ === "wpis" && o.startMin === startMin
-                ? null
-                : { typ: "wpis", startMin },
+        {wiersze.map((w) => {
+          if (w.type === "gap") {
+            // Klik w przerwę: „Nowy blok” od początku przerwy zaokrąglonego w górę do pełnej godziny
+            // (najpóźniej 23:00), 60 min
+            const start = Math.min(Math.ceil(w.startMin / 60) * 60, 23 * 60);
+            return (
+              <div
+                key={`gap-${w.startMin}`}
+                data-testid="przerwa"
+                // .gap: min. 30 px, środek; .gap-big (≥ 3 h): min. 84 px, godzina u góry
+                className={`${wiersz} ${w.big ? "min-h-[84px] items-stretch" : "min-h-[30px] items-center"}`}
+              >
+                <span
+                  className={`text-xs text-muted-foreground tabular-nums ${w.big ? "pt-2" : ""}`}
+                >
+                  {godz(w.startMin)}
+                </span>
+                <button
+                  type="button"
+                  title={`Dodaj blok od ${godz(start)}`}
+                  aria-label={`${w.label}, dodaj blok od ${godz(start)}`}
+                  onClick={() => {
+                    setWybrany(null);
+                    setOkno({
+                      typ: "blok",
+                      mode: "create",
+                      initial: {
+                        title: "",
+                        categoryId: null,
+                        date: today,
+                        startMin: start,
+                        durationMin: 60,
+                        recurrence: null,
+                        note: "",
+                        remind: true,
+                      },
+                    });
+                  }}
+                  // Tekst przerwy między przerywanymi liniami rgba(0,0,0,.14)
+                  className="flex w-full cursor-pointer items-center gap-2 self-center text-xs text-muted-foreground tabular-nums outline-none before:flex-1 before:border-t before:border-dashed before:border-black/[.14] before:content-[''] after:flex-1 after:border-t after:border-dashed after:border-black/[.14] after:content-[''] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
+                >
+                  {w.label}
+                </button>
+              </div>
             );
-          }}
-          onMouseMove={(e) => {
-            if (!wPusteMiejsce(e)) {
-              if (duchMyszy !== null) setDuchMyszy(null);
-              return;
-            }
-            const startMin = polgodzinaZ(e) * 30;
-            if (duchMyszy !== startMin) setDuchMyszy(startMin);
-          }}
-          onMouseLeave={() => setDuchMyszy(null)}
-        >
-          {Array.from({ length: 24 }, (_, h) => (
-            <div
-              key={h}
-              aria-hidden="true"
-              className="absolute left-3.5 text-xs text-muted-foreground tabular-nums"
-              style={{ top: h * GODZINA + 4 }}
-            >
-              {godz(h * 60)}
-            </div>
-          ))}
-          <div
-            aria-hidden="true"
-            className="absolute inset-y-0 left-16 border-l border-border"
-          />
+          }
 
-          {podglad && (
-            <div
-              data-testid="podglad-przeciagania"
-              aria-hidden="true"
-              // Zaznaczany zakres: przerywana ramka rgba(0,0,0,.45), tło rgba(0,0,0,.04)
-              className="pointer-events-none absolute right-2.5 left-[72px] z-10 box-border overflow-hidden rounded-md border border-dashed border-black/[.45] bg-black/[.04] px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums"
-              style={{
-                top: (podglad.startMin / 60) * GODZINA + 3,
-                height: (podglad.durationMin / 60) * GODZINA - 6,
-              }}
-            >
-              {`Nowy blok · ${godz(podglad.startMin)}–${godz(podglad.startMin + podglad.durationMin)}`}
-            </div>
-          )}
-
-          {duch !== null && (
-            <div
-              ref={duchAktywny ? setKotwicaWpisu : undefined}
-              aria-hidden="true"
-              // Najechanie: rgba(0,0,0,.24) / .02; slot z otwartym „Nowym wpisem” jak zakres (.45 / .04)
-              className={`pointer-events-none absolute right-2.5 left-[72px] z-[2] box-border rounded-md border border-dashed px-2.5 py-1.5 text-[13px] font-medium text-soft-foreground tabular-nums ${duchAktywny ? "border-black/[.45] bg-black/[.04]" : "border-black/[.24] bg-black/[.02]"}`}
-              style={{ top: (duch / 60) * GODZINA + 3, height: GODZINA - 6 }}
-            >
-              {`+ ${godz(duch)}–${godz(Math.min(duch + 60, 1440))}`}
-            </div>
-          )}
-
-          {plan.map((p) => {
-            const pozycja = uklad.find((u) => u.key === p.key);
-            const kolumna = pozycja?.col ?? 0;
-            const kolumn = pozycja?.cols ?? 1;
-            const czas = p.endMin - p.startMin;
-            const godziny = `${godz(p.startMin)}–${godz(p.endMin)}`;
-            // Wpisy do 1 h włącznie: dwie linie nie mieszczą się w 42 px, więc jedna linia
-            const kompakt = czas <= 60;
-            const licznik = p.planned
-              ? "plan"
+          const p = w.item;
+          const godziny = `${godz(p.startMin)}–${godz(p.endMin)}`;
+          const trwa = trwajacy?.key === p.key;
+          const zaznaczony = wybrany === p.key;
+          // Odznaka po prawej: trening „plan”/„zrobione”, blok „x/y” zadań (bez zadań — brak)
+          const odznaka =
+            p.kind !== "block"
+              ? p.planned
+                ? "plan"
+                : "zrobione"
               : p.tasksTotal > 0
                 ? `${p.tasksDone}/${p.tasksTotal}`
                 : "";
-            const trwa = trwajacy?.key === p.key;
-            const zaznaczony = wybrany === p.key;
-            const styl: React.CSSProperties = {
-              top: (p.startMin / 60) * GODZINA + 3,
-              height: Math.max((czas / 60) * GODZINA - 6, 14),
-              // Pas od 72 px do 10 px przed prawą krawędzią, dzielony na kolumny nakładających się wpisów
-              left: `calc(72px + (100% - 82px) * ${kolumna / kolumn})`,
-              width: `calc((100% - 82px) / ${kolumn} - ${kolumn > 1 ? 4 : 0}px)`,
-              // CToday: tło kolor+12, ramka 1 px kolor+4d, bez paska po lewej;
-              // zaznaczony ma pierścień 2 px biały + 4 px kolor+66
-              background: `${p.color}12`,
-              border: `1px solid ${p.color}4d`,
-              boxShadow: zaznaczony
-                ? `0 0 0 2px #fff, 0 0 0 4px ${p.color}66`
+          // .blk: tło kolor+12, ramka 1 px kolor+4d (jak w kalendarzu); trwający — pierścień
+          // 2 px biały + 1 px kolor+59, otwarty dymek — 2 px biały + 2 px kolor+66
+          const styl: React.CSSProperties = {
+            background: `${p.color}12`,
+            border: `1px solid ${p.color}4d`,
+            boxShadow: zaznaczony
+              ? `0 0 0 2px #fff, 0 0 0 4px ${p.color}66`
+              : trwa
+                ? `0 0 0 2px #fff, 0 0 0 3px ${p.color}59`
                 : undefined,
-            };
-            const tresc = (
-              <>
-                <span className="flex w-full items-center gap-2">
-                  <span className="min-w-0 shrink truncate font-medium">
-                    {p.title}
-                  </span>
-                  {kompakt && (
-                    <span className="min-w-0 shrink-[4] truncate text-xs text-soft-foreground tabular-nums">
-                      {godziny}
-                    </span>
-                  )}
-                  {trwa && <StatusBadge tone="green">Teraz</StatusBadge>}
-                  {licznik && (
-                    <StatusBadge tone="outline" className="ml-auto tabular-nums">
-                      {licznik}
-                    </StatusBadge>
-                  )}
-                </span>
-                {!kompakt && (
-                  <span className="block truncate text-xs text-soft-foreground tabular-nums">
-                    {`${godziny} · ${p.categoryName ?? "Bez kategorii"}`}
-                  </span>
+          };
+          const tresc = (
+            <>
+              <span className="min-w-0">
+                <b className="font-medium">{p.title}</b>
+                {trwa && (
+                  <>
+                    {" "}
+                    <StatusBadge tone="green">Teraz</StatusBadge>
+                  </>
                 )}
-              </>
-            );
-            // Fokus jako outline z odstępem: inline boxShadow zaznaczenia nie może go zasłonić
-            const klasy = `absolute box-border focus-visible:z-[2] ${zaznaczony ? "z-[1]" : ""} flex flex-col items-stretch gap-0.5 overflow-hidden rounded-md text-left text-sm leading-[1.3] text-foreground no-underline outline-none hover:text-foreground focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${kompakt ? "justify-center px-2.5 py-0" : "justify-start px-2.5 py-1.5"}`;
+                <br />
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {`${godziny} · ${p.categoryName ?? "Bez kategorii"}`}
+                </span>
+              </span>
+              {odznaka && (
+                <StatusBadge tone="gray" className="shrink-0 tabular-nums">
+                  {odznaka}
+                </StatusBadge>
+              )}
+            </>
+          );
+          // Fokus jako outline z odstępem: inline boxShadow pierścienia nie może go zasłonić
+          const klasy =
+            "my-1 box-border flex w-full items-start justify-between gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-[13px] text-foreground no-underline outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid";
 
-            // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
-            if (p.kind !== "block") {
-              return (
-                <Link
-                  key={p.key}
-                  href={sportItemHref({ date: today, key: p.key })}
-                  title={`${p.title} ${godziny}`}
-                  className={klasy}
-                  style={styl}
-                >
-                  {tresc}
-                </Link>
-              );
-            }
-            return (
-              <button
-                key={p.key}
-                type="button"
-                data-occurrence-key={p.key}
-                aria-pressed={zaznaczony}
-                title={`${p.title} ${godziny}`}
-                // Ponowny klik w ten sam blok zamyka dymek
-                onClick={() => {
-                  setOkno((o) => (o?.typ === "wpis" ? null : o));
-                  setWybrany((w) => (w === p.key ? null : p.key));
-                }}
-                className={`${klasy} cursor-pointer`}
-                style={styl}
-              >
-                {tresc}
-              </button>
-            );
-          })}
+          return (
+            <div
+              key={p.key}
+              data-testid="wiersz-planu"
+              // .hr-row: min. 48 px, godzina z odstępem 6 px od góry
+              className={`${wiersz} min-h-12`}
+            >
+              <span className="pt-1.5 text-xs text-muted-foreground tabular-nums">
+                {godz(p.startMin)}
+              </span>
+              <div className="min-w-0">
+                {p.kind !== "block" ? (
+                  // Trening: tylko do odczytu, prowadzi do jego podglądu na /sport
+                  <Link
+                    href={sportItemHref({ date: today, key: p.key })}
+                    title={`${p.title} ${godziny}`}
+                    className={klasy}
+                    style={styl}
+                  >
+                    {tresc}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    data-occurrence-key={p.key}
+                    aria-pressed={zaznaczony}
+                    title={`${p.title} ${godziny}`}
+                    // Ponowny klik w ten sam blok zamyka dymek
+                    onClick={() => setWybrany((x) => (x === p.key ? null : p.key))}
+                    className={`${klasy} cursor-pointer`}
+                    style={styl}
+                  >
+                    {tresc}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
-          <div
-            data-testid="linia-teraz"
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 left-14 z-[3] border-t-2 border-destructive"
-            style={{ top: (teraz / 60) * GODZINA }}
-          />
-          <span
-            data-testid="etykieta-teraz"
-            aria-hidden="true"
-            // Etykieta godziny: biała na #dc2626 (destructive-strong), promień 6 px, 11 px / 500
-            className="pointer-events-none absolute left-2 z-[3] rounded-sm bg-destructive-strong px-[5px] py-0.5 text-[11px] font-medium text-white tabular-nums"
-            style={{ top: (teraz / 60) * GODZINA - 10 }}
-          >
-            {godz(teraz)}
-          </span>
-        </div>
+        {/* Pusty dzień: zachęta pod przerwą „24 h wolne” */}
+        {plan.length === 0 && (
+          <div className="grid grid-cols-[56px_1fr] pb-5">
+            <span />
+            <div className="flex flex-col items-center gap-2.5">
+              <span className="text-xs text-muted-foreground">
+                Nie masz jeszcze bloków na dziś.
+              </span>
+              <Button onClick={onNewBlock}>
+                <Plus size={16} aria-hidden="true" />
+                Dodaj pierwszy blok
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Ostatni, pusty wiersz 23:00 (min. 40 px) — pomijany, gdy jakiś wiersz (przerwa albo wpis)
+            startuje o 23:00 lub później (inaczej byłyby dwa wiersze z godziną 23:00 albo 23:00 po 23:30) */}
+        {!wiersze.some(
+          (w) => (w.type === "gap" ? w.startMin : w.item.startMin) >= 23 * 60,
+        ) && (
+          <div aria-hidden="true" className={`${wiersz} min-h-10`}>
+            <span className="pt-2 text-xs text-muted-foreground tabular-nums">
+              {godz(23 * 60)}
+            </span>
+            <div />
+          </div>
+        )}
       </div>
 
       {wybraneWystapienie && (
         <BlockPopover
-          // Blok na Dziś zajmuje całą szerokość osi: dymek pod blokiem (Radix przerzuca nad
+          // Blok zajmuje całą szerokość listy: dymek pod blokiem (Radix przerzuca nad
           // blok przy dolnej krawędzi i przesuwa w poziomie, żeby nie wyszedł poza stronę)
           side="bottom"
           occurrence={wybraneWystapienie}
@@ -400,33 +302,6 @@ export function DayPlan({
             setOkno({ typ: "usun", occurrence: wybraneWystapienie });
           }}
           onClose={() => setWybrany(null)}
-        />
-      )}
-      {okno?.typ === "wpis" && (
-        <NewEntryPopover
-          side="bottom"
-          anchor={kotwicaWpisu}
-          date={today}
-          startMin={okno.startMin}
-          clock={clock}
-          onBlock={() =>
-            setOkno({
-              typ: "blok",
-              mode: "create",
-              initial: {
-                title: "",
-                categoryId: null,
-                date: today,
-                startMin: okno.startMin,
-                // Blok nie przechodzi przez północ
-                durationMin: Math.min(60, 1440 - okno.startMin),
-                recurrence: null,
-                note: "",
-                remind: true,
-              },
-            })
-          }
-          onClose={() => setOkno(null)}
         />
       )}
       {okno?.typ === "blok" && (

@@ -1,5 +1,5 @@
 begin;
-select plan(43);
+select plan(44);
 
 -- Użytkownicy A i B.
 insert into auth.users (id, email)
@@ -36,8 +36,8 @@ values ('b0000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000
   '2026-11-03 08:00', 60, 'Europe/Warsaw', '{"freq":"weekly","byWeekday":[2]}');
 insert into public.block_exceptions (block_id, user_id, occurrence_date, kind)
 values ('b0000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', '2026-11-10', 'cancelled');
-insert into public.tasks (user_id, title, due_date)
-values ('00000000-0000-0000-0000-00000000000b', 'Zadanie B', '2026-11-10');
+insert into public.tasks (user_id, title, block_id, occurrence_date, due_date)
+values ('00000000-0000-0000-0000-00000000000b', 'Zadanie B', 'b0000000-0000-0000-0000-00000000000b', '2026-11-10', '2026-11-10');
 
 -- A: seria weekly od wt 2026-11-03 08:00, zadania na 10.11 i 17.11;
 -- odwołany następny tydzień (24.11) i przesunięte wystąpienie 1.12.
@@ -92,7 +92,7 @@ select lives_ok(
 select throws_ok(
   $$insert into public.tasks (user_id, title, block_id)
     values ('00000000-0000-0000-0000-00000000000a', 'Bez daty', 'a0000000-0000-0000-0000-00000000000a')$$,
-  '23514', null, 'zadanie z block_id bez occurrence_date odrzucone');
+  '23502', null, 'zadanie z block_id bez occurrence_date odrzucone (NOT NULL)');
 
 -- Cudzy blok: rozcięcie kończy się błędem.
 select throws_ok(
@@ -129,7 +129,7 @@ select is(
   (select count(*) from public.block_exceptions as e where e.occurrence_date = '2026-12-01'),
   0::bigint, 'przesunięcie z 1.12 skasowane po zmianie godziny');
 
--- Usunięcie od pierwszego wystąpienia: seria znika, zadania stają się samodzielne.
+-- Usunięcie od pierwszego wystąpienia: seria znika razem z zadaniami.
 select is(
   public.split_block_series('a0000000-0000-0000-0000-00000000000a', '2026-11-03', null, true),
   null::uuid, 'usunięcie zwraca null');
@@ -137,11 +137,10 @@ select is(
   (select count(*) from public.blocks where id = 'a0000000-0000-0000-0000-00000000000a'),
   0::bigint, 'seria usunięta');
 select is(
-  (select (t.block_id is null and t.occurrence_date is null and t.due_date = '2026-11-10')::int
-   from public.tasks as t where t.id = 'a1000000-0000-0000-0000-00000000000a'),
-  1, 'zadanie samodzielne z due_date = data wystąpienia');
+  (select count(*) from public.tasks as t where t.id = 'a1000000-0000-0000-0000-00000000000a'),
+  0::bigint, 'zadanie usunięte razem z serią');
 
--- Zwykły DELETE bloku z zadaniami: zadania zostają jako samodzielne.
+-- Zwykły DELETE bloku z zadaniami: zadania są usuwane kaskadowo.
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
 values ('a3000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Do usunięcia',
   '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"daily"}');
@@ -153,10 +152,8 @@ select lives_ok(
   $$delete from public.blocks where id = 'a3000000-0000-0000-0000-00000000000a'$$,
   'usunięcie bloku z zadaniami się udaje');
 select is(
-  (select count(*) from public.tasks as t
-   where t.title in ('Usuw 1', 'Usuw 2') and t.block_id is null and t.occurrence_date is null
-     and t.due_date = case t.title when 'Usuw 1' then date '2026-12-01' else date '2026-12-02' end),
-  2::bigint, 'oba zadania samodzielne z due_date = data wystąpienia');
+  (select count(*) from public.tasks as t where t.title in ('Usuw 1', 'Usuw 2')),
+  0::bigint, 'oba zadania usunięte razem z blokiem');
 
 -- Nowa seria A: wyjątek i zadania; zakres until.
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
@@ -190,13 +187,16 @@ select is(
   (select t.block_id from public.tasks as t where t.id = 'a4100000-0000-0000-0000-00000000000a'),
   (select new_id from split_result2), 'zadanie przeniesione do nowej serii przy zmianie samego tytułu');
 
--- Zmiana recurrence: zadania samodzielne, wyjątki skasowane.
+-- Zmiana recurrence: zadania z dni nowego wzorca przechodzą do nowej serii, pozostałe znikają; wyjątki jak dotąd.
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence)
 values ('a5000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Seria 5',
   '2026-12-01 08:00', 60, 'Europe/Warsaw', '{"freq":"weekly","byWeekday":[2]}');
 insert into public.tasks (id, user_id, title, block_id, occurrence_date)
-values ('a5100000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'S5 8.12',
-  'a5000000-0000-0000-0000-00000000000a', '2026-12-08');
+values
+  ('a5100000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'S5 8.12',
+    'a5000000-0000-0000-0000-00000000000a', '2026-12-08'),
+  ('a5200000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'S5 19.12',
+    'a5000000-0000-0000-0000-00000000000a', '2026-12-19');
 -- Odwołania: 15.12 (wt, zostaje w nowym wzorcu pn–pt) i 19.12 (sb, poza nim); przesunięcie 22.12.
 insert into public.block_exceptions (block_id, user_id, occurrence_date, kind, new_start_local)
 values
@@ -210,9 +210,12 @@ select public.split_block_series(
 ) as new_id;
 grant select on split_result5 to authenticated;
 select is(
-  (select (t.block_id is null and t.occurrence_date is null and t.due_date = '2026-12-08')::int
+  (select (t.block_id = (select new_id from split_result5) and t.due_date = '2026-12-08')::int
    from public.tasks as t where t.id = 'a5100000-0000-0000-0000-00000000000a'),
-  1, 'zmiana recurrence odpina zadania jako samodzielne');
+  1, 'zmiana recurrence przenosi zadanie z dnia nowego wzorca do nowej serii');
+select is(
+  (select count(*) from public.tasks as t where t.id = 'a5200000-0000-0000-0000-00000000000a'),
+  0::bigint, 'zmiana recurrence usuwa zadanie z dnia spoza nowego wzorca');
 select is(
   (select e.block_id from public.block_exceptions as e
    where e.occurrence_date = '2026-12-15'

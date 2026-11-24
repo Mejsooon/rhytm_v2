@@ -27,7 +27,7 @@ function wystapienie(
   };
 }
 
-function zadanie(id: string, blockId: string | null, done: boolean): TaskRow {
+function zadanie(id: string, blockId: string, done: boolean): TaskRow {
   return {
     id,
     user_id: "u1",
@@ -36,7 +36,7 @@ function zadanie(id: string, blockId: string | null, done: boolean): TaskRow {
     done_at: null,
     due_date: null,
     block_id: blockId,
-    occurrence_date: blockId ? "2026-11-17" : null,
+    occurrence_date: "2026-11-17",
     position: 0,
     created_at: null,
   };
@@ -122,7 +122,8 @@ describe("DaySide", () => {
         zadanie("t1", "a", true),
         zadanie("t2", "a", false),
         zadanie("t3", "b", false),
-        zadanie("t4", null, true),
+        // zadanie bloku, którego tego dnia nie ma, się nie liczy
+        zadanie("t4", "inny", true),
       ],
     });
     expect(screen.getByText("Dzień w liczbach")).toBeInTheDocument();
