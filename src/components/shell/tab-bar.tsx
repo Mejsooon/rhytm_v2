@@ -6,30 +6,35 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { TAB_ITEMS } from "./nav-items";
 
-// Dolny pasek telefonu (MTabBar.dc.html): 56 px treści + odstęp max(8 px, safe-area), razem --tabbar-h;
-// 5 pozycji, widoczny tylko poniżej 800 px. W poziomie omija boczne wcięcia (notch) przez safe-area.
-// Aktywna pozycja wynika z prefiksu trasy.
+// Dolny pasek telefonu (CMTabBar.dc.html, .tabbar/.tab): 5 pozycji, widoczny tylko poniżej 800 px.
+// Wysokość --tabbar-h = 56 px treści + dolny odstęp max(8 px, safe-area) (w makiecie 64 px);
+// w poziomie omija boczne wcięcia (notch) przez safe-area.
+// Aktywna pozycja wynika z prefiksu trasy (href albo alsoActive z TAB_ITEMS, np. /hasla → „Strony”).
 export function TabBar() {
   const sciezka = usePathname();
 
   return (
     <nav
       aria-label="Moduły"
-      className="fixed inset-x-0 bottom-0 z-40 grid h-(--tabbar-h) grid-cols-5 border-t border-border bg-panel/95 pt-1.5 pr-[max(4px,env(safe-area-inset-right))] pl-[max(4px,env(safe-area-inset-left))] pb-[max(8px,env(safe-area-inset-bottom))] min-[800px]:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-(--tabbar-h) grid-cols-5 gap-0.5 border-t border-sidebar-border bg-sidebar pt-1.5 pr-[max(6px,env(safe-area-inset-right))] pl-[max(6px,env(safe-area-inset-left))] pb-[max(8px,env(safe-area-inset-bottom))] text-[11px] text-foreground min-[800px]:hidden"
     >
-      {TAB_ITEMS.map(({ key, label, href, icon: Ikona }) => {
-        const aktywna = sciezka === href || sciezka.startsWith(`${href}/`);
+      {TAB_ITEMS.map(({ key, label, href, icon: Ikona, alsoActive = [] }) => {
+        const aktywna = [href, ...alsoActive].some(
+          (prefiks) => sciezka === prefiks || sciezka.startsWith(`${prefiks}/`),
+        );
         return (
           <Link
             key={key}
             href={href}
             aria-current={aktywna ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center justify-center gap-[3px] rounded-md text-[11px] no-underline",
-              aktywna ? "font-semibold text-foreground" : "text-muted-foreground",
+              "flex min-h-11 flex-col items-center justify-center gap-[3px] rounded-lg font-medium no-underline",
+              aktywna
+                ? "bg-black/5 text-foreground"
+                : "text-[rgba(38,38,38,.68)] hover:bg-black/4 hover:text-foreground",
             )}
           >
-            <Ikona size={22} strokeWidth={2} aria-hidden="true" />
+            <Ikona size={20} strokeWidth={2} aria-hidden="true" />
             <span>{label}</span>
           </Link>
         );

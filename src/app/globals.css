@@ -179,7 +179,9 @@
    Nazwy klas makiety bez prefiksu dostały prefiks `m-`: .stats → m-stats, .stat → m-stat,
    .stat-v → m-stat-v, .sec-h → m-sec-h, .plan-block → m-plan-block.
    Różnica z makietą: m-fab ma `position: fixed` i `bottom` liczony od --tabbar-h (w makiecie 84 px
-   w ramce 390×844), bo w aplikacji przewija się okno. */
+   w ramce 390×844), bo w aplikacji przewija się okno.
+   Zwykłe klasy Tailwind dopisane obok narzędzia (np. `m-head py-1`, `m-row min-h-[52px]`) wygrywają
+   z jego wartościami, a wariantów używa się jak zwykle (`max-[799px]:m-row`). */
 
 /* Nagłówek ekranu: tytuł po lewej, akcje po prawej */
 @utility m-head {
