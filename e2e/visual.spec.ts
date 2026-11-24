@@ -597,7 +597,7 @@ test.describe("ekrany z sesją", () => {
     }
   });
 
-  test("zrzuty /sport i podstron (makiety Sport, RunDialog, GymLog, WorkoutTemplates, TemplateEditor, ExerciseDetail, MSport, MRunNew, MGym)", async ({
+  test("zrzuty /sport i podstron (makiety Sport, RunDialog, GymLog, WorkoutTemplates, TemplateEditor, ExerciseDetail, CMSport, CMRunNew, CMGym, CMWorkoutTemplates, CMExerciseDetail)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;

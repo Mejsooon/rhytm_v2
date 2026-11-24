@@ -591,12 +591,12 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         najciezsza={
           najciezsza === null
             ? null
-            : `${formatKg(najciezsza.kg, zMasaCiala)}${jednostka} × ${najciezsza.reps}`
+            : `${formatKg(najciezsza.kg, zMasaCiala)}${formatKg(najciezsza.kg, zMasaCiala).startsWith("mc") ? "" : jednostka} × ${najciezsza.reps}`
         }
         najwiecejPowt={
           najwiecejPowt === null
             ? null
-            : `${formatKg(najwiecejPowt.kg, zMasaCiala)}${jednostka} × ${najwiecejPowt.reps}`
+            : `${formatKg(najwiecejPowt.kg, zMasaCiala)}${formatKg(najwiecejPowt.kg, zMasaCiala).startsWith("mc") ? "" : jednostka} × ${najwiecejPowt.reps}`
         }
         najlepsza={
           najlepszaSesja === null

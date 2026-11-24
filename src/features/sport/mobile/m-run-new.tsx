@@ -45,7 +45,7 @@ const KROK_S = 60;
 const ETYKIETA = "text-xs font-medium text-muted-foreground";
 // Pole liczby w m-step: wysokość 44 px jak przyciski −/+, bez własnej ramki
 const POLE_KROKU =
-  "box-border h-11 min-w-0 border-0 bg-white p-0 font-semibold tabular-nums outline-none placeholder:text-faint-foreground";
+  "box-border h-11 min-w-0 border-0 bg-white p-0 text-base font-semibold tabular-nums outline-none placeholder:text-faint-foreground";
 // Skala trudności z renderVals makiety CMRunNew: 1–4 zielony, 5–7 bursztyn, 8–10 czerwony (dane makiety, nie tokeny)
 const KOLOR_SKALI = (n: number) =>
   n >= 8 ? "#ef4444" : n >= 5 ? "#f59e0b" : "#15803d";
