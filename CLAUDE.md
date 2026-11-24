@@ -58,7 +58,7 @@ Każda rozmowa zaczyna się od przeczytania dwóch plików:
 - **e2e i pgTAP działają tylko w CI na GitHubie,** bo lokalnie nie ma Dockera.
   - Artefaktów CI (zrzutów) nie da się pobrać z sesji, czytaj logi przez `gh run view <id> --log-failed`.
   - GraphQL w `gh` jest zablokowany.
-- **Niestabilne testy e2e** (zależne od pory, niezwiązane ze zmianami) to `calendar.spec` (33, 240, 265), `sport.spec` (20, 203) i `today.spec:45`. Przed uznaniem błędu uruchom je ponownie (`gh run rerun <id> --failed`).
+- **Niestabilne testy e2e:** pakiet sprzątania (24.11) ustabilizował kliknięcia w siatkę kalendarza i testy przy północy (`e2e/helpers/kalendarz.ts`: `czekajNaSiatke`, `kliknijSlot`). Znany pozostały niestabilny test: `[mobile] today.spec.ts:185` („nawyk odhaczony na Dziś → kafelek Nawyki 1/1”), przyczyna niezbadana. Krok `supabase/setup-cli` w CI czasem pada na limicie GitHuba („rate limit exceeded”) — to nie błąd kodu. W obu przypadkach przed uznaniem błędu uruchom ponownie (`gh run rerun <id> --failed`).
 
 ## Proces
 

@@ -31,7 +31,7 @@ Task 4: minor (deferred): delete-block-dialog Trash2 icon + scope Info icon not 
 Final review: Important = process (CI, Do decyzji list) → controller; fix wave minors 1,2,6,9 dispatched
 Decisions round 2a (A–E per Mejson): impl a83bf11e00c6b16a5, BASE ce87588; point 1 (renewals) deferred as separate feature; 6,8,9 unchanged
 Task 1: impl bf0f647 (DONE_WITH_CONCERNS: heat-2 = #4ade80 as in CHabits AND old Habits — kept per mockup, PO muted-green wish → Do decyzji); review next
-Task 1: minor (deferred): month heatmap cell focus outline overlaps ring band (offset-4); week-grid test parentElement chain fragile; --heat-2 #4ade80 → Do decyzji
+**[naprawione 24.11, sprzątanie webu]** Task 1: minor (deferred): month heatmap cell focus outline overlaps ring band (offset-4); week-grid test parentElement chain fragile; --heat-2 #4ade80 → Do decyzji
 Task 2: minor (deferred): mood seg duplicates Segment shadow literal rgba; bar fill border-strong .16 vs mockup .12; tooltip div structure
 Ruling: keep szare = bg-panel (legend true, info preserved) over mockup's all-white — cost: slight deviation from CHabitDetail
 Task 3: minor (deferred): today ring added (mockup) — accepted; phone branches interleaved in habit-month; out-of-month text faint/50 contrast
@@ -42,8 +42,8 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 ## Z Etapu 2c (Sport), 2026-11-21
 - `.seg` skopiowany w run-dialog.tsx i template-editor.tsx (aria-pressed / wielokrotny wybór) — rozszerzyć `Segment` o tryb pressed/multiple i podmienić kopie.
 - Zmiany układu telefonu przez wspólne drzewo web/tel. w Sporcie (kafelki exercise-detail jako osobne karty, odstępy w template-editor/templates-list) — zweryfikować w Etapie 3 z CM*.
-- Okruszki: `<nav aria-label="Okruszki">` tylko w exercise-detail — ujednolicić na pozostałych ekranach Sportu.
-- Kruche `parentElement` w templates-list.test.tsx (l.102, ~141).
+- **[naprawione 24.11, sprzątanie webu]** Okruszki: `<nav aria-label="Okruszki">` tylko w exercise-detail — ujednolicić na pozostałych ekranach Sportu.
+- **[naprawione 24.11, sprzątanie webu]** Kruche `parentElement` w templates-list.test.tsx (l.102, ~141).
 
 ## Z Etapu 2d (Strony), 2026-11-21
 - FormDialog (src/components/controls/form-dialog.tsx): aria-describedby={undefined} i <p> zamiast Dialog.Description — opis okna niepowiązany dla czytników.
@@ -111,7 +111,7 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Uwaga: część punktów z T3/T6/T9 już naprawiona (.catch importu, PageMenu align end, zapis nazwy przy zamknięciu menu, przywracanie ukrytej kolumny 0).
 
 ## Strony 2.0 krok 2 — odłożone drobne uwagi (stan 2026-11-23)
-- Task 1: minor (deferred → do T2): column_widths z serwera — tablica przechodzi przez typeof object (dodać !Array.isArray); brak walidacji wartości przy wczytaniu (konsumenci robią clamp ≥80 i Number.isFinite); brak testu górnej granicy karty 4001.
+- **[naprawione 24.11, sprzątanie webu]** Task 1: minor (deferred → do T2): column_widths z serwera — tablica przechodzi przez typeof object (dodać !Array.isArray); brak walidacji wartości przy wczytaniu (konsumenci robią clamp ≥80 i Number.isFinite); brak testu górnej granicy karty 4001.
 - Task 2: minor (deferred): updateCell porównanie z domknięcia (dwa wywołania tej samej komórki w jednym renderze); createOption/updateOption/updateCell nie odrzucają pola z tymczasowym id (toast po nieudanym RPC); moveField przy równych pozycjach ze starych danych — kolizja wizualna do odświeżenia.
 - Task 2: minor (deferred): potwierdzenie wg kolejności zakończeń, nie kolejności na serwerze (odwrócone zakończenia); zatwierdzone z wartości saveRow/removeOption; removeOption i applyTypeChange poza zapisyPol (może przywrócić usuniętą opcję); „Pokaż w kalendarzu” bez bazy z zapisu w toku.
 - Task 3: minor (deferred → do T4): nowyId w page-table nigdy się nie czyści (autoFocus może kraść fokus przy ponownym zamontowaniu wiersza po zmianie filtra).
@@ -119,13 +119,13 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Task 4: minor (deferred): wielokrotne spacje w nazwie opcji nie normalizowane; pusta/zduplikowana nazwa w panelu po cichu pomijana; podwójny Enter woła onCreate dwa razy (bezpieczne przez dedup); Enter na bieżącą opcję ją czyści; „⋯” niewidoczne na dotyku.
 - Task 4: minor (deferred): podświetlenie wiersza gaśnie przy najechaniu na „⋯”; „najechana” może wskazać zniknięta opcję po filtrze.
 - Task 4: minor (deferred): panelRef bez cleanupu na unmount; Tab z opcji nie idzie do jej „⋯” (osobna warstwa).
-- Task 5: minor (deferred): martwe klucze usuniętych kolumn w column_widths; brak testu odfiltrowania niepoprawnych wpisów; rollback patchSettings przy dwóch szybkich zapisach nadpisuje nowszą mapę (istniejące zachowanie store).
+- **[naprawione 24.11, sprzątanie webu]** Task 5: minor (deferred): martwe klucze usuniętych kolumn w column_widths; brak testu odfiltrowania niepoprawnych wpisów; rollback patchSettings przy dwóch szybkich zapisach nadpisuje nowszą mapę (istniejące zachowanie store).
 - Task 5: minor (deferred): ucinanie nazwy i przeciąganie dotykiem/piórem do sprawdzenia w przeglądarce (T10/podgląd); brak releasePointerCapture w gałęzi buttons===0.
 - Task 6: minor (deferred): onPointerUp karty bierze indeks z domknięcia (zmiana kolejności z zewnątrz w trakcie przeciągania trafi w inną kartę); key={i} — po przesunięciu fokus wraca na „⋯” karty na starym miejscu; „⋯” niewidoczne na tablecie ≥800 px bez hovera; brak aria-valuemax uchwytu; toast „Cofnij” po nawigacji używa starego onChange.
 - Task 7: minor (deferred): edycja nearest_date nadpisuje field_id pierwszą kolumną status; grupy radio bez nawigacji strzałkami.
 - Task 7: minor (deferred): podpowiedź limitu tylko w title (a11y); brak testów: unit zachowany przy tym samym sposobie, maxLength; unit przechodzi przy zmianie kolumny z tym samym sposobem.
 - Task 8: minor (deferred): plan i spec nadal opisują page_icon_lucide jako do zrobienia.
-- Task 9: minor (deferred): stanWBazie w e2e ignoruje error zapytania; expect.poll timeout 5 s < actionTimeout 10 s; brak asercji trwałości „Cofnij” w Books.
+- **[naprawione 24.11, sprzątanie webu]** Task 9: minor (deferred): stanWBazie w e2e ignoruje error zapytania; expect.poll timeout 5 s < actionTimeout 10 s; brak asercji trwałości „Cofnij” w Books.
 - Task 9: minor (deferred): removeOption — cofnięcie wierszy/ustawień bez warunku „nadal z tej zmiany” przy równoległym zapisie; Promise.all wszystko-albo-nic bez resynchronizacji; settings z domknięcia przy dwóch removeOption w jednym renderze.
 - Przegląd końcowy (odłożone): M1 utrata szkicu przy zamknięciu karty w 600 ms; M4 rerender całej tabeli przy zapisie komórki (memo); pozostałe Minor z final-review kroku 2; onBlur odpina przy alt-tab; dwie identyczne karty przy edycji po treści.
 
@@ -157,3 +157,9 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - `visual.spec` Subscriptions liczy daty w UTC (tekst zrzutu koło północy może się przesunąć o dzień).
 - Test pgTAP `subscriptions.test.sql` używa `"cycle":"monthly"` w danych (powinno `"month"`; bez wpływu na wynik).
 - Telefon (arkusz wiersza): bez dopisku „następne: dd.mm.rrrr” — pole pokazuje od razu następne odnowienie.
+
+## Sprzątanie webu — odłożone (stan 2026-11-24)
+- `e2e/helpers/kalendarz.ts:121`: komentarz „+10 px = środek 30 minut” nieścisły (środek to +12 px); wynik poprawny.
+- `duplicate_page` kopiuje wartości Sekret: dla starej niesystemowej strony z polem Sekret i szyfrogramem starej generacji duplikat zakończy się ogólnym błędem (dane bezpieczne). Na później: zerować pola `secret` w kopii.
+- Strażnik `page_rows` robi przy każdym zapisie dodatkowe zapytanie do `page_blocks` (bez „szybkiego wyjścia” ze specu); koszt pomijalny.
+- Niestabilny `[mobile] today.spec.ts:185` (nawyk odhaczony na Dziś → 1/1) — przyczyna niezbadana.
