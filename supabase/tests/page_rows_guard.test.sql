@@ -1,5 +1,5 @@
 begin;
-select plan(35);
+select plan(36);
 
 -- Użytkownik P: strona Hasła (ensure_passwords_page), zwykła strona z dwiema tabelami i strona z Sekretem w koszu.
 insert into auth.users (id, email)
@@ -19,8 +19,12 @@ select ok(has_function_privilege('authenticated', 'public.reset_vault()', 'execu
 -- V (ofiara): strona Hasła i aktywny sejf; P nie może się o nich niczego dowiedzieć.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c2","role":"authenticated"}', true);
+-- ensure_passwords_page w osobnym poleceniu: w jednym zapytaniu podzapytanie nie widzi bloku wstawionego przez
+-- funkcję w trakcie tego samego polecenia (migawka sprzed wywołania) i zwracało pusty id.
+select set_config('test.v_page', public.ensure_passwords_page()::text, true);
 select set_config('test.v_block', (select b.id::text from public.page_blocks as b
-  where b.page_id = public.ensure_passwords_page()), true);
+  where b.page_id = current_setting('test.v_page')::uuid), true);
+select ok(current_setting('test.v_block') <> '', 'id bloku Haseł V ustawione');
 insert into public.vaults (status, generation) values ('active', 1);
 
 -- Od teraz jako zalogowany P.
