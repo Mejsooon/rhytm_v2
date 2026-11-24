@@ -104,7 +104,7 @@ describe("FormDialog — arkusz telefonu (CM)", () => {
       </FormDialog>,
     );
     const stopka = screen.getByRole("button", { name: "Dodaj" }).parentElement as HTMLElement;
-    expect(stopka).toHaveClass("max-[799px]:pb-7");
+    expect(stopka).toHaveClass("max-[799px]:pb-[max(28px,env(safe-area-inset-bottom))]");
     expect(stopka).not.toHaveClass("max-[799px]:hidden");
   });
 

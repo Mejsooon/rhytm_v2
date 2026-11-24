@@ -74,6 +74,13 @@ describe("ConfirmDialog", () => {
       "min-[800px]:rounded-xl",
     );
     expect(okno.querySelector(".m-grab")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("max-[799px]:h-12");
+    // Telefon: siatka 2 kolumn, „Anuluj” z ramką (.btn) po lewej, potwierdzenie po prawej, oba 44 px
+    const potwierdz = screen.getByRole("button", { name: "Usuń" });
+    const anuluj = screen.getByRole("button", { name: "Anuluj" });
+    expect(potwierdz.parentElement).toHaveClass("max-[799px]:grid", "max-[799px]:grid-cols-2", "max-[799px]:gap-2.5");
+    expect(potwierdz.parentElement).not.toHaveClass("max-[799px]:flex-col-reverse");
+    expect(anuluj).toHaveClass("max-[799px]:h-11", "max-[799px]:border-input", "max-[799px]:bg-white");
+    expect(potwierdz).toHaveClass("max-[799px]:h-11");
+    expect(okno).toHaveClass("max-[799px]:border", "max-[799px]:border-b-0", "max-[799px]:pb-[max(20px,env(safe-area-inset-bottom))]");
   });
 });

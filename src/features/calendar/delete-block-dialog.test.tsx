@@ -117,9 +117,9 @@ describe("DeleteBlockDialog", () => {
     const { onCancel } = wyrenderuj(wystapienie());
     // „Anuluj” bez ramki (ghost, .btng z makiet)
     expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
-    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
-    // Telefon: pełny przycisk 48 px zostaje
-    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-12");
+    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toMatch(/(^|\s)border-input/);
+    // Telefon: przycisk 44 px z ramką (.btn), obok potwierdzenia
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("max-[799px]:h-11", "max-[799px]:border-input");
     await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(onCancel).toHaveBeenCalled();
     expect(changeOccurrence).not.toHaveBeenCalled();

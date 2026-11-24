@@ -9,6 +9,17 @@ import { Button } from "./button";
 
 // Okno wg VaultReset.dc.html (od 800 px, na środku) i arkusz wg CMQuickAdd / CMBlockSheet
 // (poniżej 800 px, od dołu z uchwytem m-grab). Przełączanie wyłącznie klasami CSS.
+// Nagłówek arkusza na telefonie: "close" (CMQuickAdd) = tytuł po lewej + ✕ po prawej;
+// "actions" (CMBlockSheet, CMRowEdit) = „Anuluj” · tytuł na środku · przycisk główny.
+// Przy "actions" ✕ i stopka są ukryte, więc „Anuluj” i przycisk główny są wymagane (typ to wymusza).
+type NaglowekTelefonu =
+  | { phoneHeader?: "close"; phoneCancel?: undefined; phoneSubmit?: undefined }
+  | {
+      phoneHeader: "actions";
+      phoneCancel: { label: string; onClick: () => void };
+      phoneSubmit: React.ReactNode;
+    };
+
 export function FormDialog({
   open,
   onOpenChange,
@@ -21,7 +32,7 @@ export function FormDialog({
   phoneHeader = "close",
   phoneCancel,
   phoneSubmit,
-}: {
+}: NaglowekTelefonu & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -33,11 +44,6 @@ export function FormDialog({
   footer?: React.ReactNode;
   // Przycisk w nagłówku po prawej (telefon: np. „Gotowe” w arkuszu „Kolumna”)
   headerAction?: React.ReactNode;
-  // Nagłówek arkusza na telefonie: "close" (CMQuickAdd) = tytuł po lewej + ✕ po prawej;
-  // "actions" (CMBlockSheet, CMRowEdit) = „Anuluj” · tytuł na środku · przycisk główny
-  phoneHeader?: "close" | "actions";
-  phoneCancel?: { label: string; onClick: () => void };
-  phoneSubmit?: React.ReactNode;
 }) {
   const akcje = phoneHeader === "actions";
   return (
@@ -46,7 +52,7 @@ export function FormDialog({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:backdrop-blur-none" />
         <Dialog.Content
           {...(description ? {} : { "aria-describedby": undefined })}
-          className={`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[88%] max-[799px]:rounded-t-2xl max-[799px]:rounded-b-none max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`}
+          className={`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[88%] max-[799px]:rounded-t-2xl max-[799px]:rounded-b-none max-[799px]:border max-[799px]:border-b-0 max-[799px]:border-border max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`}
         >
           {/* Uchwyt arkusza — tylko na telefonie (m-grab z CM-BASE) */}
           <div
@@ -95,7 +101,7 @@ export function FormDialog({
               </Button>
             </Dialog.Close>
             {headerAction && (
-              <div className="flex-none max-[799px]:absolute max-[799px]:top-1 max-[799px]:right-2">
+              <div className="flex-none">
                 {headerAction}
               </div>
             )}
@@ -105,10 +111,10 @@ export function FormDialog({
           </div>
           <div
             className={cn(
-              "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-5 max-[799px]:px-5",
+              "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-5",
               akcje
-                ? "max-[799px]:gap-[18px] max-[799px]:pt-4 max-[799px]:pb-7"
-                : "max-[799px]:pt-1",
+                ? "max-[799px]:gap-[18px] max-[799px]:pt-4 max-[799px]:pb-[max(20px,env(safe-area-inset-bottom))]"
+                : "max-[799px]:px-5 max-[799px]:pt-1",
             )}
           >
             {children}
@@ -116,7 +122,7 @@ export function FormDialog({
           {footer && (
             <div
               className={cn(
-                "flex flex-none flex-wrap items-center justify-end gap-2 border-t border-border bg-black/[.025] px-6 py-4 min-[800px]:rounded-b-[15px] max-[799px]:px-5 max-[799px]:pb-7",
+                "flex flex-none flex-wrap items-center justify-end gap-2 border-t border-border bg-black/[.025] px-6 py-4 min-[800px]:rounded-b-[15px] max-[799px]:pb-[max(28px,env(safe-area-inset-bottom))]",
                 // Przy nagłówku „actions” telefon nie ma stopki (przycisk główny jest w nagłówku)
                 akcje && "max-[799px]:hidden",
               )}

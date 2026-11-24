@@ -81,11 +81,11 @@ describe("DeleteSessionDialog", () => {
     );
     expect(
       screen.getByRole("button", { name: "Anuluj" }).className,
-    ).not.toContain("border-input");
-    // Rozmiar md: 32 px na webie i 48 px na telefonie (przyciski arkusza)
+    ).not.toMatch(/(^|\s)border-input/);
+    // Rozmiar md: 32 px na webie i 44 px na telefonie (przyciski arkusza obok siebie)
     expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
       "h-8",
-      "max-[799px]:h-12",
+      "max-[799px]:h-11",
     );
     // Okno w stylu .dlg: promień 16 px, ramka border, cień pop, szara stopka
     expect(screen.getByRole("alertdialog")).toHaveClass(

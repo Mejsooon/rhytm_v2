@@ -9,9 +9,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
+        // FIELD ma już na telefonie font 16 px (iOS nie powiększa strony) i wysokość 44 px
         FIELD,
-        // Telefon: font 16 px (iOS nie powiększa strony) i wysokość 44 px
-        "max-[799px]:h-11 max-[799px]:text-base",
         className,
       )}
       {...props}

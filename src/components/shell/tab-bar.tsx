@@ -28,7 +28,7 @@ export function TabBar() {
             href={href}
             aria-current={aktywna ? "page" : undefined}
             className={cn(
-              "flex min-h-11 flex-col items-center justify-center gap-[3px] rounded-lg font-medium no-underline",
+              "flex min-h-11 flex-col items-center justify-center gap-[3px] rounded-[8px] font-medium no-underline",
               aktywna
                 ? "bg-black/5 text-foreground"
                 : "text-[rgba(38,38,38,.68)] hover:bg-black/4 hover:text-foreground",

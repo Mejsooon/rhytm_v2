@@ -143,7 +143,7 @@ export function BlockDetails({
           icon
           aria-label="Zamknij"
           onClick={onClose}
-          className="max-[799px]:size-11"
+          className="max-[799px]:hidden"
         >
           <X size={16} aria-hidden="true" />
         </Button>

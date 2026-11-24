@@ -76,7 +76,7 @@ describe("TabBar", () => {
     const pasek = screen.getByRole("navigation", { name: "Moduły" });
     expect(pasek).toHaveClass("bg-sidebar", "border-sidebar-border", "gap-0.5", "pt-1.5", "text-[11px]");
     const aktywna = screen.getByRole("link", { name: "Sport" });
-    expect(aktywna).toHaveClass("min-h-11", "rounded-lg", "font-medium", "gap-[3px]", "bg-black/5", "text-foreground");
+    expect(aktywna).toHaveClass("min-h-11", "rounded-[8px]", "font-medium", "gap-[3px]", "bg-black/5", "text-foreground");
     const nieaktywna = screen.getByRole("link", { name: "Dziś" });
     expect(nieaktywna).toHaveClass("min-h-11", "text-[rgba(38,38,38,.68)]");
     expect(nieaktywna).not.toHaveClass("bg-black/5");
