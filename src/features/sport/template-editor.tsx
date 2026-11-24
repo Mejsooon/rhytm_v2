@@ -198,7 +198,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
     <div className="flex min-w-0 flex-col">
       {/* .topbar z okruszkami .crumb (CWorkoutTemplates) */}
       <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
-        <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+        <nav aria-label="Okruszki" className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
           {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
           <SidebarToggle placement="header" />
           <Link
@@ -219,7 +219,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           </Button>
           <span aria-hidden="true">/</span>
           <span className="font-medium text-foreground">{crumb}</span>
-        </div>
+        </nav>
         <div className="flex flex-wrap items-center gap-2">
           {przyciskAnuluj}
           {przyciskZapisz}

@@ -61,7 +61,10 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     pinned_cards: Array.isArray(surowe.pinned_cards) ? surowe.pinned_cards : [],
     column_widths:
       surowe.column_widths && typeof surowe.column_widths === "object" && !Array.isArray(surowe.column_widths)
-        ? surowe.column_widths
+        ? Object.fromEntries(
+            // Martwe klucze (pola, których już nie ma w bloku) odpadają przy wczytaniu
+            Object.entries(surowe.column_widths).filter(([id]) => block.fields.some((f) => f.id === id)),
+          )
         : {},
   };
 
@@ -550,12 +553,13 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // Nazwa tabeli (content.name): od razu lokalnie, zapis z zachowaniem content.settings; błąd cofa
   async function renameTable(name: string): Promise<boolean> {
-    if (name === tableName) return true;
+    const nazwa = name.trim();
+    if (nazwa === tableName) return true;
     const poprzednia = tableName;
-    setTableName(name);
+    setTableName(nazwa);
     let udane = false;
     try {
-      udane = (await updateBlockContent(block.id, { ...block.content, name })).ok;
+      udane = (await updateBlockContent(block.id, { ...block.content, name: nazwa })).ok;
     } catch {
       udane = false;
     }
@@ -618,9 +622,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     // Config z zapisu w toku (drugie wywołanie przed rerenderem nie zgubi opcji pierwszego)
     const pole = fields.find((f) => f.id === field.id) ?? field;
     const config = zapisyPol.current.get(field.id)?.config ?? pole.config;
-    const etykieta = label.trim();
+    const etykieta = label.replace(/\s+/g, " ").trim();
     const opcje = config.options ?? [];
-    if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
+    if (etykieta === "" || opcje.some((o) => o.label.replace(/\s+/g, " ").trim().toLowerCase() === etykieta.toLowerCase())) {
       return null;
     }
     // Szary to ostatni kolor PALETA (#525252)
@@ -643,10 +647,10 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     if (!opcje.some((o) => o.id === optionId)) return false;
     const zmiana: { label?: string; color?: string } = {};
     if (patch.label !== undefined) {
-      const etykieta = patch.label.trim();
+      const etykieta = patch.label.replace(/\s+/g, " ").trim();
       if (
         etykieta === "" ||
-        opcje.some((o) => o.id !== optionId && o.label.trim().toLowerCase() === etykieta.toLowerCase())
+        opcje.some((o) => o.id !== optionId && o.label.replace(/\s+/g, " ").trim().toLowerCase() === etykieta.toLowerCase())
       ) {
         return false;
       }
@@ -659,12 +663,12 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // Nowa opcja Wyboru: kolor to następny z PALETA; etykieta już istniejąca (bez wielkości liter) nic nie robi
   async function addOption(field: PageField, label: string): Promise<boolean> {
-    const etykieta = label.trim();
+    const etykieta = label.replace(/\s+/g, " ").trim();
     // Pole i config z najnowszego stanu (polaRef) albo z zapisu w toku, nie z przekazanego obiektu
     const pole = polaRef.current.find((f) => f.id === field.id) ?? field;
     const config = zapisyPol.current.get(field.id)?.config ?? pole.config;
     const opcje = config.options ?? [];
-    if (etykieta === "" || opcje.some((o) => o.label.trim().toLowerCase() === etykieta.toLowerCase())) {
+    if (etykieta === "" || opcje.some((o) => o.label.replace(/\s+/g, " ").trim().toLowerCase() === etykieta.toLowerCase())) {
       return false;
     }
     const nowa: FieldOption = {
@@ -870,6 +874,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     const zabranePodsumowania = Object.entries(settings.column_summaries).filter(
       ([id, p]) => nalezy(id) || p.where?.field_id === field.id,
     );
+    const zabranaSzerokosc = field.id in settings.column_widths ? settings.column_widths[field.id] : undefined;
     const zabraneKarty = settings.pinned_cards.filter(
       (c) => nalezy(c.field_id) || c.date_field_id === field.id || c.title_field_id === field.id,
     );
@@ -886,6 +891,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
           ([id, podsumowanie]) => id !== field.id && podsumowanie.where?.field_id !== field.id,
         ),
       ),
+      column_widths: Object.fromEntries(Object.entries(s.column_widths).filter(([id]) => id !== field.id)),
       pinned_cards: s.pinned_cards.filter(
         (c) =>
           c.field_id !== field.id && c.date_field_id !== field.id && c.title_field_id !== field.id,
@@ -917,6 +923,11 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
           ...Object.fromEntries(zabranePodsumowania.filter(([id]) => !(id in s.column_summaries))),
           ...s.column_summaries,
         },
+        // Szerokość wraca tylko, jeśli w międzyczasie nikt nie ustawił nowej
+        column_widths:
+          zabranaSzerokosc !== undefined && !(field.id in s.column_widths)
+            ? { ...s.column_widths, [field.id]: zabranaSzerokosc }
+            : s.column_widths,
         pinned_cards: [...s.pinned_cards, ...zabraneKarty],
       }));
       if (zabraneFiltryTymczasowe.length > 0) {

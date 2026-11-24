@@ -66,6 +66,12 @@ beforeEach(() => {
 });
 
 describe("GymLog — nagłówek i liczniki", () => {
+  it("okruszki są nawigacją „Okruszki”", () => {
+    render(<GymLog data={daneTreningu()} />);
+    const nav = screen.getByRole("navigation", { name: "Okruszki" });
+    expect(nav).toHaveTextContent("Sport");
+  });
+
   it("ścieżka, tytuł, data z godzinami i szablonem, objętość i serie", () => {
     render(<GymLog data={daneTreningu()} />);
     expect(screen.getByText("Push · czw 19.11")).toBeInTheDocument();

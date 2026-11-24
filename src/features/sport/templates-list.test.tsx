@@ -51,6 +51,12 @@ beforeEach(() => {
 });
 
 describe("TemplatesList", () => {
+  it("okruszki są nawigacją „Okruszki”", () => {
+    render(<TemplatesList data={dane()} flash={null} />);
+    const nav = screen.getByRole("navigation", { name: "Okruszki" });
+    expect(nav).toHaveTextContent("Sport");
+  });
+
   it("ścieżka, nagłówek i „Nowy szablon” w nagłówku", () => {
     render(<TemplatesList data={dane()} flash={null} />);
     expect(screen.getByRole("link", { name: "Sport" })).toHaveAttribute(

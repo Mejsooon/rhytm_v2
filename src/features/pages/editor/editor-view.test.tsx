@@ -157,7 +157,7 @@ describe("EditorView", () => {
     expect(menu).toHaveClass("rounded-xl", "border-border", "shadow-lg", "p-1", "w-[330px]");
     const pozycje = screen.getAllByRole("option");
     // MENU_ITEM: aktywna pozycja ma tło accent (aria-selected), wysokość 44 px
-    expect(pozycje[0]).toHaveClass("min-h-11", "rounded-sm");
+    expect(pozycje[0]).toHaveClass("max-[799px]:min-h-11", "rounded-sm");
     expect(pozycje[0]).toHaveAttribute("aria-selected", "true");
     await user.keyboard("{ArrowDown}");
     expect(pozycje[1]).toHaveAttribute("aria-selected", "true");

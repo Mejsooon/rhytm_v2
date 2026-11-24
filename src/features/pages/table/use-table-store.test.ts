@@ -573,5 +573,122 @@ describe("useTableStore", () => {
       expect(result.current.settings.column_widths).toEqual({});
       expect(result.current.settings.column_summaries).toEqual({});
     });
+
+    it("column_widths z martwym kluczem po wczytaniu zostaje tylko dla pól bloku", () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const zMartwym = {
+        ...b,
+        content: {
+          ...b.content,
+          settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 240, "nie-ma-takiego-pola": 180 } },
+        },
+      };
+      const { result } = renderHook(() => useTableStore(zMartwym));
+      expect(result.current.settings.column_widths).toEqual({ [autor.id]: 240 });
+    });
+  });
+
+  describe("removeField i column_widths", () => {
+    function blokZeSzerokoscia() {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      return {
+        autor,
+        b: {
+          ...b,
+          content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 240 } } },
+        },
+      };
+    }
+
+    it("po usunięciu pola nie ma jego klucza w column_widths", async () => {
+      const { autor, b } = blokZeSzerokoscia();
+      const { result } = renderHook(() => useTableStore(b));
+      expect(result.current.settings.column_widths).toEqual({ [autor.id]: 240 });
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      expect(result.current.settings.column_widths).toEqual({});
+    });
+
+    it("po błędzie serwera klucz szerokości wraca", async () => {
+      const { autor, b } = blokZeSzerokoscia();
+      actions.deleteField.mockResolvedValue({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      expect(result.current.settings.column_widths).toEqual({ [autor.id]: 240 });
+      expect(toast.error).toHaveBeenCalledWith(BLAD_ZAPISU);
+    });
+  });
+
+  describe("renameTable", () => {
+    it("„  Lektury  ” zapisuje „Lektury”", async () => {
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.renameTable("  Lektury  ");
+      });
+      expect(actions.updateBlockContent).toHaveBeenCalledWith(b.id, expect.objectContaining({ name: "Lektury" }));
+      expect(result.current.tableName).toBe("Lektury");
+    });
+
+    it("same spacje przy pustej nazwie nie wysyłają zapisu", async () => {
+      // Tabela bez nazwy: same spacje po przycięciu to ta sama (pusta) nazwa
+      const b0 = blok();
+      const b = { ...b0, content: { ...b0.content, name: "" } };
+      const { result } = renderHook(() => useTableStore(b));
+      let wynik: boolean | undefined;
+      await act(async () => {
+        wynik = await result.current.renameTable("   ");
+      });
+      expect(wynik).toBe(true);
+      expect(actions.updateBlockContent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("normalizacja nazw opcji", () => {
+    it("createOption(„W  toku”) przy istniejącym „W toku” nie tworzy duplikatu", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const zOpcja = {
+        ...b,
+        fields: b.fields.map((f) =>
+          f.id === status.id
+            ? { ...f, config: { ...f.config, options: [...f.config.options!, { id: "o-wtoku", label: "W toku", color: "#525252" }] } }
+            : f,
+        ),
+      };
+      const { result } = renderHook(() => useTableStore(zOpcja));
+      const pole = result.current.fields.find((f) => f.id === status.id)!;
+      let id: string | null | undefined;
+      await act(async () => {
+        id = await result.current.createOption(pole, "W  toku");
+      });
+      expect(id).toBeNull();
+      expect(actions.updateField).not.toHaveBeenCalled();
+    });
+
+    it("createOption i updateOption zapisują nazwę ze zwiniętymi spacjami", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.createOption(status, "  Na   później ");
+      });
+      const zapisana = actions.updateField.mock.calls[0][1].config.options.find(
+        (o: { label: string }) => o.label === "Na później",
+      );
+      expect(zapisana).toBeDefined();
+      const pole = result.current.fields.find((f) => f.id === status.id)!;
+      const pierwsza = pole.config.options![0];
+      await act(async () => {
+        await result.current.updateOption(pole, pierwsza.id, { label: " Nowa   nazwa " });
+      });
+      const ostatni = actions.updateField.mock.calls.at(-1)![1].config.options;
+      expect(ostatni.find((o: { id: string }) => o.id === pierwsza.id).label).toBe("Nowa nazwa");
+    });
   });
 });

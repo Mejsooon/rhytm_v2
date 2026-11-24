@@ -43,4 +43,12 @@ describe("SlashMenu", () => {
     await user.click(pozycje[2]);
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ type: "heading" }));
   });
+
+  it("pozycje nie wymuszają 44 px na webie, tylko na telefonie", () => {
+    render(<SlashMenu query="" active={0} onActive={vi.fn()} onPick={vi.fn()} />);
+    for (const pozycja of screen.getAllByRole("option")) {
+      expect(pozycja).toHaveClass("max-[799px]:min-h-11");
+      expect(pozycja).not.toHaveClass("min-h-11");
+    }
+  });
 });

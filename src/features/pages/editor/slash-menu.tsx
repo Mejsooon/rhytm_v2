@@ -37,8 +37,8 @@ export function SlashMenu({
           onMouseDown={(e) => e.preventDefault()}
           onMouseEnter={() => onActive(i)}
           onClick={() => onPick(p)}
-          // .mi: aktywna pozycja (aria-selected) ma tło accent; min. 44 px
-          className={cn(MENU_ITEM, "min-h-11 gap-2.5 aria-selected:bg-accent")}
+          // .mi: aktywna pozycja (aria-selected) ma tło accent; wysokość z MENU_ITEM (32 px web, 44 px telefon)
+          className={cn(MENU_ITEM, "gap-2.5 aria-selected:bg-accent")}
         >
           {/* .ico: 32 px, ramka border, promień 8 px, cień xs */}
           <span
