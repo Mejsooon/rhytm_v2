@@ -137,3 +137,11 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - B6 (informacyjnie): treść błędu wyzwalacza zdradza 1 bit, czy cudzy UUID to blok modułu. Praktycznie nieosiągalne.
 - Z zadania 3: status „ladowanie” chwilowo pokazuje „zablokowane”; arkusz telefonu odszyfrowuje sekrety od razu po otwarciu; klik w trakcie szyfrowania otwiera starą wartość; brak testu kopiowania z dwóch wierszy.
 - Z zadania 5: `m-row-sheet.test` raz zachował się niestabilnie.
+
+## Projekt Dziś (wariant F) — odłożone drobne uwagi (stan 2026-11-24)
+- RLS `tasks`: polityki insert/update mają martwą gałąź `block_id is null` (po `20261126100000_tasks_only_in_blocks.sql`) — uprościć osobną migracją (pakiet sprzątania).
+- `today-view.tsx`: `HabitDialog` woła `router.refresh()` także po „Anuluj” (zbędne odświeżenie; okno nie odróżnia zapisu od anulowania).
+- Nawyki na dziś: 4 kolumny także przy 800–1100 px; długie nazwy są ucinane (`truncate`), makieta zawija. Sprawdzić na żywo.
+- `StatusBadge green` („Teraz”) ma tekst `text-success`, makieta `.bdg.ok` — drobna różnica koloru kontrolki.
+- `delete-block-dialog`: zdanie o zadaniach zawsze w formie „jeśli są” (okno nie zna liczby zadań).
+- Scope-dialog: przy edycji „Tylko to wystąpienie” tekst o usuwaniu zadań może niepotrzebnie straszyć (zadania nie są tam usuwane).

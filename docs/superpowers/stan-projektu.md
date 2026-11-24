@@ -1,6 +1,6 @@
 # Stan projektu rhytm (aktualizuj na koniec każdego etapu)
 
-Ostatnia aktualizacja: 2026-11-23 (krok 3 Stron 2.0).
+Ostatnia aktualizacja: 2026-11-24 (projekt Dziś; seria autonomiczna).
 
 ## Czym jest rhytm
 
@@ -34,6 +34,9 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
   - **Krok 3** (merge `a69a5b1`): Hasła jako moduł systemowy `/hasla` (strona `is_system`, stałe kolumny, przy zamkniętym sejfie sama karta „Odblokuj sejf”), nowy onboarding. Plan: `plans/2026-11-23-strony-2-krok-3.md`. Migracja `20261125100000_passwords_module.sql` wykonana na produkcji.
 
 ## W toku
+
+- **Seria autonomiczna (2026-11-24):** Dziś → Subscriptions → sprzątanie uwag webu → Etap 3 (telefon). Decyzje podjęte bez Mejsona: `docs/superpowers/do-decyzji-seria.md`.
+- **Projekt Dziś** (`feat/dzis`): spec `specs/2026-11-24-dzis-design.md`, plan `plans/2026-11-24-dzis.md`; migracja `20261126100000_tasks_only_in_blocks.sql`.
 
 - Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
 
