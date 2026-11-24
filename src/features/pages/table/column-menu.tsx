@@ -649,7 +649,16 @@ export function ColumnMenu({
         title="Kolumna"
         phoneClose={false}
         headerAction={
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="font-semibold">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Pole nazwy odmontuje się bez blur, więc zapisujemy nazwę przed zamknięciem
+              setPodmenu(null);
+              if (!locked) zapiszNazwe();
+              onOpenChange(false);
+            }}
+            className="font-semibold"
+          >
             Gotowe
           </Button>
         }

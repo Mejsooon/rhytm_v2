@@ -16,7 +16,8 @@ import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
 // Wybór szablonu nowej strony (S2NewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
 // po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
-// Telefon (poniżej 800 px) według mediów; po stronie serwera i w testach (bez matchMedia) false = układ webowy
+// Telefon (poniżej 800 px) według mediów; po stronie serwera (i przy hydratacji) układ jest nieustalony (null),
+// więc przy twardym wejściu widać samo tło, a nie błysk niewłaściwego układu. W testach bez matchMedia: web
 function subskrybujTelefon(wywolaj: () => void) {
   const mq = window.matchMedia("(max-width: 799px)");
   mq.addEventListener?.("change", wywolaj);
@@ -32,7 +33,7 @@ export function NewPageView() {
   const telefon = React.useSyncExternalStore(
     (wywolaj) => (typeof window.matchMedia === "function" ? subskrybujTelefon(wywolaj) : () => {}),
     czyTelefon,
-    () => false,
+    (): boolean | null => null,
   );
   const [wybrany, setWybrany] = React.useState<TemplateKey>("empty");
   const [fraza, setFraza] = React.useState("");
@@ -72,6 +73,10 @@ export function NewPageView() {
       return;
     }
     router.push(`/strony/${wynik.id}`);
+  }
+
+  if (telefon === null) {
+    return <div className="fixed inset-0 z-50 bg-black/[.32]" />;
   }
 
   if (telefon) {

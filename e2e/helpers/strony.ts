@@ -32,7 +32,7 @@ export async function zalozKontoStron(
 export async function utworzBooks(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
   await page.getByRole("button", { name: /^Books/ }).click();
-  await page.getByRole("button", { name: "Utwórz stronę" }).click();
+  await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Tytuł jest polem „Nazwa strony” na webie i telefonie (h1 jest tylko w nagłówku webowym)
   await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
@@ -44,7 +44,7 @@ export async function utworzBooks(page: Page): Promise<void> {
 export async function utworzSubscriptions(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
   await page.getByRole("button", { name: /^Subscriptions/ }).click();
-  await page.getByRole("button", { name: "Utwórz stronę" }).click();
+  await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
     "Subscriptions",

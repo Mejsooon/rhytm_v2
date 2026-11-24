@@ -519,6 +519,6 @@ test.describe("strony", () => {
 
     // Strona pojawia się na liście
     await page.goto("/strony");
-    await expect(page.getByRole("link", { name: /Bez tytułu/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Pusta strona/ })).toBeVisible();
   });
 });

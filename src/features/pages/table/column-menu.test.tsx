@@ -642,6 +642,19 @@ describe("arkusz „Kolumna” (telefon, CMEditor)", () => {
     return screen.findByRole("dialog", { name: "Kolumna" });
   }
 
+  it("„Gotowe” zapisuje wpisaną nazwę bez blur", async () => {
+    const user = userEvent.setup();
+    const dane = stronaTestowa("books", "Books", BOOKS);
+    render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+    const arkusz = await otworzArkusz(user, "Autor");
+    const pole = within(arkusz).getByRole("textbox", { name: "Nazwa kolumny" });
+    await user.clear(pole);
+    await user.type(pole, "Pisarz");
+    await user.click(within(arkusz).getByRole("button", { name: "Gotowe" }));
+    const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
+    await waitFor(() => expect(actions.updateField).toHaveBeenCalledWith(autor.id, { name: "Pisarz" }));
+  });
+
   it("nagłówek otwiera arkusz z nazwą, chipami typu bez Sekretu, przesuwaniem, usuwaniem i „Gotowe” zamiast dymku", async () => {
     const user = userEvent.setup();
     render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
