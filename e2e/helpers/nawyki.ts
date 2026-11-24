@@ -5,7 +5,7 @@ import {
   randomPassword,
   uniqueEmail,
 } from "./konto";
-import { expect, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // Nawyki zawsze pracują na „dziś” (brak nawigacji po datach), a czasu serwera nie da się podmienić.
 // Dlatego dane zasiewamy względem prawdziwego dziś w strefie profilu (konta testowe mają domyślne Europe/Warsaw)
@@ -32,6 +32,26 @@ export async function zalozKontoNawykow(
   page: Page,
   projekt: string,
 ): Promise<string> {
+  // Serwer liczy „dziś” w strefie profilu, a test (Node) zasiewa dane względem własnego zegara; zegara serwera
+  // nie da się podmienić. Tuż przed północą w Warszawie oba „dziś” mogłyby się rozjechać w trakcie testu,
+  // więc przeczekujemy północ (i wydłużamy limit testu o ten czas).
+  const czesci = new Intl.DateTimeFormat("en-GB", {
+    timeZone: STREFA,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const sekundyOdPolnocy =
+    Number(czesci.find((c) => c.type === "hour")!.value) * 3600 +
+    Number(czesci.find((c) => c.type === "minute")!.value) * 60 +
+    Number(czesci.find((c) => c.type === "second")!.value);
+  const sekundyDoPolnocy = 86400 - sekundyOdPolnocy;
+  if (sekundyDoPolnocy < 180) {
+    test.info().setTimeout(test.info().timeout + (sekundyDoPolnocy + 5) * 1000);
+    await new Promise((r) => setTimeout(r, (sekundyDoPolnocy + 5) * 1000));
+  }
+
   const email = uniqueEmail(projekt);
   const haslo = randomPassword();
   const userId = await createConfirmedUser(email, haslo);

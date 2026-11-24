@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  czekajNaSiatke,
+  kliknijSlot,
   NASTEPNY_WTOREK,
   poZapisie,
   SRODA,
@@ -36,10 +38,8 @@ test.describe("kalendarz (web)", () => {
     await zalozKontoKalendarza(page, info.project.name);
     await page.goto(TYDZIEN);
 
-    // Slot 10:00 we wtorek: godzina ma 48 px, więc 490 px od góry kolumny to połowa 10:00–10:30
-    await page
-      .getByTestId(`kolumna-${WTOREK}`)
-      .click({ position: { x: 40, y: 490 } });
+    // Slot 10:00 we wtorek (po przewinięciu siatki do 06:00)
+    await kliknijSlot(page, WTOREK, 600);
     const wpis = page.getByRole("dialog", { name: "Nowy wpis" });
     await expect(wpis).toContainText("10:00");
     await wpis.getByRole("button", { name: /^Blok/ }).click();
@@ -249,12 +249,12 @@ test.describe("kalendarz (web)", () => {
         () => document.scrollingElement!.scrollHeight <= window.innerHeight,
       ),
     ).toBe(true);
+    await czekajNaSiatke(page);
     const ramka = (await siatka.boundingBox())!;
     expect(Math.round(ramka.y + ramka.height)).toBe(
       page.viewportSize()!.height,
     );
     // Siatka startuje przewinięta (06:00), a nagłówek dni zostaje u góry
-    expect(await siatka.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
     const naglowek = (await page
       .getByTestId(`naglowek-${WTOREK}`)
       .boundingBox())!;
@@ -275,6 +275,7 @@ test.describe("kalendarz (web)", () => {
 
     const przycisk = blok(page, "Matematyka");
     await expect(przycisk).toContainText("10:00–11:00");
+    await czekajNaSiatke(page);
     const ramka = await przycisk.boundingBox();
     if (!ramka) throw new Error("Blok nie ma ramki");
     const x = ramka.x + ramka.width / 2;

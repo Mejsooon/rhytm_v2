@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { adminClient } from "./helpers/konto";
-import { poZapisie, WTOREK } from "./helpers/kalendarz";
+import { kliknijSlot, poZapisie, WTOREK } from "./helpers/kalendarz";
 import { dzisWarszawa, przesunDate, zalozKontoNawykow } from "./helpers/nawyki";
 import { dzienTygodnia, etykietaDnia, zasiejSzablon } from "./helpers/sport";
 
@@ -215,10 +215,8 @@ test.describe("sport (web)", () => {
     const tydzien = `/kalendarz?widok=tydzien&data=${WTOREK}`;
     await page.goto(tydzien);
 
-    // Slot 10:00 we wtorek (48 px na godzinę)
-    await page
-      .getByTestId(`kolumna-${WTOREK}`)
-      .click({ position: { x: 40, y: 490 } });
+    // Slot 10:00 we wtorek
+    await kliknijSlot(page, WTOREK, 600);
     await page
       .getByRole("dialog", { name: "Nowy wpis" })
       .getByRole("link", { name: /Bieg/ })
@@ -233,9 +231,7 @@ test.describe("sport (web)", () => {
     await okno.getByRole("button", { name: "Anuluj" }).click();
 
     await page.goto(tydzien);
-    await page
-      .getByTestId(`kolumna-${WTOREK}`)
-      .click({ position: { x: 40, y: 490 } });
+    await kliknijSlot(page, WTOREK, 600);
     await page
       .getByRole("dialog", { name: "Nowy wpis" })
       .getByRole("link", { name: /Siłownia/ })
