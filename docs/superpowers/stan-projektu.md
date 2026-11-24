@@ -39,8 +39,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 - **Projekt Dziś:** scalony (`02a36ba`) i wdrożony; spec `specs/2026-11-24-dzis-design.md`. Migracja `20261126100000_tasks_only_in_blocks.sql` wykonana 24.11 (6 zadań usuniętych).
 - **Sprzątanie uwag webu** (`feat/sprzatanie-webu`): spec `specs/2026-11-24-sprzatanie-webu-design.md`; migracje `20261128100000_page_rows_guard.sql`, `20261128110000_tasks_rls_simplify.sql`.
 - **Subscriptions:** scalony (`d7db6f0`), wdrożony, migracja `20261127100000_subscriptions.sql` wykonana 24.11; spec `specs/2026-11-24-subscriptions-design.md`, plan `plans/2026-11-24-subscriptions.md`; migracja `20261127100000_subscriptions.sql`.
-
-- Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
+- **Ustawienia i sejf — web:** scalone (`7ffe56f`), spec `specs/2026-11-24-ustawienia-web-design.md`. Migracje `20261129100000`–`20261129130000` (konto, usuwanie konta, push, wysyłka push) wykonane 24.11. Push zacznie działać po krokach Mejsona (VAPID, CRON_SECRET, sekrety Vault) — lista w spec, sekcja „Kroki Mejsona”.
+- **Etap 3 (telefon):** wstrzymany do zamknięcia webu; `feat/telefon-fundament` ma zadanie 1 i poprawione makiety, zadanie 2 w `git stash`.
 
 ## Dalej (kolejność ustalona z Mejsonem 2026-11-23; kroki 1–3 zamykają obecny etap aplikacji)
 
