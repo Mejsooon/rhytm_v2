@@ -1,11 +1,15 @@
 "use client";
 
-// Szczegóły nawyku na telefonie wg MHabitDetail.dc.html: wstecz / edytuj w nagłówku, podtytuł z harmonogramem,
-// kafelki Seria / Rekord / Skuteczn., kalendarz do 5 miesięcy wstecz z „N z M dni zaliczone”, notatki, „Usuń nawyk”.
+// Szczegóły nawyku na telefonie wg CMHabitDetail.dc.html: wstecz / edytuj w nagłówku, podtytuł z harmonogramem,
+// karty Seria / Rekord / Skuteczn., „Łącznie N dni zrobionych”, kalendarz do 5 miesięcy wstecz z podsumowaniem,
+// notatki, historia harmonogramu i „Usuń nawyk” (ConfirmDialog).
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, InfoIcon, Pencil, Trash2 } from "lucide-react";
 
+import { Button, Card, CardTitle, StatusBadge } from "@/components/controls";
+import { formatDatePl } from "@/components/controls/calendar-math";
+import { addDays } from "@/features/calendar/view-range";
 import { formatClockTime } from "@/lib/time/timezones";
 import { DeleteHabitDialog } from "../delete-habit-dialog";
 import { HabitMonth } from "../habit-month";
@@ -16,15 +20,11 @@ import {
   longestStreak,
   scheduleOn,
   successRate30,
+  totalChecks,
   type Checks,
 } from "../model";
 import { describeSchedule, streakLabel } from "../text";
 import { MHabitSheet } from "./m-habit-sheet";
-
-const PRZYCISK_IKONY =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus";
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 
 export function MHabitDetail({ data }: { data: HabitDetailData }) {
   const habit = data.habits[0];
@@ -49,7 +49,7 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
     podtytul += ` · ${formatClockTime(g, m, data.clock)} przypomnienie`;
   }
 
-  // „12 dni” → liczba duża, jednostka mała (jak na webie)
+  // „12 dni” → liczba duża, jednostka mała
   const seria = streakLabel(
     currentStreak(habit, checks, data.today, data.weekStart),
   ).split(" ");
@@ -75,6 +75,44 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
     },
   ];
 
+  // „Łącznie 47 dni zrobionych od 01.10.2026” (odmiana: 1 dzień zrobiony, 2–4 dni zrobione, reszta dni zrobionych)
+  const lacznie = totalChecks(habit.id, checks);
+  const pierwszaData = habit.schedules[0]?.validFrom;
+  let zrobione = "dni zrobionych";
+  if (lacznie === 1) zrobione = "dzień zrobiony";
+  else if (
+    lacznie % 10 >= 2 &&
+    lacznie % 10 <= 4 &&
+    (lacznie % 100 < 12 || lacznie % 100 > 14)
+  )
+    zrobione = "dni zrobione";
+  const sumaOdhaczen = `Łącznie ${lacznie} ${zrobione}${pierwszaData ? ` od ${formatDatePl(pierwszaData)}` : ""}`;
+
+  // Historia harmonogramu jak na webie: od najnowszej, zakres kończy się dzień przed następną wersją;
+  // przy wersji obowiązującej dziś odznaka „Aktualny” i przypomnienie
+  let przypomnienie = "";
+  if (habit.remindAt) {
+    const [g, m] = habit.remindAt.split(":").map(Number);
+    przypomnienie = ` · przypomnienie ${formatClockTime(g, m, data.clock)}`;
+  }
+  const historia = [...habit.schedules]
+    .reverse()
+    .map((wersja, i, wszystkie) => {
+      const nastepna = i === 0 ? null : wszystkie[i - 1];
+      let zakres = `od ${formatDatePl(wersja.validFrom)}`;
+      if (nastepna) {
+        zakres = `${formatDatePl(wersja.validFrom).slice(0, 5)} – ${formatDatePl(addDays(nastepna.validFrom, -1))}`;
+      }
+      const aktualna = wersja.validFrom === biezaca?.validFrom;
+      const opis = describeSchedule(wersja);
+      return {
+        klucz: wersja.validFrom,
+        aktualna,
+        zakres: aktualna ? `${zakres}${przypomnienie}` : zakres,
+        opis: opis.charAt(0).toUpperCase() + opis.slice(1),
+      };
+    });
+
   // Najwcześniejszy miesiąc kalendarza: bieżący − 5 (HabitMonth i tak nie cofnie się przed start nawyku)
   const [rok, miesiac] = data.today.split("-").map(Number);
   const piecWstecz = new Date(Date.UTC(rok, miesiac - 1 - 5, 1));
@@ -82,43 +120,51 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
 
   return (
     <div className="flex flex-col">
-      <header className="flex min-h-[60px] items-center gap-1 p-2">
-        <Link href="/nawyki" aria-label="Wstecz" className={PRZYCISK_IKONY}>
-          <ChevronLeft size={22} aria-hidden="true" />
-        </Link>
+      <header className="m-head border-b-0 px-2">
+        <Button variant="ghost" icon asChild>
+          <Link href="/nawyki" aria-label="Wstecz">
+            <ChevronLeft size={20} aria-hidden="true" />
+          </Link>
+        </Button>
         <div className="flex-1" />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          icon
           aria-label="Edytuj"
           onClick={() => setEdycja(true)}
-          className={PRZYCISK_IKONY}
         >
-          <Pencil size={19} aria-hidden="true" />
-        </button>
+          <Pencil size={18} aria-hidden="true" />
+        </Button>
       </header>
 
       <div className="flex flex-col gap-4 px-4 pb-6">
         <div>
-          <div className={ETYKIETA}>{podtytul}</div>
-          <h1 className="m-0 mt-1 text-[28px] font-semibold tracking-[-0.02em] break-words">
-            {habit.name}
-          </h1>
+          <div className="text-xs font-medium text-muted-foreground">
+            {podtytul}
+          </div>
+          <h1 className="m-title mt-1 text-2xl break-words">{habit.name}</h1>
         </div>
 
-        <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
+        <div className="grid grid-cols-3 gap-2.5">
           {kafelki.map((k) => (
-            <div key={k.etykieta} className="bg-white px-3.5 py-3">
-              <div className={ETYKIETA}>{k.etykieta}</div>
-              <div className="mt-1 font-mono text-[22px] font-medium">
+            <Card key={k.etykieta} className="px-3.5 py-3">
+              <div className="text-xs font-medium text-muted-foreground">
+                {k.etykieta}
+              </div>
+              <div className="mt-1.5 text-2xl font-semibold tracking-[-0.02em] tabular-nums">
                 {k.wartosc}
                 {k.jednostka && (
-                  <span className="ml-1 text-sm text-muted-foreground">
+                  <span className="ml-1 text-sm font-normal tracking-normal text-muted-foreground">
                     {k.jednostka}
                   </span>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
+        </div>
+
+        <div className="-mt-2 text-[13px] text-muted-foreground tabular-nums">
+          {sumaOdhaczen}
         </div>
 
         <HabitMonth
@@ -135,14 +181,42 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
 
         <HabitNotes habitId={habit.id} notes={data.notes} phone />
 
-        <button
-          type="button"
+        <section>
+          <CardTitle as="h2" className="mb-2 text-[15px]">
+            Historia harmonogramu
+          </CardTitle>
+          <Card>
+            {historia.map((w) => (
+              <div key={w.klucz} className="m-row min-h-14">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{w.opis}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {w.zakres}
+                  </span>
+                </span>
+                {w.aktualna && <StatusBadge tone="green">Aktualny</StatusBadge>}
+              </div>
+            ))}
+            <div className="m-row min-h-10 gap-2">
+              <InfoIcon
+                aria-hidden="true"
+                className="size-3.5 flex-none text-muted-foreground"
+              />
+              <span className="text-xs text-muted-foreground">
+                Zmiana harmonogramu nie przelicza przeszłych dni.
+              </span>
+            </div>
+          </Card>
+        </section>
+
+        <Button
+          variant="destructive-outline"
+          className="w-full"
           onClick={() => setUsuwanie(true)}
-          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-destructive-border bg-white text-[15px] font-medium text-destructive-foreground outline-none hover:bg-panel focus-visible:shadow-focus"
         >
           <Trash2 size={18} aria-hidden="true" />
           Usuń nawyk
-        </button>
+        </Button>
       </div>
 
       {edycja && (

@@ -84,7 +84,10 @@ describe("MHabitDetail", () => {
     const d = dane();
     d.habits[0].remindAt = null;
     render(<MHabitDetail data={d} />);
-    expect(screen.getByText("Codziennie")).toBeInTheDocument();
+    // Podtytuł to div; ten sam tekst jest jeszcze w historii harmonogramu (span)
+    expect(
+      screen.getByText("Codziennie", { selector: "div" }),
+    ).toBeInTheDocument();
   });
 
   it("kafelki Seria / Rekord / Skuteczn.", () => {
@@ -112,7 +115,12 @@ describe("MHabitDetail", () => {
     expect(
       screen.getByRole("heading", { name: "Czerwiec 2026" }),
     ).toBeInTheDocument();
-    expect(wstecz).toBeDisabled();
+    // Na granicy strzałka ma aria-disabled i nie cofa dalej
+    expect(wstecz).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(wstecz);
+    expect(
+      screen.getByRole("heading", { name: "Czerwiec 2026" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("0 z 30 dni zaliczone")).toBeInTheDocument();
   });
 
@@ -125,7 +133,7 @@ describe("MHabitDetail", () => {
     expect(
       screen.getByRole("heading", { name: "Październik 2026" }),
     ).toBeInTheDocument();
-    expect(wstecz).toBeDisabled();
+    expect(wstecz).toHaveAttribute("aria-disabled", "true");
   });
 
   it("pominięte dni są szare jak w makiecie (nie czerwone jak na webie)", () => {
@@ -134,8 +142,8 @@ describe("MHabitDetail", () => {
       '[data-day="2026-11-04"]',
     ) as HTMLElement;
     expect(pominiety).toHaveAttribute("data-state", "pominiete");
-    expect(pominiety.className).toContain("bg-muted");
-    expect(pominiety.className).toContain("text-faint-foreground");
+    expect(pominiety.className).toContain("bg-active");
+    expect(pominiety.className).toContain("text-muted-foreground");
     expect(pominiety.className).not.toContain("bg-destructive-soft");
     // Bez webowej legendy
     expect(
@@ -156,6 +164,60 @@ describe("MHabitDetail", () => {
     render(<MHabitDetail data={d} />);
     expect(screen.getByText("15 razy w tym miesiącu")).toBeInTheDocument();
     expect(screen.queryByText(/dni zaliczone/)).not.toBeInTheDocument();
+  });
+
+  it("„Łącznie N dni zrobionych od …” z odmianą", () => {
+    render(<MHabitDetail data={dane()} />);
+    // 15 odhaczeń, start 01.03.2026
+    expect(
+      screen.getByText("Łącznie 15 dni zrobionych od 01.03.2026"),
+    ).toBeInTheDocument();
+  });
+
+  it("Historia harmonogramu: aktualna wersja z odznaką i przypomnieniem, starsza z zakresem", () => {
+    const d = dane();
+    d.habits[0].schedules = [
+      {
+        validFrom: "2026-03-01",
+        type: "weekdays",
+        weekdays: [1, 3, 5, 7],
+        timesPerWeek: null,
+      },
+      {
+        validFrom: "2026-11-01",
+        type: "daily",
+        weekdays: [],
+        timesPerWeek: null,
+      },
+    ];
+    render(<MHabitDetail data={d} />);
+    const naglowek = screen.getByRole("heading", {
+      name: "Historia harmonogramu",
+    });
+    const karta = naglowek.nextElementSibling as HTMLElement;
+    expect(within(karta).getByText("Codziennie")).toBeInTheDocument();
+    expect(
+      within(karta).getByText("od 01.11.2026 · przypomnienie 20:00"),
+    ).toBeInTheDocument();
+    expect(within(karta).getByText("Aktualny")).toBeInTheDocument();
+    expect(within(karta).getByText("Pn, śr, pt, nd")).toBeInTheDocument();
+    expect(within(karta).getByText("01.03 – 31.10.2026")).toBeInTheDocument();
+    expect(
+      within(karta).getByText(
+        "Zmiana harmonogramu nie przelicza przeszłych dni.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("Notatki: nagłówek nad kartą, notatka z datą, pole „Dodaj notatkę…” z przyciskiem zapisu", async () => {
+    addHabitNote.mockResolvedValue({ ok: true });
+    render(<MHabitDetail data={dane()} />);
+    const pole = screen.getByPlaceholderText("Dodaj notatkę…");
+    await userEvent.type(pole, "Nowa");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Zapisz notatkę" }),
+    );
+    expect(addHabitNote).toHaveBeenCalledWith("h1", "Nowa");
   });
 
   it("Notatki: nagłówek nad kartą, notatka z datą", () => {
