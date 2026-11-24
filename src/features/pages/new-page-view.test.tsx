@@ -20,16 +20,15 @@ describe("NewPageView", () => {
     createPageFromTemplate.mockResolvedValue({ ok: true, id: "nowa" });
   });
 
-  it("pokazuje 4 szablony (Pusta strona, Books, Projects, Websites), bez Passwords i odznaki „szyfr.”", () => {
+  it("pokazuje 5 szablonów (Pusta strona, Books, Projects, Websites, Subscriptions), bez Passwords i odznaki „szyfr.”", () => {
     render(<NewPageView />);
     const karty = screen.getAllByRole("button", { pressed: false }).concat(
       screen.getAllByRole("button", { pressed: true }),
     );
-    const nazwy = ["Pusta strona", "Books", "Projects", "Websites"];
+    const nazwy = ["Pusta strona", "Books", "Projects", "Websites", "Subscriptions"];
     for (const n of nazwy) {
       expect(karty.some((k) => k.textContent?.includes(n))).toBe(true);
     }
-    expect(screen.queryByText("Subscriptions")).toBeNull();
     // Hasła to moduł, nie szablon
     expect(karty.some((k) => k.textContent?.includes("Passwords"))).toBe(false);
     expect(screen.queryByText("szyfr.")).toBeNull();

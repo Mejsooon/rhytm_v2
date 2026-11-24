@@ -203,7 +203,84 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
 
 describe("Hasła to moduł, nie szablon", () => {
   it("TEMPLATE_KEYS nie zawiera passwords", () => {
-    expect(TEMPLATE_KEYS).toEqual(["empty", "books", "projects", "websites"]);
+    expect(TEMPLATE_KEYS).toEqual(["empty", "books", "projects", "websites", "subscriptions"]);
   });
 });
 
+
+describe("szablon Subscriptions", () => {
+  function zbuduj() {
+    const bloki = buildTemplateBlocks("subscriptions", seqId());
+    const tabela = bloki.find((b) => b.type === "table")!;
+    const pole = (nazwa: string) => tabela.fields.find((f) => f.name === nazwa)!;
+    return { bloki, tabela, pole, settings: tabela.content.settings as TableSettings };
+  }
+
+  it("opis, ikona i pola w kolejności z makiety", () => {
+    const { bloki, tabela } = zbuduj();
+    expect(TEMPLATES.subscriptions).toMatchObject({
+      name: "Subscriptions",
+      icon: "lucide:wallet",
+      desc: "Twoje subskrypcje",
+      intro: "Twoje subskrypcje i ich odnowienia.",
+      extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
+    });
+    expect(bloki[0]).toMatchObject({ type: "text", content: { text: "Twoje subskrypcje i ich odnowienia." } });
+    expect(tabela.fields.map((f) => [f.name, f.type])).toEqual([
+      ["Nazwa", "text"],
+      ["Kwota cykliczna", "recurring"],
+      ["Data odnowienia", "renewal"],
+      ["Kategoria", "select"],
+      ["Aktywna", "checkbox"],
+    ]);
+    expect(tabela.fields[0].is_title).toBe(true);
+    expect(tabela.fields[0].config).toEqual({ empty_label: "Bez nazwy" });
+  });
+
+  it("pole odnowienia wskazuje id pola kwoty i checkboxa z tego samego bloku", () => {
+    const { pole } = zbuduj();
+    const config = pole("Data odnowienia").config;
+    expect(config.cycle_field_id).toBe(pole("Kwota cykliczna").id);
+    expect(config.active_field_id).toBe(pole("Aktywna").id);
+    expect(config.show_in_calendar).toBe(true);
+    expect(pole("Kwota cykliczna").config).toEqual({ default_cycle: "month" });
+  });
+
+  it("Aktywna ma default_checked, a Kategoria opcje bez koloru i domyślną „Inne”", () => {
+    const { pole } = zbuduj();
+    expect(pole("Aktywna").config).toEqual({ default_checked: true });
+    const kat = pole("Kategoria").config;
+    expect(kat.options?.map((o) => o.label)).toEqual(["Rozrywka", "Chmura", "Zdrowie", "Praca", "Sport", "Nauka", "Inne"]);
+    expect(kat.options?.every((o) => o.color === "")).toBe(true);
+    expect(kat.options?.find((o) => o.id === kat.default_option)?.label).toBe("Inne");
+  });
+
+  it("karty, sort i stopki wskazują id pól", () => {
+    const { pole, settings } = zbuduj();
+    expect(settings.pinned_cards).toEqual([
+      { label: "Σ miesięcznie", field_id: pole("Kwota cykliczna").id, aggregation: "sum_month" },
+      { label: "Σ rocznie", field_id: pole("Kwota cykliczna").id, aggregation: "sum_year" },
+      { label: "Najbliższe odnowienie", field_id: pole("Data odnowienia").id, aggregation: "next_renewal" },
+    ]);
+    expect(settings.sort).toEqual([{ field_id: pole("Data odnowienia").id, dir: "asc" }]);
+    expect(settings.column_summaries[pole("Kwota cykliczna").id]).toEqual({ kind: "sum_month" });
+    expect(settings.column_summaries[pole("Data odnowienia").id]).toEqual({ kind: "in_calendar" });
+    expect(settings.column_summaries[pole("Nazwa").id]).toEqual({
+      kind: "count",
+      unit: ["subskrypcja", "subskrypcje", "subskrypcji"],
+    });
+  });
+
+  it("id pól są unikalne, a w configach nie zostają klucze szablonu", () => {
+    const { tabela } = zbuduj();
+    const idy = tabela.fields.map((f) => f.id);
+    expect(new Set(idy).size).toBe(idy.length);
+    const config = tabela.fields.find((f) => f.type === "renewal")!.config;
+    expect(idy).toContain(config.cycle_field_id);
+    expect(idy).toContain(config.active_field_id);
+  });
+
+  it("onboarding bez zmian: PENDING_TO_TEMPLATE nie zna Subscriptions", () => {
+    expect(PENDING_TO_TEMPLATE.Subscriptions).toBeUndefined();
+  });
+});

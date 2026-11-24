@@ -25,7 +25,15 @@ export type FieldType =
   | "status"
   | "date"
   | "rating"
-  | "secret";
+  | "secret"
+  | "recurring"
+  | "renewal";
+
+// Cykl Kwoty cyklicznej i Daty odnowienia (spec Subscriptions, D1: tylko miesiąc i rok)
+export type Cycle = "month" | "year";
+
+// Wartość Kwoty cyklicznej: kwota w zł i cykl, w którym ją płacimy
+export type RecurringValue = { amount: number; cycle: Cycle };
 
 export type FieldOption = { id: string; label: string; color: string };
 
@@ -36,6 +44,16 @@ export type FieldConfig = {
   empty_label?: string;
   // Id opcji, którą dostaje nowy wiersz (Select / Status; z makiet szablonów)
   default_option?: string;
+  // Kwota cykliczna: cykl nowej kwoty (domyślnie miesiąc)
+  default_cycle?: Cycle;
+  // Data odnowienia: pole Kwota cykliczna, z którego bierze się cykl wiersza
+  cycle_field_id?: string;
+  // Data odnowienia: własny cykl, gdy brak (albo zły) cycle_field_id
+  cycle?: Cycle;
+  // Data odnowienia: pole Checkbox „Aktywna”; brak = wiersz zawsze aktywny
+  active_field_id?: string;
+  // Checkbox: nowy wiersz dostaje zaznaczone (ustawia szablon)
+  default_checked?: boolean;
 };
 
 export type PageField = {
@@ -48,7 +66,7 @@ export type PageField = {
 };
 
 // Sekret to szyfrogram {v, g, iv, ct}; serwer i tabela nigdy nie widzą tekstu jawnego
-export type CellValue = string | number | boolean | SecretValue | null;
+export type CellValue = string | number | boolean | SecretValue | RecurringValue | null;
 
 // Ikony nagłówków i etykiety z makiet (AddField). Icon to ikona lucide z makiet (web);
 // icon to dawny znak, który zostaje dla telefonu (mobile/ czyta go bez zmian wyglądu).
@@ -65,6 +83,8 @@ export const FIELD_TYPE_META: Record<
   date: { icon: "▦", Icon: Calendar, label: "Data" },
   rating: { icon: "★", Icon: Star, label: "Ocena" },
   secret: { icon: "🔑", Icon: KeyRound, label: "Sekret" },
+  recurring: { icon: "↻zł", Icon: Hash, label: "Kwota cykliczna" },
+  renewal: { icon: "↻", Icon: Calendar, label: "Data odnowienia" },
 };
 
 // „Typ pola” w edytorze (EmptyPage): Wybór = status z kolorowymi plakietkami
@@ -114,6 +134,8 @@ export const DOMYSLNA_SZEROKOSC: Record<FieldType, number> = {
   rating: 130,
   number: 120,
   checkbox: 90,
+  recurring: 200,
+  renewal: 230,
 };
 export const MIN_SZEROKOSC_KOLUMNY = 80;
 
@@ -148,6 +170,99 @@ function parsujLiczbe(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Czy to obiekt {amount, cycle} (kształt wartości Kwoty cyklicznej)
+export function isRecurringValue(raw: unknown): raw is RecurringValue {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return false;
+  const o = raw as Record<string, unknown>;
+  return (
+    typeof o.amount === "number" &&
+    Number.isFinite(o.amount) &&
+    (o.cycle === "month" || o.cycle === "year")
+  );
+}
+
+// „5 255,28”: 2 miejsca, przecinek, tysiące oddzielone twardą spacją, bez „zł”
+export function formatMoney(n: number): string {
+  const [calkowite, ulamek] = Math.abs(n).toFixed(2).split(".");
+  const grupy = calkowite.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+  return `${n < 0 ? "-" : ""}${grupy},${ulamek}`;
+}
+
+// Kwota na miesiąc / na rok (bez zaokrąglania; do grosza dopiero przy wyświetlaniu)
+export function monthlyAmount(v: RecurringValue): number {
+  return v.cycle === "month" ? v.amount : v.amount / 12;
+}
+export function yearlyAmount(v: RecurringValue): number {
+  return v.cycle === "year" ? v.amount : v.amount * 12;
+}
+
+// k-te wystąpienie serii od kotwicy (k ≥ 0): zawsze liczone od kotwicy, dzień obcięty do długości miesiąca
+export function addCycle(anchor: string, cycle: Cycle, k: number): string {
+  if (dniOdEpoki(anchor) === null) return anchor;
+  const [r, m, d] = anchor.split("-").map(Number);
+  const razem = r * 12 + (m - 1) + k * (cycle === "month" ? 1 : 12);
+  const rok = Math.floor(razem / 12);
+  const mies = razem % 12;
+  const dniWMiesiacu = new Date(Date.UTC(rok, mies + 1, 0)).getUTCDate();
+  const dzien = Math.min(d, dniWMiesiacu);
+  return `${String(rok).padStart(4, "0")}-${String(mies + 1).padStart(2, "0")}-${String(dzien).padStart(2, "0")}`;
+}
+
+// Następne odnowienie: kotwica, gdy jest dziś lub później, inaczej najbliższe k ≥ 1 z terminem ≥ dziś
+export function nextRenewal(anchor: string, cycle: Cycle, today: string): string {
+  if (dniOdEpoki(anchor) === null || dniOdEpoki(today) === null) return anchor;
+  if (anchor >= today) return anchor;
+  const krok = cycle === "month" ? 1 : 12;
+  const [ra, ma] = anchor.split("-").map(Number);
+  const [rt, mt] = today.split("-").map(Number);
+  // Przybliżenie z różnicy miesięcy, potem dosunięcie do pierwszego terminu ≥ dziś
+  let k = Math.max(1, Math.floor((rt * 12 + mt - (ra * 12 + ma)) / krok) - 1);
+  while (addCycle(anchor, cycle, k) < today) k += 1;
+  return addCycle(anchor, cycle, k);
+}
+
+// Wszystkie wystąpienia serii (k ≥ 0) w zakresie [from, to]; przed kotwicą nic
+export function renewalDates(anchor: string, cycle: Cycle, from: string, to: string): string[] {
+  if (dniOdEpoki(anchor) === null || anchor > to || from > to) return [];
+  const krok = cycle === "month" ? 1 : 12;
+  const [ra, ma] = anchor.split("-").map(Number);
+  const [rf, mf] = from.split("-").map(Number);
+  let k = anchor < from ? Math.max(0, Math.floor((rf * 12 + mf - (ra * 12 + ma)) / krok) - 1) : 0;
+  const wynik: string[] = [];
+  for (let d = addCycle(anchor, cycle, k); d <= to && k < 10_000; d = addCycle(anchor, cycle, ++k)) {
+    if (d >= from) wynik.push(d);
+  }
+  return wynik;
+}
+
+// Cykl wiersza dla pola Data odnowienia: wartość kwoty z cycle_field_id, potem default_cycle tego pola,
+// potem własny cycle. Odwołanie do pola, którego nie ma albo które nie jest Kwotą cykliczną, to brak odwołania
+export function rowCycle(
+  renewal: PageField,
+  fields: PageField[],
+  values: Record<string, unknown>,
+): Cycle {
+  const id = renewal.config.cycle_field_id;
+  const kwota = id ? fields.find((f) => f.id === id && f.type === "recurring") : undefined;
+  if (kwota) {
+    const v = normalizeValue(kwota, values[kwota.id]);
+    return isRecurringValue(v) ? v.cycle : (kwota.config.default_cycle ?? "month");
+  }
+  return renewal.config.cycle ?? "month";
+}
+
+// Czy wiersz jest aktywny dla pola Data odnowienia (active_field_id wskazuje Checkbox i wartość to true;
+// brak odwołania albo odwołanie do pola innego typu to „zawsze aktywny”)
+export function rowActive(
+  renewal: PageField,
+  fields: PageField[],
+  values: Record<string, unknown>,
+): boolean {
+  const id = renewal.config.active_field_id;
+  const pole = id ? fields.find((f) => f.id === id && f.type === "checkbox") : undefined;
+  return pole ? values[pole.id] === true : true;
+}
+
 // Zwraca wartość poprawnego typu albo null; niczego nie zgaduje (checkbox tylko boolean)
 export function normalizeValue(field: PageField, raw: unknown): CellValue {
   switch (field.type) {
@@ -170,7 +285,21 @@ export function normalizeValue(field: PageField, raw: unknown): CellValue {
       return n !== null && Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
     }
     case "date":
+    case "renewal":
       return typeof raw === "string" && dniOdEpoki(raw) !== null ? raw : null;
+    case "recurring": {
+      // Obiekt {amount, cycle} albo goła liczba / tekst („43,5”) z cyklem domyślnym pola
+      let amount: number | null = null;
+      let cycle: Cycle = field.config.default_cycle ?? "month";
+      if (isRecurringValue(raw)) {
+        amount = raw.amount;
+        cycle = raw.cycle;
+      } else if (typeof raw === "number") amount = Number.isFinite(raw) ? raw : null;
+      else if (typeof raw === "string") amount = parsujLiczbe(raw);
+      if (amount === null || amount < 0 || amount > 1_000_000_000) return null;
+      // Nowy obiekt tylko z dwoma kluczami, kwota do 2 miejsc
+      return { amount: Math.round(amount * 100) / 100, cycle };
+    }
     case "secret":
       // Nowy obiekt tylko z czterema kluczami: nic dodatkowego (np. tekst jawny) nie trafia do bazy
       return isSecretValue(raw) ? { v: 1, g: raw.g, iv: raw.iv, ct: raw.ct } : null;
@@ -206,9 +335,14 @@ export function formatValue(field: PageField, raw: unknown): string {
       return (v as string).replace(/^https?:\/\//i, "").replace(/^www\./i, "");
     case "rating":
       return "★".repeat(v as number) + "☆".repeat(5 - (v as number));
-    case "date": {
+    case "date":
+    case "renewal": {
       const [r, m, d] = (v as string).split("-");
       return `${d}.${m}.${r}`;
+    }
+    case "recurring": {
+      const k = v as RecurringValue;
+      return `${formatMoney(k.amount)} zł / ${k.cycle === "month" ? "mies." : "rok"}`;
     }
     case "select":
     case "status":
@@ -232,20 +366,38 @@ export function convertValue(
   let tekst: string;
   if (from.type === "number") tekst = String(v).replace(".", ",");
   else if (from.type === "checkbox") tekst = v === true ? "tak" : "nie";
-  else if (from.type === "date") tekst = formatValue(from, v);
-  else if (from.type === "select" || from.type === "status") tekst = formatValue(from, v);
+  else if (from.type === "date" || from.type === "renewal" || from.type === "recurring") {
+    tekst = formatValue(from, v);
+  } else if (from.type === "select" || from.type === "status") tekst = formatValue(from, v);
   else if (from.type === "rating") tekst = String(v);
   else tekst = String(v);
+
+  // Z i do nowych typów przechodzą tylko ścieżki ze specu; reszta to null
+  if (from.type === "recurring" && to !== "text" && to !== "number" && to !== "recurring") return null;
+  if (from.type === "renewal" && to !== "text" && to !== "date" && to !== "renewal") return null;
+  if (to === "recurring" && from.type !== "number" && from.type !== "text" && from.type !== "recurring") {
+    return null;
+  }
+  if (to === "renewal" && from.type !== "date" && from.type !== "text" && from.type !== "renewal") {
+    return null;
+  }
 
   switch (to) {
     case "text":
       return tekst;
+    case "recurring": {
+      if (from.type === "recurring") return v;
+      const n = from.type === "number" ? (v as number) : parsujLiczbe(tekst);
+      if (n === null || n < 0 || n > 1_000_000_000) return null;
+      return { amount: Math.round(n * 100) / 100, cycle: "month" };
+    }
     case "url": {
       if (from.type !== "text" && from.type !== "url") return null;
       return tekst.trim() === "" ? null : tekst.trim();
     }
     case "number": {
       if (from.type === "number" || from.type === "rating") return v as number;
+      if (from.type === "recurring") return (v as RecurringValue).amount;
       if (from.type === "text" || from.type === "url") return parsujLiczbe(tekst);
       return null;
     }
@@ -266,8 +418,9 @@ export function convertValue(
       if (["nie", "0", "false"].includes(t)) return false;
       return null;
     }
-    case "date": {
-      if (from.type === "date") return v;
+    case "date":
+    case "renewal": {
+      if (from.type === "date" || from.type === "renewal") return v;
       if (from.type !== "text") return null;
       const t = tekst.trim();
       if (dniOdEpoki(t) !== null) return t;
@@ -305,6 +458,15 @@ export function planTypeChange(
   if (to === "date" && field.config.show_in_calendar !== undefined) {
     config.show_in_calendar = field.config.show_in_calendar;
   }
+  // Nowa Data odnowienia: pokazuje się w kalendarzu (z daty przejmuje ustawienie) i ma własny cykl miesięczny
+  if (to === "renewal") {
+    config.show_in_calendar =
+      field.type === "date" || field.type === "renewal"
+        ? (field.config.show_in_calendar ?? true)
+        : true;
+    config.cycle = "month";
+  }
+  if (to === "recurring") config.default_cycle = "month";
   if (to === "number" && field.config.number_format !== undefined) {
     config.number_format = field.config.number_format;
   }

@@ -33,6 +33,8 @@ export const fieldTypeSchema = z.enum([
   "date",
   "rating",
   "secret",
+  "recurring",
+  "renewal",
 ]);
 
 export const fieldConfigSchema = z.object({
@@ -51,6 +53,13 @@ export const fieldConfigSchema = z.object({
   empty_label: z.string().max(60).optional(),
   // Id opcji wstawianej do nowego wiersza (Select / Status)
   default_option: z.string().min(1).max(64).optional(),
+  // Kwota cykliczna / Data odnowienia (Subscriptions)
+  default_cycle: z.enum(["month", "year"]).optional(),
+  cycle: z.enum(["month", "year"]).optional(),
+  cycle_field_id: z.string().min(1).max(64).optional(),
+  active_field_id: z.string().min(1).max(64).optional(),
+  // Checkbox: nowy wiersz zaznaczony
+  default_checked: z.boolean().optional(),
 });
 
 // Zawartość bloku zależy od typu (tekst, zadanie, tabela z ustawieniami) — tu tylko obiekt
@@ -94,6 +103,9 @@ const pinnedCard = z.object({
     "avg",
     "nearest_date",
     "count_distinct",
+    "sum_month",
+    "sum_year",
+    "next_renewal",
   ]),
   option_id: z.string().optional(),
   date_field_id: z.string().optional(),

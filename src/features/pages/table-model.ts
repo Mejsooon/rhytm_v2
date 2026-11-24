@@ -1,6 +1,18 @@
 // Logika tabeli stron: sort, filtr, podsumowania stopki, karty i stopka edytora.
 // Czyste funkcje bez bazy i UI; ustawienia wskazujące nieistniejące pole są pomijane.
-import { isUrgent, normalizeValue, relativeDue, formatValue } from "./fields";
+import {
+  formatMoney,
+  formatValue,
+  isRecurringValue,
+  isUrgent,
+  monthlyAmount,
+  nextRenewal,
+  normalizeValue,
+  relativeDue,
+  rowActive,
+  rowCycle,
+  yearlyAmount,
+} from "./fields";
 import type { FieldType, PageField } from "./fields";
 
 export type PageRow = {
@@ -40,7 +52,10 @@ export type SummaryKind =
   | "checked"
   | "earliest"
   | "latest"
-  | "nearest";
+  | "nearest"
+  | "sum_month"
+  | "sum_year"
+  | "in_calendar";
 
 export type PinnedCard = {
   // Etykieta; „{year}” zamieniamy na bieżący rok w computeCard
@@ -52,7 +67,10 @@ export type PinnedCard = {
     | "count_option_in_year"
     | "avg"
     | "nearest_date"
-    | "count_distinct";
+    | "count_distinct"
+    | "sum_month"
+    | "sum_year"
+    | "next_renewal";
   option_id?: string;
   date_field_id?: string;
   title_field_id?: string;
@@ -107,7 +125,10 @@ export function operatorsFor(type: FieldType): FilterCond["op"][] {
     case "url":
       return ["contains", "empty"];
     case "date":
+    case "renewal":
       return ["before", "after", "empty"];
+    case "recurring":
+      return ["gte", "lte", "empty"];
     // Sekret: serwer i widok widzą tylko szyfrogram, więc można filtrować jedynie puste / niepuste
     case "secret":
       return ["empty", "not_empty"];
@@ -119,6 +140,8 @@ export function visibleRows(
   rows: PageRow[],
   settings: TableSettings,
   extraFilters: FilterCond[] | null = null,
+  // Dziś (RRRR-MM-DD): Data odnowienia filtruje i sortuje po następnym odnowieniu; bez niego po kotwicy
+  today: string | null = null,
 ): PageRow[] {
   const poId = new Map(fields.map((f) => [f.id, f]));
   const filtry = extraFilters ?? settings.filters;
@@ -132,7 +155,12 @@ export function visibleRows(
     // Sekret: poza pusty / niepusty żaden operator nie ma sensu (nic nie porównujemy z szyfrogramem)
     if (field.type === "secret" && cond.op !== "empty" && cond.op !== "not_empty") continue;
     wynik = wynik.filter((r) => {
-      const v = normalizeValue(field, r.values[field.id]);
+      let v = normalizeValue(field, r.values[field.id]);
+      // Kwota cykliczna porównuje się na skali miesięcznej, Data odnowienia po następnym odnowieniu
+      if (field.type === "recurring" && isRecurringValue(v)) v = monthlyAmount(v);
+      if (field.type === "renewal" && typeof v === "string" && today !== null) {
+        v = nextRenewal(v, rowCycle(field, fields, r.values), today);
+      }
       switch (cond.op) {
         case "checked":
           return v === true;
@@ -172,8 +200,16 @@ export function visibleRows(
   return wynik.slice().sort((a, b) => {
     for (const k of klucze) {
       const field = poId.get(k.field_id) as PageField;
-      const va = normalizeValue(field, a.values[field.id]);
-      const vb = normalizeValue(field, b.values[field.id]);
+      let va = normalizeValue(field, a.values[field.id]);
+      let vb = normalizeValue(field, b.values[field.id]);
+      if (field.type === "recurring") {
+        if (isRecurringValue(va)) va = monthlyAmount(va);
+        if (isRecurringValue(vb)) vb = monthlyAmount(vb);
+      }
+      if (field.type === "renewal" && today !== null) {
+        if (typeof va === "string") va = nextRenewal(va, rowCycle(field, fields, a.values), today);
+        if (typeof vb === "string") vb = nextRenewal(vb, rowCycle(field, fields, b.values), today);
+      }
       // Puste zawsze na końcu, niezależnie od kierunku
       if (va === null && vb === null) continue;
       if (va === null) return 1;
@@ -205,6 +241,10 @@ export function summaryOptions(type: FieldType): SummaryKind[] {
       return ["none", "count", "checked"];
     case "date":
       return ["none", "count", "filled", "empty", "earliest", "latest", "nearest"];
+    case "recurring":
+      return ["none", "count", "filled", "empty", "sum_month", "sum_year"];
+    case "renewal":
+      return ["none", "count", "filled", "empty", "nearest", "in_calendar"];
     case "text":
     case "url":
     case "select":
@@ -222,6 +262,8 @@ export function summarize(
   rows: PageRow[],
   summary: ColumnSummary,
   today: string,
+  // Wszystkie pola tabeli: sumy Kwoty cyklicznej i podsumowania Daty odnowienia szukają w nich „Aktywnej”
+  fields: PageField[] = [],
 ): string {
   const kind = summary.kind;
   const unit = summary.unit;
@@ -233,6 +275,14 @@ export function summarize(
   const wypelnione = wartosci.filter((v) => v !== null);
   const liczby = wypelnione.filter((v): v is number => typeof v === "number");
   const daty = wypelnione.filter((v): v is string => typeof v === "string").sort();
+
+  // Wiersze aktywne: dla Kwoty według pierwszego pola Data odnowienia, które bierze z niej cykl;
+  // dla Daty odnowienia według niej samej; bez takiego pola liczą się wszystkie wiersze
+  const odnowienie =
+    field.type === "renewal"
+      ? field
+      : fields.find((f) => f.type === "renewal" && f.config.cycle_field_id === field.id);
+  const aktywne = odnowienie ? zywe.filter((r) => rowActive(odnowienie, fields, r.values)) : zywe;
 
   switch (kind) {
     case "none":
@@ -251,7 +301,9 @@ export function summarize(
     case "filled": {
       const n = wypelnione.length;
       if (unit) return odmien(n, ...unit);
-      if (field.type === "date") return odmien(n, "termin", "terminy", "terminów");
+      if (field.type === "date" || field.type === "renewal") {
+        return odmien(n, "termin", "terminy", "terminów");
+      }
       if (field.type === "url") return odmien(n, "link", "linki", "linków");
       return odmien(n, "wypełniony", "wypełnione", "wypełnionych");
     }
@@ -284,8 +336,38 @@ export function summarize(
     case "latest":
       return daty.length === 0 ? "—" : formatValue(field, daty[daty.length - 1]);
     case "nearest": {
+      if (field.type === "renewal") {
+        // Najwcześniejsze następne odnowienie aktywnych wierszy
+        const nastepne = aktywne
+          .map((r) => {
+            const d = normalizeValue(field, r.values[field.id]);
+            return typeof d === "string" ? nextRenewal(d, rowCycle(field, fields, r.values), today) : null;
+          })
+          .filter((d): d is string => d !== null)
+          .sort();
+        return nastepne.length === 0 ? "—" : formatValue(field, nastepne[0]);
+      }
       const najblizsza = daty.find((d) => d >= today);
       return najblizsza === undefined ? "—" : formatValue(field, najblizsza);
+    }
+    case "sum_month":
+    case "sum_year": {
+      const kwoty = aktywne
+        .map((r) => normalizeValue(field, r.values[field.id]))
+        .filter(isRecurringValue);
+      if (kwoty.length === 0) return "—";
+      const suma = kwoty.reduce(
+        (s, k) => s + (kind === "sum_month" ? monthlyAmount(k) : yearlyAmount(k)),
+        0,
+      );
+      return `Σ ${formatMoney(suma)} zł / ${kind === "sum_month" ? "mies." : "rok"}`;
+    }
+    case "in_calendar": {
+      if (field.config.show_in_calendar === false) return "0 w kalendarzu";
+      const n = aktywne.filter(
+        (r) => normalizeValue(field, r.values[field.id]) !== null,
+      ).length;
+      return `${n} w kalendarzu`;
     }
   }
 }
@@ -295,7 +377,7 @@ export function computeCard(
   fields: PageField[],
   rows: PageRow[],
   today: string,
-): { label: string; value: string; sub: string; urgent?: boolean } {
+): { label: string; value: string; sub: string; urgent?: boolean; date?: string } {
   const label = card.label.replace("{year}", today.slice(0, 4));
   const brak = { label, value: "—", sub: "" };
   const field = fields.find((f) => f.id === card.field_id);
@@ -354,6 +436,44 @@ export function computeCard(
         value: typeof nazwa === "string" ? nazwa : (titleField.config.empty_label ?? ""),
         sub: relativeDue(najblizszy.data, today).text,
         urgent: isUrgent(najblizszy.data, today, false),
+      };
+    }
+    case "sum_month":
+    case "sum_year": {
+      // Aktywność według pierwszego pola Data odnowienia, które bierze cykl z tej kwoty
+      const odnowienie = fields.find(
+        (f) => f.type === "renewal" && f.config.cycle_field_id === field.id,
+      );
+      const kwoty = zywe
+        .filter((r) => (odnowienie ? rowActive(odnowienie, fields, r.values) : true))
+        .map((r) => normalizeValue(field, r.values[field.id]))
+        .filter(isRecurringValue);
+      const suma = kwoty.reduce(
+        (s, k) => s + (card.aggregation === "sum_month" ? monthlyAmount(k) : yearlyAmount(k)),
+        0,
+      );
+      return { label, value: formatMoney(suma), sub: "zł" };
+    }
+    case "next_renewal": {
+      // Aktywny wiersz z najwcześniejszym następnym odnowieniem (przy remisie pierwszy w tabeli)
+      let najblizszy: { row: PageRow; data: string } | null = null;
+      for (const r of zywe) {
+        if (!rowActive(field, fields, r.values)) continue;
+        const d = normalizeValue(field, r.values[field.id]);
+        if (typeof d !== "string") continue;
+        const nastepne = nextRenewal(d, rowCycle(field, fields, r.values), today);
+        if (najblizszy === null || nastepne < najblizszy.data) najblizszy = { row: r, data: nastepne };
+      }
+      if (najblizszy === null) return { label, value: "Brak odnowień", sub: "" };
+      const titleField = fields.find((f) => f.isTitle);
+      const nazwa = titleField ? normalizeValue(titleField, najblizszy.row.values[titleField.id]) : null;
+      const dni = relativeDue(najblizszy.data, today);
+      return {
+        label,
+        value: typeof nazwa === "string" ? nazwa : (titleField?.config.empty_label ?? ""),
+        sub: dni.text,
+        urgent: dni.days <= 10,
+        date: najblizszy.data,
       };
     }
     case "count_distinct": {

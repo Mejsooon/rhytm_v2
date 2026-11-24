@@ -29,7 +29,7 @@ const bezUstawien: TableSettings = {
 };
 
 // Szablon z id pól i opcji, jak po create_page
-function szablon(key: "books" | "projects" | "websites") {
+function szablon(key: "books" | "projects" | "websites" | "subscriptions") {
   const blok = buildTemplateBlocks(key, seqId()).find((b) => b.type === "table")!;
   const fields: PageField[] = blok.fields.map((f, i) => ({
     id: f.id,
@@ -92,6 +92,8 @@ describe("operatorsFor", () => {
     expect(operatorsFor("text")).toEqual(["contains", "empty"]);
     expect(operatorsFor("url")).toEqual(["contains", "empty"]);
     expect(operatorsFor("date")).toEqual(["before", "after", "empty"]);
+    expect(operatorsFor("recurring")).toEqual(["gte", "lte", "empty"]);
+    expect(operatorsFor("renewal")).toEqual(["before", "after", "empty"]);
   });
 });
 
@@ -510,5 +512,197 @@ describe("pole Sekret w tabeli", () => {
 
     expect(formatValue(sekret, wartosc)).toBe("");
     expect(formatValue(sekret, null)).toBe("");
+  });
+});
+
+const NBSP = "\u00a0";
+
+// Dane z makiety S2Main: Netflix i Strava aktywne, Disney+ anulowany
+function subskrypcje() {
+  const t = szablon("subscriptions");
+  const w = (
+    i: number,
+    nazwa: string,
+    kwota: { amount: number; cycle: "month" | "year" } | null,
+    odnowienie: string | null,
+    aktywna: boolean | null,
+  ) =>
+    wiersz(i, {
+      [t.pole("Nazwa").id]: nazwa,
+      [t.pole("Kwota cykliczna").id]: kwota,
+      [t.pole("Data odnowienia").id]: odnowienie,
+      [t.pole("Aktywna").id]: aktywna,
+    });
+  const rows = [
+    w(1, "Strava", { amount: 249.99, cycle: "year" }, "2025-12-03", true),
+    w(2, "Netflix", { amount: 43, cycle: "month" }, "2026-10-21", true),
+    w(3, "Disney+", { amount: 37.99, cycle: "month" }, "2026-11-24", false),
+  ];
+  return { ...t, rows };
+}
+
+describe("Subscriptions: summaryOptions", () => {
+  it("Kwota cykliczna i Data odnowienia", () => {
+    expect(summaryOptions("recurring")).toEqual(["none", "count", "filled", "empty", "sum_month", "sum_year"]);
+    expect(summaryOptions("renewal")).toEqual(["none", "count", "filled", "empty", "nearest", "in_calendar"]);
+  });
+});
+
+describe("Subscriptions: visibleRows", () => {
+  it("sort po odnowieniu z today idzie po następnym terminie, a bez today po kotwicy", () => {
+    const k = subskrypcje();
+    const odnowienie = k.pole("Data odnowienia").id;
+    const settings = { ...bezUstawien, sort: [{ field_id: odnowienie, dir: "asc" as const }] };
+    const nazwa = k.pole("Nazwa").id;
+    // Netflix: kotwica 21.10 → następne 21.11 przed Disney+ (24.11) i Stravą (03.12)
+    expect(visibleRows(k.fields, k.rows, settings, null, "2026-11-15").map((r) => r.values[nazwa])).toEqual([
+      "Netflix",
+      "Disney+",
+      "Strava",
+    ]);
+    expect(visibleRows(k.fields, k.rows, settings).map((r) => r.values[nazwa])).toEqual([
+      "Strava",
+      "Netflix",
+      "Disney+",
+    ]);
+  });
+
+  it("sort po kwocie idzie po przeliczeniu na miesiąc, puste na końcu", () => {
+    const k = subskrypcje();
+    const kwota = k.pole("Kwota cykliczna").id;
+    const nazwa = k.pole("Nazwa").id;
+    const rows = [...k.rows, wiersz(4, { [nazwa]: "Bez ceny" })];
+    const rosnaco = { ...bezUstawien, sort: [{ field_id: kwota, dir: "asc" as const }] };
+    // Strava 20,83 / mies. < Disney+ 37,99 < Netflix 43,00
+    expect(visibleRows(k.fields, rows, rosnaco).map((r) => r.values[nazwa])).toEqual([
+      "Strava",
+      "Disney+",
+      "Netflix",
+      "Bez ceny",
+    ]);
+    const malejaco = { ...bezUstawien, sort: [{ field_id: kwota, dir: "desc" as const }] };
+    expect(visibleRows(k.fields, rows, malejaco).map((r) => r.values[nazwa]).at(-1)).toBe("Bez ceny");
+  });
+
+  it("filtr gte 50 na kwocie nie przepuszcza Stravy (20,83 / mies.)", () => {
+    const k = subskrypcje();
+    const kwota = k.pole("Kwota cykliczna").id;
+    const nazwa = k.pole("Nazwa").id;
+    const gte = (value: number) => [{ field_id: kwota, op: "gte" as const, value }];
+    expect(visibleRows(k.fields, k.rows, { ...bezUstawien, filters: gte(50) })).toEqual([]);
+    expect(
+      visibleRows(k.fields, k.rows, { ...bezUstawien, filters: gte(30) }).map((r) => r.values[nazwa]),
+    ).toEqual(["Netflix", "Disney+"]);
+    const lte = [{ field_id: kwota, op: "lte" as const, value: 25 }];
+    expect(visibleRows(k.fields, k.rows, { ...bezUstawien, filters: lte }).map((r) => r.values[nazwa])).toEqual([
+      "Strava",
+    ]);
+  });
+
+  it("filtr „przed” na odnowieniu używa następnego terminu, gdy podano today", () => {
+    const k = subskrypcje();
+    const odnowienie = k.pole("Data odnowienia").id;
+    const nazwa = k.pole("Nazwa").id;
+    const przed = { ...bezUstawien, filters: [{ field_id: odnowienie, op: "before" as const, value: "2026-11-23" }] };
+    // Surowa kotwica Stravy (2025-12-03) i Netflixa (2026-10-21) jest przed 23.11, ale następne Stravy to 03.12
+    expect(visibleRows(k.fields, k.rows, przed, null, "2026-11-15").map((r) => r.values[nazwa])).toEqual(["Netflix"]);
+    expect(visibleRows(k.fields, k.rows, przed).map((r) => r.values[nazwa])).toEqual(["Strava", "Netflix"]);
+  });
+});
+
+describe("Subscriptions: summarize", () => {
+  it("sum_month i sum_year pomijają wiersze nieaktywne według pola odnowienia", () => {
+    const k = subskrypcje();
+    const kwota = k.pole("Kwota cykliczna");
+    expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY, k.fields)).toBe(`Σ 63,83 zł / mies.`);
+    expect(summarize(kwota, k.rows, { kind: "sum_year" }, TODAY, k.fields)).toBe(`Σ 765,99 zł / rok`);
+  });
+
+  it("bez pola odnowienia (albo bez listy pól) sumują wszystkie wiersze", () => {
+    const k = subskrypcje();
+    const kwota = k.pole("Kwota cykliczna");
+    // 43 + 249,99 / 12 + 37,99 = 101,8225
+    expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY)).toBe("Σ 101,82 zł / mies.");
+    const bezOdnowienia = k.fields.filter((f) => f.type !== "renewal");
+    expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY, bezOdnowienia)).toBe("Σ 101,82 zł / mies.");
+  });
+
+  it("tysiące twardą spacją i „—” dla pustej tabeli", () => {
+    const k = subskrypcje();
+    const kwota = k.pole("Kwota cykliczna");
+    const duzo = [wiersz(1, { [kwota.id]: { amount: 437.94, cycle: "month" } })];
+    expect(summarize(kwota, duzo, { kind: "sum_year" }, TODAY)).toBe(`Σ 5${NBSP}255,28 zł / rok`);
+    expect(summarize(kwota, [], { kind: "sum_month" }, TODAY, k.fields)).toBe("—");
+  });
+
+  it("in_calendar liczy aktywne wiersze z datą, a przy show_in_calendar: false daje 0", () => {
+    const k = subskrypcje();
+    const odnowienie = k.pole("Data odnowienia");
+    expect(summarize(odnowienie, k.rows, { kind: "in_calendar" }, TODAY, k.fields)).toBe("2 w kalendarzu");
+    const ukryte = { ...odnowienie, config: { ...odnowienie.config, show_in_calendar: false } };
+    expect(summarize(ukryte, k.rows, { kind: "in_calendar" }, TODAY, k.fields)).toBe("0 w kalendarzu");
+  });
+
+  it("nearest dla odnowienia to najwcześniejsze następne odnowienie aktywnych wierszy", () => {
+    const k = subskrypcje();
+    const odnowienie = k.pole("Data odnowienia");
+    // Netflix 21.11 (Disney+ nieaktywny, Strava 03.12)
+    expect(summarize(odnowienie, k.rows, { kind: "nearest" }, "2026-11-15", k.fields)).toBe("21.11.2026");
+    expect(summarize(odnowienie, k.rows, { kind: "nearest" }, "2026-11-22", k.fields)).toBe("03.12.2026");
+    expect(summarize(odnowienie, [], { kind: "nearest" }, TODAY, k.fields)).toBe("—");
+  });
+
+  it("count i filled działają na nowych typach", () => {
+    const k = subskrypcje();
+    expect(summarize(k.pole("Nazwa"), k.rows, { kind: "count", unit: ["subskrypcja", "subskrypcje", "subskrypcji"] }, TODAY, k.fields)).toBe("3 subskrypcje");
+    expect(summarize(k.pole("Data odnowienia"), k.rows, { kind: "filled" }, TODAY, k.fields)).toBe("3 terminy");
+    expect(summarize(k.pole("Kwota cykliczna"), k.rows, { kind: "filled" }, TODAY, k.fields)).toBe("3 wypełnione");
+  });
+});
+
+describe("Subscriptions: computeCard", () => {
+  const karta = (k: ReturnType<typeof subskrypcje>, i: number) => k.settings.pinned_cards[i];
+
+  it("sum_month i sum_year z szarym „zł”", () => {
+    const k = subskrypcje();
+    expect(computeCard(karta(k, 0), k.fields, k.rows, TODAY)).toEqual({ label: "Σ miesięcznie", value: "63,83", sub: "zł" });
+    expect(computeCard(karta(k, 1), k.fields, k.rows, TODAY)).toEqual({ label: "Σ rocznie", value: "765,99", sub: "zł" });
+  });
+
+  it("next_renewal pomija nieaktywny wiersz i zwraca tytuł, czas, pilność i datę", () => {
+    const k = subskrypcje();
+    expect(computeCard(karta(k, 2), k.fields, k.rows, "2026-11-15")).toEqual({
+      label: "Najbliższe odnowienie",
+      value: "Netflix",
+      sub: "za 6 dni",
+      urgent: true,
+      date: "2026-11-21",
+    });
+    // Po 21.11 najbliższa jest Strava (03.12), nie anulowany Disney+ (24.11)
+    expect(computeCard(karta(k, 2), k.fields, k.rows, "2026-11-22")).toMatchObject({
+      value: "Strava",
+      sub: "za 11 dni",
+      urgent: false,
+      date: "2026-12-03",
+    });
+  });
+
+  it("next_renewal: granica pilności to 10 dni, pusty tytuł daje empty_label", () => {
+    const k = subskrypcje();
+    const nazwa = k.pole("Nazwa").id;
+    const rows = [{ ...k.rows[1], values: { ...k.rows[1].values, [nazwa]: null } }];
+    const wynik = computeCard(karta(k, 2), k.fields, rows, "2026-11-11");
+    expect(wynik).toMatchObject({ value: "Bez nazwy", sub: "za 10 dni", urgent: true });
+    expect(computeCard(karta(k, 2), k.fields, rows, "2026-11-10")).toMatchObject({ sub: "za 11 dni", urgent: false });
+  });
+
+  it("next_renewal bez aktywnych wierszy daje „Brak odnowień”", () => {
+    const k = subskrypcje();
+    expect(computeCard(karta(k, 2), k.fields, [k.rows[2]], TODAY)).toEqual({
+      label: "Najbliższe odnowienie",
+      value: "Brak odnowień",
+      sub: "",
+    });
+    expect(computeCard(karta(k, 2), k.fields, [], TODAY).value).toBe("Brak odnowień");
   });
 });

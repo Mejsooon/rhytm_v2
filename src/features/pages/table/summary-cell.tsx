@@ -16,6 +16,9 @@ export const NAZWY_PODSUMOWAN: Record<SummaryKind, string> = {
   earliest: "Najwcześniejsza",
   latest: "Najpóźniejsza",
   nearest: "Najbliższa",
+  sum_month: "Suma / mies.",
+  sum_year: "Suma / rok",
+  in_calendar: "W kalendarzu",
 };
 
 // Komórka stopki tabeli: wynik podsumowania kolumny z wierszy po filtrze (puste dla „Brak”)
