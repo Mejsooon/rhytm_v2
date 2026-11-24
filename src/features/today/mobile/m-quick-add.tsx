@@ -188,7 +188,9 @@ export function MQuickAdd({
       />
 
       <TextField
-        label={opis.pole}
+        label={
+          <span className="text-xs text-muted-foreground">{opis.pole}</span>
+        }
         type="text"
         value={tekst}
         maxLength={120}
@@ -211,8 +213,8 @@ export function MQuickAdd({
           <div
             role="group"
             aria-label="Kiedy"
-            // Chipy 36 px w poziomym przewijaniu; pole stuknięcia ≥ 44 px daje pseudo-element chipa
-            className="flex gap-2 overflow-x-auto px-0.5 pt-0.5 pb-1"
+            // Chipy 36 px; py-[5px] zostawia kontenerowi (overflow ucina pseudo-element) cel stuknięcia ≥ 44 px
+            className="flex gap-2 overflow-x-auto px-0.5 py-[5px]"
           >
             {opcje.map((o) => (
               <div key={o.label} className="flex-none">

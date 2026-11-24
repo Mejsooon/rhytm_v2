@@ -172,7 +172,7 @@ export function MToday({
   }
 
   return (
-    <div className="flex flex-col bg-[#fafafa]">
+    <div className="flex flex-1 flex-col bg-[#fafafa]">
       {/* Nagłówek: przezroczysty, bez ramki */}
       <header className="m-head border-b-0 bg-transparent pt-1">
         <div className="min-w-0 flex-1">
@@ -279,7 +279,7 @@ export function MToday({
             <button
               type="button"
               onClick={onNewHabit}
-              className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-white text-sm text-muted-foreground"
+              className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-white text-sm font-medium text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid outline-none"
             >
               <Plus size={16} aria-hidden="true" />
               Utwórz nowy nawyk
@@ -293,7 +293,7 @@ export function MToday({
                   aria-pressed={h.done}
                   onClick={() => onToggleHabit(h.id)}
                   // Odhaczony: ramka rgba(0,0,0,.24), tło rgba(0,0,0,.02)
-                  className={`box-border flex min-h-[72px] cursor-pointer flex-col items-start gap-2 rounded-xl border px-3.5 py-3 text-left text-sm text-foreground shadow-[0_1px_2px_rgba(0,0,0,.04)] ${h.done ? "border-black/[.24] bg-black/[.02]" : "border-black/10 bg-white"}`}
+                  className={`box-border flex min-h-[72px] cursor-pointer flex-col items-start gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid outline-none border px-3.5 py-3 text-left text-sm text-foreground shadow-[0_1px_2px_rgba(0,0,0,.04)] ${h.done ? "border-black/[.24] bg-black/[.02]" : "border-black/10 bg-white"}`}
                 >
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="min-w-0 truncate font-medium">
@@ -348,13 +348,17 @@ export function MToday({
                 <span className="text-xs text-muted-foreground tabular-nums">
                   00:00–24:00 · 24 h wolne
                 </span>
-                <Button variant="primary" onClick={otworzNowyBlok}>
+                <Button
+                  variant="primary"
+                  className="mt-1.5"
+                  onClick={otworzNowyBlok}
+                >
                   Dodaj pierwszy blok
                 </Button>
               </div>
             </Card>
           ) : (
-            <div className="overflow-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white px-3 pt-1.5 pb-0.5 leading-[normal]">
+            <div className="overflow-hidden rounded-lg border-[1.5px] border-black/[.14] bg-white px-3 pt-1.5 pb-0.5 leading-[normal]">
               {wiersze.map((w) => {
                 if (w.type === "gap") {
                   return (
@@ -419,7 +423,7 @@ export function MToday({
                   </>
                 );
                 const klasy =
-                  "my-1 box-border flex min-h-11 w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-foreground no-underline";
+                  "my-1 box-border flex min-h-11 w-full items-start justify-between gap-2 rounded-[8px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid outline-none px-2.5 py-2 text-left text-[13px] text-foreground no-underline";
                 return (
                   <div
                     key={p.key}

@@ -50,7 +50,9 @@ test.describe("powłoka aplikacji", () => {
 
     // Powłoka dociąga się strumieniem (Suspense) — dopiero po treści modułu <main> jest ostateczny.
     // Wcześniejszy wstrzyknięty element zniknąłby przy podmianie, a strona nie dałaby się przewinąć.
-    const tresc = page.getByText("Nie masz jeszcze bloków na dziś.");
+    const tresc = page
+      .getByTestId("web-dzis")
+      .getByText("Nie masz jeszcze bloków na dziś.");
     await expect(tresc).toBeVisible();
     const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
     await expect(sidebar).toBeVisible();
@@ -77,14 +79,19 @@ test.describe("powłoka aplikacji", () => {
   test("pasek boczny chowa się przyciskiem, zostaje schowany po odświeżeniu i wraca przez Ctrl+\\ (web)", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "web", "pasek boczny chowa się tylko na webie");
+    test.skip(
+      info.project.name !== "web",
+      "pasek boczny chowa się tylko na webie",
+    );
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createConfirmedUser(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    const nawigacja = page.getByRole("navigation", { name: "Główna nawigacja" });
+    const nawigacja = page.getByRole("navigation", {
+      name: "Główna nawigacja",
+    });
     await expect(nawigacja).toBeVisible();
 
     await page.getByRole("button", { name: "Schowaj pasek boczny" }).click();
@@ -95,7 +102,11 @@ test.describe("powłoka aplikacji", () => {
 
     // Stan siedzi w ciasteczku czytanym na serwerze — po odświeżeniu pasek dalej schowany
     await page.reload();
-    await expect(page.getByText("Nie masz jeszcze bloków na dziś.")).toBeVisible();
+    await expect(
+      page
+        .getByTestId("web-dzis")
+        .getByText("Nie masz jeszcze bloków na dziś."),
+    ).toBeVisible();
     await expect(nawigacja).toBeHidden();
 
     await page.keyboard.press("Control+\\");

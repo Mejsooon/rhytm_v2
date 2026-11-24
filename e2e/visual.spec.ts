@@ -122,24 +122,24 @@ test("zrzut /dev/kontrolki (bez makiety)", async ({ page }, info) => {
 test.describe("ekrany z sesją", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("zrzut /dzis, pusty (makieta S2EmptyToday)", async ({ page }, info) => {
+  test("zrzut /dzis, pusty (makiety S2EmptyToday, CMEmptyToday)", async ({
+    page,
+  }, info) => {
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createConfirmedUser(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
-    // Web: pełny układ z zerami i zachętą w planie dnia; telefon: własny pusty plan
+    // Ten sam tekst pustego planu jest w obu układach — zawężamy do aktywnego
     await expect(
-      page.getByText(
-        info.project.name === "web"
-          ? "Nie masz jeszcze bloków na dziś."
-          : "Plan dnia jest pusty",
-      ),
+      page
+        .getByTestId(info.project.name === "web" ? "web-dzis" : "m-dzis")
+        .getByText("Nie masz jeszcze bloków na dziś."),
     ).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
   });
 
-  test("zrzuty /dzis, pełne (makiety S2Today, MToday, MQuickAdd)", async ({
+  test("zrzuty /dzis, pełne (makiety S2Today, CMToday, CMQuickAdd)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
@@ -481,7 +481,9 @@ test.describe("ekrany z sesją", () => {
 
     await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
     await expect(
-      page.getByTestId("komorka-2027-01-16").getByRole("button", { name: "Odnowienie Netflix" }),
+      page
+        .getByTestId("komorka-2027-01-16")
+        .getByRole("button", { name: "Odnowienie Netflix" }),
     ).toBeVisible();
     await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
   });
@@ -967,12 +969,36 @@ test.describe("ekrany z sesją", () => {
     const dzis = new Date();
     const za = (dni: number) =>
       new Date(dzis.getTime() + dni * 86_400_000).toISOString().slice(0, 10);
-    const { error } = await admin.from("page_rows").insert([
-      wiersz("Netflix", { amount: 43, cycle: "month" }, za(6), "Rozrywka", true, 0),
-      wiersz("Strava", { amount: 249.99, cycle: "year" }, za(40), "Sport", true, 1),
-      wiersz("Disney+", { amount: 37.99, cycle: "month" }, za(9), "Rozrywka", false, 2),
-    ]);
-    if (error) throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
+    const { error } = await admin
+      .from("page_rows")
+      .insert([
+        wiersz(
+          "Netflix",
+          { amount: 43, cycle: "month" },
+          za(6),
+          "Rozrywka",
+          true,
+          0,
+        ),
+        wiersz(
+          "Strava",
+          { amount: 249.99, cycle: "year" },
+          za(40),
+          "Sport",
+          true,
+          1,
+        ),
+        wiersz(
+          "Disney+",
+          { amount: 37.99, cycle: "month" },
+          za(9),
+          "Rozrywka",
+          false,
+          2,
+        ),
+      ]);
+    if (error)
+      throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
     await page.reload();
     await expect(page.locator("tbody tr")).toHaveCount(3);
     await expect(page.getByTestId("karta")).toHaveCount(3);
