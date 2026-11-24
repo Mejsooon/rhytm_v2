@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Usunięcie bloku (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+</style>
+</helmet>
+<div class="m-screen">
+  <header class="m-head" style="padding-top:4px;padding-bottom:4px"><div style="flex:1"><div class="lbl">2026 · tydzień 46</div><h1 class="m-title">Listopad</h1></div></header>
+  <div class="m-body" style="opacity:.45;display:flex;flex-direction:column;gap:16px" aria-hidden="true"><div class="card" style="height:64px"></div><div class="card" style="height:400px"></div></div>
+  <a href="CMCalendarDay.dc.html" class="backdrop" aria-label="Zamknij"></a>
+  <div class="dlg m-sheet" role="dialog" aria-label="Usunąć blok?" style="padding-bottom:20px">
+    <div class="m-grab" aria-hidden="true"></div>
+    <div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:14px">
+      <div><h2 style="margin:0;font-size:20px;font-weight:600">Usunąć blok?</h2><p class="muted num" style="margin:4px 0 0">{{sub}}</p></div>
+      <sc-if value="{{rec}}" hint-placeholder-val="{{true}}"><div class="card" role="radiogroup" aria-label="Zakres usunięcia"><sc-for list="{{opts}}" as="o" hint-placeholder-count="3"><label class="m-row" style="min-height:64px;align-items:flex-start;padding-top:12px;padding-bottom:12px;cursor:pointer"><input type="radio" name="zakres" checked="{{o.on}}" onChange="{{o.pick}}" style="margin-top:2px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">{{o.t}}</span><span class="hint">{{o.d}}</span></span></label></sc-for></div></sc-if>
+      <p class="hint" style="margin:0">{{note}}</p>
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><a href="CMBlockDetail.dc.html" class="btn">Anuluj</a><a href="CMCalendarDay.dc.html" class="btnd">Usuń</a></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"cykliczny": {"editor": "boolean", "default": true}, "$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const rec = this.props.cykliczny ?? true;
+    const pick = S.pick || 'one';
+    const O = [['one', 'Tylko to wystąpienie', 'nd 15.11. Inne tygodnie zostają.'], ['next', 'To i następne', 'Od 15.11 w przód. Wcześniejsze wystąpienia zostają.'], ['all', 'Wszystkie wystąpienia', 'Cała seria, także przeszłe tygodnie.']];
+    return {
+      rec,
+      sub: rec ? '„Bieg 10 km” · co tydzień w niedziele · 16:00–17:00' : '„Matematyka — ćwiczenia” · nd 15.11 · 13:00–14:30',
+      opts: O.map((o) => ({ t: o[1], d: o[2], on: o[0] === pick, pick: () => this.setState({ pick: o[0] }) })),
+      note: rec ? 'Zadania z odhaczonych wystąpień nie przepadają.' : 'Blok zniknie z kalendarza razem z zadaniami.'
+    };
+  }
+}
+</script>
+</body>
+</html>

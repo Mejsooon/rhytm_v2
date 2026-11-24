@@ -163,6 +163,10 @@ Pakiety 4, 5 i 9 są niezależne i mogą zmienić kolejność.
 - **Zrzuty:** `e2e/visual.spec.ts` robi zrzuty telefonu. Każdy pakiet dopisuje nazwy makiet CM* w tytułach testów (np. „…(makiety CMToday, CMQuickAdd)”) i zrzuty nowych stanów. Wykonawca porównuje wygląd z `pnpm -s mockups:shots <CM…>` ręcznie przez podgląd lokalny (`pnpm dev` + Chrome 390×844 albo `PW_CHANNEL=chrome`), bo lokalnie nie ma bazy. Ekrany z danymi ogląda na podglądzie Vercel gałęzi.
 - **Cele dotykowe:** w każdym pakiecie test jednostkowy co najmniej dla nowych przycisków ikon: klasa `size-11`/`min-h-11` albo `m-hit`.
 
+## Uzupełnienie makiet (24.11)
+
+Po porównaniu z makietami webu (S2*) doszły artboardy telefonu: CMCheckEmail, CMEmailLink, CMNewPassword, CMEmptyToday, CMBlockDetail, CMScopeSheet, CMDeleteBlock, CMNewEntry, CMCategorySheet, CMRenewalSheet, CMWorkoutTemplates, CMExerciseDetail, CMNewPage, CMPageMenu, CMCardSheet, CMFilterSheet, CMVaultSetup, CMVaultReset, CMSettingsGeneral, CMSettingsAccount, CMSettingsVault, CMSettingsNotifications. Poprawione: CMSettings (indeks), CMBlockSheet (edycja, notatka, „Powtarzaj do”, 5 min), kalendarz (szczegóły bloku, nowy wpis, odnowienia — T13), CMGym, CMRunNew (kcal), CMHabitDetail, CMHabits, CMEditor (wszystkie typy kolumn bez Sekretu, filtr, karty, menu strony), CMVault (bez biometrii — T7), CMPasswords (URL, kategorie, bez wymyślonych ostrzeżeń), logowanie i rejestracja (Turnstile, zasady hasła jak web), CMOnboarding (Hasła zawsze, przypomnienia 5 min / dzień przed). Pakiety telefonu biorą wygląd z tych artboardów.
+
 ## Poza zakresem
 
 - Ciemny motyw, eksport danych, biometria, powiadomienia (przypomnienia odnowień).
@@ -183,7 +187,7 @@ Pakiety 4, 5 i 9 są niezależne i mogą zmienić kolejność.
 | T6 | Wszystkie potwierdzenia usunięcia jako `ConfirmDialog`: arkusz na telefonie, `.dlg` 400 px od 800 px. | Odłożona uwaga 2d, a arkusz to wzorzec CM-BASE. Makiety nie mają osobnego okna usuwania na telefonie. | Niski: jedna kontrolka. |
 | T7 | Bez „Odblokuj biometrią”. | Brak WebAuthn. Przycisk bez funkcji byłby kłamstwem. | Niski: osobna funkcja w przyszłości. |
 | T8 | Hasła na telefonie: lista-akordeon (CMPasswords), a edycja przez „Edytuj” w rozwinięciu → arkusz wiersza. „Nowe hasło” otwiera pusty arkusz. Tytuł „Hasła”. | Makieta nie pokazuje edycji, a moduł musi ją mieć (M9). Arkusz już szyfruje. | Średni: inny gest edycji (np. długie przytrzymanie) to zmiana jednego pliku. |
-| T9 | Ustawienia na telefonie: indeks według CMSettings + podstrony zakładek; bez Motywu i Eksportu. | Makieta ma jedną stronę, aplikacja ma 5 zakładek z większą treścią (cele, kategorie, kosz). Indeks zachowuje wygląd i wszystkie funkcje. | Średni: gdyby Mejson chciał jedną długą stronę, trzeba złożyć zakładki w jedną trasę. |
+| T9 | Ustawienia na telefonie: indeks CMSettings + podstrony CMSettingsGeneral, CMSettingsAccount, CMSettingsVault, CMSettingsNotifications (makiety uzupełnione 24.11). Bez Motywu. | Makiety telefonu pokazują teraz wszystkie zakładki webu (profil, cele, kategorie, kosz, konto, sesje, eksport, sejf, push). | Niski. |
 | T10 | Tabela na stronie (nie Subscriptions) na telefonie wygląda jak w CMEditor (`frame`, `th-cell` 44 px, wiersze 44 px). Stuknięcie wiersza otwiera arkusz CMRowEdit zamiast edycji w komórce; checkbox i Wybór da się zmienić w komórce, jak w makiecie (Wybór przełącza się cyklicznie po stuknięciu). | Komórki Strony 2.0 mają wiele typów (data, ocena, URL, Sekret), których edycji w 44-pikselowej komórce makieta nie pokazuje. Arkusz już działa. | Średni: pełna edycja w komórce to osobny pakiet. |
 | T11 | Etap 3 nie ma migracji. | Wszystko to wygląd i odczyty. Wyszukiwanie używa zwykłych zapytań z RLS. | Brak. |
 | T12 | Bez przełącznika przypomnienia w arkuszu wiersza; Mejson usunął go z makiety 24.11. | Przypomnienie o odnowieniu ustawia się raz dla wszystkich w Ustawieniach → Powiadomienia („dzień przed”); `page_rows.remind` zostaje domyślnie włączone. | Niski. |

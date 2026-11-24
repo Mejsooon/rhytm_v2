@@ -60,14 +60,16 @@ html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px
     <form class="card" onSubmit="{{noop}}">
       <div class="card-h" style="flex-direction:column;align-items:stretch;gap:0;padding-top:24px"><h1 class="h-title" style="font-size:20px">Załóż konto</h1><p class="card-d">Kalendarz, nawyki, sport i strony w jednym miejscu.</p></div>
       <div class="card-p" style="display:flex;flex-direction:column;gap:16px;padding-bottom:24px">
-        <label class="fld">Imię<input class="inp" type="text" autocomplete="given-name" placeholder="Jak mamy się do ciebie zwracać?"></label>
+        <label class="fld">Nazwa<input class="inp" type="text" autocomplete="nickname" placeholder="Jak mamy się do Ciebie zwracać?"></label>
         <label class="fld">E-mail<input class="inp" type="email" autocomplete="email" placeholder="ty@example.com"></label>
         <label class="fld">Hasło<input class="inp" type="password" autocomplete="new-password" placeholder="Min. 10 znaków" value="{{pw}}" onChange="{{onPw}}">
           <span style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:4px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="{{b.s}}"></span></sc-for></span>
-          <span class="hint">{{pwHint}}</span>
+          <ul style="list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px"><sc-for list="{{rules}}" as="r" hint-placeholder-count="3"><li style="{{r.s}}"><span style="{{r.ic}}" aria-hidden="true">{{r.mark}}</span>{{r.t}}</li></sc-for></ul>
         </label>
-        <label style="display:flex;align-items:flex-start;gap:12px;line-height:1.45;min-height:44px"><input type="checkbox" class="m-hit" checked="{{tosOn}}" onChange="{{toggleTos}}" aria-label="Akceptuję regulamin" style="margin-top:2px"><span>Akceptuję <span style="text-decoration:underline">regulamin</span> i <span style="text-decoration:underline">politykę prywatności</span>.</span></label>
-        <a href="CMOnboarding.dc.html" class="btnp" style="{{ctaS}}" aria-disabled="{{ctaDis}}">Utwórz konto</a>
+        <div class="alert ok" style="align-items:center;padding:10px 12px;font-size:13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg><span style="flex:1">Weryfikacja zakończona</span><span class="bdg out">Turnstile</span></div>
+        <a href="{{ctaHref}}" class="btnp" style="{{ctaS}}" aria-disabled="{{ctaDis}}">Utwórz konto</a>
+        <div class="muted" style="display:flex;align-items:center;gap:12px;font-size:12px"><span class="sep" style="flex:1"></span>lub<span class="sep" style="flex:1"></span></div>
+        <a href="CMOnboarding.dc.html" class="btn" style="width:100%">Kontynuuj z Google</a>
       </div>
     </form>
     <p class="muted" style="margin:0;text-align:center">Masz już konto? <a href="CMLogin.dc.html" style="font-weight:500;color:var(--foreground);display:inline-block;padding:12px 0">Zaloguj się</a></p>
@@ -79,16 +81,18 @@ class Component extends DCLogic {
   renderVals() {
     const S = this.state || {};
     const pw = S.pw || '';
-    const score = (pw.length >= 10 ? 1 : 0) + (/[A-Z]/.test(pw) ? 1 : 0) + (/[0-9]/.test(pw) ? 1 : 0) + (/[^A-Za-z0-9]/.test(pw) ? 1 : 0);
+    const okLen = pw.length >= 10, okMix = /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw);
+    const okLeak = pw.length > 0 && !['haslo1234', 'password123', 'qwerty12345'].includes(pw.toLowerCase());
+    const score = [okLen, okMix, okLeak].filter(Boolean).length + (pw.length >= 14 ? 1 : 0);
     const col = ['rgba(0,0,0,.08)', '#ef4444', '#f59e0b', '#15803d', '#15803d'][score];
-    const tos = !!S.tos;
+    const ok = okLen && okMix && okLeak;
+    const rule = (v, t) => ({ t, mark: v ? '✓' : '', s: 'display:flex;align-items:center;gap:8px;' + (v ? 'color:#15803d' : 'color:#686868'), ic: 'width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:9px;font-weight:700;' + (v ? 'background:#15803d;color:#fff' : 'box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)') });
     return {
       pw, onPw: (e) => this.setState({ pw: e.target.value }),
       noop: (e) => { if (e && e.preventDefault) e.preventDefault(); },
       bars: [0, 1, 2, 3].map((i) => ({ s: 'height:6px;border-radius:999px;background:' + (i < score ? col : 'rgba(0,0,0,.06)') })),
-      pwHint: pw ? ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'][score] + ' hasło' : '10+ znaków, wielka litera, cyfra, znak',
-      tosOn: tos, toggleTos: () => this.setState({ tos: !tos }),
-      ctaS: tos ? '' : 'pointer-events:none', ctaDis: tos ? 'false' : 'true'
+      rules: [rule(okLen, 'co najmniej 10 znaków'), rule(okMix, 'litery i cyfry'), rule(okLeak, 'nie ma go w bazie wycieków')],
+      ctaHref: ok ? 'CMCheckEmail.dc.html' : '#', ctaS: ok ? '' : 'opacity:.64;pointer-events:none', ctaDis: ok ? 'false' : 'true'
     };
   }
 }

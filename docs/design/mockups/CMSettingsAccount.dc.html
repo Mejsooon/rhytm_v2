@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Konto i bezpieczeństwo (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+</style>
+</helmet>
+<div class="m-screen" style="display:flex;flex-direction:column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="padding:0 8px"><a href="CMSettings.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex:1;text-align:center">Konto i bezpieczeństwo</h1><span style="width:44px"></span></header>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px">
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Zmień hasło do konta</h2><p class="card-d">Hasło do konta nie otwiera sejfu.</p></div>
+      <div class="card-p" style="display:flex;flex-direction:column;gap:12px">
+        <label class="fld">Obecne hasło<input class="inp" type="password" autocomplete="current-password" value="{{cur}}" onInput="{{setCur}}"></label>
+        <label class="fld">Nowe hasło<input class="inp" type="password" autocomplete="new-password" value="{{nw}}" onInput="{{setNw}}"></label>
+        <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:4px;margin-top:-4px" aria-hidden="true"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="{{b.s}}"></span></sc-for></div>
+        <span class="hint" style="margin-top:-6px">{{strength}}</span>
+        <label class="fld">Powtórz<input class="inp" type="password" autocomplete="new-password" value="{{rep}}" onInput="{{setRep}}"></label>
+        <sc-if value="{{repShow}}" hint-placeholder-val="{{false}}"><span class="hint" style="margin-top:-6px;{{repS}}">{{repTxt}}</span></sc-if>
+      </div>
+      <div class="foot" style="gap:10px"><span style="flex:1;font-size:13px;{{msgS}}">{{msg}}</span><button type="button" class="btnp" aria-disabled="{{dis}}" style="{{btnS}}" onClick="{{change}}">Zmień hasło</button></div>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Sesje</h2><p class="card-d">{{sessCount}}</p></div>
+      <div style="padding:4px 0"><sc-for list="{{sessions}}" as="s" hint-placeholder-count="3"><div class="m-row" style="min-height:60px"><span class="avatar" style="width:32px;height:32px" aria-hidden="true"><sc-if value="{{s.phone}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M11 18h2"></path></svg></sc-if><sc-if value="{{s.pc}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></sc-if></span><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">{{s.t}}</span><span class="hint num">{{s.d}}</span></span><sc-if value="{{s.cur}}" hint-placeholder-val="{{false}}"><span class="bdg ok">Aktualna</span></sc-if><sc-if value="{{s.other}}" hint-placeholder-val="{{true}}"><button type="button" class="btng" onClick="{{s.out}}">Wyloguj</button></sc-if></div></sc-for></div>
+      <div class="card-p" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border)">
+        <button type="button" class="btn" style="width:100%" aria-disabled="{{allDis}}" onClick="{{outAll}}">Wyloguj wszystkie inne</button>
+        <span class="hint">„Wyloguj wszystkie inne” kończy sesje na wszystkich pozostałych urządzeniach i przeglądarkach. Tu zostaniesz zalogowany.</span>
+        <sc-if value="{{outMsg}}" hint-placeholder-val="{{false}}"><div class="alert ok" style="font-size:13px">{{outMsg}}</div></sc-if>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Eksport danych</h2><p class="card-d">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div>
+      <div class="foot" style="gap:10px"><span class="num" style="flex:1;font-size:12px;{{expS}}">{{expTxt}}</span><button type="button" class="btn" onClick="{{exp}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 10l5 5 5-5M5 21h14"></path></svg>{{expBtn}}</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const cur = S.cur || '', nw = S.nw || '', rep = S.rep || '';
+    // Siła jak w makiecie webowej: długość ≥ 10, wielka litera, cyfra, znak spoza [A-Za-z0-9]
+    const score = nw ? (nw.length >= 10) + /[A-Z]/.test(nw) + /[0-9]/.test(nw) + /[^A-Za-z0-9]/.test(nw) : 0;
+    const COL = ['rgba(0,0,0,.08)', '#ef4444', '#f59e0b', '#eab308', '#15803d'];
+    const TXT = ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'];
+    const msg = S.done ? 'Hasło zmienione ✓ Inne urządzenia zostały wylogowane.'
+      : !cur ? 'Wpisz obecne hasło.'
+      : nw.length < 10 ? 'Nowe hasło: min. 10 znaków.'
+      : nw === cur ? 'Nowe hasło musi różnić się od obecnego.'
+      : rep !== nw ? 'Hasła muszą być takie same.'
+      : 'Gotowe — wylogujemy inne urządzenia.';
+    const ready = msg.startsWith('Gotowe');
+    const all = [['pc', 'Chrome · Parrot OS', 'teraz · ta sesja', true], ['phone', 'Safari · iPhone', 'dziś 08:02', false], ['pc', 'Firefox · Windows 11', 'wczoraj 21:14', false]];
+    const gone = S.gone || [];
+    const list = all.filter((s) => !gone.includes(s[1]));
+    const n = list.length;
+    const last = S.exp ? new Date().toISOString().slice(0, 10) : '';
+    return {
+      cur, nw, rep,
+      setCur: (e) => this.setState({ cur: e.target.value, done: false }), setNw: (e) => this.setState({ nw: e.target.value, done: false }), setRep: (e) => this.setState({ rep: e.target.value, done: false }),
+      bars: [1, 2, 3, 4].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (score >= i ? COL[score] : COL[0]) })),
+      strength: nw ? TXT[score] + ' hasło' : 'Min. 10 znaków. Wylogujemy inne urządzenia.',
+      repShow: !!rep, repTxt: rep === nw ? 'Hasła są takie same ✓' : 'Hasła się różnią', repS: rep === nw ? 'color:#15803d' : 'color:#b91c1c',
+      msg, msgS: S.done || ready ? 'color:#15803d' : 'color:var(--muted-foreground)',
+      dis: ready ? 'false' : 'true', btnS: ready ? '' : 'opacity:.64',
+      change: () => { if (ready) this.setState({ done: true, cur: '', nw: '', rep: '', gone: ['Safari · iPhone', 'Firefox · Windows 11'] }); },
+      sessCount: n === 1 ? '1 aktywna sesja' : n + ' aktywne sesje',
+      sessions: list.map((s) => ({ phone: s[0] === 'phone', pc: s[0] === 'pc', t: s[1], d: s[2], cur: s[3], other: !s[3], out: () => this.setState({ gone: gone.concat([s[1]]), outMsg: 'Wylogowano: ' + s[1] }) })),
+      allDis: n > 1 ? 'false' : 'true',
+      outAll: () => { if (n > 1) this.setState({ gone: all.filter((s) => !s[3]).map((s) => s[1]), outMsg: 'Wylogowano wszystkie inne urządzenia ✓' }); },
+      outMsg: S.outMsg || '',
+      expTxt: S.exp ? 'rhytm-export-' + last + '.json · 2,4 MB · pobrano' : 'ostatni eksport: nigdy',
+      expS: S.exp ? 'color:#15803d' : 'color:var(--muted-foreground)',
+      expBtn: S.exp ? 'Pobierz ponownie' : 'Pobierz .json',
+      exp: () => this.setState({ exp: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

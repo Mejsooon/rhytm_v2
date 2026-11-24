@@ -58,15 +58,15 @@ body{margin:0;background:#ffffff}
   <header class="m-head" style="padding-top: 4px; padding-bottom: 4px"><div style="flex: 1"><div class="lbl">2026 · tydzień 46</div><h1 class="m-title">Listopad</h1></div></header>
   <div class="m-body" style="opacity: .45; display: flex; flex-direction: column; gap: 16px"><div class="card" style="height: 64px"></div><div class="card" style="height: 400px"></div></div>
   <a href="CMCalendarDay.dc.html" class="backdrop" aria-label="Zamknij"></a>
-  <div class="dlg m-sheet" role="dialog" aria-label="Nowy blok" style="height: 88%">
+  <div class="dlg m-sheet" role="dialog" aria-label="{{title}}" style="height: 88%">
     <div class="m-grab" aria-hidden="true"></div>
     <div class="dlg-h" style="align-items: center; padding: 4px 12px 8px; border-bottom: 1px solid var(--border)">
       <a href="CMCalendarDay.dc.html" class="btng" style="color: var(--muted-foreground)">Anuluj</a>
-      <h2 class="dlg-t" style="flex: 1; text-align: center">Nowy blok</h2>
-      <a href="CMCalendarDay.dc.html" class="btnp">Zapisz</a>
+      <h2 class="dlg-t" style="flex: 1; text-align: center">{{title}}</h2>
+      <a href="{{saveHref}}" class="btnp">Zapisz</a>
     </div>
     <div class="dlg-b" style="flex: 1; overflow-y: auto; padding-top: 16px; gap: 18px">
-      <input class="inp" type="text" placeholder="Nazwa bloku" aria-label="Nazwa bloku" style="font-size: 18px; font-weight: 500">
+      <input class="inp" type="text" placeholder="Nazwa bloku" aria-label="Nazwa bloku" value="{{name}}" style="font-size: 18px; font-weight: 500">
       <div class="fld"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{c.p}}" onClick="{{c.pick}}" style="{{c.s}}"><span class="dot" style="{{c.dot}}"></span>{{c.t}}</button></sc-for></div></div>
       <div class="card">
         <div class="m-row"><span style="flex: 1">Dzień</span><span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><span style="color: var(--foreground)">nd 15.11.2026</span></span></div>
@@ -74,23 +74,31 @@ body{margin:0;background:#ffffff}
         <div class="m-row"><span style="flex: 1">Do</span><span class="m-step"><button type="button" aria-label="Wcześniej" onClick="{{s2m}}">−</button><span>{{to}}</span><button type="button" aria-label="Później" onClick="{{s2p}}">+</button></span></div>
         <div class="m-row" style="min-height: 40px"><span class="hint num">Czas trwania: {{dur}}</span></div>
       </div>
-      <div class="fld"><span class="lbl">Powtarzanie</span><div class="seg" style="display: flex"><sc-for list="{{reps}}" as="r" hint-placeholder-count="4"><button type="button" aria-pressed="{{r.p}}" onClick="{{r.pick}}" style="flex: 1; padding: 0 4px">{{r.t}}</button></sc-for></div></div>
+      <div class="fld"><span class="lbl">Powtarzanie</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{reps}}" as="r" hint-placeholder-count="5"><button type="button" class="chip m-hit" aria-pressed="{{r.p}}" onClick="{{r.pick}}">{{r.t}}</button></sc-for></div>
+        <sc-if value="{{custom}}" hint-placeholder-val="{{false}}"><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 4px" role="group" aria-label="Dni tygodnia"><sc-for list="{{days}}" as="d" hint-placeholder-count="7"><button type="button" class="chip" aria-pressed="{{d.p}}" onClick="{{d.pick}}" style="padding: 0; justify-content: center">{{d.t}}</button></sc-for></div></sc-if>
+        <sc-if value="{{repeats}}" hint-placeholder-val="{{false}}"><div class="card" style="margin-top: 4px"><div class="m-row"><span style="flex: 1">Powtarzaj do</span><button type="button" class="chip" aria-pressed="{{untilOn}}" onClick="{{untilToggle}}">{{untilTxt}}</button></div></div></sc-if>
+        <span class="hint">{{repTxt}}</span></div>
       <div class="fld"><span class="lbl">Zadania w bloku · {{taskCount}}</span>
         <div class="card"><sc-for list="{{tasks}}" as="t" hint-placeholder-count="2"><div class="m-row"><span class="cbx" aria-hidden="true"></span><span style="flex: 1">{{t.t}}</span><button type="button" class="btng ic" style="color: var(--muted-foreground)" aria-label="Usuń zadanie" onClick="{{t.del}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div></sc-for>
           <div class="m-row" style="gap: 8px; padding: 0 8px 0 16px"><input type="text" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{draftKey}}" placeholder="Dodaj zadanie…" aria-label="Nowe zadanie" style="flex: 1; border: 0; outline: 0; font: inherit; font-size: 16px; background: transparent; min-width: 0; height: 44px"><button type="button" class="btng ic" aria-label="Dodaj zadanie" onClick="{{addTask}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
         </div>
       </div>
-      <div class="card"><div class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg><span style="flex: 1">Przypomnij 10 min wcześniej</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div></div>
+      <label class="fld">Notatka<textarea class="inp" rows="2" placeholder="Opcjonalnie" style="font-size: 16px; padding: 10px 12px">{{note}}</textarea></label>
+      <div class="card"><div class="m-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg><span style="flex: 1">Przypomnij 5 min wcześniej</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div></div>
+      <sc-if value="{{edit}}" hint-placeholder-val="{{false}}"><a href="CMDeleteBlock.dc.html" class="btndo" style="width: 100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń blok</a></sc-if>
     </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"edit": {"editor": "boolean", "default": false}, "$preview": {"width": 390, "height": 844}}'>
 class Component extends DCLogic {
   renderVals() {
     const CAT = { own: ['#15803d', 'Własne'], uni: ['#3b82f6', 'Studia'], sport: ['#f59e0b', 'Sport'], work: ['#8b5cf6', 'Praca'], life: ['#eab308', 'Dom'] };
     const S = this.state || {};
-    const cat = S.cat || 'own', rep = S.rep || 'Nie';
+    const edit = this.props.edit ?? false;
+    const cat = S.cat || (edit ? 'sport' : 'own'), rep = S.rep || (edit ? 'Co tydzień' : 'Nie');
+    const DN = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'], days = S.days || [6];
+    const until = S.until ?? (edit ? '31.01.2027' : null);
     const f = S.f ?? 16 * 60, t = S.t ?? 17 * 60;
     const tasks = S.tasks || ['Rozgrzewka 10 min', 'Tempo 5:10/km'];
     const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
@@ -103,7 +111,13 @@ class Component extends DCLogic {
       from: hm(f), to: hm(t), dur: (Math.floor(d / 60) + ' h ' + (d % 60 ? d % 60 + ' min' : '')).trim(),
       s1m: () => this.setState({ f: Math.max(0, f - 15) }), s1p: () => this.setState({ f: Math.min(t - 15, f + 15) }),
       s2m: () => this.setState({ t: Math.max(f + 15, t - 15) }), s2p: () => this.setState({ t: Math.min(24 * 60, t + 15) }),
-      reps: ['Nie', 'Codziennie', 'Co tydzień', 'Dni rob.'].map((r) => ({ t: r, p: r === rep ? 'true' : 'false', pick: () => this.setState({ rep: r }) })),
+      title: edit ? 'Edytuj blok' : 'Nowy blok', edit, name: edit ? 'Bieg 10 km' : '', note: edit ? 'Trasa nad Zalewem.' : '',
+      saveHref: edit && rep !== 'Nie' ? 'CMScopeSheet.dc.html' : 'CMCalendarDay.dc.html',
+      reps: ['Nie', 'Codziennie', 'Co tydzień', 'Dni robocze', 'Własne…'].map((r) => ({ t: r, p: r === rep ? 'true' : 'false', pick: () => this.setState({ rep: r }) })),
+      custom: rep === 'Własne…', repeats: rep !== 'Nie',
+      days: DN.map((n, i) => ({ t: n, p: days.includes(i) ? 'true' : 'false', pick: () => this.setState({ days: days.includes(i) ? days.filter((x) => x !== i) : days.concat([i]) }) })),
+      untilOn: until ? 'true' : 'false', untilTxt: until ? 'do ' + until : 'bez końca', untilToggle: () => this.setState({ until: until ? '' : '31.01.2027' }),
+      repTxt: rep === 'Nie' ? 'Jednorazowy blok.' : rep === 'Codziennie' ? 'Każdego dnia, ' + (until ? 'do ' + until + '.' : 'bez końca.') : rep === 'Co tydzień' ? 'Co tydzień w niedziele, ' + (until ? 'do ' + until + '.' : 'bez końca.') : rep === 'Dni robocze' ? 'Pon–pt, ' + (until ? 'do ' + until + '.' : 'bez końca.') : 'W wybrane dni: ' + DN.filter((_, i) => days.includes(i)).join(', ') + (until ? ', do ' + until + '.' : ', bez końca.'),
       tasks: tasks.map((x, i) => ({ t: x, del: () => this.setState({ tasks: tasks.filter((_, j) => j !== i) }) })), taskCount: tasks.length,
       draft: S.draft || '', onDraft: (e) => this.setState({ draft: e.target.value }),
       draftKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); add(e.target.value); } }, addTask: () => add(S.draft),
