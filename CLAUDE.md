@@ -57,7 +57,7 @@ Każda rozmowa zaczyna się od przeczytania dwóch plików:
 - **e2e i pgTAP działają tylko w CI na GitHubie,** bo lokalnie nie ma Dockera.
   - Artefaktów CI (zrzutów) nie da się pobrać z sesji, czytaj logi przez `gh run view <id> --log-failed`.
   - GraphQL w `gh` jest zablokowany.
-- **Niestabilne testy e2e** (zależne od pory, niezwiązane ze zmianami) to `calendar.spec` (32, 239, 264), `sport.spec` (20, 203) i `today.spec:45`. Przed uznaniem błędu uruchom je ponownie (`gh run rerun <id> --failed`).
+- **Niestabilne testy e2e** (zależne od pory, niezwiązane ze zmianami) to `calendar.spec` (33, 240, 265), `sport.spec` (20, 203) i `today.spec:45`. Przed uznaniem błędu uruchom je ponownie (`gh run rerun <id> --failed`).
 
 ## Proces
 

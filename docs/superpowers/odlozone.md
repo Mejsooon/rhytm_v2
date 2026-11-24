@@ -145,3 +145,15 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - `StatusBadge green` („Teraz”) ma tekst `text-success`, makieta `.bdg.ok` — drobna różnica koloru kontrolki.
 - `delete-block-dialog`: zdanie o zadaniach zawsze w formie „jeśli są” (okno nie zna liczby zadań).
 - Scope-dialog: przy edycji „Tylko to wystąpienie” tekst o usuwaniu zadań może niepotrzebnie straszyć (zadania nie są tam usuwane).
+
+## Subscriptions — odłożone drobne uwagi (stan 2026-11-24)
+- `use-table-store.updateCell` i `szkicZmieniony()` porównują `Object.is`: obiekt kwoty `{amount, cycle}` z tą samą wartością i tak idzie na serwer (zbędne żądanie, bez szkody).
+- `relativeDue`: „za N mies.” od 61 dni, makieta S2Main od 45 dni (funkcja wspólna z Projects).
+- Plakietka sortu „Sort: Data odnowienia” — makieta raz pisze „Sort: Odnowienie”, a kolumnę „Data odnowienia”.
+- Telefon wczytuje `loadRenewals` na `/kalendarz`, choć widoki telefonu odnowień nie pokazują (1–3 zbędne zapytania) — Etap 3.
+- Arkusz „Kategorie” na telefonie przełącza źródło odnowień, którego telefon nie pokazuje — Etap 3.
+- `przelaczZrodlo` nadpisuje cały `config` pola wersją z chwili wczytania (edycja z innej karty może się zgubić).
+- `loadRenewals` bez paginacji `page_rows` (limit PostgREST 1000 wierszy).
+- `visual.spec` Subscriptions liczy daty w UTC (tekst zrzutu koło północy może się przesunąć o dzień).
+- Test pgTAP `subscriptions.test.sql` używa `"cycle":"monthly"` w danych (powinno `"month"`; bez wpływu na wynik).
+- Telefon (arkusz wiersza): bez dopisku „następne: dd.mm.rrrr” — pole pokazuje od razu następne odnowienie.

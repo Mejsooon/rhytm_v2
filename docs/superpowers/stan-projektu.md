@@ -36,7 +36,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 ## W toku
 
 - **Seria autonomiczna (2026-11-24):** Dziś → Subscriptions → sprzątanie uwag webu → Etap 3 (telefon). Decyzje podjęte bez Mejsona: `docs/superpowers/do-decyzji-seria.md`.
-- **Projekt Dziś** (`feat/dzis`): spec `specs/2026-11-24-dzis-design.md`, plan `plans/2026-11-24-dzis.md`; migracja `20261126100000_tasks_only_in_blocks.sql`.
+- **Projekt Dziś:** scalony (`02a36ba`) i wdrożony; spec `specs/2026-11-24-dzis-design.md`. **Migracja `20261126100000_tasks_only_in_blocks.sql` czeka na zgodę Mejsona w konektorze** (usuwa 6 zadań).
+- **Subscriptions** (`feat/subscriptions`): spec `specs/2026-11-24-subscriptions-design.md`, plan `plans/2026-11-24-subscriptions.md`; migracja `20261127100000_subscriptions.sql`.
 
 - Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
 
