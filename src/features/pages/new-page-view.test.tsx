@@ -154,4 +154,23 @@ describe("NewPageView", () => {
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
     expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");
   });
+
+  it("wybór Subscriptions pokazuje pola z typami inteligentnymi i dopisek z extra", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("button", { name: /Subscriptions/ }));
+    const lista = screen.getByText("Pola, które powstaną").parentElement!;
+    const wiersze = Array.from(lista.querySelectorAll("div.justify-between")).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "NazwaTekst",
+      "Kwota cyklicznaKwota cykliczna",
+      "Data odnowieniaData odnowienia",
+      "KategoriaSelect",
+      "AktywnaCheckbox",
+    ]);
+    expect(screen.getByText("Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Subscriptions");
+    await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
+    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("subscriptions", "Subscriptions"));
+  });
 });

@@ -40,6 +40,17 @@ export async function utworzBooks(page: Page): Promise<void> {
   );
 }
 
+// Strona z szablonu Subscriptions założona przez /strony/nowa (karta „Subscriptions” → „Utwórz stronę”)
+export async function utworzSubscriptions(page: Page): Promise<void> {
+  await page.goto("/strony/nowa");
+  await page.getByRole("button", { name: /^Subscriptions/ }).click();
+  await page.getByRole("button", { name: "Utwórz stronę" }).click();
+  await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
+    "Subscriptions",
+  );
+}
+
 // Pusta strona edytora bloków (bez szablonu i bez bloków), jak dawne „Nowa strona” z paska.
 // Na webie pasek prowadzi teraz do wyboru szablonu, więc pustą stronę zakładamy przez API administratora.
 export async function zasiejPustaStrone(

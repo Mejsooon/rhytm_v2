@@ -4,6 +4,7 @@ import { adminClient } from "./helpers/konto";
 
 import {
   utworzBooks,
+  utworzSubscriptions,
   zalozKontoStron,
   zasiejPustaStrone,
 } from "./helpers/strony";
@@ -79,6 +80,102 @@ test.describe("strony", () => {
     await expect(tytul).toHaveValue("Diuna");
     await expect(status).toHaveText("Czytam");
     await expect(karta).toHaveText(/Czytam teraz\s*1/);
+  });
+
+  test("Subscriptions: szablon, kwota, cykl, sumy", async ({ page }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    await zalozKontoStron(page, info.project.name);
+    await utworzSubscriptions(page);
+
+    const sumaMiesieczna = page.getByTestId("karta").filter({ hasText: "Σ miesięcznie" });
+    const sumaRoczna = page.getByTestId("karta").filter({ hasText: "Σ rocznie" });
+    const najblizsze = page.getByTestId("karta").filter({ hasText: "Najbliższe odnowienie" });
+
+    // „+ Nowy”: nazwa „Netflix” (Enter zapisuje od razu), potem kwota 43 (zapis przy pisaniu)
+    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    const wiersz = page.locator("tbody tr");
+    await expect(wiersz).toHaveCount(1);
+    const nazwa = wiersz.getByRole("textbox", { name: "Nazwa", exact: true });
+    const zapisNazwy = page.waitForResponse(AKCJA_SERWERA);
+    await nazwa.fill("Netflix");
+    await nazwa.press("Enter");
+    await zapisNazwy;
+    const kwota = wiersz.getByRole("textbox", { name: "Kwota cykliczna", exact: true });
+    const zapisKwoty = page.waitForResponse(AKCJA_SERWERA);
+    await kwota.fill("43");
+    await zapisKwoty;
+    await expect(sumaMiesieczna).toContainText("43,00");
+    await expect(sumaRoczna).toContainText("516,00");
+
+    // Cykl „/ rok”: 43 zł rocznie to 3,58 zł miesięcznie
+    const zapisCyklu = page.waitForResponse(AKCJA_SERWERA);
+    await wiersz.getByRole("button", { name: /^Cykl: mies\./ }).click();
+    await zapisCyklu;
+    await expect(wiersz.getByRole("button", { name: /^Cykl: rok/ })).toBeVisible();
+    await expect(sumaMiesieczna).toContainText("3,58");
+
+    // Nowy wiersz jest „Aktywna”; odznaczenie zeruje sumy i daje plakietkę „anulowana”
+    const aktywna = wiersz.getByRole("checkbox", { name: "Aktywna" });
+    await expect(aktywna).toBeChecked();
+    const zapisAktywnej = page.waitForResponse(AKCJA_SERWERA);
+    await aktywna.click();
+    await zapisAktywnej;
+    await expect(sumaMiesieczna).toContainText("0,00");
+    await expect(sumaRoczna).toContainText("0,00");
+    await expect(wiersz.getByText("anulowana")).toBeVisible();
+
+    // Data odnowienia „Dziś”: wiersz nieaktywny, więc karta mówi „Brak odnowień”
+    await wiersz.getByRole("button", { name: /^Data odnowienia: / }).click();
+    const zapisDaty = page.waitForResponse(AKCJA_SERWERA);
+    await page.getByRole("button", { name: "Dziś", exact: true }).click();
+    await zapisDaty;
+    await expect(najblizsze).toContainText("Brak odnowień");
+
+    // Po zaznaczeniu „Aktywna” karta pokazuje Netflix i „dziś”
+    const zapisPonowny = page.waitForResponse(AKCJA_SERWERA);
+    await aktywna.click();
+    await zapisPonowny;
+    await expect(najblizsze).toContainText("Netflix");
+    await expect(najblizsze).toContainText("dziś");
+  });
+
+  test("Subscriptions: pole „Kwota cykliczna” z „+” i stopka „Suma / mies.”", async ({ page }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+
+    // Pusta strona z tabelą z menu „/” (3 pola i nagłówek z „+”)
+    const idStrony = await zasiejPustaStrone(userId, "Wydatki");
+    await page.goto(`/strony/${idStrony}`);
+    await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
+    await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
+    await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    await expect(page.getByRole("columnheader")).toHaveCount(4, { timeout: 20_000 });
+
+    // „+” → okno „Nowe pole” → grupa „Inteligentne” → Kwota cykliczna (domyślna nazwa „Cena”)
+    await page.getByRole("button", { name: "Dodaj kolumnę" }).click();
+    const okno = page.getByRole("dialog", { name: "Nowe pole" });
+    await expect(okno.getByText("Inteligentne", { exact: true })).toBeVisible();
+    await okno.getByRole("button", { name: /Kwota cykliczna/ }).click();
+    await expect(okno.getByRole("textbox", { name: "Nazwa pola" })).toHaveValue("Cena");
+    const dodanie = page.waitForResponse(AKCJA_SERWERA);
+    await okno.getByRole("button", { name: "Dodaj pole" }).click();
+    await dodanie;
+    const naglowek = page.getByRole("columnheader");
+    await expect(naglowek).toHaveCount(5, { timeout: 20_000 });
+    await expect(naglowek.getByRole("button", { name: "Cena", exact: true })).toBeVisible();
+
+    // Kwota 43 w pierwszym wierszu, podsumowanie „Suma / mies.” → stopka „Σ 43,00 zł / mies.”
+    const kwota = page.locator("tbody tr").first().getByRole("textbox", { name: "Cena", exact: true });
+    const zapisKwoty = page.waitForResponse(AKCJA_SERWERA);
+    await kwota.fill("43");
+    await zapisKwoty;
+    await naglowek.getByRole("button", { name: "Cena", exact: true }).click();
+    await page.getByRole("dialog", { name: "Kolumna Cena" }).getByRole("menuitem", { name: /^Podsumowanie/ }).click();
+    await page
+      .getByRole("menu", { name: "Podsumowanie" })
+      .getByRole("menuitem", { name: "Suma / mies.", exact: true })
+      .click();
+    await expect(page.locator("tfoot").getByRole("cell", { name: "Σ 43,00 zł / mies." })).toBeVisible();
   });
 
   test("opcje z komórki: „Utwórz «Porzucone»” od razu ją wybiera, zmiana koloru i usunięcie", async ({

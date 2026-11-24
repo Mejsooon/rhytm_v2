@@ -37,7 +37,7 @@ vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "
 vi.mock("../actions", () => actions);
 
 import { PageTable } from "./page-table";
-import { DZIS, stronaTestowa } from "./test-page";
+import { DZIS, stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
 const BOOKS = [
   { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
@@ -259,5 +259,38 @@ describe("filtr tabeli", () => {
     rerender(<PageTable block={(odswiezone).blocks[0]} today={DZIS} />);
     await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+  });
+
+  describe("typy inteligentne", () => {
+    it("Kwota cykliczna: operatory ≥ / ≤ / puste, wartość z dopiskiem „zł / mies.”, filtr po kwocie na miesiąc", async () => {
+      const user = userEvent.setup();
+      const dane = stronaTestowa("subscriptions", "Subscriptions", SUBSKRYPCJE);
+      render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+      const filtr = await otworzFiltr(user);
+      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+      await wybierz(user, "Pole warunku 1", "Kwota cykliczna");
+      await user.click(screen.getByRole("button", { name: "Operator warunku 1" }));
+      expect(
+        within(screen.getByRole("listbox", { name: "Operator warunku 1" })).getAllByRole("option").map((o) => o.textContent),
+      ).toHaveLength(3);
+      await user.keyboard("{Escape}");
+      expect(within(filtr).getByText("zł / mies.")).toBeInTheDocument();
+      // Strava 249,99 zł / rok = 20,83 zł / mies., Netflix 43, Disney+ 37,99: ≥ 40 zostawia tylko Netflix
+      await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "40");
+      expect(tytuly()).toEqual(["Netflix"]);
+    });
+
+    it("Data odnowienia: wartość to kalendarz jak dla daty, a filtr idzie po następnym odnowieniu", async () => {
+      const user = userEvent.setup();
+      const dane = stronaTestowa("subscriptions", "Subscriptions", SUBSKRYPCJE);
+      render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+      const filtr = await otworzFiltr(user);
+      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+      await wybierz(user, "Pole warunku 1", "Data odnowienia");
+      expect(within(filtr).getByRole("button", { name: "Operator warunku 1" })).toHaveTextContent("przed");
+      expect(within(filtr).queryByRole("textbox", { name: "Wartość warunku 1" })).not.toBeInTheDocument();
+      expect(within(filtr).getByRole("button", { name: "Wartość warunku 1" })).toBeInTheDocument();
+      expect(within(filtr).queryByText("zł / mies.")).not.toBeInTheDocument();
+    });
   });
 });

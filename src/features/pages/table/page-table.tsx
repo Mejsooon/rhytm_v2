@@ -24,6 +24,7 @@ import {
   SZEROKOSC_TYTULU,
   planTypeChange,
   rowActive,
+  type FieldConfig,
   type FieldType,
   type PageField,
 } from "../fields";
@@ -576,6 +577,7 @@ export function PageTable({
                   >
                     <ColumnMenu
                       field={f}
+                      fields={fields}
                       // Kolumny modułu są stałe: bez zmiany nazwy, typu, przesuwania i usuwania
                       locked={modul}
                       open={menuPola === f.id}
@@ -627,6 +629,14 @@ export function PageTable({
                           },
                         })
                       }
+                      onConfig={(patch) => {
+                        // Klucz z wartością undefined znika z configu (np. „— zawsze —” usuwa active_field_id)
+                        const config: FieldConfig = { ...f.config, ...patch };
+                        for (const klucz of Object.keys(patch) as (keyof FieldConfig)[]) {
+                          if (patch[klucz] === undefined) delete config[klucz];
+                        }
+                        void store.patchField(f, { config });
+                      }}
                       onHide={() =>
                         void store.patchSettings({ hidden_field_ids: [...settings.hidden_field_ids, f.id] })
                       }
@@ -720,7 +730,12 @@ export function PageTable({
                 {modul ? (
                   <span className="sr-only">Akcje</span>
                 ) : (
-                  <AddFieldDialog iconTrigger allowSecret={false} onAdd={(input) => void store.addField(input)} />
+                  <AddFieldDialog
+                    iconTrigger
+                    allowSecret={false}
+                    fields={fields}
+                    onAdd={(input) => void store.addField(input)}
+                  />
                 )}
               </th>
             </tr>

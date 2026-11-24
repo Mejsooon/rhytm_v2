@@ -2,14 +2,16 @@
 
 import * as React from "react";
 
-import { Plus, Search, type LucideIcon } from "lucide-react";
+import { Info, Plus, Search, type LucideIcon } from "lucide-react";
 
-import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL, StatusBadge } from "@/components/controls";
+import { ActionPopover, Button, Checkbox, Dropdown, FIELD, MENU_LABEL, Segment, StatusBadge, Switch } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import { FIELD_TYPE_META, PALETA, type FieldConfig, type FieldOption, type FieldType } from "../fields";
+import { FIELD_TYPE_META, PALETA, type Cycle, type FieldConfig, type FieldOption, type FieldType, type PageField } from "../fields";
 
-// Typy z grupy „Podstawowe” z AddField.dc.html (Inteligentne dochodzą w Etapie 7)
-const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; defName: string }[] = [
+type TypPola = { type: FieldType; Icon: LucideIcon; name: string; desc: string; defName: string; badge?: string };
+
+// Typy z grupy „Podstawowe” z AddField.dc.html
+const TYPY: TypPola[] = [
   { type: "text", Icon: FIELD_TYPE_META.text.Icon, name: "Tekst", desc: "Zwykły tekst.", defName: "Notatka" },
   { type: "number", Icon: FIELD_TYPE_META.number.Icon, name: "Liczba", desc: "Liczba ze zwykłym formatem, w zł albo w %.", defName: "Liczba" },
   { type: "checkbox", Icon: FIELD_TYPE_META.checkbox.Icon, name: "Checkbox", desc: "Tak / nie. Może sterować widocznością dat w kalendarzu.", defName: "Aktywna" },
@@ -20,9 +22,29 @@ const TYPY: { type: FieldType; Icon: LucideIcon; name: string; desc: string; def
   { type: "rating", Icon: FIELD_TYPE_META.rating.Icon, name: "Ocena", desc: "Gwiazdki 1–5.", defName: "Ocena" },
 ];
 
+// Grupa „Inteligentne” z AddField.dc.html: typy, które same liczą (zielona plakietka „liczy”)
+const TYPY_INTELIGENTNE: TypPola[] = [
+  {
+    type: "recurring",
+    Icon: FIELD_TYPE_META.recurring.Icon,
+    name: "Kwota cykliczna",
+    desc: "Kwota z cyklem. Sama przelicza się na miesiąc i rok, a pod tabelą liczy sumy.",
+    defName: "Cena",
+    badge: "liczy",
+  },
+  {
+    type: "renewal",
+    Icon: FIELD_TYPE_META.renewal.Icon,
+    name: "Data odnowienia",
+    desc: "Pokazuje najbliższą przyszłą datę wg cyklu i liczbę dni do niej. Nic nie trzeba przesuwać ręcznie.",
+    defName: "Odnowienie",
+    badge: "liczy",
+  },
+];
+
 // Grupa „Bezpieczne” z AddField.dc.html: Sekret (szyfrowany w przeglądarce), tylko na stronie Hasła
-const TYP_SEKRET = {
-  type: "secret" as const,
+const TYP_SEKRET: TypPola = {
+  type: "secret",
   Icon: FIELD_TYPE_META.secret.Icon,
   name: "Sekret",
   desc: "Zamaskowana wartość, np. hasło.",
@@ -46,11 +68,14 @@ const OPCJE_STATUSU = [
 export function AddFieldDialog({
   allowSecret = false,
   iconTrigger = false,
+  fields,
   onAdd,
 }: {
   // Typ Sekret tylko na stronie z szablonu (nie na „Pustej stronie”)
   allowSecret?: boolean;
   iconTrigger?: boolean;
+  // Pola tabeli: Data odnowienia wskazuje w nich Kwotę cykliczną (cykl) i Checkbox („Tylko gdy zaznaczone”)
+  fields: PageField[];
   onAdd: (input: { name: string; type: FieldType; config: FieldConfig }) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -62,10 +87,24 @@ export function AddFieldDialog({
   const [opcje, setOpcje] = React.useState<string[]>([]);
   const [nowaOpcja, setNowaOpcja] = React.useState<string | null>(null);
   const [wKalendarzu, setWKalendarzu] = React.useState(false);
+  // Kwota cykliczna: domyślny cykl nowych kwot
+  const [cykl, setCykl] = React.useState<Cycle>("month");
+  // Data odnowienia: id pola Kwota cykliczna, z którego bierze się cykl ("" = własny cykl), własny cykl,
+  // pole Checkbox „Tylko gdy zaznaczone” ("" = zawsze) i widoczność w kalendarzu
+  const [cyklZPola, setCyklZPola] = React.useState("");
+  const [wlasnyCykl, setWlasnyCykl] = React.useState<Cycle>("month");
+  const [aktywnePole, setAktywnePole] = React.useState("");
+  const [odnowienieWKalendarzu, setOdnowienieWKalendarzu] = React.useState(true);
 
-  const wybrany = [...TYPY, TYP_SEKRET].find((t) => t.type === typ) ?? TYPY[0];
+  const polaKwot = fields.filter((f) => f.type === "recurring");
+  const polaCheckbox = fields.filter((f) => f.type === "checkbox");
+
+  const wybrany = [...TYPY, ...TYPY_INTELIGENTNE, TYP_SEKRET].find((t) => t.type === typ) ?? TYPY[0];
   const fraza = szukaj.trim().toLowerCase();
-  const widoczne = TYPY.filter((t) => t.name.toLowerCase().includes(fraza));
+  const grupy = [
+    { nazwa: "Podstawowe", typy: TYPY.filter((t) => t.name.toLowerCase().includes(fraza)) },
+    { nazwa: "Inteligentne", typy: TYPY_INTELIGENTNE.filter((t) => t.name.toLowerCase().includes(fraza)) },
+  ];
   const sekretWidoczny = allowSecret && TYP_SEKRET.name.toLowerCase().includes(fraza);
 
   function otworz(o: boolean) {
@@ -78,11 +117,17 @@ export function AddFieldDialog({
       setOpcje([]);
       setNowaOpcja(null);
       setWKalendarzu(false);
+      setCykl("month");
+      // Domyślnie cykl z pierwszej Kwoty cyklicznej i warunek z pierwszego Checkboxa, jeśli są
+      setCyklZPola(polaKwot[0]?.id ?? "");
+      setWlasnyCykl("month");
+      setAktywnePole(polaCheckbox[0]?.id ?? "");
+      setOdnowienieWKalendarzu(true);
     }
     setOpen(o);
   }
 
-  function wybierzTyp(t: (typeof TYPY)[number] | typeof TYP_SEKRET) {
+  function wybierzTyp(t: TypPola) {
     setTyp(t.type);
     if (!nazwaWlasna) setNazwa(t.defName);
     setOpcje(t.type === "status" ? OPCJE_STATUSU.map((o) => o.label) : []);
@@ -111,6 +156,14 @@ export function AddFieldDialog({
       );
     }
     if (typ === "date" && wKalendarzu) config.show_in_calendar = true;
+    if (typ === "recurring") config.default_cycle = cykl;
+    if (typ === "renewal") {
+      // Cykl z pola albo własny; „— zawsze —” to brak active_field_id
+      if (cyklZPola !== "") config.cycle_field_id = cyklZPola;
+      else config.cycle = wlasnyCykl;
+      config.show_in_calendar = odnowienieWKalendarzu;
+      if (aktywnePole !== "") config.active_field_id = aktywnePole;
+    }
     onAdd({ name: nazwa.trim() === "" ? wybrany.defName : nazwa.trim(), type: typ, config });
     setOpen(false);
   }
@@ -155,27 +208,33 @@ export function AddFieldDialog({
               className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground"
             />
           </div>
-          {widoczne.length > 0 && <div className={MENU_LABEL}>Podstawowe</div>}
-          {widoczne.map((t) => (
-            <button
-              key={t.type}
-              type="button"
-              aria-pressed={t.type === typ}
-              onClick={() => wybierzTyp(t)}
-              // Wybrany typ: biała pigułka z cieniem; fokus na nim to obrys (cień zaznaczenia zajmuje shadow)
-              className={cn(
-                "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-0 px-2 text-left text-sm text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:min-h-11",
-                t.type === typ
-                  ? WYBRANY_TYP
-                  : "bg-transparent",
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <t.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
-                {t.name}
-              </span>
-            </button>
-          ))}
+          {grupy.map(
+            (g) =>
+              g.typy.length > 0 && (
+                <React.Fragment key={g.nazwa}>
+                  <div className={MENU_LABEL}>{g.nazwa}</div>
+                  {g.typy.map((t) => (
+                    <button
+                      key={t.type}
+                      type="button"
+                      aria-pressed={t.type === typ}
+                      onClick={() => wybierzTyp(t)}
+                      // Wybrany typ: biała pigułka z cieniem; fokus na nim to obrys (cień zaznaczenia zajmuje shadow)
+                      className={cn(
+                        "flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-0 px-2 text-left text-sm text-foreground outline-none hover:bg-accent focus-visible:shadow-focus max-[799px]:min-h-11",
+                        t.type === typ ? WYBRANY_TYP : "bg-transparent",
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        <t.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
+                        {t.name}
+                      </span>
+                      {t.badge && <StatusBadge tone="green">{t.badge}</StatusBadge>}
+                    </button>
+                  ))}
+                </React.Fragment>
+              ),
+          )}
           {sekretWidoczny && (
             <>
               <div className={MENU_LABEL}>Bezpieczne</div>
@@ -213,7 +272,10 @@ export function AddFieldDialog({
             />
           </label>
           <div>
-            <div className="flex items-center gap-2 font-semibold">{wybrany.name}</div>
+            <div className="flex items-center gap-2 font-semibold">
+              {wybrany.name}
+              {wybrany.badge && <StatusBadge tone="green">inteligentne</StatusBadge>}
+            </div>
             <p className="mt-1 mb-0 text-[13px] leading-normal text-muted-foreground">{wybrany.desc}</p>
           </div>
 
@@ -237,6 +299,98 @@ export function AddFieldDialog({
                     options={[{ value: "zawsze", label: "— zawsze —" }]}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {typ === "recurring" && (
+            <>
+              <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white px-3">
+                <div className="flex items-center justify-between gap-2.5 border-b border-black/[.06] py-[9px] text-sm">
+                  <span>Domyślny cykl</span>
+                  <Segment
+                    ariaLabel="Domyślny cykl"
+                    value={cykl}
+                    options={[
+                      { value: "month", label: "miesiąc" },
+                      { value: "year", label: "rok" },
+                    ]}
+                    onChange={setCykl}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2.5 border-b border-black/[.06] py-[9px] text-sm">
+                  <span>Suma w stopce</span>
+                  <StatusBadge tone="gray">/ mies. i / rok</StatusBadge>
+                </div>
+                <div className="flex items-center justify-between gap-2.5 py-[9px] text-sm">
+                  <span>Waluta</span>
+                  <span className="text-[13px] text-muted-foreground">zł</span>
+                </div>
+              </div>
+              {/* .alert.info: przykład przeliczenia dla wybranego cyklu */}
+              <div className="flex items-start gap-2.5 rounded-xl border border-info-border bg-info/[.04] px-3.5 py-3 text-[13px]">
+                <Info size={16} aria-hidden="true" className="mt-px flex-none" />
+                <span className="tabular-nums">
+                  {cykl === "month" ? "50,00 / mies. → 600,00 / rok" : "600,00 / rok → 50,00 / mies."}
+                </span>
+              </div>
+            </>
+          )}
+
+          {typ === "renewal" && (
+            <div className="rounded-xl border-[1.5px] border-black/[.14] bg-white px-3">
+              <div className="flex items-center justify-between gap-2.5 border-b border-black/[.06] py-[9px] text-sm">
+                <span>Cykl z pola</span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <select
+                    aria-label="Cykl z pola"
+                    value={cyklZPola}
+                    onChange={(e) => setCyklZPola(e.target.value)}
+                    className={cn(FIELD, "w-auto")}
+                  >
+                    {polaKwot.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name} (Kwota cykliczna)
+                      </option>
+                    ))}
+                    <option value="">własny cykl</option>
+                  </select>
+                  {cyklZPola === "" && (
+                    <Segment
+                      ariaLabel="Własny cykl"
+                      value={wlasnyCykl}
+                      options={[
+                        { value: "month", label: "miesiąc" },
+                        { value: "year", label: "rok" },
+                      ]}
+                      onChange={setWlasnyCykl}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2.5 border-b border-black/[.06] py-[9px] text-sm">
+                <span>Pokaż w kalendarzu</span>
+                <Switch
+                  checked={odnowienieWKalendarzu}
+                  ariaLabel="Pokaż w kalendarzu"
+                  onChange={setOdnowienieWKalendarzu}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2.5 py-[9px] text-sm">
+                <span>Tylko gdy zaznaczone</span>
+                <select
+                  aria-label="Tylko gdy zaznaczone"
+                  value={aktywnePole}
+                  onChange={(e) => setAktywnePole(e.target.value)}
+                  className={cn(FIELD, "w-auto")}
+                >
+                  {polaCheckbox.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                  <option value="">— zawsze —</option>
+                </select>
               </div>
             </div>
           )}

@@ -28,7 +28,7 @@ vi.mock("../actions", () => actions);
 import type { PageField } from "../fields";
 import { ColumnMenu } from "./column-menu";
 import { PageTable } from "./page-table";
-import { DZIS, stronaTestowa } from "./test-page";
+import { DZIS, stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
 const BOOKS = [
   { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
@@ -474,12 +474,115 @@ describe("menu kolumny", () => {
   });
 });
 
+describe("menu kolumny: typy inteligentne (Subscriptions)", () => {
+  beforeEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+    vi.clearAllMocks();
+    for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
+  });
+
+  function strona() {
+    const dane = stronaTestowa("subscriptions", "Subscriptions", SUBSKRYPCJE);
+    render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+    return dane.blocks[0].fields;
+  }
+
+  it("„Typ pola” kończy się Kwotą cykliczną i Datą odnowienia (bez Sekretu)", async () => {
+    const user = userEvent.setup();
+    strona();
+    const menu = await otworzMenu(user, "Kwota cykliczna");
+    await user.click(within(menu).getByRole("menuitem", { name: /^Typ:/ }));
+    const typy = within(screen.getByRole("menu", { name: "Typ pola" })).getAllByRole("menuitem").map((t) => t.textContent);
+    expect(typy.slice(-2)).toEqual(["Kwota cykliczna", "Data odnowienia"]);
+    expect(typy).not.toContain("Sekret");
+  });
+
+  it("Data odnowienia: „Pokaż w kalendarzu” jest domyślnie włączone i wyłącza się przez config", async () => {
+    const user = userEvent.setup();
+    const pola = strona();
+    const odnowienie = pola.find((f) => f.name === "Data odnowienia")!;
+    const menu = await otworzMenu(user, "Data odnowienia");
+    const pozycja = within(menu).getByRole("menuitem", { name: /Pokaż w kalendarzu/ });
+    expect(pozycja.querySelector("[data-on=true]")).not.toBeNull();
+    await user.click(pozycja);
+    expect(actions.updateField).toHaveBeenCalledWith(odnowienie.id, {
+      config: { ...odnowienie.config, show_in_calendar: false },
+    });
+    const menu2 = await otworzMenu(user, "Data odnowienia");
+    expect(within(menu2).getByRole("menuitem", { name: /Pokaż w kalendarzu/ }).querySelector("[data-on=true]")).toBeNull();
+  });
+
+  it("Data odnowienia: podmenu „Cykl z pola” zaznacza pole Kwoty, a „Własny: rok” zapisuje cykl bez odwołania", async () => {
+    const user = userEvent.setup();
+    const pola = strona();
+    const odnowienie = pola.find((f) => f.name === "Data odnowienia")!;
+    const kwota = pola.find((f) => f.name === "Kwota cykliczna")!;
+    const menu = await otworzMenu(user, "Data odnowienia");
+    await user.click(within(menu).getByRole("menuitem", { name: /^Cykl z pola/ }));
+    const podmenu = screen.getByRole("menu", { name: "Cykl z pola" });
+    expect(within(podmenu).getAllByRole("menuitem").map((p) => p.textContent)).toEqual([
+      "Kwota cykliczna",
+      "Własny: miesiąc",
+      "Własny: rok",
+    ]);
+    expect(within(podmenu).getByRole("menuitem", { name: "Kwota cykliczna" }).querySelector("svg")).not.toBeNull();
+    await user.click(within(podmenu).getByRole("menuitem", { name: "Własny: rok" }));
+    const { cycle_field_id: _pominiete, ...reszta } = odnowienie.config;
+    void _pominiete;
+    expect(actions.updateField).toHaveBeenCalledWith(odnowienie.id, { config: { ...reszta, cycle: "year" } });
+    // Powrót do pola Kwoty usuwa własny cykl
+    const menu2 = await otworzMenu(user, "Data odnowienia");
+    await user.click(within(menu2).getByRole("menuitem", { name: /^Cykl z pola/ }));
+    await user.click(within(screen.getByRole("menu", { name: "Cykl z pola" })).getByRole("menuitem", { name: "Kwota cykliczna" }));
+    expect(actions.updateField).toHaveBeenLastCalledWith(odnowienie.id, {
+      config: { ...reszta, cycle_field_id: kwota.id },
+    });
+  });
+
+  it("Data odnowienia: „— zawsze —” zapisuje config bez active_field_id", async () => {
+    const user = userEvent.setup();
+    const pola = strona();
+    const odnowienie = pola.find((f) => f.name === "Data odnowienia")!;
+    const menu = await otworzMenu(user, "Data odnowienia");
+    await user.click(within(menu).getByRole("menuitem", { name: /^Tylko gdy zaznaczone/ }));
+    const podmenu = screen.getByRole("menu", { name: "Tylko gdy zaznaczone" });
+    expect(within(podmenu).getAllByRole("menuitem").map((p) => p.textContent)).toEqual(["Aktywna", "— zawsze —"]);
+    await user.click(within(podmenu).getByRole("menuitem", { name: "— zawsze —" }));
+    const { active_field_id: _pominiete, ...reszta } = odnowienie.config;
+    void _pominiete;
+    expect(actions.updateField).toHaveBeenCalledWith(odnowienie.id, { config: reszta });
+    expect(actions.updateField.mock.calls.at(-1)![1].config).not.toHaveProperty("active_field_id");
+  });
+
+  it("Kwota cykliczna: podmenu „Domyślny cykl” zapisuje default_cycle", async () => {
+    const user = userEvent.setup();
+    const pola = strona();
+    const kwota = pola.find((f) => f.name === "Kwota cykliczna")!;
+    const menu = await otworzMenu(user, "Kwota cykliczna");
+    expect(within(menu).queryByRole("menuitem", { name: /Pokaż w kalendarzu/ })).not.toBeInTheDocument();
+    await user.click(within(menu).getByRole("menuitem", { name: /^Domyślny cykl/ }));
+    const podmenu = screen.getByRole("menu", { name: "Domyślny cykl" });
+    expect(within(podmenu).getAllByRole("menuitem").map((p) => p.textContent)).toEqual(["miesiąc", "rok"]);
+    await user.click(within(podmenu).getByRole("menuitem", { name: "rok" }));
+    expect(actions.updateField).toHaveBeenCalledWith(kwota.id, { config: { ...kwota.config, default_cycle: "year" } });
+  });
+
+  it("inne typy nie mają podmenu cyklu", async () => {
+    const user = userEvent.setup();
+    strona();
+    const menu = await otworzMenu(user, "Nazwa");
+    expect(within(menu).queryByRole("menuitem", { name: /^Cykl z pola/ })).not.toBeInTheDocument();
+    expect(within(menu).queryByRole("menuitem", { name: /^Domyślny cykl/ })).not.toBeInTheDocument();
+  });
+});
+
 describe("menu kolumny zablokowanej (moduł Hasła)", () => {
   function menu(field: PageField) {
     const wywolania = { onHide: vi.fn(), onSort: vi.fn(), onRename: vi.fn(), onDelete: vi.fn() };
     render(
       <ColumnMenu
         field={field}
+        fields={[field]}
         open
         onOpenChange={() => {}}
         canHide
@@ -491,6 +594,7 @@ describe("menu kolumny zablokowanej (moduł Hasła)", () => {
         onFilter={() => {}}
         onSummary={() => {}}
         onToggleCalendar={() => {}}
+        onConfig={() => {}}
         onHide={wywolania.onHide}
         onDelete={wywolania.onDelete}
         onMoveLeft={() => {}}

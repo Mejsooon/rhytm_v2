@@ -23,6 +23,7 @@ import {
 } from "./helpers/sport";
 import {
   utworzBooks,
+  utworzSubscriptions,
   zalozKontoStron,
   zasiejPustaStrone,
 } from "./helpers/strony";
@@ -829,5 +830,72 @@ test.describe("ekrany z sesją", () => {
     await page.goto("/ustawienia/ogolne#kosz");
     await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
     await zrzut(page, "ustawienia-kosz", projekt);
+  });
+
+  // Telefon (CMSubs) należy do Etapu 3, więc tylko web
+  test("zrzuty /strony Subscriptions (makiety S2Main, S2AddField)", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const projekt = info.project.name;
+    await zalozKontoStron(page, projekt);
+    await utworzSubscriptions(page);
+
+    // Kilka wierszy zasiewamy przez API administratora (wartości po id pól), bo tabela wstawia je po jednym
+    const idStrony = page.url().split("/").at(-1)!;
+    const admin = adminClient();
+    const { data: blok } = await admin
+      .from("page_blocks")
+      .select("id")
+      .eq("page_id", idStrony)
+      .eq("type", "table")
+      .single();
+    const { data: pola } = await admin
+      .from("page_fields")
+      .select("id, name, config")
+      .eq("block_id", blok!.id);
+    const pole = (nazwa: string) => pola!.find((f) => f.name === nazwa)!;
+    const opcja = (nazwa: string, etykieta: string) =>
+      (pole(nazwa).config.options as { id: string; label: string }[]).find(
+        (o) => o.label === etykieta,
+      )!.id;
+    const wiersz = (
+      nazwa: string,
+      kwota: { amount: number; cycle: "month" | "year" },
+      data: string,
+      kategoria: string,
+      aktywna: boolean,
+      position: number,
+    ) => ({
+      block_id: blok!.id,
+      position,
+      values: {
+        [pole("Nazwa").id]: nazwa,
+        [pole("Kwota cykliczna").id]: kwota,
+        [pole("Data odnowienia").id]: data,
+        [pole("Kategoria").id]: opcja("Kategoria", kategoria),
+        [pole("Aktywna").id]: aktywna,
+      },
+    });
+    const dzis = new Date();
+    const za = (dni: number) =>
+      new Date(dzis.getTime() + dni * 86_400_000).toISOString().slice(0, 10);
+    const { error } = await admin.from("page_rows").insert([
+      wiersz("Netflix", { amount: 43, cycle: "month" }, za(6), "Rozrywka", true, 0),
+      wiersz("Strava", { amount: 249.99, cycle: "year" }, za(40), "Sport", true, 1),
+      wiersz("Disney+", { amount: 37.99, cycle: "month" }, za(9), "Rozrywka", false, 2),
+    ]);
+    if (error) throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
+    await page.reload();
+    await expect(page.locator("tbody tr")).toHaveCount(3);
+    await expect(page.getByTestId("karta")).toHaveCount(3);
+    await zrzut(page, "strony-subscriptions", projekt);
+
+    // Okno „Nowe pole” z wybraną Kwotą cykliczną (S2AddField)
+    await page.getByRole("button", { name: "Dodaj kolumnę" }).click();
+    const okno = page.getByRole("dialog", { name: "Nowe pole" });
+    await okno.getByRole("button", { name: /Kwota cykliczna/ }).click();
+    await expect(okno.getByText("inteligentne", { exact: true })).toBeVisible();
+    await zrzut(page, "strony-nowe-pole-kwota", projekt);
   });
 });

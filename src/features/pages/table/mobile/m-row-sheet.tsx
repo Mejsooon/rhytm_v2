@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { OptionBadge } from "../option-badge";
 import {
   formatMoney,
-  formatValue,
   isRecurringValue,
   nextRenewal,
   normalizeValue,
