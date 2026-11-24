@@ -11,6 +11,7 @@ export function EmptyState({
   className,
   iconClassName,
   titleAs: Tytul = "p",
+  titleId,
   titleClassName,
   descriptionClassName,
 }: {
@@ -23,6 +24,8 @@ export function EmptyState({
   iconClassName?: string;
   // Element tytułu: domyślnie akapit; na pełnym ekranie nagłówek (h1/h2)
   titleAs?: "p" | "h1" | "h2";
+  // Id tytułu (np. aria-labelledby formularza)
+  titleId?: string;
   titleClassName?: string;
   descriptionClassName?: string;
 }) {
@@ -44,6 +47,7 @@ export function EmptyState({
         </div>
       ) : null}
       <Tytul
+        id={titleId}
         className={cn(
           "m-0 text-base font-semibold leading-[1.3] text-foreground",
           titleClassName,

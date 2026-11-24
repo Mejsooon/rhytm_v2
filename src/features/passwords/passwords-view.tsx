@@ -20,7 +20,8 @@ import { MPasswords } from "./mobile/m-passwords";
 
 // Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html): nagłówek z okruszkami „Moduły / Hasła”
 // i „Zablokuj teraz”, plakietka „Szyfrowane” i tabela modułu. Stan sejfu:
-// - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu),
+// - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu);
+//   telefon (CMVaultSetup): pełny ekran, a „Anuluj” prowadzi do listy stron,
 // - ladowanie: sama głowa strony, bez tabeli i bez nakładki (nie mignie tabela przed sprawdzeniem sejfu),
 // - telefon (CMVault, CMPasswords): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny
 //   ekran „Sejf jest zablokowany” (bez tabeli pod rozmyciem), przy odblokowanym lista-akordeon `MPasswords` z tego samego
@@ -147,7 +148,17 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
               </div>
             )}
 
-            {ustawianie && <VaultSetup onCancel={() => setAnulowano(true)} />}
+            {/* Ustawianie hasła głównego: karta na webie, pełny ekran (CMVaultSetup) na telefonie */}
+            {ustawianie && (
+              <>
+                <div className="max-[799px]:hidden">
+                  <VaultSetup onCancel={() => setAnulowano(true)} />
+                </div>
+                <div className="min-[800px]:hidden">
+                  <VaultSetup ekran onCancel={() => setAnulowano(true)} />
+                </div>
+              </>
+            )}
 
             {!ustawianie && !blok && (
               <EmptyModule>

@@ -61,4 +61,18 @@ describe("VaultResetDialog", () => {
     await user.click(within(okno).getByRole("button", { name: "Zresetuj sejf" }));
     await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
+
+  it("arkusz telefonu (CMVaultReset): opis pod tytułem, bez ✕, przyciski w dwóch kolumnach, etykieta słowa na czerwono", async () => {
+    m.countSecrets.mockResolvedValue({ ok: true, count: 4 });
+    render(<VaultResetDialog open onOpenChange={() => {}} />);
+    const okno = await screen.findByRole("dialog", { name: "Zresetować sejf?" });
+    expect(within(okno).getByText("Tej operacji nie da się cofnąć.")).toHaveClass("max-[799px]:block");
+    expect(within(okno).getByRole("button", { name: "Zamknij" })).toHaveClass("max-[799px]:hidden");
+    const stopka = within(okno).getByRole("button", { name: "Anuluj" }).parentElement!;
+    expect(stopka).toHaveClass("max-[799px]:grid-cols-2");
+    expect(within(okno).getByPlaceholderText("RESETUJ").closest("label")).toHaveClass("max-[799px]:text-destructive-foreground");
+    // Liczba sekretów i „Zostaje” z kodu, w jednym zestawie wierszy (karta na telefonie, kafelki na webie)
+    expect(await within(okno).findByText("4 sekrety")).toBeInTheDocument();
+    expect(within(okno).getByText("serwisy, loginy, URL-e")).toBeInTheDocument();
+  });
 });

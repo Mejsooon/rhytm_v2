@@ -707,19 +707,15 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "kalendarz-sport", projekt);
   });
 
-  test("zrzuty /hasla (makiety S2VaultSetup, S2Passwords, S2Vault)", async ({
+  test("zrzuty /hasla (makiety S2VaultSetup, S2Passwords, S2Vault; telefon: CMVaultSetup, CMPasswords, CMVault, CMVaultReset)", async ({
     page,
   }, info) => {
-    test.skip(
-      info.project.name !== "web",
-      "układ webowy; telefon należy do Etapu 3",
-    );
     // PBKDF2 przy ustawieniu sejfu
     test.setTimeout(90_000);
     const projekt = info.project.name;
     await zalozKontoStron(page, projekt);
 
-    // Ustawianie hasła głównego (S2VaultSetup)
+    // Ustawianie hasła głównego (S2VaultSetup / CMVaultSetup)
     await page.goto("/hasla");
     const ustawianie = page.getByRole("form", {
       name: "Ustaw hasło główne sejfu",
@@ -735,38 +731,91 @@ test.describe("ekrany z sesją", () => {
       })
       .click();
     await ustawianie.getByRole("button", { name: "Utwórz sejf" }).click();
+
+    if (projekt === "web") {
+      await expect(
+        page.getByText("Sejf odblokowany", { exact: true }),
+      ).toBeVisible({
+        timeout: 20_000,
+      });
+
+      // Wiersz z hasłem (S2Passwords: odblokowany)
+      await page.getByRole("button", { name: "Nowy", exact: true }).click();
+      const wiersz = page.locator("tbody tr");
+      await expect(wiersz).toHaveCount(1);
+      const serwis = wiersz.getByRole("textbox", {
+        name: "Serwis",
+        exact: true,
+      });
+      await serwis.fill("GitHub");
+      await serwis.press("Enter");
+      const login = wiersz.getByRole("textbox", {
+        name: "Login",
+        exact: true,
+      });
+      await login.fill("mejson");
+      await login.press("Enter");
+      await wiersz.getByRole("button", { name: "Hasło: puste" }).click();
+      const haslo = wiersz.getByRole("textbox", {
+        name: "Hasło",
+        exact: true,
+      });
+      await haslo.fill("Przykladowe-Haslo-1!");
+      await haslo.press("Enter");
+      await expect(
+        wiersz.getByRole("button", { name: "Hasło: zaszyfrowane" }),
+      ).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await zrzut(page, "hasla-odblokowane", projekt);
+
+      // Zablokowany sejf (S2Vault): tabela pod rozmyciem, okno „Odblokuj sejf” na środku, bez tytułu „Hasła”
+      await page.getByRole("button", { name: "Zablokuj teraz" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Odblokuj sejf" }),
+      ).toBeVisible();
+      await zrzut(page, "hasla-zablokowane", projekt);
+      return;
+    }
+
+    // Telefon: lista (CMPasswords) z jednym hasłem dodanym przez „Nowe hasło” (arkusz wiersza)
     await expect(
-      page.getByText("Sejf odblokowany", { exact: true }),
+      page.getByText(/^odblokowany · auto-blokada za /),
     ).toBeVisible({
       timeout: 20_000,
     });
-
-    // Wiersz z hasłem (S2Passwords: odblokowany)
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
-    await expect(wiersz).toHaveCount(1);
-    const serwis = wiersz.getByRole("textbox", { name: "Serwis", exact: true });
-    await serwis.fill("GitHub");
-    await serwis.press("Enter");
-    const login = wiersz.getByRole("textbox", { name: "Login", exact: true });
-    await login.fill("mejson");
-    await login.press("Enter");
-    await wiersz.getByRole("button", { name: "Hasło: puste" }).click();
-    const haslo = wiersz.getByRole("textbox", { name: "Hasło", exact: true });
-    await haslo.fill("Przykladowe-Haslo-1!");
-    await haslo.press("Enter");
-    await expect(
-      wiersz.getByRole("button", { name: "Hasło: zaszyfrowane" }),
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Nowe hasło" }).click();
+    const arkusz = page.getByRole("dialog", { name: "Nowy wiersz" });
+    await expect(arkusz).toBeVisible();
+    await arkusz.getByLabel("Serwis", { exact: true }).fill("GitHub");
+    await arkusz.getByLabel("Login", { exact: true }).fill("mejson");
+    await arkusz
+      .getByRole("textbox", { name: "Hasło", exact: true })
+      .fill("Przykladowe-Haslo-1!");
+    await arkusz.getByRole("button", { name: "Zapisz" }).click();
+    await expect(arkusz).toHaveCount(0);
+    const wierszTelefonu = page.getByRole("button", { name: /^GitHub/ });
+    await expect(wierszTelefonu).toBeVisible();
     await page.waitForLoadState("networkidle");
-    await zrzut(page, "hasla-odblokowane", projekt);
+    await zrzut(page, "hasla-lista", projekt);
 
-    // Zablokowany sejf (S2Vault): tabela pod rozmyciem, okno „Odblokuj sejf” na środku, bez tytułu „Hasła”
-    await page.getByRole("button", { name: "Zablokuj teraz" }).click();
+    // Rozwinięty wiersz (hasło pod maską, oczko, kopiowanie, „Edytuj”)
+    await wierszTelefonu.click();
+    await expect(wierszTelefonu).toHaveAttribute("aria-expanded", "true");
+    await zrzut(page, "hasla-rozwiniete", projekt);
+
+    // Zablokowany sejf (CMVault) i reset (CMVaultReset)
+    await page.getByRole("button", { name: "Zablokuj sejf" }).click();
     await expect(
-      page.getByRole("heading", { name: "Odblokuj sejf" }),
+      page.getByRole("heading", { name: "Sejf jest zablokowany" }),
     ).toBeVisible();
     await zrzut(page, "hasla-zablokowane", projekt);
+    await page
+      .getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })
+      .click();
+    await expect(
+      page.getByRole("dialog", { name: "Zresetować sejf?" }),
+    ).toBeVisible();
+    await zrzut(page, "hasla-reset", projekt);
   });
 
   test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, S2CardMenu, S2CardDialog, MPages, MEditor; telefon: CMPages, CMNewPage, CMEditor, CMPageMenu, CMFilterSheet, CMCardSheet, CMRowEdit)", async ({

@@ -229,8 +229,9 @@ test.describe("sejf", () => {
     await expect(
       page.getByRole("heading", { name: "Odblokuj sejf" }),
     ).toBeVisible();
+    // Ekran telefonu ma dłuższe zdanie z tym fragmentem (oba układy są w DOM), więc tekst dokładny
     await expect(
-      page.getByText("Blokada po 5 min bezczynności."),
+      page.getByText("Blokada po 5 min bezczynności.", { exact: true }),
     ).toBeVisible();
     await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
     await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
@@ -370,5 +371,235 @@ test.describe("sejf", () => {
     ).toBe(true);
     sprawdzZadania();
     await sprawdzMagazyny();
+  });
+  test("Hasła na telefonie: ustawienie, nowe hasło w arkuszu, rozwinięcie, Pokaż/Kopiuj, blokada, odblokowanie i reset — bez haseł w żądaniach", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile", "układ telefonu");
+    // PBKDF2 600 000 iteracji ×4 (ustawienie, odblokowanie ×2, ponowne ustawienie) + zapisy
+    test.setTimeout(150_000);
+
+    const sufiks = randomBytes(6).toString("hex");
+    const haslo = `żółw-Tajne!${sufiks}&zbyt Dlugie-7`;
+    const glowne = `Glowne-${sufiks}-Kl3ucz!Dluuugie`;
+    const noweGlowne = `Nowe-${sufiks}-Gl0wne!Dluuugie`;
+    const zlyGlowne = `Zle-${sufiks}-Haslo!Dluuugie9`;
+    const serwis = `Serwis-${sufiks}`;
+    const login = `login-${sufiks}`;
+    const notatka = `notatka-Tajna!${sufiks}`;
+    const zakazane = [haslo, notatka, glowne, noweGlowne, zlyGlowne].flatMap(
+      (h) => [
+        h,
+        encodeURIComponent(h),
+        encodeURI(h),
+        JSON.stringify(h).slice(1, -1),
+        h.replace(
+          /[^\x00-\x7f]/g,
+          (z) => `\\u${z.charCodeAt(0).toString(16).padStart(4, "0")}`,
+        ),
+      ],
+    );
+
+    await page
+      .context()
+      .grantPermissions(["clipboard-read", "clipboard-write"]);
+
+    // Wszystkie żądania z całego testu (adres, nagłówki, treść): żadne nie niesie jawnego hasła
+    const zadania: { url: string; naglowki: string; tresc: string }[] = [];
+    page.on("request", (zadanie) => {
+      const bufor = zadanie.postDataBuffer();
+      zadania.push({
+        url: zadanie.url(),
+        naglowki: JSON.stringify(zadanie.headers()),
+        tresc: bufor ? bufor.toString("utf8") + bufor.toString("latin1") : "",
+      });
+    });
+    function sprawdzZadania() {
+      for (const z of zadania) {
+        for (const h of zakazane) {
+          expect(z.url, `adres ${z.url} zawiera hasło`).not.toContain(h);
+          expect(z.naglowki, `nagłówki ${z.url} zawierają hasło`).not.toContain(
+            h,
+          );
+          expect(z.tresc, `treść ${z.url} zawiera hasło`).not.toContain(h);
+        }
+      }
+    }
+
+    await zalozKontoStron(page, info.project.name);
+
+    // Ustawianie sejfu: pełny ekran (CMVaultSetup) z linkiem „Anuluj” do listy stron
+    await page.goto("/hasla");
+    const ustawianie = page.getByRole("form", {
+      name: "Ustaw hasło główne sejfu",
+    });
+    await expect(ustawianie).toBeVisible();
+    await expect(
+      ustawianie.getByText("Hasło tylko do sejfu!", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      ustawianie.getByRole("link", { name: "Anuluj" }),
+    ).toHaveAttribute("href", "/strony");
+    await expect(
+      ustawianie.getByRole("button", { name: "Utwórz sejf" }),
+    ).toBeDisabled();
+    await ustawianie.getByLabel("Hasło główne", { exact: true }).fill(glowne);
+    await ustawianie.getByLabel("Powtórz", { exact: true }).fill(`${glowne}x`);
+    await expect(ustawianie.getByText("Hasła się różnią.")).toBeVisible();
+    await ustawianie.getByLabel("Powtórz", { exact: true }).fill(glowne);
+    await ustawianie
+      .getByRole("checkbox", {
+        name: "Rozumiem, że zapomnianego hasła głównego nie da się odzyskać.",
+      })
+      .click();
+    await ustawianie.getByRole("button", { name: "Utwórz sejf" }).click();
+
+    // Odblokowany: lista z plakietką odliczania (baner webu jest ukryty na telefonie)
+    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+      { timeout: 20_000 },
+    );
+    await expect(page.getByRole("heading", { name: "Hasła", level: 1 })).toBeVisible();
+    await expect(page.getByText("Brak haseł. Dodaj pierwsze przyciskiem +.")).toBeVisible();
+
+    // „Nowe hasło” → arkusz wiersza: Serwis, Login, Hasło i Notatka (sekrety szyfrowane przed wysłaniem)
+    await page.getByRole("button", { name: "Nowe hasło" }).click();
+    const arkusz = page.getByRole("dialog", { name: "Nowy wiersz" });
+    await expect(arkusz).toBeVisible();
+    await arkusz.getByLabel("Serwis", { exact: true }).fill(serwis);
+    await arkusz.getByLabel("Login", { exact: true }).fill(login);
+    await arkusz.getByRole("textbox", { name: "Hasło", exact: true }).fill(haslo);
+    await arkusz
+      .getByRole("textbox", { name: "Notatka", exact: true })
+      .fill(notatka);
+    const zapisWiersza = page.waitForResponse(AKCJA_SERWERA);
+    await arkusz.getByRole("button", { name: "Zapisz" }).click();
+    await zapisWiersza;
+    await expect(arkusz).toHaveCount(0);
+
+    // Lista: wiersz zwinięty; po rozwinięciu hasło i notatka pod maską, nic nie jest w DOM jako tekst jawny
+    const wiersz = page.getByRole("button", { name: new RegExp(serwis) });
+    await expect(wiersz).toHaveAttribute("aria-expanded", "false");
+    await page.waitForLoadState("networkidle");
+    await wiersz.click();
+    await expect(wiersz).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByText("••••••••••")).toHaveCount(2);
+    await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
+
+    // „Pokaż hasło” / „Ukryj hasło” i „Pokaż notatkę”
+    await page.getByRole("button", { name: "Pokaż hasło" }).click();
+    await expect(page.getByText(haslo, { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Ukryj hasło" }).click();
+    await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Pokaż notatkę" }).click();
+    await expect(page.getByText(notatka, { exact: true })).toBeVisible();
+
+    // „Kopiuj hasło”: schowek ma hasło, pod polem dopisek o czyszczeniu; hasło nie pojawia się na ekranie
+    await page.getByRole("button", { name: "Kopiuj hasło" }).click();
+    await expect(
+      page.getByText("Skopiowano · schowek wyczyści się za 30 s"),
+    ).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      haslo,
+    );
+    await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
+
+    // Zwinięcie czyści odsłoniętą notatkę
+    await wiersz.click();
+    await expect(wiersz).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
+
+    // „Edytuj”: arkusz z polem Hasło „zaszyfrowane” (puste), odszyfrowanie dopiero po fokusie
+    await wiersz.click();
+    await page.getByRole("button", { name: "Edytuj", exact: true }).click();
+    const edycja = page.getByRole("dialog", { name: serwis });
+    await expect(edycja).toBeVisible();
+    const poleHasla = edycja.getByRole("textbox", { name: "Hasło", exact: true });
+    await expect(poleHasla).toHaveValue("");
+    await expect(poleHasla).toHaveAttribute("placeholder", "zaszyfrowane");
+    await poleHasla.click();
+    await expect(poleHasla).toHaveValue(haslo);
+    await edycja.getByRole("button", { name: "Anuluj" }).click();
+    await expect(edycja).toHaveCount(0);
+
+    // Wyszukiwanie po Loginie i chipy Kategorii (stan klienta, bez zapisu)
+    const szukaj = page.getByRole("searchbox", { name: "Szukaj haseł" });
+    await szukaj.fill("nie-ma-takiego-serwisu");
+    await expect(page.getByText("Nic nie znaleziono.")).toBeVisible();
+    await szukaj.fill(login.toUpperCase());
+    await expect(wiersz).toBeVisible();
+    await szukaj.fill("");
+    await page.waitForLoadState("networkidle");
+    sprawdzZadania();
+
+    // Odsłoń hasło i zablokuj sejf: pełny ekran „Sejf jest zablokowany”, jawnego tekstu już nie ma
+    await wiersz.click();
+    await page.getByRole("button", { name: "Pokaż hasło" }).click();
+    await expect(page.getByText(haslo, { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Zablokuj sejf" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Sejf jest zablokowany", level: 1 }),
+    ).toBeVisible();
+    await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Odblokuj biometrią")).toHaveCount(0);
+
+    // Odblokowanie: puste pole, złe hasło, dobre hasło
+    await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
+    await expect(
+      page.getByText("Wpisz hasło główne.", { exact: true }),
+    ).toBeVisible();
+    await page.getByLabel("Hasło główne", { exact: true }).fill(zlyGlowne);
+    await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
+    await expect(page.getByText("Nieprawidłowe hasło główne.")).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.getByLabel("Hasło główne", { exact: true }).fill(glowne);
+    await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
+    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+      { timeout: 20_000 },
+    );
+    await expect(wiersz).toBeVisible();
+    sprawdzZadania();
+
+    // Reset z ekranu blokady: arkusz „Zresetować sejf?” z liczbą sekretów (hasło i notatka)
+    await page.getByRole("button", { name: "Zablokuj sejf" }).click();
+    await page
+      .getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })
+      .click();
+    const reset = page.getByRole("dialog", { name: "Zresetować sejf?" });
+    await expect(reset).toBeVisible();
+    await expect(
+      reset.getByText("Tej operacji nie da się cofnąć."),
+    ).toBeVisible();
+    await expect(reset.getByText("2 sekrety", { exact: true })).toBeVisible();
+    await expect(reset.getByText("serwisy, loginy, URL-e")).toBeVisible();
+    await expect(
+      reset.getByRole("button", { name: "Zresetuj sejf", exact: true }),
+    ).toHaveAttribute("aria-disabled", "true");
+    await reset.getByPlaceholder("RESETUJ").fill("RESETUJ");
+    await reset
+      .getByRole("button", { name: "Zresetuj sejf", exact: true })
+      .click();
+    await expect(reset).toHaveCount(0);
+
+    // Po resecie sejf trzeba ustawić od nowa (ekran ustawiania); wiersz zostaje, sekrety są puste
+    const nowe = page.getByRole("form", { name: "Ustaw hasło główne sejfu" });
+    await expect(nowe).toBeVisible({ timeout: 20_000 });
+    await nowe.getByLabel("Hasło główne", { exact: true }).fill(noweGlowne);
+    await nowe.getByLabel("Powtórz", { exact: true }).fill(noweGlowne);
+    await nowe
+      .getByRole("checkbox", {
+        name: "Rozumiem, że zapomnianego hasła głównego nie da się odzyskać.",
+      })
+      .click();
+    await nowe.getByRole("button", { name: "Utwórz sejf" }).click();
+    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+      { timeout: 20_000 },
+    );
+    await expect(page.getByRole("button", { name: new RegExp(serwis) })).toBeVisible();
+    await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
+
+    sprawdzZadania();
   });
 });

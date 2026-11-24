@@ -218,13 +218,26 @@ describe("PasswordsView", () => {
     tabela.readOnly = true;
     const user = userEvent.setup();
     pokaz();
-    expect(screen.getByRole("heading", { name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
+    // Karta webu i ekran telefonu są oba w DOM (przełącza je CSS)
+    expect(screen.getAllByRole("heading", { name: "Ustaw hasło główne sejfu" })).toHaveLength(2);
     expect(screen.queryByTestId("tabela")).not.toBeInTheDocument();
     await user.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
     expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
     expect(screen.getByTestId("tabela")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Ustaw hasło główne" }));
-    expect(screen.getByRole("heading", { name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Ustaw hasło główne sejfu" })).toHaveLength(2);
+  });
+
+  it("telefon, brak sejfu: ekran ustawiania w układzie tylko dla telefonu, z nagłówkiem „Hasła” i linkiem „Anuluj” do /strony", () => {
+    vault.state = { status: "brak", remainingMs: 0 };
+    pokaz();
+    const ekran = screen.getAllByRole("form", { name: "Ustaw hasło główne sejfu" }).find((f) => f.closest(".min-\\[800px\\]\\:hidden"))!;
+    expect(ekran).toBeDefined();
+    expect(within(ekran).getByRole("link", { name: "Anuluj" })).toHaveAttribute("href", "/strony");
+    // Nagłówek telefonu: link „Strony” i wyśrodkowane „Hasła”
+    const naglowek = document.querySelector("header.m-head")!;
+    expect(within(naglowek as HTMLElement).getByRole("link", { name: "Strony" })).toHaveAttribute("href", "/strony");
+    expect(within(naglowek as HTMLElement).getByRole("heading", { level: 1, name: "Hasła" })).toBeInTheDocument();
   });
 
   it("nieobsługiwany: komunikat banera i tabela", () => {

@@ -18,6 +18,7 @@ export function WordConfirm({
   value,
   onValueChange,
   hideButton = false,
+  labelClassName,
 }: {
   word: string;
   label: string;
@@ -29,6 +30,8 @@ export function WordConfirm({
   onValueChange?: (v: string) => void;
   // Ukrywa wbudowany przycisk (potwierdza rodzic)
   hideButton?: boolean;
+  // Dodatkowe klasy etykiety (np. czerwony tekst na telefonie w resecie sejfu)
+  labelClassName?: string;
 }) {
   const [lokalne, setLokalne] = React.useState("");
   const wpisane = value ?? lokalne;
@@ -43,7 +46,7 @@ export function WordConfirm({
 
   return (
     <div className="flex flex-col gap-3.5">
-      <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+      <label className={cn("flex flex-col gap-1.5 text-[13px] font-medium", labelClassName)}>
         <span>
           {czesci.map((czesc, i) => (
             <React.Fragment key={i}>

@@ -98,4 +98,64 @@ describe("VaultSetup", () => {
     await user.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onCancel).toHaveBeenCalledTimes(2);
   });
+
+  describe("ekran telefonu (CMVaultSetup)", () => {
+    it("teksty makiety: tytuł, opis, ostrzeżenie, zgoda; pola new-password; „Anuluj” to link do /strony", () => {
+      render(<VaultSetup ekran onCancel={() => {}} />);
+      expect(screen.getByRole("heading", { level: 2, name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
+      expect(screen.getByRole("form", { name: "Ustaw hasło główne sejfu" })).toBeInTheDocument();
+      expect(screen.getByText("Hasło główne szyfruje moduł Hasła i pola „Sekret” na Twoim urządzeniu.")).toBeInTheDocument();
+      expect(screen.getByText("Hasło tylko do sejfu!")).toBeInTheDocument();
+      expect(screen.getByText(/Nie używaj hasła do konta\. Nie da się go odzyskać\./)).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: "Rozumiem, że zapomnianego hasła głównego nie da się odzyskać." })).toBeInTheDocument();
+      for (const nazwa of ["Hasło główne", "Powtórz"]) {
+        const pole = screen.getByLabelText(nazwa);
+        expect(pole).toHaveAttribute("type", "password");
+        expect(pole).toHaveAttribute("autocomplete", "new-password");
+        expect(pole).not.toHaveAttribute("name");
+      }
+      expect(screen.getByRole("link", { name: "Anuluj" })).toHaveAttribute("href", "/strony");
+      expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeDisabled();
+    });
+
+    it("miernik: 4 paski i podpis z tych samych progów co web; puste pole podaje wymaganie", async () => {
+      const user = userEvent.setup();
+      render(<VaultSetup ekran onCancel={() => {}} />);
+      expect(screen.getByText("Min. „Mocne”, 12+ znaków.")).toBeInTheDocument();
+      expect(document.querySelectorAll("[data-segment]")).toHaveLength(4);
+      const pole = screen.getByLabelText("Hasło główne");
+      await user.type(pole, "abcdefghijk1");
+      expect(screen.getByText("Średnie")).toBeInTheDocument();
+      await user.clear(pole);
+      await user.type(pole, "abcdefghijL1");
+      expect(screen.getByText("Mocne")).toBeInTheDocument();
+    });
+
+    it("„Hasła się różnią.”, a „Utwórz sejf” czeka na „Mocne”, zgodność i zgodę", async () => {
+      const user = userEvent.setup();
+      render(<VaultSetup ekran onCancel={() => {}} />);
+      await user.type(screen.getByLabelText("Hasło główne"), "Dobre-haslo-glowne-1");
+      await user.type(screen.getByLabelText("Powtórz"), "Dobre-haslo-glowne-2");
+      expect(screen.getByText("Hasła się różnią.")).toBeInTheDocument();
+      await user.clear(screen.getByLabelText("Powtórz"));
+      await user.type(screen.getByLabelText("Powtórz"), "Dobre-haslo-glowne-1");
+      expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeDisabled();
+      await user.click(screen.getByRole("checkbox"));
+      expect(screen.getByRole("button", { name: "Utwórz sejf" })).toBeEnabled();
+    });
+
+    it("wysłanie: setup dostaje hasło, pola są czyszczone, błąd z providera dosłownie", async () => {
+      const user = userEvent.setup();
+      vault.setup.mockResolvedValue({ ok: false, message: "Nie udało się połączyć z sejfem. Spróbuj ponownie." });
+      render(<VaultSetup ekran onCancel={() => {}} />);
+      await user.type(screen.getByLabelText("Hasło główne"), "Dobre-haslo-glowne-1");
+      await user.type(screen.getByLabelText("Powtórz"), "Dobre-haslo-glowne-1");
+      await user.click(screen.getByRole("checkbox"));
+      await user.click(screen.getByRole("button", { name: "Utwórz sejf" }));
+      expect(vault.setup).toHaveBeenCalledWith("Dobre-haslo-glowne-1");
+      expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się połączyć z sejfem. Spróbuj ponownie.");
+      await waitFor(() => expect(screen.getByLabelText("Hasło główne")).toHaveValue(""));
+      expect(screen.getByLabelText("Powtórz")).toHaveValue("");
+    });
+  });
 });
