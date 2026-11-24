@@ -572,6 +572,7 @@ export type Database = {
           clock: string | null;
           created_at: string | null;
           currency: string | null;
+          deletion_requested_at: string | null;
           display_name: string | null;
           goals: string[] | null;
           height_cm: number | null;
@@ -597,6 +598,7 @@ export type Database = {
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
+          deletion_requested_at?: string | null;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
@@ -622,6 +624,7 @@ export type Database = {
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
+          deletion_requested_at?: string | null;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
@@ -1029,6 +1032,10 @@ export type Database = {
           p_id: string;
         };
         Returns: undefined;
+      };
+      purge_deleted_accounts: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
       };
       purge_trash: {
         Args: Record<PropertyKey, never>;
