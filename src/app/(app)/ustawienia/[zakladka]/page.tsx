@@ -7,8 +7,11 @@ import { Card, CardContent } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { AccountCard } from "@/features/settings/account-card";
 import { CategoriesCard } from "@/features/settings/categories-card";
+import { ExportCard } from "@/features/settings/export-card";
 import { GoalsCard } from "@/features/settings/goals-card";
+import { PasswordCard } from "@/features/settings/password-card";
 import { ProfileCard } from "@/features/settings/profile-card";
+import { SessionsCard } from "@/features/settings/sessions-card";
 import { TrashCard } from "@/features/settings/trash-card";
 import { VaultCard } from "@/features/settings/vault-card";
 import { loadTrash } from "@/features/pages/actions";
@@ -112,6 +115,55 @@ async function Ogolne({
   );
 }
 
+// Konto i bezpieczeństwo: hasło, sesje, eksport (dane zależą od ciasteczek → connection + Suspense)
+async function Konto() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  // Hasło do konta ma tylko tożsamość „email” (konto samo z Google go nie ma)
+  const hasPassword = (user.identities ?? []).some(
+    (t) => t.provider === "email",
+  );
+  const biezaca = describeUserAgent((await headers()).get("user-agent"));
+
+  // Lista sesji z bazy; stara baza bez funkcji albo błąd → sama bieżąca sesja z nagłówka
+  const { data: sesje, error: bladSesji } =
+    await supabase.rpc("list_my_sessions");
+  const lista = (sesje ?? []).map((s) => {
+    const opis = describeUserAgent(s.user_agent);
+    return {
+      id: s.id,
+      label: opis.label,
+      mobile: opis.mobile,
+      lastActiveAt: s.last_active_at,
+      current: s.is_current,
+    };
+  });
+
+  return (
+    <>
+      <PasswordCard hasPassword={hasPassword} email={user.email ?? ""} />
+      <SessionsCard
+        sessions={bladSesji ? [] : lista}
+        loadError={!!bladSesji}
+        currentLabel={biezaca.label}
+        currentMobile={biezaca.mobile}
+        timeZone={safeTimezone(profil?.timezone)}
+      />
+      <ExportCard />
+    </>
+  );
+}
+
 // Karta Kategorie kalendarza z listą w kolejności z bazy (dane zależą od ciasteczek → connection + Suspense)
 async function Kategorie() {
   await connection();
@@ -163,6 +215,10 @@ export default async function ZakladkaPage({
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
               <Ogolne searchParams={searchParams} />
+            </Suspense>
+          ) : tab.slug === "konto" ? (
+            <Suspense fallback={null}>
+              <Konto />
             </Suspense>
           ) : tab.slug === "kategorie" ? (
             <Suspense fallback={null}>

@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { isPasswordPwned } from "@/lib/auth/hibp";
+import { newPasswordSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export type AccountResult = { ok: true } | { ok: false; message: string };
@@ -41,5 +44,166 @@ export async function requestEmailChange(
   }
 
   revalidatePath("/ustawienia/ogolne");
+  return { ok: true };
+}
+
+// Zmiana hasła do konta (Ustawienia → Konto i bezpieczeństwo). Haseł nigdy nie logujemy.
+export async function changePassword(input: {
+  current: string;
+  next: string;
+  repeat: string;
+}): Promise<AccountResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  // 1. Konto tylko z Google nie ma obecnego hasła do sprawdzenia
+  if (!(user.identities ?? []).some((t) => t.provider === "email"))
+    return {
+      ok: false,
+      message: "To konto loguje się przez Google. Ustaw hasło linkiem z maila.",
+    };
+
+  // 2. Format: obecne wpisane, nowe min. 10 znaków z literami i cyframi, powtórzone, inne niż obecne
+  const current = typeof input?.current === "string" ? input.current : "";
+  if (!current) return { ok: false, message: "Wpisz obecne hasło." };
+  const parsed = newPasswordSchema.safeParse({
+    password: input?.next,
+    confirm: input?.repeat,
+  });
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Sprawdź nowe hasło.",
+    };
+  if (parsed.data.password === current)
+    return {
+      ok: false,
+      message: "Nowe hasło musi różnić się od obecnego.",
+    };
+
+  // 3. Hasło z wycieków (HIBP, k-anonimowość)
+  if (await isPasswordPwned(parsed.data.password))
+    return {
+      ok: false,
+      message: "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
+    };
+
+  // 4. Obecne hasło sprawdza baza (limit 5 prób / 15 min); stara baza nie ma funkcji (PGRST202)
+  const { data: zgodne, error: bladWeryfikacji } = await supabase.rpc(
+    "verify_my_password",
+    { p_password: current },
+  );
+  if (bladWeryfikacji) {
+    if (bladWeryfikacji.code === "PGRST202")
+      return {
+        ok: false,
+        message: "Zmiana hasła będzie dostępna za chwilę. Spróbuj później.",
+      };
+    if ((bladWeryfikacji.message ?? "").includes("za_duzo_prob"))
+      return {
+        ok: false,
+        message: "Za dużo nieudanych prób. Spróbuj za 15 minut.",
+      };
+    return {
+      ok: false,
+      message: "Nie udało się zmienić hasła. Spróbuj ponownie.",
+    };
+  }
+  if (zgodne !== true)
+    return { ok: false, message: "Obecne hasło jest nieprawidłowe." };
+
+  // 5. Nowe hasło + data zmiany (podpis „zmienione DD.MM.RRRR” w Ogólnych)
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+    data: { password_changed_at: new Date().toISOString() },
+  });
+  if (error)
+    return {
+      ok: false,
+      message: "Nie udało się zmienić hasła. Spróbuj ponownie.",
+    };
+
+  // 6. Inne urządzenia tracą sesję, ta zostaje
+  await supabase.auth.signOut({ scope: "others" });
+  revalidatePath("/ustawienia/konto");
+  return { ok: true };
+}
+
+// Konto tylko z Google: link do ustawienia hasła (dalej istniejący ekran /nowe-haslo)
+export async function sendSetPasswordLink(): Promise<
+  { ok: true; email: string } | { ok: false; message: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+  const email = user.email ?? "";
+  if (!email)
+    return {
+      ok: false,
+      message: "Nie udało się wysłać linku. Spróbuj ponownie.",
+    };
+
+  // Adres aplikacji: NEXT_PUBLIC_SITE_URL; nagłówkom żądania ufamy tylko poza produkcją (jak w auth/actions.ts)
+  let origin = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  if (!origin && process.env.NODE_ENV === "production")
+    return {
+      ok: false,
+      message: "Nie udało się wysłać linku. Spróbuj ponownie.",
+    };
+  if (!origin) {
+    const naglowki = await headers();
+    const host =
+      naglowki.get("x-forwarded-host") ??
+      naglowki.get("host") ??
+      "localhost:3000";
+    const protokol =
+      naglowki.get("x-forwarded-proto") ??
+      (host.startsWith("localhost") ? "http" : "https");
+    origin = `${protokol}://${host}`;
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/confirm`,
+  });
+  if (error) {
+    if (error.status === 429 || (error.code ?? "").includes("rate_limit"))
+      return { ok: false, message: "Za dużo prób. Spróbuj za chwilę." };
+    return {
+      ok: false,
+      message: "Nie udało się wysłać linku. Spróbuj ponownie.",
+    };
+  }
+  return { ok: true, email };
+}
+
+// „Wyloguj wszystkie inne”: kończy wszystkie sesje poza bieżącą
+export async function signOutOtherSessions(): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut({ scope: "others" });
+  revalidatePath("/ustawienia/konto");
+  return { ok: !error };
+}
+
+// „Wyloguj” jednej innej sesji: funkcja w bazie usuwa własny wiersz auth.sessions
+// (token dostępu tamtej sesji działa jeszcze do wygaśnięcia, ≤ 1 h — decyzja C8)
+export async function revokeSession(id: string): Promise<AccountResult> {
+  const parsed = z.uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, message: "Ta sesja już wygasła." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("revoke_my_session", {
+    p_session_id: parsed.data,
+  });
+  if (error)
+    return {
+      ok: false,
+      message: "Nie udało się wylogować sesji. Spróbuj ponownie.",
+    };
+  if (data !== true) return { ok: false, message: "Ta sesja już wygasła." };
+  revalidatePath("/ustawienia/konto");
   return { ok: true };
 }

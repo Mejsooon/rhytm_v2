@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+
+import { expect, test, type Browser } from "@playwright/test";
 
 import {
   createConfirmedUser,
@@ -190,5 +192,182 @@ test.describe("ustawienia ogólne", () => {
     await expect(konto.getByText(/· teraz$/)).toBeVisible();
     await konto.getByRole("button", { name: "Wyloguj" }).click();
     await expect(page).toHaveURL(/\/logowanie/);
+  });
+});
+
+// Osobny kontekst przeglądarki = osobna sesja (inny user-agent → inny opis na liście sesji)
+async function drugaPrzegladarka(
+  browser: Browser,
+  baseURL: string | undefined,
+  userAgent?: string,
+) {
+  const kontekst = await browser.newContext({
+    baseURL,
+    viewport: { width: 1440, height: 900 },
+    userAgent,
+  });
+  const strona = await kontekst.newPage();
+  return { kontekst, strona };
+}
+
+test.describe("ustawienia: konto i bezpieczeństwo", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test("zmiana hasła: złe obecne → komunikat, dobre → sukces, logowanie nowym hasłem", async ({
+    page,
+    browser,
+    baseURL,
+  }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/konto");
+    const karta = page.getByTestId("karta-haslo");
+    await expect(
+      karta.getByRole("heading", { name: "Zmień hasło do konta" }),
+    ).toBeVisible();
+    const nowe = randomPassword();
+    await karta.getByLabel("Obecne hasło").fill("Zle-Haslo-12345");
+    await karta.getByLabel("Nowe hasło").fill(nowe);
+    await karta.getByLabel("Powtórz").fill(nowe);
+    await expect(karta.getByText("Hasła są takie same ✓")).toBeVisible();
+    await karta.getByRole("button", { name: "Zmień hasło" }).click();
+    await expect(
+      karta.getByText("Obecne hasło jest nieprawidłowe."),
+    ).toBeVisible();
+
+    await karta.getByLabel("Obecne hasło").fill(haslo);
+    await karta.getByRole("button", { name: "Zmień hasło" }).click();
+    await expect(
+      karta.getByText("Hasło zmienione ✓ Inne urządzenia zostały wylogowane."),
+    ).toBeVisible();
+    await expect(karta.getByLabel("Obecne hasło")).toHaveValue("");
+
+    // Podpis w Ogólnych: „zmienione DD.MM.RRRR”
+    await page.goto("/ustawienia/ogolne");
+    await expect(
+      page
+        .getByTestId("karta-konto")
+        .getByText(/^zmienione \d{2}\.\d{2}\.\d{4}$/),
+    ).toBeVisible();
+
+    // Wylogowanie i logowanie nowym hasłem
+    await page
+      .getByTestId("karta-konto")
+      .getByRole("button", { name: "Wyloguj" })
+      .click();
+    await expect(page).toHaveURL(/\/logowanie/);
+    await logInViaForm(page, email, nowe);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    // Stare hasło już nie działa (czysty kontekst)
+    const { kontekst, strona } = await drugaPrzegladarka(browser, baseURL);
+    await logInViaForm(strona, email, haslo);
+    await expect(
+      strona.getByText("Nieprawidłowy e-mail lub hasło"),
+    ).toBeVisible();
+    await kontekst.close();
+  });
+
+  test("sesje: druga przeglądarka na liście, „Wyloguj” jednej i „Wyloguj wszystkie inne”", async ({
+    page,
+    browser,
+    baseURL,
+  }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    const iphone = await drugaPrzegladarka(
+      browser,
+      baseURL,
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    );
+    await logInViaForm(iphone.strona, email, haslo);
+    await expect(iphone.strona).toHaveURL(/\/dzis$/);
+    const windows = await drugaPrzegladarka(
+      browser,
+      baseURL,
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+    );
+    await logInViaForm(windows.strona, email, haslo);
+    await expect(windows.strona).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/konto");
+    const sesje = page.getByTestId("karta-sesje");
+    await expect(sesje.getByText("3 aktywne sesje")).toBeVisible();
+    await expect(sesje.getByText("teraz · ta sesja")).toBeVisible();
+    await expect(sesje.getByText("Aktualna")).toBeVisible();
+    await expect(sesje.getByText("Safari · iPhone")).toBeVisible();
+    await expect(sesje.getByText("Firefox · Windows")).toBeVisible();
+
+    // Jedna sesja
+    await sesje
+      .getByRole("button", { name: "Wyloguj: Safari · iPhone" })
+      .click();
+    await expect(
+      sesje.getByRole("status").getByText("Wylogowano: Safari · iPhone"),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByTestId("karta-sesje").getByText("Safari · iPhone"),
+    ).toHaveCount(0);
+
+    // Wszystkie inne
+    const sesje2 = page.getByTestId("karta-sesje");
+    await sesje2
+      .getByRole("button", { name: "Wyloguj wszystkie inne" })
+      .click();
+    await expect(
+      sesje2.getByText("Wylogowano wszystkie inne urządzenia ✓"),
+    ).toBeVisible();
+    await page.reload();
+    const sesje3 = page.getByTestId("karta-sesje");
+    await expect(sesje3.getByText("1 aktywna sesja")).toBeVisible();
+    await expect(sesje3.getByText("Firefox · Windows")).toHaveCount(0);
+    await expect(
+      sesje3.getByRole("button", { name: "Wyloguj wszystkie inne" }),
+    ).toHaveAttribute("aria-disabled", "true");
+
+    // Ta przeglądarka nadal zalogowana
+    await expect(page).toHaveURL(/\/ustawienia\/konto$/);
+    await iphone.kontekst.close();
+    await windows.kontekst.close();
+  });
+
+  test("eksport pobiera plik .json z kluczem „tabele”", async ({
+    page,
+  }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/konto");
+    const karta = page.getByTestId("karta-eksport");
+    await expect(karta.getByText("ostatni eksport: nigdy")).toBeVisible();
+    const [pobranie] = await Promise.all([
+      page.waitForEvent("download"),
+      karta.getByRole("button", { name: "Pobierz .json" }).click(),
+    ]);
+    expect(pobranie.suggestedFilename()).toMatch(
+      /^rhytm-export-\d{4}-\d{2}-\d{2}\.json$/,
+    );
+    const json = JSON.parse(await readFile(await pobranie.path(), "utf8"));
+    expect(json.format).toBe("rhytm-eksport");
+    expect(json.konto.email).toBe(email.toLowerCase());
+    expect(Array.isArray(json.tabele.profiles)).toBe(true);
+    expect(json.tabele.profiles).toHaveLength(1);
+    await expect(karta.getByText(/· pobrano$/)).toBeVisible();
+    await expect(
+      karta.getByRole("button", { name: "Pobierz ponownie" }),
+    ).toBeVisible();
   });
 });
