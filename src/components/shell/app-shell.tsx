@@ -33,11 +33,25 @@ async function Powloka({
     return <main className="flex min-w-0 flex-1 flex-col">{children}</main>;
   }
 
-  const { data: profil } = await supabase
+  const { data: zDataUsuniecia, error: bladProfilu } = await supabase
     .from("profiles")
-    .select("display_name, avatar_path")
+    .select("display_name, avatar_path, deletion_requested_at")
     .eq("user_id", user.id)
     .maybeSingle();
+  let profil: { display_name: string | null; avatar_path: string | null } | null =
+    zDataUsuniecia;
+  if (bladProfilu?.code === "42703") {
+    // Stara baza bez kolumny deletion_requested_at: profil bez niej
+    const { data: stary } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_path")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    profil = stary;
+  }
+  // Konto oznaczone do usunięcia nie wchodzi do aplikacji. Proxy tego pilnuje przy zwykłych żądaniach,
+  // ale przekierowanie z Server Action (np. po logowaniu albo nowym haśle) renderuje stronę z pominięciem proxy
+  if (zDataUsuniecia?.deletion_requested_at) redirect("/konto-usuniete");
 
   const email = user.email ?? "";
   const displayName =

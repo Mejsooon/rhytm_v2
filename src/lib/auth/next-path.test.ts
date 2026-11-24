@@ -15,4 +15,24 @@ describe("pathAfterLogin", () => {
       "/dzis",
     );
   });
+  it("konto oznaczone do usunięcia → /konto-usuniete (także bez onboardingu)", () => {
+    expect(
+      pathAfterLogin({
+        onboarded_at: "2026-11-16T10:00:00Z",
+        deletion_requested_at: "2026-11-24T10:00:00Z",
+      }),
+    ).toBe("/konto-usuniete");
+    expect(
+      pathAfterLogin({
+        onboarded_at: null,
+        deletion_requested_at: "2026-11-24T10:00:00Z",
+      }),
+    ).toBe("/konto-usuniete");
+    expect(
+      pathAfterLogin({
+        onboarded_at: "2026-11-16T10:00:00Z",
+        deletion_requested_at: null,
+      }),
+    ).toBe("/dzis");
+  });
 });

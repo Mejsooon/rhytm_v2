@@ -1,10 +1,12 @@
 begin;
-select plan(26);
+select plan(30);
 
--- A: oznaczone 31 dni temu (do usunięcia), B: 29 dni temu (zostaje), C: bez daty, D: konto do testów wyzwalacza.
+-- A: oznaczone 31 dni temu (do usunięcia), B: 29 dni temu (zostaje), C: bez daty, D: konto do testów wyzwalacza,
+-- E: 31 dni temu, ale z obcym kluczem bez kaskady (usunięcie się nie uda i nie może zablokować A).
 insert into auth.users (id, email, raw_user_meta_data)
 values
   ('00000000-0000-0000-0000-0000000000a2', 'a2@test.pl', '{"display_name":"A"}'),
+  ('00000000-0000-0000-0000-0000000000e2', 'e2@test.pl', '{"display_name":"E"}'),
   ('00000000-0000-0000-0000-0000000000b2', 'b2@test.pl', '{"display_name":"B"}'),
   ('00000000-0000-0000-0000-0000000000c2', 'c2@test.pl', '{"display_name":"C"}'),
   ('00000000-0000-0000-0000-0000000000d2', 'd2@test.pl', '{"display_name":"D"}');
@@ -26,6 +28,26 @@ values ('a2000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-0000000
 insert into public.tasks (user_id, title, block_id, occurrence_date, due_date)
 values ('00000000-0000-0000-0000-0000000000a2', 'Zadanie A', 'a2000000-0000-0000-0000-0000000000c2',
   '2026-12-01', '2026-12-01');
+
+-- Systemowa strona Hasła A z blokiem, kolumną Sekret i wierszem (kaskada przez strażniki systemowe)
+select set_config('rhytm.system_write', 'on', true);
+insert into public.pages (id, user_id, title, icon, template_key, is_system)
+values ('a2000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000a2', 'Hasła', '', 'passwords', true);
+insert into public.page_blocks (id, page_id, user_id, type)
+values ('a2000000-0000-0000-0000-0000000000e2', 'a2000000-0000-0000-0000-0000000000d2',
+  '00000000-0000-0000-0000-0000000000a2', 'table');
+insert into public.page_fields (id, block_id, user_id, name, type, position, is_title)
+values
+  ('a2000000-0000-0000-0000-0000000000f1', 'a2000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-0000000000a2', 'Serwis', 'text', 0, true),
+  ('a2000000-0000-0000-0000-0000000000f2', 'a2000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-0000000000a2', 'Hasło', 'secret', 1, false);
+insert into public.page_rows (block_id, user_id, values)
+values ('a2000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-0000000000a2',
+  '{"a2000000-0000-0000-0000-0000000000f1":"GitHub","a2000000-0000-0000-0000-0000000000f2":{"v":1,"g":1,"iv":"i1","ct":"c1"}}');
+select set_config('rhytm.system_write', 'off', true);
+
+-- E: wiersz w tabeli z obcym kluczem bez kaskady blokuje usunięcie konta E
+create temp table blokada_usuwania (user_id uuid not null references auth.users (id));
+insert into blokada_usuwania (user_id) values ('00000000-0000-0000-0000-0000000000e2');
 
 -- Schemat, uprawnienia, cron
 select has_column('public', 'profiles', 'deletion_requested_at', 'profiles ma deletion_requested_at');
@@ -125,14 +147,17 @@ select throws_ok(
 reset role;
 alter table public.profiles disable trigger profiles_deletion_guard;
 update public.profiles as p set deletion_requested_at = now() - interval '31 days'
-where p.user_id = '00000000-0000-0000-0000-0000000000a2';
+where p.user_id in ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000e2');
 update public.profiles as p set deletion_requested_at = now() - interval '29 days'
 where p.user_id = '00000000-0000-0000-0000-0000000000b2';
 update public.profiles as p set deletion_requested_at = now()
 where p.user_id = '00000000-0000-0000-0000-0000000000d2';
 alter table public.profiles enable trigger profiles_deletion_guard;
 
-select is(public.purge_deleted_accounts(), 1, 'purge usuwa jedno konto (A) i zwraca liczbę');
+-- Pod pg_cron nie ma JWT (auth.uid() = null)
+select set_config('request.jwt.claims', '', true);
+
+select is(public.purge_deleted_accounts(), 1, 'purge usuwa jedno konto (A), mimo błędu E, i zwraca liczbę');
 
 select is((select count(*) from auth.users as u where u.id = '00000000-0000-0000-0000-0000000000a2'), 0::bigint,
   'konto A usunięte z auth.users');
@@ -144,6 +169,10 @@ select is((select count(*) from public.pages as p where p.user_id = '00000000-00
   'strona A usunięta');
 select is((select count(*) from public.habits as h where h.user_id = '00000000-0000-0000-0000-0000000000a2'), 0::bigint,
   'nawyk A usunięty');
+select is((select count(*) from public.pages as p where p.id = 'a2000000-0000-0000-0000-0000000000d2'), 0::bigint,
+  'systemowa strona Hasła A usunięta kaskadą');
+select is((select count(*) from public.page_rows as r where r.user_id = '00000000-0000-0000-0000-0000000000a2'), 0::bigint,
+  'blok, kolumny i wiersze Haseł A usunięte');
 select is((select count(*) from public.vaults as v where v.user_id = '00000000-0000-0000-0000-0000000000a2'), 0::bigint,
   'sejf A usunięty');
 select is((select count(*) from public.tasks as t where t.user_id = '00000000-0000-0000-0000-0000000000a2'), 0::bigint,
@@ -156,7 +185,12 @@ select is((select count(*) from public.habits as h where h.user_id = '00000000-0
 select is((select count(*) from auth.users as u where u.id in ('00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-0000000000d2')),
   2::bigint, 'konta bez daty i z dzisiejszą datą zostają');
 
-select is(public.purge_deleted_accounts(), 0, 'drugi purge nic nie usuwa');
+select is((select count(*) from auth.users as u where u.id = '00000000-0000-0000-0000-0000000000e2'), 1::bigint,
+  'konto E (blokada obcym kluczem) zostaje, z datą do kolejnej próby');
+select isnt((select p.deletion_requested_at from public.profiles as p where p.user_id = '00000000-0000-0000-0000-0000000000e2'), null,
+  'E dalej oznaczone do usunięcia');
+
+select is(public.purge_deleted_accounts(), 0, 'drugi purge nic nie usuwa (E dalej zablokowane)');
 
 select * from finish();
 rollback;

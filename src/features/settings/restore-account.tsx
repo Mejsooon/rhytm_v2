@@ -24,16 +24,31 @@ export function RestoreAccount({
   const [blad, setBlad] = useState<string | null>(null);
   const [trwa, startTransition] = useTransition();
 
-  // Trwałe usunięcie = prośba + 30 dni, po polsku w strefie z profilu („24 grudnia 2026”)
+  // Trwałe usunięcie: pg_cron (codziennie 03:41 UTC) usuwa konta z prośbą starszą niż 30 dni,
+  // więc konto znika przy pierwszym uruchomieniu po upływie 30 dni. Ostatni pewny dzień przywrócenia
+  // to dzień wcześniej. Daty po polsku w strefie z profilu („25 grudnia 2026”)
   const prosba = new Date(requestedAt).getTime();
-  const dataUsuniecia = Number.isNaN(prosba)
-    ? null
-    : new Intl.DateTimeFormat("pl-PL", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone,
-      }).format(new Date(prosba + 30 * DZIEN_MS));
+  let dataUsuniecia: string | null = null;
+  let ostatniDzien: string | null = null;
+  if (!Number.isNaN(prosba)) {
+    const granica = new Date(prosba + 30 * DZIEN_MS);
+    let usuniecie = Date.UTC(
+      granica.getUTCFullYear(),
+      granica.getUTCMonth(),
+      granica.getUTCDate(),
+      3,
+      41,
+    );
+    if (usuniecie <= granica.getTime()) usuniecie += DZIEN_MS;
+    const format = new Intl.DateTimeFormat("pl-PL", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone,
+    });
+    dataUsuniecia = format.format(new Date(usuniecie));
+    ostatniDzien = format.format(new Date(usuniecie - DZIEN_MS));
+  }
 
   function przywroc() {
     setBlad(null);
@@ -64,7 +79,16 @@ export function RestoreAccount({
             <span className="font-medium text-foreground">{dataUsuniecia}</span>
           </>
         ) : null}{" "}
-        (30 dni od prośby o usunięcie). Do tego czasu możesz je przywrócić.
+        (30 dni od prośby o usunięcie).{" "}
+        {ostatniDzien ? (
+          <>
+            Możesz je przywrócić do{" "}
+            <span className="font-medium text-foreground">{ostatniDzien}</span>{" "}
+            włącznie.
+          </>
+        ) : (
+          "Do tego czasu możesz je przywrócić."
+        )}
       </p>
       {blad && (
         <p role="alert" className="m-0 text-[13px] text-destructive-foreground">

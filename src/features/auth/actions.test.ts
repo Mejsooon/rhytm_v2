@@ -138,6 +138,41 @@ describe("signIn", () => {
     ).rejects.toThrow("REDIRECT:/dzis");
   });
 
+  it("konto oznaczone do usunięcia → /konto-usuniete", async () => {
+    verifyTurnstile.mockResolvedValue(true);
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    maybeSingle.mockResolvedValue({
+      data: {
+        onboarded_at: "2026-11-16T10:00:00Z",
+        deletion_requested_at: "2026-11-24T10:00:00Z",
+      },
+      error: null,
+    });
+    await expect(
+      signIn({ status: "idle" }, formularz(poprawne)),
+    ).rejects.toThrow("REDIRECT:/konto-usuniete");
+  });
+
+  it("stara baza bez kolumny (42703) → drugie zapytanie, /dzis", async () => {
+    verifyTurnstile.mockResolvedValue(true);
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    maybeSingle
+      .mockResolvedValueOnce({ data: null, error: { code: "42703" } })
+      .mockResolvedValueOnce({
+        data: { onboarded_at: "2026-11-16T10:00:00Z" },
+        error: null,
+      });
+    await expect(
+      signIn({ status: "idle" }, formularz(poprawne)),
+    ).rejects.toThrow("REDIRECT:/dzis");
+  });
+
   it("sukces bez onboardingu → /onboarding", async () => {
     verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({

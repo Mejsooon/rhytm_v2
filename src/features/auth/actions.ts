@@ -59,14 +59,24 @@ export async function signIn(
     return { status: "error", message: BLAD_LOGOWANIA };
   }
 
-  // 4. Profil decyduje, czy idziemy do aplikacji, czy do onboardingu
-  const { data: profil } = await supabase
+  // 4. Profil decyduje: ekran przywracania (konto do usunięcia), aplikacja albo onboarding
+  const { data: profil, error: bladProfilu } = await supabase
     .from("profiles")
-    .select("onboarded_at")
+    .select("onboarded_at, deletion_requested_at")
     .eq("user_id", data.user.id)
     .maybeSingle();
+  // Stara baza bez kolumny deletion_requested_at (42703): sam onboarding
+  let profilDoCelu: Parameters<typeof pathAfterLogin>[0] = profil;
+  if (bladProfilu?.code === "42703") {
+    const { data: stary } = await supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    profilDoCelu = stary;
+  }
 
-  redirect(pathAfterLogin(profil));
+  redirect(pathAfterLogin(profilDoCelu));
 }
 
 // Adres aplikacji do linków zwrotnych. Źródłem jest NEXT_PUBLIC_SITE_URL (nagłówek Host może podszyć atakujący).

@@ -15,11 +15,23 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !data.user) return blad;
 
-  const { data: profil } = await supabase
+  const { data: profil, error: bladProfilu } = await supabase
     .from("profiles")
-    .select("onboarded_at")
+    .select("onboarded_at, deletion_requested_at")
     .eq("user_id", data.user.id)
     .maybeSingle();
+  // Stara baza bez kolumny deletion_requested_at (42703): sam onboarding
+  let profilDoCelu: Parameters<typeof pathAfterLogin>[0] = profil;
+  if (bladProfilu?.code === "42703") {
+    const { data: stary } = await supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    profilDoCelu = stary;
+  }
 
-  return NextResponse.redirect(new URL(pathAfterLogin(profil), origin));
+  return NextResponse.redirect(
+    new URL(pathAfterLogin(profilDoCelu), origin),
+  );
 }

@@ -32,24 +32,44 @@ create trigger profiles_deletion_guard
   before update of deletion_requested_at on public.profiles
   for each row execute function public.guard_deletion_requested_at();
 
--- 3. Trwałe usunięcie kont oznaczonych co najmniej 30 dni temu (wołane tylko przez pg_cron).
+-- 3. Trwałe usunięcie kont oznaczonych ponad 30 dni temu (wołane tylko przez pg_cron).
 -- Usuwa wiersz auth.users; dane we wszystkich tabelach znikają kaskadą (on delete cascade).
--- Zwraca liczbę usuniętych kont.
+-- Każde konto we własnym podbloku: błąd jednego (np. obcy klucz bez kaskady) cofa tylko jego
+-- usunięcie i zostawia ostrzeżenie w logu, reszta kont jest usuwana. Do 500 kont na wywołanie
+-- (reszta przy następnym). Zwraca liczbę usuniętych kont.
 create function public.purge_deleted_accounts()
 returns int
-language sql
+language plpgsql
 security definer
 set search_path = ''
 as $$
-  with usuniete as (
-    delete from auth.users as u
-    using public.profiles as p
-    where p.user_id = u.id
-      and p.deletion_requested_at is not null
-      and p.deletion_requested_at <= now() - interval '30 days'
-    returning u.id
-  )
-  select count(*)::int from usuniete as us;
+declare
+  v_id uuid;
+  v_usuniete int := 0;
+  v_wiersze int;
+begin
+  for v_id in
+    select p.user_id
+    from public.profiles as p
+    where p.deletion_requested_at < now() - interval '30 days'
+    order by p.deletion_requested_at, p.user_id
+    limit 500
+  loop
+    begin
+      -- Warunek daty sprawdzany ponownie: konto mogło zostać przywrócone w międzyczasie
+      delete from auth.users as u
+      using public.profiles as p
+      where u.id = v_id
+        and p.user_id = u.id
+        and p.deletion_requested_at < now() - interval '30 days';
+      get diagnostics v_wiersze = row_count;
+      v_usuniete := v_usuniete + v_wiersze;
+    exception when others then
+      raise warning 'purge_deleted_accounts: nie udało się usunąć konta % (%: %)', v_id, sqlstate, sqlerrm;
+    end;
+  end loop;
+  return v_usuniete;
+end;
 $$;
 
 revoke execute on function public.purge_deleted_accounts() from public, anon, authenticated;

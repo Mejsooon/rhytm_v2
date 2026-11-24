@@ -259,13 +259,17 @@ export async function requestAccountDeletion(
   const db = supabase as unknown as SupabaseClient;
   await db.from("push_subscriptions").delete().eq("user_id", user.id);
 
-  // Zdjęcie profilowe usuwamy od razu: SQL w pg_cron nie usunie pliku ze Storage (decyzja C16)
+  // Zdjęcie profilowe usuwamy od razu: SQL w pg_cron nie usunie pliku ze Storage (decyzja C16).
+  // Ścieżkę zerujemy tylko po udanym usunięciu pliku — inaczej plik zostałby bez śladu w profilu
   if (profil.avatar_path) {
-    await supabase.storage.from("avatars").remove([profil.avatar_path]);
-    await supabase
-      .from("profiles")
-      .update({ avatar_path: null })
-      .eq("user_id", user.id);
+    const { error: bladPliku } = await supabase.storage
+      .from("avatars")
+      .remove([profil.avatar_path]);
+    if (!bladPliku)
+      await supabase
+        .from("profiles")
+        .update({ avatar_path: null })
+        .eq("user_id", user.id);
   }
 
   // Wylogowanie ze wszystkich urządzeń

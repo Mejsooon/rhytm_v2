@@ -148,6 +148,20 @@ describe("requestAccountDeletion", () => {
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
   });
 
+  it("błąd usuwania pliku zdjęcia → avatar_path zostaje, wylogowanie i przekierowanie dalej", async () => {
+    wynikiProfilu.mockResolvedValue({
+      data: { avatar_path: "u1/zdjecie.webp" },
+      error: null,
+    });
+    remove.mockResolvedValue({ error: { message: "storage" } });
+    await expect(requestAccountDeletion("USUŃ")).rejects.toThrow(
+      "REDIRECT:/logowanie?konto=usuniete",
+    );
+    expect(remove).toHaveBeenCalledWith(["u1/zdjecie.webp"]);
+    expect(zapytania).toHaveLength(2);
+    expect(signOut).toHaveBeenCalledWith({ scope: "global" });
+  });
+
   it("bez zdjęcia → bez Storage", async () => {
     wynikiProfilu.mockResolvedValue({
       data: { avatar_path: null },

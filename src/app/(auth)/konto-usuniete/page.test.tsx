@@ -50,7 +50,7 @@ describe("/konto-usuniete", () => {
     expect(KontoUsunietePage().type).toBe(AuthShell);
   });
 
-  it("data trwałego usunięcia = prośba + 30 dni po polsku i trzy przyciski", async () => {
+  it("data usunięcia (pierwszy purge po 30 dniach), ostatni dzień przywrócenia i trzy przyciski", async () => {
     maybeSingle.mockResolvedValue({
       data: {
         deletion_requested_at: "2026-11-24T10:00:00Z",
@@ -65,7 +65,7 @@ describe("/konto-usuniete", () => {
     expect(
       screen.getByText(/zostanie trwale usunięte/).textContent,
     ).toBe(
-      "Konto ala@example.com zostanie trwale usunięte 24 grudnia 2026 (30 dni od prośby o usunięcie). Do tego czasu możesz je przywrócić.",
+      "Konto ala@example.com zostanie trwale usunięte 25 grudnia 2026 (30 dni od prośby o usunięcie). Możesz je przywrócić do 24 grudnia 2026 włącznie.",
     );
     expect(
       screen.getByRole("button", { name: "Przywróć konto" }),
