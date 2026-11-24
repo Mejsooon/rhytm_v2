@@ -23,6 +23,17 @@ begin
     return new;
   end if;
 
+  -- Klient (auth.uid() ustawione) piszący cudzy user_id albo do cudzego bloku dostaje jeden wspólny błąd, zanim strażnik
+  -- zajrzy do bloku czy sejfu. Funkcja jest security definer, a RLS sprawdza nowy wiersz dopiero po wyzwalaczach BEFORE,
+  -- więc różne komunikaty zdradzałyby, czy cudzy blok jest systemowy, ma pole Sekret i w jakim stanie jest cudzy sejf.
+  -- service_role (auth.uid() null, np. seed w e2e) przechodzi dalej jak dotąd.
+  if auth.uid() is not null and (
+    new.user_id is distinct from auth.uid()
+    or not exists (select 1 from public.page_blocks as b where b.id = new.block_id and b.user_id = auth.uid())
+  ) then
+    raise exception 'Brak dostępu do wiersza' using errcode = '42501';
+  end if;
+
   -- Wiersz modułu Hasła nie wychodzi z jego bloku, a zwykły wiersz do niego nie wchodzi
   -- (inaczej szyfrogram trafiłby pod zwykłe pole albo jawny tekst pod Sekret bez sprawdzenia kształtu).
   if tg_op = 'UPDATE' and new.block_id is distinct from old.block_id and exists (
@@ -53,7 +64,7 @@ begin
     -- Dokładnie v, g, iv, ct; v = 1; g całkowite ≥ 1 (bez zer wiodących, porównywane z generation jako tekst);
     -- iv = 16 znaków base64 (12 B), ct = 24–8192 znaków base64 (co najmniej sam tag GCM).
     if not (
-      (select count(*) from jsonb_object_keys(v_value)) = 4
+      (select count(*) from jsonb_object_keys(v_value) as k) = 4
       and v_value ?& array['v', 'g', 'iv', 'ct']
       and jsonb_typeof(v_value -> 'v') = 'number'
       and (v_value ->> 'v') = '1'
@@ -78,6 +89,7 @@ begin
     select v.status, v.generation into v_status, v_generation
     from public.vaults as v
     where v.user_id = new.user_id
+      and (auth.uid() is null or v.user_id = auth.uid())
     for share;
 
     if not found or v_status <> 'active' or not (v_generation::text = all (v_generations)) then
@@ -105,6 +117,9 @@ as $$
 declare
   v_count int;
 begin
+  -- Kolejność blokad wszędzie ta sama: najpierw wiersze tabel, potem sejf. UPDATE wiersza blokuje go przed wyzwalaczem
+  -- BEFORE, a strażnik bierze potem FOR SHARE sejfu; gdyby reset brał najpierw sejf, a potem wiersze, mógłby powstać deadlock.
+  perform 1 from public.page_rows as r where r.user_id = auth.uid() for update;
   -- Zapis sekretu trwający przed resetem kończy się przed nim (i reset go wyczyści),
   -- a zapis po resecie zobaczy podbite generation.
   perform 1 from public.vaults as v where v.user_id = auth.uid() for update;

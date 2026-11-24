@@ -1,9 +1,11 @@
 begin;
-select plan(30);
+select plan(35);
 
 -- Użytkownik P: strona Hasła (ensure_passwords_page), zwykła strona z dwiema tabelami i strona z Sekretem w koszu.
 insert into auth.users (id, email)
-values ('00000000-0000-0000-0000-0000000000c1', 'p@test.pl');
+values
+  ('00000000-0000-0000-0000-0000000000c1', 'p@test.pl'),
+  ('00000000-0000-0000-0000-0000000000c2', 'v@test.pl');
 
 -- Schemat i uprawnienia.
 select has_trigger('public', 'page_rows', 'page_rows_guard', 'wyzwalacz page_rows_guard istnieje');
@@ -14,8 +16,14 @@ select is(has_function_privilege('anon', 'public.page_rows_guard()', 'execute'),
 select ok(has_function_privilege('authenticated', 'public.reset_vault()', 'execute'),
   'authenticated dalej wykonuje reset_vault');
 
--- Od teraz jako zalogowany P.
+-- V (ofiara): strona Hasła i aktywny sejf; P nie może się o nich niczego dowiedzieć.
 set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c2","role":"authenticated"}', true);
+select set_config('test.v_block', (select b.id::text from public.page_blocks as b
+  where b.page_id = public.ensure_passwords_page()), true);
+insert into public.vaults (status, generation) values ('active', 1);
+
+-- Od teraz jako zalogowany P.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}', true);
 
 select set_config('test.sys', public.ensure_passwords_page()::text, true);
@@ -185,6 +193,32 @@ select lives_ok(
   'zwykła strona wraca z kosza');
 select ok((select p.deleted_at is not null from public.pages as p where p.id = 'a0000000-0000-0000-0000-0000000000f0'),
   'strona z Sekretem dalej w koszu');
+
+-- Cudzy user_id albo cudzy blok: zawsze ten sam błąd, niezależnie od stanu sejfu i bloku ofiary.
+select throws_ok(
+  format('insert into public.page_rows (block_id, user_id, values) values (%L, %L, jsonb_build_object(%L, %L::jsonb))',
+    current_setting('test.sys_block'), '00000000-0000-0000-0000-0000000000c2', current_setting('test.f_haslo'), current_setting('test.g1')),
+  '42501', 'Brak dostępu do wiersza', 'cudzy user_id przy aktywnym sejfie ofiary: wspólny błąd');
+select throws_ok(
+  format('insert into public.page_rows (block_id, values) values (%L, jsonb_build_object(%L, ''jawne''))',
+    current_setting('test.v_block'), current_setting('test.f_haslo')),
+  '42501', 'Brak dostępu do wiersza', 'cudzy blok Haseł: wspólny błąd, bez zdradzania pól');
+select throws_ok(
+  format('update public.page_rows set block_id = %L where id = %L',
+    current_setting('test.v_block'), 'a0000000-0000-0000-0000-000000000003'),
+  '42501', 'Brak dostępu do wiersza', 'przeniesienie do cudzego bloku: wspólny błąd');
+
+reset role;
+update public.vaults set status = 'reset', generation = 5 where user_id = '00000000-0000-0000-0000-0000000000c2';
+set local role authenticated;
+select throws_ok(
+  format('insert into public.page_rows (block_id, user_id, values) values (%L, %L, jsonb_build_object(%L, %L::jsonb))',
+    current_setting('test.sys_block'), '00000000-0000-0000-0000-0000000000c2', current_setting('test.f_haslo'), current_setting('test.g1')),
+  '42501', 'Brak dostępu do wiersza', 'cudzy user_id przy sejfie ofiary po resecie: ten sam błąd');
+select throws_ok(
+  format('insert into public.page_rows (block_id, user_id, values) values (%L, %L, %L::jsonb)',
+    current_setting('test.sys_block'), '00000000-0000-0000-0000-0000000000c2', '{}'),
+  '42501', 'Brak dostępu do wiersza', 'cudzy user_id bez sekretu: ten sam błąd');
 
 select * from finish();
 rollback;
