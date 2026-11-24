@@ -41,9 +41,9 @@ Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots S2Settings S2SettingsAccount S2
 ### A. Hasła przy zamkniętym sejfie (S2Vault)
 
 - Przy `vault.status === "zablokowany"` moduł renderuje **całą treść** (nagłówek web z okruszkami, plakietki, pasek narzędzi, tabelę tylko do odczytu z „zablokowane” w sekretach), a nad nią **nakładkę** na cały obszar modułu (od górnej krawędzi nagłówka do dołu, bez paska bocznego): `bg-white/60 backdrop-blur-[3px]` (makieta: `rgba(255,255,255,.6)`, `blur(3px)`).
-- Treść pod nakładką ma `inert` i `aria-hidden="true"` (nie da się w nią kliknąć ani wejść Tabem).
+- Treść pod nakładką ma `inert` i `aria-hidden="true"` (nie da się w nią kliknąć ani wejść Tabem). Przycisk „Pokaż pasek boczny” (schowany pasek) jest renderowany nad nakładką w tym samym miejscu, ostry i klikalny — inaczej nie dałoby się wyjść z modułu.
 - **Wiersz tytułu (ikona kłódki + „Hasła”, 24 px) przy zamkniętym sejfie nie jest renderowany** (decyzja C1). Okruszki „Moduły / Hasła” w nagłówku zostają pod rozmyciem jak na makiecie.
-- Okno „Odblokuj sejf” (`VaultUnlockCard`) leży nad nakładką: `position: absolute`, `top: 160px`, wyśrodkowane w obszarze modułu, szerokość `min(400px, 100% - 32px)`, `role="dialog"`, `aria-modal="true"`, `aria-labelledby` na tytuł. Pole hasła dostaje fokus po pojawieniu się okna. Treść okna bez zmian (jest zgodna z makietą).
+- Okno „Odblokuj sejf” (`VaultUnlockCard`) leży nad nakładką: `position: absolute`, `top: 160px`, wyśrodkowane w obszarze modułu, szerokość `min(400px, 100% - 32px)`, `role="dialog"` (bez `aria-modal` — okno nie więzi fokusu, a pasek boczny ma zostać dostępny dla czytników), `aria-labelledby` na tytuł. Pole hasła dostaje fokus po pojawieniu się okna. Treść okna bez zmian (jest zgodna z makietą).
 - Telefon (< 800 px): ta sama nakładka na treść modułu, okno u góry (`top: 24px`). Dokładny CMVault należy do Etapu 3.
 - Stany `ladowanie`, `brak`, `odblokowany`, `nieobslugiwany` bez zmian. Po odblokowaniu nakładka znika, wiersz tytułu wraca, tabela przechodzi w tryb edycji bez przeładowania (tabela jest stale zamontowana, jak dziś).
 - Zmienia się decyzja zapisana w komentarzu `passwords-view.tsx` („tabela pojawia się dopiero po wpisaniu hasła”) — komentarz trzeba poprawić.
@@ -225,7 +225,7 @@ Cztery migracje (wszystkie dokładające; jedyna zmiana danych to `before_block_
 | `20261129120000_push.sql` | `push_subscriptions`, `save_push_subscription`, ustawienia domyślne |
 | `20261129130000_push_dispatch.sql` | pg_net, `push_log`, `claim_due_notifications`, `dispatch_notifications`, `remove_push_subscriptions`, cron |
 
-- **Migracje idą przed wdrożeniem kodu na Vercel**: po scaleniu i pushu `main`, w czasie budowania, w kolejności plików, przez konektor Supabase (`apply_migration`), potem poprawa wersji w `supabase_migrations.schema_migrations` według `CLAUDE.md`. Konektor pyta Mejsona o zgodę, więc migracje mogą poczekać — dlatego kod musi działać na starej bazie:
+- **Migracje idą po wdrożeniu kodu na Vercel**: Vercel buduje `main` od razu po pushu, a konektor Supabase (`apply_migration`) czeka na zgodę Mejsona — dlatego najpierw wdrożenie kodu, potem migracje w kolejności plików, potem poprawa wersji w `supabase_migrations.schema_migrations` według `CLAUDE.md`. Między wdrożeniem a migracjami (i gdy migracje poczekają dłużej) kod działa na starej bazie:
   - proxy: brak kolumny `deletion_requested_at` (kod `42703`) → zapytanie bez niej;
   - zmiana hasła: brak `verify_my_password` → komunikat „będzie dostępna za chwilę”;
   - sesje: błąd `list_my_sessions` → tylko bieżąca sesja z nagłówka;
@@ -244,7 +244,7 @@ Cztery migracje (wszystkie dokładające; jedyna zmiana danych to `before_block_
    - `VAPID_SUBJECT` = `mailto:` + Twój adres e-mail (np. `mailto:ty@domena.pl`);
    - `CRON_SECRET` = sekret z punktu 2 (*Sensitive*);
    - potem *Deployments* → ostatnie wdrożenie produkcji → *Redeploy* (zmienne `NEXT_PUBLIC_*` wchodzą do kodu przy budowaniu).
-4. **Supabase** → projekt `yazntcoocfxfxqqevxoh` → *Integrations* → *Vault* (albo *SQL Editor*), po wykonaniu migracji `20261129130000_push_dispatch.sql`:
+4. **Supabase** → projekt `yazntcoocfxfxqqevxoh` → *Integrations* → *Vault* (albo *SQL Editor*), po wykonaniu migracji `20261129130000_push_dispatch.sql` i **dopiero po zakończonym redeployu na Vercel z punktu 3** (inaczej cron wyśle przypomnienia do wdrożenia bez kluczy VAPID / `CRON_SECRET`, a te przypomnienia przepadną — są już zapisane w `push_log`):
    - sekret o nazwie `rhytm_cron_secret` = ta sama wartość co `CRON_SECRET` na Vercel;
    - sekret o nazwie `rhytm_app_url` = adres produkcji z `https://`, bez ukośnika na końcu;
    - w SQL Editor: `select vault.create_secret('<wartość>', 'rhytm_cron_secret');` i `select vault.create_secret('<adres>', 'rhytm_app_url');` (wartości wpisujesz tylko tam).

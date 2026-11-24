@@ -90,9 +90,9 @@ const DANE = {
   currency: "PLN",
 } as unknown as LoadedPage;
 
-function pokaz(dane: LoadedPage = DANE) {
+function pokaz(dane: LoadedPage = DANE, schowany = false) {
   return render(
-    <SidebarStateProvider initialCollapsed={false}>
+    <SidebarStateProvider initialCollapsed={schowany}>
       <PasswordsView data={dane} />
     </SidebarStateProvider>,
   );
@@ -120,11 +120,31 @@ describe("PasswordsView", () => {
     expect(vault.lock).toHaveBeenCalledTimes(1);
   });
 
+  it("zablokowany przy schowanym pasku: „Pokaż pasek boczny” nad nakładką (poza inert) i działa", async () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    const user = userEvent.setup();
+    pokaz(DANE, true);
+    // Jedyny dostępny przycisk (ten z nagłówka jest pod inert + aria-hidden)
+    const przyciski = screen.getAllByRole("button", { name: "Pokaż pasek boczny", hidden: true });
+    const nad = przyciski.filter((b) => b.closest("[inert]") === null);
+    expect(nad).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Pokaż pasek boczny" })).toBe(nad[0]);
+    await user.click(nad[0]);
+    // Pasek pokazany → przycisk znika (SidebarToggle w nagłówku renderuje się tylko przy schowanym pasku)
+    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny", hidden: true })).toBeNull();
+  });
+
+  it("zablokowany przy widocznym pasku: bez przycisku „Pokaż pasek boczny”", () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    pokaz();
+    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny", hidden: true })).toBeNull();
+  });
+
   it("zablokowany: tabela tylko do odczytu pod rozmyciem, okno „Odblokuj sejf”, bez tytułu „Hasła” i „Zablokuj teraz”", () => {
     vault.state = { status: "zablokowany", remainingMs: 0 };
     const { container } = pokaz();
     const okno = screen.getByRole("dialog", { name: "Odblokuj sejf" });
-    expect(okno).toHaveAttribute("aria-modal", "true");
+    expect(okno).not.toHaveAttribute("aria-modal");
     expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
     // Tabela widoczna (atrapa), nie ukryta; w treści pod nakładką, która jest inert i aria-hidden

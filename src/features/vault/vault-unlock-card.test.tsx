@@ -33,7 +33,7 @@ describe("VaultUnlockCard", () => {
   it("okno dialogowe z nazwą „Odblokuj sejf”, pole hasła ma fokus", () => {
     render(<VaultUnlockCard />);
     const okno = screen.getByRole("dialog", { name: "Odblokuj sejf" });
-    expect(okno).toHaveAttribute("aria-modal", "true");
+    expect(okno).not.toHaveAttribute("aria-modal");
     expect(screen.getByLabelText("Hasło główne")).toHaveFocus();
   });
 

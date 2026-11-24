@@ -11,11 +11,15 @@ export async function updateSession(request: NextRequest) {
   // Biblioteka przekazuje je tylko przy pierwszym setAll, a odpowiedź tworzymy od nowa przy każdym — więc je zbieramy.
   // Bez nich CDN mógłby zapamiętać odpowiedź z ciasteczkami jednego użytkownika i podać ją innemu.
   const naglowkiBezCache: Record<string, string> = {};
+  // GoTrue przy odświeżaniu tokenu nadpisuje user_agent sesji — bez User-Agenta przeglądarki zapisałby UA serwera
+  // i po ~1 h każda sesja w Ustawieniach byłaby „Przeglądarka · nieznany system” (jak w lib/supabase/server.ts)
+  const userAgent = request.headers.get("user-agent");
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: userAgent ? { headers: { "User-Agent": userAgent } } : undefined,
       cookies: {
         getAll() {
           return request.cookies.getAll();

@@ -11,6 +11,7 @@ type OpcjeCookies = {
 const { stan, getUser } = vi.hoisted(() => ({
   stan: {
     cookies: null as OpcjeCookies | null,
+    global: undefined as unknown,
     przyGetUser: (() => {}) as () => void,
   },
   getUser: vi.fn(),
@@ -20,9 +21,10 @@ vi.mock("@supabase/ssr", () => ({
   createServerClient: (
     _url: string,
     _key: string,
-    opcje: { cookies: OpcjeCookies },
+    opcje: { cookies: OpcjeCookies; global?: unknown },
   ) => {
     stan.cookies = opcje.cookies;
+    stan.global = opcje.global;
     return { auth: { getUser } };
   },
 }));
@@ -43,6 +45,24 @@ describe("updateSession", () => {
       stan.przyGetUser();
       return { data: { user: { id: "u1" } } };
     });
+  });
+
+  it("User-Agent przeglądarki trafia do klienta (GoTrue zapisuje go w sesji przy odświeżeniu tokenu)", async () => {
+    stan.przyGetUser = () => {};
+    await updateSession(
+      new NextRequest("http://localhost:3000/dzis", {
+        headers: { "user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0" },
+      }),
+    );
+    expect(stan.global).toEqual({
+      headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0" },
+    });
+  });
+
+  it("bez nagłówka user-agent → bez nadpisywania nagłówków klienta", async () => {
+    stan.przyGetUser = () => {};
+    await updateSession(new NextRequest("http://localhost:3000/dzis"));
+    expect(stan.global).toBeUndefined();
   });
 
   it("nagłówki przekazane do setAll (Cache-Control, Expires, Pragma) trafiają na odpowiedź razem z ciasteczkami", async () => {

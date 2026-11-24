@@ -20,7 +20,6 @@ export function VaultUnlockCard() {
   return (
     <div
       role="dialog"
-      aria-modal="true"
       aria-labelledby={`${id}-t`}
       className="w-full rounded-xl border border-border bg-white bg-clip-padding text-sm shadow-pop"
     >
