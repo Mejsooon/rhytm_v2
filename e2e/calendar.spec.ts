@@ -391,7 +391,12 @@ test.describe("kalendarz (telefon)", () => {
     await zalozKontoKalendarza(page, info.project.name);
     await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
 
+    // „+” otwiera „Nowy wpis”; wiersz „Blok” prowadzi do arkusza nowego bloku
     await page.getByRole("button", { name: "Dodaj blok", exact: true }).click();
+    await page
+      .getByRole("dialog", { name: "Nowy wpis" })
+      .getByRole("button", { name: /^Blok/ })
+      .click();
     const arkusz = page.getByRole("dialog", { name: "Nowy blok" });
     await arkusz.getByLabel("Nazwa bloku").fill("Fizyka");
     await arkusz.getByRole("button", { name: "Nauka" }).click();

@@ -423,6 +423,10 @@ test.describe("ekrany z sesją", () => {
       await page
         .getByRole("button", { name: "Dodaj blok", exact: true })
         .click();
+      await page
+        .getByRole("dialog", { name: "Nowy wpis" })
+        .getByRole("button", { name: /^Blok/ })
+        .click();
       await expect(
         page.getByRole("dialog", { name: "Nowy blok" }),
       ).toBeVisible();

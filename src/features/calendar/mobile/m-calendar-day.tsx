@@ -16,6 +16,7 @@ import {
   sportItemHref,
   type SportItem,
 } from "@/features/sport/model";
+import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "../day-layout";
 import type { CategoryRow } from "../load-calendar";
@@ -38,6 +39,7 @@ export function MCalendarDay({
   sport = [],
   categories,
   clock,
+  tasks = [],
   onAdd,
   onBlockClick,
 }: {
@@ -51,6 +53,8 @@ export function MCalendarDay({
   sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
+  // Zadania kalendarza: pasek „Zaplanowane…” liczy z nich „zadania A/B” dnia
+  tasks?: TaskRow[];
   onAdd: (date: IsoDate, startMin: number) => void;
   // Stuknięcie bloku (klucz wystąpienia); szczegóły otwiera arkusz u rodzica
   onBlockClick: (key: string) => void;
@@ -75,6 +79,50 @@ export function MCalendarDay({
           (liczba % 100 < 12 || liczba % 100 > 14)
         ? "bloki"
         : "bloków";
+
+  // Pasek pod datą: zaplanowany czas (bloki i treningi bez dublowania nakładających się), wolny czas
+  // między 8:00 a 20:00 i zadania bloków dnia (wykonane/wszystkie)
+  const przedzialy = [...dnia, ...treningi]
+    .map((i) => ({
+      od: i.startMin,
+      do: i.startMin + Math.min(i.durationMin, 1440 - i.startMin),
+    }))
+    .sort((a, b) => a.od - b.od);
+  let zaplanowaneMin = 0;
+  let zajeteWDzienMin = 0;
+  let koniecScalonego = 0;
+  for (const p of przedzialy) {
+    const od = Math.max(p.od, koniecScalonego);
+    if (p.do <= od) continue;
+    zaplanowaneMin += p.do - od;
+    zajeteWDzienMin += Math.max(
+      0,
+      Math.min(p.do, 20 * 60) - Math.max(od, 8 * 60),
+    );
+    koniecScalonego = p.do;
+  }
+  const wolneMin = 12 * 60 - zajeteWDzienMin;
+  // „2 h 30 min”, „3 h”, „45 min”, „0 h”
+  const naGodziny = (min: number) =>
+    min === 0
+      ? "0 h"
+      : [
+          min >= 60 ? `${Math.floor(min / 60)} h` : null,
+          min % 60 > 0 ? `${min % 60} min` : null,
+        ]
+          .filter(Boolean)
+          .join(" ");
+  let zadanWykonanych = 0;
+  let zadanRazem = 0;
+  for (const o of dnia) {
+    const { done, total } = occurrenceProgress(
+      tasks,
+      o.blockId,
+      o.key.slice(o.blockId.length + 1),
+    );
+    zadanWykonanych += done;
+    zadanRazem += total;
+  }
 
   // Oś startuje na 07:00; w dzisiejszym dniu z trwającym blokiem na jego początku (z zapasem pół godziny)
   useEffect(() => {
@@ -162,6 +210,13 @@ export function MCalendarDay({
           tone="gray"
           className="tabular-nums"
         >{`${liczba} ${slowoBlok}`}</StatusBadge>
+      </div>
+
+      <div
+        data-testid="m-pasek-dnia"
+        className="flex-none border-b border-border px-4 py-2 text-xs text-muted-foreground tabular-nums"
+      >
+        {`Zaplanowane ${naGodziny(zaplanowaneMin)} · wolne (8–20) ${naGodziny(wolneMin)} · zadania ${zadanWykonanych}/${zadanRazem}`}
       </div>
 
       <div

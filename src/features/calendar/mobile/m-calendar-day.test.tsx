@@ -90,6 +90,39 @@ describe("MCalendarDay", () => {
     }
   });
 
+  it("pasek pod datą: zaplanowane, wolne (8–20) i zadania z danych dnia", () => {
+    const zadanie = (id: string, done: boolean) => ({
+      id,
+      user_id: "u1",
+      title: id,
+      done,
+      done_at: null,
+      due_date: "2026-11-18",
+      block_id: "b1",
+      occurrence_date: "2026-11-18",
+      position: 1,
+      created_at: null,
+    });
+    wyrenderuj({
+      // Algebra 10:00–12:00 (2 h) i blok 07:00–08:30, z czego do okna 8–20 wchodzi 30 min
+      occurrences: [
+        ...wystapienia,
+        wystapienie("b3:2026-11-18", "2026-11-18", 420, 90, "Rano", null),
+      ],
+      tasks: [zadanie("z1", true), zadanie("z2", false), zadanie("z3", false)],
+    });
+    expect(screen.getByTestId("m-pasek-dnia")).toHaveTextContent(
+      "Zaplanowane 3 h 30 min · wolne (8–20) 9 h 30 min · zadania 1/3",
+    );
+  });
+
+  it("pasek pod datą: pusty dzień to 0 h, wolne 12 h, zadania 0/0", () => {
+    wyrenderuj({ occurrences: [] });
+    expect(screen.getByTestId("m-pasek-dnia")).toHaveTextContent(
+      "Zaplanowane 0 h · wolne (8–20) 12 h · zadania 0/0",
+    );
+  });
+
   it("blok pokazuje godziny i kategorię, bez data-occurrence-key", () => {
     const { container } = wyrenderuj();
     expect(screen.getByRole("button", { name: /Algebra/ })).toHaveTextContent(

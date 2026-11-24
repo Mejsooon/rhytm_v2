@@ -53,6 +53,8 @@ export function CalendarHeader({
   categories = [],
   onToggleCategory = () => {},
   onAddCategory = () => {},
+  onAddCategoryPhone,
+  onNewBlockPhone,
   renewalSources = [],
   onToggleRenewalSource = () => {},
   onNewBlock,
@@ -70,6 +72,9 @@ export function CalendarHeader({
   onToggleCategory?: (category: CategoryRow) => void;
   // „+ Kategoria” w menu, „Kategoria” w arkuszu
   onAddCategory?: () => void;
+  // Telefon: osobne wejścia (arkusz „Nowa kategoria”, „Nowy wpis”); bez nich działają te same co na webie
+  onAddCategoryPhone?: () => void;
+  onNewBlockPhone?: () => void;
   // Źródła odnowień subskrypcji w menu „Kategorie” (pod kategoriami)
   renewalSources?: RenewalSource[];
   onToggleRenewalSource?: (source: RenewalSource) => void;
@@ -195,7 +200,7 @@ export function CalendarHeader({
               <CategorySheet
                 categories={categories}
                 onToggle={onToggleCategory}
-                onAdd={onAddCategory}
+                onAdd={onAddCategoryPhone ?? onAddCategory}
                 sources={renewalSources}
                 onToggleSource={onToggleRenewalSource}
               />
@@ -217,7 +222,7 @@ export function CalendarHeader({
                 variant="ghost"
                 icon
                 aria-label="Nowy blok"
-                onClick={onNewBlock}
+                onClick={onNewBlockPhone ?? onNewBlock}
               >
                 <Plus size={20} aria-hidden="true" />
               </Button>

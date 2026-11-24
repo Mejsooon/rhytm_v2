@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
 import { updateField } from "@/features/pages/actions";
-import { FormDialog } from "@/components/controls/form-dialog";
 import {
   CategoryDialog,
   type NewCategory,
@@ -19,7 +18,7 @@ import {
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
-import { BlockDetails, BlockPopover } from "./block-popover";
+import { BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
 import { DaySide } from "./day-side";
 import { DeleteBlockDialog } from "./delete-block-dialog";
@@ -32,10 +31,13 @@ import {
   type RenewalSource,
   type RenewalsData,
 } from "./load-calendar";
+import { MBlockDetail } from "./mobile/m-block-detail";
 import { MBlockSheet } from "./mobile/m-block-sheet";
 import { MCalendarDay } from "./mobile/m-calendar-day";
 import { MCalendarMonth } from "./mobile/m-calendar-month";
 import { MCalendarWeek } from "./mobile/m-calendar-week";
+import { MCategorySheet } from "./mobile/m-category-sheet";
+import { MNewEntry } from "./mobile/m-new-entry";
 import { MonthGrid } from "./month-grid";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
@@ -64,7 +66,8 @@ const BEZ_ODNOWIEN: RenewalsData = { items: [], sources: [] };
 
 // Otwarte okno kalendarza; okna nie zmieniają adresu, więc widok i data zostają jak były
 type Okno =
-  | { typ: "wpis"; date: IsoDate; startMin: number }
+  // `tel`: otwarte na telefonie, więc zamiast dymku pokazuje się arkusz MNewEntry
+  | { typ: "wpis"; date: IsoDate; startMin: number; tel?: boolean }
   // `tel`: otwarte na telefonie, więc zamiast BlockDialog pokazuje się arkusz MBlockSheet
   | {
       typ: "blok";
@@ -72,7 +75,8 @@ type Okno =
       initial: BlockDialogInitial;
       tel?: boolean;
     }
-  | { typ: "kategoria" }
+  // `tel`: arkusz MCategorySheet zamiast okna web
+  | { typ: "kategoria"; tel?: boolean }
   | { typ: "usun"; occurrence: Occurrence }
   // Przeciągnięty blok cykliczny czeka na wybór zakresu zmiany
   | { typ: "przeciagniecie"; occurrence: Occurrence; wynik: DragResult };
@@ -474,9 +478,15 @@ export function CalendarView({
     setOkno({ typ: "usun", occurrence: o });
   }
 
-  // „+” i stuknięcie pustej osi na telefonie: okno nowego bloku z tym dniem i godziną
-  // (arkusz MBlockSheet)
+  // „+”, „Nowy blok” w nagłówku tygodnia i stuknięcie pustej osi na telefonie: arkusz „Nowy wpis”
+  // z tym dniem i godziną (Blok · Bieg · Trening siłowy)
   function dodajNaTelefonie(dzien: IsoDate, startMin: number) {
+    setWybranyTel(null);
+    setOkno({ typ: "wpis", date: dzien, startMin, tel: true });
+  }
+
+  // „Brak bloków — dodaj” w miesiącu: od razu arkusz nowego bloku na ten dzień (MBlockSheet)
+  function dodajBlokNaTelefonie(dzien: IsoDate, startMin: number) {
     setWybranyTel(null);
     setOkno({
       typ: "blok",
@@ -632,8 +642,16 @@ export function CalendarView({
           categories={data.categories}
           onToggleCategory={przelaczKategorie}
           onAddCategory={() => setOkno({ typ: "kategoria" })}
+          onAddCategoryPhone={() => setOkno({ typ: "kategoria", tel: true })}
           renewalSources={zrodla}
           onToggleRenewalSource={przelaczZrodlo}
+          // Telefon: „Nowy blok” w nagłówku tygodnia otwiera „Nowy wpis” na dziś i najbliższą pełną godzinę
+          onNewBlockPhone={() =>
+            dodajNaTelefonie(
+              today,
+              Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60),
+            )
+          }
           // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
           onNewBlock={() => {
             setWybrany(null);
@@ -731,6 +749,7 @@ export function CalendarView({
               sport={treningi}
               categories={data.categories}
               clock={data.profile.clock}
+              tasks={data.tasks}
               onAdd={dodajNaTelefonie}
               onBlockClick={setWybranyTel}
             />
@@ -761,7 +780,7 @@ export function CalendarView({
                 sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
-                onAdd={dodajNaTelefonie}
+                onAdd={dodajBlokNaTelefonie}
                 onBlockClick={setWybranyTel}
               />
             </div>
@@ -797,27 +816,45 @@ export function CalendarView({
         />
       )}
       {wybraneTel && (
-        // Telefon: szczegóły bloku w dolnym arkuszu (FormDialog), nie w dymku przy bloku
-        <FormDialog
-          open
-          onOpenChange={(otwarte) => !otwarte && setWybranyTel(null)}
-          title="Szczegóły bloku"
-        >
-          <BlockDetails
-            occurrence={wybraneTel}
-            tasks={data.tasks}
-            category={data.categories.find(
-              (k) => k.id === wybraneTel.categoryId,
-            )}
-            clock={data.profile.clock}
-            applyOptimistic={applyOptimistic}
-            onEdit={() => edytuj(wybraneTel, true)}
-            onDelete={() => usunBlok(wybraneTel)}
-            onClose={() => setWybranyTel(null)}
-          />
-        </FormDialog>
+        // Telefon: szczegóły bloku w dolnym arkuszu, nie w dymku przy bloku
+        <MBlockDetail
+          occurrence={wybraneTel}
+          tasks={data.tasks}
+          category={data.categories.find((k) => k.id === wybraneTel.categoryId)}
+          clock={data.profile.clock}
+          applyOptimistic={applyOptimistic}
+          onEdit={() => edytuj(wybraneTel, true)}
+          onDelete={() => usunBlok(wybraneTel)}
+          onClose={() => setWybranyTel(null)}
+        />
       )}
-      {okno?.typ === "wpis" && (
+      {okno?.typ === "wpis" && okno.tel && (
+        <MNewEntry
+          date={okno.date}
+          startMin={okno.startMin}
+          clock={data.profile.clock}
+          onBlock={() =>
+            setOkno({
+              typ: "blok",
+              mode: "create",
+              tel: true,
+              initial: {
+                title: "",
+                categoryId: null,
+                date: okno.date,
+                startMin: okno.startMin,
+                // Blok nie przechodzi przez północ
+                durationMin: Math.min(60, 1440 - okno.startMin),
+                recurrence: null,
+                note: "",
+                remind: true,
+              },
+            })
+          }
+          onClose={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "wpis" && !okno.tel && (
         <NewEntryPopover
           anchor={kotwicaWpisu}
           date={okno.date}
@@ -871,7 +908,17 @@ export function CalendarView({
           onCancel={zamknijOknoBloku}
         />
       )}
-      {okno?.typ === "kategoria" && (
+      {okno?.typ === "kategoria" && okno.tel && (
+        <MCategorySheet
+          usedColors={data.categories.map((k) => k.color)}
+          onSaved={(nowa) => {
+            dodajKategorie(nowa);
+            setOkno(null);
+          }}
+          onCancel={() => setOkno(null)}
+        />
+      )}
+      {okno?.typ === "kategoria" && !okno.tel && (
         <CategoryDialog
           usedColors={data.categories.map((k) => k.color)}
           onSaved={(nowa) => {
