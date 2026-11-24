@@ -18,4 +18,12 @@ describe("Progress", () => {
     const bar = screen.getByRole("progressbar", { name: "Puste" });
     expect((bar.firstElementChild as HTMLElement).style.width).toBe("0%");
   });
+
+  it("przyjmuje własny kolor wypełnienia zamiast zielonego", () => {
+    render(<Progress value={1} max={2} ariaLabel="Km" color="#f59e0b" />);
+    const fill = screen.getByRole("progressbar", { name: "Km" })
+      .firstElementChild as HTMLElement;
+    expect(fill).not.toHaveClass("bg-success");
+    expect(fill.style.background).toBe("rgb(245, 158, 11)");
+  });
 });

@@ -43,6 +43,11 @@ function dane(): TemplatesData {
   };
 }
 
+// „Nowy szablon” w nagłówku web (primary); drugi taki link to „+” w nagłówku telefonu
+const webNowy = () =>
+  screen
+    .getAllByRole("link", { name: "Nowy szablon" })
+    .find((l) => l.classList.contains("bg-primary")) as HTMLElement;
 const karta = (nazwa: string) => screen.getByRole("region", { name: nazwa });
 
 beforeEach(() => {
@@ -63,17 +68,62 @@ describe("TemplatesList", () => {
       "href",
       "/sport",
     );
+    // Dwa nagłówki w DOM: web (h1 w treści) i telefon (.m-head); CSS pokazuje jeden
     expect(
-      screen.getByRole("heading", { name: "Szablony treningów" }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("heading", { name: "Szablony treningów" }),
+    ).toHaveLength(2);
     expect(
       screen.getByText(
         "Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Nowy szablon" })).toHaveAttribute(
-      "href",
-      "/sport/szablony/nowy",
+    expect(webNowy()).toHaveAttribute("href", "/sport/szablony/nowy");
+  });
+
+  it("telefon: nagłówek .m-head ze strzałką do Sportu i „+” do edytora; web bez okruszków", () => {
+    render(<TemplatesList data={dane()} flash={null} />);
+    const naglowek = screen
+      .getAllByRole("banner")
+      .find((h) => h.classList.contains("m-head"));
+    expect(naglowek).toBeDefined();
+    expect(
+      within(naglowek as HTMLElement).getByRole("link", { name: "Wstecz" }),
+    ).toHaveAttribute("href", "/sport");
+    expect(
+      within(naglowek as HTMLElement).getByRole("link", {
+        name: "Nowy szablon",
+      }),
+    ).toHaveAttribute("href", "/sport/szablony/nowy");
+    // Okruszki web znikają na telefonie
+    expect(
+      screen.getByRole("navigation", { name: "Okruszki" }).closest("header"),
+    ).toHaveClass("max-[799px]:hidden");
+  });
+
+  it("telefon: karta ma liczbę ćwiczeń, listę ćwiczeń, dni z godziną i stopkę Edytuj / Rozpocznij", () => {
+    render(<TemplatesList data={dane()} flash={null} />);
+    const push_ = karta("Push");
+    // Odznaka z liczbą ćwiczeń i opis widoczne tylko na telefonie
+    expect(within(push_).getByText("2 ćwiczenia")).toHaveClass(
+      "hidden",
+      "max-[799px]:inline-flex",
+    );
+    expect(
+      within(push_).getByText("Wyciskanie na ławce · Pompki na poręczach"),
+    ).toHaveClass("hidden", "max-[799px]:block");
+    expect(within(push_).getByText(/^czw · \d{1,2}:\d{2}/)).toHaveClass(
+      "max-[799px]:block",
+    );
+    expect(
+      within(karta("Nogi")).getByText("bez stałego dnia"),
+    ).toBeInTheDocument();
+    // Stopka: Edytuj po lewej (kolejność odwrócona na telefonie), tło i linia
+    expect(
+      within(push_).getByRole("button", { name: "Rozpocznij" }).parentElement,
+    ).toHaveClass("max-[799px]:flex-row-reverse", "max-[799px]:border-t");
+    // Web: odznaki ćwiczeń i meta chowają się na telefonie
+    expect(within(push_).getByText("2 ćwiczenia · 7 serii · Cz")).toHaveClass(
+      "max-[799px]:hidden",
     );
   });
 
@@ -119,10 +169,7 @@ describe("TemplatesList", () => {
       "max-[799px]:h-11",
     );
     // „Nowy szablon” w nagłówku = primary md (32 px)
-    expect(screen.getByRole("link", { name: "Nowy szablon" })).toHaveClass(
-      "bg-primary",
-      "h-8",
-    );
+    expect(webNowy()).toHaveClass("bg-primary", "h-8");
   });
 
   it("długa nazwa szablonu ma truncate", () => {
@@ -143,7 +190,10 @@ describe("TemplatesList", () => {
       items: [{ ...d.templates[0].items[0], exerciseName: dluga }],
     };
     render(<TemplatesList data={d} flash={null} />);
-    const tekst = screen.getByText(dluga);
+    // Nazwa jest też w opisie telefonu (jedna pozycja = ten sam tekst); odznaka web ma truncate
+    const tekst = screen
+      .getAllByText(dluga)
+      .find((el) => el.classList.contains("truncate")) as HTMLElement;
     expect(tekst).toHaveClass("min-w-0", "truncate");
     expect(tekst.closest("span.rounded-sm")).toHaveClass("max-w-full");
   });

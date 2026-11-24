@@ -51,6 +51,8 @@ beforeEach(() => {
   updateSet.mockResolvedValue({ ok: true });
   addSet.mockResolvedValue({ ok: true, id: "w5" });
   addExercise.mockResolvedValue({ ok: true, id: "nowe-cw" });
+  removeExercise.mockResolvedValue({ ok: true });
+  saveSessionAsTemplate.mockResolvedValue({ ok: true, id: "t2" });
   finishWorkout.mockResolvedValue({ ok: true });
 });
 afterEach(() => {
@@ -77,7 +79,10 @@ describe("MGym", () => {
     expect(within(telefon()).getByTestId("m-serie")).toHaveTextContent(
       "3/6 serii",
     );
-    expect(within(telefon()).getByTestId("m-postep")).toHaveStyle({
+    expect(
+      within(telefon()).getByRole("progressbar", { name: "Postęp serii" })
+        .firstElementChild,
+    ).toHaveStyle({
       width: "50%",
     });
     expect(
@@ -95,7 +100,7 @@ describe("MGym", () => {
     render(<GymLog data={daneTreningu()} />);
     const wyc = karta(WYC);
     expect(within(wyc).getByText("ost. 2×6 · 70 kg")).toBeInTheDocument();
-    expect(within(wyc).getByText("SERIA")).toBeInTheDocument();
+    expect(within(wyc).getByText("Seria")).toBeInTheDocument();
     expect(
       within(wyc).getByRole("textbox", { name: `${WYC}, seria 3 — ciężar` }),
     ).toHaveValue("72,5");
@@ -177,6 +182,45 @@ describe("MGym", () => {
     );
     expect(addExercise).toHaveBeenCalledWith(SESJA, "Martwy ciąg");
     expect(karta("Martwy ciąg")).toBeInTheDocument();
+  });
+
+  it("nazwa ćwiczenia prowadzi do jego szczegółów", () => {
+    render(<GymLog data={daneTreningu()} />);
+    expect(within(karta(WYC)).getByRole("link", { name: WYC })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/sport\/cwiczenia\/./),
+    );
+  });
+
+  it("„Usuń ćwiczenie” usuwa ćwiczenie z treningu", async () => {
+    render(<GymLog data={daneTreningu()} />);
+    await userEvent.click(
+      within(karta(WYC)).getByRole("button", {
+        name: `Usuń ćwiczenie ${WYC}`,
+      }),
+    );
+    expect(removeExercise).toHaveBeenCalledTimes(1);
+    expect(removeExercise.mock.calls[0][0]).toBe(SESJA);
+  });
+
+  it("„Zapisz jako szablon” otwiera okno nazwy i zapisuje szablon", async () => {
+    render(<GymLog data={daneTreningu()} />);
+    await userEvent.click(
+      within(telefon()).getByRole("button", { name: "Zapisz jako szablon" }),
+    );
+    const okno = screen.getByRole("dialog", { name: "Zapisz jako szablon" });
+    await userEvent.click(within(okno).getByRole("button", { name: "Zapisz" }));
+    expect(saveSessionAsTemplate).toHaveBeenCalledWith(SESJA, "Push");
+  });
+
+  it("dopisek „mc = masa ciała” tylko przy ćwiczeniu z masą ciała", () => {
+    const { unmount } = render(<GymLog data={daneTreningu()} />);
+    expect(within(telefon()).queryByText(/^mc = masa ciała/)).toBeNull();
+    unmount();
+    render(<GymLog data={daneZMasaCiala()} />);
+    expect(
+      within(telefon()).getByText(/^mc = masa ciała .* kg z profilu/),
+    ).toBeInTheDocument();
   });
 
   it("„Zakończ” kończy trening i wraca do Sportu", async () => {

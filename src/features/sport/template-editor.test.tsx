@@ -61,9 +61,10 @@ describe("TemplateEditor — nowy szablon", () => {
     expect(
       screen.getByRole("link", { name: "Szablony treningów" }),
     ).toHaveAttribute("href", "/sport/szablony");
+    // Dwa nagłówki: h1 web w treści i tytuł .m-head telefonu (CSS pokazuje jeden)
     expect(
-      screen.getByRole("heading", { name: "Nowy szablon" }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("heading", { name: "Nowy szablon" }),
+    ).toHaveLength(2);
     expect(screen.getByText("0 ćwiczeń · 0 serii")).toBeInTheDocument();
     expect(
       screen.getByText("Brak ćwiczeń — dodaj pierwsze poniżej."),
@@ -239,8 +240,8 @@ describe("TemplateEditor — istniejący szablon", () => {
     render(<TemplateEditor data={dane()} />);
     expect(screen.getByText("Edycja: Push")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Edytuj szablon" }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("heading", { name: "Edytuj szablon" }),
+    ).toHaveLength(2);
     expect(screen.getByLabelText("Nazwa szablonu")).toHaveValue("Push");
     expect(screen.getByRole("button", { name: "Cz" })).toHaveAttribute(
       "aria-pressed",
@@ -365,5 +366,51 @@ describe("TemplateEditor — istniejący szablon", () => {
     render(<TemplateEditor data={dane()} />);
     for (const a of screen.getAllByRole("link", { name: "Anuluj" }))
       expect(a).toHaveAttribute("href", "/sport/szablony");
+  });
+});
+
+describe("TemplateEditor — telefon", () => {
+  const naglowekTelefonu = () =>
+    screen
+      .getAllByRole("banner")
+      .find((h) => h.classList.contains("m-head")) as HTMLElement;
+
+  it("nagłówek .m-head: wstecz do listy, tytuł i „Zapisz” zapisują szablon", async () => {
+    saveTemplate.mockResolvedValue({ ok: true, id: "t1" });
+    render(<TemplateEditor data={dane()} />);
+    const g = within(naglowekTelefonu());
+    expect(g.getByRole("link", { name: "Wstecz" })).toHaveAttribute(
+      "href",
+      "/sport/szablony",
+    );
+    expect(g.getByRole("heading", { name: "Edytuj szablon" })).toBeVisible();
+    await userEvent.click(g.getByRole("button", { name: "Zapisz" }));
+    expect(saveTemplate).toHaveBeenCalledTimes(1);
+    // Okruszki web znikają na telefonie
+    expect(
+      screen.getByRole("navigation", { name: "Okruszki" }).closest("header"),
+    ).toHaveClass("max-[799px]:hidden");
+  });
+
+  it("nowy szablon: „Zapisz” w nagłówku ma aria-disabled bez nazwy i ćwiczeń", () => {
+    render(<TemplateEditor data={dane(true)} />);
+    expect(
+      within(naglowekTelefonu()).getByRole("button", { name: "Zapisz" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("dni tygodnia: siatka 7 kolumn, stopka z samym „Usuń szablon” (tylko edycja)", () => {
+    const { unmount } = render(<TemplateEditor data={dane()} />);
+    expect(screen.getByRole("group", { name: "Dni tygodnia" })).toHaveClass(
+      "max-[799px]:grid-cols-7",
+    );
+    const stopka = screen.getByTestId("stopka-szablonu");
+    expect(stopka).not.toHaveClass("max-[799px]:hidden");
+    expect(stopka.firstElementChild).toHaveClass("max-[799px]:hidden");
+    unmount();
+    render(<TemplateEditor data={dane(true)} />);
+    expect(screen.getByTestId("stopka-szablonu")).toHaveClass(
+      "max-[799px]:hidden",
+    );
   });
 });

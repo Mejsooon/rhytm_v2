@@ -597,7 +597,7 @@ test.describe("ekrany z sesją", () => {
     }
   });
 
-  test("zrzuty /sport i podstron (makiety Sport, RunDialog, GymLog, WorkoutTemplates, TemplateEditor, ExerciseDetail, MSport, MRunNew, MGym)", async ({
+  test("zrzuty /sport i podstron (makiety Sport, RunDialog, GymLog, WorkoutTemplates, TemplateEditor, ExerciseDetail, CMSport, CMRunNew, CMGym, CMWorkoutTemplates, CMExerciseDetail)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
@@ -680,7 +680,7 @@ test.describe("ekrany z sesją", () => {
     ).toBeVisible();
     await zrzut(page, "sport-trening", projekt);
 
-    // Szablony: lista i edytor; szczegóły ćwiczenia (jedno drzewo dla obu układów)
+    // Szablony: lista i edytor (jedno drzewo, nagłówek telefonu osobno); szczegóły ćwiczenia (osobne układy web i telefon, widoczny jeden)
     await page.goto("/sport/szablony");
     await expect(
       page.getByRole("heading", { name: "Szablony treningów", level: 1 }),

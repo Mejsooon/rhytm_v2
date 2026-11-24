@@ -292,17 +292,19 @@ test.describe("sport (telefon)", () => {
     await page.getByRole("button", { name: "Push", exact: true }).click();
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
     const trening = page.getByTestId("m-gym");
-    await expect(trening.getByTestId("m-postep")).toHaveAttribute(
-      "style",
-      /width: 0%/,
-    );
+    await expect(
+      trening
+        .getByRole("progressbar", { name: "Postęp serii" })
+        .locator(":scope > div"),
+    ).toHaveAttribute("style", /width: 0%/);
     await trening
       .getByRole("checkbox", { name: "Wyciskanie, seria 1", exact: true })
       .click();
-    await expect(trening.getByTestId("m-postep")).toHaveAttribute(
-      "style",
-      /width: 50%/,
-    );
+    await expect(
+      trening
+        .getByRole("progressbar", { name: "Postęp serii" })
+        .locator(":scope > div"),
+    ).toHaveAttribute("style", /width: 50%/);
     await expect(trening.getByTestId("m-serie")).toHaveText(/^1\/2 serii/);
   });
 });

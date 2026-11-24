@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (CMSport, CMGym, CMRunNew), uwagi „sport”, T18. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMSport.dc.html`, `CMGym.dc.html`, `CMRunNew.dc.html`. Dla szablonów i ćwiczenia na telefonie wzorem są web `CWorkoutTemplates.dc.html` i `CExerciseDetail.dc.html` przepisane na CM-BASE (karty na całą szerokość, wiersze `m-row`, przyciski 44 px). Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMSport CMGym CMRunNew`.
+**Makiety (wiążące):** `docs/design/mockups/CMSport.dc.html`, `CMGym.dc.html`, `CMRunNew.dc.html`. Od 24.11 szablony i ćwiczenie mają własne makiety telefonu: `CMWorkoutTemplates.dc.html` (karty szablonów z ćwiczeniami i dniami, „Edytuj” / „Rozpocznij”, arkusz „Nowy szablon”) i `CMExerciseDetail.dc.html` (szacowany 1RM z wykresem 8 tyg. i segmentem Szac. 1RM · Objętość, „Rekordy”, „Historia”). CMGym ma dodatkowo nazwę ćwiczenia jako link do szczegółów, „Usuń ćwiczenie”, dopisek „mc = masa ciała…” i „Zapisz jako szablon”; CMRunNew ma wiersz „Kcal (z wagi w profilu)”. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMSport CMGym CMRunNew`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4 (`@utility` `m-*`), kontrolki `@/components/controls`, Vitest, Playwright (CI).
 

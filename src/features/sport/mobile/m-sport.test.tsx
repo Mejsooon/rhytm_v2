@@ -123,9 +123,12 @@ describe("MSport", () => {
     expect(within(karta()).getByTestId("km")).toHaveTextContent("8,0");
     expect(within(karta()).getByText("/ 25 km")).toBeInTheDocument();
     // 8 / 25 = 32%
-    expect(within(karta()).getByTestId("pasek-km")).toHaveStyle({
-      width: "32%",
-    });
+    const pasek = within(karta()).getByRole("progressbar");
+    expect(pasek.firstElementChild).toHaveStyle({ width: "32%" });
+    // Kolor wypełnienia z makiety CMSport
+    expect((pasek.firstElementChild as HTMLElement).style.background).toBe(
+      "rgb(245, 158, 11)",
+    );
     expect(within(karta()).getByTestId("biegi")).toHaveTextContent("2");
     // (1500 + 1080) / 8 = 322,5 s → 5:23
     expect(within(karta()).getByTestId("tempo")).toHaveTextContent("5:23");
@@ -138,7 +141,7 @@ describe("MSport", () => {
     expect(within(karta()).getByTestId("km")).toHaveTextContent("8,0");
     expect(within(karta()).getByText("km")).toBeInTheDocument();
     expect(within(karta()).queryByText(/\/ 25/)).not.toBeInTheDocument();
-    expect(within(karta()).queryByTestId("pasek-km")).not.toBeInTheDocument();
+    expect(within(karta()).queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
   it("bez biegów tempo to „—”", () => {
@@ -204,7 +207,7 @@ describe("MSport", () => {
     pokaz();
     const szablony = screen.getByRole("link", { name: "Szablony" });
     expect(szablony).toHaveAttribute("href", "/sport/szablony");
-    expect(szablony).toHaveClass("col-span-2", "h-12");
+    expect(szablony).toHaveClass("col-span-2", "max-[799px]:h-11");
   });
 
   it("„Bieg” otwiera nowy bieg", async () => {

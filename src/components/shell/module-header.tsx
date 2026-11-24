@@ -23,6 +23,8 @@ import { SidebarToggle } from "./sidebar-toggle";
 //                     <Button variant="ghost" icon aria-label="…"> albo z asChild dla <Link>
 //   phoneSettingsLink ⚙ → /ustawienia jako pierwsza akcja po prawej (CMPages)
 //   webOnly           ekran ma własny nagłówek telefonu (np. Dziś)
+//   phoneOnly         odwrotnie: ekran ma własny nagłówek web (np. okruszki ze stronami podrzędnymi);
+//                     renderuje tylko .m-head telefonu
 // Przykład: <ModuleHeader title="Strony" phoneLabel="Twoje tabele i notatki" phoneSettingsLink
 //             phoneActions={<Button variant="ghost" icon aria-label="Nowa strona"><Plus size={20} /></Button>} />
 export function ModuleHeader({
@@ -37,6 +39,7 @@ export function ModuleHeader({
   webMeta,
   webAction,
   webOnly = false,
+  phoneOnly = false,
 }: {
   title: string;
   // Pierwszy człon okruszków na webie („Ustawienia / Ogólne”); bez niego web pokazuje sam tytuł
@@ -59,31 +62,39 @@ export function ModuleHeader({
   webAction?: React.ReactNode;
   // Tylko nagłówek web (ekran ma własny nagłówek telefonu, np. pełne Dziś z MToday)
   webOnly?: boolean;
+  // Tylko nagłówek telefonu (ekran ma własny nagłówek web, np. okruszki)
+  phoneOnly?: boolean;
 }) {
   const maAkcje = phoneSettingsLink || phoneActions != null;
   return (
     <>
       {/* .topbar: min-height 36 px liczone bez paddingu (box-content), padding 10px 24px */}
-      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-          <SidebarToggle placement="header" />
-          {webParent ? (
-            // .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <span>{webParent}</span> <span>/</span>{" "}
-              <h1 className="m-0 text-sm font-medium text-foreground">{title}</h1>
-            </div>
-          ) : (
-            // .h-title: sam tytuł modułu, bez „Moduły /”
-            <h1 className="m-0 text-lg font-semibold tracking-[-0.011em]">{title}</h1>
+      {!phoneOnly && (
+        <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
+            <SidebarToggle placement="header" />
+            {webParent ? (
+              // .crumb: rodzic muted 14 px, ukośnik, tytuł 14 px / 500
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <span>{webParent}</span> <span>/</span>{" "}
+                <h1 className="m-0 text-sm font-medium text-foreground">
+                  {title}
+                </h1>
+              </div>
+            ) : (
+              // .h-title: sam tytuł modułu, bez „Moduły /”
+              <h1 className="m-0 text-lg font-semibold tracking-[-0.011em]">
+                {title}
+              </h1>
+            )}
+            {webMeta}
+          </div>
+          {webAction && (
+            <div className="flex flex-wrap items-center gap-2">{webAction}</div>
           )}
-          {webMeta}
-        </div>
-        {webAction && (
-          <div className="flex flex-wrap items-center gap-2">{webAction}</div>
-        )}
-      </header>
+        </header>
+      )}
       {!webOnly && (
         // .m-head; z etykietą padding 4 px góra/dół (CMPages), ze „wstecz” 0 8px (CMSettings, CMGym)
         <header
@@ -100,9 +111,13 @@ export function ModuleHeader({
               </Link>
             </Button>
           )}
-          <div className={cn("min-w-0 flex-1", phoneCenterTitle && "text-center")}>
+          <div
+            className={cn("min-w-0 flex-1", phoneCenterTitle && "text-center")}
+          >
             {phoneLabel && (
-              <div className="text-xs font-medium text-muted-foreground">{phoneLabel}</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                {phoneLabel}
+              </div>
             )}
             <h1 className="m-title truncate">{phoneTitle ?? title}</h1>
           </div>
@@ -119,7 +134,9 @@ export function ModuleHeader({
             </div>
           )}
           {/* Przeciwwaga dla „wstecz”, żeby wyśrodkowany tytuł był na środku ekranu (CMSettings) */}
-          {phoneCenterTitle && !maAkcje && <span aria-hidden="true" className="w-11 flex-none" />}
+          {phoneCenterTitle && !maAkcje && (
+            <span aria-hidden="true" className="w-11 flex-none" />
+          )}
         </header>
       )}
     </>

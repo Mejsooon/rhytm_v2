@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { saveRun } = vi.hoisted(() => ({ saveRun: vi.fn() }));
 vi.mock("../actions", () => ({ saveRun }));
 
-import type { SportItem } from "../model";
+import { runKcal, type SportItem } from "../model";
 import { bieg, daneSportu } from "../sport-test-data";
 import { MRunNew } from "./m-run-new";
 
@@ -302,5 +302,31 @@ describe("MRunNew", () => {
     );
     expect(okno).toHaveAccessibleName("Uzupełnij dane biegu");
     expect(czas()).toHaveValue("");
+  });
+
+  it("kcal liczone jak na webie z wagi w profilu; bez dystansu „—”", async () => {
+    pokaz();
+    // 10 km w 52:00 przy wadze z profilu (runKcal)
+    const oczekiwane = runKcal(10, 3120, profil.weightKg);
+    expect(oczekiwane).not.toBeNull();
+    expect(screen.getByTestId("kcal")).toHaveTextContent(String(oczekiwane));
+    await userEvent.clear(dystans());
+    expect(screen.getByTestId("kcal")).toHaveTextContent("—");
+  });
+
+  it("trudność w kolorach skali z makiety: wybrany pełny kolor, niższe z przezroczystością", async () => {
+    pokaz();
+    const przycisk = (n: number) =>
+      screen.getByRole("button", { name: `Trudność ${n} z 10` });
+    await userEvent.click(przycisk(6));
+    // 6 → bursztyn #f59e0b, tekst biały
+    expect(przycisk(6).style.background).toBe("rgb(245, 158, 11)");
+    expect(przycisk(6).style.color).toBe("rgb(255, 255, 255)");
+    expect(przycisk(3).style.background).toBe("rgba(245, 158, 11, 0.094)");
+    expect(przycisk(8).style.background).toBe("");
+    await userEvent.click(przycisk(9));
+    expect(przycisk(9).style.background).toBe("rgb(239, 68, 68)");
+    await userEvent.click(przycisk(2));
+    expect(przycisk(2).style.background).toBe("rgb(21, 128, 61)");
   });
 });

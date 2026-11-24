@@ -4,7 +4,8 @@
 // Nowy szablon | Edycja: X”, nazwa, chipy dni pn–nd z godziną startu (tylko przy wybranych dniach),
 // tabela ćwiczeń (serie −/+, powt., przerwa „m:ss”, ↑ ↓ ✕), „+ Ćwiczenie”, Zapisz / Anuluj / Usuń.
 // Okno czeka na serwer: przyciski są zablokowane w trakcie, a błąd zostaje na ekranie.
-// Jedno drzewo dla webu i telefonu — tabela przewija się poziomo w wąskim oknie.
+// Jedno drzewo dla webu i telefonu (CMWorkoutTemplates, arkusz „Nowy szablon”): poniżej 800 px nagłówek .m-head
+// ze strzałką do listy i „Zapisz”, dni tygodnia jako siatka 7 chipów, tabela ćwiczeń przewija się poziomo.
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ import {
   XIcon,
 } from "lucide-react";
 
+import { ModuleHeader } from "@/components/shell/module-header";
 import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
@@ -196,9 +198,29 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
 
   return (
     <div className="flex min-w-0 flex-col">
+      {/* Telefon: .m-head — wstecz do listy szablonów, tytuł na środku, „Zapisz” (jak „Zapisz szablon” na webie) */}
+      <ModuleHeader
+        title={template ? "Edytuj szablon" : "Nowy szablon"}
+        phoneOnly
+        phoneCenterTitle
+        phoneBack={{ href: "/sport/szablony", label: "Wstecz" }}
+        phoneActions={
+          <Button
+            variant="primary"
+            aria-disabled={valid ? "false" : "true"}
+            disabled={zapisuje}
+            onClick={() => void zapisz()}
+          >
+            Zapisz
+          </Button>
+        }
+      />
       {/* .topbar z okruszkami .crumb (CWorkoutTemplates) */}
-      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
-        <nav aria-label="Okruszki" className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
+        <nav
+          aria-label="Okruszki"
+          className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground"
+        >
           {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
           <SidebarToggle placement="header" />
           <Link
@@ -226,12 +248,12 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
         </div>
       </header>
 
-      <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
+      <div className="box-border flex w-full flex-col gap-6 px-6 py-7 max-[799px]:gap-3.5 max-[799px]:px-4 max-[799px]:pt-4 max-[799px]:pb-6">
         <div>
-          <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
+          <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em] max-[799px]:hidden">
             {template ? "Edytuj szablon" : "Nowy szablon"}
           </h1>
-          <p className="m-0 mt-1.5 text-[13px] text-muted-foreground tabular-nums">
+          <p className="m-0 mt-1.5 text-[13px] text-muted-foreground tabular-nums max-[799px]:mt-0 max-[799px]:text-xs">
             {meta}
           </p>
         </div>
@@ -260,7 +282,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                 <div
                   role="group"
                   aria-label="Dni tygodnia"
-                  className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md bg-muted p-0.5 font-normal"
+                  className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md bg-muted p-0.5 font-normal max-[799px]:grid max-[799px]:w-full max-[799px]:grid-cols-7"
                 >
                   {DNI.map((etykieta, i) => {
                     const dzien = i + 1;
@@ -279,7 +301,7 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
                           }))
                         }
                         className={cn(
-                          "inline-flex h-7 w-9 cursor-pointer items-center justify-center rounded-[8px] border-0 px-0 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-11 max-[799px]:w-11",
+                          "inline-flex h-7 w-9 cursor-pointer items-center justify-center rounded-[8px] border-0 px-0 text-sm font-medium whitespace-nowrap outline-none focus-visible:shadow-focus max-[799px]:h-11 max-[799px]:w-full",
                           wlaczony
                             ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
                             : "bg-transparent text-muted-foreground hover:text-foreground",
@@ -494,15 +516,20 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           {/* .foot: Zapisz / Anuluj po lewej, „Usuń szablon” (.btndo) po prawej */}
           <div
             data-testid="stopka-szablonu"
-            className="flex flex-wrap items-center justify-between gap-2.5 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 max-[799px]:px-[18px]"
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-2.5 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 max-[799px]:px-[18px]",
+              // Telefon: Zapisz jest w nagłówku, więc stopka zostaje tylko z „Usuń szablon”
+              !template && "max-[799px]:hidden",
+            )}
           >
-            <div className="flex gap-2">
+            <div className="flex gap-2 max-[799px]:hidden">
               {przyciskZapisz}
               {przyciskAnuluj}
             </div>
             {template && (
               <Button
                 variant="destructive-outline"
+                className="max-[799px]:w-full"
                 disabled={zapisuje}
                 onClick={() => void usun()}
               >
