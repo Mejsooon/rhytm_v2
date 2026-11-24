@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 import { todayIso, type IsoDate } from "@/components/controls/calendar-math";
 import { setCategoryHidden } from "@/features/categories/actions";
+import { updateField } from "@/features/pages/actions";
 import { FormDialog } from "@/components/controls/form-dialog";
 import {
   CategoryDialog,
@@ -27,6 +28,9 @@ import {
   minutesNow,
   type CalendarData,
   type CategoryRow,
+  type RenewalItem,
+  type RenewalSource,
+  type RenewalsData,
 } from "./load-calendar";
 import { MBlockSheet } from "./mobile/m-block-sheet";
 import { MCalendarDay } from "./mobile/m-calendar-day";
@@ -36,6 +40,7 @@ import { MonthGrid } from "./month-grid";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
 import { recurrenceBadge } from "./recurrence-text";
+import { RenewalPopover } from "./renewal-popover";
 import { ScopeDialog } from "./scope-dialog";
 import {
   planScopeChange,
@@ -53,6 +58,9 @@ function godzina(minuty: number): string {
   const m = String(minuty % 60).padStart(2, "0");
   return `${h}:${m}`;
 }
+
+// Bez odnowień (stała, żeby tożsamość danych nie zmieniała się co render)
+const BEZ_ODNOWIEN: RenewalsData = { items: [], sources: [] };
 
 // Otwarte okno kalendarza; okna nie zmieniają adresu, więc widok i data zostają jak były
 type Okno =
@@ -77,6 +85,7 @@ export function CalendarView({
   data: daneSerwera,
   hasExplicitView = true,
   newBlock = null,
+  renewals: odnowieniaSerwera = BEZ_ODNOWIEN,
 }: {
   view: CalendarView;
   // Czy adres ma `widok`; bez niego web pokazuje domyślny tydzień, a telefon dzień
@@ -88,9 +97,16 @@ export function CalendarView({
   data: CalendarData;
   // ?nowy=blok&data&godzina&tytul — okno nowego bloku otwarte od razu (web okno, telefon arkusz)
   newBlock?: { date: IsoDate; startMin: number; title: string } | null;
+  // Odnowienia subskrypcji z loadRenewals (tylko web: tydzień, dzień, miesiąc; telefon w Etapie 3)
+  renewals?: RenewalsData;
 }) {
   const router = useRouter();
-  const { data, applyOptimistic } = useCalendarStore(daneSerwera);
+  // Odnowienia siedzą w danych magazynu, żeby przełączanie źródła było optymistyczne jak kategorie
+  const wejscie = useMemo(
+    () => ({ ...daneSerwera, renewals: odnowieniaSerwera }),
+    [daneSerwera, odnowieniaSerwera],
+  );
+  const { data, applyOptimistic } = useCalendarStore(wejscie);
   const { weekStart } = data.profile;
 
   // Zegar: start z wartości serwera (bez rozjazdu hydracji), potem co minutę w strefie profilu.
@@ -128,6 +144,11 @@ export function CalendarView({
   const [wybrany, setWybrany] = useState<string | null>(null);
   // Na telefonie szczegóły bloku otwiera arkusz, nie dymek przy bloku
   const [wybranyTel, setWybranyTel] = useState<string | null>(null);
+  // Otwarte odnowienie: klucz wystąpienia i kliknięty wpis (kotwica dymku)
+  const [odnowienie, setOdnowienie] = useState<{
+    key: string;
+    anchor: HTMLElement;
+  } | null>(null);
   // Okno nowego wpisu / bloku / kategorii / usuwania (naraz tylko jedno) i kotwica dymku „Nowy wpis”
   const [okno, setOkno] = useState<Okno | null>(null);
   const [kotwicaWpisu, setKotwicaWpisu] = useState<HTMLElement | null>(null);
@@ -147,6 +168,7 @@ export function CalendarView({
     setWidokDla(`${view}|${date}`);
     setWybrany(null);
     setWybranyTel(null);
+    setOdnowienie(null);
     setOkno((o) => (o?.typ === "wpis" ? null : o));
   }
 
@@ -187,6 +209,48 @@ export function CalendarView({
     (k) => k.is_system && k.name === "Sport",
   );
   const treningi = kategoriaSport?.hidden ? [] : data.sport;
+
+  // Odnowienia widocznych źródeł (ukrycie źródła chowa je bez ponownego wczytania)
+  const zrodla = data.renewals?.sources ?? [];
+  const pokazaneZrodla = new Set(
+    zrodla.filter((z) => z.shown).map((z) => z.fieldId),
+  );
+  const odnowienia = (data.renewals?.items ?? []).filter((i) =>
+    pokazaneZrodla.has(i.fieldId),
+  );
+  const otwarteOdnowienie = odnowienie
+    ? odnowienia.find((i) => i.key === odnowienie.key)
+    : undefined;
+  // Odnowienie zniknęło (ukryte źródło, nowe dane): dymek się zamyka i nie wraca po ponownym pokazaniu
+  if (odnowienie && !otwarteOdnowienie) setOdnowienie(null);
+
+  // Klik w odnowienie: zamyka dymek bloku i „Nowy wpis”; ponowny klik w ten sam wpis zamyka dymek
+  function kliknieteOdnowienie(item: RenewalItem, anchor: HTMLElement) {
+    setWybrany(null);
+    setOkno((o) => (o?.typ === "wpis" ? null : o));
+    setOdnowienie((w) => (w?.key === item.key ? null : { key: item.key, anchor }));
+  }
+
+  // Ukrycie źródła odnowień od razu chowa wpisy; zapis show_in_calendar pola, błąd cofa i daje toast
+  function przelaczZrodlo(zrodlo: RenewalSource) {
+    const shown = !zrodlo.shown;
+    const config = { ...zrodlo.config, show_in_calendar: shown };
+    void applyOptimistic(
+      (d) =>
+        d.renewals
+          ? {
+              ...d,
+              renewals: {
+                ...d.renewals,
+                sources: d.renewals.sources.map((z) =>
+                  z.fieldId === zrodlo.fieldId ? { ...z, shown, config } : z,
+                ),
+              },
+            }
+          : d,
+      () => updateField(zrodlo.fieldId, { config }),
+    );
+  }
 
   // Ukrycie od razu znika z widoku; błąd zapisu cofa zmianę i pokazuje toast (w store)
   function przelaczKategorie(kategoria: CategoryRow) {
@@ -486,7 +550,8 @@ export function CalendarView({
   // Wpisy widoczne w samym miesiącu (siatka obejmuje też dni sąsiednich miesięcy) do nagłówka
   const wpisyMiesiaca =
     widoczne.filter((o) => o.date.slice(0, 7) === date.slice(0, 7)).length +
-    treningi.filter((i) => i.date.slice(0, 7) === date.slice(0, 7)).length;
+    treningi.filter((i) => i.date.slice(0, 7) === date.slice(0, 7)).length +
+    odnowienia.filter((i) => i.date.slice(0, 7) === date.slice(0, 7)).length;
   // Odmiana: 1 wpis widoczny; 2–4, 22–24… wpisy widoczne (ale 12–14 wpisów); reszta wpisów widocznych
   const napisWpisow =
     wpisyMiesiaca === 1
@@ -515,8 +580,14 @@ export function CalendarView({
       variant={view === "dzien" ? "day" : "week"}
       totalCount={view === "dzien" ? wystapienia.length : undefined}
       selectedKey={wybrany}
-      // Ponowny klik w ten sam blok zamyka dymek
-      onBlockClick={(key) => setWybrany((w) => (w === key ? null : key))}
+      // Ponowny klik w ten sam blok zamyka dymek; blok zamyka dymek odnowienia
+      onBlockClick={(key) => {
+        setOdnowienie(null);
+        setWybrany((w) => (w === key ? null : key));
+      }}
+      renewals={odnowienia}
+      openRenewalKey={odnowienie?.key ?? null}
+      onRenewalClick={kliknieteOdnowienie}
       activeSlot={okno?.typ === "wpis" ? okno : null}
       onSlotAnchor={setKotwicaWpisu}
       onRangeDrag={przeciagnietyZakres}
@@ -524,6 +595,7 @@ export function CalendarView({
       // Klik w ten sam slot zamyka dymek, w inny przenosi go
       onSlotClick={(dzien, startMin) => {
         setWybrany(null);
+        setOdnowienie(null);
         setOkno((o) =>
           o?.typ === "wpis" && o.date === dzien && o.startMin === startMin
             ? null
@@ -558,6 +630,8 @@ export function CalendarView({
           categories={data.categories}
           onToggleCategory={przelaczKategorie}
           onAddCategory={() => setOkno({ typ: "kategoria" })}
+          renewalSources={zrodla}
+          onToggleRenewalSource={przelaczZrodlo}
           // Dziś (w widoku dnia: wybrany dzień) i najbliższa pełna godzina, 60 min; po 23:00 zostaje 23:00
           onNewBlock={() => {
             setWybrany(null);
@@ -615,17 +689,23 @@ export function CalendarView({
                 activeDay={okno?.typ === "wpis" ? okno.date : null}
                 // Ponowny klik w ten sam wpis zamyka dymek; wpis zamyka też „Nowy wpis”
                 onEntryClick={(key) => {
+                  setOdnowienie(null);
                   setOkno((o) => (o?.typ === "wpis" ? null : o));
                   setWybrany((w) => (w === key ? null : key));
                 }}
                 // „+N więcej” przechodzi do dnia, więc otwarte dymki znikają
                 onMoreClick={() => {
                   setWybrany(null);
+                  setOdnowienie(null);
                   setOkno((o) => (o?.typ === "wpis" ? null : o));
                 }}
+                renewals={odnowienia}
+                openRenewalKey={odnowienie?.key ?? null}
+                onRenewalClick={kliknieteOdnowienie}
                 // Klik w komórkę: „Nowy wpis” z tym dniem i 09:00; ponowny klik zamyka
                 onDayClick={(dzien, kotwica) => {
                   setWybrany(null);
+                  setOdnowienie(null);
                   setKotwicaWpisu(kotwica);
                   setOkno((o) =>
                     o?.typ === "wpis" && o.date === dzien
@@ -699,6 +779,17 @@ export function CalendarView({
           onEdit={() => edytuj(wybraneWystapienie)}
           onDelete={() => usunBlok(wybraneWystapienie)}
           onClose={() => setWybrany(null)}
+        />
+      )}
+      {odnowienie && otwarteOdnowienie && (
+        <RenewalPopover
+          item={otwarteOdnowienie}
+          anchor={odnowienie.anchor}
+          today={today}
+          // Tydzień i dzień: pod wpisem (makieta); miesiąc: obok wpisu, jak dymek bloku
+          side={view === "miesiac" ? "right" : "bottom"}
+          align={view === "miesiac" ? wyrownanie(otwarteOdnowienie.date) : "center"}
+          onClose={() => setOdnowienie(null)}
         />
       )}
       {wybraneTel && (

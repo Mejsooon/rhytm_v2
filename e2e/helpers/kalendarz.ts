@@ -6,6 +6,7 @@ import {
   uniqueEmail,
 } from "./konto";
 import { expect, type Page } from "@playwright/test";
+import { utworzSubscriptions } from "./strony";
 
 // Stały tydzień testów: poniedziałek 11.01.2027, wtorek 12.01, kolejny wtorek 19.01.
 // Daty są w przyszłości i niezależne od „dziś”, więc testy nie zależą od zegara.
@@ -108,4 +109,57 @@ export async function zasiejZadanie(
 // Czeka na zakończenie zapisu (akcja serwera to POST na adres strony), żeby odświeżenie go nie ucięło
 export function poZapisie(page: Page) {
   return page.waitForResponse((odp) => odp.request().method() === "POST");
+}
+
+// Strona Subscriptions założona przez /strony/nowa i jej wiersz zasiany przez API administratora
+// (wartości po id pól: Nazwa, Kwota cykliczna, Data odnowienia = kotwica serii, Aktywna); zwraca id strony
+export async function zasiejOdnowienie(
+  page: Page,
+  userId: string,
+  wiersz: {
+    title: string;
+    amount: number;
+    cycle?: "month" | "year";
+    date: string;
+    active?: boolean;
+  },
+) {
+  await utworzSubscriptions(page);
+  const pageId = page.url().split("/").at(-1)!;
+  const admin = adminClient();
+  const { data: blok, error: bladBloku } = await admin
+    .from("page_blocks")
+    .select("id")
+    .eq("page_id", pageId)
+    .eq("type", "table")
+    .single();
+  if (bladBloku || !blok)
+    throw new Error(`Brak tabeli na stronie: ${bladBloku?.message}`);
+  const { data: pola, error: bladPol } = await admin
+    .from("page_fields")
+    .select("id, name")
+    .eq("block_id", blok.id);
+  if (bladPol || !pola)
+    throw new Error(`Nie udało się wczytać pól: ${bladPol?.message}`);
+  const idPola = (nazwa: string) => {
+    const pole = pola.find((f) => f.name === nazwa);
+    if (!pole) throw new Error(`Brak pola ${nazwa}`);
+    return pole.id;
+  };
+  const { error } = await admin.from("page_rows").insert({
+    user_id: userId,
+    block_id: blok.id,
+    values: {
+      [idPola("Nazwa")]: wiersz.title,
+      [idPola("Kwota cykliczna")]: {
+        amount: wiersz.amount,
+        cycle: wiersz.cycle ?? "month",
+      },
+      [idPola("Data odnowienia")]: wiersz.date,
+      [idPola("Aktywna")]: wiersz.active ?? true,
+    },
+  });
+  if (error)
+    throw new Error(`Nie udało się zasiać subskrypcji: ${error.message}`);
+  return pageId;
 }

@@ -190,7 +190,7 @@ export function FilterPopover({
                         );
                       })}
                     </div>
-                  ) : pole.type === "date" ? (
+                  ) : pole.type === "date" || pole.type === "renewal" ? (
                     <DatePicker
                       size="sm"
                       ariaLabel={nazwaWartosci}
@@ -198,24 +198,32 @@ export function FilterPopover({
                       value={typeof c.value === "string" ? (c.value as IsoDate) : null}
                       onChange={(d) => zmien(i, { value: d ?? undefined })}
                     />
-                  ) : pole.type === "number" || pole.type === "rating" ? (
-                    <TextField
-                      label={<span className="sr-only">{nazwaWartosci}</span>}
-                      inputMode="decimal"
-                      className="font-mono"
-                      value={
-                        szkice[i] ??
-                        (typeof c.value === "number" ? String(c.value).replace(".", ",") : "")
-                      }
-                      onChange={(e) => {
-                        const tekst = e.target.value;
-                        setSzkice((s) => ({ ...s, [i]: tekst }));
-                        const liczba = Number(tekst.trim().replace(",", "."));
-                        zmien(i, {
-                          value: tekst.trim() !== "" && Number.isFinite(liczba) ? liczba : undefined,
-                        });
-                      }}
-                    />
+                  ) : pole.type === "number" || pole.type === "rating" || pole.type === "recurring" ? (
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <TextField
+                          label={<span className="sr-only">{nazwaWartosci}</span>}
+                          inputMode="decimal"
+                          className="font-mono"
+                          value={
+                            szkice[i] ??
+                            (typeof c.value === "number" ? String(c.value).replace(".", ",") : "")
+                          }
+                          onChange={(e) => {
+                            const tekst = e.target.value;
+                            setSzkice((s) => ({ ...s, [i]: tekst }));
+                            const liczba = Number(tekst.trim().replace(",", "."));
+                            zmien(i, {
+                              value: tekst.trim() !== "" && Number.isFinite(liczba) ? liczba : undefined,
+                            });
+                          }}
+                        />
+                      </div>
+                      {/* Kwota cykliczna porównuje się na kwocie przeliczonej na miesiąc */}
+                      {pole.type === "recurring" && (
+                        <span className="flex-none text-[13px] whitespace-nowrap text-muted-foreground">zł / mies.</span>
+                      )}
+                    </div>
                   ) : (
                     <TextField
                       label={<span className="sr-only">{nazwaWartosci}</span>}

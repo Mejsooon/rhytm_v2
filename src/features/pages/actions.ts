@@ -611,7 +611,17 @@ export async function changeFieldType(
   const typ = fieldTypeSchema.safeParse(type);
   const cfg = fieldConfigSchema.safeParse(config ?? {});
   const wartosci = z
-    .record(idSchema, z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .record(
+      idSchema,
+      z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.null(),
+        // Kwota cykliczna
+        z.object({ amount: z.number(), cycle: z.enum(["month", "year"]) }),
+      ]),
+    )
     .safeParse(values ?? {});
   if (!idOk.success || !typ.success || !cfg.success || !wartosci.success) {
     return { ok: false, message: BLAD_ZAPISU };

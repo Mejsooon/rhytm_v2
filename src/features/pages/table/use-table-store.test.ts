@@ -293,6 +293,28 @@ describe("useTableStore", () => {
       expect(result.current.rows).toHaveLength(3);
     });
 
+    it("checkbox z default_checked daje nowemu wierszowi true (addRowInline i addRowDraft)", async () => {
+      const b = stronaTestowa("subscriptions", "Subskrypcje", []).blocks[0];
+      const aktywna = b.fields.find((f) => f.name === "Aktywna")!;
+      const kategoria = b.fields.find((f) => f.name === "Kategoria")!;
+      actions.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
+        ok: true,
+        row: { id: "srv-1", values, position: 0, deletedAt: null },
+      }));
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.addRowInline();
+      });
+      expect(actions.addRow).toHaveBeenCalledWith(b.id, {
+        [kategoria.id]: kategoria.config.default_option,
+        [aktywna.id]: true,
+      });
+      await act(async () => {
+        await result.current.addRowDraft();
+      });
+      expect(result.current.editing?.values[aktywna.id]).toBe(true);
+    });
+
     it("błąd zwraca null i pokazuje toast", async () => {
       actions.addRow.mockResolvedValue({ ok: false, message: "x" });
       const { result } = renderHook(() => useTableStore(blok()));

@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { PageField } from "../fields";
 import type { PinnedCard } from "../table-model";
 import { CardDialog } from "./card-dialog";
-import { stronaTestowa } from "./test-page";
+import { stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
 const DZIS = "2026-11-15";
 
@@ -369,3 +369,68 @@ describe("CardDialog", () => {
     expect((onSave.mock.calls[0][0] as PinnedCard).unit).toBeUndefined();
   });
 });
+
+// Subscriptions (S2Main): sposoby liczenia Kwoty cyklicznej i Daty odnowienia
+describe("CardDialog: Subscriptions", () => {
+  const SUB = stronaTestowa("subscriptions", "Subscriptions", SUBSKRYPCJE).blocks[0];
+
+  function pokazSub() {
+    const onSave = vi.fn();
+    render(
+      <CardDialog
+        open
+        tableName="Subscriptions"
+        fields={SUB.fields}
+        rows={SUB.rows}
+        today={DZIS}
+        initial={null}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    return { onSave };
+  }
+
+  it("Kwota cykliczna proponuje „Suma na miesiąc” i „Suma na rok”; podgląd liczy aktywne wiersze", async () => {
+    const user = userEvent.setup();
+    const { onSave } = pokazSub();
+    await user.click(
+      within(screen.getByRole("radiogroup", { name: "Kolumna" })).getByRole("radio", { name: "Kwota cykliczna" }),
+    );
+    const sposoby = within(screen.getByRole("radiogroup", { name: "Co policzyć" })).getAllByRole("radio");
+    expect(sposoby.map((r) => r.querySelector(".font-medium")?.textContent)).toEqual([
+      "Suma na miesiąc",
+      "Suma na rok",
+    ]);
+    expect(sposoby[0]).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText("np. „Σ miesięcznie: 437,94 zł”")).toBeTruthy();
+    const podglad = screen.getByTestId("podglad-karty");
+    expect(within(podglad).getByText("Σ miesięcznie")).toBeTruthy();
+    expect(within(podglad).getByText("63,83")).toBeTruthy();
+    expect(within(podglad).getByText("zł")).toBeTruthy();
+    await user.click(sposoby[1]);
+    expect(within(podglad).getByText("765,99")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Dodaj kartę" }));
+    expect(onSave).toHaveBeenCalledWith({
+      label: "Σ rocznie",
+      field_id: SUB.fields.find((f) => f.name === "Kwota cykliczna")!.id,
+      aggregation: "sum_year",
+    });
+  });
+
+  it("Data odnowienia proponuje „Najbliższe odnowienie”", async () => {
+    const user = userEvent.setup();
+    pokazSub();
+    await user.click(
+      within(screen.getByRole("radiogroup", { name: "Kolumna" })).getByRole("radio", { name: "Data odnowienia" }),
+    );
+    const sposoby = within(screen.getByRole("radiogroup", { name: "Co policzyć" })).getAllByRole("radio");
+    expect(sposoby).toHaveLength(1);
+    expect(sposoby[0]).toHaveTextContent("Najbliższe odnowienie");
+    expect(sposoby[0]).toHaveTextContent("najbliższa przyszła data wg cyklu");
+    const podglad = screen.getByTestId("podglad-karty");
+    expect(within(podglad).getByText("Netflix")).toBeTruthy();
+    expect(within(podglad).getByText("za 6 dni")).toBeTruthy();
+  });
+});
+

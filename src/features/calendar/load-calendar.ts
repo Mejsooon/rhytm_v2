@@ -16,6 +16,18 @@ import {
   type SportItem,
   type TemplateRow,
 } from "@/features/sport/model";
+import {
+  nextRenewal,
+  isRecurringValue,
+  normalizeValue,
+  renewalDates,
+  rowActive,
+  rowCycle,
+  type Cycle,
+  type FieldConfig,
+  type FieldType,
+  type PageField,
+} from "@/features/pages/fields";
 
 export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
@@ -33,7 +45,42 @@ export type CalendarData = {
   profile: CalendarProfile;
   // Treningi do podglądu: sesje z show_in_calendar i wystąpienia szablonów od dziś, rosnąco
   sport: SportItem[];
+  // Odnowienia subskrypcji (tylko web /kalendarz; loadCalendar ich nie wczytuje, dokłada je loadRenewals)
+  renewals?: RenewalsData;
 };
+
+// Źródło odnowień = pole Data odnowienia; przełącza je pozycja w menu „Kategorie” (show_in_calendar)
+export type RenewalSource = {
+  fieldId: string;
+  pageId: string;
+  config: FieldConfig;
+  // Tytuł strony; przy kilku polach odnowienia na stronie „Tytuł · Nazwa pola”
+  name: string;
+  // config.show_in_calendar !== false
+  shown: boolean;
+};
+
+// Jedno wystąpienie odnowienia w zakresie widoku (tylko podgląd)
+export type RenewalItem = {
+  // `${fieldId}:${rowId}:${date}`
+  key: string;
+  fieldId: string;
+  pageId: string;
+  pageTitle: string;
+  rowId: string;
+  // To wystąpienie i następne po nim (data + 1 cykl)
+  date: IsoDate;
+  next: IsoDate;
+  // Tytuł wiersza (pusty → empty_label pola tytułowego)
+  title: string;
+  amount: number | null;
+  cycle: Cycle;
+  // Nazwa pierwszego pola Select/Status tabeli albo „Kategoria” i etykieta wybranej opcji
+  categoryName: string;
+  categoryLabel: string | null;
+};
+
+export type RenewalsData = { items: RenewalItem[]; sources: RenewalSource[] };
 
 // Bloki, które mogą mieć wystąpienia w zakresie: jednorazowe z dniem w zakresie
 // oraz serie zaczęte do końca zakresu, których `until` nie wypada przed jego początkiem
@@ -262,4 +309,158 @@ export async function loadCalendar(
     profile: profil,
     sport,
   };
+}
+
+// Odnowienia subskrypcji w zakresie: wszystkie pola Data odnowienia użytkownika (strony i bloki
+// nieusunięte, strona nie systemowa), ich tabele i wiersze. Wystąpienia liczone są dla wszystkich
+// źródeł, także ukrytych, więc przełączenie widoczności nie wymaga ponownego wczytania.
+export async function loadRenewals(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  range: { from: IsoDate; to: IsoDate },
+): Promise<RenewalsData> {
+  const polaRes = await supabase
+    .from("page_fields")
+    .select(
+      "id, block_id, name, config, page_blocks!inner(id, page_id, deleted_at, pages!inner(id, title, deleted_at, is_system))",
+    )
+    .eq("user_id", userId)
+    .eq("type", "renewal")
+    .is("page_blocks.deleted_at", null)
+    .is("page_blocks.pages.deleted_at", null)
+    .eq("page_blocks.pages.is_system", false);
+  if (polaRes.error) throw new Error(polaRes.error.message);
+
+  type PoleOdnowienia = {
+    id: string;
+    block_id: string;
+    name: string;
+    config: unknown;
+    page_blocks: {
+      id: string;
+      page_id: string;
+      pages: { id: string; title: string };
+    };
+  };
+  const odnowienia = (polaRes.data ?? []) as unknown as PoleOdnowienia[];
+  if (odnowienia.length === 0) return { items: [], sources: [] };
+
+  const idBlokow = [...new Set(odnowienia.map((p) => p.block_id))];
+  const [wszystkiePolaRes, wierszeRes] = await Promise.all([
+    supabase
+      .from("page_fields")
+      .select("id, block_id, name, type, config, position, is_title")
+      .in("block_id", idBlokow),
+    supabase
+      .from("page_rows")
+      .select("id, block_id, values")
+      .in("block_id", idBlokow)
+      .is("deleted_at", null),
+  ]);
+  if (wszystkiePolaRes.error) throw new Error(wszystkiePolaRes.error.message);
+  if (wierszeRes.error) throw new Error(wierszeRes.error.message);
+
+  // Pola bloków w kształcie modelu stron (PageField), posortowane po pozycji
+  const polaBloku = new Map<string, PageField[]>();
+  for (const f of wszystkiePolaRes.data ?? []) {
+    const lista = polaBloku.get(f.block_id) ?? [];
+    lista.push({
+      id: f.id,
+      name: f.name,
+      type: f.type as FieldType,
+      config: (f.config ?? {}) as FieldConfig,
+      position: f.position,
+      isTitle: f.is_title,
+    });
+    polaBloku.set(f.block_id, lista);
+  }
+  for (const lista of polaBloku.values()) {
+    lista.sort((a, b) => a.position - b.position);
+  }
+
+  // Ile pól odnowienia ma każda strona (przy kilku nazwa źródła dostaje nazwę pola)
+  const naStronie = new Map<string, number>();
+  for (const p of odnowienia) {
+    const id = p.page_blocks.page_id;
+    naStronie.set(id, (naStronie.get(id) ?? 0) + 1);
+  }
+
+  const sources: RenewalSource[] = [];
+  const items: RenewalItem[] = [];
+  for (const p of odnowienia) {
+    const pageId = p.page_blocks.page_id;
+    const pageTitle = p.page_blocks.pages.title.trim() || "Bez tytułu";
+    const config = (p.config ?? {}) as FieldConfig;
+    sources.push({
+      fieldId: p.id,
+      pageId,
+      config,
+      name:
+        (naStronie.get(pageId) ?? 0) > 1
+          ? `${pageTitle} · ${p.name}`
+          : pageTitle,
+      shown: config.show_in_calendar !== false,
+    });
+
+    const pola = polaBloku.get(p.block_id) ?? [];
+    const pole = pola.find((f) => f.id === p.id) ?? {
+      id: p.id,
+      name: p.name,
+      type: "renewal" as const,
+      config,
+      position: 0,
+      isTitle: false,
+    };
+    const tytulowe = pola.find((f) => f.isTitle);
+    const kwotowe = config.cycle_field_id
+      ? pola.find((f) => f.id === config.cycle_field_id && f.type === "recurring")
+      : undefined;
+    const kategorii = pola.find(
+      (f) => f.type === "select" || f.type === "status",
+    );
+
+    for (const w of wierszeRes.data ?? []) {
+      if (w.block_id !== p.block_id) continue;
+      const values = (w.values ?? {}) as Record<string, unknown>;
+      if (!rowActive(pole, pola, values)) continue;
+      const kotwica = normalizeValue(pole, values[pole.id]);
+      if (typeof kotwica !== "string") continue;
+      const cykl = rowCycle(pole, pola, values);
+      const kwota = kwotowe ? normalizeValue(kwotowe, values[kwotowe.id]) : null;
+      const surowyTytul = tytulowe ? values[tytulowe.id] : undefined;
+      const tytul =
+        typeof surowyTytul === "string" && surowyTytul.trim() !== ""
+          ? surowyTytul.trim()
+          : (tytulowe?.config.empty_label ?? "Bez nazwy");
+      const opcja = kategorii
+        ? kategorii.config.options?.find((o) => o.id === values[kategorii.id])
+        : undefined;
+      for (const data of renewalDates(kotwica, cykl, range.from, range.to)) {
+        items.push({
+          key: `${p.id}:${w.id}:${data}`,
+          fieldId: p.id,
+          pageId,
+          pageTitle,
+          rowId: w.id,
+          date: data,
+          next: nextRenewal(kotwica, cykl, addDays(data, 1)),
+          title: tytul,
+          amount: isRecurringValue(kwota) ? kwota.amount : null,
+          cycle: cykl,
+          categoryName: kategorii?.name ?? "Kategoria",
+          categoryLabel: opcja?.label ?? null,
+        });
+      }
+    }
+  }
+
+  items.sort((a, b) =>
+    a.date !== b.date
+      ? a.date < b.date
+        ? -1
+        : 1
+      : a.title.localeCompare(b.title, "pl"),
+  );
+  sources.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+  return { items, sources };
 }

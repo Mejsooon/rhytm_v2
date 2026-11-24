@@ -553,6 +553,27 @@ describe("pole Sekret", () => {
     });
   });
 
+  it("changeFieldType number → recurring z wartością obiektową przechodzi walidację", async () => {
+    tables.page_fields = fakeTable({ single: { is_title: false, type: "number" } });
+    rpc.mockResolvedValue({ data: null, error: null });
+    const wartosci = { [WIERSZ]: { amount: 43, cycle: "month" as const }, [STRONA]: null };
+    const w = await changeFieldType(POLE_LICZBA, "recurring", { default_cycle: "month" }, wartosci);
+    expect(w).toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledWith("change_field_type", {
+      p_field_id: POLE_LICZBA,
+      p_type: "recurring",
+      p_config: { default_cycle: "month" },
+      p_values: wartosci,
+    });
+  });
+
+  it("changeFieldType odrzuca obiekt o złym cyklu", async () => {
+    tables.page_fields = fakeTable({ single: { is_title: false, type: "number" } });
+    const w = await changeFieldType(POLE_LICZBA, "recurring", {}, { [WIERSZ]: { amount: 1, cycle: "week" } as never });
+    expect(w.ok).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("changeFieldType z i na secret zwraca błąd", async () => {
     // Na secret
     tables.page_fields = fakeTable({ single: { is_title: false, type: "text" } });

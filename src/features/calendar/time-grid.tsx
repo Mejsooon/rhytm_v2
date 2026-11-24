@@ -6,9 +6,11 @@
 // Pozycje bloków to czas ścienny (startMin), więc nie zależą od stref.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Repeat } from "lucide-react";
 
 import { StatusBadge } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
+import { formatMoney } from "@/features/pages/fields";
 import {
   SPORT_COLOR,
   sportItemHref,
@@ -18,7 +20,7 @@ import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "./day-layout";
 import type { DragResult } from "./drag";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalItem } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
 import { useGridDrag } from "./use-grid-drag";
 import { weekdayOf } from "./view-range";
@@ -48,6 +50,9 @@ export function TimeGrid({
   onBlockClick,
   onRangeDrag,
   onBlockDrag,
+  renewals = [],
+  openRenewalKey = null,
+  onRenewalClick,
 }: {
   days: IsoDate[];
   // Wystąpienia widocznych kategorii w zakresie dni
@@ -74,6 +79,10 @@ export function TimeGrid({
   onRangeDrag?: (range: DragResult) => void;
   // Przesunięcie albo rozciągnięcie bloku: nowe miejsce wystąpienia
   onBlockDrag?: (occurrence: Occurrence, result: DragResult) => void;
+  // Odnowienia subskrypcji (tylko podgląd) w wierszu „cały dzień”; otwarte ma ciemniejszą ramkę
+  renewals?: RenewalItem[];
+  openRenewalKey?: string | null;
+  onRenewalClick?: (item: RenewalItem, anchorEl: HTMLElement) => void;
 }) {
   const wysokoscGodziny = GODZINA[variant];
   const wysokoscSiatki = 24 * wysokoscGodziny;
@@ -124,6 +133,34 @@ export function TimeGrid({
     );
 
   const godziny = Array.from({ length: 24 }, (_, h) => h);
+
+  // Wpis odnowienia wg S2Calendar (`renChip`): przerywana ramka, ikona Repeat 12 px, tekst
+  // „Netflix · 43,00 zł” ucinany wielokropkiem; otwarty ma ramkę .4 i cień 2 px (S2CalendarRenewal)
+  const wpisOdnowienia = (r: RenewalItem) => {
+    const otwarte = openRenewalKey === r.key;
+    return (
+      <button
+        key={r.key}
+        type="button"
+        data-renewal-key={r.key}
+        aria-expanded={otwarte}
+        aria-haspopup="dialog"
+        title={`Odnowienie ze strony ${r.pageTitle} — tylko podgląd`}
+        onClick={(e) => onRenewalClick?.(r, e.currentTarget)}
+        className="box-border flex w-full min-w-0 cursor-pointer items-center gap-1 overflow-hidden rounded-[6px] border border-dashed bg-white px-1.5 py-[3px] text-left text-xs font-medium whitespace-nowrap text-[#404040] outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        style={{
+          borderColor: otwarte ? "rgba(0,0,0,.4)" : "rgba(0,0,0,.24)",
+          boxShadow: otwarte ? "0 0 0 2px rgba(0,0,0,.08)" : undefined,
+        }}
+      >
+        <Repeat size={12} aria-hidden="true" className="flex-none" />
+        <span className="min-w-0 truncate">
+          {r.title +
+            (r.amount !== null ? ` · ${formatMoney(r.amount)} zł` : "")}
+        </span>
+      </button>
+    );
+  };
   // Linia godziny na górze każdej godziny, pod etykietą z osi
   const tloLinii = `repeating-linear-gradient(to bottom, rgba(0,0,0,.05) 0, rgba(0,0,0,.05) 1px, transparent 1px, transparent ${wysokoscGodziny}px)`;
 
@@ -180,7 +217,7 @@ export function TimeGrid({
                   );
                 })}
               </div>
-              {/* Wiersz „cały dzień” — w Etapie 2 pusty (odnowienia subskrypcji dojdą później) */}
+              {/* Wiersz „cały dzień”: odnowienia subskrypcji tego dnia (S2Calendar) */}
               <div
                 className="grid border-t border-border-soft"
                 style={{ gridTemplateColumns: kolumny }}
@@ -193,8 +230,13 @@ export function TimeGrid({
                 {days.map((dzien) => (
                   <div
                     key={dzien}
-                    className="min-h-7 border-l border-border-soft p-1"
-                  />
+                    data-testid={`caly-dzien-${dzien}`}
+                    className="flex min-h-7 min-w-0 flex-col gap-0.5 border-l border-border-soft p-1"
+                  >
+                    {renewals
+                      .filter((r) => r.date === dzien)
+                      .map(wpisOdnowienia)}
+                  </div>
                 ))}
               </div>
             </>
@@ -208,7 +250,7 @@ export function TimeGrid({
               </div>
               <div
                 data-testid={`naglowek-${days[0]}`}
-                className="flex min-h-7 items-center gap-2 border-l border-border-soft px-2 py-1.5"
+                className="flex min-h-7 min-w-0 flex-wrap items-center gap-2 border-l border-border-soft px-2 py-1.5"
               >
                 <span
                   data-dzis={days[0] === today || undefined}
@@ -223,6 +265,14 @@ export function TimeGrid({
                 <span className="text-xs font-medium text-muted-foreground">
                   {DNI_KROTKO[weekdayOf(days[0])]}
                 </span>
+                {/* Odnowienia dnia za numerem i nazwą dnia (układ z tygodnia) */}
+                {renewals
+                  .filter((r) => r.date === days[0])
+                  .map((r) => (
+                    <span key={r.key} className="flex min-w-0 max-w-[260px]">
+                      {wpisOdnowienia(r)}
+                    </span>
+                  ))}
               </div>
             </div>
           )}

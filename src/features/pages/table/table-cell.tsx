@@ -4,6 +4,7 @@ import * as React from "react";
 
 import {
   ActionPopover,
+  Button,
   Checkbox,
   DatePicker,
   StatusBadge,
@@ -14,10 +15,17 @@ import { OptionBadge } from "./option-badge";
 import { OptionPicker } from "./option-picker";
 import { SecretTableCell } from "./secret-table-cell";
 import {
+  formatMoney,
   formatValue,
+  isRecurringValue,
   isUrgent,
+  nextRenewal,
+  renewalDates,
   normalizeValue,
   relativeDue,
+  rowActive,
+  rowCycle,
+  type Cycle,
   type PageField,
 } from "../fields";
 import type { PageRow } from "../table-model";
@@ -35,11 +43,14 @@ const OBWODKA =
 // Jedna komórka tabeli edytowana wprost, jak w Notion (S2Books.dc.html). Tekst, liczba i link to stałe
 // pole bez ramki: zapis po 600 ms przerwy oraz od razu przy Enter, Esc, wyjściu i odmontowaniu.
 // Gwiazdki, checkbox i data zapisują od razu. Select i status pokazują plakietkę (klik otwiera okienko opcji).
+// Kwota cykliczna to pole kwoty (zapis jak liczba) z „zł” i przyciskiem cyklu; Data odnowienia pokazuje następne
+// odnowienie i czas do niego (S2Main.dc.html).
 // Sekret to SecretTableCell (szyfrowanie przy zapisie). `readOnly` (moduł Hasła przy zamkniętym sejfie)
 // pokazuje wartość jako zwykły tekst, bez edycji.
 export function TableCell({
   row,
   field,
+  fields,
   today,
   done,
   autoFocus = false,
@@ -55,6 +66,8 @@ export function TableCell({
 }: {
   row: PageRow;
   field: PageField;
+  // Wszystkie pola tabeli: Data odnowienia bierze z nich cykl wiersza i „Aktywną”
+  fields: PageField[];
   today: IsoDate;
   // Opcja „zrobione” z karty najbliższego terminu — zrobione terminy nie są pilne
   done: { fieldId: string; optionId: string } | null;
@@ -91,8 +104,9 @@ export function TableCell({
     wstecz: () => void;
   } | null>(null);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Wpisany, a jeszcze niezapisany tekst (null = nic do zapisu) i najnowsze onSave — dla zapisu przy odmontowaniu
-  const niezapisany = React.useRef<string | null>(null);
+  // Wpisana, a jeszcze niezapisana wartość (null = nic do zapisu; Kwota cykliczna zapisuje też null, stąd opakowanie)
+  // i najnowsze onSave — dla zapisu przy odmontowaniu
+  const niezapisany = React.useRef<{ wartosc: unknown } | null>(null);
   const zapisz = React.useRef(onSave);
   React.useEffect(() => {
     zapisz.current = onSave;
@@ -110,7 +124,7 @@ export function TableCell({
     const z = zapisz;
     return () => {
       if (t.current) clearTimeout(t.current);
-      if (n.current !== null) z.current(n.current);
+      if (n.current !== null) z.current(n.current.wartosc);
       n.current = null;
     };
   }, []);
@@ -121,9 +135,9 @@ export function TableCell({
       clearTimeout(timer.current);
       timer.current = null;
     }
-    const tekst = niezapisany.current;
+    const szkicZapisu = niezapisany.current;
     niezapisany.current = null;
-    if (tekst !== null) zapisz.current(tekst);
+    if (szkicZapisu !== null) zapisz.current(szkicZapisu.wartosc);
   }
 
   // Sekret: maska, oczko i edycja z szyfrowaniem (szyfrogramu nigdy nie pokazujemy)
@@ -307,6 +321,142 @@ export function TableCell({
     );
   }
 
+  if (field.type === "renewal") {
+    const kotwica = typeof v === "string" ? v : null;
+    // Wyświetlamy następne odnowienie (od dziś według cyklu wiersza), a zapisujemy kotwicę serii
+    const cykl = rowCycle(field, fields, row.values);
+    const nastepne = kotwica === null ? null : nextRenewal(kotwica, cykl, today);
+    const aktywny = rowActive(field, fields, row.values);
+    const wzgledna = nastepne === null ? null : relativeDue(nastepne, today);
+    // Za datą: „anulowana” w wierszu nieaktywnym (także bez daty, jak relTxt w S2Main), inaczej czas do odnowienia
+    const zaData = !aktywny || wzgledna !== null;
+    return (
+      // Otwarty kalendarz (aria-expanded na wyzwalaczu) daje niebieską obwódkę komórki, jak w dacie
+      <td
+        className={cn(
+          TD,
+          "p-0 has-[[aria-expanded=true]]:bg-white has-[[aria-expanded=true]]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)] has-[:focus-visible]:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]",
+        )}
+      >
+        {/* Czas do odnowienia tuż za datą (odstęp 6 px); klik w puste miejsce komórki otwiera kalendarz */}
+        <div
+          className="flex h-11 cursor-pointer items-center gap-1.5 overflow-hidden pr-3 whitespace-nowrap"
+          onClick={(e) => {
+            const wyzwalacz = e.currentTarget.querySelector("button");
+            const cel = e.target as Node;
+            if (wyzwalacz && e.currentTarget.contains(cel) && !wyzwalacz.contains(cel)) wyzwalacz.click();
+          }}
+        >
+          <DatePicker
+            variant="bare"
+            ariaLabel={`${field.name}: ${nastepne !== null ? formatValue(field, nastepne) : "puste"}`}
+            placeholder="—"
+            today={today}
+            // Kalendarz otwiera się na następnym odnowieniu: wybór tej samej daty nie zmienia serii
+            value={nastepne as IsoDate | null}
+            onChange={(d) => {
+              // Data już należąca do serii nie zmienia kotwicy (inaczej seria dryfuje: 31.01 → 28.02 → 28.03)
+              if (d !== null && kotwica !== null && renewalDates(kotwica, cykl, d, d).length > 0) return;
+              onSave(d);
+            }}
+            className={cn(
+              "h-11 min-w-0 justify-start rounded-none pl-3 text-sm tabular-nums focus-visible:shadow-none",
+              zaData ? "flex-none" : "flex-1",
+            )}
+          />
+          {zaData &&
+            (!aktywny ? (
+              // Wiersz nieaktywny: szara plakietka zamiast czasu do odnowienia (S2Main relC → .bdg.sec)
+              <StatusBadge tone="gray" className="min-w-0">
+                anulowana
+              </StatusBadge>
+            ) : wzgledna !== null && wzgledna.days >= 0 && wzgledna.days <= 10 ? (
+              // 0–10 dni do odnowienia: pomarańczowa plakietka (.bdg.warn)
+              <StatusBadge tone="orange" className="min-w-0">
+                {wzgledna.text}
+              </StatusBadge>
+            ) : (
+              <span className="min-w-0 truncate text-muted-foreground">{wzgledna?.text}</span>
+            ))}
+        </div>
+      </td>
+    );
+  }
+
+  if (field.type === "recurring") {
+    const kwota = isRecurringValue(v) ? v : null;
+    // Kwota w szkicu (null = pusty albo niepoprawny tekst); bez szkicu kwota z magazynu
+    const zSzkicu = szkic === null ? null : normalizeValue(field, szkic.replace(/[\s\u00a0]/g, ""));
+    const kwotaSzkicu =
+      szkic === null ? (kwota?.amount ?? null) : isRecurringValue(zSzkicu) ? zSzkicu.amount : null;
+    // Przy pustej kwocie przycisk pokazuje cykl domyślny pola
+    const cykl: Cycle = kwota?.cycle ?? field.config.default_cycle ?? "month";
+    const cyklTekst = cykl === "month" ? "mies." : "rok";
+    return (
+      <td className={cn(TD, "relative cursor-text p-0 text-foreground tabular-nums", OBWODKA)}>
+        {/* Kolejność z S2Main (isMoney): kwota do prawej, szare „zł” 13 px i przycisk cyklu; odstęp 4 px */}
+        <span className="flex h-11 items-center justify-end gap-1 px-3">
+          <input
+            ref={poleRef}
+            type="text"
+            inputMode="decimal"
+            aria-label={field.name}
+            value={szkic ?? (kwota ? formatMoney(kwota.amount) : "")}
+            placeholder="0,00"
+            onFocus={() => {
+              setSzkic(kwota ? formatMoney(kwota.amount) : "");
+              onFocused?.();
+            }}
+            onChange={(e) => {
+              const t = e.target.value;
+              setSzkic(t);
+              // Spacje (także twarde z formatu) nie przeszkadzają w odczycie kwoty
+              const czysty = t.replace(/[\s\u00a0]/g, "");
+              const n = normalizeValue(field, czysty);
+              // Pusty tekst czyści kwotę; niepoprawny nie idzie do zapisu (po wyjściu wraca poprzednia wartość)
+              const zla = czysty !== "" && !isRecurringValue(n);
+              niezapisany.current = zla
+                ? null
+                : { wartosc: czysty === "" || !isRecurringValue(n) ? null : { amount: n.amount, cycle: cykl } };
+              if (timer.current) clearTimeout(timer.current);
+              timer.current = zla ? null : setTimeout(zapiszSzkic, OPOZNIENIE_ZAPISU);
+            }}
+            onBlur={() => {
+              zapiszSzkic();
+              setSzkic(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
+            className="block h-11 w-full min-w-0 flex-1 truncate rounded-none border-0 bg-transparent p-0 text-right font-[inherit] text-inherit shadow-none outline-none placeholder:font-normal placeholder:text-faint-foreground focus:shadow-none focus-visible:shadow-none"
+          />
+          <span className="flex-none text-[13px] text-muted-foreground">zł</span>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={kwotaSzkicu === null}
+            aria-label={`Cykl: ${cyklTekst} (kliknij, aby zmienić)`}
+            // Klik nie zabiera fokusu z pola kwoty: szkic i nowy cykl idą w jednym zapisie
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (kwotaSzkicu === null) return;
+              if (timer.current) clearTimeout(timer.current);
+              timer.current = null;
+              niezapisany.current = null;
+              onSave({ amount: kwotaSzkicu, cycle: cykl === "month" ? "year" : "month" });
+            }}
+            className="flex-none px-1 text-muted-foreground"
+          >
+            / {cyklTekst}
+          </Button>
+        </span>
+      </td>
+    );
+  }
+
   // Tekst, liczba i link: stałe pole bez ramki, wyglądające jak tekst
   const tekstWidoku =
     field.type === "text"
@@ -361,7 +511,7 @@ export function TableCell({
             field.type === "number" &&
             t.trim() !== "" &&
             normalizeValue(field, t) === null;
-          niezapisany.current = zla ? null : t;
+          niezapisany.current = zla ? null : { wartosc: t };
           if (timer.current) clearTimeout(timer.current);
           timer.current = zla
             ? null

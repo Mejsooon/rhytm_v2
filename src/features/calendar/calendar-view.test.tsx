@@ -17,7 +17,9 @@ const {
   replace,
   createBlock,
   changeOccurrence,
+  updateField,
 } = vi.hoisted(() => ({
+  updateField: vi.fn(),
   setCategoryHidden: vi.fn(),
   createCategory: vi.fn(),
   toastError: vi.fn(),
@@ -31,6 +33,7 @@ vi.mock("@/features/categories/actions", () => ({
   createCategory,
 }));
 vi.mock("./actions", () => ({ createBlock, changeOccurrence }));
+vi.mock("@/features/pages/actions", () => ({ updateField }));
 vi.mock("@/features/tasks/actions", () => ({
   addTask: vi.fn(),
   toggleTask: vi.fn(),
@@ -45,7 +48,7 @@ vi.mock("./mobile/m-calendar-week", () => ({ MCalendarWeek: () => null }));
 vi.mock("./mobile/m-calendar-month", () => ({ MCalendarMonth: () => null }));
 
 import { CalendarView } from "./calendar-view";
-import type { CalendarData } from "./load-calendar";
+import type { CalendarData, RenewalsData } from "./load-calendar";
 import { planZSzablonu, trening } from "./mobile/fixtures";
 
 function blok(id: string, title: string, categoryId: string) {
@@ -1138,5 +1141,147 @@ describe("CalendarView — podgląd treningów", () => {
       );
       expect(replace).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("CalendarView: odnowienia subskrypcji", () => {
+  function odnowienia(shown = true): RenewalsData {
+    return {
+      items: [
+        {
+          key: "f-ren:r1:2026-11-21",
+          fieldId: "f-ren",
+          pageId: "p1",
+          pageTitle: "Subscriptions",
+          rowId: "r1",
+          date: "2026-11-21",
+          next: "2026-12-21",
+          title: "Netflix",
+          amount: 43,
+          cycle: "month",
+          categoryName: "Kategoria",
+          categoryLabel: "Rozrywka",
+        },
+      ],
+      sources: [
+        {
+          fieldId: "f-ren",
+          pageId: "p1",
+          config: { cycle_field_id: "f-kw", show_in_calendar: shown },
+          name: "Subscriptions",
+          shown,
+        },
+      ],
+    };
+  }
+
+  function wyrenderujZOdnowieniem(
+    view: "tydzien" | "dzien" | "miesiac" = "tydzien",
+    date = "2026-11-18",
+  ) {
+    return render(
+      <CalendarView
+        view={view}
+        date={date}
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+        renewals={odnowienia()}
+      />,
+    );
+  }
+
+  it("tydzień: wpis w sobotę, klik otwiera dymek z „Następne 21.12.2026” i linkiem; Esc zamyka", async () => {
+    wyrenderujZOdnowieniem();
+    const wpis = within(screen.getByTestId("caly-dzien-2026-11-21")).getByRole(
+      "button",
+      { name: "Netflix · 43,00 zł" },
+    );
+    await userEvent.click(wpis);
+    const dymek = await screen.findByRole("dialog", {
+      name: "Odnowienie Netflix",
+    });
+    expect(dymek).toHaveTextContent("Następne21.12.2026");
+    expect(dymek).toHaveTextContent("sob 21.11.2026 · za 4 dni");
+    expect(
+      within(dymek).getByRole("link", { name: "Otwórz w Subscriptions" }),
+    ).toHaveAttribute("href", "/strony/p1");
+    expect(wpis).toHaveAttribute("aria-expanded", "true");
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Odnowienie Netflix" }),
+      ).toBeNull(),
+    );
+  });
+
+  it("otwarcie odnowienia zamyka dymek bloku i odwrotnie", async () => {
+    wyrenderujZOdnowieniem();
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(
+      await screen.findByRole("dialog", { name: "Szczegóły bloku" }),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Netflix · 43,00 zł" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Odnowienie Netflix" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Szczegóły bloku" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: /Algebra/ }));
+    expect(
+      await screen.findByRole("dialog", { name: "Szczegóły bloku" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Odnowienie Netflix" }),
+    ).toBeNull();
+  });
+
+  it("ukrycie źródła w menu chowa wpisy i woła updateField z show_in_calendar:false", async () => {
+    updateField.mockResolvedValue({ ok: true });
+    wyrenderujZOdnowieniem();
+    expect(przyciskKategorii()).toHaveTextContent("3/3");
+    const pole = await poleKategorii("Subscriptions");
+    await userEvent.click(pole);
+    expect(updateField).toHaveBeenCalledWith("f-ren", {
+      config: { cycle_field_id: "f-kw", show_in_calendar: false },
+    });
+    await waitFor(() =>
+      expect(screen.queryByText("Netflix · 43,00 zł")).toBeNull(),
+    );
+    expect(przyciskKategorii()).toHaveTextContent("2/3");
+  });
+
+  it("błąd zapisu źródła cofa ukrycie i pokazuje komunikat", async () => {
+    updateField.mockResolvedValue({ ok: false, message: "x" });
+    wyrenderujZOdnowieniem();
+    await userEvent.click(await poleKategorii("Subscriptions"));
+    await waitFor(() => expect(toastError).toHaveBeenCalled());
+    await userEvent.keyboard("{Escape}");
+    expect(
+      await screen.findByRole("button", { name: "Netflix · 43,00 zł" }),
+    ).toBeInTheDocument();
+  });
+
+  it("miesiąc: „↻ Netflix” w komórce dnia otwiera ten sam dymek", async () => {
+    wyrenderujZOdnowieniem("miesiac");
+    const komorka = screen.getByTestId("komorka-2026-11-21");
+    await userEvent.click(
+      within(komorka).getByRole("button", { name: "Odnowienie Netflix" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Odnowienie Netflix" }),
+    ).toHaveTextContent("Kwota43,00 zł / mies.");
+  });
+
+  it("dzień: wpis w wierszu „cały dzień”", () => {
+    wyrenderujZOdnowieniem("dzien", "2026-11-21");
+    expect(
+      within(screen.getByTestId("naglowek-2026-11-21")).getByRole("button", {
+        name: "Netflix · 43,00 zł",
+      }),
+    ).toBeInTheDocument();
   });
 });

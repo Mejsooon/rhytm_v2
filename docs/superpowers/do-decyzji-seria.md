@@ -16,6 +16,17 @@ Każdy punkt: co wybrano, dlaczego, koszt pomyłki (ile pracy, żeby to zmienić
 | 8 | Ekran Dziś na telefonie zostaje stary do Etapu 3 (tylko bez luźnych zadań). | Zakres projektu. | Brak. |
 
 ## Subscriptions
+Pełna tabela decyzji D1–D18 z kosztem pomyłki: `docs/superpowers/specs/2026-11-24-subscriptions-design.md`, sekcja „Decyzje Claude”. Najważniejsze:
+| # | Decyzja | Koszt pomyłki |
+|---|---|---|
+| 1 | Tylko cykle miesiąc i rok (bez tygodnia i kwartału z S2AddField). | Niski, bez migracji. |
+| 2 | „Data odnowienia” to osobny typ pola; w bazie zostaje pierwsza data serii, wszędzie widać następne odnowienie (31.01 → 28.02 → 31.03). | Średni. |
+| 3 | Kalendarz pokazuje tylko odnowienia; terminy Projects dalej nie (opis szablonu Projects obiecuje kalendarz). | Średni: mały pakiet później. |
+| 4 | „Subscriptions” w menu „Kategorie” kalendarza przełącza „Pokaż w kalendarzu” pola, nie jest kategorią systemową. | Niski. |
+| 5 | Onboarding bez Subscriptions (makieta S2OnboardingPages go nie ma). | Niski. |
+| 6 | Pomarańczowa odznaka przy 0–10 dniach do odnowienia (jak S2Main). | Niski. |
+| 7 | Migracja Subscriptions idzie zaraz po scaleniu (wstecznie zgodna, nic nie usuwa). | Niski. |
+| 8 | Ponowny wybór daty, która już należy do serii, nic nie zapisuje (żeby seria nie „dryfowała”). | Niski. |
 
 ## Sprzątanie uwag webu
 

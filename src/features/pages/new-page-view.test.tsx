@@ -20,16 +20,15 @@ describe("NewPageView", () => {
     createPageFromTemplate.mockResolvedValue({ ok: true, id: "nowa" });
   });
 
-  it("pokazuje 4 szablony (Pusta strona, Books, Projects, Websites), bez Passwords i odznaki „szyfr.”", () => {
+  it("pokazuje 5 szablonów (Pusta strona, Books, Projects, Websites, Subscriptions), bez Passwords i odznaki „szyfr.”", () => {
     render(<NewPageView />);
     const karty = screen.getAllByRole("button", { pressed: false }).concat(
       screen.getAllByRole("button", { pressed: true }),
     );
-    const nazwy = ["Pusta strona", "Books", "Projects", "Websites"];
+    const nazwy = ["Pusta strona", "Books", "Projects", "Websites", "Subscriptions"];
     for (const n of nazwy) {
       expect(karty.some((k) => k.textContent?.includes(n))).toBe(true);
     }
-    expect(screen.queryByText("Subscriptions")).toBeNull();
     // Hasła to moduł, nie szablon
     expect(karty.some((k) => k.textContent?.includes("Passwords"))).toBe(false);
     expect(screen.queryByText("szyfr.")).toBeNull();
@@ -154,5 +153,24 @@ describe("NewPageView", () => {
     expect(screen.getByText("Tekst", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
     expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");
+  });
+
+  it("wybór Subscriptions pokazuje pola z typami inteligentnymi i dopisek z extra", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("button", { name: /Subscriptions/ }));
+    const lista = screen.getByText("Pola, które powstaną").parentElement!;
+    const wiersze = Array.from(lista.querySelectorAll("div.justify-between")).map((w) => w.textContent);
+    expect(wiersze).toEqual([
+      "NazwaTekst",
+      "Kwota cyklicznaKwota cykliczna",
+      "Data odnowieniaData odnowienia",
+      "KategoriaSelect",
+      "AktywnaCheckbox",
+    ]);
+    expect(screen.getByText("Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Subscriptions");
+    await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
+    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("subscriptions", "Subscriptions"));
   });
 });

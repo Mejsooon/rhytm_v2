@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -237,7 +238,27 @@ export function PinnedCards({
             <div className="text-xs font-medium text-muted-foreground">
               {wynik.label}
             </div>
-            {card.aggregation === "nearest_date" ? (
+            {card.aggregation === "next_renewal" ? (
+              // Najbliższe odnowienie (S2Main): nazwa 18 px jako link do tygodnia w kalendarzu i czas do odnowienia
+              // w odznace lg, pomarańczowej przy 0–10 dniach, inaczej szarej
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-lg font-semibold">
+                {wynik.date ? (
+                  <Link
+                    href={`/kalendarz?widok=tydzien&data=${wynik.date}`}
+                    className="rounded-sm text-inherit no-underline outline-none focus-visible:shadow-focus"
+                  >
+                    {wynik.value}
+                  </Link>
+                ) : (
+                  <span>{wynik.value}</span>
+                )}
+                {wynik.sub && (
+                  <StatusBadge tone={wynik.urgent ? "orange" : "gray"} size="lg">
+                    {wynik.sub}
+                  </StatusBadge>
+                )}
+              </div>
+            ) : card.aggregation === "nearest_date" ? (
               // Najbliższy termin: nazwa 18 px i czas do terminu w odznace, czerwonej przy ≤ 7 dniach
               <div className="mt-2.5 flex flex-wrap items-center gap-2 text-lg font-semibold">
                 <span>{wynik.value}</span>

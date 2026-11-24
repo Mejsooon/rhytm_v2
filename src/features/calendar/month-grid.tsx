@@ -12,7 +12,7 @@ import {
   type SportItem,
 } from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalItem } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
 import { weekdayOf } from "./view-range";
 
@@ -34,6 +34,9 @@ export function MonthGrid({
   onDayClick,
   onEntryClick,
   onMoreClick,
+  renewals = [],
+  openRenewalKey = null,
+  onRenewalClick,
 }: {
   // 42 dni siatki (6 tygodni), od pierwszego dnia tygodnia
   days: IsoDate[];
@@ -52,12 +55,22 @@ export function MonthGrid({
   onEntryClick: (key: string, anchor: HTMLElement) => void;
   // Klik w „+N więcej” (przejście do widoku dnia)
   onMoreClick?: () => void;
+  // Odnowienia subskrypcji (tylko podgląd): w komórce przed blokami i treningami (S2CalendarMonth)
+  renewals?: RenewalItem[];
+  openRenewalKey?: string | null;
+  onRenewalClick?: (item: RenewalItem, anchorEl: HTMLElement) => void;
 }) {
-  // Wpisy pogrupowane po dniu: bloki i treningi razem, godzina rosnąco
+  // Wpisy pogrupowane po dniu: odnowienia (startMin -1, więc pierwsze), bloki i treningi, godzina rosnąco
   type Wpis =
+    | { typ: "odnowienie"; r: RenewalItem; startMin: number }
     | { typ: "blok"; o: Occurrence; startMin: number }
     | { typ: "sport"; i: SportItem; startMin: number };
   const poDniach = new Map<IsoDate, Wpis[]>();
+  for (const r of renewals) {
+    const lista = poDniach.get(r.date) ?? [];
+    lista.push({ typ: "odnowienie", r, startMin: -1 });
+    poDniach.set(r.date, lista);
+  }
   for (const o of occurrences) {
     const lista = poDniach.get(o.date) ?? [];
     lista.push({ typ: "blok", o, startMin: o.startMin });
@@ -137,6 +150,33 @@ export function MonthGrid({
                   <Plus className="size-3.5" aria-hidden="true" />
                 </button>
                 {wpisy.slice(0, MAX_WPISOW).map((wpis) => {
+                  if (wpis.typ === "odnowienie") {
+                    const r = wpis.r;
+                    const otwarte = openRenewalKey === r.key;
+                    // Styl wpisu bez kategorii (tło KOLOR_BRAK+14, ramka +4d) i „↻ Netflix”, jak w makiecie
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        data-renewal-key={r.key}
+                        aria-expanded={otwarte}
+                        aria-haspopup="dialog"
+                        aria-label={`Odnowienie ${r.title}`}
+                        title={`Odnowienie ze strony ${r.pageTitle} — tylko podgląd`}
+                        onClick={(e) => onRenewalClick?.(r, e.currentTarget)}
+                        style={{
+                          backgroundColor: `${KOLOR_BRAK}14`,
+                          border: `1px solid ${KOLOR_BRAK}4d`,
+                          boxShadow: otwarte
+                            ? `0 0 0 2px ${KOLOR_BRAK}66`
+                            : undefined,
+                        }}
+                        className="mt-[3px] block w-full cursor-pointer overflow-hidden rounded-sm px-1.5 py-0.5 text-left text-xs font-medium text-ellipsis whitespace-nowrap text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      >
+                        {`↻ ${r.title}`}
+                      </button>
+                    );
+                  }
                   if (wpis.typ === "sport") {
                     const i = wpis.i;
                     // Plan: białe tło i przerywana ramka; wykonany jak chip bloku (tło 14, ramka 4d, bez paska)

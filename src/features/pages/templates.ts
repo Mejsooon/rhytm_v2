@@ -4,7 +4,7 @@ import { PALETA } from "./fields";
 import type { FieldConfig, FieldType } from "./fields";
 import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
 
-export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites"] as const;
+export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites", "subscriptions"] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 // Dokładnie kształt jsonb, który przyjmuje create_page(p_title, p_icon, p_template_key, p_blocks)
@@ -24,7 +24,8 @@ export type TemplateField = {
   name: string;
   type: FieldType;
   is_title?: boolean;
-  // default_option to klucz opcji szablonu; buildTemplateBlocks zamienia go na id opcji
+  // default_option to klucz opcji szablonu, a cycle_field_id i active_field_id to klucze pól szablonu;
+  // buildTemplateBlocks zamienia je na prawdziwe id
   config?: Omit<FieldConfig, "options"> & { options?: TemplateOption[] };
 };
 
@@ -235,6 +236,52 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
     },
   },
+  subscriptions: {
+    name: "Subscriptions",
+    icon: "lucide:wallet",
+    desc: "Twoje subskrypcje",
+    intro: "Twoje subskrypcje i ich odnowienia.",
+    extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
+    fields: [
+      { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
+      { key: "price", name: "Kwota cykliczna", type: "recurring", config: { default_cycle: "month" } },
+      {
+        key: "renewal",
+        name: "Data odnowienia",
+        type: "renewal",
+        config: { cycle_field_id: "price", active_field_id: "active", show_in_calendar: true },
+      },
+      {
+        key: "cat",
+        name: "Kategoria",
+        type: "select",
+        config: {
+          options: [
+            { key: "fun", label: "Rozrywka", color: "" },
+            { key: "cloud", label: "Chmura", color: "" },
+            { key: "health", label: "Zdrowie", color: "" },
+            { key: "work", label: "Praca", color: "" },
+            { key: "sport", label: "Sport", color: "" },
+            { key: "learn", label: "Nauka", color: "" },
+            { key: "other", label: "Inne", color: "" },
+          ],
+          default_option: "other",
+        },
+      },
+      { key: "active", name: "Aktywna", type: "checkbox", config: { default_checked: true } },
+    ],
+    cards: [
+      { label: "Σ miesięcznie", field: "price", aggregation: "sum_month" },
+      { label: "Σ rocznie", field: "price", aggregation: "sum_year" },
+      { label: "Najbliższe odnowienie", field: "renewal", aggregation: "next_renewal" },
+    ],
+    sort: [{ field: "renewal", dir: "asc" }],
+    summaries: {
+      name: { kind: "count", unit: ["subskrypcja", "subskrypcje", "subskrypcji"] },
+      price: { kind: "sum_month" },
+      renewal: { kind: "in_calendar" },
+    },
+  },
 };
 
 // Nazwy z profiles.pending_pages (onboarding) -> szablon
@@ -248,11 +295,14 @@ export const PENDING_TO_TEMPLATE: Record<string, TemplateKey> = {
 export function buildTemplateBlocks(key: TemplateKey, newId: () => string): CreatePageBlock[] {
   const tpl = TEMPLATES[key];
 
+  // Przejście 1: id wszystkich pól (pole „renewal” wskazuje „active”, które stoi za nim)
   const idPola: Record<string, string> = {};
+  for (const f of tpl.fields) idPola[f.key] = newId();
+
+  // Przejście 2: configi z opcjami i odwołaniami do innych pól zamienionymi na id
   const idOpcji: Record<string, string> = {};
   const fields: CreatePageBlock["fields"] = tpl.fields.map((f) => {
-    idPola[f.key] = newId();
-    const { options, default_option, ...reszta } = f.config ?? {};
+    const { options, default_option, cycle_field_id, active_field_id, ...reszta } = f.config ?? {};
     const config: FieldConfig = { ...reszta };
     if (options) {
       config.options = options.map((o) => {
@@ -262,6 +312,8 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
       });
     }
     if (default_option !== undefined) config.default_option = idOpcji[`${f.key}.${default_option}`];
+    if (cycle_field_id !== undefined) config.cycle_field_id = idPola[cycle_field_id];
+    if (active_field_id !== undefined) config.active_field_id = idPola[active_field_id];
     return { id: idPola[f.key], name: f.name, type: f.type, config, is_title: f.is_title === true };
   });
 

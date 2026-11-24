@@ -10,6 +10,7 @@ import {
   DatePicker,
   Dropdown,
   FormDialog,
+  Segment,
   TextField,
   FIELD,
   type IsoDate,
@@ -18,7 +19,16 @@ import { isSecretValue, type SecretValue } from "@/features/vault/crypto";
 import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
 import { OptionBadge } from "../option-badge";
-import { normalizeValue, type PageField } from "../../fields";
+import {
+  formatMoney,
+  isRecurringValue,
+  nextRenewal,
+  renewalDates,
+  normalizeValue,
+  rowCycle,
+  type Cycle,
+  type PageField,
+} from "../../fields";
 import { SEJF_ZABLOKOWANY } from "../../messages";
 
 // Po tylu ms od skopiowania sekretu czyścimy schowek
@@ -33,6 +43,7 @@ export function MRowSheet({
   open,
   title,
   fields,
+  allFields,
   values,
   today,
   onChange,
@@ -43,6 +54,8 @@ export function MRowSheet({
   open: boolean;
   title: string;
   fields: PageField[];
+  // Wszystkie pola tabeli (także ukryte): Data odnowienia bierze z nich cykl wiersza; brak = `fields`
+  allFields?: PageField[];
   values: Record<string, unknown>;
   today: IsoDate;
   onChange: (fieldId: string, value: unknown) => void;
@@ -59,11 +72,19 @@ export function MRowSheet({
   const [teksty, setTeksty] = React.useState<Record<string, string>>({});
   const [oryginaly, setOryginaly] = React.useState<Record<string, string>>({});
   const [pokazane, setPokazane] = React.useState<string[]>([]);
+  // Kwota cykliczna: tekst kwoty w trakcie pisania i cykl wybrany przy pustej kwocie (id pola → wartość)
+  const [kwoty, setKwoty] = React.useState<Record<string, string>>({});
+  const [cykle, setCykle] = React.useState<Record<string, Cycle>>({});
   // „Zapisz” w trakcie szyfrowania nie zapisuje drugi raz
   const [szyfrowanie, setSzyfrowanie] = React.useState(false);
   const [poprzednie, setPoprzednie] = React.useState({ open, status: vault.status });
   if (poprzednie.open !== open || poprzednie.status !== vault.status) {
     setPoprzednie({ open, status: vault.status });
+    // Zamknięcie arkusza: szkice kwot znikają (następny wiersz zaczyna od swoich wartości)
+    if (!open) {
+      setKwoty({});
+      setCykle({});
+    }
     // Zamknięcie arkusza albo blokada sejfu: tekst jawny znika
     if (!open || vault.status !== "odblokowany") {
       setTeksty({});
@@ -287,6 +308,70 @@ export function MRowSheet({
                 today={today}
                 value={typeof v === "string" ? (v as IsoDate) : null}
                 onChange={(d) => onChange(f.id, d)}
+              />
+            </div>
+          );
+        }
+
+        // Kwota cykliczna (minimum na telefon, Etap 3): pole kwoty i segment „mies. | rok”
+        if (f.type === "recurring") {
+          const kwota = normalizeValue(f, surowa);
+          const cykl: Cycle = isRecurringValue(kwota)
+            ? kwota.cycle
+            : (cykle[f.id] ?? f.config.default_cycle ?? "month");
+          return (
+            <div key={f.id} className="flex flex-col gap-1.5">
+              <TextField
+                label={f.name}
+                value={kwoty[f.id] ?? (isRecurringValue(kwota) ? formatMoney(kwota.amount) : "")}
+                inputMode="decimal"
+                placeholder="0,00"
+                onChange={(e) => {
+                  const t = e.target.value;
+                  setKwoty((m) => ({ ...m, [f.id]: t }));
+                  const czysty = t.replace(/[\s\u00a0]/g, "");
+                  const n = normalizeValue(f, czysty);
+                  // Pusty tekst czyści kwotę; niepoprawny zostawia ostatnią poprawną
+                  if (czysty === "") onChange(f.id, null);
+                  else if (isRecurringValue(n)) onChange(f.id, { amount: n.amount, cycle: cykl });
+                }}
+                className="font-mono"
+              />
+              <Segment
+                ariaLabel={`${f.name}: cykl`}
+                value={cykl}
+                options={[
+                  { value: "month", label: "mies." },
+                  { value: "year", label: "rok" },
+                ]}
+                onChange={(c) => {
+                  setCykle((m) => ({ ...m, [f.id]: c }));
+                  if (isRecurringValue(kwota)) onChange(f.id, { amount: kwota.amount, cycle: c });
+                }}
+              />
+            </div>
+          );
+        }
+
+        // Data odnowienia (minimum na telefon): pole daty pokazuje następne odnowienie (jak tabela),
+        // a wybrana data zapisuje się jako nowa kotwica serii
+        if (f.type === "renewal") {
+          const v = normalizeValue(f, surowa);
+          const kotwica = typeof v === "string" ? v : null;
+          const cykl = rowCycle(f, allFields ?? fields, values);
+          const nastepne = kotwica === null ? null : nextRenewal(kotwica, cykl, today);
+          return (
+            <div key={f.id} className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
+              <span>{f.name}</span>
+              <DatePicker
+                ariaLabel={f.name}
+                today={today}
+                value={nastepne as IsoDate | null}
+                onChange={(d) => {
+                  // Data już należąca do serii nie zmienia kotwicy (inaczej seria dryfuje)
+                  if (d !== null && kotwica !== null && renewalDates(kotwica, cykl, d, d).length > 0) return;
+                  onChange(f.id, d);
+                }}
               />
             </div>
           );

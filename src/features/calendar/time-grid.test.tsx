@@ -1,9 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRow } from "@/features/tasks/model";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalItem } from "./load-calendar";
 import { planZSzablonu, trening } from "./mobile/fixtures";
 import type { Occurrence } from "./occurrences";
 import { TimeGrid } from "./time-grid";
@@ -623,5 +623,66 @@ describe("TimeGrid", () => {
         "07:00–07:58 · Sport",
       );
     });
+  });
+});
+
+const NETFLIX: RenewalItem = {
+  key: "f-ren:r1:2026-11-21",
+  fieldId: "f-ren",
+  pageId: "p1",
+  pageTitle: "Subscriptions",
+  rowId: "r1",
+  date: "2026-11-21",
+  next: "2026-12-21",
+  title: "Netflix",
+  amount: 43,
+  cycle: "month",
+  categoryName: "Kategoria",
+  categoryLabel: "Rozrywka",
+};
+
+describe("TimeGrid: odnowienia subskrypcji", () => {
+  it("tydzień: „Netflix · 43,00 zł” w wierszu „cały dzień” soboty; klik woła onRenewalClick z kotwicą", async () => {
+    const onRenewalClick = vi.fn();
+    wyrenderuj({ renewals: [NETFLIX], onRenewalClick });
+    const sobota = screen.getByTestId("caly-dzien-2026-11-21");
+    const wpis = within(sobota).getByRole("button", {
+      name: "Netflix · 43,00 zł",
+    });
+    expect(wpis).toHaveAttribute(
+      "title",
+      "Odnowienie ze strony Subscriptions — tylko podgląd",
+    );
+    expect(wpis).toHaveAttribute("aria-expanded", "false");
+    expect(wpis).toHaveClass("border-dashed", "w-full");
+    expect(
+      within(screen.getByTestId("caly-dzien-2026-11-20")).queryByRole("button"),
+    ).toBeNull();
+    await userEvent.click(wpis);
+    expect(onRenewalClick).toHaveBeenCalledWith(NETFLIX, wpis);
+  });
+
+  it("bez kwoty sam tytuł; otwarte ma ramkę .4 i cień", () => {
+    wyrenderuj({
+      renewals: [{ ...NETFLIX, amount: null }],
+      openRenewalKey: NETFLIX.key,
+    });
+    const wpis = screen.getByRole("button", { name: "Netflix" });
+    expect(wpis).toHaveAttribute("aria-expanded", "true");
+    expect(wpis.style.borderColor).toBe("rgba(0, 0, 0, 0.4)");
+    expect(wpis.style.boxShadow).toBe("rgba(0, 0, 0, 0.08) 0px 0px 0px 2px");
+  });
+
+  it("dzień: wpis w wierszu „cały dzień” za numerem i nazwą dnia", () => {
+    wyrenderuj({
+      days: ["2026-11-21"],
+      variant: "day",
+      renewals: [NETFLIX],
+    });
+    const naglowek = screen.getByTestId("naglowek-2026-11-21");
+    expect(naglowek).toHaveTextContent("21sobNetflix · 43,00 zł");
+    expect(
+      within(naglowek).getByRole("button", { name: "Netflix · 43,00 zł" }),
+    ).toBeInTheDocument();
   });
 });

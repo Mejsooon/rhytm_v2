@@ -11,7 +11,9 @@ import {
   ChevronRight,
   EyeOff,
   Funnel,
+  Repeat,
   Sigma,
+  SquareCheck,
   Trash2,
 } from "lucide-react";
 
@@ -26,7 +28,7 @@ import {
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { OptionBadge } from "./option-badge";
-import { FIELD_TYPE_META, type FieldType, type PageField } from "../fields";
+import { FIELD_TYPE_META, type FieldConfig, type FieldType, type PageField } from "../fields";
 import { summaryOptions, type ColumnSummary, type SummaryKind } from "../table-model";
 import { NAZWY_PODSUMOWAN } from "./summary-cell";
 
@@ -46,6 +48,7 @@ const PODMENU =
 // ma plakietkę „szyfr.” (S2Passwords.dc.html).
 export function ColumnMenu({
   field,
+  fields,
   open,
   onOpenChange,
   canHide,
@@ -56,6 +59,7 @@ export function ColumnMenu({
   onFilter,
   onSummary,
   onToggleCalendar,
+  onConfig,
   onHide,
   onDelete,
   onCloseAutoFocus,
@@ -68,6 +72,8 @@ export function ColumnMenu({
   locked = false,
 }: {
   field: PageField;
+  // Wszystkie pola tabeli: Data odnowienia wskazuje w nich Kwotę cykliczną i Checkbox
+  fields: PageField[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Ukryć można, dopóki zostaje choć jedna widoczna kolumna
@@ -79,6 +85,8 @@ export function ColumnMenu({
   onFilter: () => void;
   onSummary: (kind: SummaryKind) => void;
   onToggleCalendar: () => void;
+  // Zmiana configu pola (np. cykl Daty odnowienia); klucz z wartością undefined jest usuwany
+  onConfig: (patch: Partial<FieldConfig>) => void;
   onHide: () => void;
   onDelete: () => void;
   // Pozwala wyłączyć zwrot fokusu na nagłówek (gdy zaraz otwiera się filtr)
@@ -93,7 +101,7 @@ export function ColumnMenu({
   onRemoveOption?: (optionId: string) => void;
   locked?: boolean;
 }) {
-  const [podmenu, setPodmenu] = React.useState<"typ" | "podsumowanie" | null>(null);
+  const [podmenu, setPodmenu] = React.useState<"typ" | "podsumowanie" | "cykl" | "aktywne" | "domyslnyCykl" | null>(null);
   // Strona otwarcia podmenu: w lewo, gdy menu stoi przy prawej krawędzi okna
   const [wLewo, setWLewo] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -108,7 +116,20 @@ export function ColumnMenu({
 
   const meta = FIELD_TYPE_META[field.type];
   const jestWyborem = field.type === "select" || field.type === "status";
-  const wKalendarzu = field.config.show_in_calendar === true;
+  // Data odnowienia jest w kalendarzu domyślnie (brak klucza = włączone), zwykła data nie
+  const wKalendarzu = field.type === "renewal" ? field.config.show_in_calendar !== false : field.config.show_in_calendar === true;
+  const polaKwot = fields.filter((f) => f.type === "recurring");
+  const polaCheckbox = fields.filter((f) => f.type === "checkbox");
+  // Odwołanie do pola, którego nie ma albo które ma inny typ, to brak odwołania (jak w rowCycle / rowActive)
+  const polaCykl = polaKwot.find((f) => f.id === field.config.cycle_field_id);
+  const poleAktywne = polaCheckbox.find((f) => f.id === field.config.active_field_id);
+  const cyklAktualny = polaCykl
+    ? polaCykl.name
+    : field.config.cycle === "year"
+      ? "Własny: rok"
+      : "Własny: miesiąc";
+  const aktywneAktualne = poleAktywne ? poleAktywne.name : "— zawsze —";
+  const domyslnyCyklAktualny = field.config.default_cycle === "year" ? "rok" : "miesiąc";
 
   // Aktualne podsumowanie: rodzaj ogólny albo szablonowe (licznik opcji / roku) z własną etykietą
   let aktualne = "Brak";
@@ -362,7 +383,7 @@ export function ColumnMenu({
             </div>
           )}
         </div>
-        {field.type === "date" && (
+        {(field.type === "date" || field.type === "renewal") && (
           <button type="button" role="menuitem" onClick={() => wykonaj(onToggleCalendar)} className={POZYCJA}>
             <Calendar aria-hidden="true" className={IKONA} />
             <span className="flex-1">Pokaż w kalendarzu</span>
@@ -383,6 +404,150 @@ export function ColumnMenu({
               />
             </span>
           </button>
+        )}
+        {field.type === "renewal" && !locked && (
+          <>
+            <div className="relative">
+              <button
+                type="button"
+                role="menuitem"
+                aria-label={`Cykl z pola ${cyklAktualny} ›`}
+                aria-haspopup="menu"
+                aria-expanded={podmenu === "cykl"}
+                onClick={() => {
+                  const rect = menuRef.current?.getBoundingClientRect();
+                  setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+                  setPodmenu(podmenu === "cykl" ? null : "cykl");
+                }}
+                className={cn(POZYCJA, podmenu === "cykl" && "bg-accent")}
+              >
+                <Repeat aria-hidden="true" className={IKONA} />
+                <span className="flex-1">Cykl z pola</span>
+                <span className="max-w-[90px] truncate text-xs text-muted-foreground">{cyklAktualny}</span>
+                <ChevronRight size={14} aria-hidden="true" className="flex-none" />
+              </button>
+              {podmenu === "cykl" && (
+                <div role="menu" aria-label="Cykl z pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+                  <div className={MENU_LABEL}>Cykl z pola</div>
+                  {polaKwot.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => wykonaj(() => onConfig({ cycle_field_id: f.id, cycle: undefined }))}
+                      className={cn(POZYCJA, polaCykl?.id === f.id && "bg-accent")}
+                    >
+                      <span className="flex-1">{f.name}</span>
+                      {polaCykl?.id === f.id && <Check size={14} aria-hidden="true" className="flex-none" />}
+                    </button>
+                  ))}
+                  {(["month", "year"] as const).map((c) => {
+                    const wybrane = !polaCykl && (field.config.cycle ?? "month") === c;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => wykonaj(() => onConfig({ cycle_field_id: undefined, cycle: c }))}
+                        className={cn(POZYCJA, wybrane && "bg-accent")}
+                      >
+                        <span className="flex-1">{c === "month" ? "Własny: miesiąc" : "Własny: rok"}</span>
+                        {wybrane && <Check size={14} aria-hidden="true" className="flex-none" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                role="menuitem"
+                aria-label={`Tylko gdy zaznaczone ${aktywneAktualne} ›`}
+                aria-haspopup="menu"
+                aria-expanded={podmenu === "aktywne"}
+                onClick={() => {
+                  const rect = menuRef.current?.getBoundingClientRect();
+                  setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+                  setPodmenu(podmenu === "aktywne" ? null : "aktywne");
+                }}
+                className={cn(POZYCJA, podmenu === "aktywne" && "bg-accent")}
+              >
+                <SquareCheck aria-hidden="true" className={IKONA} />
+                <span className="flex-1">Tylko gdy zaznaczone</span>
+                <span className="max-w-[90px] truncate text-xs text-muted-foreground">{aktywneAktualne}</span>
+                <ChevronRight size={14} aria-hidden="true" className="flex-none" />
+              </button>
+              {podmenu === "aktywne" && (
+                <div role="menu" aria-label="Tylko gdy zaznaczone" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+                  <div className={MENU_LABEL}>Tylko gdy zaznaczone</div>
+                  {polaCheckbox.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => wykonaj(() => onConfig({ active_field_id: f.id }))}
+                      className={cn(POZYCJA, poleAktywne?.id === f.id && "bg-accent")}
+                    >
+                      <span className="flex-1">{f.name}</span>
+                      {poleAktywne?.id === f.id && <Check size={14} aria-hidden="true" className="flex-none" />}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => wykonaj(() => onConfig({ active_field_id: undefined }))}
+                    className={cn(POZYCJA, !poleAktywne && "bg-accent")}
+                  >
+                    <span className="flex-1">— zawsze —</span>
+                    {!poleAktywne && <Check size={14} aria-hidden="true" className="flex-none" />}
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        {field.type === "recurring" && !locked && (
+          <div className="relative">
+            <button
+              type="button"
+              role="menuitem"
+              aria-label={`Domyślny cykl ${domyslnyCyklAktualny} ›`}
+              aria-haspopup="menu"
+              aria-expanded={podmenu === "domyslnyCykl"}
+              onClick={() => {
+                const rect = menuRef.current?.getBoundingClientRect();
+                setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+                setPodmenu(podmenu === "domyslnyCykl" ? null : "domyslnyCykl");
+              }}
+              className={cn(POZYCJA, podmenu === "domyslnyCykl" && "bg-accent")}
+            >
+              <Repeat aria-hidden="true" className={IKONA} />
+              <span className="flex-1">Domyślny cykl</span>
+              <span className="text-xs text-muted-foreground">{domyslnyCyklAktualny}</span>
+              <ChevronRight size={14} aria-hidden="true" className="flex-none" />
+            </button>
+            {podmenu === "domyslnyCykl" && (
+              <div role="menu" aria-label="Domyślny cykl" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+                <div className={MENU_LABEL}>Domyślny cykl</div>
+                {(["month", "year"] as const).map((c) => {
+                  const wybrane = (field.config.default_cycle ?? "month") === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => wykonaj(() => onConfig({ default_cycle: c }))}
+                      className={cn(POZYCJA, wybrane && "bg-accent")}
+                    >
+                      <span className="flex-1">{c === "month" ? "miesiąc" : "rok"}</span>
+                      {wybrane && <Check size={14} aria-hidden="true" className="flex-none" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
         {onMoveLeft && !locked && (
           <button type="button" role="menuitem" disabled={firstColumn} onClick={() => wykonaj(onMoveLeft)} className={POZYCJA}>

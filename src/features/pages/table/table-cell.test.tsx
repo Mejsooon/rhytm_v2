@@ -44,6 +44,7 @@ function komorka(
           <TableCell
             row={row}
             field={field}
+            fields={[field]}
             today={TODAY}
             done={null}
             autoFocus={autoFocus}
@@ -131,6 +132,7 @@ describe("TableCell", () => {
               <TableCell
                 row={wiersz(v)}
                 field={f}
+                fields={[f]}
                 today={TODAY}
                 done={null}
                 onSave={onSave}
@@ -378,6 +380,7 @@ describe("TableCell", () => {
             <TableCell
               row={{ id: "row-1", values: { f1: "GitHub", f2: "o1" }, position: 0, deletedAt: null }}
               field={pole("text", { name: "Serwis" })}
+              fields={[]}
               today={TODAY}
               done={null}
               readOnly
@@ -386,6 +389,7 @@ describe("TableCell", () => {
             <TableCell
               row={{ id: "row-1", values: { f1: "GitHub", f2: "o1" }, position: 0, deletedAt: null }}
               field={pole("select", { id: "f2", name: "Kategoria", config: { options: [{ id: "o1", label: "Praca", color: "" }] } })}
+              fields={[]}
               today={TODAY}
               done={null}
               readOnly
@@ -487,6 +491,216 @@ describe("TableCell", () => {
       expect(screen.getByText("Bez barwy").parentElement).toHaveClass(
         "border-input",
       );
+    });
+  });
+});
+
+// Subscriptions (S2Main.dc.html): Kwota cykliczna i Data odnowienia z polami „Kwota” i „Aktywna” w tej samej tabeli
+describe("TableCell: Subscriptions", () => {
+  const kwota: PageField = {
+    id: "k",
+    name: "Kwota cykliczna",
+    type: "recurring",
+    config: { default_cycle: "month" },
+    position: 0,
+    isTitle: false,
+  };
+  const aktywna: PageField = { id: "a", name: "Aktywna", type: "checkbox", config: {}, position: 2, isTitle: false };
+  const odnowienie: PageField = {
+    id: "o",
+    name: "Data odnowienia",
+    type: "renewal",
+    config: { cycle_field_id: "k", active_field_id: "a", show_in_calendar: true },
+    position: 1,
+    isTitle: false,
+  };
+  const pola = [kwota, odnowienie, aktywna];
+
+  function subskrypcja(values: Record<string, unknown>): PageRow {
+    return { id: "row-1", values, position: 0, deletedAt: null };
+  }
+
+  function wTabeli(field: PageField, row: PageRow, onSave: (v: unknown) => void) {
+    return (
+      <table>
+        <tbody>
+          <tr>
+            <TableCell row={row} field={field} fields={pola} today={TODAY} done={null} onSave={onSave} />
+          </tr>
+        </tbody>
+      </table>
+    );
+  }
+
+  describe("Data odnowienia: kotwica serii", () => {
+    it("ponowny wybór daty z serii nie woła zapisu", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      const wiersz_ = subskrypcja({ k: { amount: 43, cycle: "month" }, o: "2026-10-21", a: true });
+      render(wTabeli(odnowienie, wiersz_, onSave));
+      await user.click(screen.getByRole("button", { name: /Data odnowienia: 21\.11\.2026/ }));
+      await user.click(await screen.findByRole("button", { name: /^21(\D|$)/ }));
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it("data spoza serii zapisuje nową kotwicę", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      const wiersz_ = subskrypcja({ k: { amount: 43, cycle: "month" }, o: "2026-10-21", a: true });
+      render(wTabeli(odnowienie, wiersz_, onSave));
+      await user.click(screen.getByRole("button", { name: /Data odnowienia: 21\.11\.2026/ }));
+      await user.click(await screen.findByRole("button", { name: /25/ }));
+      expect(onSave).toHaveBeenCalledWith("2026-11-25");
+    });
+  });
+
+  describe("Kwota cykliczna", () => {
+    it("pole kwoty do prawej, szare „zł” i przycisk cyklu w kolejności z makiety", () => {
+      render(wTabeli(kwota, subskrypcja({ k: { amount: 43, cycle: "month" } }), vi.fn()));
+      const pole_ = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+      expect(pole_).toHaveValue("43,00");
+      expect(pole_).toHaveAttribute("inputmode", "decimal");
+      expect(pole_).toHaveAttribute("placeholder", "0,00");
+      expect(pole_).toHaveClass("text-right");
+      const zl = screen.getByText("zł");
+      expect(zl).toHaveClass("text-[13px]", "text-muted-foreground");
+      const cykl = screen.getByRole("button", { name: "Cykl: mies. (kliknij, aby zmienić)" });
+      expect(cykl).toHaveTextContent("/ mies.");
+      // Kolejność w DOM: pole, „zł”, przycisk
+      expect(pole_.compareDocumentPosition(zl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(zl.compareDocumentPosition(cykl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("wpisanie „43,5” zapisuje {amount: 43.5, cycle: month}, a po zapisie i wyjściu pole pokazuje „43,50”", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      const { rerender } = render(wTabeli(kwota, subskrypcja({}), onSave));
+      const pole_ = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+      await user.type(pole_, "43,5");
+      await user.tab();
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({ amount: 43.5, cycle: "month" });
+      // Magazyn oddaje zapisaną wartość (jak optymistyczna aktualizacja store)
+      rerender(wTabeli(kwota, subskrypcja({ k: { amount: 43.5, cycle: "month" } }), onSave));
+      expect(pole_).toHaveValue("43,50");
+    });
+
+    it("zapis po 600 ms przerwy w pisaniu; kwota roczna zostaje roczna", () => {
+      vi.useFakeTimers();
+      try {
+        const onSave = vi.fn();
+        render(wTabeli(kwota, subskrypcja({ k: { amount: 200, cycle: "year" } }), onSave));
+        const pole_ = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+        fireEvent.focus(pole_);
+        fireEvent.change(pole_, { target: { value: "249,99" } });
+        act(() => vi.advanceTimersByTime(599));
+        expect(onSave).not.toHaveBeenCalled();
+        act(() => vi.advanceTimersByTime(1));
+        expect(onSave).toHaveBeenCalledWith({ amount: 249.99, cycle: "year" });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("pusty tekst zapisuje null, niepoprawny nic nie zapisuje", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(kwota, subskrypcja({ k: { amount: 43, cycle: "month" } }), onSave));
+      const pole_ = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+      await user.clear(pole_);
+      await user.tab();
+      expect(onSave).toHaveBeenCalledWith(null);
+      onSave.mockClear();
+      await user.click(pole_);
+      await user.clear(pole_);
+      await user.type(pole_, "abc");
+      await user.tab();
+      expect(onSave).not.toHaveBeenCalled();
+      expect(pole_).toHaveValue("43,00");
+    });
+
+    it("kwota z tysiącami (twarda spacja z formatu) da się poprawić", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(kwota, subskrypcja({ k: { amount: 1234.5, cycle: "month" } }), onSave));
+      const pole_ = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+      expect(pole_).toHaveValue("1\u00a0234,50");
+      // Kursor na końcu „1 234,50”: zamiana ostatniej cyfry
+      await user.type(pole_, "{Backspace}1");
+      await user.tab();
+      expect(onSave).toHaveBeenCalledWith({ amount: 1234.51, cycle: "month" });
+    });
+
+    it("klik w „/ mies.” zapisuje od razu cykl roczny", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(kwota, subskrypcja({ k: { amount: 43, cycle: "month" } }), onSave));
+      await user.click(screen.getByRole("button", { name: "Cykl: mies. (kliknij, aby zmienić)" }));
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({ amount: 43, cycle: "year" });
+    });
+
+    it("„/ rok” wraca do miesiąca", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(kwota, subskrypcja({ k: { amount: 249.99, cycle: "year" } }), onSave));
+      await user.click(screen.getByRole("button", { name: "Cykl: rok (kliknij, aby zmienić)" }));
+      expect(onSave).toHaveBeenCalledWith({ amount: 249.99, cycle: "month" });
+    });
+
+    it("klik cyklu w trakcie pisania zapisuje wpisaną kwotę z nowym cyklem (jeden zapis)", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(kwota, subskrypcja({}), onSave));
+      await user.type(screen.getByRole("textbox", { name: "Kwota cykliczna" }), "120");
+      await user.click(screen.getByRole("button", { name: "Cykl: mies. (kliknij, aby zmienić)" }));
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({ amount: 120, cycle: "year" });
+    });
+
+    it("pusty wiersz: przycisk cyklu wyłączony i pokazuje cykl domyślny pola", () => {
+      const roczna = { ...kwota, config: { default_cycle: "year" as const } };
+      render(wTabeli(roczna, subskrypcja({}), vi.fn()));
+      const cykl = screen.getByRole("button", { name: "Cykl: rok (kliknij, aby zmienić)" });
+      expect(cykl).toBeDisabled();
+      expect(cykl).toHaveTextContent("/ rok");
+    });
+  });
+
+  describe("Data odnowienia", () => {
+    it("kotwica 21.10.2026 przy dziś 15.11.2026: 21.11.2026 i „za 6 dni” w pomarańczowej plakietce", () => {
+      render(
+        wTabeli(odnowienie, subskrypcja({ k: { amount: 43, cycle: "month" }, o: "2026-10-21", a: true }), vi.fn()),
+      );
+      expect(screen.getByRole("button", { name: "Data odnowienia: 21.11.2026" })).toHaveTextContent("21.11.2026");
+      expect(screen.getByText("za 6 dni")).toHaveClass("bg-warning-soft");
+    });
+
+    it("cykl roczny z kwoty: kotwica 03.12.2025 daje 03.12.2026 i szary tekst „za 18 dni”", () => {
+      render(
+        wTabeli(odnowienie, subskrypcja({ k: { amount: 249.99, cycle: "year" }, o: "2025-12-03", a: true }), vi.fn()),
+      );
+      expect(screen.getByRole("button", { name: "Data odnowienia: 03.12.2026" })).toBeInTheDocument();
+      const tekst = screen.getByText("za 18 dni");
+      expect(tekst).toHaveClass("text-muted-foreground");
+      expect(tekst).not.toHaveClass("bg-warning-soft");
+    });
+
+    it("wiersz nieaktywny: szara plakietka „anulowana” zamiast czasu do odnowienia", () => {
+      render(
+        wTabeli(odnowienie, subskrypcja({ k: { amount: 37.99, cycle: "month" }, o: "2026-11-24", a: false }), vi.fn()),
+      );
+      expect(screen.getByText("anulowana")).toHaveClass("bg-muted");
+      expect(screen.queryByText("za 9 dni")).not.toBeInTheDocument();
+    });
+
+    it("wybór daty zapisuje nową kotwicę", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      render(wTabeli(odnowienie, subskrypcja({ o: "2026-10-21", a: true }), onSave));
+      await user.click(screen.getByRole("button", { name: "Data odnowienia: 21.11.2026" }));
+      await user.click(await screen.findByRole("button", { name: "Dziś" }));
+      expect(onSave).toHaveBeenCalledWith(TODAY);
     });
   });
 });

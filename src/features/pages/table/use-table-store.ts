@@ -173,6 +173,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       if (domyslna !== undefined && (f.config.options ?? []).some((o) => o.id === domyslna)) {
         values[f.id] = domyslna;
       }
+      if (f.type === "checkbox" && f.config.default_checked === true) values[f.id] = true;
     }
     setEditing({ rowId: null, values, original: { ...values } });
   }
@@ -374,6 +375,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       if (domyslna !== undefined && (f.config.options ?? []).some((o) => o.id === domyslna)) {
         values[f.id] = domyslna;
       }
+      if (f.type === "checkbox" && f.config.default_checked === true) values[f.id] = true;
     }
     let wynik: Awaited<ReturnType<typeof addRow>> | null = null;
     try {
