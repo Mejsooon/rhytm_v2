@@ -235,19 +235,28 @@ test.describe("sejf", () => {
     await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
     await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
 
-    // Zamknięty sejf: sama karta na środku, bez tabeli, wyszukiwarki i „Kategorie”
-    await expect(page.locator("table")).toBeHidden();
-    await expect(page.getByText(serwis, { exact: true })).toBeHidden();
-    await expect(szukaj).toBeHidden();
+    // Zamknięty sejf (S2Vault): tabela widoczna pod rozmyciem, sekrety jako „zablokowane”, okno na środku;
+    // klik w komórkę tabeli nic nie robi (treść jest inert pod nakładką)
+    await expect(page.locator("table")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Nowy", exact: true }),
-    ).toHaveCount(0);
+      page.getByText("zablokowane", { exact: true }).first(),
+    ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Kategorie", exact: true }),
-    ).toHaveCount(0);
+      page.getByRole("dialog", { name: "Odblokuj sejf" }),
+    ).toBeVisible();
+    await expect(page.getByText(serwis, { exact: true })).toBeVisible();
+    await page
+      .locator("table")
+      .getByText("zablokowane", { exact: true })
+      .first()
+      .click({ force: true });
+    await expect(page.locator("table input:focus")).toHaveCount(0);
+    await expect(
+      page.getByRole("dialog", { name: "Odblokuj sejf" }),
+    ).toBeVisible();
 
     // Odblokowanie: najpierw puste pole, potem złe hasło, potem dobre
-    const karta = page.getByRole("region", { name: "Odblokuj sejf" });
+    const karta = page.getByRole("dialog", { name: "Odblokuj sejf" });
     await expect(karta).toBeVisible();
     await karta.getByRole("button", { name: "Odblokuj", exact: true }).click();
     await expect(karta.getByText("Wpisz hasło główne.")).toBeVisible();

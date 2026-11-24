@@ -30,6 +30,13 @@ describe("VaultUnlockCard", () => {
     expect(uzytkownik).toHaveAttribute("tabindex", "-1");
   });
 
+  it("okno dialogowe z nazwą „Odblokuj sejf”, pole hasła ma fokus", () => {
+    render(<VaultUnlockCard />);
+    const okno = screen.getByRole("dialog", { name: "Odblokuj sejf" });
+    expect(okno).not.toHaveAttribute("aria-modal");
+    expect(screen.getByLabelText("Hasło główne")).toHaveFocus();
+  });
+
   it("puste hasło: Wpisz hasło główne., bez wywołania unlock", async () => {
     const user = userEvent.setup();
     render(<VaultUnlockCard />);

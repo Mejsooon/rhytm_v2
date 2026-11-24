@@ -174,7 +174,7 @@ test.describe("onboarding", () => {
 
     // Krok 6: przypomnienia i zgoda na powiadomienia
     await expect(page).toHaveURL(/\/onboarding\/6$/);
-    const nawyki = page.getByRole("switch", { name: "Nawyki na dziś" });
+    const nawyki = page.getByRole("switch", { name: "Nawyki", exact: true });
     await expect(nawyki).toHaveAttribute("aria-checked", "false");
     await nawyki.click();
     await expect(nawyki).toHaveAttribute("aria-checked", "true");

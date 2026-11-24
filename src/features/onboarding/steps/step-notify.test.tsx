@@ -110,15 +110,15 @@ describe("StepNotify", () => {
     expect(screen.getByTestId("out")).toHaveTextContent('"perm":false');
   });
 
-  it("przełącznik „Nawyki na dziś” zmienia notify.habits", async () => {
+  it("przełącznik „Nawyki” zmienia notify.habits", async () => {
     render(<Probe />);
-    expect(web().getAllByRole("switch")).toHaveLength(4);
+    expect(web().getAllByRole("switch")).toHaveLength(3);
     await userEvent.click(
-      web().getByRole("switch", { name: "Nawyki na dziś" }),
+      web().getByRole("switch", { name: "Nawyki" }),
     );
     expect(screen.getByTestId("out")).toHaveTextContent('"habits":true');
     await userEvent.click(
-      phone().getByRole("switch", { name: "Nawyki na dziś" }),
+      phone().getByRole("switch", { name: "Nawyki" }),
     );
     expect(screen.getByTestId("out")).toHaveTextContent('"habits":false');
   });
@@ -161,11 +161,11 @@ describe("StepNotify", () => {
     const wiersze = web()
       .getAllByRole("switch")
       .map((s) => s.parentElement!);
-    expect(wiersze).toHaveLength(4);
+    expect(wiersze).toHaveLength(3);
     expect(wiersze[0].parentElement).toHaveClass("shadow-card");
     expect(wiersze[0]).toHaveClass("border-b");
-    expect(wiersze[3]).toHaveClass("last:border-b-0");
-    expect(wiersze[3]).toHaveClass("min-h-[58px]");
+    expect(wiersze[2]).toHaveClass("last:border-b-0");
+    expect(wiersze[2]).toHaveClass("min-h-[58px]");
   });
 
   it("wygląd: niebieska informacja z tokenów info", () => {

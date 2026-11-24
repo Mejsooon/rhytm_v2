@@ -59,14 +59,24 @@ export async function signIn(
     return { status: "error", message: BLAD_LOGOWANIA };
   }
 
-  // 4. Profil decyduje, czy idziemy do aplikacji, czy do onboardingu
-  const { data: profil } = await supabase
+  // 4. Profil decyduje: ekran przywracania (konto do usunięcia), aplikacja albo onboarding
+  const { data: profil, error: bladProfilu } = await supabase
     .from("profiles")
-    .select("onboarded_at")
+    .select("onboarded_at, deletion_requested_at")
     .eq("user_id", data.user.id)
     .maybeSingle();
+  // Stara baza bez kolumny deletion_requested_at (42703): sam onboarding
+  let profilDoCelu: Parameters<typeof pathAfterLogin>[0] = profil;
+  if (bladProfilu?.code === "42703") {
+    const { data: stary } = await supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    profilDoCelu = stary;
+  }
 
-  redirect(pathAfterLogin(profil));
+  redirect(pathAfterLogin(profilDoCelu));
 }
 
 // Adres aplikacji do linków zwrotnych. Źródłem jest NEXT_PUBLIC_SITE_URL (nagłówek Host może podszyć atakujący).
@@ -336,9 +346,19 @@ export async function resendLink(
   return { status: "success", email: kontrola.email };
 }
 
-// Wylogowanie: kończy sesję Supabase i wraca na ekran logowania
-export async function signOut(): Promise<never> {
+// Wylogowanie: kończy sesję Supabase i wraca na ekran logowania.
+// SignOutForm dokłada endpoint push tej przeglądarki (pole push_endpoint) — usuwamy jego wiersz, zanim sesja
+// zniknie, żeby na wspólnym urządzeniu nie przychodziły powiadomienia wylogowanego konta. Błąd nie blokuje wylogowania.
+export async function signOut(formData?: FormData): Promise<never> {
   const supabase = await createClient();
+  const endpoint = formData instanceof FormData ? formData.get("push_endpoint") : null;
+  if (typeof endpoint === "string" && endpoint.length > 0 && endpoint.length <= 1000) {
+    try {
+      await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+    } catch {
+      // stara baza albo błąd sieci — wylogowujemy mimo to
+    }
+  }
   await supabase.auth.signOut();
   redirect("/logowanie");
 }

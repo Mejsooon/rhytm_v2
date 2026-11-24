@@ -8,22 +8,30 @@ const PUBLICZNE = [
   "/regulamin",
   "/prywatnosc",
 ];
-const PUBLICZNE_PREFIKSY = ["/auth/", "/dev/"];
+// /api/cron/: wywołuje pg_net z Supabase bez sesji; trasa sama sprawdza sekret (Authorization: Bearer)
+const PUBLICZNE_PREFIKSY = ["/auth/", "/dev/", "/api/cron/"];
 const ZAWSZE_PRZEPUSZCZANE_PREFIKSY = ["/icons/", "/_next/"];
+// Konto oznaczone do usunięcia ma dostęp tylko do ekranu przywracania i eksportu danych
+const KONTO_USUNIETE = "/konto-usuniete";
+const DOZWOLONE_PRZY_USUWANIU = [KONTO_USUNIETE, "/api/eksport"];
 
 export function resolveRoute(input: {
   pathname: string;
   isLoggedIn: boolean;
   // null = nie wiadomo (zapytanie o profil się nie udało) — wtedy nie przekierowujemy według onboardingu
   isOnboarded: boolean | null;
+  // Data prośby o usunięcie konta (null/brak = konto aktywne albo stara baza bez kolumny)
+  deletionRequestedAt?: string | null;
 }): { redirect: string } | null {
   const { pathname, isLoggedIn, isOnboarded } = input;
+  const doUsuniecia = isLoggedIn && input.deletionRequestedAt != null;
   const domyslnaDlaZalogowanego =
     isOnboarded === false ? "/onboarding" : "/dzis";
 
   // Zasoby statyczne — nigdy nie przekierowujemy
   if (
     pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
     ZAWSZE_PRZEPUSZCZANE_PREFIKSY.some((p) => pathname.startsWith(p))
   ) {
     return null;
@@ -37,6 +45,18 @@ export function resolveRoute(input: {
     pathname === "/dev"
   ) {
     return null;
+  }
+
+  // Konto czeka na usunięcie: wszędzie poza ekranem przywracania i eksportem → /konto-usuniete
+  if (doUsuniecia) {
+    return DOZWOLONE_PRZY_USUWANIU.includes(pathname)
+      ? null
+      : { redirect: KONTO_USUNIETE };
+  }
+
+  // Ekran przywracania bez prośby o usunięcie: niezalogowany → logowanie, zalogowany → aplikacja
+  if (pathname === KONTO_USUNIETE) {
+    return { redirect: isLoggedIn ? domyslnaDlaZalogowanego : "/logowanie" };
   }
 
   // Ekrany konta: zalogowany nie ma tu czego szukać
