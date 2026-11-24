@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (CMToday, CMQuickAdd), „Konflikty makiet” punkty 1 i 3, decyzja T5. Także `docs/superpowers/specs/2026-11-24-dzis-design.md` punkt B. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMToday.dc.html`, `CMQuickAdd.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMToday CMQuickAdd`.
+**Makiety (wiążące):** `docs/design/mockups/CMToday.dc.html`, `CMEmptyToday.dc.html` (nowe konto: pusty plan „Nie masz jeszcze bloków na dziś.” + „Dodaj pierwszy blok”, kafelek „Utwórz nowy nawyk”, „Ten tydzień” z zerami), `CMQuickAdd.dc.html`. Stuknięcie bloku w planie dnia otwiera szczegóły bloku z pakietu kalendarz (`m-block-detail.tsx`), jeśli Dziś ma do nich dostęp; inaczej to, co dziś. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMToday CMQuickAdd`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4 (`@utility` `m-*`), kontrolki `@/components/controls`, Vitest, Playwright (CI).
 

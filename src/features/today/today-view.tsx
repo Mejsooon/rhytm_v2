@@ -2,7 +2,7 @@
 
 // Ekran Dziś (S2Today web).
 // Web: nagłówek z „Nowy blok”, karta „Ten tydzień”, „Nawyki na dziś” i plan dnia.
-// Telefon: MToday (MToday.dc.html). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
+// Telefon: MToday (makieta CMToday, wariant F). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
@@ -146,7 +146,7 @@ export function TodayView({
     <>
       <div
         data-testid="m-dzis"
-        className="flex min-w-0 flex-1 flex-col min-[800px]:hidden"
+        className="flex min-w-0 flex-1 flex-col bg-[#fafafa] min-[800px]:hidden"
       >
         <MToday
           data={data}
@@ -156,6 +156,7 @@ export function TodayView({
           applyOptimistic={applyOptimistic}
           onToggleHabit={(habitId) => void toggleHabit(habitId, today)}
           onQuickAdd={() => setSzybkieDodawanie(true)}
+          onNewHabit={() => setNowyNawyk(true)}
         />
       </div>
       {/* Arkusz szybkiego dodawania (pływający „+” na telefonie) */}

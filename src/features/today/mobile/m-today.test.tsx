@@ -232,17 +232,25 @@ describe("MToday", () => {
     );
   });
 
-  it("nagłówek: etykieta dnia, tytuł „Dziś”, szukaj → /szukaj, awatar z inicjałem → /ustawienia/ogolne", () => {
+  it("tło ekranu #fafafa i przezroczysty nagłówek bez ramki", () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    const naglowek = telefon().getByRole("banner");
+    expect(naglowek.className).toContain("bg-transparent");
+    expect(naglowek.className).toContain("border-b-0");
+    expect(naglowek.parentElement?.className).toContain("bg-[#fafafa]");
+  });
+
+  it("nagłówek: data „Wtorek · 17 listopada”, tytuł „Dziś”, szukaj → /szukaj, awatar z inicjałem → /ustawienia/ogolne", () => {
     render(<TodayView data={dane()} name="Mejson" />);
     const t = telefon();
     expect(t.getByText("Wtorek · 17 listopada")).toBeInTheDocument();
     expect(t.getByRole("heading", { name: "Dziś" })).toBeInTheDocument();
-    expect(t.getByRole("link", { name: "Szukaj" })).toHaveAttribute(
-      "href",
-      "/szukaj",
-    );
+    const szukaj = t.getByRole("link", { name: "Szukaj" });
+    expect(szukaj).toHaveAttribute("href", "/szukaj");
+    expect(szukaj.className).toContain("size-11");
     const konto = t.getByRole("link", { name: "Konto i ustawienia" });
     expect(konto).toHaveAttribute("href", "/ustawienia/ogolne");
+    expect(konto.className).toContain("size-11");
     expect(konto).toHaveTextContent("M");
   });
 
@@ -261,72 +269,102 @@ describe("MToday", () => {
     );
   });
 
-  it("kafelki 2×2 z wartościami i linkami", () => {
+  it("„Ten tydzień”: zakres dni i cztery paski z wartościami", () => {
     render(<TodayView data={dane()} name="Mejson" />);
-    const t = telefon();
-    // Nawyki: zaplanowane dziś h1, h3, h4 + odhaczony X/tydz. h2 → 2/4
-    const nawyki = t.getByRole("link", { name: /^Nawyki/ });
-    expect(nawyki).toHaveAttribute("href", "/nawyki");
-    expect(nawyki).toHaveTextContent("Nawyki2/4");
-    // Sen: 23:30 → 06:42 = 7:12 h, zakładka Sen
-    const sen = t.getByRole("link", { name: /^Sen/ });
-    expect(sen).toHaveAttribute("href", "/nawyki?tab=sen");
-    expect(sen).toHaveTextContent("Sen7:12 h");
-    // Zadania: tylko z terminem dziś (t1–t3) → 1/3
-    const zadania = t.getByRole("link", { name: /^Zadania/ });
-    expect(zadania).toHaveAttribute("href", "/kalendarz");
-    expect(zadania).toHaveTextContent("Zadania1/3");
-    const km = t.getByRole("link", { name: /^Km w tyg\./ });
-    expect(km).toHaveAttribute("href", "/sport");
-    expect(km).toHaveTextContent("Km w tyg.18,4/25");
+    const sekcja = telefon().getByRole("region", { name: "Ten tydzień" });
+    expect(within(sekcja).getByText("pn 16 – nd 22.11")).toBeInTheDocument();
+    expect(
+      within(sekcja)
+        .getAllByRole("progressbar")
+        .map((p) => p.getAttribute("aria-label")),
+    ).toEqual(["Treningi", "Bieg", "Nawyki", "Sen"]);
+    // Bieg: 18,4 z 25 km → zostało 6,6
+    expect(within(sekcja).getByText("18,4")).toBeInTheDocument();
+    expect(within(sekcja).getByText("/ 25 km")).toBeInTheDocument();
+    expect(within(sekcja).getByText("jeszcze 6,6 km")).toBeInTheDocument();
+    // Sen: 23:30 → 06:42 = 7:12
+    expect(within(sekcja).getByText("7:12")).toBeInTheDocument();
   });
 
-  it("bez wpisu snu kafelek „—”, bez celu km sama liczba", () => {
-    const d = dane();
-    d.sleepLogs = [];
-    d.profile.kmGoalOn = false;
-    render(<TodayView data={d} name="Mejson" />);
-    const t = telefon();
-    expect(t.getByRole("link", { name: /^Sen/ })).toHaveTextContent("Sen—");
-    expect(t.getByRole("link", { name: /^Km w tyg\./ })).toHaveTextContent(
-      /^Km w tyg\.18,4$/,
-    );
-  });
-
-  it("karta Teraz: godziny, „zostało N min” i odhaczanie zadań wystąpienia (optymistycznie)", async () => {
-    toggleTask.mockResolvedValue({ ok: true });
+  it("„Nawyki na dziś”: kafelki z aria-pressed, serią i licznikiem", () => {
     render(<TodayView data={dane()} name="Mejson" />);
-    const t = telefon();
-    const karta = t.getByRole("region", { name: "Teraz" });
-    // 09:30–11:30, teraz 10:20 → zostało 70 min
-    expect(
-      within(karta).getByText("09:30–11:30 · zostało 70 min"),
-    ).toBeInTheDocument();
-    expect(
-      within(karta).getByRole("button", { name: "rhytm — kod" }),
-    ).toBeInTheDocument();
-    const zrobione = within(karta).getByRole("checkbox", {
-      name: "Okno „+ Pole”",
-    });
-    expect(zrobione).toHaveAttribute("aria-checked", "true");
-    const testy = within(karta).getByRole("checkbox", { name: "Testy RLS" });
-    expect(testy).toHaveAttribute("aria-checked", "false");
-
-    await userEvent.click(testy);
-    expect(toggleTask).toHaveBeenCalledWith({ id: "t2", done: true });
-    expect(testy).toHaveAttribute("aria-checked", "true");
-    // Kafelek „Zadania” zmienia się od razu
-    expect(t.getByRole("link", { name: /^Zadania/ })).toHaveTextContent(
-      "Zadania2/3",
-    );
+    const sekcja = telefon().getByRole("region", { name: "Nawyki na dziś" });
+    const kafelki = within(sekcja).getAllByRole("button");
+    expect(kafelki.map((k) => k.textContent)).toEqual([
+      "Woda 2 l3 dni z rzędu",
+      "Angielskizacznij passę",
+      "Rozciąganiezacznij passę",
+    ]);
+    expect(kafelki[0]).toHaveAttribute("aria-pressed", "true");
+    expect(kafelki[2]).toHaveAttribute("aria-pressed", "false");
+    // Odhaczone dziś: Woda i Angielski
+    expect(within(sekcja).getByText("2 / 3")).toBeInTheDocument();
   });
 
-  it("błąd odhaczenia zadania cofa zmianę i pokazuje toast", async () => {
+  it("odhaczenie nawyku zmienia od razu kafelek i licznik; błąd cofa i pokazuje toast", async () => {
+    let zakoncz: (v: { ok: boolean }) => void = () => {};
+    setHabitCheck.mockReturnValue(
+      new Promise((r) => {
+        zakoncz = r;
+      }),
+    );
+    render(<TodayView data={dane()} name="Mejson" />);
+    const sekcja = telefon().getByRole("region", { name: "Nawyki na dziś" });
+    const kafelek = within(sekcja).getByRole("button", { name: /Rozciąganie/ });
+    await userEvent.click(kafelek);
+    expect(setHabitCheck).toHaveBeenCalledWith("h3", "2026-11-17", true);
+    expect(kafelek).toHaveAttribute("aria-pressed", "true");
+    expect(within(sekcja).getByText("3 / 3")).toBeInTheDocument();
+    expect(within(sekcja).getByText("1 dzień z rzędu")).toBeInTheDocument();
+
+    zakoncz({ ok: false });
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "Nie udało się zapisać. Spróbuj ponownie.",
+      ),
+    );
+    expect(kafelek).toHaveAttribute("aria-pressed", "false");
+    expect(within(sekcja).getByText("2 / 3")).toBeInTheDocument();
+  });
+
+  it("plan dnia: licznik wpisów, przerwy, wpisy po godzinie z kategorią, „Teraz” i „x/y”", () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    const plan = telefon().getByRole("region", { name: "Plan dnia" });
+    expect(within(plan).getByText("00:00–24:00 · 4 bloki")).toBeInTheDocument();
+    // Przerwa przed pierwszym wpisem: 00:00–08:00
+    expect(within(plan).getByText("8 h wolne")).toBeInTheDocument();
+    const blok = within(plan).getByRole("button", { name: /rhytm — kod/ });
+    // 09:30–11:30, teraz 10:20 → trwa
+    expect(blok).toHaveTextContent("Teraz");
+    expect(blok).toHaveTextContent("09:30–11:30 · Własne");
+    expect(blok).toHaveTextContent("1/2");
+    expect(blok.className).toContain("min-h-11");
+    expect(
+      within(plan).getByRole("button", { name: /Poranna rutyna/ }),
+    ).toHaveTextContent("08:00–08:30 · Bez kategorii");
+    // Trening prowadzi do Sportu
+    const bieg = within(plan).getByRole("link", { name: /Bieg 10 km/ });
+    expect(bieg).toHaveAttribute("href", "/sport?miesiac=2026-11&wybrany=s:s2");
+    expect(bieg).toHaveTextContent("plan");
+  });
+
+  it("stuknięcie bloku otwiera szczegóły; zadania odhaczają się optymistycznie, a błąd cofa zmianę", async () => {
     toggleTask.mockResolvedValue({ ok: false, message: "x" });
     render(<TodayView data={dane()} name="Mejson" />);
-    const karta = telefon().getByRole("region", { name: "Teraz" });
-    const testy = within(karta).getByRole("checkbox", { name: "Testy RLS" });
+    const plan = telefon().getByRole("region", { name: "Plan dnia" });
+    await userEvent.click(
+      within(plan).getByRole("button", { name: /rhytm — kod/ }),
+    );
+    const szczegoly = await screen.findByRole("dialog", {
+      name: "Szczegóły bloku",
+    });
+    expect(within(szczegoly).getByText("Zadania · 1 z 2")).toBeInTheDocument();
+    const testy = within(szczegoly).getByRole("checkbox", {
+      name: "Testy RLS",
+    });
+    expect(testy).toHaveAttribute("aria-checked", "false");
     await userEvent.click(testy);
+    expect(toggleTask).toHaveBeenCalledWith({ id: "t2", done: true });
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
         "Nie udało się zapisać. Spróbuj ponownie.",
@@ -335,21 +373,17 @@ describe("MToday", () => {
     expect(testy).toHaveAttribute("aria-checked", "false");
   });
 
-  it("bez trwającego bloku nie ma karty Teraz", () => {
-    const d = dane();
-    d.nowMin = 12 * 60;
-    vi.setSystemTime(new Date("2026-11-17T11:00:00Z"));
-    render(<TodayView data={d} name="Mejson" />);
-    expect(
-      telefon().queryByRole("region", { name: "Teraz" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("stuknięcie w tytuł Teraz otwiera arkusz bloku w trybie edycji", async () => {
+  it("„Edytuj” w szczegółach otwiera arkusz bloku w trybie edycji", async () => {
     render(<TodayView data={dane()} name="Mejson" />);
-    const karta = telefon().getByRole("region", { name: "Teraz" });
+    const plan = telefon().getByRole("region", { name: "Plan dnia" });
     await userEvent.click(
-      within(karta).getByRole("button", { name: "rhytm — kod" }),
+      within(plan).getByRole("button", { name: /rhytm — kod/ }),
+    );
+    const szczegoly = await screen.findByRole("dialog", {
+      name: "Szczegóły bloku",
+    });
+    await userEvent.click(
+      within(szczegoly).getByRole("button", { name: "Edytuj" }),
     );
     const arkusz = await screen.findByRole("dialog", { name: "Edytuj blok" });
     expect(within(arkusz).getByDisplayValue("rhytm — kod")).toBeInTheDocument();
@@ -359,173 +393,41 @@ describe("MToday", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("plan dnia: wpisy po godzinie, zakończone przekreślone, kategoria i „x/y” zadań", () => {
-    render(<TodayView data={dane()} name="Mejson" />);
-    const plan = telefon().getByRole("region", { name: "Plan dnia" });
-    expect(
-      within(plan).getByRole("link", { name: "Kalendarz" }),
-    ).toHaveAttribute("href", "/kalendarz?widok=dzien");
-    const wiersze = within(plan)
-      .getAllByRole("listitem")
-      .map((w) => w.textContent);
-    expect(wiersze).toEqual([
-      "08:00Poranna rutyna30 min · zrobione",
-      "09:30rhytm — kod2 h · Własne · 1/2",
-      "16:00Bieg 10 km1 h · Sport",
-      "19:00Bazy danych — projekt1 h · Studia · 0/1",
-    ]);
-    // Zakończony blok (08:00–08:30) jest przekreślony, trwający nie
-    expect(within(plan).getByText("Poranna rutyna")).toHaveClass(
-      "line-through",
-    );
-    expect(within(plan).getByText("rhytm — kod")).not.toHaveClass(
-      "line-through",
-    );
-    // Trening prowadzi do Sportu, blok do dnia w kalendarzu
-    expect(
-      within(plan).getByRole("link", { name: /Bieg 10 km/ }),
-    ).toHaveAttribute("href", "/sport?miesiac=2026-11&wybrany=s:s2");
-    expect(
-      within(plan).getByRole("link", { name: /Bazy danych/ }),
-    ).toHaveAttribute("href", "/kalendarz?widok=dzien");
-  });
-
-  it("zakończony blok: „zrobione” tylko bez zadań albo przy wszystkich zrobionych", () => {
-    const d = dane();
-    // Teraz 19:30: rhytm (09:30–11:30, 1/2 zadań) się skończył, Bazy danych trwa
-    d.nowMin = 19 * 60 + 30;
-    vi.setSystemTime(new Date("2026-11-17T18:30:00Z"));
-    const { unmount } = render(<TodayView data={d} name="Mejson" />);
-    let plan = telefon().getByRole("region", { name: "Plan dnia" });
-    expect(within(plan).getByText("2 h · Własne · 1/2")).toBeInTheDocument();
-    expect(within(plan).getByText("rhytm — kod")).toHaveClass("line-through");
-    // Trening zaplanowany na 16:00, który minął, nie jest „zrobiony”
-    expect(within(plan).getByText("1 h · Sport")).toBeInTheDocument();
-    unmount();
-
-    d.tasks = d.tasks.map((t) => (t.id === "t2" ? { ...t, done: true } : t));
-    render(<TodayView data={d} name="Mejson" />);
-    plan = telefon().getByRole("region", { name: "Plan dnia" });
-    expect(within(plan).getAllByText("2 h · zrobione")).toHaveLength(1);
-  });
-
-  it("linki „Kalendarz” i „Wszystkie” mają cel dotyku 44 px", () => {
-    render(<TodayView data={dane()} name="Mejson" />);
-    const t = telefon();
-    for (const nazwa of ["Kalendarz", "Wszystkie"]) {
-      expect(t.getByRole("link", { name: nazwa }).className).toContain(
-        "min-h-11",
-      );
-    }
-  });
-
-  it("pusty plan dnia: „Plan dnia jest pusty”", () => {
+  it("pusty dzień (CMEmptyToday): „Nie masz jeszcze bloków na dziś.”, „Dodaj pierwszy blok” i „Utwórz nowy nawyk”", async () => {
     const d = dane();
     d.occurrencesToday = [];
     d.sportItems = [];
-    render(<TodayView data={d} name="Mejson" />);
-    expect(telefon().getByText("Plan dnia jest pusty")).toBeInTheDocument();
-  });
-
-  it("nawyki: zaplanowane dziś i X/tydz., z serią; „Wszystkie” → /nawyki", () => {
-    render(<TodayView data={dane()} name="Mejson" />);
-    const sekcja = telefon().getByRole("region", { name: "Nawyki" });
+    d.habits = [];
+    d.tasks = [];
+    const onNewHabit = vi.fn();
+    render(
+      <MToday
+        data={d}
+        nowMin={d.nowMin}
+        name="Mejson"
+        avatarUrl={null}
+        applyOptimistic={vi.fn()}
+        onToggleHabit={vi.fn()}
+        onQuickAdd={vi.fn()}
+        onNewHabit={onNewHabit}
+      />,
+    );
     expect(
-      within(sekcja).getByRole("link", { name: "Wszystkie" }),
-    ).toHaveAttribute("href", "/nawyki");
-    const pola = within(sekcja).getAllByRole("checkbox");
-    expect(pola.map((p) => p.getAttribute("aria-label"))).toEqual([
-      "Woda 2 l",
-      "Angielski",
-      "Rozciąganie",
-    ]);
-    expect(pola[0]).toHaveAttribute("aria-checked", "true");
-    expect(within(sekcja).getByText("3 dni")).toBeInTheDocument();
-    expect(within(sekcja).getByText("2/4 tydz.")).toBeInTheDocument();
-    expect(within(sekcja).getByText("—")).toBeInTheDocument();
-  });
-
-  it("odhaczenie nawyku zmienia od razu listę, serię i kafelek; błąd cofa i pokazuje toast", async () => {
-    let zakoncz: (v: { ok: boolean }) => void = () => {};
-    setHabitCheck.mockReturnValue(
-      new Promise((r) => {
-        zakoncz = r;
-      }),
+      screen.getByText("Nie masz jeszcze bloków na dziś."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("00:00–24:00 · 0 bloków")).toBeInTheDocument();
+    expect(screen.getByText("00:00–24:00 · 24 h wolne")).toBeInTheDocument();
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Utwórz nowy nawyk" }),
     );
-    render(<TodayView data={dane()} name="Mejson" />);
-    const t = telefon();
-    const sekcja = t.getByRole("region", { name: "Nawyki" });
-    const pole = within(sekcja).getByRole("checkbox", { name: "Rozciąganie" });
-    await userEvent.click(pole);
-    expect(setHabitCheck).toHaveBeenCalledWith("h3", "2026-11-17", true);
-    expect(pole).toHaveAttribute("aria-checked", "true");
-    expect(within(sekcja).getByText("1 dzień")).toBeInTheDocument();
-    expect(t.getByRole("link", { name: /^Nawyki/ })).toHaveTextContent(
-      "Nawyki3/4",
+    expect(onNewHabit).toHaveBeenCalledTimes(1);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Dodaj pierwszy blok" }),
     );
-
-    zakoncz({ ok: false });
-    await waitFor(() =>
-      expect(toastError).toHaveBeenCalledWith(
-        "Nie udało się zapisać. Spróbuj ponownie.",
-      ),
-    );
-    expect(pole).toHaveAttribute("aria-checked", "false");
-    expect(t.getByRole("link", { name: /^Nawyki/ })).toHaveTextContent(
-      "Nawyki2/4",
-    );
-  });
-
-  it("karta biegu: „Bieg o 16:00 · 10 km” i „Cel tygodnia: jeszcze 6,6 km” → /sport", () => {
-    render(<TodayView data={dane()} name="Mejson" />);
-    const karta = telefon().getByRole("link", { name: /Bieg o 16:00/ });
-    expect(karta).toHaveAttribute("href", "/sport");
-    expect(karta).toHaveTextContent("Bieg o 16:00 · 10 km");
-    expect(karta).toHaveTextContent("Cel tygodnia: jeszcze 6,6 km");
-  });
-
-  it("cel i dystans niecałkowite: z przecinkiem", () => {
-    const d = dane();
-    d.profile.weeklyKmGoal = 30.5;
-    d.sportItems[1] = { ...d.sportItems[1], distanceKm: 7.5 };
-    render(<TodayView data={d} name="Mejson" />);
-    const t = telefon();
-    expect(t.getByRole("link", { name: /^Km w tyg\./ })).toHaveTextContent(
-      "Km w tyg.18,4/30,5",
-    );
-    expect(t.getByRole("link", { name: /Bieg o 16:00/ })).toHaveTextContent(
-      "Bieg o 16:00 · 7,5 km",
-    );
-  });
-
-  it("karta biegu: bez planu dziś najbliższy w tygodniu, cel osiągnięty, bez celu bez dopisku", () => {
-    const d = dane();
-    d.sportItems[1] = {
-      ...d.sportItems[1],
-      date: "2026-11-19",
-      startMin: 18 * 60,
-      distanceKm: null,
-    };
-    d.sportItems[0] = { ...d.sportItems[0], distanceKm: 26 };
-    const { unmount } = render(<TodayView data={d} name="Mejson" />);
-    const karta = telefon().getByRole("link", { name: /Bieg cz 18:00/ });
-    expect(karta).toHaveTextContent("Cel tygodnia osiągnięty");
-    unmount();
-
-    d.profile.kmGoalOn = false;
-    render(<TodayView data={d} name="Mejson" />);
     expect(
-      telefon().getByRole("link", { name: /Bieg cz 18:00/ }),
-    ).not.toHaveTextContent("Cel tygodnia");
-  });
-
-  it("bez zaplanowanego biegu karta biegu jest ukryta", () => {
-    const d = dane();
-    d.sportItems = [d.sportItems[0]];
-    render(<TodayView data={d} name="Mejson" />);
-    expect(
-      telefon().queryByRole("link", { name: /^Bieg/ }),
-    ).not.toBeInTheDocument();
+      await screen.findByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
   });
 
   it("pływający „+” (Szybko dodaj) woła onQuickAdd", async () => {
@@ -540,11 +442,11 @@ describe("MToday", () => {
         applyOptimistic={vi.fn()}
         onToggleHabit={vi.fn()}
         onQuickAdd={onQuickAdd}
+        onNewHabit={vi.fn()}
       />,
     );
     const plus = screen.getByRole("button", { name: "Szybko dodaj" });
-    // 16 px nad dolnym paskiem
-    expect(plus.className).toContain("bottom-[calc(var(--tabbar-h)+16px)]");
+    expect(plus.className).toContain("m-fab");
     await userEvent.click(plus);
     expect(onQuickAdd).toHaveBeenCalledTimes(1);
   });

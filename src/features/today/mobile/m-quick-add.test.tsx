@@ -2,19 +2,15 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  createBlock,
-  saveRun,
-  createHabit,
-  refresh,
-  toastSuccess,
-} = vi.hoisted(() => ({
-  createBlock: vi.fn(),
-  saveRun: vi.fn(),
-  createHabit: vi.fn(),
-  refresh: vi.fn(),
-  toastSuccess: vi.fn(),
-}));
+const { createBlock, saveRun, createHabit, refresh, toastSuccess } = vi.hoisted(
+  () => ({
+    createBlock: vi.fn(),
+    saveRun: vi.fn(),
+    createHabit: vi.fn(),
+    refresh: vi.fn(),
+    toastSuccess: vi.fn(),
+  }),
+);
 vi.mock("@/features/calendar/actions", () => ({ createBlock }));
 vi.mock("@/features/sport/actions", () => ({ saveRun }));
 vi.mock("@/features/habits/actions", () => ({ createHabit }));
@@ -24,6 +20,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { kategoria } from "@/features/calendar/mobile/fixtures";
+import { quickWhenOptions } from "../model";
 import { MQuickAdd } from "./m-quick-add";
 
 // Wtorek 17.11.2026, 10:20, tydzień od poniedziałku → następny tydzień od Pn 23.11
@@ -221,5 +218,60 @@ describe("MQuickAdd", () => {
     const onClose = pokaz();
     await user.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("rodzaje to tylko Blok · Bieg · Nawyk, domyślnie Blok, bez „Zadanie”", () => {
+    pokaz();
+    const rodzaj = screen.getByRole("radiogroup", { name: "Rodzaj" });
+    expect(
+      within(rodzaj)
+        .getAllByRole("radio")
+        .map((r) => r.textContent),
+    ).toEqual(["Blok", "Bieg", "Nawyk"]);
+    expect(within(rodzaj).getByRole("radio", { name: "Blok" })).toBeChecked();
+    expect(
+      screen.queryByRole("radio", { name: "Zadanie" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Zadanie" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("chipy „Kiedy” mają aria-pressed i nigdy nie ma „Bez daty”", async () => {
+    const user = userEvent.setup();
+    pokaz();
+    for (const rodzaj of ["Blok", "Bieg"]) {
+      await user.click(screen.getByRole("radio", { name: rodzaj }));
+      const kiedy = screen.getByRole("group", { name: "Kiedy" });
+      expect(within(kiedy).getAllByRole("button").length).toBeGreaterThan(0);
+      for (const chip of within(kiedy).getAllByRole("button")) {
+        expect(chip).toHaveAttribute("aria-pressed");
+      }
+      expect(
+        within(kiedy).getByRole("button", { name: "Dziś" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(
+        screen.queryByRole("button", { name: "Bez daty" }),
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it("quickWhenOptions nie zwraca „Bez daty” dla żadnego rodzaju", () => {
+    for (const rodzaj of ["block", "run", "habit"] as const) {
+      const etykiety = quickWhenOptions(
+        rodzaj,
+        "2026-11-17",
+        10 * 60 + 20,
+        "mon",
+      ).map((o) => o.label);
+      expect(etykiety).not.toContain("Bez daty");
+    }
+  });
+
+  it("stopka: „Dodaj” na całą szerokość", () => {
+    pokaz();
+    expect(screen.getByRole("button", { name: "Dodaj" }).className).toContain(
+      "w-full",
+    );
   });
 });

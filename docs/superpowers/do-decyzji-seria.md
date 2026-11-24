@@ -65,3 +65,11 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Pasek dnia „Zaplanowane · wolne (8–20) · zadania” liczy też treningi Sportu | treningi zajmują czas dnia | niski |
 | W Dziś arkusz edycji bloku też ma „Usuń blok” | Dziś używa tego samego arkusza | niski |
 | W szczegółach bloku na telefonie bez paska postępu i bez usuwania zadań (usuwanie w edycji) | makieta CMBlockDetail | niski |
+
+### Pakiet Dziś
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| Dziś na telefonie wg aktualnej makiety CMToday (wariant F): „Ten tydzień”, kafelki nawyków, plan całej doby; bez kafelka „Zadania x/y”, karty biegu i linków „Kalendarz”/„Wszystkie”; zadania odhacza się w szczegółach bloku | makieta wygrywa z planem i ze starym punktem specu (konflikty, pkt 3) | średni: zadania wymagają jednego stuknięcia więcej |
+| Przerwy w planie dnia na telefonie nieklikalne | makieta pokazuje tylko tekst | niski |
+| Odstęp etykieta–pole w szybkim dodawaniu 6 px zamiast 8 px | wspólny `TextField` | niski |

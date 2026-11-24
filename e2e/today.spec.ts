@@ -182,24 +182,25 @@ test.describe("Dziś (telefon)", () => {
       .toEqual([{ start_local: `${jutro}T09:00:00`, duration_min: 60 }]);
   });
 
-  test("nawyk odhaczony na Dziś → kafelek „Nawyki” 1/1, także po odświeżeniu", async ({
+  test("nawyk odhaczony na Dziś → kafelek „Czytanie” wciśnięty, licznik „1 / 1”, także po odświeżeniu", async ({
     page,
   }, info) => {
     await zalozPelneDzis(page, info.project.name);
     const m = page.getByTestId("m-dzis");
-    // Kafelek to link „Nawyki” z wartością x/y (link „Wszystkie” ma inną nazwę)
-    const kafelekNawykow = m.getByRole("link").filter({ hasText: /^Nawyki/ });
-    await expect(kafelekNawykow).toContainText("0/1");
+    // Sekcja „Nawyki na dziś” z kafelkami (aria-pressed) i licznikiem „x / y”
+    const nawyki = m.getByRole("region", { name: "Nawyki na dziś" });
+    const czytanie = nawyki.getByRole("button", { name: /Czytanie/ });
+    await expect(czytanie).toHaveAttribute("aria-pressed", "false");
+    await expect(nawyki).toContainText("0 / 1");
 
     const zapis = poZapisie(page);
-    const nawyk = m.getByRole("checkbox", { name: "Czytanie" });
-    await nawyk.click();
-    await expect(nawyk).toHaveAttribute("aria-checked", "true");
-    await expect(kafelekNawykow).toContainText("1/1");
+    await czytanie.click();
+    await expect(czytanie).toHaveAttribute("aria-pressed", "true");
+    await expect(nawyki).toContainText("1 / 1");
     await zapis;
 
     await page.reload();
-    await expect(nawyk).toHaveAttribute("aria-checked", "true");
-    await expect(kafelekNawykow).toContainText("1/1");
+    await expect(czytanie).toHaveAttribute("aria-pressed", "true");
+    await expect(nawyki).toContainText("1 / 1");
   });
 });
