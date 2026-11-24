@@ -30,6 +30,7 @@ export function resolveRoute(input: {
   // Zasoby statyczne — nigdy nie przekierowujemy
   if (
     pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
     ZAWSZE_PRZEPUSZCZANE_PREFIKSY.some((p) => pathname.startsWith(p))
   ) {
     return null;

@@ -64,7 +64,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Pomija statyki, optymalizację obrazów, favicon, ikony i manifest
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest).*)",
+    // Pomija statyki, optymalizację obrazów, favicon, ikony, manifest i service worker
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js).*)",
   ],
 };

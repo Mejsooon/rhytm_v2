@@ -93,6 +93,7 @@ describe("resolveRoute", () => {
     expect(
       resolveRoute({ pathname: "/icons/icon-192.png", ...wylogowany }),
     ).toBeNull();
+    expect(resolveRoute({ pathname: "/sw.js", ...wylogowany })).toBeNull();
     expect(
       resolveRoute({ pathname: "/_next/static/a.js", ...wylogowany }),
     ).toBeNull();
