@@ -647,6 +647,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_log: {
+        Row: {
+          for_date: string;
+          kind: string;
+          ref: string;
+          sent_at: string;
+          user_id: string;
+        };
+        Insert: {
+          for_date: string;
+          kind: string;
+          ref: string;
+          sent_at?: string;
+          user_id: string;
+        };
+        Update: {
+          for_date?: string;
+          kind?: string;
+          ref?: string;
+          sent_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       push_subscriptions: {
         Row: {
           auth: string;
@@ -1018,6 +1042,19 @@ export type Database = {
         Args: { p_available: string[] };
         Returns: string[];
       };
+      claim_due_notifications: {
+        Args: { p_now: string };
+        Returns: {
+          auth: string;
+          body: string;
+          endpoint: string;
+          kind: string;
+          p256dh: string;
+          tag: string;
+          title: string;
+          url: string;
+        }[];
+      };
       complete_onboarding: {
         Args: { p_categories: Json };
         Returns: undefined;
@@ -1038,6 +1075,10 @@ export type Database = {
       delete_field: {
         Args: { p_field_id: string };
         Returns: undefined;
+      };
+      dispatch_notifications: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
       };
       duplicate_page: {
         Args: { p_page_id: string };
@@ -1076,6 +1117,10 @@ export type Database = {
       purge_trash: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
+      };
+      remove_push_subscriptions: {
+        Args: { p_endpoints: string[]; p_secret: string };
+        Returns: number;
       };
       reorder_fields: {
         Args: {
