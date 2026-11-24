@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (CMPages, CMEditor, CMRowEdit), uwagi „strony”, decyzje T10, T15, T17. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMPages.dc.html`, `CMEditor.dc.html` (stany: pusta strona, tabela, menu „Wstaw blok” `menuOpen`, arkusz „Kolumna” `colOpen`), `CMRowEdit.dc.html` (układ arkusza i wygląd pól). Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMPages CMEditor CMRowEdit`.
+**Makiety (wiążące):** `docs/design/mockups/CMPages.dc.html`, `CMNewPage.dc.html`, `CMPageMenu.dc.html`, `CMFilterSheet.dc.html`, `CMCardSheet.dc.html` (dodane 24.11), `CMEditor.dc.html` (stany: pusta strona, tabela, menu „Wstaw blok” `menuOpen`, arkusz „Kolumna” `colOpen`), `CMRowEdit.dc.html` (układ arkusza i wygląd pól). Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMPages CMEditor CMRowEdit`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4 (`@utility` `m-*`), kontrolki `@/components/controls`, Vitest, Playwright (CI).
 
@@ -60,7 +60,7 @@
 - [ ] Usunięcie wiersza na telefonie (przycisk kosza 44 px na końcu wiersza, `#a3a3a3`, „Usuń wiersz”) bez potwierdzenia, z toastem „Cofnij” jak na webie (T17).
 - [ ] Arkusz „Kolumna” (`FormDialog`, nagłówek z „Gotowe”):
   - pole nazwy 44 px;
-  - „Typ pola” jako chipy w 2 kolumnach (ikona 20 px + nazwa);
+  - „Typ pola” jako chipy w 2 kolumnach (ikona 20 px + nazwa) — wszystkie typy z `fields.ts` poza Sekretem (Tekst, Liczba, Data, Wybór, Checkbox, URL, Ocena, Kwota cykliczna, Data odnowienia; uzupełnienie 24.11);
   - „← W lewo” / „W prawo →”;
   - „Usuń kolumnę” (destructive-outline);
   - stałe kolumny modułu Hasła (`locked`) bez tych pozycji, jak dziś.
@@ -83,10 +83,31 @@
 - [ ] Niestabilny test (odłożone krok 3, zad. 5): przejrzyj `m-row-sheet.test.tsx` pod kątem `waitFor`/`findBy` przy odszyfrowaniu i usuń zależność od kolejności mikrozadań.
 - [ ] Commit: `feat(telefon): arkusz wiersza według CMRowEdit`.
 
-## Task 5 (koordynator): przegląd, CI, scalenie, dziennik
+## Task 5: Nowa strona (CMNewPage)
+
+**Files:** `src/features/pages/new-page-view.tsx` (gałąź telefonu albo `mobile/m-new-page.tsx`) + test.
+
+- [ ] Ekran pełny (nie arkusz): `m-head` z `.lbl` „Twoje tabele i notatki” i `m-title` „Strony”; pasek „Anuluj · Nowa strona · Utwórz” (44 px).
+- [ ] `.fld` „Nazwa strony” 44 px (16 px tekstu). Wybór szablonu podpowiada nazwę jak dziś.
+- [ ] „Szablon”: lista `m-row` z tytułem i opisem, zaznaczona ma tło `rgba(0,0,0,.03)` i `aria-pressed`. Szablony i opisy z dzisiejszego kodu (makieta wzorem). Pod listą `.hint` „Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.”.
+- [ ] „Pola, które powstaną”: chipy z nazwami pól szablonu („bez pól” dla pustej) i `.hint` z dopiskiem szablonu (kalendarz, karty), jeśli kod go ma.
+- [ ] Web bez zmian. Commit: `feat(telefon): nowa strona według CMNewPage`.
+
+## Task 6: Menu strony, filtr i karty (CMPageMenu, CMFilterSheet, CMCardSheet)
+
+**Files:** `src/features/pages/page-menu.tsx`, `delete-page-dialog.tsx`, `icon-picker.tsx`, `table/filter-popover.tsx`, `table/card-dialog.tsx`, `table/pinned-cards.tsx` (gałęzie telefonu) + testy.
+
+- [ ] Menu strony na telefonie (arkusz „close”): nagłówek z ikoną, tytułem i `.hint` „N wierszy · M pól”; pozycje `m-row` 44 px: „Zmień nazwę”, „Zmień ikonę”, „Duplikuj”, „Dodaj do ulubionych / Usuń z ulubionych”, „Usuń stronę” (destructive). Pozycje, których kod nie obsługuje, pomiń i zapisz w ledgerze.
+- [ ] „Zmień nazwę”: arkusz z `.fld` „Nazwa strony” i „Anuluj · Zapisz”. „Zmień ikonę”: siatka ikon 44 px z `aria-pressed`. „Usuń stronę”: `ConfirmDialog` z dzisiejszym tekstem skutków (makieta: wiersze do kosza na 30 dni, daty znikną z kalendarza — tylko jeśli tak działa kod).
+- [ ] Nad tabelą na telefonie: przyciski 44 px „Filtr i sortowanie” i „Dodaj kartę” (jak w CMEditor).
+- [ ] Arkusz „Filtr i sortowanie” („Wyczyść · tytuł · Gotowe”): sekcja „Filtr” z warunkami (pole · operator · wartość, usuń 44 px), pusty stan „Brak warunków. Tabela pokazuje wszystkie wiersze.”, „+ Dodaj warunek”, `.hint` „Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.”; sekcja „Sortowanie” (pole + `.seg` Rosnąco/Malejąco, „+ Dodaj sortowanie”); „Zapisz jako domyślny”, jeśli kod to ma. Logika z `filter-popover.tsx` bez zmian.
+- [ ] Arkusz „Nowa karta” („Anuluj · Nowa karta · Dodaj”): podgląd karty (etykieta, wartość, dopisek), „Co policzyć” jako chipy (rodzaje z `card-dialog.tsx`), „Kolumna”, „Tylko gdy zaznaczone”, „Napis” z `.hint` „„{year}” pokaże bieżący rok.” — pola tylko te, które kod obsługuje. Logika z `card-dialog.tsx` bez zmian.
+- [ ] Web bez zmian. Commit: `feat(telefon): menu strony, filtr i karty według makiet`.
+
+## Task 7 (koordynator): przegląd, CI, scalenie, dziennik
 
 - [ ] **Przed Task 1:** gałąź `feat/telefon-strony` z `main`, kopia planu, dziennik.
-- [ ] `visual.spec.ts`: test Stron z makietami `CMPages, CMEditor, CMRowEdit` w tytule, zrzuty arkuszy „Wstaw blok”, „Kolumna” i arkusza wiersza na telefonie.
+- [ ] `visual.spec.ts`: test Stron z makietami `CMPages, CMNewPage, CMEditor, CMPageMenu, CMFilterSheet, CMCardSheet, CMRowEdit` w tytule, zrzuty arkuszy „Wstaw blok”, „Kolumna” i arkusza wiersza na telefonie.
 - [ ] Recenzja: Sekret (tekst jawny tylko w arkuszu), zrzuty vs makiety, cele 44 px, web tabeli bez zmian (`page-table.test.tsx` dla webu zielony bez zmian oczekiwań).
 - [ ] Przegląd gałęzi, CI zielone (w tym `sejf.spec` mobile), scalenie według zasad serii. `odlozone.md` oznacz. Dziennik, `stan-projektu.md`.
 - [ ] „Do decyzji”: T10, T15, T17.
