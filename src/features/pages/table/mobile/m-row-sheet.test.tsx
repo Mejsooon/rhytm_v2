@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -149,9 +149,11 @@ describe("MRowSheet: Sekret", () => {
     expect(writeText).toHaveBeenLastCalledWith("");
   });
 
-  it("zamaskowane pole blokuje kopiowanie i wycinanie; po oczku nie", () => {
+  it("zamaskowane pole blokuje kopiowanie i wycinanie; po oczku nie", async () => {
     arkusz();
     const pole = screen.getByRole("textbox", { name: "Hasło" });
+    // Czekamy na odszyfrowanie (stan arkusza zmienia się po mikrozadaniach), zamiast liczyć na ich kolejność
+    await waitFor(() => expect(pole).toHaveValue("jawne-haslo-A"));
     expect(fireEvent.copy(pole)).toBe(false);
     expect(fireEvent.cut(pole)).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Pokaż: Hasło" }));
@@ -206,31 +208,145 @@ describe("MRowSheet: Subscriptions", () => {
     expect(onChange).toHaveBeenLastCalledWith("k", { amount: 43, cycle: "year" });
   });
 
-  it("data odnowienia: pole pokazuje następne odnowienie, nie kotwicę", () => {
+  it("data odnowienia: kalendarz pokazuje następne odnowienie (nie kotwicę), z podpisem „dd.mm.rrrr · za N dni”", () => {
     arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("21.11.2026");
-    expect(screen.queryByText(/następne:/)).not.toBeInTheDocument();
+    const grupa = screen.getByRole("group", { name: "Data odnowienia" });
+    expect(within(grupa).getByText("listopad 2026")).toBeInTheDocument();
+    expect(within(grupa).getByRole("button", { name: "21 listopad 2026" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(grupa).getByText("21.11.2026 · za 6 dni")).toBeInTheDocument();
   });
 
   it("cykl bierze się z ukrytej kolumny kwoty (allFields)", () => {
     arkuszSub({ k: { amount: 249.99, cycle: "year" }, o: "2025-12-03" }, [SUB[1]], SUB);
-    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("03.12.2026");
+    const grupa = screen.getByRole("group", { name: "Data odnowienia" });
+    expect(within(grupa).getByText("grudzień 2026")).toBeInTheDocument();
+    expect(within(grupa).getByText("03.12.2026 · za 18 dni")).toBeInTheDocument();
   });
 
   it("wybrana data staje się nową kotwicą", async () => {
     const user = userEvent.setup();
     const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    await user.click(screen.getByRole("button", { name: "Data odnowienia" }));
-    await user.click(screen.getByRole("button", { name: /25/ }));
+    await user.click(screen.getByRole("button", { name: "25 listopad 2026" }));
     expect(onChange).toHaveBeenLastCalledWith("o", "2026-11-25");
   });
 
   it("ponowny wybór daty z serii nie zapisuje nowej kotwicy", async () => {
     const user = userEvent.setup();
     const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    await user.click(screen.getByRole("button", { name: "Data odnowienia" }));
-    await user.click(screen.getByRole("button", { name: /21/ }));
+    await user.click(screen.getByRole("button", { name: "21 listopad 2026" }));
     expect(onChange).not.toHaveBeenCalledWith("o", expect.anything());
   });
 });
 
+
+// Układ według CMRowEdit: nagłówek „Anuluj · tytuł · Zapisz”, chipy Wyboru, karta z przełącznikami, „Usuń wiersz”
+describe("MRowSheet: układ CMRowEdit", () => {
+  const OPCJE = [
+    { id: "o1", label: "Rozrywka", color: "#0070f3" },
+    { id: "o2", label: "Praca", color: "#15803d" },
+  ];
+  const POLA_UKLADU: PageField[] = [
+    { id: "n", name: "Nazwa", type: "text", config: {}, position: 0, isTitle: true },
+    { id: "kat", name: "Kategoria", type: "select", config: { options: OPCJE }, position: 1, isTitle: false },
+    { id: "akt", name: "Aktywna", type: "checkbox", config: {}, position: 2, isTitle: false },
+    { id: "zrobione", name: "Zrobione", type: "checkbox", config: {}, position: 3, isTitle: false },
+    { id: "ocena", name: "Ocena", type: "rating", config: {}, position: 4, isTitle: false },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stan("zablokowany");
+  });
+
+  function uklad(values: Record<string, unknown>, onDelete?: () => void) {
+    const onChange = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <MRowSheet
+        open
+        title="Netflix"
+        fields={POLA_UKLADU}
+        values={values}
+        today="2026-11-15"
+        onChange={onChange}
+        onSave={vi.fn()}
+        onCancel={onCancel}
+        onDelete={onDelete}
+      />,
+    );
+    return { onChange, onCancel };
+  }
+
+  it("arkusz ma 90% wysokości; nagłówek „Anuluj · tytuł · Zapisz”, bez stopki", () => {
+    const { onCancel } = uklad({ n: "Netflix" });
+    const arkusz = screen.getByRole("dialog", { name: "Netflix" });
+    expect(arkusz.className).toContain("max-[799px]:h-[90%]");
+    expect(screen.getAllByRole("button", { name: "Anuluj" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Zapisz" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("Wybór to chipy z aria-pressed; stuknięcie zaznaczonej opcji ją czyści", async () => {
+    const user = userEvent.setup();
+    const { onChange } = uklad({ n: "Netflix", kat: "o1" });
+    const grupa = screen.getByRole("group", { name: "Kategoria" });
+    expect(within(grupa).getByRole("button", { name: "Rozrywka" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(grupa).getByRole("button", { name: "Praca" })).toHaveAttribute("aria-pressed", "false");
+    await user.click(within(grupa).getByRole("button", { name: "Praca" }));
+    expect(onChange).toHaveBeenLastCalledWith("kat", "o2");
+    await user.click(within(grupa).getByRole("button", { name: "Rozrywka" }));
+    expect(onChange).toHaveBeenLastCalledWith("kat", null);
+  });
+
+  it("checkboxy są razem w jednej karcie jako przełączniki m-row", async () => {
+    const user = userEvent.setup();
+    const { onChange } = uklad({ n: "Netflix", akt: true });
+    const akt = screen.getByRole("switch", { name: "Aktywna" });
+    const zrobione = screen.getByRole("switch", { name: "Zrobione" });
+    expect(akt).toHaveAttribute("aria-checked", "true");
+    expect(akt.parentElement).toHaveClass("m-row");
+    expect(akt.parentElement!.parentElement).toBe(zrobione.parentElement!.parentElement);
+    await user.click(zrobione);
+    expect(onChange).toHaveBeenLastCalledWith("zrobione", true);
+  });
+
+  it("„Usuń wiersz” (destructive-outline na całą szerokość) tylko dla istniejącego wiersza", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    const { unmount } = render(
+      <MRowSheet open title="A" fields={POLA_UKLADU} values={{}} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} onCancel={vi.fn()} />,
+    );
+    expect(screen.queryByRole("button", { name: "Usuń wiersz" })).toBeNull();
+    unmount();
+    uklad({ n: "Netflix" }, onDelete);
+    const usun = screen.getByRole("button", { name: "Usuń wiersz" });
+    expect(usun).toHaveClass("w-full");
+    await user.click(usun);
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it("data: kalendarz z nawigacją miesięcy; dziś na czerwono, podpis pod kartą", async () => {
+    const user = userEvent.setup();
+    const pola: PageField[] = [{ id: "d", name: "Termin", type: "date", config: {}, position: 0, isTitle: false }];
+    const onChange = vi.fn();
+    render(
+      <MRowSheet open title="A" fields={pola} values={{ d: "2026-11-20" }} today="2026-11-15" onChange={onChange} onSave={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const grupa = screen.getByRole("group", { name: "Termin" });
+    expect(within(grupa).getByText("20.11.2026 · za 5 dni")).toBeInTheDocument();
+    expect(within(grupa).getByRole("button", { name: "15 listopad 2026" }).className).toContain("bg-[#dc2626]");
+    expect(within(grupa).getByRole("button", { name: "20 listopad 2026" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(grupa).getByRole("button", { name: "Następny miesiąc" }));
+    expect(within(grupa).getByText("grudzień 2026")).toBeInTheDocument();
+    await user.click(within(grupa).getByRole("button", { name: "3 grudzień 2026" }));
+    expect(onChange).toHaveBeenLastCalledWith("d", "2026-12-03");
+  });
+
+  it("ocena: gwiazdki 44 px", () => {
+    uklad({ n: "Netflix", ocena: 3 });
+    const gwiazdka = screen.getByRole("button", { name: "Ocena 2 na 5" });
+    expect(gwiazdka).toHaveClass("size-11");
+    expect(gwiazdka).toHaveAttribute("aria-pressed", "true");
+  });
+});
