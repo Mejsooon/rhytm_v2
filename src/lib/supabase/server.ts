@@ -1,16 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import type { Database } from "@/types/database";
 
 // Klient Supabase po stronie serwera (Server Components, Server Actions, Route Handlers).
 export async function createClient() {
   const cookieStore = await cookies();
+  // Logowanie idzie z serwera Next, więc bez tego GoTrue zapisałby w auth.sessions user-agent serwera (node),
+  // a lista sesji w Ustawieniach pokazywałaby wszystkie sesje jako „Przeglądarka · nieznany system”.
+  const userAgent = (await headers()).get("user-agent");
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: userAgent ? { headers: { "User-Agent": userAgent } } : undefined,
       cookies: {
         getAll() {
           return cookieStore.getAll();

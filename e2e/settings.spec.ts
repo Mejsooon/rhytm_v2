@@ -63,7 +63,11 @@ test.describe("ustawienia ogólne", () => {
 
     // Karta Cele: cel snu 8:00 → „+” → 8:15 → zapis
     const cele = page.getByTestId("karta-cele");
-    await expect(cele.getByText("8:00", { exact: true })).toBeVisible();
+    await expect(
+      cele.getByRole("group", { name: "Cel snu" }).getByText("8:00", {
+        exact: true,
+      }),
+    ).toBeVisible();
     await cele.getByRole("button", { name: "Zwiększ Cel snu" }).click();
     await expect(cele.getByText("8:15", { exact: true })).toBeVisible();
     await expect(cele.getByText("Masz niezapisane zmiany.")).toBeVisible();
@@ -71,8 +75,11 @@ test.describe("ustawienia ogólne", () => {
     await expect(cele.getByText(/Zapisano ✓/)).toBeVisible();
 
     await page.reload();
+    // Po przeładowaniu streamowanie na chwilę zostawia ukrytą kopię karty — rola „group” pomija ukryte elementy
     await expect(
-      page.getByTestId("karta-cele").getByText("8:15", { exact: true }),
+      page.getByRole("group", { name: "Cel snu" }).getByText("8:15", {
+        exact: true,
+      }),
     ).toBeVisible();
 
     // Cele treningowe: nowe konto ma oba włączone (3 treningi, 25 km) → wyłączamy km, treningi 5 → zapis
