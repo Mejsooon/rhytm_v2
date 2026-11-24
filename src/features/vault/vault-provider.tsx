@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { createVault, getVault, resetVault, rewrapVault as rewrapVaultAction } from "./actions";
+import { BLOKADA_MS } from "./lock-timeout";
 import { masterPasswordStrength, MASTER_MIN_STRENGTH } from "./strength";
 import {
   createVaultMaterial,
@@ -32,8 +33,6 @@ export type VaultState = {
   onStaleGeneration(): void;
 };
 
-// 5 minut od ostatniej aktywności
-const BLOKADA_MS = 5 * 60 * 1000;
 const AKTYWNOSC = ["pointerdown", "keydown", "touchstart", "wheel", "scroll"] as const;
 const ZLE_HASLO = "Nieprawidłowe hasło główne.";
 const NIE_ZAPISANO = "Nie zapisano. Sejf musi być odblokowany.";

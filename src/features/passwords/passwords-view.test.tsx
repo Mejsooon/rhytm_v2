@@ -146,7 +146,8 @@ describe("PasswordsView", () => {
     const okno = screen.getByRole("dialog", { name: "Odblokuj sejf" });
     expect(okno).not.toHaveAttribute("aria-modal");
     expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
+    // Link do resetu jest w oknie webu i na ekranie telefonu (oba w DOM, przełącza je CSS)
+    expect(within(okno).getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
     // Tabela widoczna (atrapa), nie ukryta; w treści pod nakładką, która jest inert i aria-hidden
     const tabelaEl = screen.getByTestId("tabela");
     expect(tabelaEl).toBeVisible();
@@ -163,6 +164,20 @@ describe("PasswordsView", () => {
     expect(screen.getByText("Szyfrowane")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sejf odblokowany")).not.toBeInTheDocument();
+  });
+
+  it("telefon, zablokowany: pełny ekran „Sejf jest zablokowany” z linkiem „Strony”, okno i nakładka webu chowane CSS", () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    const { container } = pokaz();
+    const ekran = screen.getByRole("heading", { level: 1, name: "Sejf jest zablokowany" });
+    const telefon = ekran.closest(".min-\\[800px\\]\\:hidden")!;
+    expect(telefon).not.toBeNull();
+    expect(within(telefon as HTMLElement).getByRole("link", { name: "Strony" })).toHaveAttribute("href", "/strony");
+    expect(within(telefon as HTMLElement).getByLabelText("Hasło główne")).toHaveAttribute("autocomplete", "current-password");
+    // Opakowanie webu (tabela, nagłówek) chowa się na telefonie, a nakładka i okno webu też
+    expect(screen.getByTestId("tabela").closest("[inert]")).toHaveClass("max-[799px]:hidden");
+    expect(container.querySelector(".backdrop-blur-\\[3px\\]")).toHaveClass("max-[799px]:hidden");
+    expect(screen.getByRole("dialog", { name: "Odblokuj sejf" }).parentElement).toHaveClass("max-[799px]:hidden");
   });
 
   it("zablokowany → odblokowany: nakładka i okno znikają, tytuł wraca, tabela zostaje ta sama", () => {
@@ -267,6 +282,15 @@ describe("PasswordsView", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByTestId("tabela")).not.toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+  });
+
+  it("telefon, ładowanie: sam nagłówek z linkiem „Strony”, bez ekranu „zablokowany” ani pola hasła", () => {
+    vault.state = { status: "ladowanie", remainingMs: 0 };
+    pokaz();
+    expect(screen.getByRole("link", { name: "Strony" })).toHaveAttribute("href", "/strony");
+    expect(screen.queryByRole("heading", { name: "Sejf jest zablokowany" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Hasło główne")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Odblokuj" })).not.toBeInTheDocument();
   });
 
   it("bez bloku tabeli: komunikat zamiast tabeli", () => {
