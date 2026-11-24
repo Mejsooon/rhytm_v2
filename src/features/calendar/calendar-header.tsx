@@ -4,20 +4,15 @@
 // Web (CCalendar.dc.html, CCalendarDay.dc.html): jeden pasek — zgrupowane ‹ Dziś › z tytułem
 // i szarą plakietką (tydz. N / N z M bloków) po lewej, „Kategorie”, segment Dzień/Tydzień/Miesiąc
 // i „Nowy blok” po prawej.
-// Telefon (MCalendarDayFull.dc.html): jedna linia „Listopad” + „tydz. N”, ikona Kategorie i strzałki,
-// segment pod spodem. Nowy blok na telefonie dodaje pływający przycisk widoku.
+// Telefon (CMCalendarDay.dc.html): jedna linia „Listopad” + „tydz. N”, ikony Kategorie i Szukaj,
+// segment widoków (linki) pod spodem; strzałki tylko w tygodniu i miesiącu (do przeróbki w Task 2). Nowy blok na telefonie dodaje pływający przycisk widoku.
 // Oba układy są w DOM, przełącza je CSS (800 px).
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 
 import { SidebarToggle } from "@/components/shell/sidebar-toggle";
-import {
-  Button,
-  MonoLabel,
-  Segment,
-  StatusBadge,
-} from "@/components/controls";
+import { Button, Segment, StatusBadge } from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { CategoryFilters, CategorySheet } from "./category-filters";
 import type { CategoryRow, RenewalSource } from "./load-calendar";
@@ -71,7 +66,7 @@ export function CalendarHeader({
   subtitle?: string;
   categories?: CategoryRow[];
   onToggleCategory?: (category: CategoryRow) => void;
-  // „+ Kategoria” w menu i w arkuszu
+  // „+ Kategoria” w menu, „Kategoria” w arkuszu
   onAddCategory?: () => void;
   // Źródła odnowień subskrypcji w menu „Kategorie” (pod kategoriami)
   renewalSources?: RenewalSource[];
@@ -112,11 +107,7 @@ export function CalendarHeader({
           <SidebarToggle placement="header" />
           {/* Grupa ‹ Dziś ›: przyciski sklejone, zaokrąglone tylko skrajne rogi; fokus nad sąsiadem */}
           <div className="inline-flex">
-            <Button
-              asChild
-              icon
-              className="rounded-r-none focus-visible:z-10"
-            >
+            <Button asChild icon className="rounded-r-none focus-visible:z-10">
               <Link
                 href={adres(view, shiftDate(view, date, -1))}
                 aria-label={`Poprzedni ${OKRES[view]}`}
@@ -164,16 +155,15 @@ export function CalendarHeader({
       </header>
 
       <div className="flex-none min-[800px]:hidden">
-        <header className="flex min-h-[52px] items-center gap-0.5 pt-2 pr-2 pb-1 pl-4">
+        {/* CMCalendarDay: „Listopad” + „tydz. N” w jednej linii, po prawej Kategorie i Szukaj (44 px) */}
+        <header className="m-head">
           <div className="flex min-w-0 flex-1 items-baseline gap-2">
-            <h2 className="text-[22px] font-semibold tracking-[-0.02em]">
-              {miesiacWielka}
-            </h2>
-            <MonoLabel>
+            <h2 className="m-title">{miesiacWielka}</h2>
+            <span className="text-xs font-medium text-muted-foreground">
               {mobileView === "miesiac"
                 ? `${rok}`
                 : `tydz. ${isoWeekNumber(date)}`}
-            </MonoLabel>
+            </span>
           </div>
           <CategorySheet
             categories={categories}
@@ -182,28 +172,59 @@ export function CalendarHeader({
             sources={renewalSources}
             onToggleSource={onToggleRenewalSource}
           />
-          <button
-            type="button"
-            aria-label={`Poprzedni ${OKRES[mobileView]}`}
-            onClick={() =>
-              router.push(adres(mobileView, shiftDate(mobileView, date, -1)))
-            }
-            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
-          >
-            <ChevronLeft size={22} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label={`Następny ${OKRES[mobileView]}`}
-            onClick={() =>
-              router.push(adres(mobileView, shiftDate(mobileView, date, 1)))
-            }
-            className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-muted"
-          >
-            <ChevronRight size={22} aria-hidden="true" />
-          </button>
+          <Button variant="ghost" icon asChild>
+            <Link href="/szukaj" aria-label="Szukaj">
+              <Search size={20} aria-hidden="true" />
+            </Link>
+          </Button>
+          {/* Dzień ma nawigację w pasku tygodnia; tydzień i miesiąc zachowują strzałki do czasu przeróbki (CMCalendarWeek, CMCalendarMonth) */}
+          {mobileView !== "dzien" && (
+            <>
+              <Button
+                variant="ghost"
+                icon
+                aria-label={`Poprzedni ${OKRES[mobileView]}`}
+                onClick={() =>
+                  router.push(
+                    adres(mobileView, shiftDate(mobileView, date, -1)),
+                  )
+                }
+              >
+                <ChevronLeft size={20} aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                icon
+                aria-label={`Następny ${OKRES[mobileView]}`}
+                onClick={() =>
+                  router.push(adres(mobileView, shiftDate(mobileView, date, 1)))
+                }
+              >
+                <ChevronRight size={20} aria-hidden="true" />
+              </Button>
+            </>
+          )}
         </header>
-        <div className="mx-4 mb-2">{segment(mobileView)}</div>
+        {/* Segment widoków jako linki (.seg z makiety): aktualny widok ma aria-current="page" */}
+        <nav
+          aria-label="Widok kalendarza"
+          className="mx-4 mt-3 mb-2 flex gap-0.5 rounded-md bg-muted p-0.5 text-sm"
+        >
+          {OPCJE_WIDOKU.map((opcja) => (
+            <Link
+              key={opcja.value}
+              href={adres(opcja.value, date)}
+              aria-current={opcja.value === mobileView ? "page" : undefined}
+              className={`inline-flex h-10 min-w-0 flex-1 items-center justify-center truncate rounded-[8px] px-2 font-medium no-underline outline-none focus-visible:shadow-focus ${
+                opcja.value === mobileView
+                  ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {opcja.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </>
   );

@@ -80,16 +80,19 @@ describe("CalendarView na telefonie", () => {
     );
     expect(screen.getByTestId("m-os-dnia")).toBeInTheDocument();
     expect(screen.getByTestId("kolumna-2026-11-18")).toBeInTheDocument();
-    // Segment w nagłówku telefonu pokazuje „Dzień”
-    const segmenty = screen.getAllByRole("radiogroup", {
+    // Segment web zostaje przy „Tydzień”, a nagłówek telefonu (linki) wskazuje „Dzień”
+    const segmentWeb = screen.getByRole("radiogroup", {
+      name: "Widok kalendarza",
+    });
+    expect(segmentWeb.querySelector('[aria-checked="true"]')).toHaveTextContent(
+      "Tydzień",
+    );
+    const nawigacja = screen.getByRole("navigation", {
       name: "Widok kalendarza",
     });
     expect(
-      segmenty[0].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Tydzień");
-    expect(
-      segmenty[1].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Dzień");
+      within(nawigacja).getByRole("link", { name: "Dzień" }),
+    ).toHaveAttribute("aria-current", "page");
   });
 
   it("z jawnym widokiem tygodnia telefon pokazuje listę tygodnia", () => {
@@ -193,7 +196,7 @@ describe("CalendarView na telefonie", () => {
     ).toHaveAttribute("aria-checked", "false");
   });
 
-  it("„+ Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
+  it("„Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
     render(
       <CalendarView
         view="dzien"
@@ -205,7 +208,7 @@ describe("CalendarView na telefonie", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     await userEvent.click(
-      await screen.findByRole("button", { name: "+ Kategoria" }),
+      await screen.findByRole("button", { name: "Kategoria" }),
     );
     expect(
       await screen.findByRole("dialog", { name: "Nowa kategoria" }),

@@ -110,18 +110,42 @@ describe("CalendarHeader", () => {
     expect(onNewBlock).toHaveBeenCalledTimes(1);
   });
 
-  it("telefon bierze mobileView: segment i strzałki działają na dniach", async () => {
+  it("telefon: segment to linki z aria-current przy aktualnym widoku; dzień bez strzałek", () => {
     wyrenderuj({ mobileView: "dzien" });
-    const segmenty = screen.getAllByRole("radiogroup", {
+    const nawigacja = screen.getByRole("navigation", {
       name: "Widok kalendarza",
     });
     expect(
-      segmenty[1].querySelector('[aria-checked="true"]'),
-    ).toHaveTextContent("Dzień");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Następny dzień" }),
+      within(nawigacja).getByRole("link", { name: "Dzień" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(nawigacja).getByRole("link", { name: "Tydzień" }),
+    ).not.toHaveAttribute("aria-current");
+    expect(
+      within(nawigacja).getByRole("link", { name: "Miesiąc" }),
+    ).toHaveAttribute("href", "/kalendarz?widok=miesiac&data=2026-11-18");
+    expect(
+      screen.queryByRole("button", { name: "Następny dzień" }),
+    ).not.toBeInTheDocument();
+    // Telefon: „Szukaj” to link do /szukaj, a „Kategorie” otwiera okno
+    expect(screen.getByRole("link", { name: "Szukaj" })).toHaveAttribute(
+      "href",
+      "/szukaj",
     );
-    expect(push).toHaveBeenCalledWith("/kalendarz?widok=dzien&data=2026-11-19");
+    expect(screen.getByRole("button", { name: "Kategorie" })).toHaveAttribute(
+      "aria-haspopup",
+      "dialog",
+    );
+  });
+
+  it("telefon: tydzień i miesiąc zachowują strzałki", async () => {
+    wyrenderuj({ mobileView: "tydzien" });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Następny tydzień" }),
+    );
+    expect(push).toHaveBeenCalledWith(
+      "/kalendarz?widok=tydzien&data=2026-11-25",
+    );
   });
 
   it("wygląd COSS: zgrupowane ‹ Dziś ›, podtytuł jako szara plakietka, Nowy blok z ikoną", () => {
@@ -161,6 +185,8 @@ describe("CalendarHeader", () => {
         />
       </SidebarStateProvider>,
     );
-    expect(screen.getByRole("button", { name: "Pokaż pasek boczny" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Pokaż pasek boczny" }),
+    ).toBeInTheDocument();
   });
 });

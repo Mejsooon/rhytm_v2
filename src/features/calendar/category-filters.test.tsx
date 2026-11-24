@@ -167,7 +167,11 @@ describe("CategoryFilters (przycisk „Kategorie” na webie)", () => {
     expect(menu.className).toContain("w-[230px]");
     // Etykieta .mi-lbl „Pokaż w kalendarzu” nad listą kategorii (CCalendar.dc.html)
     const etykieta = screen.getByText("Pokaż w kalendarzu");
-    expect(etykieta).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
+    expect(etykieta).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-muted-foreground",
+    );
     expect(menu.firstElementChild).toBe(etykieta);
     const studia = screen.getByRole("menuitemcheckbox", { name: /Studia/ });
     expect(studia.className).toContain("min-h-8");
@@ -232,13 +236,13 @@ describe("CategorySheet (arkusz kategorii na telefonie)", () => {
       screen.getByRole("switch", { name: "Pokaż kategorię Dom" }),
     );
     expect(onToggle).toHaveBeenCalledTimes(2);
-    // Wiersz ma co najmniej 52 px wysokości (pole dotyku)
+    // Wiersz to m-row (min. 48 px wysokości, pole dotyku ≥ 44 px)
     expect(screen.getByTestId("wiersz-kategorii-c2").className).toContain(
-      "min-h-[52px]",
+      "m-row",
     );
   });
 
-  it("„+ Kategoria” zamyka arkusz i woła onAdd", async () => {
+  it("„Kategoria” zamyka arkusz i woła onAdd", async () => {
     const onAdd = vi.fn();
     render(
       <CategorySheet
@@ -249,7 +253,7 @@ describe("CategorySheet (arkusz kategorii na telefonie)", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     await userEvent.click(
-      await screen.findByRole("button", { name: "+ Kategoria" }),
+      await screen.findByRole("button", { name: "Kategoria" }),
     );
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
     expect(
@@ -309,7 +313,10 @@ describe("CategoryFilters: źródła odnowień", () => {
         categories={kategorie}
         onToggle={() => {}}
         onAdd={() => {}}
-        sources={[zrodlo, { ...zrodlo, fieldId: "f2", name: "Inne", shown: false }]}
+        sources={[
+          zrodlo,
+          { ...zrodlo, fieldId: "f2", name: "Inne", shown: false },
+        ]}
         onToggleSource={onToggleSource}
       />,
     );
@@ -347,7 +354,9 @@ describe("CategoryFilters: źródła odnowień", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
     await userEvent.click(
-      await screen.findByRole("switch", { name: "Pokaż odnowienia Subscriptions" }),
+      await screen.findByRole("switch", {
+        name: "Pokaż odnowienia Subscriptions",
+      }),
     );
     expect(onToggleSource).toHaveBeenCalledWith(zrodlo);
   });
