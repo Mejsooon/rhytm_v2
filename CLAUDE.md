@@ -30,7 +30,8 @@ Każda rozmowa zaczyna się od przeczytania dwóch plików:
   - migracja idzie na produkcję dopiero po zielonym CI i po scaleniu do `main` („scal do main”), nigdy z gałęzi w trakcie pracy;
   - przed wykonaniem Claude podaje, czy migracja idzie przed wdrożeniem kodu na Vercel, czy po nim, i trzyma się tej kolejności;
   - **migracje usuwające dane** (DELETE, DROP z danymi, zawężenie typu) tylko po wyraźnym potwierdzeniu Mejsona w rozmowie;
-  - po wykonaniu `list_migrations` musi pokazać tę samą wersję co nazwa pliku w `supabase/migrations/`. Jeśli konektor nadał inną wersję, zmień nazwę pliku w repo na wersję z produkcji (commit na gałęzi `docs/*`), żeby `supabase db push` nie puścił jej drugi raz;
+  - po wykonaniu `list_migrations` musi pokazać tę samą wersję co nazwa pliku w `supabase/migrations/`. Konektor (`apply_migration`) nadaje wersję z bieżącej godziny, więc zaraz po migracji popraw wersję w historii produkcji na numer z nazwy pliku: `update supabase_migrations.schema_migrations as m set version = '<wersja z pliku>' where m.version = '<wersja nadana>' and m.name = '<nazwa>';` (zgoda Mejsona z 2026-11-24). **Nie zmieniaj nazwy pliku w repo** — wersja z godziny może wypaść przed późniejszymi migracjami i zepsuć kolejność na czystej bazie w CI. Bez tej poprawki `supabase db push` puściłby migrację drugi raz;
+  - konektor przy każdej migracji pyta Mejsona o zgodę w interfejsie (wygasa po 120 s), więc migracji nie da się wykonać, gdy Mejsona nie ma — wtedy kod musi działać na starej bazie, a migracja czeka;
   - jeśli konektor nie działa, migrację uruchamia Mejson (`pnpm exec supabase db push --remote`).
 - **Sekretów** (kluczy, haseł, tokenów) nie wpisuje się w czacie.
 - **Kod:**
