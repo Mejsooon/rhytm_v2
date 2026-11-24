@@ -84,8 +84,9 @@ describe("HabitDetail z oboma drzewami", () => {
     expect(
       within(okno).queryByRole("radiogroup", { name: "Harmonogram" }),
     ).not.toBeInTheDocument();
+    // ✕ z FormDialog jest w DOM, ale na telefonie ukryty (nagłówek „actions”)
     expect(
-      within(okno).queryByRole("button", { name: "Zamknij" }),
-    ).not.toBeInTheDocument();
+      within(okno).getByRole("button", { name: "Zamknij" }).className,
+    ).toContain("max-[799px]:hidden");
   });
 });

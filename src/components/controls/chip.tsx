@@ -11,6 +11,7 @@ export function Chip({
   dotColor,
   onClick,
   disabled = false,
+  ariaLabel,
   className,
   style,
   children,
@@ -21,6 +22,8 @@ export function Chip({
   dotColor?: string;
   onClick?: () => void;
   disabled?: boolean;
+  // Dostępna nazwa, gdy napis na chipie jest skrótem (np. „Pn” → „poniedziałek”)
+  ariaLabel?: string;
   // Dodatkowe klasy i styl (np. kolor kategorii z danych)
   className?: string;
   style?: React.CSSProperties;
@@ -30,6 +33,7 @@ export function Chip({
     <button
       type="button"
       aria-pressed={selected}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
       style={style}
