@@ -140,6 +140,20 @@ describe("SessionsCard", () => {
     expect(signOutOtherSessions).not.toHaveBeenCalled();
   });
 
+  it("lista bez bieżącej (JWT bez session_id) → żaden wiersz nie ma „Wyloguj”", () => {
+    render(
+      <SessionsCard
+        {...bazowe}
+        sessions={[{ ...BIEZACA, current: false }, inna(1)]}
+      />,
+    );
+    expect(screen.getByText("teraz · ta sesja")).toBeInTheDocument();
+    expect(screen.getByText("Safari · iPhone")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Wyloguj: / })).toBeNull();
+    expect(screen.getByText("2 aktywne sesje")).toBeInTheDocument();
+    expect(wszystkieInne()).toHaveAttribute("aria-disabled", "false");
+  });
+
   it("loadError → bieżąca z nagłówka, komunikat i aktywny „Wyloguj wszystkie inne”", () => {
     render(
       <SessionsCard

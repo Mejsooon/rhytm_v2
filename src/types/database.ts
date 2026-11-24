@@ -1019,6 +1019,10 @@ export type Database = {
           user_agent: string | null;
         }[];
       };
+      my_has_password: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       move_category: {
         Args: {
           p_dir: number;

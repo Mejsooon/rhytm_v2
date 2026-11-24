@@ -54,10 +54,13 @@ async function Ogolne({
   // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = komunikat w karcie)
   const kosz = await loadTrash();
   const waluta = profil?.currency;
-  // Hasło do konta ma tylko tożsamość „email” (konto samo z Google go nie ma)
-  const hasPassword = (user.identities ?? []).some(
-    (t) => t.provider === "email",
-  );
+  // Czy konto ma hasło: z bazy (konto Google może ustawić hasło linkiem, bez tożsamości „email”);
+  // stara baza bez funkcji → tożsamość „email” jak dotąd
+  const { data: maHaslo, error: bladHasla } =
+    await supabase.rpc("my_has_password");
+  const hasPassword = bladHasla
+    ? (user.identities ?? []).some((t) => t.provider === "email")
+    : maHaslo === true;
   const zmianaHasla = user.user_metadata?.password_changed_at;
   const sesja = describeUserAgent((await headers()).get("user-agent"));
   return (
@@ -129,10 +132,13 @@ async function Konto() {
     .select("timezone")
     .eq("user_id", user.id)
     .maybeSingle();
-  // Hasło do konta ma tylko tożsamość „email” (konto samo z Google go nie ma)
-  const hasPassword = (user.identities ?? []).some(
-    (t) => t.provider === "email",
-  );
+  // Czy konto ma hasło: z bazy (konto Google może ustawić hasło linkiem, bez tożsamości „email”);
+  // stara baza bez funkcji → tożsamość „email” jak dotąd
+  const { data: maHaslo, error: bladHasla } =
+    await supabase.rpc("my_has_password");
+  const hasPassword = bladHasla
+    ? (user.identities ?? []).some((t) => t.provider === "email")
+    : maHaslo === true;
   const biezaca = describeUserAgent((await headers()).get("user-agent"));
 
   // Lista sesji z bazy; stara baza bez funkcji albo błąd → sama bieżąca sesja z nagłówka

@@ -62,11 +62,16 @@ export function SessionsCard({
   const inne = wszystkieInne
     ? []
     : sessions.filter((s) => !s.current && !usuniete.includes(s.id));
+  // Lista bez bieżącej (JWT bez session_id): nie wiadomo, który wiersz to ta przeglądarka,
+  // więc żaden wiersz nie dostaje „Wyloguj” (baza i tak odmówi: brak_sesji)
+  const bezRozpoznania =
+    sessions.length > 0 && !sessions.some((s) => s.current);
   // Przy błędzie odczytu nie wiemy, czy są inne sesje — przycisk zostaje aktywny
   const brakInnych = inne.length === 0 && (!loadError || wszystkieInne);
 
-  // Odmiana: 1 aktywna sesja, 2–4 aktywne sesje (bez 12–14), reszta aktywnych sesji
-  const n = inne.length + 1;
+  // Odmiana: 1 aktywna sesja, 2–4 aktywne sesje (bez 12–14), reszta aktywnych sesji.
+  // Bez rozpoznania bieżąca jest jednym z wierszy listy — nie liczymy jej drugi raz
+  const n = bezRozpoznania ? Math.max(1, inne.length) : inne.length + 1;
   const liczba =
     n === 1
       ? "1 aktywna sesja"
@@ -209,15 +214,17 @@ export function SessionsCard({
                   </div>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={`Wyloguj: ${s.label}`}
-                aria-disabled={pracuje}
-                onClick={() => void wyloguj(s)}
-              >
-                Wyloguj
-              </Button>
+              {!bezRozpoznania && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Wyloguj: ${s.label}`}
+                  aria-disabled={pracuje}
+                  onClick={() => void wyloguj(s)}
+                >
+                  Wyloguj
+                </Button>
+              )}
             </div>
           );
         })}

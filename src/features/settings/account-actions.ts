@@ -59,8 +59,14 @@ export async function changePassword(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  // 1. Konto tylko z Google nie ma obecnego hasła do sprawdzenia
-  if (!(user.identities ?? []).some((t) => t.provider === "email"))
+  // 1. Konto bez hasła (samo Google) nie ma czego sprawdzić. Hasło ustawione linkiem nie dodaje
+  // tożsamości „email”, więc pytamy bazę; stara baza bez funkcji → tożsamości jak dotąd
+  const { data: maHaslo, error: bladHasla } =
+    await supabase.rpc("my_has_password");
+  const zHaslem = bladHasla
+    ? (user.identities ?? []).some((t) => t.provider === "email")
+    : maHaslo === true;
+  if (!zHaslem)
     return {
       ok: false,
       message: "To konto loguje się przez Google. Ustaw hasło linkiem z maila.",
@@ -126,9 +132,18 @@ export async function changePassword(input: {
       message: "Nie udało się zmienić hasła. Spróbuj ponownie.",
     };
 
-  // 6. Inne urządzenia tracą sesję, ta zostaje
-  await supabase.auth.signOut({ scope: "others" });
+  // 6. Inne urządzenia tracą sesję, ta zostaje; błąd wylogowania nie może wyglądać jak pełny sukces
+  const { error: bladWylogowania } = await supabase.auth.signOut({
+    scope: "others",
+  });
   revalidatePath("/ustawienia/konto");
+  revalidatePath("/ustawienia/ogolne");
+  if (bladWylogowania)
+    return {
+      ok: false,
+      message:
+        "Hasło zmienione, ale nie udało się wylogować innych urządzeń. Użyj „Wyloguj wszystkie inne”.",
+    };
   return { ok: true };
 }
 
@@ -198,6 +213,7 @@ export async function revokeSession(id: string): Promise<AccountResult> {
   const { data, error } = await supabase.rpc("revoke_my_session", {
     p_session_id: parsed.data,
   });
+  // Każdy błąd (także brak_sesji: JWT bez session_id) → ogólny komunikat, nic nie usunięto
   if (error)
     return {
       ok: false,

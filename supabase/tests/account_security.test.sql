@@ -1,12 +1,18 @@
 begin;
-select plan(25);
+select plan(33);
 
--- A: konto z hasłem, B: drugie konto z hasłem, C: konto tylko Google (bez hasła).
+-- A: konto z hasłem, B: drugie konto z hasłem, C: konto tylko Google (hasło null), D: pusty hash.
 insert into auth.users (id, email, encrypted_password, raw_user_meta_data)
 values
   ('00000000-0000-0000-0000-0000000000a1', 'a@test.pl', extensions.crypt('Dobre-Haslo-123', extensions.gen_salt('bf')), '{"display_name":"A"}'),
   ('00000000-0000-0000-0000-0000000000b1', 'b@test.pl', extensions.crypt('Haslo-B-12345', extensions.gen_salt('bf')), '{"display_name":"B"}'),
-  ('00000000-0000-0000-0000-0000000000c1', 'c@test.pl', null, '{"display_name":"C"}');
+  ('00000000-0000-0000-0000-0000000000c1', 'c@test.pl', null, '{"display_name":"C"}'),
+  ('00000000-0000-0000-0000-0000000000d1', 'd@test.pl', '', '{"display_name":"D"}');
+
+-- Stare porażki B (sprzed 20 min) — verify_my_password je kasuje i nie liczy do limitu.
+insert into public.password_check_failures (user_id, failed_at)
+select '00000000-0000-0000-0000-0000000000b1', now() - interval '20 minutes'
+from generate_series(1, 5);
 
 -- Sesje: A1 bieżąca, A2 inna aktywna, A3 wygasła (not_after w przeszłości), B1 cudza.
 insert into auth.sessions (id, user_id, created_at, updated_at, refreshed_at, not_after, user_agent, ip)
@@ -28,6 +34,10 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.verify_my_password(text)', 'execute'),
   'anon nie może wywołać verify_my_password'
+);
+select ok(
+  not has_function_privilege('anon', 'public.my_has_password()', 'execute'),
+  'anon nie może wywołać my_has_password'
 );
 select ok(
   has_function_privilege('authenticated', 'public.list_my_sessions()', 'execute')
@@ -70,7 +80,22 @@ select is(
   'ip jako tekst bez maski'
 );
 
--- Wylogowanie pojedynczej sesji
+-- Wylogowanie pojedynczej sesji: bez session_id w JWT funkcja odmawia (nie wie, która sesja jest bieżąca)
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+select throws_ok(
+  $$select public.revoke_my_session('00000000-0000-0000-0000-0000000005a1')$$,
+  'P0001',
+  'brak_sesji',
+  'bez session_id → brak_sesji'
+);
+reset role;
+select ok(
+  exists (select 1 from auth.sessions as s where s.id = '00000000-0000-0000-0000-0000000005a1'),
+  'po brak_sesji sesja A1 nadal istnieje'
+);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated","session_id":"00000000-0000-0000-0000-0000000005a1"}', true);
+
 select is(
   public.revoke_my_session('00000000-0000-0000-0000-0000000005b1'),
   false,
@@ -94,6 +119,9 @@ select throws_ok(
   null,
   'authenticated nie czyta password_check_failures'
 );
+
+-- Czy konto ma hasło
+select is(public.my_has_password(), true, 'my_has_password: konto z hasłem → true');
 
 -- Weryfikacja hasła
 select is(public.verify_my_password('Dobre-Haslo-123'), true, 'dobre hasło → true');
@@ -145,11 +173,18 @@ select throws_ok(
 
 -- B ma własny licznik
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}', true);
-select is(public.verify_my_password('Haslo-B-12345'), true, 'limit A nie dotyczy B');
+-- Złe hasło: bez wyjątku (limit A i stare porażki B się nie liczą), stare porażki skasowane, nowa zapisana
+select is(public.verify_my_password('Zle-Haslo-B-1'), false, 'limit A nie dotyczy B, stare porażki B nie blokują');
 
 -- C bez hasła (Google) → false
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}', true);
 select is(public.verify_my_password('cokolwiek-123'), false, 'konto bez hasła → false');
+select is(public.my_has_password(), false, 'my_has_password: hasło null → false');
+
+-- D z pustym hashem → false
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}', true);
+select is(public.verify_my_password(''), false, 'pusty hash → false (także dla pustego hasła)');
+select is(public.my_has_password(), false, 'my_has_password: pusty hash → false');
 
 -- Bez zalogowania → unauthorized
 select set_config('request.jwt.claims', '{"role":"authenticated"}', true);
@@ -166,5 +201,10 @@ select is(
 );
 
 reset role;
+select is(
+  (select count(*) from public.password_check_failures as f where f.user_id = '00000000-0000-0000-0000-0000000000b1'),
+  1::bigint,
+  'porażki B starsze niż 15 min skasowane, została tylko nowa'
+);
 select * from finish();
 rollback;

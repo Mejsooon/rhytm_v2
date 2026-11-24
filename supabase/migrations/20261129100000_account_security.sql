@@ -1,5 +1,5 @@
 -- Konto i bezpieczeństwo: lista własnych sesji, wylogowanie pojedynczej sesji,
--- weryfikacja obecnego hasła z limitem prób (5 porażek / 15 min).
+-- weryfikacja obecnego hasła z limitem prób (5 porażek / 15 min), informacja, czy konto ma hasło.
 -- Funkcje są security definer (czytają auth.*), ale działają wyłącznie dla auth.uid().
 
 -- 1. Lista własnych, niewygasłych sesji. Bieżąca (session_id z JWT) pierwsza, potem ostatnia aktywność malejąco.
@@ -49,6 +49,10 @@ begin
   if v_uid is null then
     raise exception 'unauthorized';
   end if;
+  -- Bez session_id w JWT nie wiadomo, która sesja jest bieżąca — nic nie usuwamy
+  if v_biezaca is null then
+    raise exception 'brak_sesji';
+  end if;
 
   delete from auth.sessions as s
   where s.id = p_session_id
@@ -91,6 +95,11 @@ begin
   -- Równoległe próby tego samego użytkownika czekają na siebie (limit nie przecieka)
   perform pg_advisory_xact_lock(hashtextextended('verify_my_password:' || v_uid::text, 0));
 
+  -- Porażki starsze niż okno limitu nie są już potrzebne
+  delete from public.password_check_failures as f
+  where f.user_id = v_uid
+    and f.failed_at <= now() - interval '15 minutes';
+
   select count(*) into v_porazki
   from public.password_check_failures as f
   where f.user_id = v_uid
@@ -118,10 +127,30 @@ begin
 end;
 $$;
 
--- 5. Uprawnienia: tylko zalogowani
+-- 5. Czy konto ma hasło (także konto Google, które ustawiło hasło linkiem — bez tożsamości „email”)
+create function public.my_has_password()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select u.encrypted_password is not null and u.encrypted_password <> ''
+      from auth.users as u
+      where u.id = (select auth.uid())
+    ),
+    false
+  );
+$$;
+
+-- 6. Uprawnienia: tylko zalogowani
 revoke execute on function public.list_my_sessions() from public, anon;
 revoke execute on function public.revoke_my_session(uuid) from public, anon;
 revoke execute on function public.verify_my_password(text) from public, anon;
+revoke execute on function public.my_has_password() from public, anon;
 grant execute on function public.list_my_sessions() to authenticated;
 grant execute on function public.revoke_my_session(uuid) to authenticated;
 grant execute on function public.verify_my_password(text) to authenticated;
+grant execute on function public.my_has_password() to authenticated;

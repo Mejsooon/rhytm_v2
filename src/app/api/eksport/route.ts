@@ -63,7 +63,8 @@ export async function GET() {
     const wiersze: unknown[] = [];
     let blad = false;
     for (let od = 0; ; od += STRONA) {
-      let zapytanie = db.from(nazwa).select(kolumny);
+      // Jawny filtr po właścicielu obok RLS (obrona w głąb) — każda tabela z listy ma user_id
+      let zapytanie = db.from(nazwa).select(kolumny).eq("user_id", user.id);
       for (const klucz of klucze)
         zapytanie = zapytanie.order(klucz, { ascending: true });
       const { data, error } = await zapytanie.range(od, od + STRONA - 1);
@@ -72,8 +73,9 @@ export async function GET() {
         blad = true;
         break;
       }
-      wiersze.push(...(data ?? []));
-      if (!data || data.length < STRONA) break;
+      // Koniec na pustej stronie (nie na niepełnej — limit serwera może być mniejszy niż STRONA)
+      if (!data || data.length === 0) break;
+      wiersze.push(...data);
     }
     if (blad) pominiete.push(nazwa);
     else tabele[nazwa] = wiersze;

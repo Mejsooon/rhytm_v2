@@ -6,6 +6,8 @@ const {
   signOut,
   resetPasswordForEmail,
   rpc,
+  maHaslo,
+  weryfikacja,
   revalidatePath,
   isPasswordPwned,
 } = vi.hoisted(() => ({
@@ -14,6 +16,8 @@ const {
   signOut: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   rpc: vi.fn(),
+  maHaslo: vi.fn(),
+  weryfikacja: vi.fn(),
   revalidatePath: vi.fn(),
   isPasswordPwned: vi.fn(),
 }));
@@ -131,12 +135,39 @@ describe("changePassword", () => {
     vi.clearAllMocks();
     getUser.mockResolvedValue({ data: { user: UZYTKOWNIK_Z_HASLEM } });
     isPasswordPwned.mockResolvedValue(false);
-    rpc.mockResolvedValue({ data: true, error: null });
+    maHaslo.mockResolvedValue({ data: true, error: null });
+    weryfikacja.mockResolvedValue({ data: true, error: null });
+    // my_has_password i verify_my_password z osobnych mocków
+    rpc.mockImplementation((nazwa: string) =>
+      nazwa === "my_has_password" ? maHaslo() : weryfikacja(),
+    );
     updateUser.mockResolvedValue({ error: null });
     signOut.mockResolvedValue({ error: null });
   });
 
-  it("konto tylko Google → komunikat, bez rpc", async () => {
+  it("konto bez hasła (my_has_password → false) → komunikat, bez weryfikacji", async () => {
+    maHaslo.mockResolvedValue({ data: false, error: null });
+    expect(await changePassword(DOBRE)).toEqual({
+      ok: false,
+      message: "To konto loguje się przez Google. Ustaw hasło linkiem z maila.",
+    });
+    expect(weryfikacja).not.toHaveBeenCalled();
+  });
+
+  it("konto Google z hasłem ustawionym linkiem (bez tożsamości email) może zmienić hasło", async () => {
+    getUser.mockResolvedValue({
+      data: {
+        user: { ...UZYTKOWNIK_Z_HASLEM, identities: [{ provider: "google" }] },
+      },
+    });
+    expect(await changePassword(DOBRE)).toEqual({ ok: true });
+  });
+
+  it("stara baza bez my_has_password → tożsamości (samo Google = komunikat)", async () => {
+    maHaslo.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST202", message: "x" },
+    });
     getUser.mockResolvedValue({
       data: {
         user: { ...UZYTKOWNIK_Z_HASLEM, identities: [{ provider: "google" }] },
@@ -146,7 +177,6 @@ describe("changePassword", () => {
       ok: false,
       message: "To konto loguje się przez Google. Ustaw hasło linkiem z maila.",
     });
-    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("za krótkie nowe hasło → komunikat schematu", async () => {
@@ -159,7 +189,7 @@ describe("changePassword", () => {
       ok: false,
       message: "Hasło musi mieć co najmniej 10 znaków",
     });
-    expect(rpc).not.toHaveBeenCalled();
+    expect(weryfikacja).not.toHaveBeenCalled();
   });
 
   it("nowe = obecne → komunikat", async () => {
@@ -173,7 +203,7 @@ describe("changePassword", () => {
       ok: false,
       message: "Nowe hasło musi różnić się od obecnego.",
     });
-    expect(rpc).not.toHaveBeenCalled();
+    expect(weryfikacja).not.toHaveBeenCalled();
   });
 
   it("hasło z wycieku → komunikat, bez rpc", async () => {
@@ -182,11 +212,11 @@ describe("changePassword", () => {
       ok: false,
       message: "To hasło wystąpiło w wyciekach danych. Wybierz inne.",
     });
-    expect(rpc).not.toHaveBeenCalled();
+    expect(weryfikacja).not.toHaveBeenCalled();
   });
 
   it("złe obecne hasło (rpc → false)", async () => {
-    rpc.mockResolvedValue({ data: false, error: null });
+    weryfikacja.mockResolvedValue({ data: false, error: null });
     expect(await changePassword(DOBRE)).toEqual({
       ok: false,
       message: "Obecne hasło jest nieprawidłowe.",
@@ -198,7 +228,7 @@ describe("changePassword", () => {
   });
 
   it("za dużo prób", async () => {
-    rpc.mockResolvedValue({
+    weryfikacja.mockResolvedValue({
       data: null,
       error: { code: "P0001", message: "za_duzo_prob" },
     });
@@ -209,7 +239,7 @@ describe("changePassword", () => {
   });
 
   it("stara baza bez funkcji (PGRST202)", async () => {
-    rpc.mockResolvedValue({
+    weryfikacja.mockResolvedValue({
       data: null,
       error: { code: "PGRST202", message: "Could not find the function" },
     });
@@ -218,6 +248,15 @@ describe("changePassword", () => {
       message: "Zmiana hasła będzie dostępna za chwilę. Spróbuj później.",
     });
     expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("błąd wylogowania innych → bez komunikatu sukcesu", async () => {
+    signOut.mockResolvedValue({ error: { status: 500, message: "x" } });
+    expect(await changePassword(DOBRE)).toEqual({
+      ok: false,
+      message:
+        "Hasło zmienione, ale nie udało się wylogować innych urządzeń. Użyj „Wyloguj wszystkie inne”.",
+    });
   });
 
   it("błąd updateUser → komunikat, bez wylogowania innych", async () => {
@@ -302,6 +341,22 @@ describe("signOutOtherSessions i revokeSession", () => {
       ok: false,
       message: "Ta sesja już wygasła.",
     });
+  });
+
+  it("revokeSession: JWT bez session_id (brak_sesji) → ogólny komunikat", async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "brak_sesji" },
+    });
+    expect(await revokeSession(ID)).toEqual({
+      ok: false,
+      message: "Nie udało się wylogować sesji. Spróbuj ponownie.",
+    });
+  });
+
+  it("signOutOtherSessions z błędem → ok: false", async () => {
+    signOut.mockResolvedValue({ error: { status: 500, message: "x" } });
+    expect(await signOutOtherSessions()).toEqual({ ok: false });
   });
 
   it("revokeSession z błędnym id → bez rpc", async () => {
