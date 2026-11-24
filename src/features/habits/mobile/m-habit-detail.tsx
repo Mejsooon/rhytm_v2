@@ -5,7 +5,7 @@
 // notatki, historia harmonogramu i „Usuń nawyk” (ConfirmDialog).
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, InfoIcon, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 
 import { Button, Card, CardTitle, StatusBadge } from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
@@ -197,11 +197,7 @@ export function MHabitDetail({ data }: { data: HabitDetailData }) {
                 {w.aktualna && <StatusBadge tone="green">Aktualny</StatusBadge>}
               </div>
             ))}
-            <div className="m-row min-h-10 gap-2">
-              <InfoIcon
-                aria-hidden="true"
-                className="size-3.5 flex-none text-muted-foreground"
-              />
+            <div className="m-row min-h-10">
               <span className="text-xs text-muted-foreground">
                 Zmiana harmonogramu nie przelicza przeszłych dni.
               </span>

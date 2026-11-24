@@ -3,7 +3,7 @@
 // Ekran „Nawyki i sen” na telefonie wg CMHabits.dc.html: nagłówek z „+”, segment Nawyki / Sen.
 // Nawyki: pierścień dnia, lista z checkboxem (odhacza dziś przez wspólny store), heatmapa z zakresem.
 // Sen: ostatnia noc i średnia, wykres 14/30 dni ze stuknięciem słupka, „Dodaj wpis snu”.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Flame, Moon, Plus } from "lucide-react";
 
@@ -43,6 +43,8 @@ const SLUPEK_CEL = "#15803d";
 const SLUPEK_BLISKO = "#bbe5cc";
 const SLUPEK_MALO = "rgba(0,0,0,.12)";
 const OBRYS_WYBRANEGO = "0 0 0 2px #fff, 0 0 0 4px #262626";
+// Obrys wybranego dnia w zwartej heatmapie (kwadraty 12 px, odstęp 2 px)
+const OBRYS_WYBRANEGO_ZWARTY = "0 0 0 1px #fff, 0 0 0 2px #262626";
 const OBRYS_SLUPKA = "0 0 0 2px #262626";
 // Zakresy heatmapy jak przełącznik z makiety: wartość → tygodnie, etykieta i tytuł karty
 const ZAKRESY_HEATMAPY = [
@@ -81,6 +83,8 @@ export function MHabits({
   const [zakres, setZakres] = useState<"14" | "30">("14");
   const [zakresHeatmapy, setZakresHeatmapy] = useState<ZakresHeatmapy>("30");
   const [slupek, setSlupek] = useState<number | null>(null);
+  // Ramka zwartej heatmapy (3 mies. / 6 mies. / Rok), przewijana w poziomie na koniec
+  const ramkaHeatmapy = useRef<HTMLDivElement>(null);
 
   const [, miesiac, numerDnia] = today.split("-").map(Number);
   const naglowek = `${DNI_PELNE[weekdayOf(today)]} · ${numerDnia} ${MIESIACE_DOP[miesiac - 1]}`;
@@ -112,6 +116,8 @@ export function MHabits({
     today,
     weekStart,
   );
+  // Zakresy dłuższe niż 30 dni: tygodnie jako kolumny, małe kwadraty, przewijanie w poziomie
+  const zwarty = zakresH.weeks > 4;
   const naglowkiDni =
     weekStart === "mon"
       ? SKROTY_DNI
@@ -125,6 +131,13 @@ export function MHabits({
         : `${komorka.done} z ${komorka.planned} nawyków`
     }`;
   }
+
+  // Zwarta heatmapa startuje przewinięta do dzisiejszego tygodnia (prawy koniec)
+  useEffect(() => {
+    if (ramkaHeatmapy.current) {
+      ramkaHeatmapy.current.scrollLeft = ramkaHeatmapy.current.scrollWidth;
+    }
+  }, [zwarty, zakresHeatmapy, zakladka]);
 
   // ——— Sen ———
   // Ostatnia noc = wpis z najpóźniejszą datą (nie z przyszłości), jak SleepCard
@@ -224,7 +237,7 @@ export function MHabits({
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke="rgba(0,0,0,.06)"
+                  className="stroke-active"
                   strokeWidth="4"
                 />
                 <circle
@@ -323,60 +336,81 @@ export function MHabits({
                   }))}
                 />
               </div>
-              <div className="mb-1 grid grid-cols-7 gap-[5px] text-center text-xs font-medium text-muted-foreground">
-                {naglowkiDni.map((n) => (
-                  <span key={n}>{n}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-[5px]">
-                {tygodnie.flat().map((komorka) => {
-                  const przyszlosc = komorka.date > today;
-                  // Dzień bez planu: jaśniejsze tło i przerywana ramka, żeby nie mylił się z 0%
-                  const bezPlanu = !przyszlosc && komorka.percent === null;
-                  // Kolor z % dnia (progi jak na webie): 0 → najjaśniejszy, powyżej 80% → pełny
-                  let tlo = ODCIENIE[0];
-                  if (komorka.percent !== null && komorka.percent > 0) {
-                    tlo =
-                      komorka.percent <= 40
-                        ? ODCIENIE[1]
-                        : komorka.percent <= 80
-                          ? ODCIENIE[2]
-                          : ODCIENIE[3];
+              {!zwarty && (
+                <div className="mb-1 grid grid-cols-7 gap-[5px] text-center text-xs font-medium text-muted-foreground">
+                  {naglowkiDni.map((n) => (
+                    <span key={n}>{n}</span>
+                  ))}
+                </div>
+              )}
+              <div
+                ref={ramkaHeatmapy}
+                className={cn(zwarty && "overflow-x-auto pb-1")}
+              >
+                <div
+                  className={
+                    zwarty
+                      ? "grid w-max grid-flow-col grid-rows-7 gap-0.5"
+                      : "grid grid-cols-7 gap-[5px]"
                   }
-                  const opis = `${formatDatePl(komorka.date)} · ${
-                    komorka.planned === 0
-                      ? "brak zaplanowanych"
-                      : `${komorka.done} z ${komorka.planned} nawyków`
-                  }`;
-                  return (
-                    <button
-                      key={komorka.date}
-                      type="button"
-                      data-heat-day={komorka.date}
-                      // Przyszłość bez szczegółów (jak dymek na webie)
-                      disabled={przyszlosc}
-                      aria-label={
-                        przyszlosc ? formatDatePl(komorka.date) : opis
-                      }
-                      aria-pressed={dzien === komorka.date}
-                      onClick={() => setDzien(komorka.date)}
-                      // Pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px)
-                      className={cn(
-                        "relative box-border aspect-square cursor-pointer rounded-lg p-0 outline-none after:absolute after:-inset-0.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
-                        przyszlosc
-                          ? "border border-dashed border-input bg-white"
-                          : bezPlanu
-                            ? "border border-dashed border-border-strong bg-panel"
-                            : "border-0",
-                      )}
-                      style={{
-                        background: przyszlosc || bezPlanu ? undefined : tlo,
-                        boxShadow:
-                          dzien === komorka.date ? OBRYS_WYBRANEGO : undefined,
-                      }}
-                    />
-                  );
-                })}
+                >
+                  {tygodnie.flat().map((komorka) => {
+                    const przyszlosc = komorka.date > today;
+                    // Dzień bez planu: jaśniejsze tło i przerywana ramka, żeby nie mylił się z 0%
+                    const bezPlanu = !przyszlosc && komorka.percent === null;
+                    // Kolor z % dnia (progi jak na webie): 0 → najjaśniejszy, powyżej 80% → pełny
+                    let tlo = ODCIENIE[0];
+                    if (komorka.percent !== null && komorka.percent > 0) {
+                      tlo =
+                        komorka.percent <= 40
+                          ? ODCIENIE[1]
+                          : komorka.percent <= 80
+                            ? ODCIENIE[2]
+                            : ODCIENIE[3];
+                    }
+                    const opis = `${formatDatePl(komorka.date)} · ${
+                      komorka.planned === 0
+                        ? "brak zaplanowanych"
+                        : `${komorka.done} z ${komorka.planned} nawyków`
+                    }`;
+                    return (
+                      <button
+                        key={komorka.date}
+                        type="button"
+                        data-heat-day={komorka.date}
+                        // Przyszłość bez szczegółów (jak dymek na webie)
+                        disabled={przyszlosc}
+                        aria-label={
+                          przyszlosc ? formatDatePl(komorka.date) : opis
+                        }
+                        aria-pressed={dzien === komorka.date}
+                        onClick={() => setDzien(komorka.date)}
+                        // Pełny układ: pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px).
+                        // Zwarty: kwadrat 12 px to podgląd, cel dotyku mały; szczegóły dnia w podpisie nad kartą
+                        className={cn(
+                          "relative box-border cursor-pointer p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
+                          zwarty
+                            ? "size-3 rounded-[3px]"
+                            : "aspect-square rounded-lg after:absolute after:-inset-0.5 after:content-['']",
+                          przyszlosc
+                            ? "border border-dashed border-input bg-white"
+                            : bezPlanu
+                              ? "border border-dashed border-border-strong bg-panel"
+                              : "border-0",
+                        )}
+                        style={{
+                          background: przyszlosc || bezPlanu ? undefined : tlo,
+                          boxShadow:
+                            dzien === komorka.date
+                              ? zwarty
+                                ? OBRYS_WYBRANEGO_ZWARTY
+                                : OBRYS_WYBRANEGO
+                              : undefined,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
               <div className="mt-2.5 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                 <span>mniej</span>

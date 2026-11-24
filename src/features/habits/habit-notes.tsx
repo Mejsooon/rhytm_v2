@@ -73,7 +73,8 @@ export function HabitNotes({
               <span className="min-w-0 break-words">{n.text}</span>
             </div>
           ))}
-          <div className="m-row gap-2 pr-2">
+          {/* border-b-0: pod wierszem bywa komunikat błędu, więc :last-child nie wystarcza */}
+          <div className="m-row gap-2 border-b-0 pr-2">
             <input
               type="text"
               value={tekst}

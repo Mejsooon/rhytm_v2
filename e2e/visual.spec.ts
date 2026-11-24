@@ -488,7 +488,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
   });
 
-  test("zrzuty /nawyki i /nawyki/[id] (makiety Habits, HabitDetail, HabitDialog, SleepDialog, MHabits, MSleep, MHabitNew, MHabitDetail)", async ({
+  test("zrzuty /nawyki i /nawyki/[id] (makiety Habits, HabitDetail, HabitDialog, SleepDialog, CMHabits, CMSleep, CMHabitNew, CMHabitDetail)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;

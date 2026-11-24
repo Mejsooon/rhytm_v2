@@ -163,7 +163,7 @@ export function HabitMonth({
             icon
             aria-label="Poprzedni miesiąc"
             aria-disabled={miesiac <= dolny}
-            className="aria-disabled:opacity-30"
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent"
             onClick={() => {
               if (miesiac > dolny) setMiesiac(przesunMiesiac(miesiac, -1));
             }}
@@ -175,7 +175,7 @@ export function HabitMonth({
             icon
             aria-label="Następny miesiąc"
             aria-disabled={miesiac >= maxMonth}
-            className="aria-disabled:opacity-30"
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent"
             onClick={() => {
               if (miesiac < maxMonth) setMiesiac(przesunMiesiac(miesiac, 1));
             }}
