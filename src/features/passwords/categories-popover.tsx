@@ -9,16 +9,19 @@ import { OptionBadge } from "@/features/pages/table/option-badge";
 // Przycisk „Kategorie” z dymkiem „Opcje kategorii” (S2Passwords.dc.html): lista opcji pola Kategoria z „×”,
 // pole „Nowa kategoria” i „Dodaj”. Sam nic nie zapisuje: dodawanie i usuwanie idzie przez funkcje magazynu
 // tabeli (PageTable je podaje), więc lista jest ta sama co w okienku komórki. Zamknięty sejf: przycisk wyłączony.
+// `phone` (CMPasswords): wyzwalacz to „Edytuj” (btng, nazwa „Opcje kategorii”) obok chipów kategorii.
 export function CategoriesPopover({
   options,
   readOnly,
   onCreate,
   onRemove,
+  phone = false,
 }: {
   options: FieldOption[];
   readOnly: boolean;
   onCreate: (label: string) => Promise<unknown> | void;
   onRemove: (optionId: string) => Promise<unknown> | void;
+  phone?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [nowa, setNowa] = React.useState("");
@@ -32,9 +35,22 @@ export function CategoriesPopover({
       ariaLabel="Opcje kategorii"
       className="flex flex-col gap-2"
       trigger={
-        <Button size="sm" disabled={readOnly} aria-haspopup="dialog" aria-expanded={open && !readOnly}>
-          Kategorie
-        </Button>
+        phone ? (
+          <Button
+            variant="ghost"
+            disabled={readOnly}
+            aria-label="Opcje kategorii"
+            aria-haspopup="dialog"
+            aria-expanded={open && !readOnly}
+            className="px-1.5"
+          >
+            Edytuj
+          </Button>
+        ) : (
+          <Button size="sm" disabled={readOnly} aria-haspopup="dialog" aria-expanded={open && !readOnly}>
+            Kategorie
+          </Button>
+        )
       }
     >
       <div className={`${MENU_LABEL} p-0`}>Opcje kategorii</div>
@@ -46,7 +62,7 @@ export function CategoriesPopover({
                 type="button"
                 aria-label={`Usuń kategorię ${o.label}`}
                 onClick={() => void onRemove(o.id)}
-                className="cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-60 hover:opacity-100"
+                className="relative cursor-pointer border-0 bg-transparent p-0 pl-0.5 font-[inherit] text-inherit opacity-60 max-[799px]:before:absolute max-[799px]:before:-inset-3.5 max-[799px]:before:content-[''] hover:opacity-100"
               >
                 ×
               </button>
@@ -73,7 +89,7 @@ export function CategoriesPopover({
           aria-label="Nowa kategoria"
           className={FIELD}
         />
-        <Button size="sm" type="submit" className="flex-none">
+        <Button size="sm" type="submit" className="flex-none max-[799px]:h-11">
           Dodaj
         </Button>
       </form>

@@ -63,6 +63,36 @@ const RAMKA_PRZEWIJANA =
 // Po tylu ms od skopiowania hasła czyścimy schowek
 const SCHOWEK_MS = 30_000;
 
+// Co moduł Hasła dostaje od tabeli na telefonie (prop `renderPhone`): te same wiersze i pola co tabela webu,
+// czyli jeden stan (bez drugiego wczytywania), oraz akcje magazynu i arkusza wiersza
+export type PhoneTableApi = {
+  fields: PageField[];
+  // Wiersze po filtrze modułu (wyszukiwarka i Kategoria), bez usuniętych
+  rows: PageRow[];
+  readOnly: boolean;
+  createOption: (field: PageField, label: string) => Promise<string | null>;
+  removeOption: (field: PageField, optionId: string) => Promise<boolean>;
+  // „Nowe hasło”: pusty szkic w arkuszu wiersza
+  newRow: () => void;
+  // „Edytuj”: arkusz wiersza z polami modułu
+  editRow: (row: PageRow) => void;
+  // Hasło trafiło do schowka (bez tekstu): tabela planuje czyszczenie po 30 s tym samym mechanizmem co komórki webu.
+  // Zwraca false, gdy sejf zablokował się albo tabela zniknęła w trakcie zapisu (schowek wyczyszczony od razu).
+  planClipboardClear: () => boolean;
+};
+
+// Układ telefonu modułu (prop `renderPhone`) jako osobny komponent: funkcja renderująca dostaje akcje oparte na
+// refach tabeli (schowek), więc wywołujemy ją tu, a nie w ciele PageTable
+function UkladTelefonu({
+  render,
+  api,
+}: {
+  render: (api: PhoneTableApi) => React.ReactNode;
+  api: PhoneTableApi;
+}) {
+  return <>{render(api)}</>;
+}
+
 // Przycisk akcji wiersza (.row-del): widoczny po najechaniu na wiersz i przy fokusie w wierszu;
 // na telefonie zawsze, 44 px, #a3a3a3 (CMEditor); „pointer-events-auto” przebija regułę wiersza z [&_button]
 const AKCJA_WIERSZA =
@@ -88,6 +118,7 @@ export function PageTable({
   moduleTools,
   moduleRowFilter,
   onLiveRowCount,
+  renderPhone,
 }: {
   block: LoadedBlock;
   today: IsoDate;
@@ -107,6 +138,10 @@ export function PageTable({
   moduleRowFilter?: (row: PageRow, fields: PageField[]) => boolean;
   // Tylko w trybie modułu: liczba żywych wierszy (bez filtrów), np. do plakietki w nagłówku ekranu
   onLiveRowCount?: (n: number) => void;
+  // Tylko w trybie modułu: układ telefonu (CMPasswords) z tego samego magazynu co tabela. Oba układy są w DOM:
+  // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „+ Nowy”) tylko od 800 px.
+  // Arkusz wiersza (MRowSheet) i okna zostają wspólne.
+  renderPhone?: (api: PhoneTableApi) => React.ReactNode;
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
@@ -257,6 +292,37 @@ export function PageTable({
     void store.patchSettings({ column_widths: mapa });
   }
 
+  // Czyszczenie schowka po skopiowaniu hasła: plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko
+  // z fokusem, więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie zastępuje stary plan.
+  // Nie sprawdzamy, co jest w schowku (readText wymaga uprawnienia), więc czyszczenie nadpisuje go bezwarunkowo.
+  // Używają go komórki webu i lista telefonu. Zwraca false, gdy sejf zablokował się albo tabela zniknęła
+  // w trakcie zapisu do schowka (czyścimy od razu).
+  function zaplanujSchowek(): boolean {
+    if (schowekRef.current) clearTimeout(schowekRef.current.timer);
+    const plan = {
+      timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
+      wyczysc: () => {
+        clearTimeout(plan.timer);
+        if (schowekRef.current === plan) schowekRef.current = null;
+        const pusty = () => {
+          try {
+            void navigator.clipboard.writeText("").catch(() => {});
+          } catch {
+            // Schowek niedostępny: nic więcej nie zrobimy
+          }
+        };
+        if (document.hasFocus()) pusty();
+        else window.addEventListener("focus", pusty, { once: true });
+      },
+    };
+    schowekRef.current = plan;
+    if (statusRef.current !== "odblokowany" || !zamontowana.current) {
+      plan.wyczysc();
+      return false;
+    }
+    return true;
+  }
+
   // Telefon (poniżej 800 px) edytuje wiersz w arkuszu; sprawdzamy w chwili kliknięcia
   function naTelefonie() {
     return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
@@ -290,7 +356,28 @@ export function PageTable({
         : (tytulowe?.config.empty_label ?? "Bez tytułu");
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <>
+    {renderPhone && modul && (
+      <div className="min-[800px]:hidden">
+        <UkladTelefonu render={renderPhone} api={{
+          fields,
+          rows: widoczneWiersze,
+          readOnly: tylkoOdczyt,
+          createOption: store.createOption,
+          removeOption: store.removeOption,
+          newRow: () => {
+            setWArkuszu(true);
+            void store.addRowDraft();
+          },
+          editRow: (r) => {
+            setWArkuszu(true);
+            void store.startEdit(r);
+          },
+          planClipboardClear: () => zaplanujSchowek(),
+        }} />
+      </div>
+    )}
+    <div className={cn("flex min-w-0 flex-col gap-3", renderPhone && modul && "max-[799px]:hidden")}>
       <PinnedCards
         cards={settings.pinned_cards}
         fields={fields}
@@ -814,33 +901,8 @@ export function PageTable({
                     onCopied={
                       modul
                         ? () => {
-                            // Czyszczenie schowka: plan nie trzyma skopiowanego tekstu. Schowek da się zapisać tylko
-                            // z fokusem, więc bez fokusu czekamy jednorazowo na powrót do karty. Nowe kopiowanie
-                            // zastępuje stary plan. Nie sprawdzamy, co jest w schowku (readText wymaga uprawnienia),
-                            // więc czyszczenie nadpisuje go bezwarunkowo.
-                            if (schowekRef.current) clearTimeout(schowekRef.current.timer);
-                            const plan = {
-                              timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
-                              wyczysc: () => {
-                                clearTimeout(plan.timer);
-                                if (schowekRef.current === plan) schowekRef.current = null;
-                                const pusty = () => {
-                                  try {
-                                    void navigator.clipboard.writeText("").catch(() => {});
-                                  } catch {
-                                    // Schowek niedostępny: nic więcej nie zrobimy
-                                  }
-                                };
-                                if (document.hasFocus()) pusty();
-                                else window.addEventListener("focus", pusty, { once: true });
-                              },
-                            };
-                            schowekRef.current = plan;
-                            // Sejf zablokował się albo tabela zniknęła w trakcie zapisu do schowka: czyścimy od razu
-                            if (statusRef.current !== "odblokowany" || !zamontowana.current) {
-                              plan.wyczysc();
-                              return;
-                            }
+                            // Czyszczenie schowka po 30 s (plan nie trzyma skopiowanego tekstu); bez planu toast pomijamy
+                            if (!zaplanujSchowek()) return;
                             const serwis =
                               tytulowe && typeof r.values[tytulowe.id] === "string" ? (r.values[tytulowe.id] as string) : "";
                             toast(f.name === "Hasło" ? `Skopiowano hasło ${serwis}`.trim() : `Skopiowano: ${f.name}`, {
@@ -958,5 +1020,6 @@ export function PageTable({
         onDelete={edytowany ? () => void store.removeRow(edytowany) : undefined}
       />
     </div>
+    </>
   );
 }

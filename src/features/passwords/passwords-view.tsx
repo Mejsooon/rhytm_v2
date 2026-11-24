@@ -16,13 +16,15 @@ import { VaultSetup } from "@/features/vault/vault-setup";
 import { VaultUnlockCard } from "@/features/vault/vault-unlock-card";
 import { cn } from "@/lib/utils";
 import { CategoriesPopover } from "./categories-popover";
+import { MPasswords } from "./mobile/m-passwords";
 
 // Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html): nagłówek z okruszkami „Moduły / Hasła”
 // i „Zablokuj teraz”, plakietka „Szyfrowane” i tabela modułu. Stan sejfu:
 // - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu),
 // - ladowanie: sama głowa strony, bez tabeli i bez nakładki (nie mignie tabela przed sprawdzeniem sejfu),
-// - telefon (CMVault.dc.html): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny ekran
-//   „Sejf jest zablokowany” (bez tabeli pod rozmyciem); układy webu i telefonu są oba w DOM, przełącza je CSS (800 px),
+// - telefon (CMVault, CMPasswords): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny
+//   ekran „Sejf jest zablokowany” (bez tabeli pod rozmyciem), przy odblokowanym lista-akordeon `MPasswords` z tego samego
+//   magazynu co tabela (prop `renderPhone`). Układy webu i telefonu są oba w DOM, przełącza je CSS (800 px),
 // - zablokowany (S2Vault): tabela tylko do odczytu (sekrety jako „zablokowane”) pod rozmyciem, a na środku okno
 //   „Odblokuj sejf”; treść pod nakładką jest `inert` i `aria-hidden`, a wiersza tytułu z ikoną i „Hasła” nie ma
 //   (decyzja C1: tytuł przeszkadzał Mejsonowi; okruszki w nagłówku zostają pod rozmyciem jak na makiecie),
@@ -84,9 +86,14 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         aria-hidden={zablokowany ? "true" : undefined}
         className={cn("flex min-w-0 flex-1 flex-col", telefonBezTresci && "max-[799px]:hidden")}
       >
+        {/* Telefon ma własny nagłówek: w MPasswords (odblokowany: „Zablokuj sejf”, „Nowe hasło”) albo na ekranie
+            ładowania i blokady powyżej */}
         <ModuleHeader
           title="Hasła"
           webParent="Moduły"
+          webOnly={odblokowany || telefonBezTresci}
+          phoneBack={{ href: "/strony", label: "Strony" }}
+          phoneCenterTitle
           webAction={
             odblokowany && (
               <Button onClick={vault.lock}>
@@ -98,8 +105,15 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         />
         {/* Treść na całą szerokość (decyzja Mejsona, jak S2Books) */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
-            <div>
+          <div
+            className={cn(
+              "flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4",
+              // Lista telefonu (MPasswords) ma własne odstępy i nagłówek na całą szerokość
+              odblokowany && "max-[799px]:p-0",
+            )}
+          >
+            {/* Tytuł i plakietki tylko na webie: telefon ma tytuł w nagłówku albo w MPasswords */}
+            <div className="max-[799px]:hidden">
               {/* Tytuł z ikoną tylko na webie (telefon ma duży tytuł w nagłówku) i tylko przy otwartym sejfie (C1) */}
               {!zablokowany && (
                 <div className="mb-2.5 flex items-center gap-2.5 max-[799px]:hidden">
@@ -126,8 +140,11 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
               </div>
             </div>
 
+            {/* Odblokowany: odliczanie pokazuje plakietka w MPasswords, więc baner webu chowa się na telefonie */}
             {(odblokowany || vault.status === "nieobslugiwany") && (
-              <VaultBanner />
+              <div className={cn(odblokowany && "max-[799px]:hidden")}>
+                <VaultBanner />
+              </div>
             )}
 
             {ustawianie && <VaultSetup onCancel={() => setAnulowano(true)} />}
@@ -161,6 +178,24 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   today={data.today}
                   module="passwords"
                   onLiveRowCount={setLiczbaHasel}
+                  // Telefon (CMPasswords): lista z tego samego magazynu co tabela; poza odblokowanym sejfem nic
+                  renderPhone={(api) =>
+                    odblokowany ? (
+                      <MPasswords
+                        fields={api.fields}
+                        rows={api.rows}
+                        fraza={fraza}
+                        onFraza={setFraza}
+                        kategoriaId={kategoriaId}
+                        onKategoria={setKategoriaId}
+                        onNewRow={api.newRow}
+                        onEditRow={api.editRow}
+                        onCreateOption={api.createOption}
+                        onRemoveOption={api.removeOption}
+                        planClipboardClear={api.planClipboardClear}
+                      />
+                    ) : null
+                  }
                   moduleRowFilter={(wiersz, pola) => {
                     const nazwy = new Map(pola.map((f) => [f.name, f]));
                     const kategoria = nazwy.get("Kategoria");

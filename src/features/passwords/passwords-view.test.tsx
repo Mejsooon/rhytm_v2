@@ -17,6 +17,8 @@ vi.mock("@/features/vault/actions", () => ({ countSecrets: vi.fn().mockResolvedV
 const tabela = vi.hoisted(() => ({
   createOption: vi.fn(),
   removeOption: vi.fn(),
+  newRow: vi.fn(),
+  editRow: vi.fn(),
   readOnly: false,
 }));
 vi.mock("@/features/pages/table/page-table", () => ({
@@ -25,11 +27,13 @@ vi.mock("@/features/pages/table/page-table", () => ({
     moduleTools,
     moduleRowFilter,
     onLiveRowCount,
+    renderPhone,
   }: {
     module?: string;
     moduleTools?: (api: unknown) => React.ReactNode;
     moduleRowFilter?: (row: unknown, fields: unknown[]) => boolean;
     onLiveRowCount?: (n: number) => void;
+    renderPhone?: (api: unknown) => React.ReactNode;
   }) => {
     const pola = [
       { id: "f-serwis", name: "Serwis", type: "text", config: {}, position: 0, isTitle: true },
@@ -74,6 +78,17 @@ vi.mock("@/features/pages/table/page-table", () => ({
           createOption: tabela.createOption,
           removeOption: tabela.removeOption,
         })}
+        {/* Układ telefonu z tych samych wierszy co tabela (po filtrze modułu) */}
+        {renderPhone && <div className="min-[800px]:hidden">{renderPhone({
+          fields: pola2,
+          rows: wiersze.filter((w) => !moduleRowFilter || moduleRowFilter(w, pola2)),
+          readOnly: tabela.readOnly,
+          createOption: tabela.createOption,
+          removeOption: tabela.removeOption,
+          newRow: tabela.newRow,
+          editRow: tabela.editRow,
+          planClipboardClear: () => true,
+        })}</div>}
       </div>
     );
   },
@@ -273,6 +288,51 @@ describe("PasswordsView", () => {
     expect(tabela.createOption).toHaveBeenCalledWith(expect.objectContaining({ id: "f-kat", name: "Kategoria" }), "Bank");
     await user.click(screen.getByRole("button", { name: "Usuń kategorię Praca" }));
     expect(tabela.removeOption).toHaveBeenCalledWith(expect.objectContaining({ id: "f-kat" }), "k1");
+  });
+
+  it("telefon, odblokowany: lista MPasswords z tych samych wierszy co tabela; nagłówek webu bez nagłówka telefonu", async () => {
+    const user = userEvent.setup();
+    const { container } = pokaz();
+    // Lista telefonu w układzie widocznym tylko na telefonie, z własnym nagłówkiem (Strony, Zablokuj sejf, Nowe hasło)
+    const telefon = screen.getByRole("button", { name: "Nowe hasło" }).closest(".min-\\[800px\\]\\:hidden") as HTMLElement;
+    expect(telefon).not.toBeNull();
+    expect(within(telefon).getByRole("link", { name: "Strony" })).toHaveAttribute("href", "/strony");
+    expect(within(telefon).getByText("odblokowany · auto-blokada za 2:00")).toBeInTheDocument();
+    expect(within(telefon).getAllByRole("button", { expanded: false }).filter((b) => b.hasAttribute("aria-controls"))).toHaveLength(3);
+    // ModuleHeader odblokowanego sejfu ma tylko nagłówek webu (telefon ma swój w MPasswords)
+    expect(container.querySelectorAll("header.m-head")).toHaveLength(1);
+    await user.click(within(telefon).getByRole("button", { name: "Nowe hasło" }));
+    expect(tabela.newRow).toHaveBeenCalledTimes(1);
+    await user.click(within(telefon).getByRole("button", { name: /^GitHub/ }));
+    await user.click(within(telefon).getByRole("button", { name: "Edytuj" }));
+    expect(tabela.editRow).toHaveBeenCalledWith(expect.objectContaining({ id: "r1" }));
+    await user.click(within(telefon).getByRole("button", { name: "Zablokuj sejf" }));
+    expect(vault.lock).toHaveBeenCalledTimes(1);
+  });
+
+  it("telefon: szukajka i chipy Kategorii dzielą stan z paskiem webu i zawężają listę telefonu", async () => {
+    const user = userEvent.setup();
+    pokaz();
+    const telefon = screen.getByRole("button", { name: "Nowe hasło" }).closest(".min-\\[800px\\]\\:hidden") as HTMLElement;
+    // Wiersze listy to jedyne przyciski z aria-controls (chipy mają aria-pressed)
+    const lista = () => within(telefon).queryAllByRole("button").filter((b) => b.hasAttribute("aria-controls")).map((b) => b.textContent);
+    expect(lista()).toHaveLength(3);
+    await user.type(within(telefon).getByRole("searchbox", { name: "Szukaj haseł" }), "bank");
+    expect(lista()).toHaveLength(1);
+    // Ta sama fraza na pasku webu (jeden stan widoku)
+    expect(screen.getByRole("textbox", { name: "Szukaj" })).toHaveValue("bank");
+    await user.clear(within(telefon).getByRole("searchbox", { name: "Szukaj haseł" }));
+    await user.click(within(telefon).getByRole("button", { name: "Praca" }));
+    expect(lista()).toHaveLength(1);
+    expect(within(telefon).getByRole("button", { name: "Praca" })).toHaveAttribute("aria-pressed", "true");
+    // Segment webu pokazuje tę samą kategorię
+    expect(within(screen.getByRole("group", { name: "Kategoria" })).getByRole("button", { name: "Praca" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("telefon, nieobsługiwany i zablokowany: bez listy telefonu (hasła tylko po odblokowaniu)", () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    pokaz();
+    expect(screen.queryByRole("button", { name: "Nowe hasło" })).not.toBeInTheDocument();
   });
 
   it("ładowanie sejfu: tabela ukryta, bez nakładki i okna odblokowania", () => {
