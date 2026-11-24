@@ -1,18 +1,37 @@
 import * as React from "react";
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { ChevronLeft, Settings } from "lucide-react";
 
-import { MonoLabel } from "@/components/controls";
+import { Button } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { SidebarToggle } from "./sidebar-toggle";
 
 // Nagłówek modułu. Oba warianty są w DOM, przełącza je wyłącznie CSS (800 px):
 // - web: .topbar z coss.css; moduły (bez webParent) pokazują sam tytuł .h-title
 //   (18 px / 600), strony z webParent okruszki .crumb („Strony / Books”),
-// - telefon: duży tytuł 28 px z etykietą mono nad nim (MToday / MPages).
+// - telefon: .m-head z makiet CM* (CMPages, CMCalendarWeek, CMSettings, CMGym):
+//   [Wstecz] [.lbl nad .m-title] [akcje po prawej], wszystkie przyciski 44 px.
+//
+// API telefonu (dla ekranów m-*.tsx):
+//   phoneTitle        inny tytuł niż na webie
+//   phoneLabel        .lbl nad tytułem (12 px, 500, muted), np. „Twoje tabele i notatki”
+//   phoneBack         { href, label } → link 44 px ze strzałką w lewo przed tytułem;
+//                     label to dostępna nazwa („Wstecz”, „Strony”)
+//   phoneCenterTitle  tytuł na środku (CMSettings, CMGym); bez akcji po prawej
+//                     wstawia pusty 44 px, żeby tytuł był naprawdę na środku
+//   phoneActions      węzły po prawej; każdy przycisk 44 px, najprościej
+//                     <Button variant="ghost" icon aria-label="…"> albo z asChild dla <Link>
+//   phoneSettingsLink ⚙ → /ustawienia jako pierwsza akcja po prawej (CMPages)
+//   webOnly           ekran ma własny nagłówek telefonu (np. Dziś)
+// Przykład: <ModuleHeader title="Strony" phoneLabel="Twoje tabele i notatki" phoneSettingsLink
+//             phoneActions={<Button variant="ghost" icon aria-label="Nowa strona"><Plus size={20} /></Button>} />
 export function ModuleHeader({
   title,
   phoneLabel,
   phoneSettingsLink = false,
+  phoneBack,
+  phoneActions,
+  phoneCenterTitle = false,
   webParent,
   phoneTitle,
   webMeta,
@@ -24,10 +43,16 @@ export function ModuleHeader({
   webParent?: string;
   // Inny tytuł na telefonie (np. „Ustawienia” zamiast nazwy zakładki)
   phoneTitle?: string;
-  // Etykieta mono nad dużym tytułem na telefonie
+  // Etykieta .lbl nad tytułem na telefonie
   phoneLabel?: string;
-  // Ikona ⚙ → /ustawienia po prawej (MPages)
+  // Ikona ⚙ → /ustawienia po prawej (CMPages), przed phoneActions
   phoneSettingsLink?: boolean;
+  // Przycisk „wstecz” 44 px przed tytułem na telefonie
+  phoneBack?: { href: string; label: string };
+  // Akcje po prawej na telefonie (przyciski 44 px)
+  phoneActions?: React.ReactNode;
+  // Tytuł telefonu wyśrodkowany (CMSettings, CMGym)
+  phoneCenterTitle?: boolean;
   // Dopiski tuż za tytułem na webie (CToday: odznaka z datą i „tydz. N”)
   webMeta?: React.ReactNode;
   // Akcja po prawej stronie nagłówka na webie (np. „Nowy blok”)
@@ -35,6 +60,7 @@ export function ModuleHeader({
   // Tylko nagłówek web (ekran ma własny nagłówek telefonu, np. pełne Dziś z MToday)
   webOnly?: boolean;
 }) {
+  const maAkcje = phoneSettingsLink || phoneActions != null;
   return (
     <>
       {/* .topbar: min-height 36 px liczone bez paddingu (box-content), padding 10px 24px */}
@@ -59,22 +85,41 @@ export function ModuleHeader({
         )}
       </header>
       {!webOnly && (
-        <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4 min-[800px]:hidden">
-          <div className="min-w-0 flex-1">
-            {phoneLabel && <MonoLabel className="block">{phoneLabel}</MonoLabel>}
-            <h1 className="mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">
-              {phoneTitle ?? title}
-            </h1>
-          </div>
-          {phoneSettingsLink && (
-            <Link
-              href="/ustawienia"
-              aria-label="Ustawienia"
-              className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted"
-            >
-              <Settings size={21} aria-hidden="true" />
-            </Link>
+        // .m-head; z etykietą padding 4 px góra/dół (CMPages), ze „wstecz” 0 8px (CMSettings, CMGym)
+        <header
+          className={cn(
+            "m-head min-[800px]:hidden",
+            phoneLabel && "py-1",
+            phoneBack && "px-2",
           )}
+        >
+          {phoneBack && (
+            <Button variant="ghost" icon asChild>
+              <Link href={phoneBack.href} aria-label={phoneBack.label}>
+                <ChevronLeft size={20} aria-hidden="true" />
+              </Link>
+            </Button>
+          )}
+          <div className={cn("min-w-0 flex-1", phoneCenterTitle && "text-center")}>
+            {phoneLabel && (
+              <div className="text-xs font-medium text-muted-foreground">{phoneLabel}</div>
+            )}
+            <h1 className="m-title truncate">{phoneTitle ?? title}</h1>
+          </div>
+          {maAkcje && (
+            <div className="flex flex-none items-center gap-2">
+              {phoneSettingsLink && (
+                <Button variant="ghost" icon asChild>
+                  <Link href="/ustawienia" aria-label="Ustawienia">
+                    <Settings size={20} aria-hidden="true" />
+                  </Link>
+                </Button>
+              )}
+              {phoneActions}
+            </div>
+          )}
+          {/* Przeciwwaga dla „wstecz”, żeby wyśrodkowany tytuł był na środku ekranu (CMSettings) */}
+          {phoneCenterTitle && !maAkcje && <span aria-hidden="true" className="w-11 flex-none" />}
         </header>
       )}
     </>

@@ -58,13 +58,13 @@ body{margin:0;background:#fafafa}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { notify: { perm: false, before: true, renew: true, weekly: true, habits: false } }; }
+  constructor(p) { super(p); this.state = { notify: { perm: false, before: true, renew: true, habits: false } }; }
   renderVals() {
-    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo', goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, notify: { perm: true, before: true, renew: true, weekly: true, habits: false } };
+    const D = { name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', roles: { student: true, sport: true }, field: 'Cyberbezpieczeństwo', goals: { plan: true, sport: true, habits: true, subs: true, proj: true }, pages: { Subscriptions: true, Projects: true }, notify: { perm: true, before: true, renew: true, habits: false } };
     const S = Object.assign({}, D, this.state || {});
     const v = (e) => (e && e.target ? e.target.value : e);
     const N = S.notify || {};
-    const RW = [['before', 'Przed blokiem', '10 min wcześniej'], ['renew', 'Odnowienie subskrypcji', '3 dni wcześniej, o 9:00'], ['weekly', 'Podsumowanie tygodnia', 'Niedziela, 18:00'], ['habits', 'Nawyki na dziś', 'Codziennie, 21:00']];
+    const RW = [['before', 'Przed blokiem', '5 min wcześniej'], ['renew', 'Odnowienie subskrypcji', 'Dzień wcześniej, o 9:00'], ['habits', 'Nawyki', 'O godzinie ustawionej przy nawyku']];
     const rows = RW.map((r, i) => { const on = !!N[r[0]]; return { title: r[1], when: r[2], on: on ? 'true' : 'false', rs: 'display:flex;align-items:center;gap:12px;min-height:58px;' + (i < RW.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,.08)' : ''), toggle: () => this.setState({ notify: Object.assign({}, N, { [r[0]]: !on }) }) }; });
     return { S, rows, perm: !!N.perm, notPerm: !N.perm, permText: N.perm ? 'Przeglądarka pozwoliła na powiadomienia' : 'Przeglądarka zapyta o zgodę', allow: () => this.setState({ notify: Object.assign({}, N, { perm: true }) }), revoke: () => this.setState({ notify: Object.assign({}, N, { perm: false }) }) };
   }

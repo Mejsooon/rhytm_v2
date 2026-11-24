@@ -3,12 +3,9 @@
 // Usuwanie bloku: jednorazowy — potwierdzenie „Usunąć blok?” (DeleteBlockDialog.dc.html, na webie w stylu .dlg z coss.css),
 // cykliczny — okno zakresu.
 import { useRef, useState } from "react";
-import { Dialog } from "radix-ui";
-import { Trash2Icon } from "lucide-react";
 
-import { Button } from "@/components/controls";
+import { ConfirmDialog } from "@/components/controls";
 import type { ActionResult } from "@/lib/action-result";
-import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/lib/time/timezones";
 import { changeOccurrence } from "./actions";
 import type { Occurrence } from "./occurrences";
@@ -86,73 +83,17 @@ export function DeleteBlockDialog({
   const opis = `„${o.title}” · ${DNI_KROTKO[weekdayOf(o.date)]} ${dzien}.${String(miesiac).padStart(2, "0")} · ${godziny}`;
 
   return (
-    <Dialog.Root
+    <ConfirmDialog
       open
-      // W trakcie usuwania Esc i klik w tło nie zamykają okna
-      onOpenChange={(otwarte) => !otwarte && !pending && onCancel()}
+      onOpenChange={(otwarte) => !otwarte && onCancel()}
+      title="Usunąć blok?"
+      description={opis}
+      error={blad}
+      confirmLabel="Usuń"
+      pending={pending}
+      onConfirm={() => usun("all")}
     >
-      <Dialog.Portal>
-        {/* .backdrop z coss.css na webie; telefon bez zmian */}
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:bg-black/40 max-[799px]:backdrop-blur-none" />
-        <Dialog.Content
-          role="alertdialog"
-          // Web: .dlg (promień 16 px, ramka border, cień pop) z .dlg-h i szarą stopką .dlg-f;
-          // telefon: dolny arkusz jak dotąd
-          className="fixed z-50 flex flex-col gap-4 bg-white bg-clip-padding text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:w-[min(400px,calc(100%-32px))] min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 min-[800px]:gap-0 min-[800px]:rounded-xl min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:rounded-t-[18px] max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-7 max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]"
-        >
-          {/* Uchwyt arkusza — tylko na telefonie */}
-          <div
-            aria-hidden="true"
-            className="mx-auto h-[5px] w-9 flex-none rounded-[3px] bg-border-strong min-[800px]:hidden"
-          />
-          {/* .dlg-h z makiety ma tu dolny odstęp 20 px (bez treści pod nagłówkiem); z błędem pod spodem 16 px */}
-          <div
-            className={cn(
-              "min-[800px]:px-6 min-[800px]:pt-6",
-              blad ? "min-[800px]:pb-4" : "min-[800px]:pb-5",
-            )}
-          >
-            <Dialog.Title className="m-0 text-base leading-[1.3] font-semibold min-[800px]:text-lg">
-              Usunąć blok?
-            </Dialog.Title>
-            <Dialog.Description className="m-0 mt-1 text-[13px] text-muted-foreground min-[800px]:text-sm">
-              {opis}
-            </Dialog.Description>
-            <p className="m-0 mt-2 text-[13px] text-muted-foreground min-[800px]:text-sm">
-              Zadania bloku, jeśli są, zostaną usunięte razem z nim.
-            </p>
-          </div>
-          {blad && (
-            <p
-              role="alert"
-              className="m-0 text-xs text-destructive-foreground min-[800px]:px-6 min-[800px]:pb-4"
-            >
-              {blad}
-            </p>
-          )}
-          {/* Web: stopka .dlg-f na szarym tle; telefon: dwa pełne przyciski */}
-          <div className="flex justify-end gap-2 max-[799px]:flex-col-reverse min-[800px]:rounded-b-[15px] min-[800px]:border-t min-[800px]:border-border min-[800px]:bg-black/[.025] min-[800px]:px-6 min-[800px]:py-4">
-            <Button
-              variant="ghost"
-              className="max-[799px]:h-12"
-              disabled={pending}
-              onClick={onCancel}
-            >
-              Anuluj
-            </Button>
-            <Button
-              variant="destructive"
-              className="max-[799px]:h-12"
-              disabled={pending}
-              onClick={() => usun("all")}
-            >
-              {/* Kosz z makiety tylko na webie; telefon bez zmian */}
-              <Trash2Icon aria-hidden="true" className="size-4 max-[799px]:hidden" />
-              Usuń
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      Zadania bloku, jeśli są, zostaną usunięte razem z nim.
+    </ConfirmDialog>
   );
 }

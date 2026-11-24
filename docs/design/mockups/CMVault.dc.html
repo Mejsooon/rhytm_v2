@@ -60,14 +60,13 @@ html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px
     <div class="empty" style="padding:24px 0 0">
       <span class="empty-ic" style="width:56px;height:56px;border-radius:14px;color:var(--foreground)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span>
       <h1 class="h-title" style="font-size:24px;margin-top:4px">Sejf jest zablokowany</h1>
-      <p class="muted" style="margin:0;line-height:1.5;max-width:290px">Hasła są szyfrowane na urządzeniu. Odblokuj hasłem głównym albo biometrią.</p>
+      <p class="muted" style="margin:0;line-height:1.5;max-width:290px">Hasła są szyfrowane na urządzeniu. Klucz zostaje tylko w pamięci tej karty. Blokada po 5 min bezczynności.</p>
     </div>
     <label class="fld">Hasło główne<input class="inp" type="password" value="{{pw}}" onChange="{{onPw}}" placeholder="••••••••••" autocomplete="current-password" aria-invalid="{{invalid}}"></label>
     <sc-if value="{{err}}" hint-placeholder-val="{{false}}"><span role="alert" class="err" style="margin-top:-10px">Wpisz hasło główne.</span></sc-if>
     <sc-if value="{{ok}}" hint-placeholder-val="{{false}}"><a href="CMPasswords.dc.html" class="btnp">Odblokuj</a></sc-if>
     <sc-if value="{{notOk}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{tryOpen}}">Odblokuj</button></sc-if>
-    <a href="CMPasswords.dc.html" class="btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v3a8 8 0 0 0 1 4M8 13a4 4 0 0 1 8 0v1M5 14a7 7 0 0 1 14-2M9 20a11 11 0 0 1-1-5"></path></svg>Odblokuj biometrią</a>
-    <a href="CMLogin.dc.html" class="btng" style="align-self:center;color:var(--destructive-foreground)">Nie pamiętam hasła głównego</a>
+    <a href="CMVaultReset.dc.html" class="btng" style="align-self:center;color:var(--destructive-foreground)">Nie pamiętam hasła — zresetuj sejf</a>
   </div>
 </div>
 </x-dc>

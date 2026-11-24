@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Powiadomienia (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+</style>
+</helmet>
+<div class="m-screen" style="display:flex;flex-direction:column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="padding:0 8px"><a href="CMSettings.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex:1;text-align:center">Powiadomienia</h1><span style="width:44px"></span></header>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px">
+    <section class="card">
+      <div class="m-row" style="min-height:64px;border-bottom:0"><span style="flex:1;min-width:0"><span style="display:block;font-weight:600">Push na tym urządzeniu</span><span class="hint">{{pushTxt}}</span></span><button type="button" class="sw m-hit" role="switch" aria-checked="{{push}}" aria-label="Push na tym urządzeniu" onClick="{{pushToggle}}"></button></div>
+      <div class="card-p" style="padding-top:0"><div class="alert info" style="font-size:13px">Na iPhonie push działa po dodaniu rhytm do ekranu głównego.</div></div>
+    </section>
+    <section class="card" style="{{offS}}">
+      <div class="card-h"><h2 class="card-t">Rodzaje</h2></div>
+      <div style="padding:4px 0"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="3"><div class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">{{k.t}}</span><span class="hint">{{k.d}}</span></span><button type="button" class="sw m-hit" role="switch" aria-checked="{{k.on}}" aria-label="{{k.t}}" onClick="{{k.toggle}}"></button></div></sc-for></div>
+    </section>
+    <section class="card" style="{{offS}}">
+      <div class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Cicha noc</span><span class="hint">Bez powiadomień {{quietTxt}}</span></span><button type="button" class="sw m-hit" role="switch" aria-checked="{{quiet}}" aria-label="Cicha noc" onClick="{{quietToggle}}"></button></div>
+      <sc-if value="{{quietOn}}" hint-placeholder-val="{{true}}"><div class="card-p" style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><label class="fld">Od<select class="dd" aria-label="Cicha noc od"><option>23:00</option><option>22:00</option></select></label><label class="fld">Do<select class="dd" aria-label="Cicha noc do"><option>07:00</option><option>08:00</option></select></label></div></sc-if>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Urządzenia</h2><p class="card-d">{{devCount}}</p></div>
+      <div style="padding:4px 0"><sc-for list="{{devices}}" as="d" hint-placeholder-count="2"><div class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">{{d.t}}</span><span class="hint num">{{d.d}}</span></span><button type="button" class="sw m-hit" role="switch" aria-checked="{{d.on}}" aria-label="{{d.t}}" onClick="{{d.toggle}}"></button></div></sc-for></div>
+      <div class="foot" style="gap:10px"><span style="flex:1;font-size:13px;{{testS}}">{{testMsg}}</span><button type="button" class="btn" aria-disabled="{{testDis}}" onClick="{{test}}">Wyślij testowe</button></div>
+    </section>
+    <section class="card" style="{{offS}}">
+      <div class="card-h"><h2 class="card-t">Przypomnienia nawyków</h2><p class="card-d">Wysyłane o godzinie ustawionej przy nawyku, tylko w dni z harmonogramu i gdy nawyk nie jest odhaczony.</p></div>
+      <div style="padding:4px 0"><sc-for list="{{habits}}" as="h" hint-placeholder-count="4"><div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0">{{h.t}}</span><span class="num" style="{{h.timeS}}">{{h.time}}</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{h.on}}" aria-label="{{h.label}}" onClick="{{h.toggle}}"></button></div></sc-for></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const push = S.push ?? true;
+    const K = S.k || { block: true, renew: true, hab: true };
+    const quiet = S.quiet ?? true;
+    const D = S.d || { a: true, b: true };
+    const H = S.h || { a: '20:30', b: '21:00', c: null, d: '22:30' };
+    const KINDS = [['block', 'Start bloku w kalendarzu', '5 minut przed rozpoczęciem bloku'], ['renew', 'Odnowienia subskrypcji', 'Dzień przed odnowieniem, o 9:00'], ['hab', 'Przypomnienia o nawykach', 'O godzinie ustawionej przy nawyku']];
+    const DEV = [['a', 'Safari · iPhone', 'to urządzenie · włączone 24.11.2026'], ['b', 'Chrome · Parrot OS', 'włączone 12.11.2026']];
+    const HAB = [['a', 'Czytanie 20 min'], ['b', 'Rozciąganie'], ['c', 'Woda 2 l'], ['d', 'Bez telefonu po 23:00']];
+    const anyDev = push && DEV.some((d) => D[d[0]]);
+    return {
+      push: push ? 'true' : 'false',
+      pushTxt: push ? 'Włączone' : 'Wyłączone — nie dostaniesz żadnych powiadomień na tym urządzeniu',
+      pushToggle: () => this.setState({ push: !push }),
+      offS: push ? '' : 'opacity:.56',
+      kinds: KINDS.map((k) => ({ t: k[1], d: k[2], on: K[k[0]] ? 'true' : 'false', toggle: () => this.setState({ k: Object.assign({}, K, { [k[0]]: !K[k[0]] }) }) })),
+      quiet: quiet ? 'true' : 'false', quietOn: quiet, quietTxt: quiet ? '23:00–07:00' : '— wyłączone',
+      quietToggle: () => this.setState({ quiet: !quiet }),
+      devCount: '2 urządzenia',
+      devices: DEV.map((d) => ({ t: d[1], d: d[2], on: D[d[0]] ? 'true' : 'false', toggle: () => this.setState({ d: Object.assign({}, D, { [d[0]]: !D[d[0]] }) }) })),
+      testDis: anyDev ? 'false' : 'true',
+      testMsg: S.sent ? 'Wysłano testowe powiadomienie na 2 urządzenia ✓' : (anyDev ? '' : 'Włącz push i co najmniej jedno urządzenie, żeby wysłać test.'),
+      testS: S.sent ? 'color:#15803d' : 'color:var(--muted-foreground)',
+      test: () => { if (anyDev) this.setState({ sent: true }); },
+      habits: HAB.map((h) => ({ t: h[1], label: 'Przypomnienie: ' + h[1], time: H[h[0]] || 'wył.', timeS: H[h[0]] ? '' : 'color:var(--muted-foreground)', on: H[h[0]] ? 'true' : 'false', toggle: () => this.setState({ h: Object.assign({}, H, { [h[0]]: H[h[0]] ? null : '20:30' }) }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

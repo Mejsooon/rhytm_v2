@@ -137,7 +137,7 @@ describe("Dropdown", () => {
     const wyzwalacz = screen.getByRole("button", { name: "Waluta" });
     expect(wyzwalacz).not.toHaveTextContent("zł");
     expect(wyzwalacz.className).toBe(
-      "h-8 w-full min-w-0 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm font-normal text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-faint-foreground focus:border-ring focus:shadow-halo aria-[invalid=true]:border-destructive/[.36] aria-[invalid=true]:focus:shadow-[0_0_0_3px_rgba(239,68,68,.16)] disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11 max-[799px]:text-[15px] flex cursor-pointer items-center justify-between gap-2 text-left aria-expanded:border-ring aria-expanded:shadow-halo",
+      "h-8 w-full min-w-0 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm font-normal text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-faint-foreground focus:border-ring focus:shadow-halo aria-[invalid=true]:border-destructive/[.36] aria-[invalid=true]:focus:shadow-[0_0_0_3px_rgba(239,68,68,.16)] disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11 max-[799px]:text-base flex cursor-pointer items-center justify-between gap-2 text-left aria-expanded:border-ring aria-expanded:shadow-halo",
     );
     expect(wyzwalacz.querySelector("svg")).toHaveClass("lucide-chevron-down", "size-3");
   });
@@ -158,3 +158,13 @@ describe("Dropdown", () => {
     expect(hint).toHaveClass("font-mono");
   });
 });
+
+describe("Dropdown compact", () => {
+  it("wariant compact ma na telefonie 44 px, na webie 28 px", () => {
+    render(
+      <Dropdown ariaLabel="Strefa" value="utc" options={OPCJE} onChange={() => {}} compact />,
+    );
+    expect(screen.getByRole("button", { name: "Strefa" })).toHaveClass("h-7", "max-[799px]:h-11");
+  });
+});
+

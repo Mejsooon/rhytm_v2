@@ -170,3 +170,172 @@
     opacity: 1;
   }
 }
+
+/* ── Telefon: narzędzia CM-BASE ─────────────────────────────────────────────
+   Wartości przepisane 1:1 z bloku „CM-BASE” makiet telefonu (docs/design/mockups/CM*.dc.html,
+   np. CMToday.dc.html; blok jest identyczny we wszystkich plikach CM*). To jedyne źródło wyglądu
+   telefonu: komponenty `m-*.tsx` w `src/features/<moduł>/mobile` używają tych nazw zamiast przepisywać
+   wartości. Kolory przez tokeny; hexy/rgba zostają tylko w cieniach i uchwycie z makiety.
+   Nazwy klas makiety bez prefiksu dostały prefiks `m-`: .stats → m-stats, .stat → m-stat,
+   .stat-v → m-stat-v, .sec-h → m-sec-h, .plan-block → m-plan-block.
+   Różnica z makietą: m-fab ma `position: fixed` i `bottom` liczony od --tabbar-h (w makiecie 84 px
+   w ramce 390×844), bo w aplikacji przewija się okno.
+   Zwykłe klasy Tailwind dopisane obok narzędzia (np. `m-head py-1`, `m-row min-h-[52px]`) wygrywają
+   z jego wartościami, a wariantów używa się jak zwykle (`max-[799px]:m-row`). */
+
+/* Nagłówek ekranu: tytuł po lewej, akcje po prawej */
+@utility m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+/* Tytuł ekranu (18 px, 600) */
+@utility m-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -.011em;
+}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania); ostatni bez ramki */
+@utility m-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* Uchwyt arkusza od dołu (36×4 px) */
+@utility m-grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, .14);
+  margin: 8px auto 0;
+}
+
+/* Krok +/−: <div class="m-step"><button>−</button><span>5</span><button>+</button></div> */
+@utility m-step {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  overflow: hidden;
+  & button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: var(--background);
+    font: inherit;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  & span {
+    min-width: 48px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Przycisk pływający (FAB) nad paskiem zakładek */
+@utility m-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--tabbar-h) + 20px);
+  z-index: 30;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 8px 16px -4px rgba(38, 38, 38, .32);
+  cursor: pointer;
+}
+
+/* Powiększony cel dotyku (≥ 44 px) dla 16-pikselowych checkboxów i przełączników */
+@utility m-hit {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -14px;
+  }
+}
+
+/* Siatka kafelków 2×N z liniami 1 px (CMToday) */
+@utility m-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+/* Kafelek w m-stats */
+@utility m-stat {
+  display: block;
+  background: var(--background);
+  padding: 12px 14px;
+  color: var(--foreground);
+  text-decoration: none;
+  min-height: 44px;
+  box-sizing: border-box;
+  &:hover {
+    background: var(--panel);
+  }
+}
+
+/* Wartość kafelka (22 px); <span> w środku to jednostka/mianownik 14 px */
+@utility m-stat-v {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 4px;
+  & span {
+    font-size: 14px;
+    font-weight: 400;
+  }
+}
+
+/* Nagłówek sekcji: tytuł po lewej, link po prawej (wyrównane do linii bazowej) */
+@utility m-sec-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  & > :is(h2, h3) {
+    margin: 0;
+  }
+}
+
+/* Wiersz planu dnia (CMToday); tło i ramkę w kolorze kategorii daje wywołujący */
+@utility m-plan-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  color: inherit;
+  text-decoration: none;
+}

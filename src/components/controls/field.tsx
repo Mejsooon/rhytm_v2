@@ -25,7 +25,7 @@ export function MonoLabel({
 // Klasy pola wg .inp z coss.css: 32 px (na telefonie 44 px), promień 10 px, cień xs,
 // fokus: ramka ring + halo 3 px; błąd: czerwona ramka (aria-invalid)
 export const FIELD =
-  "block h-8 w-full min-w-0 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm font-normal text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-faint-foreground focus:border-ring focus:shadow-halo aria-[invalid=true]:border-destructive/[.36] aria-[invalid=true]:focus:shadow-[0_0_0_3px_rgba(239,68,68,.16)] disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11 max-[799px]:text-[15px]";
+  "block h-8 w-full min-w-0 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-sm font-normal text-foreground shadow-xs outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-faint-foreground focus:border-ring focus:shadow-halo aria-[invalid=true]:border-destructive/[.36] aria-[invalid=true]:focus:shadow-[0_0_0_3px_rgba(239,68,68,.16)] disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11 max-[799px]:text-base";
 
 // Pole tekstowe z etykietą (.inp z coss.css)
 export function TextField({

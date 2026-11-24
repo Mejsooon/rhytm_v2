@@ -49,10 +49,39 @@ describe("TabBar", () => {
     expect(pasek.className).not.toContain("84px");
     // Poziomo: boczne wcięcia ekranu (notch)
     expect(pasek.className).toContain(
-      "pl-[max(4px,env(safe-area-inset-left))]",
+      "pl-[max(6px,env(safe-area-inset-left))]",
     );
     expect(pasek.className).toContain(
-      "pr-[max(4px,env(safe-area-inset-right))]",
+      "pr-[max(6px,env(safe-area-inset-right))]",
     );
+  });
+
+  it("A1: /hasla i /hasla/... zaznaczają „Strony” (Hasła nie mają zakładki)", () => {
+    for (const s of ["/hasla", "/hasla/nowe"]) {
+      sciezka = s;
+      const { unmount } = render(<TabBar />);
+      expect(screen.getByRole("link", { name: "Strony" })).toHaveAttribute("aria-current", "page");
+      expect(screen.getAllByRole("link").filter((l) => l.hasAttribute("aria-current"))).toHaveLength(1);
+      unmount();
+    }
+    // Sam prefiks bez ukośnika nie łapie innych tras
+    sciezka = "/haslaxyz";
+    render(<TabBar />);
+    expect(screen.getByRole("link", { name: "Strony" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("wygląd według CMTabBar: tło --sidebar, zakładki 44 px, aktywna z tłem, ikony 20 px", () => {
+    sciezka = "/sport";
+    render(<TabBar />);
+    const pasek = screen.getByRole("navigation", { name: "Moduły" });
+    expect(pasek).toHaveClass("bg-sidebar", "border-sidebar-border", "gap-0.5", "pt-1.5", "text-[11px]");
+    const aktywna = screen.getByRole("link", { name: "Sport" });
+    expect(aktywna).toHaveClass("min-h-11", "rounded-[8px]", "font-medium", "gap-[3px]", "bg-black/5", "text-foreground");
+    const nieaktywna = screen.getByRole("link", { name: "Dziś" });
+    expect(nieaktywna).toHaveClass("min-h-11", "text-[rgba(38,38,38,.68)]");
+    expect(nieaktywna).not.toHaveClass("bg-black/5");
+    const ikona = aktywna.querySelector("svg")!;
+    expect(ikona).toHaveAttribute("width", "20");
+    expect(ikona).toHaveAttribute("height", "20");
   });
 });

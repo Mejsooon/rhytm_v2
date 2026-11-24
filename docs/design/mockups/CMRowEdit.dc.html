@@ -83,7 +83,6 @@ html body .date-cell{height:40px;padding:0;border:0;border-radius:8px;font:inher
       <div class="fld"><span class="lbl">Kategoria</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip m-hit" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div></div>
       <div class="card" style="overflow: hidden">
         <div class="m-row"><span style="flex: 1">Aktywna</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{active}}" aria-label="Aktywna" onClick="{{toggleActive}}"></button></div>
-        <div class="m-row"><span style="flex: 1">Przypomnij 3 dni przed</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{rem}}" aria-label="Przypomnienie" onClick="{{toggleRem}}"></button></div>
       </div>
       <a href="CMSubs.dc.html" class="btndo" style="width: 100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Usuń wiersz</a>
     </div>
@@ -113,8 +112,7 @@ class Component extends DCLogic {
       cal, calLabel: MON[m] + ' ' + y, prev: () => this.setState({ mo: mo - 1 }), next: () => this.setState({ mo: mo + 1 }),
       dateTxt: iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) + ' · ' + (dd < 0 ? 'minęło' : dd === 0 ? 'dziś' : 'za ' + dd + ' dni'),
       cats: ['Rozrywka', 'Chmura', 'Praca', 'Nauka', 'Zdrowie', 'Inne'].map((c) => ({ t: c, p: c === cat ? 'true' : 'false', pick: () => this.setState({ cat: c }) })),
-      active: S.act === false ? 'false' : 'true', toggleActive: () => this.setState({ act: S.act === false }),
-      rem: S.rem ? 'true' : 'false', toggleRem: () => this.setState({ rem: !S.rem })
+      active: S.act === false ? 'false' : 'true', toggleActive: () => this.setState({ act: S.act === false })
     };
   }
 }

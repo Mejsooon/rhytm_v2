@@ -81,8 +81,8 @@ describe("DeleteSessionDialog", () => {
     );
     expect(
       screen.getByRole("button", { name: "Anuluj" }).className,
-    ).not.toContain("border-input");
-    // Rozmiar md: 32 px na webie i 44 px na telefonie (cel dotykowy)
+    ).not.toMatch(/(^|\s)border-input/);
+    // Rozmiar md: 32 px na webie i 44 px na telefonie (przyciski arkusza obok siebie)
     expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass(
       "h-8",
       "max-[799px]:h-11",
@@ -93,9 +93,10 @@ describe("DeleteSessionDialog", () => {
       "min-[800px]:border-border",
       "min-[800px]:shadow-pop",
     );
-    // Telefon: promień 16 px bez zmian
+    // Telefon: arkusz od dołu (jak pozostałe okna usuwania)
     expect(screen.getByRole("alertdialog")).toHaveClass(
-      "max-[799px]:rounded-xl",
+      "max-[799px]:bottom-0",
+      "max-[799px]:rounded-t-2xl",
     );
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     expect(screen.getByRole("alert")).toHaveTextContent(

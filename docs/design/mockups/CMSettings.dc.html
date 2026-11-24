@@ -57,20 +57,15 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
   <div class="m-status"><span>9:41</span><span></span></div>
   <header class="m-head" style="padding:0 8px"><a href="CMToday.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex:1;text-align:center">Ustawienia</h1><span style="width:44px"></span></header>
   <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px">
-    <section class="card">
-      <div class="card-p" style="display:flex;align-items:center;gap:14px;padding-bottom:14px"><span class="avatar" style="{{av.style}}" aria-hidden="true">{{av.txt}}<sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#d4d4d4" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="9" r="3.5"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg></sc-if></span><span style="flex:1;min-width:0"><span style="display:block;font-weight:600;font-size:17px">Mejson</span><span class="muted">mejson@example.com</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></div>
-      <div class="foot" style="gap:10px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Zdjęcie profilowe</span><span class="hint" style="{{av.subS}}">{{av.sub}}</span></span><sc-if value="{{av.has}}" hint-placeholder-val="{{false}}"><button type="button" class="btndo" onClick="{{av.del}}">Usuń</button></sc-if><button type="button" class="btn" onClick="{{av.pick}}">{{av.btn}}</button></div>
-    </section>
-    <section class="card"><div class="card-h"><h2 class="card-t">Wygląd</h2></div><div class="card-p" style="display:flex;flex-direction:column;gap:10px">
-      <span style="font-weight:500">Motyw</span><div class="seg" style="display:flex"><sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" style="flex:1" aria-pressed="{{t.p}}" onClick="{{t.pick}}">{{t.t}}</button></sc-for></div>
-      <span style="font-weight:500;margin-top:4px">Tydzień zaczyna się w</span><div class="seg" style="display:flex"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="2"><button type="button" style="flex:1" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div>
-    </div></section>
-    <section class="card"><div class="card-h"><h2 class="card-t">Powiadomienia</h2></div><div style="padding:8px 0 0"><sc-for list="{{notifs}}" as="n" hint-placeholder-count="4"><div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">{{n.t}}</span><span class="hint">{{n.d}}</span></span><button type="button" class="sw m-hit" role="switch" aria-checked="{{n.on}}" aria-label="{{n.t}}" onClick="{{n.toggle}}"></button></div></sc-for></div></section>
-    <section class="card"><div class="card-h"><h2 class="card-t">Konto i bezpieczeństwo</h2></div><div style="padding:8px 0 0">
-      <a href="CMForgot.dc.html" class="m-row"><span style="flex:1">Zmień hasło</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
-      <a href="CMVault.dc.html" class="m-row"><span style="flex:1">Sejf — hasło główne</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
-      <button type="button" class="m-row row-btn"><span style="flex:1">Eksport danych</span><span class="bdg sec num">CSV, JSON</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-    </div></section>
+    <a href="CMSettingsGeneral.dc.html" class="card" style="text-decoration:none;color:inherit">
+      <span class="card-p" style="display:flex;align-items:center;gap:14px"><span class="avatar" style="width:52px;height:52px;font-size:20px;font-weight:600" aria-hidden="true">M</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:600;font-size:17px">Mejson</span><span class="muted">mejson@example.com</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></span>
+    </a>
+    <nav class="card" aria-label="Sekcje ustawień" style="padding:4px 0">
+      <a href="CMSettingsGeneral.dc.html" class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Ogólne</span><span class="hint">Profil, cele, kategorie kalendarza, kosz</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a href="CMSettingsAccount.dc.html" class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Konto i bezpieczeństwo</span><span class="hint">Hasło do konta, sesje, eksport danych</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a href="CMSettingsVault.dc.html" class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Sejf</span><span class="hint">Hasło główne do modułu Hasła</span></span><span class="bdg ok">Odblokowany</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a href="CMSettingsNotifications.dc.html" class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Powiadomienia</span><span class="hint">Push, cicha noc, urządzenia</span></span><span class="bdg sec">wł.</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </nav>
     <a href="CMLogin.dc.html" class="btndo" style="width:100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg>Wyloguj się</a>
     <div class="num muted" style="text-align:center;font-size:12px">rhytm 3.0 · build 2026.11</div>
   </div>
@@ -79,28 +74,7 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
 <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const S = this.state || {};
-    const th = S.th || 'Jasny', wk = S.wk || 'Pon.';
-    const N = S.n || { a: true, b: true, c: false, d: true };
-    const L = [['a', 'Poranne podsumowanie', 'Codziennie o 7:00'], ['b', 'Start bloku', '5 min przed blokiem'], ['c', 'Nawyki wieczorem', 'Jeśli coś zostało — 21:00'], ['d', 'Odnowienia subskrypcji', '3 dni przed płatnością']];
-    // Zdjęcie profilowe: zapis od razu po wyborze pliku
-    const avHas = !!S.avHas;
-    const av = {
-      has: avHas,
-      txt: avHas ? '' : 'M',
-      style: 'width:52px;height:52px;font-size:20px;font-weight:600;' + (avHas ? 'background:#525252' : ''),
-      sub: S.avMsg || (avHas ? 'PNG, JPG albo WebP, do 2 MB' : 'Bez zdjęcia pokażemy inicjały'),
-      subS: S.avMsg ? 'font-size:13px;color:#15803d' : 'font-size:13px',
-      btn: avHas ? 'Zmień' : 'Wgraj',
-      pick: () => this.setState({ avHas: true, avMsg: 'Zapisano ✓' }),
-      del: () => this.setState({ avHas: false, avMsg: '' })
-    };
-    return {
-      av,
-      themes: ['Jasny', 'Ciemny', 'Systemowy'].map((t) => ({ t, p: t === th ? 'true' : 'false', pick: () => this.setState({ th: t }) })),
-      weeks: ['Pon.', 'Niedz.'].map((t) => ({ t: t === 'Pon.' ? 'Poniedziałek' : 'Niedziela', p: t === wk ? 'true' : 'false', pick: () => this.setState({ wk: t }) })),
-      notifs: L.map((x) => ({ t: x[1], d: x[2], on: N[x[0]] ? 'true' : 'false', toggle: () => this.setState({ n: Object.assign({}, N, { [x[0]]: !N[x[0]] }) }) }))
-    };
+    return {};
   }
 }
 </script>

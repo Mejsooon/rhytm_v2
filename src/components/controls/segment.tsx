@@ -61,14 +61,15 @@ export function Segment<T extends string>({
             onClick={() => onChange(opcja.value)}
             onKeyDown={(e) => naKlawisz(e, i)}
             className={cn(
-              "inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-medium whitespace-nowrap transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-focus max-[799px]:h-10 max-[799px]:px-2",
+              "inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-medium whitespace-nowrap transition-[box-shadow,background-color,color] duration-150 outline-none focus-visible:shadow-focus max-[799px]:h-10 max-[799px]:min-w-0 max-[799px]:flex-1 max-[799px]:px-2",
               fill && "flex-1",
               wybrany
                 ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
                 : "bg-transparent text-muted-foreground hover:text-foreground",
             )}
           >
-            {opcja.label}
+            {/* Telefon: etykieta ucinana wielokropkiem zamiast zawijania */}
+            <span className="max-[799px]:min-w-0 max-[799px]:truncate">{opcja.label}</span>
           </button>
         );
       })}

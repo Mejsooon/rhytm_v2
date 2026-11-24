@@ -187,7 +187,7 @@ describe("HabitDetail", () => {
     expect(
       screen.getByText("Historia odhaczeń i notatki zostaną usunięte."),
     ).toBeInTheDocument();
-    const okno = screen.getByRole("dialog");
+    const okno = screen.getByRole("alertdialog");
     await userEvent.click(within(okno).getByRole("button", { name: "Usuń" }));
     expect(deleteHabit).toHaveBeenCalledWith("h1");
     await waitFor(() => expect(push).toHaveBeenCalledWith("/nawyki"));
@@ -201,7 +201,7 @@ describe("HabitDetail", () => {
     render(<HabitDetail data={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
     await userEvent.click(
-      within(screen.getByRole("dialog")).getByRole("button", { name: "Usuń" }),
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Usuń" }),
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Nie znaleziono nawyku.",
@@ -381,7 +381,7 @@ describe("HabitDetail", () => {
   it("okno usuwania w stylu .dlg: opis 14 px, Usuń destructive z koszem", async () => {
     render(<HabitDetail data={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
-    const okno = screen.getByRole("dialog");
+    const okno = screen.getByRole("alertdialog");
     expect(
       within(okno).getByText("Historia odhaczeń i notatki zostaną usunięte.")
         .className,

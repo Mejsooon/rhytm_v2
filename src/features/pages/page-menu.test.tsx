@@ -198,7 +198,7 @@ describe("PageMenu", () => {
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
 
-    const okno = await screen.findByRole("dialog");
+    const okno = await screen.findByRole("alertdialog");
     expect(within(okno).getByText("Usunąć stronę „Books”?")).toBeInTheDocument();
     expect(
       within(okno).getByText("11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza."),
@@ -223,7 +223,7 @@ describe("PageMenu", () => {
     sciezka = "/strony/a";
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Usuń" }));
     await waitFor(() => expect(deletePage).toHaveBeenCalled());
     expect(replace).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
@@ -234,7 +234,7 @@ describe("PageMenu", () => {
     deletePage.mockReturnValue(new Promise((r) => (zakoncz = r)));
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Usuń" }));
     expect(deletePage).toHaveBeenCalledWith("b");
     // Odpowiedź (z odświeżoną trasą usuniętej strony) jeszcze nie wróciła, a nawigacja już ruszyła
     expect(replace).toHaveBeenCalledWith("/strony");
@@ -249,7 +249,7 @@ describe("PageMenu", () => {
     countPageRows.mockReturnValue(new Promise((r) => (zakoncz = r)));
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    const okno = await screen.findByRole("dialog");
+    const okno = await screen.findByRole("alertdialog");
     expect(countPageRows).toHaveBeenCalledWith("b");
     // Do czasu odpowiedzi — liczba z listy stron (11)
     expect(within(okno).getByText(/^11 wierszy trafi/)).toBeInTheDocument();
@@ -261,7 +261,7 @@ describe("PageMenu", () => {
     countPageRows.mockResolvedValue({ ok: false, message: "x" });
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    const okno = await screen.findByRole("dialog");
+    const okno = await screen.findByRole("alertdialog");
     await waitFor(() => expect(countPageRows).toHaveBeenCalled());
     expect(within(okno).getByText(/^11 wierszy trafi/)).toBeInTheDocument();
   });
@@ -270,9 +270,9 @@ describe("PageMenu", () => {
     deletePage.mockResolvedValue({ ok: false, message: "x" });
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Usuń" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByTestId("kolejnosc")).toHaveTextContent("a,b,c");
   });
 
@@ -280,7 +280,7 @@ describe("PageMenu", () => {
     restorePage.mockResolvedValue({ ok: false, message: "x" });
     const user = await otworz();
     await user.click(screen.getByRole("menuitem", { name: /Usuń stronę/ }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Usuń" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Usuń" }));
     await waitFor(() => expect(toast).toHaveBeenCalled());
     const opcje = toast.mock.calls[0][1] as { action: { onClick: () => Promise<void> } };
     await opcje.action.onClick();
@@ -312,7 +312,7 @@ describe("PageMenu", () => {
   it("okno usuwania jak .dlg ze wzoru Sportu: zwarte 400 px, cień pop, szara stopka, ikona kosza", async () => {
     const { DeletePageDialog } = await import("./delete-page-dialog");
     render(<DeletePageDialog page={strona("b", "Books", { rowCount: 3 })} open onOpenChange={vi.fn()} onDeleted={vi.fn()} />);
-    const okno = screen.getByRole("dialog");
+    const okno = screen.getByRole("alertdialog");
     expect(okno.className).toContain("min-[800px]:shadow-pop");
     expect(okno.className).toContain("w-[min(400px,calc(100%-32px))]");
     const usun = within(okno).getByRole("button", { name: "Usuń" });
@@ -323,9 +323,9 @@ describe("PageMenu", () => {
   it("na telefonie okno usuwania to arkusz od dołu z uchwytem, a opis jest powiązany przez aria-describedby", async () => {
     const { DeletePageDialog } = await import("./delete-page-dialog");
     render(<DeletePageDialog page={strona("b", "Books", { rowCount: 3 })} open onOpenChange={vi.fn()} onDeleted={vi.fn()} />);
-    const okno = screen.getByRole("dialog");
-    expect(okno).toHaveClass("max-[799px]:inset-x-0", "max-[799px]:bottom-0", "max-[799px]:rounded-t-[18px]", "max-[799px]:rounded-b-none");
-    expect(okno.querySelector("div[aria-hidden='true']")).toHaveClass("min-[800px]:hidden");
+    const okno = screen.getByRole("alertdialog");
+    expect(okno).toHaveClass("max-[799px]:inset-x-0", "max-[799px]:bottom-0", "max-[799px]:rounded-t-2xl", "max-[799px]:rounded-b-none");
+    expect(okno.querySelector(".m-grab")).toHaveClass("min-[800px]:hidden");
     const opis = screen.getByText(/do kosza na 30 dni/);
     expect(opis.id).not.toBe("");
     expect(okno).toHaveAttribute("aria-describedby", opis.id);

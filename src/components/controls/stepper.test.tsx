@@ -58,6 +58,17 @@ describe("Stepper", () => {
     }
   });
 
+  it("telefon: przyciski 44×44 jak m-step, bez ramek i bez ucinania pierścienia fokusu", () => {
+    ustaw();
+    for (const nazwa of ["Zmniejsz Cel tygodniowy", "Zwiększ Cel tygodniowy"]) {
+      expect(screen.getByRole("button", { name: nazwa })).toHaveClass(
+        "max-[799px]:size-11",
+        "max-[799px]:border-0",
+        "max-[799px]:focus-visible:shadow-focus-inset",
+      );
+    }
+  });
+
   it("wide: jedna ramka na pełną szerokość, wartość bez font-mono", () => {
     ustaw({ wide: true });
     const grupa = screen.getByRole("group", { name: "Cel tygodniowy" });

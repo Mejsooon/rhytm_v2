@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Ustawienia, Ogólne (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+</style>
+</helmet>
+<div class="m-screen" style="display:flex;flex-direction:column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="padding:0 8px"><a href="CMSettings.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex:1;text-align:center">Ogólne</h1><span style="width:44px"></span></header>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px">
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Profil</h2></div>
+      <div class="card-p" style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;gap:12px"><span class="avatar" style="width:52px;height:52px;font-size:20px;font-weight:600" aria-hidden="true">M</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Zdjęcie profilowe</span><span class="hint">PNG, JPG albo WebP, do 2 MB</span></span><button type="button" class="btn">Wgraj</button></div>
+        <label class="fld">Wyświetlana nazwa<input class="inp" type="text" value="Mejson"></label>
+        <label class="fld">Strefa czasowa<select class="dd"><option>Warszawa · UTC+01:00</option><option>Londyn · UTC+00:00</option><option>Berlin · UTC+01:00</option></select></label>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Cele</h2><p class="card-d">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p></div>
+      <div style="padding:4px 0">
+        <div class="m-row" style="min-height:60px"><span style="flex:1">Cel snu</span><span class="m-step"><button type="button" aria-label="Krócej" onClick="{{sleepDown}}">−</button><span class="num">{{sleep}}</span><button type="button" aria-label="Dłużej" onClick="{{sleepUp}}">+</button></span></div>
+        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{trOn}}" aria-label="Treningi w tygodniu" onClick="{{trToggle}}"></button><span style="flex:1">Treningi w tygodniu</span><span class="m-step"><button type="button" aria-label="Mniej treningów" onClick="{{trDown}}">−</button><span class="num">{{tr}}</span><button type="button" aria-label="Więcej treningów" onClick="{{trUp}}">+</button></span></div>
+        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{kmOn}}" aria-label="Kilometry biegu w tygodniu" onClick="{{kmToggle}}"></button><span style="flex:1">Km biegu w tygodniu</span><span class="m-step"><button type="button" aria-label="Mniej kilometrów" onClick="{{kmDown}}">−</button><span class="num">{{km}}</span><button type="button" aria-label="Więcej kilometrów" onClick="{{kmUp}}">+</button></span></div>
+      </div>
+      <div class="card-p" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px">
+        <label class="fld">Waga (kg)<input class="inp num" type="text" inputMode="decimal" placeholder="np. 75" value="78"></label>
+        <label class="fld">Wzrost (cm)<input class="inp num" type="text" inputMode="numeric" placeholder="np. 180" value="182"></label>
+        <span class="hint" style="grid-column:1 / -1">Waga i wzrost służą do liczenia kcal biegów. Są opcjonalne.</span>
+      </div>
+      <div class="card-p" style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--border)">
+        <span style="font-weight:500">Waluta stron</span><div class="seg" role="group" aria-label="Waluta stron" style="display:flex"><sc-for list="{{curs}}" as="c" hint-placeholder-count="3"><button type="button" style="flex:1" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div>
+        <span class="hint" style="margin-top:-6px">Waluta dotyczy pól „Kwota cykliczna”.</span>
+        <span style="font-weight:500">Tydzień zaczyna się w</span><div class="seg" role="group" aria-label="Początek tygodnia" style="display:flex"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="2"><button type="button" style="flex:1" aria-pressed="{{w.p}}" onClick="{{w.pick}}">{{w.t}}</button></sc-for></div>
+      </div>
+      <div class="foot"><span class="hint" style="flex:1;{{msgS}}">{{msg}}</span><button type="button" class="btnp" onClick="{{save}}">Zapisz</button></div>
+    </section>
+    <section class="card">
+      <div class="card-h" style="display:flex;align-items:center;gap:8px"><h2 class="card-t" style="flex:1">Kategorie kalendarza</h2><button type="button" class="btng" style="padding:0 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</button></div>
+      <div style="padding:4px 0"><sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><div class="m-row"><span style="{{c.dot}}" aria-hidden="true"></span><span style="flex:1">{{c.t}}</span><button type="button" class="btng ic" aria-label="{{c.up}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"></path></svg></button><button type="button" class="btng ic" aria-label="{{c.edit}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button></div></sc-for></div>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Kosz</h2><p class="card-d">Usunięte strony i wiersze znikają na dobre po 30 dniach.</p></div>
+      <div style="padding:4px 0">
+        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Websites</span><span class="hint num">strona · usunięta 20.11 · zostało 26 dni</span></span><button type="button" class="btn">Przywróć</button></div>
+        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Disney+</span><span class="hint num">wiersz w Subscriptions · zostało 29 dni</span></span><button type="button" class="btn">Przywróć</button></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-h"><h2 class="card-t">Konto</h2></div>
+      <div style="padding:4px 0">
+        <div class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">E-mail</span><span class="hint">{{mail}}</span></span><button type="button" class="btn" onClick="{{mailEdit}}">Zmień</button></div>
+        <sc-if value="{{mailOpen}}" hint-placeholder-val="{{false}}"><div class="card-p" style="display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--border)"><label class="fld">Nowy e-mail<input class="inp" type="email" placeholder="nowy@adres.pl"></label><span class="hint">Wyślemy link na stary i na nowy adres. Zmiana wejdzie po potwierdzeniu obu.</span><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" onClick="{{mailEdit}}">Anuluj</button><button type="button" class="btnp" onClick="{{mailSend}}">Wyślij link</button></div></div></sc-if>
+        <a href="CMSettingsAccount.dc.html" class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Hasło do konta</span><span class="hint num">zmienione 15.11.2026</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      </div>
+    </section>
+    <section class="card" style="border-color:rgba(239,68,68,.24)">
+      <div class="card-h"><h2 class="card-t">Usuń konto</h2><p class="card-d">Konto zostanie usunięte po 30 dniach razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je przywrócić, logując się. Zdjęcie profilowe usuwamy od razu.</p></div>
+      <sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}"><div class="card-p" style="display:flex;flex-direction:column;gap:8px"><label class="fld" style="color:#b91c1c">Wpisz <span class="kbd">USUŃ</span>, żeby potwierdzić<input class="inp" type="text" autocomplete="off" placeholder="USUŃ" value="{{word}}" onInput="{{typeWord}}"></label></div></sc-if>
+      <div class="foot" style="background:rgba(239,68,68,.04);border-top-color:rgba(239,68,68,.16);gap:8px;justify-content:flex-end"><sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{delToggle}}">Anuluj</button></sc-if><a href="{{delHref}}" class="btnd" style="{{delS}}" aria-disabled="{{delDis}}" onClick="{{delClick}}">Usuń konto</a></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const sl = S.sl ?? 480, tr = S.tr ?? 3, km = S.km ?? 25;
+    const trOn = S.trOn ?? true, kmOn = S.kmOn ?? true;
+    const cur = S.cur || 'PLN', wk = S.wk || 'pn';
+    const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    const CATS = [['Studia', '#3b82f6'], ['Praca', '#8b5cf6'], ['Projekty', '#15803d'], ['Sport', '#f59e0b'], ['Dom', '#a16207']];
+    const word = S.word || '', ok = word.trim().toUpperCase() === 'USUŃ';
+    const delOpen = !!S.delOpen;
+    return {
+      sleep: hm(sl), sleepDown: () => this.setState({ sl: Math.max(300, sl - 15) }), sleepUp: () => this.setState({ sl: Math.min(720, sl + 15) }),
+      tr, trOn: trOn ? 'true' : 'false', trToggle: () => this.setState({ trOn: !trOn }), trDown: () => this.setState({ tr: Math.max(1, tr - 1) }), trUp: () => this.setState({ tr: Math.min(14, tr + 1) }),
+      km, kmOn: kmOn ? 'true' : 'false', kmToggle: () => this.setState({ kmOn: !kmOn }), kmDown: () => this.setState({ km: Math.max(1, km - 1) }), kmUp: () => this.setState({ km: Math.min(250, km + 1) }),
+      curs: ['PLN', 'EUR', 'USD'].map((t) => ({ t, p: t === cur ? 'true' : 'false', pick: () => this.setState({ cur: t }) })),
+      weeks: [['pn', 'Poniedziałek'], ['nd', 'Niedziela']].map((w) => ({ t: w[1], p: w[0] === wk ? 'true' : 'false', pick: () => this.setState({ wk: w[0] }) })),
+      msg: S.saved ? 'Zapisano ✓ — cele zaktualizowane na ekranie Dziś' : (!trOn && !kmOn ? 'Włącz co najmniej jeden cel.' : ''),
+      msgS: S.saved ? 'color:#15803d' : (!trOn && !kmOn ? 'color:#b91c1c' : ''),
+      save: () => this.setState({ saved: true }),
+      cats: CATS.map((c) => ({ t: c[0], dot: 'width:10px;height:10px;border-radius:50%;background:' + c[1], up: 'Przesuń ' + c[0] + ' w górę', edit: 'Edytuj kategorię ' + c[0] })),
+      mail: S.mailSent ? 'mejson@example.com · link potwierdzający wysłany na nowy adres' : 'mejson@example.com · potwierdzony',
+      mailOpen: !!S.mailOpen, mailEdit: () => this.setState({ mailOpen: !S.mailOpen }), mailSend: () => this.setState({ mailOpen: false, mailSent: true }),
+      delOpen, word, typeWord: (e) => this.setState({ word: e.target.value }),
+      delToggle: () => this.setState({ delOpen: !delOpen, word: '' }),
+      delDis: delOpen && !ok ? 'true' : 'false',
+      delS: delOpen && !ok ? 'opacity:.64' : '',
+      delHref: delOpen && ok ? 'CMLogin.dc.html' : '#',
+      delClick: (e) => { if (!delOpen) { e.preventDefault(); this.setState({ delOpen: true }); } else if (!ok) e.preventDefault(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

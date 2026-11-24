@@ -68,18 +68,20 @@ html body .day-pick{display:flex;flex-direction:column;align-items:center;gap:2p
     <sc-for list="{{week}}" as="d" hint-placeholder-count="7"><button type="button" class="day-pick" aria-pressed="{{d.p}}" aria-label="{{d.label}}" onClick="{{d.pick}}" style="{{d.s}}"><span style="font-size: 11px; opacity: .75">{{d.wd}}</span><span class="num" style="{{d.numS}}">{{d.n}}</span><span style="{{d.dot}}"></span></button></sc-for>
   </div>
   <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 13px" class="muted"><span>{{dayTitle}}</span><span aria-hidden="true">·</span><span class="bdg sec num">{{count}}</span></div>
+  <!-- Dzień w liczbach + odnowienia subskrypcji w pasku nad osią (T13) -->
+  <div style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num muted" style="font-size: 12px; flex: 1 1 100%">{{stats}}</span><sc-for list="{{renewals}}" as="r" hint-placeholder-count="1"><a href="CMRenewalSheet.dc.html" class="bdg sec num" style="text-decoration: none; border-style: dashed">↻ {{r.t}}</a></sc-for></div>
 
   <!-- OŚ GODZIN wypełnia resztę ekranu do paska zakładek; przewija się tylko ona -->
   <div id="rh-tel-os-c" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 16px 96px">
     <div style="position: relative; height: 1344px">
       <sc-for list="{{hours}}" as="h" hint-placeholder-count="24"><div style="{{h.s}}"><span class="num muted" style="width: 40px; font-size: 11px; transform: translateY(-7px); text-align: right">{{h.t}}</span><span style="flex: 1; border-top: 1px solid var(--border)"></span></div></sc-for>
-      <a href="CMBlockSheet.dc.html" aria-label="Dodaj blok w wolnym miejscu" style="position: absolute; left: 48px; right: 0; top: 0; bottom: 0"></a>
-      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4"><a href="CMBlockSheet.dc.html" style="{{b.s}}"><span style="font-weight: 500; font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0">{{b.t}}</span><span class="num muted" style="font-size: 12px; line-height: 16px; white-space: nowrap; flex: none">{{b.time}}</span></a></sc-for>
+      <a href="CMNewEntry.dc.html" aria-label="Dodaj wpis w wolnym miejscu" style="position: absolute; left: 48px; right: 0; top: 0; bottom: 0"></a>
+      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4"><a href="CMBlockDetail.dc.html" style="{{b.s}}"><span style="font-weight: 500; font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0">{{b.t}}</span><span class="num muted" style="font-size: 12px; line-height: 16px; white-space: nowrap; flex: none">{{b.time}}</span></a></sc-for>
       <sc-if value="{{isToday}}" hint-placeholder-val="{{true}}"><div aria-hidden="true" style="{{nowS}}"><span style="position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--destructive)"></span></div></sc-if>
     </div>
   </div>
 
-  <a href="CMBlockSheet.dc.html" class="m-fab" aria-label="Nowy blok"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+  <a href="CMNewEntry.dc.html" class="m-fab" aria-label="Nowy wpis"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
   <dc-import name="CMTabBar" active="cal" hint-size="390px,64px"></dc-import>
 
   <!-- arkusz z kategoriami (jak przycisk „Kategorie” na komputerze) -->
@@ -90,7 +92,7 @@ html body .day-pick{display:flex;flex-direction:column;align-items:center;gap:2p
       <div class="dlg-h" style="padding: 8px 8px 8px 16px; align-items: center"><h2 class="dlg-t">Kategorie</h2><button type="button" class="btng ic" aria-label="Zamknij" onClick="{{closeCats}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
       <div style="border-top: 1px solid var(--border)">
         <sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><div class="m-row"><span style="{{c.dot}}"></span><span style="flex: 1">{{c.name}}</span><button type="button" class="sw m-hit" role="switch" aria-checked="{{c.on}}" aria-label="{{c.aria}}" onClick="{{c.toggle}}"></button></div></sc-for>
-        <a href="CCategoryDialog.dc.html" class="m-row" style="color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
+        <a href="CMCategorySheet.dc.html" class="m-row" style="color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
       </div>
     </div>
   </sc-if>
@@ -130,11 +132,14 @@ class Component extends DCLogic {
       week: [9, 10, 11, 12, 13, 14, 15].map((d, i) => ({
         n: d, wd: WD[i], p: d === sel ? 'true' : 'false', label: FULL[i] + ' ' + d + ' listopada', pick: () => this.setState({ d }),
         s: d === sel ? 'background:var(--primary);color:var(--primary-foreground);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:transparent;color:var(--foreground)',
-        numS: d === 15 ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:16px;font-weight:500',
+        // dziś zaznaczone: sama czarna kafelka, bez czerwonego kółka (decyzja Mejsona)
+        numS: d === 15 && d !== sel ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:16px;font-weight:500',
         dot: 'width:4px;height:4px;border-radius:50%;background:' + (d === sel ? '#fafafa' : (DAYS[d] || []).length ? '#15803d' : 'transparent')
       })),
       dayTitle: FULL[[9, 10, 11, 12, 13, 14, 15].indexOf(sel)] + ', ' + sel + ' listopada',
       count: n + ' ' + word,
+      stats: (() => { const plan = list.reduce((a, b) => a + b[1], 0); const free = Math.max(0, 12 - list.filter((b) => b[0] >= 8 && b[0] < 20).reduce((a, b) => a + b[1], 0)); const h = (x) => (x % 1 ? Math.floor(x) + ' h 30 min' : x + ' h'); return 'Zaplanowane ' + h(plan) + ' · wolne (8–20) ' + h(free) + ' · zadania 3/7'; })(),
+      renewals: ({ 14: [{ t: 'Netflix · 43,00 zł' }], 12: [{ t: 'Spotify · 23,99 zł' }] })[sel] || [],
       isToday: sel === 15,
       nowS: 'position:absolute;left:42px;right:0;top:' + Math.round(now * H) + 'px;height:2px;background:#ef4444;z-index:3',
       hours: Array.from({ length: 24 }, (_, i) => ({ t: i === 0 ? '' : String(i).padStart(2, '0') + ':00', s: 'position:absolute;left:0;right:0;top:' + (i * H) + 'px;height:' + H + 'px;display:flex;align-items:flex-start;gap:8px' })),

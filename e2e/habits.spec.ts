@@ -153,7 +153,7 @@ test.describe("nawyki i sen (web)", () => {
       .getByTestId("web-nawyk")
       .getByRole("button", { name: "Usuń" })
       .click();
-    const okno = page.getByRole("dialog", {
+    const okno = page.getByRole("alertdialog", {
       name: "Usunąć nawyk „Do usunięcia”?",
     });
     await okno.getByRole("button", { name: "Usuń", exact: true }).click();

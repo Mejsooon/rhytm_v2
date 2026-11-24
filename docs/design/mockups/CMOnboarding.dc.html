@@ -107,7 +107,7 @@ html body .steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:
     <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
       <div><h1 class="step-title">Co chcesz ogarnąć w rhytm?</h1><p class="muted" style="margin: 6px 0 0">Na tej podstawie przygotujemy startowe strony i cele.</p></div>
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{goals}}" as="g" hint-placeholder-count="7"><button type="button" class="choice" role="checkbox" aria-checked="{{g.on}}" aria-disabled="{{g.locked}}" onClick="{{g.pick}}" style="flex-direction:column;gap:4px;min-height:76px"><span style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 8px"><span style="font-weight: 500">{{g.t}}</span><span class="cbx" aria-hidden="true" aria-checked="{{g.on}}"><sc-if value="{{g.isLocked}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if><sc-if value="{{g.isFree}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if></span></span><span class="hint" style="font-size: 12px">{{g.d}}</span></button></sc-for></div>
-      <p class="hint" style="margin: -4px 0 0; font-size: 13px">Plan tygodnia, treningi oraz nawyki i sen są zawsze włączone.</p>
+      <p class="hint" style="margin: -4px 0 0; font-size: 13px">Plan tygodnia, treningi, nawyki i sen oraz Hasła są zawsze włączone. Hasło główne sejfu ustawisz przy pierwszym otwarciu Haseł.</p>
       <div class="card" style="padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 0"><span class="lbl">Cele treningowe · jeden albo oba</span><sc-for list="{{tg}}" as="t" hint-placeholder-count="2"><div style="{{t.rowS}}"><button type="button" class="cbx m-hit" role="checkbox" aria-checked="{{t.on}}" aria-label="{{t.lbl}}" onClick="{{t.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></button><span style="flex: 1; min-width: 0">{{t.lbl}}</span><sc-if value="{{t.isOn}}" hint-placeholder-val="{{true}}"><span class="m-step"><button type="button" aria-label="{{t.minus}}" onClick="{{t.m}}">−</button><span class="num">{{t.txt}}</span><button type="button" aria-label="{{t.plus}}" onClick="{{t.p}}">+</button></span></sc-if><sc-if value="{{t.off}}" hint-placeholder-val="{{false}}"><span class="hint num">wyłączony</span></sc-if></div></sc-for><sc-if value="{{noGoal}}" hint-placeholder-val="{{false}}"><span class="err" style="padding-bottom: 10px">Włącz co najmniej jeden cel.</span></sc-if></div>
       <sc-if value="{{showSleep}}" hint-placeholder-val="{{true}}"><div class="card" style="padding: 0; gap: 0"><div class="m-row"><span style="flex: 1">Cel snu</span><span class="m-step"><button type="button" aria-label="Krócej" onClick="{{slM}}">−</button><span class="num">{{sleep}}</span><button type="button" aria-label="Dłużej" onClick="{{slP}}">+</button></span></div></div></sc-if>
     </sc-if>
@@ -166,7 +166,7 @@ class Component extends DCLogic {
     const G = S.goals || { plan: true, sport: true, habits: true, subs: true, proj: true };
     const P = S.pages;
     const src = S.src || null;
-    const N = S.notify || { perm: false, before: true, renew: true, weekly: true, habits: false };
+    const N = S.notify || { perm: false, before: true, renew: true, habits: false };
     const km = S.km ?? 25, tr = S.tr ?? 3, trOn = S.trOn !== false, kmOn = S.kmOn !== false, sleep = S.sleep ?? 480;
     const go = (n) => this.setState({ step: n, tzOpen: false });
     const TZ = [['Europe/Warsaw', 'Warszawa', 'UTC+01:00'], ['Europe/Berlin', 'Berlin', 'UTC+01:00'], ['Europe/London', 'Londyn', 'UTC+00:00'], ['Europe/Kyiv', 'Kijów', 'UTC+02:00'], ['America/New_York', 'Nowy Jork', 'UTC−05:00']];
@@ -176,12 +176,12 @@ class Component extends DCLogic {
     const cats = [];
     if (R.student) cats.push('Studia'); if (R.work) cats.push('Praca'); if (R.free) cats.push('Projekty'); if (R.sport) cats.push('Sport');
     if (!cats.length) cats.push('Dom');
-    const GOALS = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['pass', 'Hasła', 'Szyfrowany sejf', 'Passwords'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
+    const GOALS = [['plan', 'Plan tygodnia', 'Bloki z zadaniami w środku', null], ['sport', 'Treningi', 'Biegi i siłownia', null], ['habits', 'Nawyki i sen', 'Codzienne odhaczanie', null], ['subs', 'Subskrypcje', 'Sumy i odnowienia', 'Subscriptions'], ['proj', 'Projekty', 'Statusy i terminy', 'Projects'], ['books', 'Książki', 'Co czytasz i co dalej', 'Books']];
     const rec = GOALS.filter((g) => G[g[0]] && g[3]).map((g) => g[3]);
-    const PAGES = [['Subscriptions', 'Sumy miesięczne i roczne, odnowienia w kalendarzu', 'Kwota cykliczna · Data odnowienia · Aktywna'], ['Projects', 'Statusy, terminy i linki do repo', 'Status · Data · URL'], ['Books', 'Przeczytane, w trakcie i na później', 'Status · Ocena · Autor'], ['Websites', 'Zakładki z kategoriami', 'URL · Select · Checkbox'], ['Passwords', 'Hasło główne ustawisz przy pierwszym otwarciu', 'Sekret · URL · Login']];
+    const PAGES = [['Subscriptions', 'Sumy miesięczne i roczne, odnowienia w kalendarzu', 'Kwota cykliczna · Data odnowienia · Aktywna'], ['Projects', 'Statusy, terminy i linki do repo', 'Status · Data · URL'], ['Books', 'Przeczytane, w trakcie i na później', 'Status · Ocena · Autor'], ['Websites', 'Zakładki z kategoriami', 'URL · Select · Checkbox']];
     const pages = P || rec.reduce((o, p) => { o[p] = true; return o; }, {});
     const SRC = ['Od znajomego', 'Na uczelni', 'TikTok', 'Instagram', 'YouTube', 'X', 'Reddit', 'Wyszukiwarka', 'ChatGPT lub inne AI', 'Inne'];
-    const REMS = [['before', 'Przed blokiem', '10 min wcześniej'], ['renew', 'Odnowienie subskrypcji', '3 dni wcześniej, o 9:00'], ['weekly', 'Podsumowanie tygodnia', 'Niedziela, 18:00'], ['habits', 'Nawyki na dziś', 'Codziennie, 21:00']];
+    const REMS = [['before', 'Przed blokiem', '5 min wcześniej'], ['renew', 'Odnowienie subskrypcji', 'Dzień wcześniej, o 9:00'], ['habits', 'Nawyki', 'O godzinie ustawionej przy nawyku']];
     const hm = (m) => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
     const nameOk = !!name.trim();
     const pagesSel = PAGES.filter((p) => pages[p[0]]).map((p) => p[0]);
@@ -228,7 +228,7 @@ class Component extends DCLogic {
         // Cele treningowe: włączone (jeden albo oba)
         { k: 'Cele treningowe', v: [trOn ? tr + ' ' + (tr === 1 ? 'trening' : (tr % 10 >= 2 && tr % 10 <= 4 && (tr % 100 < 12 || tr % 100 > 14)) ? 'treningi' : 'treningów') + ' / tydz.' : '', kmOn ? String(km).replace('.', ',') + ' km / tydz.' : ''].filter(Boolean).join(' · '), go: () => go(3) },
         { k: 'Strony', v: pagesSel.join(', ') || 'brak', go: () => go(5) },
-        { k: 'Przypomnienia', v: remOn + ' z 4 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
+        { k: 'Przypomnienia', v: remOn + ' z 3 włączone' + (N.perm ? '' : ' · bez zgody na push'), go: () => go(6) }
       ]
     };
   }

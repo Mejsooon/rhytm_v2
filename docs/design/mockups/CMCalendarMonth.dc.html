@@ -68,8 +68,8 @@ html body .month-cell{height:46px;border:0;border-radius:10px;cursor:pointer;fon
   </div>
   <div style="flex: 1; overflow-y: auto; border-top: 1px solid var(--border); padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px">
     <div style="display: flex; align-items: center; justify-content: space-between"><h2 class="card-t" style="font-size: 17px">{{selTitle}}</h2><a href="CMCalendarDay.dc.html" class="btng" style="padding: 0 4px">Otwórz dzień</a></div>
-    <sc-for list="{{selItems}}" as="b" hint-placeholder-count="3"><a href="CMCalendarDay.dc.html" style="{{b.s}}"><span class="num muted" style="font-size: 12px; width: 42px">{{b.time}}</span><span style="flex: 1; font-weight: 500; font-size: 14px">{{b.t}}</span></a></sc-for>
-    <sc-if value="{{selEmpty}}" hint-placeholder-val="{{false}}"><a href="CMBlockSheet.dc.html" class="btn" style="width: 100%; height: 56px; border-style: dashed; box-shadow: none; color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Brak bloków — dodaj</a></sc-if>
+    <sc-for list="{{selItems}}" as="b" hint-placeholder-count="3"><a href="{{b.href}}" style="{{b.s}}"><span class="num muted" style="font-size: 12px; width: 42px">{{b.time}}</span><span style="flex: 1; font-weight: 500; font-size: 14px">{{b.t}}</span></a></sc-for>
+    <sc-if value="{{selEmpty}}" hint-placeholder-val="{{false}}"><a href="CMNewEntry.dc.html" class="btn" style="width: 100%; height: 56px; border-style: dashed; box-shadow: none; color: var(--muted-foreground)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Brak bloków — dodaj</a></sc-if>
   </div>
   <dc-import name="CMTabBar" active="cal" hint-size="390px,64px"></dc-import>
 </div>
@@ -103,6 +103,7 @@ class Component extends DCLogic {
       if (wd === 5 || wd === 6) return [[10, 2, 'Długi bieg', 'sport']];
       return d % 3 === 0 ? [[10, 2, 'rhytm — kod', 'own'], [18, 1, 'Siłownia', 'sport']] : [[9, 1.5, 'Zajęcia', 'uni']];
     };
+    const REN = { 12: [['Spotify', '23,99 zł']], 14: [['Netflix', '43,00 zł']], 21: [['YouTube Premium', '29,99 zł']] };
     const fmt = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + (h % 1 ? '30' : '00');
     const cells = [];
     for (let i = 0; i < lead; i++) cells.push({ t: '', label: '', p: 'false', pick: () => {}, s: 'visibility:hidden', ns: '', dots: [] });
@@ -111,15 +112,18 @@ class Component extends DCLogic {
       const cats = evs(d).map((b) => b[3]).filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
       cells.push({ t: d, label: d + ' ' + MONG[m], p: on ? 'true' : 'false', pick: () => this.setState({ sel: d }),
         s: on ? 'background:var(--primary);color:var(--primary-foreground);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:transparent;color:var(--foreground)',
-        ns: today ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:15px',
-        dots: cats.map((c) => ({ s: 'width:5px;height:5px;border-radius:50%;background:' + (on ? '#fafafa' : CAT[c]) })) });
+        // dziś zaznaczone: sama czarna kafelka, bez czerwonego kółka (decyzja Mejsona)
+        ns: today && !on ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:15px',
+        // odnowienie subskrypcji = szara kropka w komórce (T13)
+        dots: cats.map((c) => ({ s: 'width:5px;height:5px;border-radius:50%;background:' + (on ? '#fafafa' : CAT[c]) })).concat(isNov && REN[d] ? [{ s: 'width:5px;height:5px;border-radius:50%;box-sizing:border-box;border:1px solid ' + (on ? '#fafafa' : '#737373') }] : []) });
     }
     const items = evs(sel);
+    const ren = isNov && REN[sel] ? REN[sel] : [];
     return {
       year: y, monthName: MON[m], cells,
       prev: () => this.setState({ mo: mo - 1, sel: 1 }), next: () => this.setState({ mo: mo + 1, sel: 1 }),
-      selTitle: sel + ' ' + MONG[m], selEmpty: !items.length,
-      selItems: items.map((b) => ({ t: b[2], time: fmt(b[0]), s: 'display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border-radius:10px;box-sizing:border-box;color:inherit;text-decoration:none;background:' + CAT[b[3]] + '12;border:1px solid ' + CAT[b[3]] + '4d' }))
+      selTitle: sel + ' ' + MONG[m], selEmpty: !items.length && !ren.length,
+      selItems: ren.map((r) => ({ t: '↻ ' + r[0] + ' · ' + r[1], time: 'cały dzień', href: 'CMRenewalSheet.dc.html', s: 'display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border-radius:10px;box-sizing:border-box;color:inherit;text-decoration:none;background:#fff;border:1px dashed rgba(0,0,0,.24)' })).concat(items.map((b) => ({ t: b[2], time: fmt(b[0]), href: 'CMBlockDetail.dc.html', s: 'display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border-radius:10px;box-sizing:border-box;color:inherit;text-decoration:none;background:' + CAT[b[3]] + '12;border:1px solid ' + CAT[b[3]] + '4d' })))
     };
   }
 }
