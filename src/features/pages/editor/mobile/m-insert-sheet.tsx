@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 
 import { filterSlash, type SlashItem } from "../../blocks";
 
-// Arkusz „Wstaw blok” (MEditor.dc.html): lista pozycji z filtrem z pola poleceń. Bez modala Radixa, żeby pisanie „/tab” w polu pod spodem dalej filtrowało listę.
+// Arkusz „Wstaw blok” (CMEditor.dc.html: .m-sheet, pozycje .mi 60 px z .block-icon 40 px): lista pozycji z filtrem z pola poleceń. Bez modala Radixa, żeby pisanie „/tab” w polu pod spodem dalej filtrowało listę.
 export function MInsertSheet({
   open,
   query,
@@ -75,7 +75,7 @@ export function MInsertSheet({
       >
         <div aria-hidden="true" className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong" />
         <div className="flex flex-none items-center py-0.5 pr-2 pl-5">
-          <h2 ref={tytulRef} tabIndex={-1} className="m-0 flex-1 text-[17px] font-semibold outline-none">Wstaw blok</h2>
+          <h2 ref={tytulRef} tabIndex={-1} className="m-0 flex-1 text-lg font-semibold outline-none">Wstaw blok</h2>
           <button
             type="button"
             aria-label="Zamknij"
@@ -92,12 +92,12 @@ export function MInsertSheet({
               type="button"
               onClick={() => onPick(p)}
               className={`flex min-h-[60px] w-full cursor-pointer items-center gap-3 rounded-xl border-0 p-2 text-left font-[inherit] ${
-                i === 0 && query.trim() !== "" ? "bg-muted" : "bg-transparent"
+                i === 0 && query.trim() !== "" ? "bg-accent" : "bg-transparent"
               }`}
             >
               <span
                 aria-hidden="true"
-                className="flex size-10 flex-none items-center justify-center rounded-md border border-border bg-white font-mono"
+                className="flex size-10 flex-none items-center justify-center rounded-[10px] border border-border bg-white text-sm font-semibold text-[#525252] shadow-xs"
               >
                 {p.icon}
               </span>

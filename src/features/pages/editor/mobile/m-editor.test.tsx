@@ -88,10 +88,10 @@ function tabela(status: string | null = null): LoadedBlock {
   };
 }
 
-// Przycisk menu strony w nagłówku telefonu (web ma własny w okruszkach)
+// Przycisk „Więcej” (menu strony) w nagłówku telefonu (web ma własny w okruszkach)
 function menuTelefonu() {
   const przycisk = screen
-    .getAllByRole("button", { name: "Menu strony" })
+    .getAllByRole("button", { name: /^(Więcej|Menu strony)$/ })
     .find((b) => b.closest("header")?.className.includes("min-[800px]:hidden"));
   if (!przycisk) throw new Error("Brak menu strony na telefonie");
   return przycisk;
@@ -119,9 +119,27 @@ describe("MEditor (telefon)", () => {
     render(<EditorView data={dane([])} />);
     const pasek = screen.getByRole("button", { name: "Wstaw tabelę" }).parentElement!;
     expect(pasek.className).toContain("bottom-(--tabbar-h)");
-    for (const nazwa of ["Wstaw tabelę", "Wstaw zadanie", "Wstaw nagłówek"]) {
-      expect(screen.getByRole("button", { name: nazwa }).className).toContain("size-11");
+    expect(pasek.className).toContain("bg-[#fafafa]");
+    for (const nazwa of ["Wstaw blok", "Wstaw tabelę", "Wstaw zadanie", "Wstaw nagłówek"]) {
+      const przyciski = screen.getAllByRole("button", { name: nazwa });
+      const przycisk = przyciski[przyciski.length - 1];
+      expect(przycisk.className).toContain("max-[799px]:h-11");
+      expect(przycisk.className).toContain("max-[799px]:w-11");
     }
+    // Plakietka secondary z licznikiem bloków po prawej
+    expect(within(pasek).getByText("0 bloków")).toBeTruthy();
+  });
+
+  it("nagłówek telefonu: .m-head z powrotem „Strony” (44 px) i menu „Więcej”", () => {
+    render(<EditorView data={dane([])} />);
+    const przycisk = menuTelefonu();
+    const naglowek = przycisk.closest("header")!;
+    expect(naglowek).toHaveClass("m-head", "px-2");
+    expect(przycisk).toHaveAccessibleName("Więcej");
+    expect(przycisk.className).toContain("size-11");
+    const wstecz = within(naglowek).getByRole("link", { name: "Strony" });
+    expect(wstecz).toHaveAttribute("href", "/strony");
+    expect(wstecz.className).toContain("max-[799px]:w-11");
   });
 
   it("„+” otwiera arkusz „Wstaw blok” z 5 pozycjami i zamyka go krzyżykiem", async () => {
@@ -219,6 +237,9 @@ describe("MEditor (telefon)", () => {
     render(<EditorView data={dane([])} />);
     await user.click(menuTelefonu());
     const menu = await screen.findByRole("menu");
+    // Pozycje arkusza to .m-row 44 px bez ikon
+    expect(within(menu).getByRole("menuitem", { name: "Zmień nazwę" }).className).toContain("m-row");
+    expect(within(menu).getByRole("menuitem", { name: "Zmień nazwę" }).className).toContain("min-h-11");
     expect(within(menu).getByText("Dodaj do ulubionych")).toBeTruthy();
     expect(within(menu).getByText("Zmień nazwę")).toBeTruthy();
     expect(within(menu).getByText("Usuń stronę")).toBeTruthy();

@@ -501,7 +501,11 @@ test.describe("strony", () => {
     await expect(
       page.getByRole("heading", { name: "Strony", level: 1 }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Nowa strona" }).first().click();
+    // „Nowa strona” (nagłówek telefonu) prowadzi do wyboru szablonu; pusty szablon tworzy pustą stronę
+    await page.getByRole("link", { name: "Nowa strona" }).first().click();
+    await expect(page).toHaveURL(/\/strony\/nowa$/);
+    // Telefon: arkusz „Nowa strona” z paskiem „Anuluj · Nowa strona · Utwórz”; domyślnie pusta strona
+    await page.getByRole("button", { name: "Utwórz", exact: true }).click();
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     await expect(
       page.getByRole("button", { name: "Wstaw tabelę" }),
@@ -515,6 +519,6 @@ test.describe("strony", () => {
 
     // Strona pojawia się na liście
     await page.goto("/strony");
-    await expect(page.getByRole("link", { name: /Bez tytułu/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Pusta strona/ })).toBeVisible();
   });
 });

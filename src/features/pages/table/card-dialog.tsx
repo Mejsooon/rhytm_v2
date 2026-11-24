@@ -171,6 +171,12 @@ export function CardDialog({
     };
   });
 
+  // Telefon (CMCardSheet): nagłówek „Anuluj · tytuł · Dodaj / Zapisz” zamiast stopki, podgląd karty na górze.
+  // Okno montuje się dopiero po otwarciu (po stronie klienta), więc szerokość sprawdzamy raz przy montowaniu.
+  const [telefon] = React.useState(
+    () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches,
+  );
+
   const pole = dostepne.find((f) => f.id === w.fieldId);
   const sposoby = pole ? (SPOSOBY[pole.type] ?? []) : [];
   const opcje = pole?.config.options ?? [];
@@ -230,6 +236,24 @@ export function CardDialog({
     (!potrzebaOpcji || w.optId !== "") &&
     (!potrzebaDaty || w.dateId !== "");
 
+  const naglowek = telefon
+    ? {
+        phoneHeader: "actions" as const,
+        phoneCancel: { label: "Anuluj", onClick: onCancel },
+        phoneSubmit: (
+          <Button
+            variant="primary"
+            disabled={!mozeDodac}
+            onClick={() => {
+              if (karta) onSave(karta);
+            }}
+          >
+            {initial ? "Zapisz" : "Dodaj"}
+          </Button>
+        ),
+      }
+    : { phoneHeader: "close" as const };
+
   return (
     <FormDialog
       open={open}
@@ -239,21 +263,25 @@ export function CardDialog({
       wide
       title={initial ? "Edytuj kartę" : "Nowa karta"}
       description={`Liczba policzona z kolumny tabeli „${tableName}”.`}
+      {...naglowek}
+      // Na telefonie przyciski są w nagłówku, więc stopki nie ma w DOM (bez dubli „Anuluj” i „Zapisz”)
       footer={
-        <>
-          <Button variant="ghost" onClick={onCancel}>
-            Anuluj
-          </Button>
-          <Button
-            variant="primary"
-            disabled={!mozeDodac}
-            onClick={() => {
-              if (karta) onSave(karta);
-            }}
-          >
-            {initial ? "Zapisz" : "Dodaj kartę"}
-          </Button>
-        </>
+        telefon ? undefined : (
+          <>
+            <Button variant="ghost" onClick={onCancel}>
+              Anuluj
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!mozeDodac}
+              onClick={() => {
+                if (karta) onSave(karta);
+              }}
+            >
+              {initial ? "Zapisz" : "Dodaj kartę"}
+            </Button>
+          </>
+        )
       }
     >
       {dostepne.length === 0 ? (
@@ -454,13 +482,13 @@ export function CardDialog({
             </span>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-[799px]:order-first">
             <span className="text-xs font-medium text-muted-foreground">
               Podgląd
             </span>
             <Card
               data-testid="podglad-karty"
-              className="w-60 max-w-full px-[18px] py-4"
+              className="w-60 max-w-full px-[18px] py-4 max-[799px]:w-full"
             >
               <div className="text-xs font-medium text-muted-foreground">
                 {wynik?.label}

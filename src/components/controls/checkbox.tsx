@@ -13,12 +13,15 @@ export function Checkbox({
   label,
   ariaLabel,
   disabled = false,
+  className,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label?: React.ReactNode;
   ariaLabel?: string;
   disabled?: boolean;
+  // Dodatkowe klasy samego kwadratu (np. dotyk na telefonie w komórce tabeli)
+  className?: string;
 }) {
   const labelId = React.useId();
   return (
@@ -36,6 +39,7 @@ export function Checkbox({
           checked
             ? "border-primary bg-primary text-primary-foreground"
             : "border-input bg-white text-transparent",
+          className,
         )}
       >
         {checked && (

@@ -91,3 +91,15 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Edytor szablonu na telefonie bez makiety: przewijana tabela, nowy nagłówek i dni tygodnia | brak makiety edytora z ćwiczeniami | niski |
 | „Usuń ćwiczenie” w treningu na telefonie bez potwierdzenia (jak w makiecie) | makieta CMGym | niski: przypadkowe usunięcie ćwiczenia z trwającego treningu |
 | „Wstecz” w treningu wraca do miesiąca Sportu (`/sport?miesiac=…`) | zachowanie miesiąca, z którego wszedłeś | brak |
+
+### Pakiet strony
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T10: tabela na telefonie jak w CMEditor, stuknięcie wiersza otwiera arkusz; checkbox i Wybór (cyklicznie) zmieniają się w komórce | arkusz obsługuje wszystkie typy | średni |
+| T15: szukajka listy stron filtruje tylko tytuły; placeholder zmieniony na „Szukaj stron” (makieta: „…i wierszy”) | szukanie w wierszach to wyszukiwarka globalna | niski |
+| T17: „Nowy wiersz” / „Usuń wiersz” bez potwierdzenia, z „Cofnij” | jak web | niski |
+| „Nowa strona” z pustym szablonem dostaje nazwę „Pusta strona” zamiast „Bez tytułu” | nazwa z szablonu jak na webie | niski |
+| `/strony/nowa` przy twardym wejściu pokazuje samo tło do hydratacji (także web) | bez błysku złego układu | niski: ułamek sekundy pustego tła |
+| Pominięte z makiet: ikony filtru/kart w nagłówku (zamiast tego przyciski nad tabelą), „Filtr tabeli nie zmienia kart” (nieprawda — karty liczą przefiltrowane wiersze), sekcja „Moduł”, pozycje bez wsparcia w kodzie | nie dobudowujemy backendu w pakiecie wyglądu | niski |
+| „Wyczyść” w filtrze czyści tylko warunki, nie sortowanie | makieta nie rozstrzyga | niski |

@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Przechwytuje propsy każdego Popover.Content Radixa (dymek filtra idzie przez ActionPopover)
 const zlapane = vi.hoisted(() => ({ propsy: [] as Record<string, unknown>[] }));
@@ -292,5 +292,48 @@ describe("filtr tabeli", () => {
       expect(within(filtr).getByRole("button", { name: "Wartość warunku 1" })).toBeInTheDocument();
       expect(within(filtr).queryByText("zł / mies.")).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("filtr i sortowanie na telefonie (CMFilterSheet)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+  });
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  it("przycisk „Filtr i sortowanie” otwiera arkusz z sekcjami Filtr i Sortowanie", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
+    await user.click(screen.getByRole("button", { name: "Filtr i sortowanie" }));
+    const arkusz = await screen.findByRole("dialog", { name: "Filtr i sortowanie" });
+    expect(within(arkusz).getByText("Brak warunków. Tabela pokazuje wszystkie wiersze.")).toBeInTheDocument();
+    expect(within(arkusz).getByText("Sortowanie")).toBeInTheDocument();
+    expect(within(arkusz).getByRole("button", { name: "Dodaj sortowanie" })).toBeInTheDocument();
+  });
+
+  it("dodane sortowanie ma przełącznik Rosnąco / Malejąco i „Usuń sortowanie”", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
+    await user.click(screen.getByRole("button", { name: "Filtr i sortowanie" }));
+    const arkusz = await screen.findByRole("dialog", { name: "Filtr i sortowanie" });
+    const przed = within(arkusz).queryAllByRole("radio", { name: "Rosnąco" }).length;
+    await user.click(within(arkusz).getByRole("button", { name: "Dodaj sortowanie" }));
+    expect(within(arkusz).getAllByRole("radio", { name: "Rosnąco" })).toHaveLength(przed + 1);
+    expect(within(arkusz).getAllByRole("radio", { name: "Malejąco" })).toHaveLength(przed + 1);
+    await user.click(within(arkusz).getAllByRole("button", { name: /^Usuń sortowanie/ })[0]);
+    expect(within(arkusz).queryAllByRole("radio", { name: "Rosnąco" })).toHaveLength(przed);
+  });
+
+  it("„Gotowe” zamyka arkusz", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
+    await user.click(screen.getByRole("button", { name: "Filtr i sortowanie" }));
+    const arkusz = await screen.findByRole("dialog", { name: "Filtr i sortowanie" });
+    await user.click(within(arkusz).getByRole("button", { name: "Gotowe" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Filtr i sortowanie" })).toBeNull());
   });
 });

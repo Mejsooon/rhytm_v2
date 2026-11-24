@@ -1008,6 +1008,49 @@ describe("PageTable", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(actions.addRow).not.toHaveBeenCalled();
     });
+
+    it("checkbox przełącza się w komórce bez otwierania arkusza (cbx m-hit)", async () => {
+      telefon();
+      const user = userEvent.setup();
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      const pole = within(wiersz("Netflix")).getByRole("checkbox", { name: "Aktywna" });
+      expect(pole).toHaveAttribute("aria-checked", "true");
+      await user.click(pole);
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("row-2", expect.objectContaining({})));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("plakietka Wyboru przełącza opcje po kolei po stuknięciu; nazwa mówi „stuknij by zmienić”", async () => {
+      telefon();
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      const przycisk = within(wiersz("Atomic Habits")).getByRole("button", { name: "Status: Czytam, stuknij by zmienić" });
+      await user.click(przycisk);
+      // Opcje Books: Chcę przeczytać → Czytam → Przeczytane → Porzucone; po „Czytam” następne to „Przeczytane”
+      await waitFor(() => expect(actions.updateRow).toHaveBeenCalledTimes(1));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.queryByRole("option")).not.toBeInTheDocument();
+      expect(within(wiersz("Atomic Habits")).getByRole("button", { name: /^Status: Przeczytane/ })).toBeInTheDocument();
+    });
+
+    it("kosz „Usuń wiersz” (44 px) usuwa wiersz bez potwierdzenia i bez arkusza", async () => {
+      telefon();
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      const kosz = within(wiersz("Deep Work")).getByRole("button", { name: "Usuń wiersz" });
+      expect(kosz.className).toContain("max-[799px]:size-11");
+      expect(kosz.className).not.toContain("max-[799px]:hidden");
+      await user.click(kosz);
+      await waitFor(() => expect(actions.deleteRow).toHaveBeenCalledWith("row-4"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("pod tabelą: „Nowy wiersz” i plakietka z liczbą wierszy", () => {
+      telefon();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
+      expect(screen.getAllByText("11 wierszy").length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   describe("okno karty", () => {

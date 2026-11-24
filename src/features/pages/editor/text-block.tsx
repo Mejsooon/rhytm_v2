@@ -34,7 +34,7 @@ export function TextBlock({
         onBlur={przyUtracieFokusu}
         placeholder="Nagłówek"
         aria-label="Nagłówek"
-        className="w-full min-w-0 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus"
+        className="w-full min-w-0 rounded-md border-0 bg-transparent py-1.5 font-[inherit] text-xl font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:focus-visible:shadow-[0_0_0_2px_rgba(38,38,38,.08)]!"
       />
     );
   }
@@ -47,7 +47,7 @@ export function TextBlock({
       onBlur={przyUtracieFokusu}
       placeholder="Pusty akapit"
       aria-label="Akapit"
-      className="block w-full min-w-0 resize-none rounded-md border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-foreground outline-none [field-sizing:content] placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus"
+      className="block w-full min-w-0 resize-none rounded-md border-0 bg-transparent py-[3px] font-[inherit] leading-[1.6] text-foreground outline-none [field-sizing:content] placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:focus-visible:shadow-[0_0_0_2px_rgba(38,38,38,.08)]!"
     />
   );
 }

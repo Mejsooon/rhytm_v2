@@ -1,15 +1,9 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { push, createBlankPage, toast } = vi.hoisted(() => ({
-  push: vi.fn(),
-  createBlankPage: vi.fn(),
-  toast: Object.assign(vi.fn(), { error: vi.fn() }),
-}));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
-vi.mock("sonner", () => ({ toast }));
-vi.mock("../actions", () => ({ createBlankPage }));
+const { status } = vi.hoisted(() => ({ status: { value: "zablokowany" } }));
+vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: status.value }) }));
 
 import type { PageSummary } from "../load-pages";
 import { MPages } from "./m-pages";
@@ -28,8 +22,7 @@ const STRONY = [
 
 describe("MPages", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    createBlankPage.mockResolvedValue({ ok: true, id: "nowa" });
+    status.value = "zablokowany";
   });
 
   it("„Hasła” to pozycja na górze listy, przed „Ulubione”, prowadzi do /hasla", () => {
@@ -63,7 +56,7 @@ describe("MPages", () => {
     expect(within(wszystkie).getAllByRole("link")).toHaveLength(4);
   });
 
-  it("kafelek 36 px pokazuje ikonę strony 18 px: emoji, ikonę Lucide albo domyślną tabelę", () => {
+  it("kafelek 40 px pokazuje ikonę strony 18 px: emoji, ikonę Lucide albo domyślną tabelę", () => {
     render(
       <MPages
         pages={[
@@ -78,7 +71,7 @@ describe("MPages", () => {
     expect(ikona(/Beta/).getAttribute("data-page-icon")).toBe("globe");
     expect(ikona(/Gamma/).getAttribute("data-page-icon")).toBe("table");
     expect(ikona(/Alfa/)).toHaveStyle({ width: "18px", height: "18px" });
-    expect(ikona(/Alfa/).parentElement!.className).toContain("size-9");
+    expect(ikona(/Alfa/).parentElement!.className).toContain("size-10");
   });
 
   it("bez ulubionych nie ma sekcji „Ulubione”", () => {
@@ -109,23 +102,31 @@ describe("MPages", () => {
     expect(screen.getByText("Nic nie znaleziono.")).toBeInTheDocument();
   });
 
-  it("„Nowa strona” (nagłówek i kafel) tworzy stronę i przechodzi do niej", async () => {
-    const user = userEvent.setup();
+  it("„Nowa strona” (nagłówek i przycisk przerywany) prowadzi do wyboru szablonu /strony/nowa", () => {
     render(<MPages pages={STRONY} />);
-    const przyciski = screen.getAllByRole("button", { name: "Nowa strona" });
-    expect(przyciski).toHaveLength(2);
-    await user.click(przyciski[1]);
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/strony/nowa"));
-    expect(createBlankPage).toHaveBeenCalledTimes(1);
+    const linki = screen.getAllByRole("link", { name: "Nowa strona" });
+    expect(linki).toHaveLength(2);
+    for (const l of linki) expect(l).toHaveAttribute("href", "/strony/nowa");
+    expect(linki[0]).toHaveClass("max-[799px]:w-11", "max-[799px]:h-11");
+    expect(linki[1]).toHaveClass("h-14", "border-dashed");
   });
 
-  it("błąd tworzenia pokazuje toast", async () => {
-    createBlankPage.mockResolvedValue({ ok: false, message: "x" });
-    const user = userEvent.setup();
-    render(<MPages pages={STRONY} />);
-    await user.click(screen.getAllByRole("button", { name: "Nowa strona" })[0]);
-    await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(push).not.toHaveBeenCalled();
+  it("„Hasła” pokazują stan sejfu: zablokowany / odblokowany", () => {
+    const { rerender } = render(<MPages pages={STRONY} />);
+    expect(within(screen.getByRole("link", { name: /Hasła/ })).getByText("sejf · zablokowany")).toBeInTheDocument();
+    status.value = "odblokowany";
+    rerender(<MPages pages={STRONY} />);
+    expect(within(screen.getByRole("link", { name: /Hasła/ })).getByText("sejf · odblokowany")).toBeInTheDocument();
+  });
+
+  it("szukajka ma 44 px i pole 16 px; ikona Subscriptions jest zielona", () => {
+    render(<MPages pages={[strona("s", "Subscriptions", { templateKey: "subscriptions", rowCount: 7 })]} />);
+    const pole = screen.getByRole("searchbox", { name: "Szukaj stron" });
+    expect(pole).toHaveAttribute("placeholder", "Szukaj stron");
+    expect(pole).toHaveClass("text-base");
+    expect(pole.closest("label")).toHaveClass("h-11");
+    const kafelek = screen.getByRole("link", { name: /Subscriptions/ }).querySelector("[data-page-icon]")!.parentElement!;
+    expect(kafelek).toHaveClass("text-success");
   });
 
   it("⚙ prowadzi do /ustawienia", () => {

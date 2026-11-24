@@ -137,7 +137,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
         onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
       >
-        <div className="box-border flex w-full min-w-0 flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:px-4 max-[799px]:pt-0 max-[799px]:pb-0">
+        <div className="box-border flex w-full min-w-0 flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:gap-2.5 max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-0">
           <div className="mb-2 flex items-center gap-3">
             <ActionPopover
               open={wyborIkony}
@@ -160,10 +160,6 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
             >
               <IconPicker value={ikona} onPick={zmienIkone} />
             </ActionPopover>
-            {/* Telefon: sama ikona przy tytule; zmienia się ją w menu strony („Zmień ikonę”), więc z pagesStore */}
-            <span className="text-foreground min-[800px]:hidden">
-              <PageIcon icon={stronaWMenu.icon} size={28} />
-            </span>
             <input
               ref={tytulRef}
               type="text"
@@ -172,7 +168,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
               onBlur={zapiszTytul}
               placeholder="Bez tytułu"
               aria-label="Nazwa strony"
-              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-foreground outline-none max-[799px]:text-[28px]"
+              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-foreground outline-none"
             />
           </div>
 

@@ -16,6 +16,8 @@ import {
 
 import {
   ActionPopover,
+  Button,
+  FIELD,
   FormDialog,
   MENU_ITEM,
   MENU_ITEM_DANGER,
@@ -25,17 +27,21 @@ import { cn } from "@/lib/utils";
 import { duplicatePage } from "./actions";
 import { DeletePageDialog } from "./delete-page-dialog";
 import { IconPicker } from "./icon-picker";
+import { PageIcon } from "./page-icon";
 import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
 
 const POZYCJA = MENU_ITEM;
-const IKONA_POZYCJI = "w-[18px] font-mono text-muted-foreground";
+// Telefon (CMPageMenu): pozycja to .m-row 44 px bez ikon, z linią pod spodem
+const POZYCJA_ARKUSZA =
+  "m-row min-h-11 w-full cursor-pointer border-x-0 border-t-0 bg-transparent px-4 text-left font-[inherit] text-base text-foreground hover:bg-panel";
 // Skrót po prawej (.mi-sc)
 const SKROT = "ml-auto text-xs tracking-[0.06em] text-muted-foreground";
 
-// Menu strony (CPageMenu.dc.html, CSidebar.dc.html): na webie dymek 240 px, z `sheet` arkusz od dołu (telefon).
-// Web ma ikony lucide 16 px jak makieta; arkusz telefonu zostaje przy znakach (układ telefonu bez zmian w tym etapie).
+// Menu strony (CPageMenu.dc.html, CSidebar.dc.html): na webie dymek 240 px, z `sheet` arkusz od dołu (telefon,
+// CMPageMenu.dc.html: pozycje .m-row 44 px bez ikon).
+// Web ma ikony lucide 16 px jak makieta.
 // Na webie kolejność zmienia się przeciąganiem w sidebarze, więc „Przenieś wyżej / niżej” jest tylko w arkuszu.
 // `pages` to cała lista w kolejności (dla „Przenieś wyżej / niżej”), `store` — optymistyczne zmiany.
 export function PageMenu({
@@ -47,6 +53,7 @@ export function PageMenu({
   triggerClassName,
   triggerLabel,
   align = "start",
+  meta,
 }: {
   page: PageSummary;
   pages: PageSummary[];
@@ -58,11 +65,15 @@ export function PageMenu({
   triggerLabel?: string;
   // Wyrównanie dymku do przycisku: w sidebarze „start”, w nagłówku przy prawej krawędzi okna „end”
   align?: "start" | "end";
+  // Telefon: dopisek pod nazwą w nagłówku arkusza, np. „11 wierszy · 5 pól”
+  meta?: string;
 }) {
   const router = useRouter();
   const sciezka = usePathname();
   const [otwarte, setOtwarte] = React.useState(false);
-  const [widok, setWidok] = React.useState<"menu" | "ikony">("menu");
+  const [widok, setWidok] = React.useState<"menu" | "ikony" | "nazwa">("menu");
+  // Telefon: szkic nazwy w arkuszu „Zmień nazwę”
+  const [szkicNazwy, setSzkicNazwy] = React.useState("");
   const [usuwanie, setUsuwanie] = React.useState(false);
 
   const tytul = page.title.trim() === "" ? "Bez tytułu" : page.title;
@@ -102,17 +113,9 @@ export function PageMenu({
     router.push(`/strony/${wynik.id}`);
   }
 
-  // Ikony pozycji: web — lucide w kolorze muted-foreground, arkusz — dotychczasowe znaki
+  // Ikony pozycji: tylko web (lucide, muted-foreground); arkusz telefonu ma same napisy jak CMPageMenu
   const ikony = sheet
-    ? {
-        nazwa: <span aria-hidden="true" className={IKONA_POZYCJI}>✎</span>,
-        ikona: <span aria-hidden="true" className={IKONA_POZYCJI}>◇</span>,
-        dalej: <span aria-hidden="true" className="font-mono text-[11px] text-muted-foreground">›</span>,
-        duplikuj: <span aria-hidden="true" className={IKONA_POZYCJI}>⧉</span>,
-        usun: <span aria-hidden="true" className={`${IKONA_POZYCJI} text-destructive-foreground`}>✕</span>,
-        ulubione: <span aria-hidden="true" className={IKONA_POZYCJI}>★</span>,
-        wstecz: "←",
-      }
+    ? { nazwa: null, ikona: null, dalej: null, duplikuj: null, usun: null, ulubione: null, wstecz: "←" }
     : {
         nazwa: <Pencil size={16} aria-hidden="true" className="flex-none text-muted-foreground" />,
         ikona: <Smile size={16} aria-hidden="true" className="flex-none text-muted-foreground" />,
@@ -122,9 +125,38 @@ export function PageMenu({
         usun: <Trash2 size={16} aria-hidden="true" className="flex-none" />,
         wstecz: <ChevronLeft size={16} aria-hidden="true" />,
       };
+  const pozycja = sheet ? POZYCJA_ARKUSZA : POZYCJA;
 
   const zawartosc =
-    widok === "ikony" ? (
+    widok === "nazwa" ? (
+      // Telefon (CMPageMenu, „Zmień nazwę”): pole nazwy i „Anuluj · Zapisz”; zapis idzie przez magazyn stron
+      <div className="flex flex-col gap-3">
+        <h2 className="m-0 text-lg font-semibold">Zmień nazwę</h2>
+        <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+          Nazwa strony
+          <input
+            type="text"
+            value={szkicNazwy}
+            maxLength={200}
+            placeholder="Bez tytułu"
+            onChange={(e) => setSzkicNazwy(e.target.value)}
+            className={FIELD}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Button onClick={() => setWidok("menu")}>Anuluj</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              zmienOtwarcie(false);
+              if (szkicNazwy !== page.title) void store.rename(page.id, szkicNazwy);
+            }}
+          >
+            Zapisz
+          </Button>
+        </div>
+      </div>
+    ) : widok === "ikony" ? (
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           {/* .btng.ic.xs */}
@@ -148,44 +180,61 @@ export function PageMenu({
       </div>
     ) : (
       <div role="menu" aria-label={`Strona ${tytul}`}>
+        {/* Telefon: ikona strony i dopisek „N wierszy · M pól” pod tytułem arkusza */}
+        {sheet && (
+          <div className="flex items-center gap-2.5 px-4 pt-1 pb-2.5">
+            <span
+              aria-hidden="true"
+              className="grid size-9 flex-none place-items-center rounded-[10px] border border-border bg-white text-muted-foreground shadow-xs"
+            >
+              <PageIcon icon={page.icon} size={18} />
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">{meta ?? ""}</span>
+          </div>
+        )}
         <button
           type="button"
           role="menuitem"
-          className={POZYCJA}
+          className={pozycja}
           onClick={() => {
+            if (sheet) {
+              // Telefon: nazwę zmienia się w arkuszu (bez przenoszenia fokusu na tytuł strony)
+              setSzkicNazwy(page.title);
+              setWidok("nazwa");
+              return;
+            }
             zmienOtwarcie(false);
             onRename();
           }}
         >
           {ikony.nazwa}
           <span className="flex-1">Zmień nazwę</span>
-          <span className={sheet ? "font-mono text-[11px] text-muted-foreground" : SKROT}>F2</span>
+          {!sheet && <span className={SKROT}>F2</span>}
         </button>
         <button
           type="button"
           role="menuitem"
-          className={POZYCJA}
+          className={pozycja}
           onClick={() => setWidok("ikony")}
         >
           {ikony.ikona}
           <span className="flex-1">Zmień ikonę</span>
           {ikony.dalej}
         </button>
-        <button type="button" role="menuitem" className={POZYCJA} onClick={duplikuj}>
+        <button type="button" role="menuitem" className={pozycja} onClick={duplikuj}>
           {ikony.duplikuj}
           <span className="flex-1">Duplikuj</span>
         </button>
-        {/* Tylko arkusz (telefon); etykieta jak w makiecie, kierunek wybiera się strzałkami po prawej */}
+        {/* Tylko arkusz (telefon); makieta nie ma tej pozycji, ale telefon nie ma innego sposobu na zmianę kolejności */}
         {sheet && (
-          <div className={cn(POZYCJA, "cursor-default hover:bg-transparent")}>
-            <span aria-hidden="true" className={IKONA_POZYCJI}>⇅</span>
+          <div className="m-row min-h-11 px-4">
             <span className="flex-1">Przenieś wyżej / niżej</span>
             <button
               type="button"
               aria-label="Przenieś wyżej"
               disabled={indeks <= 0}
               onClick={() => przenies(-1)}
-              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40"
             >
               ↑
             </button>
@@ -194,7 +243,7 @@ export function PageMenu({
               aria-label="Przenieś niżej"
               disabled={indeks < 0 || indeks >= sekcja.length - 1}
               onClick={() => przenies(1)}
-              className="inline-flex size-6 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40 max-[799px]:size-11"
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded border border-input bg-white font-mono text-[11px] text-soft-foreground disabled:cursor-default disabled:opacity-40"
             >
               ↓
             </button>
@@ -203,7 +252,7 @@ export function PageMenu({
         <button
           type="button"
           role="menuitem"
-          className={POZYCJA}
+          className={pozycja}
           onClick={() => {
             zmienOtwarcie(false);
             void store.setFavorite(page.id, !page.favorite);
@@ -215,11 +264,11 @@ export function PageMenu({
             {page.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
           </span>
         </button>
-        <div className={MENU_SEPARATOR} />
+        {!sheet && <div className={MENU_SEPARATOR} />}
         <button
           type="button"
           role="menuitem"
-          className={cn(POZYCJA, MENU_ITEM_DANGER)}
+          className={cn(pozycja, sheet ? "text-destructive-foreground" : MENU_ITEM_DANGER)}
           onClick={() => {
             zmienOtwarcie(false);
             setUsuwanie(true);
@@ -243,7 +292,7 @@ export function PageMenu({
         "flex size-6 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent text-foreground outline-none hover:bg-accent focus-visible:shadow-focus aria-expanded:bg-accent"
       }
     >
-      {sheet ? <span aria-hidden="true">⋯</span> : <Ellipsis size={16} aria-hidden="true" />}
+      <Ellipsis size={sheet ? 20 : 16} aria-hidden="true" />
     </button>
   );
 

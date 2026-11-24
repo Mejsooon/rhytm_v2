@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
   addField: vi.fn(),
@@ -8,6 +8,7 @@ const actions = vi.hoisted(() => ({
   changeFieldType: vi.fn(),
   deleteField: vi.fn(),
   deleteRow: vi.fn(),
+  reorderFields: vi.fn(),
   restoreRow: vi.fn(),
   saveTableSettings: vi.fn(),
   updateField: vi.fn(),
@@ -451,9 +452,10 @@ describe("menu kolumny", () => {
     await user.click(screen.getByRole("button", { name: "Nowy" }));
     await user.type(screen.getByRole("textbox", { name: "Nazwa" }), "Nowy");
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
-    const menu = await otworzMenu(user, "Repo");
-    await user.click(within(menu).getByRole("menuitem", { name: /Typ: URL/ }));
-    await user.click(screen.getByRole("menuitem", { name: /Tekst/ }));
+    // Telefon: nagłówek otwiera arkusz „Kolumna”, a typ wybiera się chipem
+    await user.click(within(naglowek("Repo")).getByRole("button", { name: /Repo/ }));
+    const arkusz = await screen.findByRole("dialog", { name: "Kolumna" });
+    await user.click(within(arkusz).getByRole("button", { name: "Tekst" }));
     expect(toast.error).toHaveBeenCalledWith("Poczekaj, aż wiersze się zapiszą.");
     expect(actions.changeFieldType).not.toHaveBeenCalled();
     delete (window as { matchMedia?: unknown }).matchMedia;
@@ -622,5 +624,79 @@ describe("menu kolumny zablokowanej (moduł Hasła)", () => {
   it("kolumna Sekret ma plakietkę „szyfr.” w nagłówku", () => {
     menu({ id: "f-haslo", name: "Hasło", type: "secret", config: {}, position: 2, isTitle: false });
     expect(screen.getByRole("button", { name: /Hasło/, expanded: true })).toHaveTextContent("szyfr.");
+  });
+});
+
+describe("arkusz „Kolumna” (telefon, CMEditor)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const a of Object.values(actions)) a.mockResolvedValue({ ok: true });
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+  });
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  async function otworzArkusz(user: ReturnType<typeof userEvent.setup>, nazwa: string) {
+    await user.click(within(naglowek(nazwa)).getByRole("button", { name: new RegExp(nazwa) }));
+    return screen.findByRole("dialog", { name: "Kolumna" });
+  }
+
+  it("„Gotowe” zapisuje wpisaną nazwę bez blur", async () => {
+    const user = userEvent.setup();
+    const dane = stronaTestowa("books", "Books", BOOKS);
+    render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+    const arkusz = await otworzArkusz(user, "Autor");
+    const pole = within(arkusz).getByRole("textbox", { name: "Nazwa kolumny" });
+    await user.clear(pole);
+    await user.type(pole, "Pisarz");
+    await user.click(within(arkusz).getByRole("button", { name: "Gotowe" }));
+    const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
+    await waitFor(() => expect(actions.updateField).toHaveBeenCalledWith(autor.id, { name: "Pisarz" }));
+  });
+
+  it("nagłówek otwiera arkusz z nazwą, chipami typu bez Sekretu, przesuwaniem, usuwaniem i „Gotowe” zamiast dymku", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
+    const arkusz = await otworzArkusz(user, "Autor");
+    expect(screen.queryByRole("menu", { name: "Kolumna Autor" })).toBeNull();
+    expect(within(arkusz).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveValue("Autor");
+    for (const typ of ["Tekst", "Liczba", "Checkbox", "URL", "Select", "Status", "Data", "Ocena", "Kwota cykliczna", "Data odnowienia"]) {
+      expect(within(arkusz).getByRole("button", { name: typ })).toBeInTheDocument();
+    }
+    expect(within(arkusz).queryByRole("button", { name: "Sekret" })).toBeNull();
+    expect(within(arkusz).getByRole("button", { name: "Tekst" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(arkusz).getByRole("button", { name: "← W lewo" })).toBeInTheDocument();
+    expect(within(arkusz).getByRole("button", { name: "W prawo →" })).toBeInTheDocument();
+    expect(within(arkusz).getByRole("button", { name: "Usuń kolumnę" })).toBeInTheDocument();
+    await user.click(within(arkusz).getByRole("button", { name: "Gotowe" }));
+    expect(screen.queryByRole("dialog", { name: "Kolumna" })).toBeNull();
+  });
+
+  it("chip typu zmienia typ pola, „W prawo” przesuwa, „Usuń kolumnę” usuwa", async () => {
+    const user = userEvent.setup();
+    const dane = stronaTestowa("books", "Books", BOOKS);
+    render(<PageTable block={dane.blocks[0]} today={DZIS} />);
+    const autor = dane.blocks[0].fields.find((f) => f.name === "Autor")!;
+    let arkusz = await otworzArkusz(user, "Autor");
+    await user.click(within(arkusz).getByRole("button", { name: "URL" }));
+    await waitFor(() => expect(actions.changeFieldType).toHaveBeenCalled());
+    expect(screen.queryByRole("dialog", { name: "Kolumna" })).toBeNull();
+
+    arkusz = await otworzArkusz(user, "Autor");
+    await user.click(within(arkusz).getByRole("button", { name: "W prawo →" }));
+    await waitFor(() => expect(actions.reorderFields).toHaveBeenCalled());
+
+    arkusz = await otworzArkusz(user, "Autor");
+    await user.click(within(arkusz).getByRole("button", { name: "Usuń kolumnę" }));
+    await waitFor(() => expect(actions.deleteField).toHaveBeenCalledWith(autor.id));
+  });
+
+  it("kolumna tytułu: chipy typu i „Usuń kolumnę” wyłączone", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={stronaTestowa("books", "Books", BOOKS).blocks[0]} today={DZIS} />);
+    const arkusz = await otworzArkusz(user, "Tytuł");
+    expect(within(arkusz).getByRole("button", { name: "Liczba" })).toBeDisabled();
+    expect(within(arkusz).getByRole("button", { name: "Usuń kolumnę" })).toBeDisabled();
   });
 });

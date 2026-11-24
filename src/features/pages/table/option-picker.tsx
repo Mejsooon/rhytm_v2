@@ -207,7 +207,7 @@ export function OptionPicker({
               key={o.id}
               className="flex h-8 shrink-0 items-center justify-end"
             >
-              {/* „⋯” widoczne po najechaniu i przy fokusie (.optmenu) */}
+              {/* „⋯” widoczne po najechaniu i przy fokusie (.optmenu); na urządzeniach bez najeżdżania (dotyk) zawsze */}
               <Button
                 variant="ghost"
                 size="xs"
@@ -217,7 +217,7 @@ export function OptionPicker({
                   setNazwa(o.label);
                   setEdytowanaId(o.id);
                 }}
-                className={`pointer-events-auto hover:opacity-100 focus-visible:opacity-100 ${najechana === o.id ? "opacity-100" : "opacity-0"}`}
+                className={`pointer-events-auto hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 ${najechana === o.id ? "opacity-100" : "opacity-0"}`}
               >
                 <Ellipsis aria-hidden="true" className="size-3.5" />
               </Button>

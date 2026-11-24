@@ -404,7 +404,7 @@ export function PinnedCards({
               : undefined
           }
           onClick={onAdd}
-          className="flex min-h-[88px] flex-[0_0_140px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed disabled:cursor-not-allowed disabled:opacity-[.64] border-black/[.16] bg-transparent text-sm font-medium text-muted-foreground outline-none transition-colors hover:border-black/[.24] hover:bg-black/[.02] hover:text-foreground focus-visible:shadow-focus max-[799px]:w-full max-[799px]:flex-[1_1_100%]"
+          className="flex min-h-[88px] flex-[0_0_140px] cursor-pointer max-[799px]:min-h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed disabled:cursor-not-allowed disabled:opacity-[.64] border-black/[.16] bg-transparent text-sm font-medium text-muted-foreground outline-none transition-colors hover:border-black/[.24] hover:bg-black/[.02] hover:text-foreground focus-visible:shadow-focus max-[799px]:w-full max-[799px]:flex-[1_1_100%]"
         >
           <Plus aria-hidden="true" size={16} />
           Karta

@@ -37,6 +37,7 @@ export function FormDialog({
   titleClassName,
   descriptionClassName,
   footerClassName,
+  contentClassName,
 }: NaglowekTelefonu & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,6 +58,8 @@ export function FormDialog({
   titleClassName?: string;
   descriptionClassName?: string;
   footerClassName?: string;
+  // Dodatkowe klasy okna / arkusza (np. wysokość 90% arkusza wiersza na telefonie)
+  contentClassName?: string;
 }) {
   const akcje = phoneHeader === "actions";
   return (
@@ -65,7 +68,7 @@ export function FormDialog({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:backdrop-blur-none" />
         <Dialog.Content
           {...(description ? {} : { "aria-describedby": undefined })}
-          className={`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[88%] max-[799px]:rounded-t-2xl max-[799px]:rounded-b-none max-[799px]:border max-[799px]:border-b-0 max-[799px]:border-border max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`}
+          className={cn(`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[88%] max-[799px]:rounded-t-2xl max-[799px]:rounded-b-none max-[799px]:border max-[799px]:border-b-0 max-[799px]:border-border max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`, contentClassName)}
         >
           {/* Uchwyt arkusza — tylko na telefonie (m-grab z CM-BASE) */}
           <div

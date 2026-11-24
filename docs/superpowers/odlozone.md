@@ -187,3 +187,13 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Szczegóły ćwiczenia: tytuł nagłówka 18 px zamiast 16 px z makiety.
 - `ModuleHeader` z `phoneOnly` i `webOnly` naraz nie renderuje nic (dziś nikt tak nie woła).
 - e2e: teksty „Z masą ciała”, „Nowy szablon” są w obu układach — dziś bezpieczne (`display:none`), uważać przy nowych selektorach.
+
+## Telefon / strony (24.11, z przeglądu gałęzi)
+
+- Filtr: „Zapisz jako domyślny” stoi w sekcji Sortowanie, a zapisuje tylko filtr; etykieta „Filtruj” → „Filtr i sortowanie” przeskakuje po hydratacji (matchMedia).
+- Nowa strona (telefon): fokus nie trafia do arkusza.
+- `table-cell.tsx`: subskrypcja `matchMedia` w każdej komórce — wystarczy w komórce Wyboru.
+- Wybór w komórce: cykl nie wraca do pustej wartości (czyści arkusz wiersza).
+- `column-menu.tsx`: `aria-haspopup="menu"` także gdy otwiera arkusz; ikona typu 14 px zamiast 12; nierówne wcięcia.
+- Menu strony (arkusz): nagłówek i „Przenieś wyżej/niżej” wewnątrz `role="menu"`; dopisek „N wierszy · M pól” nie odświeża się po zmianach w tabeli.
+- `visual.spec.ts`: brak zrzutów arkuszy „Wstaw blok”, „Kolumna” i arkusza wiersza.

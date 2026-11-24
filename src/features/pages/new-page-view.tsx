@@ -10,13 +10,31 @@ import { cn } from "@/lib/utils";
 import { createPageFromTemplate } from "./actions";
 import { FIELD_TYPE_META } from "./fields";
 import { BLAD_ZAPISU } from "./messages";
+import { MNewPage } from "./mobile/m-new-page";
 import { PageIcon } from "./page-icon";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
 
 // Wybór szablonu nowej strony (S2NewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
 // po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
+// Telefon (poniżej 800 px) według mediów; po stronie serwera (i przy hydratacji) układ jest nieustalony (null),
+// więc przy twardym wejściu widać samo tło, a nie błysk niewłaściwego układu. W testach bez matchMedia: web
+function subskrybujTelefon(wywolaj: () => void) {
+  const mq = window.matchMedia("(max-width: 799px)");
+  mq.addEventListener?.("change", wywolaj);
+  return () => mq.removeEventListener?.("change", wywolaj);
+}
+function czyTelefon() {
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
+}
+
 export function NewPageView() {
   const router = useRouter();
+  // Telefon dostaje arkusz CMNewPage (MNewPage) ze wspólnym stanem i zapisem; web zostaje oknem 920 px
+  const telefon = React.useSyncExternalStore(
+    (wywolaj) => (typeof window.matchMedia === "function" ? subskrybujTelefon(wywolaj) : () => {}),
+    czyTelefon,
+    (): boolean | null => null,
+  );
   const [wybrany, setWybrany] = React.useState<TemplateKey>("empty");
   const [fraza, setFraza] = React.useState("");
   // Nazwa wpisana przez użytkownika; bez niej pole pokazuje nazwę szablonu
@@ -55,6 +73,24 @@ export function NewPageView() {
       return;
     }
     router.push(`/strony/${wynik.id}`);
+  }
+
+  if (telefon === null) {
+    return <div className="fixed inset-0 z-50 bg-black/[.32]" />;
+  }
+
+  if (telefon) {
+    return (
+      <MNewPage
+        selected={wybrany}
+        onSelect={setWybrany}
+        name={nazwa}
+        onNameChange={setNazwaWlasna}
+        busy={trwa}
+        onCreate={utworz}
+        onCancel={() => router.back()}
+      />
+    );
   }
 
   return (
