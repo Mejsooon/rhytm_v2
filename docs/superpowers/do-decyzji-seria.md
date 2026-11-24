@@ -31,3 +31,16 @@ Pełna tabela decyzji D1–D18 z kosztem pomyłki: `docs/superpowers/specs/2026-
 ## Sprzątanie uwag webu
 
 ## Etap 3: telefon
+
+## Ustawienia i sejf — web (24.11, na prośbę Mejsona)
+Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniejsze:
+| # | Decyzja | Koszt pomyłki |
+|---|---|---|
+| 1 | Zamknięty sejf bez tytułu „Hasła”; okruszki i tabela pod rozmyciem, okno odblokowania na środku (bez `aria-modal`). | Niski. |
+| 2 | Usunięcie konta: oznaczenie + 30 dni, ekran „Przywróć konto” po zalogowaniu, purge przez pg_cron 03:41 UTC; zdjęcie profilowe kasowane od razu. | Średni: po 30 dniach dane nie do odzyskania. |
+| 3 | Przypomnienia ujednolicone do makiety: 5 min przed blokiem, dzień przed odnowieniem o 9:00 — migracja nadpisuje też wybrane wcześniej 10/15/30 min i 3 dni. | Niski. |
+| 4 | `secure_password_change` (zmiana hasła z kodem OTP) wyłączone; obecne hasło sprawdza funkcja w bazie z limitem 5 prób / 15 min. | Wysoki przy skradzionej sesji: można zmienić hasło przez API bez obecnego. |
+| 5 | Brak kluczy VAPID nie wyszarza rodzajów i przypomnień (zapis ustawień działa). | Niski. |
+| 6 | Klucze urządzeń push nie trafiają do eksportu JSON. | Niski. |
+| 7 | Konto Google z hasłem ustawionym linkiem może zmienić e-mail. | Niski. |
+| 8 | Migracje idą po wdrożeniu kodu (kod działa na starej bazie). | Niski. |
