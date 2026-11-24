@@ -175,3 +175,8 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Eksport JSON budowany w pamięci, bez limitu wywołań.
 - Przypomnienie oznaczone przez `claim` przepada bez ponowienia, gdy trasa Vercel zwróci błąd.
 - IP sesji to IP serwera (bez `X-Forwarded-For`), nieużywane w UI.
+
+## Niestabilne e2e (24.11, pakiet kalendarz)
+
+- `[web] e2e/sport.spec.ts:20` — kliknięcie podglądu biegu w tygodniu kalendarza czasem nie przechodzi na /sport (było już na feat/ustawienia-web i feat/telefon-fundament); przyczyna niezbadana, przechodzi przy powtórce.
+- `[web] e2e/settings.spec.ts:205` — opis karty „Usuń konto” raz znaleziony podwójnie (ukryty fragment, prawdopodobnie strumieniowanie Suspense); przechodzi przy powtórce.

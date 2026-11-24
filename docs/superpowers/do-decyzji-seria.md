@@ -53,3 +53,15 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | 6 | Klucze urządzeń push nie trafiają do eksportu JSON. | Niski. |
 | 7 | Konto Google z hasłem ustawionym linkiem może zmienić e-mail. | Niski. |
 | 8 | Migracje idą po wdrożeniu kodu (kod działa na starej bazie). | Niski. |
+
+### Pakiet kalendarz
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| Dzień na telefonie bez strzałek poprzedni/następny; inny tydzień przez Tydzień/Miesiąc | makieta CMCalendarDay ich nie ma | niski: dłuższa droga do innego tygodnia |
+| Tydzień na telefonie zachowuje strzałki poprzedni/następny; „Kategorie” tylko w dniu | bez strzałek nie ma nawigacji między tygodniami; makiety tygodnia/miesiąca nie mają „Kategorii” | niski |
+| Przy usuwaniu serii napis „Usunięte wystąpienia znikną razem z zadaniami.” (makiety poprawione) | zadania kasują się z blokiem — stare zdanie było nieprawdziwe | niski |
+| „Powtarzaj do” jako wybór daty (z „Wyczyść”) zamiast chipa | chip nie ma skąd wziąć daty | niski |
+| Pasek dnia „Zaplanowane · wolne (8–20) · zadania” liczy też treningi Sportu | treningi zajmują czas dnia | niski |
+| W Dziś arkusz edycji bloku też ma „Usuń blok” | Dziś używa tego samego arkusza | niski |
+| W szczegółach bloku na telefonie bez paska postępu i bez usuwania zadań (usuwanie w edycji) | makieta CMBlockDetail | niski |
