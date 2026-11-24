@@ -32,6 +32,15 @@ Pełna tabela decyzji D1–D18 z kosztem pomyłki: `docs/superpowers/specs/2026-
 
 ## Etap 3: telefon
 
+### Pakiet fundament
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T1–T6 ze specu telefonu (wspólne drzewo web/telefon, CM-BASE jako `@utility`, bez paska statusu, 5 zakładek bez Haseł, Szybkie dodawanie bez zadania, jedno okno usuwania) | spec `specs/2026-11-24-telefon-design.md` | niski–średni, opisane w specu |
+| Tło za arkuszem na telefonie bez rozmycia (makieta ma blur) | odłożona uwaga z Etapu 1: wydajność na telefonie | niski: jedna klasa |
+| Okno „Usunąć nawyk?” na webie przeszło na wspólne `ConfirmDialog` (400 px zamiast 460, bez ✕) | jedno okno usuwania w całej aplikacji (plan, T6) | niski: drobna zmiana wyglądu webu |
+| Przyciski okna usuwania na telefonie obok siebie (Anuluj · Usuń, 44 px) | makieta CMDeleteBlock wygrywa z planem (kolumna 48 px) | niski |
+
 ## Ustawienia i sejf — web (24.11, na prośbę Mejsona)
 Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniejsze:
 | # | Decyzja | Koszt pomyłki |
