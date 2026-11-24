@@ -79,8 +79,12 @@ export const REMINDERS: { key: ReminderKey; title: string; when: string }[] = [
     title: "Odnowienie subskrypcji",
     when: "Dzień wcześniej, o 9:00",
   },
-  { key: "weekly", title: "Podsumowanie tygodnia", when: "Niedziela, 18:00" },
-  { key: "habits", title: "Nawyki na dziś", when: "Codziennie, 21:00" },
+  // „weekly” zostaje w szkicu i w zapisie, ale bez wiersza: wysyłka podsumowania tygodnia nie istnieje (decyzja C15)
+  {
+    key: "habits",
+    title: "Nawyki",
+    when: "O godzinie ustawionej przy nawyku",
+  },
 ];
 
 export const CATEGORY_COLORS = {
@@ -215,9 +219,7 @@ export function buildSummary(
     .map((c) => c.name)
     .join(", ");
   const strony = effectivePages(draft).join(", ") || "brak";
-  const wlaczone = (["before", "renew", "weekly", "habits"] as const).filter(
-    (k) => draft.notify[k],
-  ).length;
+  const wlaczone = REMINDERS.filter((r) => draft.notify[r.key]).length;
 
   let profil: string;
   let przypomnienia: string;
@@ -228,7 +230,7 @@ export function buildSummary(
     const tydzien = draft.weekStart === "mon" ? "pn" : "nd";
     profil = `${nazwa} · ${tzCity} · tydzień od ${tydzien}`;
     przypomnienia =
-      `${wlaczone} z 4 włączone` +
+      `${wlaczone} z ${REMINDERS.length} włączone` +
       (draft.notify.perm ? "" : " · bez zgody na push");
   }
 

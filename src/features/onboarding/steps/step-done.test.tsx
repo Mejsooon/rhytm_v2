@@ -47,14 +47,14 @@ describe("StepDone", () => {
     const web = within(screen.getByTestId("done-web"));
     expect(web.getByText("Mejson · Europe/Warsaw")).toBeInTheDocument();
     expect(web.getByText("Projects")).toBeInTheDocument();
-    expect(web.getByText("3 włączone")).toBeInTheDocument();
+    expect(web.getByText("2 włączone")).toBeInTheDocument();
     expect(web.getByText("Ctrl")).toBeInTheDocument();
     const phone = within(screen.getByTestId("done-phone"));
     expect(
       phone.getByText("Mejson · Warszawa · tydzień od pn"),
     ).toBeInTheDocument();
     expect(
-      phone.getByText("3 z 4 włączone · bez zgody na push"),
+      phone.getByText("2 z 3 włączone · bez zgody na push"),
     ).toBeInTheDocument();
     expect(
       phone.getByText(/Pierwszy blok dodasz przyciskiem/),
