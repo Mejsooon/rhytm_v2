@@ -45,9 +45,9 @@ values ('a2000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-0000000
   '{"a2000000-0000-0000-0000-0000000000f1":"GitHub","a2000000-0000-0000-0000-0000000000f2":{"v":1,"g":1,"iv":"i1","ct":"c1"}}');
 select set_config('rhytm.system_write', 'off', true);
 
--- E: wiersz w tabeli z obcym kluczem bez kaskady blokuje usunięcie konta E
-create temp table blokada_usuwania (user_id uuid not null references auth.users (id));
-insert into blokada_usuwania (user_id) values ('00000000-0000-0000-0000-0000000000e2');
+-- E: wiersz w tabeli z obcym kluczem bez kaskady blokuje usunięcie konta E (zwykła tabela: FK z tabeli tymczasowej do auth.users jest niedozwolony; test i tak kończy się rollbackiem)
+create table public.blokada_usuwania (user_id uuid not null references auth.users (id));
+insert into public.blokada_usuwania (user_id) values ('00000000-0000-0000-0000-0000000000e2');
 
 -- Schemat, uprawnienia, cron
 select has_column('public', 'profiles', 'deletion_requested_at', 'profiles ma deletion_requested_at');
