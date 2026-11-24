@@ -59,6 +59,26 @@ const SPOSOBY: Partial<
       desc: "najbliższy przyszły termin w kolumnie",
     },
   ],
+  // Kwota cykliczna i Data odnowienia (spec Subscriptions, punkt 3)
+  recurring: [
+    {
+      key: "sum_month",
+      label: "Suma na miesiąc",
+      desc: "np. „Σ miesięcznie: 437,94 zł”",
+    },
+    {
+      key: "sum_year",
+      label: "Suma na rok",
+      desc: "np. „Σ rocznie: 5 255,28 zł”",
+    },
+  ],
+  renewal: [
+    {
+      key: "next_renewal",
+      label: "Najbliższe odnowienie",
+      desc: "najbliższa przyszła data wg cyklu",
+    },
+  ],
   text: [
     {
       key: "count_distinct",
@@ -175,6 +195,10 @@ export function CardDialog({
     else if (sposob === "nearest_date")
       napisDomyslny = `Najbliższa: ${pole.name.toLowerCase()}`;
     else if (sposob === "count_distinct") napisDomyslny = pole.name;
+    // Napisy kart szablonu Subscriptions (S2Main)
+    else if (sposob === "sum_month") napisDomyslny = "Σ miesięcznie";
+    else if (sposob === "sum_year") napisDomyslny = "Σ rocznie";
+    else if (sposob === "next_renewal") napisDomyslny = "Najbliższe odnowienie";
     else napisDomyslny = nazwaOpcji;
   }
 

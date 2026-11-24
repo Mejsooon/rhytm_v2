@@ -158,3 +158,63 @@ describe("MRowSheet: Sekret", () => {
     expect(fireEvent.copy(pole)).toBe(true);
   });
 });
+
+// Subscriptions na telefonie (minimum do Etapu 3): kwota z segmentem cyklu i data z dopiskiem następnego odnowienia
+describe("MRowSheet: Subscriptions", () => {
+  const SUB: PageField[] = [
+    { id: "k", name: "Kwota cykliczna", type: "recurring", config: { default_cycle: "month" }, position: 0, isTitle: false },
+    { id: "o", name: "Data odnowienia", type: "renewal", config: { cycle_field_id: "k" }, position: 1, isTitle: false },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stan("zablokowany");
+  });
+
+  function arkuszSub(values: Record<string, unknown>, fields: PageField[] = SUB, allFields?: PageField[]) {
+    const onChange = vi.fn();
+    render(
+      <MRowSheet
+        open
+        title="Netflix"
+        fields={fields}
+        allFields={allFields}
+        values={values}
+        today="2026-11-15"
+        onChange={onChange}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    return { onChange };
+  }
+
+  it("kwota: pole liczby zapisuje {amount, cycle}, segment „mies. | rok” zmienia cykl", async () => {
+    const user = userEvent.setup();
+    const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" } });
+    const pole = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+    expect(pole).toHaveValue("43,00");
+    expect(pole).toHaveAttribute("inputmode", "decimal");
+    await user.clear(pole);
+    expect(onChange).toHaveBeenLastCalledWith("k", null);
+    await user.type(pole, "29,99");
+    expect(onChange).toHaveBeenLastCalledWith("k", { amount: 29.99, cycle: "month" });
+    const segment = screen.getByRole("radiogroup", { name: "Kwota cykliczna: cykl" });
+    expect(screen.getByRole("radio", { name: "mies." })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("radio", { name: "rok" }));
+    expect(segment).toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith("k", { amount: 43, cycle: "year" });
+  });
+
+  it("data odnowienia: kotwica w polu daty i dopisek „następne: 21.11.2026”", () => {
+    arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
+    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("21.10.2026");
+    expect(screen.getByText("następne: 21.11.2026")).toBeInTheDocument();
+  });
+
+  it("cykl bierze się z ukrytej kolumny kwoty (allFields)", () => {
+    arkuszSub({ k: { amount: 249.99, cycle: "year" }, o: "2025-12-03" }, [SUB[1]], SUB);
+    expect(screen.getByText("następne: 03.12.2026")).toBeInTheDocument();
+  });
+});
+

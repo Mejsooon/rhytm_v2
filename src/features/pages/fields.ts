@@ -183,9 +183,13 @@ export function isRecurringValue(raw: unknown): raw is RecurringValue {
 
 // „5 255,28”: 2 miejsca, przecinek, tysiące oddzielone twardą spacją, bez „zł”
 export function formatMoney(n: number): string {
+  // NaN i nieskończoność nie są kwotą: pokazujemy zero zamiast „NaN,undefined”
+  if (!Number.isFinite(n)) return "0,00";
   const [calkowite, ulamek] = Math.abs(n).toFixed(2).split(".");
   const grupy = calkowite.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
-  return `${n < 0 ? "-" : ""}${grupy},${ulamek}`;
+  // Minus tylko wtedy, gdy po zaokrągleniu do grosza zostaje coś poza zerem (bez „-0,00”)
+  const ujemna = n < 0 && (calkowite !== "0" || ulamek !== "00");
+  return `${ujemna ? "-" : ""}${grupy},${ulamek}`;
 }
 
 // Kwota na miesiąc / na rok (bez zaokrąglania; do grosza dopiero przy wyświetlaniu)

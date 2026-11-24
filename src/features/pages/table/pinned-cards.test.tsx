@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,6 +10,7 @@ vi.mock("sonner", () => ({ toast }));
 import type { PageField } from "../fields";
 import type { PinnedCard } from "../table-model";
 import { PinnedCards } from "./pinned-cards";
+import { stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
 const POLA: PageField[] = [
   {
@@ -289,3 +290,57 @@ describe("PinnedCards: szerokość, menu i kolejność", () => {
     );
   });
 });
+
+// Subscriptions (S2Main): trzy karty szablonu na danych z test-page
+describe("PinnedCards: Subscriptions", () => {
+  const SUB = stronaTestowa("subscriptions", "Subscriptions", SUBSKRYPCJE).blocks[0];
+  const karty = (SUB.content as { settings: { pinned_cards: PinnedCard[] } }).settings.pinned_cards;
+
+  function pokazSub(rows = SUB.rows) {
+    render(
+      <PinnedCards
+        cards={karty}
+        fields={SUB.fields}
+        rows={rows}
+        today="2026-11-15"
+        onChange={vi.fn()}
+        onAdd={vi.fn()}
+        onEdit={vi.fn()}
+      />,
+    );
+    return screen.getAllByTestId("karta");
+  }
+
+  it("karty Σ: liczba 26 px i szare „zł” 14 px; nieaktywny wiersz się nie liczy", () => {
+    const [miesiac, rok] = pokazSub();
+    expect(miesiac).toHaveTextContent("Σ miesięcznie");
+    expect(miesiac).toHaveTextContent("63,83 zł");
+    expect(rok).toHaveTextContent("765,99 zł");
+    const liczba = miesiac.querySelector(".text-\\[26px\\]") as HTMLElement;
+    expect(liczba).toHaveTextContent("63,83 zł");
+    const zl = Array.from(liczba.querySelectorAll("span")).find((s) => s.textContent === "zł");
+    expect(zl).toHaveClass("text-sm", "font-normal", "text-muted-foreground");
+  });
+
+  it("„Najbliższe odnowienie”: nazwa 18 px jako link do tygodnia w kalendarzu i pomarańczowa plakietka", () => {
+    const [, , odnowienie] = pokazSub();
+    const link = screen.getByRole("link", { name: "Netflix" });
+    expect(link).toHaveAttribute("href", "/kalendarz?widok=tydzien&data=2026-11-21");
+    expect(link).toHaveClass("text-inherit", "no-underline");
+    expect(link.parentElement).toHaveClass("text-lg");
+    const plakietka = screen.getByText("za 6 dni");
+    expect(plakietka).toHaveClass("bg-warning-soft", "h-[22px]");
+    expect(odnowienie).toContainElement(link);
+  });
+
+  it("odnowienie dalej niż 10 dni ma szarą plakietkę; bez aktywnych wierszy „Brak odnowień” bez linku", () => {
+    // Tylko Strava (następne 03.12.2026, za 18 dni)
+    pokazSub([SUB.rows[0]]);
+    expect(screen.getByText("za 18 dni")).toHaveClass("bg-muted");
+    cleanup();
+    pokazSub([SUB.rows[2]]);
+    expect(screen.getByText("Brak odnowień")).toBeTruthy();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+});
+

@@ -28,7 +28,7 @@ import { PALETA } from "../fields";
 import type { LoadedBlock } from "../load-page";
 import { buildTemplateBlocks, type TemplateKey } from "../templates";
 import { PageTable } from "./page-table";
-import { stronaTestowa } from "./test-page";
+import { stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
 const TODAY = "2026-11-15";
 
@@ -1421,4 +1421,66 @@ describe("PageTable", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
+
+  // Subscriptions (S2Main.dc.html): dane z test-page (Disney+ nieaktywny), dziś 15.11.2026
+  describe("Subscriptions", () => {
+    function stopka() {
+      return screen.getAllByRole("row").at(-1) as HTMLElement;
+    }
+
+    it("stopka: „Σ 63,83 zł / mies.” pomija nieaktywny wiersz, pogrubiona, ciemna i do prawej", () => {
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      const suma = within(stopka()).getByText("Σ 63,83 zł / mies.");
+      expect(suma).toHaveClass("font-semibold", "text-foreground", "text-right");
+      expect(suma).not.toHaveClass("text-muted-foreground");
+      expect(within(stopka()).getByText("2 w kalendarzu")).toHaveClass("text-muted-foreground");
+    });
+
+    it("nagłówek Kwoty cyklicznej wyrównany do prawej", () => {
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      expect(naglowek("Kwota cykliczna")).toHaveClass("text-right");
+      expect(naglowek("Data odnowienia")).toHaveClass("text-left");
+    });
+
+    it("sort „Odnowienie” idzie po następnym odnowieniu (od dziś), nie po kotwicy", () => {
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      // Netflix 21.11, Disney+ 24.11, Strava 03.12.2026 (kotwica Stravy 03.12.2025 jest najwcześniejsza)
+      expect(tytuly()).toEqual(["Netflix", "Disney+", "Strava"]);
+      expect(screen.getByText("Sort: Data odnowienia")).toBeInTheDocument();
+    });
+
+    it("wiersz z odznaczoną „Aktywna” ma przezroczystość .55 i „anulowana”", () => {
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      const disney = wiersz("Disney+");
+      expect(disney).toHaveStyle({ opacity: "0.55" });
+      expect(within(disney).getByText("anulowana")).toBeInTheDocument();
+      expect(wiersz("Netflix").style.opacity).toBe("");
+      expect(within(wiersz("Netflix")).getByText("za 6 dni")).toHaveClass("bg-warning-soft");
+    });
+
+    it("odznaczenie „Aktywna” i zmiana cyklu przeliczają stopkę i karty", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      expect(screen.getByText("63,83")).toBeInTheDocument();
+      await user.click(within(wiersz("Netflix")).getByRole("checkbox", { name: "Aktywna" }));
+      // Został sam Strava: 249,99 / 12
+      expect(within(stopka()).getByText("Σ 20,83 zł / mies.")).toBeInTheDocument();
+      expect(wiersz("Netflix")).toHaveStyle({ opacity: "0.55" });
+      await user.click(within(wiersz("Strava")).getByRole("button", { name: "Cykl: rok (kliknij, aby zmienić)" }));
+      expect(within(stopka()).getByText("Σ 249,99 zł / mies.")).toBeInTheDocument();
+      expect(within(wiersz("Strava")).getByRole("button", { name: "Cykl: mies. (kliknij, aby zmienić)" })).toBeInTheDocument();
+    });
+
+    it("karty: Σ 63,83 zł, Σ 765,99 zł i link najbliższego odnowienia do tygodnia w kalendarzu", () => {
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      const karty = screen.getAllByTestId("karta");
+      expect(karty[0]).toHaveTextContent("63,83 zł");
+      expect(karty[1]).toHaveTextContent("765,99 zł");
+      expect(within(karty[2]).getByRole("link", { name: "Netflix" })).toHaveAttribute(
+        "href",
+        "/kalendarz?widok=tydzien&data=2026-11-21",
+      );
+    });
+  });
 });
+

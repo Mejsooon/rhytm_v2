@@ -5,6 +5,14 @@ import { buildTemplateBlocks, type TemplateKey } from "../templates";
 
 export const DZIS = "2026-11-15";
 
+// Subscriptions (S2Main.dc.html, wycinek BASE; te same dane co w table-model.test): przy DZIS sumy aktywnych
+// to 63,83 zł / mies. i 765,99 zł / rok (Disney+ nieaktywny), najbliższe odnowienie Netflix 21.11.2026 („za 6 dni”)
+export const SUBSKRYPCJE: Record<string, unknown>[] = [
+  { Nazwa: "Strava", "Kwota cykliczna": { amount: 249.99, cycle: "year" }, "Data odnowienia": "2025-12-03", Kategoria: "Sport", Aktywna: true },
+  { Nazwa: "Netflix", "Kwota cykliczna": { amount: 43, cycle: "month" }, "Data odnowienia": "2026-10-21", Kategoria: "Rozrywka", Aktywna: true },
+  { Nazwa: "Disney+", "Kwota cykliczna": { amount: 37.99, cycle: "month" }, "Data odnowienia": "2026-11-24", Kategoria: "Rozrywka", Aktywna: false },
+];
+
 // Strona z szablonu z wierszami podanymi po nazwach pól i etykietach opcji
 export function stronaTestowa(
   key: TemplateKey,

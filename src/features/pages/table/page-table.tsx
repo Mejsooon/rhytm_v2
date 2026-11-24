@@ -23,6 +23,7 @@ import {
   MIN_SZEROKOSC_KOLUMNY,
   SZEROKOSC_TYTULU,
   planTypeChange,
+  rowActive,
   type FieldType,
   type PageField,
 } from "../fields";
@@ -192,7 +193,7 @@ export function PageTable({
   const ukryte = new Set(settings.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
-  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters).filter(
+  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters, today).filter(
     (r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields),
   );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
@@ -571,7 +572,7 @@ export function PageTable({
                   <th
                     key={f.id}
                     scope="col"
-                    className={`group/kol relative ${NAGLOWEK} ${f.type === "number" ? "text-right" : "text-left"}`}
+                    className={`group/kol relative ${NAGLOWEK} ${f.type === "number" || f.type === "recurring" ? "text-right" : "text-left"}`}
                   >
                     <ColumnMenu
                       field={f}
@@ -616,7 +617,14 @@ export function PageTable({
                       }}
                       onToggleCalendar={() =>
                         void store.patchField(f, {
-                          config: { ...f.config, show_in_calendar: f.config.show_in_calendar !== true },
+                          // Data odnowienia jest w kalendarzu domyślnie (brak klucza = włączone), zwykła data nie
+                          config: {
+                            ...f.config,
+                            show_in_calendar:
+                              f.type === "renewal"
+                                ? f.config.show_in_calendar === false
+                                : f.config.show_in_calendar !== true,
+                          },
                         })
                       }
                       onHide={() =>
@@ -721,6 +729,17 @@ export function PageTable({
             {widoczneWiersze.map((r) => (
               <tr
                 key={r.id}
+                // Wiersz nieaktywny (odznaczona „Aktywna” wskazana przez Datę odnowienia) jest przygaszony (S2Main)
+                style={
+                  fields.some(
+                    (f) =>
+                      f.type === "renewal" &&
+                      f.config.active_field_id !== undefined &&
+                      !rowActive(f, fields, r.values),
+                  )
+                    ? { opacity: 0.55 }
+                    : undefined
+                }
                 // Telefon: dotknięcie wiersza otwiera arkusz zamiast zmieniać komórkę (sprawdzamy w chwili dotknięcia)
                 onClickCapture={(e) => {
                   // Moduł przy zamkniętym sejfie: arkusz się nie otwiera
@@ -757,6 +776,7 @@ export function PageTable({
                     key={f.id}
                     row={r}
                     field={f}
+                    fields={fields}
                     today={today}
                     done={zrobione}
                     autoFocus={f.isTitle && r.id === nowyId}
@@ -845,6 +865,7 @@ export function PageTable({
                   <SummaryCell
                     key={f.id}
                     field={f}
+                    fields={fields}
                     rows={widoczneWiersze}
                     summary={settings.column_summaries[f.id]}
                     today={today}
@@ -888,6 +909,7 @@ export function PageTable({
         open={editing !== null && wArkuszu}
         title={tytulArkusza}
         fields={widocznePola}
+        allFields={fields}
         values={editing?.values ?? {}}
         today={today}
         onChange={store.setEditValue}

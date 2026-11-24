@@ -376,6 +376,20 @@ describe("formatMoney", () => {
     expect(formatMoney(43)).toBe("43,00");
     expect(formatMoney(1234567.891)).toBe(`1${NBSP}234${NBSP}567,89`);
   });
+
+  it("NaN i nieskończoność dają 0,00", () => {
+    expect(formatMoney(Number.NaN)).toBe("0,00");
+    expect(formatMoney(Number.POSITIVE_INFINITY)).toBe("0,00");
+    expect(formatMoney(Number.NEGATIVE_INFINITY)).toBe("0,00");
+  });
+
+  it("bez „-0,00”: znak tylko, gdy zaokrąglona kwota nie jest zerem", () => {
+    expect(formatMoney(-0)).toBe("0,00");
+    expect(formatMoney(-0.001)).toBe("0,00");
+    expect(formatMoney(-0.004)).toBe("0,00");
+    expect(formatMoney(-0.005)).toBe("-0,01");
+    expect(formatMoney(-1234.5)).toBe(`-1${NBSP}234,50`);
+  });
 });
 
 describe("addCycle", () => {
