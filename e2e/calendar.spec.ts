@@ -327,9 +327,10 @@ test.describe("kalendarz (web)", () => {
     await expect(blok(page, "Matematyka")).toBeVisible();
     await expect(page.getByText("styczeń 2027", { exact: true })).toBeVisible();
     await expect(page.getByText("Dzień w liczbach")).toBeVisible();
-    await expect(page.getByText("Zaplanowane").locator("..")).toContainText(
-      "1 h",
-    );
+    // exact: pasek dnia telefonu („Zaplanowane 1 h · wolne …”) też jest w DOM, ukryty na webie
+    await expect(
+      page.getByText("Zaplanowane", { exact: true }).locator(".."),
+    ).toContainText("1 h");
 
     // Mini kalendarz przenosi na inny dzień
     await page.getByRole("button", { name: "13 stycznia" }).click();
