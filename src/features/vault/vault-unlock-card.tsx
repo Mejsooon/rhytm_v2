@@ -7,7 +7,7 @@ import { Button } from "@/components/controls";
 import { VaultResetDialog } from "./vault-reset-dialog";
 import { useVault } from "./vault-provider";
 
-// Karta „Odblokuj sejf” (S2Vault.dc.html): hasło główne, „Odblokuj”, podpowiedź i link do resetu.
+// Okno „Odblokuj sejf” (S2Vault.dc.html; pozycję i szerokość nadaje rodzic): hasło główne, „Odblokuj”, podpowiedź i link do resetu.
 // Hasło żyje tylko w stanie pola i jest czyszczone zaraz po wysłaniu.
 export function VaultUnlockCard() {
   const { unlock } = useVault();
@@ -18,9 +18,11 @@ export function VaultUnlockCard() {
   const id = React.useId();
 
   return (
-    <section
+    <div
+      role="dialog"
+      aria-modal="true"
       aria-labelledby={`${id}-t`}
-      className="mx-auto w-full max-w-[400px] rounded-xl border border-border bg-white bg-clip-padding text-sm shadow-pop"
+      className="w-full rounded-xl border border-border bg-white bg-clip-padding text-sm shadow-pop"
     >
       <form
         className="flex flex-col gap-4 px-6 pt-6 pb-5"
@@ -43,15 +45,28 @@ export function VaultUnlockCard() {
         }}
       >
         {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
-        <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
+        <input
+          type="text"
+          autoComplete="username"
+          value="Sejf rhytm (hasło główne)"
+          readOnly
+          hidden
+          aria-hidden="true"
+          tabIndex={-1}
+        />
         <span className="grid size-10 place-items-center rounded-lg border border-border bg-panel shadow-xs">
           <Lock aria-hidden="true" className="size-[18px]" />
         </span>
         <div>
-          <h2 id={`${id}-t`} className="m-0 text-lg leading-[1.3] font-semibold">
+          <h2
+            id={`${id}-t`}
+            className="m-0 text-lg leading-[1.3] font-semibold"
+          >
             Odblokuj sejf
           </h2>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">Hasło główne sejfu, nie hasło do konta.</p>
+          <p className="m-0 mt-1 text-sm text-muted-foreground">
+            Hasło główne sejfu, nie hasło do konta.
+          </p>
         </div>
         <div className="flex flex-col gap-1.5 text-[13px] font-medium">
           <label htmlFor={`${id}-haslo`}>Hasło główne</label>
@@ -61,6 +76,7 @@ export function VaultUnlockCard() {
             <input
               id={`${id}-haslo`}
               type="password"
+              autoFocus
               autoComplete="current-password"
               value={haslo}
               onChange={(e) => {
@@ -73,12 +89,20 @@ export function VaultUnlockCard() {
             />
           </div>
           {blad && (
-            <p id={`${id}-blad`} className="m-0 text-xs font-normal text-destructive-foreground">
+            <p
+              id={`${id}-blad`}
+              className="m-0 text-xs font-normal text-destructive-foreground"
+            >
               {blad}
             </p>
           )}
         </div>
-        <Button variant="primary" type="submit" disabled={trwa} className="w-full">
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={trwa}
+          className="w-full"
+        >
           Odblokuj
         </Button>
         <p className="m-0 text-xs leading-normal text-muted-foreground">
@@ -96,6 +120,6 @@ export function VaultUnlockCard() {
         </Button>
       </div>
       <VaultResetDialog open={reset} onOpenChange={setReset} />
-    </section>
+    </div>
   );
 }

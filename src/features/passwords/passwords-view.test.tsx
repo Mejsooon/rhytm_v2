@@ -120,18 +120,47 @@ describe("PasswordsView", () => {
     expect(vault.lock).toHaveBeenCalledTimes(1);
   });
 
-  it("zablokowany: sama karta „Odblokuj sejf”, bez tabeli, paska, „Zablokuj teraz” i banera", () => {
+  it("zablokowany: tabela tylko do odczytu pod rozmyciem, okno „Odblokuj sejf”, bez tytułu „Hasła” i „Zablokuj teraz”", () => {
     vault.state = { status: "zablokowany", remainingMs: 0 };
-    pokaz();
-    expect(screen.getByRole("heading", { name: "Odblokuj sejf" })).toBeInTheDocument();
+    const { container } = pokaz();
+    const okno = screen.getByRole("dialog", { name: "Odblokuj sejf" });
+    expect(okno).toHaveAttribute("aria-modal", "true");
     expect(screen.getByText("Blokada po 5 min bezczynności.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })).toBeInTheDocument();
-    // Tabela zostaje zamontowana (stan po odblokowaniu), ale jest ukryta razem z paskiem
-    expect(screen.getByTestId("tabela")).not.toBeVisible();
-    expect(screen.queryByRole("textbox", { name: "Szukaj" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Kategorie" })).not.toBeInTheDocument();
+    // Tabela widoczna (atrapa), nie ukryta; w treści pod nakładką, która jest inert i aria-hidden
+    const tabelaEl = screen.getByTestId("tabela");
+    expect(tabelaEl).toBeVisible();
+    const tresc = tabelaEl.closest("[inert]");
+    expect(tresc).not.toBeNull();
+    expect(tresc).toHaveAttribute("aria-hidden", "true");
+    expect(okno.closest("[inert]")).toBeNull();
+    // Nakładka z rozmyciem
+    const nakladka = container.querySelector(".backdrop-blur-\\[3px\\]");
+    expect(nakladka).not.toBeNull();
+    expect(nakladka).toHaveAttribute("aria-hidden", "true");
+    // Brak wiersza tytułu z ikoną; okruszki i plakietki zostają (pod rozmyciem)
+    expect(screen.queryByText("Hasła", { selector: "p" })).not.toBeInTheDocument();
+    expect(screen.getByText("Szyfrowane")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Zablokuj teraz" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sejf odblokowany")).not.toBeInTheDocument();
+  });
+
+  it("zablokowany → odblokowany: nakładka i okno znikają, tytuł wraca, tabela zostaje ta sama", () => {
+    vault.state = { status: "zablokowany", remainingMs: 0 };
+    const { container, rerender } = pokaz();
+    const przed = screen.getByTestId("tabela");
+    vault.state = { status: "odblokowany", remainingMs: 120_000 };
+    rerender(
+      <SidebarStateProvider initialCollapsed={false}>
+        <PasswordsView data={DANE} />
+      </SidebarStateProvider>,
+    );
+    expect(screen.queryByRole("dialog", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+    expect(container.querySelector(".backdrop-blur-\\[3px\\]")).toBeNull();
+    expect(container.querySelector("[inert]")).toBeNull();
+    expect(screen.getByText("Hasła", { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByTestId("tabela")).toBe(przed);
+    expect(screen.getByRole("button", { name: "Zablokuj teraz" })).toBeInTheDocument();
   });
 
   it("brak sejfu: formularz ustawiania hasła głównego zamiast tabeli; „Anuluj” pokazuje tabelę i przycisk powrotu", async () => {
@@ -211,11 +240,13 @@ describe("PasswordsView", () => {
     expect(tabela.removeOption).toHaveBeenCalledWith(expect.objectContaining({ id: "f-kat" }), "k1");
   });
 
-  it("ładowanie sejfu: ani tabeli, ani karty odblokowania", () => {
+  it("ładowanie sejfu: tabela ukryta, bez nakładki i okna odblokowania", () => {
     vault.state = { status: "ladowanie", remainingMs: 0 };
-    pokaz();
+    const { container } = pokaz();
+    expect(container.querySelector(".backdrop-blur-\\[3px\\]")).toBeNull();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByTestId("tabela")).not.toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Odblokuj sejf" })).not.toBeInTheDocument();
   });
 
   it("bez bloku tabeli: komunikat zamiast tabeli", () => {

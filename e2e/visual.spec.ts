@@ -710,7 +710,7 @@ test.describe("ekrany z sesją", () => {
     await page.waitForLoadState("networkidle");
     await zrzut(page, "hasla-odblokowane", projekt);
 
-    // Zablokowany sejf (S2Vault): sama karta „Odblokuj sejf” na środku, bez tabeli
+    // Zablokowany sejf (S2Vault): tabela pod rozmyciem, okno „Odblokuj sejf” na środku, bez tytułu „Hasła”
     await page.getByRole("button", { name: "Zablokuj teraz" }).click();
     await expect(
       page.getByRole("heading", { name: "Odblokuj sejf" }),
