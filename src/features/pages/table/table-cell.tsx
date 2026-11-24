@@ -34,8 +34,22 @@ import type { PageRow } from "../table-model";
 const OPOZNIENIE_ZAPISU = 600;
 
 // Komórka .td z S2Books.dc.html: wiersz 44 px, dolna linia (bez niej w ostatnim wierszu), najechanie podświetla o 2 %
+// Telefon (CMEditor): linie wierszy rgba(0,0,0,.06) i prawa linia komórki rgba(0,0,0,.04)
 const TD =
-  "h-11 truncate border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02]";
+  "h-11 truncate border-b border-border group-last/wiersz:border-b-0 hover:bg-black/[.02] max-[799px]:border-b-black/[.06] max-[799px]:border-r max-[799px]:border-r-black/[.04]";
+// Elementy komórki, które na telefonie działają od razu (checkbox, plakietka Wyboru): wiersz nie otwiera wtedy arkusza
+// (page-table pomija kliknięcia z [data-m-akcja]), a reguła wiersza „[&_button]:pointer-events-none” ich nie dotyczy
+const AKCJA_TELEFONU = "max-[799px]:pointer-events-auto!";
+
+// Telefon (poniżej 800 px) według mediów; po stronie serwera i w testach (bez matchMedia) false
+function subskrybujTelefon(wywolaj: () => void) {
+  const mq = window.matchMedia("(max-width: 799px)");
+  mq.addEventListener?.("change", wywolaj);
+  return () => mq.removeEventListener?.("change", wywolaj);
+}
+function czyTelefon() {
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
+}
 // Komórka w edycji (.celltxt:focus-within): niebieska obwódka do środka i białe tło
 const OBWODKA =
   "focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]";
@@ -92,6 +106,12 @@ export function TableCell({
   onRemoveOption?: (id: string) => void;
 }) {
   const v = normalizeValue(field, row.values[field.id]);
+  // Telefon: nazwa plakietki Wyboru mówi, że stuknięcie zmienia wartość
+  const telefon = React.useSyncExternalStore(
+    (wywolaj) => (typeof window.matchMedia === "function" ? subskrybujTelefon(wywolaj) : () => {}),
+    czyTelefon,
+    () => false,
+  );
 
   // Szkic tekstu w komórce z fokusem; null = komórka pokazuje wartość z magazynu.
   // Dopóki komórka ma fokus, nowa wartość z serwera nie nadpisuje tego, co się pisze.
@@ -193,8 +213,22 @@ export function TableCell({
             <button
               type="button"
               // Czytnik ekranu słyszy pole i wartość („Status: Czytam”), bo etykieta zastępuje treść przycisku
-              aria-label={`${field.name}: ${opcja?.label ?? "puste"}`}
-              className="flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]"
+              aria-label={`${field.name}: ${opcja?.label ?? "puste"}${telefon ? ", stuknij by zmienić" : ""}`}
+              data-m-akcja=""
+              // Telefon (CMEditor): stuknięcie przełącza opcje po kolei i nie otwiera okienka
+              onClick={(e) => {
+                if (!czyTelefon()) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const opcje = field.config.options ?? [];
+                if (opcje.length === 0) return;
+                const indeks = opcje.findIndex((o) => o.id === v);
+                onSave(opcje[(indeks + 1) % opcje.length].id);
+              }}
+              className={cn(
+                "flex h-11 w-full cursor-pointer items-center border-0 bg-transparent px-3 text-left outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)]",
+                AKCJA_TELEFONU,
+              )}
             >
               {opcja ? (
                 <span className="flex min-w-0">
@@ -258,11 +292,15 @@ export function TableCell({
   if (field.type === "checkbox") {
     return (
       <td className={cn(TD, "px-3")}>
-        <Checkbox
-          checked={v === true}
-          ariaLabel={field.name}
-          onChange={(c) => onSave(c)}
-        />
+        {/* Telefon: checkbox przełącza się w komórce (cbx m-hit), wiersz nie otwiera arkusza */}
+        <span data-m-akcja="" className="inline-flex">
+          <Checkbox
+            checked={v === true}
+            ariaLabel={field.name}
+            onChange={(c) => onSave(c)}
+            className={AKCJA_TELEFONU}
+          />
+        </span>
       </td>
     );
   }

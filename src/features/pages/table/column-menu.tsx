@@ -19,7 +19,10 @@ import {
 
 import {
   ActionPopover,
+  Button,
+  Chip,
   FIELD,
+  FormDialog,
   MENU_ITEM,
   MENU_ITEM_DANGER,
   MENU_LABEL,
@@ -113,6 +116,8 @@ export function ColumnMenu({
   }
 
   const [nowaOpcja, setNowaOpcja] = React.useState("");
+  // Telefon: zamiast dymku arkusz „Kolumna” (decyzja w chwili otwarcia)
+  const [wArkuszu, setWArkuszu] = React.useState(false);
 
   const meta = FIELD_TYPE_META[field.type];
   const jestWyborem = field.type === "select" || field.type === "status";
@@ -166,122 +171,8 @@ export function ColumnMenu({
     akcja();
   }
 
-  return (
-    <ActionPopover
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) {
-          setPodmenu(null);
-          if (!locked) zapiszNazwe();
-        }
-        onOpenChange(o);
-      }}
-      width={260}
-      className="p-1"
-      onCloseAutoFocus={onCloseAutoFocus}
-      ariaLabel={`Kolumna ${field.name}`}
-      trigger={
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          // .colbtn: padding 3 × 6 px zjedzony ujemnym marginesem, tło rgba(0,0,0,.05) i ciemny tekst po najechaniu;
-          // długa nazwa ucina się wielokropkiem w szerokości kolumny
-          className="-mx-1.5 -my-[3px] inline-flex max-w-[calc(100%+12px)] min-w-0 cursor-pointer items-center rounded-md border-0 bg-transparent px-1.5 py-[3px] font-[inherit] font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:shadow-focus aria-expanded:bg-black/5 aria-expanded:text-foreground max-[799px]:min-h-11"
-        >
-          {/* Ikona typu pola: 14 px, jasnoszara, odstęp 6 px jak w nagłówkach makiety */}
-          <meta.Icon
-            size={14}
-            aria-hidden="true"
-            className="mr-1.5 flex-none text-faint-foreground"
-          />
-          <span className="min-w-0 truncate">{field.name}</span>
-          {locked && field.type === "secret" && (
-            <StatusBadge tone="green" className="ml-1.5 flex-none">
-              szyfr.
-            </StatusBadge>
-          )}
-        </button>
-      }
-    >
-      <div ref={menuRef} role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
-        {/* Stała kolumna (moduł): nazwa jako napis, bez typu — nie zmienia się ani jedno, ani drugie */}
-        {locked ? (
-          <div className={cn(MENU_LABEL, "pt-2")}>{field.name}</div>
-        ) : (
-          <div className="p-1">
-            <input
-              type="text"
-              value={nazwa}
-              onChange={(e) => setNazwa(e.target.value)}
-              onBlur={zapiszNazwe}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.currentTarget.blur();
-                }
-              }}
-              aria-label="Nazwa kolumny"
-              className={FIELD}
-            />
-          </div>
-        )}
-
-        {!locked && (
-          <div className="relative">
-            <button
-              type="button"
-              role="menuitem"
-              // Typu Sekret nie zmienia się w żadną stronę
-              disabled={field.isTitle || field.type === "secret"}
-              aria-label={`Typ: ${meta.label} ›`}
-              aria-haspopup="menu"
-              aria-expanded={podmenu === "typ"}
-              onClick={() => {
-                // Podmenu ma 210 px + odstęp 12 px; przy prawej krawędzi otwiera się w lewo
-                const rect = menuRef.current?.getBoundingClientRect();
-                setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
-                setPodmenu(podmenu === "typ" ? null : "typ");
-              }}
-              className={cn(POZYCJA, podmenu === "typ" && "bg-accent")}
-            >
-              {/* Ikona typu w kolumnie ikon (16 px), jak pozostałe pozycje */}
-              <meta.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
-              <span className="flex-1">Typ: {meta.label}</span>
-              <ChevronRight size={14} aria-hidden="true" className="flex-none" />
-            </button>
-            {podmenu === "typ" && (
-              <div role="menu" aria-label="Typ pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
-                <div className={MENU_LABEL}>Typ pola</div>
-                {/* Sekret wybiera się tylko przy dodawaniu pola; zmiana typu z i na Sekret jest zablokowana */}
-                {(Object.keys(FIELD_TYPE_META) as FieldType[]).filter((t) => t !== "secret").map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      if (t === field.type) {
-                        setPodmenu(null);
-                        return;
-                      }
-                      wykonaj(() => onPickType(t));
-                    }}
-                    className={cn(POZYCJA, t === field.type && "bg-accent font-medium")}
-                  >
-                    {React.createElement(FIELD_TYPE_META[t].Icon, {
-                      size: 16,
-                      "aria-hidden": true,
-                      className: "flex-none text-muted-foreground",
-                    })}
-                    <span className="flex-1">{FIELD_TYPE_META[t].label}</span>
-                    {t === field.type && <Check size={14} aria-hidden="true" className="flex-none" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
+  const blokOpcje = (
+    <>
         {jestWyborem && onAddOption && (
           <>
             <div className={MENU_SEPARATOR} />
@@ -322,6 +213,11 @@ export function ColumnMenu({
           </>
         )}
 
+    </>
+  );
+
+  const blokSortFiltr = (
+    <>
         <div className={MENU_SEPARATOR} />
         {/* Szyfrogramu nie da się sortować: kolumna Sekret nie ma sortowania */}
         {field.type !== "secret" && (
@@ -341,6 +237,11 @@ export function ColumnMenu({
           <span className="flex-1">Filtruj po tym polu</span>
         </button>
 
+    </>
+  );
+
+  const blokPodsumowanie = (
+    <>
         <div className={MENU_SEPARATOR} />
         <div className="relative">
           <button
@@ -549,6 +450,11 @@ export function ColumnMenu({
             )}
           </div>
         )}
+    </>
+  );
+
+  const blokPrzesun = (
+    <>
         {onMoveLeft && !locked && (
           <button type="button" role="menuitem" disabled={firstColumn} onClick={() => wykonaj(onMoveLeft)} className={POZYCJA}>
             <ArrowLeft aria-hidden="true" className={IKONA} />
@@ -561,6 +467,11 @@ export function ColumnMenu({
             <span className="flex-1">Przesuń w prawo</span>
           </button>
         )}
+    </>
+  );
+
+  const blokUkryj = (
+    <>
         <button
           type="button"
           role="menuitem"
@@ -572,6 +483,11 @@ export function ColumnMenu({
           <span className="flex-1">Ukryj kolumnę</span>
         </button>
 
+    </>
+  );
+
+  const blokUsun = (
+    <>
         {!locked && (
           <>
             <div className={MENU_SEPARATOR} />
@@ -587,7 +503,228 @@ export function ColumnMenu({
             </button>
           </>
         )}
+    </>
+  );
+
+  return (
+    <>
+    <ActionPopover
+      open={open && !wArkuszu}
+      onOpenChange={(o) => {
+        if (!o) {
+          setPodmenu(null);
+          if (!locked) zapiszNazwe();
+        }
+        // Telefon (poniżej 800 px): zamiast dymku otwiera się arkusz „Kolumna”; sprawdzamy w chwili otwarcia
+        if (o) setWArkuszu(typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches);
+        onOpenChange(o);
+      }}
+      width={260}
+      className="p-1"
+      onCloseAutoFocus={onCloseAutoFocus}
+      ariaLabel={`Kolumna ${field.name}`}
+      trigger={
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          // .colbtn: padding 3 × 6 px zjedzony ujemnym marginesem, tło rgba(0,0,0,.05) i ciemny tekst po najechaniu;
+          // długa nazwa ucina się wielokropkiem w szerokości kolumny
+          className="-mx-1.5 -my-[3px] inline-flex max-w-[calc(100%+12px)] min-w-0 cursor-pointer items-center rounded-md border-0 bg-transparent px-1.5 py-[3px] font-[inherit] font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:shadow-focus aria-expanded:bg-black/5 aria-expanded:text-foreground max-[799px]:min-h-11"
+        >
+          {/* Ikona typu pola: 14 px, jasnoszara, odstęp 6 px jak w nagłówkach makiety */}
+          <meta.Icon
+            size={14}
+            aria-hidden="true"
+            className="mr-1.5 flex-none text-faint-foreground"
+          />
+          <span className="min-w-0 truncate">{field.name}</span>
+          {locked && field.type === "secret" && (
+            <StatusBadge tone="green" className="ml-1.5 flex-none">
+              szyfr.
+            </StatusBadge>
+          )}
+        </button>
+      }
+    >
+      <div ref={menuRef} role="menu" aria-label={`Kolumna ${field.name}`} className="relative">
+        {/* Stała kolumna (moduł): nazwa jako napis, bez typu — nie zmienia się ani jedno, ani drugie */}
+        {locked ? (
+          <div className={cn(MENU_LABEL, "pt-2")}>{field.name}</div>
+        ) : (
+          <div className="p-1">
+            <input
+              type="text"
+              value={nazwa}
+              onChange={(e) => setNazwa(e.target.value)}
+              onBlur={zapiszNazwe}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
+              aria-label="Nazwa kolumny"
+              className={FIELD}
+            />
+          </div>
+        )}
+
+        {!locked && (
+          <div className="relative">
+            <button
+              type="button"
+              role="menuitem"
+              // Typu Sekret nie zmienia się w żadną stronę
+              disabled={field.isTitle || field.type === "secret"}
+              aria-label={`Typ: ${meta.label} ›`}
+              aria-haspopup="menu"
+              aria-expanded={podmenu === "typ"}
+              onClick={() => {
+                // Podmenu ma 210 px + odstęp 12 px; przy prawej krawędzi otwiera się w lewo
+                const rect = menuRef.current?.getBoundingClientRect();
+                setWLewo(rect !== undefined && rect.right + 230 > window.innerWidth);
+                setPodmenu(podmenu === "typ" ? null : "typ");
+              }}
+              className={cn(POZYCJA, podmenu === "typ" && "bg-accent")}
+            >
+              {/* Ikona typu w kolumnie ikon (16 px), jak pozostałe pozycje */}
+              <meta.Icon size={16} aria-hidden="true" className="flex-none text-muted-foreground" />
+              <span className="flex-1">Typ: {meta.label}</span>
+              <ChevronRight size={14} aria-hidden="true" className="flex-none" />
+            </button>
+            {podmenu === "typ" && (
+              <div role="menu" aria-label="Typ pola" className={cn(PODMENU, wLewo ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]")}>
+                <div className={MENU_LABEL}>Typ pola</div>
+                {/* Sekret wybiera się tylko przy dodawaniu pola; zmiana typu z i na Sekret jest zablokowana */}
+                {(Object.keys(FIELD_TYPE_META) as FieldType[]).filter((t) => t !== "secret").map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      if (t === field.type) {
+                        setPodmenu(null);
+                        return;
+                      }
+                      wykonaj(() => onPickType(t));
+                    }}
+                    className={cn(POZYCJA, t === field.type && "bg-accent font-medium")}
+                  >
+                    {React.createElement(FIELD_TYPE_META[t].Icon, {
+                      size: 16,
+                      "aria-hidden": true,
+                      className: "flex-none text-muted-foreground",
+                    })}
+                    <span className="flex-1">{FIELD_TYPE_META[t].label}</span>
+                    {t === field.type && <Check size={14} aria-hidden="true" className="flex-none" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+{blokOpcje}
+{blokSortFiltr}
+{blokPodsumowanie}
+{blokPrzesun}
+{blokUkryj}
+{blokUsun}
       </div>
     </ActionPopover>
+
+      {/* Telefon (CMEditor, „Ustawienia kolumny”): arkusz „Kolumna” z „Gotowe”. Nazwa, typ pola jako chipy w 2 kolumnach,
+          przesuwanie i usuwanie jak w makiecie; reszta menu (sortowanie, filtr, podsumowanie, kalendarz, cykle, opcje,
+          ukrywanie) zostaje poniżej, żeby telefon niczego nie tracił względem webu. Stałe kolumny modułu bez typu, przesuwania i usuwania. */}
+      <FormDialog
+        open={open && wArkuszu}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPodmenu(null);
+            if (!locked) zapiszNazwe();
+          }
+          onOpenChange(o);
+        }}
+        title="Kolumna"
+        phoneClose={false}
+        headerAction={
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="font-semibold">
+            Gotowe
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-4 pb-6">
+          {locked ? (
+            <div className="text-base font-medium">{field.name}</div>
+          ) : (
+            <input
+              type="text"
+              value={nazwa}
+              onChange={(e) => setNazwa(e.target.value)}
+              onBlur={zapiszNazwe}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
+              aria-label="Nazwa kolumny"
+              className={FIELD}
+            />
+          )}
+          {!locked && (
+            <>
+              <span className="text-xs font-medium text-muted-foreground">Typ pola</span>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Sekret wybiera się tylko przy dodawaniu pola; zmiana typu z i na Sekret jest zablokowana */}
+                {(Object.keys(FIELD_TYPE_META) as FieldType[])
+                  .filter((t) => t !== "secret")
+                  .map((t) => (
+                    <Chip
+                      key={t}
+                      selected={t === field.type}
+                      disabled={field.isTitle || field.type === "secret"}
+                      onClick={() => {
+                        if (t === field.type) return;
+                        wykonaj(() => onPickType(t));
+                      }}
+                      className="justify-start"
+                    >
+                      {React.createElement(FIELD_TYPE_META[t].Icon, {
+                        size: 16,
+                        "aria-hidden": true,
+                        className: "flex-none text-muted-foreground",
+                      })}
+                      {FIELD_TYPE_META[t].label}
+                    </Chip>
+                  ))}
+              </div>
+              {onMoveLeft && onMoveRight && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button disabled={firstColumn} onClick={() => wykonaj(onMoveLeft)}>
+                    ← W lewo
+                  </Button>
+                  <Button disabled={lastColumn} onClick={() => wykonaj(onMoveRight)}>
+                    W prawo →
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+          <div ref={menuRef} role="menu" aria-label={`Więcej opcji kolumny ${field.name}`} className="-mx-2 flex flex-col">
+            {blokOpcje}
+            {blokSortFiltr}
+            {blokPodsumowanie}
+            {blokUkryj}
+          </div>
+          {!locked && (
+            <Button variant="destructive-outline" disabled={field.isTitle} onClick={() => wykonaj(onDelete)}>
+              Usuń kolumnę
+            </Button>
+          )}
+        </div>
+      </FormDialog>
+    </>
   );
 }

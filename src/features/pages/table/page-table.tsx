@@ -43,7 +43,9 @@ import { TableCell } from "./table-cell";
 import { PREFIKS_TYMCZASOWY, useTableStore } from "./use-table-store";
 
 // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
-const NAGLOWEK = "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground";
+// Telefon (th-cell z CMEditor): 44 px, tło .02, linia pod spodem .08 i prawa linia komórki
+const NAGLOWEK =
+  "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground max-[799px]:h-11 max-[799px]:border-r max-[799px]:border-b-black/[.08] max-[799px]:border-r-border max-[799px]:bg-black/[.02]";
 
 // Wyzwalacz „Filtruj” jak Button secondary sm (.btn.sm z coss.css): 28 px, cień btn, fokus shadow-focus
 const PRZYCISK_FILTRA =
@@ -61,9 +63,10 @@ const RAMKA_PRZEWIJANA =
 // Po tylu ms od skopiowania hasła czyścimy schowek
 const SCHOWEK_MS = 30_000;
 
-// Przycisk akcji wiersza (.row-del): widoczny po najechaniu na wiersz i przy fokusie w wierszu; na telefonie ukryty
+// Przycisk akcji wiersza (.row-del): widoczny po najechaniu na wiersz i przy fokusie w wierszu;
+// na telefonie zawsze, 44 px, #a3a3a3 (CMEditor); „pointer-events-auto” przebija regułę wiersza z [&_button]
 const AKCJA_WIERSZA =
-  "opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 focus-visible:opacity-100 max-[799px]:hidden";
+  "opacity-0 transition-opacity duration-[120ms] group-focus-within/wiersz:opacity-100 group-hover/wiersz:opacity-100 focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:rounded-none max-[799px]:text-faint-foreground max-[799px]:opacity-100 max-[799px]:pointer-events-auto!";
 
 // Pozycja menu „⋯”; wyłączona: opacity .64
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
@@ -759,6 +762,8 @@ export function PageTable({
                 onClickCapture={(e) => {
                   // Moduł przy zamkniętym sejfie: arkusz się nie otwiera
                   if (!naTelefonie() || tylkoOdczyt) return;
+                  // Checkbox, plakietka Wyboru i kosz działają w wierszu od razu (CMEditor)
+                  if (e.target instanceof Element && e.target.closest("[data-m-akcja]")) return;
                   e.preventDefault();
                   e.stopPropagation();
                   // Wiersz w trakcie zapisu (tymczasowe id) store otworzy sam po odpowiedzi serwera
@@ -858,8 +863,10 @@ export function PageTable({
                       size="xs"
                       icon
                       aria-label="Usuń wiersz"
+                      data-m-akcja=""
+                      // Telefon: bez potwierdzenia, z toastem „Cofnij” jak na webie (T17)
                       onClick={() => void store.removeRow(r)}
-                      className={cn(AKCJA_WIERSZA, "text-destructive-foreground hover:text-destructive-foreground")}
+                      className={cn(AKCJA_WIERSZA, "text-destructive-foreground hover:text-destructive-foreground max-[799px]:text-faint-foreground")}
                     >
                       <Trash2 aria-hidden="true" className="size-3.5" />
                     </Button>
@@ -893,19 +900,33 @@ export function PageTable({
         </table>
       </div>
 
-      {/* „+ Nowy” pod ramką (.btng.sm, szary tekst); w module przy zamkniętym sejfie go nie ma */}
+      {/* „+ Nowy” pod ramką (.btng.sm, szary tekst); w module przy zamkniętym sejfie go nie ma.
+          Telefon (CMEditor): „Nowy wiersz” (.btng muted) i plakietka z liczbą wierszy po prawej */}
       {!tylkoOdczyt && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 max-[799px]:justify-between">
           <Button
             variant="ghost"
             size="sm"
             disabled={dodawanie}
             onClick={() => void nowyWiersz()}
-            className="text-muted-foreground"
+            className="text-muted-foreground max-[799px]:hidden"
           >
             <Plus aria-hidden="true" className="size-4" />
             Nowy
           </Button>
+          <Button
+            variant="ghost"
+            size="md"
+            disabled={dodawanie}
+            onClick={() => void nowyWiersz()}
+            className="text-muted-foreground min-[800px]:hidden"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            Nowy wiersz
+          </Button>
+          <StatusBadge tone="gray" className="min-[800px]:hidden">
+            {rowsLabel(widoczneWiersze.length)}
+          </StatusBadge>
         </div>
       )}
 
