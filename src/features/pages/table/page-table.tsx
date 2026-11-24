@@ -1015,7 +1015,8 @@ export function PageTable({
         today={today}
         onChange={store.setEditValue}
         // Arkusz szyfruje zmienione sekrety sam i oddaje tylko szyfrogramy
-        onSave={(secrets) => void store.saveRow(secrets)}
+        // (obietnica kończy się z zapisem: „Zapisz” w arkuszu jest zajęty do tego czasu)
+        onSave={(secrets) => store.saveRow(secrets)}
         onCancel={store.cancelEdit}
         onDelete={edytowany ? () => void store.removeRow(edytowany) : undefined}
       />

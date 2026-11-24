@@ -37,9 +37,12 @@ const SCHOWEK_MS = 30_000;
 // „Anuluj” · tytuł wiersza · „Zapisz”, pola według typu (tekst, liczba i link jako pole 44 px, Wybór jako chipy,
 // Data jako kalendarz miesiąca z podpisem, Ocena jako gwiazdki 44 px, Checkboxy zebrane w jednej karcie
 // z przełącznikami), „Usuń wiersz” (tylko istniejący wiersz).
-// Sekret: pole zamaskowane z oczkiem i kopiowaniem, bez autouzupełniania menedżerów haseł. Tekst jawny żyje
-// tylko w stanie arkusza (nigdy w onChange / store); „Zapisz” szyfruje zmienione sekrety i oddaje szyfrogramy
-// w onSave. Zamknięcie arkusza albo blokada sejfu czyści tekst jawny.
+// Sekret: pole zamaskowane z oczkiem i kopiowaniem, bez autouzupełniania menedżerów haseł. Po otwarciu arkusza
+// sekrety NIE są odszyfrowane (pole mówi „zaszyfrowane”); odszyfrowanie dopiero przy fokusie w polu, „Pokaż”
+// albo „Kopiuj” (kopiowanie nie zostawia tekstu w stanie). Tekst jawny żyje tylko w stanie arkusza (nigdy
+// w onChange / store); „Zapisz” szyfruje zmienione sekrety i oddaje szyfrogramy w onSave, a sekret, którego
+// nie odszyfrowano ani nie wpisano, w ogóle nie jest wysyłany. Zamknięcie arkusza albo blokada sejfu czyści
+// tekst jawny. W trakcie szyfrowania i zapisu „Zapisz” jest wyłączony (aria-busy), a arkusz nie daje się zamknąć.
 export function MRowSheet({
   open,
   title,
@@ -60,8 +63,9 @@ export function MRowSheet({
   values: Record<string, unknown>;
   today: IsoDate;
   onChange: (fieldId: string, value: unknown) => void;
-  // Zaszyfrowane sekrety zmienione w arkuszu (id pola → SecretValue albo null)
-  onSave: (secrets: Record<string, SecretValue | null>) => void;
+  // Zaszyfrowane sekrety zmienione w arkuszu (id pola → SecretValue albo null). Obietnica kończy się razem
+  // z zapisem; do tego czasu „Zapisz” jest zajęty
+  onSave: (secrets: Record<string, SecretValue | null>) => Promise<unknown> | void;
   onCancel: () => void;
   // Brak dla nowego wiersza
   onDelete?: () => void;
@@ -78,7 +82,7 @@ export function MRowSheet({
   const [cykle, setCykle] = React.useState<Record<string, Cycle>>({});
   // Miesiąc pokazany w kalendarzu pola daty (id pola → rok i miesiąc 0–11); bez wpisu miesiąc wartości albo dzisiejszy
   const [miesiace, setMiesiace] = React.useState<Record<string, { rok: number; miesiac: number }>>({});
-  // „Zapisz” w trakcie szyfrowania nie zapisuje drugi raz
+  // „Zapisz” w trakcie szyfrowania i zapisu nie zapisuje drugi raz
   const [szyfrowanie, setSzyfrowanie] = React.useState(false);
   const [poprzednie, setPoprzednie] = React.useState({ open, status: vault.status });
   if (poprzednie.open !== open || poprzednie.status !== vault.status) {
@@ -97,31 +101,11 @@ export function MRowSheet({
     }
   }
 
-  // Wartości z chwili otwarcia arkusza (efekt odszyfrowania nie zależy od każdej zmiany w arkuszu)
-  const wartosciRef = React.useRef(values);
-  const polaRef = React.useRef(fields);
+  // Epoka rośnie przy zamknięciu arkusza i blokadzie sejfu: wolne odszyfrowanie ze starą epoką niczego nie ustawia
+  const epokaRef = React.useRef(0);
   React.useEffect(() => {
-    wartosciRef.current = values;
-    polaRef.current = fields;
-  });
-  // Po otwarciu (i odblokowaniu): sekrety wiersza odszyfrowane lokalnie do stanu arkusza
-  React.useEffect(() => {
-    if (!open || !odblokowany) return;
-    let anulowano = false;
-    for (const f of polaRef.current) {
-      const v = wartosciRef.current[f.id];
-      if (f.type !== "secret" || !isSecretValue(v)) continue;
-      void decrypt(v).then((t) => {
-        if (anulowano || t === null) return;
-        // Wpisany już tekst wygrywa z wartością początkową
-        setTeksty((m) => (f.id in m ? m : { ...m, [f.id]: t }));
-        setOryginaly((m) => ({ ...m, [f.id]: t }));
-      });
-    }
-    return () => {
-      anulowano = true;
-    };
-  }, [open, odblokowany, decrypt]);
+    epokaRef.current += 1;
+  }, [open, odblokowany]);
 
   // Zaplanowane czyszczenie schowka (bez skopiowanego tekstu)
   const schowekRef = React.useRef<{ timer: ReturnType<typeof setTimeout>; wyczysc: () => void } | null>(null);
@@ -137,7 +121,8 @@ export function MRowSheet({
   const maskaCss =
     typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("-webkit-text-security", "disc");
 
-  // „Zapisz”: zmienione sekrety szyfrujemy tutaj; do store idą tylko szyfrogramy (pusty tekst → null)
+  // „Zapisz”: zmienione sekrety szyfrujemy tutaj; do store idą tylko szyfrogramy (pusty tekst → null).
+  // Sekret bez wpisu w `teksty` (nie odszyfrowany ani nie wpisany) nie jest ruszany.
   async function zapisz() {
     const zaszyfrowane: Record<string, SecretValue | null> = {};
     setSzyfrowanie(true);
@@ -151,12 +136,16 @@ export function MRowSheet({
     } catch {
       // Sejf zablokował się przed szyfrowaniem: nic nie zapisujemy, arkusz zostaje
       toast.error(SEJF_ZABLOKOWANY);
+      setSzyfrowanie(false);
       return;
+    }
+    // Tekst jawny znika z zamknięciem arkusza po udanym zapisie; po błędzie arkusz zostaje z tekstem.
+    // „Zapisz” czeka na koniec zapisu (nowe otwarcie wiersza też czeka w magazynie)
+    try {
+      await onSave(zaszyfrowane);
     } finally {
       setSzyfrowanie(false);
     }
-    // Tekst jawny znika z zamknięciem arkusza po udanym zapisie; po błędzie arkusz zostaje z tekstem
-    onSave(zaszyfrowane);
   }
 
   // Checkboxy idą na koniec, razem w jednej karcie (m-row z przełącznikiem)
@@ -167,13 +156,14 @@ export function MRowSheet({
     <FormDialog
       open={open}
       onOpenChange={(o) => {
-        if (!o) onCancel();
+        // W trakcie szyfrowania i zapisu arkusz się nie zamyka (zapis nie zgubi się ani nie dostanie starych wartości)
+        if (!o && !szyfrowanie) onCancel();
       }}
       title={title}
       phoneHeader="actions"
-      phoneCancel={{ label: "Anuluj", onClick: onCancel }}
+      phoneCancel={{ label: "Anuluj", onClick: onCancel, disabled: szyfrowanie }}
       phoneSubmit={
-        <Button variant="primary" disabled={szyfrowanie} onClick={() => void zapisz()}>
+        <Button variant="primary" disabled={szyfrowanie} aria-busy={szyfrowanie} onClick={() => void zapisz()}>
           Zapisz
         </Button>
       }
@@ -187,6 +177,8 @@ export function MRowSheet({
         if (f.type === "secret") {
           const pokazany = pokazane.includes(f.id);
           const tekst = teksty[f.id] ?? "";
+          // Zaszyfrowany sekret, którego jeszcze nie odszyfrowano (odszyfrowanie dopiero po fokusie, „Pokaż” lub „Kopiuj”)
+          const zaszyfrowany = isSecretValue(surowa) && !(f.id in teksty);
           return (
             <div key={f.id} className="flex flex-col gap-1.5 text-[13px] font-medium">
               <span>{f.name}</span>
@@ -205,8 +197,17 @@ export function MRowSheet({
                   data-form-type="other"
                   translate="no"
                   aria-label={f.name}
-                  placeholder={odblokowany ? "—" : isSecretValue(surowa) ? "zablokowane" : "—"}
+                  placeholder={odblokowany ? (zaszyfrowany ? "zaszyfrowane" : "—") : isSecretValue(surowa) ? "zablokowane" : "—"}
                   value={odblokowany ? tekst : ""}
+                  // Fokus odszyfrowuje lokalnie do stanu arkusza; wpisany już tekst wygrywa z wartością początkową
+                  onFocus={async () => {
+                    if (!odblokowany || !zaszyfrowany || !isSecretValue(surowa)) return;
+                    const epoka = epokaRef.current;
+                    const t = await decrypt(surowa);
+                    if (t === null || epoka !== epokaRef.current) return;
+                    setTeksty((m) => (f.id in m ? m : { ...m, [f.id]: t }));
+                    setOryginaly((m) => ({ ...m, [f.id]: t }));
+                  }}
                   onChange={(e) => {
                     const t = e.target.value;
                     setTeksty((m) => ({ ...m, [f.id]: t }));
@@ -230,9 +231,23 @@ export function MRowSheet({
                       icon
                       aria-label={pokazany ? `Ukryj: ${f.name}` : `Pokaż: ${f.name}`}
                       aria-pressed={pokazany}
-                      onClick={() =>
-                        setPokazane((l) => (l.includes(f.id) ? l.filter((id) => id !== f.id) : [...l, f.id]))
-                      }
+                      onClick={async () => {
+                        if (pokazany) {
+                          setPokazane((l) => l.filter((id) => id !== f.id));
+                          return;
+                        }
+                        // „Pokaż” odszyfrowuje dopiero teraz (jeśli fokus tego jeszcze nie zrobił)
+                        if (zaszyfrowany && isSecretValue(surowa)) {
+                          const epoka = epokaRef.current;
+                          const t = await decrypt(surowa);
+                          if (epoka !== epokaRef.current) return;
+                          if (t !== null) {
+                            setTeksty((m) => (f.id in m ? m : { ...m, [f.id]: t }));
+                            setOryginaly((m) => ({ ...m, [f.id]: t }));
+                          }
+                        }
+                        setPokazane((l) => (l.includes(f.id) ? l : [...l, f.id]));
+                      }}
                       className="size-11"
                     >
                       {pokazany ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
@@ -241,10 +256,22 @@ export function MRowSheet({
                       variant="ghost"
                       icon
                       aria-label={`Kopiuj: ${f.name}`}
-                      disabled={tekst === ""}
+                      disabled={zaszyfrowany ? false : tekst === ""}
                       onClick={async () => {
+                        // Zaszyfrowany sekret: odszyfrowanie na potrzeby kopiowania, tekst nie zostaje w stanie
+                        let doSchowka = tekst;
+                        if (zaszyfrowany && isSecretValue(surowa)) {
+                          const epoka = epokaRef.current;
+                          const t = await decrypt(surowa);
+                          if (epoka !== epokaRef.current) return;
+                          if (t === null) {
+                            toast.error("Nie udało się skopiować.");
+                            return;
+                          }
+                          doSchowka = t;
+                        }
                         try {
-                          await navigator.clipboard.writeText(tekst);
+                          await navigator.clipboard.writeText(doSchowka);
                         } catch {
                           toast.error("Nie udało się skopiować.");
                           return;

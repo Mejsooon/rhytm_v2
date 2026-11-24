@@ -21,7 +21,7 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("../actions", () => actions);
 
 import type { LoadedBlock } from "../load-page";
-import { BLAD_ZAPISU } from "../messages";
+import { BLAD_ZAPISU, ZAPIS_W_TOKU } from "../messages";
 import { stronaTestowa } from "./test-page";
 import { useTableStore } from "./use-table-store";
 
@@ -270,6 +270,91 @@ describe("useTableStore", () => {
       expect(wynik).toBe(true);
       expect(actions.updateRow).toHaveBeenCalledWith("row-1", { "f-sekret": sv });
       expect(result.current.rows[0].values["f-sekret"]).toEqual(sv);
+    });
+  });
+
+  describe("zapis wiersza w toku (arkusz telefonu)", () => {
+    it("drugi zapis w trakcie pierwszego: toast „Poczekaj, zapisuję poprzednią zmianę.” zamiast cichego false", async () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const serwer = odroczona<{ ok: true }>();
+      actions.updateRow.mockReturnValue(serwer.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.startEdit(result.current.rows[0]);
+      });
+      act(() => result.current.setEditValue(autor.id, "Nowy autor"));
+      let pierwszy!: Promise<boolean>;
+      act(() => {
+        pierwszy = result.current.saveRow();
+      });
+      let drugi: boolean | undefined;
+      await act(async () => {
+        drugi = await result.current.saveRow();
+      });
+      expect(drugi).toBe(false);
+      expect(toast).toHaveBeenCalledWith(ZAPIS_W_TOKU);
+      await act(async () => {
+        serwer.rozwiaz({ ok: true });
+        await pierwszy;
+      });
+      expect(actions.updateRow).toHaveBeenCalledTimes(1);
+    });
+
+    it("otwarcie innego wiersza w trakcie zapisu czeka na jego koniec i dostaje zapisaną wartość", async () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const serwer = odroczona<{ ok: true }>();
+      actions.updateRow.mockReturnValue(serwer.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.startEdit(result.current.rows[0]);
+      });
+      act(() => result.current.setEditValue(autor.id, "Nowy autor"));
+      let zapis!: Promise<boolean>;
+      act(() => {
+        zapis = result.current.saveRow();
+      });
+      // Klik w ten sam wiersz w trakcie zapisu: edycja jeszcze się nie otwiera
+      let otwarcie!: Promise<void>;
+      act(() => {
+        otwarcie = result.current.startEdit(result.current.rows[0]);
+      });
+      expect(result.current.editing).toBeNull();
+      await act(async () => {
+        serwer.rozwiaz({ ok: true });
+        await zapis;
+        await otwarcie;
+      });
+      expect(result.current.editing?.rowId).toBe("row-1");
+      expect(result.current.editing?.values[autor.id]).toBe("Nowy autor");
+    });
+
+    it("otwarcie wiersza po nieudanym zapisie nie nadpisuje przywróconego szkicu", async () => {
+      const b = blok();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const serwer = odroczona<{ ok: false; message: string }>();
+      actions.updateRow.mockReturnValue(serwer.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.startEdit(result.current.rows[0]);
+      });
+      act(() => result.current.setEditValue(autor.id, "Nowy autor"));
+      let zapis!: Promise<boolean>;
+      act(() => {
+        zapis = result.current.saveRow();
+      });
+      let otwarcie!: Promise<void>;
+      act(() => {
+        otwarcie = result.current.startEdit(result.current.rows[1]);
+      });
+      await act(async () => {
+        serwer.rozwiaz({ ok: false, message: "x" });
+        await zapis;
+        await otwarcie;
+      });
+      expect(toast.error).toHaveBeenCalledWith(BLAD_ZAPISU);
+      expect(result.current.editing?.rowId).toBe("row-1");
     });
   });
 
