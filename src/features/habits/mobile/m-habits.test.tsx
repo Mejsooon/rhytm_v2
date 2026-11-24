@@ -162,17 +162,19 @@ describe("MHabits — zakładka Nawyki", () => {
     ).toBeInTheDocument();
   });
 
-  it("lista: duży checkbox ≥ 44 px, harmonogram i seria, nazwa prowadzi do szczegółów", () => {
+  it("lista: checkbox z polem stuknięcia 44 px, harmonogram i osobna odznaka serii, nazwa prowadzi do szczegółów", () => {
     wyrenderuj();
     const woda = screen.getByRole("checkbox", { name: "Woda 2 l" });
     expect(woda).toHaveAttribute("aria-checked", "true");
-    // Pole stuknięcia 44 px (kwadrat 28 px + pseudo-element)
-    expect(woda.className).toContain("after:-inset-2");
-    expect(screen.getByText("Codziennie · seria 5 dni")).toBeInTheDocument();
-    expect(screen.getByText("Pn, Śr, Pt · seria 0 dni")).toBeInTheDocument();
-    expect(
-      screen.getByText("4× w tygodniu · seria 0 tyg."),
-    ).toBeInTheDocument();
+    // Pole stuknięcia 44 px (kwadrat 16 px + pseudo-element m-hit)
+    expect(woda.className).toContain("before:-inset-3.5");
+    // Harmonogram i seria to osobne elementy (hint + odznaka)
+    expect(screen.getByText("Codziennie")).toBeInTheDocument();
+    expect(screen.getByText("seria 5 dni")).toBeInTheDocument();
+    expect(screen.getByText("Pn, Śr, Pt")).toBeInTheDocument();
+    expect(screen.getByText("seria 0 dni")).toBeInTheDocument();
+    expect(screen.getByText("4× w tygodniu")).toBeInTheDocument();
+    expect(screen.getByText("seria 0 tyg.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Woda 2 l/ })).toHaveAttribute(
       "href",
       "/nawyki/h1",
@@ -197,10 +199,10 @@ describe("MHabits — zakładka Nawyki", () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it("heatmapa 4 tygodni: podpowiedź, stuknięcie pokazuje „{data} · x z y nawyków”", async () => {
+  it("heatmapa: tytuł zakresu, podpowiedź, stuknięcie pokazuje „{data} · x z y nawyków”", async () => {
     wyrenderuj();
     expect(
-      screen.getByRole("heading", { name: "Ostatnie 4 tygodnie" }),
+      screen.getByRole("heading", { name: "Ostatnie 30 dni" }),
     ).toBeInTheDocument();
     expect(screen.getByText("stuknij dzień")).toBeInTheDocument();
     // 4 tygodnie po 7 dni
@@ -211,6 +213,21 @@ describe("MHabits — zakładka Nawyki", () => {
     expect(screen.getByText("16.11.2026 · 1 z 2 nawyków")).toBeInTheDocument();
     expect(screen.getByText("mniej")).toBeInTheDocument();
     expect(screen.getByText("więcej")).toBeInTheDocument();
+  });
+
+  it("przełącznik zakresu heatmapy: 3 mies. = 13 tygodni, zmiana czyści wybór dnia", async () => {
+    wyrenderuj();
+    await userEvent.click(
+      screen.getByRole("button", { name: "16.11.2026 · 1 z 2 nawyków" }),
+    );
+    await userEvent.click(screen.getByRole("radio", { name: "3 mies." }));
+    expect(
+      screen.getByRole("heading", { name: "Ostatnie 3 miesiące" }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-heat-day]")).toHaveLength(91);
+    expect(screen.getByText("stuknij dzień")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "Rok" }));
+    expect(document.querySelectorAll("[data-heat-day]")).toHaveLength(364);
   });
 
   it("dzień bez planu: „· brak zaplanowanych”", async () => {
@@ -233,10 +250,10 @@ describe("MHabits — zakładka Nawyki", () => {
     const zero = screen.getByRole("button", {
       name: "02.11.2026 · 0 z 2 nawyków",
     });
-    expect(bezPlanu.style.background).toBe("rgb(250, 250, 250)");
+    expect(bezPlanu.className).toContain("bg-panel");
     expect(bezPlanu.className).toContain("border-dashed");
     expect(bezPlanu.className).toContain("border-border-strong");
-    expect(zero.style.background).toBe("rgb(240, 240, 240)");
+    expect(zero.style.background).toBe("rgba(0, 0, 0, 0.05)");
     expect(zero.className).not.toContain("border-dashed");
   });
 
@@ -259,7 +276,7 @@ describe("MHabits — zakładka Sen", () => {
       "aria-checked",
       "true",
     );
-    expect(screen.queryByText("Ostatnie 4 tygodnie")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ostatnie 30 dni")).not.toBeInTheDocument();
   });
 
   it("Ostatnia noc: czas, godziny i samopoczucie; Średnio 14 dni i cel", async () => {
