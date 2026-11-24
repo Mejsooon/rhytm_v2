@@ -172,7 +172,7 @@ describe("MHabitDetail", () => {
     deleteHabit.mockResolvedValue({ ok: true });
     render(<MHabitDetail data={dane()} />);
     await userEvent.click(screen.getByRole("button", { name: "Usuń nawyk" }));
-    const okno = screen.getByRole("dialog", {
+    const okno = screen.getByRole("alertdialog", {
       name: "Usunąć nawyk „Woda 2 l”?",
     });
     expect(

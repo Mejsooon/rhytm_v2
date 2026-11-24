@@ -472,7 +472,7 @@ test.describe("strony", () => {
     await expect(wSidebarze).toBeVisible();
     await page.getByRole("button", { name: "Menu strony", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
-    const potwierdzenie = page.getByRole("dialog", { name: /Usunąć stronę/ });
+    const potwierdzenie = page.getByRole("alertdialog", { name: /Usunąć stronę/ });
     await expect(potwierdzenie).toBeVisible();
     await potwierdzenie
       .getByRole("button", { name: "Usuń", exact: true })

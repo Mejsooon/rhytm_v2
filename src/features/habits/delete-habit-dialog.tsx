@@ -1,11 +1,10 @@
 "use client";
 
-// Potwierdzenie usunięcia nawyku (FormDialog w stylu .dlg, jak „Usunąć blok?”); po sukcesie wracamy na listę /nawyki.
+// Potwierdzenie usunięcia nawyku (ConfirmDialog); po sukcesie wracamy na listę /nawyki.
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TrashIcon } from "lucide-react";
 
-import { Button, FormDialog } from "@/components/controls";
+import { ConfirmDialog } from "@/components/controls";
 import type { ActionResult } from "@/lib/action-result";
 import { deleteHabit } from "./actions";
 
@@ -48,40 +47,16 @@ export function DeleteHabitDialog({
   }
 
   return (
-    <FormDialog
+    <ConfirmDialog
       open={open}
-      // Esc, tło i ✕ są zablokowane na czas usuwania
-      onOpenChange={(otwarte) => {
-        if (!otwarte && pending) return;
-        onOpenChange(otwarte);
-      }}
+      // Esc, tło i „Anuluj” są zablokowane na czas usuwania (pending w ConfirmDialog)
+      onOpenChange={onOpenChange}
       title={`Usunąć nawyk „${name}”?`}
-      footer={
-        <>
-          {blad && (
-            <p role="alert" className="mr-auto text-xs text-destructive-foreground">
-              {blad}
-            </p>
-          )}
-          <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
-            Anuluj
-          </Button>
-          <Button
-            variant="destructive"
-            disabled={pending}
-            onClick={() => void usun()}
-          >
-            {/* Ikona tylko w wersji web; telefon (m-habit-detail) bez zmian */}
-            <TrashIcon aria-hidden="true" className="size-4 max-[799px]:hidden" />
-            Usuń
-          </Button>
-        </>
-      }
-    >
-      {/* .dlg-d: 14 px muted na web, 13 px na telefonie */}
-      <p className="m-0 text-sm text-muted-foreground max-[799px]:text-[13px]">
-        Historia odhaczeń i notatki zostaną usunięte.
-      </p>
-    </FormDialog>
+      description="Historia odhaczeń i notatki zostaną usunięte."
+      error={blad}
+      confirmLabel="Usuń"
+      pending={pending}
+      onConfirm={usun}
+    />
   );
 }

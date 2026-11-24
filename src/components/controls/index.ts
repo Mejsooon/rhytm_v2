@@ -8,6 +8,7 @@ export {
   MENU_LABEL,
 } from "./action-popover";
 export { FormDialog } from "./form-dialog";
+export { ConfirmDialog } from "./confirm-dialog";
 export { Dropdown, type DropdownOption } from "./dropdown";
 export { Segment } from "./segment";
 export { Switch } from "./switch";
