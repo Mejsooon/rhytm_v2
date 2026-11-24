@@ -86,6 +86,19 @@ describe("resolveRoute", () => {
     ).toBeNull();
   });
 
+  it("trasa crona bez sesji nie przekierowuje (sama sprawdza sekret)", () => {
+    expect(
+      resolveRoute({ pathname: "/api/cron/powiadomienia", ...wylogowany }),
+    ).toBeNull();
+    expect(
+      resolveRoute({ pathname: "/api/cron/powiadomienia", ...bezOnboardingu }),
+    ).toBeNull();
+    // Inne trasy API dalej wymagają sesji
+    expect(
+      resolveRoute({ pathname: "/api/eksport", ...wylogowany }),
+    ).toEqual({ redirect: "/logowanie" });
+  });
+
   it("zasoby statyczne zawsze przepuszczane", () => {
     expect(
       resolveRoute({ pathname: "/manifest.webmanifest", ...wylogowany }),

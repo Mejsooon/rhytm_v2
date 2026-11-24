@@ -8,7 +8,8 @@ const PUBLICZNE = [
   "/regulamin",
   "/prywatnosc",
 ];
-const PUBLICZNE_PREFIKSY = ["/auth/", "/dev/"];
+// /api/cron/: wywołuje pg_net z Supabase bez sesji; trasa sama sprawdza sekret (Authorization: Bearer)
+const PUBLICZNE_PREFIKSY = ["/auth/", "/dev/", "/api/cron/"];
 const ZAWSZE_PRZEPUSZCZANE_PREFIKSY = ["/icons/", "/_next/"];
 // Konto oznaczone do usunięcia ma dostęp tylko do ekranu przywracania i eksportu danych
 const KONTO_USUNIETE = "/konto-usuniete";
