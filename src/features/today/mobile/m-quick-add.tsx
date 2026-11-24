@@ -1,17 +1,22 @@
 "use client";
 
-// Arkusz szybkiego dodawania na telefonie wg MQuickAdd.dc.html (pływający „+” w MToday).
-// Segment Blok / Bieg / Nawyk, jedno pole, chipy „Kiedy” zależne od typu
+// Arkusz szybkiego dodawania na telefonie wg CMQuickAdd.dc.html (pływający „+” w MToday).
+// FormDialog z ✕, segment Blok / Bieg / Nawyk (bez „Zadanie”: zadanie należy do bloku), jedno pole, chipy „Kiedy” zależne od typu
 // (quickWhenOptions w model.ts) i „Dodaj”. Zapis nie jest optymistyczny: pending, błąd zostaje
 // w arkuszu, a po sukcesie arkusz się zamyka, pokazuje toast „Dodano” i odświeża Dziś.
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, PenLine, XIcon } from "lucide-react";
-import { Dialog } from "radix-ui";
+import { ChevronRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, Chip, Segment } from "@/components/controls";
+import {
+  Button,
+  Chip,
+  FormDialog,
+  Segment,
+  TextField,
+} from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { createBlock } from "@/features/calendar/actions";
 import type { CategoryRow } from "@/features/calendar/load-calendar";
@@ -48,11 +53,6 @@ const RODZAJE: {
     placeholder: "Np. Woda 2 l",
   },
 ];
-
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
-const LINK =
-  "flex min-h-11 items-center gap-2 text-sm text-soft-foreground outline-none focus-visible:shadow-focus";
 
 export function MQuickAdd({
   today,
@@ -161,134 +161,107 @@ export function MQuickAdd({
 
   return (
     // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
-    <Dialog.Root
+    <FormDialog
       open
       onOpenChange={(otwarte) => !otwarte && !pending && onClose()}
-    >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content
-          aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92%] flex-col rounded-t-[18px] bg-white text-[15px] text-foreground shadow-[0_-8px_30px_rgba(0,0,0,.12)] outline-none"
+      title="Szybko dodaj"
+      phoneHeader="close"
+      footer={
+        <Button
+          variant="primary"
+          disabled={!mozeDodac}
+          onClick={() => void dodaj()}
+          className="w-full font-medium disabled:cursor-default disabled:opacity-50"
         >
-          {/* Uchwyt arkusza */}
+          Dodaj
+        </Button>
+      }
+    >
+      <Segment
+        ariaLabel="Rodzaj"
+        value={rodzaj}
+        onChange={(r) => {
+          setRodzaj(r);
+          setBlad("");
+        }}
+        options={RODZAJE}
+      />
+
+      <TextField
+        label={opis.pole}
+        type="text"
+        value={tekst}
+        maxLength={120}
+        placeholder={opis.placeholder}
+        onChange={(e) => setTekst(e.target.value)}
+        onKeyDown={(e) => {
+          // Enter dodaje (nie podczas składania znaków z klawiatury ekranowej)
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            void dodaj();
+          }
+        }}
+      />
+
+      {opcje.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Kiedy
+          </span>
           <div
-            aria-hidden="true"
-            className="mx-auto mt-2 mb-0.5 h-[5px] w-9 flex-none rounded-[3px] bg-border-strong"
-          />
-          <div className="flex items-center py-1 pr-2 pl-5">
-            <Dialog.Title className="m-0 flex-1 text-[17px] font-semibold">
-              Szybko dodaj
-            </Dialog.Title>
-            <button
-              type="button"
-              aria-label="Zamknij"
-              disabled={pending}
-              onClick={onClose}
-              className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
-            >
-              <XIcon aria-hidden="true" className="size-5" />
-            </button>
-          </div>
-
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-4 pt-1 pb-6">
-            <Segment
-              ariaLabel="Rodzaj"
-              value={rodzaj}
-              onChange={(r) => {
-                setRodzaj(r);
-                setBlad("");
-              }}
-              options={RODZAJE}
-            />
-
-            <label className="flex flex-col gap-1.5 text-[13px]">
-              <span className={ETYKIETA}>{opis.pole}</span>
-              <input
-                type="text"
-                value={tekst}
-                maxLength={120}
-                placeholder={opis.placeholder}
-                onChange={(e) => setTekst(e.target.value)}
-                onKeyDown={(e) => {
-                  // Enter dodaje (nie podczas składania znaków z klawiatury ekranowej)
-                  if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                    e.preventDefault();
-                    void dodaj();
-                  }
-                }}
-                className="box-border h-[52px] w-full rounded-md border border-input bg-white px-3.5 text-[17px] text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
-              />
-            </label>
-
-            {opcje.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className={ETYKIETA}>Kiedy</span>
-                <div
-                  role="group"
-                  aria-label="Kiedy"
-                  // Pionowy odstęp 5 px zostawia chipom pełne pole stuknięcia ≥ 44 px (wymóg ważniejszy niż 2 px z makiety)
-                  className="flex gap-2 overflow-x-auto py-[5px]"
+            role="group"
+            aria-label="Kiedy"
+            // Chipy 36 px w poziomym przewijaniu; pole stuknięcia ≥ 44 px daje pseudo-element chipa
+            className="flex gap-2 overflow-x-auto px-0.5 pt-0.5 pb-1"
+          >
+            {opcje.map((o) => (
+              <div key={o.label} className="flex-none">
+                <Chip
+                  selected={o.label === wybrana?.label}
+                  onClick={() => setKiedy(o.label)}
                 >
-                  {opcje.map((o) => (
-                    <div key={o.label} className="flex-none">
-                      <Chip
-                        variant="solid"
-                        selected={o.label === wybrana?.label}
-                        onClick={() => setKiedy(o.label)}
-                      >
-                        {o.label}
-                      </Chip>
-                    </div>
-                  ))}
-                </div>
+                  {o.label}
+                </Chip>
               </div>
-            )}
-
-            {pelnyBlok && (
-              <Link href={pelnyBlok} onClick={onClose} className={LINK}>
-                <PenLine
-                  aria-hidden="true"
-                  className="size-4 flex-none text-muted-foreground"
-                />
-                Pełny formularz bloku (kategoria, zadania, powtarzanie)
-                <ChevronRight
-                  aria-hidden="true"
-                  className="size-4 flex-none text-faint-foreground"
-                />
-              </Link>
-            )}
-            {pelnyBieg && (
-              <Link href={pelnyBieg} onClick={onClose} className={LINK}>
-                <PenLine
-                  aria-hidden="true"
-                  className="size-4 flex-none text-muted-foreground"
-                />
-                Pełny formularz biegu (dystans, tempo)
-                <ChevronRight
-                  aria-hidden="true"
-                  className="size-4 flex-none text-faint-foreground"
-                />
-              </Link>
-            )}
-
-            {blad && (
-              <p role="alert" className="m-0 text-xs text-destructive-foreground">
-                {blad}
-              </p>
-            )}
-
-            <Button
-              variant="primary"
-              disabled={!mozeDodac}
-              onClick={() => void dodaj()}
-              className="w-full font-medium disabled:cursor-default disabled:opacity-50"
-            >
-              Dodaj
-            </Button>
+            ))}
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </div>
+      )}
+
+      {pelnyBlok && (
+        <Link href={pelnyBlok} onClick={onClose} className="m-row px-0">
+          <PenLine
+            aria-hidden="true"
+            className="size-4 flex-none text-muted-foreground"
+          />
+          <span className="flex-1">
+            Pełny formularz bloku (kategoria, zadania, powtarzanie)
+          </span>
+          <ChevronRight
+            aria-hidden="true"
+            className="size-4 flex-none text-faint-foreground"
+          />
+        </Link>
+      )}
+      {pelnyBieg && (
+        <Link href={pelnyBieg} onClick={onClose} className="m-row px-0">
+          <PenLine
+            aria-hidden="true"
+            className="size-4 flex-none text-muted-foreground"
+          />
+          <span className="flex-1">Pełny formularz biegu (dystans, tempo)</span>
+          <ChevronRight
+            aria-hidden="true"
+            className="size-4 flex-none text-faint-foreground"
+          />
+        </Link>
+      )}
+
+      {blad && (
+        <p role="alert" className="m-0 text-xs text-destructive-foreground">
+          {blad}
+        </p>
+      )}
+    </FormDialog>
   );
 }
