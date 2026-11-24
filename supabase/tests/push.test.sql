@@ -1,5 +1,5 @@
 begin;
-select plan(35);
+select plan(37);
 
 -- A i B: dwa konta; endpointy na dozwolonych serwerach push.
 insert into auth.users (id, email, raw_user_meta_data)
@@ -164,10 +164,25 @@ select ok(
   'delete B nie usunął urządzenia A'
 );
 
--- Przejęcie: B zapisuje endpoint A (ta sama przeglądarka, inne konto)
+-- Przejęcie endpointu A przez B: z innymi kluczami odrzucone (sama znajomość adresu nie wystarcza)
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b3","role":"authenticated"}', true);
-select public.save_push_subscription('https://fcm.googleapis.com/fcm/send/a1', 'klucz-b', 'auth-b', 'Firefox · Linux');
+select throws_ok(
+  $$select public.save_push_subscription('https://fcm.googleapis.com/fcm/send/a1', 'klucz-b', 'auth-b', 'Firefox · Linux')$$,
+  'P0001', 'invalid subscription', 'przejęcie z innymi kluczami odrzucone'
+);
+reset role;
+select results_eq(
+  $$select ps.user_id, ps.p256dh from public.push_subscriptions as ps
+    where ps.endpoint = 'https://fcm.googleapis.com/fcm/send/a1'$$,
+  $$values ('00000000-0000-0000-0000-0000000000a3'::uuid, 'klucz-a1-nowy')$$,
+  'po odmowie urządzenie zostaje przy A z jego kluczami'
+);
+
+-- Przejęcie z tymi samymi kluczami (ta sama przeglądarka, inne konto)
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b3","role":"authenticated"}', true);
+select public.save_push_subscription('https://fcm.googleapis.com/fcm/send/a1', 'klucz-a1-nowy', 'auth-a1', 'Firefox · Linux');
 
 reset role;
 select results_eq(

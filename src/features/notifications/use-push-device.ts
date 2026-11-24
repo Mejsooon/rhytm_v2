@@ -124,10 +124,23 @@ export function usePushDevice(): {
       for (let i = 0; i < surowy.length; i++)
         applicationServerKey[i] = surowy.charCodeAt(i);
 
-      const subskrypcja = await rejestracja.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey,
-      });
+      let subskrypcja: PushSubscription;
+      try {
+        subskrypcja = await rejestracja.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+      } catch (e) {
+        // InvalidStateError: przeglądarka ma subskrypcję z innym kluczem VAPID (po rotacji kluczy).
+        // Cofamy starą i próbujemy jeszcze raz (tylko raz); inny błąd idzie dalej.
+        if ((e as { name?: unknown } | null)?.name !== "InvalidStateError") throw e;
+        const stara = await rejestracja.pushManager.getSubscription();
+        if (stara) await stara.unsubscribe().catch(() => false);
+        subskrypcja = await rejestracja.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+      }
       const klucze = subskrypcja.toJSON().keys ?? {};
       const zapis = await savePushDevice({
         endpoint: subskrypcja.endpoint,
@@ -164,7 +177,8 @@ export function usePushDevice(): {
           return;
         }
       }
-      if (subskrypcja) await subskrypcja.unsubscribe();
+      // Urządzenie już zniknęło z serwera, więc nieudane unsubscribe() nie jest błędem dla użytkownika
+      if (subskrypcja) await subskrypcja.unsubscribe().catch(() => false);
       setEndpoint(null);
       setStan("wylaczony");
     } catch {

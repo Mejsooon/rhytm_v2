@@ -50,7 +50,8 @@ grant all on public.push_subscriptions to service_role;
 -- 3. Zapis urządzenia. RLS ukrywa cudze wiersze, a ta sama przeglądarka może przejść na inne konto,
 -- więc funkcja działa z prawami właściciela:
 --   - ten sam endpoint tego samego użytkownika → nowe klucze, etykieta i last_seen_at (enabled bez zmian);
---   - endpoint innego użytkownika → jego wiersz znika, powstaje nowy (przejęcie);
+--   - endpoint innego użytkownika z tymi samymi kluczami → jego wiersz znika, powstaje nowy (przejęcie);
+--     z innymi kluczami → 'invalid subscription';
 --   - endpoint musi być adresem https jednego ze znanych serwerów push, pola niepuste, najwyżej 1000 znaków.
 -- Etykieta przycięta do 80 znaków, pusta → „Przeglądarka”. Zwraca id wiersza.
 create function public.save_push_subscription(p_endpoint text, p_p256dh text, p_auth text, p_label text)
@@ -92,7 +93,17 @@ begin
     v_label := 'Przeglądarka';
   end if;
 
-  -- Przejęcie endpointu od innego konta (ta sama przeglądarka, inny użytkownik)
+  -- Przejęcie endpointu od innego konta (ta sama przeglądarka, inny użytkownik) tylko z identycznymi kluczami:
+  -- adres endpointu może wyciec (np. z logów serwera push), ale p256dh i auth zna tylko przeglądarka,
+  -- więc sama znajomość adresu nie pozwala odebrać komuś urządzenia
+  if exists (
+    select 1 from public.push_subscriptions as ps
+    where ps.endpoint = p_endpoint
+      and ps.user_id <> v_user_id
+      and (ps.p256dh <> p_p256dh or ps.auth <> p_auth)) then
+    raise exception 'invalid subscription';
+  end if;
+
   delete from public.push_subscriptions as ps
   where ps.endpoint = p_endpoint
     and ps.user_id <> v_user_id;

@@ -238,6 +238,40 @@ describe("usePushDevice — wlacz()", () => {
     expect(register).not.toHaveBeenCalled();
   });
 
+  it("InvalidStateError (subskrypcja ze starym kluczem VAPID) → unsubscribe() starej i druga próba", async () => {
+    ustawPrzegladarke();
+    const { result } = renderHook(() => usePushDevice());
+    await waitFor(() => expect(result.current.stan).toBe("wylaczony"));
+    const stara = subskrypcja("https://fcm.googleapis.com/fcm/send/stary-klucz");
+    istniejaca = stara;
+    subscribe
+      .mockRejectedValueOnce(new DOMException("inny klucz", "InvalidStateError"))
+      .mockImplementationOnce(async () => nowa);
+
+    await act(() => result.current.wlacz());
+
+    expect(stara.unsubscribe).toHaveBeenCalled();
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    expect(savePushDevice).toHaveBeenCalledWith(
+      expect.objectContaining({ endpoint: "https://fcm.googleapis.com/fcm/send/nowa" }),
+    );
+    expect(result.current.stan).toBe("wlaczony");
+    expect(result.current.blad).toBeNull();
+  });
+
+  it("InvalidStateError dwa razy → tylko jedna ponowna próba i komunikat", async () => {
+    ustawPrzegladarke();
+    const { result } = renderHook(() => usePushDevice());
+    await waitFor(() => expect(result.current.stan).toBe("wylaczony"));
+    subscribe.mockRejectedValue(new DOMException("inny klucz", "InvalidStateError"));
+
+    await act(() => result.current.wlacz());
+
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    expect(result.current.blad).toBe("Nie udało się włączyć powiadomień.");
+    expect(result.current.stan).toBe("wylaczony");
+  });
+
   it("wyjątek przeglądarki → „Nie udało się włączyć powiadomień.”", async () => {
     ustawPrzegladarke();
     subscribe.mockRejectedValue(new Error("AbortError"));
@@ -267,6 +301,21 @@ describe("usePushDevice — wylacz()", () => {
     expect(istniejaca.unsubscribe).toHaveBeenCalled();
     expect(result.current.stan).toBe("wylaczony");
     expect(result.current.endpoint).toBeNull();
+  });
+
+  it("nieudane unsubscribe() po usunięciu na serwerze → wylaczony bez błędu", async () => {
+    uprawnienie = "granted";
+    istniejaca = subskrypcja("https://fcm.googleapis.com/fcm/send/stara");
+    istniejaca.unsubscribe.mockRejectedValue(new Error("brak"));
+    ustawPrzegladarke();
+    const { result } = renderHook(() => usePushDevice());
+    await waitFor(() => expect(result.current.stan).toBe("wlaczony"));
+
+    await act(() => result.current.wylacz());
+
+    expect(removePushDevice).toHaveBeenCalled();
+    expect(result.current.stan).toBe("wylaczony");
+    expect(result.current.blad).toBeNull();
   });
 
   it("błąd usuwania → komunikat, subskrypcja zostaje", async () => {

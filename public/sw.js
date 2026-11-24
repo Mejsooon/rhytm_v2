@@ -19,9 +19,19 @@ self.addEventListener("push", (event) => {
   );
 });
 
+// Nowa wersja service workera przejmuje otwarte karty od razu (inaczej navigate() na nich odrzuca)
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/dzis";
+  // Tylko adresy z tej samej domeny: obcy adres w treści powiadomienia (open redirect) → /dzis
+  let url = "/dzis";
+  try {
+    const u = new URL(event.notification.data?.url ?? "/dzis", self.location.origin);
+    if (u.origin === self.location.origin) url = u.pathname + u.search + u.hash;
+  } catch {}
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
@@ -29,11 +39,11 @@ self.addEventListener("notificationclick", (event) => {
         // Otwartą kartę aplikacji przenosimy na adres z powiadomienia i skupiamy; gdy jej nie ma, otwieramy nową
         for (const client of windows) {
           if ("navigate" in client && "focus" in client) {
-            // navigate() startuje przed focus(), ale na nie nie czekamy: focus() musi zajść
-            // w czasie obsługi kliknięcia, a nawigacja może trwać dłużej
-            const navigation = client.navigate(url).catch(() => null);
+            // navigate() odrzuca (albo zwraca null) dla karty, której ten SW nie kontroluje —
+            // wtedy po skupieniu otwieramy adres w nowym oknie
+            const nawigacja = await client.navigate(url).catch(() => null);
             await client.focus().catch(() => null);
-            await navigation;
+            if (!nawigacja) return self.clients.openWindow(url);
             return;
           }
         }
