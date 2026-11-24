@@ -75,7 +75,7 @@ export function IconPicker({
           onChange={(e) => setFraza(e.target.value)}
           placeholder="Szukaj ikony (po polsku lub angielsku)…"
           aria-label="Szukaj ikony"
-          className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
+          className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit] text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-base"
         />
       </label>
 

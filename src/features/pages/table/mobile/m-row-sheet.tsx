@@ -366,7 +366,8 @@ export function MRowSheet({
                       <button
                         key={c.date}
                         type="button"
-                        aria-label={`${Number(c.date.slice(8, 10))} ${MIESIACE[widok.miesiac]} ${widok.rok}`}
+                        // etykieta w dopełniaczu: „21 listopada 2026”
+                        aria-label={new Date(`${c.date}T12:00:00`).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
                         aria-pressed={zaznaczona}
                         onClick={() => wybierz(c.date)}
                         // date-cell 40 px; dziś = czerwone koło 32 px (#dc2626), wybrana = primary, wybrana i dziś = koło z pierścieniem
@@ -374,7 +375,7 @@ export function MRowSheet({
                           "flex h-10 cursor-pointer items-center justify-center justify-self-stretch rounded-md border-0 bg-transparent p-0 font-[inherit] text-sm tabular-nums",
                           zaznaczona && !dzis && "bg-primary font-semibold text-primary-foreground",
                           dzis &&
-                            "size-8 self-center justify-self-center rounded-full bg-[#dc2626] font-semibold text-white",
+                            "relative size-8 self-center justify-self-center rounded-full bg-[#dc2626] font-semibold text-white before:absolute before:-inset-1.5 before:content-['']",
                           dzis && zaznaczona && "shadow-[0_0_0_2px_#fff,0_0_0_4px_#262626]",
                         )}
                       >
@@ -391,7 +392,7 @@ export function MRowSheet({
                     : `${wybrana.slice(8, 10)}.${wybrana.slice(5, 7)}.${wybrana.slice(0, 4)} · ${roznica < 0 ? "minęło" : roznica === 0 ? "dziś" : `za ${roznica} dni`}`}
                 </span>
                 {wybrana !== null && (
-                  <Button variant="ghost" size="sm" onClick={czyscDate} className="text-muted-foreground">
+                  <Button variant="ghost" size="md" onClick={czyscDate} className="text-muted-foreground">
                     Wyczyść
                   </Button>
                 )}

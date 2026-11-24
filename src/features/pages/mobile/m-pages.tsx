@@ -75,7 +75,7 @@ export function MPages({ pages }: { pages: PageSummary[] }) {
             type="search"
             value={fraza}
             onChange={(e) => setFraza(e.target.value)}
-            placeholder="Szukaj stron i wierszy"
+            placeholder="Szukaj stron"
             aria-label="Szukaj stron"
             className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-foreground outline-none placeholder:text-muted-foreground"
           />

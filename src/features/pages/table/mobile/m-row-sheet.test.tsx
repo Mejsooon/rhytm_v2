@@ -212,7 +212,7 @@ describe("MRowSheet: Subscriptions", () => {
     arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
     const grupa = screen.getByRole("group", { name: "Data odnowienia" });
     expect(within(grupa).getByText("listopad 2026")).toBeInTheDocument();
-    expect(within(grupa).getByRole("button", { name: "21 listopad 2026" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(grupa).getByRole("button", { name: "21 listopada 2026" })).toHaveAttribute("aria-pressed", "true");
     expect(within(grupa).getByText("21.11.2026 · za 6 dni")).toBeInTheDocument();
   });
 
@@ -226,14 +226,14 @@ describe("MRowSheet: Subscriptions", () => {
   it("wybrana data staje się nową kotwicą", async () => {
     const user = userEvent.setup();
     const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    await user.click(screen.getByRole("button", { name: "25 listopad 2026" }));
+    await user.click(screen.getByRole("button", { name: "25 listopada 2026" }));
     expect(onChange).toHaveBeenLastCalledWith("o", "2026-11-25");
   });
 
   it("ponowny wybór daty z serii nie zapisuje nowej kotwicy", async () => {
     const user = userEvent.setup();
     const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    await user.click(screen.getByRole("button", { name: "21 listopad 2026" }));
+    await user.click(screen.getByRole("button", { name: "21 listopada 2026" }));
     expect(onChange).not.toHaveBeenCalledWith("o", expect.anything());
   });
 });
@@ -335,11 +335,11 @@ describe("MRowSheet: układ CMRowEdit", () => {
     );
     const grupa = screen.getByRole("group", { name: "Termin" });
     expect(within(grupa).getByText("20.11.2026 · za 5 dni")).toBeInTheDocument();
-    expect(within(grupa).getByRole("button", { name: "15 listopad 2026" }).className).toContain("bg-[#dc2626]");
-    expect(within(grupa).getByRole("button", { name: "20 listopad 2026" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(grupa).getByRole("button", { name: "15 listopada 2026" }).className).toContain("bg-[#dc2626]");
+    expect(within(grupa).getByRole("button", { name: "20 listopada 2026" })).toHaveAttribute("aria-pressed", "true");
     await user.click(within(grupa).getByRole("button", { name: "Następny miesiąc" }));
     expect(within(grupa).getByText("grudzień 2026")).toBeInTheDocument();
-    await user.click(within(grupa).getByRole("button", { name: "3 grudzień 2026" }));
+    await user.click(within(grupa).getByRole("button", { name: "3 grudnia 2026" }));
     expect(onChange).toHaveBeenLastCalledWith("d", "2026-12-03");
   });
 

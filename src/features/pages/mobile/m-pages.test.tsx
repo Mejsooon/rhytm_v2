@@ -122,7 +122,7 @@ describe("MPages", () => {
   it("szukajka ma 44 px i pole 16 px; ikona Subscriptions jest zielona", () => {
     render(<MPages pages={[strona("s", "Subscriptions", { templateKey: "subscriptions", rowCount: 7 })]} />);
     const pole = screen.getByRole("searchbox", { name: "Szukaj stron" });
-    expect(pole).toHaveAttribute("placeholder", "Szukaj stron i wierszy");
+    expect(pole).toHaveAttribute("placeholder", "Szukaj stron");
     expect(pole).toHaveClass("text-base");
     expect(pole.closest("label")).toHaveClass("h-11");
     const kafelek = screen.getByRole("link", { name: /Subscriptions/ }).querySelector("[data-page-icon]")!.parentElement!;
