@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, Plus } from "lucide-react";
+import { ChevronLeft, Plus, Table2, SquareCheck } from "lucide-react";
 
+import { Button, StatusBadge } from "@/components/controls";
 import { PageMenu } from "../../page-menu";
 import type { PageSummary } from "../../load-pages";
 import { rowsForm } from "../../rows-label";
@@ -20,12 +21,14 @@ function blokiLabel(n: number): string {
   return `${n} bloków`;
 }
 
-const PRZYCISK_PASKA =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 font-[inherit] text-foreground hover:bg-muted";
+// Przycisk „Więcej” w nagłówku: kwadrat 44 px jak .btng.ic z makiety
+const PRZYCISK_WIECEJ =
+  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent p-0 font-[inherit] text-foreground hover:bg-accent";
 
-// Telefon (MEditor.dc.html): nagłówek z powrotem i menu strony, treść strony (`children`), pole poleceń
-// z podpowiedzią, dolny pasek skrótów nad paskiem zakładek i arkusz „Wstaw blok”. Widoczne tylko
-// poniżej 800 px (klasy). Bloki i tytuł rysuje wspólne drzewo w `children`, stan bloków jest jeden.
+// Telefon (CMEditor.dc.html): nagłówek .m-head z powrotem do „Stron” i menu „Więcej”, treść strony
+// (`children`: tytuł 24/600 i bloki), pole poleceń z podpowiedzią, pasek skrótów (.editbar) nad paskiem
+// zakładek i arkusz „Wstaw blok”. Widoczne tylko poniżej 800 px (klasy). Bloki i tytuł rysuje wspólne
+// drzewo w `children`, stan bloków jest jeden.
 export function MEditor({
   store,
   page,
@@ -75,10 +78,12 @@ export function MEditor({
 
   return (
     <>
-      <header className="flex min-h-[60px] flex-none items-center gap-1 p-2 min-[800px]:hidden">
-        <Link href="/strony" aria-label="Strony" className={PRZYCISK_PASKA}>
-          <ChevronLeft size={22} aria-hidden="true" />
-        </Link>
+      <header className="m-head flex-none px-2 min-[800px]:hidden">
+        <Button variant="ghost" icon asChild>
+          <Link href="/strony" aria-label="Strony">
+            <ChevronLeft size={20} aria-hidden="true" />
+          </Link>
+        </Button>
         <div className="flex-1" />
         <PageMenu
           page={page}
@@ -86,16 +91,17 @@ export function MEditor({
           store={pagesStore}
           onRename={onRename}
           sheet
-          triggerLabel="Menu strony"
-          triggerClassName={PRZYCISK_PASKA}
+          triggerLabel="Więcej"
+          triggerClassName={PRZYCISK_WIECEJ}
         />
       </header>
 
       {children}
 
+      {/* ed-body: odstęp 10 px, dół zostawia miejsce na pasek skrótów i pasek zakładek */}
       <div className="flex flex-col gap-2.5 px-4 pb-[calc(var(--tabbar-h)+72px)] min-[800px]:hidden">
         {store.blocks.length === 0 && (
-          <p className="m-0 mt-1 mb-1.5 text-[13px] text-muted-foreground">
+          <p className="m-0 mb-1.5 text-xs text-muted-foreground">
             Stuknij „+” na dole albo wpisz „/”, żeby wstawić blok.
           </p>
         )}
@@ -106,37 +112,26 @@ export function MEditor({
           onKeyDown={przyKlawiszu}
           placeholder="Wpisz „/”, aby wstawić blok"
           aria-label="Nowy blok"
-          className="min-h-11 w-full border-0 bg-transparent py-2 font-[inherit] text-soft-foreground outline-none placeholder:text-faint-foreground"
+          className="box-border w-full min-w-0 rounded-md border-0 bg-transparent py-2.5 font-[inherit] text-base text-soft-foreground outline-none placeholder:text-faint-foreground focus:bg-black/[.02] focus:shadow-[0_0_0_2px_rgba(38,38,38,.08)]"
         />
       </div>
 
-      {/* Pasek skrótów siedzi nad paskiem zakładek (--tabbar-h) */}
-      <div className="fixed inset-x-0 bottom-(--tabbar-h) z-30 flex items-center gap-1 border-t border-border bg-panel px-3 py-2 min-[800px]:hidden">
-        <button
-          type="button"
-          aria-label="Wstaw blok"
-          onClick={() => setMenuOtwarte(true)}
-          className={`${PRZYCISK_PASKA} !bg-primary !text-white`}
-        >
-          <Plus size={22} aria-hidden="true" />
-        </button>
-        <button type="button" aria-label="Wstaw tabelę" onClick={() => wstaw("table")} className={PRZYCISK_PASKA}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <path d="M3 10h18M9 10v10" />
-          </svg>
-        </button>
-        <button type="button" aria-label="Wstaw zadanie" onClick={() => wstaw("todo")} className={PRZYCISK_PASKA}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="18" rx="3" />
-            <path d="m8 12 3 3 5-6" />
-          </svg>
-        </button>
-        <button type="button" aria-label="Wstaw nagłówek" onClick={() => wstaw("heading")} className={`${PRZYCISK_PASKA} font-bold`}>
+      {/* .editbar: pasek skrótów siedzi nad paskiem zakładek (--tabbar-h), który sam obsługuje safe-area */}
+      <div className="fixed inset-x-0 bottom-(--tabbar-h) z-30 flex items-center gap-1 border-t border-border bg-[#fafafa] px-3 py-2 min-[800px]:hidden">
+        <Button variant="primary" icon aria-label="Wstaw blok" onClick={() => setMenuOtwarte(true)}>
+          <Plus size={20} aria-hidden="true" />
+        </Button>
+        <Button variant="ghost" icon aria-label="Wstaw tabelę" onClick={() => wstaw("table")}>
+          <Table2 size={20} aria-hidden="true" />
+        </Button>
+        <Button variant="ghost" icon aria-label="Wstaw zadanie" onClick={() => wstaw("todo")}>
+          <SquareCheck size={20} aria-hidden="true" />
+        </Button>
+        <Button variant="ghost" icon aria-label="Wstaw nagłówek" onClick={() => wstaw("heading")} className="font-bold">
           H
-        </button>
+        </Button>
         <span className="flex-1" />
-        <span className="font-mono text-[11px] text-faint-foreground">{blokiLabel(store.blocks.length)}</span>
+        <StatusBadge tone="gray">{blokiLabel(store.blocks.length)}</StatusBadge>
       </div>
 
       <MInsertSheet
