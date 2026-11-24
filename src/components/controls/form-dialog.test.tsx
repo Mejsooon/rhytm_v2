@@ -137,4 +137,31 @@ describe("FormDialog z Dropdown w środku", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it("opis jest powiązany z oknem przez aria-describedby", () => {
+    render(
+      <FormDialog open onOpenChange={() => {}} title="Nowy blok" description="Podpowiedź do okna">
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    const okno = screen.getByRole("dialog", { name: "Nowy blok" });
+    const opis = screen.getByText("Podpowiedź do okna");
+    expect(okno).toHaveAttribute("aria-describedby", opis.id);
+    expect(opis.id).not.toBe("");
+  });
+
+  it("bez opisu nie ma aria-describedby ani ostrzeżenia Radix", () => {
+    const blad = vi.spyOn(console, "error").mockImplementation(() => {});
+    const ostrzezenie = vi.spyOn(console, "warn").mockImplementation(() => {});
+    render(
+      <FormDialog open onOpenChange={() => {}} title="Nowy blok">
+        <p>Treść</p>
+      </FormDialog>,
+    );
+    expect(screen.getByRole("dialog", { name: "Nowy blok" })).not.toHaveAttribute("aria-describedby");
+    expect(blad).not.toHaveBeenCalled();
+    expect(ostrzezenie).not.toHaveBeenCalled();
+    blad.mockRestore();
+    ostrzezenie.mockRestore();
+  });
 });

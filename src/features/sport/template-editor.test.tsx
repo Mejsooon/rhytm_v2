@@ -38,6 +38,12 @@ beforeEach(() => {
 });
 
 describe("TemplateEditor — nowy szablon", () => {
+  it("okruszki są nawigacją „Okruszki”", () => {
+    render(<TemplateEditor data={dane(true)} />);
+    const nav = screen.getByRole("navigation", { name: "Okruszki" });
+    expect(nav).toHaveTextContent("Sport");
+  });
+
   it("ścieżka „Nowy szablon”, nagłówek, brak ćwiczeń i brak „Usuń szablon”", () => {
     render(<TemplateEditor data={dane(true)} />);
     // „Anuluj” w nagłówku i pod formularzem bez ramki (ghost), na telefonie 44 px

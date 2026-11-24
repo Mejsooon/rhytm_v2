@@ -196,13 +196,15 @@ select lives_ok(
   format('select public.reorder_pages(array[%L]::uuid[])', current_setting('test.reg')),
   'reorder_pages bez strony systemowej przechodzi');
 
--- Sejf: count_secrets i reset_vault obejmują Notatkę.
+-- Sejf: count_secrets i reset_vault obejmują Notatkę. Strażnik wierszy wymaga aktywnego sejfu i poprawnego kształtu.
+insert into public.vaults (user_id, status, generation)
+values ('00000000-0000-0000-0000-00000000000c', 'active', 1);
 insert into public.page_rows (block_id, values)
 values (
   current_setting('test.sys_block')::uuid,
   jsonb_build_object(
-    current_setting('test.f_haslo'), '{"v":1,"g":1,"iv":"aaa","ct":"bbb"}'::jsonb,
-    current_setting('test.f_notatka'), '{"v":1,"g":1,"iv":"ccc","ct":"ddd"}'::jsonb
+    current_setting('test.f_haslo'), '{"v":1,"g":1,"iv":"AAAAAAAAAAAAAAAA","ct":"AAAAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
+    current_setting('test.f_notatka'), '{"v":1,"g":1,"iv":"BBBBBBBBBBBBBBBB","ct":"BBBBBBBBBBBBBBBBBBBBBBBB"}'::jsonb
   )
 );
 select is(public.count_secrets(), 2, 'count_secrets liczy Hasło i Notatkę');

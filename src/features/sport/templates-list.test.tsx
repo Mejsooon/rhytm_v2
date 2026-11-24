@@ -51,6 +51,12 @@ beforeEach(() => {
 });
 
 describe("TemplatesList", () => {
+  it("okruszki są nawigacją „Okruszki”", () => {
+    render(<TemplatesList data={dane()} flash={null} />);
+    const nav = screen.getByRole("navigation", { name: "Okruszki" });
+    expect(nav).toHaveTextContent("Sport");
+  });
+
   it("ścieżka, nagłówek i „Nowy szablon” w nagłówku", () => {
     render(<TemplatesList data={dane()} flash={null} />);
     expect(screen.getByRole("link", { name: "Sport" })).toHaveAttribute(
@@ -101,7 +107,7 @@ describe("TemplatesList", () => {
       "tabular-nums",
     );
     expect(
-      within(push_).getByText("Wyciskanie na ławce").parentElement,
+      within(push_).getByText("Wyciskanie na ławce").closest("span.rounded-sm"),
     ).toHaveClass("bg-white", "border-input");
     // Rozpocznij = primary sm, Edytuj = secondary sm; na telefonie 44 px
     expect(
@@ -139,7 +145,7 @@ describe("TemplatesList", () => {
     render(<TemplatesList data={d} flash={null} />);
     const tekst = screen.getByText(dluga);
     expect(tekst).toHaveClass("min-w-0", "truncate");
-    expect(tekst.parentElement).toHaveClass("max-w-full");
+    expect(tekst.closest("span.rounded-sm")).toHaveClass("max-w-full");
   });
 
   it("karta „+ Nowy szablon” ma przerywaną ramkę i prowadzi do edytora", () => {

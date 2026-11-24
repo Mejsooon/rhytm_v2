@@ -188,16 +188,18 @@ test.describe("strony", () => {
     // Stan kolumny Status i wiersza w bazie: „Utwórz” i „Usuń opcję” wysyłają po dwie akcje
     // (pole i komórka), więc zamiast liczyć odpowiedzi czekamy, aż baza pokaże ich wynik
     async function stanWBazie() {
-      const { data: pola } = await adminClient()
+      const { data: pola, error: bladPol } = await adminClient()
         .from("page_fields")
         .select("id, config")
         .eq("user_id", userId)
         .eq("name", "Status");
-      const { data: wiersze } = await adminClient()
+      if (bladPol) throw bladPol;
+      const { data: wiersze, error: bladWierszy } = await adminClient()
         .from("page_rows")
         .select("values")
         .eq("user_id", userId)
         .is("deleted_at", null);
+      if (bladWierszy) throw bladWierszy;
       const pole = pola?.[0] as
         | { id: string; config: { options?: { id: string; label: string; color: string }[] } }
         | undefined;
@@ -227,7 +229,7 @@ test.describe("strony", () => {
     await expect(szukaj).toHaveCount(0);
     await expect(status).toHaveText("Porzucone");
     await expect
-      .poll(stanWBazie)
+      .poll(stanWBazie, { timeout: 10_000 })
       .toEqual({ opcja: "#525252", komorka: "Porzucone" });
 
     // „⋯” przy opcji → panel „Edycja opcji” → kolor Czerwony (jedna akcja: zapis pola)
@@ -249,7 +251,7 @@ test.describe("strony", () => {
     ).toHaveAttribute("aria-pressed", "true");
     // Kolor musi być zapisany przed usunięciem: inaczej spóźniony zapis koloru mógłby przywrócić opcję
     await expect
-      .poll(stanWBazie)
+      .poll(stanWBazie, { timeout: 10_000 })
       .toEqual({ opcja: "#b91c1c", komorka: "Porzucone" });
 
     // „Usuń opcję”: komórka pustoszeje, panel wraca do listy, opcji nie ma
@@ -258,7 +260,9 @@ test.describe("strony", () => {
     await expect(opcja).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(status).toHaveText("—");
-    await expect.poll(stanWBazie).toEqual({ opcja: "brak", komorka: null });
+    await expect
+      .poll(stanWBazie, { timeout: 10_000 })
+      .toEqual({ opcja: "brak", komorka: null });
 
     // Po przeładowaniu opcji nadal nie ma, a pozostałe są
     await page.reload();

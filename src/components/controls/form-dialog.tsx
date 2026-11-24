@@ -35,7 +35,7 @@ export function FormDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/[.32] backdrop-blur-[4px] max-[799px]:bg-black/40 max-[799px]:backdrop-blur-none" />
         <Dialog.Content
-          aria-describedby={undefined}
+          {...(description ? {} : { "aria-describedby": undefined })}
           className={`fixed z-50 flex flex-col bg-white text-sm text-foreground outline-none min-[800px]:top-1/2 min-[800px]:left-1/2 min-[800px]:max-h-[calc(100%-64px)] ${wide ? "min-[800px]:w-[min(560px,calc(100%-32px))]" : "min-[800px]:w-[min(460px,calc(100%-32px))]"} min-[800px]:-translate-x-1/2 min-[800px]:-translate-y-1/2 rounded-xl bg-clip-padding min-[800px]:border min-[800px]:border-border min-[800px]:shadow-pop max-[799px]:inset-x-0 max-[799px]:bottom-0 max-[799px]:max-h-[92%] max-[799px]:rounded-t-[18px] max-[799px]:rounded-b-none max-[799px]:shadow-[0_-8px_30px_rgba(0,0,0,.12)]`}
         >
           {/* Uchwyt arkusza — tylko na telefonie */}
@@ -49,9 +49,9 @@ export function FormDialog({
                 {title}
               </Dialog.Title>
               {description && (
-                <p className="m-0 mt-1 text-sm text-muted-foreground max-[799px]:hidden">
+                <Dialog.Description className="m-0 mt-1 text-sm text-muted-foreground max-[799px]:hidden">
                   {description}
-                </p>
+                </Dialog.Description>
               )}
             </div>
             {/* ✕ jak .btng.ic.sm z makiet: 28 px bez ramki; na telefonie (gdyby był widoczny) cel 44 px */}
