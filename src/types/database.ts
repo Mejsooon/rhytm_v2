@@ -647,6 +647,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          enabled: boolean;
+          endpoint: string;
+          id: string;
+          label: string;
+          last_seen_at: string;
+          p256dh: string;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          created_at?: string;
+          enabled?: boolean;
+          endpoint: string;
+          id?: string;
+          label: string;
+          last_seen_at?: string;
+          p256dh: string;
+          user_id?: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          enabled?: boolean;
+          endpoint?: string;
+          id?: string;
+          label?: string;
+          last_seen_at?: string;
+          p256dh?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       runs: {
         Row: {
           difficulty: number | null;
@@ -1063,6 +1099,15 @@ export type Database = {
       reset_vault: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      save_push_subscription: {
+        Args: {
+          p_auth: string;
+          p_endpoint: string;
+          p_label: string;
+          p_p256dh: string;
+        };
+        Returns: string;
       };
       split_block_series: {
         Args: {
