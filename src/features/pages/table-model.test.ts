@@ -217,7 +217,7 @@ describe("rows with deletedAt are excluded", () => {
     const k = ksiazki();
     const rows = k.rows.map((r) => (r.id === "r3" ? { ...r, deletedAt: "2026-11-14T10:00:00Z" } : r));
     expect(visibleRows(k.fields, rows, bezUstawien).map((r) => r.id)).not.toContain("r3");
-    expect(summarize(k.pole("Tytuł"), rows, { kind: "count" }, TODAY)).toBe("10 wierszy");
+    expect(summarize(k.pole("Tytuł"), rows, { kind: "count" }, TODAY, [])).toBe("10 wierszy");
     expect(computeCard(k.settings.pinned_cards[0], k.fields, rows, TODAY).value).toBe("5");
   });
 });
@@ -260,33 +260,33 @@ describe("summarize", () => {
   const rows = [wiersz(1, { cena: 10 }), wiersz(2, { cena: 33 }), wiersz(3, {})];
 
   it("sum i avg Liczby z formatem pln", () => {
-    expect(summarize(cena, rows, { kind: "sum" }, TODAY)).toBe("43,00 zł");
-    expect(summarize(cena, rows, { kind: "avg" }, TODAY)).toBe("śr. 21,50 zł");
-    expect(summarize(cena, rows, { kind: "min" }, TODAY)).toBe("10,00 zł");
-    expect(summarize(cena, rows, { kind: "max" }, TODAY)).toBe("33,00 zł");
+    expect(summarize(cena, rows, { kind: "sum" }, TODAY, [])).toBe("43,00 zł");
+    expect(summarize(cena, rows, { kind: "avg" }, TODAY, [])).toBe("śr. 21,50 zł");
+    expect(summarize(cena, rows, { kind: "min" }, TODAY, [])).toBe("10,00 zł");
+    expect(summarize(cena, rows, { kind: "max" }, TODAY, [])).toBe("33,00 zł");
   });
 
   it("avg Oceny z 1 miejscem po przecinku", () => {
     const k = ksiazki();
-    expect(summarize(k.pole("Ocena"), k.rows, { kind: "avg" }, TODAY)).toBe("śr. 4,1");
+    expect(summarize(k.pole("Ocena"), k.rows, { kind: "avg" }, TODAY, [])).toBe("śr. 4,1");
   });
 
   it("count, filled, empty", () => {
-    expect(summarize(cena, rows, { kind: "count" }, TODAY)).toBe("3 wiersze");
-    expect(summarize(cena, rows, { kind: "filled" }, TODAY)).toBe("2 wypełnione");
-    expect(summarize(cena, rows, { kind: "empty" }, TODAY)).toBe("1 pusty");
-    expect(summarize(cena, rows, { kind: "none" }, TODAY)).toBe("");
+    expect(summarize(cena, rows, { kind: "count" }, TODAY, [])).toBe("3 wiersze");
+    expect(summarize(cena, rows, { kind: "filled" }, TODAY, [])).toBe("2 wypełnione");
+    expect(summarize(cena, rows, { kind: "empty" }, TODAY, [])).toBe("1 pusty");
+    expect(summarize(cena, rows, { kind: "none" }, TODAY, [])).toBe("");
     const k = ksiazki();
-    expect(summarize(k.pole("Przeczytana"), k.rows, { kind: "filled" }, TODAY)).toBe("7 terminów");
+    expect(summarize(k.pole("Przeczytana"), k.rows, { kind: "filled" }, TODAY, [])).toBe("7 terminów");
     expect(
-      summarize(k.pole("Przeczytana"), k.rows, { kind: "filled", unit: ["termin", "terminy", "terminów"] }, TODAY),
+      summarize(k.pole("Przeczytana"), k.rows, { kind: "filled", unit: ["termin", "terminy", "terminów"] }, TODAY, []),
     ).toBe("7 terminów");
   });
 
   it("checked pokazuje „x / y”", () => {
     const chk: PageField = { id: "c", name: "Aktywna", type: "checkbox", config: {}, position: 0, isTitle: false };
     const r = [wiersz(1, { c: true }), wiersz(2, { c: false }), wiersz(3, { c: true }), wiersz(4, {})];
-    expect(summarize(chk, r, { kind: "checked" }, TODAY)).toBe("2 / 4");
+    expect(summarize(chk, r, { kind: "checked" }, TODAY, [])).toBe("2 / 4");
   });
 
   it("earliest, latest i nearest dat (nearest >= today)", () => {
@@ -298,15 +298,15 @@ describe("summarize", () => {
       wiersz(3, { [data.id]: "2026-12-24" }),
       wiersz(4, {}),
     ];
-    expect(summarize(data, r, { kind: "earliest" }, TODAY)).toBe("01.11.2026");
-    expect(summarize(data, r, { kind: "latest" }, TODAY)).toBe("24.12.2026");
-    expect(summarize(data, r, { kind: "nearest" }, TODAY)).toBe("20.11.2026");
-    expect(summarize(data, [r[0]], { kind: "nearest" }, TODAY)).toBe("—");
+    expect(summarize(data, r, { kind: "earliest" }, TODAY, [])).toBe("01.11.2026");
+    expect(summarize(data, r, { kind: "latest" }, TODAY, [])).toBe("24.12.2026");
+    expect(summarize(data, r, { kind: "nearest" }, TODAY, [])).toBe("20.11.2026");
+    expect(summarize(data, [r[0]], { kind: "nearest" }, TODAY, [])).toBe("—");
   });
 
   it("brak wartości daje „—”", () => {
-    expect(summarize(cena, [], { kind: "sum" }, TODAY)).toBe("—");
-    expect(summarize(cena, [], { kind: "avg" }, TODAY)).toBe("—");
+    expect(summarize(cena, [], { kind: "sum" }, TODAY, [])).toBe("—");
+    expect(summarize(cena, [], { kind: "avg" }, TODAY, [])).toBe("—");
   });
 
   it("summaryOptions zależy od typu", () => {
@@ -321,7 +321,7 @@ describe("summarize", () => {
 describe("stopki z szablonów (teksty z makiet)", () => {
   const stopka = (t: ReturnType<typeof szablon>, name: string, rows: PageRow[]) => {
     const pole = t.pole(name);
-    return summarize(pole, rows, t.settings.column_summaries[pole.id], TODAY);
+    return summarize(pole, rows, t.settings.column_summaries[pole.id], TODAY, []);
   };
 
   it("Books: przeczytane, śr., w tym roku", () => {
@@ -507,8 +507,8 @@ describe("pole Sekret w tabeli", () => {
     const posortowane = visibleRows(fields, rows, { ...bezUstawien, sort: [{ field_id: "s", dir: "desc" }] });
     expect(posortowane.map((r) => r.id)).toEqual(["r1", "r2", "r3"]);
 
-    expect(summarize(sekret, rows, { kind: "filled" }, TODAY)).toBe("1 wypełniony");
-    expect(summarize(sekret, rows, { kind: "empty" }, TODAY)).toBe("2 puste");
+    expect(summarize(sekret, rows, { kind: "filled" }, TODAY, [])).toBe("1 wypełniony");
+    expect(summarize(sekret, rows, { kind: "empty" }, TODAY, [])).toBe("2 puste");
 
     expect(formatValue(sekret, wartosc)).toBe("");
     expect(formatValue(sekret, null)).toBe("");
@@ -622,7 +622,7 @@ describe("Subscriptions: summarize", () => {
     const k = subskrypcje();
     const kwota = k.pole("Kwota cykliczna");
     // 43 + 249,99 / 12 + 37,99 = 101,8225
-    expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY)).toBe("Σ 101,82 zł / mies.");
+    expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY, [])).toBe("Σ 101,82 zł / mies.");
     const bezOdnowienia = k.fields.filter((f) => f.type !== "renewal");
     expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY, bezOdnowienia)).toBe("Σ 101,82 zł / mies.");
   });
@@ -631,7 +631,7 @@ describe("Subscriptions: summarize", () => {
     const k = subskrypcje();
     const kwota = k.pole("Kwota cykliczna");
     const duzo = [wiersz(1, { [kwota.id]: { amount: 437.94, cycle: "month" } })];
-    expect(summarize(kwota, duzo, { kind: "sum_year" }, TODAY)).toBe(`Σ 5${NBSP}255,28 zł / rok`);
+    expect(summarize(kwota, duzo, { kind: "sum_year" }, TODAY, [])).toBe(`Σ 5${NBSP}255,28 zł / rok`);
     expect(summarize(kwota, [], { kind: "sum_month" }, TODAY, k.fields)).toBe("—");
   });
 

@@ -353,7 +353,8 @@ export function MRowSheet({
           );
         }
 
-        // Data odnowienia (minimum na telefon): kotwica serii w polu daty i dopisek z następnym odnowieniem
+        // Data odnowienia (minimum na telefon): pole daty pokazuje następne odnowienie (jak tabela),
+        // a wybrana data zapisuje się jako nowa kotwica serii
         if (f.type === "renewal") {
           const v = normalizeValue(f, surowa);
           const nastepne =
@@ -364,12 +365,9 @@ export function MRowSheet({
               <DatePicker
                 ariaLabel={f.name}
                 today={today}
-                value={typeof v === "string" ? (v as IsoDate) : null}
+                value={nastepne as IsoDate | null}
                 onChange={(d) => onChange(f.id, d)}
               />
-              {nastepne !== null && (
-                <span className="font-normal text-muted-foreground">następne: {formatValue(f, nastepne)}</span>
-              )}
             </div>
           );
         }

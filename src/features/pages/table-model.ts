@@ -263,7 +263,7 @@ export function summarize(
   summary: ColumnSummary,
   today: string,
   // Wszystkie pola tabeli: sumy Kwoty cyklicznej i podsumowania Daty odnowienia szukają w nich „Aktywnej”
-  fields: PageField[] = [],
+  fields: PageField[],
 ): string {
   const kind = summary.kind;
   const unit = summary.unit;

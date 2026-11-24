@@ -206,15 +206,23 @@ describe("MRowSheet: Subscriptions", () => {
     expect(onChange).toHaveBeenLastCalledWith("k", { amount: 43, cycle: "year" });
   });
 
-  it("data odnowienia: kotwica w polu daty i dopisek „następne: 21.11.2026”", () => {
+  it("data odnowienia: pole pokazuje następne odnowienie, nie kotwicę", () => {
     arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
-    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("21.10.2026");
-    expect(screen.getByText("następne: 21.11.2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("21.11.2026");
+    expect(screen.queryByText(/następne:/)).not.toBeInTheDocument();
   });
 
   it("cykl bierze się z ukrytej kolumny kwoty (allFields)", () => {
     arkuszSub({ k: { amount: 249.99, cycle: "year" }, o: "2025-12-03" }, [SUB[1]], SUB);
-    expect(screen.getByText("następne: 03.12.2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Data odnowienia" })).toHaveTextContent("03.12.2026");
+  });
+
+  it("wybrana data staje się nową kotwicą", async () => {
+    const user = userEvent.setup();
+    const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
+    await user.click(screen.getByRole("button", { name: "Data odnowienia" }));
+    await user.click(screen.getByRole("button", { name: /25/ }));
+    expect(onChange).toHaveBeenLastCalledWith("o", "2026-11-25");
   });
 });
 
