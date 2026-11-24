@@ -7,7 +7,7 @@ import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { isSecretValue } from "@/features/vault/crypto";
 import { normalizeValue } from "./fields";
-import { BLAD_ZAPISU, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE } from "./messages";
+import { BLAD_ZAPISU, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE, SEKRET_ZA_DLUGI } from "./messages";
 import type { CellValue, FieldConfig, FieldType, PageField } from "./fields";
 import type { BlockType, LoadedBlock } from "./load-page";
 import {
@@ -742,10 +742,10 @@ export async function addRow(
     if (!(p.id in wartosci.data) && !pole.isTitle) continue;
     const surowaSekret = wartosci.data[p.id];
     if (pole.type === "secret" && surowaSekret !== null && surowaSekret !== undefined) {
-      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
-      if (!isSecretValue(surowaSekret) || surowaSekret.ct.length > 8192 || sejf === null) {
-        return { ok: false, message: SEJF_ZABLOKOWANY };
-      }
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
+      if (!isSecretValue(surowaSekret) || sejf === null) return { ok: false, message: SEJF_ZABLOKOWANY };
+      // ct ponad 8192 znaki odrzuca też strażnik w bazie; tu z dokładnym komunikatem
+      if (surowaSekret.ct.length > 8192) return { ok: false, message: SEKRET_ZA_DLUGI };
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
       if (surowaSekret.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
       if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };
@@ -846,10 +846,10 @@ export async function updateRow(
       isTitle: p.is_title,
     };
     if (pole.type === "secret" && surowa !== null && surowa !== undefined) {
-      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu; ct ponad 8192 znaki odrzucamy
-      if (!isSecretValue(surowa) || surowa.ct.length > 8192 || sejf === null) {
-        return { ok: false, message: SEJF_ZABLOKOWANY };
-      }
+      // String i każdy inny kształt niż SecretValue to próba zapisu jawnego tekstu
+      if (!isSecretValue(surowa) || sejf === null) return { ok: false, message: SEJF_ZABLOKOWANY };
+      // ct ponad 8192 znaki odrzuca też strażnik w bazie; tu z dokładnym komunikatem
+      if (surowa.ct.length > 8192) return { ok: false, message: SEKRET_ZA_DLUGI };
       // Złe g przy istniejącym wierszu sejfu (także po resecie) = zmiana w innej karcie
       if (surowa.g !== sejf.generation) return { ok: false, message: SEJF_ZMIENIL_SIE, code: "stale_generation" };
       if (sejf.status !== "active") return { ok: false, message: SEJF_ZABLOKOWANY };

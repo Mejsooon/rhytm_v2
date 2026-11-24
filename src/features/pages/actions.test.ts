@@ -539,10 +539,20 @@ describe("pole Sekret", () => {
     expect(tables.page_rows.insert).not.toHaveBeenCalled();
   });
 
-  it("updateRow i addRow odrzucają ct dłuższe niż 8192 znaki; zapisują bez dodatkowych kluczy", async () => {
+  it("bez wiersza vaults za długie ct to dalej „Sejf musi być odblokowany” (updateRow i addRow)", async () => {
+    tables.vaults = fakeTable({ single: null });
     const zaDlugi = { ...SEKRET, ct: "A".repeat(8196) };
     expect(await updateRow(WIERSZ, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: NIEZALOGOWANY });
     expect(await addRow(BLOK, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: NIEZALOGOWANY });
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
+  it("updateRow i addRow odrzucają ct dłuższe niż 8192 znaki osobnym komunikatem; zapisują bez dodatkowych kluczy", async () => {
+    const zaDlugi = { ...SEKRET, ct: "A".repeat(8196) };
+    const ZA_DLUGI = "Nie zapisano. Tekst jest za długi.";
+    expect(await updateRow(WIERSZ, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: ZA_DLUGI });
+    expect(await addRow(BLOK, { [POLE_SEKRET]: zaDlugi })).toEqual({ ok: false, message: ZA_DLUGI });
     expect(tables.page_rows.update).not.toHaveBeenCalled();
     expect(tables.page_rows.insert).not.toHaveBeenCalled();
     // Dokładnie 8192 znaki przechodzą; dodatkowe klucze nie trafiają do bazy
