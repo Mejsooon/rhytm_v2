@@ -6,6 +6,7 @@ import {
   randomPassword,
   uniqueEmail,
 } from "./helpers/konto";
+import { latestLinkFor } from "./helpers/mailpit";
 
 test.describe("ustawienia ogólne", () => {
   // Krótszy limit akcji: przy błędzie widać, która linia utknęła (a nie ogólny timeout testu)
@@ -69,8 +70,7 @@ test.describe("ustawienia ogólne", () => {
 
     await page.reload();
     await expect(
-      page.getByTestId("karta-cele")
-        .getByText("8:15", { exact: true }),
+      page.getByTestId("karta-cele").getByText("8:15", { exact: true }),
     ).toBeVisible();
 
     // Cele treningowe: nowe konto ma oba włączone (3 treningi, 25 km) → wyłączamy km, treningi 5 → zapis
@@ -126,5 +126,69 @@ test.describe("ustawienia ogólne", () => {
     await expect(
       profil2.getByRole("button", { name: "Zapisz" }),
     ).toBeDisabled();
+  });
+  test("karta Konto: zmiana e-maila przez linki na oba adresy", async ({
+    page,
+  }, info) => {
+    const stary = uniqueEmail(info.project.name);
+    const nowy = uniqueEmail(`${info.project.name}-nowy`);
+    const haslo = randomPassword();
+    await createConfirmedUser(stary, haslo);
+    await logInViaForm(page, stary, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/ogolne");
+    const konto = page.getByTestId("karta-konto");
+    await expect(
+      konto.getByText(`${stary.toLowerCase()} · potwierdzony`),
+    ).toBeVisible();
+    await konto.getByRole("button", { name: "Zmień" }).click();
+    await konto.getByPlaceholder("nowy@adres.pl").fill(nowy);
+    await konto.getByRole("button", { name: "Wyślij link" }).click();
+    await expect(
+      konto.getByText(/link potwierdzający wysłany na/),
+    ).toBeVisible();
+    await expect(
+      konto.getByText(
+        "Kliknij link w obu wiadomościach: na obecnym i na nowym adresie.",
+      ),
+    ).toBeVisible();
+
+    // double_confirm_changes: po jednym mailu na każdy adres; zmiana wchodzi po obu kliknięciach
+    const linkStary = await latestLinkFor(stary);
+    const linkNowy = await latestLinkFor(nowy);
+    await page.goto(linkStary);
+    await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
+    await expect(
+      page
+        .getByTestId("karta-konto")
+        .getByText(
+          "Link potwierdzony. Kliknij jeszcze link na drugim adresie.",
+        ),
+    ).toBeVisible();
+    await page.goto(linkNowy);
+    await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
+    await expect(
+      page
+        .getByTestId("karta-konto")
+        .getByText(`${nowy.toLowerCase()} · potwierdzony`),
+    ).toBeVisible();
+  });
+
+  test("karta Konto: wiersz Sesja i „Wyloguj” prowadzi na logowanie", async ({
+    page,
+  }, info) => {
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/ogolne");
+    const konto = page.getByTestId("karta-konto");
+    await expect(konto.getByText("Aktywna")).toBeVisible();
+    await expect(konto.getByText(/· teraz$/)).toBeVisible();
+    await konto.getByRole("button", { name: "Wyloguj" }).click();
+    await expect(page).toHaveURL(/\/logowanie/);
   });
 });

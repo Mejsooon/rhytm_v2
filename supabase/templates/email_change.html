@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pl">
+  <body style="margin:0;padding:24px;background:#fafafa;font-family:Arial,Helvetica,sans-serif;color:#171717">
+    <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #eaeaea;border-radius:12px;padding:28px">
+      <p style="margin:0 0 16px;font-size:17px;font-weight:600">rhytm</p>
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600">Potwierdź zmianę adresu e-mail</h1>
+      <p style="margin:0 0 20px;font-size:14px;line-height:1.5;color:#666666">Prosimy o zmianę adresu konta z {{ .Email }} na {{ .NewEmail }}. Kliknij przycisk, żeby ją potwierdzić. Zmiana wejdzie w życie po potwierdzeniu w obu wiadomościach: na obecnym i na nowym adresie. Link jest jednorazowy i ma ograniczony czas ważności.</p>
+      <p style="margin:0 0 20px">
+        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;border-radius:6px;padding:10px 16px;font-size:14px;font-weight:500">Potwierdź zmianę</a>
+      </p>
+      <p style="margin:0;font-size:12px;line-height:1.5;color:#6b6b6b">Jeśli to nie Ty prosisz o zmianę adresu, zignoruj tę wiadomość.</p>
+    </div>
+  </body>
+</html>

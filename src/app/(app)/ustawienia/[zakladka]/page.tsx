@@ -1,9 +1,11 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { Card, CardContent } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
+import { AccountCard } from "@/features/settings/account-card";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { GoalsCard } from "@/features/settings/goals-card";
 import { ProfileCard } from "@/features/settings/profile-card";
@@ -16,12 +18,19 @@ import {
   type SettingsTabSlug,
 } from "@/features/settings/settings-tabs";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
+import { describeUserAgent } from "@/lib/user-agent";
 import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
 import { createClient } from "@/lib/supabase/server";
 
 // Karty Profil i Cele z zapisanymi wartościami (dane zależą od ciasteczek → connection + Suspense)
-async function Ogolne() {
+async function Ogolne({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string | string[] }>;
+}) {
   await connection();
+  // ?email=potwierdzono dopisuje auth/confirm po kliknięciu linku ze zmiany adresu (czytane tu, w Suspense)
+  const emailConfirmed = (await searchParams).email === "potwierdzono";
   const supabase = await createClient();
   const {
     data: { user },
@@ -42,6 +51,12 @@ async function Ogolne() {
   // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = komunikat w karcie)
   const kosz = await loadTrash();
   const waluta = profil?.currency;
+  // Hasło do konta ma tylko tożsamość „email” (konto samo z Google go nie ma)
+  const hasPassword = (user.identities ?? []).some(
+    (t) => t.provider === "email",
+  );
+  const zmianaHasla = user.user_metadata?.password_changed_at;
+  const sesja = describeUserAgent((await headers()).get("user-agent"));
   return (
     <>
       <ProfileCard
@@ -78,6 +93,15 @@ async function Ogolne() {
           week: profil?.week_start === "sun" ? "sun" : "mon",
         }}
       />
+      <AccountCard
+        email={user.email ?? ""}
+        newEmail={user.new_email ?? null}
+        hasPassword={hasPassword}
+        passwordChangedAt={typeof zmianaHasla === "string" ? zmianaHasla : null}
+        sessionLabel={sesja.label}
+        emailConfirmed={emailConfirmed}
+        timeZone={strefa}
+      />
       <TrashCard
         pages={kosz.ok ? kosz.pages : []}
         rows={kosz.ok ? kosz.rows : []}
@@ -107,8 +131,10 @@ async function Kategorie() {
 
 export default async function ZakladkaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ zakladka: string }>;
+  searchParams: Promise<{ email?: string | string[] }>;
 }) {
   const { zakladka } = await params;
   const tab = SETTINGS_TABS.find((t) => t.slug === zakladka);
@@ -136,7 +162,7 @@ export default async function ZakladkaPage({
           </div>
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
-              <Ogolne />
+              <Ogolne searchParams={searchParams} />
             </Suspense>
           ) : tab.slug === "kategorie" ? (
             <Suspense fallback={null}>
