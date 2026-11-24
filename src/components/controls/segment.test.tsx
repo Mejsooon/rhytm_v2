@@ -92,4 +92,11 @@ describe("Segment", () => {
     expect(screen.getByRole("radiogroup")).toHaveClass("flex", "w-full");
     expect(screen.getByRole("radio", { name: "Pn" })).toHaveClass("flex-1");
   });
+
+  it("telefon: przyciski flex-1 i min-w-0, etykieta ucinana wielokropkiem", () => {
+    render(<Wrapper />);
+    const przycisk = screen.getByRole("radio", { name: "Pn" });
+    expect(przycisk).toHaveClass("max-[799px]:h-10", "max-[799px]:flex-1", "max-[799px]:min-w-0");
+    expect(przycisk.querySelector("span")).toHaveClass("max-[799px]:truncate", "max-[799px]:min-w-0");
+  });
 });

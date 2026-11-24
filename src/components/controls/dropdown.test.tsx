@@ -158,3 +158,13 @@ describe("Dropdown", () => {
     expect(hint).toHaveClass("font-mono");
   });
 });
+
+describe("Dropdown compact", () => {
+  it("wariant compact ma na telefonie 44 px, na webie 28 px", () => {
+    render(
+      <Dropdown ariaLabel="Strefa" value="utc" options={OPCJE} onChange={() => {}} compact />,
+    );
+    expect(screen.getByRole("button", { name: "Strefa" })).toHaveClass("h-7", "max-[799px]:h-11");
+  });
+});
+
