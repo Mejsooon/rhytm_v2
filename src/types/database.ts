@@ -551,6 +551,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      password_check_failures: {
+        Row: {
+          failed_at: string;
+          user_id: string;
+        };
+        Insert: {
+          failed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          failed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_path: string | null;
@@ -993,6 +1008,17 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      list_my_sessions: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          id: string;
+          ip: string | null;
+          is_current: boolean;
+          last_active_at: string;
+          user_agent: string | null;
+        }[];
+      };
       move_category: {
         Args: {
           p_dir: number;
@@ -1019,6 +1045,10 @@ export type Database = {
         Args: { p_ids: string[] };
         Returns: undefined;
       };
+      revoke_my_session: {
+        Args: { p_session_id: string };
+        Returns: boolean;
+      };
       reset_vault: {
         Args: Record<PropertyKey, never>;
         Returns: number;
@@ -1031,6 +1061,10 @@ export type Database = {
           p_patch: Json;
         };
         Returns: string;
+      };
+      verify_my_password: {
+        Args: { p_password: string };
+        Returns: boolean;
       };
     };
     Enums: {
