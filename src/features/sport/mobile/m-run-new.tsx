@@ -1,13 +1,15 @@
 "use client";
 
-// Arkusz biegu na telefonie wg MRunNew.dc.html (pełny ekran, Anuluj / tytuł / Zapisz): chipy rodzaju,
-// dystans i czas −/+ (można też wpisać), tempo liczone, trudność 1–10 z opisem, dzień, „Pokaż w kalendarzu
-// głównym”, notatka. Walidację i ładunek saveRun dzieli z RunDialog (web) przez runFormInput w model.ts.
+// Arkusz biegu na telefonie wg CMRunNew.dc.html (pełny ekran, Anuluj / tytuł / Zapisz): chipy rodzaju,
+// dystans i czas −/+ (można też wpisać), tempo i kcal liczone (waga z profilu), trudność 1–10 z opisem
+// w kolorach skali, dzień (dwa pola: data i godzina), „Pokaż w kalendarzu głównym”, notatka. Walidację i ładunek saveRun dzieli z RunDialog (web) przez runFormInput w model.ts.
 // Zapis nieoptymistyczny: w trakcie Anuluj i Esc są zablokowane.
 import { useRef, useState } from "react";
 import { Dialog } from "radix-ui";
 
 import {
+  Button,
+  Card,
   Chip,
   DatePicker,
   Switch,
@@ -24,6 +26,7 @@ import {
   formatPace,
   paceSPerKm,
   runFormInput,
+  runKcal,
   parseDuration,
   parseKm,
   type RunKind,
@@ -38,16 +41,14 @@ const CZAS_START = 3120;
 const KROK_KM = 0.5;
 const KROK_S = 60;
 
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
-const WIERSZ =
-  "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
-const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
-const PLUS_MINUS =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-[15px] text-foreground outline-none hover:bg-muted focus-visible:shadow-focus";
-const WARTOSC =
-  "box-border h-11 w-[84px] rounded-md border border-transparent bg-transparent px-1 text-center font-mono text-lg text-foreground outline-none placeholder:text-faint-foreground focus:border-primary";
+// .lbl z CMRunNew
+const ETYKIETA = "text-xs font-medium text-muted-foreground";
+// Pole liczby w m-step: wysokość 44 px jak przyciski −/+, bez własnej ramki
+const POLE_KROKU =
+  "box-border h-11 min-w-0 border-0 bg-white p-0 font-semibold tabular-nums outline-none placeholder:text-faint-foreground";
+// Skala trudności z renderVals makiety CMRunNew: 1–4 zielony, 5–7 bursztyn, 8–10 czerwony (dane makiety, nie tokeny)
+const KOLOR_SKALI = (n: number) =>
+  n >= 8 ? "#ef4444" : n >= 5 ? "#f59e0b" : "#15803d";
 
 type Bledy = Partial<Record<keyof RunInput, string>>;
 
@@ -105,10 +106,10 @@ export function MRunNew({
 
   const km = parseKm(dystans);
   const sekundy = parseDuration(czas);
-  const tempo =
-    km !== null && km > 0 && sekundy !== null && sekundy > 0
-      ? `${formatPace(paceSPerKm(km, sekundy))} /km`
-      : "—";
+  const naZywo = km !== null && km > 0 && sekundy !== null && sekundy > 0;
+  const tempo = naZywo ? `${formatPace(paceSPerKm(km, sekundy))} /km` : "—";
+  // Kcal jak na webie (RunDialog): z wagi w profilu; bez wagi albo bez poprawnego biegu „—”
+  const kcal = naZywo ? runKcal(km, sekundy, profile.weightKg) : null;
 
   // Progi opisu trudności z makiety
   let opisTrudnosci = "";
@@ -207,39 +208,35 @@ export function MRunNew({
       <Dialog.Portal>
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
+          className="fixed inset-0 z-50 flex flex-col bg-white text-sm text-foreground outline-none"
         >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
-            <button
-              type="button"
+          <div className="m-head flex-none px-2">
+            <Button
+              variant="ghost"
               disabled={pending}
               onClick={onClose}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
-              )}
+              className="text-muted-foreground"
             >
               Anuluj
-            </button>
-            <Dialog.Title className="m-0 flex-1 text-center text-[15px] font-semibold">
+            </Button>
+            <Dialog.Title className="m-title flex-1 text-center text-base">
               {tytul}
             </Dialog.Title>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               disabled={pending}
               onClick={() => void zapisz()}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
-              )}
             >
               Zapisz
-            </button>
+            </Button>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-[18px] pb-6">
             {blad && (
-              <p role="alert" className="m-0 text-xs text-destructive-foreground">
+              <p
+                role="alert"
+                className="m-0 text-xs text-destructive-foreground"
+              >
                 {blad}
               </p>
             )}
@@ -254,7 +251,6 @@ export function MRunNew({
                 {RODZAJE.map((r) => (
                   <Chip
                     key={r.kind}
-                    variant="solid"
                     selected={kind === r.kind}
                     onClick={() => setKind(r.kind)}
                   >
@@ -265,20 +261,22 @@ export function MRunNew({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <div className="rounded-xl border border-border bg-white">
-                <div className={cn(WIERSZ, "min-h-16 gap-2")}>
-                  <label htmlFor="m-bieg-dystans" className="flex-1">
+              <Card className="overflow-hidden">
+                <div className="m-row">
+                  <label
+                    htmlFor="m-bieg-dystans"
+                    className="flex-1 font-medium"
+                  >
                     Dystans
                   </label>
-                  <button
-                    type="button"
-                    aria-label="Mniej"
-                    onClick={() => zmienDystans(-1)}
-                    className={PLUS_MINUS}
-                  >
-                    −
-                  </button>
-                  <span className="flex items-baseline">
+                  <div className="m-step">
+                    <button
+                      type="button"
+                      aria-label="Mniej"
+                      onClick={() => zmienDystans(-1)}
+                    >
+                      −
+                    </button>
                     <input
                       id="m-bieg-dystans"
                       type="text"
@@ -288,67 +286,81 @@ export function MRunNew({
                       placeholder="—"
                       value={dystans}
                       onChange={(e) => setDystans(e.target.value)}
-                      className={cn(WARTOSC, "w-[64px] text-right")}
+                      className={cn(POLE_KROKU, "w-[52px] text-right")}
                     />
-                    <span className="pr-1 pl-1 font-mono text-lg">km</span>
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Więcej"
-                    onClick={() => zmienDystans(1)}
-                    className={PLUS_MINUS}
-                  >
-                    +
-                  </button>
+                    <div className="bg-white pr-2 pl-1 font-semibold">km</div>
+                    <button
+                      type="button"
+                      aria-label="Więcej"
+                      onClick={() => zmienDystans(1)}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div className={cn(WIERSZ, "min-h-16 gap-2")}>
-                  <label htmlFor="m-bieg-czas" className="flex-1">
+                <div className="m-row">
+                  <label htmlFor="m-bieg-czas" className="flex-1 font-medium">
                     Czas
                   </label>
-                  <button
-                    type="button"
-                    aria-label="Krócej"
-                    onClick={() => zmienCzas(-1)}
-                    className={PLUS_MINUS}
-                  >
-                    −
-                  </button>
-                  <input
-                    id="m-bieg-czas"
-                    type="text"
-                    autoComplete="off"
-                    aria-label="Czas"
-                    placeholder="—"
-                    value={czas}
-                    onChange={(e) => setCzas(e.target.value)}
-                    className={cn(WARTOSC, "w-[100px]")}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Dłużej"
-                    onClick={() => zmienCzas(1)}
-                    className={PLUS_MINUS}
-                  >
-                    +
-                  </button>
+                  <div className="m-step">
+                    <button
+                      type="button"
+                      aria-label="Krócej"
+                      onClick={() => zmienCzas(-1)}
+                    >
+                      −
+                    </button>
+                    <input
+                      id="m-bieg-czas"
+                      type="text"
+                      autoComplete="off"
+                      aria-label="Czas"
+                      placeholder="—"
+                      value={czas}
+                      onChange={(e) => setCzas(e.target.value)}
+                      className={cn(POLE_KROKU, "w-[78px] text-center")}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Dłużej"
+                      onClick={() => zmienCzas(1)}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div className={cn(WIERSZ, "bg-panel")}>
+                <div className="m-row bg-black/[.025]">
                   <span className="flex-1 text-[13px] text-muted-foreground">
                     Tempo (liczone)
                   </span>
                   <span
                     data-testid="tempo"
-                    className="font-mono text-lg font-medium"
+                    className="text-lg font-semibold tabular-nums"
                   >
                     {tempo}
                   </span>
                 </div>
-              </div>
+                <div className="m-row bg-black/[.025]">
+                  <span className="flex-1 text-[13px] text-muted-foreground">
+                    Kcal (z wagi w profilu)
+                  </span>
+                  <span
+                    data-testid="kcal"
+                    className="text-lg font-semibold tabular-nums"
+                  >
+                    {kcal !== null ? kcal : "—"}
+                  </span>
+                </div>
+              </Card>
               {bledy.distanceKm && (
-                <p className="m-0 text-xs text-destructive-foreground">{bledy.distanceKm}</p>
+                <p className="m-0 text-xs text-destructive-foreground">
+                  {bledy.distanceKm}
+                </p>
               )}
               {bledy.durationS && (
-                <p className="m-0 text-xs text-destructive-foreground">{bledy.durationS}</p>
+                <p className="m-0 text-xs text-destructive-foreground">
+                  {bledy.durationS}
+                </p>
               )}
             </div>
 
@@ -357,32 +369,48 @@ export function MRunNew({
                 {trudnosc === null ? "Trudność" : `Trudność · ${opisTrudnosci}`}
               </span>
               <div className="grid grid-cols-10 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-pressed={trudnosc === n}
-                    aria-label={`Trudność ${n} z 10`}
-                    // Ponowne stuknięcie czyści (trudność jest opcjonalna)
-                    onClick={() => setTrudnosc(trudnosc === n ? null : n)}
-                    className={cn(
-                      "h-11 min-w-0 cursor-pointer rounded-lg border p-0 font-mono text-sm outline-none focus-visible:shadow-focus",
-                      trudnosc === n
-                        ? "border-primary bg-primary text-white"
-                        : "border-input bg-white text-foreground",
-                    )}
-                  >
-                    {n}
-                  </button>
-                ))}
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
+                  // Wybrany: pełny kolor skali i biały tekst; niższe: kolor wybranego z przezroczystością; wyższe: białe
+                  const kolor = trudnosc === null ? "" : KOLOR_SKALI(trudnosc);
+                  const styl =
+                    trudnosc === n
+                      ? {
+                          background: kolor,
+                          color: "#fff",
+                          borderColor: kolor,
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,.2)",
+                        }
+                      : trudnosc !== null && n < trudnosc
+                        ? {
+                            background: `${kolor}18`,
+                            borderColor: `${kolor}30`,
+                          }
+                        : undefined;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-pressed={trudnosc === n}
+                      aria-label={`Trudność ${n} z 10`}
+                      // Ponowne stuknięcie czyści (trudność jest opcjonalna)
+                      onClick={() => setTrudnosc(trudnosc === n ? null : n)}
+                      style={styl}
+                      className="h-11 min-w-0 cursor-pointer rounded-[10px] border border-black/10 bg-white p-0 text-[13px] font-medium text-soft-foreground tabular-nums shadow-xs outline-none focus-visible:shadow-focus"
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
               </div>
               {bledy.difficulty && (
-                <p className="m-0 text-xs text-destructive-foreground">{bledy.difficulty}</p>
+                <p className="m-0 text-xs text-destructive-foreground">
+                  {bledy.difficulty}
+                </p>
               )}
             </div>
 
-            <div className="rounded-xl border border-border bg-white">
-              <div className={cn(WIERSZ, "flex-wrap py-2")}>
+            <Card className="overflow-hidden">
+              <div className="m-row flex-wrap py-2">
                 <span className="flex-1">Dzień</span>
                 <DatePicker
                   value={dzien}
@@ -397,7 +425,7 @@ export function MRunNew({
                   clock={profile.clock}
                 />
               </div>
-              <div className={WIERSZ}>
+              <div className="m-row">
                 <span className="flex-1">Pokaż w kalendarzu głównym</span>
                 <Switch
                   checked={wKalendarzu}
@@ -405,23 +433,27 @@ export function MRunNew({
                   ariaLabel="Pokaż w kalendarzu głównym"
                 />
               </div>
-            </div>
+            </Card>
             {bledy.date && (
-              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">{bledy.date}</p>
+              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">
+                {bledy.date}
+              </p>
             )}
 
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
               Notatka
               <textarea
                 rows={3}
                 placeholder="Jak poszło?"
                 value={notatka}
                 onChange={(e) => setNotatka(e.target.value)}
-                className="box-border h-[88px] w-full resize-none rounded-md border border-input bg-white px-3.5 py-3 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
+                className="box-border w-full resize-none rounded-md border border-input bg-white px-[11px] py-[7px] text-base leading-normal font-normal text-foreground shadow-xs outline-none placeholder:text-faint-foreground focus:border-ring focus:shadow-halo"
               />
             </label>
             {bledy.note && (
-              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">{bledy.note}</p>
+              <p className="-mt-3 mb-0 text-xs text-destructive-foreground">
+                {bledy.note}
+              </p>
             )}
           </div>
         </Dialog.Content>
