@@ -627,12 +627,13 @@ describe("Subscriptions: summarize", () => {
     expect(summarize(kwota, k.rows, { kind: "sum_month" }, TODAY, bezOdnowienia)).toBe("Σ 101,82 zł / mies.");
   });
 
-  it("tysiące twardą spacją i „—” dla pustej tabeli", () => {
+  it("tysiące twardą spacją i zero dla pustej tabeli", () => {
     const k = subskrypcje();
     const kwota = k.pole("Kwota cykliczna");
     const duzo = [wiersz(1, { [kwota.id]: { amount: 437.94, cycle: "month" } })];
     expect(summarize(kwota, duzo, { kind: "sum_year" }, TODAY, [])).toBe(`Σ 5${NBSP}255,28 zł / rok`);
-    expect(summarize(kwota, [], { kind: "sum_month" }, TODAY, k.fields)).toBe("—");
+    expect(summarize(kwota, [], { kind: "sum_month" }, TODAY, k.fields)).toBe("Σ 0,00 zł / mies.");
+    expect(summarize(kwota, [], { kind: "sum_year" }, TODAY, k.fields)).toBe("Σ 0,00 zł / rok");
   });
 
   it("in_calendar liczy aktywne wiersze z datą, a przy show_in_calendar: false daje 0", () => {

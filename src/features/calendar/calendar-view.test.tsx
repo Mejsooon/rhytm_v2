@@ -1269,7 +1269,7 @@ describe("CalendarView: odnowienia subskrypcji", () => {
     wyrenderujZOdnowieniem("miesiac");
     const komorka = screen.getByTestId("komorka-2026-11-21");
     await userEvent.click(
-      within(komorka).getByRole("button", { name: "↻ Netflix" }),
+      within(komorka).getByRole("button", { name: "Odnowienie Netflix" }),
     );
     expect(
       await screen.findByRole("dialog", { name: "Odnowienie Netflix" }),

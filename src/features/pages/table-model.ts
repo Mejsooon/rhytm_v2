@@ -355,7 +355,6 @@ export function summarize(
       const kwoty = aktywne
         .map((r) => normalizeValue(field, r.values[field.id]))
         .filter(isRecurringValue);
-      if (kwoty.length === 0) return "—";
       const suma = kwoty.reduce(
         (s, k) => s + (kind === "sum_month" ? monthlyAmount(k) : yearlyAmount(k)),
         0,

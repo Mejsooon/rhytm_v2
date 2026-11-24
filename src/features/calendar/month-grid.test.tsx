@@ -318,7 +318,7 @@ describe("MonthGrid: odnowienia subskrypcji", () => {
 
   it("otwarte odnowienie ma aria-expanded", () => {
     wyrenderuj([], { renewals: [NETFLIX], openRenewalKey: NETFLIX.key });
-    expect(screen.getByRole("button", { name: "↻ Netflix" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Odnowienie Netflix" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );

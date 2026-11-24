@@ -432,7 +432,7 @@ test.describe("ekrany z sesją", () => {
 
     await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
     await expect(
-      page.getByTestId("komorka-2027-01-16").getByRole("button", { name: "↻ Netflix" }),
+      page.getByTestId("komorka-2027-01-16").getByRole("button", { name: "Odnowienie Netflix" }),
     ).toBeVisible();
     await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
   });

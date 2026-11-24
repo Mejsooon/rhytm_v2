@@ -144,6 +144,7 @@ export function TimeGrid({
         type="button"
         data-renewal-key={r.key}
         aria-expanded={otwarte}
+        aria-haspopup="dialog"
         title={`Odnowienie ze strony ${r.pageTitle} — tylko podgląd`}
         onClick={(e) => onRenewalClick?.(r, e.currentTarget)}
         className="box-border flex w-full min-w-0 cursor-pointer items-center gap-1 overflow-hidden rounded-[6px] border border-dashed bg-white px-1.5 py-[3px] text-left text-xs font-medium whitespace-nowrap text-[#404040] outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

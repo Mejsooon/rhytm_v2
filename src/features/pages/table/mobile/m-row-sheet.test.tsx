@@ -224,5 +224,13 @@ describe("MRowSheet: Subscriptions", () => {
     await user.click(screen.getByRole("button", { name: /25/ }));
     expect(onChange).toHaveBeenLastCalledWith("o", "2026-11-25");
   });
+
+  it("ponowny wybór daty z serii nie zapisuje nowej kotwicy", async () => {
+    const user = userEvent.setup();
+    const { onChange } = arkuszSub({ k: { amount: 43, cycle: "month" }, o: "2026-10-21" });
+    await user.click(screen.getByRole("button", { name: "Data odnowienia" }));
+    await user.click(screen.getByRole("button", { name: /21/ }));
+    expect(onChange).not.toHaveBeenCalledWith("o", expect.anything());
+  });
 });
 

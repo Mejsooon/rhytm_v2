@@ -457,7 +457,6 @@ describe("loadRenewals", () => {
       ),
       "u1",
       { from: "2026-11-16", to: "2026-11-22" },
-      "2026-11-17",
     );
     expect(tydzien.items).toEqual([
       {
@@ -487,7 +486,6 @@ describe("loadRenewals", () => {
       ),
       "u1",
       { from: "2026-09-28", to: "2026-11-08" },
-      "2026-11-17",
     );
     // Przed kotwicą nic, potem 21.10 (kotwica)
     expect(miesiac.items.map((i) => i.date)).toEqual(["2026-10-21"]);
@@ -505,7 +503,6 @@ describe("loadRenewals", () => {
       klientOdnowien(pierwsze, fakeTable({ data: polaTabeli() }), wiersze),
       "u1",
       { from: "2026-11-16", to: "2026-11-22" },
-      "2026-11-17",
     );
     expect(wynik.items.map((i) => i.title)).toEqual(["Netflix"]);
     expect(pierwsze.eq).toHaveBeenCalledWith("type", "renewal");
@@ -524,10 +521,23 @@ describe("loadRenewals", () => {
       ),
       "u1",
       { from: "2026-11-16", to: "2026-11-22" },
-      "2026-11-17",
     );
     expect(wynik.sources[0].shown).toBe(false);
     expect(wynik.items).toHaveLength(1);
+  });
+
+  it("next liczy od kotwicy, nie od wystąpienia (31.01 → 28.02, następne 31.03)", async () => {
+    const wynik = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia()] }),
+        fakeTable({ data: polaTabeli() }),
+        fakeTable({ data: [{ ...netflix, values: { ...netflix.values, "f-ren": "2027-01-31" } }] }),
+      ),
+      "u1",
+      { from: "2027-02-01", to: "2027-02-28" },
+    );
+    expect(wynik.items).toHaveLength(1);
+    expect(wynik.items[0]).toMatchObject({ date: "2027-02-28", next: "2027-03-31" });
   });
 
   it("bez pola kwoty amount to null, a cykl bierze się z własnego cyklu", async () => {
@@ -541,7 +551,6 @@ describe("loadRenewals", () => {
       ),
       "u1",
       { from: "2027-10-01", to: "2027-10-31" },
-      "2026-11-17",
     );
     expect(wynik.items).toHaveLength(1);
     expect(wynik.items[0]).toMatchObject({ amount: null, cycle: "year", date: "2027-10-21", next: "2028-10-21" });
@@ -554,7 +563,6 @@ describe("loadRenewals", () => {
       klientOdnowien(fakeTable({ data: [] }), drugie, wiersze),
       "u1",
       { from: "2026-11-16", to: "2026-11-22" },
-      "2026-11-17",
     );
     expect(wynik).toEqual({ items: [], sources: [] });
     expect(drugie.select).not.toHaveBeenCalled();
@@ -571,7 +579,6 @@ describe("loadRenewals", () => {
       ),
       "u1",
       { from: "2026-11-16", to: "2026-11-22" },
-      "2026-11-17",
     );
     expect(wynik.sources.map((z) => z.name)).toEqual([
       "Subscriptions · Data odnowienia",
@@ -586,7 +593,6 @@ describe("loadRenewals", () => {
         ),
         "u1",
         { from: "2026-11-16", to: "2026-11-22" },
-        "2026-11-17",
       ),
     ).rejects.toThrow("boom");
   });

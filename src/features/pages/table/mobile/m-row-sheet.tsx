@@ -23,6 +23,7 @@ import {
   formatMoney,
   isRecurringValue,
   nextRenewal,
+  renewalDates,
   normalizeValue,
   rowCycle,
   type Cycle,
@@ -356,8 +357,9 @@ export function MRowSheet({
         // a wybrana data zapisuje się jako nowa kotwica serii
         if (f.type === "renewal") {
           const v = normalizeValue(f, surowa);
-          const nastepne =
-            typeof v === "string" ? nextRenewal(v, rowCycle(f, allFields ?? fields, values), today) : null;
+          const kotwica = typeof v === "string" ? v : null;
+          const cykl = rowCycle(f, allFields ?? fields, values);
+          const nastepne = kotwica === null ? null : nextRenewal(kotwica, cykl, today);
           return (
             <div key={f.id} className="flex flex-col items-start gap-1.5 text-[13px] font-medium">
               <span>{f.name}</span>
@@ -365,7 +367,11 @@ export function MRowSheet({
                 ariaLabel={f.name}
                 today={today}
                 value={nastepne as IsoDate | null}
-                onChange={(d) => onChange(f.id, d)}
+                onChange={(d) => {
+                  // Data już należąca do serii nie zmienia kotwicy (inaczej seria dryfuje)
+                  if (d !== null && kotwica !== null && renewalDates(kotwica, cykl, d, d).length > 0) return;
+                  onChange(f.id, d);
+                }}
               />
             </div>
           );

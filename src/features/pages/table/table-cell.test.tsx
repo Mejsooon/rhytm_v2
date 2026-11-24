@@ -532,6 +532,28 @@ describe("TableCell: Subscriptions", () => {
     );
   }
 
+  describe("Data odnowienia: kotwica serii", () => {
+    it("ponowny wybór daty z serii nie woła zapisu", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      const wiersz_ = subskrypcja({ k: { amount: 43, cycle: "month" }, o: "2026-10-21", a: true });
+      render(wTabeli(odnowienie, wiersz_, onSave));
+      await user.click(screen.getByRole("button", { name: /Data odnowienia: 21\.11\.2026/ }));
+      await user.click(await screen.findByRole("button", { name: /^21(\D|$)/ }));
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it("data spoza serii zapisuje nową kotwicę", async () => {
+      const user = userEvent.setup();
+      const onSave = vi.fn();
+      const wiersz_ = subskrypcja({ k: { amount: 43, cycle: "month" }, o: "2026-10-21", a: true });
+      render(wTabeli(odnowienie, wiersz_, onSave));
+      await user.click(screen.getByRole("button", { name: /Data odnowienia: 21\.11\.2026/ }));
+      await user.click(await screen.findByRole("button", { name: /25/ }));
+      expect(onSave).toHaveBeenCalledWith("2026-11-25");
+    });
+  });
+
   describe("Kwota cykliczna", () => {
     it("pole kwoty do prawej, szare „zł” i przycisk cyklu w kolejności z makiety", () => {
       render(wTabeli(kwota, subskrypcja({ k: { amount: 43, cycle: "month" } }), vi.fn()));

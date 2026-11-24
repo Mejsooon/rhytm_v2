@@ -17,7 +17,7 @@ import {
   type TemplateRow,
 } from "@/features/sport/model";
 import {
-  addCycle,
+  nextRenewal,
   isRecurringValue,
   normalizeValue,
   renewalDates,
@@ -318,10 +318,6 @@ export async function loadRenewals(
   supabase: SupabaseClient<Database>,
   userId: string,
   range: { from: IsoDate; to: IsoDate },
-  // „Dziś” z profilu; wystąpienia i „następne” liczą się od kotwicy, więc dziś wpływa tylko na dymek
-  // (czas do odnowienia liczy klient) — parametr zostaje w kontrakcie planu
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kontrakt planu (Task 5)
-  today: IsoDate,
 ): Promise<RenewalsData> {
   const polaRes = await supabase
     .from("page_fields")
@@ -447,7 +443,7 @@ export async function loadRenewals(
           pageTitle,
           rowId: w.id,
           date: data,
-          next: addCycle(data, cykl, 1),
+          next: nextRenewal(kotwica, cykl, addDays(data, 1)),
           title: tytul,
           amount: isRecurringValue(kwota) ? kwota.amount : null,
           cycle: cykl,

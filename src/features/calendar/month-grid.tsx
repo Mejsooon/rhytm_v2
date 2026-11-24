@@ -160,6 +160,8 @@ export function MonthGrid({
                         type="button"
                         data-renewal-key={r.key}
                         aria-expanded={otwarte}
+                        aria-haspopup="dialog"
+                        aria-label={`Odnowienie ${r.title}`}
                         title={`Odnowienie ze strony ${r.pageTitle} — tylko podgląd`}
                         onClick={(e) => onRenewalClick?.(r, e.currentTarget)}
                         style={{

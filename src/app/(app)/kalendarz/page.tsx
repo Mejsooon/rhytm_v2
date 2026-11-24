@@ -51,7 +51,7 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   // Odnowienia subskrypcji tylko tutaj (Dziś i telefon ich nie wczytują), równolegle z kalendarzem
   const [dane, odnowienia] = await Promise.all([
     loadCalendar(supabase, user.id, zakres, profil),
-    loadRenewals(supabase, user.id, zakres, dzis),
+    loadRenewals(supabase, user.id, zakres),
   ]);
 
   // ?nowy=blok&data&godzina&tytul (np. z szybkiego dodawania na Dziś) → okno nowego bloku.

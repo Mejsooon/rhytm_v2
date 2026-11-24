@@ -20,6 +20,7 @@ import {
   isRecurringValue,
   isUrgent,
   nextRenewal,
+  renewalDates,
   normalizeValue,
   relativeDue,
   rowActive,
@@ -323,7 +324,8 @@ export function TableCell({
   if (field.type === "renewal") {
     const kotwica = typeof v === "string" ? v : null;
     // Wyświetlamy następne odnowienie (od dziś według cyklu wiersza), a zapisujemy kotwicę serii
-    const nastepne = kotwica === null ? null : nextRenewal(kotwica, rowCycle(field, fields, row.values), today);
+    const cykl = rowCycle(field, fields, row.values);
+    const nastepne = kotwica === null ? null : nextRenewal(kotwica, cykl, today);
     const aktywny = rowActive(field, fields, row.values);
     const wzgledna = nastepne === null ? null : relativeDue(nastepne, today);
     // Za datą: „anulowana” w wierszu nieaktywnym (także bez daty, jak relTxt w S2Main), inaczej czas do odnowienia
@@ -352,7 +354,11 @@ export function TableCell({
             today={today}
             // Kalendarz otwiera się na następnym odnowieniu: wybór tej samej daty nie zmienia serii
             value={nastepne as IsoDate | null}
-            onChange={(d) => onSave(d)}
+            onChange={(d) => {
+              // Data już należąca do serii nie zmienia kotwicy (inaczej seria dryfuje: 31.01 → 28.02 → 28.03)
+              if (d !== null && kotwica !== null && renewalDates(kotwica, cykl, d, d).length > 0) return;
+              onSave(d);
+            }}
             className={cn(
               "h-11 min-w-0 justify-start rounded-none pl-3 text-sm tabular-nums focus-visible:shadow-none",
               zaData ? "flex-none" : "flex-1",
