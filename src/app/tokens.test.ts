@@ -107,4 +107,35 @@ describe("tokeny globals.css", () => {
     expect(html).not.toMatch(/font-size/);
     expect(body).toMatch(/font-size:\s*14px/);
   });
+
+  it("narzędzia CM-BASE telefonu (@utility) z wartościami z makiet CM*", () => {
+    const narzedzie = (nazwa: string) => {
+      const m = css.match(new RegExp(`@utility ${nazwa} \\{([\\s\\S]*?)\\n\\}`));
+      expect(m, nazwa).not.toBeNull();
+      return m?.[1] ?? "";
+    };
+    const wszystkie = ["m-head", "m-title", "m-row", "m-grab", "m-step", "m-fab", "m-hit", "m-stats", "m-stat", "m-stat-v", "m-sec-h", "m-plan-block"];
+    for (const n of wszystkie) narzedzie(n);
+    expect(narzedzie("m-head")).toContain("min-height: 52px");
+    expect(narzedzie("m-head")).toContain("padding: 0 12px 0 16px");
+    expect(narzedzie("m-head")).toContain("border-bottom: 1px solid var(--border)");
+    expect(narzedzie("m-title")).toContain("font-size: 18px");
+    expect(narzedzie("m-title")).toContain("letter-spacing: -.011em");
+    expect(narzedzie("m-row")).toContain("min-height: 48px");
+    expect(narzedzie("m-row")).toMatch(/&:last-child \{\s*border-bottom: 0;/);
+    expect(narzedzie("m-grab")).toContain("width: 36px");
+    expect(narzedzie("m-grab")).toContain("background: rgba(0, 0, 0, .14)");
+    expect(narzedzie("m-step")).toMatch(/& button \{[^}]*width: 44px;[^}]*height: 44px;/);
+    expect(narzedzie("m-step")).toMatch(/& span \{[^}]*min-width: 48px;/);
+    expect(narzedzie("m-fab")).toContain("width: 56px");
+    expect(narzedzie("m-fab")).toContain("height: 56px");
+    expect(narzedzie("m-fab")).toContain("position: fixed");
+    expect(narzedzie("m-fab")).toContain("bottom: calc(var(--tabbar-h) + 20px)");
+    expect(narzedzie("m-hit")).toMatch(/&::before \{[^}]*inset: -14px;/);
+    expect(narzedzie("m-stats")).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+    expect(narzedzie("m-stat-v")).toContain("font-size: 22px");
+    expect(narzedzie("m-plan-block")).toContain("min-height: 56px");
+    // „*/” w środku komentarza (np. ścieżka z gwiazdką) zamyka go za wcześnie i psuje cały arkusz
+    expect(css.split("/*").length).toBe(css.split("*/").length);
+  });
 });
