@@ -1,5 +1,5 @@
 begin;
-select plan(48);
+select plan(49);
 
 -- Konta (profil tworzy wyzwalacz; strefa Europe/Warsaw, tydzień od poniedziałku, waluta PLN):
 --   A1 nawyki (2 włączone urządzenia + 1 wyłączone), A2 nawyki wyłączone w ustawieniach, A3 tylko wyłączone urządzenie,
@@ -93,7 +93,8 @@ values
 -- Bloki A6 (strefa bloku Europe/Warsaw):
 --   01 jednorazowy 20:05 → należny; 02 jednorazowy 20:10 (10 min przed); 03 codziennie 20:05 z wyjątkiem cancelled 2.12;
 --   04 codziennie 19:00 z wyjątkiem modified 2.12 → 20:05, „Przeniesiony”, 30 min; 05 pn–pt 20:05 od 30.11;
---   06 jednorazowy 3.12 00:03 (wywołanie 2 o 23:58); 07 jednorazowy 20:05 bez przypomnienia.
+--   06 jednorazowy 3.12 00:03 (wywołanie 2 o 23:58); 07 jednorazowy 20:05 bez przypomnienia;
+--   08 stary jednorazowy (2.11 20:05); 09 seria codzienna 20:05 zakończona 20.11 (until).
 insert into public.blocks (id, user_id, title, start_local, duration_min, timezone, recurrence, remind)
 values
   ('62000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000006a6', 'Siłownia', '2026-12-02 20:05', 60, 'Europe/Warsaw', null, true),
@@ -102,7 +103,9 @@ values
   ('62000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000006a6', 'Seria', '2026-11-01 19:00', 60, 'Europe/Warsaw', '{"freq":"daily"}', true),
   ('62000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-0000000006a6', 'Dni robocze', '2026-11-30 20:05', 30, 'Europe/Warsaw', '{"freq":"weekdays"}', true),
   ('62000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-0000000006a6', 'Po północy', '2026-12-03 00:03', 30, 'Europe/Warsaw', null, true),
-  ('62000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-0000000006a6', 'Bez przypomnienia', '2026-12-02 20:05', 30, 'Europe/Warsaw', null, false);
+  ('62000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-0000000006a6', 'Bez przypomnienia', '2026-12-02 20:05', 30, 'Europe/Warsaw', null, false),
+  ('62000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-0000000006a6', 'Stary', '2026-11-02 20:05', 30, 'Europe/Warsaw', null, true),
+  ('62000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-0000000006a6', 'Zakończona', '2026-11-01 20:05', 30, 'Europe/Warsaw', '{"freq":"daily","until":"2026-11-20"}', true);
 
 insert into public.block_exceptions (block_id, user_id, occurrence_date, kind, new_start_local, new_duration_min, new_title)
 values
@@ -244,6 +247,12 @@ select is((select count(*) from w1 as w where w.tag like 'block-62000000-0000-00
   'seria pn–pt w środę → wiersz');
 select is((select count(*) from w1 as w where w.tag like 'block-62000000-0000-0000-0000-000000000007-%'), 0::bigint,
   'blok bez przypomnienia → nic');
+select is(
+  (select count(*) from w1 as w
+   where w.tag like 'block-62000000-0000-0000-0000-000000000008-%' or w.tag like 'block-62000000-0000-0000-0000-000000000009-%'),
+  0::bigint,
+  'stary blok jednorazowy i seria zakończona (until w przeszłości) → nic'
+);
 select is((select count(*) from w1 as w where w.kind = 'renewal'), 0::bigint,
   'o 20:00 odnowienia nie wychodzą');
 

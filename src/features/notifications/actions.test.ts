@@ -6,11 +6,17 @@ const { sendNotification, setVapidDetails, revalidatePath, baza } = vi.hoisted(
     setVapidDetails: vi.fn(),
     revalidatePath: vi.fn(),
     baza: {
+      user: { id: "u-1" } as { id: string } | null,
       odczyt: { data: [] as unknown[] | null, error: null as unknown },
+      limit: { data: [{ user_id: "u-1" }] as unknown[] | null, error: null as unknown },
+      upsertBlad: null as unknown,
       select: vi.fn(),
       eq: vi.fn(),
       del: vi.fn(),
       in: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+      or: vi.fn(),
     },
   }),
 );
@@ -19,7 +25,30 @@ vi.mock("web-push", () => ({ sendNotification, setVapidDetails }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
+    auth: { getUser: async () => ({ data: { user: baza.user } }) },
     from: (tabela: string) => {
+      if (tabela === "notification_settings") {
+        return {
+          upsert: async (wiersz: unknown, opcje: unknown) => {
+            baza.upsert(wiersz, opcje);
+            return { error: baza.upsertBlad };
+          },
+          update: (zmiana: unknown) => {
+            baza.update(zmiana);
+            return {
+              eq: (kolumna: string, wartosc: unknown) => {
+                baza.eq(kolumna, wartosc);
+                return {
+                  or: (filtr: string) => {
+                    baza.or(filtr);
+                    return { select: async () => baza.limit };
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
       expect(tabela).toBe("push_subscriptions");
       return {
         select: (kolumny: string) => {
@@ -65,6 +94,9 @@ describe("sendTestPush", () => {
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "pub";
     process.env.VAPID_PRIVATE_KEY = "priv";
     baza.odczyt = { data: [KOMPUTER, TELEFON], error: null };
+    baza.user = { id: "u-1" };
+    baza.limit = { data: [{ user_id: "u-1" }], error: null };
+    baza.upsertBlad = null;
     sendNotification.mockResolvedValue({ statusCode: 201 });
   });
 
@@ -90,6 +122,55 @@ describe("sendTestPush", () => {
 
   it("błąd odczytu (np. stara baza) → komunikat", async () => {
     baza.odczyt = { data: null, error: { code: "42P01" } };
+    const wynik = await sendTestPush();
+    expect(wynik.ok).toBe(false);
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it("limit: test w ciągu 30 s → „Spróbuj ponownie za chwilę.” bez wysyłki", async () => {
+    baza.limit = { data: [], error: null };
+    expect(await sendTestPush()).toEqual({
+      ok: false,
+      message: "Spróbuj ponownie za chwilę.",
+    });
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it("limit: znacznik ustawiany atomowo przed wysyłką (warunek na poprzedni test)", async () => {
+    await sendTestPush();
+    expect(baza.upsert).toHaveBeenCalledWith(
+      { user_id: "u-1" },
+      { onConflict: "user_id", ignoreDuplicates: true },
+    );
+    expect(baza.update).toHaveBeenCalledWith({
+      last_test_push_at: expect.any(String),
+    });
+    expect(baza.eq).toHaveBeenCalledWith("user_id", "u-1");
+    const filtr = baza.or.mock.calls[0][0] as string;
+    expect(filtr).toMatch(/^last_test_push_at\.is\.null,last_test_push_at\.lt\./);
+    // Granica = 30 s temu (±5 s)
+    const granica = Date.parse(filtr.split(".lt.")[1]);
+    expect(Math.abs(Date.now() - 30_000 - granica)).toBeLessThan(5_000);
+    expect(baza.update.mock.invocationCallOrder[0]).toBeLessThan(
+      sendNotification.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("brak urządzeń nie zużywa limitu", async () => {
+    baza.odczyt = { data: [], error: null };
+    await sendTestPush();
+    expect(baza.update).not.toHaveBeenCalled();
+  });
+
+  it("błąd zapisu znacznika (np. stara baza) → komunikat bez wysyłki", async () => {
+    baza.limit = { data: null, error: { code: "42703" } };
+    const wynik = await sendTestPush();
+    expect(wynik.ok).toBe(false);
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it("brak sesji → komunikat bez wysyłki", async () => {
+    baza.user = null;
     const wynik = await sendTestPush();
     expect(wynik.ok).toBe(false);
     expect(sendNotification).not.toHaveBeenCalled();

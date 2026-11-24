@@ -145,6 +145,67 @@ describe("POST /api/cron/powiadomienia", () => {
     expect(sendNotification).not.toHaveBeenCalled();
   });
 
+  it("zwraca 400 przy przekroczonych limitach (endpoint bez https, za długie pola, za dużo wierszy)", async () => {
+    for (const zly of [
+      { ...nawykWoda, endpoint: "http://fcm.googleapis.com/x" },
+      { ...nawykWoda, endpoint: "https://x/" + "a".repeat(1000) },
+      { ...nawykWoda, p256dh: "" },
+      { ...nawykWoda, title: "t".repeat(301) },
+      { ...nawykWoda, body: "b".repeat(1001) },
+      { ...nawykWoda, kind: "inne" },
+    ]) {
+      const res = await POST(makeRequest({ notifications: [zly] }));
+      expect(res.status).toBe(400);
+    }
+    const res = await POST(
+      makeRequest({ notifications: Array.from({ length: 1001 }, () => nawykWoda) }),
+    );
+    expect(res.status).toBe(400);
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it("brak zmiennych Supabase → 500 przed wysyłką", async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const res = await POST(makeRequest({ notifications: [nawykWoda] }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "supabase not configured" });
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it("wysyła paczkami po 50 (następna paczka dopiero po zakończeniu poprzedniej)", async () => {
+    let wToku = 0;
+    let maksimum = 0;
+    sendNotification.mockImplementation(async () => {
+      wToku += 1;
+      maksimum = Math.max(maksimum, wToku);
+      await new Promise((r) => setTimeout(r, 1));
+      wToku -= 1;
+      return { statusCode: 201 };
+    });
+    const lista = Array.from({ length: 120 }, (_, i) => ({
+      ...nawykWoda,
+      endpoint: `https://fcm.googleapis.com/fcm/send/${i}`,
+    }));
+
+    const res = await POST(makeRequest({ notifications: lista }));
+
+    expect(await res.json()).toEqual({ sent: 120, failed: 0, removed: 0 });
+    expect(sendNotification).toHaveBeenCalledTimes(120);
+    expect(maksimum).toBe(50);
+  });
+
+  it("wyjątek klienta Supabase przy usuwaniu → odpowiedź bez usunięć", async () => {
+    sendNotification.mockRejectedValue(
+      Object.assign(new Error("gone"), { statusCode: 410 }),
+    );
+    rpc.mockRejectedValue(new Error("fetch failed"));
+
+    const res = await POST(makeRequest({ notifications: [nawykWoda] }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ sent: 0, failed: 1, removed: 0 });
+  });
+
   it("pusta lista → nic nie wysyła i zwraca zera", async () => {
     const res = await POST(makeRequest({ notifications: [] }));
     expect(res.status).toBe(200);

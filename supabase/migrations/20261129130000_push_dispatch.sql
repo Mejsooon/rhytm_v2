@@ -39,7 +39,11 @@ language sql
 security definer
 set search_path = ''
 as $$
-  with uzytkownicy as (
+  with strefy as (
+    -- Poprawne nazwy stref (lista liczona raz na wywołanie, używana dla profili i bloków)
+    select tzn.name from pg_catalog.pg_timezone_names as tzn
+  ),
+  uzytkownicy as (
     -- Warunki wspólne użytkownika: konto nie czeka na usunięcie, strefa profilu poprawna, co najmniej jedno
     -- włączone urządzenie i lokalny czas poza cichą nocą (cicha noc pomija bez wpisu do push_log — decyzja C12).
     -- Brak wiersza notification_settings = wartości domyślne kolumn (te same literały co w migracjach:
@@ -56,7 +60,7 @@ as $$
       coalesce(ns.renewal_hour, 9) as renewal_hour
     from public.profiles as p
     cross join lateral (
-      select case when p.timezone in (select tzn.name from pg_catalog.pg_timezone_names as tzn)
+      select case when p.timezone in (select st.name from strefy as st)
         then p_now at time zone p.timezone
       end as local_ts
     ) as lt
@@ -66,19 +70,22 @@ as $$
       and exists (
         select 1 from public.push_subscriptions as ps
         where ps.user_id = p.user_id and ps.enabled)
+      -- quiet_from = quiet_to to pusty przedział = brak cichej nocy (UI nie pozwala zapisać równych godzin)
       and not (
         coalesce(ns.quiet_enabled, false)
+        and ns.quiet_from <> ns.quiet_to
         and case
           -- zwykły przedział, np. 13:00–15:00
-          when ns.quiet_from <= ns.quiet_to
+          when ns.quiet_from < ns.quiet_to
             then lt.local_ts::time >= ns.quiet_from and lt.local_ts::time < ns.quiet_to
           -- przez północ, np. 23:00–07:00
           else lt.local_ts::time >= ns.quiet_from or lt.local_ts::time < ns.quiet_to
         end)
   ),
   nawyki as (
-    -- Nawyki: lokalny czas profilu w [remind_at, remind_at + 15 min) — liczone na znacznikach czasu, żeby
-    -- 23:50 + 15 min nie zawijało się przez północ. Harmonogram obowiązujący dziś = największe valid_from <= dziś
+    -- Nawyki: lokalny czas profilu w [remind_at, remind_at + 15 min), liczone na znacznikach czasu od lokalnej
+    -- północy dnia bieżącego. Okno nie przechodzi przez północ: przypomnienie o 23:50 wychodzi do 23:59, a po
+    -- północy liczy się już nowy dzień (00:02 nie łapie wczorajszego 23:50). Harmonogram obowiązujący dziś = największe valid_from <= dziś
     -- (brak = nawyk jeszcze nie istnieje). Zaplanowany dziś: daily; weekdays → dzień ISO w weekdays;
     -- times_per_week → odhaczeń w bieżącym tygodniu (od profiles.week_start, jak src/features/habits/model.ts)
     -- mniej niż times_per_week. Nawyk odhaczony dziś nie dostaje przypomnienia.
@@ -141,13 +148,22 @@ as $$
     from uzytkownicy as u
     join public.blocks as b on b.user_id = u.user_id
     cross join lateral (
-      select case when b.timezone in (select tzn.name from pg_catalog.pg_timezone_names as tzn)
+      select case when b.timezone in (select st.name from strefy as st)
         then p_now at time zone b.timezone
       end as block_ts
     ) as bt
     where u.before_block_min is not null
       and b.remind
       and bt.block_ts is not null
+      -- Bez skanowania historii co minutę (indeks blocks (user_id, start_local)): blok jednorazowy tylko z ostatnich
+      -- 2 dni i później (zapas na strefy), seria z poprawnym until — tylko gdy until >= wczoraj (UTC)
+      and (jsonb_typeof(b.recurrence) = 'object' or b.start_local >= (p_now at time zone 'UTC') - interval '2 days')
+      and case
+        when jsonb_typeof(b.recurrence -> 'until') = 'string'
+          and pg_catalog.pg_input_is_valid(b.recurrence ->> 'until', 'date')
+          then (b.recurrence ->> 'until')::date >= (p_now at time zone 'UTC')::date - 1
+        else true
+      end
   ),
   bloki_dni as (
     -- Kandydaci na wystąpienie: dziś i jutro w strefie bloku (blok o 00:03 przypominamy o 23:58 dnia wcześniej)
@@ -176,7 +192,8 @@ as $$
       'block'::text as kind,
       bd.block_id::text as ref,
       bd.occurrence_date as for_date,
-      'Za ' || bd.before_block_min || ' min: ' || coalesce(e.new_title, bd.block_title) as title,
+      -- tytuł przycięty do 120 znaków (jak blocks.title; new_title wyjątku nie ma limitu w bazie)
+      'Za ' || bd.before_block_min || ' min: ' || left(coalesce(e.new_title, bd.block_title), 120) as title,
       to_char(st.start_ts, 'HH24:MI') || '–'
         || to_char(st.start_ts + make_interval(mins => coalesce(e.new_duration_min, bd.duration_min)), 'HH24:MI') as body,
       'block-' || bd.block_id || '-' || bd.occurrence_date as tag,
@@ -339,11 +356,11 @@ as $$
       ) as z
     ) as kwota
     cross join lateral (
-      -- Tytuł wiersza: wartość pola tytułowego, pusty → empty_label pola, potem „Bez nazwy”
+      -- Tytuł wiersza (do 120 znaków, mieści się w limicie trasy): wartość pola tytułowego, pusty → empty_label pola, potem „Bez nazwy”
       select case
         when jsonb_typeof(ow.values -> tf.id::text) = 'string' and btrim(ow.values ->> tf.id::text) <> ''
-          then btrim(ow.values ->> tf.id::text)
-        else coalesce(tf.config ->> 'empty_label', 'Bez nazwy')
+          then left(btrim(ow.values ->> tf.id::text), 120)
+        else left(coalesce(tf.config ->> 'empty_label', 'Bez nazwy'), 120)
       end as tekst
     ) as tytul
     cross join lateral (
@@ -455,7 +472,10 @@ begin
   from vault.decrypted_secrets as ds
   where ds.name = 'rhytm_cron_secret';
 
-  if coalesce(v_secret, '') = '' or p_secret is distinct from v_secret then
+  -- Porównanie skrótów SHA-256 (stała długość), żeby czas porównania nie zdradzał długości wspólnego prefiksu
+  if coalesce(v_secret, '') = ''
+    or p_secret is null
+    or extensions.digest(p_secret, 'sha256') <> extensions.digest(v_secret, 'sha256') then
     raise exception 'unauthorized';
   end if;
 

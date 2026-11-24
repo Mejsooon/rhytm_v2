@@ -9,7 +9,7 @@ const { updateSession, maybeSingle, select } = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/proxy-session", () => ({ updateSession }));
 
-import { proxy } from "./proxy";
+import { config, proxy } from "./proxy";
 
 // Odpowiedź z updateSession: ciasteczko sesji i nagłówki no-cache od Supabase
 function odpowiedzSesji() {
@@ -132,5 +132,21 @@ describe("proxy", () => {
       .mockResolvedValueOnce({ data: { onboarded_at: null }, error: null });
     const res = await proxy(new NextRequest("http://localhost:3000/dzis"));
     expect(new URL(res.headers.get("location")!).pathname).toBe("/onboarding");
+  });
+});
+
+describe("config.matcher", () => {
+  // Wzorzec matchera jako wyrażenie regularne (ta sama składnia co w path-to-regexp dla tego wzorca)
+  const wzorzec = new RegExp(`^${config.matcher[0]}$`);
+
+  it("pomija trasy crona, service worker i manifest", () => {
+    expect(wzorzec.test("/api/cron/powiadomienia")).toBe(false);
+    expect(wzorzec.test("/sw.js")).toBe(false);
+    expect(wzorzec.test("/manifest.webmanifest")).toBe(false);
+  });
+
+  it("obejmuje strony aplikacji i inne trasy API", () => {
+    expect(wzorzec.test("/dzis")).toBe(true);
+    expect(wzorzec.test("/api/eksport")).toBe(true);
   });
 });

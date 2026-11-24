@@ -343,6 +343,7 @@ export type Database = {
           before_block_min: number | null;
           created_at: string | null;
           habits_enabled: boolean;
+          last_test_push_at: string | null;
           push_enabled: boolean;
           quiet_enabled: boolean;
           quiet_from: string;
@@ -358,6 +359,7 @@ export type Database = {
           before_block_min?: number | null;
           created_at?: string | null;
           habits_enabled?: boolean;
+          last_test_push_at?: string | null;
           push_enabled?: boolean;
           quiet_enabled?: boolean;
           quiet_from?: string;
@@ -373,6 +375,7 @@ export type Database = {
           before_block_min?: number | null;
           created_at?: string | null;
           habits_enabled?: boolean;
+          last_test_push_at?: string | null;
           push_enabled?: boolean;
           quiet_enabled?: boolean;
           quiet_from?: string;

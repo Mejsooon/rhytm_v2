@@ -142,3 +142,28 @@ alter table public.notification_settings alter column renewal_days_before set de
 update public.notification_settings as ns
 set renewal_days_before = 1
 where ns.renewal_days_before <> 1;
+
+-- 5. Limit „Wyślij testowe”: znacznik ostatniego testu (akcja sendTestPush ustawia go atomowo i odmawia,
+-- gdy od poprzedniego minęło mniej niż 30 s). Użytkownik ma prawo update na swoim wierszu, więc wyzwalacz
+-- zamienia każdą zmianę znacznika na now() — wyzerowanie albo cofnięcie daty nie obejdzie limitu.
+alter table public.notification_settings add column last_test_push_at timestamptz;
+
+create function public.guard_last_test_push_at()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if new.last_test_push_at is distinct from old.last_test_push_at then
+    new.last_test_push_at := now();
+  end if;
+  return new;
+end
+$$;
+
+revoke execute on function public.guard_last_test_push_at() from public, anon, authenticated;
+
+create trigger notification_settings_test_push_guard
+  before update of last_test_push_at on public.notification_settings
+  for each row execute function public.guard_last_test_push_at();

@@ -1,5 +1,5 @@
 begin;
-select plan(37);
+select plan(41);
 
 -- A i B: dwa konta; endpointy na dozwolonych serwerach push.
 insert into auth.users (id, email, raw_user_meta_data)
@@ -46,6 +46,30 @@ select is(
    where (ns.before_block_min is not null and ns.before_block_min <> 5) or ns.renewal_days_before <> 1),
   0::bigint,
   'po migracji wszystkie wiersze mają 5 min (albo null) i 1 dzień'
+);
+
+-- Znacznik ostatniego testu push: każda zmiana zamienia się na now() (limit „Wyślij testowe” nie do obejścia)
+select has_column('public', 'notification_settings', 'last_test_push_at', 'notification_settings ma last_test_push_at');
+update public.notification_settings as ns set last_test_push_at = '2000-01-01'
+where ns.user_id = '00000000-0000-0000-0000-0000000000b3';
+select is(
+  (select ns.last_test_push_at from public.notification_settings as ns where ns.user_id = '00000000-0000-0000-0000-0000000000b3'),
+  now(),
+  'data wstecz → now()'
+);
+update public.notification_settings as ns set last_test_push_at = null
+where ns.user_id = '00000000-0000-0000-0000-0000000000b3';
+select is(
+  (select ns.last_test_push_at from public.notification_settings as ns where ns.user_id = '00000000-0000-0000-0000-0000000000b3'),
+  now(),
+  'wyzerowanie → now()'
+);
+update public.notification_settings as ns set habits_enabled = true
+where ns.user_id = '00000000-0000-0000-0000-0000000000b3';
+select is(
+  (select ns.last_test_push_at from public.notification_settings as ns where ns.user_id = '00000000-0000-0000-0000-0000000000b3'),
+  now(),
+  'zmiana innej kolumny nie rusza znacznika'
 );
 
 -- Bez zalogowania funkcja odmawia

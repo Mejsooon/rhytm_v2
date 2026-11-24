@@ -37,6 +37,36 @@ export async function sendTestPush(): Promise<
     };
   }
 
+  // Limit: najwyżej jeden test na 30 s. Znacznik ustawiany atomowo przed wysyłką — update przejdzie tylko wtedy,
+  // gdy poprzedni test był dawniej (równoległe kliknięcia: drugi update nie znajdzie wiersza). Wyzwalacz w bazie
+  // zamienia wartość na now(), więc znacznika nie da się cofnąć z klienta. Brak wiersza ustawień → tworzymy
+  // go z wartościami domyślnymi (brak wiersza i tak oznacza domyślne).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, message: "Sesja wygasła. Zaloguj się ponownie." };
+  }
+  const { error: bladWiersza } = await supabase
+    .from("notification_settings")
+    .upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
+  const granica = new Date(Date.now() - 30_000).toISOString();
+  const { data: limit, error: bladLimitu } = await supabase
+    .from("notification_settings")
+    .update({ last_test_push_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .or(`last_test_push_at.is.null,last_test_push_at.lt.${granica}`)
+    .select("user_id");
+  if (bladWiersza || bladLimitu) {
+    return {
+      ok: false,
+      message: "Nie udało się wysłać testowego powiadomienia. Spróbuj ponownie.",
+    };
+  }
+  if (!limit || limit.length === 0) {
+    return { ok: false, message: "Spróbuj ponownie za chwilę." };
+  }
+
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
   const payload = JSON.stringify({
     title: "rhytm",

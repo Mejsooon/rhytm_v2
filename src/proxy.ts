@@ -64,7 +64,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Pomija statyki, optymalizację obrazów, favicon, ikony, manifest i service worker
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js).*)",
+    // Pomija statyki, optymalizację obrazów, favicon, ikony, manifest, service worker i trasy crona
+    // (/api/cron/* wołane bez sesji przez pg_net; trasa sama sprawdza sekret)
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|api/cron/).*)",
   ],
 };
