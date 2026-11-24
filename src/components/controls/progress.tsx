@@ -8,11 +8,14 @@ export function Progress({
   max = 100,
   ariaLabel,
   className,
+  color,
 }: {
   value: number;
   max?: number;
   ariaLabel: string;
   className?: string;
+  // Własny kolor wypełnienia (np. #f59e0b z makiety CMSport); domyślnie zielony
+  color?: string;
 }) {
   // max <= 0 daje 0%, żeby nie wyszło NaN
   const procent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
@@ -25,7 +28,10 @@ export function Progress({
       aria-valuemax={max}
       className={cn("h-1.5 overflow-hidden rounded-full bg-muted", className)}
     >
-      <div className="h-full bg-success" style={{ width: `${procent}%` }} />
+      <div
+        className={cn("h-full", !color && "bg-success")}
+        style={{ width: `${procent}%`, ...(color && { background: color }) }}
+      />
     </div>
   );
 }

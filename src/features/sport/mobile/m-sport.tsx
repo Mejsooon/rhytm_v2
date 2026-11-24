@@ -12,14 +12,23 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 
-import { ActionPopover, Segment } from "@/components/controls";
+import {
+  ActionPopover,
+  Button,
+  Card,
+  CardTitle,
+  MENU_ITEM,
+  MENU_LABEL,
+  MENU_SEPARATOR,
+  Progress,
+  Segment,
+} from "@/components/controls";
 import { DNI_SKROT } from "@/features/calendar/mobile/pl";
 import {
   addDays,
   isoWeekNumber,
   weekdayOf,
 } from "@/features/calendar/view-range";
-import { cn } from "@/lib/utils";
 import type { GymSessionInput } from "../actions";
 import type { RunRequest } from "../item-popover";
 import type { SportMonthData } from "../load-sport";
@@ -34,22 +43,18 @@ import {
 
 const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const WYSOKOSC_WYKRESU = 116; // px, najwyższy słupek
-const KARTA = "rounded-xl border border-border bg-white";
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
-const PRZYCISK =
-  "box-border flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border font-medium outline-none focus-visible:shadow-focus";
-// Opcja dymku „Trening” — wiersz 44 px
-const OPCJA =
-  "flex min-h-11 w-full cursor-pointer items-center rounded-lg border-0 bg-transparent px-3 text-left text-[15px] text-foreground no-underline outline-none hover:bg-muted hover:text-foreground focus-visible:bg-muted";
-const IKONA_WIERSZA =
-  "flex size-10 flex-none items-center justify-center rounded-md";
-
-// Wiersz listy „Zaplanowane” / „Ostatnie” (64 px) z ikoną rodzaju i strzałką
+// Kolor paska km i słupków to dane z makiety CMSport (nie token UI)
+const KOLOR_KM = "#f59e0b";
+// Etykieta małej karty i wartość w trzech kolumnach karty „Bieganie” (.lbl, .num)
+const ETYKIETA = "text-xs font-medium text-muted-foreground";
+const LICZBA = "mt-0.5 text-[17px] font-semibold tabular-nums";
+// Wiersz listy „Zaplanowane” / „Ostatnie”: m-row, ikona rodzaju 40 px i chevron (CMSport)
 const WIERSZ =
-  "flex min-h-16 w-full items-center gap-3 border-0 border-b border-solid border-border bg-transparent px-3.5 text-left text-[15px] text-foreground no-underline outline-none last:border-b-0 hover:bg-panel focus-visible:bg-panel";
+  "m-row w-full cursor-pointer border-x-0 border-t-0 bg-transparent py-2.5 text-left text-sm text-foreground outline-none focus-visible:bg-panel";
+const IKONA_WIERSZA =
+  "flex size-10 flex-none items-center justify-center rounded-[10px]";
 const IKONA_BIEGU = (
-  <span className={cn(IKONA_WIERSZA, "bg-warning-soft text-warning-foreground")}>
+  <span className={`${IKONA_WIERSZA} bg-warning-soft text-warning-foreground`}>
     <svg
       width="19"
       height="19"
@@ -66,7 +71,7 @@ const IKONA_BIEGU = (
   </span>
 );
 const IKONA_SILOWNI = (
-  <span className={cn(IKONA_WIERSZA, "bg-[#f5f3ff] text-[#7c3aed]")}>
+  <span className={`${IKONA_WIERSZA} bg-accent text-foreground`}>
     <svg
       width="19"
       height="19"
@@ -204,24 +209,22 @@ export function MSport({
 
   return (
     <div className="flex flex-col">
-      <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4">
+      <header className="m-head py-1">
         <div className="min-w-0 flex-1">
           <div className={ETYKIETA}>{naglowek}</div>
-          <h1 className="m-0 mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">
-            Sport
-          </h1>
+          <h1 className="m-title">Sport</h1>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          icon
           aria-label="Nowa aktywność"
           onClick={onNewRun}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
         >
-          <Plus size={22} aria-hidden="true" />
-        </button>
+          <Plus size={20} aria-hidden="true" />
+        </Button>
       </header>
 
-      <div className="mx-4 mb-2">
+      <div className="mx-4 mt-3 mb-2">
         <Segment
           ariaLabel="Zakres"
           value={zakres}
@@ -237,17 +240,14 @@ export function MSport({
       </div>
 
       <div className="flex flex-col gap-4 px-4 pt-1 pb-6">
-        <section
-          aria-labelledby="m-sport-bieganie"
-          className={cn(KARTA, "p-4")}
-        >
+        <Card className="p-4" role="region" aria-labelledby="m-sport-bieganie">
           <div id="m-sport-bieganie" className={ETYKIETA}>
             Bieganie
           </div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span
               data-testid="km"
-              className="font-mono text-[34px] font-medium"
+              className="text-[34px] font-semibold tracking-[-0.02em] tabular-nums"
             >
               {formatKm(km)}
             </span>
@@ -256,26 +256,24 @@ export function MSport({
             </span>
           </div>
           {profile.kmGoalOn && (
-            <div className="mt-2.5 h-2 overflow-hidden rounded-[4px] bg-active">
-              <div
-                data-testid="pasek-km"
-                className="h-full rounded-[4px] bg-warning"
-                style={{
-                  width: `${Math.min(100, Math.round((km / cel) * 100))}%`,
-                }}
-              />
-            </div>
+            <Progress
+              value={km}
+              max={cel}
+              ariaLabel="Postęp celu km"
+              color={KOLOR_KM}
+              className="mt-2.5"
+            />
           )}
-          <div className="mt-3.5 grid grid-cols-3">
+          <div className="mt-3.5 grid grid-cols-3 border-t border-border pt-3">
             <div>
               <div className={ETYKIETA}>Biegi</div>
-              <div data-testid="biegi" className="mt-0.5 font-mono text-[17px]">
+              <div data-testid="biegi" className={LICZBA}>
                 {biegi}
               </div>
             </div>
             <div>
               <div className={ETYKIETA}>Śr. tempo</div>
-              <div data-testid="tempo" className="mt-0.5 font-mono text-[17px]">
+              <div data-testid="tempo" className={LICZBA}>
                 {tempo}
               </div>
             </div>
@@ -283,35 +281,30 @@ export function MSport({
               <div className={ETYKIETA}>Siłownia</div>
               <div
                 data-testid="silownia"
-                className="mt-0.5 font-mono text-[17px]"
+                className={LICZBA}
               >{`${silownia}×`}</div>
             </div>
           </div>
-        </section>
+        </Card>
 
-        <section
+        <Card
+          className="p-3.5"
+          role="region"
           aria-labelledby="m-sport-kilometry"
-          className={cn(KARTA, "p-3.5")}
         >
           <div className="flex items-baseline justify-between">
-            <h2
-              id="m-sport-kilometry"
-              className="m-0 text-[17px] font-semibold"
-            >
+            <CardTitle as="h2" id="m-sport-kilometry" className="text-[15px]">
               Kilometry
-            </h2>
-            <span className="font-mono text-xs text-soft-foreground">
+            </CardTitle>
+            <span className="text-xs text-muted-foreground tabular-nums">
               {slupek === null
                 ? "stuknij słupek"
                 : `${slupki[slupek].etykieta} · ${formatKm(slupki[slupek].km)} km`}
             </span>
           </div>
           <div
-            className={cn(
-              // Odstęp między słupkami jest w przyciskach (padding), żeby pole stuknięcia miało ≥ 44 px
-              "-mx-[5px] mt-3 flex items-end border-b border-border",
-            )}
-            style={{ height: 120 }}
+            // Odstęp między słupkami jest w przyciskach (padding), żeby pole stuknięcia miało ≥ 44 px
+            className="-mx-[5px] mt-3 flex h-[120px] items-end border-b border-border"
           >
             {slupki.map((s, k) => (
               // Przycisk na całą wysokość wykresu, żeby dało się trafić także w niski słupek
@@ -321,40 +314,37 @@ export function MSport({
                 aria-label={`${s.etykieta}: ${formatKm(s.km)} km`}
                 aria-pressed={slupek === k}
                 onClick={() => setSlupek(k)}
-                className={cn(
-                  "flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent py-0 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  zakres === "w" ? "px-[5px]" : "px-3",
-                )}
+                className={`flex h-full min-w-0 flex-1 cursor-pointer items-end border-0 bg-transparent py-0 outline-none focus-visible:ring-2 focus-visible:ring-ring ${zakres === "w" ? "px-[5px]" : "px-3"}`}
               >
                 <span
-                  className="block w-full rounded-t-md"
+                  className="block w-full rounded-t-[6px]"
                   style={{
                     height: Math.max(
                       4,
                       Math.round((s.km / najwiecej) * WYSOKOSC_WYKRESU),
                     ),
                     background:
-                      slupek === k ? "#171717" : s.km ? "#c2410c" : "#eeeeee",
+                      slupek === k
+                        ? "var(--primary)"
+                        : s.km
+                          ? KOLOR_KM
+                          : "rgba(0,0,0,.08)",
                   }}
                 />
               </button>
             ))}
           </div>
-          <div className="-mx-[5px] mt-1.5 flex font-mono text-[10px] text-faint-foreground">
+          <div className="-mx-[5px] mt-1.5 flex text-xs text-muted-foreground tabular-nums">
             {slupki.map((s) => (
               <span key={s.etykieta} className="flex-1 text-center">
                 {s.etykieta}
               </span>
             ))}
           </div>
-        </section>
+        </Card>
 
         <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={onNewRun}
-            className={cn(PRZYCISK, "border-primary bg-primary text-white")}
-          >
+          <Button variant="primary" onClick={onNewRun}>
             <svg
               width="18"
               height="18"
@@ -369,7 +359,7 @@ export function MSport({
               <path d="M3 12h4l3-8 4 16 3-8h4" />
             </svg>
             Bieg
-          </button>
+          </Button>
           <ActionPopover
             open={menuTreningu}
             onOpenChange={setMenuTreningu}
@@ -378,13 +368,7 @@ export function MSport({
             width={260}
             ariaLabel="Nowy trening"
             trigger={
-              <button
-                type="button"
-                className={cn(
-                  PRZYCISK,
-                  "border-input bg-white text-foreground hover:bg-panel",
-                )}
-              >
+              <Button>
                 <svg
                   width="18"
                   height="18"
@@ -399,13 +383,13 @@ export function MSport({
                   <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
                 </svg>
                 Trening
-              </button>
+              </Button>
             }
           >
             <div className="flex flex-col gap-px">
               <button
                 type="button"
-                className={OPCJA}
+                className={MENU_ITEM}
                 onClick={() => {
                   setMenuTreningu(false);
                   onNewGym(null);
@@ -415,14 +399,13 @@ export function MSport({
               </button>
               {data.templates.length > 0 && (
                 <>
-                  <div className="mt-1 border-t border-border px-3 pt-2 pb-1 font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
-                    Z szablonu
-                  </div>
+                  <div className={`${MENU_SEPARATOR} mt-1`} />
+                  <div className={MENU_LABEL}>Z szablonu</div>
                   {data.templates.map((t) => (
                     <button
                       key={t.id}
                       type="button"
-                      className={OPCJA}
+                      className={MENU_ITEM}
                       onClick={() => {
                         setMenuTreningu(false);
                         onNewGym(t.id);
@@ -433,49 +416,46 @@ export function MSport({
                   ))}
                 </>
               )}
-              <div className="my-1 border-t border-border" />
+              <div className={MENU_SEPARATOR} />
               <Link
                 href="/sport/szablony"
-                className={OPCJA}
+                className={MENU_ITEM}
                 onClick={() => setMenuTreningu(false)}
               >
                 Szablony treningów…
               </Link>
             </div>
           </ActionPopover>
-          <Link
-            href="/sport/szablony"
-            className={cn(
-              PRZYCISK,
-              "col-span-2 border-input bg-white text-foreground no-underline hover:bg-panel hover:text-foreground",
-            )}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 6h16M4 12h16M4 18h10" />
-            </svg>
-            Szablony
-          </Link>
+          <Button asChild className="col-span-2">
+            <Link href="/sport/szablony">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 6h16M4 12h16M4 18h10" />
+              </svg>
+              Szablony
+            </Link>
+          </Button>
         </div>
 
         {zaplanowane.length > 0 && (
           <section aria-labelledby="m-sport-zaplanowane">
-            <h2
+            <CardTitle
+              as="h2"
               id="m-sport-zaplanowane"
-              className="m-0 mb-2 text-[17px] font-semibold"
+              className="mb-2 text-[15px]"
             >
               Zaplanowane
-            </h2>
-            <div className={KARTA}>
+            </CardTitle>
+            <Card className="overflow-hidden">
               {zaplanowane.map((item) => {
                 const godzina = `${String(Math.floor(item.startMin / 60)).padStart(2, "0")}:${String(item.startMin % 60).padStart(2, "0")}`;
                 const kiedy = `${DNI[weekdayOf(item.date)]} ${item.date.slice(8, 10)}.${item.date.slice(5, 7)} · ${godzina}`;
@@ -488,7 +468,7 @@ export function MSport({
                         item.sessionId &&
                         onOpenRun({ sessionId: item.sessionId })
                       }
-                      className={cn(WIERSZ, "cursor-pointer")}
+                      className={WIERSZ}
                     >
                       {IKONA_BIEGU}
                       <span className="min-w-0 flex-1">
@@ -497,7 +477,7 @@ export function MSport({
                             ? `${item.title} · ${formatKm(item.distanceKm)} km`
                             : item.title}
                         </span>
-                        <span className="font-mono text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground tabular-nums">
                           {kiedy}
                         </span>
                       </span>
@@ -510,7 +490,7 @@ export function MSport({
                     {IKONA_SILOWNI}
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{`Siłownia — ${item.title}`}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {kiedy}
                       </span>
                     </span>
@@ -522,7 +502,7 @@ export function MSport({
                   <Link
                     key={item.key}
                     href={`/sport/trening/${item.sessionId}`}
-                    className={WIERSZ}
+                    className="m-row py-2.5"
                   >
                     {tresc}
                   </Link>
@@ -537,24 +517,21 @@ export function MSport({
                         templateId: item.templateId ?? undefined,
                       })
                     }
-                    className={cn(WIERSZ, "cursor-pointer")}
+                    className={WIERSZ}
                   >
                     {tresc}
                   </button>
                 );
               })}
-            </div>
+            </Card>
           </section>
         )}
 
         <section aria-labelledby="m-sport-ostatnie">
-          <h2
-            id="m-sport-ostatnie"
-            className="m-0 mb-2 text-[17px] font-semibold"
-          >
+          <CardTitle as="h2" id="m-sport-ostatnie" className="mb-2 text-[15px]">
             Ostatnie
-          </h2>
-          <div className={KARTA}>
+          </CardTitle>
+          <Card className="overflow-hidden">
             {ostatnie.length === 0 && (
               <p className="m-0 px-3.5 py-4 text-sm text-muted-foreground">
                 Brak wykonanych treningów.
@@ -576,12 +553,12 @@ export function MSport({
                     onClick={() =>
                       item.sessionId && onOpenRun({ sessionId: item.sessionId })
                     }
-                    className={cn(WIERSZ, "cursor-pointer")}
+                    className={WIERSZ}
                   >
                     {IKONA_BIEGU}
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{`${item.title} · ${formatKm(kmBiegu)} km`}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {opis.join(" · ")}
                       </span>
                     </span>
@@ -597,12 +574,12 @@ export function MSport({
                 <Link
                   key={item.key}
                   href={`/sport/trening/${item.sessionId}`}
-                  className={WIERSZ}
+                  className="m-row py-2.5"
                 >
                   {IKONA_SILOWNI}
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{`Siłownia — ${item.title}`}</span>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {`${kiedy} · ${plPlural(cwiczen, "ćwiczenie", "ćwiczenia", "ćwiczeń")} · ${item.durationMin} min`}
                     </span>
                   </span>
@@ -610,7 +587,7 @@ export function MSport({
                 </Link>
               );
             })}
-          </div>
+          </Card>
         </section>
       </div>
     </div>
