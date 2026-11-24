@@ -181,7 +181,7 @@ describe("LivePreview", () => {
   it("krok 6 z perm i before: dymek", () => {
     pokaz(draft, 6);
     expect(
-      screen.getByText("Za 10 min · Matematyka — ćwiczenia"),
+      screen.getByText("Za 5 min · Matematyka — ćwiczenia"),
     ).toBeInTheDocument();
     expect(screen.getByText("Start o 08:00")).toBeInTheDocument();
   });
@@ -191,10 +191,10 @@ describe("LivePreview", () => {
       { ...draft, notify: { ...draft.notify, perm: false } },
       6,
     );
-    expect(screen.queryByText(/Za 10 min/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Za 5 min/)).not.toBeInTheDocument();
     unmount();
     pokaz({ ...draft, notify: { ...draft.notify, before: false } }, 6);
-    expect(screen.queryByText(/Za 10 min/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Za 5 min/)).not.toBeInTheDocument();
   });
 
   it("brak stron", () => {
@@ -257,7 +257,7 @@ describe("LivePreview", () => {
     expect(profil.className).not.toContain("#fff");
     unmount();
     pokaz(draft, 6);
-    const dymek = screen.getByText(/Za 10 min/).closest("div.absolute");
+    const dymek = screen.getByText(/Za 5 min/).closest("div.absolute");
     expect(dymek?.className).toContain("var(--background)");
     expect(dymek?.className).not.toContain("#fff");
   });

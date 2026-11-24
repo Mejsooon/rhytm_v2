@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { updateSession, maybeSingle } = vi.hoisted(() => ({
+const { updateSession, maybeSingle, select } = vi.hoisted(() => ({
   updateSession: vi.fn(),
   maybeSingle: vi.fn(),
+  select: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/proxy-session", () => ({ updateSession }));
 
-import { proxy } from "./proxy";
+import { config, proxy } from "./proxy";
 
 // Odpowiedź z updateSession: ciasteczko sesji i nagłówki no-cache od Supabase
 function odpowiedzSesji() {
@@ -29,7 +30,12 @@ function zalogowany() {
     response,
     user: { id: "u1" },
     supabase: {
-      from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
+      from: () => ({
+        select: (kolumny: string) => {
+          select(kolumny);
+          return { eq: () => ({ maybeSingle }) };
+        },
+      }),
     },
   });
   return response;
@@ -80,5 +86,67 @@ describe("proxy", () => {
     );
     expect(res.headers.get("expires")).toBe("0");
     expect(res.headers.get("pragma")).toBe("no-cache");
+  });
+  it("konto oznaczone do usunięcia → /konto-usuniete", async () => {
+    zalogowany();
+    maybeSingle.mockResolvedValue({
+      data: {
+        onboarded_at: "2026-11-16T10:00:00Z",
+        deletion_requested_at: "2026-11-24T10:00:00Z",
+      },
+      error: null,
+    });
+    const res = await proxy(new NextRequest("http://localhost:3000/dzis"));
+    expect(new URL(res.headers.get("location")!).pathname).toBe(
+      "/konto-usuniete",
+    );
+    expect(select).toHaveBeenCalledWith("onboarded_at, deletion_requested_at");
+    expect(select).toHaveBeenCalledTimes(1);
+  });
+
+  it("stara baza bez kolumny (42703) → drugie zapytanie bez niej, bez przekierowania na /konto-usuniete", async () => {
+    const response = zalogowany();
+    maybeSingle
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: "42703", message: "column does not exist" },
+      })
+      .mockResolvedValueOnce({
+        data: { onboarded_at: "2026-11-16T10:00:00Z" },
+        error: null,
+      });
+    expect(await proxy(new NextRequest("http://localhost:3000/dzis"))).toBe(
+      response,
+    );
+    expect(select).toHaveBeenNthCalledWith(
+      1,
+      "onboarded_at, deletion_requested_at",
+    );
+    expect(select).toHaveBeenNthCalledWith(2, "onboarded_at");
+  });
+
+  it("stara baza: drugie zapytanie też bez onboardingu → /onboarding", async () => {
+    zalogowany();
+    maybeSingle
+      .mockResolvedValueOnce({ data: null, error: { code: "42703" } })
+      .mockResolvedValueOnce({ data: { onboarded_at: null }, error: null });
+    const res = await proxy(new NextRequest("http://localhost:3000/dzis"));
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/onboarding");
+  });
+});
+
+describe("config.matcher", () => {
+  // Wzorzec matchera jako wyrażenie regularne (ta sama składnia co w path-to-regexp dla tego wzorca)
+  const wzorzec = new RegExp(`^${config.matcher[0]}$`);
+
+  it("pomija trasy crona, service worker i manifest", () => {
+    expect(wzorzec.test("/api/cron/powiadomienia")).toBe(false);
+    expect(wzorzec.test("/sw.js")).toBe(false);
+    expect(wzorzec.test("/manifest.webmanifest")).toBe(false);
+  });
+
+  it("obejmuje strony aplikacji i inne trasy API", () => {
+    expect(wzorzec.test("/dzis")).toBe(true);
+    expect(wzorzec.test("/api/eksport")).toBe(true);
   });
 });

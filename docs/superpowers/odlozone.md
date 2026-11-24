@@ -163,3 +163,15 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - `duplicate_page` kopiuje wartości Sekret: dla starej niesystemowej strony z polem Sekret i szyfrogramem starej generacji duplikat zakończy się ogólnym błędem (dane bezpieczne). Na później: zerować pola `secret` w kopii.
 - Strażnik `page_rows` robi przy każdym zapisie dodatkowe zapytanie do `page_blocks` (bez „szybkiego wyjścia” ze specu); koszt pomijalny.
 - Niestabilny `[mobile] today.spec.ts:185` (nawyk odhaczony na Dziś → 1/1) — przyczyna niezbadana.
+
+## Ustawienia i sejf — web: odłożone (stan 2026-11-24)
+- `?email=potwierdzono` zostaje w adresie, komunikat wraca po odświeżeniu.
+- Okno „Odblokuj sejf” (`absolute top-[160px]`) przewija się z treścią przy długiej tabeli.
+- „Zablokuj teraz” ukryty przy zamkniętym sejfie (makieta ma go pod rozmyciem).
+- `TimePicker` bez strzałki ▾; etykiety urządzeń bez „(PWA)”.
+- Makiety CBlockDialog, CMBlockSheet, COnboardingNotify, COnbPreview nadal mówią „10 min” / „3 dni” (kod: 5 min / dzień wcześniej o 9:00, C4).
+- Onboarding pokazuje „Podsumowanie tygodnia” bez wysyłki (C15).
+- `/konto-usuniete` i onboarding wylogowują zwykłym `signOut` bez wypisania push.
+- Eksport JSON budowany w pamięci, bez limitu wywołań.
+- Przypomnienie oznaczone przez `claim` przepada bez ponowienia, gdy trasa Vercel zwróci błąd.
+- IP sesji to IP serwera (bez `X-Forwarded-For`), nieużywane w UI.

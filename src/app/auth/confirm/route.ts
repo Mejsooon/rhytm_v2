@@ -8,7 +8,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 // Dozwolone typy linków z maili — tylko one trafiają do verifyOtp (żadnych dowolnych wartości z adresu)
-const TYPY = ["signup", "email", "recovery"] as const;
+const TYPY = ["signup", "email", "recovery", "email_change"] as const;
 type TypLinku = (typeof TYPY)[number];
 
 // Gdzie prowadzi udane potwierdzenie danego typu
@@ -16,6 +16,7 @@ const CEL: Record<TypLinku, string> = {
   signup: "/potwierdzono",
   email: "/potwierdzono",
   recovery: "/nowe-haslo",
+  email_change: "/ustawienia/ogolne?email=potwierdzono",
 };
 
 // Link z maila (szablony w supabase/templates): wymiana token_hash na sesję.

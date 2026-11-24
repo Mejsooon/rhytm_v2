@@ -105,7 +105,7 @@ async function createUser(
         {
           user_id: data.user.id,
           push_enabled: false,
-          before_block_min: 10,
+          before_block_min: 5,
           renewals_enabled: true,
           weekly_summary: true,
           habits_enabled: false,

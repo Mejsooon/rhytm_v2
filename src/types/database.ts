@@ -343,6 +343,7 @@ export type Database = {
           before_block_min: number | null;
           created_at: string | null;
           habits_enabled: boolean;
+          last_test_push_at: string | null;
           push_enabled: boolean;
           quiet_enabled: boolean;
           quiet_from: string;
@@ -358,6 +359,7 @@ export type Database = {
           before_block_min?: number | null;
           created_at?: string | null;
           habits_enabled?: boolean;
+          last_test_push_at?: string | null;
           push_enabled?: boolean;
           quiet_enabled?: boolean;
           quiet_from?: string;
@@ -373,6 +375,7 @@ export type Database = {
           before_block_min?: number | null;
           created_at?: string | null;
           habits_enabled?: boolean;
+          last_test_push_at?: string | null;
           push_enabled?: boolean;
           quiet_enabled?: boolean;
           quiet_from?: string;
@@ -551,12 +554,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      password_check_failures: {
+        Row: {
+          failed_at: string;
+          user_id: string;
+        };
+        Insert: {
+          failed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          failed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_path: string | null;
           clock: string | null;
           created_at: string | null;
           currency: string | null;
+          deletion_requested_at: string | null;
           display_name: string | null;
           goals: string[] | null;
           height_cm: number | null;
@@ -582,6 +601,7 @@ export type Database = {
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
+          deletion_requested_at?: string | null;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
@@ -607,6 +627,7 @@ export type Database = {
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
+          deletion_requested_at?: string | null;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
@@ -626,6 +647,66 @@ export type Database = {
           weekly_km_goal?: number | null;
           weekly_workouts_goal?: number | null;
           weight_kg?: number | null;
+        };
+        Relationships: [];
+      };
+      push_log: {
+        Row: {
+          for_date: string;
+          kind: string;
+          ref: string;
+          sent_at: string;
+          user_id: string;
+        };
+        Insert: {
+          for_date: string;
+          kind: string;
+          ref: string;
+          sent_at?: string;
+          user_id: string;
+        };
+        Update: {
+          for_date?: string;
+          kind?: string;
+          ref?: string;
+          sent_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          enabled: boolean;
+          endpoint: string;
+          id: string;
+          label: string;
+          last_seen_at: string;
+          p256dh: string;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          created_at?: string;
+          enabled?: boolean;
+          endpoint: string;
+          id?: string;
+          label: string;
+          last_seen_at?: string;
+          p256dh: string;
+          user_id?: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          enabled?: boolean;
+          endpoint?: string;
+          id?: string;
+          label?: string;
+          last_seen_at?: string;
+          p256dh?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -964,6 +1045,19 @@ export type Database = {
         Args: { p_available: string[] };
         Returns: string[];
       };
+      claim_due_notifications: {
+        Args: { p_now: string };
+        Returns: {
+          auth: string;
+          body: string;
+          endpoint: string;
+          kind: string;
+          p256dh: string;
+          tag: string;
+          title: string;
+          url: string;
+        }[];
+      };
       complete_onboarding: {
         Args: { p_categories: Json };
         Returns: undefined;
@@ -985,6 +1079,10 @@ export type Database = {
         Args: { p_field_id: string };
         Returns: undefined;
       };
+      dispatch_notifications: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       duplicate_page: {
         Args: { p_page_id: string };
         Returns: string;
@@ -993,6 +1091,21 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      list_my_sessions: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          id: string;
+          ip: string | null;
+          is_current: boolean;
+          last_active_at: string;
+          user_agent: string | null;
+        }[];
+      };
+      my_has_password: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       move_category: {
         Args: {
           p_dir: number;
@@ -1000,9 +1113,17 @@ export type Database = {
         };
         Returns: undefined;
       };
+      purge_deleted_accounts: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       purge_trash: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
+      };
+      remove_push_subscriptions: {
+        Args: { p_endpoints: string[]; p_secret: string };
+        Returns: number;
       };
       reorder_fields: {
         Args: {
@@ -1019,9 +1140,22 @@ export type Database = {
         Args: { p_ids: string[] };
         Returns: undefined;
       };
+      revoke_my_session: {
+        Args: { p_session_id: string };
+        Returns: boolean;
+      };
       reset_vault: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      save_push_subscription: {
+        Args: {
+          p_auth: string;
+          p_endpoint: string;
+          p_label: string;
+          p_p256dh: string;
+        };
+        Returns: string;
       };
       split_block_series: {
         Args: {
@@ -1031,6 +1165,10 @@ export type Database = {
           p_patch: Json;
         };
         Returns: string;
+      };
+      verify_my_password: {
+        Args: { p_password: string };
+        Returns: boolean;
       };
     };
     Enums: {

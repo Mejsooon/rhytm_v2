@@ -123,7 +123,7 @@ export async function saveOnboardingStep(
       {
         user_id: user.id,
         push_enabled: d.push_enabled,
-        before_block_min: d.before ? 10 : null,
+        before_block_min: d.before ? 5 : null,
         renewals_enabled: d.renew,
         weekly_summary: d.weekly,
         habits_enabled: d.habits,

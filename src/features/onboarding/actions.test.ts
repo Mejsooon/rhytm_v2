@@ -174,7 +174,7 @@ describe("saveOnboardingStep", () => {
       {
         user_id: "u1",
         push_enabled: true,
-        before_block_min: 10,
+        before_block_min: 5,
         renewals_enabled: false,
         weekly_summary: true,
         habits_enabled: false,
