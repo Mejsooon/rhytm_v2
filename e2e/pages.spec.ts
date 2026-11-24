@@ -504,7 +504,8 @@ test.describe("strony", () => {
     // „Nowa strona” (nagłówek telefonu) prowadzi do wyboru szablonu; pusty szablon tworzy pustą stronę
     await page.getByRole("link", { name: "Nowa strona" }).first().click();
     await expect(page).toHaveURL(/\/strony\/nowa$/);
-    await page.getByRole("button", { name: "Utwórz stronę" }).click();
+    // Telefon: arkusz „Nowa strona” z paskiem „Anuluj · Nowa strona · Utwórz”; domyślnie pusta strona
+    await page.getByRole("button", { name: "Utwórz", exact: true }).click();
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     await expect(
       page.getByRole("button", { name: "Wstaw tabelę" }),

@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { push, back, createPageFromTemplate, toast } = vi.hoisted(() => ({
   push: vi.fn(),
@@ -172,5 +172,61 @@ describe("NewPageView", () => {
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Subscriptions");
     await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
     await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("subscriptions", "Subscriptions"));
+  });
+});
+
+describe("NewPageView: telefon (CMNewPage)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createPageFromTemplate.mockResolvedValue({ ok: true, id: "nowa" });
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+  });
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  it("arkusz „Nowa strona” z paskiem „Anuluj · Nowa strona · Utwórz”, bez okna weba", () => {
+    render(<NewPageView />);
+    const arkusz = screen.getByRole("dialog", { name: "Nowa strona" });
+    expect(arkusz.className).toContain("h-[88%]");
+    expect(within(arkusz).getByRole("heading", { name: "Nowa strona" })).toBeInTheDocument();
+    expect(within(arkusz).getByRole("button", { name: "Anuluj" })).toBeInTheDocument();
+    expect(within(arkusz).getByRole("button", { name: "Utwórz" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Utwórz stronę" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Szukaj szablonu" })).toBeNull();
+    expect(within(arkusz).getByText("Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.")).toBeInTheDocument();
+  });
+
+  it("lista szablonów z opisami i aria-pressed; wybór podpowiada nazwę i pola", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    const lista = screen.getByRole("group", { name: "Szablon" });
+    expect(within(lista).getByRole("button", { name: /Pusta strona/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(lista).getByText("Zacznij od zera")).toBeInTheDocument();
+    expect(screen.getByText("bez pól")).toBeInTheDocument();
+    await user.click(within(lista).getByRole("button", { name: /Books/ }));
+    expect(within(lista).getByRole("button", { name: /Books/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(lista).getByRole("button", { name: /Books/ }).className).toContain("bg-black/[.03]");
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Books");
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-11", "text-base");
+    for (const pole of ["Tytuł", "Autor", "Status", "Ocena", "Przeczytana"]) {
+      expect(screen.getByText(pole)).toBeInTheDocument();
+    }
+    expect(screen.getByText("Liczba przeczytanych w tym roku.")).toBeInTheDocument();
+    expect(screen.queryByText("bez pól")).toBeNull();
+  });
+
+  it("„Utwórz” woła createPageFromTemplate(key, nazwa) i przechodzi do strony; „Anuluj” wraca", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("button", { name: /Books/ }));
+    const nazwa = screen.getByRole("textbox", { name: "Nazwa strony" });
+    await user.clear(nazwa);
+    await user.type(nazwa, "Lektury");
+    await user.click(screen.getByRole("button", { name: "Utwórz" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/strony/nowa"));
+    expect(createPageFromTemplate).toHaveBeenCalledWith("books", "Lektury");
+    await user.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(back).toHaveBeenCalledTimes(1);
   });
 });

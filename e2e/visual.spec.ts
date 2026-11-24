@@ -879,7 +879,7 @@ test.describe("ekrany z sesją", () => {
       await page.goto("/strony");
       await page.getByRole("link", { name: "Nowa strona" }).first().click();
       await expect(page).toHaveURL(/\/strony\/nowa$/);
-      await page.getByRole("button", { name: "Utwórz stronę" }).click();
+      await page.getByRole("button", { name: "Utwórz", exact: true }).click();
     }
     await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
     // Pusta strona przed pierwszym blokiem (S2EmptyPage): szybki start na webie, „Wstaw tabelę” na telefonie
