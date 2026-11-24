@@ -1,13 +1,20 @@
 "use client";
 
-// Ekran „Nawyki i sen” na telefonie wg MHabits.dc.html: nagłówek z „+”, segment Nawyki / Sen.
-// Nawyki: pierścień dnia, lista z dużym checkboxem (odhacza dziś przez wspólny store), heatmapa 4 tygodni.
+// Ekran „Nawyki i sen” na telefonie wg CMHabits.dc.html: nagłówek z „+”, segment Nawyki / Sen.
+// Nawyki: pierścień dnia, lista z checkboxem (odhacza dziś przez wspólny store), heatmapa z zakresem.
 // Sen: ostatnia noc i średnia, wykres 14/30 dni ze stuknięciem słupka, „Dodaj wpis snu”.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckIcon, ChevronRight, Moon, Plus } from "lucide-react";
+import { ChevronRight, Flame, Moon, Plus } from "lucide-react";
 
-import { Button, Segment } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardTitle,
+  Checkbox,
+  Segment,
+  StatusBadge,
+} from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { DNI_PELNE, MIESIACE_DOP } from "@/features/calendar/mobile/pl";
@@ -29,21 +36,26 @@ import { describeSchedule, formatDuration, streakLabel } from "../text";
 
 const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 const SAMOPOCZUCIE = ["Źle", "Słabo", "OK", "Dobrze", "Super"];
-// Odcienie heatmapy z makiety (od braku do 100%)
-const ODCIENIE = [
-  "#f0f0f0",
-  "#cdebd8",
-  "#8fd1a8",
-  "#3fa66b",
-  "#15803d",
-  "#0f5f2e",
-];
+// Kolory heatmapy i słupków snu to dane z renderVals makiety CMHabits (nie tokeny UI):
+// brak → jasnoszary, do 40% → jasny, do 80% → średni, powyżej → pełny
+const ODCIENIE = ["rgba(0,0,0,.05)", "#bbe5cc", "#86c99f", "#15803d"];
+const SLUPEK_CEL = "#15803d";
+const SLUPEK_BLISKO = "#bbe5cc";
+const SLUPEK_MALO = "rgba(0,0,0,.12)";
+const OBRYS_WYBRANEGO = "0 0 0 2px #fff, 0 0 0 4px #262626";
+// Obrys wybranego dnia w zwartej heatmapie (kwadraty 12 px, odstęp 2 px)
+const OBRYS_WYBRANEGO_ZWARTY = "0 0 0 1px #fff, 0 0 0 2px #262626";
+const OBRYS_SLUPKA = "0 0 0 2px #262626";
+// Zakresy heatmapy jak przełącznik z makiety: wartość → tygodnie, etykieta i tytuł karty
+const ZAKRESY_HEATMAPY = [
+  { value: "30", weeks: 4, label: "30 dni", title: "Ostatnie 30 dni" },
+  { value: "90", weeks: 13, label: "3 mies.", title: "Ostatnie 3 miesiące" },
+  { value: "180", weeks: 26, label: "6 mies.", title: "Ostatnie 6 miesięcy" },
+  { value: "365", weeks: 52, label: "Rok", title: "Ostatni rok" },
+] as const;
+type ZakresHeatmapy = (typeof ZAKRESY_HEATMAPY)[number]["value"];
 const WYSOKOSC_WYKRESU = 140; // px
 const OBWOD_PIERSCIENIA = 94.2; // 2π · 15
-
-const KARTA = "rounded-xl border border-border bg-white";
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
 
 export function MHabits({
   data,
@@ -69,7 +81,10 @@ export function MHabits({
   // Stuknięty dzień heatmapy i słupek snu
   const [dzien, setDzien] = useState<IsoDate | null>(null);
   const [zakres, setZakres] = useState<"14" | "30">("14");
+  const [zakresHeatmapy, setZakresHeatmapy] = useState<ZakresHeatmapy>("30");
   const [slupek, setSlupek] = useState<number | null>(null);
+  // Ramka zwartej heatmapy (3 mies. / 6 mies. / Rok), przewijana w poziomie na koniec
+  const ramkaHeatmapy = useRef<HTMLDivElement>(null);
 
   const [, miesiac, numerDnia] = today.split("-").map(Number);
   const naglowek = `${DNI_PELNE[weekdayOf(today)]} · ${numerDnia} ${MIESIACE_DOP[miesiac - 1]}`;
@@ -92,8 +107,17 @@ export function MHabits({
     if (lepsza) rekord = { name: habit.name, dni, label: streakLabel(seria) };
   }
 
-  // Heatmapa: 4 tygodnie, wiersz = tydzień
-  const tygodnie = heatmapWeeks(habits, checks, 4, today, weekStart);
+  // Heatmapa: wiersz = tydzień, liczba tygodni z wybranego zakresu
+  const zakresH = ZAKRESY_HEATMAPY.find((z) => z.value === zakresHeatmapy)!;
+  const tygodnie = heatmapWeeks(
+    habits,
+    checks,
+    zakresH.weeks,
+    today,
+    weekStart,
+  );
+  // Zakresy dłuższe niż 30 dni: tygodnie jako kolumny, małe kwadraty, przewijanie w poziomie
+  const zwarty = zakresH.weeks > 4;
   const naglowkiDni =
     weekStart === "mon"
       ? SKROTY_DNI
@@ -107,6 +131,13 @@ export function MHabits({
         : `${komorka.done} z ${komorka.planned} nawyków`
     }`;
   }
+
+  // Zwarta heatmapa startuje przewinięta do dzisiejszego tygodnia (prawy koniec)
+  useEffect(() => {
+    if (ramkaHeatmapy.current) {
+      ramkaHeatmapy.current.scrollLeft = ramkaHeatmapy.current.scrollWidth;
+    }
+  }, [zwarty, zakresHeatmapy, zakladka]);
 
   // ——— Sen ———
   // Ostatnia noc = wpis z najpóźniejszą datą (nie z przyszłości), jak SleepCard
@@ -148,24 +179,24 @@ export function MHabits({
 
   return (
     <div className="flex flex-col">
-      <header className="flex min-h-[60px] items-center gap-1 pt-2 pr-2 pb-1 pl-4">
+      <header className="m-head py-1">
         <div className="min-w-0 flex-1">
-          <div className={ETYKIETA}>{naglowek}</div>
-          <h1 className="m-0 mt-0.5 text-[28px] font-semibold tracking-[-0.02em]">
-            Nawyki i sen
-          </h1>
+          <div className="text-xs font-medium text-muted-foreground">
+            {naglowek}
+          </div>
+          <h1 className="m-title">Nawyki i sen</h1>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          icon
           aria-label="Nowy nawyk"
           onClick={onNewHabit}
-          className="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
         >
-          <Plus size={22} aria-hidden="true" />
-        </button>
+          <Plus size={20} aria-hidden="true" />
+        </Button>
       </header>
 
-      <div className="mx-4 mb-2">
+      <div className="mx-4 mt-3 mb-2">
         <Segment
           ariaLabel="Widok"
           value={zakladka}
@@ -180,25 +211,20 @@ export function MHabits({
       <div className="flex flex-col gap-4 px-4 pt-1 pb-6">
         {zakladka === "nawyki" && habits.length === 0 && (
           // Stan pusty jak na webie
-          <div
-            className={cn(
-              KARTA,
-              "flex flex-col items-center gap-3 px-4 py-12 text-center",
-            )}
-          >
+          <Card className="items-center gap-3 px-4 py-12 text-center">
             <p className="m-0 text-sm text-muted-foreground">
               Nie masz jeszcze nawyków.
             </p>
             <Button variant="primary" onClick={onNewHabit}>
               Dodaj pierwszy nawyk
             </Button>
-          </div>
+          </Card>
         )}
 
         {zakladka === "nawyki" && habits.length > 0 && (
           <>
-            {/* Pierścień dnia */}
-            <div className={cn(KARTA, "flex items-center gap-3.5 p-3.5")}>
+            {/* Pierścień dnia (jest w makiecie) */}
+            <Card className="flex-row items-center gap-3.5 p-3.5">
               <svg
                 width="56"
                 height="56"
@@ -211,7 +237,7 @@ export function MHabits({
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke="#eeeeee"
+                  className="stroke-active"
                   strokeWidth="4"
                 />
                 <circle
@@ -219,7 +245,7 @@ export function MHabits({
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke="#15803d"
+                  className="stroke-success"
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeDasharray={`${kreska.toFixed(1)} ${OBWOD_PIERSCIENIA}`}
@@ -227,15 +253,15 @@ export function MHabits({
                 />
               </svg>
               <div className="min-w-0 flex-1">
-                <div className="text-lg font-semibold">{`${dzis.done} z ${dzis.planned} zrobione dziś`}</div>
+                <div className="text-lg font-semibold tabular-nums">{`${dzis.done} z ${dzis.planned} zrobione dziś`}</div>
                 {rekord && (
-                  <div className="text-[13px] text-muted-foreground">{`Najdłuższa seria: ${rekord.name} · ${rekord.label}`}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{`Najdłuższa seria: ${rekord.name} · ${rekord.label}`}</div>
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Lista nawyków */}
-            <div className={KARTA}>
+            <Card>
               {habits.map((habit) => {
                 // Opis harmonogramu: wersja na dziś, a gdy nawyk rusza później — pierwsza; dni z wielkiej litery
                 const wersja = scheduleOn(habit, today) ?? habit.schedules[0];
@@ -252,40 +278,28 @@ export function MHabits({
                 // Odznaczyć wolno zawsze (także osierocone odhaczenie), odhaczyć tylko gdy dziś się da
                 const aktywny = canCheck(habit, today, today) || odhaczone;
                 return (
-                  <div
-                    key={habit.id}
-                    className="flex min-h-16 items-center gap-3 border-b border-border px-3.5 last:border-b-0"
-                  >
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={odhaczone}
-                      aria-label={habit.name}
+                  <div key={habit.id} className="m-row py-2">
+                    <Checkbox
+                      checked={odhaczone}
+                      ariaLabel={habit.name}
                       disabled={!aktywny}
-                      onClick={() => onToggle(habit.id, today)}
-                      // Kwadrat 28 px, pole stuknięcia 44 px (pseudo-element)
-                      className={cn(
-                        "relative inline-flex size-7 flex-none cursor-pointer items-center justify-center rounded-lg border-[1.5px] p-0 text-white outline-none after:absolute after:-inset-2 after:content-[''] focus-visible:shadow-focus disabled:cursor-default disabled:opacity-40",
-                        odhaczone
-                          ? "border-success bg-success"
-                          : "border-border-strong bg-white",
-                      )}
-                    >
-                      {odhaczone && (
-                        <CheckIcon
-                          aria-hidden="true"
-                          strokeWidth={3}
-                          className="size-[18px]"
-                        />
-                      )}
-                    </button>
+                      onChange={() => onToggle(habit.id, today)}
+                    />
                     <Link
                       href={`/nawyki/${habit.id}`}
                       className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-foreground no-underline"
                     >
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium">{habit.name}</span>
-                        <span className="font-mono text-xs text-muted-foreground">{`${harmonogram} · seria ${seria}`}</span>
+                        <span className="mt-1 flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">
+                            {harmonogram}
+                          </span>
+                          <StatusBadge tone="gray" className="tabular-nums">
+                            <Flame size={11} aria-hidden="true" />
+                            {`seria ${seria}`}
+                          </StatusBadge>
+                        </span>
                       </span>
                       <ChevronRight
                         size={16}
@@ -296,151 +310,192 @@ export function MHabits({
                   </div>
                 );
               })}
-            </div>
+            </Card>
 
-            {/* Heatmapa 4 tygodni */}
-            <section className={cn(KARTA, "p-3.5")}>
-              <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-2">
-                <h2 className="m-0 text-[17px] font-semibold">
-                  Ostatnie 4 tygodnie
-                </h2>
-                <span className="font-mono text-[11px] text-muted-foreground">
+            {/* Heatmapa z zakresem */}
+            <Card className="p-3.5">
+              <div className="mb-2.5 flex items-baseline justify-between gap-x-2">
+                <CardTitle as="h2" className="text-[15px]">
+                  {zakresH.title}
+                </CardTitle>
+                <span className="text-xs text-muted-foreground tabular-nums">
                   {podpisDnia}
                 </span>
               </div>
-              <div className="mb-1 grid grid-cols-7 gap-[5px] text-center font-mono text-[10px] text-faint-foreground">
-                {naglowkiDni.map((n) => (
-                  <span key={n}>{n}</span>
-                ))}
+              <div className="mb-2.5">
+                <Segment
+                  ariaLabel="Zakres heatmapy"
+                  value={zakresHeatmapy}
+                  onChange={(v) => {
+                    setZakresHeatmapy(v);
+                    setDzien(null);
+                  }}
+                  options={ZAKRESY_HEATMAPY.map((z) => ({
+                    value: z.value,
+                    label: z.label,
+                  }))}
+                />
               </div>
-              <div className="grid grid-cols-7 gap-[5px]">
-                {tygodnie.flat().map((komorka) => {
-                  const przyszlosc = komorka.date > today;
-                  // Dzień bez planu: jaśniejsze tło i przerywana ramka, żeby nie mylił się z 0%
-                  const bezPlanu = !przyszlosc && komorka.percent === null;
-                  // Kolor z % dnia: 0 → najjaśniejszy, 100% → najciemniejszy
-                  let tlo = ODCIENIE[0];
-                  if (komorka.percent !== null && komorka.percent > 0) {
-                    tlo =
-                      komorka.percent <= 25
-                        ? ODCIENIE[1]
-                        : komorka.percent <= 50
-                          ? ODCIENIE[2]
-                          : komorka.percent <= 75
-                            ? ODCIENIE[3]
-                            : komorka.percent < 100
-                              ? ODCIENIE[4]
-                              : ODCIENIE[5];
+              {!zwarty && (
+                <div className="mb-1 grid grid-cols-7 gap-[5px] text-center text-xs font-medium text-muted-foreground">
+                  {naglowkiDni.map((n) => (
+                    <span key={n}>{n}</span>
+                  ))}
+                </div>
+              )}
+              <div
+                ref={ramkaHeatmapy}
+                className={cn(zwarty && "overflow-x-auto pb-1")}
+              >
+                <div
+                  className={
+                    zwarty
+                      ? "grid w-max grid-flow-col grid-rows-7 gap-0.5"
+                      : "grid grid-cols-7 gap-[5px]"
                   }
-                  const opis = `${formatDatePl(komorka.date)} · ${
-                    komorka.planned === 0
-                      ? "brak zaplanowanych"
-                      : `${komorka.done} z ${komorka.planned} nawyków`
-                  }`;
-                  return (
-                    <button
-                      key={komorka.date}
-                      type="button"
-                      data-heat-day={komorka.date}
-                      // Przyszłość bez szczegółów (jak dymek na webie)
-                      disabled={przyszlosc}
-                      aria-label={
-                        przyszlosc ? formatDatePl(komorka.date) : opis
-                      }
-                      aria-pressed={dzien === komorka.date}
-                      onClick={() => setDzien(komorka.date)}
-                      // Pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px)
-                      className={cn(
-                        "relative box-border aspect-square cursor-pointer rounded-md p-0 outline-none after:absolute after:-inset-0.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
-                        przyszlosc
-                          ? "border border-dashed border-input"
-                          : bezPlanu
-                            ? "border border-dashed border-border-strong"
-                            : "border-0",
-                        dzien === komorka.date &&
-                          "border-2 border-solid border-primary",
-                      )}
-                      style={{
-                        background: przyszlosc
-                          ? "#ffffff"
-                          : bezPlanu
-                            ? "#fafafa"
-                            : tlo,
-                      }}
-                    />
-                  );
-                })}
+                >
+                  {tygodnie.flat().map((komorka) => {
+                    const przyszlosc = komorka.date > today;
+                    // Dzień bez planu: jaśniejsze tło i przerywana ramka, żeby nie mylił się z 0%
+                    const bezPlanu = !przyszlosc && komorka.percent === null;
+                    // Kolor z % dnia (progi jak na webie): 0 → najjaśniejszy, powyżej 80% → pełny
+                    let tlo = ODCIENIE[0];
+                    if (komorka.percent !== null && komorka.percent > 0) {
+                      tlo =
+                        komorka.percent <= 40
+                          ? ODCIENIE[1]
+                          : komorka.percent <= 80
+                            ? ODCIENIE[2]
+                            : ODCIENIE[3];
+                    }
+                    const opis = `${formatDatePl(komorka.date)} · ${
+                      komorka.planned === 0
+                        ? "brak zaplanowanych"
+                        : `${komorka.done} z ${komorka.planned} nawyków`
+                    }`;
+                    return (
+                      <button
+                        key={komorka.date}
+                        type="button"
+                        data-heat-day={komorka.date}
+                        // Przyszłość bez szczegółów (jak dymek na webie)
+                        disabled={przyszlosc}
+                        aria-label={
+                          przyszlosc ? formatDatePl(komorka.date) : opis
+                        }
+                        aria-pressed={dzien === komorka.date}
+                        onClick={() => setDzien(komorka.date)}
+                        // Pełny układ: pseudo-element poszerza pole stuknięcia do ~47 px (mieści się w odstępie 5 px).
+                        // Zwarty: kwadrat 12 px to podgląd, cel dotyku mały; szczegóły dnia w podpisie nad kartą
+                        className={cn(
+                          "relative box-border cursor-pointer p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
+                          zwarty
+                            ? "size-3 rounded-[3px]"
+                            : "aspect-square rounded-lg after:absolute after:-inset-0.5 after:content-['']",
+                          przyszlosc
+                            ? "border border-dashed border-input bg-white"
+                            : bezPlanu
+                              ? "border border-dashed border-border-strong bg-panel"
+                              : "border-0",
+                        )}
+                        style={{
+                          background: przyszlosc || bezPlanu ? undefined : tlo,
+                          boxShadow:
+                            dzien === komorka.date
+                              ? zwarty
+                                ? OBRYS_WYBRANEGO_ZWARTY
+                                : OBRYS_WYBRANEGO
+                              : undefined,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-              <div className="mt-2.5 flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
+              <div className="mt-2.5 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                 <span>mniej</span>
-                {[0, 1, 2, 3, 5].map((n) => (
+                {ODCIENIE.map((kolor) => (
                   <span
-                    key={n}
+                    key={kolor}
                     aria-hidden="true"
                     className="size-3 rounded-[3px]"
-                    style={{ background: ODCIENIE[n] }}
+                    style={{ background: kolor }}
                   />
                 ))}
                 <span>więcej</span>
               </div>
-            </section>
+            </Card>
           </>
         )}
 
         {zakladka === "sen" && (
           <>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border">
-              {ostatnia ? (
-                // Stuknięcie otwiera wpis ostatniej nocy do edycji
-                <button
-                  type="button"
-                  onClick={() => onNewSleep(ostatnia.date)}
-                  className="block cursor-pointer border-0 bg-white px-3.5 py-3 text-left text-foreground outline-none focus-visible:shadow-focus-inset"
-                >
-                  <div className={ETYKIETA}>Ostatnia noc</div>
-                  <div className="mt-1 font-mono text-[22px] font-medium">
-                    {minutyOstatniej === null
-                      ? "—"
-                      : formatDuration(minutyOstatniej)}
-                    <span className="text-sm text-muted-foreground"> h</span>
+            <div className="grid grid-cols-2 gap-3">
+              <Card>
+                {ostatnia ? (
+                  // Stuknięcie otwiera wpis ostatniej nocy do edycji
+                  <button
+                    type="button"
+                    onClick={() => onNewSleep(ostatnia.date)}
+                    className="block w-full cursor-pointer rounded-xl border-0 bg-transparent p-3.5 text-left text-foreground outline-none focus-visible:shadow-focus"
+                  >
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Ostatnia noc
+                    </div>
+                    <div className="mt-1.5 text-2xl font-semibold tracking-[-0.02em] tabular-nums">
+                      {minutyOstatniej === null
+                        ? "—"
+                        : formatDuration(minutyOstatniej)}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {" "}
+                        h
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                      {opisOstatniej}
+                    </div>
+                  </button>
+                ) : (
+                  <div className="p-3.5">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Ostatnia noc
+                    </div>
+                    <div className="mt-1.5 text-2xl font-semibold tracking-[-0.02em]">
+                      —
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {opisOstatniej}
+                    </div>
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                    {opisOstatniej}
-                  </div>
-                </button>
-              ) : (
-                <div className="bg-white px-3.5 py-3">
-                  <div className={ETYKIETA}>Ostatnia noc</div>
-                  <div className="mt-1 font-mono text-[22px] font-medium">
-                    —
-                  </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                    {opisOstatniej}
-                  </div>
-                </div>
-              )}
-              <div className="bg-white px-3.5 py-3">
-                <div className={ETYKIETA}>{`Średnio ${zakres} dni`}</div>
-                <div className="mt-1 font-mono text-[22px] font-medium">
+                )}
+              </Card>
+              <Card className="p-3.5">
+                <div className="text-xs font-medium text-muted-foreground">{`Średnio ${zakres} dni`}</div>
+                <div className="mt-1.5 text-2xl font-semibold tracking-[-0.02em] tabular-nums">
                   {statystyki.avg === null ? (
                     "—"
                   ) : (
                     <>
                       {formatDuration(statystyki.avg)}
-                      <span className="text-sm text-muted-foreground"> h</span>
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {" "}
+                        h
+                      </span>
                     </>
                   )}
                 </div>
                 {cel > 0 && (
-                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{`cel ${formatDuration(cel)}`}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">{`cel ${formatDuration(cel)}`}</div>
                 )}
-              </div>
+              </Card>
             </div>
 
-            <section className={cn(KARTA, "p-3.5")}>
+            <Card className="p-3.5">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="m-0 text-[17px] font-semibold">Sen</h2>
-                <div className="w-[140px]">
+                <CardTitle as="h2" className="text-[15px]">
+                  Sen
+                </CardTitle>
+                <div className="w-[150px]">
                   <Segment
                     ariaLabel="Zakres snu"
                     value={zakres}
@@ -455,7 +510,7 @@ export function MHabits({
                   />
                 </div>
               </div>
-              <div className="mb-1.5 min-h-[18px] font-mono text-xs text-soft-foreground">
+              <div className="mb-1.5 min-h-[18px] text-xs tabular-nums">
                 {slupek === null
                   ? "Stuknij słupek, żeby zobaczyć szczegóły"
                   : opisSlupka(slupek)}
@@ -470,7 +525,7 @@ export function MHabits({
                 {cel > 0 && (
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-success-border"
+                    className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-success"
                     style={{ bottom: liniaCelu }}
                   />
                 )}
@@ -479,12 +534,12 @@ export function MHabits({
                     b.minutes === null
                       ? 0
                       : Math.round((b.minutes / skala) * WYSOKOSC_WYKRESU);
-                  // Kolor jak w makiecie: cel → zielony, do 90% celu → jasnozielony, mniej → pomarańczowy
-                  let kolor = "#e5a582";
-                  if (b.minutes !== null && b.minutes >= cel) kolor = "#15803d";
+                  // Kolor jak w makiecie: cel → zielony, do 90% celu → jasnozielony, mniej → szary
+                  let kolor = SLUPEK_MALO;
+                  if (b.minutes !== null && b.minutes >= cel)
+                    kolor = SLUPEK_CEL;
                   else if (b.minutes !== null && b.minutes >= cel * 0.9)
-                    kolor = "#8fd1a8";
-                  if (slupek === k) kolor = "#171717";
+                    kolor = SLUPEK_BLISKO;
                   return (
                     // Przycisk na całą wysokość wykresu, żeby dało się trafić także w niski słupek
                     <button
@@ -500,22 +555,24 @@ export function MHabits({
                         className="block w-full rounded-t-[4px]"
                         style={{
                           height: b.minutes === null ? 3 : wysokosc,
-                          background: b.minutes === null ? "#f0f0f0" : kolor,
+                          background:
+                            b.minutes === null ? "rgba(0,0,0,.05)" : kolor,
+                          boxShadow: slupek === k ? OBRYS_SLUPKA : undefined,
                         }}
                       />
                     </button>
                   );
                 })}
               </div>
-              <div className="mt-1.5 flex justify-between font-mono text-[10px] text-faint-foreground">
+              <div className="mt-1.5 flex justify-between text-xs text-muted-foreground tabular-nums">
                 <span>{krotko(statystyki.bars[0].date)}</span>
                 <span>dziś</span>
               </div>
-            </section>
+            </Card>
 
             <Button
               variant="primary"
-              className="h-12 w-full rounded-md text-[15px]"
+              className="w-full"
               onClick={() => onNewSleep(today)}
             >
               <Moon size={18} aria-hidden="true" />

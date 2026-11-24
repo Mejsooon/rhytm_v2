@@ -1,15 +1,14 @@
 "use client";
 
-// Arkusz wpisu snu na telefonie wg MSleep.dc.html (pełny ekran, Anuluj / Wpis snu / Zapisz).
+// Arkusz wpisu snu na telefonie wg CMSleep.dc.html (FormDialog, nagłówek „actions”: Anuluj / Wpis snu / Zapisz).
 // Makieta nie ma wyboru daty: arkusz zapisuje noc dla podanej daty pobudki,
 // a gdy ten dzień ma już wpis — edytuje go. Godziny −/+ co 15 min, z przejściem przez północ.
 // Zasady zapisu jak w SleepDialog (web, bliźniacza logika w sleep-dialog.tsx): ta sama akcja i ładunek.
 // Zapis nieoptymistyczny: w trakcie zapisu Anuluj, Esc i wszystkie pola są zablokowane, błąd zostaje w arkuszu.
 import { useRef, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { Dialog } from "radix-ui";
 
-import { Chip } from "@/components/controls";
+import { Button, Card, Chip, FIELD, FormDialog } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -24,13 +23,6 @@ const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 const DOMYSLNE_ZASNIECIE = "23:00";
 const DOMYSLNA_POBUDKA = "07:00";
 const KROK = 15; // min
-
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
-const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
-const PRZYCISK_KROKU =
-  "inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white p-0 text-lg text-foreground outline-none hover:bg-muted focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50";
 
 export function MSleepSheet({
   date,
@@ -121,183 +113,177 @@ export function MSleepSheet({
   ];
 
   return (
-    // W trakcie zapisu arkusz się nie zamyka (Esc)
-    <Dialog.Root
+    <FormDialog
       open
+      // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
       onOpenChange={(otwarte) => !otwarte && !pending && onDone()}
+      title="Wpis snu"
+      phoneHeader="actions"
+      phoneCancel={{ label: "Anuluj", onClick: onDone, disabled: pending }}
+      phoneSubmit={
+        <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
+          Zapisz
+        </Button>
+      }
+      // Od 800 px (obrót tabletu przy otwartym arkuszu) okno ma zwykłą stopkę; na telefonie jest ukryta
+      footer={
+        <>
+          <Button
+            aria-label="Anuluj i zamknij"
+            disabled={pending}
+            onClick={onDone}
+          >
+            Anuluj
+          </Button>
+          <Button
+            variant="primary"
+            aria-label="Zapisz wpis snu"
+            disabled={!mozeZapisac}
+            onClick={zapisz}
+          >
+            Zapisz
+          </Button>
+        </>
+      }
     >
-      <Dialog.Portal>
-        <Dialog.Content
-          aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
-        >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
-            <button
-              type="button"
-              disabled={pending}
-              onClick={onDone}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
-              )}
-            >
-              Anuluj
-            </button>
-            <Dialog.Title className="m-0 flex-1 text-center text-[15px] font-semibold">
-              Wpis snu
-            </Dialog.Title>
-            <button
-              type="button"
-              disabled={!mozeZapisac}
-              onClick={zapisz}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
-              )}
-            >
-              Zapisz
-            </button>
+      {blad && (
+        <p role="alert" className="m-0 text-xs text-destructive-foreground">
+          {blad}
+        </p>
+      )}
+
+      {/* Noc, czas snu na żywo i odniesienie do celu */}
+      <div className="text-center">
+        <div className="text-xs font-medium text-muted-foreground">
+          {nightTitle(date).phone}
+        </div>
+        <div className="mt-1.5 text-5xl font-semibold tracking-[-0.02em] tabular-nums">
+          {minuty === null ? "—" : formatDuration(minuty)}
+        </div>
+        {minuty === null ? (
+          <p
+            role="alert"
+            className="m-0 text-[13px] text-destructive-foreground"
+          >
+            Godziny zaśnięcia i pobudki muszą się różnić.
+          </p>
+        ) : (
+          <div className="text-[13px] text-muted-foreground">
+            {goalText(minuty, goalMin).phone}
           </div>
+        )}
+      </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-5 pb-6">
-            {blad && (
-              <p role="alert" className="m-0 text-xs text-destructive-foreground">
-                {blad}
-              </p>
-            )}
-
-            {/* Noc, czas snu na żywo i odniesienie do celu */}
-            <div className="text-center">
-              <div className={ETYKIETA}>{nightTitle(date).phone}</div>
-              <div className="mt-1.5 font-mono text-5xl font-medium tracking-[-0.02em]">
-                {minuty === null ? "—" : formatDuration(minuty)}
-              </div>
-              {minuty === null ? (
-                <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
-                  Godziny zaśnięcia i pobudki muszą się różnić.
-                </p>
-              ) : (
-                <div className="text-[13px] text-muted-foreground">
-                  {goalText(minuty, goalMin).phone}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border bg-white">
-              {wiersze.map(({ nazwa, testId, wartosc, zmien, Ikona }) => {
-                const [g, m] = wartosc.split(":").map(Number);
-                return (
-                  <div
-                    key={nazwa}
-                    className="flex min-h-16 items-center gap-3 border-b border-border px-3.5 last:border-b-0"
-                  >
-                    <Ikona
-                      size={20}
-                      aria-hidden="true"
-                      className="flex-none text-muted-foreground"
-                    />
-                    <span className="flex-1">{nazwa}</span>
-                    <button
-                      type="button"
-                      aria-label={`${nazwa} wcześniej`}
-                      disabled={pending}
-                      onClick={() => zmien(przesun(wartosc, -KROK))}
-                      className={PRZYCISK_KROKU}
-                    >
-                      −
-                    </button>
-                    <span
-                      data-testid={testId}
-                      className="min-w-[60px] text-center font-mono text-lg"
-                    >
-                      {formatClockTime(g, m, clock)}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label={`${nazwa} później`}
-                      disabled={pending}
-                      onClick={() => zmien(przesun(wartosc, KROK))}
-                      className={PRZYCISK_KROKU}
-                    >
-                      +
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className={ETYKIETA}>Jak się wyspałeś?</span>
-              <div
-                role="radiogroup"
-                aria-label="Jak się wyspałeś?"
-                className="grid grid-cols-5 gap-1.5"
-              >
-                {SAMOPOCZUCIE.map((etykieta, i) => {
-                  const wartosc = i + 1;
-                  const wybrane = feeling === wartosc;
-                  return (
-                    <button
-                      key={etykieta}
-                      type="button"
-                      role="radio"
-                      aria-checked={wybrane}
-                      aria-label={`Jakość ${wartosc} — ${etykieta}`}
-                      disabled={pending}
-                      // Ponowne stuknięcie wybranej wartości czyści samopoczucie (jak na webie)
-                      onClick={() => setFeeling(wybrane ? null : wartosc)}
-                      className={cn(
-                        "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border outline-none focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50",
-                        wybrane
-                          ? "border-success bg-success-soft text-success"
-                          : "border-input bg-white text-soft-foreground",
-                      )}
-                    >
-                      <span className="font-mono text-lg">{wartosc}</span>
-                      <span className="text-[10px]">{etykieta}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className={ETYKIETA}>Co mogło wpłynąć</span>
-              <div className="flex flex-wrap gap-2">
-                {SLEEP_TAGS.map((tag) => (
-                  <Chip
-                    key={tag}
-                    selected={tags.includes(tag)}
-                    disabled={pending}
-                    onClick={() =>
-                      setTags((t) =>
-                        t.includes(tag)
-                          ? t.filter((x) => x !== tag)
-                          : [...t, tag],
-                      )
-                    }
-                  >
-                    {tag}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium">
-              Notatka
-              <textarea
-                rows={3}
-                value={note}
-                maxLength={1000}
-                disabled={pending}
-                placeholder="Opcjonalnie"
-                onChange={(e) => setNote(e.target.value)}
-                className="box-border h-[88px] w-full resize-none rounded-md border border-input bg-white px-3.5 py-3 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary disabled:opacity-60"
+      <Card>
+        {wiersze.map(({ nazwa, testId, wartosc, zmien, Ikona }) => {
+          const [g, m] = wartosc.split(":").map(Number);
+          return (
+            <div key={nazwa} className="m-row">
+              <Ikona
+                size={20}
+                aria-hidden="true"
+                className="flex-none text-soft-foreground"
               />
-            </label>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+              <span className="flex-1">{nazwa}</span>
+              <span className="m-step">
+                <button
+                  type="button"
+                  aria-label={`${nazwa} wcześniej`}
+                  disabled={pending}
+                  onClick={() => zmien(przesun(wartosc, -KROK))}
+                  className="disabled:cursor-default disabled:opacity-50"
+                >
+                  −
+                </button>
+                <span data-testid={testId}>{formatClockTime(g, m, clock)}</span>
+                <button
+                  type="button"
+                  aria-label={`${nazwa} później`}
+                  disabled={pending}
+                  onClick={() => zmien(przesun(wartosc, KROK))}
+                  className="disabled:cursor-default disabled:opacity-50"
+                >
+                  +
+                </button>
+              </span>
+            </div>
+          );
+        })}
+      </Card>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Jak się wyspałeś?
+        </span>
+        <div
+          role="radiogroup"
+          aria-label="Jak się wyspałeś?"
+          className="grid grid-cols-5 gap-1.5"
+        >
+          {SAMOPOCZUCIE.map((etykieta, i) => {
+            const wartosc = i + 1;
+            const wybrane = feeling === wartosc;
+            return (
+              <button
+                key={etykieta}
+                type="button"
+                role="radio"
+                aria-checked={wybrane}
+                aria-label={`Jakość ${wartosc} — ${etykieta}`}
+                disabled={pending}
+                // Ponowne stuknięcie wybranej wartości czyści samopoczucie (jak na webie)
+                onClick={() => setFeeling(wybrane ? null : wartosc)}
+                className={cn(
+                  "flex h-[60px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border p-0 outline-none focus-visible:shadow-focus disabled:cursor-default disabled:opacity-50",
+                  wybrane
+                    ? "border-success/40 bg-success-soft text-success"
+                    : "border-input bg-white text-foreground shadow-xs",
+                )}
+              >
+                <span className="text-lg font-semibold tabular-nums">
+                  {wartosc}
+                </span>
+                <span className="text-[11px]">{etykieta}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Co mogło wpłynąć
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {SLEEP_TAGS.map((tag) => (
+            <Chip
+              key={tag}
+              selected={tags.includes(tag)}
+              disabled={pending}
+              onClick={() =>
+                setTags((t) =>
+                  t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag],
+                )
+              }
+            >
+              {tag}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
+      <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+        Notatka
+        <textarea
+          rows={3}
+          value={note}
+          maxLength={1000}
+          disabled={pending}
+          placeholder="Opcjonalnie"
+          onChange={(e) => setNote(e.target.value)}
+          className={cn(FIELD, "h-auto resize-none py-3 max-[799px]:h-auto")}
+        />
+      </label>
+    </FormDialog>
   );
 }

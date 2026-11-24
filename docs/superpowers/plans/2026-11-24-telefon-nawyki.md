@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (CMHabits, CMHabitDetail, CMHabitNew, CMSleep), uwagi „nawyki”, decyzja T18. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMHabits.dc.html` (stany Nawyki i Sen), `CMHabitDetail.dc.html`, `CMHabitNew.dc.html`, `CMSleep.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMHabits CMHabitDetail CMHabitNew CMSleep`.
+**Makiety (wiążące):** `docs/design/mockups/CMHabits.dc.html` (stany Nawyki i Sen), `CMHabitDetail.dc.html`, `CMHabitNew.dc.html`, `CMSleep.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMHabits CMHabitDetail CMHabitNew CMSleep`. Uzupełnienie 24.11: CMHabits ma przełącznik zakresu heatmapy (30 dni · 3 mies. · 6 mies. · Rok — jak zakresy webu); CMHabitDetail ma „Łącznie N dni zrobionych od …”, notatki z polem „Dodaj notatkę…” (jak `habit-notes.tsx`) i kartę „Historia harmonogramu” (jak `habit-detail.tsx` na webie).
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4 (`@utility` `m-*`), kontrolki `@/components/controls`, Vitest, Playwright (CI).
 

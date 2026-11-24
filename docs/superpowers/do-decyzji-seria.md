@@ -73,3 +73,12 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Dziś na telefonie wg aktualnej makiety CMToday (wariant F): „Ten tydzień”, kafelki nawyków, plan całej doby; bez kafelka „Zadania x/y”, karty biegu i linków „Kalendarz”/„Wszystkie”; zadania odhacza się w szczegółach bloku | makieta wygrywa z planem i ze starym punktem specu (konflikty, pkt 3) | średni: zadania wymagają jednego stuknięcia więcej |
 | Przerwy w planie dnia na telefonie nieklikalne | makieta pokazuje tylko tekst | niski |
 | Odstęp etykieta–pole w szybkim dodawaniu 6 px zamiast 8 px | wspólny `TextField` | niski |
+
+### Pakiet nawyki
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| Heatmapa: „30 dni” jak w makiecie (4 tygodnie = 28 dni, tytuł „Ostatnie 30 dni”); 3 mies./6 mies./Rok w zwartym układzie (tygodnie jako kolumny, 12 px, przewijanie w poziomie, bez podpisów dni) | makieta pokazuje tylko 30 dni; pełna siatka roku miała ~2,5 tys. px | niski |
+| Karty Seria/Rekord z jednostką („dni”, „tyg.”) | nawyki X razy w tygodniu liczą serię w tygodniach | niski |
+| Nowy nawyk i wpis snu jako arkusz od dołu (makieta: pełny ekran) | spójnie z resztą arkuszy CM | niski |
+| Historia harmonogramu: starsze wersje z zakresem dat jak na webie | dokładniejsze niż samo „od …” | niski |

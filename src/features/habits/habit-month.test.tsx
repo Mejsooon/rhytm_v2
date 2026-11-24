@@ -187,7 +187,7 @@ describe("HabitMonth", () => {
     expect(dalej).toBeDisabled();
   });
 
-  it("telefon: przyciski miesiąca 44 px i dotychczasowa karta", () => {
+  it("telefon: strzałki 44 px z aria-disabled, karta COSS, dni sąsiednich miesięcy niewidoczne", async () => {
     render(
       <HabitMonth
         habit={nawyk([codziennie("2026-09-01")])}
@@ -199,10 +199,20 @@ describe("HabitMonth", () => {
       />,
     );
     const wstecz = screen.getByRole("button", { name: "Poprzedni miesiąc" });
-    expect(wstecz.className).toContain("max-[799px]:size-11");
-    const karta = wstecz.closest("section") as HTMLElement;
-    expect(karta.className).toContain("rounded-lg");
-    expect(karta.className).toContain("p-4");
-    expect(karta.className).not.toContain("shadow-card");
+    const dalej = screen.getByRole("button", { name: "Następny miesiąc" });
+    expect(wstecz.className).toContain("max-[799px]:w-11");
+    expect(wstecz.className).toContain("max-[799px]:h-11");
+    // Najpóźniejszy miesiąc: strzałka w przód ma aria-disabled i nic nie robi
+    expect(dalej).toHaveAttribute("aria-disabled", "true");
+    expect(dalej).not.toBeDisabled();
+    await userEvent.click(dalej);
+    expect(
+      screen.getByRole("heading", { name: "Listopad 2026" }),
+    ).toBeInTheDocument();
+    const karta = wstecz.closest("section, div.shadow-card") as HTMLElement;
+    expect(karta.className).toContain("shadow-card");
+    // 26.10 to poniedziałek przed 1.11 — zajmuje miejsce, ale go nie widać
+    const sasiad = document.querySelector('[data-day="2026-10-31"]');
+    expect(sasiad?.className).toContain("invisible");
   });
 });

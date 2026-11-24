@@ -1,10 +1,18 @@
 "use client";
 
 // Notatki do nawyku (karta spoza makiety webowej — jak karta „Historia harmonogramu” z CHabitDetail): lista + pole dodawania.
-// Telefon zostaje w dotychczasowym wyglądzie.
+// Telefon (CMHabitDetail) to osobny blok JSX.
 import { useRef, useState } from "react";
 
-import { CardHeader, CardTitle, FIELD } from "@/components/controls";
+import { Plus } from "lucide-react";
+
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  FIELD,
+} from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { addHabitNote } from "./actions";
 
@@ -15,7 +23,7 @@ export function HabitNotes({
 }: {
   habitId: string;
   notes: { id: string; date: IsoDate; text: string }[];
-  // Telefon (MHabitDetail.dc.html): nagłówek nad kartą, data nad treścią notatki
+  // Telefon (CMHabitDetail.dc.html): nagłówek nad kartą, data nad treścią notatki
   phone?: boolean;
 }) {
   const [tekst, setTekst] = useState("");
@@ -45,30 +53,80 @@ export function HabitNotes({
     }
   }
 
+  // Telefon (CMHabitDetail): nagłówek card-t nad kartą, notatka = data .hint nad tekstem,
+  // ostatni wiersz to pole „Dodaj notatkę…” 16 px z przyciskiem „Zapisz notatkę” 44 px
+  if (phone) {
+    return (
+      <section>
+        <CardTitle as="h2" className="mb-2 text-[15px]">
+          Notatki
+        </CardTitle>
+        <Card>
+          {notes.map((n) => (
+            <div
+              key={n.id}
+              className="m-row flex-col items-start gap-0.5 py-2.5"
+            >
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {`${n.date.slice(8)}.${n.date.slice(5, 7)}`}
+              </span>
+              <span className="min-w-0 break-words">{n.text}</span>
+            </div>
+          ))}
+          {/* border-b-0: pod wierszem bywa komunikat błędu, więc :last-child nie wystarcza */}
+          <div className="m-row gap-2 border-b-0 pr-2">
+            <input
+              type="text"
+              value={tekst}
+              readOnly={pending}
+              placeholder="Dodaj notatkę…"
+              aria-label="Dodaj notatkę"
+              onChange={(e) => setTekst(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void zapisz();
+                }
+              }}
+              className="h-11 min-w-0 flex-1 border-0 bg-transparent text-base text-foreground outline-none"
+            />
+            <Button
+              variant="ghost"
+              icon
+              aria-label="Zapisz notatkę"
+              disabled={pending}
+              onClick={() => void zapisz()}
+            >
+              <Plus size={18} aria-hidden="true" />
+            </Button>
+          </div>
+          {blad && (
+            <p
+              role="alert"
+              className="m-0 px-4 pb-3 text-xs text-destructive-foreground"
+            >
+              {blad}
+            </p>
+          )}
+        </Card>
+      </section>
+    );
+  }
+
   const karta = (
     <>
       {notes.map((n) => (
         <div
           key={n.id}
-          className={
-            phone
-              ? "flex flex-col gap-0.5 border-b border-border px-3.5 py-3"
-              : "flex gap-3 border-b border-border-soft px-6 py-3"
-          }
+          className="flex gap-3 border-b border-border-soft px-6 py-3"
         >
-          <span
-            className={
-              phone
-                ? "font-mono text-[11px] text-muted-foreground"
-                : "flex-none pt-px text-xs text-muted-foreground tabular-nums"
-            }
-          >
+          <span className="flex-none pt-px text-xs text-muted-foreground tabular-nums">
             {`${n.date.slice(8)}.${n.date.slice(5, 7)}`}
           </span>
           <span className="min-w-0 break-words">{n.text}</span>
         </div>
       ))}
-      <div className={phone ? "px-3.5 py-3" : "px-6 py-4"}>
+      <div className="px-6 py-4">
         <input
           type="text"
           value={tekst}
@@ -82,15 +140,13 @@ export function HabitNotes({
               void zapisz();
             }
           }}
-          // Web: pole .inp (FIELD); telefon jak dotąd
-          className={
-            phone
-              ? "box-border w-full rounded-md border border-input bg-white px-2.5 py-2 text-sm text-foreground outline-none focus-visible:shadow-focus disabled:opacity-60 max-[799px]:h-11 max-[799px]:rounded-md max-[799px]:text-[15px]"
-              : FIELD
-          }
+          className={FIELD}
         />
         {blad && (
-          <p role="alert" className="m-0 mt-2 text-xs text-destructive-foreground">
+          <p
+            role="alert"
+            className="m-0 mt-2 text-xs text-destructive-foreground"
+          >
             {blad}
           </p>
         )}
@@ -98,16 +154,7 @@ export function HabitNotes({
     </>
   );
 
-  if (phone) {
-    return (
-      <section>
-        <h2 className="m-0 mb-2 text-[17px] font-semibold">Notatki</h2>
-        <div className="rounded-xl border border-border bg-white">
-          {karta}
-        </div>
-      </section>
-    );
-  }
+  // Web: .card z nagłówkiem .card-h
   return (
     // .card z nagłówkiem .card-h i linią nad listą jak w „Historii harmonogramu”
     <section className="relative flex min-w-0 flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">

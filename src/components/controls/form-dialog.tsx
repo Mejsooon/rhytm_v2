@@ -16,7 +16,7 @@ type NaglowekTelefonu =
   | { phoneHeader?: "close"; phoneCancel?: undefined; phoneSubmit?: undefined }
   | {
       phoneHeader: "actions";
-      phoneCancel: { label: string; onClick: () => void };
+      phoneCancel: { label: string; onClick: () => void; disabled?: boolean };
       phoneSubmit: React.ReactNode;
     };
 
@@ -86,6 +86,7 @@ export function FormDialog({
                 type="button"
                 variant="ghost"
                 onClick={phoneCancel.onClick}
+                disabled={phoneCancel.disabled}
                 className="flex-none text-muted-foreground min-[800px]:hidden"
               >
                 {phoneCancel.label}

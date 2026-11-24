@@ -1,11 +1,17 @@
 "use client";
 
 // Kalendarz miesiąca jednego nawyku (CHabitDetail.dc.html): zrobione / pominięte / szare / neutralne.
-// Używany na komputerze i (Task 7) na telefonie z własnym `minMonth`; telefon zostaje w dotychczasowym wyglądzie.
+// Używany na komputerze i na telefonie (CMHabitDetail, własny `minMonth`). Web i telefon to osobne bloki JSX.
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-import { Button, CardContent, CardHeader, CardTitle } from "@/components/controls";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/controls";
 import { buildMonthGrid, MIESIACE } from "@/components/controls/calendar-math";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { isPlanned, scheduleOn, type Habit } from "./model";
@@ -18,19 +24,22 @@ const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 // ale „szare” (dzień bez nawyku) zostaje na szarym tle, żeby różniło się od „neutralne” i legenda była prawdziwa.
 const STYLE_STANU: Record<StanDnia, string> = {
   zrobione: "border-success bg-success text-white",
-  pominiete: "border-destructive/[.16] bg-destructive/10 text-destructive-foreground",
+  pominiete:
+    "border-destructive/[.16] bg-destructive/10 text-destructive-foreground",
   szare: "border-border bg-panel text-faint-foreground",
   neutralne: "border-border bg-white text-faint-foreground",
   przyszlosc: "border-dashed border-input bg-white text-faint-foreground",
 };
 
-// Telefon (MHabitDetail.dc.html) — style bez zmian do Etapu 3
+// Telefon (CMHabitDetail.dc.html): zrobione → zielone, przyszłość → przerywana ramka, reszta szara jak w renderVals;
+// „szare” (dzień bez nawyku) zostaje jaśniejsze, żeby różniło się od pominiętego
 const STYLE_STANU_TEL: Record<StanDnia, string> = {
   zrobione: "bg-success text-white",
-  pominiete: "bg-destructive-soft text-destructive-foreground",
+  pominiete: "bg-active text-muted-foreground",
   szare: "bg-panel text-faint-foreground",
-  neutralne: "bg-white text-faint-foreground",
-  przyszlosc: "border border-dashed border-input bg-white text-faint-foreground",
+  neutralne: "bg-active text-muted-foreground",
+  przyszlosc:
+    "border border-dashed border-input bg-white text-faint-foreground",
 };
 
 const OPIS_STANU: Record<StanDnia, string> = {
@@ -84,8 +93,7 @@ export function HabitMonth({
   minMonth?: string;
   // Najpóźniejszy miesiąc 'YYYY-MM' — zwykle bieżący
   maxMonth: string;
-  // Wariant telefonu (MHabitDetail.dc.html): pominięte dni szare zamiast czerwonych,
-  // a zamiast legendy podsumowanie pokazanego miesiąca
+  // Wariant telefonu (CMHabitDetail.dc.html): osobny blok JSX, zamiast legendy podsumowanie miesiąca
   phone?: boolean;
 }) {
   const [miesiac, setMiesiac] = useState(maxMonth);
@@ -141,14 +149,73 @@ export function HabitMonth({
   // Nazwa miesiąca z wielkiej litery: „Listopad 2026”
   const tytul = `${MIESIACE[m - 1][0].toUpperCase()}${MIESIACE[m - 1].slice(1)} ${rok}`;
 
+  // Telefon (CMHabitDetail): osobny blok JSX — karta, strzałki 44 px z aria-disabled, nagłówki .lbl,
+  // komórki 12 px / 500, dziś z czerwonym pierścieniem, pod spodem podsumowanie miesiąca
+  if (phone) {
+    return (
+      <Card className="p-3.5">
+        <div className="mb-2.5 flex items-center">
+          <CardTitle as="h2" className="flex-1 text-[15px]">
+            {tytul}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            icon
+            aria-label="Poprzedni miesiąc"
+            aria-disabled={miesiac <= dolny}
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent"
+            onClick={() => {
+              if (miesiac > dolny) setMiesiac(przesunMiesiac(miesiac, -1));
+            }}
+          >
+            <ChevronLeftIcon size={20} aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            icon
+            aria-label="Następny miesiąc"
+            aria-disabled={miesiac >= maxMonth}
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-30 aria-disabled:hover:bg-transparent"
+            onClick={() => {
+              if (miesiac < maxMonth) setMiesiac(przesunMiesiac(miesiac, 1));
+            }}
+          >
+            <ChevronRightIcon size={20} aria-hidden="true" />
+          </Button>
+        </div>
+        <div className="mb-1 grid grid-cols-7 gap-[5px] text-center text-xs font-medium text-muted-foreground">
+          {naglowki.map((n) => (
+            <span key={n}>{n}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-[5px]">
+          {widoczne.map((k) => {
+            const stan = stanDnia(k.date, k.inMonth);
+            return (
+              <span
+                key={k.date}
+                data-day={k.date}
+                data-state={stan}
+                aria-label={`${dataSlownie(k.date)} · ${OPIS_STANU[stan]}`}
+                // Dni sąsiednich miesięcy zajmują miejsce, ale ich nie widać (jak puste pola w makiecie)
+                className={`box-border flex aspect-square items-center justify-center rounded-lg text-xs font-medium tabular-nums ${
+                  k.inMonth ? STYLE_STANU_TEL[stan] : "invisible"
+                } ${k.date === today ? "shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--destructive-strong)]" : ""}`}
+              >
+                {Number(k.date.slice(8))}
+              </span>
+            );
+          })}
+        </div>
+        <div className="mt-2.5 text-xs text-muted-foreground">
+          {podsumowanie}
+        </div>
+      </Card>
+    );
+  }
+
   const naglowkiDni = (
-    <div
-      className={
-        phone
-          ? "mb-1 grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-muted-foreground"
-          : "mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-muted-foreground"
-      }
-    >
+    <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-muted-foreground">
       {naglowki.map((n) => (
         <span key={n}>{n}</span>
       ))}
@@ -164,13 +231,6 @@ export function HabitMonth({
         if (!k.inMonth) {
           wyglad = "border-transparent bg-transparent text-faint-foreground/50";
         }
-        if (phone) {
-          // Telefon: pominięte dni szare zamiast czerwonych, reszta jak dotąd
-          wyglad =
-            stan === "pominiete"
-              ? "bg-muted text-faint-foreground"
-              : STYLE_STANU_TEL[stan];
-        }
         return (
           <span
             key={k.date}
@@ -180,15 +240,14 @@ export function HabitMonth({
             // Web: dziś z pierścieniem (biała przerwa 2 px + obrys 2 px) — celowy dodatek z makiety CHabitDetail
             // (wcześniej aplikacja nie wyróżniała dziś); tylko styl, bez zmian w treści i ARIA
             style={
-              !phone && k.date === today
-                ? { boxShadow: "0 0 0 2px var(--background), 0 0 0 4px var(--foreground)" }
+              k.date === today
+                ? {
+                    boxShadow:
+                      "0 0 0 2px var(--background), 0 0 0 4px var(--foreground)",
+                  }
                 : undefined
             }
-            className={
-              phone
-                ? `box-border flex h-10 items-center justify-center rounded-md font-mono text-xs ${wyglad}`
-                : `box-border flex h-10 items-center justify-center rounded-[8px] border text-[13px] font-medium tabular-nums ${wyglad}`
-            }
+            className={`box-border flex h-10 items-center justify-center rounded-[8px] border text-[13px] font-medium tabular-nums ${wyglad}`}
           >
             {Number(k.date.slice(8))}
           </span>
@@ -196,39 +255,6 @@ export function HabitMonth({
       })}
     </div>
   );
-
-  if (phone) {
-    return (
-      <section className="rounded-lg border border-border bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="m-0 text-[15px] font-semibold">{tytul}</h2>
-          <div className="flex gap-1 font-mono text-xs text-muted-foreground">
-            <button
-              type="button"
-              aria-label="Poprzedni miesiąc"
-              disabled={miesiac <= dolny}
-              onClick={() => setMiesiac(przesunMiesiac(miesiac, -1))}
-              className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              aria-label="Następny miesiąc"
-              disabled={miesiac >= maxMonth}
-              onClick={() => setMiesiac(przesunMiesiac(miesiac, 1))}
-              className="size-6 cursor-pointer rounded border-0 bg-transparent hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent max-[799px]:size-11 max-[799px]:rounded-md max-[799px]:text-base"
-            >
-              ›
-            </button>
-          </div>
-        </div>
-        {naglowkiDni}
-        {siatka}
-        <div className="mt-2.5 text-[13px] text-muted-foreground">{podsumowanie}</div>
-      </section>
-    );
-  }
 
   // Web: .card z nagłówkiem .card-h (tytuł + ‹ › jako .btng.ic.sm) i treścią .card-p
   return (

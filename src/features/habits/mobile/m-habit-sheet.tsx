@@ -1,23 +1,25 @@
 "use client";
 
-// Arkusz nowego i edytowanego nawyku na telefonie wg MHabitNew.dc.html (pełny ekran, Anuluj / tytuł / Zapisz).
+// Arkusz nowego i edytowanego nawyku na telefonie wg CMHabitNew.dc.html (FormDialog, nagłówek „actions”: Anuluj / tytuł / Zapisz).
 // Zasady zapisu jak w HabitDialog (web): ten sam ładunek i te same akcje; bliźniacza logika
 // jest w habit-dialog.tsx — zmieniając jedną, popraw drugą.
 // Zapis nieoptymistyczny: w trakcie zapisu Anuluj i Esc są zablokowane, błąd zostaje w arkuszu.
 import { useRef, useState } from "react";
-import { Dialog } from "radix-ui";
 
 import {
+  Button,
+  Card,
   Chip,
+  FormDialog,
   Segment,
   Stepper,
   Switch,
+  TextField,
   TimePicker,
 } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
-import { cn } from "@/lib/utils";
 import { createHabit, updateHabit } from "../actions";
 import { scheduleOn, type Habit, type ScheduleType } from "../model";
 
@@ -42,12 +44,6 @@ const PELNE = [
 const GODZINY = ["07:30", "12:00", "18:00", "21:00"];
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
-const ETYKIETA =
-  "font-mono text-[11px] tracking-[.06em] text-muted-foreground uppercase";
-const WIERSZ =
-  "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0";
-const NAGLOWEK_PRZYCISK =
-  "flex h-11 cursor-pointer items-center border-0 bg-transparent px-3 text-[15px] outline-none focus-visible:shadow-focus";
 
 export function MHabitSheet({
   habit,
@@ -152,182 +148,162 @@ export function MHabitSheet({
   }
 
   return (
-    // W trakcie zapisu arkusz się nie zamyka (Esc)
-    <Dialog.Root
+    <FormDialog
       open
+      // W trakcie zapisu arkusz się nie zamyka (nakładka, Esc)
       onOpenChange={(otwarte) => !otwarte && !pending && onDone()}
+      title={habit ? "Edytuj nawyk" : "Nowy nawyk"}
+      phoneHeader="actions"
+      phoneCancel={{ label: "Anuluj", onClick: onDone, disabled: pending }}
+      phoneSubmit={
+        <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
+          Zapisz
+        </Button>
+      }
+      // Od 800 px (obrót tabletu przy otwartym arkuszu) okno ma zwykłą stopkę; na telefonie jest ukryta
+      footer={
+        <>
+          <Button
+            aria-label="Anuluj i zamknij"
+            disabled={pending}
+            onClick={onDone}
+          >
+            Anuluj
+          </Button>
+          <Button
+            variant="primary"
+            aria-label="Zapisz nawyk"
+            disabled={!mozeZapisac}
+            onClick={zapisz}
+          >
+            Zapisz
+          </Button>
+        </>
+      }
     >
-      <Dialog.Portal>
-        <Dialog.Content
-          aria-describedby={undefined}
-          className="fixed inset-0 z-50 flex flex-col bg-white text-[15px] text-foreground outline-none"
+      {blad && (
+        <p role="alert" className="m-0 text-xs text-destructive-foreground">
+          {blad}
+        </p>
+      )}
+
+      <TextField
+        label="Nazwa"
+        type="text"
+        value={name}
+        maxLength={80}
+        placeholder="Np. Woda 2 l"
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Jak często
+        </span>
+        <Segment
+          ariaLabel="Jak często"
+          value={tryb}
+          onChange={setTryb}
+          options={TRYBY}
+        />
+      </div>
+
+      {tryb === "weekdays" && (
+        <div
+          role="group"
+          aria-label="Dni tygodnia"
+          className="grid grid-cols-7 gap-1.5"
         >
-          <div className="flex min-h-[60px] flex-none items-center gap-1 border-b border-border p-2">
-            <button
-              type="button"
-              disabled={pending}
-              onClick={onDone}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "text-muted-foreground disabled:cursor-default disabled:opacity-50",
-              )}
+          {kolejnosc.map((numer) => (
+            <Chip
+              key={numer}
+              selected={dni.includes(numer)}
+              ariaLabel={PELNE[numer - 1]}
+              className="justify-center px-0"
+              onClick={() =>
+                setDni((d) =>
+                  d.includes(numer)
+                    ? d.filter((n) => n !== numer)
+                    : [...d, numer],
+                )
+              }
             >
-              Anuluj
-            </button>
-            <Dialog.Title className="m-0 flex-1 text-center text-[15px] font-semibold">
-              {habit ? "Edytuj nawyk" : "Nowy nawyk"}
-            </Dialog.Title>
-            <button
-              type="button"
-              disabled={!mozeZapisac}
-              onClick={zapisz}
-              className={cn(
-                NAGLOWEK_PRZYCISK,
-                "font-semibold disabled:cursor-default disabled:text-faint-foreground",
-              )}
-            >
-              Zapisz
-            </button>
+              {SKROTY[numer - 1]}
+            </Chip>
+          ))}
+        </div>
+      )}
+
+      {tryb === "times_per_week" && (
+        <Card>
+          <div className="m-row">
+            <span className="flex-1">Razy w tygodniu</span>
+            <Stepper
+              ariaLabel="Razy w tygodniu"
+              value={String(razy)}
+              decDisabled={razy <= 1}
+              incDisabled={razy >= 7}
+              onDec={() => setRazy((n) => Math.max(1, n - 1))}
+              onInc={() => setRazy((n) => Math.min(7, n + 1))}
+            />
           </div>
+        </Card>
+      )}
 
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-[18px] pb-6">
-            {blad && (
-              <p role="alert" className="m-0 text-xs text-destructive-foreground">
-                {blad}
-              </p>
-            )}
-
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium">
-              Nazwa
-              <input
-                type="text"
-                value={name}
-                maxLength={80}
-                placeholder="Np. Woda 2 l"
-                onChange={(e) => setName(e.target.value)}
-                className="box-border h-12 w-full rounded-md border border-input bg-white px-3.5 text-[15px] font-normal text-foreground outline-none placeholder:text-faint-foreground focus:border-primary"
-              />
-            </label>
-
-            <div className="flex flex-col gap-2">
-              <span className={ETYKIETA}>Jak często</span>
-              <Segment
-                ariaLabel="Jak często"
-                value={tryb}
-                onChange={setTryb}
-                options={TRYBY}
-              />
-            </div>
-
-            {tryb === "weekdays" && (
-              <div
-                role="group"
-                aria-label="Dni tygodnia"
-                className="grid grid-cols-7 gap-1.5"
+      <Card>
+        <div className="m-row">
+          <span className="flex-1">Przypomnienie</span>
+          <Switch
+            checked={przypomnienie}
+            onChange={setPrzypomnienie}
+            ariaLabel="Przypomnienie"
+          />
+        </div>
+        {przypomnienie && (
+          <div className="m-row flex-wrap gap-2 py-2.5">
+            {GODZINY.map((t) => (
+              <Chip
+                key={t}
+                selected={!inna && godzina === t}
+                className="tabular-nums"
+                onClick={() => {
+                  setGodzina(t);
+                  setInna(false);
+                }}
               >
-                {kolejnosc.map((numer) => {
-                  const wybrany = dni.includes(numer);
-                  return (
-                    <button
-                      key={numer}
-                      type="button"
-                      aria-pressed={wybrany}
-                      aria-label={PELNE[numer - 1]}
-                      onClick={() =>
-                        setDni((d) =>
-                          d.includes(numer)
-                            ? d.filter((n) => n !== numer)
-                            : [...d, numer],
-                        )
-                      }
-                      className={cn(
-                        "h-11 cursor-pointer rounded-md border text-[13px] outline-none focus-visible:shadow-focus",
-                        wybrany
-                          ? "border-primary bg-primary text-white"
-                          : "border-input bg-white text-foreground",
-                      )}
-                    >
-                      {SKROTY[numer - 1]}
-                    </button>
-                  );
-                })}
-              </div>
+                {formatClockTime(
+                  Number(t.slice(0, 2)),
+                  Number(t.slice(3)),
+                  clock,
+                )}
+              </Chip>
+            ))}
+            <Chip selected={inna} onClick={() => setInna(true)}>
+              Inna…
+            </Chip>
+            {inna && (
+              <TimePicker
+                clock={clock}
+                ariaLabel="Godzina przypomnienia"
+                value={godzina}
+                onChange={setGodzina}
+              />
             )}
-
-            {tryb === "times_per_week" && (
-              <div className="rounded-xl border border-border bg-white">
-                <div className={WIERSZ}>
-                  <span className="flex-1">Razy w tygodniu</span>
-                  <Stepper
-                    ariaLabel="Razy w tygodniu"
-                    value={String(razy)}
-                    decDisabled={razy <= 1}
-                    incDisabled={razy >= 7}
-                    onDec={() => setRazy((n) => Math.max(1, n - 1))}
-                    onInc={() => setRazy((n) => Math.min(7, n + 1))}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-xl border border-border bg-white">
-              <div className={WIERSZ}>
-                <span className="flex-1">Przypomnienie</span>
-                <Switch
-                  checked={przypomnienie}
-                  onChange={setPrzypomnienie}
-                  ariaLabel="Przypomnienie"
-                />
-              </div>
-              {przypomnienie && (
-                <div className={cn(WIERSZ, "flex-wrap gap-2 py-2.5")}>
-                  {GODZINY.map((t) => (
-                    <Chip
-                      key={t}
-                      selected={!inna && godzina === t}
-                      onClick={() => {
-                        setGodzina(t);
-                        setInna(false);
-                      }}
-                    >
-                      <span className="font-mono">
-                        {formatClockTime(
-                          Number(t.slice(0, 2)),
-                          Number(t.slice(3)),
-                          clock,
-                        )}
-                      </span>
-                    </Chip>
-                  ))}
-                  <Chip selected={inna} onClick={() => setInna(true)}>
-                    Inna…
-                  </Chip>
-                  {inna && (
-                    <TimePicker
-                      clock={clock}
-                      ariaLabel="Godzina przypomnienia"
-                      value={godzina}
-                      onChange={setGodzina}
-                    />
-                  )}
-                </div>
-              )}
-              <div className={WIERSZ}>
-                <span className="flex-1">Pokazuj na ekranie Dziś</span>
-                <Switch
-                  checked={naDzis}
-                  onChange={setNaDzis}
-                  ariaLabel="Pokazuj na ekranie Dziś"
-                />
-              </div>
-            </div>
-
-            <p className="m-0 text-[13px] leading-normal text-muted-foreground">
-              {podsumowanie}
-            </p>
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        )}
+        <div className="m-row">
+          <span className="flex-1">Pokazuj na ekranie Dziś</span>
+          <Switch
+            checked={naDzis}
+            onChange={setNaDzis}
+            ariaLabel="Pokazuj na ekranie Dziś"
+          />
+        </div>
+      </Card>
+
+      <p className="m-0 text-[13px] leading-normal text-muted-foreground">
+        {podsumowanie}
+      </p>
+    </FormDialog>
   );
 }
