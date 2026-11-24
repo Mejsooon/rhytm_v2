@@ -145,7 +145,7 @@ describe("CalendarView na telefonie", () => {
       />,
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
       { clientY: 10 * 56 },
     );
     const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
@@ -173,7 +173,7 @@ describe("CalendarView na telefonie", () => {
       />,
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
       { clientY: 10 * 56 },
     );
     const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
@@ -201,13 +201,13 @@ describe("CalendarView na telefonie", () => {
         data={dane()}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
     expect(
       await screen.findByRole("dialog", { name: "Nowy wpis" }),
     ).toHaveTextContent("śr 18.11 · 11:00");
   });
 
-  it("tydzień: „Nowy blok” w nagłówku telefonu otwiera „Nowy wpis”", async () => {
+  it("tydzień: „Nowy wpis” (+) w nagłówku telefonu otwiera „Nowy wpis”", async () => {
     render(
       <CalendarView
         view="tydzien"
@@ -217,9 +217,9 @@ describe("CalendarView na telefonie", () => {
         data={dane()}
       />,
     );
-    // Przyciski „Nowy blok”: web (z tekstem) i telefon (ikona w nagłówku tygodnia)
-    const przyciski = screen.getAllByRole("button", { name: "Nowy blok" });
-    await userEvent.click(przyciski[przyciski.length - 1]);
+    // „+” w nagłówku tygodnia na telefonie i pływający przycisk widoku mają nazwę „Nowy wpis”
+    const przyciski = screen.getAllByRole("button", { name: "Nowy wpis" });
+    await userEvent.click(przyciski[0]);
     expect(
       await screen.findByRole("dialog", { name: "Nowy wpis" }),
     ).toHaveTextContent("wt 17.11 · 11:00");
@@ -352,7 +352,7 @@ describe("CalendarView na telefonie", () => {
     });
     // Telefon: arkusz MCategorySheet (nagłówek z „Dodaj”, siatka kolorów), nie okno web
     expect(
-      within(arkusz).getByRole("button", { name: "Dodaj" }),
+      within(arkusz).getAllByRole("button", { name: "Dodaj" })[0],
     ).toBeDisabled();
     expect(
       within(arkusz).getByRole("radio", { name: "Niebieski" }),
@@ -374,14 +374,14 @@ describe("CalendarView na telefonie", () => {
       1,
     );
     expect(
-      screen.getByRole("button", { name: "Dodaj blok" }),
+      screen.getByRole("button", { name: "Nowy wpis" }),
     ).toBeInTheDocument();
     expect((container.firstElementChild as HTMLElement).className).toContain(
       "max-[799px]:h-[calc(100dvh-var(--tabbar-h))]",
     );
   });
 
-  it("miesiąc na telefonie: „Brak bloków — dodaj” w pustym dniu otwiera arkusz nowego bloku na ten dzień", async () => {
+  it("miesiąc na telefonie: „Brak bloków — dodaj” w pustym dniu otwiera „Nowy wpis” na ten dzień", async () => {
     render(
       <CalendarView
         view="miesiac"
@@ -395,6 +395,9 @@ describe("CalendarView na telefonie", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Brak bloków — dodaj" }),
     );
+    // Makieta CMCalendarMonth: „dodaj” prowadzi do „Nowy wpis”, a wiersz „Blok” do arkusza bloku
+    const wpis = await screen.findByRole("dialog", { name: "Nowy wpis" });
+    await userEvent.click(within(wpis).getByRole("button", { name: /^Blok/ }));
     const arkusz = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(
       within(arkusz).getByRole("button", { name: "Dzień" }),
@@ -453,7 +456,7 @@ describe("CalendarView na telefonie", () => {
       ).toHaveTextContent("18.11");
       expect(within(arkusz).getByText("09:00")).toBeInTheDocument();
       await userEvent.click(
-        within(arkusz).getByRole("button", { name: "Anuluj" }),
+        within(arkusz).getAllByRole("button", { name: "Anuluj" })[0],
       );
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(replace).toHaveBeenCalledWith("/kalendarz?data=2026-11-18", {

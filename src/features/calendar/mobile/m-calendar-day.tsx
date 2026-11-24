@@ -242,7 +242,7 @@ export function MCalendarDay({
           {/* Puste miejsce na osi: stuknięcie dodaje blok o tej godzinie (z dokładnością do 30 min) */}
           <button
             type="button"
-            aria-label="Dodaj blok w wolnym miejscu"
+            aria-label="Dodaj wpis w wolnym miejscu"
             className="absolute top-0 right-0 bottom-0 left-12 cursor-pointer"
             onClick={(e) => {
               const gora = e.currentTarget.getBoundingClientRect().top;
@@ -381,7 +381,7 @@ export function MCalendarDay({
 
       <button
         type="button"
-        aria-label="Dodaj blok"
+        aria-label="Nowy wpis"
         onClick={() => onAdd(date, startPlusa)}
         className="m-fab"
       >

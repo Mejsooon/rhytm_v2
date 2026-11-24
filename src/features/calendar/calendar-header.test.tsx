@@ -80,10 +80,13 @@ describe("CalendarHeader", () => {
     expect(
       screen.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ }),
     ).toBeInTheDocument();
-    // Telefon w tygodniu: bez „Kategorie” (jak w makiecie), „Nowy blok” jest na webie i w nagłówku telefonu
+    // Telefon w tygodniu: bez „Kategorie” (jak w makiecie), „Nowy blok” jest na webie, „Nowy wpis” w nagłówku telefonu
     expect(screen.queryByRole("button", { name: "Kategorie" })).toBeNull();
     expect(screen.getAllByRole("button", { name: "Nowy blok" })).toHaveLength(
-      2,
+      1,
+    );
+    expect(screen.getAllByRole("button", { name: "Nowy wpis" })).toHaveLength(
+      1,
     );
   });
 
@@ -148,9 +151,7 @@ describe("CalendarHeader", () => {
       "href",
       "/szukaj",
     );
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Nowy blok" })[0],
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
     expect(onNewBlock).toHaveBeenCalledTimes(1);
     await userEvent.click(
       screen.getByRole("button", { name: "Następny tydzień" }),

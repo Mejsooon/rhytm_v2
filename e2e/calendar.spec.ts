@@ -392,7 +392,7 @@ test.describe("kalendarz (telefon)", () => {
     await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
 
     // „+” otwiera „Nowy wpis”; wiersz „Blok” prowadzi do arkusza nowego bloku
-    await page.getByRole("button", { name: "Dodaj blok", exact: true }).click();
+    await page.getByRole("button", { name: "Nowy wpis", exact: true }).click();
     await page
       .getByRole("dialog", { name: "Nowy wpis" })
       .getByRole("button", { name: /^Blok/ })

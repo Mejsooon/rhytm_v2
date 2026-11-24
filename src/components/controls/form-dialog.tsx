@@ -29,6 +29,7 @@ export function FormDialog({
   children,
   footer,
   headerAction,
+  headerStart,
   phoneHeader = "close",
   phoneCancel,
   phoneSubmit,
@@ -48,6 +49,8 @@ export function FormDialog({
   footer?: React.ReactNode;
   // Przycisk w nagłówku po prawej (telefon: np. „Gotowe” w arkuszu „Kolumna”)
   headerAction?: React.ReactNode;
+  // Telefon: treść przed tytułem w tym samym wierszu co ✕ (np. plakietka kategorii w szczegółach bloku)
+  headerStart?: React.ReactNode;
   // Telefon: false chowa ✕ w nagłówku (arkusz zamykany nakładką, np. CMScopeSheet)
   phoneClose?: boolean;
   // Dodatkowe klasy tytułu, podtytułu i stopki (np. inny układ na telefonie)
@@ -95,6 +98,9 @@ export function FormDialog({
                 !akcje && "max-[799px]:flex-1",
               )}
             >
+              {headerStart && (
+                <div className="min-[800px]:hidden">{headerStart}</div>
+              )}
               <Dialog.Title
                 className={cn(
                   "m-0 text-lg leading-[1.3] font-semibold max-[799px]:flex max-[799px]:h-11 max-[799px]:items-center max-[799px]:text-lg",

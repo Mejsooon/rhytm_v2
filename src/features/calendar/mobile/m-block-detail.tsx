@@ -105,6 +105,20 @@ export function MBlockDetail({
       title="Szczegóły bloku"
       // Makieta nie ma nagłówka z tytułem: nazwa arkusza zostaje dla czytników, ✕ stoi w prawym rogu
       titleClassName="max-[799px]:sr-only"
+      // Plakietka kategorii stoi w jednym wierszu z ✕ (tło, ramka i kropka z koloru kategorii to dane)
+      headerStart={
+        <span
+          className="inline-flex h-[22px] items-center gap-1 rounded-md border px-[7px] text-[13px] font-medium whitespace-nowrap text-foreground"
+          style={{ background: `${kolor}12`, borderColor: `${kolor}4d` }}
+        >
+          <span
+            aria-hidden="true"
+            className="size-2 rounded-full"
+            style={{ background: kolor }}
+          />
+          {category?.name ?? "Bez kategorii"}
+        </span>
+      }
       footerClassName="max-[799px]:grid max-[799px]:grid-cols-2 max-[799px]:gap-2.5 max-[799px]:border-t-0 max-[799px]:bg-transparent max-[799px]:px-5 max-[799px]:pt-0 max-[799px]:pb-[max(20px,env(safe-area-inset-bottom))]"
       footer={
         <>
@@ -115,19 +129,6 @@ export function MBlockDetail({
         </>
       }
     >
-      {/* Plakietka kategorii: tło, ramka i kropka z koloru kategorii (to dane) */}
-      <span
-        className="inline-flex h-[22px] items-center gap-1 self-start rounded-md border px-[7px] text-[13px] font-medium whitespace-nowrap text-foreground"
-        style={{ background: `${kolor}12`, borderColor: `${kolor}4d` }}
-      >
-        <span
-          aria-hidden="true"
-          className="size-2 rounded-full"
-          style={{ background: kolor }}
-        />
-        {category?.name ?? "Bez kategorii"}
-      </span>
-
       <div>
         <h2 className="m-0 text-[22px] leading-[1.3] font-semibold break-words">
           {o.title}

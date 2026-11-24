@@ -12,7 +12,7 @@ beforeEach(() => vi.clearAllMocks());
 describe("MCategorySheet", () => {
   it("pusta nazwa blokuje „Dodaj”; błąd pojawia się po dotknięciu pola", async () => {
     render(<MCategorySheet onSaved={vi.fn()} onCancel={vi.fn()} />);
-    expect(screen.getByRole("button", { name: "Dodaj" })).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: "Dodaj" })[0]).toBeDisabled();
     expect(screen.queryByText("Nazwa nie może być pusta.")).toBeNull();
     await userEvent.type(screen.getByRole("textbox", { name: "Nazwa" }), "A");
     await userEvent.clear(screen.getByRole("textbox", { name: "Nazwa" }));
@@ -39,6 +39,25 @@ describe("MCategorySheet", () => {
     expect(zajety).not.toHaveClass("opacity-50");
   });
 
+  it("kolory: strzałki zmieniają wybór (roving tabindex), przyciski mają cel 44 px", async () => {
+    render(
+      <MCategorySheet usedColors={[]} onSaved={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const kolory = screen.getAllByRole("radio");
+    const wybrany = kolory.find(
+      (k) => k.getAttribute("aria-checked") === "true",
+    )!;
+    expect(wybrany).toHaveAttribute("tabindex", "0");
+    expect(wybrany).toHaveClass("after:-inset-y-1");
+    wybrany.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    const po = kolory.findIndex(
+      (k) => k.getAttribute("aria-checked") === "true",
+    );
+    expect(po).toBe((kolory.indexOf(wybrany) + 1) % kolory.length);
+    expect(kolory[po]).toHaveFocus();
+  });
+
   it("podgląd pokazuje nazwę z paskiem koloru; „Dodaj” zapisuje i oddaje kategorię", async () => {
     createCategory.mockResolvedValue({ ok: true, id: "k9" });
     const onSaved = vi.fn();
@@ -51,7 +70,7 @@ describe("MCategorySheet", () => {
     );
     expect(arkusz).toHaveTextContent("Języki");
     await userEvent.click(screen.getByRole("radio", { name: "Fioletowy" }));
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Dodaj" })[0]);
     expect(createCategory).toHaveBeenCalledWith({
       name: "Języki",
       color: "#7c3aed",
@@ -69,12 +88,12 @@ describe("MCategorySheet", () => {
     const onCancel = vi.fn();
     render(<MCategorySheet onSaved={onSaved} onCancel={onCancel} />);
     await userEvent.type(screen.getByRole("textbox", { name: "Nazwa" }), "X");
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Dodaj" })[0]);
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Nie udało się.",
     );
     expect(onSaved).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

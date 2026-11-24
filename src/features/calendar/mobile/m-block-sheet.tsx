@@ -40,7 +40,7 @@ import {
   type Scope,
 } from "../scope";
 import { weekdayOf } from "../view-range";
-import { DNI_SKROT } from "./pl";
+import { DNI_SKROT, KOLOR_BRAK } from "./pl";
 
 type Powtarzanie = "none" | "daily" | "weekly" | "weekdays" | "custom";
 
@@ -53,7 +53,6 @@ const OPCJE_POWTARZANIA: { value: Powtarzanie; label: string }[] = [
   { value: "custom", label: "Własne…" },
 ];
 const PREFIKS_TYMCZASOWY = "tmp-";
-const KOLOR_BRAK = "#a3a3a3";
 
 // Arkusz zmienia tylko zadania, więc działa z magazynem kalendarza i Dziś (jak dymek bloku)
 type ApplyOptimistic = (
@@ -413,6 +412,21 @@ export function MBlockSheet({
             Zapisz
           </Button>
         }
+        // Od 800 px (obrót tabletu przy otwartym arkuszu) okno ma zwykłą stopkę; na telefonie ukryta
+        footer={
+          <>
+            <Button
+              onClick={() => {
+                if (!pending) onDone();
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button variant="primary" disabled={!mozeZapisac} onClick={zapisz}>
+              Zapisz
+            </Button>
+          </>
+        }
       >
         {(blad || bladPol) && (
           <div className="flex flex-col items-start gap-1">
@@ -435,7 +449,7 @@ export function MBlockSheet({
           className={cn(FIELD, "max-[799px]:text-lg max-[799px]:font-medium")}
         />
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <span className={ETYKIETA}>Kategoria</span>
           <div className="flex flex-wrap gap-2">
             {wybor.map((k) => {
@@ -514,7 +528,7 @@ export function MBlockSheet({
           </div>
         </Card>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <span className={ETYKIETA}>Powtarzanie</span>
           <div className="flex flex-wrap gap-2">
             {OPCJE_POWTARZANIA.map((o) => (
@@ -575,7 +589,7 @@ export function MBlockSheet({
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <span className={ETYKIETA}>
             Zadania w bloku · {wierszeZadan.length}
           </span>
@@ -630,7 +644,7 @@ export function MBlockSheet({
           </Card>
         </div>
 
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+        <label className="flex flex-col gap-2 text-sm font-medium">
           Notatka
           <textarea
             rows={2}

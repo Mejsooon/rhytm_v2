@@ -221,7 +221,7 @@ export function CalendarHeader({
               <Button
                 variant="ghost"
                 icon
-                aria-label="Nowy blok"
+                aria-label="Nowy wpis"
                 onClick={onNewBlockPhone ?? onNewBlock}
               >
                 <Plus size={20} aria-hidden="true" />

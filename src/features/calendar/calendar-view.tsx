@@ -478,32 +478,11 @@ export function CalendarView({
     setOkno({ typ: "usun", occurrence: o });
   }
 
-  // „+”, „Nowy blok” w nagłówku tygodnia i stuknięcie pustej osi na telefonie: arkusz „Nowy wpis”
+  // „+”, „Nowy wpis” w nagłówku tygodnia, „Brak bloków — dodaj” w miesiącu i stuknięcie pustej osi na telefonie: arkusz „Nowy wpis”
   // z tym dniem i godziną (Blok · Bieg · Trening siłowy)
   function dodajNaTelefonie(dzien: IsoDate, startMin: number) {
     setWybranyTel(null);
     setOkno({ typ: "wpis", date: dzien, startMin, tel: true });
-  }
-
-  // „Brak bloków — dodaj” w miesiącu: od razu arkusz nowego bloku na ten dzień (MBlockSheet)
-  function dodajBlokNaTelefonie(dzien: IsoDate, startMin: number) {
-    setWybranyTel(null);
-    setOkno({
-      typ: "blok",
-      mode: "create",
-      tel: true,
-      initial: {
-        title: "",
-        categoryId: null,
-        date: dzien,
-        startMin,
-        // Blok nie przechodzi przez północ
-        durationMin: Math.min(60, 1440 - startMin),
-        recurrence: null,
-        note: "",
-        remind: true,
-      },
-    });
   }
 
   // ?nowy=blok: okno nowego bloku otwiera się raz na dany adres (Next 16 Activity trzyma trasę
@@ -645,7 +624,7 @@ export function CalendarView({
           onAddCategoryPhone={() => setOkno({ typ: "kategoria", tel: true })}
           renewalSources={zrodla}
           onToggleRenewalSource={przelaczZrodlo}
-          // Telefon: „Nowy blok” w nagłówku tygodnia otwiera „Nowy wpis” na dziś i najbliższą pełną godzinę
+          // Telefon: „Nowy wpis” (+) w nagłówku tygodnia otwiera „Nowy wpis” na dziś i najbliższą pełną godzinę
           onNewBlockPhone={() =>
             dodajNaTelefonie(
               today,
@@ -780,7 +759,7 @@ export function CalendarView({
                 sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
-                onAdd={dodajBlokNaTelefonie}
+                onAdd={dodajNaTelefonie}
                 onBlockClick={setWybranyTel}
               />
             </div>

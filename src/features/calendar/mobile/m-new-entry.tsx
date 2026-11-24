@@ -56,7 +56,7 @@ export function MNewEntry({
         <button
           type="button"
           onClick={onBlock}
-          className="m-row min-h-16 w-full cursor-pointer border-0 bg-transparent text-left"
+          className="m-row min-h-16 w-full cursor-pointer bg-transparent text-left"
         >
           <span aria-hidden="true" className={AWATAR}>
             <CalendarIcon className="size-[18px]" />

@@ -160,7 +160,7 @@ export function MCalendarWeek({
 
       <button
         type="button"
-        aria-label="Dodaj blok"
+        aria-label="Nowy wpis"
         onClick={() => onAdd(date, startPlusa)}
         className="m-fab"
       >

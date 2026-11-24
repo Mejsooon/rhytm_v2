@@ -369,7 +369,7 @@ describe("MBlockSheet", () => {
     expect(
       screen.getByRole("button", { name: "Zapisz blok" }),
     ).toHaveTextContent("Zapisz");
-    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
     expect(onDone).toHaveBeenCalled();
   });
 
@@ -453,7 +453,7 @@ describe("MBlockSheet", () => {
     expect(
       screen.getByRole("dialog", { name: "Usuwasz blok, który się powtarza" }),
     ).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Anuluj" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Anuluj" })[0]);
     expect(
       screen.getByRole("dialog", { name: "Edytuj blok" }),
     ).toBeInTheDocument();

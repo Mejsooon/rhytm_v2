@@ -112,7 +112,12 @@ export function ScopeDialog({
               {error}
             </p>
           )}
-          <Button variant="ghost" onClick={onCancel}>
+          {/* Telefon: „Anuluj” jak .btn z makiety (biały, z ramką) */}
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            className="max-[799px]:border-input max-[799px]:bg-white max-[799px]:shadow-btn"
+          >
             Anuluj
           </Button>
           <Button
@@ -177,9 +182,19 @@ export function ScopeDialog({
           aria-hidden="true"
           className="mt-px size-4 flex-none text-info max-[799px]:hidden"
         />
-        {intent === "delete"
-          ? "Zadania z usuniętych wystąpień zostaną usunięte razem z nimi."
-          : "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."}
+        {intent === "delete" ? (
+          <>
+            <span className="max-[799px]:hidden">
+              Zadania z usuniętych wystąpień zostaną usunięte razem z nimi.
+            </span>
+            {/* Telefon: tekst z CMScopeSheet / CMDeleteBlock */}
+            <span className="hidden max-[799px]:inline">
+              Usunięte wystąpienia znikną razem z zadaniami.
+            </span>
+          </>
+        ) : (
+          "Zadania z wystąpień, które znikną ze zmienionej serii, zostaną usunięte."
+        )}
       </p>
     </FormDialog>
   );

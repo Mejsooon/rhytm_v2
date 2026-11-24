@@ -421,7 +421,7 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "kalendarz-dzien", projekt);
 
       await page
-        .getByRole("button", { name: "Dodaj blok", exact: true })
+        .getByRole("button", { name: "Nowy wpis", exact: true })
         .click();
       await page
         .getByRole("dialog", { name: "Nowy wpis" })

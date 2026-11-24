@@ -189,7 +189,7 @@ describe("MCalendarDay", () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
     fireEvent.click(
-      screen.getByRole("button", { name: "Dodaj blok w wolnym miejscu" }),
+      screen.getByRole("button", { name: "Dodaj wpis w wolnym miejscu" }),
       { clientY: 10 * 56 },
     );
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 600);
@@ -198,7 +198,7 @@ describe("MCalendarDay", () => {
   it("pływający „+” dodaje blok na dzień", async () => {
     const onAdd = vi.fn();
     wyrenderuj({ onAdd });
-    await userEvent.click(screen.getByRole("button", { name: "Dodaj blok" }));
+    await userEvent.click(screen.getByRole("button", { name: "Nowy wpis" }));
     expect(onAdd).toHaveBeenCalledWith("2026-11-18", 540);
   });
 
@@ -246,7 +246,7 @@ describe("MCalendarDay", () => {
     const blok = screen.getByRole("button", { name: /Algebra/ });
     expect(blok.style.background).toBe("rgba(0, 112, 243, 0.07)");
     expect(blok.style.border).toBe("1px solid rgba(0, 112, 243, 0.3)");
-    expect(screen.getByRole("button", { name: "Dodaj blok" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "Nowy wpis" })).toHaveClass(
       "m-fab",
     );
   });

@@ -65,8 +65,27 @@ export function MCategorySheet({
           Dodaj
         </Button>
       }
+      // Od 800 px (obrót tabletu przy otwartym arkuszu) okno ma zwykłą stopkę; na telefonie ukryta
+      footer={
+        <>
+          <Button
+            onClick={() => {
+              if (!pending) onCancel();
+            }}
+          >
+            Anuluj
+          </Button>
+          <Button
+            variant="primary"
+            disabled={pusta || pending}
+            onClick={zapisz}
+          >
+            Dodaj
+          </Button>
+        </>
+      }
     >
-      <label className="flex flex-col gap-1.5 text-[13px] font-medium">
+      <label className="flex flex-col gap-2 text-sm font-medium">
         Nazwa
         <input
           type="text"
@@ -113,8 +132,33 @@ export function MCategorySheet({
                 role="radio"
                 aria-checked={wybrany}
                 aria-label={c.name}
+                // Roving tabindex: Tab trafia na wybrany kolor, strzałki zmieniają wybór
+                tabIndex={wybrany ? 0 : -1}
                 onClick={() => setColor(c.hex)}
-                className={`inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[8px] border border-input bg-white px-1.5 text-sm font-medium whitespace-nowrap text-foreground shadow-xs outline-none focus-visible:shadow-focus ${zajety && !wybrany ? "opacity-50" : ""}`}
+                onKeyDown={(e) => {
+                  const kroki: Record<string, number> = {
+                    ArrowRight: 1,
+                    ArrowDown: 1,
+                    ArrowLeft: -1,
+                    ArrowUp: -1,
+                  };
+                  if (!(e.key in kroki)) return;
+                  e.preventDefault();
+                  const idx = CATEGORY_COLORS.findIndex((k) => k.hex === c.hex);
+                  const nowy =
+                    CATEGORY_COLORS[
+                      (idx + kroki[e.key] + CATEGORY_COLORS.length) %
+                        CATEGORY_COLORS.length
+                    ];
+                  setColor(nowy.hex);
+                  (
+                    e.currentTarget.parentElement?.children[
+                      CATEGORY_COLORS.indexOf(nowy)
+                    ] as HTMLElement | undefined
+                  )?.focus();
+                }}
+                // Cel dotyku 44 px: przycisk ma 36 px, reszta to niewidoczne rozszerzenie (przerwa 8 px)
+                className={`relative inline-flex h-9 cursor-pointer after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] items-center justify-center gap-1.5 rounded-[8px] border border-input bg-white px-1.5 text-sm font-medium whitespace-nowrap text-foreground shadow-xs outline-none focus-visible:shadow-focus ${zajety && !wybrany ? "opacity-50" : ""}`}
                 // Kolor kategorii to dane: pierścień wybranego w jego kolorze
                 style={
                   wybrany
