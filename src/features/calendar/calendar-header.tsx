@@ -4,8 +4,10 @@
 // Web (CCalendar.dc.html, CCalendarDay.dc.html): jeden pasek — zgrupowane ‹ Dziś › z tytułem
 // i szarą plakietką (tydz. N / N z M bloków) po lewej, „Kategorie”, segment Dzień/Tydzień/Miesiąc
 // i „Nowy blok” po prawej.
-// Telefon (CMCalendarDay.dc.html): jedna linia „Listopad” + „tydz. N”, ikony Kategorie i Szukaj,
-// segment widoków (linki) pod spodem; strzałki tylko w tygodniu i miesiącu (do przeróbki w Task 2). Nowy blok na telefonie dodaje pływający przycisk widoku.
+// Telefon (CMCalendarDay/Week/Month.dc.html): dzień „Listopad” + „tydz. N” z ikonami Kategorie i Szukaj;
+// tydzień etykieta „RRRR · tydzień N” + zakres dni, Szukaj, Nowy blok i strzałki; miesiąc etykieta roku + nazwa
+// i strzałki; pod spodem segment widoków (linki). Kategorie na telefonie tylko w dniu (tydzień i miesiąc
+// jak w makietach bez ikony). Nowy blok w dniu i miesiącu dodaje pływający przycisk widoku.
 // Oba układy są w DOM, przełącza je CSS (800 px).
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -90,6 +92,15 @@ export function CalendarHeader({
       ? `tydz. ${isoWeekNumber(viewRange("tydzien", date, weekStart).days[3])}`
       : subtitle;
 
+  // Zakres dni tygodnia do nagłówka telefonu: „9–15 listopada” albo „28 listopada – 4 grudnia”
+  const dniTygodnia = viewRange("tydzien", date, weekStart).days;
+  const [, mPierwszy, dPierwszy] = dniTygodnia[0].split("-").map(Number);
+  const [, mOstatni, dOstatni] = dniTygodnia[6].split("-").map(Number);
+  const zakresTygodnia =
+    mPierwszy === mOstatni
+      ? `${dPierwszy}–${dOstatni} ${MIESIACE_DOP[mOstatni - 1]}`
+      : `${dPierwszy} ${MIESIACE_DOP[mPierwszy - 1]} – ${dOstatni} ${MIESIACE_DOP[mOstatni - 1]}`;
+
   const segment = (wartosc: CalendarView) => (
     <Segment
       ariaLabel="Widok kalendarza"
@@ -155,29 +166,64 @@ export function CalendarHeader({
       </header>
 
       <div className="flex-none min-[800px]:hidden">
-        {/* CMCalendarDay: „Listopad” + „tydz. N” w jednej linii, po prawej Kategorie i Szukaj (44 px) */}
+        {/* Nagłówek telefonu wg CM*: dzień „Listopad” + „tydz. N”, tydzień etykieta + zakres dni, miesiąc etykieta roku + nazwa */}
         <header className="m-head">
-          <div className="flex min-w-0 flex-1 items-baseline gap-2">
-            <h2 className="m-title">{miesiacWielka}</h2>
-            <span className="text-xs font-medium text-muted-foreground">
-              {mobileView === "miesiac"
-                ? `${rok}`
-                : `tydz. ${isoWeekNumber(date)}`}
-            </span>
-          </div>
-          <CategorySheet
-            categories={categories}
-            onToggle={onToggleCategory}
-            onAdd={onAddCategory}
-            sources={renewalSources}
-            onToggleSource={onToggleRenewalSource}
-          />
-          <Button variant="ghost" icon asChild>
-            <Link href="/szukaj" aria-label="Szukaj">
-              <Search size={20} aria-hidden="true" />
-            </Link>
-          </Button>
-          {/* Dzień ma nawigację w pasku tygodnia; tydzień i miesiąc zachowują strzałki do czasu przeróbki (CMCalendarWeek, CMCalendarMonth) */}
+          {mobileView === "dzien" ? (
+            <div className="flex min-w-0 flex-1 items-baseline gap-2">
+              <h2 className="m-title">{miesiacWielka}</h2>
+              <span className="text-xs font-medium text-muted-foreground">
+                {`tydz. ${isoWeekNumber(date)}`}
+              </span>
+            </div>
+          ) : mobileView === "tydzien" ? (
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium text-muted-foreground tabular-nums">
+                {`${dniTygodnia[3].slice(0, 4)} · tydzień ${isoWeekNumber(dniTygodnia[3])}`}
+              </div>
+              <h2 className="m-title truncate">{zakresTygodnia}</h2>
+            </div>
+          ) : (
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium text-muted-foreground tabular-nums">
+                {rok}
+              </div>
+              <h2 className="m-title">{miesiacWielka}</h2>
+            </div>
+          )}
+          {mobileView === "dzien" && (
+            <>
+              <CategorySheet
+                categories={categories}
+                onToggle={onToggleCategory}
+                onAdd={onAddCategory}
+                sources={renewalSources}
+                onToggleSource={onToggleRenewalSource}
+              />
+              <Button variant="ghost" icon asChild>
+                <Link href="/szukaj" aria-label="Szukaj">
+                  <Search size={20} aria-hidden="true" />
+                </Link>
+              </Button>
+            </>
+          )}
+          {mobileView === "tydzien" && (
+            <>
+              <Button variant="ghost" icon asChild>
+                <Link href="/szukaj" aria-label="Szukaj">
+                  <Search size={20} aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                icon
+                aria-label="Nowy blok"
+                onClick={onNewBlock}
+              >
+                <Plus size={20} aria-hidden="true" />
+              </Button>
+            </>
+          )}
+          {/* Dzień ma nawigację w pasku tygodnia; tydzień i miesiąc mają strzałki */}
           {mobileView !== "dzien" && (
             <>
               <Button

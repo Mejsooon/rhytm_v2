@@ -1,7 +1,8 @@
 "use client";
 
-// Tydzień na telefonie wg MCalendarWeek.dc.html: lista dni, przy każdym plakietka dnia
-// (dziś czarna, stuknięcie otwiera dzień) i bloki z godziną startu.
+// Tydzień na telefonie wg CMCalendarWeek.dc.html: lista dni, przy każdym odznaka dnia
+// (dziś: numer w czerwonym kółku, stuknięcie otwiera dzień) i wpisy z godziną startu
+// w kolorach kategorii (tło 12, ramka 4d).
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
@@ -74,7 +75,7 @@ export function MCalendarWeek({
             <Link
               href={`/kalendarz?widok=dzien&data=${dzien}`}
               aria-label={nazwa}
-              className="flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl bg-muted text-foreground"
+              className="flex h-[52px] w-11 flex-none flex-col items-center justify-center rounded-xl bg-accent text-foreground no-underline"
             >
               <span className="text-[11px]">{DNI_SKROT[numer]}</span>
               <span
@@ -82,7 +83,7 @@ export function MCalendarWeek({
                 className={
                   dzien === today
                     ? "inline-flex size-7 items-center justify-center rounded-full bg-destructive-strong text-base leading-none font-semibold tracking-normal text-white tabular-nums"
-                    : "font-mono text-lg font-medium"
+                    : "text-lg font-medium tabular-nums"
                 }
               >
                 {d}
@@ -90,7 +91,7 @@ export function MCalendarWeek({
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
               {dzienne.length === 0 && treningi.length === 0 && (
-                <span className="flex min-h-10 items-center text-sm text-muted-foreground">
+                <span className="flex min-h-11 items-center text-sm text-muted-foreground">
                   Brak bloków
                 </span>
               )}
@@ -103,19 +104,18 @@ export function MCalendarWeek({
                       key={i.key}
                       href={sportItemHref(i)}
                       data-planned={i.planned || undefined}
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 text-left text-foreground outline-none focus-visible:shadow-focus"
+                      className={`box-border flex min-h-11 w-full items-center gap-2 rounded-[10px] px-2.5 text-left text-foreground no-underline outline-none focus-visible:shadow-focus ${i.planned ? "bg-background" : ""}`}
                       style={{
-                        background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
+                        background: i.planned ? undefined : `${SPORT_COLOR}12`,
                         border: i.planned
                           ? `1px dashed ${SPORT_COLOR}`
-                          : undefined,
-                        borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                          : `1px solid ${SPORT_COLOR}4d`,
                       }}
                     >
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {i.title}
                       </span>
-                      <span className="font-mono text-[11px] text-soft-foreground">
+                      <span className="flex-none text-xs text-muted-foreground tabular-nums">
                         {formatClockTime(
                           Math.floor(i.startMin / 60),
                           i.startMin % 60,
@@ -134,16 +134,16 @@ export function MCalendarWeek({
                     key={o.key}
                     type="button"
                     onClick={() => onBlockClick(o.key)}
-                    className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-left text-foreground"
+                    className="box-border flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-[10px] px-2.5 text-left text-foreground"
                     style={{
-                      background: `${kolor}14`,
-                      borderLeft: `3px solid ${kolor}`,
+                      background: `${kolor}12`,
+                      border: `1px solid ${kolor}4d`,
                     }}
                   >
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">
                       {o.title}
                     </span>
-                    <span className="font-mono text-[11px] text-soft-foreground">
+                    <span className="flex-none text-xs text-muted-foreground tabular-nums">
                       {formatClockTime(
                         Math.floor(o.startMin / 60),
                         o.startMin % 60,
@@ -162,10 +162,9 @@ export function MCalendarWeek({
         type="button"
         aria-label="Dodaj blok"
         onClick={() => onAdd(date, startPlusa)}
-        // 16 px nad dolnym paskiem (ta sama zmienna co wysokość paska)
-        className="fixed right-4 bottom-[calc(var(--tabbar-h)+16px)] z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+        className="m-fab"
       >
-        <Plus size={26} aria-hidden="true" />
+        <Plus size={24} aria-hidden="true" />
       </button>
     </div>
   );

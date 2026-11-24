@@ -98,6 +98,30 @@ describe("MCalendarMonth", () => {
     );
   });
 
+  it("dziś niewybrane ma czerwone kółko, dziś wybrane to sama czarna kafelka", async () => {
+    wyrenderuj();
+    const dzis = screen.getByRole("button", { name: "17 listopada" });
+    expect(dzis.querySelector("[data-dzis]")).toHaveClass(
+      "bg-destructive-strong",
+    );
+    await userEvent.click(dzis);
+    expect(dzis).toHaveClass("bg-primary");
+    expect(dzis.querySelector("[data-dzis]")).not.toHaveClass(
+      "bg-destructive-strong",
+    );
+  });
+
+  it("pusty dzień: przerywany przycisk 56 px z plusem dodaje blok na ten dzień", async () => {
+    const onAdd = vi.fn();
+    wyrenderuj({ onAdd });
+    await userEvent.click(screen.getByRole("button", { name: "11 listopada" }));
+    const dodaj = screen.getByRole("button", { name: "Brak bloków — dodaj" });
+    expect(dodaj).toHaveClass("border-dashed", "h-14");
+    expect(dodaj.querySelector("svg")).not.toBeNull();
+    await userEvent.click(dodaj);
+    expect(onAdd).toHaveBeenCalledWith("2026-11-11", 540);
+  });
+
   it("nagłówki dni tygodnia zależą od początku tygodnia", () => {
     wyrenderuj();
     expect(screen.getByText("pn")).toBeInTheDocument();

@@ -1,11 +1,13 @@
 "use client";
 
-// Miesiąc na telefonie wg MCalendarMonth.dc.html: siatka z kropkami kategorii (do 3), wybrany dzień
-// czarny, pod siatką lista bloków wybranego dnia albo „Brak bloków — dodaj”.
+// Miesiąc na telefonie wg CMCalendarMonth.dc.html: siatka z kropkami kategorii (do 3), wybrany dzień
+// czarny (dziś wybrane to sama czarna kafelka, dziś niewybrane ma czerwone kółko), pod siatką lista
+// wpisów wybranego dnia w kolorach kategorii albo przerywany przycisk „Brak bloków — dodaj”.
 import { useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
+import { Button } from "@/components/controls";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
   SPORT_COLOR,
@@ -76,8 +78,8 @@ export function MCalendarMonth({
 
   return (
     <div className="flex flex-col">
-      <div className="pb-2">
-        <div className="grid grid-cols-7 pb-1.5 text-center font-mono text-[11px] text-faint-foreground">
+      <div className="px-3 pt-1 pb-2">
+        <div className="grid grid-cols-7 pb-1.5 text-center text-xs font-medium text-muted-foreground">
           {days.slice(0, 7).map((dzien) => (
             <span key={dzien}>{DNI_SKROT[weekdayOf(dzien)]}</span>
           ))}
@@ -113,16 +115,18 @@ export function MCalendarMonth({
                 aria-label={`${d} ${MIESIACE_DOP[m - 1]}`}
                 aria-pressed={aktywny}
                 onClick={() => setWybrany(dzien)}
-                className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-md ${
-                  aktywny ? "bg-primary" : "bg-transparent"
+                className={`flex h-[46px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] border-0 ${
+                  aktywny
+                    ? "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16)]"
+                    : "bg-transparent text-foreground"
                 }`}
               >
                 <span
                   data-dzis={dzien === today || undefined}
                   className={
-                    dzien === today
+                    dzien === today && !aktywny
                       ? "inline-flex size-[26px] items-center justify-center rounded-full bg-destructive-strong text-sm leading-none font-semibold tracking-normal text-white tabular-nums"
-                      : `font-mono text-[15px] ${aktywny ? "text-white" : "text-foreground"}`
+                      : "text-[15px] tabular-nums"
                   }
                 >
                   {d}
@@ -133,7 +137,7 @@ export function MCalendarMonth({
                       key={kolor}
                       data-testid="kropka-kategorii"
                       className="size-[5px] rounded-full"
-                      style={{ background: aktywny ? "#ffffff" : kolor }}
+                      style={{ background: aktywny ? "#fafafa" : kolor }}
                     />
                   ))}
                 </span>
@@ -143,15 +147,14 @@ export function MCalendarMonth({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 border-t border-border pt-3.5 pb-24">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">{tytul}</h2>
-          <Link
-            href={`/kalendarz?widok=dzien&data=${wybrany}`}
-            className="inline-flex min-h-11 items-center text-sm text-muted-foreground"
-          >
-            Otwórz dzień
-          </Link>
+      <div className="flex flex-col gap-2.5 border-t border-border px-4 pt-3.5 pb-24">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[17px] leading-[1.3] font-semibold">{tytul}</h2>
+          <Button variant="ghost" asChild className="px-1">
+            <Link href={`/kalendarz?widok=dzien&data=${wybrany}`}>
+              Otwórz dzień
+            </Link>
+          </Button>
         </div>
         {wpisyDnia.map((wpis) => {
           if (wpis.typ === "sport") {
@@ -162,14 +165,15 @@ export function MCalendarMonth({
                 key={i.key}
                 href={sportItemHref(i)}
                 data-planned={i.planned || undefined}
-                className="flex min-h-12 w-full items-center gap-2.5 rounded-md px-3 text-left text-foreground outline-none focus-visible:shadow-focus"
+                className={`box-border flex min-h-12 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-foreground no-underline outline-none focus-visible:shadow-focus ${i.planned ? "bg-background" : ""}`}
                 style={{
-                  background: i.planned ? "#ffffff" : `${SPORT_COLOR}14`,
-                  border: i.planned ? `1px dashed ${SPORT_COLOR}` : undefined,
-                  borderLeft: `3px ${i.planned ? "dashed" : "solid"} ${SPORT_COLOR}`,
+                  background: i.planned ? undefined : `${SPORT_COLOR}12`,
+                  border: i.planned
+                    ? `1px dashed ${SPORT_COLOR}`
+                    : `1px solid ${SPORT_COLOR}4d`,
                 }}
               >
-                <span className="w-[42px] font-mono text-xs text-soft-foreground">
+                <span className="w-[42px] flex-none text-xs text-muted-foreground tabular-nums">
                   {formatClockTime(
                     Math.floor(i.startMin / 60),
                     i.startMin % 60,
@@ -190,13 +194,13 @@ export function MCalendarMonth({
               key={o.key}
               type="button"
               onClick={() => onBlockClick(o.key)}
-              className="flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-md px-3 text-left text-foreground"
+              className="box-border flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-[10px] px-3 text-left text-foreground"
               style={{
-                background: `${kolor}14`,
-                borderLeft: `3px solid ${kolor}`,
+                background: `${kolor}12`,
+                border: `1px solid ${kolor}4d`,
               }}
             >
-              <span className="w-[42px] font-mono text-xs text-soft-foreground">
+              <span className="w-[42px] flex-none text-xs text-muted-foreground tabular-nums">
                 {formatClockTime(
                   Math.floor(o.startMin / 60),
                   o.startMin % 60,
@@ -210,14 +214,13 @@ export function MCalendarMonth({
           );
         })}
         {wybraneBloki.length === 0 && wybraneTreningi.length === 0 && (
-          <button
-            type="button"
+          <Button
+            className="h-14 w-full border-dashed text-muted-foreground shadow-none max-[799px]:h-14"
             onClick={() => onAdd(wybrany, 540)}
-            className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-white text-sm text-muted-foreground"
           >
             <Plus size={16} aria-hidden="true" />
             Brak bloków — dodaj
-          </button>
+          </Button>
         )}
       </div>
     </div>

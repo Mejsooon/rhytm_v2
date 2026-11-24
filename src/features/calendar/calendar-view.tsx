@@ -228,7 +228,9 @@ export function CalendarView({
   function kliknieteOdnowienie(item: RenewalItem, anchor: HTMLElement) {
     setWybrany(null);
     setOkno((o) => (o?.typ === "wpis" ? null : o));
-    setOdnowienie((w) => (w?.key === item.key ? null : { key: item.key, anchor }));
+    setOdnowienie((w) =>
+      w?.key === item.key ? null : { key: item.key, anchor },
+    );
   }
 
   // Ukrycie źródła odnowień od razu chowa wpisy; zapis show_in_calendar pola, błąd cofa i daje toast
@@ -750,7 +752,7 @@ export function CalendarView({
             </div>
           )}
           {widokTel === "miesiac" && (
-            <div className="px-4">
+            <div>
               <MCalendarMonth
                 days={zakresTel.days}
                 date={date}
@@ -788,7 +790,9 @@ export function CalendarView({
           today={today}
           // Tydzień i dzień: pod wpisem (makieta); miesiąc: obok wpisu, jak dymek bloku
           side={view === "miesiac" ? "right" : "bottom"}
-          align={view === "miesiac" ? wyrownanie(otwarteOdnowienie.date) : "center"}
+          align={
+            view === "miesiac" ? wyrownanie(otwarteOdnowienie.date) : "center"
+          }
           onClose={() => setOdnowienie(null)}
         />
       )}

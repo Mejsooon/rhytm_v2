@@ -237,6 +237,26 @@ describe("CalendarView na telefonie", () => {
     );
   });
 
+  it("miesiąc na telefonie: „Brak bloków — dodaj” w pustym dniu otwiera arkusz nowego bloku na ten dzień", async () => {
+    render(
+      <CalendarView
+        view="miesiac"
+        date="2026-11-18"
+        today="2026-11-17"
+        nowMinutes={600}
+        data={dane()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "20 listopada" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Brak bloków — dodaj" }),
+    );
+    const arkusz = await screen.findByRole("dialog", { name: "Nowy blok" });
+    expect(
+      within(arkusz).getByRole("button", { name: "Dzień" }),
+    ).toHaveTextContent("20.11");
+  });
+
   it("telefon: „Edytuj” w szczegółach bloku otwiera arkusz edycji", async () => {
     render(
       <CalendarView
