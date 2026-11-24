@@ -82,3 +82,12 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Karty Seria/Rekord z jednostką („dni”, „tyg.”) | nawyki X razy w tygodniu liczą serię w tygodniach | niski |
 | Nowy nawyk i wpis snu jako arkusz od dołu (makieta: pełny ekran) | spójnie z resztą arkuszy CM | niski |
 | Historia harmonogramu: starsze wersje z zakresem dat jak na webie | dokładniejsze niż samo „od …” | niski |
+
+### Pakiet sport
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| Szczegóły ćwiczenia na telefonie jako osobny układ (`m-exercise-detail.tsx`) wg CMExerciseDetail; „Z masą ciała” i „Zmień nazwę” dołożone poza makietą (ołówek w nagłówku, wiersz pod historią) | makieta ich nie ma, a funkcje istnieją | niski |
+| Edytor szablonu na telefonie bez makiety: przewijana tabela, nowy nagłówek i dni tygodnia | brak makiety edytora z ćwiczeniami | niski |
+| „Usuń ćwiczenie” w treningu na telefonie bez potwierdzenia (jak w makiecie) | makieta CMGym | niski: przypadkowe usunięcie ćwiczenia z trwającego treningu |
+| „Wstecz” w treningu wraca do miesiąca Sportu (`/sport?miesiac=…`) | zachowanie miesiąca, z którego wszedłeś | brak |
