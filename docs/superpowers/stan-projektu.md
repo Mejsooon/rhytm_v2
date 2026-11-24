@@ -37,7 +37,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 - **Seria autonomiczna (2026-11-24):** Dziś → Subscriptions → sprzątanie uwag webu → Etap 3 (telefon). Decyzje podjęte bez Mejsona: `docs/superpowers/do-decyzji-seria.md`.
 - **Projekt Dziś:** scalony (`02a36ba`) i wdrożony; spec `specs/2026-11-24-dzis-design.md`. Migracja `20261126100000_tasks_only_in_blocks.sql` wykonana 24.11 (6 zadań usuniętych).
-- **Sprzątanie uwag webu** (`feat/sprzatanie-webu`): spec `specs/2026-11-24-sprzatanie-webu-design.md`; migracje `20261128100000_page_rows_guard.sql`, `20261128110000_tasks_rls_simplify.sql`.
+- **Sprzątanie uwag webu:** scalone (`effe78c`), wdrożone, obie migracje wykonane 24.11.
+- **Etap 3 — telefon:** spec `specs/2026-11-24-telefon-design.md`, 10 pakietów (plany `plans/2026-11-24-telefon-<pakiet>.md`): fundament → kalendarz → dzis → nawyki → sport → strony → hasla → subskrypcje → konto → szukaj. W toku: `feat/telefon-fundament`.
 - **Subscriptions:** scalony (`d7db6f0`), wdrożony, migracja `20261127100000_subscriptions.sql` wykonana 24.11; spec `specs/2026-11-24-subscriptions-design.md`, plan `plans/2026-11-24-subscriptions.md`; migracja `20261127100000_subscriptions.sql`.
 
 - Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
