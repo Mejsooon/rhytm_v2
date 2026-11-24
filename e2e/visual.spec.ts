@@ -218,7 +218,7 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "dzis-dymek-bloku", projekt);
     } else {
       const m = page.getByTestId("m-dzis");
-      await expect(m.getByRole("checkbox", { name: "Woda 2 l" })).toBeVisible();
+      await expect(m.getByRole("button", { name: /Woda 2 l/ })).toBeVisible();
       await zrzut(page, "dzis-pelne", projekt);
 
       await m.getByRole("button", { name: "Szybko dodaj" }).click();

@@ -156,6 +156,7 @@ export function TodayView({
           applyOptimistic={applyOptimistic}
           onToggleHabit={(habitId) => void toggleHabit(habitId, today)}
           onQuickAdd={() => setSzybkieDodawanie(true)}
+          onNewHabit={() => setNowyNawyk(true)}
         />
       </div>
       {/* Arkusz szybkiego dodawania (pływający „+” na telefonie) */}

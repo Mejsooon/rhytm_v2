@@ -168,7 +168,9 @@ describe("TodayView", () => {
     d.tasks = [];
     render(<TodayView data={d} name="Mejson" />);
     const web = within(screen.getByTestId("web-dzis"));
-    expect(web.getByRole("heading", { name: "Ten tydzień" })).toBeInTheDocument();
+    expect(
+      web.getByRole("heading", { name: "Ten tydzień" }),
+    ).toBeInTheDocument();
     expect(
       web.getByRole("button", { name: "Utwórz nowy nawyk" }),
     ).toBeInTheDocument();
@@ -215,7 +217,9 @@ describe("TodayView", () => {
   it("„Dodaj pierwszy blok” otwiera to samo okno co „Nowy blok” (najbliższa pełna godzina)", async () => {
     render(<TodayView data={dane()} name="Mejson" />);
     await userEvent.click(
-      screen.getByRole("button", { name: "Dodaj pierwszy blok" }),
+      within(screen.getByTestId("web-dzis")).getByRole("button", {
+        name: "Dodaj pierwszy blok",
+      }),
     );
     const okno = await screen.findByRole("dialog", { name: "Nowy blok" });
     expect(within(okno).getByRole("button", { name: "Od" })).toHaveTextContent(
@@ -276,7 +280,7 @@ describe("TodayView", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("odhaczenie zadania w dymku bloku zmienia od razu „x/y” na liście i kafelek „Zadania” telefonu", async () => {
+  it("odhaczenie zadania w dymku bloku zmienia od razu „x/y” na liście i plan dnia telefonu", async () => {
     toggleTask.mockResolvedValue({ ok: true });
     const d = dane();
     d.occurrencesToday = [
@@ -318,12 +322,12 @@ describe("TodayView", () => {
     });
     await userEvent.click(within(dymek).getByLabelText("Testy RLS"));
     expect(within(blok).getByText("1/1")).toBeInTheDocument();
-    // Telefon liczy z tych samych danych: kafelek „Zadania” dziś 2/2
+    // Telefon liczy z tych samych danych: blok w planie dnia też ma 1/1
     expect(
-      within(screen.getByTestId("m-dzis")).getByRole("link", {
-        name: /^Zadania/,
+      within(screen.getByTestId("m-dzis")).getByRole("button", {
+        name: /rhytm — kod/,
       }),
-    ).toHaveTextContent("Zadania2/2");
+    ).toHaveTextContent("1/1");
   });
 
   it("jeden zegar co minutę dla obu drzew; po północy jedno odświeżenie", () => {
@@ -353,21 +357,23 @@ describe("TodayView", () => {
     const tel = within(screen.getByTestId("m-dzis"));
     const blok = () => web.getByRole("button", { name: /rhytm — kod/ });
     expect(within(blok()).getByText("Teraz")).toBeInTheDocument();
-    expect(tel.getByText("10:00–10:22 · zostało 2 min")).toBeInTheDocument();
+    const blokTel = () => tel.getByRole("button", { name: /rhytm — kod/ });
+    expect(within(blokTel()).getByText("Teraz")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(14_999);
     });
-    expect(tel.getByText("10:00–10:22 · zostało 2 min")).toBeInTheDocument();
+    expect(within(blokTel()).getByText("Teraz")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(tel.getByText("10:00–10:22 · zostało 1 min")).toBeInTheDocument();
     expect(within(blok()).getByText("Teraz")).toBeInTheDocument();
+    expect(within(blokTel()).getByText("Teraz")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(60_000);
     });
     expect(within(blok()).queryByText("Teraz")).not.toBeInTheDocument();
+    expect(within(blokTel()).queryByText("Teraz")).not.toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
 
     // Przeskok za północ (Warszawa): następny tik widzi inny dzień → jedno odświeżenie
@@ -383,7 +389,9 @@ describe("TodayView", () => {
     await userEvent.click(screen.getByRole("button", { name: "Szybko dodaj" }));
     const arkusz = await screen.findByRole("dialog", { name: "Szybko dodaj" });
     // Domyślny rodzaj to „Blok”; chipy liczą się od dziś i teraz z profilu (wtorek 10:20 → Dziś = 11:00, Pn 23.11)
-    expect(within(arkusz).getByLabelText("Blok w kalendarzu")).toBeInTheDocument();
+    expect(
+      within(arkusz).getByLabelText("Blok w kalendarzu"),
+    ).toBeInTheDocument();
     expect(
       within(arkusz).getByRole("button", { name: "Pn 23.11" }),
     ).toBeInTheDocument();
