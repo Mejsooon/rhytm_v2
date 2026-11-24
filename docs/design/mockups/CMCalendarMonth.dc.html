@@ -111,7 +111,8 @@ class Component extends DCLogic {
       const cats = evs(d).map((b) => b[3]).filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
       cells.push({ t: d, label: d + ' ' + MONG[m], p: on ? 'true' : 'false', pick: () => this.setState({ sel: d }),
         s: on ? 'background:var(--primary);color:var(--primary-foreground);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)' : 'background:transparent;color:var(--foreground)',
-        ns: today ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:15px',
+        // dziś zaznaczone: sama czarna kafelka, bez czerwonego kółka (decyzja Mejsona)
+        ns: today && !on ? 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums' : 'font-size:15px',
         dots: cats.map((c) => ({ s: 'width:5px;height:5px;border-radius:50%;background:' + (on ? '#fafafa' : CAT[c]) })) });
     }
     const items = evs(sel);
