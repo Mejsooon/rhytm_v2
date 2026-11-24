@@ -13,6 +13,8 @@ const router = { refresh };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("./actions", () => ({ renameExercise, setExerciseBodyweight }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
+// Drzewo telefonu (w DOM obok webu) ma własne testy (mobile/m-exercise-detail.test.tsx); tu sprawdzamy web
+vi.mock("./mobile/m-exercise-detail", () => ({ MExerciseDetail: () => null }));
 
 import { ExerciseDetail } from "./exercise-detail";
 import type { ExerciseData, SessionSets } from "./load-sport";

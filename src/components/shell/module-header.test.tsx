@@ -148,4 +148,23 @@ describe("ModuleHeader", () => {
     render(<ModuleHeader title="Dziś" webOnly />);
     expect(screen.getAllByRole("heading", { level: 1, name: "Dziś" })).toHaveLength(1);
   });
+
+  it("phoneOnly: tylko nagłówek telefonu, bez .topbar web", () => {
+    const { container } = render(
+      <ModuleHeader
+        title="Szablony treningów"
+        phoneOnly
+        phoneBack={{ href: "/sport", label: "Wstecz" }}
+      />,
+    );
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: "Szablony treningów" }),
+    ).toHaveLength(1);
+    expect(container.querySelectorAll("header")).toHaveLength(1);
+    expect(container.querySelector("header")).toHaveClass("m-head");
+    expect(screen.getByRole("link", { name: "Wstecz" })).toHaveAttribute(
+      "href",
+      "/sport",
+    );
+  });
 });

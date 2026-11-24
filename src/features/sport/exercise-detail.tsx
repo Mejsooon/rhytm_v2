@@ -3,7 +3,8 @@
 // Szczegóły ćwiczenia (ExerciseDetail.dc.html): ścieżka „Sport / Ćwiczenia / nazwa” z „Z masą ciała” i „Zmień nazwę”,
 // cztery kafelki (szac. 1RM, najcięższa seria, najwięcej powt., zmiana 8 tyg.), wykres 1RM
 // z przełącznikiem 3 mies. / 8 tyg. i historia sesji z plakietką REKORD.
-// Jedno drzewo dla webu i telefonu — kafelki i tabela same się zwężają (tabela przewija się w poziomie).
+// Web: powyżej 800 px. Telefon: poniżej 800 px osobny układ z CMExerciseDetail (mobile/m-exercise-detail.tsx)
+// na tych samych danych; oba drzewa są w DOM, przełącza je CSS.
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,9 +23,14 @@ import {
   Switch,
   TextField,
 } from "@/components/controls";
-import { addDays, weekdayOf } from "@/features/calendar/view-range";
+import {
+  addDays,
+  isoWeekNumber,
+  weekdayOf,
+} from "@/features/calendar/view-range";
 import { cn } from "@/lib/utils";
 import { renameExercise, setExerciseBodyweight } from "./actions";
+import { MExerciseDetail } from "./mobile/m-exercise-detail";
 import type { ExerciseData } from "./load-sport";
 import {
   effectiveKg,
@@ -47,6 +53,9 @@ type Sesja = {
   dzien: string; // YYYY-MM-DD
   v: number | null; // najlepszy szac. 1RM sesji (serie z ciężarem i powt. ≥ 1)
   seria: string; // najlepsza seria, np. „72,5 × 5”
+  seriaTel: string; // jak `seria`, ale z jednostką („72,5 kg × 5”), na telefon
+  komplet: string; // wszystkie zrobione serie, np. „60×8 · 60×8 · 62,5×6” (telefon)
+  objetosc: number; // suma kg × powt. zrobionych serii z ciężarem (telefon)
   rekord: boolean;
 };
 
@@ -89,11 +98,15 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
     let v: number | null = null;
     let seria: { kg: number | null; reps: number } | null = null;
     let rekord = false;
+    let objetosc = 0;
+    const komplet: string[] = [];
     for (const s of h.sets) {
       if (s.exercise_id !== exercise.id || !s.done) continue;
       if (rekordowe.has(s.id)) rekord = true;
       if (s.reps === null || s.reps < 1) continue;
       const ef = effectiveKg(s.weight_kg, zMasaCiala, wagaProfilu);
+      komplet.push(`${formatKg(s.weight_kg, zMasaCiala)}×${s.reps}`);
+      if (ef !== null) objetosc += ef * s.reps;
       if (
         najwiecejPowt === null ||
         s.reps > najwiecejPowt.reps ||
@@ -126,6 +139,9 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
       dzien: h.startLocal.slice(0, 10),
       v,
       seria: `${formatKg(seria.kg, zMasaCiala)} × ${seria.reps}`,
+      seriaTel: `${formatKg(seria.kg, zMasaCiala)}${zMasaCiala ? "" : " kg"} × ${seria.reps}`,
+      komplet: komplet.join(" · "),
+      objetosc,
       rekord,
     });
   }
@@ -204,10 +220,46 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
 
   const pierwsza = sesje[0];
 
+  // Telefon (CMExerciseDetail): 8 ostatnich tygodni kalendarzowych (wg początku tygodnia z profilu),
+  // najlepszy 1RM i objętość każdego tygodnia
+  const dzienTygodnia = weekdayOf(today);
+  const poczatekTygodnia = addDays(
+    today,
+    -(data.profile.weekStart === "mon" ? dzienTygodnia - 1 : dzienTygodnia % 7),
+  );
+  const tygodnie = Array.from({ length: 8 }, (_, i) => {
+    const od = addDays(poczatekTygodnia, (i - 7) * 7);
+    const doDnia = addDays(od, 6);
+    let rmTygodnia: number | null = null;
+    let objetoscTygodnia: number | null = null;
+    for (const s of sesje) {
+      if (s.dzien < od || s.dzien > doDnia) continue;
+      if (s.v !== null && (rmTygodnia === null || s.v > rmTygodnia))
+        rmTygodnia = s.v;
+      if (s.objetosc > 0)
+        objetoscTygodnia = (objetoscTygodnia ?? 0) + s.objetosc;
+    }
+    return {
+      etykieta: `tydz. ${isoWeekNumber(addDays(od, 3))}`,
+      rm: rmTygodnia,
+      objetosc: objetoscTygodnia,
+    };
+  });
+  // Seria z najlepszym szac. 1RM (do wiersza „Najlepsza seria”)
+  let najlepszaSesja: Sesja | null = null;
+  for (const s of sesje) {
+    if (
+      s.v !== null &&
+      (najlepszaSesja === null || s.v > (najlepszaSesja.v as number))
+    )
+      najlepszaSesja = s;
+  }
+  const jednostka = zMasaCiala ? "" : " kg";
+
   return (
     <div className="flex min-w-0 flex-col">
       {/* .topbar z okruszkami .crumb (CExerciseDetail) */}
-      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:px-4">
+      <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5 max-[799px]:hidden">
         <nav
           aria-label="Okruszki"
           className="flex items-center gap-1.5 text-sm text-muted-foreground"
@@ -255,7 +307,7 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
         </div>
       </header>
 
-      <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7 max-[799px]:px-4 max-[799px]:py-5">
+      <div className="box-border flex w-full max-w-[1100px] flex-col gap-6 px-6 py-7 max-[799px]:hidden">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
             {exercise.name}
@@ -520,6 +572,52 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           </div>
         </Card>
       </div>
+
+      <MExerciseDetail
+        nazwa={exercise.name}
+        rm={najlepszy1rm === null ? null : kg(najlepszy1rm)}
+        zmiana={
+          zmiana === null
+            ? null
+            : {
+                tekst:
+                  zmiana === 0
+                    ? "0 kg"
+                    : `${zmiana > 0 ? "+" : "−"}${formatKg(Math.abs(zmiana))} kg`,
+                znak: zmiana > 0 ? 1 : zmiana < 0 ? -1 : 0,
+              }
+        }
+        tygodnie={tygodnie}
+        najciezsza={
+          najciezsza === null
+            ? null
+            : `${formatKg(najciezsza.kg, zMasaCiala)}${jednostka} × ${najciezsza.reps}`
+        }
+        najwiecejPowt={
+          najwiecejPowt === null
+            ? null
+            : `${formatKg(najwiecejPowt.kg, zMasaCiala)}${jednostka} × ${najwiecejPowt.reps}`
+        }
+        najlepsza={
+          najlepszaSesja === null
+            ? null
+            : { tekst: najlepszaSesja.seriaTel, rekord: najlepszaSesja.rekord }
+        }
+        wiersze={wiersze.map((s) => ({
+          id: s.id,
+          dzien: etykietaDnia(s.dzien),
+          serie: s.komplet,
+          rm: s.v === null ? "—" : `${kg(s.v)} kg`,
+        }))}
+        nazwaSzablonu={data.templateName}
+        zMasaCiala={zMasaCiala}
+        onToggleBodyweight={(v) => void przelaczMaseCiala(v)}
+        onRename={() => {
+          setNazwa(exercise.name);
+          setBlad(null);
+          setDialogOtwarty(true);
+        }}
+      />
 
       <FormDialog
         open={dialogOtwarty}
