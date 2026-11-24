@@ -57,7 +57,7 @@ describe("stałe", () => {
       "Websites",
     ]);
     expect(SOURCES).toHaveLength(10);
-    expect(REMINDERS).toHaveLength(4);
+    expect(REMINDERS).toHaveLength(3);
   });
 });
 
@@ -207,7 +207,7 @@ describe("buildSummary", () => {
       { key: "Kategorie", value: "Studia, Sport", step: 2 },
       { key: "Cele treningowe", value: "3 treningi / tydz.", step: 3 },
       { key: "Strony", value: "Books, Projects", step: 5 },
-      { key: "Przypomnienia", value: "3 włączone", step: 6 },
+      { key: "Przypomnienia", value: "2 włączone", step: 6 },
     ]);
   });
   it("wariant telefon", () => {
@@ -218,7 +218,7 @@ describe("buildSummary", () => {
       { key: "Strony", value: "Books, Projects", step: 5 },
       {
         key: "Przypomnienia",
-        value: "3 z 4 włączone · bez zgody na push",
+        value: "2 z 3 włączone · bez zgody na push",
         step: 6,
       },
     ]);
@@ -237,7 +237,7 @@ describe("buildSummary", () => {
     );
     expect(s[0].value).toBe("Ty · Berlin · tydzień od nd");
     expect(s[3].value).toBe("brak");
-    expect(s[4].value).toBe("3 z 4 włączone");
+    expect(s[4].value).toBe("2 z 3 włączone");
   });
   it("wiersz „Cele treningowe”: jeden albo oba cele, z odmianą", () => {
     const wiersz = (d: OnboardingDraft) =>
