@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalSource } from "./load-calendar";
 import { CategoryFilters, CategorySheet } from "./category-filters";
 
 function kat(over: Partial<CategoryRow>): CategoryRow {
@@ -274,5 +274,81 @@ describe("CategorySheet (arkusz kategorii na telefonie)", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
     expect(onAdd).not.toHaveBeenCalled();
+  });
+});
+
+const zrodlo: RenewalSource = {
+  fieldId: "f-ren",
+  pageId: "p1",
+  config: { show_in_calendar: true },
+  name: "Subscriptions",
+  shown: true,
+};
+
+describe("CategoryFilters: źródła odnowień", () => {
+  it("licznik liczy kategorie i źródła, kropki tylko kategorie", () => {
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+        sources={[zrodlo]}
+      />,
+    );
+    const przycisk = screen.getByRole("button", {
+      name: "Kategorie, widoczne 3 z 4",
+    });
+    expect(przycisk).toHaveTextContent("3/4");
+    expect(screen.getByTestId("kropki-kategorii").children).toHaveLength(2);
+  });
+
+  it("pozycja źródła pod kategoriami z przerywanym kwadratem; klik woła onToggleSource", async () => {
+    const onToggleSource = vi.fn();
+    render(
+      <CategoryFilters
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+        sources={[zrodlo, { ...zrodlo, fieldId: "f2", name: "Inne", shown: false }]}
+        onToggleSource={onToggleSource}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Kategorie, widoczne/ }),
+    );
+    const pozycje = await screen.findAllByRole("menuitemcheckbox");
+    expect(pozycje.map((p) => p.textContent)).toEqual([
+      "Studia",
+      "Dom",
+      "Sport",
+      "Subscriptions",
+      "Inne",
+    ]);
+    expect(pozycje[3]).toHaveAttribute("aria-checked", "true");
+    expect(pozycje[4]).toHaveAttribute("aria-checked", "false");
+    const znaczniki = screen.getAllByTestId("znacznik-zrodla");
+    expect(znaczniki[0].style.borderColor).toBe("rgb(64, 64, 64)");
+    expect(znaczniki[1].style.borderColor).toBe("rgb(163, 163, 163)");
+    expect(znaczniki[0]).toHaveClass("border-dashed", "h-2", "w-2.5");
+    await userEvent.click(pozycje[3]);
+    expect(onToggleSource).toHaveBeenCalledWith(zrodlo);
+  });
+
+  it("arkusz na telefonie ma przełącznik źródła", async () => {
+    const onToggleSource = vi.fn();
+    render(
+      <CategorySheet
+        categories={kategorie}
+        onToggle={() => {}}
+        onAdd={() => {}}
+        sources={[zrodlo]}
+        onToggleSource={onToggleSource}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Kategorie" }));
+    await userEvent.click(
+      await screen.findByRole("switch", { name: "Pokaż odnowienia Subscriptions" }),
+    );
+    expect(onToggleSource).toHaveBeenCalledWith(zrodlo);
   });
 });

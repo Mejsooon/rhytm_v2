@@ -7,6 +7,7 @@ import {
   WTOREK,
   zalozKontoKalendarza,
   zasiejBlok,
+  zasiejOdnowienie,
   zasiejZadanie,
 } from "./helpers/kalendarz";
 
@@ -335,6 +336,43 @@ test.describe("kalendarz (web)", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Środa, 13 stycznia" }),
     ).toBeVisible();
+  });
+
+  test("odnowienie subskrypcji w kalendarzu", async ({ page }, info) => {
+    const { userId } = await zalozKontoKalendarza(page, info.project.name);
+    // Stały tydzień testów (środa 13.01.2027, w przyszłości), więc wynik nie zależy od dnia ani pory
+    const idStrony = await zasiejOdnowienie(page, userId, {
+      title: "Netflix",
+      amount: 43,
+      date: SRODA,
+    });
+    await page.goto(TYDZIEN);
+
+    // Wpis stoi w przyklejonym wierszu „cały dzień”, więc nie zależy od przewinięcia siatki
+    const wpis = page.getByRole("button", { name: "Netflix · 43,00 zł" });
+    await expect(wpis).toBeVisible();
+    await wpis.click();
+    const dymek = page.getByRole("dialog", { name: "Odnowienie Netflix" });
+    await expect(dymek).toContainText("Odnowienie · Subscriptions");
+    await expect(dymek).toContainText("13.02.2027");
+    await dymek.getByRole("link", { name: "Otwórz w Subscriptions" }).click();
+    await expect(page).toHaveURL(new RegExp(`/strony/${idStrony}$`));
+
+    // Odznaczenie „Subscriptions” w menu „Kategorie” chowa wpis i zapisuje się w polu
+    await page.goto(TYDZIEN);
+    await expect(wpis).toBeVisible();
+    await przyciskKategorii(page).click();
+    const zapis = poZapisie(page);
+    await page.getByRole("menuitemcheckbox", { name: /Subscriptions/ }).click();
+    await zapis;
+    await expect(wpis).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await page.reload();
+    await expect(przyciskKategorii(page)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Kategorie, widoczne 3 z 4$/ }),
+    ).toBeVisible();
+    await expect(wpis).toHaveCount(0);
   });
 });
 

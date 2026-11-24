@@ -8,6 +8,7 @@ import { CalendarView } from "@/features/calendar/calendar-view";
 import {
   loadCalendar,
   loadCalendarProfile,
+  loadRenewals,
   minutesNow,
 } from "@/features/calendar/load-calendar";
 import { parseCalendarParams, viewRange } from "@/features/calendar/view-range";
@@ -47,7 +48,11 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
     date,
     profil.weekStart,
   );
-  const dane = await loadCalendar(supabase, user.id, zakres, profil);
+  // Odnowienia subskrypcji tylko tutaj (Dziś i telefon ich nie wczytują), równolegle z kalendarzem
+  const [dane, odnowienia] = await Promise.all([
+    loadCalendar(supabase, user.id, zakres, profil),
+    loadRenewals(supabase, user.id, zakres, dzis),
+  ]);
 
   // ?nowy=blok&data&godzina&tytul (np. z szybkiego dodawania na Dziś) → okno nowego bloku.
   // Dzień = `data` kalendarza (zła albo brak → dziś); zła albo brak godziny → najbliższa pełna
@@ -74,6 +79,7 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
       today={dzis}
       nowMinutes={teraz}
       data={dane}
+      renewals={odnowienia}
       newBlock={nowyBlok}
     />
   );

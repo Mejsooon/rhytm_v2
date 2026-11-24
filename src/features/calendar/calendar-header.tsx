@@ -20,7 +20,7 @@ import {
 } from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { CategoryFilters, CategorySheet } from "./category-filters";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalSource } from "./load-calendar";
 import { DNI_PELNE, MIESIACE_DOP } from "./mobile/pl";
 import {
   isoWeekNumber,
@@ -56,6 +56,8 @@ export function CalendarHeader({
   categories = [],
   onToggleCategory = () => {},
   onAddCategory = () => {},
+  renewalSources = [],
+  onToggleRenewalSource = () => {},
   onNewBlock,
 }: {
   view: CalendarView;
@@ -71,6 +73,9 @@ export function CalendarHeader({
   onToggleCategory?: (category: CategoryRow) => void;
   // „+ Kategoria” w menu i w arkuszu
   onAddCategory?: () => void;
+  // Źródła odnowień subskrypcji w menu „Kategorie” (pod kategoriami)
+  renewalSources?: RenewalSource[];
+  onToggleRenewalSource?: (source: RenewalSource) => void;
   onNewBlock?: () => void;
 }) {
   const router = useRouter();
@@ -147,6 +152,8 @@ export function CalendarHeader({
             categories={categories}
             onToggle={onToggleCategory}
             onAdd={onAddCategory}
+            sources={renewalSources}
+            onToggleSource={onToggleRenewalSource}
           />
           {segment(view)}
           <Button variant="primary" onClick={onNewBlock}>
@@ -172,6 +179,8 @@ export function CalendarHeader({
             categories={categories}
             onToggle={onToggleCategory}
             onAdd={onAddCategory}
+            sources={renewalSources}
+            onToggleSource={onToggleRenewalSource}
           />
           <button
             type="button"

@@ -5,6 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   zalozKontoKalendarza,
   zasiejBlok,
+  zasiejOdnowienie,
   zasiejZadanie,
   WTOREK,
 } from "./helpers/kalendarz";
@@ -399,6 +400,41 @@ test.describe("ekrany z sesją", () => {
         .getByRole("heading", { name: "Kategorie kalendarza" }),
     ).toBeVisible();
     await zrzut(page, "ustawienia-kategorie", projekt);
+  });
+
+  test("zrzuty odnowień w kalendarzu (makiety S2Calendar, S2CalendarRenewal, S2CalendarMonth)", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const projekt = info.project.name;
+    const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
+    await zasiejBlok(userId, {
+      title: "Matematyka",
+      date: WTOREK,
+      startMin: 600,
+      categoryId: kategorie["Nauka"],
+    });
+    // Netflix w sobotę stałego tygodnia (16.01.2027), co miesiąc 43 zł
+    await zasiejOdnowienie(page, userId, {
+      title: "Netflix",
+      amount: 43,
+      date: "2027-01-16",
+    });
+
+    await page.goto(`/kalendarz?widok=tydzien&data=${WTOREK}`);
+    const wpis = page.getByRole("button", { name: "Netflix · 43,00 zł" });
+    await expect(wpis).toBeVisible();
+    await wpis.click();
+    await expect(
+      page.getByRole("dialog", { name: "Odnowienie Netflix" }),
+    ).toContainText("Tylko podgląd");
+    await zrzut(page, "kalendarz-dymek-odnowienia", projekt);
+
+    await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);
+    await expect(
+      page.getByTestId("komorka-2027-01-16").getByRole("button", { name: "↻ Netflix" }),
+    ).toBeVisible();
+    await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
   });
 
   test("zrzuty /nawyki i /nawyki/[id] (makiety Habits, HabitDetail, HabitDialog, SleepDialog, MHabits, MSleep, MHabitNew, MHabitDetail)", async ({
@@ -838,7 +874,7 @@ test.describe("ekrany z sesją", () => {
   }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
     const projekt = info.project.name;
-    await zalozKontoStron(page, projekt);
+    const userId = await zalozKontoStron(page, projekt);
     await utworzSubscriptions(page);
 
     // Kilka wierszy zasiewamy przez API administratora (wartości po id pól), bo tabela wstawia je po jednym
@@ -867,6 +903,8 @@ test.describe("ekrany z sesją", () => {
       aktywna: boolean,
       position: number,
     ) => ({
+      // API administratora nie ma auth.uid(), więc user_id podajemy wprost (kolumna NOT NULL)
+      user_id: userId,
       block_id: blok!.id,
       position,
       values: {

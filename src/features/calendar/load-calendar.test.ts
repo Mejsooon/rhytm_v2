@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { fakeTable } from "@/test-utils/fake-supabase";
 import type { BlockRow } from "./occurrences";
-import { loadCalendar, minutesNow, pickBlocksForRange } from "./load-calendar";
+import {
+  loadCalendar,
+  loadRenewals,
+  minutesNow,
+  pickBlocksForRange,
+} from "./load-calendar";
 
 function blok(id: string, start: string, recurrence: unknown = null): BlockRow {
   return {
@@ -394,5 +399,195 @@ describe("loadCalendar", () => {
       );
       expect(wynik.sport).toEqual([]);
     });
+  });
+});
+
+describe("loadRenewals", () => {
+  // Strona Subscriptions: Nazwa, Kwota, Data odnowienia (cykl z kwoty, „Aktywna”), Kategoria, Aktywna
+  const poleOdnowienia = (config: Record<string, unknown> = {}) => ({
+    id: "f-ren",
+    block_id: "b1",
+    name: "Data odnowienia",
+    config: { cycle_field_id: "f-kw", active_field_id: "f-akt", ...config },
+    page_blocks: {
+      id: "b1",
+      page_id: "p1",
+      deleted_at: null,
+      pages: { id: "p1", title: "Subscriptions", deleted_at: null, is_system: false },
+    },
+  });
+  const polaTabeli = (renewalConfig: Record<string, unknown> = {}) => [
+    { id: "f-nazwa", block_id: "b1", name: "Nazwa", type: "text", config: { empty_label: "Bez nazwy" }, position: 0, is_title: true },
+    { id: "f-kw", block_id: "b1", name: "Kwota cykliczna", type: "recurring", config: { default_cycle: "month" }, position: 1, is_title: false },
+    { id: "f-ren", block_id: "b1", name: "Data odnowienia", type: "renewal", config: { cycle_field_id: "f-kw", active_field_id: "f-akt", ...renewalConfig }, position: 2, is_title: false },
+    { id: "f-kat", block_id: "b1", name: "Kategoria", type: "select", config: { options: [{ id: "o1", label: "Rozrywka", color: "" }] }, position: 3, is_title: false },
+    { id: "f-akt", block_id: "b1", name: "Aktywna", type: "checkbox", config: {}, position: 4, is_title: false },
+  ];
+  const netflix = {
+    id: "r1",
+    block_id: "b1",
+    values: { "f-nazwa": "Netflix", "f-kw": { amount: 43, cycle: "month" }, "f-ren": "2026-10-21", "f-kat": "o1", "f-akt": true },
+  };
+
+  // page_fields jest pytane dwa razy: najpierw pola odnowienia (z osadzoną stroną), potem pola bloków
+  function klientOdnowien(
+    pierwsze: ReturnType<typeof fakeTable>,
+    drugie: ReturnType<typeof fakeTable>,
+    wiersze: ReturnType<typeof fakeTable>,
+  ) {
+    let pytaniaOPola = 0;
+    return {
+      from: (nazwa: string) => {
+        if (nazwa === "page_fields") {
+          pytaniaOPola += 1;
+          return pytaniaOPola === 1 ? pierwsze : drugie;
+        }
+        if (nazwa === "page_rows") return wiersze;
+        return fakeTable({ data: [] });
+      },
+    } as never;
+  }
+
+  it("liczy miesięczne wystąpienia w zakresie tygodnia i miesiąca", async () => {
+    const tydzien = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia()] }),
+        fakeTable({ data: polaTabeli() }),
+        fakeTable({ data: [netflix] }),
+      ),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+      "2026-11-17",
+    );
+    expect(tydzien.items).toEqual([
+      {
+        key: "f-ren:r1:2026-11-21",
+        fieldId: "f-ren",
+        pageId: "p1",
+        pageTitle: "Subscriptions",
+        rowId: "r1",
+        date: "2026-11-21",
+        next: "2026-12-21",
+        title: "Netflix",
+        amount: 43,
+        cycle: "month",
+        categoryName: "Kategoria",
+        categoryLabel: "Rozrywka",
+      },
+    ]);
+    expect(tydzien.sources).toEqual([
+      expect.objectContaining({ fieldId: "f-ren", pageId: "p1", name: "Subscriptions", shown: true }),
+    ]);
+
+    const miesiac = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia()] }),
+        fakeTable({ data: polaTabeli() }),
+        fakeTable({ data: [netflix] }),
+      ),
+      "u1",
+      { from: "2026-09-28", to: "2026-11-08" },
+      "2026-11-17",
+    );
+    // Przed kotwicą nic, potem 21.10 (kotwica)
+    expect(miesiac.items.map((i) => i.date)).toEqual(["2026-10-21"]);
+  });
+
+  it("pomija nieaktywny wiersz i pyta tylko o nieusunięte bloki, strony i wiersze", async () => {
+    const pierwsze = fakeTable({ data: [poleOdnowienia()] });
+    const wiersze = fakeTable({
+      data: [
+        netflix,
+        { ...netflix, id: "r2", values: { ...netflix.values, "f-nazwa": "Disney+", "f-akt": false } },
+      ],
+    });
+    const wynik = await loadRenewals(
+      klientOdnowien(pierwsze, fakeTable({ data: polaTabeli() }), wiersze),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+      "2026-11-17",
+    );
+    expect(wynik.items.map((i) => i.title)).toEqual(["Netflix"]);
+    expect(pierwsze.eq).toHaveBeenCalledWith("type", "renewal");
+    expect(pierwsze.is).toHaveBeenCalledWith("page_blocks.deleted_at", null);
+    expect(pierwsze.is).toHaveBeenCalledWith("page_blocks.pages.deleted_at", null);
+    expect(pierwsze.eq).toHaveBeenCalledWith("page_blocks.pages.is_system", false);
+    expect(wiersze.is).toHaveBeenCalledWith("deleted_at", null);
+  });
+
+  it("show_in_calendar:false daje shown=false, a wystąpienia zostają policzone", async () => {
+    const wynik = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia({ show_in_calendar: false })] }),
+        fakeTable({ data: polaTabeli({ show_in_calendar: false }) }),
+        fakeTable({ data: [netflix] }),
+      ),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+      "2026-11-17",
+    );
+    expect(wynik.sources[0].shown).toBe(false);
+    expect(wynik.items).toHaveLength(1);
+  });
+
+  it("bez pola kwoty amount to null, a cykl bierze się z własnego cyklu", async () => {
+    const wynik = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia({ cycle_field_id: undefined, cycle: "year" })] }),
+        fakeTable({
+          data: polaTabeli({ cycle_field_id: undefined, cycle: "year" }).filter((f) => f.id !== "f-kw"),
+        }),
+        fakeTable({ data: [netflix] }),
+      ),
+      "u1",
+      { from: "2027-10-01", to: "2027-10-31" },
+      "2026-11-17",
+    );
+    expect(wynik.items).toHaveLength(1);
+    expect(wynik.items[0]).toMatchObject({ amount: null, cycle: "year", date: "2027-10-21", next: "2028-10-21" });
+  });
+
+  it("bez pól odnowienia zwraca puste listy bez dalszych zapytań", async () => {
+    const drugie = fakeTable({ data: [] });
+    const wiersze = fakeTable({ data: [] });
+    const wynik = await loadRenewals(
+      klientOdnowien(fakeTable({ data: [] }), drugie, wiersze),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+      "2026-11-17",
+    );
+    expect(wynik).toEqual({ items: [], sources: [] });
+    expect(drugie.select).not.toHaveBeenCalled();
+    expect(wiersze.select).not.toHaveBeenCalled();
+  });
+
+  it("kilka pól odnowienia na stronie: nazwa źródła z nazwą pola; błąd zapytania rzuca", async () => {
+    const drugiePole = { ...poleOdnowienia(), id: "f-ren2", name: "Koniec próby" };
+    const wynik = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia(), drugiePole] }),
+        fakeTable({ data: polaTabeli() }),
+        fakeTable({ data: [] }),
+      ),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+      "2026-11-17",
+    );
+    expect(wynik.sources.map((z) => z.name)).toEqual([
+      "Subscriptions · Data odnowienia",
+      "Subscriptions · Koniec próby",
+    ]);
+    await expect(
+      loadRenewals(
+        klientOdnowien(
+          fakeTable({ data: null, error: { message: "boom" } }),
+          fakeTable({ data: [] }),
+          fakeTable({ data: [] }),
+        ),
+        "u1",
+        { from: "2026-11-16", to: "2026-11-22" },
+        "2026-11-17",
+      ),
+    ).rejects.toThrow("boom");
   });
 });

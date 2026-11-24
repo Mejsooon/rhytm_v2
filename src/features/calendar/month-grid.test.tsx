@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildMonthGrid } from "@/components/controls/calendar-math";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalItem } from "./load-calendar";
 import { planZSzablonu, trening } from "./mobile/fixtures";
 import { MonthGrid } from "./month-grid";
 import type { Occurrence } from "./occurrences";
@@ -273,5 +273,54 @@ describe("MonthGrid", () => {
       expect(komorka.queryByText("Wpis c")).not.toBeInTheDocument();
       expect(komorka.getByText("+1 więcej")).toBeInTheDocument();
     });
+  });
+});
+
+const NETFLIX: RenewalItem = {
+  key: "f-ren:r1:2026-11-21",
+  fieldId: "f-ren",
+  pageId: "p1",
+  pageTitle: "Subscriptions",
+  rowId: "r1",
+  date: "2026-11-21",
+  next: "2026-12-21",
+  title: "Netflix",
+  amount: 43,
+  cycle: "month",
+  categoryName: "Kategoria",
+  categoryLabel: "Rozrywka",
+};
+
+describe("MonthGrid: odnowienia subskrypcji", () => {
+  it("„↻ Netflix” jest pierwszym wpisem dnia, a 4. wpis daje „+1 więcej”", async () => {
+    const onRenewalClick = vi.fn();
+    const wpisy = [1, 2, 3].map((i) =>
+      wystapienie(`b${i}`, "2026-11-21", 480 + i * 60),
+    );
+    wyrenderuj(wpisy, { renewals: [NETFLIX], onRenewalClick });
+    const komorka = screen.getByTestId("komorka-2026-11-21");
+    const przyciski = within(komorka)
+      .getAllByRole("button")
+      .filter((b) => !b.getAttribute("aria-label")?.startsWith("Nowy wpis"));
+    expect(przyciski.map((b) => b.textContent)).toEqual([
+      "↻ Netflix",
+      "Wpis b1",
+      "Wpis b2",
+    ]);
+    expect(
+      within(komorka).getByRole("link", { name: "+1 więcej" }),
+    ).toBeInTheDocument();
+    // Styl wpisu bez kategorii: tło #a3a3a3 + 14, ramka + 4d
+    expect(przyciski[0].style.backgroundColor).toBe("rgba(163, 163, 163, 0.08)");
+    await userEvent.click(przyciski[0]);
+    expect(onRenewalClick).toHaveBeenCalledWith(NETFLIX, przyciski[0]);
+  });
+
+  it("otwarte odnowienie ma aria-expanded", () => {
+    wyrenderuj([], { renewals: [NETFLIX], openRenewalKey: NETFLIX.key });
+    expect(screen.getByRole("button", { name: "↻ Netflix" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 });

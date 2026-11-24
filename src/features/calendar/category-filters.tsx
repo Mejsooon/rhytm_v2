@@ -7,6 +7,8 @@
 // Telefon (MCalendarDayFull.dc.html): ikona „Kategorie” (44 px) otwiera dolny arkusz
 // z przełącznikiem przy każdej kategorii i „+ Kategoria”.
 // Ukrywanie działa tak samo jak dawne chipy: `onToggle` dostaje kategorię, rodzic zapisuje optymistycznie.
+// Pod kategoriami stoją źródła odnowień subskrypcji (S2Calendar: „Subscriptions” z przerywanym
+// kwadratem zamiast kropki); licznik liczy też je, kropki na przycisku tylko kategorie.
 import { useRef, useState } from "react";
 import { CheckIcon, ChevronDown, ListFilter, Plus, XIcon } from "lucide-react";
 import { Dialog, DropdownMenu } from "radix-ui";
@@ -20,19 +22,27 @@ import {
   Switch,
 } from "@/components/controls";
 import { cn } from "@/lib/utils";
-import type { CategoryRow } from "./load-calendar";
+import type { CategoryRow, RenewalSource } from "./load-calendar";
 
 export function CategoryFilters({
   categories,
   onToggle,
   onAdd,
+  sources = [],
+  onToggleSource = () => {},
 }: {
   categories: CategoryRow[];
   onToggle: (category: CategoryRow) => void;
   // „+ Kategoria”: rodzic otwiera CategoryDialog
   onAdd: () => void;
+  // Źródła odnowień (pola Data odnowienia); przełączenie zapisuje show_in_calendar pola
+  sources?: RenewalSource[];
+  onToggleSource?: (source: RenewalSource) => void;
 }) {
   const widoczne = categories.filter((k) => !k.hidden);
+  const widoczneRazem =
+    widoczne.length + sources.filter((z) => z.shown).length;
+  const wszystkie = categories.length + sources.length;
   const przycisk = useRef<HTMLButtonElement>(null);
   // „+ Kategoria” otwiera okno dopiero po zamknięciu menu, gdy fokus jest już na przycisku,
   // żeby okno po zamknięciu oddało fokus właśnie tam
@@ -43,7 +53,7 @@ export function CategoryFilters({
       <DropdownMenu.Trigger asChild ref={przycisk}>
         <Button
           // Czytnik słyszy „Kategorie, widoczne 3 z 4” zamiast sklejonego „Kategorie3/4”
-          aria-label={`Kategorie, widoczne ${widoczne.length} z ${categories.length}`}
+          aria-label={`Kategorie, widoczne ${widoczneRazem} z ${wszystkie}`}
         >
           {widoczne.length > 0 && (
             <span
@@ -67,7 +77,7 @@ export function CategoryFilters({
           Kategorie
           <span aria-hidden="true" className="inline-flex">
             <StatusBadge tone="gray" className="tabular-nums">
-              {`${widoczne.length}/${categories.length}`}
+              {`${widoczneRazem}/${wszystkie}`}
             </StatusBadge>
           </span>
           <ChevronDown size={16} aria-hidden="true" />
@@ -132,6 +142,45 @@ export function CategoryFilters({
               </DropdownMenu.CheckboxItem>
             );
           })}
+          {sources.map((zrodlo) => (
+            <DropdownMenu.CheckboxItem
+              key={zrodlo.fieldId}
+              checked={zrodlo.shown}
+              onSelect={(e) => e.preventDefault()}
+              onCheckedChange={() => onToggleSource(zrodlo)}
+              className={cn(
+                MENU_ITEM,
+                "select-none data-[highlighted]:bg-accent",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "box-border grid size-4 flex-none place-items-center rounded-[4px] border shadow-xs",
+                  zrodlo.shown
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-white text-transparent",
+                )}
+              >
+                <CheckIcon strokeWidth={3} className="size-3" />
+              </span>
+              {/* Przerywany kwadrat 10×8 px zamiast kropki: ciemny przy widocznym, szary przy ukrytym */}
+              <span
+                aria-hidden="true"
+                data-testid="znacznik-zrodla"
+                className="box-border h-2 w-2.5 flex-none rounded-[2px] border border-dashed"
+                style={{ borderColor: zrodlo.shown ? "#404040" : "#a3a3a3" }}
+              />
+              <span
+                className={cn(
+                  "min-w-0 truncate",
+                  !zrodlo.shown && "text-muted-foreground",
+                )}
+              >
+                {zrodlo.name}
+              </span>
+            </DropdownMenu.CheckboxItem>
+          ))}
           <DropdownMenu.Separator className={MENU_SEPARATOR} />
           <DropdownMenu.Item
             onSelect={() => {
@@ -158,10 +207,14 @@ export function CategorySheet({
   categories,
   onToggle,
   onAdd,
+  sources = [],
+  onToggleSource = () => {},
 }: {
   categories: CategoryRow[];
   onToggle: (category: CategoryRow) => void;
   onAdd: () => void;
+  sources?: RenewalSource[];
+  onToggleSource?: (source: RenewalSource) => void;
 }) {
   const [otwarty, setOtwarty] = useState(false);
   const przycisk = useRef<HTMLButtonElement>(null);
@@ -234,6 +287,30 @@ export function CategorySheet({
                   checked={!kategoria.hidden}
                   onChange={() => onToggle(kategoria)}
                   ariaLabel={`Pokaż kategorię ${kategoria.name}`}
+                />
+              </div>
+            ))}
+            {sources.map((zrodlo) => (
+              <div
+                key={zrodlo.fieldId}
+                data-testid={`wiersz-zrodla-${zrodlo.fieldId}`}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("[role=switch]"))
+                    return;
+                  onToggleSource(zrodlo);
+                }}
+                className="flex min-h-[52px] cursor-pointer items-center gap-3 border-b border-border px-4"
+              >
+                <span
+                  aria-hidden="true"
+                  className="box-border h-2 w-2.5 flex-none rounded-[2px] border border-dashed"
+                  style={{ borderColor: zrodlo.shown ? "#404040" : "#a3a3a3" }}
+                />
+                <span className="min-w-0 flex-1 truncate">{zrodlo.name}</span>
+                <Switch
+                  checked={zrodlo.shown}
+                  onChange={() => onToggleSource(zrodlo)}
+                  ariaLabel={`Pokaż odnowienia ${zrodlo.name}`}
                 />
               </div>
             ))}
