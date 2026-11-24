@@ -14,6 +14,7 @@ const {
   setFavorite,
   duplicatePage,
   countPageRows,
+  renamePage,
 } = vi.hoisted(() => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -25,6 +26,7 @@ const {
     setPageIcon: vi.fn(),
     setFavorite: vi.fn(),
     duplicatePage: vi.fn(),
+    renamePage: vi.fn(),
   }));
 vi.mock("next/navigation", () => ({
   usePathname: () => sciezka,
@@ -39,7 +41,7 @@ vi.mock("./actions", () => ({
   setFavorite,
   duplicatePage,
   countPageRows,
-  renamePage: vi.fn(),
+  renamePage,
 }));
 
 import type { PageSummary } from "./load-pages";
@@ -84,6 +86,7 @@ describe("PageMenu", () => {
     setPageIcon.mockResolvedValue({ ok: true });
     setFavorite.mockResolvedValue({ ok: true });
     duplicatePage.mockResolvedValue({ ok: true, id: "kopia" });
+    renamePage.mockResolvedValue({ ok: true });
   });
 
   it("pokazuje pozycje z makiety i „Dodaj do ulubionych” (nazwa bez „★”)", async () => {
@@ -330,4 +333,32 @@ describe("PageMenu", () => {
     expect(opis.id).not.toBe("");
     expect(okno).toHaveAttribute("aria-describedby", opis.id);
   });
+
+  it("arkusz (telefon): nagłówek z ikoną i dopiskiem, pozycje bez skrótu F2", async () => {
+    const user = userEvent.setup();
+    render(<PageMenuZDopiskiem />);
+    await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
+    expect(screen.getByText("11 wierszy · 5 pól")).toBeInTheDocument();
+    expect(screen.queryByText("F2")).toBeNull();
+  });
+
+  it("arkusz (telefon): „Zmień nazwę” otwiera widok z polem i zapisuje nową nazwę", async () => {
+    const onRename = vi.fn();
+    const user = userEvent.setup();
+    render(<Uprzaz onRename={onRename} sheet />);
+    await user.click(screen.getByRole("button", { name: "Menu strony Books" }));
+    await user.click(screen.getByRole("menuitem", { name: /Zmień nazwę/ }));
+    expect(onRename).not.toHaveBeenCalled();
+    const pole = screen.getByRole("textbox", { name: "Nazwa strony" });
+    await user.clear(pole);
+    await user.type(pole, "Biblioteka");
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+    expect(renamePage).toHaveBeenCalledWith("b", "Biblioteka");
+  });
 });
+
+function PageMenuZDopiskiem() {
+  const store = usePagesStore(POCZATKOWE);
+  const books = store.pages.find((p) => p.id === "b")!;
+  return <PageMenu page={books} pages={store.pages} store={store} onRename={vi.fn()} sheet meta="11 wierszy · 5 pól" />;
+}

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PageField } from "../fields";
 import type { PinnedCard } from "../table-model";
@@ -434,3 +434,20 @@ describe("CardDialog: Subscriptions", () => {
   });
 });
 
+describe("CardDialog na telefonie (CMCardSheet)", () => {
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  it("przyciski są w nagłówku („Anuluj” i „Dodaj”), bez stopki z dublami", async () => {
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    const { onSave, onCancel } = pokaz();
+    expect(screen.getAllByRole("button", { name: "Anuluj" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Dodaj kartę" })).toBeNull();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("button", { name: "Anuluj" }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+});

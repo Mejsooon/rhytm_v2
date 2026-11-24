@@ -769,7 +769,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "hasla-zablokowane", projekt);
   });
 
-  test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, S2CardMenu, S2CardDialog, MPages, MEditor)", async ({
+  test("zrzuty /strony (makiety S2NewPage, S2EmptyPage, S2Books, S2ColumnMenu, S2FilterPopover, S2TableMenu, S2PageMenu, S2SidebarCollapsed, S2CardMenu, S2CardDialog, MPages, MEditor; telefon: CMPages, CMNewPage, CMEditor, CMPageMenu, CMFilterSheet, CMCardSheet, CMRowEdit)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
@@ -785,6 +785,15 @@ test.describe("ekrany z sesją", () => {
     // Strona z szablonu Books (Books, ColumnMenu, FilterPopover)
     await utworzBooks(page);
     await zrzut(page, "strony-books", projekt);
+    if (projekt !== "web") {
+      // Telefon: arkusz „Filtr i sortowanie” (CMFilterSheet) i menu strony (CMPageMenu)
+      await page.getByRole("button", { name: "Filtr i sortowanie" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Filtr i sortowanie" }),
+      ).toBeVisible();
+      await zrzut(page, "strony-filtr-arkusz", projekt);
+      await page.getByRole("button", { name: "Gotowe" }).click();
+    }
     if (projekt === "web") {
       await page
         .getByRole("columnheader")

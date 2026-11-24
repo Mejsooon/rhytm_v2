@@ -16,6 +16,8 @@ import {
 
 import {
   ActionPopover,
+  Button,
+  FIELD,
   FormDialog,
   MENU_ITEM,
   MENU_ITEM_DANGER,
@@ -25,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { duplicatePage } from "./actions";
 import { DeletePageDialog } from "./delete-page-dialog";
 import { IconPicker } from "./icon-picker";
+import { PageIcon } from "./page-icon";
 import { BLAD_ZAPISU } from "./messages";
 import type { PageSummary } from "./load-pages";
 import type { PagesStore } from "./use-pages-store";
@@ -50,6 +53,7 @@ export function PageMenu({
   triggerClassName,
   triggerLabel,
   align = "start",
+  meta,
 }: {
   page: PageSummary;
   pages: PageSummary[];
@@ -61,11 +65,15 @@ export function PageMenu({
   triggerLabel?: string;
   // Wyrównanie dymku do przycisku: w sidebarze „start”, w nagłówku przy prawej krawędzi okna „end”
   align?: "start" | "end";
+  // Telefon: dopisek pod nazwą w nagłówku arkusza, np. „11 wierszy · 5 pól”
+  meta?: string;
 }) {
   const router = useRouter();
   const sciezka = usePathname();
   const [otwarte, setOtwarte] = React.useState(false);
-  const [widok, setWidok] = React.useState<"menu" | "ikony">("menu");
+  const [widok, setWidok] = React.useState<"menu" | "ikony" | "nazwa">("menu");
+  // Telefon: szkic nazwy w arkuszu „Zmień nazwę”
+  const [szkicNazwy, setSzkicNazwy] = React.useState("");
   const [usuwanie, setUsuwanie] = React.useState(false);
 
   const tytul = page.title.trim() === "" ? "Bez tytułu" : page.title;
@@ -120,7 +128,35 @@ export function PageMenu({
   const pozycja = sheet ? POZYCJA_ARKUSZA : POZYCJA;
 
   const zawartosc =
-    widok === "ikony" ? (
+    widok === "nazwa" ? (
+      // Telefon (CMPageMenu, „Zmień nazwę”): pole nazwy i „Anuluj · Zapisz”; zapis idzie przez magazyn stron
+      <div className="flex flex-col gap-3">
+        <h2 className="m-0 text-lg font-semibold">Zmień nazwę</h2>
+        <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+          Nazwa strony
+          <input
+            type="text"
+            value={szkicNazwy}
+            maxLength={200}
+            placeholder="Bez tytułu"
+            onChange={(e) => setSzkicNazwy(e.target.value)}
+            className={FIELD}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Button onClick={() => setWidok("menu")}>Anuluj</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              zmienOtwarcie(false);
+              if (szkicNazwy !== page.title) void store.rename(page.id, szkicNazwy);
+            }}
+          >
+            Zapisz
+          </Button>
+        </div>
+      </div>
+    ) : widok === "ikony" ? (
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           {/* .btng.ic.xs */}
@@ -144,11 +180,29 @@ export function PageMenu({
       </div>
     ) : (
       <div role="menu" aria-label={`Strona ${tytul}`}>
+        {/* Telefon: ikona strony i dopisek „N wierszy · M pól” pod tytułem arkusza */}
+        {sheet && (
+          <div className="flex items-center gap-2.5 px-4 pt-1 pb-2.5">
+            <span
+              aria-hidden="true"
+              className="grid size-9 flex-none place-items-center rounded-[10px] border border-border bg-white text-muted-foreground shadow-xs"
+            >
+              <PageIcon icon={page.icon} size={18} />
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">{meta ?? ""}</span>
+          </div>
+        )}
         <button
           type="button"
           role="menuitem"
           className={pozycja}
           onClick={() => {
+            if (sheet) {
+              // Telefon: nazwę zmienia się w arkuszu (bez przenoszenia fokusu na tytuł strony)
+              setSzkicNazwy(page.title);
+              setWidok("nazwa");
+              return;
+            }
             zmienOtwarcie(false);
             onRename();
           }}

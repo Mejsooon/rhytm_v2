@@ -1,22 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { Funnel, X } from "lucide-react";
+import { Funnel, ListFilter, Plus, X } from "lucide-react";
 
 import {
   ActionPopover,
   Button,
+  Card,
   Chip,
   DatePicker,
   Dropdown,
   FIELD,
+  FormDialog,
+  Segment,
   StatusBadge,
   TextField,
   type IsoDate,
 } from "@/components/controls";
 import type { PageField } from "../fields";
 import { cn } from "@/lib/utils";
-import { operatorsFor, type FilterCond } from "../table-model";
+import { operatorsFor, type FilterCond, type SortKey } from "../table-model";
 
 // Nazwy operatorów w liście „Operator” (makieta: „jest”, „jest jednym z”, „≥”); dla Checkboxa
 // operator to zawsze „jest”, a wartość („zaznaczone” / „niezaznaczone”) wybiera op
@@ -38,9 +41,21 @@ const SIATKA = "flex flex-col gap-2 min-[800px]:gap-3";
 const WARUNEK =
   "grid items-center gap-1.5 min-[800px]:grid-cols-[48px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)_32px] max-[799px]:grid-cols-[minmax(0,1fr)_44px] max-[799px]:rounded-lg max-[799px]:border max-[799px]:border-border max-[799px]:p-2";
 
+// Telefon (poniżej 800 px) według mediów; po stronie serwera i w testach (bez matchMedia) false = dymek weba
+function subskrybujTelefon(wywolaj: () => void) {
+  const mq = window.matchMedia("(max-width: 799px)");
+  mq.addEventListener?.("change", wywolaj);
+  return () => mq.removeEventListener?.("change", wywolaj);
+}
+function czyTelefon() {
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
+}
+
 // Filtr tabeli z FilterPopover.dc.html: warunki „Gdzie … i …”, operatory zależne od typu pola,
 // licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako domyślny”. Zmiany idą do stanu klienta —
 // zapisuje je dopiero „Zapisz jako domyślny”. Wyzwalaczem jest przycisk „Filtruj” w nagłówku strony.
+// Telefon (CMFilterSheet): przycisk „Filtr i sortowanie” 44 px i arkusz „Wyczyść · Filtr i sortowanie · Gotowe”
+// z warunkami (te same kontrolki co w dymku), sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako domyślny”.
 export function FilterPopover({
   fields,
   filters,
@@ -52,6 +67,8 @@ export function FilterPopover({
   onChange,
   onSave,
   triggerClassName,
+  sort,
+  onSortChange,
 }: {
   fields: PageField[];
   filters: FilterCond[];
@@ -64,7 +81,15 @@ export function FilterPopover({
   onChange: (filters: FilterCond[]) => void;
   onSave: () => void;
   triggerClassName: string;
+  // Telefon: klucze sortowania tabeli i ich zmiana (zapis od razu, jak w menu „⋯” tabeli); bez nich arkusz nie ma sekcji sortowania
+  sort?: SortKey[];
+  onSortChange?: (sort: SortKey[]) => void;
 }) {
+  const telefon = React.useSyncExternalStore(
+    (wywolaj) => (typeof window.matchMedia === "function" ? subskrybujTelefon(wywolaj) : () => {}),
+    czyTelefon,
+    () => false,
+  );
   // Teksty liczb w trakcie wpisywania (np. „20,”) — wartość warunku trzyma już liczbę
   const [szkice, setSzkice] = React.useState<Record<number, string>>({});
 
@@ -82,35 +107,8 @@ export function FilterPopover({
     onChange([...filters, { field_id: pole.id, op: operatorsFor(pole.type)[0] }]);
   }
 
-  return (
-    <ActionPopover
-      open={open}
-      onOpenChange={onOpenChange}
-      align="end"
-      ariaLabel="Filtr"
-      // Dymek wg .pop: padding 14 px (cn = twMerge nadpisuje domyślne 10 px)
-      className="p-3.5"
-      trigger={
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          // Otwarty filtr: tło jak aria-expanded na przycisku w makiecie (rgba(0,0,0,.04))
-          className={cn(triggerClassName, open && "bg-accent")}
-        >
-          <Funnel aria-hidden="true" className="size-4 flex-none opacity-80" />
-          {warunki.length > 0 ? `Filtruj · ${warunki.length}` : "Filtruj"}
-        </button>
-      }
-    >
-      <div className="flex w-[min(600px,calc(100vw-48px))] flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold">Filtr</span>
-          <StatusBadge tone="gray" className="font-mono">
-            {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
-          </StatusBadge>
-        </div>
-
+  const listaWarunkow = (
+    <>
         <div className={SIATKA}>
           {warunki.map(({ c, i, pole }, n) => {
             const operatory = operatorsFor(pole.type);
@@ -251,12 +249,157 @@ export function FilterPopover({
           })}
         </div>
 
+    </>
+  );
+  const brakWarunkow = (
+    <>
         {/* .empty z paddingiem 18 px: stan bez warunków */}
         {warunki.length === 0 && (
           <div className="flex flex-col items-center gap-2 p-[18px] text-center">
             Brak warunków. Tabela pokazuje wszystkie wiersze.
           </div>
         )}
+
+    </>
+  );
+
+  // Telefon: arkusz zamiast dymku
+  if (telefon) {
+    const wolneDoSortu = fields.filter((f) => !(sort ?? []).some((k) => k.field_id === f.id));
+    return (
+      <>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => onOpenChange(true)}
+          className={cn(triggerClassName, "max-[799px]:h-11", open && "bg-accent")}
+        >
+          <ListFilter aria-hidden="true" className="size-4 flex-none opacity-80" />
+          Filtr i sortowanie
+        </button>
+        <FormDialog
+          open={open}
+          onOpenChange={onOpenChange}
+          title="Filtr i sortowanie"
+          phoneHeader="actions"
+          phoneCancel={{
+            label: "Wyczyść",
+            onClick: () => {
+              setSzkice({});
+              onChange([]);
+            },
+          }}
+          phoneSubmit={
+            <Button variant="primary" onClick={() => onOpenChange(false)}>
+              Gotowe
+            </Button>
+          }
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Filtr</span>
+              <StatusBadge tone="gray" className="font-mono">
+                {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
+              </StatusBadge>
+            </div>
+            {listaWarunkow}
+            {warunki.length === 0 && (
+              <p className="m-0 text-xs text-muted-foreground">Brak warunków. Tabela pokazuje wszystkie wiersze.</p>
+            )}
+            <Button onClick={() => dodaj(fields[0])} className="border-dashed shadow-none">
+              <Plus aria-hidden="true" className="size-4" />
+              Dodaj warunek
+            </Button>
+            <span className="text-xs text-muted-foreground">Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.</span>
+          </div>
+          {sort && onSortChange && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Sortowanie</span>
+              {sort.length > 0 && (
+                <Card className="overflow-hidden">
+                  {sort.map((klucz, i) => {
+                    const pole = fields.find((f) => f.id === klucz.field_id);
+                    if (!pole) return null;
+                    return (
+                      <div key={klucz.field_id} className="m-row py-1.5">
+                        <span className="min-w-0 flex-1 truncate">{pole.name}</span>
+                        <div className="w-[200px] flex-none">
+                          <Segment
+                            ariaLabel={`Kierunek sortowania: ${pole.name}`}
+                            value={klucz.dir}
+                            options={[
+                              { value: "asc", label: "Rosnąco" },
+                              { value: "desc", label: "Malejąco" },
+                            ]}
+                            onChange={(dir) =>
+                              onSortChange(sort.map((k, j) => (j === i ? { field_id: k.field_id, dir } : k)))
+                            }
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          icon
+                          aria-label={`Usuń sortowanie: ${pole.name}`}
+                          onClick={() => onSortChange(sort.filter((_, j) => j !== i))}
+                        >
+                          <X aria-hidden="true" className="size-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </Card>
+              )}
+              {sort.length === 0 && <p className="m-0 text-xs text-muted-foreground">Wiersze w kolejności dodania.</p>}
+              <Button
+                disabled={wolneDoSortu.length === 0}
+                onClick={() => onSortChange([...sort, { field_id: wolneDoSortu[0].id, dir: "asc" }])}
+                className="border-dashed shadow-none"
+              >
+                <Plus aria-hidden="true" className="size-4" />
+                Dodaj sortowanie
+              </Button>
+              <Button variant="ghost" onClick={onSave} className="self-start px-1">
+                Zapisz jako domyślny
+              </Button>
+            </div>
+          )}
+        </FormDialog>
+      </>
+    );
+  }
+
+  return (
+    <ActionPopover
+      open={open}
+      onOpenChange={onOpenChange}
+      align="end"
+      ariaLabel="Filtr"
+      // Dymek wg .pop: padding 14 px (cn = twMerge nadpisuje domyślne 10 px)
+      className="p-3.5"
+      trigger={
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          // Otwarty filtr: tło jak aria-expanded na przycisku w makiecie (rgba(0,0,0,.04))
+          className={cn(triggerClassName, open && "bg-accent")}
+        >
+          <Funnel aria-hidden="true" className="size-4 flex-none opacity-80" />
+          {warunki.length > 0 ? `Filtruj · ${warunki.length}` : "Filtruj"}
+        </button>
+      }
+    >
+      <div className="flex w-[min(600px,calc(100vw-48px))] flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold">Filtr</span>
+          <StatusBadge tone="gray" className="font-mono">
+            {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
+          </StatusBadge>
+        </div>
+
+        {listaWarunkow}
+        {brakWarunkow}
 
         <div className="flex items-center justify-between border-t border-border pt-3">
           <Button

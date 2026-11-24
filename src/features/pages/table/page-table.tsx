@@ -385,6 +385,9 @@ export function PageTable({
               });
             }}
             triggerClassName={PRZYCISK_FILTRA}
+            // Telefon: sortowanie w tym samym arkuszu co filtr (zapis od razu, jak w menu „⋯” tabeli)
+            sort={settings.sort}
+            onSortChange={(sort) => void store.patchSettings({ sort })}
           />
           <ActionPopover
             open={menuTabeli}

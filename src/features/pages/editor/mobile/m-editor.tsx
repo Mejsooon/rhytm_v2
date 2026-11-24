@@ -7,7 +7,7 @@ import { ChevronLeft, Plus, Table2, SquareCheck } from "lucide-react";
 import { Button, StatusBadge } from "@/components/controls";
 import { PageMenu } from "../../page-menu";
 import type { PageSummary } from "../../load-pages";
-import { rowsForm } from "../../rows-label";
+import { rowsForm, rowsLabel } from "../../rows-label";
 import type { PagesStore } from "../../use-pages-store";
 import { filterSlash } from "../../blocks";
 import type { EditorStore } from "../use-editor-store";
@@ -46,6 +46,16 @@ export function MEditor({
 }) {
   const [menuOtwarte, setMenuOtwarte] = React.useState(false);
   const [komenda, setKomenda] = React.useState("");
+
+  // Dopisek w arkuszu menu strony: wiersze i pola wszystkich tabel strony; bez tabel „pusta strona”
+  const tabele = store.blocks.filter((b) => b.type === "table");
+  const wiersze = tabele.reduce((suma, b) => suma + b.rows.filter((r) => r.deletedAt === null).length, 0);
+  const pola = tabele.reduce((suma, b) => suma + b.fields.length, 0);
+  const formaPol = rowsForm(pola);
+  const dopisek =
+    tabele.length === 0
+      ? "pusta strona"
+      : `${rowsLabel(wiersze)} · ${pola} ${formaPol === "one" ? "pole" : formaPol === "few" ? "pola" : "pól"}`;
 
   const jestPolecenie = komenda.startsWith("/");
   const zapytanie = jestPolecenie ? komenda.slice(1) : "";
@@ -92,6 +102,7 @@ export function MEditor({
           onRename={onRename}
           sheet
           triggerLabel="Więcej"
+          meta={dopisek}
           triggerClassName={PRZYCISK_WIECEJ}
         />
       </header>
