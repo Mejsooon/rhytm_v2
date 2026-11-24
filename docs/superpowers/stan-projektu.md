@@ -42,8 +42,9 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 - Nic. Ostatnie scalenie: `98746b2` (strony i Hasła na całą szerokość).
 
-## Dalej (kolejność ustalona z Mejsonem 2026-11-23; kroki 1–3 zamykają obecny etap aplikacji)
+## Dalej (kolejność ustalona z Mejsonem 2026-11-23; kroki 0–3 zamykają obecny etap aplikacji)
 
+0. **Dokończenie webu (2026-11-24):** Ustawienia (karta Konto w Ogólne, Konto i bezpieczeństwo, Powiadomienia bez wysyłki push) i zablokowany sejf jak S2Vault (strona z tytułem pod rozmyciem). Spec: `specs/2026-11-24-dokonczenie-webu-design.md`.
 1. **Projekt Dziś:**
    - wariant F według makiety S2Today i pusty stan S2EmptyToday;
    - zadania tylko w blokach, w bazie `NOT NULL`;
