@@ -157,6 +157,11 @@ export function GymLog({ data }: { data: WorkoutData }) {
           store={sklep}
           finishing={konczy}
           onFinish={() => void zakoncz()}
+          onSaveTemplate={() => {
+            setNazwaSzablonu(session.title);
+            setBladSzablonu(null);
+            setOknoSzablonu(true);
+          }}
         />
       </div>
       <div
@@ -165,7 +170,10 @@ export function GymLog({ data }: { data: WorkoutData }) {
       >
         {/* .topbar z okruszkami .crumb (CGymLog) */}
         <header className="box-content flex min-h-9 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-2.5">
-          <nav aria-label="Okruszki" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <nav
+            aria-label="Okruszki"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground"
+          >
             {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
             <SidebarToggle placement="header" />
             <Link
