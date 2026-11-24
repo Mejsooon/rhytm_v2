@@ -13,7 +13,9 @@ const {
   isPasswordPwned,
   maybeSingle,
   verifyTurnstile,
+  pushDelete,
 } = vi.hoisted(() => ({
+  pushDelete: vi.fn(),
   signInWithPassword: vi.fn(),
   signUpMock: vi.fn(),
   resendMock: vi.fn(),
@@ -39,7 +41,13 @@ vi.mock("@/lib/supabase/server", () => ({
       updateUser,
       signOut: signOutMock,
     },
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle }) }),
+      // signOut: usunięcie wiersza push tej przeglądarki
+      delete: () => ({
+        eq: async (kolumna: string, wartosc: string) => pushDelete(kolumna, wartosc),
+      }),
+    }),
   }),
 }));
 vi.mock("@/lib/auth/turnstile", () => ({ verifyTurnstile }));
@@ -67,6 +75,7 @@ import {
   resendConfirmation,
   resendLink,
   signIn,
+  signOut,
   signUp,
   updatePassword,
 } from "./actions";
@@ -547,5 +556,40 @@ describe("resendLink", () => {
       message: "Potwierdź, że nie jesteś botem",
     });
     expect(resetForEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("signOut", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    signOutMock.mockResolvedValue({ error: null });
+    pushDelete.mockResolvedValue({ error: null });
+  });
+
+  it("z endpointem push → usuwa wiersz urządzenia przed wylogowaniem", async () => {
+    const fd = new FormData();
+    fd.set("push_endpoint", "https://fcm.googleapis.com/fcm/send/abc");
+    await expect(signOut(fd)).rejects.toThrow("REDIRECT:/logowanie");
+    expect(pushDelete).toHaveBeenCalledWith(
+      "endpoint",
+      "https://fcm.googleapis.com/fcm/send/abc",
+    );
+    expect(pushDelete.mock.invocationCallOrder[0]).toBeLessThan(
+      signOutMock.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("bez endpointu → samo wylogowanie", async () => {
+    await expect(signOut(new FormData())).rejects.toThrow("REDIRECT:/logowanie");
+    expect(pushDelete).not.toHaveBeenCalled();
+    expect(signOutMock).toHaveBeenCalled();
+  });
+
+  it("błąd usuwania nie blokuje wylogowania", async () => {
+    pushDelete.mockRejectedValue(new Error("sieć"));
+    const fd = new FormData();
+    fd.set("push_endpoint", "https://fcm.googleapis.com/fcm/send/abc");
+    await expect(signOut(fd)).rejects.toThrow("REDIRECT:/logowanie");
+    expect(signOutMock).toHaveBeenCalled();
   });
 });

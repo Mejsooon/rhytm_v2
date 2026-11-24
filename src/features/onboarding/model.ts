@@ -73,11 +73,11 @@ export const SOURCES: { key: SourceKey; label: string }[] = [
 
 // OnboardingNotify
 export const REMINDERS: { key: ReminderKey; title: string; when: string }[] = [
-  { key: "before", title: "Przed blokiem", when: "10 min wcześniej" },
+  { key: "before", title: "Przed blokiem", when: "5 min wcześniej" },
   {
     key: "renew",
     title: "Odnowienie subskrypcji",
-    when: "3 dni wcześniej, o 9:00",
+    when: "Dzień wcześniej, o 9:00",
   },
   { key: "weekly", title: "Podsumowanie tygodnia", when: "Niedziela, 18:00" },
   { key: "habits", title: "Nawyki na dziś", when: "Codziennie, 21:00" },

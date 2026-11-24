@@ -12,7 +12,7 @@ import {
   MENU_LABEL,
   MENU_SEPARATOR,
 } from "@/components/controls";
-import { signOut } from "@/features/auth/actions";
+import { SignOutForm } from "@/features/auth/sign-out-form";
 import { cn } from "@/lib/utils";
 
 export type SidebarUser = {
@@ -82,12 +82,12 @@ export function AccountPopover({ user }: { user: SidebarUser }) {
           <UserRound size={16} aria-hidden="true" className="text-muted-foreground" />
           Konto
         </Link>
-        <form action={signOut}>
+        <SignOutForm>
           <button type="submit" className={cn(MENU_ITEM, MENU_ITEM_DANGER)}>
             <LogOut size={16} aria-hidden="true" />
             Wyloguj się
           </button>
-        </form>
+        </SignOutForm>
       </div>
     </ActionPopover>
   );

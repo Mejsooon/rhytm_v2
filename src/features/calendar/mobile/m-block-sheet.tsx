@@ -623,7 +623,7 @@ export function MBlockSheet({
                   aria-hidden="true"
                   className="size-[18px] flex-none text-muted-foreground"
                 />
-                <span className="flex-1">Przypomnij 10 min wcześniej</span>
+                <span className="flex-1">Przypomnij 5 min wcześniej</span>
                 <Switch
                   checked={remind}
                   onChange={setRemind}

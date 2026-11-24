@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
-import { Card, CardContent } from "@/components/controls";
+import { todayIso } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { AccountCard } from "@/features/settings/account-card";
 import { CategoriesCard } from "@/features/settings/categories-card";
@@ -22,6 +22,10 @@ import {
   type SettingsTabSlug,
 } from "@/features/settings/settings-tabs";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
+import { mapHabits } from "@/features/habits/load-habits";
+import { scheduleOn } from "@/features/habits/model";
+import { describeSchedule } from "@/features/habits/text";
+import { NotificationsTab } from "@/features/notifications/notifications-card";
 import { describeUserAgent } from "@/lib/user-agent";
 import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
 import { createClient } from "@/lib/supabase/server";
@@ -172,6 +176,99 @@ async function Konto() {
   );
 }
 
+// Powiadomienia: ustawienia, urządzenia push i przypomnienia nawyków (dane zależą od ciasteczek → connection + Suspense)
+async function Powiadomienia() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const [profilRes, ustawieniaRes, urzadzeniaRes, nawykiRes, wersjeRes] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("timezone")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("notification_settings")
+        .select(
+          "habits_enabled, before_block_min, renewals_enabled, quiet_enabled, quiet_from, quiet_to",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      // Bez kluczy urządzenia (p256dh, auth); endpoint tylko do rozpoznania tej przeglądarki („TO”)
+      supabase
+        .from("push_subscriptions")
+        .select("id, endpoint, label, enabled, created_at, last_seen_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true }),
+      // Nawyki w kolejności modułu Nawyki
+      supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true }),
+      supabase
+        .from("habit_schedules")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("valid_from", { ascending: true }),
+    ]);
+  // Błąd odczytu nawyków ma trafić do granicy błędu trasy (jak w module Nawyki), a nie pokazać pustą listę
+  if (nawykiRes.error) throw new Error(nawykiRes.error.message);
+  if (wersjeRes.error) throw new Error(wersjeRes.error.message);
+
+  const strefa = safeTimezone(profilRes.data?.timezone);
+  const dzis = todayIso(strefa);
+  // Brak wiersza ustawień = wartości domyślne kolumn (nawyki wył., blok 5 min, odnowienia wł., cisza 23:00–07:00)
+  const u = ustawieniaRes.data;
+  const nawyki = mapHabits(nawykiRes.data ?? [], wersjeRes.data ?? []).map(
+    (h) => {
+      // Obowiązująca dziś wersja; gdy wszystkie są w przyszłości — pierwsza
+      const wersja = scheduleOn(h, dzis) ?? h.schedules[0];
+      return {
+        id: h.id,
+        name: h.name,
+        schedule: wersja ? describeSchedule(wersja) : "",
+        remindAt: h.remindAt,
+      };
+    },
+  );
+  // Stara baza bez tabeli push_subscriptions → komunikat w karcie „Urządzenia”, reszta działa
+  const urzadzenia = (urzadzeniaRes.data ?? []).map((d) => ({
+    id: d.id,
+    endpoint: d.endpoint,
+    label: d.label,
+    // Etykieta „{Przeglądarka} · {System}” z describeUserAgent: telefony i tablety po nazwie systemu
+    mobile: /· (iPhone|iPad|Android)$/.test(d.label),
+    enabled: d.enabled,
+    lastSeenAt: d.last_seen_at,
+    createdAt: d.created_at,
+  }));
+
+  return (
+    <NotificationsTab
+      settings={{
+        habits: u?.habits_enabled ?? false,
+        block: u ? u.before_block_min !== null : true,
+        renewals: u?.renewals_enabled ?? true,
+        quiet: u?.quiet_enabled ?? false,
+        // kolumny time wracają jako 'HH:MM:SS'
+        quietFrom: u?.quiet_from?.slice(0, 5) ?? "23:00",
+        quietTo: u?.quiet_to?.slice(0, 5) ?? "07:00",
+      }}
+      devices={urzadzenia}
+      devicesLoadError={!!urzadzeniaRes.error}
+      habits={nawyki}
+      timeZone={strefa}
+    />
+  );
+}
+
 // Karta Kategorie kalendarza z listą w kolejności z bazy (dane zależą od ciasteczek → connection + Suspense)
 async function Kategorie() {
   await connection();
@@ -235,11 +332,9 @@ export default async function ZakladkaPage({
           ) : tab.slug === "sejf" ? (
             <VaultCard />
           ) : (
-            <Card>
-              <CardContent className="py-10 text-center text-muted-foreground">
-                Ta zakładka powstanie w kolejnym etapie.
-              </CardContent>
-            </Card>
+            <Suspense fallback={null}>
+              <Powiadomienia />
+            </Suspense>
           )}
         </div>
       </div>

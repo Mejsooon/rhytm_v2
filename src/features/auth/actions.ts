@@ -346,9 +346,19 @@ export async function resendLink(
   return { status: "success", email: kontrola.email };
 }
 
-// Wylogowanie: kończy sesję Supabase i wraca na ekran logowania
-export async function signOut(): Promise<never> {
+// Wylogowanie: kończy sesję Supabase i wraca na ekran logowania.
+// SignOutForm dokłada endpoint push tej przeglądarki (pole push_endpoint) — usuwamy jego wiersz, zanim sesja
+// zniknie, żeby na wspólnym urządzeniu nie przychodziły powiadomienia wylogowanego konta. Błąd nie blokuje wylogowania.
+export async function signOut(formData?: FormData): Promise<never> {
   const supabase = await createClient();
+  const endpoint = formData instanceof FormData ? formData.get("push_endpoint") : null;
+  if (typeof endpoint === "string" && endpoint.length > 0 && endpoint.length <= 1000) {
+    try {
+      await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+    } catch {
+      // stara baza albo błąd sieci — wylogowujemy mimo to
+    }
+  }
   await supabase.auth.signOut();
   redirect("/logowanie");
 }

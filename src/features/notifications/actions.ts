@@ -2,8 +2,104 @@
 
 import { revalidatePath } from "next/cache";
 import * as webpush from "web-push";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+
+const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
+
+// Godzina 'HH:MM' z minutami co 5 (siatka TimePicker: 12 pól minut)
+const godzina5 = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5][05]$/, "Nieprawidłowa godzina.");
+
+const ustawieniaSchema = z
+  .object({
+    habits_enabled: z.boolean(),
+    // Start bloku: tylko 5 min przed albo wyłączone (decyzja C4)
+    before_block_min: z.literal(5).nullable(),
+    renewals_enabled: z.boolean(),
+    quiet_enabled: z.boolean(),
+    quiet_from: godzina5,
+    quiet_to: godzina5,
+  })
+  .partial()
+  .strict()
+  // Cicha noc o równych godzinach nic by nie robiła (wysyłka traktuje ją jak wyłączoną) — odrzucamy
+  .refine(
+    (p) =>
+      p.quiet_from === undefined ||
+      p.quiet_to === undefined ||
+      p.quiet_from !== p.quiet_to,
+    "Początek i koniec cichej nocy muszą się różnić.",
+  );
+
+// Ustawienia → Powiadomienia: zapis jednego lub kilku pól od razu po przełączeniu (bez „Zapisz”).
+// Brak wiersza ustawień → upsert tworzy go z wartościami domyślnymi pozostałych kolumn.
+export async function saveNotificationSettings(
+  patch: Partial<{
+    habits_enabled: boolean;
+    before_block_min: 5 | null;
+    renewals_enabled: boolean;
+    quiet_enabled: boolean;
+    quiet_from: string;
+    quiet_to: string;
+  }>,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const parsed = ustawieniaSchema.safeParse(patch);
+  if (!parsed.success) {
+    // Równe godziny cichej nocy → własny komunikat, reszta → ogólny
+    const rowne = parsed.error.issues.find((i) => i.code === "custom");
+    return { ok: false, message: rowne?.message ?? BLAD_ZAPISU };
+  }
+  if (Object.keys(parsed.data).length === 0)
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sesja wygasła. Zaloguj się ponownie." };
+
+  const { error } = await supabase
+    .from("notification_settings")
+    .upsert({ user_id: user.id, ...parsed.data }, { onConflict: "user_id" });
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+
+  revalidatePath("/ustawienia/powiadomienia");
+  return { ok: true };
+}
+
+const przypomnienieSchema = z.object({
+  habitId: z.uuid(),
+  remindAt: godzina5.nullable(),
+});
+
+// Ustawienia → Powiadomienia → „Przypomnienia nawyków”: godzina przypomnienia albo null (wyłączone).
+// RLS pilnuje, że nawyk należy do użytkownika.
+export async function setHabitReminder(
+  habitId: string,
+  remindAt: string | null,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const parsed = przypomnienieSchema.safeParse({ habitId, remindAt });
+  if (!parsed.success) return { ok: false, message: BLAD_ZAPISU };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("habits")
+    .update({ remind_at: parsed.data.remindAt })
+    .eq("id", parsed.data.habitId)
+    .select("id");
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!data || data.length === 0)
+    return { ok: false, message: "Nie znaleziono nawyku." };
+
+  // Godzina przypomnienia jest widoczna w module Nawyki (szczegóły i okno nawyku)
+  revalidatePath("/nawyki");
+  revalidatePath("/nawyki/[id]", "page");
+  revalidatePath("/ustawienia/powiadomienia");
+  return { ok: true };
+}
 
 // Ustawienia → Powiadomienia: „Wyślij testowe” — powiadomienie na wszystkie włączone urządzenia użytkownika.
 // Cicha noc nie dotyczy testu (decyzja C12). Bez kluczy VAPID (push nieskonfigurowany) → łagodny komunikat.

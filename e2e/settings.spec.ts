@@ -9,6 +9,7 @@ import {
   uniqueEmail,
 } from "./helpers/konto";
 import { latestLinkFor } from "./helpers/mailpit";
+import { zalozKontoNawykow, zasiejNawyk } from "./helpers/nawyki";
 
 test.describe("ustawienia ogólne", () => {
   // Krótszy limit akcji: przy błędzie widać, która linia utknęła (a nie ogólny timeout testu)
@@ -431,6 +432,96 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
     await expect(karta.getByText(/· pobrano$/)).toBeVisible();
     await expect(
       karta.getByRole("button", { name: "Pobierz ponownie" }),
+    ).toBeVisible();
+  });
+});
+
+test.describe("ustawienia: powiadomienia", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test("bez VAPID: podpis push; odnowienia, cicha noc i przypomnienie nawyku zapisują się", async ({
+    page,
+  }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    const id = await zasiejNawyk(userId, { name: "Czytanie" });
+
+    await page.goto("/ustawienia/powiadomienia");
+    const karta = page.getByTestId("karta-powiadomienia");
+    // CI nie ma kluczy VAPID → push nieskonfigurowany, przełącznik zablokowany
+    await expect(
+      karta.getByText("Push nie jest jeszcze skonfigurowany"),
+    ).toBeVisible();
+    await expect(
+      karta.getByRole("switch", { name: "Push na tym urządzeniu" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    await expect(
+      karta.getByRole("button", { name: "Wyślij testowe" }),
+    ).toHaveAttribute("aria-disabled", "true");
+
+    // Zapis bez „Zapisz”: czekamy na odpowiedź akcji serwera (POST na tę stronę)
+    const zapis = () =>
+      page.waitForResponse(
+        (r) =>
+          r.request().method() === "POST" &&
+          r.url().includes("/ustawienia/powiadomienia"),
+      );
+
+    const odnowienia = karta.getByRole("switch", {
+      name: "Odnowienia subskrypcji",
+    });
+    await expect(odnowienia).toHaveAttribute("aria-checked", "true");
+    await Promise.all([zapis(), odnowienia.click()]);
+    await expect(odnowienia).toHaveAttribute("aria-checked", "false");
+
+    const cisza = karta.getByRole("switch", { name: "Cicha noc" });
+    await Promise.all([zapis(), cisza.click()]);
+    await expect(karta.getByText("Bez powiadomień 23:00–07:00")).toBeVisible();
+    await karta.getByRole("button", { name: "Cicha noc od" }).click();
+    await Promise.all([
+      zapis(),
+      page.getByRole("button", { name: "22", exact: true }).click(),
+    ]);
+    await page.getByRole("button", { name: "Gotowe" }).click();
+    await expect(karta.getByText("Bez powiadomień 22:00–07:00")).toBeVisible();
+
+    // Przypomnienia nawyków wymagają włączonego rodzaju „Przypomnienia o nawykach”
+    await Promise.all([
+      zapis(),
+      karta.getByRole("switch", { name: "Przypomnienia o nawykach" }).click(),
+    ]);
+    const nawyki = page.getByTestId("karta-przypomnienia-nawykow");
+    await expect(nawyki.getByText("wyłączone")).toBeVisible();
+    await Promise.all([
+      zapis(),
+      nawyki.getByRole("switch", { name: "Przypomnienie: Czytanie" }).click(),
+    ]);
+    const godzina = nawyki.getByRole("button", {
+      name: "Czytanie — godzina przypomnienia",
+    });
+    await expect(godzina).toHaveText("20:30");
+    await godzina.click();
+    await Promise.all([
+      zapis(),
+      page.getByRole("button", { name: "21", exact: true }).click(),
+    ]);
+    await page.getByRole("button", { name: "Gotowe" }).click();
+    await expect(godzina).toHaveText("21:30");
+
+    // Po odświeżeniu wszystko z bazy
+    await page.reload();
+    await expect(odnowienia).toHaveAttribute("aria-checked", "false");
+    await expect(cisza).toHaveAttribute("aria-checked", "true");
+    await expect(karta.getByText("Bez powiadomień 22:00–07:00")).toBeVisible();
+    await expect(godzina).toHaveText("21:30");
+
+    // Moduł Nawyki pokazuje godzinę przypomnienia (web: odznaka „przypomnienie 21:30”, telefon: podtytuł)
+    await page.goto(`/nawyki/${id}`);
+    await expect(
+      page
+        .getByText(/przypomnienie 21:30|21:30 przypomnienie/)
+        .filter({ visible: true })
+        .first(),
     ).toBeVisible();
   });
 });

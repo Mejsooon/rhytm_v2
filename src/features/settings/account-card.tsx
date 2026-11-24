@@ -14,7 +14,7 @@ import {
   StatusBadge,
   TextField,
 } from "@/components/controls";
-import { signOut } from "@/features/auth/actions";
+import { SignOutForm } from "@/features/auth/sign-out-form";
 import { requestEmailChange } from "./account-actions";
 
 // Ten sam wzorzec co w makiecie; dokładną walidację robi serwer
@@ -182,12 +182,12 @@ export function AccountCard({
               {sessionLabel} · teraz
             </div>
           </div>
-          <form action={signOut}>
+          <SignOutForm>
             <Button type="submit" variant="secondary">
               <LogOut size={16} aria-hidden="true" />
               Wyloguj
             </Button>
-          </form>
+          </SignOutForm>
         </div>
       </CardContent>
     </Card>

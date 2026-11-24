@@ -17,6 +17,9 @@ const { sendNotification, setVapidDetails, revalidatePath, baza } = vi.hoisted(
       upsert: vi.fn(),
       update: vi.fn(),
       or: vi.fn(),
+      nawyk: { data: [{ id: "x" }] as unknown[] | null, error: null as unknown },
+      nawykUpdate: vi.fn(),
+      nawykEq: vi.fn(),
     },
   }),
 );
@@ -49,6 +52,19 @@ vi.mock("@/lib/supabase/server", () => ({
           },
         };
       }
+      if (tabela === "habits") {
+        return {
+          update: (zmiana: unknown) => {
+            baza.nawykUpdate(zmiana);
+            return {
+              eq: (kolumna: string, wartosc: unknown) => {
+                baza.nawykEq(kolumna, wartosc);
+                return { select: async () => baza.nawyk };
+              },
+            };
+          },
+        };
+      }
       expect(tabela).toBe("push_subscriptions");
       return {
         select: (kolumny: string) => {
@@ -74,7 +90,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { sendTestPush } from "./actions";
+import { saveNotificationSettings, sendTestPush, setHabitReminder } from "./actions";
 
 const KOMPUTER = {
   endpoint: "https://fcm.googleapis.com/fcm/send/komputer",
@@ -235,5 +251,142 @@ describe("sendTestPush", () => {
       message: "Nie udało się wysłać testowego powiadomienia. Spróbuj ponownie.",
     });
     expect(baza.del).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveNotificationSettings", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    baza.user = { id: "u-1" };
+    baza.upsertBlad = null;
+  });
+
+  it("zapisuje pole upsertem po user_id", async () => {
+    expect(await saveNotificationSettings({ renewals_enabled: false })).toEqual({
+      ok: true,
+    });
+    expect(baza.upsert).toHaveBeenCalledWith(
+      { user_id: "u-1", renewals_enabled: false },
+      { onConflict: "user_id" },
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/ustawienia/powiadomienia");
+  });
+
+  it.each([5, null])("before_block_min = %s jest przyjmowane", async (v) => {
+    expect(await saveNotificationSettings({ before_block_min: v as 5 | null })).toEqual({ ok: true });
+    expect(baza.upsert).toHaveBeenCalledWith(
+      { user_id: "u-1", before_block_min: v },
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("before_block_min = 10 → odrzucone bez zapisu", async () => {
+    const wynik = await saveNotificationSettings({
+      before_block_min: 10 as unknown as 5,
+    });
+    expect(wynik).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
+    expect(baza.upsert).not.toHaveBeenCalled();
+  });
+
+  it("cicha noc: godziny HH:MM co 5 minut", async () => {
+    expect(
+      await saveNotificationSettings({ quiet_from: "22:30", quiet_to: "06:05" }),
+    ).toEqual({ ok: true });
+    expect(baza.upsert).toHaveBeenCalledWith(
+      { user_id: "u-1", quiet_from: "22:30", quiet_to: "06:05" },
+      { onConflict: "user_id" },
+    );
+  });
+
+  it.each(["22:31", "24:00", "7:00", "22:30:00", "ab:cd", ""])(
+    "quiet_from „%s” → odrzucone",
+    async (v) => {
+      const wynik = await saveNotificationSettings({ quiet_from: v });
+      expect(wynik.ok).toBe(false);
+      expect(baza.upsert).not.toHaveBeenCalled();
+    },
+  );
+
+  it("równe godziny cichej nocy → komunikat bez zapisu", async () => {
+    expect(
+      await saveNotificationSettings({ quiet_from: "07:00", quiet_to: "07:00" }),
+    ).toEqual({
+      ok: false,
+      message: "Początek i koniec cichej nocy muszą się różnić.",
+    });
+    expect(baza.upsert).not.toHaveBeenCalled();
+  });
+
+  it("nieznane pole albo pusty patch → odrzucone", async () => {
+    expect(
+      (await saveNotificationSettings({ push_enabled: true } as never)).ok,
+    ).toBe(false);
+    expect((await saveNotificationSettings({})).ok).toBe(false);
+    expect(baza.upsert).not.toHaveBeenCalled();
+  });
+
+  it("błąd bazy → komunikat", async () => {
+    baza.upsertBlad = { code: "42501" };
+    expect(await saveNotificationSettings({ habits_enabled: true })).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
+  });
+
+  it("brak sesji → komunikat bez zapisu", async () => {
+    baza.user = null;
+    expect((await saveNotificationSettings({ habits_enabled: true })).ok).toBe(
+      false,
+    );
+    expect(baza.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("setHabitReminder", () => {
+  const ID = "7d3f2a4e-1b2c-4d5e-8f90-123456789abc";
+  beforeEach(() => {
+    vi.clearAllMocks();
+    baza.nawyk = { data: [{ id: ID }], error: null };
+  });
+
+  it("godzina → update remind_at i odświeżenie Nawyków", async () => {
+    expect(await setHabitReminder(ID, "20:30")).toEqual({ ok: true });
+    expect(baza.nawykUpdate).toHaveBeenCalledWith({ remind_at: "20:30" });
+    expect(baza.nawykEq).toHaveBeenCalledWith("id", ID);
+    expect(revalidatePath).toHaveBeenCalledWith("/nawyki");
+    expect(revalidatePath).toHaveBeenCalledWith("/ustawienia/powiadomienia");
+  });
+
+  it("null → wyłącza przypomnienie", async () => {
+    expect(await setHabitReminder(ID, null)).toEqual({ ok: true });
+    expect(baza.nawykUpdate).toHaveBeenCalledWith({ remind_at: null });
+  });
+
+  it.each([
+    ["nie-uuid", "20:30"],
+    [ID, "20:31"],
+    [ID, "25:00"],
+  ])("zły wpis (%s, %s) → odrzucony bez zapisu", async (id, godz) => {
+    expect((await setHabitReminder(id, godz)).ok).toBe(false);
+    expect(baza.nawykUpdate).not.toHaveBeenCalled();
+  });
+
+  it("brak wiersza (cudzy albo usunięty) → komunikat", async () => {
+    baza.nawyk = { data: [], error: null };
+    expect(await setHabitReminder(ID, "20:30")).toEqual({
+      ok: false,
+      message: "Nie znaleziono nawyku.",
+    });
+  });
+
+  it("błąd bazy → komunikat", async () => {
+    baza.nawyk = { data: null, error: { code: "x" } };
+    expect(await setHabitReminder(ID, "20:30")).toEqual({
+      ok: false,
+      message: "Nie udało się zapisać. Spróbuj ponownie.",
+    });
   });
 });

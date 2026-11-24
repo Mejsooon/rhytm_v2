@@ -435,7 +435,7 @@ export function LivePreview({
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="font-medium">
-                  Za 10 min · {pierwszy ? pierwszy.tytul : "blok"}
+                  Za 5 min · {pierwszy ? pierwszy.tytul : "blok"}
                 </span>
                 <span className="text-muted-foreground">
                   Start o{" "}

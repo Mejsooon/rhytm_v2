@@ -262,6 +262,51 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-ogolne", info.project.name);
   });
 
+  test("zrzuty /ustawienia/konto i /ustawienia/powiadomienia (makiety S2SettingsAccount, S2SettingsNotifications)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    const userId = await zalozKontoNawykow(page, projekt);
+    // Trzy nawyki jak w makiecie; dwa z przypomnieniem
+    const woda = await zasiejNawyk(userId, { name: "Woda 2 l" });
+    await zasiejNawyk(userId, {
+      name: "Rozciąganie",
+      type: "weekdays",
+      weekdays: [1, 3, 5, 7],
+    });
+    await zasiejNawyk(userId, {
+      name: "Angielski",
+      type: "times_per_week",
+      timesPerWeek: 4,
+    });
+    const admin = adminClient();
+    await admin.from("habits").update({ remind_at: "12:00" }).eq("id", woda);
+    await admin
+      .from("notification_settings")
+      .upsert(
+        { user_id: userId, habits_enabled: true, quiet_enabled: true },
+        { onConflict: "user_id" },
+      );
+
+    await page.goto("/ustawienia/konto");
+    await expect(
+      page.getByRole("heading", { name: "Sesje", exact: true }),
+    ).toBeVisible();
+    await zrzut(page, "ustawienia-konto", projekt);
+
+    await page.goto("/ustawienia/powiadomienia");
+    await expect(
+      page.getByRole("heading", { name: "Przypomnienia nawyków" }),
+    ).toBeVisible();
+    // Stan push wykryty po stronie przeglądarki (w CI bez VAPID: „nieskonfigurowany”)
+    await expect(
+      page
+        .getByTestId("karta-powiadomienia")
+        .getByRole("switch", { name: "Push na tym urządzeniu" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    await zrzut(page, "ustawienia-powiadomienia", projekt);
+  });
+
   test("zrzut 404 po zalogowaniu (makieta CNotFound)", async ({
     page,
   }, info) => {
