@@ -979,11 +979,10 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-kosz", projekt);
   });
 
-  // Telefon (CMSubs) należy do Etapu 3, więc tylko web
-  test("zrzuty /strony Subscriptions (makiety S2Main, S2AddField)", async ({
+  // Web: tabela i okno „Nowe pole”; telefon: ekran CMSubs i arkusz wiersza (CMRowEdit)
+  test("zrzuty /strony Subscriptions (makiety S2Main, S2AddField; telefon: CMSubs, CMRowEdit)", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "web", "układ webowy");
     const projekt = info.project.name;
     const userId = await zalozKontoStron(page, projekt);
     await utworzSubscriptions(page);
@@ -1060,6 +1059,16 @@ test.describe("ekrany z sesją", () => {
     if (error)
       throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
     await page.reload();
+    if (projekt === "mobile") {
+      // CMSubs: trzy wiersze listy (jeden anulowany), sumy i pasek „Najbliżej”
+      await expect(page.getByText("3 z 3 subskrypcji").filter({ visible: true })).toBeVisible();
+      await zrzut(page, "strony-subscriptions", projekt);
+      // CMRowEdit: arkusz wiersza Netflix (kwota z cyklem, kalendarz odnowienia, kategoria, „Aktywna”)
+      await page.getByRole("button", { name: /Netflix/ }).filter({ visible: true }).click();
+      await expect(page.getByRole("dialog", { name: "Netflix" })).toBeVisible();
+      await zrzut(page, "strony-subscriptions-wiersz", projekt);
+      return;
+    }
     await expect(page.locator("tbody tr")).toHaveCount(3);
     await expect(page.getByTestId("karta")).toHaveCount(3);
     await zrzut(page, "strony-subscriptions", projekt);

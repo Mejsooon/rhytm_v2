@@ -35,6 +35,7 @@ export function MEditor({
   pages,
   pagesStore,
   onRename,
+  ownScreen = false,
   children,
 }: {
   store: EditorStore;
@@ -42,6 +43,8 @@ export function MEditor({
   pages: PageSummary[];
   pagesStore: PagesStore;
   onRename: () => void;
+  // Strona ma na telefonie własny ekran (Subscriptions, CMSubs): bez nagłówka, pola poleceń i paska skrótów edytora
+  ownScreen?: boolean;
   children: React.ReactNode;
 }) {
   const [menuOtwarte, setMenuOtwarte] = React.useState(false);
@@ -85,6 +88,8 @@ export function MEditor({
       wstaw("text", komenda.trim());
     }
   }
+
+  if (ownScreen) return <>{children}</>;
 
   return (
     <>

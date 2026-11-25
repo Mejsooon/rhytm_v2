@@ -1613,6 +1613,19 @@ describe("PageTable", () => {
         "/kalendarz?widok=tydzien&data=2026-11-21",
       );
     });
+
+    it("renderPhone poza modułem (CMSubs): układ telefonu z tego samego magazynu, tabela webu chowa się na telefonie, bez renderPhone tabela zostaje", () => {
+      const renderPhone = vi.fn((api: unknown) => (api ? <span>ekran subskrypcji</span> : null));
+      const { unmount } = render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} renderPhone={renderPhone} />);
+      const api = renderPhone.mock.calls.at(-1)![0] as { rows: { id: string }[]; readOnly: boolean };
+      expect(api.rows).toHaveLength(3);
+      expect(api.readOnly).toBe(false);
+      expect(screen.getByText("ekran subskrypcji").parentElement).toHaveClass("min-[800px]:hidden");
+      expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).not.toBeNull();
+      unmount();
+      render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
+      expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).toBeNull();
+    });
   });
 });
 
