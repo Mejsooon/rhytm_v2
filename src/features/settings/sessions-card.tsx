@@ -27,7 +27,7 @@ export type SessionItem = {
 
 // Wiersz listy (.nrow): 14 px w pionie, linia rgba(0,0,0,.06) między wierszami
 const WIERSZ =
-  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5";
+  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 max-[799px]:min-h-[60px] max-[799px]:flex-nowrap max-[799px]:border-border max-[799px]:px-4 max-[799px]:py-2.5 max-[799px]:[&>:first-child]:min-w-0 max-[799px]:[&>:first-child]:flex-1";
 
 export function SessionsCard({
   sessions,
@@ -153,7 +153,7 @@ export function SessionsCard({
 
   return (
     <Card data-testid="karta-sesje">
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="flex-row items-center justify-between max-[799px]:flex-col max-[799px]:items-stretch">
         <div>
           <CardTitle as="h2">Sesje</CardTitle>
           <CardDescription>{liczba}</CardDescription>
@@ -161,13 +161,13 @@ export function SessionsCard({
         <Button
           size="sm"
           aria-disabled={brakInnych || pracuje}
-          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45]"
+          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45] max-[799px]:h-11 max-[799px]:w-full"
           onClick={() => void wylogujWszystkie()}
         >
           Wyloguj wszystkie inne
         </Button>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 max-[799px]:p-0">
         <div className={WIERSZ}>
           <div className="flex items-center gap-3">
             <span className="inline-flex size-8 flex-none items-center justify-center rounded-full bg-muted shadow-[inset_0_0_0_1px_var(--border)]">
@@ -218,6 +218,7 @@ export function SessionsCard({
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="max-[799px]:h-11"
                   aria-label={`Wyloguj: ${s.label}`}
                   aria-disabled={pracuje}
                   onClick={() => void wyloguj(s)}
@@ -229,17 +230,17 @@ export function SessionsCard({
           );
         })}
         {loadError && (
-          <p className="m-0 pt-3.5 text-[13px] text-destructive-foreground">
+          <p className="m-0 pt-3.5 text-[13px] text-destructive-foreground max-[799px]:px-4">
             Nie udało się wczytać listy sesji.
           </p>
         )}
-        <p className="m-0 pt-3.5 pb-1 text-[13px] text-muted-foreground">
+        <p className="m-0 pt-3.5 pb-1 text-[13px] text-muted-foreground max-[799px]:px-4 max-[799px]:pb-4">
           „Wyloguj wszystkie inne” kończy sesje na wszystkich pozostałych
           urządzeniach i przeglądarkach. Tu zostaniesz zalogowany.
         </p>
       </CardContent>
       {komunikat && (
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 max-[799px]:px-4 max-[799px]:pb-4">
           <div
             role="status"
             className={cn(

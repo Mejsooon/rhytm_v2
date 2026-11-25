@@ -32,7 +32,7 @@ function wykryjStrefe(): string | undefined {
   }
 }
 
-// Krok 1: profil (Onboarding + MOnboarding). Zdjęcie wgrywa się od razu po wyborze pliku.
+// Krok 1: profil (COnboarding + CMOnboarding). Zdjęcie wgrywa się od razu po wyborze pliku.
 export function StepProfile({
   draft,
   onChange,
@@ -114,6 +114,7 @@ export function StepProfile({
       <StepHeader
         title="Uzupełnij profil"
         subtitle="Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach"
+        phoneSubtitle="Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach."
       />
 
       <div className="flex flex-col gap-1.5">
@@ -124,10 +125,10 @@ export function StepProfile({
             <img
               src={avatarUrl}
               alt=""
-              className="size-14 flex-none rounded-full object-cover max-[799px]:size-16"
+              className="size-14 flex-none rounded-full object-cover"
             />
           ) : (
-            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-primary-foreground max-[799px]:size-16 max-[799px]:border max-[799px]:border-input max-[799px]:bg-active max-[799px]:text-[22px] max-[799px]:font-semibold max-[799px]:text-foreground">
+            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-primary-foreground">
               {inicjaly(draft.name)}
             </span>
           )}

@@ -260,12 +260,21 @@ describe("StepGoals", () => {
       screen.getByLabelText("Treningi w tygodniu", { selector: "input" }),
     ).toHaveClass("tabular-nums");
     const sen = screen.getByRole("group", { name: "Cel snu" });
-    expect(sen).toHaveClass("h-8");
+    // Szeroki Stepper tylko od 800 px; na telefonie zwykły m-step
+    expect(sen).toHaveClass("min-[800px]:h-8");
+    expect(sen).not.toHaveClass("h-8");
     expect(sen.parentElement).toHaveClass("min-[800px]:w-1/2");
   });
 
   it("bez font-mono", () => {
     const { container } = render(<Probe initial={{ ...start, kmOn: true }} />);
     expect(container.innerHTML).not.toContain("font-mono");
+  });
+
+  it("telefon (CMOnboarding): notka o zawsze włączonych modułach i haśle głównym sejfu", () => {
+    render(<Probe initial={start} />);
+    const notka = screen.getByText(/Hasło główne sejfu ustawisz przy pierwszym otwarciu Haseł\./);
+    expect(notka).toHaveClass("min-[800px]:hidden");
+    expect(screen.getByText("Zawsze masz:").parentElement).toHaveClass("max-[799px]:hidden");
   });
 });

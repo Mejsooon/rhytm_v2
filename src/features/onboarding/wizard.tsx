@@ -167,7 +167,7 @@ export function OnboardingWizard({
   const mozeDalej = canContinue(step, draft) && !pending;
 
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-white text-sm leading-[1.45] text-foreground tabular-nums min-[800px]:bg-panel">
+    <div className="flex min-h-dvh flex-1 flex-col bg-panel text-sm leading-[1.45] text-foreground tabular-nums">
       {/* Nagłówek web */}
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
         <RhytmLogo size={24} withWordmark className="gap-2" />
@@ -178,51 +178,50 @@ export function OnboardingWizard({
         <Wyloguj className="ml-2" />
       </header>
 
-      {/* Nagłówek telefon */}
-      <header className="box-border flex min-h-[60px] flex-none items-center gap-1 px-2 pt-2 min-[800px]:hidden">
+      {/* Nagłówek telefon (CMOnboarding): m-head bez ramki i tła; „Wstecz” od kroku 2, w kroku 1 logo w polu 44 px;
+          na środku szara plakietka kroku, po prawej „Wyloguj” */}
+      <header className="m-head flex-none border-b-0 bg-transparent pr-3 pl-2 min-[800px]:hidden">
         {step > 1 ? (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            icon
             aria-label="Wstecz"
             onClick={wstecz}
             disabled={pending}
-            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-foreground hover:bg-muted"
           >
-            <ChevronLeft
-              aria-hidden="true"
-              className="size-[22px]"
-              strokeWidth={2}
-            />
-          </button>
+            <ChevronLeft aria-hidden="true" className="size-5" strokeWidth={2} />
+          </Button>
         ) : (
-          <span className="flex items-center px-2">
-            <RhytmLogo size={26} />
+          <span className="flex w-11 items-center justify-center">
+            <RhytmLogo size={24} />
           </span>
         )}
-        <span className="flex-1 text-center font-mono text-[11px] tracking-[0.06em] text-muted-foreground uppercase">
-          Krok {step} z 7
+        <span className="flex-1 text-center">
+          <StatusBadge tone="gray" className="tabular-nums">
+            Krok {step} z 7
+          </StatusBadge>
         </span>
-        {/* Telefon: układ bez zmian, cel dotykowy 44 px (nadpisuje max-[799px]:h-10 z Button sm) */}
+        {/* Cel dotykowy 44 px (nadpisuje max-[799px]:h-10 z Button sm) */}
         <Wyloguj className="max-[799px]:h-11 max-[799px]:px-3" />
       </header>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center min-[800px]:px-6 min-[800px]:pb-10">
-        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:bg-clip-padding min-[800px]:shadow-card">
-          {/* Pasek postępu: 7 segmentów po 4 px (web: pełne zaokrąglenie, wypełnienie jak w AuthShell) */}
+      <div className="flex min-h-0 flex-1 items-center justify-center max-[799px]:items-stretch min-[800px]:px-6 min-[800px]:pb-10">
+        <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden max-[799px]:h-auto min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:bg-clip-padding min-[800px]:shadow-card">
+          {/* Pasek postępu (.steps z CMOnboarding): 7 segmentów po 4 px, pełne zaokrąglenie, wypełnienie jak w AuthShell */}
           <div
             role="progressbar"
             aria-label="Postęp onboardingu"
             aria-valuemin={1}
             aria-valuemax={7}
             aria-valuenow={step}
-            className="grid grid-cols-7 gap-1 px-4 pt-1 pb-1 min-[800px]:px-5 min-[800px]:pt-4 min-[800px]:pb-0"
+            className="grid grid-cols-7 gap-1 px-4 pt-1 pb-2 min-[800px]:px-5 min-[800px]:pt-4 min-[800px]:pb-0"
           >
             {KROKI.map((k) => (
               <span
                 key={k}
                 className={cn(
-                  "h-1 rounded-sm min-[800px]:rounded-full",
-                  k <= step ? "bg-primary" : "bg-input min-[800px]:bg-border",
+                  "h-1 rounded-full",
+                  k <= step ? "bg-primary" : "bg-border",
                 )}
               />
             ))}
@@ -231,7 +230,7 @@ export function OnboardingWizard({
           <div className="grid min-h-0 flex-1 grid-cols-[520px_1fr] max-[1100px]:grid-cols-1">
             <div className="flex min-h-0 flex-col">
               {/* Bez paska przewijania (komentarz do makiety OnboardingGoals); kółko i gładzik dalej przewijają */}
-              <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pt-4 pb-6 [scrollbar-width:none] min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-5 [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-5 pt-4 pb-6 min-[800px]:gap-5 [scrollbar-width:none] min-[800px]:px-10 min-[800px]:pt-8 min-[800px]:pb-5 [&::-webkit-scrollbar]:hidden">
                 <Widok
                   draft={draft}
                   onChange={setDraft}
@@ -245,7 +244,7 @@ export function OnboardingWizard({
 
               <div
                 data-testid="wizard-footer"
-                className="flex flex-none flex-col gap-2 border-t border-border bg-white px-5 pt-3 pb-[30px] max-[799px]:sticky max-[799px]:bottom-0 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:bg-black/[.025] min-[800px]:px-10 min-[800px]:py-3.5"
+                className="flex flex-none flex-col gap-2 border-t border-border bg-white px-5 pt-3 max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:pb-[max(30px,env(safe-area-inset-bottom))] min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:bg-black/[.025] min-[800px]:px-10 min-[800px]:py-3.5"
               >
                 {/* Web: „Wstecz” w stopce; na telefonie jest w nagłówku */}
                 <Button
@@ -267,7 +266,7 @@ export function OnboardingWizard({
                     variant="ghost"
                     onClick={pomin}
                     disabled={pending}
-                    className="text-soft-foreground max-[799px]:order-2 max-[799px]:h-11 max-[799px]:border-0"
+                    className="text-soft-foreground max-[799px]:order-2 max-[799px]:text-muted-foreground"
                   >
                     Pomiń
                   </Button>
@@ -279,10 +278,10 @@ export function OnboardingWizard({
                   className="max-[799px]:order-1 max-[799px]:w-full"
                 >
                   {ostatni ? "Przejdź do Dziś" : "Dalej"}
-                  {/* Strzałka tylko na webie; przycisk telefonu zostaje bez zmian */}
+                  {/* Strzałka na obu szerokościach (CMOnboarding); „Przejdź do Dziś” na telefonie bez niej */}
                   <ChevronRight
                     aria-hidden="true"
-                    className="size-4 max-[799px]:hidden"
+                    className={cn("size-4", ostatni && "max-[799px]:hidden")}
                     strokeWidth={2}
                   />
                 </Button>

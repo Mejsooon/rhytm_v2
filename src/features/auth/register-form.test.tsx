@@ -22,9 +22,6 @@ vi.mock("./actions", () => ({
 import { checkPasswordLeak, signUp } from "./actions";
 import { RegisterForm } from "./register-form";
 
-// Kolor wariantu telefonu (PhoneStrengthBar zostaje na hexach do Etapu 3)
-const KOLOR_OK = "#15803d";
-
 async function wpiszHaslo(
   user: ReturnType<typeof userEvent.setup>,
   haslo: string,
@@ -116,17 +113,17 @@ describe("RegisterForm", () => {
     );
   });
 
-  it("telefon: podpowiedź siły, placeholdery i ukryta lista reguł z właściwymi klasami breakpointów", async () => {
+  it("telefon: te same pasek siły i lista reguł co web, placeholdery bez nakładki nazwy", async () => {
     const user = userEvent.setup();
     render(<RegisterForm />);
-    // Lista reguł tylko na webie, podpis siły tylko na telefonie
-    expect(screen.getByText(/co najmniej 10 znaków/).closest("ul")).toHaveClass(
+    // Lista reguł i pasek siły widoczne na obu szerokościach (CMRegister)
+    const lista = screen.getByText(/co najmniej 10 znaków/).closest("ul");
+    expect(lista).not.toHaveClass("max-[799px]:hidden");
+    expect(screen.getByRole("img", { name: /Siła hasła/ })).not.toHaveClass(
       "max-[799px]:hidden",
     );
-    const hint = screen.getByTestId("pw-hint");
-    expect(hint).toHaveTextContent("10+ znaków, wielka litera, cyfra, znak");
-    expect(hint.parentElement).toHaveClass("min-[800px]:hidden");
-    // Placeholdery: telefon w polu, web w nakładce ukrywanej na telefonie
+    expect(screen.getAllByTestId("strength-segment")).toHaveLength(4);
+    // Placeholdery: hasło — telefon w polu, web w nakładce ukrywanej na telefonie; nazwa — jedna wersja
     expect(screen.getByLabelText("Hasło")).toHaveAttribute(
       "placeholder",
       "Min. 10 znaków",
@@ -134,37 +131,36 @@ describe("RegisterForm", () => {
     expect(screen.getByText("Wpisz, żeby zobaczyć wymagania")).toHaveClass(
       "max-[799px]:hidden",
     );
-    expect(screen.getByLabelText(/Nazwa/)).toHaveAttribute(
+    expect(screen.getByLabelText("Nazwa")).toHaveAttribute(
       "placeholder",
-      "Jak mamy się do ciebie zwracać?",
+      "Jak mamy się do Ciebie zwracać?",
     );
-    expect(screen.getByText("Jak mamy się do Ciebie zwracać?")).toHaveClass(
-      "max-[799px]:hidden",
-    );
-    // Punktacja telefonu: Rytm2026! = długość 10 + wielka litera + cyfra + znak = 4 -> Mocne, wszystkie #15803d
+    // Siła: 10 znaków, litery i cyfry → kolor zielony z tokenu (bez hexów)
     await user.type(screen.getByLabelText("Hasło"), "Rytm2026!!");
-    expect(hint).toHaveTextContent("Mocne hasło");
-    const seg = screen.getAllByTestId("strength-segment-m");
-    expect(seg).toHaveLength(4);
-    for (const s of seg) expect(s).toHaveStyle({ backgroundColor: KOLOR_OK });
-    // Poziom 3 = #ca8a04 ("Dobre")
-    await user.clear(screen.getByLabelText("Hasło"));
-    await user.type(screen.getByLabelText("Hasło"), "rytm2026!!");
-    expect(hint).toHaveTextContent("Dobre hasło");
-    expect(screen.getAllByTestId("strength-segment-m")[2]).toHaveStyle({
-      backgroundColor: "#ca8a04",
-    });
+    for (const seg of screen.getAllByTestId("strength-segment").slice(0, 2)) {
+      expect(seg).not.toHaveClass("bg-border-soft");
+    }
   });
 
-  it("telefon: hasło z wycieku ma widoczny powód pod paskiem siły (tylko < 800 px)", async () => {
+  it("telefon: karta m-auth-card, a „lub” i Google pod formularzem", () => {
+    render(<RegisterForm />);
+    const tytul = screen.getByRole("heading", { name: "Załóż konto" });
+    expect(tytul.parentElement?.parentElement).toHaveClass("max-[799px]:m-auth-card");
+    // Google na telefonie (CMRegister) jest widoczny, po separatorze „lub”
+    expect(
+      screen.getByRole("button", { name: /Kontynuuj z Google/ }).closest("form"),
+    ).toHaveClass("max-[799px]:order-7");
+    expect(screen.getByText("lub")).toHaveClass("min-[800px]:hidden");
+  });
+
+  it("hasło z wycieku: powód widać w liście reguł (web i telefon)", async () => {
     vi.mocked(checkPasswordLeak).mockResolvedValue(true);
     const user = userEvent.setup();
     render(<RegisterForm />);
     await wpiszHaslo(user, "haslo12345");
-    const powod = screen.getByText(
-      "To hasło wyciekło w innym serwisie. Wybierz inne.",
-    );
-    expect(powod).toHaveClass("min-[800px]:hidden");
+    expect(
+      screen.getByText(/nie ma go w bazie wycieków/).parentElement,
+    ).toHaveTextContent("niespełnione");
   });
 
   it("bez wycieku nie ma tekstu o wycieku", async () => {

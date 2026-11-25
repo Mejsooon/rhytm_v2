@@ -99,7 +99,7 @@ export function AvatarRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3.5 border-b border-border pb-4">
+    <div className="flex flex-wrap items-center gap-3.5 border-b border-border pb-4 max-[799px]:flex-nowrap max-[799px]:gap-3">
       {zrodlo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -115,7 +115,7 @@ export function AvatarRow({
           {inicjal}
         </span>
       )}
-      <span className="min-w-0 flex-[1_1_200px]">
+      <span className="min-w-0 flex-[1_1_200px] max-[799px]:flex-1">
         <span className="block font-medium">Zdjęcie profilowe</span>
         {blad ? (
           <span role="alert" className="text-sm text-destructive-foreground">
@@ -131,7 +131,7 @@ export function AvatarRow({
           </span>
         )}
       </span>
-      <span className="flex gap-2">
+      <span className="flex flex-none gap-2">
         {maZdjecie && (
           <Button
             variant="destructive-outline"

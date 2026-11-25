@@ -127,3 +127,15 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | „Więcej” (menu strony) dodane w nagłówku CMSubs poza makietą | bez niego strony nie da się z telefonu przemianować ani usunąć | niski |
 | Plakietki odnowień: szara z przerywaną ramką i „↻”, „Tylko podgląd…” jako dopisek (nie alert) | makiety wygrywają z planem | niski |
 | Licznik „N z M subskrypcji” bez odmiany po „z” | dopełniacz po „z” jest poprawny | brak |
+
+### Pakiet konto
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T9: ustawienia na telefonie jako indeks + podstrony (CMSettingsGeneral/Account/Vault/Notifications), bez Motywu | makiety 24.11 | niski |
+| `/ustawienia` bez przekierowania serwerowego: telefon widzi indeks, web link „Przejdź do ustawień ogólnych”; linki webowe prowadzą wprost do `/ustawienia/ogolne` | serwer nie zna szerokości ekranu | niski |
+| Waga i wzrost zostają w Profilu, Cele jako Stepper (makieta: w Celach / przełączniki) | przeniesienie zmienia zapis — poza pakietem wyglądu | niski |
+| „Link działa 1 godzinę” w resecie (było „30 minut”) wg `otp_expiry = 3600` w `supabase/config.toml` | **sprawdź w panelu Supabase produkcji (Auth → Email OTP expiration), czy też 3600 s** — inaczej tekst jest nieprawdziwy | średni |
+| Pominięte z makiet: plakietki stanu sejfu/push w indeksie, „Zły adres? Wróć do rejestracji”, live „Hasła się różnią” | brak w kodzie | niski |
+| Dopisek wersji „rhytm 0.1.0” z `package.json` (makieta: „3.0 · build 2026.11”) | wersja nie jest podbijana | niski: zdecyduj, czy podbijać wersję albo dopisać build |
+| Stopka „Usuń konto” na telefonie w kolumnie (makieta: wiersz) | przyciski na całą szerokość | niski |

@@ -351,8 +351,9 @@ export function AppSidebar({
       </Link>
 
       <div className="min-h-6 flex-1" />
+      {/* Web prowadzi wprost do „Ogólne” (/ustawienia to na telefonie indeks), ale aktywna jest każda podstrona /ustawienia */}
       <Link
-        href="/ustawienia"
+        href="/ustawienia/ogolne"
         aria-current={aktywna("/ustawienia") ? "page" : undefined}
         className={klasaPozycji("/ustawienia")}
       >

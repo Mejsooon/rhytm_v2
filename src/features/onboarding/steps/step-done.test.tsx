@@ -174,4 +174,13 @@ describe("StepDone", () => {
     const { container } = render(<StepDone draft={draft} now={NOW} />);
     expect(container.innerHTML).not.toContain("font-mono");
   });
+
+  it("telefon: wiersze m-row 60 px z etykietą .lbl i „Zmień” jako przycisk ghost 44 px", () => {
+    render(<StepDone draft={draft} now={NOW} />);
+    const tel = within(screen.getByTestId("done-phone"));
+    const zmien = tel.getByRole("button", { name: "Zmień: Profil" });
+    expect(zmien).toHaveClass("bg-transparent", "max-[799px]:h-11");
+    expect(zmien.parentElement).toHaveClass("m-row", "min-h-[60px]");
+    expect(tel.getByText("Profil")).toHaveClass("text-xs", "font-medium");
+  });
 });

@@ -70,7 +70,7 @@ const IKONY: Record<string, React.ReactNode> = {
 };
 
 // Krok 4: skąd o nas usłyszałeś — jeden wybór, klik wybranego odznacza.
-// Web: karty 2 kol. 44 px z ikonami; telefon: chipy.
+// Web: karty 2 kol. 44 px z ikonami; telefon (CMOnboarding): chipy 36 px.
 export function StepSource({
   draft,
   onChange,

@@ -27,14 +27,14 @@ function WyslijLink() {
       variant="primary"
       size="lg"
       disabled={pending}
-      className="w-full leading-[1.21] max-[799px]:text-[15px]"
+      className="w-full leading-[1.21]"
     >
       Wyślij link
     </Button>
   );
 }
 
-// Kroki 1–2 resetu hasła (CForgot.dc.html / MForgot.dc.html). Krok 3 to osobna strona /nowe-haslo.
+// Kroki 1–2 resetu hasła (CForgot.dc.html / CMForgot.dc.html). Krok 3 to osobna strona /nowe-haslo.
 // Jeden komponent dla web i telefonu; różnice tylko klasami breakpointów.
 export function ResetSteps() {
   const [state, formAction] = useActionState(requestPasswordReset, POCZATKOWY);
@@ -45,14 +45,16 @@ export function ResetSteps() {
       headerNote={`krok ${krok} / 3`}
       progress={{ step: krok, total: 3 }}
       phoneBack="/logowanie"
+      // Stopka tylko na webie i tylko w kroku 1 (w kroku 2 „Wróć do logowania” jest przyciskiem w treści);
+      // na telefonie strzałka „Wstecz” w nagłówku, więc bez pustego kontenera stopki
+      footerWebOnly
       footer={
         krok === 1 ? (
-          // Stopka tylko w kroku 1 (w kroku 2 „Wróć do logowania” jest przyciskiem w treści); na telefonie link ukryty jak dotąd
           <Button
             asChild
             variant="ghost"
             size="sm"
-            className="text-muted-foreground max-[799px]:hidden"
+            className="text-muted-foreground"
           >
             <Link href="/logowanie">
               <ChevronLeft aria-hidden="true" className="size-4" strokeWidth={2} />
@@ -66,23 +68,13 @@ export function ResetSteps() {
         <CheckInbox
           kind="reset"
           email={state.email}
-          description={
-            <>
-              <span className="max-[799px]:hidden">
-                Jeśli konto z tym adresem istnieje, wysłaliśmy link. Ten sam
-                komunikat widzi każdy, więc nikt nie sprawdzi, czy masz konto.
-              </span>
-              <span className="min-[800px]:hidden">
-                Jeśli konto istnieje, link do zmiany hasła jest już w drodze.
-              </span>
-            </>
-          }
+          description="Jeśli konto z tym adresem istnieje, wysłaliśmy link. Ten sam komunikat widzi każdy, więc nikt nie sprawdzi, czy masz konto."
           before={
             <Button
               asChild
               variant="primary"
               size="lg"
-              className="w-full leading-[1.21] max-[799px]:mt-3 max-[799px]:text-[15px]"
+              className="w-full leading-[1.21] max-[799px]:mt-2"
             >
               <Link href="/logowanie">Wróć do logowania</Link>
             </Button>
@@ -92,19 +84,18 @@ export function ResetSteps() {
       ) : (
         <form
           action={formAction}
-          className="flex flex-col gap-4 max-[799px]:gap-[22px]"
+          className="flex flex-col gap-4 max-[799px]:m-auth-card max-[799px]:px-6 max-[799px]:py-6"
         >
-          <div>
-            <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px] max-[799px]:tracking-[-0.02em]">
+          <div className="max-[799px]:mb-1">
+            <h1 className="m-0 text-xl font-semibold tracking-[-0.015em]">
               <span className="max-[799px]:hidden">Nie pamiętasz hasła?</span>
               <span className="min-[800px]:hidden">Reset hasła</span>
             </h1>
-            <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-2 max-[799px]:text-[13px] max-[799px]:leading-normal">
-              <span className="max-[799px]:hidden">
-                Podaj e-mail konta, a wyślemy link do ustawienia nowego hasła.
-              </span>
+            <p className="mt-1 mb-0 text-muted-foreground max-[799px]:leading-normal">
+              Podaj e-mail konta, a wyślemy link do ustawienia nowego hasła.
               <span className="min-[800px]:hidden">
-                Podaj e-mail konta. Wyślemy link, który działa przez 30 minut.
+                {" "}
+                Link działa 1 godzinę.
               </span>
             </p>
           </div>
@@ -124,8 +115,8 @@ export function ResetSteps() {
             </p>
           )}
           {/* Widżet (interaction-only) jest zwykle pusty — razem z przyciskiem, żeby nie dodawał odstępu */}
-          <div className="flex flex-col">
-            <TurnstileWidget resetKey={state} />
+          <div className="flex flex-col [&_[role=status]]:mb-4">
+            <TurnstileWidget resetKey={state} phoneStatus />
             <WyslijLink />
           </div>
         </form>

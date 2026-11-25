@@ -25,7 +25,7 @@ import {
 } from "./actions";
 import { CheckInbox } from "./check-inbox";
 import { PasswordRulesList, type LeakStatus } from "./password-rules-list";
-import { PhoneStrengthBar, StrengthBar } from "./strength-bar";
+import { StrengthBar } from "./strength-bar";
 
 const POCZATKOWY: AuthFormState = { status: "idle" };
 
@@ -43,14 +43,14 @@ function UtworzKonto({ gotowe }: { gotowe: boolean }) {
       onClick={(e) => {
         if (!gotowe) e.preventDefault();
       }}
-      className="w-full leading-[1.21] max-[799px]:text-[15px]"
+      className="w-full leading-[1.21]"
     >
       Utwórz konto
     </Button>
   );
 }
 
-// Jeden formularz dla web i telefonu (Register.dc.html / MRegister.dc.html). Różnice: tylko klasy breakpointów.
+// Jeden formularz dla web i telefonu (CRegister.dc.html / CMRegister.dc.html). Różnice: tylko klasy breakpointów.
 export function RegisterForm() {
   const [state, formAction] = useActionState(signUp, POCZATKOWY);
   // Pola trzymamy w stanie, bo React czyści pola formularza po wysłaniu akcji
@@ -93,134 +93,131 @@ export function RegisterForm() {
   const silaHasla = passwordStrength(password, leak === "ok");
 
   return (
-    // Kontener z kolejnością bloków; Google to osobny <form> (Enter w polach wysyła rejestrację hasłem).
-    // Na telefonie (MRegister.dc.html) nie ma przycisku Google ani separatora.
-    <div className="flex flex-1 flex-col gap-4 max-[799px]:gap-5">
-      <div className="order-1 min-[800px]:mb-1">
-        <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px]">
-          Załóż konto
-        </h1>
-        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px]">
-          <span className="max-[799px]:hidden">
-            Wyślemy link, żeby potwierdzić Twój e-mail.
-          </span>
-          <span className="min-[800px]:hidden">
-            Kalendarz, nawyki, sport i strony w jednym miejscu.
-          </span>
-        </p>
+    // Kontener: grupa karty (na telefonie `m-auth-card`, CMRegister) i stopka „Masz już konto?” poza kartą.
+    // W grupie kolejność bloków: `order-*` (web) i `max-[799px]:order-*` (telefon: formularz, „lub”, Google).
+    // Google to osobny <form> (Enter w polach wysyła rejestrację hasłem).
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="flex flex-col gap-4 max-[799px]:m-auth-card max-[799px]:px-6 max-[799px]:py-6">
+        <div className="order-1 min-[800px]:mb-1 max-[799px]:mb-1">
+          <h1 className="m-0 text-xl font-semibold tracking-[-0.015em]">
+            Załóż konto
+          </h1>
+          <p className="mt-1 mb-0 text-muted-foreground">
+            <span className="max-[799px]:hidden">
+              Wyślemy link, żeby potwierdzić Twój e-mail.
+            </span>
+            <span className="min-[800px]:hidden">
+              Kalendarz, nawyki, sport i strony w jednym miejscu.
+            </span>
+          </p>
+        </div>
+
+        <form
+          action={signInWithGoogle}
+          className="order-2 max-[799px]:order-7"
+        >
+          <GoogleButton webLabel="Kontynuuj z Google" />
+        </form>
+        <OrSeparator
+          label="lub e-mailem"
+          className="order-3 max-[799px]:hidden"
+        />
+        <OrSeparator
+          label="lub"
+          className="order-3 min-[800px]:hidden max-[799px]:order-6"
+        />
+
+        <form
+          action={formAction}
+          className="order-4 flex flex-col gap-4 max-[799px]:order-2"
+        >
+          <TextField
+            label="Nazwa"
+            name="displayName"
+            type="text"
+            autoComplete="given-name"
+            placeholder="Jak mamy się do Ciebie zwracać?"
+            required
+            className="leading-[1.21]"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            error={state.fieldErrors?.displayName}
+          />
+          <TextField
+            label="E-mail"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="ty@example.com"
+            required
+            className="leading-[1.21]"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={state.fieldErrors?.email}
+          />
+
+          <div className="flex flex-col">
+            <PasswordInput
+              name="password"
+              label="Hasło"
+              autoComplete="new-password"
+              placeholder="Min. 10 znaków"
+              webPlaceholder="Wpisz, żeby zobaczyć wymagania"
+              value={password}
+              onChange={(v) => {
+                setPassword(v);
+                setLeak("unknown");
+              }}
+            />
+            {/* Pasek siły i lista zasad: te same na webie i telefonie (CMRegister) */}
+            <StrengthBar score={silaHasla} className="mt-2" />
+            <PasswordRulesList password={password} leak={leak} className="mt-2" />
+          </div>
+
+          {/* Własny checkbox nie jest natywnym polem — jego stan przekazujemy ukrytym inputem */}
+          {tos && <input type="hidden" name="tos" value="on" />}
+          <div className="max-[799px]:text-soft-foreground">
+            <Checkbox
+              checked={tos}
+              onChange={setTos}
+              label={
+                <>
+                  Akceptuję{" "}
+                  <Link href="/regulamin" className="underline">
+                    regulamin
+                  </Link>{" "}
+                  i{" "}
+                  <Link href="/prywatnosc" className="underline">
+                    politykę prywatności
+                  </Link>
+                  .
+                </>
+              }
+            />
+          </div>
+
+          <TurnstileWidget resetKey={state} phoneStatus />
+
+          <div className="flex flex-col gap-4">
+            {(state.status === "error" && state.message) ||
+            state.fieldErrors?.tos ? (
+              <p
+                role="alert"
+                className="m-0 text-[13px] text-destructive-foreground"
+              >
+                {state.message ?? state.fieldErrors?.tos}
+              </p>
+            ) : null}
+            <UtworzKonto gotowe={gotowe} />
+          </div>
+        </form>
       </div>
 
-      <form action={signInWithGoogle} className="order-2 max-[799px]:hidden">
-        <GoogleButton webLabel="Kontynuuj z Google" />
-      </form>
-      <OrSeparator
-        label="lub e-mailem"
-        className="order-3 max-[799px]:hidden"
-      />
-
-      <form
-        action={formAction}
-        className="order-4 flex flex-col gap-4 max-[799px]:gap-5"
-      >
-        <TextField
-          label={
-            <>
-              <span className="max-[799px]:hidden">Nazwa</span>
-              <span className="min-[800px]:hidden">Imię</span>
-            </>
-          }
-          name="displayName"
-          type="text"
-          autoComplete="given-name"
-          placeholder="Jak mamy się do ciebie zwracać?"
-          webPlaceholder="Jak mamy się do Ciebie zwracać?"
-          required
-          className="leading-[1.21]"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          error={state.fieldErrors?.displayName}
-        />
-        <TextField
-          label="E-mail"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="ty@example.com"
-          required
-          className="leading-[1.21]"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          error={state.fieldErrors?.email}
-        />
-
-        <div className="flex flex-col">
-          <PasswordInput
-            name="password"
-            label="Hasło"
-            autoComplete="new-password"
-            placeholder="Min. 10 znaków"
-            webPlaceholder="Wpisz, żeby zobaczyć wymagania"
-            value={password}
-            onChange={(v) => {
-              setPassword(v);
-              setLeak("unknown");
-            }}
-          />
-          <StrengthBar score={silaHasla} className="mt-2 max-[799px]:mt-2.5" />
-          <PhoneStrengthBar password={password} className="mt-2.5" />
-          {/* Na telefonie nie ma listy reguł — powód blokady wysyłki musi być widoczny tutaj */}
-          {leak === "leaked" && (
-            <p className="m-0 mt-1.5 text-[11px] text-destructive-foreground min-[800px]:hidden">
-              To hasło wyciekło w innym serwisie. Wybierz inne.
-            </p>
-          )}
-          <PasswordRulesList
-            password={password}
-            leak={leak}
-            className="mt-2 max-[799px]:hidden"
-          />
-        </div>
-
-        {/* Własny checkbox nie jest natywnym polem — jego stan przekazujemy ukrytym inputem */}
-        {tos && <input type="hidden" name="tos" value="on" />}
-        <div className="max-[799px]:text-sm max-[799px]:text-soft-foreground">
-          <Checkbox
-            checked={tos}
-            onChange={setTos}
-            label={
-              <>
-                Akceptuję{" "}
-                <Link href="/regulamin" className="underline">
-                  regulamin
-                </Link>{" "}
-                i{" "}
-                <Link href="/prywatnosc" className="underline">
-                  politykę prywatności
-                </Link>
-                .
-              </>
-            }
-          />
-        </div>
-
-        <TurnstileWidget resetKey={state} />
-
-        <div className="flex flex-col gap-4 max-[799px]:gap-3.5">
-          {(state.status === "error" && state.message) ||
-          state.fieldErrors?.tos ? (
-            <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
-              {state.message ?? state.fieldErrors?.tos}
-            </p>
-          ) : null}
-          <UtworzKonto gotowe={gotowe} />
-        </div>
-      </form>
-
-      <p className="order-5 m-0 text-center text-sm text-muted-foreground">
+      <p className="m-0 text-center text-sm text-muted-foreground">
         Masz już konto?{" "}
         <Link
           href="/logowanie"
-          className="font-medium text-foreground underline max-[799px]:font-semibold max-[799px]:no-underline"
+          className="font-medium text-foreground underline max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center max-[799px]:no-underline"
         >
           Zaloguj się
         </Link>

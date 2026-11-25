@@ -35,7 +35,7 @@ export type NotificationSettings = {
 
 // Wiersz .nrow: 14 px w pionie, linia rgba(0,0,0,.06) między wierszami, bez linii pod ostatnim
 const WIERSZ =
-  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 leading-[1.21] last:border-b-0";
+  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 leading-[1.21] last:border-b-0 max-[799px]:min-h-[60px] max-[799px]:flex-nowrap max-[799px]:border-border max-[799px]:px-4 max-[799px]:py-2.5 max-[799px]:[&>:first-child]:min-w-0 max-[799px]:[&>:first-child]:flex-1";
 // Wiersz wyszarzony jak w makiecie (opacity .55); przełącznik w nim bez własnego przygaszenia
 const WYSZARZONY = "opacity-55 [&_[role=switch]]:opacity-100";
 
@@ -268,7 +268,7 @@ export function NotificationsCard({
 
   return (
     <Card data-testid="karta-powiadomienia">
-      <CardContent className="py-1.5">
+      <CardContent className="py-1.5 max-[799px]:p-0">
         <div className={WIERSZ}>
           <div>
             <div className="font-medium">Push na tym urządzeniu</div>
@@ -309,7 +309,7 @@ export function NotificationsCard({
           </div>
         ))}
 
-        <div className={WIERSZ}>
+        <div className={cn(WIERSZ, "max-[799px]:flex-wrap")}>
           <div>
             <div className="flex items-center gap-2 font-medium">
               <Moon size={15} aria-hidden="true" />
@@ -326,9 +326,9 @@ export function NotificationsCard({
               </div>
             )}
           </div>
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2 max-[799px]:contents">
             {wartosci.quiet && (
-              <>
+              <span className="flex items-center gap-2 max-[799px]:order-last max-[799px]:basis-full max-[799px]:justify-between max-[799px]:pb-1 max-[799px]:[&>*:not(span)]:flex-1">
                 <TimePicker
                   value={wartosci.quietFrom}
                   ariaLabel="Cicha noc od"
@@ -340,7 +340,7 @@ export function NotificationsCard({
                   ariaLabel="Cicha noc do"
                   onChange={(v) => zmienGodzine("quietTo", v)}
                 />
-              </>
+              </span>
             )}
             <Switch
               checked={wartosci.quiet}

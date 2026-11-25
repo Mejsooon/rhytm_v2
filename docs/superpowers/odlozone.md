@@ -205,3 +205,9 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Kopiowanie z listy po odmontowaniu polega tylko na kontroli w tabeli; czyszczenie schowka nadpisuje go bezwarunkowo (jak przed gałęzią).
 - React ustawia atrybut `value` w DOM na tekst jawny w polu Sekretu arkusza (tylko gdy odszyfrowane, w arkuszu).
 - Reset stanu arkusza zależy od `open` i statusu, nie od tożsamości wiersza.
+
+## Telefon / konto (25.11, z przeglądu)
+
+- Indeks ustawień wykonuje zapytania (profil, awatar) także na webie, gdzie jest ukryty CSS.
+- Brak testu jednostkowego nagłówka `/ustawienia/[zakladka]` i zrzutu e2e zakładki Sejf; karty Sejf i Powiadomienia na telefonie oglądane tylko na zrzutach CI.
+- Spec telefonu, konflikt 6: „eksportu nie ma w aplikacji” — nieaktualne (`ExportCard` istnieje).

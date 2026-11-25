@@ -24,14 +24,15 @@ function Zapisz() {
       variant="primary"
       size="lg"
       disabled={pending}
-      className="w-full leading-[1.21] max-[799px]:text-[15px]"
+      className="w-full leading-[1.21]"
     >
       Zapisz i zaloguj się
     </Button>
   );
 }
 
-// Krok 3 resetu hasła (CForgot.dc.html): nowe hasło z regułami i notką o sejfie. Układ telefonu — te same pola, klasy breakpointów.
+// Krok 3 resetu hasła (CForgot.dc.html / CMNewPassword.dc.html): nowe hasło z regułami i notką o sejfie.
+// Układ telefonu — te same pola, klasy breakpointów; na telefonie formularz jest kartą (`m-auth-card`).
 export function NewPasswordForm() {
   const [state, formAction] = useActionState(updatePassword, POCZATKOWY);
   const [password, setPassword] = useState("");
@@ -58,12 +59,19 @@ export function NewPasswordForm() {
     state.message ?? state.fieldErrors?.password ?? state.fieldErrors?.confirm;
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 max-[799px]:gap-5">
-      <div>
-        <h1 className="m-0 text-xl font-semibold tracking-[-0.015em] max-[799px]:text-[28px] max-[799px]:tracking-[-0.02em]">
+    <form
+      action={formAction}
+      className="flex flex-col gap-4 max-[799px]:m-auth-card max-[799px]:px-6 max-[799px]:py-6"
+    >
+      <div className="max-[799px]:mb-1">
+        {/* Telefon: etykieta kroku nad tytułem (web ma ją w nagłówku strony) */}
+        <span className="mb-1 block text-xs font-medium text-muted-foreground tabular-nums min-[800px]:hidden">
+          krok 3 / 3
+        </span>
+        <h1 className="m-0 text-xl font-semibold tracking-[-0.015em]">
           Ustaw nowe hasło
         </h1>
-        <p className="mt-1 mb-0 text-muted-foreground max-[799px]:mt-1.5 max-[799px]:text-[13px]">
+        <p className="mt-1 mb-0 text-muted-foreground">
           Po zmianie wylogujemy Cię z innych urządzeń.
         </p>
       </div>

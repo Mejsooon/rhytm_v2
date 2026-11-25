@@ -23,8 +23,7 @@ test.describe("ustawienia ogólne", () => {
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    await page.goto("/ustawienia");
-    await expect(page).toHaveURL(/\/ustawienia\/ogolne$/);
+    await page.goto("/ustawienia/ogolne");
     // Regresja: pasek zakładek nie może poszerzać strony (na telefonie przeglądarka oddaliłaby widok)
     await expect(
       page.getByRole("heading", { name: "Profil", exact: true }),
@@ -433,6 +432,39 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
     await expect(
       karta.getByRole("button", { name: "Pobierz ponownie" }),
     ).toBeVisible();
+  });
+});
+
+test.describe("ustawienia: układ telefonu", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test("telefon: karty konta mają cele dotyku ≥ 44 px, a „Wyloguj wszystkie inne” zajmuje całą kartę", async ({
+    page,
+  }, info) => {
+    test.skip(!info.project.name.includes("mobile"), "tylko układ telefonu");
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia/konto");
+    const sesje = page.getByTestId("karta-sesje");
+    // Role pomijają ukryty układ, więc zapytanie dotyczy tylko widocznego przycisku
+    const wszystkie = sesje.getByRole("button", {
+      name: "Wyloguj wszystkie inne",
+    });
+    await expect(wszystkie).toBeVisible();
+    const przycisk = await wszystkie.boundingBox();
+    const karta = await sesje.boundingBox();
+    expect(przycisk?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect((przycisk?.width ?? 0) / (karta?.width ?? 1)).toBeGreaterThan(0.8);
+
+    const zmien = page
+      .getByTestId("karta-haslo")
+      .getByRole("button", { name: "Zmień hasło" });
+    expect((await zmien.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 });
 

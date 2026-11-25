@@ -63,7 +63,7 @@ describe("AuthShell", () => {
     expect(pasek.children[2]).not.toHaveClass("bg-foreground");
   });
 
-  it("telefon bez zmian", () => {
+  it("telefon: powłoka płaska, kartę rysuje formularz (m-auth-card)", () => {
     render(
       <AuthShell phoneBack="/logowanie" footer="stopka">
         treść
@@ -74,15 +74,43 @@ describe("AuthShell", () => {
       "max-[799px]:border-0",
       "max-[799px]:shadow-none",
       "max-[799px]:rounded-none",
-      "max-[799px]:px-6",
-      "max-[799px]:pb-6",
-      "max-[799px]:pt-2",
+      "max-[799px]:p-0",
     );
-    expect(screen.getByRole("link", { name: "Wstecz" })).toHaveAttribute("href", "/logowanie");
+    const wstecz = screen.getByRole("link", { name: "Wstecz" });
+    expect(wstecz).toHaveAttribute("href", "/logowanie");
+    // Cel dotyku 44 px, nagłówek m-head bez ramki
+    expect(wstecz).toHaveClass("size-11");
+    expect(wstecz.parentElement).toHaveClass("m-head", "border-b-0");
   });
 
-  it("telefon bez powrotu: margines górny 56 px", () => {
-    render(<AuthShell>treść</AuthShell>);
-    expect(screen.getByText("treść")).toHaveClass("max-[799px]:pt-14");
+  it("telefon bez powrotu: logo 40 px nad kartą i górny margines 24 px", () => {
+    const { container } = render(<AuthShell>treść</AuthShell>);
+    expect(container.querySelector("main")).toHaveClass(
+      "max-[799px]:px-5",
+      "max-[799px]:pt-6",
+    );
+    // Logo web (24 px) jest w nagłówku, logo telefonu (40 px) nad kartą
+    const rozmiary = screen
+      .getAllByRole("img", { name: "rhytm" })
+      .map((l) => l.getAttribute("width"));
+    expect(rozmiary).toContain("40");
+  });
+
+  it("telefon z powrotem: bez logo i bez górnego marginesu", () => {
+    const { container } = render(<AuthShell phoneBack="/logowanie">treść</AuthShell>);
+    expect(container.querySelector("main")).toHaveClass("max-[799px]:pt-0");
+    const rozmiary = screen
+      .queryAllByRole("img", { name: "rhytm" })
+      .map((l) => l.getAttribute("width"));
+    expect(rozmiary).not.toContain("40");
+  });
+
+  it("footerWebOnly ukrywa stopkę na telefonie", () => {
+    render(
+      <AuthShell footer="stopka" footerWebOnly>
+        treść
+      </AuthShell>,
+    );
+    expect(screen.getByText("stopka")).toHaveClass("max-[799px]:hidden");
   });
 });

@@ -45,9 +45,7 @@ describe("ResetSteps", () => {
       screen.getByRole("heading", { name: "Sprawdź skrzynkę" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Jeśli konto istnieje, link do zmiany hasła jest już w drodze.",
-      ),
+      screen.getByText(/Jeśli konto z tym adresem istnieje, wysłaliśmy link\./),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Wróć do logowania" }),
@@ -135,5 +133,17 @@ describe("ResetSteps", () => {
     expect(h1).toHaveClass("text-xl", "font-semibold");
     expect(h1).not.toHaveClass("text-[22px]");
     expect(screen.getByRole("button", { name: "Wyślij link" })).toHaveClass("h-9");
+  });
+
+  it("telefon (CMForgot): w kroku 1 opis z ważnością 1 godziny, stopka tylko na webie, formularz jako karta", () => {
+    const { container } = render(<ResetSteps />);
+    expect(screen.getByText("Link działa 1 godzinę.")).toHaveClass(
+      "min-[800px]:hidden",
+    );
+    expect(container.querySelector("form")).toHaveClass("max-[799px]:m-auth-card");
+    // Stopka z „Wróć do logowania” nie zostawia pustego kontenera na telefonie
+    expect(
+      screen.getByRole("link", { name: "Wróć do logowania" }).parentElement,
+    ).toHaveClass("max-[799px]:hidden");
   });
 });

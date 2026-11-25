@@ -126,4 +126,11 @@ describe("ExportCard", () => {
     );
     expect(localStorage.getItem("rhytm-ostatni-eksport")).toBeNull();
   });
+
+  it("telefon: stopka w kolumnie, „Pobierz .json” na całą szerokość", () => {
+    render(<ExportCard />);
+    const przycisk = screen.getByRole("button", { name: /Pobierz/ });
+    expect(przycisk.className).toContain("max-[799px]:w-full");
+    expect(przycisk.parentElement?.className).toContain("max-[799px]:flex-col");
+  });
 });

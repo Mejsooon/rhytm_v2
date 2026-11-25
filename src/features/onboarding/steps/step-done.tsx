@@ -8,7 +8,7 @@ import { Button, Card, Kbd } from "@/components/controls";
 import { timezoneOptions } from "@/lib/time/timezones";
 import { buildSummary, type OnboardingDraft } from "../model";
 
-// Krok 7: podsumowanie (OnboardingDone + MOnboarding). Przycisk „Przejdź do Dziś” jest w stopce kreatora.
+// Krok 7: podsumowanie (OnboardingDone + CMOnboarding). Przycisk „Przejdź do Dziś” jest w stopce kreatora.
 export function StepDone({
   draft,
   now,
@@ -29,14 +29,14 @@ export function StepDone({
     <>
       <div className="flex flex-col gap-4 max-[799px]:items-center max-[799px]:gap-3 max-[799px]:pt-2 max-[799px]:text-center">
         <RhytmLogo size={40} className="max-[799px]:hidden" />
-        <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
-          <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
+        <span className="flex size-14 items-center justify-center rounded-2xl border border-success-border bg-success-soft text-success min-[800px]:hidden">
+          <Check aria-hidden="true" className="size-7" strokeWidth={2} />
         </span>
         <div>
-          <h1 className="m-0 text-[28px] leading-9 font-semibold tracking-[-0.01em] max-[799px]:text-[26px] max-[799px]:leading-8">
+          <h1 className="m-0 text-[28px] leading-9 font-semibold tracking-[-0.01em] max-[799px]:text-2xl max-[799px]:leading-8 max-[799px]:tracking-[-0.02em]">
             Gotowe, {imie}
           </h1>
-          <p className="m-0 mt-1.5 text-muted-foreground max-[799px]:text-[13px]">
+          <p className="m-0 mt-1.5 text-muted-foreground">
             <span className="max-[799px]:hidden">
               Twój rhytm jest ułożony. Oto co przygotowaliśmy
             </span>
@@ -90,30 +90,27 @@ export function StepDone({
         data-testid="done-phone"
         className="flex flex-col gap-4 min-[800px]:hidden"
       >
-        <div className="rounded-xl border border-border bg-white">
+        {/* Podsumowanie: wiersze `m-row` 60 px z etykietą `.lbl`, wartością i „Zmień” (ghost) */}
+        <Card className="gap-0 overflow-hidden">
           {telefonWiersze.map((w) => (
-            <div
-              key={w.key}
-              className="flex min-h-[60px] items-center gap-3 border-b border-border px-3.5 last:border-b-0"
-            >
+            <div key={w.key} className="m-row min-h-[60px]">
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px] text-muted-foreground">
+                <span className="block text-xs font-medium text-muted-foreground">
                   {w.key}
                 </span>
                 <span className="mt-0.5 block text-sm">{w.value}</span>
               </span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 aria-label={`Zmień: ${w.key}`}
                 onClick={() => router.push(`/onboarding/${w.step}`)}
-                className="min-h-11 cursor-pointer border-0 bg-transparent pl-2 text-sm text-soft-foreground underline"
               >
                 Zmień
-              </button>
+              </Button>
             </div>
           ))}
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-panel px-3.5 py-3">
+        </Card>
+        <Card className="flex-row items-center gap-3 bg-panel px-3.5 py-3">
           <Plus
             aria-hidden="true"
             className="size-[18px] flex-none text-muted-foreground"
@@ -122,7 +119,7 @@ export function StepDone({
           <span className="text-[13px] text-muted-foreground">
             Pierwszy blok dodasz przyciskiem „+” na ekranie Dziś.
           </span>
-        </div>
+        </Card>
       </div>
     </>
   );

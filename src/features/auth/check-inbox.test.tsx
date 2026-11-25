@@ -156,4 +156,21 @@ describe("CheckInbox", () => {
     expect(container.querySelector(".font-mono")).toBeNull();
     expect(screen.getByText("0:59")).toHaveClass("tabular-nums");
   });
+
+  it("telefon (CMCheckEmail): karta .empty, licznik jako plakietka, „ptaszek” tylko w resecie", () => {
+    const { container, rerender } = render(
+      <CheckInbox email="a@b.pl" onResend={sukces} />,
+    );
+    expect(container.firstElementChild).toHaveClass(
+      "max-[799px]:m-auth-card",
+      "max-[799px]:px-5",
+      "max-[799px]:py-7",
+    );
+    expect(container.querySelector("svg.lucide-check")).toBeNull();
+    expect(screen.getByText("1:00")).toHaveClass("max-[799px]:bg-muted");
+    rerender(<CheckInbox kind="reset" email="a@b.pl" onResend={sukces} />);
+    expect(container.querySelector("svg.lucide-check")).toHaveClass(
+      "min-[800px]:hidden",
+    );
+  });
 });

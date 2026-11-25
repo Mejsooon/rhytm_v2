@@ -11,7 +11,7 @@ export function OrSeparator({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 text-xs text-muted-foreground max-[799px]:text-[13px] max-[799px]:text-faint-foreground",
+        "flex items-center gap-3 text-xs text-muted-foreground",
         className,
       )}
     >

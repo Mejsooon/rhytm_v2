@@ -167,7 +167,7 @@ export function PasswordCard({
           <CardDescription>Hasło do konta nie otwiera sejfu.</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3.5">
+      <CardContent className="flex flex-col gap-3.5 max-[799px]:gap-3 max-[799px]:px-4">
         <div className={ETYKIETA}>
           <label htmlFor={`${id}-obecne`}>Obecne hasło</label>
           <input
@@ -247,7 +247,7 @@ export function PasswordCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:px-4">
         <span
           role="status"
           className={cn(
@@ -264,7 +264,7 @@ export function PasswordCard({
         <Button
           variant="primary"
           aria-disabled={!poprawne || zapisuje}
-          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45]"
+          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45] max-[799px]:w-full"
           onClick={() => void zapisz()}
         >
           Zmień hasło

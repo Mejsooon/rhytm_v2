@@ -75,7 +75,7 @@ const EKRANY_PUBLICZNE = [
     ekran: "link-wygasl",
     sciezka: "/link-wygasl",
     tekst: "Link wygasł",
-    makieta: "CEmailConfirmed (stan „Link wygasł”)",
+    makieta: "CEmailConfirmed / CMEmailLink (stan „Link wygasł”)",
   },
 ];
 
@@ -99,7 +99,7 @@ test("zrzut 404 dla gościa (makieta CNotFound)", async ({ page }, info) => {
   await zrzut(page, "404", info.project.name);
 });
 
-test("zrzut /potwierdzono (makieta CEmailConfirmed)", async ({
+test("zrzut /potwierdzono (makiety CEmailConfirmed, CMEmailLink)", async ({
   page,
 }, info) => {
   await page.goto("/potwierdzono");
@@ -247,7 +247,7 @@ test.describe("ekrany z sesją", () => {
     }
   });
 
-  test("zrzut /ustawienia/ogolne (makieta Settings)", async ({
+  test("zrzuty /ustawienia i /ustawienia/ogolne (makiety Settings, CMSettings, CMSettingsGeneral)", async ({
     page,
   }, info) => {
     const email = uniqueEmail(info.project.name);
@@ -255,6 +255,9 @@ test.describe("ekrany z sesją", () => {
     await createConfirmedUser(email, haslo);
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
+    // Indeks (CMSettings) to ekran telefonu; web pokazuje tu tylko link do Ogólnych
+    await page.goto("/ustawienia");
+    await zrzut(page, "ustawienia-indeks", info.project.name);
     await page.goto("/ustawienia/ogolne");
     await expect(
       page.getByRole("heading", { name: "Profil", exact: true }),
@@ -262,7 +265,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-ogolne", info.project.name);
   });
 
-  test("zrzuty /ustawienia/konto i /ustawienia/powiadomienia (makiety S2SettingsAccount, S2SettingsNotifications)", async ({
+  test("zrzuty /ustawienia/konto i /ustawienia/powiadomienia (makiety S2SettingsAccount, S2SettingsNotifications, CMSettingsAccount, CMSettingsNotifications)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;

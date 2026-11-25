@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 import type { AuthFormState } from "./actions";
 
 // Stan „Sprawdź skrzynkę”: ikona, tekst, „Wyślij ponownie” z odliczaniem.
-// kind="signup" — Register.dc.html (koperta, tekst o potwierdzeniu);
-// kind="reset" — CForgot.dc.html / MForgot.dc.html (zielony „ptaszek” tylko na telefonie, własny tekst i slot `before`).
+// kind="signup" — CRegister.dc.html / CMCheckEmail.dc.html (koperta, tekst o potwierdzeniu);
+// kind="reset" — CForgot.dc.html / CMForgot.dc.html (na telefonie zielony „ptaszek” w kafelku, własny tekst i slot `before`).
+// Na telefonie treść jest kartą `.empty` (m-auth-card), stąd klasy `max-[799px]:`.
 export function CheckInbox({
   onResend,
   cooldownSeconds = 60,
@@ -75,76 +76,51 @@ export function CheckInbox({
   const reset = kind === "reset";
 
   return (
-    <div
-      className={
-        reset
-          ? "flex flex-col items-center gap-4 text-center max-[799px]:mt-0 max-[799px]:gap-[22px] max-[799px]:pt-10"
-          : "flex flex-col items-center gap-3.5 text-center max-[799px]:mt-6"
-      }
-    >
-      {reset && (
-        <span className="flex size-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success min-[800px]:hidden">
-          <Check aria-hidden="true" className="size-[30px]" strokeWidth={2} />
-        </span>
-      )}
-      {/* Kafelek ikony 40 px (.empty-ic z makiety); w resecie na telefonie zastępuje go większy „ptaszek” */}
+    <div className={cn("flex flex-col items-center gap-3.5 text-center max-[799px]:m-auth-card max-[799px]:gap-2 max-[799px]:px-5 max-[799px]:py-7", reset && "min-[800px]:gap-4")}>
+      {/* Kafelek ikony 40 px (.empty-ic z makiet); w resecie na telefonie zielony „ptaszek” zamiast koperty */}
       <span
         className={cn(
           "flex size-10 items-center justify-center rounded-[10px] border border-border bg-white text-muted-foreground shadow-xs",
-          reset && "max-[799px]:hidden",
+          reset && "max-[799px]:text-success",
         )}
       >
-        <Mail aria-hidden="true" className="size-5" strokeWidth={2} />
+        <Mail
+          aria-hidden="true"
+          className={cn("size-5", reset && "max-[799px]:hidden")}
+          strokeWidth={2}
+        />
+        {reset && (
+          <Check
+            aria-hidden="true"
+            className="size-5 min-[800px]:hidden"
+            strokeWidth={2}
+          />
+        )}
       </span>
-      <div
-        className={
-          reset
-            ? "flex flex-col items-center gap-4 max-[799px]:gap-3.5"
-            : "contents"
-        }
-      >
-        <h1
-          className={
-            reset
-              ? "m-0 text-xl font-semibold max-[799px]:text-2xl max-[799px]:tracking-[-0.02em]"
-              : "m-0 text-xl font-semibold"
-          }
-        >
-          Sprawdź skrzynkę
-        </h1>
-        <p
-          className={
-            reset
-              ? "m-0 leading-normal text-muted-foreground max-[799px]:max-w-[280px] max-[799px]:text-[13px] max-[799px]:leading-normal"
-              : "m-0 leading-normal text-muted-foreground"
-          }
-        >
-          {description ??
-            "Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie."}
-        </p>
-      </div>
+      <h1 className="m-0 text-xl font-semibold max-[799px]:mt-2 max-[799px]:text-lg max-[799px]:tracking-[-0.011em]">
+        Sprawdź skrzynkę
+      </h1>
+      <p className="m-0 leading-normal text-muted-foreground max-[799px]:max-w-[290px]">
+        {description ??
+          "Jeśli adres jest poprawny, wysłaliśmy na niego link potwierdzający. Link wygasa po 1 godzinie."}
+      </p>
       {before}
       <form
         onSubmit={ponownie}
-        className={
-          reset
-            ? "flex flex-col items-center max-[799px]:w-full"
-            : "flex flex-col items-center"
-        }
+        className="flex flex-col items-center max-[799px]:w-full"
       >
         <TurnstileWidget resetKey={odnowienia} />
         <Button
           type="submit"
           disabled={pozostalo > 0 || wysylanie}
-          className={
-            reset
-              ? "max-[799px]:w-full max-[799px]:border-0"
-              : undefined
-          }
+          className="max-[799px]:w-full max-[799px]:border-transparent max-[799px]:bg-transparent max-[799px]:shadow-none"
         >
           Wyślij ponownie
           {pozostalo > 0 && (
-            <span className="tabular-nums text-muted-foreground">{licznik}</span>
+            // Na telefonie licznik jako plakietka `bdg sec num` (CMCheckEmail)
+            <span className="tabular-nums text-muted-foreground max-[799px]:inline-flex max-[799px]:h-[18px] max-[799px]:items-center max-[799px]:rounded-sm max-[799px]:bg-muted max-[799px]:px-[5px] max-[799px]:text-xs max-[799px]:text-foreground">
+              {licznik}
+            </span>
           )}
         </Button>
         {blad && (

@@ -240,7 +240,7 @@ describe("MToday", () => {
     expect(naglowek.parentElement?.className).toContain("bg-[#fafafa]");
   });
 
-  it("nagłówek: data „Wtorek · 17 listopada”, tytuł „Dziś”, szukaj → /szukaj, awatar z inicjałem → /ustawienia/ogolne", () => {
+  it("nagłówek: data „Wtorek · 17 listopada”, tytuł „Dziś”, szukaj → /szukaj, awatar z inicjałem → /ustawienia (indeks)", () => {
     render(<TodayView data={dane()} name="Mejson" />);
     const t = telefon();
     expect(t.getByText("Wtorek · 17 listopada")).toBeInTheDocument();
@@ -249,7 +249,7 @@ describe("MToday", () => {
     expect(szukaj).toHaveAttribute("href", "/szukaj");
     expect(szukaj.className).toContain("size-11");
     const konto = t.getByRole("link", { name: "Konto i ustawienia" });
-    expect(konto).toHaveAttribute("href", "/ustawienia/ogolne");
+    expect(konto).toHaveAttribute("href", "/ustawienia");
     expect(konto.className).toContain("size-11");
     expect(konto).toHaveTextContent("M");
   });

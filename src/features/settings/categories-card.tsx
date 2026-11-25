@@ -160,7 +160,7 @@ export function CategoriesCard({
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-[799px]:px-4">
         <ul className="m-0 flex list-none flex-col p-0">
           {lista.map((k, i) => (
             <li

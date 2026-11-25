@@ -122,7 +122,7 @@ export function ExportCard() {
           </CardDescription>
         </div>
       </CardHeader>
-      <CardFooter className="mt-5">
+      <CardFooter className="mt-5 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:px-4">
         <span className="inline-flex items-center gap-2">
           {stan.typ === "pracuje" && (
             <span
@@ -146,7 +146,7 @@ export function ExportCard() {
         </span>
         <Button
           aria-disabled={stan.typ === "pracuje"}
-          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45]"
+          className="aria-disabled:pointer-events-none aria-disabled:opacity-[.45] max-[799px]:w-full"
           onClick={() => void pobierz()}
         >
           <Download size={16} aria-hidden="true" />

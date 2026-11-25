@@ -84,4 +84,10 @@ describe("NewPasswordForm", () => {
       "text-sm",
     );
   });
+
+  it("telefon (CMNewPassword): karta m-auth-card i etykieta „krok 3 / 3” tylko poniżej 800 px", () => {
+    const { container } = render(<NewPasswordForm />);
+    expect(container.querySelector("form")).toHaveClass("max-[799px]:m-auth-card");
+    expect(screen.getByText("krok 3 / 3")).toHaveClass("min-[800px]:hidden");
+  });
 });

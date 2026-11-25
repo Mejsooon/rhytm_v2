@@ -189,7 +189,7 @@ export function MToday({
           <Search size={20} aria-hidden="true" />
         </Link>
         <Link
-          href="/ustawienia/ogolne"
+          href="/ustawienia"
           aria-label="Konto i ustawienia"
           className="inline-flex size-11 flex-none items-center justify-center rounded-md text-foreground hover:bg-muted"
         >

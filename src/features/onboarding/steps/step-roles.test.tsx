@@ -100,4 +100,23 @@ describe("StepRoles", () => {
     const { container } = render(<Probe initial={start} />);
     expect(container.innerHTML).not.toContain("font-mono");
   });
+
+  it("telefon (CMOnboarding): karta z wierszami m-row role=checkbox, zaznaczony wiersz z tłem, chipy kategorii z kolorem z danych", async () => {
+    render(<Probe initial={{ ...start, roles: ["student"] }} />);
+    const karta = screen.getByTestId("roles-phone");
+    const wiersze = within(karta).getAllByRole("checkbox");
+    expect(wiersze).toHaveLength(5);
+    expect(wiersze[0]).toHaveClass("m-row", "bg-black/[.025]");
+    expect(wiersze[1]).not.toHaveClass("bg-black/[.025]");
+    await userEvent.click(within(karta).getByRole("checkbox", { name: /Pracuję/ }));
+    expect(
+      within(karta).getByRole("checkbox", { name: /Pracuję/ }),
+    ).toHaveAttribute("aria-checked", "true");
+    // „W kalendarzu” to etykieta .lbl, nie wersaliki mono
+    const etykieta = within(screen.getByTestId("roles-calendar-phone")).getByText(
+      "W kalendarzu",
+    );
+    expect(etykieta).toHaveClass("text-xs", "font-medium");
+    expect(etykieta).not.toHaveClass("uppercase");
+  });
 });
