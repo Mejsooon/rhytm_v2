@@ -455,7 +455,7 @@ test.describe("sejf", () => {
     await ustawianie.getByRole("button", { name: "Utwórz sejf" }).click();
 
     // Odblokowany: lista z plakietką odliczania (baner webu jest ukryty na telefonie)
-    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+    await expect(page.getByText(/^odblokowany · auto-blokada za /).filter({ visible: true })).toBeVisible(
       { timeout: 20_000 },
     );
     await expect(page.getByRole("heading", { name: "Hasła", level: 1 })).toBeVisible();
@@ -482,7 +482,9 @@ test.describe("sejf", () => {
     await page.waitForLoadState("networkidle");
     await wiersz.click();
     await expect(wiersz).toHaveAttribute("aria-expanded", "true");
-    await expect(page.getByText("••••••••••")).toHaveCount(2);
+    // Układ webu jest w DOM (display:none na telefonie): getByText/getByLabel widzą też jego elementy,
+    // więc w tym teście zawężamy do widocznych. Tutaj: tylko widoczne maski (tabela webu też je ma)
+    await expect(page.getByText("••••••••••").filter({ visible: true })).toHaveCount(2);
     await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
     await expect(page.getByText(notatka, { exact: true })).toHaveCount(0);
 
@@ -547,16 +549,16 @@ test.describe("sejf", () => {
     // Odblokowanie: puste pole, złe hasło, dobre hasło
     await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
     await expect(
-      page.getByText("Wpisz hasło główne.", { exact: true }),
+      page.getByText("Wpisz hasło główne.", { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await page.getByLabel("Hasło główne", { exact: true }).fill(zlyGlowne);
+    await page.getByLabel("Hasło główne", { exact: true }).filter({ visible: true }).fill(zlyGlowne);
     await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
-    await expect(page.getByText("Nieprawidłowe hasło główne.")).toBeVisible({
+    await expect(page.getByText("Nieprawidłowe hasło główne.").filter({ visible: true })).toBeVisible({
       timeout: 20_000,
     });
-    await page.getByLabel("Hasło główne", { exact: true }).fill(glowne);
+    await page.getByLabel("Hasło główne", { exact: true }).filter({ visible: true }).fill(glowne);
     await page.getByRole("button", { name: "Odblokuj", exact: true }).click();
-    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+    await expect(page.getByText(/^odblokowany · auto-blokada za /).filter({ visible: true })).toBeVisible(
       { timeout: 20_000 },
     );
     await expect(wiersz).toBeVisible();
@@ -594,7 +596,7 @@ test.describe("sejf", () => {
       })
       .click();
     await nowe.getByRole("button", { name: "Utwórz sejf" }).click();
-    await expect(page.getByText(/^odblokowany · auto-blokada za /)).toBeVisible(
+    await expect(page.getByText(/^odblokowany · auto-blokada za /).filter({ visible: true })).toBeVisible(
       { timeout: 20_000 },
     );
     await expect(page.getByRole("button", { name: new RegExp(serwis) })).toBeVisible();

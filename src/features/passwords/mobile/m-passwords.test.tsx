@@ -140,6 +140,52 @@ describe("MPasswords", () => {
     expect(screen.queryByText("k7#Vq2!mLp9z")).not.toBeInTheDocument();
   });
 
+  it("oczko nie ma aria-pressed (nazwa „Pokaż/Ukryj” niesie stan)", async () => {
+    const user = userEvent.setup();
+    stan();
+    widok();
+    await user.click(wiersz(/Google/));
+    expect(screen.getByRole("button", { name: "Pokaż hasło" })).not.toHaveAttribute("aria-pressed");
+    await user.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    await screen.findByText("k7#Vq2!mLp9z");
+    expect(screen.getByRole("button", { name: "Ukryj hasło" })).not.toHaveAttribute("aria-pressed");
+  });
+
+  it("„Pokaż” odrzuca wynik, gdy szyfrogram zmienił się w trakcie odszyfrowywania", async () => {
+    const user = userEvent.setup();
+    const decrypt = stan();
+    let koniec: (t: string) => void = () => {};
+    decrypt.mockImplementationOnce(() => new Promise<string>((r) => (koniec = r)));
+    const { props, rerender } = widok();
+    await user.click(wiersz(/Google/));
+    await user.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    // Zapis z arkusza podmienia szyfrogram, zanim wolne odszyfrowanie starego się skończy
+    const nowy = [{ ...WIERSZE[0], values: { ...WIERSZE[0].values, "f-haslo": { ...SZYFR_GITHUB } } }, WIERSZE[1]];
+    rerender(<MPasswords {...props} rows={nowy} />);
+    await act(async () => koniec("k7#Vq2!mLp9z"));
+    expect(screen.queryByText("k7#Vq2!mLp9z")).not.toBeInTheDocument();
+    expect(screen.getAllByText("••••••••••").length).toBeGreaterThan(0);
+  });
+
+  it("zmiana układu przez próg 800 px zwija rozwinięty wiersz i zrzuca tekst jawny", async () => {
+    const user = userEvent.setup();
+    stan();
+    let zmiana: () => void = () => {};
+    vi.stubGlobal("matchMedia", (zapytanie: string) => ({
+      matches: false,
+      media: zapytanie,
+      addEventListener: (_: string, f: () => void) => (zmiana = f),
+      removeEventListener: vi.fn(),
+    }));
+    widok();
+    await user.click(wiersz(/Google/));
+    await user.click(screen.getByRole("button", { name: "Pokaż hasło" }));
+    expect(await screen.findByText("k7#Vq2!mLp9z")).toBeInTheDocument();
+    act(() => zmiana());
+    expect(screen.queryByText("k7#Vq2!mLp9z")).not.toBeInTheDocument();
+    expect(wiersz(/Google/)).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("notatka ma własne „Pokaż notatkę”", async () => {
     const user = userEvent.setup();
     const decrypt = stan();
@@ -322,7 +368,7 @@ describe("MPasswords", () => {
     const pola = POLA.map((f) => (f.id === "f-kat" ? { ...f, config: { options: [] } } : f));
     const { props } = widok({ fields: pola });
     expect(screen.queryByRole("button", { name: "Wszystkie" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Opcje kategorii" }));
+    await user.click(screen.getByRole("button", { name: "Edytuj kategorie" }));
     await user.type(screen.getByRole("textbox", { name: "Nowa kategoria" }), "Bank");
     await user.click(screen.getByRole("button", { name: "Dodaj" }));
     expect(props.onCreateOption).toHaveBeenCalledWith(expect.objectContaining({ id: "f-kat" }), "Bank");

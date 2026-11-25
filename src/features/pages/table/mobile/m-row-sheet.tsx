@@ -30,9 +30,6 @@ import {
 } from "../../fields";
 import { SEJF_ZABLOKOWANY } from "../../messages";
 
-// Po tylu ms od skopiowania sekretu czyścimy schowek
-const SCHOWEK_MS = 30_000;
-
 // Arkusz wiersza na telefonie (CMRowEdit.dc.html; FormDialog poniżej 800 px, wysokość 90%): nagłówek
 // „Anuluj” · tytuł wiersza · „Zapisz”, pola według typu (tekst, liczba i link jako pole 44 px, Wybór jako chipy,
 // Data jako kalendarz miesiąca z podpisem, Ocena jako gwiazdki 44 px, Checkboxy zebrane w jednej karcie
@@ -52,6 +49,7 @@ export function MRowSheet({
   today,
   onChange,
   onSave,
+  planClipboardClear,
   onCancel,
   onDelete,
 }: {
@@ -66,6 +64,8 @@ export function MRowSheet({
   // Zaszyfrowane sekrety zmienione w arkuszu (id pola → SecretValue albo null). Obietnica kończy się razem
   // z zapisem; do tego czasu „Zapisz” jest zajęty
   onSave: (secrets: Record<string, SecretValue | null>) => Promise<unknown> | void;
+  // Plan czyszczenia schowka po skopiowaniu sekretu; false, gdy sejf zablokował się w trakcie (schowek czyszczony od razu)
+  planClipboardClear: () => boolean;
   onCancel: () => void;
   // Brak dla nowego wiersza
   onDelete?: () => void;
@@ -106,16 +106,6 @@ export function MRowSheet({
   React.useEffect(() => {
     epokaRef.current += 1;
   }, [open, odblokowany]);
-
-  // Zaplanowane czyszczenie schowka (bez skopiowanego tekstu)
-  const schowekRef = React.useRef<{ timer: ReturnType<typeof setTimeout>; wyczysc: () => void } | null>(null);
-  React.useEffect(() => {
-    if (!odblokowany) schowekRef.current?.wyczysc();
-  }, [odblokowany]);
-  React.useEffect(() => {
-    const plan = schowekRef;
-    return () => plan.current?.wyczysc();
-  }, []);
 
   // Gdzie przeglądarka umie maskować pole tekstowe, używamy type="text" (menedżery haseł go nie przechwytują)
   const maskaCss =
@@ -276,26 +266,9 @@ export function MRowSheet({
                           toast.error("Nie udało się skopiować.");
                           return;
                         }
+                        // Czyszczenie schowka planuje PageTable (ten sam plan co lista); false = sejf zablokowany w trakcie
+                        if (!planClipboardClear()) return;
                         toast(`Skopiowano: ${f.name}`, { description: "Schowek wyczyści się za 30 s." });
-                        // Czyszczenie po 30 s; plan nie trzyma skopiowanego tekstu. Bez fokusu czekamy na powrót do karty.
-                        if (schowekRef.current) clearTimeout(schowekRef.current.timer);
-                        const plan = {
-                          timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
-                          wyczysc: () => {
-                            clearTimeout(plan.timer);
-                            if (schowekRef.current === plan) schowekRef.current = null;
-                            const pusty = () => {
-                              try {
-                                void navigator.clipboard.writeText("").catch(() => {});
-                              } catch {
-                                // Schowek niedostępny: nic więcej nie zrobimy
-                              }
-                            };
-                            if (document.hasFocus()) pusty();
-                            else window.addEventListener("focus", pusty, { once: true });
-                          },
-                        };
-                        schowekRef.current = plan;
                       }}
                       className="size-11"
                     >

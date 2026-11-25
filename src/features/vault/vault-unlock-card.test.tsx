@@ -69,6 +69,8 @@ describe("VaultUnlockCard", () => {
       ).toBeInTheDocument();
       const pole = screen.getByLabelText("Hasło główne");
       expect(pole).toHaveAttribute("type", "password");
+      // Fokus po „Zablokuj sejf” ląduje w polu hasła (przycisk znika razem z listą)
+      expect(pole).toHaveFocus();
       expect(pole).toHaveAttribute("autocomplete", "current-password");
       expect(pole.closest("form")!.querySelector('input[autocomplete="username"]')).toHaveAttribute("hidden");
       expect(screen.queryByText(/biometri/i)).not.toBeInTheDocument();

@@ -71,6 +71,8 @@ export function VaultUnlockCard({ ekran = false }: { ekran?: boolean }) {
             id={`${id}-haslo`}
             label="Hasło główne"
             type="password"
+            // Po „Zablokuj sejf” przycisk znika razem z listą: fokus ląduje w polu hasła na ekranie blokady
+            autoFocus
             autoComplete="current-password"
             placeholder="••••••••••"
             value={haslo}

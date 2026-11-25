@@ -9,7 +9,7 @@ import { OptionBadge } from "@/features/pages/table/option-badge";
 // Przycisk „Kategorie” z dymkiem „Opcje kategorii” (S2Passwords.dc.html): lista opcji pola Kategoria z „×”,
 // pole „Nowa kategoria” i „Dodaj”. Sam nic nie zapisuje: dodawanie i usuwanie idzie przez funkcje magazynu
 // tabeli (PageTable je podaje), więc lista jest ta sama co w okienku komórki. Zamknięty sejf: przycisk wyłączony.
-// `phone` (CMPasswords): wyzwalacz to „Edytuj” (btng, nazwa „Opcje kategorii”) obok chipów kategorii.
+// `phone` (CMPasswords): wyzwalacz to „Edytuj” (btng, nazwa dostępna „Edytuj kategorie” zawiera widoczny napis) obok chipów kategorii.
 export function CategoriesPopover({
   options,
   readOnly,
@@ -39,7 +39,7 @@ export function CategoriesPopover({
           <Button
             variant="ghost"
             disabled={readOnly}
-            aria-label="Opcje kategorii"
+            aria-label="Edytuj kategorie"
             aria-haspopup="dialog"
             aria-expanded={open && !readOnly}
             className="px-1.5"

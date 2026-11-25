@@ -11,11 +11,10 @@ import { OptionBadge } from "@/features/pages/table/option-badge";
 import type { PageRow } from "@/features/pages/table-model";
 import { isSecretValue } from "@/features/vault/crypto";
 import { useVault } from "@/features/vault/vault-provider";
+import { SCHOWEK_MS } from "@/features/vault/clipboard-timeout";
 import { CategoriesPopover } from "../categories-popover";
 
 const MASKA = "••••••••••";
-// Tyle ms po skopiowaniu tabela czyści schowek (page-table.tsx), więc tyle też trwa dopisek „Skopiowano”
-const SCHOWEK_MS = 30_000;
 
 // Rozwinięty wiersz hasła (CMPasswords): hasło i notatka jako zaszyfrowane pola z oczkiem, URL i „Edytuj”.
 // Tekst jawny żyje tylko w stanie tego komponentu. Komponent jest montowany dopiero po rozwinięciu wiersza,
@@ -54,6 +53,12 @@ function SzczegolyHasla({
       zamontowany.current = false;
     };
   }, []);
+
+  // Aktualne wartości wiersza widziane po await (do porównania szyfrogramu przed ustawieniem tekstu)
+  const surowaRef = React.useRef(wiersz.values);
+  React.useEffect(() => {
+    surowaRef.current = wiersz.values;
+  }, [wiersz.values]);
 
   // Blokada sejfu albo nowy szyfrogram (zapis z arkusza) zrzucają odsłonięty tekst
   const wartoscHasla = hasloPole ? wiersz.values[hasloPole.id] : undefined;
@@ -116,7 +121,6 @@ function SzczegolyHasla({
                 variant="ghost"
                 icon
                 aria-label={odslonieto ? ukryj : pokaz}
-                aria-pressed={odslonieto}
                 disabled={pusty || !odblokowany}
                 onClick={async () => {
                   if (odslonieto) {
@@ -131,6 +135,9 @@ function SzczegolyHasla({
                   // Odszyfrowanie lokalne dopiero teraz; tekst trafia tylko do stanu tego komponentu
                   const t = await decrypt(surowa);
                   if (statusRef.current !== "odblokowany" || !zamontowany.current) return;
+                  // Szyfrogram zmienił się w trakcie (zapis z arkusza): wynik dotyczy starej wartości, odrzucamy go
+                  const aktualna = surowaRef.current[pole.id];
+                  if (!isSecretValue(aktualna) || aktualna.ct !== surowa.ct || aktualna.iv !== surowa.iv) return;
                   setJawne((m) => ({ ...m, [pole.id]: t ?? false }));
                 }}
                 className="text-muted-foreground"
@@ -243,6 +250,16 @@ export function MPasswords({
   const sekundy = Math.max(0, Math.ceil(vault.remainingMs / 1000));
   const odliczanie = `${Math.floor(sekundy / 60)}:${String(sekundy % 60).padStart(2, "0")}`;
 
+  // Zmiana układu (próg 800 px) zwija rozwinięty wiersz, więc odsłonięty tekst nie zostaje w ukrytym układzie
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const zapytanie = window.matchMedia("(min-width: 800px)");
+    if (typeof zapytanie?.addEventListener !== "function") return;
+    const zwin = () => setOtwarty(null);
+    zapytanie.addEventListener("change", zwin);
+    return () => zapytanie.removeEventListener("change", zwin);
+  }, []);
+
   // Rozwinięty wiersz, którego już nie ma na liście (filtr, usunięcie), się zwija
   if (otwarty !== null && !rows.some((r) => r.id === otwarty)) setOtwarty(null);
 
@@ -302,7 +319,7 @@ export function MPasswords({
         </label>
 
         {kategoriaPole && (
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex min-h-11 items-center gap-2 overflow-x-auto">
             {opcje.length > 0 &&
               [{ id: null as string | null, label: "Wszystkie" }, ...opcje].map((o) => (
                 <Chip key={o.id ?? "wszystkie"} selected={wybrana === o.id} onClick={() => onKategoria(o.id)}>

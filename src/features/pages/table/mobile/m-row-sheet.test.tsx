@@ -34,6 +34,7 @@ function arkusz(values: Record<string, unknown> = { "f-serwis": "GitHub", "f-has
   const onChange = vi.fn();
   const onSave = vi.fn();
   const onCancel = vi.fn();
+  const planClipboardClear = vi.fn(() => true);
   const el = (open: boolean) => (
     <MRowSheet
       open={open}
@@ -43,11 +44,12 @@ function arkusz(values: Record<string, unknown> = { "f-serwis": "GitHub", "f-has
       today="2026-11-15"
       onChange={onChange}
       onSave={onSave}
+      planClipboardClear={planClipboardClear}
       onCancel={onCancel}
     />
   );
   const wynik = render(el(true));
-  return { ...wynik, onChange, onSave, onCancel, zamknij: () => wynik.rerender(el(false)), otworz: () => wynik.rerender(el(true)) };
+  return { ...wynik, onChange, onSave, onCancel, planClipboardClear, zamknij: () => wynik.rerender(el(false)), otworz: () => wynik.rerender(el(true)) };
 }
 
 describe("MRowSheet: Sekret", () => {
@@ -168,11 +170,10 @@ describe("MRowSheet: Sekret", () => {
     expect(screen.getByRole("textbox", { name: "Hasło" })).toHaveValue("");
   });
 
-  it("kopiowanie zaszyfrowanego sekretu: odszyfrowanie na potrzeby schowka, tekst nie zostaje w polu; czyszczenie po 30 s", async () => {
+  it("kopiowanie zaszyfrowanego sekretu: odszyfrowanie na potrzeby schowka, tekst nie zostaje w polu; czyszczenie planuje tabela", async () => {
     const writeText = vi.fn(async () => {});
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
-    vi.spyOn(document, "hasFocus").mockReturnValue(true);
-    arkusz();
+    const { planClipboardClear } = arkusz();
     const pole = screen.getByRole("textbox", { name: "Hasło" });
     vi.useFakeTimers();
     await act(async () => {
@@ -182,8 +183,23 @@ describe("MRowSheet: Sekret", () => {
     expect(writeText).toHaveBeenCalledWith("jawne-haslo-A");
     expect(pole).toHaveValue("");
     expect(toast).toHaveBeenCalledWith("Skopiowano: Hasło", { description: "Schowek wyczyści się za 30 s." });
+    // Jeden mechanizm czyszczenia: arkusz oddaje plan tabeli (PageTable.zaplanujSchowek), sam niczego nie czyści
+    expect(planClipboardClear).toHaveBeenCalledTimes(1);
     act(() => vi.advanceTimersByTime(30_000));
-    expect(writeText).toHaveBeenLastCalledWith("");
+    expect(writeText).toHaveBeenCalledTimes(1);
+  });
+
+  it("kopiowanie: gdy plan czyszczenia zwraca false (sejf zablokowany w trakcie zapisu do schowka), toastu „Skopiowano” nie ma", async () => {
+    const writeText = vi.fn(async () => {});
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    const { planClipboardClear } = arkusz();
+    planClipboardClear.mockReturnValue(false);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Kopiuj: Hasło" }));
+    });
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(planClipboardClear).toHaveBeenCalledTimes(1);
+    expect(toast).not.toHaveBeenCalled();
   });
 
   it("kopiowanie wpisanego tekstu nie woła decrypt", async () => {
@@ -205,13 +221,13 @@ describe("MRowSheet: Sekret", () => {
     let koniec: (t: string) => void = () => {};
     (vault.state.decrypt as ReturnType<typeof vi.fn>).mockImplementationOnce(() => new Promise<string>((r) => (koniec = r)));
     const { rerender } = render(
-      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} planClipboardClear={() => true} onCancel={vi.fn()} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Kopiuj: Hasło" }));
     const odblokowaneDecrypt = vault.state.decrypt;
     vault.state = { ...vault.state, status: "zablokowany", decrypt: odblokowaneDecrypt };
     rerender(
-      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} planClipboardClear={() => true} onCancel={vi.fn()} />,
     );
     await act(async () => koniec("jawne-haslo-A"));
     expect(writeText).not.toHaveBeenCalled();
@@ -233,7 +249,7 @@ describe("MRowSheet: Sekret", () => {
     const onSave = vi.fn(() => new Promise<void>((r) => (koniecZapisu = r)));
     const onCancel = vi.fn();
     render(
-      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={onSave} onCancel={onCancel} />,
+      <MRowSheet open title="GitHub" fields={POLA} values={{ "f-serwis": "GitHub", "f-haslo": A }} today="2026-11-15" onChange={vi.fn()} onSave={onSave} planClipboardClear={() => true} onCancel={onCancel} />,
     );
     const zapisz = screen.getByRole("button", { name: "Zapisz" });
     expect(zapisz).not.toHaveAttribute("aria-busy", "true");
@@ -275,6 +291,7 @@ describe("MRowSheet: Subscriptions", () => {
         today="2026-11-15"
         onChange={onChange}
         onSave={vi.fn()}
+        planClipboardClear={() => true}
         onCancel={vi.fn()}
       />,
     );
@@ -360,6 +377,7 @@ describe("MRowSheet: układ CMRowEdit", () => {
         today="2026-11-15"
         onChange={onChange}
         onSave={vi.fn()}
+        planClipboardClear={() => true}
         onCancel={onCancel}
         onDelete={onDelete}
       />,
@@ -405,7 +423,7 @@ describe("MRowSheet: układ CMRowEdit", () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
     const { unmount } = render(
-      <MRowSheet open title="A" fields={POLA_UKLADU} values={{}} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <MRowSheet open title="A" fields={POLA_UKLADU} values={{}} today="2026-11-15" onChange={vi.fn()} onSave={vi.fn()} planClipboardClear={() => true} onCancel={vi.fn()} />,
     );
     expect(screen.queryByRole("button", { name: "Usuń wiersz" })).toBeNull();
     unmount();
@@ -421,7 +439,7 @@ describe("MRowSheet: układ CMRowEdit", () => {
     const pola: PageField[] = [{ id: "d", name: "Termin", type: "date", config: {}, position: 0, isTitle: false }];
     const onChange = vi.fn();
     render(
-      <MRowSheet open title="A" fields={pola} values={{ d: "2026-11-20" }} today="2026-11-15" onChange={onChange} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <MRowSheet open title="A" fields={pola} values={{ d: "2026-11-20" }} today="2026-11-15" onChange={onChange} onSave={vi.fn()} planClipboardClear={() => true} onCancel={vi.fn()} />,
     );
     const grupa = screen.getByRole("group", { name: "Termin" });
     expect(within(grupa).getByText("20.11.2026 · za 5 dni")).toBeInTheDocument();

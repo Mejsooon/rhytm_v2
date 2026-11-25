@@ -15,6 +15,7 @@ import {
   StatusBadge,
   type IsoDate,
 } from "@/components/controls";
+import { SCHOWEK_MS } from "@/features/vault/clipboard-timeout";
 import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
 
@@ -59,9 +60,6 @@ const UCHWYT_KOLUMNY =
 // Ramka z poziomym przewijaniem i cienkim suwakiem (.tbl-wrap)
 const RAMKA_PRZEWIJANA =
   "overflow-x-auto overflow-y-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
-
-// Po tylu ms od skopiowania hasła czyścimy schowek
-const SCHOWEK_MS = 30_000;
 
 // Co moduł Hasła dostaje od tabeli na telefonie (prop `renderPhone`): te same wiersze i pola co tabela webu,
 // czyli jeden stan (bez drugiego wczytywania), oraz akcje magazynu i arkusza wiersza
@@ -159,6 +157,15 @@ export function PageTable({
     setPoprzedniStatus(vault.status);
     setOdsloniete([]);
   }
+  // Zmiana układu (próg 800 px) chowa odsłonięte sekrety, żeby tekst nie zostawał w ukrytym układzie
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const zapytanie = window.matchMedia("(min-width: 800px)");
+    if (typeof zapytanie?.addEventListener !== "function") return;
+    const schowaj = () => setOdsloniete([]);
+    zapytanie.addEventListener("change", schowaj);
+    return () => zapytanie.removeEventListener("change", schowaj);
+  }, []);
   // Status widziany po await (po blokadzie nic nie trafia do schowka)
   const statusRef = React.useRef(vault.status);
   React.useEffect(() => {
@@ -1017,6 +1024,7 @@ export function PageTable({
         // Arkusz szyfruje zmienione sekrety sam i oddaje tylko szyfrogramy
         // (obietnica kończy się z zapisem: „Zapisz” w arkuszu jest zajęty do tego czasu)
         onSave={(secrets) => store.saveRow(secrets)}
+        planClipboardClear={() => zaplanujSchowek()}
         onCancel={store.cancelEdit}
         onDelete={edytowany ? () => void store.removeRow(edytowany) : undefined}
       />
