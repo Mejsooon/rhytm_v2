@@ -599,12 +599,6 @@ test.describe("sejf", () => {
     await expect(page.getByText(/^odblokowany · auto-blokada za /).filter({ visible: true })).toBeVisible(
       { timeout: 20_000 },
     );
-    // DIAG (tymczasowe): stan ekranu po resecie
-    await page.waitForTimeout(3000);
-    console.log("DIAG-URL", page.url());
-    console.log("DIAG-BODY", (await page.locator("body").innerText()).slice(0, 1500));
-    console.log("DIAG-HTML", (await page.locator("main").first().evaluate((m) => m.outerHTML.replace(/class="[^"]*"/g, "").replace(/<svg.*?<\/svg>/g, ""))).slice(0, 6000));
-    console.log("DIAG-BTNS", JSON.stringify(await page.getByRole("button").evaluateAll((b) => b.map((x) => x.getAttribute("aria-label") || x.textContent?.trim().slice(0, 40)))));
     await expect(page.getByRole("button", { name: new RegExp(serwis) })).toBeVisible();
     await expect(page.getByText(haslo, { exact: true })).toHaveCount(0);
 

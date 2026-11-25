@@ -3,6 +3,9 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Okno resetu sejfu odświeża dane strony routerem
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }), usePathname: () => "/hasla" }));
+
 const vault = vi.hoisted(() => ({
   state: {} as Record<string, unknown>,
   lock: vi.fn(),

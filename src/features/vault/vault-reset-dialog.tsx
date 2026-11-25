@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { Button, FormDialog, matchesWord, WordConfirm } from "@/components/controls";
@@ -17,6 +18,7 @@ export function VaultResetDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { reset } = useVault();
+  const router = useRouter();
   // Liczba niepustych sekretów (null — jeszcze nieznana lub błąd odczytu)
   const [liczba, setLiczba] = React.useState<number | null>(null);
   const [blad, setBlad] = React.useState<string | null>(null);
@@ -73,8 +75,12 @@ export function VaultResetDialog({
               setBlad(null);
               void reset().then((wynik) => {
                 trwa.current = false;
-                if (wynik.ok) onOpenChange(false);
-                else setBlad(wynik.message);
+                if (wynik.ok) {
+                  onOpenChange(false);
+                  // Dane strony z serwera są sprzed resetu (np. tabela Haseł bez wierszy dodanych w tej wizycie
+                  // i ze starymi szyfrogramami); tabela montuje się od nowa po ustawieniu sejfu, więc odświeżamy je
+                  router.refresh();
+                } else setBlad(wynik.message);
               });
             }}
           >

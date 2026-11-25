@@ -2,6 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Okno resetu sejfu odświeża dane strony routerem
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }), usePathname: () => "/hasla" }));
+
 const vault = vi.hoisted(() => ({ unlock: vi.fn() }));
 vi.mock("./vault-provider", () => ({ useVault: () => ({ status: "zablokowany", unlock: vault.unlock }) }));
 vi.mock("./actions", () => ({ countSecrets: vi.fn().mockResolvedValue({ ok: true, count: 1 }) }));

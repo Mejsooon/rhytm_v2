@@ -2,7 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const m = vi.hoisted(() => ({ reset: vi.fn(), countSecrets: vi.fn() }));
+const m = vi.hoisted(() => ({ reset: vi.fn(), countSecrets: vi.fn(), refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: m.refresh }) }));
 vi.mock("./vault-provider", () => ({ useVault: () => ({ reset: m.reset }) }));
 vi.mock("./actions", () => ({ countSecrets: m.countSecrets }));
 
@@ -58,8 +59,11 @@ describe("VaultResetDialog", () => {
     await user.click(within(okno).getByRole("button", { name: "Zresetuj sejf" }));
     expect(await within(okno).findByRole("alert")).toHaveTextContent("Nie udało się połączyć z sejfem. Spróbuj ponownie.");
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(m.refresh).not.toHaveBeenCalled();
     await user.click(within(okno).getByRole("button", { name: "Zresetuj sejf" }));
     await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    // Dane strony z serwera odświeżone: tabela Haseł po ustawieniu nowego sejfu nie wraca do wierszy sprzed wejścia
+    expect(m.refresh).toHaveBeenCalledTimes(1);
   });
 
   it("arkusz telefonu (CMVaultReset): opis pod tytułem, bez ✕, przyciski w dwóch kolumnach, etykieta słowa na czerwono", async () => {
