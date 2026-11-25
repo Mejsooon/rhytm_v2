@@ -131,7 +131,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
           Nie masz konta?{" "}
           <Link
             href="/rejestracja"
-            className="inline-block py-3 font-medium text-foreground no-underline"
+            className="inline-flex min-h-11 items-center font-medium text-foreground no-underline"
           >
             Załóż konto
           </Link>

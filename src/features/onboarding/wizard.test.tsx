@@ -280,10 +280,11 @@ describe("OnboardingWizard", () => {
     const dalej = stopka.getByRole("button", { name: "Dalej" });
     expect(dalej).toHaveClass("bg-primary");
     expect(dalej.querySelector("svg.lucide-chevron-right")).not.toBeNull();
-    // Stopka web: pasek oddzielony linią, na całą szerokość kolumny
+    // Stopka web: pasek oddzielony linią, na całą szerokość kolumny; na telefonie (przyklejona) tło nieprzezroczyste
     expect(screen.getByTestId("wizard-footer")).toHaveClass(
       "border-t",
-      "bg-black/[.025]",
+      "bg-white",
+      "min-[800px]:bg-black/[.025]",
     );
   });
 

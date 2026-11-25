@@ -76,7 +76,7 @@ export function CheckInbox({
   const reset = kind === "reset";
 
   return (
-    <div className="flex flex-col items-center gap-3.5 text-center max-[799px]:m-auth-card max-[799px]:gap-2 max-[799px]:px-5 max-[799px]:py-7">
+    <div className={cn("flex flex-col items-center gap-3.5 text-center max-[799px]:m-auth-card max-[799px]:gap-2 max-[799px]:px-5 max-[799px]:py-7", reset && "min-[800px]:gap-4")}>
       {/* Kafelek ikony 40 px (.empty-ic z makiet); w resecie na telefonie zielony „ptaszek” zamiast koperty */}
       <span
         className={cn(

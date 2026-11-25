@@ -244,7 +244,7 @@ export function OnboardingWizard({
 
               <div
                 data-testid="wizard-footer"
-                className="flex flex-none flex-col gap-2 border-t border-border bg-black/[.025] px-5 pt-3 max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:pb-[max(30px,env(safe-area-inset-bottom))] min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:px-10 min-[800px]:py-3.5"
+                className="flex flex-none flex-col gap-2 border-t border-border bg-white px-5 pt-3 max-[799px]:sticky max-[799px]:bottom-0 max-[799px]:pb-[max(30px,env(safe-area-inset-bottom))] min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:bg-black/[.025] min-[800px]:px-10 min-[800px]:py-3.5"
               >
                 {/* Web: „Wstecz” w stopce; na telefonie jest w nagłówku */}
                 <Button

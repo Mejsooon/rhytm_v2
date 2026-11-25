@@ -140,7 +140,7 @@ describe("LoginForm", () => {
       screen.getByRole("link", { name: "Nie pamiętasz hasła?" }),
     ).toHaveClass("max-[799px]:min-h-11");
     const zalozKonto = screen.getByRole("link", { name: "Załóż konto" });
-    expect(zalozKonto).toHaveClass("py-3", "font-medium");
+    expect(zalozKonto).toHaveClass("min-h-11", "font-medium");
     // Stopka jest rodzeństwem karty, nie jej częścią
     expect(grupa).not.toContainElement(zalozKonto);
     // Separator „lub” 12 px bez nadpisań koloru telefonu

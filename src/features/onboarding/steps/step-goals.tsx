@@ -161,7 +161,7 @@ export function StepGoals({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "m-hit inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
+                    "max-[799px]:m-hit inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
                     cel.on
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-white text-transparent",

@@ -92,11 +92,11 @@ export function DevicesCard({
       </CardHeader>
       <CardContent className="pt-0 max-[799px]:p-0">
         {loadError ? (
-          <p className="m-0 py-3.5 text-[13px] text-destructive-foreground">
+          <p className="m-0 py-3.5 text-[13px] text-destructive-foreground max-[799px]:px-4">
             Nie udało się wczytać urządzeń.
           </p>
         ) : devices.length === 0 ? (
-          <p className="m-0 py-3.5 text-[13px] text-muted-foreground">
+          <p className="m-0 py-3.5 text-[13px] text-muted-foreground max-[799px]:px-4">
             Brak urządzeń. Włącz push na tym urządzeniu powyżej.
           </p>
         ) : (

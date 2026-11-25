@@ -217,7 +217,7 @@ export function RegisterForm() {
         Masz już konto?{" "}
         <Link
           href="/logowanie"
-          className="font-medium text-foreground underline max-[799px]:inline-block max-[799px]:py-3 max-[799px]:no-underline"
+          className="font-medium text-foreground underline max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center max-[799px]:no-underline"
         >
           Zaloguj się
         </Link>

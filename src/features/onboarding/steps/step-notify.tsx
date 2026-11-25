@@ -169,7 +169,8 @@ export function StepNotify({
                 variant="ghost"
                 size="sm"
                 onClick={cofnij}
-                className="text-muted-foreground underline"
+                // na telefonie cel dotyku 44 px jak w makiecie (sm ma tam 40 px)
+                className="text-muted-foreground underline max-[799px]:h-11"
               >
                 Anuluj
               </Button>

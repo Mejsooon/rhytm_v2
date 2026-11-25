@@ -73,7 +73,7 @@ export function HabitRemindersCard({
       </CardHeader>
       <CardContent className="pt-0 max-[799px]:p-0">
         {habits.length === 0 ? (
-          <p className="m-0 py-3.5 text-[13px] text-muted-foreground">
+          <p className="m-0 py-3.5 text-[13px] text-muted-foreground max-[799px]:px-4">
             Nie masz jeszcze nawyków.{" "}
             <Link href="/nawyki" className="font-medium text-foreground underline">
               Przejdź do Nawyków
@@ -122,7 +122,7 @@ export function HabitRemindersCard({
         {blad && (
           <p
             role="alert"
-            className="m-0 pb-1 text-[13px] text-destructive-foreground"
+            className="m-0 pb-1 text-[13px] text-destructive-foreground max-[799px]:px-4"
           >
             {blad}
           </p>
