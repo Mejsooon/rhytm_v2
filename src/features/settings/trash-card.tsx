@@ -116,19 +116,19 @@ export function TrashCard({
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-[799px]:px-0">
         {loadError && (
-          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
+          <p role="alert" className="m-0 text-[13px] text-destructive-foreground max-[799px]:px-4">
             Nie udało się wczytać kosza.
           </p>
         )}
         {pusty && !loadError && (
-          <p className="m-0 text-[13px] text-muted-foreground">Kosz jest pusty.</p>
+          <p className="m-0 text-[13px] text-muted-foreground max-[799px]:px-4">Kosz jest pusty.</p>
         )}
 
         {strony.length > 0 && (
           <section aria-label="Strony" className="mb-4 last:mb-0">
-            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground">
+            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground max-[799px]:px-4">
               Strony
             </h3>
             <ul className="m-0 flex list-none flex-col p-0">
@@ -138,7 +138,7 @@ export function TrashCard({
                   <li
                     key={s.id}
                     aria-label={nazwa}
-                    className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0"
+                    className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0 max-[799px]:min-h-14 max-[799px]:px-4"
                   >
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate font-medium">{nazwa}</span>
@@ -158,7 +158,7 @@ export function TrashCard({
 
         {wiersze.length > 0 && (
           <section aria-label="Wiersze" className="mb-4 last:mb-0">
-            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground">
+            <h3 className="m-0 mb-1 text-xs font-medium text-muted-foreground max-[799px]:px-4">
               Wiersze
             </h3>
             <ul className="m-0 flex list-none flex-col p-0">
@@ -166,7 +166,7 @@ export function TrashCard({
                 <li
                   key={w.id}
                   aria-label={w.title}
-                  className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0"
+                  className="flex items-center gap-3 border-t border-border py-2.5 first:border-t-0 max-[799px]:min-h-14 max-[799px]:px-4"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-medium">{w.title}</span>

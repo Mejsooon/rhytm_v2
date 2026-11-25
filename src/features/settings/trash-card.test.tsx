@@ -150,4 +150,12 @@ describe("TrashCard", () => {
     expect(przycisk).toHaveClass("flex-none", "whitespace-nowrap");
     expect(li).not.toHaveClass("flex-wrap");
   });
+
+  it("telefon: wiersze kosza mają min. 56 px i boczny padding 16 px, karta bez paddingu", () => {
+    render(<TrashCard pages={strony} rows={wiersze} />);
+    const li = screen.getByRole("listitem", { name: "Books" , hidden: true });
+    expect(li.className).toContain("max-[799px]:min-h-14");
+    expect(li.className).toContain("max-[799px]:px-4");
+    expect(li.closest("[class*='max-[799px]:px-0']")).not.toBeNull();
+  });
 });

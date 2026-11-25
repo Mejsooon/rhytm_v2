@@ -91,4 +91,11 @@ describe("DeleteAccountCard", () => {
       ),
     );
   });
+
+  it("telefon: stopka ustawia się w kolumnę z przyciskami na całą szerokość", async () => {
+    render(<DeleteAccountCard />);
+    const przycisk = screen.getByRole("button", { name: "Usuń konto" });
+    expect(przycisk.parentElement?.className).toContain("max-[799px]:flex-col");
+    expect(przycisk.parentElement?.className).toContain("max-[799px]:items-stretch");
+  });
 });

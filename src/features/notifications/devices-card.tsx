@@ -27,7 +27,7 @@ export type DeviceItem = {
 
 // Wiersz .nrow: 14 px w pionie, linia rgba(0,0,0,.06) między wierszami
 const WIERSZ =
-  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 leading-[1.21] last:border-b-0";
+  "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 leading-[1.21] last:border-b-0 max-[799px]:min-h-[60px] max-[799px]:flex-nowrap max-[799px]:border-border max-[799px]:px-4 max-[799px]:py-2.5 max-[799px]:[&>:first-child]:min-w-0 max-[799px]:[&>:first-child]:flex-1";
 
 export function DevicesCard({
   devices,
@@ -90,7 +90,7 @@ export function DevicesCard({
           <CardTitle as="h2">Urządzenia</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 max-[799px]:p-0">
         {loadError ? (
           <p className="m-0 py-3.5 text-[13px] text-destructive-foreground">
             Nie udało się wczytać urządzeń.

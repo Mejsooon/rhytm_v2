@@ -76,7 +76,7 @@ export function VaultCard() {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="py-2">
+        <CardContent className="py-2 max-[799px]:px-4">
           {status === "ladowanie" && (
             <div
               role="status"
@@ -152,7 +152,7 @@ export function VaultCard() {
             data-testid="karta-sejf-strefa"
             className="border-destructive-border"
           >
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 max-[799px]:flex-col max-[799px]:items-stretch">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:bg-destructive/[.04] max-[799px]:px-4">
               <div>
                 <CardTitle
                   as="h2"

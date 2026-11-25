@@ -61,7 +61,7 @@ export function DeleteAccountCard() {
         </div>
       </CardHeader>
       {!pyta ? (
-        <CardFooter className={cn("justify-end", STOPKA)}>
+        <CardFooter className={cn("justify-end max-[799px]:flex-col max-[799px]:items-stretch", STOPKA)}>
           <Button
             variant="destructive"
             onClick={() => {
@@ -74,7 +74,7 @@ export function DeleteAccountCard() {
           </Button>
         </CardFooter>
       ) : (
-        <CardFooter className={cn("items-end", STOPKA)}>
+        <CardFooter className={cn("items-end max-[799px]:flex-col max-[799px]:items-stretch", STOPKA)}>
           <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-2 text-sm font-medium text-[#b91c1c]">
             <label htmlFor={poleId}>
               Wpisz{" "}
@@ -107,7 +107,7 @@ export function DeleteAccountCard() {
               </p>
             )}
           </div>
-          <span className="flex gap-2">
+          <span className="flex gap-2 max-[799px]:[&>*]:flex-1">
             <Button
               variant="ghost"
               onClick={() => {

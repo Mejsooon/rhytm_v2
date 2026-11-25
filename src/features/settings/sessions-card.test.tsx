@@ -171,4 +171,16 @@ describe("SessionsCard", () => {
     ).toBeInTheDocument();
     expect(wszystkieInne()).toHaveAttribute("aria-disabled", "false");
   });
+
+  it("telefon: wiersze jak m-row (min. 60 px, bez zawijania), przycisk „Wyloguj wszystkie inne” na całą szerokość", () => {
+    render(<SessionsCard {...bazowe} sessions={[BIEZACA, inna(1)]} />);
+    const wiersz = screen.getByText("teraz · ta sesja").closest("div.flex-wrap");
+    expect(wiersz?.parentElement?.className).toContain("max-[799px]:p-0");
+    expect(wiersz?.className).toContain("max-[799px]:min-h-[60px]");
+    expect(wiersz?.className).toContain("max-[799px]:flex-nowrap");
+    const wszystkie = screen.getByRole("button", { name: "Wyloguj wszystkie inne" });
+    expect(wszystkie.className).toContain("max-[799px]:w-full");
+    expect(wszystkie.className).toContain("max-[799px]:h-11");
+    expect(screen.getByRole("button", { name: /Wyloguj: / }).className).toContain("max-[799px]:h-11");
+  });
 });

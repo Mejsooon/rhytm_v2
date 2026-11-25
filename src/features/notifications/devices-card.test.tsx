@@ -109,4 +109,12 @@ describe("DevicesCard", () => {
     pokaz({ devices: [], loadError: true });
     expect(screen.getByText("Nie udało się wczytać urządzeń.")).toBeInTheDocument();
   });
+
+  it("telefon: wiersze urządzeń jak m-row, karta bez własnego paddingu", () => {
+    pokaz();
+    const wiersz = screen.getByText("Chrome · Linux").closest("div.flex-wrap") as HTMLElement;
+    expect(wiersz.className).toContain("max-[799px]:min-h-[60px]");
+    expect(wiersz.className).toContain("max-[799px]:flex-nowrap");
+    expect(wiersz.parentElement?.className).toContain("max-[799px]:p-0");
+  });
 });
