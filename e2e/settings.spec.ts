@@ -147,7 +147,7 @@ test.describe("ustawienia ogólne", () => {
     await expect(page).toHaveURL(/\/dzis$/);
 
     await page.goto("/ustawienia/ogolne");
-    const konto = page.getByTestId("karta-konto");
+    const konto = page.getByTestId("karta-konto").filter({ visible: true });
     await expect(
       konto.getByText(`${stary.toLowerCase()} · potwierdzony`),
     ).toBeVisible();
@@ -170,7 +170,7 @@ test.describe("ustawienia ogólne", () => {
     await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
     await expect(
       page
-        .getByTestId("karta-konto")
+        .getByTestId("karta-konto").filter({ visible: true })
         .getByText(
           "Link potwierdzony. Kliknij jeszcze link na drugim adresie.",
         ),
@@ -179,7 +179,7 @@ test.describe("ustawienia ogólne", () => {
     await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
     await expect(
       page
-        .getByTestId("karta-konto")
+        .getByTestId("karta-konto").filter({ visible: true })
         .getByText(`${nowy.toLowerCase()} · potwierdzony`),
     ).toBeVisible();
   });
@@ -194,7 +194,7 @@ test.describe("ustawienia ogólne", () => {
     await expect(page).toHaveURL(/\/dzis$/);
 
     await page.goto("/ustawienia/ogolne");
-    const konto = page.getByTestId("karta-konto");
+    const konto = page.getByTestId("karta-konto").filter({ visible: true });
     await expect(konto.getByText("Aktywna")).toBeVisible();
     await expect(konto.getByText(/· teraz$/)).toBeVisible();
     await konto.getByRole("button", { name: "Wyloguj" }).click();
@@ -251,7 +251,7 @@ test.describe("ustawienia ogólne", () => {
       "Mejson E2E",
     );
     await expect(
-      page.getByTestId("karta-konto").getByText(`${email.toLowerCase()} · potwierdzony`),
+      page.getByTestId("karta-konto").filter({ visible: true }).getByText(`${email.toLowerCase()} · potwierdzony`),
     ).toBeVisible();
     await page.goto("/konto-usuniete");
     await expect(page).toHaveURL(/\/dzis$/);
@@ -277,6 +277,8 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
+  // Karty ustawień strumieniują się w Suspense: w chwili odsłonięcia w DOM bywa przez moment ukryta kopia z HTML
+  // serwera (id z `_R_`) obok kopii klienta (`_r_`), więc testy zawężamy do widocznej karty.
   test("zmiana hasła: złe obecne → komunikat, dobre → sukces, logowanie nowym hasłem", async ({
     page,
     browser,
@@ -289,7 +291,7 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
     await expect(page).toHaveURL(/\/dzis$/);
 
     await page.goto("/ustawienia/konto");
-    const karta = page.getByTestId("karta-haslo");
+    const karta = page.getByTestId("karta-haslo").filter({ visible: true });
     await expect(
       karta.getByRole("heading", { name: "Zmień hasło do konta" }),
     ).toBeVisible();
@@ -314,13 +316,13 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
     await page.goto("/ustawienia/ogolne");
     await expect(
       page
-        .getByTestId("karta-konto")
+        .getByTestId("karta-konto").filter({ visible: true })
         .getByText(/^zmienione \d{2}\.\d{2}\.\d{4}$/),
     ).toBeVisible();
 
     // Wylogowanie i logowanie nowym hasłem
     await page
-      .getByTestId("karta-konto")
+      .getByTestId("karta-konto").filter({ visible: true })
       .getByRole("button", { name: "Wyloguj" })
       .click();
     await expect(page).toHaveURL(/\/logowanie/);
@@ -462,7 +464,7 @@ test.describe("ustawienia: układ telefonu", () => {
     expect((przycisk?.width ?? 0) / (karta?.width ?? 1)).toBeGreaterThan(0.8);
 
     const zmien = page
-      .getByTestId("karta-haslo")
+      .getByTestId("karta-haslo").filter({ visible: true })
       .getByRole("button", { name: "Zmień hasło" });
     expect((await zmien.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   });

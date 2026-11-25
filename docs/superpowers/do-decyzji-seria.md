@@ -139,3 +139,15 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Pominięte z makiet: plakietki stanu sejfu/push w indeksie, „Zły adres? Wróć do rejestracji”, live „Hasła się różnią” | brak w kodzie | niski |
 | Dopisek wersji „rhytm 0.1.0” z `package.json` (makieta: „3.0 · build 2026.11”) | wersja nie jest podbijana | niski: zdecyduj, czy podbijać wersję albo dopisać build |
 | Stopka „Usuń konto” na telefonie w kolumnie (makieta: wiersz) | przyciski na całą szerokość | niski |
+
+### Pakiet szukaj
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T11: wyszukiwanie bez migracji — zapytania `ilike` z RLS i `user_id`, limit 5 na grupę; wiersze tabel tylko po polach tytułowych (bez pobierania całego `values`) | szybko i bez zmian w bazie | niski: przy dużej liczbie danych może być wolne |
+| Hasła w wynikach tylko jako strona po tytule; wiersze Haseł i pola Sekret nigdy nie są pobierane | prywatność sejfu | brak |
+| „Ostatnio” (frazy) w `localStorage` przeglądarki, wspólne dla kont na tym urządzeniu | `SearchView` nie zna id użytkownika | niski: na wspólnym komputerze widać frazy innego konta |
+| Szybka akcja „Nowy blok” (makieta: „Nowe zadanie lub blok”) | zadanie zawsze należy do bloku (konflikt 2) | niski |
+| Bieg z wyniku otwiera `/sport?miesiac=…&bieg=<id>` | obsługuje biegi spoza wczytanych tygodni | brak |
+| Gwiazdka `*` usuwana z frazy | w składni PostgREST działa jak `%` | brak |
+| Serie nawyków w meta liczone z ostatnich 1000 odhaczeń z 366 dni | jedno zapytanie zamiast N | niski: bardzo długie serie zaniżone |

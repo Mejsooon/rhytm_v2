@@ -66,6 +66,21 @@ describe("AppSidebar", () => {
     movePage.mockResolvedValue({ ok: true });
   });
 
+  it("pole „Szukaj…” to link do /szukaj, a ⌘K i Ctrl+K przechodzą do Szukaj", () => {
+    render(<AppSidebar user={uzytkownik} />);
+    expect(screen.getByRole("link", { name: /Szukaj…/ })).toHaveAttribute("href", "/szukaj");
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(push).toHaveBeenCalledWith("/szukaj");
+    push.mockClear();
+    fireEvent.keyDown(window, { key: "K", metaKey: true });
+    expect(push).toHaveBeenCalledWith("/szukaj");
+    push.mockClear();
+    // Samo „k” i inne złożenia nie przechodzą
+    fireEvent.keyDown(window, { key: "k" });
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true, shiftKey: true });
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("pokazuje wyszukiwarkę z keycapem, sekcje, 5 modułów, Ustawienia i inicjał", () => {
     render(<AppSidebar user={uzytkownik} />);
     expect(screen.getByText("Szukaj…")).toBeInTheDocument();

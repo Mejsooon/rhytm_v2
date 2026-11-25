@@ -1,11 +1,13 @@
-import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
+import { ModuleHeader } from "@/components/shell/module-header";
+import { SearchView } from "@/features/search/search-view";
 
-// Wyszukiwanie (ikona lupy na Dziś na telefonie) — zaślepka do Etapu 10
+// Szukaj (CMSearch): web ma nagłówek modułu, telefon własny nagłówek z polem i „Anuluj” w SearchView.
+// Strona nie czyta danych sesji — wyszukiwanie to akcja serwerowa wołana z klienta.
 export default function SzukajPage() {
   return (
     <>
-      <ModuleHeader title="Szukaj" />
-      <EmptyModule>Wyszukiwanie pojawi się wkrótce.</EmptyModule>
+      <ModuleHeader title="Szukaj" webOnly />
+      <SearchView />
     </>
   );
 }

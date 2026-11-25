@@ -31,11 +31,15 @@ export function TodayView({
   data: daneSerwera,
   name,
   avatarUrl = null,
+  openOnLoad = null,
 }: {
   data: TodayData;
   name: string;
   // Podpisany adres zdjęcia profilu (awatar na telefonie); null → inicjał
   avatarUrl?: string | null;
+  // ?szybko=blok (z ekranu Szukaj): od razu otwiera dodawanie bloku — arkusz szybkiego dodawania
+  // na telefonie, okno „Nowy blok” na webie
+  openOnLoad?: "blok" | null;
 }) {
   const router = useRouter();
   // Dane z optymistycznymi zmianami: plan dnia („x/y”) liczy się z tych samych zadań co dymek
@@ -101,6 +105,25 @@ export function TodayView({
       Nowy blok
     </Button>
   );
+
+  // ?szybko=blok: otwieramy dodawanie (także gdy widok już działa), a potem czyścimy adres, żeby odświeżenie
+  // ani „wstecz” nie otwierały go drugi raz. Wariant wybiera matchMedia dopiero w efekcie, po hydratacji,
+  // więc HTML z serwera i pierwszy render klienta są takie same (nic nie jest jeszcze otwarte).
+  useEffect(() => {
+    if (!openOnLoad) return;
+    const tel =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 799px)").matches;
+    if (tel) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- otwarcie arkusza jest reakcją na parametr adresu
+      setSzybkieDodawanie(true);
+    } else {
+      otworzNowyBlok();
+    }
+    router.replace("/dzis");
+    // otworzNowyBlok czyta tylko strefę profilu i zawsze aktualny zegar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openOnLoad]);
 
   const oknoBloku = nowyBlok && (
     <BlockDialog
