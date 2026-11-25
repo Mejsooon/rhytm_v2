@@ -25,9 +25,10 @@ export function MRenewalSheet({
 }) {
   const [rok, miesiac, dzien] = item.date.split("-");
   const [rokN, miesiacN, dzienN] = item.next.split("-");
-  // „sob 14.11.2026” i „pon 14.12.2026 · za 29 dni” (następne jest zawsze w przyszłości)
+  // „sob 14.11.2026” i „pon 14.12.2026 · za 29 dni”; czas tylko dla terminu od dziś (przy przeszłym wystąpieniu
+  // następne też bywa w przeszłości), nigdy „minął”
   const tenTermin = `${DNI_KROTKO[weekdayOf(item.date)]} ${dzien}.${miesiac}.${rok}`;
-  const nastepne = `${DNI_KROTKO[weekdayOf(item.next)]} ${dzienN}.${miesiacN}.${rokN} · ${relativeDue(item.next, today).text}`;
+  const nastepne = `${DNI_KROTKO[weekdayOf(item.next)]} ${dzienN}.${miesiacN}.${rokN}${item.next >= today ? ` · ${relativeDue(item.next, today).text}` : ""}`;
 
   return (
     <FormDialog
@@ -64,7 +65,7 @@ export function MRenewalSheet({
         <div className="m-row">
           <span className="flex-1 text-muted-foreground">{item.categoryName}</span>
           {item.categoryLabel !== null ? (
-            <StatusBadge tone="outline">{item.categoryLabel}</StatusBadge>
+            <StatusBadge tone="blue">{item.categoryLabel}</StatusBadge>
           ) : (
             <span>—</span>
           )}

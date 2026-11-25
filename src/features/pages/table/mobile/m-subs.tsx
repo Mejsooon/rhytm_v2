@@ -32,6 +32,7 @@ export function MSubs({
   fields,
   rows,
   today,
+  menu,
   onNewRow,
   onEditRow,
 }: {
@@ -40,6 +41,8 @@ export function MSubs({
   // Wiersze po filtrze i sorcie tabeli, bez usuniętych
   rows: PageRow[];
   today: IsoDate;
+  // Przycisk „Więcej” (menu strony: nazwa, ikona, kolejność, kosz) między odstępem a „Nowy wiersz”
+  menu?: React.ReactNode;
   onNewRow: () => void;
   onEditRow: (row: PageRow) => void;
 }) {
@@ -106,6 +109,7 @@ export function MSubs({
           </Link>
         </Button>
         <div className="flex-1" />
+        {menu}
         <Button variant="ghost" icon aria-label="Nowy wiersz" onClick={onNewRow}>
           <Plus size={20} aria-hidden="true" />
         </Button>
@@ -163,7 +167,7 @@ export function MSubs({
         />
 
         {lista.length === 0 ? (
-          <p className="m-0 text-center text-[13px] text-muted-foreground">
+          <p className="m-0 text-center text-xs text-muted-foreground">
             {rows.length === 0 ? "Brak subskrypcji. Dodaj pierwszą przyciskiem +." : "Brak subskrypcji w tym filtrze."}
           </p>
         ) : (
@@ -181,7 +185,7 @@ export function MSubs({
                 <Avatar initials={p.nazwa.charAt(0).toUpperCase()} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{p.nazwa}</span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted-foreground tabular-nums">
+                  <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
                     {p.nastepne === null || p.czas === null ? (
                       <span>brak daty</span>
                     ) : (
@@ -209,7 +213,7 @@ export function MSubs({
           </Card>
         )}
 
-        <div className="text-center text-[13px] text-muted-foreground tabular-nums">
+        <div className="text-center text-xs text-muted-foreground tabular-nums">
           {/* „N z M subskrypcji”: po „z” zawsze dopełniacz liczby mnogiej */}
           {`${lista.length} z ${rows.length} subskrypcji`}
         </div>

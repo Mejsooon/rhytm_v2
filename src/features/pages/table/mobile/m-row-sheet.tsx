@@ -441,7 +441,7 @@ export function MRowSheet({
                 </span>
               </label>
               <Segment
-                ariaLabel="Cykl"
+                ariaLabel={fields.filter((x) => x.type === "recurring").length > 1 ? `${f.name}: cykl` : "Cykl"}
                 value={cykl}
                 options={[
                   { value: "month", label: "mies." },

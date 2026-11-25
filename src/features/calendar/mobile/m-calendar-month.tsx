@@ -116,9 +116,9 @@ export function MCalendarMonth({
                 ...(sport.some((i) => i.date === dzien) ? [SPORT_COLOR] : []),
               ]),
             ];
-            // Odnowienie to szara kropka (pusty pierścień #737373, na wybranym dniu #fafafa); liczy się do limitu 3 kropek
+            // Odnowienie to szara kropka (pusty pierścień #737373, na wybranym dniu #fafafa); dochodzi do maks. 3 kropek kategorii (makieta)
             const maOdnowienie = renewals.some((r) => r.date === dzien);
-            const kropkiKolorow = kolory.slice(0, maOdnowienie ? 2 : 3);
+            const kropkiKolorow = kolory.slice(0, 3);
             return (
               <button
                 key={dzien}

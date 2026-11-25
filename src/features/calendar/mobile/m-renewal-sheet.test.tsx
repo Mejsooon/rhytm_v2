@@ -52,4 +52,18 @@ describe("MRenewalSheet (CMRenewalSheet)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("przeszłe „Następne” (przegląd poprzedniego miesiąca) pokazuje samą datę, bez „minął”", () => {
+    render(
+      <MRenewalSheet
+        item={odnowienie({ date: "2026-10-14", next: "2026-11-14" })}
+        today="2026-11-25"
+        onClose={() => {}}
+      />,
+    );
+    const arkusz = screen.getByRole("dialog");
+    expect(arkusz).toHaveTextContent("Następne" + "sob 14.11.2026");
+    expect(arkusz).not.toHaveTextContent("minął");
+    expect(arkusz).not.toHaveTextContent("za ");
+  });
 });

@@ -16,6 +16,7 @@ import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
+import { rowsLabel } from "../rows-label";
 import { CommandLine } from "./command-line";
 import { PageTable } from "../table/page-table";
 import { MSubs } from "../table/mobile/m-subs";
@@ -187,7 +188,11 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           </div>
 
           {store.blocks.map((b) => (
-            <div key={b.id} className={`group relative pr-9 ${b === blokSubs ? "max-[799px]:pr-0" : ""}`}>
+            <div
+              key={b.id}
+              // Telefon, Subscriptions: CMSubs to sama tabela, więc inne bloki (np. intro szablonu) chowamy
+              className={`group relative pr-9 ${blokSubs ? (b === blokSubs ? "max-[799px]:pr-0" : "max-[799px]:hidden") : ""}`}
+            >
               {b.type === "heading" && (
                 <TextBlock
                   variant="heading"
@@ -233,6 +238,18 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                             fields={api.fields}
                             rows={api.rows}
                             today={data.today}
+                            menu={
+                              <PageMenu
+                                page={stronaWMenu}
+                                pages={pagesStore.pages}
+                                store={pagesStore}
+                                onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
+                                sheet
+                                triggerLabel="Więcej"
+                                meta={rowsLabel(api.rows.length)}
+                                triggerClassName="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent p-0 font-[inherit] text-foreground hover:bg-accent"
+                              />
+                            }
                             onNewRow={api.newRow}
                             onEditRow={api.editRow}
                           />

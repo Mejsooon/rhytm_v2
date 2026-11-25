@@ -47,12 +47,11 @@ export async function utworzSubscriptions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Web: pole „Nazwa strony”. Telefon (CMSubs): własny ekran z nagłówkiem h1, bez pola nazwy
+  const nazwa = page.getByRole("textbox", { name: "Nazwa strony" });
   await expect(
-    page
-      .getByRole("textbox", { name: "Nazwa strony" })
-      .or(page.getByRole("heading", { name: "Subscriptions", level: 1 }))
-      .first(),
+    nazwa.or(page.getByRole("heading", { name: "Subscriptions", level: 1 })).first(),
   ).toBeVisible();
+  if (await nazwa.isVisible()) await expect(nazwa).toHaveValue("Subscriptions");
 }
 
 // Pusta strona edytora bloków (bez szablonu i bez bloków), jak dawne „Nowa strona” z paska.

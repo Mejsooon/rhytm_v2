@@ -170,16 +170,16 @@ describe("MCalendarMonth — kolejność wpisów dnia", () => {
     );
   });
 
-  it("odnowienie: szara kropka w komórce dnia, liczona do limitu 3 kropek", () => {
+  it("odnowienie: pierścień odnowienia w komórce dnia, obok maks. 3 kropek kategorii", () => {
     wyrenderuj({
       renewals: [
         odnowienie({ date: "2026-11-10", key: "f-ren:r1:2026-11-10" }),
         odnowienie({ date: "2026-11-20", key: "f-ren:r1:2026-11-20" }),
       ],
     });
-    // 10.11 ma 4 kategorie: 2 kropki kategorii + kropka odnowienia = 3
+    // 10.11 ma 4 kategorie: 3 kropki kategorii (limit z makiety) + pierścień odnowienia
     const z4 = screen.getByRole("button", { name: "10 listopada" });
-    expect(within(z4).getAllByTestId("kropka-kategorii")).toHaveLength(2);
+    expect(within(z4).getAllByTestId("kropka-kategorii")).toHaveLength(3);
     expect(within(z4).getAllByTestId("kropka-odnowienia")).toHaveLength(1);
     // 20.11 ma tylko odnowienie
     const sam = screen.getByRole("button", { name: "20 listopada" });

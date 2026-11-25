@@ -471,4 +471,13 @@ describe("EditorView", () => {
     expect(screen.getByRole("textbox", { name: "Nowy blok" })).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
+
+  it("Subscriptions: telefon ma „Więcej” (menu strony), a blok tekstu szablonu jest ukryty na telefonie, nie na webie", () => {
+    const d = stronaTestowa("subscriptions", "Subscriptions", []);
+    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Twoje subskrypcje i ich odnowienia." }, fields: [], rows: [] };
+    render(<EditorView data={{ ...d, blocks: [intro, ...d.blocks] }} />);
+    expect(screen.getByRole("button", { name: "Więcej" })).toBeInTheDocument();
+    const wrapper = screen.getByDisplayValue("Twoje subskrypcje i ich odnowienia.").closest(".group");
+    expect(wrapper).toHaveClass("max-[799px]:hidden");
+  });
 });
