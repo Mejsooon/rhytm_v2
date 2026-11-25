@@ -51,12 +51,14 @@ describe("SettingsTabs", () => {
     expect(nieaktywna).not.toHaveClass("bg-active");
   });
 
-  it("telefon: pasek przewijany i cele 44 px", () => {
+  it("telefon: poziomy pasek ukryty (zakładki są w indeksie /ustawienia)", () => {
     render(<SettingsTabs active="ogolne" />);
-    const nav = screen.getByRole("navigation", { name: "Sekcje ustawień" });
-    expect(nav).toHaveClass("max-[799px]:overflow-x-auto");
-    expect(screen.getByRole("link", { name: "Sejf" })).toHaveClass(
-      "max-[799px]:min-h-11",
-    );
+    expect(
+      screen.getByRole("navigation", { name: "Sekcje ustawień" }),
+    ).toHaveClass("max-[799px]:hidden");
+  });
+
+  it("każda zakładka ma opis do indeksu telefonu", () => {
+    for (const t of SETTINGS_TABS) expect(t.phoneHint.length).toBeGreaterThan(0);
   });
 });

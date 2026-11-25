@@ -23,8 +23,7 @@ test.describe("ustawienia ogólne", () => {
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    await page.goto("/ustawienia");
-    await expect(page).toHaveURL(/\/ustawienia\/ogolne$/);
+    await page.goto("/ustawienia/ogolne");
     // Regresja: pasek zakładek nie może poszerzać strony (na telefonie przeglądarka oddaliłaby widok)
     await expect(
       page.getByRole("heading", { name: "Profil", exact: true }),

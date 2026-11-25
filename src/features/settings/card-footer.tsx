@@ -23,11 +23,11 @@ export function CardFooter({
   onSave: () => void;
 }) {
   return (
-    <CossCardFooter className="max-[799px]:flex-col max-[799px]:items-stretch">
+    <CossCardFooter className="max-[799px]:flex-nowrap">
       <span
         role="status"
         className={cn(
-          "text-[13px]",
+          "text-[13px] max-[799px]:min-w-0 max-[799px]:flex-1",
           formError
             ? "text-destructive-foreground"
             : message === "saved"
@@ -37,9 +37,9 @@ export function CardFooter({
       >
         {formError ?? texts[message]}
       </span>
-      <span className="flex gap-2 max-[799px]:[&>button]:flex-1">
+      <span className="flex flex-none gap-2">
         {dirty && (
-          <Button variant="ghost" onClick={onReset} className="max-[799px]:h-12">
+          <Button variant="ghost" onClick={onReset}>
             Cofnij
           </Button>
         )}
@@ -47,7 +47,7 @@ export function CardFooter({
           variant="primary"
           disabled={!canSave || saving}
           onClick={onSave}
-          className="disabled:opacity-[.64] max-[799px]:h-12"
+          className="disabled:opacity-[.64]"
         >
           Zapisz
         </Button>

@@ -76,9 +76,10 @@ describe("AppSidebar", () => {
     for (const nazwa of ["Dziś", "Kalendarz", "Sport", "Nawyki i sen", "Hasła"]) {
       expect(screen.getByRole("link", { name: nazwa })).toBeInTheDocument();
     }
+    // Web: wprost do zakładki „Ogólne” (indeks /ustawienia jest ekranem telefonu)
     expect(screen.getByRole("link", { name: "Ustawienia" })).toHaveAttribute(
       "href",
-      "/ustawienia",
+      "/ustawienia/ogolne",
     );
     expect(screen.getByText("M")).toBeInTheDocument();
     expect(screen.getByText("Nowa strona")).toBeInTheDocument();

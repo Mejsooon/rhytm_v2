@@ -103,6 +103,22 @@ test.describe("konto", () => {
     await expect(page).toHaveURL(/\/dzis$/);
   });
 
+  test("telefon: wylogowanie z indeksu Ustawień", async ({ page }, info) => {
+    test.skip(info.project.name !== "mobile", "indeks ustawień jest ekranem telefonu");
+    const email = uniqueEmail(info.project.name);
+    const haslo = randomPassword();
+    await createConfirmedUser(email, haslo);
+    await logInViaForm(page, email, haslo);
+    await expect(page).toHaveURL(/\/dzis$/);
+
+    await page.goto("/ustawienia");
+    await expect(
+      page.getByRole("link", { name: "Konto i bezpieczeństwo" }).filter({ visible: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Wyloguj się" }).filter({ visible: true }).click();
+    await expect(page).toHaveURL(/\/logowanie$/);
+  });
+
   test("złe hasło → „Nieprawidłowy e-mail lub hasło”", async ({
     page,
   }, info) => {
