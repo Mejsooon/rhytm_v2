@@ -8,12 +8,15 @@ import { cn } from "@/lib/utils";
 
 // Wspólny układ ekranów konta.
 // Od 800 px: tło panel (#fafafa) bez siatki, nagłówek z logo i akcją, karta na środku (CLogin.dc.html).
-// Poniżej 800 px: białe tło, bez karty, logo nad treścią (MLogin.dc.html).
+// Poniżej 800 px (CMLogin, CMRegister, CMForgot…): białe tło, treść `px-5`, logo 40 px nad treścią albo
+// nagłówek „Wstecz”. Kartę (`m-auth-card`) rysuje na telefonie sam formularz, bo stopka strony („Nie masz konta?”)
+// leży poza nią; powłoka jest wtedy płaska.
 // Przełączanie wyłącznie klasami CSS — bez matchMedia, żeby hydratacja nie migotała.
 export function AuthShell({
   headerAction,
   headerNote,
   footer,
+  footerWebOnly = false,
   progress,
   phoneBack,
   children,
@@ -23,9 +26,11 @@ export function AuthShell({
   headerNote?: string;
   // Web: szary pasek stopki na dole karty (.foot z CForgot / CEmailConfirmed)
   footer?: ReactNode;
+  // Stopka tylko na webie (makiety telefonu jej nie mają albo ma ją sam formularz)
+  footerWebOnly?: boolean;
   // Web: segmenty postępu nad kartą (CForgot); aria-hidden — krok mówi headerNote
   progress?: { step: number; total: number };
-  // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (MRegister.dc.html)
+  // Telefon: zamiast logo nagłówek ze strzałką „Wstecz” (CMRegister.dc.html)
   phoneBack?: string;
   children: ReactNode;
 }) {
@@ -46,23 +51,39 @@ export function AuthShell({
       </header>
 
       {phoneBack && (
-        <header className="box-border flex min-h-[60px] flex-none items-center gap-1 p-2 min-[800px]:hidden">
+        <header className="m-head flex-none border-b-0 min-[800px]:hidden">
           <Link
             href={phoneBack}
             aria-label="Wstecz"
-            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-muted"
+            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-accent"
           >
             <ChevronLeft
               aria-hidden="true"
-              className="size-[22px]"
+              className="size-5"
               strokeWidth={2}
             />
           </Link>
         </header>
       )}
 
-      <main className="flex flex-1 items-center justify-center p-6 max-[799px]:items-stretch max-[799px]:p-0">
-        <div className="flex w-full flex-col gap-3 max-[799px]:flex-1 min-[800px]:max-w-[400px]">
+      <main
+        className={cn(
+          "flex flex-1 items-center justify-center p-6 max-[799px]:items-stretch max-[799px]:px-5 max-[799px]:pb-6",
+          phoneBack ? "max-[799px]:pt-0" : "max-[799px]:pt-6",
+        )}
+      >
+        <div
+          className={cn(
+            "flex w-full flex-col gap-3 max-[799px]:flex-1 min-[800px]:max-w-[400px]",
+            phoneBack ? "max-[799px]:gap-4" : "max-[799px]:gap-5",
+          )}
+        >
+          {!phoneBack && (
+            <RhytmLogo
+              size={40}
+              className="justify-center min-[800px]:hidden"
+            />
+          )}
           {progress && (
             <div
               data-testid="auth-progress"
@@ -83,20 +104,18 @@ export function AuthShell({
           <Card
             className={cn(
               "box-border w-full gap-4 px-6 py-7",
-              // Telefon: bez karty, marginesy z makiety (56 / 24 / 24 px)
-              "max-[799px]:flex-1 max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:px-6 max-[799px]:pb-6 max-[799px]:shadow-none",
-              phoneBack ? "max-[799px]:pt-2" : "max-[799px]:pt-14",
+              // Telefon: powłoka płaska (karta w formularzu, patrz komentarz na górze)
+              "max-[799px]:flex-1 max-[799px]:gap-0 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0 max-[799px]:shadow-none",
             )}
           >
-            {!phoneBack && (
-              <RhytmLogo
-                size={48}
-                className="mb-3.5 justify-center min-[800px]:hidden"
-              />
-            )}
             {children}
             {footer && (
-              <div className="-mx-6 -mb-7 flex items-center justify-center rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 text-center text-[13px] text-muted-foreground max-[799px]:mx-0 max-[799px]:mb-0 max-[799px]:mt-4 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0">
+              <div
+                className={cn(
+                  "-mx-6 -mb-7 flex items-center justify-center rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-3.5 text-center text-[13px] text-muted-foreground max-[799px]:mx-0 max-[799px]:mb-0 max-[799px]:mt-4 max-[799px]:rounded-none max-[799px]:border-0 max-[799px]:bg-transparent max-[799px]:p-0",
+                  footerWebOnly && "max-[799px]:hidden",
+                )}
+              >
                 {footer}
               </div>
             )}

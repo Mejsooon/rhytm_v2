@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 // Pole hasła z przyciskiem „Pokaż hasło” / „Ukryj hasło”.
 // Układ siatką: web — etykieta i link w jednym wierszu nad polem (CLogin.dc.html),
-// telefon — link pod polem, wyrównany do prawej (MCLogin.dc.html). Jeden link w DOM, różnice tylko CSS.
+// telefon — link pod polem, wyrównany do prawej, cel 44 px (CMLogin.dc.html). Jeden link w DOM, różnice tylko CSS.
 export function PasswordInput({
   name,
   label,
@@ -45,7 +45,7 @@ export function PasswordInput({
         {label}
       </label>
       {rightLink && (
-        <div className="col-start-2 row-start-1 font-normal max-[799px]:col-span-2 max-[799px]:row-start-3 max-[799px]:mt-2 max-[799px]:justify-self-end max-[799px]:py-1">
+        <div className="col-start-2 row-start-1 font-normal max-[799px]:col-span-2 max-[799px]:row-start-3 max-[799px]:-mt-0.5 max-[799px]:-mb-3 max-[799px]:justify-self-end">
           {rightLink}
         </div>
       )}

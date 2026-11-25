@@ -1,6 +1,7 @@
 "use client";
 
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Clock } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
@@ -9,7 +10,8 @@ import { TextField } from "@/components/controls/field";
 
 import { resendLink, type AuthFormState } from "./actions";
 
-// Treść ekranu „Link wygasł” (CEmailConfirmed.dc.html, prawa karta): pole e-mail i „Wyślij nowy link”. Ramkę konta (AuthShell) dokłada strona.
+// Treść ekranu „Link wygasł” (CEmailConfirmed.dc.html, prawa karta; CMEmailLink.dc.html): pole e-mail i „Wyślij nowy link”.
+// Ramkę konta (AuthShell) dokłada strona; na telefonie treść jest kartą (`m-auth-card`).
 // Po wysłaniu zawsze ten sam tekst — nie zdradzamy, czy adres ma konto.
 export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   const [wyslano, setWyslano] = useState(false);
@@ -17,11 +19,23 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
   const [wynik, setWynik] = useState<AuthFormState>({ status: "idle" });
 
   return (
-    <div className="flex flex-col items-center gap-4 text-center max-[799px]:mt-6">
-      <span className="flex size-10 items-center justify-center rounded-[10px] border border-destructive-border bg-destructive-soft text-destructive-foreground shadow-xs">
-        <CircleAlert aria-hidden="true" className="size-5" strokeWidth={2} />
+    <div className="flex flex-col items-center gap-4 text-center max-[799px]:m-auth-card max-[799px]:gap-2 max-[799px]:px-5 max-[799px]:py-7">
+      {/* Web: czerwony wykrzyknik; telefon: zegar w kolorze ostrzeżenia (.empty-ic z makiety) */}
+      <span className="flex size-10 items-center justify-center rounded-[10px] border border-destructive-border bg-destructive-soft text-destructive-foreground shadow-xs max-[799px]:border-border max-[799px]:bg-white max-[799px]:text-warning-foreground">
+        <CircleAlert
+          aria-hidden="true"
+          className="size-5 max-[799px]:hidden"
+          strokeWidth={2}
+        />
+        <Clock
+          aria-hidden="true"
+          className="size-5 min-[800px]:hidden"
+          strokeWidth={2}
+        />
       </span>
-      <h1 className="m-0 text-xl font-semibold">Link wygasł</h1>
+      <h1 className="m-0 text-xl font-semibold max-[799px]:mt-2 max-[799px]:text-lg max-[799px]:tracking-[-0.011em]">
+        Link wygasł
+      </h1>
       <p className="m-0 leading-normal text-muted-foreground">
         Ten link jest za stary albo został już użyty. Wyślemy nowy na Twój
         adres.
@@ -72,12 +86,23 @@ export function LinkExpired({ type }: { type: "signup" | "recovery" }) {
             type="submit"
             size="lg"
             disabled={pending}
-            className="w-full leading-[1.21] max-[799px]:text-[15px]"
+            className="w-full leading-[1.21] max-[799px]:mt-2 max-[799px]:border-primary max-[799px]:bg-primary max-[799px]:text-primary-foreground max-[799px]:shadow-none"
           >
             Wyślij nowy link
           </Button>
         </form>
       )}
+      {/* Telefon (CMEmailLink): ważność nowego linku pod przyciskiem i „Zaloguj się” (na webie ważność jest w stopce karty) */}
+      <span className="text-xs text-muted-foreground min-[800px]:hidden">
+        Nowy link będzie ważny 1 godzinę.
+      </span>
+      <Button
+        asChild
+        variant="ghost"
+        className="w-full min-[800px]:hidden"
+      >
+        <Link href="/logowanie">Zaloguj się</Link>
+      </Button>
     </div>
   );
 }

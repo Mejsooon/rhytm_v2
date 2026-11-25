@@ -28,6 +28,7 @@ async function Ekran() {
     return (
       <AuthShell
         headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+        footerWebOnly
         footer={
           <span className="text-xs">Nowy link będzie ważny 1 godzinę.</span>
         }
@@ -37,7 +38,11 @@ async function Ekran() {
     );
   }
   return (
-    <AuthShell headerNote="krok 3 / 3" progress={{ step: 3, total: 3 }}>
+    <AuthShell
+      headerNote="krok 3 / 3"
+      progress={{ step: 3, total: 3 }}
+      phoneBack="/logowanie"
+    >
       <NewPasswordForm />
     </AuthShell>
   );

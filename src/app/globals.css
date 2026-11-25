@@ -218,6 +218,15 @@
   }
 }
 
+/* Karta ekranów konta na telefonie (.card z CMLogin, CMRegister, CMForgot…): ramka, promień, cień.
+   Bez paddingu — wypełnienie (np. px-6 py-6 albo px-5 py-7) dopisuje się klasami obok. */
+@utility m-auth-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--background);
+  box-shadow: var(--shadow-card);
+}
+
 /* Uchwyt arkusza od dołu (36×4 px) */
 @utility m-grab {
   width: 36px;

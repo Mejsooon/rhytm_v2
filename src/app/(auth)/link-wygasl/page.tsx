@@ -21,6 +21,8 @@ export default function LinkWygaslPage(props: PageProps<"/link-wygasl">) {
   return (
     <AuthShell
       headerAction={{ href: "/logowanie", label: "Zaloguj się" }}
+      // Telefon (CMEmailLink): ważność i „Zaloguj się” są w treści karty, więc stopka tylko na webie
+      footerWebOnly
       footer={
         <span className="text-xs">Nowy link będzie ważny 1 godzinę.</span>
       }

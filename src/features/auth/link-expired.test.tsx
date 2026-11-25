@@ -63,7 +63,7 @@ describe("LinkExpired", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("kafelek ikony w tonie błędu, przycisk „Wyślij nowy link” outline, sama treść bez ramki konta", () => {
+  it("kafelek ikony w tonie błędu, przycisk „Wyślij nowy link” outline, ramkę konta dokłada strona", () => {
     const { container } = render(<LinkExpired type="recovery" />);
     const kafelek = container.querySelector("svg.lucide")?.parentElement;
     expect(kafelek).toHaveClass(
@@ -74,17 +74,21 @@ describe("LinkExpired", () => {
     );
     const przycisk = screen.getByRole("button", { name: "Wyślij nowy link" });
     expect(przycisk).toHaveClass("border-input", "bg-white", "h-9");
-    // Ramka (nagłówek, stopka) należy do strony, nie do komponentu
-    expect(
-      screen.queryByText("Nowy link będzie ważny 1 godzinę."),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Zaloguj się" }),
-    ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveClass(
       "text-xl",
       "font-semibold",
     );
     expect(container.querySelector(".font-mono")).toBeNull();
+  });
+
+  it("telefon (CMEmailLink): karta, ważność nowego linku i „Zaloguj się” tylko poniżej 800 px", () => {
+    const { container } = render(<LinkExpired type="recovery" />);
+    expect(container.firstElementChild).toHaveClass("max-[799px]:m-auth-card");
+    expect(screen.getByText("Nowy link będzie ważny 1 godzinę.")).toHaveClass(
+      "min-[800px]:hidden",
+    );
+    expect(screen.getByRole("link", { name: "Zaloguj się" })).toHaveClass(
+      "min-[800px]:hidden",
+    );
   });
 });

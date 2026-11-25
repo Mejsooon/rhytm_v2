@@ -75,7 +75,7 @@ const EKRANY_PUBLICZNE = [
     ekran: "link-wygasl",
     sciezka: "/link-wygasl",
     tekst: "Link wygasł",
-    makieta: "CEmailConfirmed (stan „Link wygasł”)",
+    makieta: "CEmailConfirmed / CMEmailLink (stan „Link wygasł”)",
   },
 ];
 
@@ -99,7 +99,7 @@ test("zrzut 404 dla gościa (makieta CNotFound)", async ({ page }, info) => {
   await zrzut(page, "404", info.project.name);
 });
 
-test("zrzut /potwierdzono (makieta CEmailConfirmed)", async ({
+test("zrzut /potwierdzono (makiety CEmailConfirmed, CMEmailLink)", async ({
   page,
 }, info) => {
   await page.goto("/potwierdzono");

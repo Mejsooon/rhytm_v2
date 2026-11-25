@@ -15,7 +15,7 @@ export function GoogleButton({
       type="submit"
       size="lg"
       className={cn(
-        "w-full gap-2 leading-[1.21] max-[799px]:gap-2.5 max-[799px]:text-[15px]",
+        "w-full gap-2 leading-[1.21]",
         className,
       )}
     >
@@ -45,10 +45,10 @@ export function GoogleButton({
         />
       </svg>
       <span className="max-[799px]:hidden">{webLabel}</span>
-      {/* Telefon: „G” z MLogin.dc.html */}
+      {/* Telefon: „G” z CMLogin.dc.html */}
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         aria-hidden="true"
         className="min-[800px]:hidden"
