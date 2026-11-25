@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { kategoria, trening, wystapienie } from "./fixtures";
+import { kategoria, odnowienie, trening, wystapienie } from "./fixtures";
 import { MCalendarDay } from "./m-calendar-day";
 
 const kategorie = [kategoria("c1", "Studia", "#0070f3")];
@@ -316,5 +316,38 @@ describe("MCalendarDay — podgląd treningów", () => {
     expect(screen.getByTestId("kropka-2026-11-21")).toBeInTheDocument();
     // Fokus z klawiatury widoczny jak na webie
     expect(bieg).toHaveClass("focus-visible:shadow-focus");
+  });
+
+  it("odnowienia dnia: plakietki w pasku nad osią, przerywana ramka, pole dotyku 44 px, stuknięcie woła onRenewalClick", async () => {
+    const onRenewalClick = vi.fn();
+    wyrenderuj({
+      date: "2026-11-21",
+      renewals: [
+        odnowienie(),
+        odnowienie({ key: "f-ren:r2:2026-11-21", title: "Spotify", amount: 23.99 }),
+        odnowienie({ key: "f-ren:r3:2026-11-22", title: "Inne", date: "2026-11-22" }),
+      ],
+      onRenewalClick,
+    });
+    const pasek = screen.getByTestId("m-pasek-dnia");
+    const netflix = within(pasek).getByRole("button", { name: "↻ Netflix · 43,00 zł" });
+    expect(within(pasek).getByRole("button", { name: "↻ Spotify · 23,99 zł" })).toBeInTheDocument();
+    // Odnowienie z innego dnia nie trafia do paska
+    expect(within(pasek).queryByRole("button", { name: /Inne/ })).toBeNull();
+    // Plakietka: szara (sec) z przerywaną ramką; przycisk ma pole dotyku 44 px (m-hit: ±14 px wokół 18 px)
+    expect(netflix).toHaveClass("m-hit");
+    expect(netflix.firstElementChild).toHaveClass("border-dashed", "bg-muted");
+    await userEvent.click(netflix);
+    expect(onRenewalClick).toHaveBeenCalledWith("f-ren:r1:2026-11-21");
+  });
+
+  it("odnowienie bez kwoty pokazuje samą nazwę, a dzień bez odnowień nie ma plakietek", () => {
+    wyrenderuj({ date: "2026-11-21", renewals: [odnowienie({ amount: null })] });
+    expect(within(screen.getByTestId("m-pasek-dnia")).getByRole("button", { name: "↻ Netflix" })).toBeInTheDocument();
+  });
+
+  it("bez odnowień pasek ma tylko tekst „dnia w liczbach”", () => {
+    wyrenderuj();
+    expect(within(screen.getByTestId("m-pasek-dnia")).queryAllByRole("button")).toHaveLength(0);
   });
 });

@@ -48,7 +48,7 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
     date,
     profil.weekStart,
   );
-  // Odnowienia subskrypcji tylko tutaj (Dziś i telefon ich nie wczytują), równolegle z kalendarzem
+  // Odnowienia subskrypcji wczytuje tylko ta strona (Dziś ich nie wczytuje); web i telefon dostają te same, równolegle z kalendarzem
   const [dane, odnowienia] = await Promise.all([
     loadCalendar(supabase, user.id, zakres, profil),
     loadRenewals(supabase, user.id, zakres),

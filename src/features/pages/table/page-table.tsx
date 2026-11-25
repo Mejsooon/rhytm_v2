@@ -136,7 +136,8 @@ export function PageTable({
   moduleRowFilter?: (row: PageRow, fields: PageField[]) => boolean;
   // Tylko w trybie modułu: liczba żywych wierszy (bez filtrów), np. do plakietki w nagłówku ekranu
   onLiveRowCount?: (n: number) => void;
-  // Tylko w trybie modułu: układ telefonu (CMPasswords) z tego samego magazynu co tabela. Oba układy są w DOM:
+  // Układ telefonu z tego samego magazynu co tabela (moduł Hasła: CMPasswords; strona Subscriptions: CMSubs).
+  // Oba układy są w DOM:
   // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „+ Nowy”) tylko od 800 px.
   // Arkusz wiersza (MRowSheet) i okna zostają wspólne.
   renderPhone?: (api: PhoneTableApi) => React.ReactNode;
@@ -364,7 +365,7 @@ export function PageTable({
 
   return (
     <>
-      {renderPhone && modul && (
+      {renderPhone && (
         <div className="min-[800px]:hidden">
           <UkladTelefonu render={renderPhone} api={{
             fields,
@@ -384,7 +385,7 @@ export function PageTable({
           }} />
         </div>
       )}
-      <div className={cn("flex min-w-0 flex-col gap-3", renderPhone && modul && "max-[799px]:hidden")}>
+      <div className={cn("flex min-w-0 flex-col gap-3", renderPhone && "max-[799px]:hidden")}>
         <PinnedCards
           cards={settings.pinned_cards}
           fields={fields}

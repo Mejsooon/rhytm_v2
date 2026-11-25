@@ -409,7 +409,7 @@ export function MRowSheet({
             : (cykle[f.id] ?? f.config.default_cycle ?? "month");
           return (
             <div key={f.id} className="grid grid-cols-[minmax(0,1fr)_150px] items-end gap-2.5">
-              <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              <label className="flex flex-col gap-1.5 text-[13px] font-medium text-foreground">
                 {f.name}
                 <span className="flex h-11 items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo">
                   <input
@@ -427,13 +427,21 @@ export function MRowSheet({
                       if (czysty === "") onChange(f.id, null);
                       else if (isRecurringValue(n)) onChange(f.id, { amount: n.amount, cycle: cykl });
                     }}
-                    className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-normal text-foreground tabular-nums outline-none placeholder:text-faint-foreground"
+                    // Po wyjściu z pola kwota formatuje się jak w komórce webu („43,5” → „43,50”); niepoprawny tekst wraca do ostatniej kwoty
+                    onBlur={() =>
+                      setKwoty((m) => {
+                        const reszta = { ...m };
+                        delete reszta[f.id];
+                        return reszta;
+                      })
+                    }
+                    className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-base font-normal text-foreground tabular-nums outline-none placeholder:text-faint-foreground"
                   />
                   <span className="text-sm font-normal">zł</span>
                 </span>
               </label>
               <Segment
-                ariaLabel={`${f.name}: cykl`}
+                ariaLabel={fields.filter((x) => x.type === "recurring").length > 1 ? `${f.name}: cykl` : "Cykl"}
                 value={cykl}
                 options={[
                   { value: "month", label: "mies." },

@@ -19,7 +19,8 @@ import {
 import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
 import { formatClockTime } from "@/lib/time/timezones";
 import { layoutDay, nowLine } from "../day-layout";
-import type { CategoryRow } from "../load-calendar";
+import { formatMoney } from "@/features/pages/fields";
+import type { CategoryRow, RenewalItem } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
 import { viewRange, weekdayOf } from "../view-range";
 import {
@@ -40,8 +41,10 @@ export function MCalendarDay({
   categories,
   clock,
   tasks = [],
+  renewals = [],
   onAdd,
   onBlockClick,
+  onRenewalClick,
 }: {
   date: IsoDate;
   today: IsoDate;
@@ -55,14 +58,19 @@ export function MCalendarDay({
   clock: "24" | "12";
   // Zadania kalendarza: pasek „Zaplanowane…” liczy z nich „zadania A/B” dnia
   tasks?: TaskRow[];
+  // Odnowienia subskrypcji widocznych źródeł (z loadRenewals, te same co na webie); z nich plakietki dnia
+  renewals?: RenewalItem[];
   onAdd: (date: IsoDate, startMin: number) => void;
   // Stuknięcie bloku (klucz wystąpienia); szczegóły otwiera arkusz u rodzica
   onBlockClick: (key: string) => void;
+  // Stuknięcie plakietki odnowienia (klucz); arkusz podglądu otwiera rodzic
+  onRenewalClick?: (key: string) => void;
 }) {
   const osRef = useRef<HTMLDivElement>(null);
   const dniTygodnia = viewRange("tydzien", date, weekStart).days;
   const dnia = occurrences.filter((o) => o.date === date);
   const treningi = sport.filter((i) => i.date === date);
+  const odnowieniaDnia = renewals.filter((r) => r.date === date);
   // Bloki i treningi dzielą szerokość przy nakładaniu
   const uklad = layoutDay([...dnia, ...treningi]);
   const linia = nowLine({ date: today, minutes: nowMinutes }, date);
@@ -212,11 +220,30 @@ export function MCalendarDay({
         >{`${liczba} ${slowoBlok}`}</StatusBadge>
       </div>
 
+      {/* „Dzień w liczbach” i odnowienia subskrypcji tego dnia (T13): plakietki z przerywaną ramką pod spodem */}
       <div
         data-testid="m-pasek-dnia"
-        className="flex-none border-b border-border px-4 py-2 text-xs text-muted-foreground tabular-nums"
+        className="flex flex-none flex-wrap items-center gap-1.5 border-b border-border px-4 py-2"
       >
-        {`Zaplanowane ${naGodziny(zaplanowaneMin)} · wolne (8–20) ${naGodziny(wolneMin)} · zadania ${zadanWykonanych}/${zadanRazem}`}
+        <span className="basis-full text-xs text-muted-foreground tabular-nums">
+          {`Zaplanowane ${naGodziny(zaplanowaneMin)} · wolne (8–20) ${naGodziny(wolneMin)} · zadania ${zadanWykonanych}/${zadanRazem}`}
+        </span>
+        {odnowieniaDnia.map((r) => (
+          // Przycisk z polem dotyku 44 px (m-hit); sama plakietka ma 18 px
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => onRenewalClick?.(r.key)}
+            className="m-hit inline-flex max-w-full cursor-pointer rounded-sm border-0 bg-transparent p-0 font-[inherit]"
+          >
+            <StatusBadge
+              tone="gray"
+              className="max-w-full border-dashed border-black/[.24] tabular-nums"
+            >
+              <span className="truncate">{`↻ ${r.title}${r.amount !== null ? ` · ${formatMoney(r.amount)} zł` : ""}`}</span>
+            </StatusBadge>
+          </button>
+        ))}
       </div>
 
       <div

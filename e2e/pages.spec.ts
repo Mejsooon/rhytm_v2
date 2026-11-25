@@ -491,6 +491,47 @@ test.describe("strony", () => {
     await expect(wSidebarze).toBeVisible();
   });
 
+  // CMSubs i CMRowEdit (Subscriptions): ekran telefonu z tego samego magazynu co tabela, nowy wiersz w arkuszu
+  test("telefon 390 px: Subscriptions — ekran CMSubs, wiersz dodany w arkuszu (kwota, cykl, data), suma w karcie „Miesięcznie”", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile", "układ telefonu");
+    await zalozKontoStron(page, info.project.name);
+    await utworzSubscriptions(page);
+
+    await expect(page.getByRole("heading", { name: "Subscriptions", level: 1 })).toBeVisible();
+    // Dwa układy są w DOM, więc zawężamy do widocznych
+    const miesiecznie = page.getByText("Miesięcznie", { exact: true }).filter({ visible: true }).locator("..");
+    await expect(miesiecznie).toContainText("0,00 zł");
+    await expect(page.getByText("Brak odnowień").filter({ visible: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Nowy wiersz" }).filter({ visible: true }).click();
+    const arkusz = page.getByRole("dialog", { name: "Nowy wiersz" });
+    await arkusz.getByRole("textbox", { name: "Nazwa", exact: true }).fill("Netflix");
+    await arkusz.getByRole("textbox", { name: "Kwota cykliczna", exact: true }).fill("43,5");
+    // Data odnowienia: piętnasty dzień następnego miesiąca (kalendarz otwiera się na bieżącym miesiącu)
+    const data = arkusz.getByRole("group", { name: "Data odnowienia" });
+    await data.getByRole("button", { name: "Następny miesiąc" }).click();
+    await data.getByRole("button", { name: /^15 \D+ \d{4}$/ }).click();
+    await arkusz.getByRole("button", { name: "Zapisz", exact: true }).click();
+    await expect(arkusz).toBeHidden();
+
+    // Wiersz na liście i suma w karcie
+    const wiersz = page.getByRole("button", { name: /Netflix/ }).filter({ visible: true });
+    await expect(wiersz).toContainText("43,50 zł/m");
+    await expect(miesiecznie).toContainText("43,50 zł");
+    await expect(page.getByText("1 z 1 subskrypcji").filter({ visible: true })).toBeVisible();
+
+    // Cykl „rok” w arkuszu: 43,50 zł rocznie to 3,63 zł miesięcznie (zaokrąglone do grosza)
+    await wiersz.click();
+    const edycja = page.getByRole("dialog", { name: "Netflix" });
+    await edycja.getByRole("radio", { name: "rok" }).click();
+    await edycja.getByRole("button", { name: "Zapisz", exact: true }).click();
+    await expect(edycja).toBeHidden();
+    await expect(wiersz).toContainText("43,50 zł/r");
+    await expect(miesiecznie).toContainText("3,63 zł");
+  });
+
   test("telefon 390 px: lista /strony, „Nowa strona” otwiera edytor z paskiem skrótów", async ({
     page,
   }, info) => {

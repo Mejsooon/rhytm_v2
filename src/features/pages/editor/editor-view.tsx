@@ -16,8 +16,10 @@ import { QUICK_START } from "../blocks";
 import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
+import { rowsLabel } from "../rows-label";
 import { CommandLine } from "./command-line";
 import { PageTable } from "../table/page-table";
+import { MSubs } from "../table/mobile/m-subs";
 import { MEditor } from "./mobile/m-editor";
 import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
@@ -93,6 +95,17 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
 
   const sciezka = tytul.trim() === "" ? "Bez tytułu" : tytul;
   const pusta = store.blocks.length === 0;
+  // Subscriptions na telefonie (CMSubs, T16): strona z szablonu Subscriptions, której tabela ma pola Kwota cykliczna
+  // i Data odnowienia, dostaje własny ekran zamiast edytora; inne strony zostają przy edytorze (CMEditor)
+  const blokSubs =
+    page.templateKey === "subscriptions"
+      ? store.blocks.find(
+          (b) =>
+            b.type === "table" &&
+            b.fields.some((f) => f.type === "recurring") &&
+            b.fields.some((f) => f.type === "renewal"),
+        )
+      : undefined;
 
   return (
     <>
@@ -134,11 +147,13 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
         page={stronaWMenu}
         pages={pagesStore.pages}
         pagesStore={pagesStore}
+        ownScreen={blokSubs !== undefined}
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
         onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
       >
         <div className="box-border flex w-full min-w-0 flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:gap-2.5 max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-0">
-          <div className="mb-2 flex items-center gap-3">
+          {/* Telefon Subscriptions: tytuł strony rysuje MSubs */}
+          <div className={`mb-2 flex items-center gap-3 ${blokSubs ? "max-[799px]:hidden" : ""}`}>
             <ActionPopover
               open={wyborIkony}
               onOpenChange={setWyborIkony}
@@ -173,7 +188,11 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           </div>
 
           {store.blocks.map((b) => (
-            <div key={b.id} className="group relative pr-9">
+            <div
+              key={b.id}
+              // Telefon, Subscriptions: CMSubs to sama tabela, więc inne bloki (np. intro szablonu) chowamy
+              className={`group relative pr-9 ${blokSubs ? (b === blokSubs ? "max-[799px]:pr-0" : "max-[799px]:hidden") : ""}`}
+            >
               {b.type === "heading" && (
                 <TextBlock
                   variant="heading"
@@ -210,6 +229,33 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   today={data.today}
                   // „Usuń tabelę” w menu „⋯” tabeli (S2TableMenu) usuwa blok jak kosz obok
                   onRemove={() => void store.remove(b.id)}
+                  // Telefon, strona Subscriptions: ekran CMSubs z tego samego magazynu co tabela
+                  renderPhone={
+                    b === blokSubs
+                      ? (api) => (
+                          <MSubs
+                            title={sciezka}
+                            fields={api.fields}
+                            rows={api.rows}
+                            today={data.today}
+                            menu={
+                              <PageMenu
+                                page={stronaWMenu}
+                                pages={pagesStore.pages}
+                                store={pagesStore}
+                                onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
+                                sheet
+                                triggerLabel="Więcej"
+                                meta={rowsLabel(api.rows.length)}
+                                triggerClassName="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent p-0 font-[inherit] text-foreground hover:bg-accent"
+                              />
+                            }
+                            onNewRow={api.newRow}
+                            onEditRow={api.editRow}
+                          />
+                        )
+                      : undefined
+                  }
                 />
               )}
               {/* .blk-act.btng.ic.xs: pojawia się po najechaniu lub fokusie; na telefonie zawsze, 44 px */}
@@ -219,7 +265,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 icon
                 aria-label="Usuń blok"
                 onClick={() => void store.remove(b.id)}
-                className="absolute top-1 right-0 text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:opacity-100"
+                className={`absolute top-1 right-0 text-destructive-foreground opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 hover:text-destructive-foreground focus-visible:opacity-100 max-[799px]:size-11 max-[799px]:opacity-100 ${b === blokSubs ? "max-[799px]:hidden" : ""}`}
               >
                 <Trash2 size={14} aria-hidden="true" />
               </Button>

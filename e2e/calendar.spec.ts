@@ -386,6 +386,49 @@ test.describe("kalendarz (telefon)", () => {
     test.skip(info.project.name !== "mobile", "układ telefonu");
   });
 
+  test("odnowienie subskrypcji: plakietka w dniu, arkusz podglądu z linkiem, kropka w miesiącu, ukrycie źródła", async ({
+    page,
+  }, info) => {
+    const { userId } = await zalozKontoKalendarza(page, info.project.name);
+    const idStrony = await zasiejOdnowienie(page, userId, {
+      title: "Netflix",
+      amount: 43,
+      date: SRODA,
+    });
+
+    // Dzień: plakietka w pasku nad osią (układ web jest ukryty, więc rola wskazuje tylko telefon)
+    await page.goto(`/kalendarz?widok=dzien&data=${SRODA}`);
+    const plakietka = page.getByRole("button", { name: "↻ Netflix · 43,00 zł" });
+    await expect(plakietka).toBeVisible();
+    await plakietka.click();
+    const arkusz = page.getByRole("dialog", { name: "Odnowienie Netflix" });
+    await expect(arkusz).toContainText("Odnowienie · Subscriptions");
+    await expect(arkusz).toContainText("13.02.2027");
+    await expect(arkusz).toContainText("Tylko podgląd");
+    await arkusz.getByRole("link", { name: "Otwórz w Subscriptions" }).click();
+    await expect(page).toHaveURL(new RegExp(`/strony/${idStrony}$`));
+
+    // Miesiąc: kropka odnowienia w komórce 13 stycznia
+    await page.goto(`/kalendarz?widok=miesiac&data=${SRODA}`);
+    await expect(
+      page
+        .getByRole("button", { name: "13 stycznia" })
+        .getByTestId("kropka-odnowienia"),
+    ).toBeVisible();
+
+    // Ukrycie źródła w arkuszu „Kategorie” chowa odnowienie
+    await page.goto(`/kalendarz?widok=dzien&data=${SRODA}`);
+    await expect(plakietka).toBeVisible();
+    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
+    const zapis = poZapisie(page);
+    await page
+      .getByRole("switch", { name: "Pokaż odnowienia Subscriptions" })
+      .click();
+    await zapis;
+    await page.keyboard.press("Escape");
+    await expect(plakietka).toHaveCount(0);
+  });
+
   test("„+” → arkusz → blok na osi dnia; miesiąc z kropką kategorii", async ({
     page,
   }, info) => {

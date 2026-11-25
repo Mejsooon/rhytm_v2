@@ -451,10 +451,9 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-kategorie", projekt);
   });
 
-  test("zrzuty odnowień w kalendarzu (makiety S2Calendar, S2CalendarRenewal, S2CalendarMonth)", async ({
+  test("zrzuty odnowień w kalendarzu (makiety S2Calendar, S2CalendarRenewal, S2CalendarMonth; telefon: CMCalendarDay, CMCalendarWeek, CMCalendarMonth, CMRenewalSheet)", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "web", "układ webowy");
     const projekt = info.project.name;
     const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
     await zasiejBlok(userId, {
@@ -469,6 +468,31 @@ test.describe("ekrany z sesją", () => {
       amount: 43,
       date: "2027-01-16",
     });
+
+    if (projekt === "mobile") {
+      // Telefon: plakietka w pasku nad osią dnia, arkusz podglądu, lista tygodnia i miesiąc z kropką
+      await page.goto("/kalendarz?widok=dzien&data=2027-01-16");
+      const plakietka = page.getByRole("button", { name: "↻ Netflix · 43,00 zł" });
+      await expect(plakietka).toBeVisible();
+      await zrzut(page, "kalendarz-dzien-odnowienie", projekt);
+      await plakietka.click();
+      await expect(
+        page.getByRole("dialog", { name: "Odnowienie Netflix" }),
+      ).toContainText("Tylko podgląd");
+      await zrzut(page, "kalendarz-arkusz-odnowienia", projekt);
+      await page.getByRole("button", { name: "Zamknij" }).click();
+
+      await page.goto(`/kalendarz?widok=tydzien&data=${WTOREK}`);
+      await expect(
+        page.getByRole("button", { name: /↻ Netflix/ }),
+      ).toBeVisible();
+      await zrzut(page, "kalendarz-tydzien-odnowienie", projekt);
+
+      await page.goto(`/kalendarz?widok=miesiac&data=2027-01-16`);
+      await expect(page.getByTestId("kropka-odnowienia")).toBeVisible();
+      await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
+      return;
+    }
 
     await page.goto(`/kalendarz?widok=tydzien&data=${WTOREK}`);
     const wpis = page.getByRole("button", { name: "Netflix · 43,00 zł" });
@@ -979,11 +1003,10 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-kosz", projekt);
   });
 
-  // Telefon (CMSubs) należy do Etapu 3, więc tylko web
-  test("zrzuty /strony Subscriptions (makiety S2Main, S2AddField)", async ({
+  // Web: tabela i okno „Nowe pole”; telefon: ekran CMSubs i arkusz wiersza (CMRowEdit)
+  test("zrzuty /strony Subscriptions (makiety S2Main, S2AddField; telefon: CMSubs, CMRowEdit)", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "web", "układ webowy");
     const projekt = info.project.name;
     const userId = await zalozKontoStron(page, projekt);
     await utworzSubscriptions(page);
@@ -1060,6 +1083,16 @@ test.describe("ekrany z sesją", () => {
     if (error)
       throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
     await page.reload();
+    if (projekt === "mobile") {
+      // CMSubs: trzy wiersze listy (jeden anulowany), sumy i pasek „Najbliżej”
+      await expect(page.getByText("3 z 3 subskrypcji").filter({ visible: true })).toBeVisible();
+      await zrzut(page, "strony-subscriptions", projekt);
+      // CMRowEdit: arkusz wiersza Netflix (kwota z cyklem, kalendarz odnowienia, kategoria, „Aktywna”)
+      await page.getByRole("button", { name: /Netflix/ }).filter({ visible: true }).click();
+      await expect(page.getByRole("dialog", { name: "Netflix" })).toBeVisible();
+      await zrzut(page, "strony-subscriptions-wiersz", projekt);
+      return;
+    }
     await expect(page.locator("tbody tr")).toHaveCount(3);
     await expect(page.getByTestId("karta")).toHaveCount(3);
     await zrzut(page, "strony-subscriptions", projekt);

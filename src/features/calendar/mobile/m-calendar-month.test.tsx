@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildMonthGrid } from "@/components/controls/calendar-math";
-import { kategoria, planZSzablonu, trening, wystapienie } from "./fixtures";
+import { kategoria, odnowienie, planZSzablonu, trening, wystapienie } from "./fixtures";
 import { MCalendarMonth } from "./m-calendar-month";
 
 const dni = buildMonthGrid(2026, 10, "mon").map((c) => c.date);
@@ -168,5 +168,39 @@ describe("MCalendarMonth — kolejność wpisów dnia", () => {
     expect(screen.getByRole("link", { name: /Spokojny/ })).toHaveClass(
       "focus-visible:shadow-focus",
     );
+  });
+
+  it("odnowienie: pierścień odnowienia w komórce dnia, obok maks. 3 kropek kategorii", () => {
+    wyrenderuj({
+      renewals: [
+        odnowienie({ date: "2026-11-10", key: "f-ren:r1:2026-11-10" }),
+        odnowienie({ date: "2026-11-20", key: "f-ren:r1:2026-11-20" }),
+      ],
+    });
+    // 10.11 ma 4 kategorie: 3 kropki kategorii (limit z makiety) + pierścień odnowienia
+    const z4 = screen.getByRole("button", { name: "10 listopada" });
+    expect(within(z4).getAllByTestId("kropka-kategorii")).toHaveLength(3);
+    expect(within(z4).getAllByTestId("kropka-odnowienia")).toHaveLength(1);
+    // 20.11 ma tylko odnowienie
+    const sam = screen.getByRole("button", { name: "20 listopada" });
+    expect(within(sam).queryAllByTestId("kropka-kategorii")).toHaveLength(0);
+    expect(within(sam).getByTestId("kropka-odnowienia")).toHaveStyle({ borderColor: "#737373" });
+    // Dzień bez odnowienia nie ma kropki
+    expect(within(screen.getByRole("button", { name: "12 listopada" })).queryByTestId("kropka-odnowienia")).toBeNull();
+  });
+
+  it("lista wybranego dnia zaczyna się od „↻ Nazwa · kwota”, a stuknięcie woła onRenewalClick; bez „Brak bloków — dodaj”", async () => {
+    const onRenewalClick = vi.fn();
+    wyrenderuj({
+      date: "2026-11-20",
+      renewals: [odnowienie({ date: "2026-11-20", key: "f-ren:r1:2026-11-20" })],
+      onRenewalClick,
+    });
+    const wpis = screen.getByRole("button", { name: /↻ Netflix · 43,00 zł/ });
+    expect(wpis).toHaveTextContent("cały dzień");
+    expect(wpis).toHaveClass("border-dashed");
+    expect(screen.queryByRole("button", { name: "Brak bloków — dodaj" })).toBeNull();
+    await userEvent.click(wpis);
+    expect(onRenewalClick).toHaveBeenCalledWith("f-ren:r1:2026-11-20");
   });
 });

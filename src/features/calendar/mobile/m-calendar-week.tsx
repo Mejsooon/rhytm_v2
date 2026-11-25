@@ -13,7 +13,8 @@ import {
   type SportItem,
 } from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
-import type { CategoryRow } from "../load-calendar";
+import { formatMoney } from "@/features/pages/fields";
+import type { CategoryRow, RenewalItem } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
 import { weekdayOf } from "../view-range";
 import { DNI_PELNE, DNI_SKROT, KOLOR_BRAK, MIESIACE_DOP } from "./pl";
@@ -27,8 +28,10 @@ export function MCalendarWeek({
   sport = [],
   categories,
   clock,
+  renewals = [],
   onAdd,
   onBlockClick,
+  onRenewalClick,
 }: {
   // 7 dni tygodnia od jego pierwszego dnia
   days: IsoDate[];
@@ -41,8 +44,12 @@ export function MCalendarWeek({
   sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
+  // Odnowienia subskrypcji widocznych źródeł: pierwsze wpisy dnia, z przerywaną ramką (T13)
+  renewals?: RenewalItem[];
   onAdd: (date: IsoDate, startMin: number) => void;
   onBlockClick: (key: string) => void;
+  // Stuknięcie odnowienia (klucz); arkusz podglądu otwiera rodzic
+  onRenewalClick?: (key: string) => void;
 }) {
   const startPlusa =
     date === today
@@ -57,6 +64,7 @@ export function MCalendarWeek({
         const nazwa = `${DNI_PELNE[numer]} ${d} ${MIESIACE_DOP[m - 1]}`;
         const dzienne = occurrences.filter((o) => o.date === dzien);
         const treningi = sport.filter((i) => i.date === dzien);
+        const odnowieniaDnia = renewals.filter((r) => r.date === dzien);
         // Bloki i treningi dnia razem, godzina rosnąco
         const wpisy = [
           ...dzienne.map((o) => ({
@@ -90,7 +98,21 @@ export function MCalendarWeek({
               </span>
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-              {dzienne.length === 0 && treningi.length === 0 && (
+              {/* Odnowienia pierwsze na liście dnia (CMCalendarWeek): „↻ Nazwa” i kwota, przerywana ramka */}
+              {odnowieniaDnia.map((r) => (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => onRenewalClick?.(r.key)}
+                  className="box-border flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-[10px] border border-dashed border-black/[.24] bg-white px-2.5 text-left text-foreground"
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{`↻ ${r.title}`}</span>
+                  {r.amount !== null && (
+                    <span className="flex-none text-xs text-muted-foreground tabular-nums">{`${formatMoney(r.amount)} zł`}</span>
+                  )}
+                </button>
+              ))}
+              {dzienne.length === 0 && treningi.length === 0 && odnowieniaDnia.length === 0 && (
                 <span className="flex min-h-11 items-center text-sm text-muted-foreground">
                   Brak bloków
                 </span>

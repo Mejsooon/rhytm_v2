@@ -448,4 +448,36 @@ describe("EditorView", () => {
     expect(tytuly(0)).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.textContent)).toEqual(["Filtruj", "Filtruj · 1"]);
   });
+
+  // CMSubs (T16): ekran telefonu tylko dla strony z szablonu Subscriptions z polami Kwota cykliczna i Data odnowienia
+  it("Subscriptions: obok tabeli webu jest ekran telefonu (sumy, filtr), a edytor telefonu (Więcej, pole „/”) znika", () => {
+    const d = stronaTestowa("subscriptions", "Subscriptions", [
+      { Nazwa: "Netflix", "Kwota cykliczna": { amount: 43, cycle: "month" }, "Data odnowienia": "2026-11-21", Kategoria: "Rozrywka", Aktywna: true },
+    ]);
+    render(<EditorView data={d} />);
+    expect(screen.getByRole("radiogroup", { name: "Filtr" })).toBeInTheDocument();
+    expect(screen.getByText("Miesięcznie")).toBeInTheDocument();
+    // Tabela webu zostaje w DOM, ale chowa się na telefonie
+    expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).not.toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Nowy blok" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Wstaw tabelę" })).not.toBeInTheDocument();
+  });
+
+  it("Books: bez ekranu CMSubs, edytor telefonu i tabela zostają", () => {
+    const d = stronaTestowa("books", "Books", [{ Tytuł: "Diuna", Status: "Czytam" }]);
+    render(<EditorView data={d} />);
+    expect(screen.queryByRole("radiogroup", { name: "Filtr" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Miesięcznie")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Nowy blok" })).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+
+  it("Subscriptions: telefon ma „Więcej” (menu strony), a blok tekstu szablonu jest ukryty na telefonie, nie na webie", () => {
+    const d = stronaTestowa("subscriptions", "Subscriptions", []);
+    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Twoje subskrypcje i ich odnowienia." }, fields: [], rows: [] };
+    render(<EditorView data={{ ...d, blocks: [intro, ...d.blocks] }} />);
+    expect(screen.getByRole("button", { name: "Więcej" })).toBeInTheDocument();
+    const wrapper = screen.getByDisplayValue("Twoje subskrypcje i ich odnowienia.").closest(".group");
+    expect(wrapper).toHaveClass("max-[799px]:hidden");
+  });
 });

@@ -10,7 +10,7 @@
 
 Czytaj oba w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMSubs.dc.html` (filtry), `CMRowEdit.dc.html`. Dla odnowień w kalendarzu (bez makiety CM) wzorem jest styl z `S2Calendar.dc.html` i `S2CalendarRenewal.dc.html`, przeniesiony na CM-BASE. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMSubs CMRowEdit S2CalendarRenewal`.
+**Makiety (wiążące):** `docs/design/mockups/CMSubs.dc.html` (filtry), `CMRowEdit.dc.html`. Odnowienia w kalendarzu telefonu: `CMCalendarDay.dc.html` (pasek nad osią z „dniem w liczbach” i odnowieniami, T13), `CMCalendarWeek.dc.html`, `CMCalendarMonth.dc.html` (dane `REN` w skrypcie makiet) i arkusz `CMRenewalSheet.dc.html` (dodane/poprawione 24.11; zastępują wzór S2CalendarRenewal). Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMSubs CMRowEdit S2CalendarRenewal`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4, kontrolki, Vitest, Playwright (CI).
 
@@ -86,8 +86,9 @@ Czytaj oba w całości przed każdym zadaniem.
 - [ ] Dzień: nad osią godzin (pod wierszem daty) pasek z plakietkami odnowień tego dnia. Plakietka to przycisk 44 px wysokości dotyku: `bdg out` z przerywaną ramką, `Repeat` 12 px, „Netflix · 43,00 zł”.
 - [ ] Tydzień: odnowienia jako pierwsze wpisy dnia, ten sam styl.
 - [ ] Miesiąc: szara kropka (`#a3a3a3`) w komórce dnia, liczona do limitu kropek. Na liście wybranego dnia wpis „↻ Netflix” z kwotą.
-- [ ] Stuknięcie otwiera `MRenewalSheet`:
-  - `FormDialog` „close” z treścią jak `RenewalPopover`: plakietka „Odnowienie · <strona>”, tytuł, data i czas, siatka Kwota/Kategoria/Cykl/Następne, `alert.info` „Tylko podgląd…”;
+- [ ] Wygląd plakietek i wpisów odnowień w dniu, tygodniu i miesiącu dokładnie według CMCalendarDay/Week/Month (24.11) — makiety wygrywają z opisem powyżej.
+- [ ] Stuknięcie otwiera `MRenewalSheet` według CMRenewalSheet:
+  - `FormDialog` „close”: plakietka „↻ Odnowienie · <strona>”, tytuł (nazwa), „43,00 zł / mies.”, wiersze „Cykl” („co miesiąc”/„co rok”), „Ten termin” („sob 14.11.2026”), „Następne” („pon 14.12.2026 · za 29 dni”), „Kategoria”; `alert.info` „Tylko podgląd. Edytujesz na stronie <strona>.”;
   - przycisk „Otwórz w <strona>” na całą szerokość (→ `/strony/<id>`).
 
   Treść kopiuje markup `RenewalPopover` (bez wspólnej funkcji pomocniczej) albo renderuje `RenewalPopover` w trybie treści, jeśli ma taki prop.

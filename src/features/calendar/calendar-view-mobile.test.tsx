@@ -25,7 +25,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { CalendarView } from "./calendar-view";
-import type { CalendarData } from "./load-calendar";
+import type { CalendarData, RenewalsData } from "./load-calendar";
 
 function dane(): CalendarData {
   return {
@@ -466,5 +466,95 @@ describe("CalendarView na telefonie", () => {
       delete (window as { matchMedia?: unknown }).matchMedia;
       window.history.replaceState(null, "", "/");
     }
+  });
+
+  // Odnowienia subskrypcji na telefonie (T13): te same dane co web, widoczność według `shown` źródła
+  describe("odnowienia", () => {
+    function odnowienia(shown = true): RenewalsData {
+      return {
+        items: [
+          {
+            key: "f-ren:r1:2026-11-21",
+            fieldId: "f-ren",
+            pageId: "p1",
+            pageTitle: "Subscriptions",
+            rowId: "r1",
+            date: "2026-11-21",
+            next: "2026-12-21",
+            title: "Netflix",
+            amount: 43,
+            cycle: "month",
+            categoryName: "Kategoria",
+            categoryLabel: "Rozrywka",
+          },
+        ],
+        sources: [
+          {
+            fieldId: "f-ren",
+            pageId: "p1",
+            config: { show_in_calendar: shown },
+            name: "Subscriptions",
+            shown,
+          },
+        ],
+      };
+    }
+
+    function widok(view: "dzien" | "tydzien" | "miesiac", shown = true) {
+      return render(
+        <CalendarView
+          view={view}
+          date="2026-11-21"
+          today="2026-11-17"
+          nowMinutes={600}
+          data={dane()}
+          renewals={odnowienia(shown)}
+        />,
+      );
+    }
+
+    it("dzień: plakietka w pasku nad osią, stuknięcie otwiera arkusz z danymi i linkiem do strony", async () => {
+      widok("dzien");
+      const plakietka = within(screen.getByTestId("m-pasek-dnia")).getByRole("button", {
+        name: "↻ Netflix · 43,00 zł",
+      });
+      await userEvent.click(plakietka);
+      const arkusz = await screen.findByRole("dialog", { name: "Odnowienie Netflix" });
+      expect(arkusz).toHaveTextContent("sob 21.11.2026");
+      expect(arkusz).toHaveTextContent("pon 21.12.2026 · za 34 dni");
+      expect(within(arkusz).getByRole("link", { name: "Otwórz w Subscriptions" })).toHaveAttribute(
+        "href",
+        "/strony/p1",
+      );
+      await userEvent.click(within(arkusz).getByRole("button", { name: "Zamknij" }));
+      expect(screen.queryByRole("dialog", { name: "Odnowienie Netflix" })).toBeNull();
+    });
+
+    it("tydzień: odnowienie na liście dnia otwiera ten sam arkusz", async () => {
+      widok("tydzien");
+      const dzien = screen.getByRole("region", { name: "Sobota 21 listopada" });
+      await userEvent.click(within(dzien).getByRole("button", { name: /↻ Netflix/ }));
+      expect(await screen.findByRole("dialog", { name: "Odnowienie Netflix" })).toBeInTheDocument();
+    });
+
+    it("miesiąc: kropka w komórce i wpis „↻ Netflix · 43,00 zł” na liście wybranego dnia otwierają arkusz", async () => {
+      widok("miesiac");
+      const komorka = screen.getByRole("button", { name: "21 listopada" });
+      expect(within(komorka).getByTestId("kropka-odnowienia")).toBeInTheDocument();
+      await userEvent.click(komorka);
+      await userEvent.click(screen.getByRole("button", { name: /↻ Netflix · 43,00 zł/ }));
+      expect(await screen.findByRole("dialog", { name: "Odnowienie Netflix" })).toBeInTheDocument();
+    });
+
+    it("ukryte źródło nie pokazuje odnowień w dniu, tygodniu ani miesiącu", () => {
+      const { unmount } = widok("dzien", false);
+      expect(screen.queryByRole("button", { name: /↻ Netflix/ })).toBeNull();
+      unmount();
+      const tydzien = widok("tydzien", false);
+      expect(screen.queryByRole("button", { name: /↻ Netflix/ })).toBeNull();
+      tydzien.unmount();
+      widok("miesiac", false);
+      expect(screen.queryByTestId("kropka-odnowienia")).toBeNull();
+    });
   });
 });
