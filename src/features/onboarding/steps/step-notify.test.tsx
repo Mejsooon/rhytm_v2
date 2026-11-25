@@ -186,4 +186,14 @@ describe("StepNotify", () => {
     const { container } = render(<Probe />);
     expect(container.innerHTML).not.toContain("font-mono");
   });
+
+  it("telefon: wiersze przypomnień jako m-row w karcie, bez zgody przyciemnione", () => {
+    render(<Probe />);
+    const wiersze = document.querySelectorAll("[data-reminder-row]");
+    expect(wiersze.length).toBeGreaterThan(0);
+    for (const w of wiersze) {
+      expect(w).toHaveClass("m-row", "opacity-[.55]");
+    }
+    expect(phone().getByRole("button", { name: "Zezwól" })).toHaveClass("bg-primary");
+  });
 });

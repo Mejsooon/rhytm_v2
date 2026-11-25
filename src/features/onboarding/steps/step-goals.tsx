@@ -15,7 +15,7 @@ import {
 
 import { StepHeader } from "./step-header";
 
-// Krok 3: cele (OnboardingGoals + MOnboarding): tylko cele treningowe i cel snu, bez kafelków modułów.
+// Krok 3: cele (OnboardingGoals + CMOnboarding): tylko cele treningowe i cel snu, bez kafelków modułów.
 export function StepGoals({
   draft,
   onChange,
@@ -30,7 +30,7 @@ export function StepGoals({
   const [tekstKm, setTekstKm] = React.useState<string | null>(null);
   const brakCelu = !draft.workoutsOn && !draft.kmOn;
 
-  // Dwa cele treningowe (OnboardingGoals: kolumny z polem; MOnboarding: wiersze z licznikiem)
+  // Dwa cele treningowe (OnboardingGoals: kolumny z polem; CMOnboarding: wiersze z licznikiem `m-step`)
   const celeTreningowe = [
     {
       key: "workouts",
@@ -122,15 +122,23 @@ export function StepGoals({
         subtitle="Zmienisz je później w Ustawieniach."
       />
       <p className="m-0 text-[13px] text-muted-foreground">
-        <span className="font-medium text-foreground">Zawsze masz:</span> Plan
-        tygodnia · Treningi · Nawyki i sen · Hasła
+        <span className="max-[799px]:hidden">
+          <span className="font-medium text-foreground">Zawsze masz:</span> Plan
+          tygodnia · Treningi · Nawyki i sen · Hasła
+        </span>
+        {/* Telefon (CMOnboarding): zawsze włączone moduły i notka o haśle głównym sejfu */}
+        <span className="min-[800px]:hidden">
+          Plan tygodnia, treningi, nawyki i sen oraz Hasła są zawsze włączone.
+          Hasło główne sejfu ustawisz przy pierwszym otwarciu Haseł.
+        </span>
       </p>
 
-      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm">
-        {/* Web: etykieta z podpowiedzią (hint 12 px); telefon: mała etykieta wersalikami jak .lbl w MOnboarding */}
-        <span className="max-[799px]:text-[11px] max-[799px]:font-normal max-[799px]:tracking-[0.06em] max-[799px]:text-muted-foreground max-[799px]:uppercase">
+      {/* Telefon: karta (padding 12/14/4) z etykietą `.lbl` i wierszami 60 px */}
+      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:gap-0 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:bg-white max-[799px]:px-3.5 max-[799px]:pt-3 max-[799px]:pb-1 max-[799px]:text-sm max-[799px]:shadow-card">
+        {/* Web: etykieta z podpowiedzią (hint 12 px); telefon: `.lbl` 12 px / 500 muted */}
+        <span className="max-[799px]:text-xs max-[799px]:text-muted-foreground">
           Cele treningowe{" "}
-          <span className="text-xs font-normal text-muted-foreground max-[799px]:text-[11px]">
+          <span className="text-xs font-normal text-muted-foreground">
             · włącz jeden albo oba
           </span>
         </span>
@@ -139,8 +147,8 @@ export function StepGoals({
             <div
               key={cel.key}
               className={cn(
-                "flex flex-col gap-2 max-[799px]:min-h-14 max-[799px]:flex-row max-[799px]:items-center max-[799px]:gap-3",
-                i > 0 && "max-[799px]:border-t max-[799px]:border-border",
+                "flex flex-col gap-2 max-[799px]:min-h-[60px] max-[799px]:flex-row max-[799px]:items-center max-[799px]:gap-3",
+                i > 0 && "max-[799px]:border-t max-[799px]:border-border-soft",
               )}
             >
               <button
@@ -153,16 +161,13 @@ export function StepGoals({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs max-[799px]:size-6 max-[799px]:rounded-[7px] max-[799px]:border-[1.5px] max-[799px]:shadow-none",
+                    "m-hit inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
                     cel.on
-                      ? "border-primary bg-primary text-primary-foreground max-[799px]:border-success max-[799px]:bg-success max-[799px]:text-white"
-                      : "border-input bg-white text-transparent max-[799px]:border-border-strong",
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-white text-transparent",
                   )}
                 >
-                  <Check
-                    className="size-3 max-[799px]:size-4"
-                    strokeWidth={3}
-                  />
+                  <Check className="size-3" strokeWidth={3} />
                 </span>
                 {cel.label}
               </button>
@@ -183,7 +188,7 @@ export function StepGoals({
               <div className="min-[800px]:hidden">
                 {cel.on ? (
                   <Stepper
-                    wide
+                    mono={false}
                     ariaLabel={cel.label}
                     value={cel.licznik}
                     onDec={() => cel.krok(-1)}
@@ -192,7 +197,7 @@ export function StepGoals({
                     incDisabled={cel.incDisabled}
                   />
                 ) : (
-                  <span className="text-[13px] font-normal text-faint-foreground">
+                  <span className="text-xs font-normal text-muted-foreground tabular-nums">
                     wyłączony
                   </span>
                 )}
@@ -209,12 +214,12 @@ export function StepGoals({
           </p>
         )}
       </div>
-      {/* Web: etykieta nad licznikiem na połowie kolumny (.fld z max-width 50%); telefon: wiersz w ramce jak dotąd */}
-      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:flex-row max-[799px]:items-center max-[799px]:justify-between max-[799px]:gap-3 max-[799px]:rounded-[14px] max-[799px]:border max-[799px]:border-input max-[799px]:px-4 max-[799px]:py-3 max-[799px]:text-sm">
+      {/* Web: etykieta nad licznikiem na połowie kolumny (.fld z max-width 50%); telefon: karta z wierszem (jak `m-row`) */}
+      <div className="flex flex-col gap-2 text-[13px] font-medium max-[799px]:min-h-12 max-[799px]:flex-row max-[799px]:items-center max-[799px]:justify-between max-[799px]:gap-3 max-[799px]:rounded-xl max-[799px]:border max-[799px]:border-border max-[799px]:bg-white max-[799px]:px-4 max-[799px]:text-sm max-[799px]:font-normal max-[799px]:shadow-card">
         <span>Cel snu</span>
         <div className="min-[800px]:w-1/2">
           <Stepper
-            wide
+            wide="web"
             ariaLabel="Cel snu"
             value={formatSleep(draft.sleepGoalMin)}
             onDec={() =>

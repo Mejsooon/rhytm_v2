@@ -10,8 +10,8 @@ import {
 } from "../model";
 import { StepHeader } from "./step-header";
 
-// Krok 5: szablony stron (OnboardingPages + MOnboarding).
-// Web: karty z kwadratem 16 px i plakietkami pól; telefon: karty z polem 24 px i zielonym zaznaczeniem.
+// Krok 5: szablony stron (OnboardingPages + CMOnboarding).
+// Web: karty z kwadratem 16 px i plakietkami pól; telefon: te same karty wyboru (.choice) z polami jako podpis 11 px.
 export function StepPages({
   draft,
   onChange,
@@ -34,18 +34,11 @@ export function StepPages({
 
   return (
     <>
-      <div className="max-[799px]:hidden">
-        <StepHeader
-          title="Od czego zaczynasz?"
-          subtitle="Dodamy te strony do sidebaru. Każdą zmienisz albo usuniesz później."
-        />
-      </div>
-      <div className="min-[800px]:hidden">
-        <StepHeader
-          title="Od czego zaczynasz?"
-          subtitle="Dodamy te strony do listy Stron. Każdą zmienisz albo usuniesz później."
-        />
-      </div>
+      <StepHeader
+        title="Od czego zaczynasz?"
+        subtitle="Dodamy te strony do sidebaru. Każdą zmienisz albo usuniesz później."
+        phoneSubtitle="Dodamy te strony do listy Stron. Każdą zmienisz albo usuniesz później."
+      />
 
       <div
         data-testid="pages-web"
@@ -115,18 +108,22 @@ export function StepPages({
               aria-checked={wlaczona}
               onClick={() => przelacz(strona.key)}
               className={cn(
-                "box-border flex min-h-11 w-full cursor-pointer items-start gap-3 rounded-xl border border-input bg-white p-3.5 text-left text-foreground outline-none focus-visible:ring-2 focus-visible:ring-success",
-                wlaczona && "border-success bg-success-soft",
+                // .choice z CMOnboarding: ten sam wzór co karty webu
+                "box-border flex min-h-11 w-full cursor-pointer items-start gap-3 rounded-xl border border-input bg-white bg-clip-padding px-3.5 py-3 text-left text-foreground shadow-xs outline-none hover:bg-panel focus-visible:shadow-focus",
+                wlaczona &&
+                  "border-black/[.24] bg-black/[.025] shadow-[0_0_0_1px_rgba(0,0,0,.12)] hover:bg-black/[.025]",
               )}
             >
               <span
                 aria-hidden="true"
                 className={cn(
-                  "inline-flex size-6 flex-none items-center justify-center rounded-[7px] border-[1.5px] border-border-strong bg-white text-white",
-                  wlaczona && "border-success bg-success",
+                  "mt-0.5 inline-flex size-4 flex-none items-center justify-center rounded-[4px] border shadow-xs",
+                  wlaczona
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-white text-transparent",
                 )}
               >
-                {wlaczona && <Check className="size-4" strokeWidth={3} />}
+                <Check className="size-3" strokeWidth={3} />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                 <span className="flex flex-wrap items-center gap-2">

@@ -266,8 +266,10 @@ describe("OnboardingWizard", () => {
       false,
       false,
     ]);
-    // Segmenty web: pełne zaokrąglenie jak w AuthShell
-    expect(segmenty[0]).toHaveClass("min-[800px]:rounded-full");
+    // Segmenty (web i telefon): pełne zaokrąglenie, tor w tokenie border (.steps z CMOnboarding)
+    expect(segmenty[0]).toHaveClass("h-1", "rounded-full", "bg-primary");
+    expect(segmenty[6]).toHaveClass("bg-border");
+    expect(screen.getByRole("progressbar")).toHaveClass("grid-cols-7", "gap-1", "px-4", "pb-2");
   });
 
   it("stopka: „Wstecz” ghost z ChevronLeft, „Dalej” primary z ChevronRight", () => {
@@ -281,7 +283,7 @@ describe("OnboardingWizard", () => {
     // Stopka web: pasek oddzielony linią, na całą szerokość kolumny
     expect(screen.getByTestId("wizard-footer")).toHaveClass(
       "border-t",
-      "min-[800px]:bg-black/[.025]",
+      "bg-black/[.025]",
     );
   });
 
@@ -302,7 +304,8 @@ describe("OnboardingWizard", () => {
         userId="u1"
       />,
     );
-    expect(container.firstElementChild).toHaveClass("min-[800px]:bg-panel");
+    // Tło panel na obu szerokościach (CMOnboarding ma #fafafa)
+    expect(container.firstElementChild).toHaveClass("bg-panel");
     const karta = screen.getByRole("progressbar").parentElement as HTMLElement;
     expect(karta).toHaveClass(
       "max-w-[1120px]",
@@ -330,7 +333,9 @@ describe("OnboardingWizard", () => {
       within(naglowekTel as HTMLElement).getByRole("button", {
         name: "Wstecz",
       }),
-    ).toHaveClass("size-11");
+    ).toHaveClass("max-[799px]:h-11", "max-[799px]:w-11");
+    // m-head bez ramki i tła, plakietka kroku bez mono
+    expect(naglowekTel).toHaveClass("m-head", "border-b-0", "bg-transparent");
   });
 
   it("nowy initialDraft z serwera zastępuje lokalny szkic", () => {

@@ -26,7 +26,7 @@ export async function requestBrowserPermission(): Promise<
   }
 }
 
-// Krok 6: przypomnienia (OnboardingNotify + MOnboarding).
+// Krok 6: przypomnienia (OnboardingNotify + CMOnboarding).
 export function StepNotify({
   draft,
   onChange,
@@ -66,18 +66,11 @@ export function StepNotify({
 
   return (
     <>
-      <div className="max-[799px]:hidden">
-        <StepHeader
-          title="Przypomnienia"
-          subtitle="Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili"
-        />
-      </div>
-      <div className="min-[800px]:hidden">
-        <StepHeader
-          title="Przypomnienia"
-          subtitle="Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili."
-        />
-      </div>
+      <StepHeader
+        title="Przypomnienia"
+        subtitle="Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili"
+        phoneSubtitle="Wybierz, o czym mamy Ci przypominać. Ustawienia zmienisz w każdej chwili."
+      />
 
       <div
         data-testid="notify-web"
@@ -154,11 +147,12 @@ export function StepNotify({
         data-testid="notify-phone"
         className="flex flex-col gap-4 min-[800px]:hidden"
       >
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3.5">
-          <span className="flex size-10 flex-none items-center justify-center rounded-md bg-muted">
+        {/* Karta zgody: kafelek 40 px z dzwonkiem, podpis i przycisk „Zezwól” albo plakietka „Włączone” */}
+        <Card className="flex-row items-center gap-3 p-3.5">
+          <span className="flex size-10 flex-none items-center justify-center rounded-md bg-black/[.05]">
             <Bell
               aria-hidden="true"
-              className="size-[19px] text-soft-foreground"
+              className="size-[19px] text-foreground"
               strokeWidth={2}
             />
           </span>
@@ -169,36 +163,31 @@ export function StepNotify({
             </span>
           </span>
           {notify.perm ? (
-            <span className="flex flex-col items-end gap-0.5">
+            <span className="flex flex-col items-end">
               <StatusBadge tone="green">Włączone</StatusBadge>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={cofnij}
-                className="min-h-11 cursor-pointer border-0 bg-transparent px-1 text-xs text-muted-foreground underline"
+                className="text-muted-foreground underline"
               >
                 Anuluj
-              </button>
+              </Button>
             </span>
           ) : (
-            <Button
-              variant="primary"
-              onClick={() => void zezwol()}
-              className="h-11 w-auto px-3.5 py-0"
-            >
+            <Button variant="primary" onClick={() => void zezwol()}>
               Zezwól
             </Button>
           )}
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-white">
+        {/* Lista przypomnień: wiersze `m-row`, bez zgody przyciemnione */}
+        <Card className="gap-0 overflow-hidden">
           {REMINDERS.map((r) => (
             <div
               key={r.key}
               data-reminder-row
-              className={cn(
-                "flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0",
-                !notify.perm && "opacity-[.55]",
-              )}
+              className={cn("m-row min-h-14", !notify.perm && "opacity-[.55]")}
             >
               <span className="min-w-0 flex-1">
                 <span className="block">{r.title}</span>
@@ -215,7 +204,7 @@ export function StepNotify({
               />
             </div>
           ))}
-        </div>
+        </Card>
 
         <p className="m-0 text-xs leading-normal text-muted-foreground">
           Dodaj rhytm do ekranu głównego, żeby dostawać push także przy
