@@ -103,3 +103,16 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | `/strony/nowa` przy twardym wejściu pokazuje samo tło do hydratacji (także web) | bez błysku złego układu | niski: ułamek sekundy pustego tła |
 | Pominięte z makiet: ikony filtru/kart w nagłówku (zamiast tego przyciski nad tabelą), „Filtr tabeli nie zmienia kart” (nieprawda — karty liczą przefiltrowane wiersze), sekcja „Moduł”, pozycje bez wsparcia w kodzie | nie dobudowujemy backendu w pakiecie wyglądu | niski |
 | „Wyczyść” w filtrze czyści tylko warunki, nie sortowanie | makieta nie rozstrzyga | niski |
+
+### Pakiet hasla
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T7: bez „Odblokuj biometrią” | brak wsparcia w kodzie | niski |
+| T8: edycja hasła na telefonie przez „Edytuj” w rozwinięciu → arkusz wiersza | jeden arkusz dla wszystkich pól | niski |
+| Chipy Kategorii na telefonie („Wszystkie” + opcje) i „Edytuj kategorie” | makieta 24.11 | niski |
+| Pusta Notatka pominięta w rozwinięciu (makieta: „—”) | mniej szumu | niski |
+| Ekran blokady: `autoFocus` na haśle głównym — klawiatura otwiera się przy wejściu na zablokowane /hasla | szybkie odblokowanie, fokus nie ginie po „Zablokuj sejf” | niski: jeden atrybut |
+| „Anuluj” w ustawianiu sejfu na telefonie prowadzi do `/strony` | pełny ekran bez tabeli pod spodem | niski |
+| Lista telefonu dziedziczy zapisany filtr/sort tabeli modułu (telefon nie ma UI do ich zmiany) | jeden magazyn z webem | niski |
+| Naprawiony błąd sprzed gałęzi: reset sejfu z ekranu blokady /hasla chował wiersze dodane w tej wizycie (tabela montowała się ze starych danych) — teraz `router.refresh()` | znalezione przez nowy e2e | brak |

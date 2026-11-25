@@ -197,3 +197,11 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - `column-menu.tsx`: `aria-haspopup="menu"` także gdy otwiera arkusz; ikona typu 14 px zamiast 12; nierówne wcięcia.
 - Menu strony (arkusz): nagłówek i „Przenieś wyżej/niżej” wewnątrz `role="menu"`; dopisek „N wierszy · M pól” nie odświeża się po zmianach w tabeli.
 - `visual.spec.ts`: brak zrzutów arkuszy „Wstaw blok”, „Kolumna” i arkusza wiersza.
+
+## Telefon / hasła (25.11, z przeglądów)
+
+- Telefon przy stanie „nieobslugiwany” pokazuje sam baner, bez listy (web: tabela tylko do odczytu).
+- CMVaultReset: dwie drobne różnice kolorów/wariantów względem makiety.
+- Kopiowanie z listy po odmontowaniu polega tylko na kontroli w tabeli; czyszczenie schowka nadpisuje go bezwarunkowo (jak przed gałęzią).
+- React ustawia atrybut `value` w DOM na tekst jawny w polu Sekretu arkusza (tylko gdy odszyfrowane, w arkuszu).
+- Reset stanu arkusza zależy od `open` i statusu, nie od tożsamości wiersza.
