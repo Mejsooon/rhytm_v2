@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Lock, Search } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, Lock, Search } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
@@ -15,11 +16,16 @@ import { VaultSetup } from "@/features/vault/vault-setup";
 import { VaultUnlockCard } from "@/features/vault/vault-unlock-card";
 import { cn } from "@/lib/utils";
 import { CategoriesPopover } from "./categories-popover";
+import { MPasswords } from "./mobile/m-passwords";
 
 // Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html): nagłówek z okruszkami „Moduły / Hasła”
 // i „Zablokuj teraz”, plakietka „Szyfrowane” i tabela modułu. Stan sejfu:
-// - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu),
+// - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu);
+//   telefon (CMVaultSetup): pełny ekran, a „Anuluj” prowadzi do listy stron,
 // - ladowanie: sama głowa strony, bez tabeli i bez nakładki (nie mignie tabela przed sprawdzeniem sejfu),
+// - telefon (CMVault, CMPasswords): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny
+//   ekran „Sejf jest zablokowany” (bez tabeli pod rozmyciem), przy odblokowanym lista-akordeon `MPasswords` z tego samego
+//   magazynu co tabela (prop `renderPhone`). Układy webu i telefonu są oba w DOM, przełącza je CSS (800 px),
 // - zablokowany (S2Vault): tabela tylko do odczytu (sekrety jako „zablokowane”) pod rozmyciem, a na środku okno
 //   „Odblokuj sejf”; treść pod nakładką jest `inert` i `aria-hidden`, a wiersza tytułu z ikoną i „Hasła” nie ma
 //   (decyzja C1: tytuł przeszkadzał Mejsonowi; okruszki w nagłówku zostają pod rozmyciem jak na makiecie),
@@ -54,18 +60,41 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
   // Jeszcze nieznany stan sejfu: tabela ukryta (`hidden`), ale zamontowana, żeby po sprawdzeniu nie mignęła;
   // przy zamkniętym sejfie tabela jest widoczna (tylko do odczytu), a sekrety czyści sama tabela
   const bezTabeli = vault.status === "ladowanie";
+  // Telefon bez tabeli: sam nagłówek (ładowanie) albo ekran blokady (zablokowany)
+  const telefonBezTresci = vault.status === "ladowanie" || zablokowany;
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col">
-      {/* Opakowanie zawsze to samo (tabela się nie przemontowuje po odblokowaniu); przy zamkniętym sejfie `inert` */}
+      {/* Telefon (CMVault): nagłówek z linkiem „Strony” bez tytułu i, przy zablokowanym sejfie, pełny ekran odblokowania */}
+      {telefonBezTresci && (
+        <div className="flex min-h-0 flex-1 flex-col min-[800px]:hidden">
+          <header className="m-head px-2">
+            <Button variant="ghost" icon asChild>
+              <Link href="/strony" aria-label="Strony">
+                <ChevronLeft size={20} aria-hidden="true" />
+              </Link>
+            </Button>
+            <div className="flex-1" />
+            <span aria-hidden="true" className="w-11 flex-none" />
+          </header>
+          {zablokowany && <VaultUnlockCard ekran />}
+        </div>
+      )}
+      {/* Opakowanie zawsze to samo (tabela się nie przemontowuje po odblokowaniu); przy zamkniętym sejfie `inert`.
+          Telefon przy ładowaniu i zablokowanym sejfie ma własny ekran powyżej, więc to opakowanie chowa */}
       <div
         inert={zablokowany}
         aria-hidden={zablokowany ? "true" : undefined}
-        className="flex min-w-0 flex-1 flex-col"
+        className={cn("flex min-w-0 flex-1 flex-col", telefonBezTresci && "max-[799px]:hidden")}
       >
+        {/* Telefon ma własny nagłówek: w MPasswords (odblokowany: „Zablokuj sejf”, „Nowe hasło”) albo na ekranie
+            ładowania i blokady powyżej */}
         <ModuleHeader
           title="Hasła"
           webParent="Moduły"
+          webOnly={odblokowany || telefonBezTresci}
+          phoneBack={{ href: "/strony", label: "Strony" }}
+          phoneCenterTitle
           webAction={
             odblokowany && (
               <Button onClick={vault.lock}>
@@ -77,8 +106,15 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         />
         {/* Treść na całą szerokość (decyzja Mejsona, jak S2Books) */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4">
-            <div>
+          <div
+            className={cn(
+              "flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4",
+              // Lista telefonu (MPasswords) ma własne odstępy i nagłówek na całą szerokość
+              odblokowany && "max-[799px]:p-0",
+            )}
+          >
+            {/* Tytuł i plakietki tylko na webie: telefon ma tytuł w nagłówku albo w MPasswords */}
+            <div className="max-[799px]:hidden">
               {/* Tytuł z ikoną tylko na webie (telefon ma duży tytuł w nagłówku) i tylko przy otwartym sejfie (C1) */}
               {!zablokowany && (
                 <div className="mb-2.5 flex items-center gap-2.5 max-[799px]:hidden">
@@ -105,11 +141,24 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
               </div>
             </div>
 
+            {/* Odblokowany: odliczanie pokazuje plakietka w MPasswords, więc baner webu chowa się na telefonie */}
             {(odblokowany || vault.status === "nieobslugiwany") && (
-              <VaultBanner />
+              <div className={cn(odblokowany && "max-[799px]:hidden")}>
+                <VaultBanner />
+              </div>
             )}
 
-            {ustawianie && <VaultSetup onCancel={() => setAnulowano(true)} />}
+            {/* Ustawianie hasła głównego: karta na webie, pełny ekran (CMVaultSetup) na telefonie */}
+            {ustawianie && (
+              <>
+                <div className="max-[799px]:hidden">
+                  <VaultSetup onCancel={() => setAnulowano(true)} />
+                </div>
+                <div className="min-[800px]:hidden">
+                  <VaultSetup ekran onCancel={() => setAnulowano(true)} />
+                </div>
+              </>
+            )}
 
             {!ustawianie && !blok && (
               <EmptyModule>
@@ -140,6 +189,24 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   today={data.today}
                   module="passwords"
                   onLiveRowCount={setLiczbaHasel}
+                  // Telefon (CMPasswords): lista z tego samego magazynu co tabela; poza odblokowanym sejfem nic
+                  renderPhone={(api) =>
+                    odblokowany ? (
+                      <MPasswords
+                        fields={api.fields}
+                        rows={api.rows}
+                        fraza={fraza}
+                        onFraza={setFraza}
+                        kategoriaId={kategoriaId}
+                        onKategoria={setKategoriaId}
+                        onNewRow={api.newRow}
+                        onEditRow={api.editRow}
+                        onCreateOption={api.createOption}
+                        onRemoveOption={api.removeOption}
+                        planClipboardClear={api.planClipboardClear}
+                      />
+                    ) : null
+                  }
                   moduleRowFilter={(wiersz, pola) => {
                     const nazwy = new Map(pola.map((f) => [f.name, f]));
                     const kategoria = nazwy.get("Kategoria");
@@ -254,15 +321,15 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           {/* Rozmycie jak S2Vault: biała zasłona 60% i blur 3 px na całym ekranie modułu */}
           <div
             aria-hidden="true"
-            className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[3px]"
+            className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[3px] max-[799px]:hidden"
           />
           {/* „Pokaż pasek boczny” nad zasłoną, w miejscu przycisku z nagłówka (ten jest pod `inert`): bez niego przy
               schowanym pasku i zamkniętym sejfie nie dałoby się wyjść z Haseł. Nagłówek: padding 10 px + (36 − 28) / 2 */}
-          <div className="absolute top-3.5 left-6 z-20">
+          <div className="absolute top-3.5 left-6 z-20 max-[799px]:hidden">
             <SidebarToggle placement="header" />
           </div>
           {/* Okno „Odblokuj sejf”: poza `inert`, pozycję nadaje rodzic */}
-          <div className="absolute top-[160px] left-1/2 z-20 w-[min(400px,calc(100%-32px))] -translate-x-1/2 max-[799px]:top-6">
+          <div className="absolute top-[160px] left-1/2 z-20 w-[min(400px,calc(100%-32px))] -translate-x-1/2 max-[799px]:hidden">
             <VaultUnlockCard />
           </div>
         </>

@@ -3,19 +3,106 @@
 import * as React from "react";
 import { Lock } from "lucide-react";
 
-import { Button } from "@/components/controls";
+import { Button, EmptyState, TextField } from "@/components/controls";
+import { BLOKADA_MS } from "./lock-timeout";
 import { VaultResetDialog } from "./vault-reset-dialog";
 import { useVault } from "./vault-provider";
 
 // Okno „Odblokuj sejf” (S2Vault.dc.html; pozycję i szerokość nadaje rodzic): hasło główne, „Odblokuj”, podpowiedź i link do resetu.
 // Hasło żyje tylko w stanie pola i jest czyszczone zaraz po wysłaniu.
-export function VaultUnlockCard() {
+// `ekran` (telefon, CMVault.dc.html): zamiast karty pełny ekran — pusty stan z ikoną, pole, „Odblokuj” i link do resetu.
+// Oba warianty mają tę samą logikę wysyłania; wybiera je rodzic (CSS przełącza układ przy 800 px).
+export function VaultUnlockCard({ ekran = false }: { ekran?: boolean }) {
   const { unlock } = useVault();
   const [haslo, setHaslo] = React.useState("");
   const [blad, setBlad] = React.useState<string | null>(null);
   const [trwa, setTrwa] = React.useState(false);
   const [reset, setReset] = React.useState(false);
   const id = React.useId();
+  const minuty = BLOKADA_MS / 60_000;
+
+  function wyslij(e: React.FormEvent) {
+    e.preventDefault();
+    if (trwa) return;
+    if (haslo === "") {
+      setBlad("Wpisz hasło główne.");
+      return;
+    }
+    // Hasło trafia tylko do providera; pole czyścimy od razu po wysłaniu
+    const wpisane = haslo;
+    setHaslo("");
+    setBlad(null);
+    setTrwa(true);
+    void unlock(wpisane).then((wynik) => {
+      setTrwa(false);
+      if (!wynik.ok) setBlad(wynik.message);
+    });
+  }
+
+  // Telefon: pełny ekran według CMVault (bez „Odblokuj biometrią” — aplikacja nie ma WebAuthn)
+  if (ekran) {
+    return (
+      <form
+        className="flex min-h-0 flex-1 flex-col gap-[22px] overflow-y-auto p-6"
+        onSubmit={wyslij}
+      >
+        {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
+        <input
+          type="text"
+          autoComplete="username"
+          value="Sejf rhytm (hasło główne)"
+          readOnly
+          hidden
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+        <EmptyState
+          className="gap-2 px-0 pt-6 pb-0"
+          icon={<Lock aria-hidden="true" className="size-[26px]" />}
+          iconClassName="size-14 rounded-[14px] text-foreground"
+          title="Sejf jest zablokowany"
+          titleAs="h1"
+          titleClassName="mt-1 text-2xl"
+          description={`Hasła są szyfrowane na urządzeniu. Klucz zostaje tylko w pamięci tej karty. Blokada po ${minuty} min bezczynności.`}
+          descriptionClassName="max-w-[290px] leading-normal"
+        />
+        <div className="flex flex-col gap-1.5">
+          <TextField
+            id={`${id}-haslo`}
+            label="Hasło główne"
+            type="password"
+            // Po „Zablokuj sejf” przycisk znika razem z listą: fokus ląduje w polu hasła na ekranie blokady
+            autoFocus
+            autoComplete="current-password"
+            placeholder="••••••••••"
+            value={haslo}
+            onChange={(e) => {
+              setHaslo(e.target.value);
+              setBlad(null);
+            }}
+            aria-invalid={blad ? true : undefined}
+            aria-describedby={blad ? `${id}-blad` : undefined}
+          />
+          {blad && (
+            <p id={`${id}-blad`} role="alert" className="m-0 text-xs font-normal text-destructive-foreground">
+              {blad}
+            </p>
+          )}
+        </div>
+        <Button variant="primary" type="submit" disabled={trwa} className="w-full">
+          Odblokuj
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setReset(true)}
+          className="self-center text-destructive-foreground hover:text-destructive-foreground"
+        >
+          Nie pamiętam hasła — zresetuj sejf
+        </Button>
+        <VaultResetDialog open={reset} onOpenChange={setReset} />
+      </form>
+    );
+  }
 
   return (
     <div
@@ -25,23 +112,7 @@ export function VaultUnlockCard() {
     >
       <form
         className="flex flex-col gap-4 px-6 pt-6 pb-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (trwa) return;
-          if (haslo === "") {
-            setBlad("Wpisz hasło główne.");
-            return;
-          }
-          // Hasło trafia tylko do providera; pole czyścimy od razu po wysłaniu
-          const wpisane = haslo;
-          setHaslo("");
-          setBlad(null);
-          setTrwa(true);
-          void unlock(wpisane).then((wynik) => {
-            setTrwa(false);
-            if (!wynik.ok) setBlad(wynik.message);
-          });
-        }}
+        onSubmit={wyslij}
       >
         {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
         <input
@@ -105,7 +176,7 @@ export function VaultUnlockCard() {
           Odblokuj
         </Button>
         <p className="m-0 text-xs leading-normal text-muted-foreground">
-          Blokada po 5 min bezczynności.
+          Blokada po {minuty} min bezczynności.
         </p>
       </form>
       <div className="flex border-t border-border bg-black/[.025] px-4 py-3 min-[800px]:rounded-b-[11px]">

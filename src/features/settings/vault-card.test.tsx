@@ -11,6 +11,9 @@ import {
   vi,
 } from "vitest";
 
+// Okno resetu sejfu odświeża dane strony routerem
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }), usePathname: () => "/hasla" }));
+
 const { getVault, createVault, rewrapVaultAction, resetVault, countSecrets } =
   vi.hoisted(() => ({
     getVault: vi.fn(),

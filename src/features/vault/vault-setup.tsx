@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Lock, TriangleAlert, X } from "lucide-react";
 
-import { Button, Checkbox, TextField } from "@/components/controls";
+import { Button, Checkbox, EmptyState, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { masterPasswordStrength, MASTER_MIN_STRENGTH } from "./strength";
 import { useVault } from "./vault-provider";
@@ -12,7 +13,10 @@ const ETYKIETY = ["Za krótkie", "Słabe", "Średnie", "Mocne", "Bardzo mocne"] 
 
 // Ustawienie hasła głównego sejfu (CVaultSetup.dc.html) jako karta w miejscu tabeli.
 // Hasła istnieją tylko w stanie pól i są czyszczone zaraz po wysłaniu.
-export function VaultSetup({ onCancel }: { onCancel: () => void }) {
+// `ekran` (telefon, CMVaultSetup.dc.html): zamiast karty pełny ekran pod nagłówkiem „Hasła” — opis, ostrzeżenie,
+// pola 44 px, miernik, zgoda, „Utwórz sejf” i „Anuluj” (link do listy stron). Obie wersje mają tę samą logikę
+// i te same progi (min. „Mocne”, 12+ znaków); wybiera je rodzic, a CSS przełącza układ przy 800 px.
+export function VaultSetup({ onCancel, ekran = false }: { onCancel: () => void; ekran?: boolean }) {
   const { setup } = useVault();
   const [haslo, setHaslo] = React.useState("");
   const [powtorz, setPowtorz] = React.useState("");
@@ -29,24 +33,91 @@ export function VaultSetup({ onCancel }: { onCancel: () => void }) {
   const kolorTekstu =
     sila <= 1 ? "text-destructive-foreground" : sila === 2 ? "text-warning-foreground" : "text-success";
 
+  function wyslij(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mozna) return;
+    // Hasło trafia tylko do providera; pola czyścimy od razu po wysłaniu
+    const wpisane = haslo;
+    setHaslo("");
+    setPowtorz("");
+    setBlad(null);
+    setTrwa(true);
+    void setup(wpisane).then((wynik) => {
+      setTrwa(false);
+      if (!wynik.ok) setBlad(wynik.message);
+    });
+  }
+
+  // Telefon: pełny ekran według CMVaultSetup
+  if (ekran) {
+    return (
+      <form aria-labelledby={`${id}-t`} className="flex flex-col gap-4 py-2 text-sm text-foreground" onSubmit={wyslij}>
+        {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
+        <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
+        <EmptyState
+          className="gap-2.5 p-0"
+          icon={<Lock aria-hidden="true" className="size-[22px]" />}
+          title="Ustaw hasło główne sejfu"
+          titleAs="h2"
+          titleId={`${id}-t`}
+          titleClassName="text-[22px]"
+          description="Hasło główne szyfruje moduł Hasła i pola „Sekret” na Twoim urządzeniu."
+        />
+        <div className="rounded-xl border border-warning-border bg-warning/[.05] px-3.5 py-3 text-[13px]">
+          <strong>Hasło tylko do sejfu!</strong> Nie używaj hasła do konta. Nie da się go odzyskać.
+        </div>
+        <TextField
+          label="Hasło główne"
+          type="password"
+          autoComplete="new-password"
+          value={haslo}
+          onChange={(e) => setHaslo(e.target.value)}
+          aria-describedby={`${id}-sila`}
+        />
+        {/* Miernik: 4 paski 4 px tuż pod polem i podpis (puste pole: wymagania) */}
+        <div id={`${id}-sila`} className="-mt-2 flex flex-col gap-1.5">
+          <div className="grid grid-cols-4 gap-1" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} data-segment="" className={cn("h-1 rounded-sm", i < sila ? kolorPaska : "bg-black/[.08]")} />
+            ))}
+          </div>
+          <div aria-live="polite" className="text-xs text-muted-foreground">
+            {haslo === "" ? "Min. „Mocne”, 12+ znaków." : ETYKIETY[sila]}
+          </div>
+        </div>
+        <TextField
+          label="Powtórz"
+          type="password"
+          autoComplete="new-password"
+          value={powtorz}
+          onChange={(e) => setPowtorz(e.target.value)}
+          error={roznia ? "Hasła się różnią." : undefined}
+        />
+        <Checkbox
+          checked={zgoda}
+          onChange={setZgoda}
+          label="Rozumiem, że zapomnianego hasła głównego nie da się odzyskać."
+        />
+        {blad && (
+          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
+            {blad}
+          </p>
+        )}
+        <Button variant="primary" type="submit" disabled={!mozna} className="w-full">
+          Utwórz sejf
+        </Button>
+        <Button variant="ghost" asChild className="w-full">
+          <Link href="/strony">Anuluj</Link>
+        </Button>
+      </form>
+    );
+  }
+
   return (
     <form
       aria-labelledby={`${id}-t`}
       className="mx-auto flex w-full max-w-[500px] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!mozna) return;
-        // Hasło trafia tylko do providera; pola czyścimy od razu po wysłaniu
-        const wpisane = haslo;
-        setHaslo("");
-        setPowtorz("");
-        setBlad(null);
-        setTrwa(true);
-        void setup(wpisane).then((wynik) => {
-          setTrwa(false);
-          if (!wynik.ok) setBlad(wynik.message);
-        });
-      }}
+      onSubmit={wyslij}
     >
       {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
       <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />

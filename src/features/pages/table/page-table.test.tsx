@@ -1455,6 +1455,95 @@ describe("PageTable", () => {
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
 
+    it("renderPhone: układ telefonu dostaje wiersze, pola i akcje tego samego magazynu, a tabela webu chowa się na telefonie", () => {
+      stanSejfu("odblokowany");
+      const renderPhone = vi.fn((api: unknown) => (api ? <span>lista telefonu</span> : null));
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" renderPhone={renderPhone} />);
+      const api = renderPhone.mock.calls.at(-1)![0] as {
+        fields: { name: string }[];
+        rows: { id: string }[];
+        readOnly: boolean;
+      };
+      expect(api.fields.map((f) => f.name)).toEqual(["Serwis", "Login", "Hasło", "URL", "Kategoria", "Notatka"]);
+      expect(api.rows.map((r) => r.id)).toEqual(["row-1"]);
+      expect(api.readOnly).toBe(false);
+      expect(screen.getByText("lista telefonu").parentElement).toHaveClass("min-[800px]:hidden");
+      expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).not.toBeNull();
+    });
+
+    it("renderPhone: „editRow” i „newRow” otwierają arkusz wiersza (istniejący i pusty szkic)", async () => {
+      stanSejfu("odblokowany");
+      let api: { rows: unknown[]; editRow: (r: never) => void; newRow: () => void } | null = null;
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          renderPhone={(a) => {
+            api = a as unknown as typeof api;
+            return null;
+          }}
+        />,
+      );
+      act(() => api!.editRow(api!.rows[0] as never));
+      expect(await screen.findByRole("dialog", { name: "GitHub" })).toBeInTheDocument();
+      act(() => screen.getByRole("button", { name: "Anuluj" }).click());
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      act(() => api!.newRow());
+      expect(await screen.findByRole("dialog", { name: "Nowy wiersz" })).toBeInTheDocument();
+    });
+
+    it("renderPhone: „planClipboardClear” czyści schowek po 30 s tym samym planem co komórki webu", async () => {
+      stanSejfu("odblokowany");
+      const writeText = schowek();
+      vi.useFakeTimers();
+      let api: { planClipboardClear: () => boolean } | null = null;
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          renderPhone={(a) => {
+            api = a as unknown as typeof api;
+            return null;
+          }}
+        />,
+      );
+      let zaplanowano = false;
+      act(() => {
+        zaplanowano = api!.planClipboardClear();
+      });
+      expect(zaplanowano).toBe(true);
+      expect(writeText).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(29_999));
+      expect(writeText).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(1));
+      expect(writeText).toHaveBeenCalledWith("");
+    });
+
+    it("renderPhone: „planClipboardClear” po blokadzie sejfu czyści od razu i zwraca false", () => {
+      stanSejfu("zablokowany");
+      const writeText = schowek();
+      let api: { planClipboardClear: () => boolean } | null = null;
+      render(
+        <PageTable
+          block={blokHasel()}
+          today={TODAY}
+          module="passwords"
+          renderPhone={(a) => {
+            api = a as unknown as typeof api;
+            return null;
+          }}
+        />,
+      );
+      let wynik = true;
+      act(() => {
+        wynik = api!.planClipboardClear();
+      });
+      expect(wynik).toBe(false);
+      expect(writeText).toHaveBeenLastCalledWith("");
+    });
+
     it("zamknięty sejf na telefonie: dotknięcie wiersza nie otwiera arkusza", async () => {
       stanSejfu("zablokowany");
       telefon();

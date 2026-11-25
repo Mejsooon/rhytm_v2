@@ -30,7 +30,7 @@ import {
   type PageField,
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
-import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE } from "../messages";
+import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE, ZAPIS_W_TOKU } from "../messages";
 import type { FilterCond, PageRow, TableSettings } from "../table-model";
 
 export type TableStore = ReturnType<typeof useTableStore>;
@@ -90,8 +90,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     new Map<string, { n: number; config: FieldConfig; zatwierdzonyConfig: FieldConfig; zatwierdzonaNazwa: string }>(),
   );
   const licznik = useRef(0);
-  // Blokada drugiego zapisu w trakcie pierwszego
+  // Blokada drugiego zapisu w trakcie pierwszego i sam zapis w toku (nowe otwarcie wiersza czeka na jego koniec)
   const zapisujeRef = useRef(false);
+  const zapisWTokuRef = useRef<Promise<boolean> | null>(null);
   // Tymczasowe id wiersza klikniętego w trakcie zapisu (edycja czeka na prawdziwe id)
   const edycjaPoZapisie = useRef<string | null>(null);
 
@@ -162,6 +163,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       return;
     }
     edycjaPoZapisie.current = null;
+    // Zapis poprzedniej zmiany trwa: nowe otwarcie czeka na jego koniec (nie dostanie starej wartości), a po błędzie
+    // zapisu zostaje przywrócony szkic poprzedniego wiersza, więc tego nie otwieramy
+    if (zapisWTokuRef.current && !(await zapisWTokuRef.current)) return;
     if (szkicZmieniony() && !(await zapiszSzkic())) return;
     setEditing({ rowId: row.id, values: { ...row.values }, original: { ...row.values } });
   }
@@ -169,6 +173,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // „Nowy wiersz”: szkic w trybie edycji na końcu tabeli, z opcjami domyślnymi pól (z makiet).
   // original = wartości startowe, żeby nietknięty szkic nie liczył się jako zmieniony
   async function addRowDraft() {
+    if (zapisWTokuRef.current && !(await zapisWTokuRef.current)) return;
     if (szkicZmieniony() && !(await zapiszSzkic())) return;
     const values: Record<string, unknown> = {};
     for (const f of fields) {
@@ -193,14 +198,20 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // Istniejący wiersz wysyła tylko zmienione komórki — nietknięte (także „brudne” z bazy) zostają.
   // Zwraca false, gdy zapis się nie udał (zmiana cofnięta, toast pokazany).
   // `secrets`: pola Sekret zmienione w arkuszu, już zaszyfrowane przez arkusz (SecretValue albo null) —
-  // tekst jawny nigdy nie trafia do store. Drugi zapis w trakcie pierwszego jest ignorowany.
+  // tekst jawny nigdy nie trafia do store. Drugi zapis w trakcie pierwszego nie rusza, ale pokazuje toast.
   async function saveRow(secrets?: Record<string, unknown>): Promise<boolean> {
-    if (zapisujeRef.current) return false;
+    if (zapisujeRef.current) {
+      toast(ZAPIS_W_TOKU);
+      return false;
+    }
     zapisujeRef.current = true;
+    const zapis = zapiszWiersz(secrets);
+    zapisWTokuRef.current = zapis;
     try {
-      return await zapiszWiersz(secrets);
+      return await zapis;
     } finally {
       zapisujeRef.current = false;
+      if (zapisWTokuRef.current === zapis) zapisWTokuRef.current = null;
     }
   }
 

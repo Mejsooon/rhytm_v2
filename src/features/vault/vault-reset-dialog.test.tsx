@@ -2,7 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const m = vi.hoisted(() => ({ reset: vi.fn(), countSecrets: vi.fn() }));
+const m = vi.hoisted(() => ({ reset: vi.fn(), countSecrets: vi.fn(), refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: m.refresh }) }));
 vi.mock("./vault-provider", () => ({ useVault: () => ({ reset: m.reset }) }));
 vi.mock("./actions", () => ({ countSecrets: m.countSecrets }));
 
@@ -58,7 +59,24 @@ describe("VaultResetDialog", () => {
     await user.click(within(okno).getByRole("button", { name: "Zresetuj sejf" }));
     expect(await within(okno).findByRole("alert")).toHaveTextContent("Nie udało się połączyć z sejfem. Spróbuj ponownie.");
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(m.refresh).not.toHaveBeenCalled();
     await user.click(within(okno).getByRole("button", { name: "Zresetuj sejf" }));
     await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    // Dane strony z serwera odświeżone: tabela Haseł po ustawieniu nowego sejfu nie wraca do wierszy sprzed wejścia
+    expect(m.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("arkusz telefonu (CMVaultReset): opis pod tytułem, bez ✕, przyciski w dwóch kolumnach, etykieta słowa na czerwono", async () => {
+    m.countSecrets.mockResolvedValue({ ok: true, count: 4 });
+    render(<VaultResetDialog open onOpenChange={() => {}} />);
+    const okno = await screen.findByRole("dialog", { name: "Zresetować sejf?" });
+    expect(within(okno).getByText("Tej operacji nie da się cofnąć.")).toHaveClass("max-[799px]:block");
+    expect(within(okno).getByRole("button", { name: "Zamknij" })).toHaveClass("max-[799px]:hidden");
+    const stopka = within(okno).getByRole("button", { name: "Anuluj" }).parentElement!;
+    expect(stopka).toHaveClass("max-[799px]:grid-cols-2");
+    expect(within(okno).getByPlaceholderText("RESETUJ").closest("label")).toHaveClass("max-[799px]:text-destructive-foreground");
+    // Liczba sekretów i „Zostaje” z kodu, w jednym zestawie wierszy (karta na telefonie, kafelki na webie)
+    expect(await within(okno).findByText("4 sekrety")).toBeInTheDocument();
+    expect(within(okno).getByText("serwisy, loginy, URL-e")).toBeInTheDocument();
   });
 });

@@ -9,12 +9,25 @@ export function EmptyState({
   description,
   children,
   className,
+  iconClassName,
+  titleAs: Tytul = "p",
+  titleId,
+  titleClassName,
+  descriptionClassName,
 }: {
   icon?: React.ReactNode;
   title: string;
   description?: string;
   children?: React.ReactNode;
   className?: string;
+  // Dodatkowe klasy ramki ikony, tytułu i opisu (np. większy pusty stan na ekranie telefonu)
+  iconClassName?: string;
+  // Element tytułu: domyślnie akapit; na pełnym ekranie nagłówek (h1/h2)
+  titleAs?: "p" | "h1" | "h2";
+  // Id tytułu (np. aria-labelledby formularza)
+  titleId?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
 }) {
   return (
     <div
@@ -24,13 +37,28 @@ export function EmptyState({
       )}
     >
       {icon ? (
-        <div className="grid size-10 place-items-center rounded-md border border-border bg-white text-muted-foreground shadow-xs">
+        <div
+          className={cn(
+            "grid size-10 place-items-center rounded-md border border-border bg-white text-muted-foreground shadow-xs",
+            iconClassName,
+          )}
+        >
           {icon}
         </div>
       ) : null}
-      <p className="m-0 text-base font-semibold leading-[1.3] text-foreground">{title}</p>
+      <Tytul
+        id={titleId}
+        className={cn(
+          "m-0 text-base font-semibold leading-[1.3] text-foreground",
+          titleClassName,
+        )}
+      >
+        {title}
+      </Tytul>
       {description ? (
-        <p className="m-0 text-sm text-muted-foreground">{description}</p>
+        <p className={cn("m-0 text-sm text-muted-foreground", descriptionClassName)}>
+          {description}
+        </p>
       ) : null}
       {children}
     </div>
