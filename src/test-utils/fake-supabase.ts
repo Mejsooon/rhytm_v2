@@ -28,6 +28,7 @@ export function fakeTable(
     "gte",
     "lte",
     "lt",
+    "ilike",
     "or",
     "order",
     "limit",
