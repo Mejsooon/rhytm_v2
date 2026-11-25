@@ -308,11 +308,77 @@ describe("MRowSheet: Subscriptions", () => {
     expect(onChange).toHaveBeenLastCalledWith("k", null);
     await user.type(pole, "29,99");
     expect(onChange).toHaveBeenLastCalledWith("k", { amount: 29.99, cycle: "month" });
-    const segment = screen.getByRole("radiogroup", { name: "Kwota cykliczna: cykl" });
+    const segment = screen.getByRole("radiogroup", { name: "Cykl" });
     expect(screen.getByRole("radio", { name: "mies." })).toHaveAttribute("aria-checked", "true");
     await user.click(screen.getByRole("radio", { name: "rok" }));
     expect(segment).toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith("k", { amount: 43, cycle: "year" });
+  });
+
+  it("kwota „43,5” zapisuje {amount: 43.5, cycle: \"month\"}, po wyjściu z pola formatuje się do „43,50”", async () => {
+    const user = userEvent.setup();
+    const { onChange } = arkuszSub({});
+    const pole = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+    expect(pole).toHaveValue("");
+    expect(pole).toHaveClass("text-right");
+    await user.type(pole, "43,5");
+    expect(onChange).toHaveBeenLastCalledWith("k", { amount: 43.5, cycle: "month" });
+    expect(pole).toHaveValue("43,5");
+    await user.tab();
+    // Rodzic trzyma wartość w store; tu props się nie zmieniają, więc po wyjściu pole wraca do wartości z props (pusta)
+    expect(pole).toHaveValue("");
+  });
+
+  it("po wyjściu z pola kwota z props jest sformatowana jak w komórce webu", async () => {
+    const user = userEvent.setup();
+    arkuszSub({ k: { amount: 43.5, cycle: "month" } });
+    const pole = screen.getByRole("textbox", { name: "Kwota cykliczna" });
+    await user.clear(pole);
+    await user.type(pole, "43,5");
+    expect(pole).toHaveValue("43,5");
+    await user.tab();
+    expect(pole).toHaveValue("43,50");
+  });
+
+  it("przy pustej kwocie segment pokazuje default_cycle pola, a wybór cyklu poprzedza wpisanie kwoty", async () => {
+    const user = userEvent.setup();
+    const rocznie: PageField[] = [{ ...SUB[0], config: { default_cycle: "year" } }, SUB[1]];
+    const { onChange } = arkuszSub({}, rocznie);
+    expect(screen.getByRole("radio", { name: "rok" })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("radio", { name: "mies." }));
+    expect(onChange).not.toHaveBeenCalled();
+    await user.type(screen.getByRole("textbox", { name: "Kwota cykliczna" }), "12");
+    expect(onChange).toHaveBeenLastCalledWith("k", { amount: 12, cycle: "month" });
+  });
+
+  it("kategoria jako chipy, „Aktywna” jako przełącznik w karcie, bez przełącznika przypomnienia (T12)", async () => {
+    const user = userEvent.setup();
+    const pelne: PageField[] = [
+      { id: "n", name: "Nazwa", type: "text", config: { empty_label: "Bez nazwy" }, position: 0, isTitle: true },
+      ...SUB,
+      { id: "kat", name: "Kategoria", type: "select", config: { options: [{ id: "r", label: "Rozrywka", color: "" }, { id: "c", label: "Chmura", color: "" }] }, position: 2, isTitle: false },
+      { id: "akt", name: "Aktywna", type: "checkbox", config: { default_checked: true }, position: 3, isTitle: false },
+    ];
+    const { onChange } = arkuszSub({ n: "Netflix", akt: true, kat: "r" }, pelne);
+    const kategoria = screen.getByRole("group", { name: "Kategoria" });
+    expect(within(kategoria).getByRole("button", { name: "Rozrywka" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(kategoria).getByRole("button", { name: "Chmura" }));
+    expect(onChange).toHaveBeenLastCalledWith("kat", "c");
+    const przelacznik = screen.getByRole("switch", { name: "Aktywna" });
+    expect(przelacznik).toHaveAttribute("aria-checked", "true");
+    expect(przelacznik.closest(".m-row")).not.toBeNull();
+    await user.click(przelacznik);
+    expect(onChange).toHaveBeenLastCalledWith("akt", false);
+    expect(screen.queryByText(/Przypomnij/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /Przypomn/ })).not.toBeInTheDocument();
+  });
+
+  it("kotwica w przeszłości: podpis pokazuje następne odnowienie i nigdy „minęło”", () => {
+    arkuszSub({ k: { amount: 99.99, cycle: "year" }, o: "2023-03-12" });
+    const grupa = screen.getByRole("group", { name: "Data odnowienia" });
+    expect(within(grupa).getByText("12.03.2027 · za 117 dni")).toBeInTheDocument();
+    expect(within(grupa).getByText("marzec 2027")).toBeInTheDocument();
+    expect(screen.queryByText(/minęło/)).not.toBeInTheDocument();
   });
 
   it("data odnowienia: kalendarz pokazuje następne odnowienie (nie kotwicę), z podpisem „dd.mm.rrrr · za N dni”", () => {
