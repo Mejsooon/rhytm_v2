@@ -6,7 +6,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-24-telefon-design.md`: inwentaryzacja (CMLogin, CMRegister, CMForgot, CMOnboarding, CMSettings), „Konflikty” punkt 6, uwagi „konto”, decyzja T9. Czytaj w całości przed każdym zadaniem.
 
-**Makiety (wiążące):** `docs/design/mockups/CMLogin.dc.html`, `CMRegister.dc.html`, `CMForgot.dc.html`, `CMOnboarding.dc.html` (7 kroków), `CMSettings.dc.html`. Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMLogin CMRegister CMForgot CMOnboarding CMSettings`.
+**Makiety (wiążące):** `docs/design/mockups/CMLogin.dc.html`, `CMRegister.dc.html`, `CMForgot.dc.html`, `CMOnboarding.dc.html` (7 kroków), `CMSettings.dc.html`; dodane/poprawione 24.11: `CMCheckEmail.dc.html`, `CMEmailLink.dc.html`, `CMNewPassword.dc.html`, `CMSettingsGeneral.dc.html`, `CMSettingsAccount.dc.html`, `CMSettingsVault.dc.html`, `CMSettingsNotifications.dc.html` (CMLogin/CMRegister/CMForgot z Turnstile i zasadami hasła jak web, CMOnboarding: Hasła zawsze, przypomnienia 5 min / dzień przed). Zrzuty: `PW_CHANNEL=chrome pnpm -s mockups:shots CMLogin CMRegister CMForgot CMOnboarding CMSettings`.
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4, kontrolki, Vitest, Playwright (CI).
 
@@ -37,6 +37,8 @@
 - [ ] Pola 44 px, pole hasła jako `igroup` z oczkiem 44 px (`aria-pressed`). „Nie pamiętasz hasła?” jako link muted z celem 44 px, wyrównany do prawej. Przyciski `btnp`/`btn` na całą szerokość. Separator „lub” 12 px z liniami.
 - [ ] Rejestracja: pasek siły 4 segmenty × 6 px pill, kolory `#ef4444` / `#f59e0b` / zielony z makiety, tło `rgba(0,0,0,.06)`. Bez hexów spoza makiety w `strength-bar.tsx` (odłożone 2g „PhoneStrengthBar hex”). CTA nieaktywne bez zgody (jak dziś).
 - [ ] Reset: krok 1 bez pustego kontenera stopki na telefonie (odłożone 2g); tytuły kroków 600; opisy muted.
+- [ ] Turnstile w formularzach na telefonie tam, gdzie pokazują go makiety (24.11) — ten sam widżet co web, bez zmian logiki.
+- [ ] Ekrany po wysłaniu maila i z linku według makiet 24.11: CMCheckEmail („sprawdź skrzynkę”), CMEmailLink (otwarcie linku z maila), CMNewPassword (nowe hasło z zasadami jak web, link ważny 1 h). Teksty i ważność tylko te, które kod już ma.
 - [ ] Commit: `feat(telefon): logowanie i rejestracja według CM`.
 
 ## Task 2: Kreator (CMOnboarding)
@@ -49,7 +51,7 @@
   - po prawej „Wyloguj” (`btng` muted, `font-medium`, tło hover jak `Button` ghost; odłożone 2g).
 - [ ] Pasek postępu `steps`: siatka 7 kolumn, `gap-1`, `px-4 pb-2`, kreski 4 px pill. Kolory zrobionych, bieżącego i przyszłych kroków z `dots` w `renderVals` makiety. `role="progressbar"` z `aria-valuenow`.
 - [ ] Treść `px-5 pt-4 pb-6 gap-[18px]`. Tytuł kroku jako `step-title` (24/32 px, 600, `-.02em`), opis muted (odłożone 2g: „tytuł kroku/„Gotowe” 600 i opis muted”).
-- [ ] Kroki według makiety:
+- [ ] Kroki według makiety (24.11: krok stron — Hasła zawsze włączone; krok przypomnień zgodny z kodem po zmianach z 24.11: „5 min wcześniej”, „Dzień wcześniej, o 9:00”, „Nawyki”):
   - profil: awatar 56 px, „Wgraj”;
   - role: karta z `m-row` `role="checkbox"`;
   - cele, źródło, strony, przypomnienia: przełączniki `m-hit`;
@@ -74,7 +76,7 @@
 - [ ] `/ustawienia/[zakladka]` na telefonie:
   - `ModuleHeader` z `phoneBack` (→ `/ustawienia`, „Ustawienia”) i `phoneTitle` = nazwa zakładki (tytuł na środku jak w CMSettings);
   - bez poziomego paska `SettingsTabs` (`max-[799px]:hidden`);
-  - karty w stylu CM (`Card` z `card-h`/`card-t`, wiersze przełączników `m-row` 56 px z `.hint` jak „Powiadomienia” w makiecie);
+  - treść każdej zakładki według jej makiety 24.11: Ogólne → CMSettingsGeneral, Konto i bezpieczeństwo → CMSettingsAccount, Sejf → CMSettingsVault, Powiadomienia → CMSettingsNotifications (Kategorie kalendarza i kosz — styl CM z tych samych kart); karty w stylu CM (`Card` z `card-h`/`card-t`, wiersze przełączników `m-row` 56 px z `.hint`). Logika (akcje serwerowe, sesje, eksport, push, sejf) bez zmian; funkcji z makiety, których nie ma w kodzie, nie dobudowujemy;
   - pola 44 px.
 - [ ] Linki do ustawień na telefonie (awatar na Dziś, ⚙ na Stronach) prowadzą do `/ustawienia` (indeks).
 - [ ] Testy:
@@ -86,7 +88,7 @@
 ## Task 4 (koordynator): przegląd, CI, scalenie, dziennik
 
 - [ ] **Przed Task 1:** gałąź `feat/telefon-konto` z `main`, kopia planu, dziennik.
-- [ ] `visual.spec.ts`: makiety CM w tytułach testów publicznych (już są „CLogin / CMLogin” itd.), onboarding, ustawienia (indeks i „Ogólne” na telefonie).
+- [ ] `visual.spec.ts`: makiety CM w tytułach testów publicznych (już są „CLogin / CMLogin” itd.), onboarding, ustawienia (indeks i wszystkie zakładki na telefonie, makiety CMSettings*).
 - [ ] Recenzja: zrzuty vs makiety, cele 44 px, web bez zmian, wylogowanie działa z indeksu.
 - [ ] Przegląd gałęzi, CI zielone, scalenie według zasad serii. `odlozone.md` (uwagi 2g telefonu) oznacz. Dziennik, `stan-projektu.md`.
 - [ ] „Do decyzji”: T9, konflikt 6 (Motyw, Eksport), rozwiązanie `/ustawienia` na webie.
