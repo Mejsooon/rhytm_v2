@@ -15,7 +15,8 @@ import {
   type SportItem,
 } from "@/features/sport/model";
 import { formatClockTime } from "@/lib/time/timezones";
-import type { CategoryRow } from "../load-calendar";
+import { formatMoney } from "@/features/pages/fields";
+import type { CategoryRow, RenewalItem } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
 import { weekdayOf } from "../view-range";
 import { DNI_SKROT, KOLOR_BRAK, MIESIACE_DOP } from "./pl";
@@ -28,8 +29,10 @@ export function MCalendarMonth({
   sport = [],
   categories,
   clock,
+  renewals = [],
   onAdd,
   onBlockClick,
+  onRenewalClick,
 }: {
   // 42 dni siatki (6 tygodni); rząd bez dni miesiąca „date” nie jest pokazywany
   days: IsoDate[];
@@ -41,8 +44,12 @@ export function MCalendarMonth({
   sport?: SportItem[];
   categories: CategoryRow[];
   clock: "24" | "12";
+  // Odnowienia subskrypcji widocznych źródeł: szara kropka w komórce dnia i wpis na liście wybranego dnia (T13)
+  renewals?: RenewalItem[];
   onAdd: (date: IsoDate, startMin: number) => void;
   onBlockClick: (key: string) => void;
+  // Stuknięcie odnowienia (klucz); arkusz podglądu otwiera rodzic
+  onRenewalClick?: (key: string) => void;
 }) {
   const [wybrany, setWybrany] = useState(date);
   // Przejście do innego dnia z zewnątrz (strzałki miesiąca) zmienia wybór (stan ustawiany w renderze)
@@ -60,6 +67,7 @@ export function MCalendarMonth({
   );
   const wybraneBloki = occurrences.filter((o) => o.date === wybrany);
   const wybraneTreningi = sport.filter((i) => i.date === wybrany);
+  const wybraneOdnowienia = renewals.filter((r) => r.date === wybrany);
   // Bloki i treningi wybranego dnia razem, godzina rosnąco (jak na webie)
   const wpisyDnia = [
     ...wybraneBloki.map((o) => ({
@@ -107,7 +115,10 @@ export function MCalendarMonth({
                   ),
                 ...(sport.some((i) => i.date === dzien) ? [SPORT_COLOR] : []),
               ]),
-            ].slice(0, 3);
+            ];
+            // Odnowienie to szara kropka (pusty pierścień #737373, na wybranym dniu #fafafa); liczy się do limitu 3 kropek
+            const maOdnowienie = renewals.some((r) => r.date === dzien);
+            const kropkiKolorow = kolory.slice(0, maOdnowienie ? 2 : 3);
             return (
               <button
                 key={dzien}
@@ -132,7 +143,7 @@ export function MCalendarMonth({
                   {d}
                 </span>
                 <span className="flex h-[5px] gap-0.5">
-                  {kolory.map((kolor) => (
+                  {kropkiKolorow.map((kolor) => (
                     <span
                       key={kolor}
                       data-testid="kropka-kategorii"
@@ -140,6 +151,13 @@ export function MCalendarMonth({
                       style={{ background: aktywny ? "#fafafa" : kolor }}
                     />
                   ))}
+                  {maOdnowienie && (
+                    <span
+                      data-testid="kropka-odnowienia"
+                      className="box-border size-[5px] rounded-full border"
+                      style={{ borderColor: aktywny ? "#fafafa" : "#737373" }}
+                    />
+                  )}
                 </span>
               </button>
             );
@@ -156,6 +174,18 @@ export function MCalendarMonth({
             </Link>
           </Button>
         </div>
+        {/* Odnowienia pierwsze na liście dnia: „↻ Nazwa · kwota”, „cały dzień”, przerywana ramka (CMCalendarMonth) */}
+        {wybraneOdnowienia.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => onRenewalClick?.(r.key)}
+            className="box-border flex min-h-12 w-full cursor-pointer items-center gap-2.5 rounded-[10px] border border-dashed border-black/[.24] bg-white px-3 text-left text-foreground"
+          >
+            <span className="w-[42px] flex-none text-xs text-muted-foreground">cały dzień</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{`↻ ${r.title}${r.amount !== null ? ` · ${formatMoney(r.amount)} zł` : ""}`}</span>
+          </button>
+        ))}
         {wpisyDnia.map((wpis) => {
           if (wpis.typ === "sport") {
             const i = wpis.i;
@@ -213,7 +243,7 @@ export function MCalendarMonth({
             </button>
           );
         })}
-        {wybraneBloki.length === 0 && wybraneTreningi.length === 0 && (
+        {wybraneBloki.length === 0 && wybraneTreningi.length === 0 && wybraneOdnowienia.length === 0 && (
           <Button
             className="h-14 w-full border-dashed text-muted-foreground shadow-none max-[799px]:h-14"
             onClick={() => onAdd(wybrany, 540)}

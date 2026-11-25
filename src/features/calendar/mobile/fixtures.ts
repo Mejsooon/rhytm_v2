@@ -1,6 +1,6 @@
 // Dane testowe wspólne dla testów widoków kalendarza (nie trafia do bundla aplikacji).
 import type { SportItem } from "@/features/sport/model";
-import type { CategoryRow } from "../load-calendar";
+import type { CategoryRow, RenewalItem } from "../load-calendar";
 import type { Occurrence } from "../occurrences";
 
 export function kategoria(
@@ -84,4 +84,23 @@ export function planZSzablonu(nadpisz: Partial<SportItem> = {}): SportItem {
     runKind: null,
     ...nadpisz,
   });
+}
+
+// Odnowienie subskrypcji: domyślnie Netflix 43,00 zł / mies. w sobotę 21.11.2026
+export function odnowienie(nadpisz: Partial<RenewalItem> = {}): RenewalItem {
+  return {
+    key: "f-ren:r1:2026-11-21",
+    fieldId: "f-ren",
+    pageId: "p1",
+    pageTitle: "Subscriptions",
+    rowId: "r1",
+    date: "2026-11-21",
+    next: "2026-12-21",
+    title: "Netflix",
+    amount: 43,
+    cycle: "month",
+    categoryName: "Kategoria",
+    categoryLabel: "Rozrywka",
+    ...nadpisz,
+  };
 }

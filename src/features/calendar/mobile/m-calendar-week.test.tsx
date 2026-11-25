@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { kategoria, planZSzablonu, trening, wystapienie } from "./fixtures";
+import { kategoria, odnowienie, planZSzablonu, trening, wystapienie } from "./fixtures";
 import { MCalendarWeek } from "./m-calendar-week";
 
 const dni = [
@@ -127,5 +127,29 @@ describe("MCalendarWeek — kolejność wpisów dnia", () => {
     expect(within(sroda).getByRole("link", { name: /Spokojny/ })).toHaveClass(
       "focus-visible:shadow-focus",
     );
+  });
+
+  it("odnowienia są pierwszymi wpisami dnia, z przerywaną ramką, kwotą i polem dotyku 44 px", async () => {
+    const onRenewalClick = vi.fn();
+    wyrenderuj({
+      renewals: [odnowienie({ date: "2026-11-18", key: "f-ren:r1:2026-11-18" })],
+      onRenewalClick,
+    });
+    const dzien = screen.getByRole("region", { name: "Środa 18 listopada" });
+    const wpisy = within(dzien).getAllByRole("button");
+    // Odnowienie przed blokami (Rutyna 08:00, Algebra 10:00)
+    expect(wpisy[0]).toHaveTextContent("↻ Netflix");
+    expect(wpisy[0]).toHaveTextContent("43,00 zł");
+    expect(wpisy[0]).toHaveClass("min-h-11", "border-dashed");
+    expect(wpisy[1]).toHaveTextContent("Rutyna");
+    await userEvent.click(wpisy[0]);
+    expect(onRenewalClick).toHaveBeenCalledWith("f-ren:r1:2026-11-18");
+  });
+
+  it("dzień tylko z odnowieniem nie pokazuje „Brak bloków”", () => {
+    wyrenderuj({ renewals: [odnowienie({ date: "2026-11-21" })] });
+    const dzien = screen.getByRole("region", { name: "Sobota 21 listopada" });
+    expect(within(dzien).getByRole("button", { name: /Netflix/ })).toBeInTheDocument();
+    expect(within(dzien).queryByText("Brak bloków")).toBeNull();
   });
 });

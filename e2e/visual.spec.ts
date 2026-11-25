@@ -451,10 +451,9 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "ustawienia-kategorie", projekt);
   });
 
-  test("zrzuty odnowień w kalendarzu (makiety S2Calendar, S2CalendarRenewal, S2CalendarMonth)", async ({
+  test("zrzuty odnowień w kalendarzu (makiety S2Calendar, S2CalendarRenewal, S2CalendarMonth; telefon: CMCalendarDay, CMCalendarWeek, CMCalendarMonth, CMRenewalSheet)", async ({
     page,
   }, info) => {
-    test.skip(info.project.name !== "web", "układ webowy");
     const projekt = info.project.name;
     const { userId, kategorie } = await zalozKontoKalendarza(page, projekt);
     await zasiejBlok(userId, {
@@ -469,6 +468,31 @@ test.describe("ekrany z sesją", () => {
       amount: 43,
       date: "2027-01-16",
     });
+
+    if (projekt === "mobile") {
+      // Telefon: plakietka w pasku nad osią dnia, arkusz podglądu, lista tygodnia i miesiąc z kropką
+      await page.goto("/kalendarz?widok=dzien&data=2027-01-16");
+      const plakietka = page.getByRole("button", { name: "↻ Netflix · 43,00 zł" });
+      await expect(plakietka).toBeVisible();
+      await zrzut(page, "kalendarz-dzien-odnowienie", projekt);
+      await plakietka.click();
+      await expect(
+        page.getByRole("dialog", { name: "Odnowienie Netflix" }),
+      ).toContainText("Tylko podgląd");
+      await zrzut(page, "kalendarz-arkusz-odnowienia", projekt);
+      await page.getByRole("button", { name: "Zamknij" }).click();
+
+      await page.goto(`/kalendarz?widok=tydzien&data=${WTOREK}`);
+      await expect(
+        page.getByRole("button", { name: /↻ Netflix/ }),
+      ).toBeVisible();
+      await zrzut(page, "kalendarz-tydzien-odnowienie", projekt);
+
+      await page.goto(`/kalendarz?widok=miesiac&data=2027-01-16`);
+      await expect(page.getByTestId("kropka-odnowienia")).toBeVisible();
+      await zrzut(page, "kalendarz-miesiac-odnowienie", projekt);
+      return;
+    }
 
     await page.goto(`/kalendarz?widok=tydzien&data=${WTOREK}`);
     const wpis = page.getByRole("button", { name: "Netflix · 43,00 zł" });

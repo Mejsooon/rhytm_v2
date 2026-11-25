@@ -38,6 +38,7 @@ import { MCalendarMonth } from "./mobile/m-calendar-month";
 import { MCalendarWeek } from "./mobile/m-calendar-week";
 import { MCategorySheet } from "./mobile/m-category-sheet";
 import { MNewEntry } from "./mobile/m-new-entry";
+import { MRenewalSheet } from "./mobile/m-renewal-sheet";
 import { MonthGrid } from "./month-grid";
 import { NewEntryPopover } from "./new-entry-popover";
 import { expandOccurrences, type Occurrence } from "./occurrences";
@@ -101,7 +102,7 @@ export function CalendarView({
   data: CalendarData;
   // ?nowy=blok&data&godzina&tytul — okno nowego bloku otwarte od razu (web okno, telefon arkusz)
   newBlock?: { date: IsoDate; startMin: number; title: string } | null;
-  // Odnowienia subskrypcji z loadRenewals (tylko web: tydzień, dzień, miesiąc; telefon w Etapie 3)
+  // Odnowienia subskrypcji z loadRenewals (te same dane dla webu i telefonu: dzień, tydzień, miesiąc)
   renewals?: RenewalsData;
 }) {
   const router = useRouter();
@@ -148,6 +149,8 @@ export function CalendarView({
   const [wybrany, setWybrany] = useState<string | null>(null);
   // Na telefonie szczegóły bloku otwiera arkusz, nie dymek przy bloku
   const [wybranyTel, setWybranyTel] = useState<string | null>(null);
+  // Telefon: klucz otwartego odnowienia (arkusz podglądu MRenewalSheet zamiast dymku)
+  const [odnowienieTel, setOdnowienieTel] = useState<string | null>(null);
   // Otwarte odnowienie: klucz wystąpienia i kliknięty wpis (kotwica dymku)
   const [odnowienie, setOdnowienie] = useState<{
     key: string;
@@ -173,6 +176,7 @@ export function CalendarView({
     setWybrany(null);
     setWybranyTel(null);
     setOdnowienie(null);
+    setOdnowienieTel(null);
     setOkno((o) => (o?.typ === "wpis" ? null : o));
   }
 
@@ -227,6 +231,11 @@ export function CalendarView({
     : undefined;
   // Odnowienie zniknęło (ukryte źródło, nowe dane): dymek się zamyka i nie wraca po ponownym pokazaniu
   if (odnowienie && !otwarteOdnowienie) setOdnowienie(null);
+  // To samo na telefonie: ukryte źródło albo nowe dane zamykają arkusz
+  const otwarteOdnowienieTel = odnowienieTel
+    ? odnowienia.find((i) => i.key === odnowienieTel)
+    : undefined;
+  if (odnowienieTel && !otwarteOdnowienieTel) setOdnowienieTel(null);
 
   // Klik w odnowienie: zamyka dymek bloku i „Nowy wpis”; ponowny klik w ten sam wpis zamyka dymek
   function kliknieteOdnowienie(item: RenewalItem, anchor: HTMLElement) {
@@ -729,8 +738,10 @@ export function CalendarView({
               categories={data.categories}
               clock={data.profile.clock}
               tasks={data.tasks}
+              renewals={odnowienia}
               onAdd={dodajNaTelefonie}
               onBlockClick={setWybranyTel}
+              onRenewalClick={setOdnowienieTel}
             />
           )}
           {widokTel === "tydzien" && (
@@ -744,8 +755,10 @@ export function CalendarView({
                 sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
+                renewals={odnowienia}
                 onAdd={dodajNaTelefonie}
                 onBlockClick={setWybranyTel}
+                onRenewalClick={setOdnowienieTel}
               />
             </div>
           )}
@@ -759,8 +772,10 @@ export function CalendarView({
                 sport={treningi}
                 categories={data.categories}
                 clock={data.profile.clock}
+                renewals={odnowienia}
                 onAdd={dodajNaTelefonie}
                 onBlockClick={setWybranyTel}
+                onRenewalClick={setOdnowienieTel}
               />
             </div>
           )}
@@ -792,6 +807,14 @@ export function CalendarView({
             view === "miesiac" ? wyrownanie(otwarteOdnowienie.date) : "center"
           }
           onClose={() => setOdnowienie(null)}
+        />
+      )}
+      {otwarteOdnowienieTel && (
+        // Telefon: podgląd odnowienia w dolnym arkuszu (CMRenewalSheet), nie w dymku przy wpisie
+        <MRenewalSheet
+          item={otwarteOdnowienieTel}
+          today={today}
+          onClose={() => setOdnowienieTel(null)}
         />
       )}
       {wybraneTel && (
