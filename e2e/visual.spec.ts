@@ -1107,4 +1107,30 @@ test.describe("ekrany z sesją", () => {
     await expect(okno.getByText("inteligentne", { exact: true })).toBeVisible();
     await zrzut(page, "strony-nowe-pole-kwota", projekt);
   });
+  test("zrzuty /szukaj: pusty, z wynikami, bez wyników (makieta CMSearch)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    const userId = await zalozKontoStron(page, projekt);
+    const dzis = dzisWarszawa();
+    // Dane jak w makiecie: bloki, nawyk i strona Books z wierszami
+    await zasiejBlok(userId, { title: "rhytm — kod", date: dzis, startMin: 10 * 60 + 30, durationMin: 120 });
+    await zasiejBlok(userId, { title: "Bazy danych — projekt", date: dzis, startMin: 19 * 60 });
+    await zasiejNawyk(userId, { name: "Czytanie 20 min" });
+    await utworzBooks(page);
+
+    await page.goto("/szukaj");
+    const pole = page.getByRole("searchbox", { name: "Szukaj" });
+    await expect(pole).toBeVisible();
+    await expect(page.getByText("Szybkie akcje")).toBeVisible();
+    await zrzut(page, "szukaj-puste", projekt);
+
+    await pole.fill("ba");
+    await expect(page.getByRole("link", { name: /Bazy danych — projekt/ })).toBeVisible();
+    await zrzut(page, "szukaj-wyniki", projekt);
+
+    await pole.fill("xyz");
+    await expect(page.getByText("Nic nie znaleziono dla „xyz”")).toBeVisible();
+    await zrzut(page, "szukaj-brak", projekt);
+  });
 });

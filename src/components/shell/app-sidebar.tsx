@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Plus, Search, Settings } from "lucide-react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
@@ -11,11 +11,6 @@ import type { PageSummary } from "@/features/pages/load-pages";
 import { PageIcon } from "@/features/pages/page-icon";
 import { PageMenu } from "@/features/pages/page-menu";
 import { usePagesStore } from "@/features/pages/use-pages-store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AccountPopover, type SidebarUser } from "./account-popover";
 import { NAV_MODULES } from "./nav-items";
@@ -42,6 +37,7 @@ export function AppSidebar({
   pages?: PageSummary[];
 }) {
   const sciezka = usePathname();
+  const router = useRouter();
   const { collapsed } = useSidebarState();
   const store = usePagesStore(pages);
   const strony = store.pages;
@@ -60,6 +56,18 @@ export function AppSidebar({
   const aktywnaStrona = strony.find((s) => sciezka === `/strony/${s.id}`);
   const aktywnaStronaId = aktywnaStrona?.id;
   const aktywnaStronaTytul = aktywnaStrona?.title;
+
+  // ⌘K / Ctrl+K z dowolnego miejsca otwiera Szukaj (także z pola tekstowego — jak w pasku Kbd)
+  React.useEffect(() => {
+    function przyKlawiszu(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        router.push("/szukaj");
+      }
+    }
+    window.addEventListener("keydown", przyKlawiszu);
+    return () => window.removeEventListener("keydown", przyKlawiszu);
+  }, [router]);
 
   // F2 na aktywnej stronie włącza zmianę nazwy (poza polami tekstowymi)
   React.useEffect(() => {
@@ -141,22 +149,16 @@ export function AppSidebar({
         <SidebarToggle placement="sidebar" />
       </div>
 
-      {/* Wyszukiwarka (⌘K) — w tym etapie nieaktywna */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-disabled="true"
-            // .igroup z coss.css
-            className="mt-1 mb-2 flex h-8 cursor-default items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground shadow-xs outline-none focus-visible:shadow-focus"
-          >
-            <Search size={16} aria-hidden="true" />
-            <span className="flex-1">Szukaj…</span>
-            <Kbd>⌘K</Kbd>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right">Wkrótce</TooltipContent>
-      </Tooltip>
+      {/* Wyszukiwarka: link do /szukaj w wyglądzie .igroup; skrót ⌘K / Ctrl+K robi to samo z klawiatury */}
+      <Link
+        href="/szukaj"
+        // .igroup z coss.css
+        className="mt-1 mb-2 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground no-underline shadow-xs outline-none transition-colors hover:bg-panel focus-visible:shadow-focus"
+      >
+        <Search size={16} aria-hidden="true" />
+        <span className="flex-1">Szukaj…</span>
+        <Kbd>⌘K</Kbd>
+      </Link>
 
       <div className={cn(GRUPA, "px-2 pt-3 pb-1")}>Moduły</div>
       {NAV_MODULES.map(({ key, label, href, icon: Ikona }) => (
