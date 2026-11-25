@@ -211,3 +211,10 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Indeks ustawień wykonuje zapytania (profil, awatar) także na webie, gdzie jest ukryty CSS.
 - Brak testu jednostkowego nagłówka `/ustawienia/[zakladka]` i zrzutu e2e zakładki Sejf; karty Sejf i Powiadomienia na telefonie oglądane tylko na zrzutach CI.
 - Spec telefonu, konflikt 6: „eksportu nie ma w aplikacji” — nieaktualne (`ExportCard` istnieje).
+
+## Szukaj / baza (25.11, z przeglądu)
+
+- **Luka w `page_blocks_system_guard` (do migracji):** blok z polem Sekret ze strony systemowej w koszu da się przez API przepiąć na zwykłą stronę. Strażnik powinien blokować zmianę `page_id` bloków z polami `secret`.
+- Kalendarz w wynikach: 5 bloków wybieranych po `start_local desc` przed liczeniem najbliższego wystąpienia — powtarzalny blok z dawną datą startu może wypaść.
+- Sport szuka tylko po tytule; `router.replace("/dzis")` po `?szybko=blok` przeładowuje RSC Dziś.
+- `settings.spec.ts:187/280`: w karcie konta chwilowo dwie kopie formularza (SSR + klient pod `Suspense`) — test zawężony do widocznej; przyczyna w kodzie niezbadana.
