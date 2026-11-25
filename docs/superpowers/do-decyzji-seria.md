@@ -116,3 +116,14 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | „Anuluj” w ustawianiu sejfu na telefonie prowadzi do `/strony` | pełny ekran bez tabeli pod spodem | niski |
 | Lista telefonu dziedziczy zapisany filtr/sort tabeli modułu (telefon nie ma UI do ich zmiany) | jeden magazyn z webem | niski |
 | Naprawiony błąd sprzed gałęzi: reset sejfu z ekranu blokady /hasla chował wiersze dodane w tej wizycie (tabela montowała się ze starych danych) — teraz `router.refresh()` | znalezione przez nowy e2e | brak |
+
+### Pakiet subskrypcje
+
+| Decyzja | Dlaczego | Koszt pomyłki |
+|---|---|---|
+| T12: bez „Przypomnij 3 dni przed” | wspólne „dzień przed” w Powiadomieniach | niski |
+| T13: odnowienia w kalendarzu telefonu (pasek nad osią dnia, wpisy w tygodniu, pierścień w miesiącu, arkusz podglądu) według CMCalendar* i CMRenewalSheet | makiety 24.11 | niski |
+| T16: strona Subscriptions na telefonie to ekran CMSubs zamiast tabeli; inne bloki strony (np. akapit z szablonu) ukryte na telefonie | makieta nie ma bloków | niski: tekst widać tylko na webie |
+| „Więcej” (menu strony) dodane w nagłówku CMSubs poza makietą | bez niego strony nie da się z telefonu przemianować ani usunąć | niski |
+| Plakietki odnowień: szara z przerywaną ramką i „↻”, „Tylko podgląd…” jako dopisek (nie alert) | makiety wygrywają z planem | niski |
+| Licznik „N z M subskrypcji” bez odmiany po „z” | dopełniacz po „z” jest poprawny | brak |
