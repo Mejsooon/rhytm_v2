@@ -43,7 +43,8 @@ export async function searchAll(q: string): Promise<SearchResult> {
   if (!sprawdzona.success) {
     return { ok: false, message: sprawdzona.error.issues[0]?.message ?? "Nieprawidłowa fraza." };
   }
-  const fraza = sprawdzona.data;
+  // PostgREST zamienia `*` w ilike na `%` i nie da się go escapować, więc gwiazdki usuwamy z frazy
+  const fraza = sprawdzona.data.replace(/\*/g, "").trim();
   // Za krótka fraza = stan pusty, bez żadnych zapytań
   if (fraza.length < MIN_ZNAKOW) return { ok: true, groups: [] };
 
@@ -134,7 +135,8 @@ export async function searchAll(q: string): Promise<SearchResult> {
       ? Promise.resolve({ data: [], error: null })
       : supabase
           .from("page_rows")
-          .select("id, block_id, values")
+          // Tylko wartości pól tytułowych (aliasy t0, t1…), nigdy cały `values` wiersza
+          .select(["id", "block_id", ...idPolTytulowych.map((id, i) => `t${i}:values->>${id}`)].join(","))
           .eq("user_id", user.id)
           .is("deleted_at", null)
           .in("block_id", idBlokow)
@@ -183,13 +185,12 @@ export async function searchAll(q: string): Promise<SearchResult> {
       href: `/strony/${s.id}`,
     });
   }
-  for (const w of wierszeWynik.data ?? []) {
+  for (const w of (wierszeWynik.data ?? []) as unknown as Record<string, unknown>[]) {
     const polaBloku = pola.filter((p) => p.block_id === w.block_id);
-    const wartosci = (w.values ?? {}) as Record<string, unknown>;
-    // Tytuł wiersza = pierwsze pole tytułowe z tekstem
+    // Tytuł wiersza = pierwsze pole tytułowe bloku z tekstem (alias t<n> = n-te pole tytułowe)
     let tytul = "";
     for (const p of polaBloku) {
-      const v = wartosci[p.id];
+      const v = w[`t${idPolTytulowych.indexOf(p.id)}`];
       if (typeof v === "string" && v.trim() !== "") {
         tytul = v;
         break;

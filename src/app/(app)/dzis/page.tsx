@@ -28,7 +28,7 @@ async function Dzis({ searchParams }: { searchParams: Parametry }) {
   // Awatar na telefonie: podpisany adres zdjęcia z profilu (brak → inicjał)
   const avatarUrl = await getAvatarUrl(supabase, dane.profile.avatarPath);
 
-  // ?szybko=blok (ekran Szukaj → „Nowe zadanie lub blok”) — otwiera dodawanie bloku od razu
+  // ?szybko=blok (ekran Szukaj → „Nowy blok”) — otwiera dodawanie bloku od razu
   const parametry = await searchParams;
   const szybko = parametry.szybko === "blok" ? "blok" : null;
 

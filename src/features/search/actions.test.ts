@@ -113,7 +113,12 @@ describe("searchAll", () => {
     expect(filtr).toContain(POLE);
     expect(filtr).not.toContain(POLE_SYS);
     // Kolumna secret nie bierze udziału w żadnym zapytaniu
-    expect(tables.page_rows.select).toHaveBeenCalledWith("id, block_id, values");
+    expect(tables.page_rows.select).toHaveBeenCalledWith(`id,block_id,t0:values->>${POLE}`);
+  });
+
+  it("gwiazdki są usuwane z frazy (PostgREST traktuje * jak %)", async () => {
+    await searchAll("a*b");
+    expect(tables.pages.ilike).toHaveBeenCalledWith("title", "%ab%");
   });
 
   it("bez pól tytułowych nie pyta o wiersze", async () => {
@@ -141,7 +146,7 @@ describe("searchAll", () => {
     tables.page_fields = fakeTable({
       data: [{ id: POLE, block_id: BLOK_TAB, page_blocks: { id: BLOK_TAB, page_id: STRONA, pages: { id: STRONA, title: "Books", is_system: false } } }],
     });
-    tables.page_rows = fakeTable({ data: [{ id: "r1", block_id: BLOK_TAB, values: { [POLE]: "Dune" } }] });
+    tables.page_rows = fakeTable({ data: [{ id: "r1", block_id: BLOK_TAB, t0: "Dune" }] });
     tables.blocks = fakeTable({
       data: [
         {
@@ -226,7 +231,7 @@ describe("searchAll", () => {
     tables.page_fields = fakeTable({
       data: [{ id: POLE, block_id: BLOK_TAB, page_blocks: { id: BLOK_TAB, page_id: STRONA, pages: { id: STRONA, title: "B", is_system: false } } }],
     });
-    tables.page_rows = fakeTable({ data: [{ id: "r1", block_id: BLOK_TAB, values: { [POLE]: "Strona x" } }] });
+    tables.page_rows = fakeTable({ data: [{ id: "r1", block_id: BLOK_TAB, t0: "Strona x" }] });
     const wynik = await searchAll("stro");
     expect(wynik.ok && wynik.groups[0].items).toHaveLength(5);
   });

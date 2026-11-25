@@ -45,7 +45,7 @@ afterEach(() => {
 describe("SearchView", () => {
   it("pusta fraza: szybkie akcje z poprawnymi adresami, bez „Ostatnio”", () => {
     render(<SearchView />);
-    expect(screen.getByRole("link", { name: "Nowe zadanie lub blok" })).toHaveAttribute("href", "/dzis?szybko=blok");
+    expect(screen.getByRole("link", { name: "Nowy blok" })).toHaveAttribute("href", "/dzis?szybko=blok");
     expect(screen.getByRole("link", { name: "Zapisz bieg" })).toHaveAttribute("href", "/sport?nowy=bieg");
     expect(screen.getByRole("link", { name: "Wpis snu" })).toHaveAttribute("href", "/nawyki?nowy=sen");
     expect(screen.getByRole("link", { name: "Nowa strona" })).toHaveAttribute("href", "/strony/nowa");

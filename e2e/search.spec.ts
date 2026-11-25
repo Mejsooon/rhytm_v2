@@ -29,7 +29,9 @@ test.describe("szukaj", () => {
       .eq("title", "Books")
       .single();
     if (bladStrony || !books) throw new Error(`Brak strony Books: ${bladStrony?.message}`);
-    const blokBooks = books.page_blocks[0];
+    // Strona z szablonu może mieć też bloki bez tabeli; bierzemy blok z polem tytułowym
+    const blokBooks = books.page_blocks.find((b) => b.page_fields.some((p) => p.is_title));
+    if (!blokBooks) throw new Error("Strona Books nie ma bloku z polem tytułowym");
     const poleTytulu = blokBooks.page_fields.find((p) => p.is_title);
     const { error: bladDune } = await admin.from("page_rows").insert({
       user_id: userId,
@@ -58,7 +60,8 @@ test.describe("szukaj", () => {
       .eq("is_system", true)
       .single();
     if (bladHasel || !hasla) throw new Error(`Brak strony Hasła: ${bladHasel?.message}`);
-    const blokHasel = hasla.page_blocks[0];
+    const blokHasel = hasla.page_blocks.find((b) => b.page_fields.some((p) => p.name === "Serwis"));
+    if (!blokHasel) throw new Error("Strona Hasła nie ma bloku z polem Serwis");
     const pole = (nazwa: string) => blokHasel.page_fields.find((p) => p.name === nazwa)!.id;
     const { error: bladGithub } = await admin.from("page_rows").insert({
       user_id: userId,
@@ -139,8 +142,11 @@ test.describe("szukaj", () => {
       .click();
     await expect(page).toHaveURL(/\/szukaj$/);
     await page.goto("/dzis");
-    await page.keyboard.press("Control+k");
-    await expect(page).toHaveURL(/\/szukaj$/);
+    // Nasłuch skrótu dochodzi po hydratacji paska, więc ponawiamy wciśnięcie
+    await expect(async () => {
+      await page.keyboard.press("Control+k");
+      await expect(page).toHaveURL(/\/szukaj$/, { timeout: 1000 });
+    }).toPass();
   });
 
   test("szybkie akcje otwierają okna w modułach", async ({ page }, info) => {
@@ -153,7 +159,7 @@ test.describe("szukaj", () => {
     ).toBeVisible();
 
     await page.goto("/szukaj");
-    await page.getByRole("link", { name: "Nowe zadanie lub blok" }).click();
+    await page.getByRole("link", { name: "Nowy blok" }).click();
     await expect(page).toHaveURL(/\/dzis$/);
     await expect(
       page.getByRole("dialog", { name: /^(Nowy blok|Szybko dodaj)$/ }).filter({ visible: true }),

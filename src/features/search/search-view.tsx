@@ -27,7 +27,7 @@ const OPOZNIENIE_MS = 250;
 
 // Szybkie akcje z makiety CMSearch; adresy otwierają odpowiednie okno w module
 const SZYBKIE_AKCJE = [
-  { href: "/dzis?szybko=blok", etykieta: "Nowe zadanie lub blok", ikona: Plus },
+  { href: "/dzis?szybko=blok", etykieta: "Nowy blok", ikona: Plus },
   { href: "/sport?nowy=bieg", etykieta: "Zapisz bieg", ikona: Pencil },
   { href: "/nawyki?nowy=sen", etykieta: "Wpis snu", ikona: Moon },
   { href: "/strony/nowa", etykieta: "Nowa strona", ikona: Table2 },
@@ -86,7 +86,7 @@ export function SearchView() {
       }
       // Odpowiedź na nieaktualną frazę (użytkownik pisał dalej albo wyczyścił pole) wyrzucamy
       if (ostatniaFraza.current !== przyciete) return;
-      if (!odpowiedz.ok) {
+      if (!odpowiedz?.ok) {
         toast.error("Nie udało się wyszukać");
         return;
       }
