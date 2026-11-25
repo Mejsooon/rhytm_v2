@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  replace,
   createBlock,
   changeOccurrence,
   createCategory,
@@ -11,6 +12,7 @@ const {
   setHabitCheck,
   createHabit,
 } = vi.hoisted(() => ({
+  replace: vi.fn(),
   createBlock: vi.fn(),
   changeOccurrence: vi.fn(),
   createCategory: vi.fn(),
@@ -36,7 +38,7 @@ vi.mock("@/features/habits/actions", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh, push: vi.fn() }),
+  useRouter: () => ({ refresh, push: vi.fn(), replace }),
 }));
 
 import type { Habit } from "@/features/habits/model";
@@ -124,6 +126,37 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.useRealTimers();
+  delete (window as { matchMedia?: unknown }).matchMedia;
+});
+
+describe("TodayView — ?szybko=blok", () => {
+  it("na telefonie otwiera arkusz szybkiego dodawania i czyści adres", () => {
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    render(<TodayView data={dane()} name="Mejson" openOnLoad="blok" />);
+    expect(
+      screen.getByRole("dialog", { name: "Szybko dodaj" }),
+    ).toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/dzis");
+  });
+
+  it("na webie otwiera okno nowego bloku i czyści adres", async () => {
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    render(<TodayView data={dane()} name="Mejson" openOnLoad="blok" />);
+    expect(
+      await screen.findByRole("dialog", { name: "Nowy blok" }),
+    ).toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/dzis");
+  });
+
+  it("bez parametru nic się nie otwiera i adres zostaje", () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
 });
 
 describe("TodayView", () => {
