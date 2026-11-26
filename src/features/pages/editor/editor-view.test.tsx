@@ -411,7 +411,7 @@ describe("EditorView", () => {
     expect(screen.getByRole("textbox", { name: "Akapit" })).toHaveValue("Co czytam, co przeczytałem i co chcę przeczytać.");
     // Trzy karty i przycisk „Karta” na końcu rzędu
     expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
-    expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+    expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Książki");
     expect(screen.getByRole("row", { name: /Diuna/ })).toBeInTheDocument();
   });
 

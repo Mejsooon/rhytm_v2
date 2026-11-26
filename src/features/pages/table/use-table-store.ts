@@ -32,6 +32,7 @@ import {
 import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE, ZAPIS_W_TOKU } from "../messages";
 import type { FilterCond, PageRow, TableSettings } from "../table-model";
+import { templateDefaults, type TemplateKey } from "../templates";
 
 export type TableStore = ReturnType<typeof useTableStore>;
 
@@ -47,7 +48,13 @@ export type RowEditing = {
 };
 
 // onStaleGeneration: wołane, gdy serwer odrzuci zapis Sekretu z powodu innej generacji sejfu
-export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void) {
+// templateKey: szablon strony bloku; tabela szablonu bez klucza `views` w zapisanych ustawieniach dostaje
+// jednorazowo gotowe widoki (pusta lista `views: []` = użytkownik je usunął, więc nic nie dopisujemy)
+export function useTableStore(
+  block: LoadedBlock,
+  onStaleGeneration?: () => void,
+  templateKey: TemplateKey | "passwords" | null = null,
+) {
   // Ustawienia z content.settings; brakujące klucze dostają puste wartości
   const surowe = (block.content.settings ?? {}) as Partial<TableSettings>;
   const zSerwera: TableSettings = {
@@ -504,6 +511,36 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     }
     return udane;
   }
+
+  // Jednorazowe dopisanie widoków szablonu (brak klucza `views` w surowych ustawieniach bloku)
+  const widokiSzablonuRef = useRef(false);
+  useEffect(() => {
+    if (widokiSzablonuRef.current) return;
+    if (templateKey === null || templateKey === "empty") return;
+    const surowaUstawienia = (block.content.settings ?? {}) as Record<string, unknown>;
+    if ("views" in surowaUstawienia) return;
+    widokiSzablonuRef.current = true;
+    const domyslne = templateDefaults(templateKey, block.fields);
+    if (domyslne.views.length === 0 && domyslne.group_by === null) return;
+    const patch: Partial<TableSettings> = {
+      views: domyslne.views,
+      group_by: domyslne.group_by,
+      collapsed_groups: domyslne.collapsed_groups,
+    };
+    // Zapis w tle bez toastu (to nie akcja użytkownika); lokalnie ustawiamy dopiero po potwierdzeniu serwera.
+    // Przy błędzie następne wczytanie bloku spróbuje ponownie
+    ustawieniaWToku.current += 1;
+    void saveTableSettings(block.id, patch)
+      .then((wynik) => {
+        if (wynik.ok) setSettings((s) => ({ ...s, ...patch }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        ustawieniaWToku.current -= 1;
+      });
+    // Jednorazowo przy wczytaniu bloku
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Plan zmiany typu kolumny z menu; null, gdy któryś wiersz czeka jeszcze na odpowiedź serwera
   // (zapisałby zmiany w starym typie)

@@ -26,7 +26,7 @@ test.describe("szukaj", () => {
       .from("pages")
       .select("id, page_blocks(id, page_fields(id, is_title))")
       .eq("user_id", userId)
-      .eq("title", "Books")
+      .eq("title", "Książki")
       .single();
     if (bladStrony || !books) throw new Error(`Brak strony Books: ${bladStrony?.message}`);
     // Strona z szablonu może mieć też bloki bez tabeli; bierzemy blok z polem tytułowym
@@ -95,7 +95,7 @@ test.describe("szukaj", () => {
     await poleSzukaj.fill("dune");
     await expect(tresc.getByText("Strony", { exact: true })).toBeVisible();
     const wiersz = tresc.getByRole("link", { name: /Dune/ });
-    await expect(wiersz).toContainText("w Books");
+    await expect(wiersz).toContainText("w Książki");
     await expect(wiersz).toHaveAttribute("href", `/strony/${books.id}`);
 
     // „czyt” → nawyk z serią

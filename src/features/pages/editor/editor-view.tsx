@@ -227,6 +227,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 <PageTable
                   block={b}
                   today={data.today}
+                  templateKey={page.templateKey}
                   // „Usuń tabelę” w menu „⋯” tabeli (S2TableMenu) usuwa blok jak kosz obok
                   onRemove={() => void store.remove(b.id)}
                   // Telefon, strona Subscriptions: ekran CMSubs z tego samego magazynu co tabela

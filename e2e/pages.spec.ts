@@ -449,7 +449,7 @@ test.describe("strony", () => {
     await utworzBooks(page);
 
     // Ikona z szablonu Books to book-open; wybieramy rakietę z wyszukiwarki ikon
-    const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
+    const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze.locator("svg.lucide-book-open")).toBeVisible();
     await page.getByRole("button", { name: "Zmień ikonę", exact: true }).click();
     await page.getByRole("textbox", { name: "Szukaj ikony" }).fill("rakieta");
@@ -468,7 +468,7 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
+    const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze).toBeVisible();
     await page.getByRole("button", { name: "Menu strony", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
@@ -482,7 +482,7 @@ test.describe("strony", () => {
     await page.goto("/ustawienia/ogolne");
     const kosz = page.locator("#kosz");
     await expect(kosz.getByRole("heading", { name: "Kosz" })).toBeVisible();
-    const pozycja = kosz.getByRole("listitem", { name: "Books" });
+    const pozycja = kosz.getByRole("listitem", { name: "Książki" });
     await expect(pozycja).toContainText("zostało 30 dni");
     await pozycja.getByRole("button", { name: "Przywróć" }).click();
     await expect(kosz.getByText("Kosz jest pusty.")).toBeVisible();
@@ -499,7 +499,7 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzSubscriptions(page);
 
-    await expect(page.getByRole("heading", { name: "Subscriptions", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Subskrypcje", level: 1 })).toBeVisible();
     // Dwa układy są w DOM, więc zawężamy do widocznych
     const miesiecznie = page.getByText("Miesięcznie", { exact: true }).filter({ visible: true }).locator("..");
     await expect(miesiecznie).toContainText("0,00 zł");

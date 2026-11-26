@@ -28,30 +28,30 @@ export async function zalozKontoStron(
   return userId;
 }
 
-// Strona z szablonu Books założona przez /strony/nowa (karta „Books” → „Utwórz stronę”)
+// Strona z szablonu Books założona przez /strony/nowa (karta „Książki” → „Utwórz stronę”)
 export async function utworzBooks(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
-  await page.getByRole("button", { name: /^Books/ }).click();
+  await page.getByRole("button", { name: /^Książki/ }).click();
   await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Tytuł jest polem „Nazwa strony” na webie i telefonie (h1 jest tylko w nagłówku webowym)
   await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
-    "Books",
+    "Książki",
   );
 }
 
-// Strona z szablonu Subscriptions założona przez /strony/nowa (karta „Subscriptions” → „Utwórz stronę”)
+// Strona z szablonu Subscriptions założona przez /strony/nowa (karta „Subskrypcje” → „Utwórz stronę”)
 export async function utworzSubscriptions(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
-  await page.getByRole("button", { name: /^Subscriptions/ }).click();
+  await page.getByRole("button", { name: /^Subskrypcje/ }).click();
   await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Web: pole „Nazwa strony”. Telefon (CMSubs): własny ekran z nagłówkiem h1, bez pola nazwy
   const nazwa = page.getByRole("textbox", { name: "Nazwa strony" });
   await expect(
-    nazwa.or(page.getByRole("heading", { name: "Subscriptions", level: 1 })).first(),
+    nazwa.or(page.getByRole("heading", { name: "Subskrypcje", level: 1 })).first(),
   ).toBeVisible();
-  if (await nazwa.isVisible()) await expect(nazwa).toHaveValue("Subscriptions");
+  if (await nazwa.isVisible()) await expect(nazwa).toHaveValue("Subskrypcje");
 }
 
 // Pusta strona edytora bloków (bez szablonu i bez bloków), jak dawne „Nowa strona” z paska.

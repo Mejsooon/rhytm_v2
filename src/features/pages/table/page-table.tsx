@@ -31,6 +31,7 @@ import {
 } from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
+import type { TemplateKey } from "../templates";
 import { rowsLabel } from "../rows-label";
 import { operatorsFor, visibleRows, type PageRow, type PinnedCard } from "../table-model";
 import { AddFieldDialog } from "./add-field-dialog";
@@ -113,6 +114,7 @@ export function PageTable({
   today,
   onRemove,
   module,
+  templateKey = null,
   moduleTools,
   moduleRowFilter,
   onLiveRowCount,
@@ -122,6 +124,8 @@ export function PageTable({
   today: IsoDate;
   onRemove?: () => void;
   module?: "passwords";
+  // Szablon strony bloku (strona Haseł: "passwords"); tabela bez zapisanych widoków dostaje te z szablonu
+  templateKey?: TemplateKey | "passwords" | null;
   // Tylko w trybie modułu: zawartość paska po lewej (w miejscu nazwy tabeli), np. podpis i „Kategorie”.
   // Dostaje te same funkcje magazynu co komórki, więc opcje Kategorii nie rozjeżdżają się z tabelą.
   moduleTools?: (api: {
@@ -144,7 +148,7 @@ export function PageTable({
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
-  const store = useTableStore(block, vault.onStaleGeneration);
+  const store = useTableStore(block, vault.onStaleGeneration, templateKey);
   const { fields, rows, settings, editing } = store;
   const modul = module === "passwords";
   const odblokowany = vault.status === "odblokowany";

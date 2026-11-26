@@ -130,7 +130,7 @@ describe("PageTable", () => {
       render(<PageTable block={block} today={TODAY} />);
       // Trzy karty i przycisk „Karta” na końcu rzędu
       expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
-      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Książki");
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
       expect(within(stopka).getByText("0 wierszy")).toBeInTheDocument();
     });
@@ -178,7 +178,7 @@ describe("PageTable", () => {
       await user.clear(pole);
       await user.type(pole, "Lektury{Enter}");
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      expect(pole).toHaveValue("Books");
+      expect(pole).toHaveValue("Książki");
     });
 
     it("nazwa bez zmian nie zapisuje nic", async () => {
@@ -197,7 +197,7 @@ describe("PageTable", () => {
       const przeczytana = b.fields.find((f) => f.name === "Przeczytana")!;
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
       const menu = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      expect(within(menu).getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+      expect(within(menu).getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Książki");
       expect(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }).textContent).toBe("A → Z");
       await user.click(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }));
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {

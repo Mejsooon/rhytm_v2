@@ -896,7 +896,7 @@ test.describe("ekrany z sesją", () => {
         .getByRole("button", { name: "Menu strony", exact: true })
         .click();
       await expect(
-        page.getByRole("menu", { name: "Strona Books" }),
+        page.getByRole("menu", { name: "Strona Książki" }),
       ).toBeVisible();
       await zrzut(page, "strony-menu-strony", projekt);
       await page.keyboard.press("Escape");

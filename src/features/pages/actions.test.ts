@@ -125,7 +125,7 @@ describe("strony", () => {
       () => `00000000-0000-4000-8000-${String(++m).padStart(12, "0")}`,
     );
     expect(rpc).toHaveBeenCalledWith("create_page", {
-      p_title: "Books",
+      p_title: "Książki",
       p_icon: "lucide:book-open",
       p_template_key: "books",
       p_blocks: oczekiwane,

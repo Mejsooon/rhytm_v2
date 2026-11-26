@@ -188,6 +188,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   block={blok}
                   today={data.today}
                   module="passwords"
+                  templateKey="passwords"
                   onLiveRowCount={setLiczbaHasel}
                   // Telefon (CMPasswords): lista z tego samego magazynu co tabela; poza odblokowanym sejfem nic
                   renderPhone={(api) =>

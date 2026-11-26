@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
@@ -774,6 +774,57 @@ describe("useTableStore", () => {
       });
       const ostatni = actions.updateField.mock.calls.at(-1)![1].config.options;
       expect(ostatni.find((o: { id: string }) => o.id === pierwsza.id).label).toBe("Nowa nazwa");
+    });
+  });
+
+  describe("widoki szablonu", () => {
+    it("blok szablonu bez klucza views: jednorazowy zapis widoków i grupowania", async () => {
+      const b = blok();
+      renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      const [blockId, patch] = actions.saveTableSettings.mock.calls[0];
+      expect(blockId).toBe(b.id);
+      expect(patch.views.map((w: { name: string }) => w.name)).toEqual([
+        "Czytam",
+        "Do przeczytania",
+        `Przeczytane w ${new Date().getFullYear()}`,
+      ]);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      expect(patch.group_by).toBe(status.id);
+    });
+
+    it("widoki trafiają od razu do lokalnych ustawień", async () => {
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(result.current.settings.views).toHaveLength(3));
+    });
+
+    it("pusta lista views (użytkownik usunął widoki): bez zapisu", async () => {
+      const b = blok();
+      b.content = { ...b.content, settings: { ...(b.content.settings as object), views: [] } };
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await act(async () => {});
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("bez szablonu, na pustej stronie i bez opcji templateKey: bez zapisu", async () => {
+      const b = blok();
+      const { rerender } = renderHook(({ k }: { k: "empty" | null }) => useTableStore(b, undefined, k), {
+        initialProps: { k: null as "empty" | null },
+      });
+      rerender({ k: "empty" });
+      await act(async () => {});
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("ponowny render nie zapisuje drugi raz", async () => {
+      const b = blok();
+      const { rerender } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      rerender();
+      await act(async () => {});
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
     });
   });
 });
