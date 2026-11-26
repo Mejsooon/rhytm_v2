@@ -2,42 +2,41 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, Lock, Search } from "lucide-react";
+import { ChevronLeft, Lock, LockOpen, Plus } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 import type { LoadedPage } from "@/features/pages/load-page";
-import { rowsForm } from "@/features/pages/rows-label";
 import { PageTable } from "@/features/pages/table/page-table";
+import { BLOKADA_MS } from "@/features/vault/lock-timeout";
 import { VaultBanner } from "@/features/vault/vault-banner";
 import { useVault } from "@/features/vault/vault-provider";
 import { VaultSetup } from "@/features/vault/vault-setup";
 import { VaultUnlockCard } from "@/features/vault/vault-unlock-card";
 import { cn } from "@/lib/utils";
-import { CategoriesPopover } from "./categories-popover";
 import { MPasswords } from "./mobile/m-passwords";
 
-// Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html): nagłówek z okruszkami „Moduły / Hasła”
-// i „Zablokuj teraz”, plakietka „Szyfrowane” i tabela modułu. Stan sejfu:
-// - brak: karta ustawiania hasła głównego zamiast tabeli (po „Anuluj” tabela tylko do odczytu i przycisk powrotu);
-//   telefon (CMVaultSetup): pełny ekran, a „Anuluj” prowadzi do listy stron,
+// Ekran modułu Hasła (S2Passwords / S2Vault / S2VaultSetup.dc.html — warianty S2Table kind="passwords"):
+// nagłówek z okruszkami „Moduły / Hasła”, „Zablokuj teraz” (tylko odblokowany) i „Nowe hasło”; pod nim tytuł
+// „Hasła” z plakietką „Odblokowany · blokada po 5 min” i opis. Dalej zwykła tabela strony (zakładki widoków
+// Praca / Studia / Prywatne, pasek z szukajką, grupowanie po Kategorii) w trybie modułu: stałe kolumny,
+// w menu „⋯” „Zresetuj sejf…”, stopka „N haseł · sekrety nie są przeszukiwane”. Stan sejfu:
+// - brak: tabela tylko do odczytu, a nad nią przyciemnienie i okno ustawiania hasła głównego (po „Anuluj”
+//   przycisk „Ustaw hasło główne”); telefon (CMVaultSetup): pełny ekran, a „Anuluj” prowadzi do listy stron,
 // - ladowanie: sama głowa strony, bez tabeli i bez nakładki (nie mignie tabela przed sprawdzeniem sejfu),
 // - telefon (CMVault, CMPasswords): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny
 //   ekran „Sejf jest zablokowany” (bez tabeli pod rozmyciem), przy odblokowanym lista-akordeon `MPasswords` z tego samego
 //   magazynu co tabela (prop `renderPhone`). Układy webu i telefonu są oba w DOM, przełącza je CSS (800 px),
 // - zablokowany (S2Vault): tabela tylko do odczytu (sekrety jako „zablokowane”) pod rozmyciem, a na środku okno
-//   „Odblokuj sejf”; treść pod nakładką jest `inert` i `aria-hidden`, a wiersza tytułu z ikoną i „Hasła” nie ma
-//   (decyzja C1: tytuł przeszkadzał Mejsonowi; okruszki w nagłówku zostają pod rozmyciem jak na makiecie),
-// - odblokowany: tabela edytowalna i baner z odliczaniem,
+//   „Odblokuj sejf”; treść pod nakładką jest `inert` i `aria-hidden`, a wiersza tytułu nie ma (decyzja C1),
+// - odblokowany: tabela edytowalna,
 // - nieobslugiwany: baner z komunikatem i tabela tylko do odczytu.
-// Pasek nad tabelą (`moduleTools`): wyszukiwarka „Szukaj”, segment „Kategoria”, podpis „Kolumny modułu są stałe”
-// i „Kategorie” (opcje Kategorii muszą iść przez ten sam magazyn co komórki tabeli). Wyszukiwanie i segment to
-// tymczasowy stan klienta (nie jest zapisywany), a tabela stosuje go przez `moduleRowFilter`; działa po jawnych
-// kolumnach Serwis, Login, URL i Kategoria (sekretów nie przeszukuje).
+// Szukajka i chipy Kategorii telefonu to tymczasowy stan klienta (nie jest zapisywany); zawężają tylko listę telefonu,
+// po jawnych kolumnach Serwis, Login i URL (sekretów nie przeszukują). Web szuka szukajką paska tabeli.
 export function PasswordsView({ data }: { data: LoadedPage }) {
   const vault = useVault();
   const blok = data.blocks.find((b) => b.type === "table");
-  // „Anuluj” w ustawianiu hasła głównego chowa formularz; po resecie (status wraca do „brak”) wraca on sam
+  // „Anuluj” w ustawianiu hasła głównego chowa okno; po resecie (status wraca do „brak”) wraca ono samo
   const [anulowano, setAnulowano] = React.useState(false);
   const [poprzedniStatus, setPoprzedniStatus] = React.useState(vault.status);
   if (poprzedniStatus !== vault.status) {
@@ -45,13 +44,11 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
     if (vault.status !== "brak") setAnulowano(false);
   }
 
-  // Tymczasowe zawężanie wierszy: fraza i id wybranej opcji Kategorii (null = „Wszystkie”)
+  // Telefon: tymczasowe zawężanie listy — fraza i id wybranej opcji Kategorii (null = „Wszystkie”)
   const [fraza, setFraza] = React.useState("");
   const [kategoriaId, setKategoriaId] = React.useState<string | null>(null);
-  // Liczba haseł w tabeli (bez zawężania) do plakietki w nagłówku; start z danych serwera
-  const [liczbaHasel, setLiczbaHasel] = React.useState(
-    () => (blok?.rows ?? []).filter((r) => r.deletedAt === null).length,
-  );
+  // „Nowe hasło” w nagłówku webu dodaje wiersz tą samą drogą co „Nowy wiersz” tabeli
+  const nowyWierszRef = React.useRef<(() => void) | null>(null);
 
   const odblokowany = vault.status === "odblokowany";
   const ustawianie = vault.status === "brak" && !anulowano;
@@ -61,6 +58,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
   const bezTabeli = vault.status === "ladowanie";
   // Telefon bez tabeli: sam nagłówek (ładowanie) albo ekran blokady (zablokowany)
   const telefonBezTresci = vault.status === "ladowanie" || zablokowany;
+  const minuty = BLOKADA_MS / 60_000;
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col">
@@ -87,7 +85,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
         className={cn("flex min-w-0 flex-1 flex-col", telefonBezTresci && "max-[799px]:hidden")}
       >
         {/* Telefon ma własny nagłówek: w MPasswords (odblokowany: „Zablokuj sejf”, „Nowe hasło”) albo na ekranie
-            ładowania i blokady powyżej */}
+            ładowania i blokady powyżej. Web (S2Passwords .topbar): „Zablokuj teraz” i główny „Nowe hasło” */}
         <ModuleHeader
           title="Hasła"
           webParent="Moduły"
@@ -95,90 +93,71 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           phoneBack={{ href: "/strony", label: "Strony" }}
           phoneCenterTitle
           webAction={
-            odblokowany && (
-              <Button onClick={vault.lock}>
-                <Lock aria-hidden="true" className="size-4" />
-                Zablokuj teraz
+            <>
+              {odblokowany && (
+                <Button onClick={vault.lock}>
+                  <Lock aria-hidden="true" className="size-4" />
+                  Zablokuj teraz
+                </Button>
+              )}
+              <Button variant="primary" disabled={!odblokowany} onClick={() => nowyWierszRef.current?.()}>
+                <Plus aria-hidden="true" className="size-4" />
+                Nowe hasło
               </Button>
-            )
+            </>
           }
         />
-        {/* Treść na całą szerokość (decyzja Mejsona, jak S2Books) */}
+        {/* Treść na całą szerokość jak S2Table: 24 px dookoła, 16 px między sekcjami */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "flex w-full min-w-0 flex-col gap-5 px-6 py-7 max-[799px]:px-4 max-[799px]:py-4",
+              "flex w-full min-w-0 flex-col gap-4 px-6 pt-6 pb-10 max-[799px]:gap-5 max-[799px]:px-4 max-[799px]:py-4",
               // Lista telefonu (MPasswords) ma własne odstępy i nagłówek na całą szerokość
               odblokowany && "max-[799px]:p-0",
             )}
           >
-            {/* Tytuł i plakietki tylko na webie: telefon ma tytuł w nagłówku albo w MPasswords */}
-            <div className="max-[799px]:hidden">
-              {/* Tytuł z ikoną tylko na webie (telefon ma duży tytuł w nagłówku) i tylko przy otwartym sejfie (C1) */}
-              {!zablokowany && (
-                <div className="mb-2.5 flex items-center gap-2.5 max-[799px]:hidden">
-                  <Lock aria-hidden="true" className="size-[26px]" />
-                  <p className="m-0 text-2xl font-semibold tracking-[-0.02em]">
-                    Hasła
-                  </p>
+            {/* Tytuł i opis tylko na webie (telefon ma tytuł w nagłówku albo w MPasswords); przy zamkniętym sejfie
+                bez tytułu (C1, S2Vault) */}
+            {!zablokowany && (
+              <div className="max-[799px]:hidden">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <p className="m-0 text-2xl font-semibold tracking-[-0.02em]">Hasła</p>
+                  {odblokowany && (
+                    <StatusBadge tone="green">
+                      <LockOpen aria-hidden="true" className="size-3" />
+                      Odblokowany · blokada po {minuty} min
+                    </StatusBadge>
+                  )}
                 </div>
-              )}
-              <div className="flex flex-wrap gap-1.5">
-                {/* Odmiana: 1 hasło, 2–4 hasła, 5+ haseł (12–14 → haseł) */}
-                <StatusBadge tone="gray" size="lg">
-                  {liczbaHasel}{" "}
-                  {
-                    { one: "hasło", few: "hasła", many: "haseł" }[
-                      rowsForm(liczbaHasel)
-                    ]
-                  }
-                </StatusBadge>
-                <StatusBadge tone="green" size="lg">
-                  <Lock aria-hidden="true" className="size-3" />
-                  Szyfrowane
-                </StatusBadge>
-              </div>
-            </div>
-
-            {/* Odblokowany: odliczanie pokazuje plakietka w MPasswords, więc baner webu chowa się na telefonie */}
-            {(odblokowany || vault.status === "nieobslugiwany") && (
-              <div className={cn(odblokowany && "max-[799px]:hidden")}>
-                <VaultBanner />
+                <p className="mt-1 mb-0 text-sm text-muted-foreground">
+                  Zaszyfrowane w przeglądarce Twoim hasłem głównym.
+                </p>
               </div>
             )}
 
-            {/* Ustawianie hasła głównego: karta na webie, pełny ekran (CMVaultSetup) na telefonie */}
+            {vault.status === "nieobslugiwany" && <VaultBanner />}
+
+            {/* Ustawianie hasła głównego na telefonie: pełny ekran (CMVaultSetup) zamiast listy */}
             {ustawianie && (
-              <>
-                <div className="max-[799px]:hidden">
-                  <VaultSetup onCancel={() => setAnulowano(true)} />
-                </div>
-                <div className="min-[800px]:hidden">
-                  <VaultSetup ekran onCancel={() => setAnulowano(true)} />
-                </div>
-              </>
+              <div className="min-[800px]:hidden">
+                <VaultSetup ekran onCancel={() => setAnulowano(true)} />
+              </div>
             )}
 
-            {!ustawianie && !blok && (
+            {!blok && (
               <EmptyModule>
                 Nie udało się wczytać tabeli haseł. Odśwież stronę.
               </EmptyModule>
             )}
 
-            {!ustawianie && blok && (
+            {blok && (
               <div
                 hidden={bezTabeli}
-                className={cn(
-                  "flex min-w-0 flex-col gap-5",
-                  bezTabeli && "hidden",
-                )}
+                className={cn("flex min-w-0 flex-col gap-4", bezTabeli && "hidden")}
               >
-                {vault.status === "brak" && (
+                {vault.status === "brak" && !ustawianie && (
                   <div>
-                    <Button
-                      variant="primary"
-                      onClick={() => setAnulowano(false)}
-                    >
+                    <Button variant="primary" onClick={() => setAnulowano(false)}>
                       Ustaw hasło główne
                     </Button>
                   </div>
@@ -189,13 +168,30 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   module="passwords"
                   templateKey="passwords"
                   title="Hasła"
-                  onLiveRowCount={setLiczbaHasel}
-                  // Telefon (CMPasswords): lista z tego samego magazynu co tabela; poza odblokowanym sejfem nic
-                  renderPhone={(api) =>
-                    odblokowany ? (
+                  newRowRef={nowyWierszRef}
+                  // Telefon (CMPasswords): lista z tego samego magazynu co tabela, zawężona szukajką i chipami
+                  // Kategorii telefonu (tylko jawne kolumny); poza odblokowanym sejfem nic
+                  renderPhone={(api) => {
+                    if (!odblokowany) return null;
+                    const kategoria = api.fields.find((f) => f.name === "Kategoria" && f.type === "select");
+                    // Wybrana opcja usunięta: chipy wracają do „Wszystkie”
+                    const wybrana = kategoria?.config.options?.some((o) => o.id === kategoriaId) ? kategoriaId : null;
+                    const szukana = fraza.trim().toLowerCase();
+                    const jawne = ["Serwis", "Login", "URL"]
+                      .map((nazwa) => api.fields.find((f) => f.name === nazwa && f.type !== "secret"))
+                      .filter((f) => f !== undefined);
+                    const wiersze = api.rows.filter((w) => {
+                      if (wybrana && kategoria && w.values[kategoria.id] !== wybrana) return false;
+                      if (szukana === "") return true;
+                      return jawne.some((pole) => {
+                        const wartosc = w.values[pole.id];
+                        return typeof wartosc === "string" && wartosc.toLowerCase().includes(szukana);
+                      });
+                    });
+                    return (
                       <MPasswords
                         fields={api.fields}
-                        rows={api.rows}
+                        rows={wiersze}
                         fraza={fraza}
                         onFraza={setFraza}
                         kategoriaId={kategoriaId}
@@ -206,108 +202,6 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                         onRemoveOption={api.removeOption}
                         planClipboardClear={api.planClipboardClear}
                       />
-                    ) : null
-                  }
-                  moduleRowFilter={(wiersz, pola) => {
-                    const nazwy = new Map(pola.map((f) => [f.name, f]));
-                    const kategoria = nazwy.get("Kategoria");
-                    // Wybrana opcja usunięta w „Kategorie”: segment wraca do „Wszystkie”
-                    const istnieje =
-                      kategoria?.config.options?.some(
-                        (o) => o.id === kategoriaId,
-                      ) ?? false;
-                    if (
-                      kategoriaId &&
-                      istnieje &&
-                      kategoria &&
-                      wiersz.values[kategoria.id] !== kategoriaId
-                    )
-                      return false;
-                    const szukana = fraza.trim().toLowerCase();
-                    if (szukana === "") return true;
-                    // Tylko jawne kolumny; sekretów (Hasło, Notatka) nie ruszamy
-                    return ["Serwis", "Login", "URL"].some((nazwa) => {
-                      const pole = nazwy.get(nazwa);
-                      const wartosc = pole ? wiersz.values[pole.id] : null;
-                      return (
-                        typeof wartosc === "string" &&
-                        wartosc.toLowerCase().includes(szukana)
-                      );
-                    });
-                  }}
-                  moduleTools={({
-                    fields,
-                    readOnly,
-                    createOption,
-                    removeOption,
-                  }) => {
-                    const kategoria = fields.find(
-                      (f) => f.name === "Kategoria" && f.type === "select",
-                    );
-                    const opcje = kategoria?.config.options ?? [];
-                    const wybrana = opcje.some((o) => o.id === kategoriaId)
-                      ? kategoriaId
-                      : null;
-                    return (
-                      <>
-                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                          <div className="flex h-8 w-[240px] max-w-full items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11 max-[799px]:w-full">
-                            <Search
-                              aria-hidden="true"
-                              className="size-4 shrink-0"
-                            />
-                            <input
-                              type="text"
-                              value={fraza}
-                              onChange={(e) => setFraza(e.target.value)}
-                              placeholder="Szukaj serwisu lub loginu"
-                              aria-label="Szukaj"
-                              className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground"
-                            />
-                          </div>
-                          <div
-                            role="group"
-                            aria-label="Kategoria"
-                            className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-md bg-muted p-0.5 text-sm"
-                          >
-                            {[
-                              { id: null, label: "Wszystkie" },
-                              ...opcje.map((o) => ({
-                                id: o.id as string | null,
-                                label: o.label,
-                              })),
-                            ].map((o) => (
-                              <button
-                                key={o.id ?? "wszystkie"}
-                                type="button"
-                                aria-pressed={wybrana === o.id}
-                                onClick={() => setKategoriaId(o.id)}
-                                className={cn(
-                                  "inline-flex h-7 cursor-pointer items-center justify-center rounded-[8px] border-0 px-2.5 font-medium whitespace-nowrap outline-none focus-visible:shadow-focus",
-                                  wybrana === o.id
-                                    ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,.08),0_0_0_1px_rgba(0,0,0,.05)]"
-                                    : "bg-transparent text-muted-foreground hover:text-foreground",
-                                )}
-                              >
-                                {o.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <span className="text-[13px] text-muted-foreground">
-                          Kolumny modułu są stałe
-                        </span>
-                        {kategoria && (
-                          <CategoriesPopover
-                            options={kategoria.config.options ?? []}
-                            readOnly={readOnly}
-                            onCreate={(etykieta) =>
-                              createOption(kategoria, etykieta)
-                            }
-                            onRemove={(id) => removeOption(kategoria, id)}
-                          />
-                        )}
-                      </>
                     );
                   }}
                 />
@@ -316,6 +210,25 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           </div>
         </div>
       </div>
+
+      {/* Ustawianie hasła głównego na webie (S2VaultSetup): przyciemnienie na całym oknie i okno 460 px, 96 px od góry
+          modułu, nad tabelą tylko do odczytu */}
+      {ustawianie && (
+        <>
+          <div aria-hidden="true" className="fixed inset-0 z-40 bg-black/[.32] max-[799px]:hidden" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Ustaw hasło główne sejfu"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setAnulowano(true);
+            }}
+            className="absolute top-24 left-1/2 z-50 w-[min(460px,calc(100%-32px))] -translate-x-1/2 max-[799px]:hidden"
+          >
+            <VaultSetup onCancel={() => setAnulowano(true)} />
+          </div>
+        </>
+      )}
 
       {zablokowany && (
         <>

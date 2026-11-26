@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 import { expect, test, type Response } from "@playwright/test";
 
@@ -101,13 +102,17 @@ test.describe("sejf", () => {
 
     await zalozKontoStron(page, info.project.name);
 
-    // Moduł Hasła: nagłówek z plakietkami, jeszcze bez sejfu
+    // Moduł Hasła (S2VaultSetup): okruszki, pod oknem ustawiania tabela tylko do odczytu ze stopką
     await page.goto("/hasla");
     await expect(
       page.getByRole("heading", { name: "Hasła", level: 1 }),
     ).toBeVisible();
-    await expect(page.getByText("Szyfrowane", { exact: true })).toBeVisible();
-    await expect(page.getByText("0 haseł", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("0 haseł · sekrety nie są przeszukiwane", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Ustaw hasło główne sejfu" }),
+    ).toBeVisible();
 
     // Ustawienie sejfu: miernik siły, zgoda, „Utwórz sejf”
     const ustawianie = page.getByRole("form", {
@@ -129,29 +134,24 @@ test.describe("sejf", () => {
       })
       .click();
     await ustawianie.getByRole("button", { name: "Utwórz sejf" }).click();
+    // S2Passwords: plakietka przy tytule, okno ustawiania znika
     await expect(
-      page.getByText("Sejf odblokowany", { exact: true }),
+      page.getByText("Odblokowany · blokada po 5 min", { exact: true }),
     ).toBeVisible({
       timeout: 20_000,
     });
+    await expect(
+      page.getByRole("dialog", { name: "Ustaw hasło główne sejfu" }),
+    ).toHaveCount(0);
     sprawdzZadania();
 
-    // Kategorie: dymek „Opcje kategorii” → nowa kategoria „Bank”
-    await page.getByRole("button", { name: "Kategorie", exact: true }).click();
-    await page.getByRole("textbox", { name: "Nowa kategoria" }).fill("Bank");
-    const zapisKategorii = page.waitForResponse(AKCJA_SERWERA);
-    await page.getByRole("button", { name: "Dodaj", exact: true }).click();
-    await zapisKategorii;
-    await expect(
-      page.getByRole("list", { name: "Kategorie haseł" }).getByText("Bank"),
-    ).toBeVisible();
-    await page.keyboard.press("Escape");
-
-    // „Nowy wiersz” zakłada wiersz na serwerze; kursor trafia do komórki Serwis
-    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    // „Nowe hasło” w nagłówku zakłada wiersz na serwerze; kursor trafia do komórki Serwis
+    await page.getByRole("button", { name: "Nowe hasło", exact: true }).click();
     const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
-    await expect(page.getByText("1 hasło", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("1 hasło · sekrety nie są przeszukiwane", { exact: true }),
+    ).toBeVisible();
     const komorkaSerwis = wiersz.getByRole("textbox", {
       name: "Serwis",
       exact: true,
@@ -189,16 +189,32 @@ test.describe("sejf", () => {
     }
     await expect(wiersz.getByText("••••••••••••").first()).toBeVisible();
 
-    // Kategoria z „Kategorie”: okienko opcji → „Bank”
+    // Kategoria: okienko opcji → „Utwórz «Bank»” tworzy opcję i od razu ją wybiera
     await wiersz.getByRole("button", { name: /^Kategoria: / }).click();
-    const zapisWyboru = page.waitForResponse(AKCJA_SERWERA);
-    await page.getByRole("option", { name: "Bank", exact: true }).click();
-    await zapisWyboru;
+    await page
+      .getByRole("textbox", { name: "Szukaj lub dodaj opcję" })
+      .fill("Bank");
+    await page.getByRole("button", { name: "Utwórz «Bank»" }).click();
     await expect(
       wiersz.getByRole("button", { name: "Kategoria: Bank" }),
     ).toBeVisible();
     await page.waitForLoadState("networkidle");
     sprawdzZadania();
+
+    // Eksport CSV (menu „⋯”): plik ma jawne kolumny, a kolumn Sekret (Hasło, Notatka) w nim nie ma
+    await page.getByRole("button", { name: "Menu tabeli" }).click();
+    const pobranie = page.waitForEvent("download");
+    await page
+      .getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" })
+      .click();
+    const plik = await pobranie;
+    expect(plik.suggestedFilename()).toBe("Hasła.csv");
+    const sciezka = await plik.path();
+    const csv = readFileSync(sciezka, "utf8").replace(/^\uFEFF/, "");
+    expect(csv.split("\r\n")[0]).toBe("Serwis,Login,URL,Kategoria");
+    expect(csv).toContain(serwis);
+    expect(csv).toContain("Bank");
+    for (const h of zakazane) expect(csv, "CSV zawiera sekret").not.toContain(h);
 
     // Oczko odsłania hasło i notatkę wiersza, ponowny klik ukrywa
     await wiersz.getByRole("button", { name: "Pokaż hasło" }).click();
@@ -214,8 +230,11 @@ test.describe("sejf", () => {
       haslo,
     );
 
-    // Wyszukiwanie i segment „Kategoria” (stan klienta, bez zapisu), tu przy otwartym sejfie
-    const szukaj = page.getByRole("textbox", { name: "Szukaj", exact: true });
+    // Szukajka paska tabeli (stan klienta, bez zapisu) szuka po jawnych kolumnach, tu przy otwartym sejfie;
+    // fraza równa treści sekretu nie znajduje wiersza
+    const szukaj = page.getByRole("searchbox", { name: "Szukaj", exact: true });
+    await szukaj.fill(notatka);
+    await expect(wiersz).toHaveCount(0);
     await szukaj.fill("nie-ma-takiego-serwisu");
     await expect(wiersz).toHaveCount(0);
     await szukaj.fill(login.toUpperCase());
@@ -272,25 +291,20 @@ test.describe("sejf", () => {
     await karta.getByLabel("Hasło główne", { exact: true }).fill(glowne);
     await karta.getByRole("button", { name: "Odblokuj", exact: true }).click();
     await expect(
-      page.getByText("Sejf odblokowany", { exact: true }),
+      page.getByText("Odblokowany · blokada po 5 min", { exact: true }),
     ).toBeVisible({
       timeout: 20_000,
     });
     await expect(karta).toHaveCount(0);
 
-    // Po odblokowaniu tabela wraca z wierszem dodanym w tej sesji; segment „Kategoria” zawęża po jawnej kolumnie
+    // Po odblokowaniu tabela wraca z wierszem dodanym w tej sesji; grupa „Bank” (grupowanie po Kategorii)
+    // podaje, ile haseł ma notatkę, a szukajka zawęża po jawnej kolumnie
     await expect(wiersz).toHaveCount(1);
-    const segment = page.getByRole("group", { name: "Kategoria" });
-    await segment.getByRole("button", { name: "Bank", exact: true }).click();
-    await expect(
-      segment.getByRole("button", { name: "Bank", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(wiersz).toHaveCount(1);
+    await expect(page.getByText("1 z notatką", { exact: true })).toBeVisible();
     await szukaj.fill("nie-ma-takiego-serwisu");
     await expect(wiersz).toHaveCount(0);
     await szukaj.fill(serwis.toLowerCase());
     await expect(wiersz).toHaveCount(1);
-    await segment.getByRole("button", { name: "Wszystkie", exact: true }).click();
     await szukaj.fill("");
 
     // Oczko po ponownym odblokowaniu
@@ -341,7 +355,7 @@ test.describe("sejf", () => {
       .click();
     await nowe.getByRole("button", { name: "Utwórz sejf" }).click();
     await expect(
-      page.getByText("Sejf odblokowany", { exact: true }),
+      page.getByText("Odblokowany · blokada po 5 min", { exact: true }),
     ).toBeVisible({
       timeout: 20_000,
     });

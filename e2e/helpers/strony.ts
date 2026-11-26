@@ -77,3 +77,57 @@ export async function zasiejPustaStrone(
     throw new Error(`Nie udało się zasiać pustej strony: ${error?.message}`);
   return data.id as string;
 }
+
+// Strona z szablonu Projekty założona przez /strony/nowa (karta „Projekty” → „Utwórz stronę”)
+export async function utworzProjekty(page: Page): Promise<void> {
+  await page.goto("/strony/nowa");
+  await page
+    .getByRole("radio", { name: /^Projekty/ })
+    .or(page.getByRole("button", { name: /^Projekty/ }))
+    .click();
+  await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
+  await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue(
+    "Projekty",
+  );
+}
+
+// Pola i opcje bloku tabeli strony (po nazwie) i zasiew wierszy przez API administratora:
+// wartości podaje się po nazwie pola, a dla Wyboru / Statusu po etykiecie opcji
+export async function zasiejWiersze(
+  userId: string,
+  idStrony: string,
+  wiersze: Record<string, unknown>[],
+): Promise<void> {
+  const admin = adminClient();
+  const { data: blok, error: bladBloku } = await admin
+    .from("page_blocks")
+    .select("id")
+    .eq("page_id", idStrony)
+    .eq("type", "table")
+    .single();
+  if (bladBloku || !blok)
+    throw new Error(`Brak bloku tabeli: ${bladBloku?.message}`);
+  const { data: pola, error: bladPol } = await admin
+    .from("page_fields")
+    .select("id, name, type, config")
+    .eq("block_id", blok.id);
+  if (bladPol || !pola) throw new Error(`Brak pól: ${bladPol?.message}`);
+  const { error } = await admin.from("page_rows").insert(
+    wiersze.map((w, i) => {
+      const values: Record<string, unknown> = {};
+      for (const [nazwa, wartosc] of Object.entries(w)) {
+        const pole = pola.find((f) => f.name === nazwa);
+        if (!pole) throw new Error(`Brak pola ${nazwa}`);
+        const opcje = (pole.config?.options ?? []) as { id: string; label: string }[];
+        values[pole.id] =
+          (pole.type === "select" || pole.type === "status") && typeof wartosc === "string"
+            ? opcje.find((o) => o.label === wartosc)?.id ?? null
+            : wartosc;
+      }
+      // API administratora nie ma auth.uid(), więc user_id podajemy wprost (kolumna NOT NULL)
+      return { user_id: userId, block_id: blok.id, position: i, values };
+    }),
+  );
+  if (error) throw new Error(`Nie udało się zasiać wierszy: ${error.message}`);
+}

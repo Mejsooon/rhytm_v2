@@ -24,9 +24,11 @@ import {
 } from "./helpers/sport";
 import {
   utworzBooks,
+  utworzProjekty,
   utworzSubscriptions,
   zalozKontoStron,
   zasiejPustaStrone,
+  zasiejWiersze,
 } from "./helpers/strony";
 import {
   adminClient,
@@ -761,13 +763,13 @@ test.describe("ekrany z sesją", () => {
 
     if (projekt === "web") {
       await expect(
-        page.getByText("Sejf odblokowany", { exact: true }),
+        page.getByText("Odblokowany · blokada po 5 min", { exact: true }),
       ).toBeVisible({
         timeout: 20_000,
       });
 
-      // Wiersz z hasłem (S2Passwords: odblokowany)
-      await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+      // Wiersz z hasłem (S2Passwords: odblokowany) z „Nowe hasło” w nagłówku
+      await page.getByRole("button", { name: "Nowe hasło", exact: true }).click();
       const wiersz = page.locator("tbody tr:has(input)");
       await expect(wiersz).toHaveCount(1);
       const serwis = wiersz.getByRole("textbox", {
@@ -801,6 +803,15 @@ test.describe("ekrany z sesją", () => {
         page.getByRole("heading", { name: "Odblokuj sejf" }),
       ).toBeVisible();
       await zrzut(page, "hasla-zablokowane", projekt);
+
+      // Reset sejfu (S2VaultReset) z okna odblokowania
+      await page
+        .getByRole("button", { name: "Nie pamiętam hasła — zresetuj sejf" })
+        .click();
+      await expect(
+        page.getByRole("dialog", { name: "Zresetować sejf?" }),
+      ).toBeVisible();
+      await zrzut(page, "hasla-reset", projekt);
       return;
     }
 
@@ -1005,6 +1016,42 @@ test.describe("ekrany z sesją", () => {
     await page.goto("/ustawienia/ogolne#kosz");
     await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
     await zrzut(page, "ustawienia-kosz", projekt);
+  });
+
+  // Strony z szablonów z danymi: Książki (S2Books) i Projekty (S2Projects, także Tablica)
+  test("zrzuty /strony Książki i Projekty z wierszami (makiety S2Books, S2Projects)", async ({
+    page,
+  }, info) => {
+    const projekt = info.project.name;
+    test.skip(projekt !== "web", "układ webowy (telefon ma zrzut listy w teście /strony)");
+    const userId = await zalozKontoStron(page, projekt);
+
+    await utworzBooks(page);
+    const idKsiazek = page.url().split("/").at(-1)!;
+    await zasiejWiersze(userId, idKsiazek, [
+      { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam", Ocena: 0 },
+      { Tytuł: "Psychologia pieniędzy", Autor: "Morgan Housel", Status: "Przeczytane", Ocena: 5, Przeczytana: "2026-11-02" },
+      { Tytuł: "Deep Work", Autor: "Cal Newport", Status: "Przeczytane", Ocena: 4, Przeczytana: "2026-10-12" },
+      { Tytuł: "Clean Code", Autor: "Robert C. Martin", Status: "Chcę przeczytać", Ocena: 0 },
+    ]);
+    await page.reload();
+    await expect(page.locator("tbody tr:has(input)")).toHaveCount(4);
+    await zrzut(page, "strony-ksiazki-dane", projekt);
+
+    await utworzProjekty(page);
+    const idProjektow = page.url().split("/").at(-1)!;
+    await zasiejWiersze(userId, idProjektow, [
+      { Nazwa: "rhytm", Status: "W toku", Obszar: "Własne", Termin: "2026-12-15", Repo: "github.com/mejson/rhytm" },
+      { Nazwa: "Projekt z baz danych", Status: "Do zrobienia", Obszar: "Studia", Termin: "2026-12-05" },
+      { Nazwa: "Strona Fanaberii", Status: "Zrobione", Obszar: "Klient", Termin: "2026-11-07" },
+    ]);
+    await page.reload();
+    // Grupa „Zrobione” jest zwinięta (szablon), więc widać dwa wiersze
+    await expect(page.locator("tbody tr:has(input)")).toHaveCount(2);
+    await zrzut(page, "strony-projekty", projekt);
+    await page.getByRole("button", { name: "Tablica", exact: true }).click();
+    await expect(page.getByText("Projekt z baz danych")).toBeVisible();
+    await zrzut(page, "strony-projekty-tablica", projekt);
   });
 
   // Web: tabela i okno „Nowe pole”; telefon: ekran CMSubs i arkusz wiersza (CMRowEdit)

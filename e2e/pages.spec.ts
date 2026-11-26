@@ -1,12 +1,16 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Response } from "@playwright/test";
 
 import { adminClient } from "./helpers/konto";
 
 import {
   utworzBooks,
+  utworzProjekty,
   utworzSubscriptions,
   zalozKontoStron,
   zasiejPustaStrone,
+  zasiejWiersze,
 } from "./helpers/strony";
 
 // Silnik stron: strona z szablonu Books, edytor z tabelą, kosz i telefon.
@@ -80,6 +84,223 @@ test.describe("strony", () => {
     await expect(tytul).toHaveValue("Diuna");
     await expect(status).toHaveText("Czytam");
     await expect(karta).toHaveText(/Czytam teraz\s*1/);
+  });
+
+  // Cztery książki w różnych statusach (zasiew przez API administratora) i odświeżenie strony
+  const KSIAZKI = [
+    { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
+    { Tytuł: "Deep Work", Autor: "Cal Newport", Status: "Przeczytane", Ocena: 4, Przeczytana: "2026-10-12" },
+    { Tytuł: "Diuna", Autor: "Frank Herbert", Status: "Przeczytane", Ocena: 5, Przeczytana: "2026-06-15" },
+    { Tytuł: "Clean Code", Autor: "Robert C. Martin", Status: "Chcę przeczytać" },
+  ];
+
+  test("widoki: zakładka szablonu i nowy widok z filtra zostają wybrane po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+
+    // Zakładki szablonu z liczbą wierszy; „Czytam” zawęża tabelę
+    const zakladki = page.getByRole("group", { name: "Zapisane widoki" });
+    const czytam = zakladki.getByRole("button", { name: /^Czytam\s*1$/ });
+    const zapisWidoku = page.waitForResponse(AKCJA_SERWERA);
+    await czytam.click();
+    await zapisWidoku;
+    await expect(czytam).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+    await page.reload();
+    await expect(czytam).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+
+    // „Wszystkie” → filtr „Tytuł zawiera »de«” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
+    await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
+    await expect(wiersze).toHaveCount(4);
+    await page.getByRole("button", { name: "Filtruj", exact: true }).click();
+    const filtr = page.getByRole("dialog", { name: "Filtr" });
+    await filtr.getByRole("button", { name: "Dodaj warunek" }).click();
+    await filtr.getByRole("textbox", { name: "Wartość warunku 1" }).fill("deep");
+    await expect(wiersze).toHaveCount(1);
+    const zapisNowego = page.waitForResponse(AKCJA_SERWERA);
+    await filtr.getByRole("button", { name: "Zapisz jako widok" }).click();
+    await zapisNowego;
+    const moj = zakladki.getByRole("button", { name: /^Mój widok 1\s*1$/ });
+    await expect(moj).toHaveAttribute("aria-pressed", "true");
+    await page.reload();
+    await expect(moj).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+    await expect(page.getByRole("textbox", { name: "Tytuł", exact: true })).toHaveValue("Deep Work");
+    // „Wszystkie” bez filtra (zapis jako widok czyści filtr „Wszystkich”)
+    await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
+    await expect(wiersze).toHaveCount(4);
+  });
+
+  test("grupy: Książki grupowane po Statusie, zwinięcie grupy zostaje po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+    await expect(page.getByRole("button", { name: /^Grupuj: Status/ })).toBeVisible();
+    // Nagłówek grupy „Przeczytane”: liczba i średnia ocena grupy
+    await expect(page.getByText("śr. ocena 4,5", { exact: true })).toBeVisible();
+
+    const zapisZwiniecia = page.waitForResponse(AKCJA_SERWERA);
+    await page.getByRole("button", { name: "Zwiń grupę Przeczytane" }).click();
+    await zapisZwiniecia;
+    await expect(wiersze).toHaveCount(2);
+    await expect(page.getByText("zwinięte · 2 ukryte", { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(wiersze).toHaveCount(2);
+    await page.getByRole("button", { name: "Rozwiń grupę Przeczytane" }).click();
+    await expect(wiersze).toHaveCount(4);
+
+    // Bez grupowania: jedna lista bez nagłówków grup
+    await page.getByRole("button", { name: /^Grupuj: Status/ }).click();
+    await page.getByRole("menuitemradio", { name: "Bez grupowania" }).click();
+    await expect(page.getByRole("button", { name: /grupę Przeczytane/ })).toHaveCount(0);
+    await expect(wiersze).toHaveCount(4);
+  });
+
+  test("tablica: Projekty, przeciągnięcie karty do „Zrobione” zmienia Status i zostaje po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzProjekty(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, [
+      { Nazwa: "rhytm", Status: "W toku", Obszar: "Własne" },
+      { Nazwa: "Projekt z baz danych", Status: "Do zrobienia", Obszar: "Studia" },
+    ]);
+    await page.reload();
+    await page.getByRole("button", { name: "Tablica", exact: true }).click();
+    const wToku = page.getByRole("region", { name: "W toku" });
+    const zrobione = page.getByRole("region", { name: "Zrobione" });
+    await expect(wToku.getByRole("article", { name: "rhytm" })).toBeVisible();
+
+    const zapis = page.waitForResponse(AKCJA_SERWERA);
+    await wToku.getByRole("article", { name: "rhytm" }).dragTo(zrobione);
+    await zapis;
+    await expect(zrobione.getByRole("article", { name: "rhytm" })).toBeVisible();
+    await expect(wToku.getByRole("article", { name: "rhytm" })).toHaveCount(0);
+
+    // Układ „Tablica” i nowy Status zostają po odświeżeniu
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Tablica", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("region", { name: "Zrobione" }).getByRole("article", { name: "rhytm" }),
+    ).toBeVisible();
+  });
+
+  test("CSV: import pliku z Excela (BOM, „;”, polskie liczby i daty) i eksport całej tabeli", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    const idStrony = page.url().split("/").at(-1)!;
+
+    // Import: „⋯” → „Importuj z CSV…” → plik → dopasowanie (Cena jako nowe pole Liczba) → „Importuj 2 wiersze”
+    await page.getByRole("button", { name: "Menu tabeli" }).click();
+    await page.getByRole("menuitem", { name: "Importuj z CSV…" }).click();
+    const okno = page.getByRole("dialog", { name: "Importuj z CSV" });
+    await okno.getByLabel("Plik CSV").setInputFiles({
+      name: "ksiazki.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(
+        "\uFEFFTytuł;Autor;Przeczytana;Cena\r\nDiuna;Frank Herbert;15.06.2026;43,50\r\n„Sapiens”;Yuval Noah Harari;11.12.2025;1 234,99\r\n;;;\r\n\r\n",
+        "utf8",
+      ),
+    });
+    await expect(okno.getByText("ksiazki.csv")).toBeVisible();
+    await okno
+      .getByRole("combobox", { name: "Pole dla kolumny Cena" })
+      .selectOption({ label: "Nowe pole · Liczba" });
+    const zapisImportu = page.waitForResponse(AKCJA_SERWERA);
+    await okno.getByRole("button", { name: "Importuj 2 wiersze" }).click();
+    await zapisImportu;
+    await okno.getByRole("button", { name: "Gotowe" }).click();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(2);
+    await expect(
+      page.getByRole("columnheader").getByRole("button", { name: "Cena", exact: true }),
+    ).toBeVisible();
+
+    // W bazie: liczby i daty przeliczone z zapisu polskiego, bez pustych wierszy z końca pliku
+    const admin = adminClient();
+    const { data: blok } = await admin
+      .from("page_blocks")
+      .select("id")
+      .eq("page_id", idStrony)
+      .eq("type", "table")
+      .single();
+    const { data: pola } = await admin
+      .from("page_fields")
+      .select("id, name")
+      .eq("block_id", blok!.id);
+    const id = (nazwa: string) => pola!.find((f) => f.name === nazwa)!.id;
+    const { data: zapisane } = await admin
+      .from("page_rows")
+      .select("values")
+      .eq("block_id", blok!.id)
+      .is("deleted_at", null);
+    const poTytule = new Map(
+      zapisane!.map((r) => [(r.values as Record<string, unknown>)[id("Tytuł")], r.values as Record<string, unknown>]),
+    );
+    expect(poTytule.size).toBe(2);
+    expect(poTytule.get("Diuna")?.[id("Cena")]).toBe(43.5);
+    expect(poTytule.get("Diuna")?.[id("Przeczytana")]).toBe("2026-06-15");
+    expect(poTytule.get("„Sapiens”")?.[id("Cena")]).toBe(1234.99);
+
+    // Eksport całej tabeli: plik „Książki.csv” z nagłówkiem pól i obiema książkami
+    await page.getByRole("button", { name: "Menu tabeli" }).click();
+    const pobranie = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }).click();
+    const plik = await pobranie;
+    expect(plik.suggestedFilename()).toBe("Książki.csv");
+    const csv = readFileSync(await plik.path(), "utf8").replace(/^\uFEFF/, "");
+    const [naglowek, ...reszta] = csv.split("\r\n").filter((l) => l !== "");
+    expect(naglowek.split(",")).toEqual(expect.arrayContaining(["Tytuł", "Autor", "Status", "Cena"]));
+    expect(reszta).toHaveLength(2);
+    expect(csv).toContain("Diuna");
+  });
+
+  test("zaznaczanie: trzy wiersze → „Usuń” → „Cofnij” przywraca wszystkie", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+
+    for (const tytul of ["Atomic Habits", "Deep Work", "Clean Code"])
+      await page.getByRole("checkbox", { name: `Zaznacz: ${tytul}` }).check();
+    const pasek = page.getByRole("toolbar", { name: "Akcje dla zaznaczonych" });
+    await expect(pasek).toContainText("3");
+    const usuniecie = page.waitForResponse(AKCJA_SERWERA);
+    await pasek.getByRole("button", { name: "Usuń" }).click();
+    await usuniecie;
+    await expect(wiersze).toHaveCount(1);
+    await expect(pasek).toHaveCount(0);
+    await expect(page.getByText("Usunięto 3 wiersze")).toBeVisible();
+
+    await page.getByRole("button", { name: "Cofnij" }).click();
+    await expect(wiersze).toHaveCount(4);
+    await page.reload();
+    await expect(wiersze).toHaveCount(4);
   });
 
   test("Subscriptions: szablon, kwota, cykl, sumy", async ({ page }, info) => {

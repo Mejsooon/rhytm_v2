@@ -1461,6 +1461,27 @@ describe("PageTable", () => {
       ]);
     });
 
+    it("Hasła (S2Passwords): szukajka w pasku, stopka „sekrety nie są przeszukiwane”, grupa „1 z notatką”", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      const blok = blokHasel();
+      // Grupowanie po Kategorii i drugi wiersz bez notatki
+      blok.content = {
+        ...blok.content,
+        settings: { ...(blok.content.settings as object), group_by: "f-kat" },
+      };
+      blok.rows = [
+        ...blok.rows,
+        { id: "row-2", values: { "f-serwis": "Vercel", "f-login": "jan", "f-haslo": null, "f-url": "", "f-kat": "k1", "f-notatka": null }, position: 1, deletedAt: null },
+      ];
+      render(<PageTable block={blok} today={TODAY} module="passwords" templateKey="passwords" />);
+      expect(screen.getByText("2 hasła · sekrety nie są przeszukiwane")).toBeInTheDocument();
+      expect(screen.getByText("1 z notatką")).toBeInTheDocument();
+      // Szukajka paska tabeli szuka po jawnych kolumnach
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "jan");
+      expect(screen.getByText("1 hasło · sekrety nie są przeszukiwane")).toBeInTheDocument();
+    });
+
     it("Hasła: menu „⋯” bez „Importuj z CSV…”, a eksport pomija kolumny Sekret", async () => {
       const user = userEvent.setup();
       stanSejfu("odblokowany");

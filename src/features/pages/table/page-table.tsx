@@ -119,7 +119,7 @@ const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64
 // dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
 // jest tylko do odczytu (bez „Nowy wiersz”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
 // Filtry, sort, grupowanie, układ i ukryte pola należą do bieżącego widoku (store.view / store.patchView).
-// W module pasek modułu (`moduleTools`) stoi nad zakładkami, a szukajki paska nie ma (moduł ma własną).
+// W module podany pasek modułu (`moduleTools`) stoi nad zakładkami, a szukajki paska wtedy nie ma (moduł ma własną).
 export function PageTable({
   block,
   today,
@@ -409,9 +409,15 @@ export function PageTable({
       return !ukryteGr.has(f.id) && f.id !== grupowanePo && p !== undefined && p.kind !== "none" && p.kind !== "count";
     });
     const tytul = fields.find((f) => f.isTitle);
+    // Hasła (S2Passwords gsum): „2 z notatkami” — liczy tylko, czy Notatka jest wypełniona (szyfrogram albo null),
+    // treści sekretu nie czyta
+    const notatka = templateKey === "passwords" ? fields.find((f) => f.name === "Notatka" && f.type === "secret") : undefined;
     for (const g of grupyPodsumowan) {
       let tekst = "";
-      if (sz && poleSzablonu) {
+      if (notatka) {
+        const n = g.rows.filter((r) => r.values[notatka.id] !== null && r.values[notatka.id] !== undefined).length;
+        tekst = n === 0 ? "" : `${n} ${n === 1 ? "z notatką" : "z notatkami"}`;
+      } else if (sz && poleSzablonu) {
         if (sz.kind === "avg") {
           const oceny = g.rows
             .map((r) => normalizeValue(poleSzablonu, r.values[poleSzablonu.id]))
@@ -444,7 +450,7 @@ export function PageTable({
       wynik.set(g.key, tekst);
     }
     return wynik;
-  }, [grupyPodsumowan, tablica, poleTablicy, podsumowaniaSzablonu, fields, settings, today]);
+  }, [grupyPodsumowan, tablica, poleTablicy, podsumowaniaSzablonu, fields, settings, today, templateKey]);
   // Stopka pod tabelą (S2Table foot): „11 książek · 2 w trakcie” — rzeczownik szablonu i opis szablonu;
   // bez szablonu pierwsze podsumowanie kolumny (bez samej liczby wierszy, którą już mówi rzeczownik), bez „Σ”
   const tekstStopki = React.useMemo(() => {
@@ -465,6 +471,9 @@ export function PageTable({
           ? summarize(poleOgolne, widoczneWiersze, settings.column_summaries[poleOgolne.id], today, fields)
           : "";
     const bezSigmy = suma.replace(/^Σ /, "");
+    // Hasła (S2Passwords foot): stały dopisek zamiast podsumowania
+    if (templateKey === "passwords")
+      return `${widoczneWiersze.length} ${rzeczownik[forma === "one" ? 0 : forma === "few" ? 1 : 2]} · sekrety nie są przeszukiwane`;
     return `${widoczneWiersze.length} ${rzeczownik[forma === "one" ? 0 : forma === "few" ? 1 : 2]}${
       bezSigmy !== "" && bezSigmy !== "—" ? ` · ${bezSigmy}` : ""
     }`;
@@ -697,8 +706,8 @@ export function PageTable({
           />
         )}
 
-        {/* Moduł (Hasła): pasek modułu nad zakładkami (wyszukiwarka, Kategoria, „Kategorie”) */}
-        {modul && (
+        {/* Moduł: własny pasek nad zakładkami, gdy wywołujący go poda (Hasła od Tabel v3 używają paska tabeli) */}
+        {modul && moduleTools && (
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
             {moduleTools?.({
               fields,
@@ -733,8 +742,8 @@ export function PageTable({
             onGroupBy={(id) => void store.setGroupBy(id)}
             onSort={(sort) => void store.patchView({ sort })}
             onHiddenChange={(ids) => void store.patchView({ hidden_field_ids: ids })}
-            // Moduł Hasła ma własną wyszukiwarkę w pasku modułu
-            showSearch={!modul}
+            // Moduł z własnym paskiem (moduleTools) ma tam własną wyszukiwarkę; Hasła szukają w pasku tabeli
+            showSearch={!(modul && moduleTools)}
             filter={
               <FilterPopover
                 fields={fields}
