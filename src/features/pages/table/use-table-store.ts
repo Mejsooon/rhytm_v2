@@ -31,7 +31,8 @@ import {
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE, ZAPIS_W_TOKU } from "../messages";
-import type { FilterCond, PageRow, TableSettings } from "../table-model";
+import type { FilterCond, PageRow, TableSettings, TableView } from "../table-model";
+import { effectiveView, type EffectiveView } from "../table-views";
 import { templateDefaults, type TemplateKey } from "../templates";
 
 export type TableStore = ReturnType<typeof useTableStore>;
@@ -93,6 +94,8 @@ export function useTableStore(
   const [zrodloUstawien, setZrodloUstawien] = useState(block.content.settings);
   const [tempFilters, setTempFilters] = useState<FilterCond[] | null>(null);
   const [editing, setEditing] = useState<RowEditing | null>(null);
+  // Szukana fraza: tylko stan klienta, nie trafia do ustawień
+  const [query, setQuery] = useState("");
 
   // Zapisy w toku: pola i ustawienia (liczniki), wiersze (id → zmiany do nałożenia na dane z serwera)
   const polaWToku = useRef(0);
@@ -494,7 +497,9 @@ export function useTableStore(
 
   // Zmiana ustawień (sort, ukryte kolumny, podsumowania…): od razu lokalnie, błąd cofa te klucze
   async function patchSettings(patch: Partial<TableSettings>): Promise<boolean> {
-    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch) widokiZmienioneRef.current = true;
+    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch || "active_view_id" in patch) {
+      widokiZmienioneRef.current = true;
+    }
     const poprzednie: Partial<TableSettings> = {};
     for (const k of Object.keys(patch) as (keyof TableSettings)[]) {
       (poprzednie as Record<string, unknown>)[k] = settings[k];
@@ -513,6 +518,110 @@ export function useTableStore(
       toast.error(BLAD_ZAPISU);
     }
     return udane;
+  }
+
+  // Ustawienia bieżącego widoku (zapisany widok albo „Wszystkie”)
+  const view: EffectiveView = effectiveView(settings);
+  const aktywnyWidok =
+    settings.active_view_id === null ? undefined : settings.views.find((v) => v.id === settings.active_view_id);
+
+  // Zmiana filtrów, sortu, grupowania, układu albo ukrytych pól: przy aktywnym zapisanym widoku zapisuje się
+  // w tym widoku (cała lista views), przy „Wszystkich” w ustawieniach bazowych bloku
+  async function patchView(patch: Partial<EffectiveView>): Promise<boolean> {
+    if (aktywnyWidok) {
+      return patchSettings({
+        views: settings.views.map((v) => (v.id === aktywnyWidok.id ? { ...v, ...patch } : v)),
+      });
+    }
+    return patchSettings(patch);
+  }
+
+  // Zakładka widoku (null = „Wszystkie”); filtr tymczasowy dotyczył poprzedniego widoku, więc znika
+  async function selectView(id: string | null): Promise<boolean> {
+    setTempFilters(null);
+    if (id === settings.active_view_id) return true;
+    return patchSettings({ active_view_id: id });
+  }
+
+  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku z filtrem tymczasowym, od razu aktywna
+  async function addView(name: string): Promise<boolean> {
+    const nowy: TableView = {
+      id: crypto.randomUUID(),
+      name: name.trim().slice(0, 40) || "Nowy widok",
+      filters: tempFilters ?? view.filters,
+      sort: view.sort,
+      group_by: view.group_by,
+      layout: view.layout,
+      hidden_field_ids: view.hidden_field_ids,
+    };
+    setTempFilters(null);
+    return patchSettings({ views: [...settings.views, nowy], active_view_id: nowy.id });
+  }
+
+  // Nowa nazwa widoku: przycięta, 1–40 znaków; pusta nic nie zmienia
+  async function renameView(id: string, name: string): Promise<boolean> {
+    const nazwa = name.trim().slice(0, 40);
+    const widok = settings.views.find((v) => v.id === id);
+    if (!widok || nazwa === "" || nazwa === widok.name) return true;
+    return patchSettings({ views: settings.views.map((v) => (v.id === id ? { ...v, name: nazwa } : v)) });
+  }
+
+  // „Duplikuj widok”: kopia „Nazwa (kopia)” zaraz za oryginałem, od razu aktywna
+  async function duplicateView(id: string): Promise<boolean> {
+    const i = settings.views.findIndex((v) => v.id === id);
+    if (i < 0) return true;
+    const kopia: TableView = {
+      ...settings.views[i],
+      id: crypto.randomUUID(),
+      name: `${settings.views[i].name} (kopia)`.slice(0, 40),
+    };
+    setTempFilters(null);
+    return patchSettings({
+      views: [...settings.views.slice(0, i + 1), kopia, ...settings.views.slice(i + 1)],
+      active_view_id: kopia.id,
+    });
+  }
+
+  // „Usuń widok”: usunięty aktywny wraca do „Wszystkich”; toast z „Cofnij” przywraca listę i aktywny widok
+  async function deleteView(id: string): Promise<boolean> {
+    const widok = settings.views.find((v) => v.id === id);
+    if (!widok) return true;
+    const poprzednieWidoki = settings.views;
+    const poprzedniAktywny = settings.active_view_id;
+    const patch: Partial<TableSettings> = { views: settings.views.filter((v) => v.id !== id) };
+    if (poprzedniAktywny === id) {
+      patch.active_view_id = null;
+      setTempFilters(null);
+    }
+    const udane = await patchSettings(patch);
+    if (!udane) return false;
+    toast(`Usunięto widok „${widok.name}”`, {
+      action: {
+        label: "Cofnij",
+        onClick: () => patchSettings({ views: poprzednieWidoki, active_view_id: poprzedniAktywny }),
+      },
+    });
+    return true;
+  }
+
+  // Grupowanie i układ (tabela / tablica) bieżącego widoku
+  async function setGroupBy(fieldId: string | null): Promise<boolean> {
+    return patchView({ group_by: fieldId });
+  }
+  async function setLayout(layout: TableView["layout"]): Promise<boolean> {
+    return patchView({ layout });
+  }
+
+  // Zwinięcie / rozwinięcie grupy w bieżącym widoku (klucz widoku albo "all" dla „Wszystkich”)
+  async function toggleGroup(key: string): Promise<boolean> {
+    const klucz = aktywnyWidok ? aktywnyWidok.id : "all";
+    const zwiniete = settings.collapsed_groups[klucz] ?? [];
+    return patchSettings({
+      collapsed_groups: {
+        ...settings.collapsed_groups,
+        [klucz]: zwiniete.includes(key) ? zwiniete.filter((k) => k !== key) : [...zwiniete, key],
+      },
+    });
   }
 
   // Jednorazowe dopisanie widoków szablonu (brak klucza `views` w surowych ustawieniach bloku)
@@ -1005,6 +1114,19 @@ export function useTableStore(
     settings,
     tempFilters,
     editing,
+    view,
+    query,
+    setQuery,
+    patchView,
+    selectView,
+    addView,
+    saveFiltersAsView: addView,
+    renameView,
+    duplicateView,
+    deleteView,
+    setGroupBy,
+    setLayout,
+    toggleGroup,
     startEdit,
     addRowDraft,
     addRowInline,

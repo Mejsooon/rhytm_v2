@@ -148,7 +148,7 @@ test.describe("strony", () => {
     await page.goto(`/strony/${idStrony}`);
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
-    await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
     await expect(page.getByRole("columnheader")).toHaveCount(4, { timeout: 20_000 });
 
     // „+” → okno „Nowe pole” → grupa „Inteligentne” → Kwota cykliczna (domyślna nazwa „Cena”)
@@ -381,7 +381,7 @@ test.describe("strony", () => {
 
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
-    await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
 
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id):
     // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)

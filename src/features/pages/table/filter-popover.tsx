@@ -20,6 +20,7 @@ import {
 import type { PageField } from "../fields";
 import { cn } from "@/lib/utils";
 import { operatorsFor, type FilterCond, type SortKey } from "../table-model";
+import { PLAKIETKA } from "./table-toolbar";
 
 // Nazwy operatorów w liście „Operator” (makieta: „jest”, „jest jednym z”, „≥”); dla Checkboxa
 // operator to zawsze „jest”, a wartość („zaznaczone” / „niezaznaczone”) wybiera op
@@ -70,6 +71,7 @@ export function FilterPopover({
   onOpenChange,
   onChange,
   onSave,
+  onSaveAsView,
   triggerClassName,
   sort,
   onSortChange,
@@ -84,6 +86,8 @@ export function FilterPopover({
   onOpenChange: (open: boolean) => void;
   onChange: (filters: FilterCond[]) => void;
   onSave: () => void;
+  // „Zapisz jako widok”: nowy zapisany widok z bieżącymi warunkami (bez tej funkcji przycisku nie ma)
+  onSaveAsView?: () => void;
   triggerClassName: string;
   // Telefon: klucze sortowania tabeli i ich zmiana (zapis od razu, jak w menu „⋯” tabeli); bez nich arkusz nie ma sekcji sortowania
   sort?: SortKey[];
@@ -150,7 +154,8 @@ export function FilterPopover({
                       value={c.op}
                       onChange={(op) => {
                         setSzkice({});
-                        zmien(i, { op: op as FilterCond["op"], value: undefined });
+                        // Nowy operator zaczyna od pustej wartości; „w ciągu dni” od 14 dni
+                        zmien(i, { op: op as FilterCond["op"], value: op === "within_days" ? 14 : undefined });
                       }}
                       options={operatory.map((op) => ({ value: op, label: NAZWY_OPERATOROW[op] }))}
                     />
@@ -168,7 +173,8 @@ export function FilterPopover({
                         { value: "unchecked", label: "niezaznaczone" },
                       ]}
                     />
-                  ) : c.op === "empty" || c.op === "not_empty" ? null : c.op === "in" ? (
+                  ) : c.op === "empty" || c.op === "not_empty" || c.op === "this_year" ? null : c.op === "in" ||
+                    c.op === "not_in" ? (
                     <div
                       role="group"
                       aria-label={nazwaWartosci}
@@ -191,6 +197,25 @@ export function FilterPopover({
                           </Chip>
                         );
                       })}
+                    </div>
+                  ) : c.op === "within_days" ? (
+                    // Liczba dni od dziś (co najmniej 1); puste pole zostawia poprzednią wartość w warunku
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        aria-label={nazwaWartosci}
+                        value={szkice[i] ?? (typeof c.value === "number" ? String(c.value) : "")}
+                        onChange={(e) => {
+                          const tekst = e.target.value;
+                          setSzkice((s) => ({ ...s, [i]: tekst }));
+                          const liczba = Math.round(Number(tekst));
+                          if (tekst.trim() !== "" && Number.isFinite(liczba) && liczba >= 1) zmien(i, { value: liczba });
+                        }}
+                        className={cn(FIELD, "min-w-0 flex-1 font-mono")}
+                      />
+                      <span className="flex-none text-[13px] whitespace-nowrap text-muted-foreground">dni</span>
                     </div>
                   ) : pole.type === "date" || pole.type === "renewal" ? (
                     <DatePicker
@@ -386,11 +411,14 @@ export function FilterPopover({
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
+          // Nazwa z liczbą warunków (plakietka sama nie czyta się jako część nazwy)
+          aria-label={warunki.length > 0 ? `Filtruj · ${warunki.length}` : undefined}
           // Otwarty filtr: tło jak aria-expanded na przycisku w makiecie (rgba(0,0,0,.04))
           className={cn(triggerClassName, open && "bg-accent")}
         >
-          <Funnel aria-hidden="true" className="size-4 flex-none opacity-80" />
-          {warunki.length > 0 ? `Filtruj · ${warunki.length}` : "Filtruj"}
+          <Funnel aria-hidden="true" className="size-3.5 flex-none" />
+          Filtruj
+          {warunki.length > 0 && <span className={PLAKIETKA}>{warunki.length}</span>}
         </button>
       }
     >
@@ -425,6 +453,11 @@ export function FilterPopover({
             >
               Wyczyść
             </Button>
+            {onSaveAsView && (
+              <Button size="sm" onClick={onSaveAsView} className="max-[799px]:h-11">
+                Zapisz jako widok
+              </Button>
+            )}
             <Button variant="primary" size="sm" onClick={onSave} className="max-[799px]:h-11">
               Zapisz jako domyślny
             </Button>

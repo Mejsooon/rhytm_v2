@@ -155,7 +155,7 @@ describe("menu kolumny", () => {
     expect(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" })).toBeDisabled();
   });
 
-  it("sortowanie zapisuje settings.sort jednym kluczem i zmienia plakietkę „Sort: …” w pasku tabeli", async () => {
+  it("sortowanie zapisuje settings.sort jednym kluczem i zmienia przycisk sortowania w pasku tabeli", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
     render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
@@ -165,7 +165,7 @@ describe("menu kolumny", () => {
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", {
       sort: [{ field_id: autor.id, dir: "desc" }],
     });
-    expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Autor ↓" })).toBeInTheDocument();
     const tytuly = screen
       .getAllByRole("row")
       .slice(1, -1)
@@ -173,7 +173,7 @@ describe("menu kolumny", () => {
     expect(tytuly).toEqual(["Clean Code", "Atomic Habits", "Diuna", "Deep Work"]);
   });
 
-  it("Ukryj kolumnę: kolumna znika, „Widoczne kolumny” w menu tabeli ją przywraca", async () => {
+  it("Ukryj kolumnę: kolumna znika, „Pola” (Widoczne pola) ją przywraca", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("projects", "Projects", PROJECTS);
     render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
@@ -182,12 +182,12 @@ describe("menu kolumny", () => {
     const repo = dane.blocks[0].fields.find((f) => f.name === "Repo")!;
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { hidden_field_ids: [repo.id] });
     expect(screen.queryByRole("columnheader", { name: /Repo/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-    const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-    await user.click(within(ustawienia).getByRole("button", { name: "Repo", pressed: false }));
+    await user.click(screen.getByRole("button", { name: /^Pola/ }));
+    const ustawienia = await screen.findByRole("dialog", { name: "Widoczne pola" });
+    await user.click(within(ustawienia).getByRole("checkbox", { name: "Repo", checked: false }));
     expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { hidden_field_ids: [] });
     expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
-    expect(within(ustawienia).getByRole("button", { name: "Repo", pressed: true })).toBeInTheDocument();
+    expect(within(ustawienia).getByRole("checkbox", { name: "Repo", checked: true })).toBeInTheDocument();
   });
 
   it("Data: „Pokaż w kalendarzu” przełącza config i stan przełącznika w menu kolumny", async () => {
@@ -300,13 +300,13 @@ describe("menu kolumny", () => {
       const dane = stronaTestowa("books", "Books", BOOKS);
       render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
       // Szablon Books sortuje po statusie i dacie przeczytania
-      expect(screen.getByText("Sort: Status, Przeczytana")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Status ↑" })).toBeInTheDocument();
       const menu = await otworzMenu(user, "Przeczytana");
       await user.click(within(menu).getByRole("menuitem", { name: "Usuń pole" }));
       const pole = dane.blocks[0].fields.find((f) => f.name === "Przeczytana")!;
       expect(actions.deleteField).toHaveBeenCalledWith(pole.id);
       expect(screen.queryByRole("columnheader", { name: /Przeczytana/ })).not.toBeInTheDocument();
-      expect(screen.getByText("Sort: Status")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Status ↑" })).toBeInTheDocument();
       expect(within(screen.getAllByRole("row").at(-1) as HTMLElement).getByText("4 wiersze")).toBeInTheDocument();
     });
 
@@ -398,11 +398,11 @@ describe("menu kolumny", () => {
 
       const menuAutora = await otworzMenu(user, "Autor");
       await user.click(within(menuAutora).getByRole("menuitem", { name: "Sortuj rosnąco" }));
-      expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Autor ↑" })).toBeInTheDocument();
 
       await act(async () => odrzuc({ ok: false, message: "x" }));
       expect(screen.getByRole("columnheader", { name: /Przeczytana/ })).toBeInTheDocument();
-      expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Autor ↑" })).toBeInTheDocument();
       expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie.");
     });
 

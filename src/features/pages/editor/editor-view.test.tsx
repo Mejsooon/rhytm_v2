@@ -207,7 +207,7 @@ describe("EditorView", () => {
     expect(screen.queryByRole("listbox", { name: "Bloki" })).toBeNull();
   });
 
-  it("„/tab” zostawia Tabelę, a wstawiona tabela ma pole nazwy z placeholderem „Tabela bez nazwy”", async () => {
+  it("„/tab” zostawia Tabelę, a wstawiona tabela ma zakładki widoków i „Nowy wiersz” w nagłówku", async () => {
     const user = userEvent.setup();
     addBlock.mockResolvedValue({ ok: true, block: blok("t1", "table", 0, { name: "" }) });
     render(<EditorView data={dane([])} />);
@@ -215,8 +215,8 @@ describe("EditorView", () => {
     expect(screen.getAllByRole("option")).toHaveLength(1);
     await user.keyboard("{Enter}");
     await waitFor(() => expect(addBlock).toHaveBeenCalledWith("p1", "table", undefined));
-    const nazwa = await screen.findByRole("textbox", { name: "Nazwa tabeli" });
-    expect(nazwa).toHaveAttribute("placeholder", "Tabela bez nazwy");
+    expect(await screen.findByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
+    expect(within(screen.getAllByRole("banner")[0]).getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
   });
 
   it("Enter na zwykłym tekście wstawia akapit na końcu i czyści pole", async () => {
@@ -381,6 +381,25 @@ describe("EditorView", () => {
     await user.click(trafienie);
     expect(updateBlockContent).toHaveBeenCalledWith("z", { text: "Kup", done: true });
   });
+  it("przycisk główny nagłówka z rzeczownikiem szablonu („Nowa książka”) dodaje wiersz do tabeli", async () => {
+    const user = userEvent.setup();
+    tabelowe.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
+      ok: true,
+      row: { id: "srv-w", values, position: 9, deletedAt: null },
+    }));
+    const d = stronaTestowa("books", "Książki", [{ Tytuł: "Diuna", Status: "Czytam" }]);
+    render(<EditorView data={d} />);
+    const naglowek = screen.getAllByRole("banner")[0];
+    await user.click(within(naglowek).getByRole("button", { name: "Nowa książka" }));
+    await waitFor(() => expect(tabelowe.addRow).toHaveBeenCalledWith("blok-1", expect.any(Object)));
+    await waitFor(() => expect(within(screen.getAllByRole("table")[0]).getAllByRole("row")).toHaveLength(4));
+  });
+
+  it("strona bez tabeli nie ma przycisku głównego", () => {
+    render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
+    expect(within(screen.getAllByRole("banner")[0]).queryByRole("button", { name: /^Now/ })).toBeNull();
+  });
+
   it("nagłówek web ma okruszki i menu strony „⋯”; „Szablony” tylko przy pustej stronie (S2EmptyPage)", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<EditorView data={dane([], "Bez tytułu")} />);
@@ -411,7 +430,7 @@ describe("EditorView", () => {
     expect(screen.getByRole("textbox", { name: "Akapit" })).toHaveValue("Co czytam, co przeczytałem i co chcę przeczytać.");
     // Trzy karty i przycisk „Karta” na końcu rzędu
     expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
-    expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Książki");
+    expect(screen.getByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Diuna/ })).toBeInTheDocument();
   });
 
@@ -446,7 +465,10 @@ describe("EditorView", () => {
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
     expect(tytuly(1)).toEqual(["Deep Work"]);
     expect(tytuly(0)).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.textContent)).toEqual(["Filtruj", "Filtruj · 1"]);
+    expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual([
+      "Filtruj",
+      "Filtruj · 1",
+    ]);
   });
 
   // CMSubs (T16): ekran telefonu tylko dla strony z szablonu Subscriptions z polami Kwota cykliczna i Data odnowienia

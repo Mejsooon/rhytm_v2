@@ -68,12 +68,15 @@ const OPCJE_STATUSU = [
 export function AddFieldDialog({
   allowSecret = false,
   iconTrigger = false,
+  openRef,
   fields,
   onAdd,
 }: {
   // Typ Sekret tylko na stronie z szablonu (nie na „Pustej stronie”)
   allowSecret?: boolean;
   iconTrigger?: boolean;
+  // Otwarcie z zewnątrz (np. „Nowa kolumna” w menu „⋯” tabeli): okno wpisuje tu funkcję otwierającą
+  openRef?: React.RefObject<(() => void) | null>;
   // Pola tabeli: Data odnowienia wskazuje w nich Kwotę cykliczną (cykl) i Checkbox („Tylko gdy zaznaczone”)
   fields: PageField[];
   onAdd: (input: { name: string; type: FieldType; config: FieldConfig }) => void;
@@ -126,6 +129,14 @@ export function AddFieldDialog({
     }
     setOpen(o);
   }
+
+  React.useEffect(() => {
+    if (!openRef) return;
+    openRef.current = () => otworz(true);
+    return () => {
+      openRef.current = null;
+    };
+  });
 
   function wybierzTyp(t: TypPola) {
     setTyp(t.type);

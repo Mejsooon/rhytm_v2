@@ -872,4 +872,167 @@ describe("useTableStore", () => {
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("widoki w zakładkach", () => {
+    // Blok „books” z dwoma zapisanymi widokami; drugi aktywny, gdy aktywny = "w2"
+    function blokZWidokami(aktywny: string | null = null): LoadedBlock {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          views: [
+            {
+              id: "w1",
+              name: "Czytam",
+              filters: [{ field_id: status.id, op: "in", value: [czytam.id] }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+            { id: "w2", name: "Pusty", filters: [], sort: [], group_by: null, layout: "table", hidden_field_ids: [] },
+          ],
+          active_view_id: aktywny,
+        },
+      };
+      return b;
+    }
+
+    it("selectView zapisuje active_view_id i czyści filtr tymczasowy", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      act(() => result.current.setTempFilters([]));
+      await act(async () => {
+        await result.current.selectView("w1");
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { active_view_id: "w1" });
+      expect(result.current.settings.active_view_id).toBe("w1");
+      expect(result.current.tempFilters).toBeNull();
+      expect(result.current.view.filters).toHaveLength(1);
+    });
+
+    it("addView kopiuje bieżący widok z filtrem tymczasowym, aktywuje go i czyści filtr tymczasowy", async () => {
+      const b = blokZWidokami("w1");
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      act(() => result.current.setTempFilters([{ field_id: autor.id, op: "contains", value: "Clear" }]));
+      await act(async () => {
+        await result.current.addView("Nowy widok");
+      });
+      const patch = actions.saveTableSettings.mock.calls[0][1];
+      expect(patch.views).toHaveLength(3);
+      const nowy = patch.views[2];
+      expect(nowy.name).toBe("Nowy widok");
+      expect(nowy.filters).toEqual([{ field_id: autor.id, op: "contains", value: "Clear" }]);
+      expect(patch.active_view_id).toBe(nowy.id);
+      expect(result.current.settings.active_view_id).toBe(nowy.id);
+      expect(result.current.tempFilters).toBeNull();
+    });
+
+    it("renameView przycina nazwę; pusta nazwa nic nie zapisuje", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.renameView("w2", "  Moje  ");
+      });
+      expect(result.current.settings.views[1].name).toBe("Moje");
+      await act(async () => {
+        await result.current.renameView("w2", "   ");
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+    });
+
+    it("duplicateView wstawia kopię za oryginałem i ją aktywuje", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.duplicateView("w1");
+      });
+      const widoki = result.current.settings.views;
+      expect(widoki.map((w) => w.name)).toEqual(["Czytam", "Czytam (kopia)", "Pusty"]);
+      expect(widoki[1].id).not.toBe("w1");
+      expect(widoki[1].filters).toEqual(widoki[0].filters);
+      expect(result.current.settings.active_view_id).toBe(widoki[1].id);
+    });
+
+    it("deleteView usuwa aktywny widok (wraca „Wszystkie”), toast „Cofnij” przywraca", async () => {
+      const { result } = (() => { const bb = blokZWidokami("w1"); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.deleteView("w1");
+      });
+      expect(result.current.settings.views.map((w) => w.id)).toEqual(["w2"]);
+      expect(result.current.settings.active_view_id).toBeNull();
+      expect(toast).toHaveBeenCalledWith("Usunięto widok „Czytam”", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls[0][1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(result.current.settings.views.map((w) => w.id)).toEqual(["w1", "w2"]);
+      expect(result.current.settings.active_view_id).toBe("w1");
+    });
+
+    it("patchView przy aktywnym widoku zapisuje do widoku, przy „Wszystkich” do ustawień bazowych", async () => {
+      const b = blokZWidokami("w2");
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id], sort: [{ field_id: autor.id, dir: "desc" }] });
+      });
+      expect(result.current.settings.views[1].hidden_field_ids).toEqual([autor.id]);
+      expect(result.current.settings.views[1].sort).toEqual([{ field_id: autor.id, dir: "desc" }]);
+      expect(result.current.settings.hidden_field_ids).toEqual([]);
+      expect(result.current.view.hidden_field_ids).toEqual([autor.id]);
+
+      await act(async () => {
+        await result.current.selectView(null);
+      });
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      expect(result.current.settings.hidden_field_ids).toEqual([autor.id]);
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { hidden_field_ids: [autor.id] });
+    });
+
+    it("setGroupBy i setLayout trafiają do aktywnego widoku", async () => {
+      const b = blokZWidokami("w2");
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setGroupBy(status.id);
+      });
+      await act(async () => {
+        await result.current.setLayout("board");
+      });
+      expect(result.current.settings.views[1].group_by).toBe(status.id);
+      expect(result.current.settings.views[1].layout).toBe("board");
+      expect(result.current.settings.group_by).toBeNull();
+      expect(result.current.view.layout).toBe("board");
+    });
+
+    it("setQuery zmienia frazę lokalnie, bez zapisu", () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      act(() => result.current.setQuery("clear"));
+      expect(result.current.query).toBe("clear");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("toggleGroup zwija i rozwija grupę w kluczu aktywnego widoku („all” dla Wszystkich)", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.toggleGroup("opt-1");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"] });
+      await act(async () => {
+        await result.current.selectView("w1");
+      });
+      await act(async () => {
+        await result.current.toggleGroup("opt-2");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"], w1: ["opt-2"] });
+      await act(async () => {
+        await result.current.toggleGroup("opt-2");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"], w1: [] });
+    });
+  });
 });

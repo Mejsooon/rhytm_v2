@@ -980,10 +980,10 @@ test.describe("ekrany z sesją", () => {
       await page.getByLabel("Nazwa strony").blur();
       await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
       await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
-      await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+      await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
     } else {
       await page.getByRole("button", { name: "Wstaw tabelę" }).click();
-      await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+      await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
     }
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
     // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę); ta sama tabela na webie i telefonie

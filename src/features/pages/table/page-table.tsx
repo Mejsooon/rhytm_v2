@@ -1,21 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Ellipsis, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { Ellipsis, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   ActionPopover,
   Button,
-  FIELD,
   MENU_ITEM,
   MENU_ITEM_DANGER,
-  MENU_LABEL,
   MENU_SEPARATOR,
   StatusBadge,
   type IsoDate,
 } from "@/components/controls";
 import { SCHOWEK_MS } from "@/features/vault/clipboard-timeout";
+import { VaultResetDialog } from "@/features/vault/vault-reset-dialog";
 import { useVault } from "@/features/vault/vault-provider";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +33,7 @@ import type { LoadedBlock } from "../load-page";
 import type { TemplateKey } from "../templates";
 import { rowsLabel } from "../rows-label";
 import { operatorsFor, visibleRows, type PageRow, type PinnedCard } from "../table-model";
+import { searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
@@ -42,16 +42,14 @@ import { MRowSheet } from "./mobile/m-row-sheet";
 import { PinnedCards } from "./pinned-cards";
 import { SummaryCell } from "./summary-cell";
 import { TableCell } from "./table-cell";
+import { PRZYCISK_PASKA, PRZYCISK_PASKA_ON, TableToolbar } from "./table-toolbar";
 import { PREFIKS_TYMCZASOWY, useTableStore } from "./use-table-store";
+import { ViewTabs } from "./view-tabs";
 
 // Nagłówek tabeli (.th): 40 px, ikona typu i nazwa; liczby do prawej
 // Telefon (th-cell z CMEditor): 44 px, tło .02, linia pod spodem .08 i prawa linia komórki
 const NAGLOWEK =
   "h-10 border-b border-border px-3 font-medium whitespace-nowrap text-muted-foreground max-[799px]:h-11 max-[799px]:border-r max-[799px]:border-b-black/[.08] max-[799px]:border-r-border max-[799px]:bg-black/[.02]";
-
-// Wyzwalacz „Filtruj” jak Button secondary sm (.btn.sm z coss.css): 28 px, cień btn, fokus shadow-focus
-const PRZYCISK_FILTRA =
-  "relative inline-flex h-7 flex-none cursor-pointer items-center justify-center gap-1.5 rounded-md border border-input bg-white bg-clip-padding px-[9px] text-sm leading-none font-medium whitespace-nowrap text-foreground shadow-btn transition-[box-shadow,background-color] duration-150 outline-none hover:bg-panel focus-visible:shadow-focus max-[799px]:h-10";
 
 // Uchwyt zmiany szerokości (.colrs): 8 px na prawej krawędzi nagłówka, niebieska kreska 2 px po najechaniu,
 // przy fokusie z klawiatury i w trakcie przeciągania (data-on); na telefonie bez uchwytu
@@ -100,15 +98,16 @@ const AKCJA_WIERSZA =
 // Pozycja menu „⋯”; wyłączona: opacity .64
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 
-// Jeden blok tabeli (S2Books.dc.html): przypięte karty, pasek z nazwą tabeli, plakietką sortu, „Filtruj”
-// i menu „⋯”, ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
+// Jeden blok tabeli (S2Table.dc.html): przypięte karty, zakładki widoków („Wszystkie” i zapisane widoki),
+// pasek narzędzi (Tabela/Tablica, Grupuj, Filtruj, sort, Pola, szukajka, menu „⋯”), ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
 // jak w Notion, kosz po najechaniu, stopka z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką.
 // Na telefonie dotknięcie wiersza otwiera arkusz.
 // Działa tylko na danych bloku — bez tytułu strony. `onRemove` (z edytora) usuwa cały blok tabeli.
 // `module="passwords"` (moduł Hasła, S2Passwords.dc.html): stałe kolumny (menu kolumny zablokowane, bez „+”
 // dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
 // jest tylko do odczytu (bez „+ Nowy”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
-// W module nazwa tabeli nie jest pokazywana (S2Passwords nie ma paska nazwy); w jej miejscu `moduleTools`.
+// Filtry, sort, grupowanie, układ i ukryte pola należą do bieżącego widoku (store.view / store.patchView).
+// W module pasek modułu (`moduleTools`) stoi nad zakładkami, a szukajki paska nie ma (moduł ma własną).
 export function PageTable({
   block,
   today,
@@ -119,6 +118,9 @@ export function PageTable({
   moduleRowFilter,
   onLiveRowCount,
   renderPhone,
+  newRowRef,
+  onImportCsv,
+  onExportCsv,
 }: {
   block: LoadedBlock;
   today: IsoDate;
@@ -145,6 +147,11 @@ export function PageTable({
   // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „+ Nowy”) tylko od 800 px.
   // Arkusz wiersza (MRowSheet) i okna zostają wspólne.
   renderPhone?: (api: PhoneTableApi) => React.ReactNode;
+  // Przycisk główny w nagłówku strony („Nowa książka”): tabela wpisuje tu funkcję dodającą wiersz jak „+ Nowy”
+  newRowRef?: React.RefObject<(() => void) | null>;
+  // Pozycje CSV w menu „⋯”; bez nich są wyłączone
+  onImportCsv?: () => void;
+  onExportCsv?: () => void;
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
@@ -228,25 +235,34 @@ export function PageTable({
   // Okno karty: karta null = nowa karta, inaczej edycja tej karty (obiekt z chwili otwarcia, nie indeks —
   // lista może się zmienić przy otwartym oknie, np. „Cofnij” usunięcia karty)
   const [oknoKarty, setOknoKarty] = React.useState<{ karta: PinnedCard | null } | null>(null);
-  // Szkic nazwy tabeli; nowa nazwa ze store (zapis, cofnięcie po błędzie) zastępuje szkic
-  const [szkicNazwy, setSzkicNazwy] = React.useState(store.tableName);
-  const [zrodloNazwy, setZrodloNazwy] = React.useState(store.tableName);
-  if (zrodloNazwy !== store.tableName) {
-    setZrodloNazwy(store.tableName);
-    setSzkicNazwy(store.tableName);
-  }
+  // Okno resetu sejfu z menu „⋯” modułu Hasła
+  const [resetSejfu, setResetSejfu] = React.useState(false);
+  // „Nowa kolumna” z menu „⋯” otwiera okno pola przy „+” w nagłówku
+  const otworzNowePole = React.useRef<(() => void) | null>(null);
 
   const zywe = rows.filter((r) => r.deletedAt === null);
   const liczbaZywych = zywe.length;
   React.useEffect(() => {
     onLiveRowCount?.(liczbaZywych);
   }, [onLiveRowCount, liczbaZywych]);
-  const ukryte = new Set(settings.hidden_field_ids);
+  // Bieżący widok (zapisany albo „Wszystkie”): filtry, sort, grupowanie, układ i ukryte pola
+  const widok = store.view;
+  const widokWszystkich = {
+    filters: settings.filters,
+    sort: settings.sort,
+    group_by: settings.group_by,
+    layout: settings.layout,
+    hidden_field_ids: settings.hidden_field_ids,
+  };
+  const ukryte = new Set(widok.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
-  const wedlugUstawien = visibleRows(fields, rows, settings, store.tempFilters, today).filter(
-    (r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields),
-  );
+  // Szukana fraza (stan klienta) zawęża wiersze po filtrach widoku; sekrety nie są przeszukiwane
+  const wedlugUstawien = searchRows(
+    fields,
+    visibleRows(fields, rows, { ...settings, filters: widok.filters, sort: widok.sort }, store.tempFilters, today),
+    store.query,
+  ).filter((r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields));
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
   let widoczneWiersze = wedlugUstawien;
@@ -263,14 +279,7 @@ export function PageTable({
     widoczneWiersze = [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
   }
   // Filtr w edycji (stan klienta) albo zapisany domyślny
-  const filtry = store.tempFilters ?? settings.filters;
-  // Pola, po których można jeszcze dodać sortowanie (bez tych już w sorcie)
-  const wolneDoSortu = fields.filter((f) => !settings.sort.some((k) => k.field_id === f.id));
-  // Plakietka „Sort: Status, Przeczytana” — nazwy pól sortu w kolejności kluczy
-  const polaSortu = settings.sort
-    .map((s) => fields.find((f) => f.id === s.field_id)?.name)
-    .filter((n): n is string => n !== undefined);
-
+  const filtry = store.tempFilters ?? widok.filters;
   // Opcja „zrobione” z karty najbliższego terminu (zrobione terminy nie są pilne)
   const kartaTerminu = settings.pinned_cards.find((c) => c.aggregation === "nearest_date");
   const zrobione =
@@ -358,6 +367,22 @@ export function PageTable({
     }
   }
 
+  // „+ Widok” i „Zapisz jako widok”: „Nowy widok” (z numerem, gdy nazwa jest zajęta) z bieżącymi filtrami
+  async function dodajWidok() {
+    let nazwa = "Nowy widok";
+    for (let n = 2; settings.views.some((v) => v.name === nazwa); n++) nazwa = `Nowy widok ${n}`;
+    if (await store.addView(nazwa)) toast(`Zapisano „${nazwa}” z obecnymi filtrami`);
+  }
+
+  // Przycisk główny nagłówka strony dodaje wiersz tą samą drogą co „+ Nowy” (moduł przy zamkniętym sejfie: nic)
+  React.useEffect(() => {
+    if (!newRowRef) return;
+    newRowRef.current = tylkoOdczyt ? null : () => void nowyWiersz();
+    return () => {
+      newRowRef.current = null;
+    };
+  });
+
   const edytowany = editing?.rowId ? rows.find((r) => r.id === editing.rowId) : undefined;
   const tytulowe = fields.find((f) => f.isTitle);
   const tytulArkusza =
@@ -438,222 +463,193 @@ export function PageTable({
           />
         )}
 
-        {/* Pasek tabeli: nazwa (h2 16 px) po lewej, sort / Filtruj / ⋯ po prawej */}
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-          {modul ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              {moduleTools?.({
-                fields,
-                readOnly: tylkoOdczyt,
-                createOption: store.createOption,
-                removeOption: store.removeOption,
-              })}
-            </div>
-          ) : (
-            <input
-              type="text"
-              value={szkicNazwy}
-              onChange={(e) => setSzkicNazwy(e.target.value)}
-              onBlur={() => void store.renameTable(szkicNazwy)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.currentTarget.blur();
-                }
-              }}
-              placeholder="Tabela bez nazwy"
-              aria-label="Nazwa tabeli"
-              className="min-w-0 flex-1 rounded-md border-0 bg-transparent p-0 font-[inherit] text-base font-semibold text-foreground outline-none placeholder:text-faint-foreground focus-visible:bg-black/[.02] focus-visible:shadow-focus max-[799px]:min-h-11"
-            />
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            {polaSortu.length > 0 && <StatusBadge tone="gray">Sort: {polaSortu.join(", ")}</StatusBadge>}
-            <FilterPopover
-              fields={fields}
-              filters={filtry}
-              today={today}
-              shown={widoczneWiersze.length}
-              total={zywe.length}
-              open={filtrOtwarty}
-              onOpenChange={setFiltrOtwarty}
-              onChange={store.setTempFilters}
-              onSave={() => {
-                // Filtr tymczasowy znika dopiero po udanym zapisie
-                void store.patchSettings({ filters: filtry }).then((udane) => {
-                  if (udane) store.setTempFilters(null);
-                });
-              }}
-              triggerClassName={PRZYCISK_FILTRA}
-              // Telefon: sortowanie w tym samym arkuszu co filtr (zapis od razu, jak w menu „⋯” tabeli)
-              sort={settings.sort}
-              onSortChange={(sort) => void store.patchSettings({ sort })}
-            />
-            <ActionPopover
-              open={menuTabeli}
-              onOpenChange={(o) => {
-                // Zamknięcie menu (Esc, klik obok) zapisuje szkic nazwy z pola w menu
-                if (!o && !modul) void store.renameTable(szkicNazwy);
-                setMenuTabeli(o);
-              }}
-              align="end"
-              width={300}
-              className="p-1"
-              ariaLabel="Ustawienia tabeli"
-              trigger={
-                <Button
-                  size="sm"
-                  icon
-                  aria-label="Menu tabeli"
-                  aria-expanded={menuTabeli}
-                  className="aria-expanded:bg-accent"
-                >
-                  <Ellipsis aria-hidden="true" className="size-4" />
-                </Button>
-              }
-            >
-              {/* S2TableMenu.dc.html: nazwa tabeli, sortowanie, widoczne kolumny i „Usuń tabelę” */}
-              {/* W module nazwy tabeli się nie zmienia */}
-              {!modul && (
-                <div className="p-1">
-                  <input
-                    type="text"
-                    value={szkicNazwy}
-                    onChange={(e) => setSzkicNazwy(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        // Enter zapisuje od razu; menu zostaje otwarte (bez onBlur — zapis robi też zamknięcie menu)
-                        e.preventDefault();
-                        void store.renameTable(szkicNazwy);
+        {/* Moduł (Hasła): pasek modułu nad zakładkami (wyszukiwarka, Kategoria, „Kategorie”) */}
+        {modul && (
+          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+            {moduleTools?.({
+              fields,
+              readOnly: tylkoOdczyt,
+              createOption: store.createOption,
+              removeOption: store.removeOption,
+            })}
+          </div>
+        )}
+
+        {/* S2Table: zakładki widoków po lewej, pasek narzędzi po prawej, linia pod spodem */}
+        <div className="mt-1 flex flex-wrap items-end justify-between gap-2 border-b border-black/[.08]">
+          <ViewTabs
+            tabs={[
+              { id: null, name: "Wszystkie", count: viewCount(fields, rows, widokWszystkich, today) },
+              ...settings.views.map((v) => ({ id: v.id, name: v.name, count: viewCount(fields, rows, v, today) })),
+            ]}
+            activeId={settings.active_view_id !== null && settings.views.some((v) => v.id === settings.active_view_id) ? settings.active_view_id : null}
+            readOnly={tylkoOdczyt}
+            onSelect={(id) => void store.selectView(id)}
+            onAdd={() => void dodajWidok()}
+            onRename={(id, nazwa) => void store.renameView(id, nazwa)}
+            onDuplicate={(id) => void store.duplicateView(id)}
+            onDelete={(id) => void store.deleteView(id)}
+          />
+          <TableToolbar
+            fields={fields}
+            view={widok}
+            query={store.query}
+            onQuery={store.setQuery}
+            onLayout={(layout) => void store.setLayout(layout)}
+            onGroupBy={(id) => void store.setGroupBy(id)}
+            onSort={(sort) => void store.patchView({ sort })}
+            onHiddenChange={(ids) => void store.patchView({ hidden_field_ids: ids })}
+            // Moduł Hasła ma własną wyszukiwarkę w pasku modułu
+            showSearch={!modul}
+            filter={
+              <FilterPopover
+                fields={fields}
+                filters={filtry}
+                today={today}
+                shown={widoczneWiersze.length}
+                total={zywe.length}
+                open={filtrOtwarty}
+                onOpenChange={setFiltrOtwarty}
+                onChange={store.setTempFilters}
+                onSave={() => {
+                  // Filtr tymczasowy znika dopiero po udanym zapisie (do bieżącego widoku)
+                  void store.patchView({ filters: filtry }).then((udane) => {
+                    if (udane) store.setTempFilters(null);
+                  });
+                }}
+                onSaveAsView={
+                  tylkoOdczyt
+                    ? undefined
+                    : () => {
+                        setFiltrOtwarty(false);
+                        void dodajWidok();
                       }
-                    }}
-                    placeholder="Tabela bez nazwy"
-                    aria-label="Nazwa tabeli"
-                    className={FIELD}
-                  />
-                </div>
-              )}
-              <div className={cn(MENU_LABEL, modul ? "pt-1" : "pt-2")}>Sortowanie</div>
-              {settings.sort.map((klucz, i) => {
-                const pole = fields.find((f) => f.id === klucz.field_id);
-                if (!pole) return null;
-                return (
-                  <div
-                    key={klucz.field_id}
-                    className="flex min-h-9 items-center gap-1.5 py-0.5 pr-1 pl-2.5"
+                }
+                triggerClassName={cn(PRZYCISK_PASKA, filtry.length > 0 && PRZYCISK_PASKA_ON, "max-[799px]:border max-[799px]:border-input")}
+                // Telefon: sortowanie w tym samym arkuszu co filtr (zapis od razu do bieżącego widoku)
+                sort={widok.sort}
+                onSortChange={(sort) => void store.patchView({ sort })}
+              />
+            }
+            menu={
+              <ActionPopover
+                open={menuTabeli}
+                onOpenChange={setMenuTabeli}
+                align="end"
+                width={240}
+                className="p-1"
+                ariaLabel="Ustawienia tabeli"
+                onCloseAutoFocus={(e) => {
+                  // „Nowa kolumna” otwiera okno pola przy nagłówku: fokus nie wraca na „⋯”
+                  if (bezZwrotuFokusu.current) {
+                    e.preventDefault();
+                    bezZwrotuFokusu.current = false;
+                  }
+                }}
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon
+                    aria-label="Menu tabeli"
+                    aria-expanded={menuTabeli}
+                    className="size-[30px] aria-expanded:bg-accent max-[799px]:size-11"
                   >
-                    <span className="flex-1">{pole.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      aria-label={`Odwróć kierunek: ${pole.name}`}
-                      onClick={() =>
-                        void store.patchSettings({
-                          sort: settings.sort.map((k, j) =>
-                            j === i
-                              ? {
-                                  field_id: k.field_id,
-                                  dir: k.dir === "asc" ? "desc" : "asc",
-                                }
-                              : k,
-                          ),
-                        })
-                      }
-                    >
-                      {klucz.dir === "asc" ? "A → Z" : "Z → A"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      icon
-                      aria-label={`Usuń sortowanie: ${pole.name}`}
-                      onClick={() =>
-                        void store.patchSettings({
-                          sort: settings.sort.filter((_, j) => j !== i),
-                        })
-                      }
-                    >
-                      <X aria-hidden="true" className="size-3.5" />
-                    </Button>
-                  </div>
-                );
-              })}
-              {settings.sort.length === 0 && (
-                <div className="px-2.5 py-1.5 text-[13px] text-muted-foreground">
-                  Wiersze w kolejności dodania.
-                </div>
-              )}
-              <button
-                type="button"
-                disabled={wolneDoSortu.length === 0}
-                onClick={() =>
-                  void store.patchSettings({
-                    sort: [
-                      ...settings.sort,
-                      { field_id: wolneDoSortu[0].id, dir: "asc" },
-                    ],
-                  })
+                    <Ellipsis aria-hidden="true" className="size-4" />
+                  </Button>
                 }
-                className={POZYCJA}
               >
-                <Plus aria-hidden="true" className="size-4 flex-none" />
-                <span className="flex-1">Dodaj sortowanie</span>
-              </button>
-              <div className={MENU_SEPARATOR} />
-              <div className={MENU_LABEL}>Widoczne kolumny</div>
-              {fields.map((f) => {
-                const widoczna = !ukryte.has(f.id);
-                // Blokada dotyczy tylko ukrywania: kolumny tytułu i ostatniej widocznej. Ukrytą kolumnę zawsze da się przywrócić.
-                const zablokowana =
-                  widoczna && (f.isTitle || widocznePola.length === 1);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    aria-pressed={widoczna}
-                    disabled={zablokowana}
-                    onClick={() =>
-                      void store.patchSettings({
-                        hidden_field_ids: widoczna
-                          ? [...settings.hidden_field_ids, f.id]
-                          : settings.hidden_field_ids.filter((id) => id !== f.id),
-                      })
-                    }
-                    className={cn(POZYCJA, !widoczna && "text-muted-foreground")}
-                  >
-                    <span className="flex-1">{f.name}</span>
-                    {widoczna ? (
-                      <Eye
-                        aria-hidden="true"
-                        className="size-4 flex-none opacity-70"
-                      />
-                    ) : (
-                      <EyeOff
-                        aria-hidden="true"
-                        className="size-4 flex-none opacity-35"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-              {onRemove && (
-                <>
+                {/* S2TableMenu.dc.html; moduł Hasła (S2Passwords): stałe kolumny i „Zresetuj sejf…” */}
+                <div role="menu" aria-label="Menu tabeli">
+                  {modul ? (
+                    <p className="mx-2 mt-1 mb-1.5 text-xs text-muted-foreground">Kolumny modułu Hasła są stałe.</p>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          bezZwrotuFokusu.current = true;
+                          setMenuTabeli(false);
+                          otworzNowePole.current?.();
+                        }}
+                        className={POZYCJA}
+                      >
+                        Nowa kolumna
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuTabeli(false);
+                          setOknoKarty({ karta: null });
+                        }}
+                        className={POZYCJA}
+                      >
+                        Dodaj kartę statystyki
+                      </button>
+                    </>
+                  )}
                   <div className={MENU_SEPARATOR} />
+                  {/* CSV: obsługę dostarcza wywołujący (import i eksport w osobnym kroku) */}
                   <button
                     type="button"
+                    role="menuitem"
+                    disabled={!onImportCsv || tylkoOdczyt}
                     onClick={() => {
                       setMenuTabeli(false);
-                      onRemove();
+                      onImportCsv?.();
                     }}
-                    className={cn(POZYCJA, MENU_ITEM_DANGER)}
+                    className={POZYCJA}
                   >
-                    <Trash2 aria-hidden="true" className="size-4 flex-none" />
-                    <span className="flex-1">Usuń tabelę</span>
+                    Importuj z CSV…
                   </button>
-                </>
-              )}
-            </ActionPopover>
-          </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={!onExportCsv}
+                    onClick={() => {
+                      setMenuTabeli(false);
+                      onExportCsv?.();
+                    }}
+                    className={POZYCJA}
+                  >
+                    Eksportuj całą tabelę (CSV)
+                  </button>
+                  {((!modul && onRemove) || modul) && <div className={MENU_SEPARATOR} />}
+                  {!modul && onRemove && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuTabeli(false);
+                        onRemove();
+                      }}
+                      className={cn(POZYCJA, MENU_ITEM_DANGER)}
+                    >
+                      Usuń tabelę
+                    </button>
+                  )}
+                  {modul && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuTabeli(false);
+                        setResetSejfu(true);
+                      }}
+                      className={cn(POZYCJA, MENU_ITEM_DANGER)}
+                    >
+                      Zresetuj sejf…
+                    </button>
+                  )}
+                </div>
+              </ActionPopover>
+            }
+          />
         </div>
+        {/* Okno resetu sejfu montujemy dopiero po wyborze z menu */}
+        {resetSejfu && <VaultResetDialog open onOpenChange={(o) => setResetSejfu(o)} />}
 
         {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
         <div className={RAMKA_PRZEWIJANA}>
@@ -710,7 +706,7 @@ export function PageTable({
                           if (plan.lost > 0) setZmianaTypu({ field: f, type: typ, plan });
                           else void store.applyTypeChange(f, typ, plan, false);
                         }}
-                        onSort={(dir) => void store.patchSettings({ sort: [{ field_id: f.id, dir }] })}
+                        onSort={(dir) => void store.patchView({ sort: [{ field_id: f.id, dir }] })}
                         onFilter={() => {
                           bezZwrotuFokusu.current = true;
                           store.setTempFilters([...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }]);
@@ -742,9 +738,7 @@ export function PageTable({
                           }
                           void store.patchField(f, { config });
                         }}
-                        onHide={() =>
-                          void store.patchSettings({ hidden_field_ids: [...settings.hidden_field_ids, f.id] })
-                        }
+                        onHide={() => void store.patchView({ hidden_field_ids: [...widok.hidden_field_ids, f.id] })}
                         onDelete={() => void store.removeField(f)}
                         onMoveLeft={() => void store.moveField(f, -1)}
                         onMoveRight={() => void store.moveField(f, 1)}
@@ -837,6 +831,7 @@ export function PageTable({
                   ) : (
                     <AddFieldDialog
                       iconTrigger
+                      openRef={otworzNowePole}
                       allowSecret={false}
                       fields={fields}
                       onAdd={(input) => void store.addField(input)}

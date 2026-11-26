@@ -36,6 +36,10 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
+import * as React from "react";
+
+import type { FilterCond } from "../table-model";
+import { FilterPopover } from "./filter-popover";
 import { PageTable } from "./page-table";
 import { DZIS, stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
@@ -337,3 +341,85 @@ describe("filtr i sortowanie na telefonie (CMFilterSheet)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Filtr i sortowanie" })).toBeNull());
   });
 });
+
+// Filtr sterowany z zewnątrz (bez tabeli): nowe operatory i „Zapisz jako widok”
+describe("FilterPopover — nowe operatory", () => {
+  const pola = stronaTestowa("books", "Books", []).blocks[0].fields;
+  const pole = (nazwa: string) => pola.find((f) => f.name === nazwa)!;
+
+  function Filtr({ start, onSaveAsView }: { start: FilterCond[]; onSaveAsView?: () => void }) {
+    const [filtry, setFiltry] = React.useState(start);
+    const [open, setOpen] = React.useState(true);
+    return (
+      <>
+        <FilterPopover
+          fields={pola}
+          filters={filtry}
+          today={DZIS}
+          shown={1}
+          total={2}
+          open={open}
+          onOpenChange={setOpen}
+          onChange={setFiltry}
+          onSave={() => {}}
+          onSaveAsView={onSaveAsView}
+          triggerClassName=""
+        />
+        <output data-testid="filtry">{JSON.stringify(filtry)}</output>
+      </>
+    );
+  }
+  const filtry = () => JSON.parse(screen.getByTestId("filtry").textContent ?? "[]") as FilterCond[];
+
+  it("data „w ciągu dni”: pole liczby z domyślnym 14 (min 1)", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Przeczytana").id, op: "before" }]} />);
+    await wybierz(user, "Operator warunku 1", "w ciągu dni");
+    expect(filtry()[0]).toEqual({ field_id: pole("Przeczytana").id, op: "within_days", value: 14 });
+    const liczba = screen.getByRole("spinbutton", { name: "Wartość warunku 1" });
+    expect(liczba).toHaveValue(14);
+    expect(liczba).toHaveAttribute("min", "1");
+    await user.clear(liczba);
+    await user.type(liczba, "30");
+    expect(filtry()[0].value).toBe(30);
+  });
+
+  it("data „w tym roku”: bez pola wartości, wartość wyczyszczona", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Przeczytana").id, op: "before", value: "2026-01-01" }]} />);
+    await wybierz(user, "Operator warunku 1", "w tym roku");
+    expect(filtry()[0]).toEqual({ field_id: pole("Przeczytana").id, op: "this_year" });
+    expect(screen.queryByRole("button", { name: "Wartość warunku 1" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Wartość warunku 1" })).toBeNull();
+  });
+
+  it("wybór „nie jest żadnym z”: opcje jak w „jest jednym z”", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Status").id, op: "in", value: ["x"] }]} />);
+    await wybierz(user, "Operator warunku 1", "nie jest żadnym z");
+    expect(filtry()[0]).toEqual({ field_id: pole("Status").id, op: "not_in" });
+    const grupa = screen.getByRole("group", { name: "Wartość warunku 1" });
+    await user.click(within(grupa).getByRole("button", { name: "Czytam" }));
+    const czytam = pole("Status").config.options!.find((o) => o.label === "Czytam")!;
+    expect(filtry()[0].value).toEqual([czytam.id]);
+  });
+
+  it("tekst „nie jest równe”: pole tekstu", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Autor").id, op: "contains", value: "abc" }]} />);
+    await wybierz(user, "Operator warunku 1", "nie jest równe");
+    expect(filtry()[0]).toEqual({ field_id: pole("Autor").id, op: "not_equals" });
+    await user.type(screen.getByRole("textbox", { name: "Wartość warunku 1" }), "Clear");
+    expect(filtry()[0].value).toBe("Clear");
+  });
+
+  it("„Zapisz jako widok” woła onSaveAsView; wyzwalacz „Filtruj” z plakietką liczby", async () => {
+    const user = userEvent.setup();
+    const zapisz = vi.fn();
+    render(<Filtr start={[{ field_id: pole("Autor").id, op: "contains", value: "a" }]} onSaveAsView={zapisz} />);
+    expect(screen.getByRole("button", { name: "Filtruj · 1" })).toHaveTextContent("Filtruj1");
+    await user.click(screen.getByRole("button", { name: "Zapisz jako widok" }));
+    expect(zapisz).toHaveBeenCalledTimes(1);
+  });
+});
+

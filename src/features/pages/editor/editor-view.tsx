@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LayoutGrid, Trash2 } from "lucide-react";
+import { LayoutGrid, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ActionPopover, Button, Chip } from "@/components/controls";
@@ -17,6 +17,7 @@ import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
 import { rowsLabel } from "../rows-label";
+import { TEMPLATES } from "../templates";
 import { CommandLine } from "./command-line";
 import { PageTable } from "../table/page-table";
 import { MSubs } from "../table/mobile/m-subs";
@@ -95,6 +96,11 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
 
   const sciezka = tytul.trim() === "" ? "Bez tytułu" : tytul;
   const pusta = store.blocks.length === 0;
+  // Przycisk główny nagłówka (S2Books: „Nowa książka”) dodaje wiersz do pierwszej tabeli strony;
+  // etykieta z szablonu strony, bez szablonu „Nowy wiersz”
+  const pierwszaTabela = store.blocks.find((b) => b.type === "table");
+  const nowyWierszRef = React.useRef<(() => void) | null>(null);
+  const etykietaNowego = TEMPLATES[page.templateKey ?? "empty"].newLabel;
   // Subscriptions na telefonie (CMSubs, T16): strona z szablonu Subscriptions, której tabela ma pola Kwota cykliczna
   // i Data odnowienia, dostaje własny ekran zamiast edytora; inne strony zostają przy edytorze (CMEditor)
   const blokSubs =
@@ -138,6 +144,12 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                 align="end"
                 triggerClassName="relative inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-btn outline-none transition-[box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus aria-expanded:bg-accent [&_svg]:opacity-80"
               />
+              {pierwszaTabela && (
+                <Button variant="primary" onClick={() => nowyWierszRef.current?.()}>
+                  <Plus size={16} aria-hidden="true" />
+                  {etykietaNowego}
+                </Button>
+              )}
             </>
           }
         />
@@ -228,6 +240,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   block={b}
                   today={data.today}
                   templateKey={page.templateKey}
+                  newRowRef={b === pierwszaTabela ? nowyWierszRef : undefined}
                   // „Usuń tabelę” w menu „⋯” tabeli (S2TableMenu) usuwa blok jak kosz obok
                   onRemove={() => void store.remove(b.id)}
                   // Telefon, strona Subscriptions: ekran CMSubs z tego samego magazynu co tabela
