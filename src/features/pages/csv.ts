@@ -20,8 +20,10 @@ export type CsvMapping = {
 // RFC 4180: separator „,”, CRLF, BOM UTF-8 na początku (Excel rozpoznaje wtedy UTF-8)
 export function toCsv(fields: PageField[], rows: PageRow[]): string {
   const kolumny = fields.filter((f) => f.type !== "secret");
+  // Komórki zaczynające się od = + - @ (tab, CR) Excel czyta jak formułę: prefiks ' (import zdejmuje go z powrotem)
+  const bezFormul = (t: string) => (/^'*[=+\-@\t\r]/.test(t) ? `'${t}` : t);
   const cytuj = (t: string) => (/[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t);
-  const linie: string[] = [kolumny.map((f) => cytuj(f.name)).join(",")];
+  const linie: string[] = [kolumny.map((f) => cytuj(bezFormul(f.name))).join(",")];
   for (const w of rows) {
     const komorki: string[] = [];
     for (const f of kolumny) {
@@ -33,8 +35,9 @@ export function toCsv(fields: PageField[], rows: PageRow[]): string {
         const k = v as RecurringValue;
         t = `${k.amount.toFixed(2)} / ${k.cycle === "month" ? "mies." : "rok"}`;
       } else if (f.type === "select" || f.type === "status") {
-        t = (f.config.options ?? []).find((o) => o.id === v)?.label ?? "";
-      } else t = String(v);
+        t = bezFormul((f.config.options ?? []).find((o) => o.id === v)?.label ?? "");
+      } else if (f.type === "text" || f.type === "url") t = bezFormul(String(v));
+      else t = String(v);
       komorki.push(cytuj(t));
     }
     linie.push(komorki.join(","));
@@ -95,7 +98,8 @@ export function parseCsv(text: string): { header: string[]; rows: string[][] } {
 export function suggestMapping(header: string[], fields: PageField[]): CsvMapping {
   const uzyte = new Set<string>();
   return header.map((nazwa, column) => {
-    const czysta = nazwa.trim();
+    let czysta = nazwa.trim();
+    if (/^'+[=+\-@\t\r]/.test(czysta)) czysta = czysta.slice(1);
     const pasuje = fields.find(
       (f) =>
         f.type !== "secret" &&
@@ -146,7 +150,9 @@ export function csvToValues(
   for (const wiersz of rows) {
     const wartosci: Record<string, unknown> = {};
     for (const cel of cele) {
-      const surowy = (wiersz[cel.column] ?? "").trim();
+      let surowy = (wiersz[cel.column] ?? "").trim();
+      // Zdejmuje prefiks ' dodany przez eksport (tylko przed znakiem formuły)
+      if (/^'+[=+\-@\t\r]/.test(surowy)) surowy = surowy.slice(1);
       const f = cel.field;
       let v: unknown = null;
       if (surowy === "") v = null;

@@ -666,7 +666,10 @@ describe("akcje na wielu wierszach", () => {
       { id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "Dune" }, position: 2, deleted_at: null },
     ];
     tables.page_rows = fakeTable({ data: zrodlowe, single: { position: 7 } });
+    tables.page_blocks = fakeTable({ data: [{ id: BLOK }] });
     const w = await duplicateRows([WIERSZ]);
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("pages.deleted_at", null);
     expect(tables.page_rows.insert).toHaveBeenCalledWith([
       { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "Dune" }, position: 8 },
     ]);
@@ -674,6 +677,16 @@ describe("akcje na wielu wierszach", () => {
       ok: true,
       rows: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune" }, position: 2 }],
     });
+  });
+
+  it("duplicateRows odmawia, gdy blok lub jego strona jest w koszu", async () => {
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, block_id: BLOK, values: {}, position: 2, deleted_at: null }],
+      single: { position: 7 },
+    });
+    tables.page_blocks = fakeTable({ data: [] });
+    expect(await duplicateRows([WIERSZ])).toEqual({ ok: false, message: "Nie znaleziono bloku." });
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
   });
 
   it("setRowsValue normalizuje wartość i zmienia tylko to pole", async () => {
@@ -717,6 +730,53 @@ describe("importCsvRows", () => {
     expect(w.ok).toBe(false);
     expect(tables.page_rows.insert).not.toHaveBeenCalled();
     expect(tables.page_fields.insert).not.toHaveBeenCalled();
+  });
+
+  it("odmawia, gdy blok lub strona jest w koszu", async () => {
+    tables.page_blocks = fakeTable({ single: null });
+    expect(await importCsvRows(BLOK, [], [{}])).toEqual({ ok: false, message: "Nie znaleziono bloku." });
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("deleted_at", null);
+    tables.page_blocks = fakeTable({ single: { type: "table", page_id: STRONA, content: {} } });
+    tables.pages = fakeTable({ single: null });
+    expect(await importCsvRows(BLOK, [], [{}])).toEqual({ ok: false, message: "Nie znaleziono strony." });
+    expect(tables.pages.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
+  it("odrzuca nowe opcje z kolorem spoza hex", async () => {
+    const w = await importCsvRows(BLOK, [], [{}], { x: [{ id: "o", label: "A", color: "red" }] });
+    expect(w.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("błąd drugiej paczki wierszy: sprząta wiersze, nowe pola i przywraca opcje", async () => {
+    const POLE_WYBOR = "a3000000-0000-4000-8000-000000000007";
+    const NOWE = "a3000000-0000-4000-8000-000000000009";
+    const stary = { options: [{ id: "o1", label: "A", color: "#000" }] };
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_WYBOR, name: "Status", type: "status", config: stary, position: 1, is_title: false },
+      ],
+      single: { id: NOWE, name: "Uwagi", type: "text", config: {}, position: 2, is_title: false },
+    });
+    const udane = { select: vi.fn(() => Promise.resolve({ data: [{ id: "r1" }, { id: "r2" }], error: null })) };
+    const nieudane = { select: vi.fn(() => Promise.resolve({ data: null, error: { message: "x" } })) };
+    tables.page_rows.insert.mockReturnValueOnce(udane).mockReturnValueOnce(nieudane);
+    const w = await importCsvRows(
+      BLOK,
+      [{ name: "Uwagi", type: "text" }],
+      Array.from({ length: 501 }, () => ({ [POLE_TYTUL]: "x" })),
+      { [POLE_WYBOR]: [{ id: "o2", label: "B", color: "#15803d" }] },
+    );
+    expect(w).toEqual({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    expect(tables.page_rows.delete).toHaveBeenCalled();
+    expect(tables.page_rows.in).toHaveBeenCalledWith("id", ["r1", "r2"]);
+    expect(tables.page_fields.delete).toHaveBeenCalled();
+    expect(tables.page_fields.in).toHaveBeenCalledWith("id", [NOWE]);
+    expect(tables.page_fields.update).toHaveBeenLastCalledWith({ config: stary });
+    expect(tables.page_rows.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(tables.page_fields.eq).toHaveBeenCalledWith("user_id", "u1");
   });
 
   it("odmawia dla więcej niż 2000 wierszy", async () => {

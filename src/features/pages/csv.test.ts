@@ -66,6 +66,35 @@ describe("toCsv", () => {
   });
 });
 
+describe("toCsv i csvToValues: formuły", () => {
+  const pola = [
+    pole("t", "=Tytuł", "text"),
+    pole("u", "Link", "url"),
+    pole("s", "Status", "status", { options: [{ id: "o1", label: "+plus", color: "#000" }] }),
+    pole("n", "Cena", "number"),
+  ];
+  it("prefiksuje ' tekst, link, etykietę opcji i nagłówek zaczynające się od = + - @; liczby bez zmian", () => {
+    const csv = toCsv(pola, [wiersz("r1", { t: "=SUM(A1)", u: "@x", s: "o1", n: -5 }), wiersz("r2", { t: "-1+2" })]);
+    const linie = csv.slice(1).split("\r\n");
+    expect(linie[0]).toBe("'=Tytuł,Link,Status,Cena");
+    expect(linie[1]).toBe("'=SUM(A1),'@x,'+plus,-5");
+    expect(linie[2]).toBe("'-1+2,,,");
+  });
+  it("import zdejmuje jeden ' przed znakiem formuły; reszta apostrofów zostaje; round trip", () => {
+    const csv = toCsv(pola, [wiersz("r1", { t: "=SUM(A1)", u: "@x", s: "o1" })]);
+    const p = parseCsv(csv);
+    const m = suggestMapping(p.header, pola);
+    expect(m[0].target).toEqual({ kind: "field", field_id: "t" });
+    const w = csvToValues(p.rows, m, pola);
+    expect(w.rows[0]).toEqual({ t: "=SUM(A1)", u: "@x", s: "o1", n: null });
+    const z = csvToValues([["'tekst", "''=x"]], [
+      { column: 0, target: { kind: "field", field_id: "t" } },
+      { column: 1, target: { kind: "field", field_id: "u" } },
+    ], pola);
+    expect(z.rows[0]).toEqual({ t: "'tekst", u: "'=x" });
+  });
+});
+
 describe("parseCsv", () => {
   it("rozpoznaje ; z Excela", () => {
     expect(parseCsv("a;b\r\n1;2\r\n")).toEqual({ header: ["a", "b"], rows: [["1", "2"]] });

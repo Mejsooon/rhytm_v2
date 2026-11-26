@@ -974,6 +974,18 @@ export async function duplicateRows(
   if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
   if (!zrodla || zrodla.length === 0) return { ok: false, message: BRAK_WIERSZA };
 
+  // Bloki źródeł (i ich strony) muszą być żywe — jak przy addBlock
+  const blokiIds = [...new Set(zrodla.map((z) => z.block_id))];
+  const { data: zywe, error: bladBlokow } = await supabase
+    .from("page_blocks")
+    .select("id, pages!inner(deleted_at)")
+    .in("id", blokiIds)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .is("pages.deleted_at", null);
+  if (bladBlokow) return { ok: false, message: BLAD_ZAPISU };
+  if (!zywe || zywe.length !== blokiIds.length) return { ok: false, message: BRAK_BLOKU };
+
   // Następna wolna pozycja osobno dla każdego bloku
   const nastepna = new Map<string, number>();
   const kopie: { block_id: string; user_id: string; values: Json; position: number }[] = [];
@@ -1076,7 +1088,8 @@ export async function setRowsValue(
 // Import CSV w jednej akcji: nowe pola na końcu, nowe opcje wyboru, potem wiersze po ostatnim.
 // W wierszach klucz „new:<indeks>” wskazuje nowe pole (kolejność newFields); pola Sekret są pomijane.
 // newOptions: klucz = id istniejącego pola wyboru albo „new:<indeks>”.
-// Zapisy idą po kolei (bez transakcji): przy błędzie w połowie zostają dodane wcześniejsze pola.
+// Bez transakcji: przy błędzie po pierwszym zapisie akcja sprząta po sobie (best effort) — kasuje wstawione
+// wiersze i pola utworzone w tym wywołaniu oraz przywraca dawne opcje rozszerzonych pól.
 export async function importCsvRows(
   blockId: string,
   newFields: { name: string; type: FieldType }[],
@@ -1102,6 +1115,7 @@ export async function importCsvRows(
     .select("type, page_id")
     .eq("id", blockId)
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
   if (!blok || blok.type !== "table") return { ok: false, message: BRAK_BLOKU };
@@ -1112,6 +1126,7 @@ export async function importCsvRows(
     .select("is_system")
     .eq("id", blok.page_id)
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (bladStrony) return { ok: false, message: BLAD_ZAPISU };
   if (!strona) return { ok: false, message: BRAK_STRONY };
@@ -1126,6 +1141,21 @@ export async function importCsvRows(
   const pola: PageField[] = [];
   const kluczePol: string[] = [];
   let ostatniaPozycjaPola = -1;
+  // Ślad zapisów do wycofania przy błędzie
+  const stareConfigi: { id: string; config: Json }[] = [];
+  const noweIds: string[] = [];
+  const wstawioneIds: string[] = [];
+  const wycofaj = async () => {
+    if (wstawioneIds.length > 0) {
+      await supabase.from("page_rows").delete().in("id", wstawioneIds).eq("user_id", user.id);
+    }
+    if (noweIds.length > 0) {
+      await supabase.from("page_fields").delete().in("id", noweIds).eq("user_id", user.id);
+    }
+    for (const s of stareConfigi) {
+      await supabase.from("page_fields").update({ config: s.config }).eq("id", s.id).eq("user_id", user.id);
+    }
+  };
   for (const p of istniejace ?? []) {
     ostatniaPozycjaPola = Math.max(ostatniaPozycjaPola, p.position);
     let config = p.config as FieldConfig;
@@ -1135,13 +1165,17 @@ export async function importCsvRows(
       const stare = config.options ?? [];
       const doDodania = dodatkowe.filter((o) => !stare.some((s) => s.id === o.id)).slice(0, 100 - stare.length);
       if (doDodania.length > 0) {
+        stareConfigi.push({ id: p.id, config: p.config });
         config = { ...config, options: [...stare, ...doDodania] };
         const { error: bladOpcji } = await supabase
           .from("page_fields")
           .update({ config: config as Json })
           .eq("id", p.id)
           .eq("user_id", user.id);
-        if (bladOpcji) return { ok: false, message: BLAD_ZAPISU };
+        if (bladOpcji) {
+          await wycofaj();
+          return { ok: false, message: BLAD_ZAPISU };
+        }
       }
     }
     pola.push({
@@ -1155,7 +1189,6 @@ export async function importCsvRows(
     kluczePol.push(p.id);
   }
 
-  const noweIds: string[] = [];
   for (let i = 0; i < nowePola.data.length; i++) {
     const nowe = nowePola.data[i];
     const config: FieldConfig =
@@ -1175,7 +1208,10 @@ export async function importCsvRows(
       })
       .select("id, name, type, config, position, is_title")
       .single();
-    if (error || !data) return { ok: false, message: BLAD_ZAPISU };
+    if (error || !data) {
+      await wycofaj();
+      return { ok: false, message: BLAD_ZAPISU };
+    }
     noweIds.push(data.id);
     pola.push({
       id: data.id,
@@ -1195,7 +1231,10 @@ export async function importCsvRows(
     .order("position", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (bladPozycji) return { ok: false, message: BLAD_ZAPISU };
+  if (bladPozycji) {
+    await wycofaj();
+    return { ok: false, message: BLAD_ZAPISU };
+  }
   const pierwsza = (ostatni?.position ?? -1) + 1;
 
   // Wartości przez normalizeValue; puste komórki nie są zapisywane, pusty tytuł dostaje etykietę pola
@@ -1213,8 +1252,15 @@ export async function importCsvRows(
     doWstawienia.push({ block_id: blockId, user_id: user.id, values: wartosci as Json, position: pierwsza + r });
   }
   for (let od = 0; od < doWstawienia.length; od += 500) {
-    const { error } = await supabase.from("page_rows").insert(doWstawienia.slice(od, od + 500));
-    if (error) return { ok: false, message: BLAD_ZAPISU };
+    const { data, error } = await supabase
+      .from("page_rows")
+      .insert(doWstawienia.slice(od, od + 500))
+      .select("id");
+    if (error || !data) {
+      await wycofaj();
+      return { ok: false, message: BLAD_ZAPISU };
+    }
+    for (const w of data) wstawioneIds.push(w.id);
   }
   return { ok: true, fieldIds: noweIds, count: doWstawienia.length };
 }

@@ -154,7 +154,16 @@ export const importRowsSchema = z.array(rowValuesSchema).max(2000, IMPORT_ZA_DUZ
 export const importNewFieldsSchema = z
   .array(z.object({ name: fieldNameSchema, type: fieldTypeSchema.exclude(["secret"]) }))
   .max(100);
+// Kolor opcji: pusty („Bez koloru”) albo hex jak w PALETA; id jak w istniejących opcjach (niepusty tekst do 64 znaków)
 export const importOptionsSchema = z.record(
   z.string().max(64),
-  z.array(z.object({ id: z.string().min(1).max(64), label: z.string().max(60), color: z.string().max(16) })).max(100),
+  z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        label: z.string().max(60),
+        color: z.string().max(16).regex(/^(#[0-9a-fA-F]{3,8})?$/, "Kolor ma nieprawidłowy format."),
+      }),
+    )
+    .max(100),
 );
