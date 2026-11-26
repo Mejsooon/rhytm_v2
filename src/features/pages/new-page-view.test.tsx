@@ -233,4 +233,12 @@ describe("NewPageView: telefon (CMNewPage)", () => {
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(back).toHaveBeenCalledTimes(1);
   });
+
+  it("Pusta strona na telefonie też bez nazwy („Bez tytułu”): createPageFromTemplate('empty', '')", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Utwórz" }));
+    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("empty", ""));
+  });
 });

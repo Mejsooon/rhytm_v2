@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LayoutGrid, Plus, Smile, Trash2 } from "lucide-react";
+import { LayoutGrid, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ActionPopover, Button } from "@/components/controls";
@@ -18,7 +18,7 @@ import type { LoadedPage } from "../load-page";
 import type { PageSummary } from "../load-pages";
 import { BLAD_ZAPISU } from "../messages";
 import { rowsLabel } from "../rows-label";
-import { TEMPLATES } from "../templates";
+import { LEGACY_TEMPLATE_INTROS, TEMPLATES } from "../templates";
 import { CommandLine } from "./command-line";
 import { PageTable } from "../table/page-table";
 import { MSubs } from "../table/mobile/m-subs";
@@ -107,8 +107,15 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
   // Strona z szablonu (Książki, Projekty…) ma układ S2Table, pozostałe — układ edytora S2EmptyPage
   const zSzablonu = page.templateKey !== null && page.templateKey !== "empty";
   const opis = zSzablonu ? TEMPLATES[page.templateKey ?? "empty"].desc : "";
-  // „Dodaj ikonę” i mały „Zmień ikonę” pokazują się po najechaniu na tytuł (albo z fokusem); pusta strona — zawsze
-  const ikonaPoNajechaniu = zSzablonu || !pusta;
+  // Dawny blok opisu na początku strony z szablonu: niezmieniony nie jest rysowany (opis stoi pod tytułem)
+  const pierwszy = store.blocks[0];
+  const staryOpis =
+    page.templateKey !== null &&
+    page.templateKey !== "empty" &&
+    pierwszy?.type === "text" &&
+    pierwszy.content.text === LEGACY_TEMPLATE_INTROS[page.templateKey]
+      ? pierwszy
+      : undefined;
   // Subscriptions na telefonie (CMSubs, T16): strona z szablonu Subscriptions, której tabela ma pola Kwota cykliczna
   // i Data odnowienia, dostaje własny ekran zamiast edytora; inne strony zostają przy edytorze (CMEditor)
   const blokSubs =
@@ -172,7 +179,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
               className={
                 zSzablonu
                   ? // Nad tytułem, w odstępie od nagłówka — bez przesuwania układu S2Table
-                    "absolute -top-[26px] left-0 max-[799px]:hidden"
+                    "absolute -top-6 left-0 max-[799px]:hidden"
                   : "flex min-h-6 items-center max-[799px]:hidden"
               }
             >
@@ -188,18 +195,19 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                       <PageIcon icon={ikona} size={28} />
                     </Button>
                   ) : (
-                    // .btng.xs w kolorze #686868: „Dodaj ikonę” albo (strona z szablonu) mała ikona i „Zmień ikonę”
+                    // .btng.xs w kolorze #686868: „Dodaj ikonę” (zawsze widoczne, sam tekst jak w S2EmptyPage) albo
+                    // (strona z szablonu z ikoną) mała ikona i „Zmień ikonę” po najechaniu na tytuł
                     <Button
                       variant="ghost"
                       size="xs"
                       aria-label={ikona === "" ? undefined : "Zmień ikonę strony"}
                       className={cn(
                         "text-muted-foreground",
-                        ikonaPoNajechaniu &&
+                        ikona !== "" &&
                           "opacity-0 transition-opacity duration-[120ms] group-hover/tytul:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100",
                       )}
                     >
-                      {ikona === "" ? <Smile size={14} aria-hidden="true" /> : <PageIcon icon={ikona} size={14} />}
+                      {ikona !== "" && <PageIcon icon={ikona} size={14} />}
                       {ikona === "" ? "Dodaj ikonę" : "Zmień ikonę"}
                     </Button>
                   )
@@ -226,7 +234,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
             {opis !== "" && <p className="mt-1 mb-0 text-sm text-muted-foreground">{opis}</p>}
           </div>
 
-          {store.blocks.map((b) => (
+          {store.blocks.filter((b) => b !== staryOpis).map((b) => (
             <div
               key={b.id}
               // Telefon, Subscriptions: CMSubs to sama tabela, więc inne bloki (np. intro szablonu) chowamy

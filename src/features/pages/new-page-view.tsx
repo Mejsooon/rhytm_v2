@@ -50,12 +50,12 @@ export function NewPageView() {
   );
   const [wybrany, setWybrany] = React.useState<TemplateKey>("empty");
   const [fraza, setFraza] = React.useState("");
-  // Nazwa wpisana przez użytkownika; bez niej pole pokazuje nazwę szablonu (web: pusta strona bez nazwy, „Bez tytułu”)
+  // Nazwa wpisana przez użytkownika; bez niej pole pokazuje nazwę szablonu (pusta strona: bez nazwy, „Bez tytułu”)
   const [nazwaWlasna, setNazwaWlasna] = React.useState<string | null>(null);
   const [trwa, setTrwa] = React.useState(false);
 
   const szablon = TEMPLATES[wybrany];
-  const nazwa = nazwaWlasna ?? (wybrany === "empty" && telefon === false ? "" : szablon.name);
+  const nazwa = nazwaWlasna ?? (wybrany === "empty" ? "" : szablon.name);
   const szukane = fraza.trim().toLowerCase();
   const widoczne = KOLEJNOSC.filter(
     (k) => szukane === "" || `${TEMPLATES[k].name} ${TEMPLATES[k].hint}`.toLowerCase().includes(szukane),

@@ -567,6 +567,7 @@ test.describe("strony", () => {
 
     // Strona pojawia się na liście
     await page.goto("/strony");
-    await expect(page.getByRole("link", { name: /Pusta strona/ })).toBeVisible();
+    // Pusta strona bez nazwy to „Bez tytułu” (jak na webie)
+    await expect(page.getByRole("link", { name: /Bez tytułu/ }).first()).toBeVisible();
   });
 });

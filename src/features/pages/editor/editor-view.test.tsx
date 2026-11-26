@@ -125,13 +125,35 @@ describe("EditorView", () => {
     );
   });
 
-  it("strona z blokami bez ikony: „Dodaj ikonę” pojawia się dopiero po najechaniu na tytuł albo z fokusem", () => {
-    render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
-    expect(screen.getByRole("button", { name: "Dodaj ikonę" })).toHaveClass(
-      "opacity-0",
-      "group-hover/tytul:opacity-100",
-      "focus-visible:opacity-100",
+  it("strona bez ikony: „Dodaj ikonę” zawsze widoczne (także z blokami i na stronie z szablonu), sam tekst bez ikony", () => {
+    const { unmount } = render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
+    const dodaj = screen.getByRole("button", { name: "Dodaj ikonę" });
+    expect(dodaj).not.toHaveClass("opacity-0");
+    expect(dodaj.querySelector("svg")).toBeNull();
+    expect(dodaj.textContent).toBe("Dodaj ikonę");
+    unmount();
+    const d = stronaTestowa("books", "Książki", []);
+    render(<EditorView data={{ ...d, page: { ...d.page, icon: "" } }} />);
+    expect(screen.getByRole("button", { name: "Dodaj ikonę" })).not.toHaveClass("opacity-0");
+  });
+
+  it("S2Table: przycisk ikony nad tytułem w odstępie 24 px (nie zachodzi na ramkę nagłówka)", () => {
+    const d = stronaTestowa("books", "Książki", []);
+    render(<EditorView data={{ ...d, page: { ...d.page, icon: "lucide:book-open" } }} />);
+    expect(screen.getByRole("button", { name: "Zmień ikonę strony" }).parentElement).toHaveClass("-top-6");
+  });
+
+  it("dawny blok opisu szablonu (niezmieniony) jest ukryty, bo opis stoi pod tytułem; zmieniony zostaje", () => {
+    const d = stronaTestowa("books", "Książki", []);
+    const intro = (text: string): LoadedBlock => ({ id: "intro", type: "text", position: -1, content: { text }, fields: [], rows: [] });
+    const { unmount } = render(
+      <EditorView data={{ ...d, blocks: [intro("Co czytam, co przeczytałem i co chcę przeczytać."), ...d.blocks] }} />,
     );
+    expect(screen.queryByDisplayValue("Co czytam, co przeczytałem i co chcę przeczytać.")).toBeNull();
+    expect(screen.getByText("Twoje książki: czytane, przeczytane i na później.")).toBeInTheDocument();
+    unmount();
+    render(<EditorView data={{ ...d, blocks: [intro("Co czytam w tym roku"), ...d.blocks] }} />);
+    expect(screen.getByDisplayValue("Co czytam w tym roku")).toBeInTheDocument();
   });
 
   it("S2EmptyPage: tytuł 32 px z „Bez tytułu” w placeholderze", () => {
@@ -545,10 +567,10 @@ describe("EditorView", () => {
 
   it("Subscriptions: telefon ma „Więcej” (menu strony), a blok tekstu szablonu jest ukryty na telefonie, nie na webie", () => {
     const d = stronaTestowa("subscriptions", "Subscriptions", []);
-    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Twoje subskrypcje i ich odnowienia." }, fields: [], rows: [] };
+    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Moje notatki o subskrypcjach" }, fields: [], rows: [] };
     render(<EditorView data={{ ...d, blocks: [intro, ...d.blocks] }} />);
     expect(screen.getByRole("button", { name: "Więcej" })).toBeInTheDocument();
-    const wrapper = screen.getByDisplayValue("Twoje subskrypcje i ich odnowienia.").closest(".group");
+    const wrapper = screen.getByDisplayValue("Moje notatki o subskrypcjach").closest(".group");
     expect(wrapper).toHaveClass("max-[799px]:hidden");
   });
 });

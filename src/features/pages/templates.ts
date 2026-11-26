@@ -383,6 +383,15 @@ export const LEGACY_TEMPLATE_TITLES: Record<"books" | "projects" | "websites" | 
   subscriptions: "Subscriptions",
 };
 
+// Dawne zdania pod tytułem (blok tekstu na początku strony z szablonu, przed Tabelami v3). Edytor ukrywa taki
+// niezmieniony blok, bo opis szablonu stoi teraz pod tytułem (S2Table); zmieniony tekst zostaje
+export const LEGACY_TEMPLATE_INTROS: Record<"books" | "projects" | "websites" | "subscriptions", string> = {
+  books: "Co czytam, co przeczytałem i co chcę przeczytać.",
+  projects: "Projekty na studia, własne i dla klientów.",
+  websites: "Strony klientów: URL, klient, status.",
+  subscriptions: "Twoje subskrypcje i ich odnowienia.",
+};
+
 // Widoki Haseł (S2Passwords: zakładki po Kategorii); strona systemowa nie ma szablonu w TEMPLATES
 const WIDOKI_HASEL = ["Praca", "Studia", "Prywatne"];
 
