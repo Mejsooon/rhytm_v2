@@ -419,7 +419,8 @@ export function useTableStore(
 
   // „+ Nowy” w tabeli: wiersz od razu na serwerze (z opcjami domyślnymi pól, jak addRowDraft),
   // bez tymczasowego id. Zwraca id nowego wiersza albo null (toast pokazany).
-  async function addRowInline(): Promise<string | null> {
+  // `initial`: wartości startowe ponad domyślnymi (np. „Dodaj” w kolumnie tablicy: opcja tej kolumny)
+  async function addRowInline(initial: Record<string, unknown> = {}): Promise<string | null> {
     const values: Record<string, unknown> = {};
     for (const f of fields) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
@@ -429,6 +430,7 @@ export function useTableStore(
       }
       if (f.type === "checkbox" && f.config.default_checked === true) values[f.id] = true;
     }
+    Object.assign(values, initial);
     let wynik: Awaited<ReturnType<typeof addRow>> | null = null;
     try {
       wynik = await addRow(block.id, values);

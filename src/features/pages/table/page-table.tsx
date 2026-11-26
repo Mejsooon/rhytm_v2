@@ -38,6 +38,7 @@ import { rowsForm, rowsLabel } from "../rows-label";
 import { operatorsFor, summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
 import { effectiveView, groupRows, searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
+import { BoardView } from "./board-view";
 import { BulkBar } from "./bulk-bar";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
@@ -329,6 +330,26 @@ export function PageTable({
 
   // Grupy bieżącego widoku (pole Wyboru, Statusu albo Checkbox; bez grupowania jedna grupa "*")
   const grupy = React.useMemo(() => groupRows(fields, widoczneWiersze, widok.group_by), [fields, widoczneWiersze, widok.group_by]);
+  // Pole kolumn Tablicy: grupowanie widoku, gdy to Wybór albo Status; inaczej pole tablicy szablonu
+  // (klucz szablonu → prawdziwe pole po nazwie i typie, jak templateSummaries); inaczej pierwszy Wybór albo Status
+  const tablica = widok.layout === "board";
+  const poleGrupyTablicy = fields.find(
+    (f) => f.id === widok.group_by && (f.type === "select" || f.type === "status"),
+  );
+  const szablonTablicy = templateKey !== null && templateKey !== "passwords" ? TEMPLATES[templateKey] : null;
+  const polaSzablonuTablicy = szablonTablicy?.fields.find((f) => f.key === szablonTablicy.board);
+  const poleTablicy =
+    poleGrupyTablicy ??
+    (polaSzablonuTablicy
+      ? fields.find((f) => f.name === polaSzablonuTablicy.name && f.type === polaSzablonuTablicy.type)
+      : undefined) ??
+    fields.find((f) => f.type === "select" || f.type === "status") ??
+    null;
+  // Podsumowania liczą się dla grup tabeli albo kolumn tablicy
+  const grupyPodsumowan = React.useMemo(
+    () => (tablica && poleTablicy ? groupRows(fields, widoczneWiersze, poleTablicy.id) : grupy),
+    [tablica, poleTablicy, fields, widoczneWiersze, grupy],
+  );
   // Zwinięte grupy zapisują się pod id aktywnego widoku albo "all" (jak store.toggleGroup)
   const kluczWidoku =
     settings.active_view_id !== null && settings.views.some((v) => v.id === settings.active_view_id)
@@ -345,13 +366,13 @@ export function PageTable({
     const sz = podsumowaniaSzablonu.group;
     const poleSzablonu = sz ? fields.find((f) => f.id === sz.field_id) : undefined;
     const ukryteGr = new Set(effectiveView(settings).hidden_field_ids);
-    const grupowanePo = effectiveView(settings).group_by;
+    const grupowanePo = tablica && poleTablicy ? poleTablicy.id : effectiveView(settings).group_by;
     const poleOgolne = fields.find((f) => {
       const p = settings.column_summaries[f.id];
       return !ukryteGr.has(f.id) && f.id !== grupowanePo && p !== undefined && p.kind !== "none" && p.kind !== "count";
     });
     const tytul = fields.find((f) => f.isTitle);
-    for (const g of grupy) {
+    for (const g of grupyPodsumowan) {
       let tekst = "";
       if (sz && poleSzablonu) {
         if (sz.kind === "avg") {
@@ -386,7 +407,7 @@ export function PageTable({
       wynik.set(g.key, tekst);
     }
     return wynik;
-  }, [grupy, podsumowaniaSzablonu, fields, settings, today]);
+  }, [grupyPodsumowan, tablica, poleTablicy, podsumowaniaSzablonu, fields, settings, today]);
   // Stopka pod tabelą (S2Table foot): „11 książek · 2 w trakcie” — rzeczownik szablonu i opis szablonu;
   // bez szablonu pierwsze podsumowanie kolumny (bez samej liczby wierszy, którą już mówi rzeczownik), bez „Σ”
   const tekstStopki = React.useMemo(() => {
@@ -509,6 +530,30 @@ export function PageTable({
       setPrzypiety({ id, kolejnosc: [...kolejnosc, id] });
     }
   }
+
+  // „Dodaj” w kolumnie tablicy: wiersz od razu na serwerze z wartością kolumny (null = „Bez wartości”),
+  // potem arkusz nowej karty (jak edycja nazwy nowej karty w makiecie)
+  // Id nowej karty czekającej na wiersz w stanie (setRows po odpowiedzi serwera)
+  const kartaDoOtwarcia = React.useRef<string | null>(null);
+  async function dodajNaTablicy(wartosc: string | null) {
+    if (!poleTablicy) return;
+    setDodawanie(true);
+    const id = await store.addRowInline({ [poleTablicy.id]: wartosc });
+    // Ref przed zmianą stanu: render po setDodawanie zobaczy czekającą kartę
+    kartaDoOtwarcia.current = id;
+    setDodawanie(false);
+  }
+  React.useEffect(() => {
+    const id = kartaDoOtwarcia.current;
+    if (id === null) return;
+    const nowa = zywe.find((r) => r.id === id);
+    if (!nowa) return;
+    kartaDoOtwarcia.current = null;
+    setWArkuszu(true);
+    void store.startEdit(nowa);
+    // Nowa karta pojawia się w stanie po setRows z addRowInline; „dodawanie” wraca na false już po ustawieniu refa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zywe, dodawanie]);
 
   // „+ Widok” i „Zapisz jako widok”: „Mój widok N” (pierwszy wolny numer, S2Table) z bieżącymi filtrami
   async function dodajWidok(zFiltra = false) {
@@ -709,6 +754,8 @@ export function PageTable({
                       <button
                         type="button"
                         role="menuitem"
+                        // Na tablicy okno „Nowe pole” jest tylko w pustym stanie (bez pola Wyboru i Statusu)
+                        disabled={tablica && poleTablicy !== null}
                         onClick={() => {
                           bezZwrotuFokusu.current = true;
                           setMenuTabeli(false);
@@ -794,8 +841,43 @@ export function PageTable({
         {/* Okno resetu sejfu montujemy dopiero po wyborze z menu */}
         {resetSejfu && <VaultResetDialog open onOpenChange={(o) => setResetSejfu(o)} />}
 
+        {/* Układ Tablica (S2Table, .kboard) zamiast ramki z tabelą */}
+        {tablica && (
+          <BoardView
+            fields={fields}
+            visibleFields={widocznePola}
+            rows={widoczneWiersze}
+            boardField={poleTablicy}
+            today={today}
+            readOnly={tylkoOdczyt}
+            passwords={modul}
+            summaries={sumyGrup}
+            adding={dodawanie}
+            addField={
+              modul ? undefined : (
+                <AddFieldDialog
+                  openRef={otworzNowePole}
+                  allowSecret={false}
+                  fields={fields}
+                  onAdd={(input) => void store.addField(input)}
+                />
+              )
+            }
+            // Zapis z cofnięciem i toastem po błędzie (Review Focus 4) robi store.updateCell
+            onMove={(r, wartosc) => {
+              if (poleTablicy) void store.updateCell(r, poleTablicy, wartosc);
+            }}
+            onAdd={(wartosc) => void dodajNaTablicy(wartosc)}
+            onOpen={(r) => {
+              setWArkuszu(true);
+              void store.startEdit(r);
+            }}
+          />
+        )}
+
         {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą,
             a stopka „Nowy wiersz” z liczbą wierszy stoi pod nią w tej samej ramce */}
+        {!tablica && (
         <div className={RAMKA}>
         <div className={RAMKA_PRZEWIJANA}>
           {/* table-layout: fixed; --szerokosc-tabeli = suma kolumn + 56 px (kolumna „+” albo „Akcje” z koszem); od 800 px
@@ -1261,6 +1343,7 @@ export function PageTable({
           </StatusBadge>
         </div>
         </div>
+        )}
 
         {/* Pasek akcji dla zaznaczonych (S2Table, .bulk) */}
         {wybrane.length > 0 && (
