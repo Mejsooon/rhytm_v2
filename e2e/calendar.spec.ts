@@ -355,17 +355,17 @@ test.describe("kalendarz (web)", () => {
     await expect(wpis).toBeVisible();
     await wpis.click();
     const dymek = page.getByRole("dialog", { name: "Odnowienie Netflix" });
-    await expect(dymek).toContainText("Odnowienie · Subscriptions");
+    await expect(dymek).toContainText("Odnowienie · Subskrypcje");
     await expect(dymek).toContainText("13.02.2027");
-    await dymek.getByRole("link", { name: "Otwórz w Subscriptions" }).click();
+    await dymek.getByRole("link", { name: "Otwórz w Subskrypcje" }).click();
     await expect(page).toHaveURL(new RegExp(`/strony/${idStrony}$`));
 
-    // Odznaczenie „Subscriptions” w menu „Kategorie” chowa wpis i zapisuje się w polu
+    // Odznaczenie „Subskrypcje” w menu „Kategorie” chowa wpis i zapisuje się w polu
     await page.goto(TYDZIEN);
     await expect(wpis).toBeVisible();
     await przyciskKategorii(page).click();
     const zapis = poZapisie(page);
-    await page.getByRole("menuitemcheckbox", { name: /Subscriptions/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Subskrypcje/ }).click();
     await zapis;
     await expect(wpis).toHaveCount(0);
     await page.keyboard.press("Escape");
@@ -402,10 +402,10 @@ test.describe("kalendarz (telefon)", () => {
     await expect(plakietka).toBeVisible();
     await plakietka.click();
     const arkusz = page.getByRole("dialog", { name: "Odnowienie Netflix" });
-    await expect(arkusz).toContainText("Odnowienie · Subscriptions");
+    await expect(arkusz).toContainText("Odnowienie · Subskrypcje");
     await expect(arkusz).toContainText("13.02.2027");
     await expect(arkusz).toContainText("Tylko podgląd");
-    await arkusz.getByRole("link", { name: "Otwórz w Subscriptions" }).click();
+    await arkusz.getByRole("link", { name: "Otwórz w Subskrypcje" }).click();
     await expect(page).toHaveURL(new RegExp(`/strony/${idStrony}$`));
 
     // Miesiąc: kropka odnowienia w komórce 13 stycznia
@@ -422,7 +422,7 @@ test.describe("kalendarz (telefon)", () => {
     await page.getByRole("button", { name: "Kategorie", exact: true }).click();
     const zapis = poZapisie(page);
     await page
-      .getByRole("switch", { name: "Pokaż odnowienia Subscriptions" })
+      .getByRole("switch", { name: "Pokaż odnowienia Subskrypcje" })
       .click();
     await zapis;
     await page.keyboard.press("Escape");

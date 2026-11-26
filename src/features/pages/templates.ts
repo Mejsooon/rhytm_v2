@@ -1,8 +1,8 @@
 // Szablony stron-tabel (NewPage) i dane wstawiane do RPC create_page.
 // Pola, opcje i kolory pochodzą z makiet Books / Projects / Websites.
 import { PALETA } from "./fields";
-import type { FieldConfig, FieldType } from "./fields";
-import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
+import type { FieldConfig, FieldType, PageField } from "./fields";
+import type { ColumnSummary, FilterCond, PinnedCard, SortKey, StoredTableSettings, TableView } from "./table-model";
 
 export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites", "subscriptions"] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
@@ -41,16 +41,38 @@ export type TemplateCard = {
   unit?: [string, string, string];
 };
 
+// Widok szablonu: filtry po kluczach pól; option to klucze opcji (op in / not_in), value to liczba dni albo tekst.
+// W nazwie {year} zamienia się na bieżący rok
+export type TemplateView = {
+  name: string;
+  filters: { field: string; op: FilterCond["op"]; value?: unknown; option?: string[] }[];
+};
+
 export type TemplateConfig = {
   name: string;
   icon: string;
+  // Opis pod tytułem strony (S2Table)
   desc: string;
-  // Zdanie pod tytułem nowej strony (blok tekstu na początku); pusty tekst = bez bloku
-  intro: string;
+  // Krótki podpis karty szablonu w oknie „Nowa strona” (S2NewPage)
+  hint: string;
+  // Tekst przycisku „Nowy …” i odmiana rzeczownika do licznika wierszy (1 / 2–4 / 5+)
+  newLabel: string;
+  noun: [string, string, string];
+  // Gotowe widoki (zakładki) i grupowanie „Wszystkich”: pole grupy, pole tablicy, zwinięte grupy (klucze opcji)
+  views: TemplateView[];
+  group: string | null;
+  board: string | null;
+  collapsed: string[];
+  // „Dodatkowo” w oknie „Nowa strona” (S2NewPage): linie oddzielone \n; pusty tekst = bez sekcji
   extra: string;
   fields: TemplateField[];
   cards: TemplateCard[];
   sort: { field: string; dir: "asc" | "desc" }[];
+  // Opis pod tabelą po liczbie wierszy (S2Table, `foot`): licznik opcji z odmianą albo suma miesięczna Kwoty
+  footer: { field: string; kind: "count_option" | "sum_month"; option?: string; unit?: [string, string, string] } | null;
+  // Podsumowanie w nagłówku grupy (S2Table, `gsum`): średnia ocena z etykietą, suma miesięczna albo najbliższy
+  // termin (skip: klucz opcji pola grupy, której grupa nie ma podsumowania, np. „Zrobione”)
+  groupSummary: { field: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip?: string } | null;
   // Stopki kolumn po kluczu pola; option wskazuje klucz opcji tego pola
   summaries: Record<string, { kind: ColumnSummary["kind"]; option?: string; unit?: [string, string, string]; where?: { field: string; option: string } }>;
 };
@@ -64,23 +86,48 @@ const SZARY = PALETA[7];
 export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   empty: {
     name: "Pusta strona",
-    icon: "lucide:table",
+    // Ikona karty w oknie „Nowa strona”; sama pusta strona powstaje bez ikony (S2EmptyPage: „Dodaj ikonę”)
+    icon: "lucide:file-text",
     desc: "Zacznij od zera",
-    intro: "",
+    hint: "Zacznij od zera",
+    newLabel: "Nowy wiersz",
+    noun: ["wiersz", "wiersze", "wierszy"],
+    views: [],
+    group: null,
+    board: null,
+    collapsed: [],
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
     ],
     cards: [],
     sort: [],
+    footer: null,
+    groupSummary: null,
     summaries: {},
   },
   books: {
-    name: "Books",
+    name: "Książki",
     icon: "lucide:book-open",
-    desc: "Twoje książki",
-    intro: "Co czytam, co przeczytałem i co chcę przeczytać.",
-    extra: "Liczba przeczytanych w tym roku.",
+    desc: "Twoje książki: czytane, przeczytane i na później.",
+    hint: "Twoje książki",
+    newLabel: "Nowa książka",
+    noun: ["książka", "książki", "książek"],
+    views: [
+      { name: "Czytam", filters: [{ field: "status", op: "in", option: ["reading"] }] },
+      { name: "Do przeczytania", filters: [{ field: "status", op: "in", option: ["want"] }] },
+      {
+        name: "Przeczytane w {year}",
+        filters: [
+          { field: "status", op: "in", option: ["read"] },
+          { field: "date", op: "this_year" },
+        ],
+      },
+    ],
+    group: "status",
+    board: "status",
+    collapsed: [],
+    extra: "Średnia ocena w stopce tabeli.",
     fields: [
       { key: "title", name: "Tytuł", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
       { key: "author", name: "Autor", type: "text" },
@@ -116,6 +163,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { field: "status", dir: "asc" },
       { field: "date", dir: "desc" },
     ],
+    footer: { field: "status", kind: "count_option", option: "reading", unit: ["w trakcie", "w trakcie", "w trakcie"] },
+    groupSummary: { field: "rating", kind: "avg", label: "śr. ocena" },
     summaries: {
       status: { kind: "count_option", option: "read", unit: ["przeczytana", "przeczytane", "przeczytanych"] },
       rating: { kind: "avg" },
@@ -127,11 +176,20 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     },
   },
   projects: {
-    name: "Projects",
+    name: "Projekty",
     icon: "lucide:rocket",
-    desc: "Twoje projekty",
-    intro: "Projekty na studia, własne i dla klientów.",
-    extra: "Terminy trafią do kalendarza głównego.",
+    desc: "Projekty na studia, własne i dla klientów.",
+    hint: "Twoje projekty",
+    newLabel: "Nowy projekt",
+    noun: ["projekt", "projekty", "projektów"],
+    views: [
+      { name: "W toku", filters: [{ field: "status", op: "in", option: ["wip"] }] },
+      { name: "Archiwum", filters: [{ field: "status", op: "in", option: ["done"] }] },
+    ],
+    group: "status",
+    board: "status",
+    collapsed: ["done"],
+    extra: "Terminy trafią do kalendarza głównego.\nWidok Tablica z kolumnami statusów.",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       {
@@ -178,6 +236,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Zrobione", field: "status", aggregation: "count_option_of_total", option: "done" },
     ],
     sort: [{ field: "due", dir: "asc" }],
+    footer: { field: "status", kind: "count_option", option: "wip", unit: ["w toku", "w toku", "w toku"] },
+    groupSummary: { field: "due", kind: "nearest", label: "najbliższy termin", skip: "done" },
     summaries: {
       status: { kind: "count_option", option: "wip", unit: ["w toku", "w toku", "w toku"] },
       due: { kind: "filled", unit: ["termin", "terminy", "terminów"] },
@@ -185,10 +245,20 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     },
   },
   websites: {
-    name: "Websites",
+    name: "Strony WWW",
     icon: "lucide:globe",
-    desc: "Twoje strony WWW",
-    intro: "Strony klientów: URL, klient, status.",
+    desc: "Strony, które zbudowałeś albo budujesz dla klientów.",
+    hint: "Twoje strony WWW",
+    newLabel: "Nowa strona",
+    noun: ["strona", "strony", "stron"],
+    views: [
+      { name: "Na żywo", filters: [{ field: "status", op: "in", option: ["live"] }] },
+      { name: "W budowie", filters: [{ field: "status", op: "in", option: ["building"] }] },
+      { name: "Dla klientów", filters: [{ field: "client", op: "not_equals", value: "ja" }] },
+    ],
+    group: "status",
+    board: "status",
+    collapsed: [],
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
@@ -231,17 +301,36 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Klienci", field: "client", aggregation: "count_distinct" },
     ],
     sort: [],
+    footer: { field: "status", kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
+    groupSummary: null,
     summaries: {
       url: { kind: "filled", unit: ["link", "linki", "linków"] },
       status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
     },
   },
   subscriptions: {
-    name: "Subscriptions",
+    name: "Subskrypcje",
     icon: "lucide:wallet",
-    desc: "Twoje subskrypcje",
-    intro: "Twoje subskrypcje i ich odnowienia.",
-    extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
+    desc: "Twoje subskrypcje i ich odnowienia.",
+    hint: "Twoje subskrypcje",
+    newLabel: "Nowa subskrypcja",
+    noun: ["subskrypcja", "subskrypcje", "subskrypcji"],
+    views: [
+      { name: "Aktywne", filters: [{ field: "active", op: "checked" }] },
+      {
+        name: "Odnowienie w 14 dni",
+        filters: [
+          { field: "active", op: "checked" },
+          { field: "renewal", op: "within_days", value: 14 },
+        ],
+      },
+      { name: "Wstrzymane", filters: [{ field: "active", op: "unchecked" }] },
+    ],
+    group: "cat",
+    board: "cat",
+    collapsed: [],
+    extra:
+      "Karty: miesięcznie, rocznie i najbliższe odnowienie.\nOdnowienia w kalendarzu i przypomnienie dzień wcześniej.\nSuma miesięczna w stopce tabeli.",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       { key: "price", name: "Kwota cykliczna", type: "recurring", config: { default_cycle: "month" } },
@@ -276,6 +365,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Najbliższe odnowienie", field: "renewal", aggregation: "next_renewal" },
     ],
     sort: [{ field: "renewal", dir: "asc" }],
+    footer: { field: "price", kind: "sum_month" },
+    groupSummary: { field: "price", kind: "sum_month" },
     summaries: {
       name: { kind: "count", unit: ["subskrypcja", "subskrypcje", "subskrypcji"] },
       price: { kind: "sum_month" },
@@ -283,6 +374,160 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     },
   },
 };
+
+// Stare angielskie tytuły stron z szablonów (przed polonizacją); migracja zmienia tylko strony z takim tytułem
+export const LEGACY_TEMPLATE_TITLES: Record<"books" | "projects" | "websites" | "subscriptions", string> = {
+  books: "Books",
+  projects: "Projects",
+  websites: "Websites",
+  subscriptions: "Subscriptions",
+};
+
+// Dawne zdania pod tytułem (blok tekstu na początku strony z szablonu, przed Tabelami v3). Edytor ukrywa taki
+// niezmieniony blok, bo opis szablonu stoi teraz pod tytułem (S2Table); zmieniony tekst zostaje
+export const LEGACY_TEMPLATE_INTROS: Record<"books" | "projects" | "websites" | "subscriptions", string> = {
+  books: "Co czytam, co przeczytałem i co chcę przeczytać.",
+  projects: "Projekty na studia, własne i dla klientów.",
+  websites: "Strony klientów: URL, klient, status.",
+  subscriptions: "Twoje subskrypcje i ich odnowienia.",
+};
+
+// Widoki Haseł (S2Passwords: zakładki po Kategorii); strona systemowa nie ma szablonu w TEMPLATES
+const WIDOKI_HASEL = ["Praca", "Studia", "Prywatne"];
+
+// Gotowe widoki, grupowanie i zwinięte grupy „Wszystkich” z prawdziwymi id pól i opcji tabeli.
+// Pola i opcje wskazuje nazwa i etykieta (id nadaje baza); widok, którego pole lub opcja zniknęły, jest pomijany.
+// year trafia do nazwy „Przeczytane w {year}”
+export function templateDefaults(
+  key: TemplateKey | "passwords",
+  fields: PageField[],
+  year: number = new Date().getFullYear(),
+): { views: TableView[]; group_by: string | null; collapsed_groups: Record<string, string[]> } {
+  const views: TableView[] = [];
+  let groupBy: string | null = null;
+  let zwiniete: string[] = [];
+
+  if (key === "passwords") {
+    const kategoria = fields.find((f) => f.name === "Kategoria" && f.type === "select");
+    if (!kategoria) return { views, group_by: null, collapsed_groups: {} };
+    for (const nazwa of WIDOKI_HASEL) {
+      const opcja = (kategoria.config.options ?? []).find((o) => o.label === nazwa);
+      if (!opcja) continue;
+      views.push({
+        id: crypto.randomUUID(),
+        name: nazwa,
+        filters: [{ field_id: kategoria.id, op: "in", value: [opcja.id] }],
+        sort: [],
+        group_by: null,
+        layout: "table",
+        hidden_field_ids: [],
+      });
+    }
+    return { views, group_by: kategoria.id, collapsed_groups: {} };
+  }
+
+  const tpl = TEMPLATES[key];
+  const polaSzablonu: Record<string, PageField | undefined> = {};
+  for (const f of tpl.fields) polaSzablonu[f.key] = fields.find((p) => p.name === f.name && p.type === f.type);
+
+  for (const w of tpl.views) {
+    const filters: FilterCond[] = [];
+    let komplet = true;
+    for (const c of w.filters) {
+      const pole = polaSzablonu[c.field];
+      if (!pole) {
+        komplet = false;
+        break;
+      }
+      const cond: FilterCond = { field_id: pole.id, op: c.op };
+      if (c.option) {
+        const etykiety = (tpl.fields.find((f) => f.key === c.field)?.config?.options ?? [])
+          .filter((o) => c.option!.includes(o.key))
+          .map((o) => o.label);
+        const ids = (pole.config.options ?? []).filter((o) => etykiety.includes(o.label)).map((o) => o.id);
+        if (ids.length !== c.option.length) {
+          komplet = false;
+          break;
+        }
+        cond.value = ids;
+      } else if (c.value !== undefined) {
+        cond.value = c.value;
+      }
+      filters.push(cond);
+    }
+    if (!komplet) continue;
+    views.push({
+      id: crypto.randomUUID(),
+      name: w.name.replace("{year}", String(year)),
+      filters,
+      sort: [],
+      group_by: null,
+      layout: "table",
+      hidden_field_ids: [],
+    });
+  }
+
+  const poleGrupy = tpl.group === null ? undefined : polaSzablonu[tpl.group];
+  if (poleGrupy) {
+    groupBy = poleGrupy.id;
+    const etykiety = (tpl.fields.find((f) => f.key === tpl.group)?.config?.options ?? [])
+      .filter((o) => tpl.collapsed.includes(o.key))
+      .map((o) => o.label);
+    zwiniete = (poleGrupy.config.options ?? []).filter((o) => etykiety.includes(o.label)).map((o) => o.id);
+  }
+  return { views, group_by: groupBy, collapsed_groups: zwiniete.length > 0 ? { all: zwiniete } : {} };
+}
+
+// Opis pod tabelą i podsumowanie grupy szablonu z prawdziwymi id pól i opcji (pole po nazwie i typie, opcja po
+// etykiecie — jak w templateDefaults). Brak szablonu, Hasła, brakujące pole albo opcja → null (ogólne podsumowanie)
+export function templateSummaries(
+  key: TemplateKey | "passwords" | null,
+  fields: PageField[],
+): {
+  footer: { field_id: string; summary: ColumnSummary } | null;
+  group: { field_id: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip_option_id?: string } | null;
+} {
+  if (key === null || key === "passwords") return { footer: null, group: null };
+  const tpl = TEMPLATES[key];
+  // Pole szablonu po kluczu i id opcji po kluczu (przez etykietę z szablonu)
+  const pole = (k: string) => {
+    const t = tpl.fields.find((f) => f.key === k);
+    return t ? fields.find((p) => p.name === t.name && p.type === t.type) : undefined;
+  };
+  const opcja = (k: string, klucz: string) => {
+    const etykieta = tpl.fields.find((f) => f.key === k)?.config?.options?.find((o) => o.key === klucz)?.label;
+    return (pole(k)?.config.options ?? []).find((o) => o.label === etykieta)?.id;
+  };
+
+  let footer: { field_id: string; summary: ColumnSummary } | null = null;
+  const st = tpl.footer;
+  const poleStopki = st ? pole(st.field) : undefined;
+  if (st && poleStopki) {
+    const summary: ColumnSummary = { kind: st.kind };
+    const idOpcji = st.option !== undefined ? opcja(st.field, st.option) : undefined;
+    if (st.option === undefined || idOpcji !== undefined) {
+      if (idOpcji !== undefined) summary.option_id = idOpcji;
+      if (st.unit) summary.unit = st.unit;
+      footer = { field_id: poleStopki.id, summary };
+    }
+  }
+
+  let group: { field_id: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip_option_id?: string } | null = null;
+  const gr = tpl.groupSummary;
+  const poleGrupy = gr ? pole(gr.field) : undefined;
+  if (gr && poleGrupy) {
+    group = { field_id: poleGrupy.id, kind: gr.kind };
+    if (gr.label) group.label = gr.label;
+    const pomin = gr.skip !== undefined && tpl.group !== null ? opcja(tpl.group, gr.skip) : undefined;
+    if (pomin !== undefined) group.skip_option_id = pomin;
+  }
+  return { footer, group };
+}
+
+// Same widoki szablonu (kontrakt z planu)
+export function templateViews(key: TemplateKey | "passwords", fields: PageField[], year?: number): TableView[] {
+  return templateDefaults(key, fields, year).views;
+}
 
 // Nazwy z profiles.pending_pages (onboarding) -> szablon
 export const PENDING_TO_TEMPLATE: Record<string, TemplateKey> = {
@@ -337,7 +582,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     if (c.unit) card.unit = c.unit;
     return card;
   });
-  const settings: TableSettings = {
+  const settings: StoredTableSettings = {
     sort,
     filters: [],
     hidden_field_ids: [],
@@ -349,24 +594,13 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
   // Pusta strona: bez bloków — edytor pokazuje szybki start „albo zacznij od:” (decyzja po kroku 2)
   if (key === "empty") return [];
 
-  const bloki: CreatePageBlock[] = [];
-  // Zdanie pod tytułem to zwykły blok tekstu przed tabelą
-  if (tpl.intro !== "") {
-    bloki.push({ id: newId(), type: "text", content: { text: tpl.intro }, fields: [], rows: [] });
-  }
-  bloki.push({
-    id: newId(),
-    type: "table",
-    content: { name: tpl.name, settings },
-    fields,
-    rows: [],
-  });
-  return bloki;
+  // Sama tabela: opis szablonu stoi pod tytułem strony (S2Table), nie w bloku tekstu
+  return [{ id: newId(), type: "table", content: { name: tpl.name, settings }, fields, rows: [] }];
 }
 
 // Nowa tabela z menu „/” (spec 6.8): Nazwa, Status (Wybór), Data i dwa puste wiersze
 export function NEW_TABLE_BLOCK(newId: () => string): CreatePageBlock {
-  const settings: TableSettings = {
+  const settings: StoredTableSettings = {
     sort: [],
     filters: [],
     hidden_field_ids: [],

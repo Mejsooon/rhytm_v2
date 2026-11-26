@@ -68,7 +68,7 @@ describe("loadPages", () => {
     const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
     expect(utworzenia).toHaveLength(1);
     expect(utworzenia[0][1]).toMatchObject({
-      p_title: "Projects",
+      p_title: "Projekty",
       p_template_key: "projects",
     });
   });
@@ -91,7 +91,7 @@ describe("loadPages", () => {
     await loadPages();
     const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
     expect(utworzenia).toHaveLength(1);
-    expect(utworzenia[0][1]).toMatchObject({ p_title: "Books", p_template_key: "books" });
+    expect(utworzenia[0][1]).toMatchObject({ p_title: "Książki", p_template_key: "books" });
     expect(blad).not.toHaveBeenCalled();
     blad.mockRestore();
   });

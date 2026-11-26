@@ -91,13 +91,17 @@ test.describe("powłoka aplikacji", () => {
 
     const nawigacja = page.getByRole("navigation", {
       name: "Główna nawigacja",
+      exact: true,
     });
     await expect(nawigacja).toBeVisible();
 
     await page.getByRole("button", { name: "Schowaj pasek boczny" }).click();
     await expect(nawigacja).toBeHidden();
+    // Schowany pasek to szyna z ikonami (S2SidebarCollapsed) z przyciskiem „Pokaż pasek boczny”
+    const szyna = page.getByRole("navigation", { name: "Główna nawigacja (zwinięta)" });
+    await expect(szyna).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Pokaż pasek boczny" }),
+      szyna.getByRole("button", { name: "Pokaż pasek boczny" }),
     ).toBeVisible();
 
     // Stan siedzi w ciasteczku czytanym na serwerze — po odświeżeniu pasek dalej schowany

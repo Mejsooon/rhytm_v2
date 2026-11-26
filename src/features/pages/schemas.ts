@@ -1,6 +1,7 @@
 // Walidacja danych stron (lustro reguł z migracji 20261120120000_pages.sql).
 import { z } from "zod";
 import { idSchema } from "@/features/calendar/schemas";
+import { IMPORT_ZA_DUZO, ZA_DUZO_WIERSZY } from "./messages";
 
 export { idSchema };
 
@@ -80,6 +81,10 @@ const filterCond = z.object({
     "after",
     "empty",
     "not_empty",
+    "within_days",
+    "this_year",
+    "not_in",
+    "not_equals",
   ]),
   value: z.unknown().optional(),
 });
@@ -115,13 +120,54 @@ const pinnedCard = z.object({
   width: z.number().int().min(180).max(4000).optional(),
 });
 
+const tableView = z.object({
+  id: z.string().min(1).max(64),
+  name: z.string().trim().min(1).max(40),
+  filters: z.array(filterCond).max(50),
+  sort: z.array(sortKey).max(10),
+  group_by: z.string().min(1).max(64).nullable(),
+  layout: z.enum(["table", "board"]),
+  hidden_field_ids: z.array(z.string().max(64)).max(200),
+});
+
 export const tableSettingsPatchSchema = z.object({
   sort: z.array(sortKey).max(10).optional(),
   filters: z.array(filterCond).max(50).optional(),
-  hidden_field_ids: z.array(z.string()).max(200).optional(),
+  hidden_field_ids: z.array(z.string().max(64)).max(200).optional(),
   column_summaries: z.record(z.string(), columnSummary).optional(),
   pinned_cards: z.array(pinnedCard).max(20).optional(),
   column_widths: z.record(z.string(), z.number().int().min(80).max(4000)).optional(),
+  views: z.array(tableView).max(20).optional(),
+  active_view_id: z.string().min(1).max(64).nullable().optional(),
+  group_by: z.string().min(1).max(64).nullable().optional(),
+  layout: z.enum(["table", "board"]).optional(),
+  // Zwinięte grupy: do 50 kluczy (widoki i „all”), do 200 wpisów w kluczu
+  collapsed_groups: z
+    .record(z.string().max(64), z.array(z.string().max(64)).max(200))
+    .refine((o) => Object.keys(o).length <= 50)
+    .optional(),
 });
 
 export const rowValuesSchema = z.record(z.string(), z.unknown());
+
+// Akcje na wielu wierszach: od 1 do 500 id
+export const rowIdsSchema = z.array(idSchema).min(1, ZA_DUZO_WIERSZY).max(500, ZA_DUZO_WIERSZY);
+
+// Import CSV: do 5000 wierszy, nowe pola bez typu Sekret, nowe opcje wyboru (klucz = id pola albo „new:<indeks>”)
+export const importRowsSchema = z.array(rowValuesSchema).max(5000, IMPORT_ZA_DUZO);
+export const importNewFieldsSchema = z
+  .array(z.object({ name: fieldNameSchema, type: fieldTypeSchema.exclude(["secret"]) }))
+  .max(100);
+// Kolor opcji: pusty („Bez koloru”) albo hex jak w PALETA; id jak w istniejących opcjach (niepusty tekst do 64 znaków)
+export const importOptionsSchema = z.record(
+  z.string().max(64),
+  z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        label: z.string().min(1).max(60),
+        color: z.string().max(16).regex(/^(#[0-9a-fA-F]{3,8})?$/, "Kolor ma nieprawidłowy format."),
+      }),
+    )
+    .max(100),
+);

@@ -14,11 +14,21 @@ const actions = vi.hoisted(() => ({
   updateRow: vi.fn(),
   updateBlockContent: vi.fn(),
   reorderFields: vi.fn(),
+  deleteRows: vi.fn(),
+  restoreRows: vi.fn(),
+  duplicateRows: vi.fn(),
+  setRowsValue: vi.fn(),
+  importCsvRows: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: router.refresh }),
+}));
 vi.mock("../actions", () => actions);
 // Sejf (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają, moduł Hasła ustawia stan sam
 const vault = vi.hoisted(() => ({ state: { status: "ladowanie" } as Record<string, unknown> }));
@@ -26,7 +36,7 @@ vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => vault.state 
 
 import { PALETA } from "../fields";
 import type { LoadedBlock } from "../load-page";
-import { buildTemplateBlocks, type TemplateKey } from "../templates";
+import { buildTemplateBlocks, templateViews, type TemplateKey } from "../templates";
 import { PageTable } from "./page-table";
 import { stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
@@ -115,9 +125,9 @@ describe("PageTable", () => {
   });
 
   describe("blok z szablonu (Review Focus 1)", () => {
-    it("buildTemplateBlocks(„books”)[1] pokazuje trzy karty i stopkę", () => {
+    it("buildTemplateBlocks(„books”)[0] pokazuje trzy karty i stopkę", () => {
       let n = 0;
-      const b = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`)[1];
+      const b = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`)[0];
       expect(b.type).toBe("table");
       const block: LoadedBlock = {
         id: b.id,
@@ -130,119 +140,151 @@ describe("PageTable", () => {
       render(<PageTable block={block} today={TODAY} />);
       // Trzy karty i przycisk „Karta” na końcu rzędu
       expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
-      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("0 wierszy")).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
+      expect(screen.getByText("0 wierszy")).toBeInTheDocument();
     });
   });
 
   describe("pasek tabeli", () => {
-    it("nazwa, plakietka sortu, „Filtruj”, „⋯” i „+ Nowy” pod ramką", () => {
+    it("zakładki, pasek narzędzi (S2Table) i „Nowy wiersz” w stopce ramki (poza tabelą); bez nazwy tabeli i plakietki sortu", () => {
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveAttribute("placeholder", "Tabela bez nazwy");
-      expect(screen.getByText("Sort: Status, Przeczytana")).toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Sort:/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Wszystkie 11" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("group", { name: "Typ widoku" })).toBeInTheDocument();
+      // Sort books: Status ↑, Przeczytana ↓; bez grupowania przycisk pokazuje pierwszy klucz
+      expect(screen.getByRole("button", { name: "Status ↑" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Pola" })).toBeInTheDocument();
+      expect(screen.getByRole("searchbox", { name: "Szukaj" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Menu tabeli" })).toBeInTheDocument();
-      const nowy = screen.getByRole("button", { name: "Nowy" });
-      // „+ Nowy” stoi pod ramką z tabelą, nie w stopce
+      const nowy = screen.getByRole("button", { name: "Nowy wiersz" });
+      // „Nowy wiersz” stoi w stopce ramki pod tabelą, nie w wierszu tfoot
       expect(nowy.closest("table")).toBeNull();
     });
 
-    it("bez sortu nie ma plakietki", () => {
+    it("bez sortu przycisk sortowania to „Sortuj”", () => {
       const b = blok("websites", []);
       (b.content as { settings: { sort: unknown[] } }).settings.sort = [];
       render(<PageTable block={b} today={TODAY} />);
-      expect(screen.queryByText(/^Sort:/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Sortuj" })).toBeInTheDocument();
     });
 
-    it("zmiana nazwy tabeli na blur woła updateBlockContent z zachowaniem settings", async () => {
-      const user = userEvent.setup();
-      const b = blok("books", BOOKS);
-      render(<PageTable block={b} today={TODAY} />);
-      const pole = screen.getByRole("textbox", { name: "Nazwa tabeli" });
-      await user.clear(pole);
-      await user.type(pole, "Lektury");
-      await user.tab();
-      expect(actions.updateBlockContent).toHaveBeenCalledWith(b.id, {
-        name: "Lektury",
-        settings: b.content.settings,
-      });
-      expect(pole).toHaveValue("Lektury");
-    });
-
-    it("błąd zapisu nazwy przywraca poprzednią i pokazuje toast", async () => {
-      actions.updateBlockContent.mockResolvedValue({ ok: false, message: "x" });
-      const user = userEvent.setup();
-      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      const pole = screen.getByRole("textbox", { name: "Nazwa tabeli" });
-      await user.clear(pole);
-      await user.type(pole, "Lektury{Enter}");
-      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      expect(pole).toHaveValue("Books");
-    });
-
-    it("nazwa bez zmian nie zapisuje nic", async () => {
-      const user = userEvent.setup();
-      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(screen.getByRole("textbox", { name: "Nazwa tabeli" }));
-      await user.tab();
-      expect(actions.updateBlockContent).not.toHaveBeenCalled();
-    });
-
-    it("„⋯” (S2TableMenu): odwrócenie i usunięcie sortu, dodanie sortowania", async () => {
-      const user = userEvent.setup();
-      const b = blok("books", BOOKS);
-      render(<PageTable block={b} today={TODAY} />);
-      const status = b.fields.find((f) => f.name === "Status")!;
-      const przeczytana = b.fields.find((f) => f.name === "Przeczytana")!;
-      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const menu = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      expect(within(menu).getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
-      expect(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }).textContent).toBe("A → Z");
-      await user.click(within(menu).getByRole("button", { name: "Odwróć kierunek: Status" }));
-      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
-        sort: [
-          { field_id: status.id, dir: "desc" },
-          { field_id: przeczytana.id, dir: "desc" },
-        ],
-      });
-      await user.click(within(menu).getByRole("button", { name: "Usuń sortowanie: Status" }));
-      await user.click(within(menu).getByRole("button", { name: "Usuń sortowanie: Przeczytana" }));
-      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { sort: [] });
-      expect(screen.queryByText(/^Sort:/)).not.toBeInTheDocument();
-      expect(within(menu).getByText("Wiersze w kolejności dodania.")).toBeInTheDocument();
-      await user.click(within(menu).getByRole("button", { name: "Dodaj sortowanie" }));
-      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { sort: [{ field_id: b.fields[0].id, dir: "asc" }] });
-    });
-
-    it("„⋯”: nazwa z pola w menu zapisuje się Enterem i przy zamknięciu menu (Esc)", async () => {
-      const user = userEvent.setup();
-      const b = blok("books", BOOKS);
-      render(<PageTable block={b} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const menu = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      const pole = within(menu).getByRole("textbox", { name: "Nazwa tabeli" });
-      await user.clear(pole);
-      await user.type(pole, "Lektury");
-      await user.keyboard("{Escape}");
-      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ustawienia tabeli" })).toBeNull());
-      expect(actions.updateBlockContent).toHaveBeenCalledTimes(1);
-      expect(actions.updateBlockContent).toHaveBeenCalledWith(b.id, expect.objectContaining({ name: "Lektury" }));
-      expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Lektury");
-    });
-
-    it("„⋯”: „Usuń tabelę” woła onRemove; bez onRemove pozycji nie ma", async () => {
+    it("„⋯” (S2TableMenu): Nowa kolumna, Dodaj kartę statystyki, Importuj z CSV…, Eksportuj całą tabelę (CSV), Usuń tabelę", async () => {
       const user = userEvent.setup();
       const usun = vi.fn();
-      const { unmount } = render(<PageTable block={blok("books", BOOKS)} today={TODAY} onRemove={usun} />);
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} onRemove={usun} />);
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      await user.click(await screen.findByRole("button", { name: "Usuń tabelę" }));
+      const menu = await screen.findByRole("menu", { name: "Menu tabeli" });
+      expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual([
+        "Nowa kolumna",
+        "Dodaj kartę statystyki",
+        "Importuj z CSV…",
+        "Eksportuj całą tabelę (CSV)",
+        "Usuń tabelę",
+      ]);
+      expect(within(menu).getByRole("menuitem", { name: "Importuj z CSV…" })).toBeEnabled();
+      await user.click(within(menu).getByRole("menuitem", { name: "Usuń tabelę" }));
       expect(usun).toHaveBeenCalledTimes(1);
-      unmount();
+    });
+
+    it("„⋯”: bez onRemove nie ma „Usuń tabelę”; CSV woła przekazane funkcje", async () => {
+      const user = userEvent.setup();
+      const importuj = vi.fn();
+      const eksportuj = vi.fn();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} onImportCsv={importuj} onExportCsv={eksportuj} />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      expect(screen.queryByRole("menuitem", { name: "Usuń tabelę" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("menuitem", { name: "Importuj z CSV…" }));
+      expect(importuj).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
+      expect(eksportuj).toHaveBeenCalledTimes(1);
+    });
+
+    describe("CSV (wbudowany import i eksport)", () => {
+      let pobrania: { nazwa: string; blob: Blob }[];
+      beforeEach(() => {
+        pobrania = [];
+        let ostatni: Blob | null = null;
+        URL.createObjectURL = vi.fn((b: Blob) => {
+          ostatni = b;
+          return "blob:test";
+        });
+        URL.revokeObjectURL = vi.fn();
+        vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+          if (ostatni) pobrania.push({ nazwa: this.download, blob: ostatni });
+        });
+      });
+      afterEach(() => vi.restoreAllMocks());
+
+      it("„Eksportuj całą tabelę (CSV)” pobiera „<tytuł>.csv” z całą tabelą i zwalnia adres", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title={'Moje: książki?'} />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
+        expect(pobrania).toHaveLength(1);
+        expect(pobrania[0].nazwa).toBe("Moje książki.csv");
+        const tekst = await pobrania[0].blob.text();
+        expect(tekst).toContain("Atomic Habits");
+        expect(tekst).toContain("Clean Code");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+        expect(toast).toHaveBeenCalledWith("Wyeksportowano 11 wierszy do Moje książki.csv");
+      });
+
+      it("„Eksport CSV” w pasku pobiera tylko zaznaczone wiersze jako „<tytuł> — zaznaczone.csv”", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+        await user.click(screen.getByRole("button", { name: "Eksport CSV" }));
+        expect(pobrania[0].nazwa).toBe("Książki — zaznaczone.csv");
+        expect(toast).toHaveBeenCalledWith("Wyeksportowano 1 wiersz do Książki — zaznaczone.csv");
+        const tekst = await pobrania[0].blob.text();
+        expect(tekst).toContain("Atomic Habits");
+        expect(tekst).not.toContain("Clean Code");
+      });
+
+      it("„Importuj z CSV…” otwiera okno importu", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Importuj z CSV…" }));
+        const okno = await screen.findByRole("dialog", { name: "Importuj z CSV" });
+        expect(within(okno).getByText("Dodaj wiersze do tabeli Książki z pliku CSV.")).toBeInTheDocument();
+      });
+
+      it("udany import odświeża dane i pokazuje krok „Gotowe”", async () => {
+        const user = userEvent.setup();
+        actions.importCsvRows.mockResolvedValue({ ok: true, fieldIds: [], count: 2 });
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Importuj z CSV…" }));
+        const tresc = "Tytuł\nNowa A\nNowa B\n";
+        const plik = new File([tresc], "x.csv", { type: "text/csv" });
+        Object.defineProperty(plik, "text", { value: () => Promise.resolve(tresc) });
+        await user.upload(await screen.findByLabelText("Plik CSV"), plik);
+        await user.click(await screen.findByRole("button", { name: "Importuj 2 wiersze" }));
+        expect(await screen.findByText("Zaimportowano 2 wiersze")).toBeInTheDocument();
+        expect(router.refresh).toHaveBeenCalled();
+        await user.click(screen.getByRole("button", { name: "Gotowe" }));
+        expect(screen.queryByRole("dialog", { name: "Importuj z CSV" })).not.toBeInTheDocument();
+      });
+    });
+
+    it("„⋯” → „Dodaj kartę statystyki” otwiera okno karty", async () => {
+      const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      expect(screen.queryByRole("button", { name: "Usuń tabelę" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("menuitem", { name: "Dodaj kartę statystyki" }));
+      expect(await screen.findByRole("dialog", { name: /karta/i })).toBeInTheDocument();
+    });
+
+    it("„⋯” → „Nowa kolumna” otwiera okno „Nowe pole”", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      await user.click(screen.getByRole("menuitem", { name: "Nowa kolumna" }));
+      expect(await screen.findByRole("dialog", { name: "Nowe pole" })).toBeInTheDocument();
     });
   });
 
@@ -276,7 +318,7 @@ describe("PageTable", () => {
   });
 
   describe("filtr", () => {
-    it("warunek zawęża tabelę i karty; „Zapisz jako domyślny” zapisuje settings.filters", async () => {
+    it("warunek zawęża tabelę i karty i od razu zapisuje settings.filters", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
@@ -284,11 +326,12 @@ describe("PageTable", () => {
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
       await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
       await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-      expect(tytuly()).toEqual(["Deep Work"]);
+      await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
       expect(karta("Czytam teraz").textContent).toContain("0");
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
-      await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
-      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { filters: [expect.objectContaining({ op: "contains", value: "deep" })] });
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
+        filters: [expect.objectContaining({ op: "contains", value: "deep" })],
+      });
     });
 
     it("„Filtruj po tym polu” otwiera filtr z warunkiem dla pola", async () => {
@@ -303,7 +346,7 @@ describe("PageTable", () => {
   });
 
   describe("menu kolumny", () => {
-    it("sort z menu kolumny zapisuje settings.sort i zmienia plakietkę i kolejność", async () => {
+    it("sort z menu kolumny zapisuje settings.sort i zmienia przycisk sortowania i kolejność", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS.slice(3, 6));
       render(<PageTable block={b} today={TODAY} />);
@@ -311,11 +354,11 @@ describe("PageTable", () => {
       await user.click(within(menu).getByRole("menuitem", { name: "Sortuj malejąco" }));
       const autor = b.fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { sort: [{ field_id: autor.id, dir: "desc" }] });
-      expect(screen.getByText("Sort: Autor")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Autor ↓" })).toBeInTheDocument();
       expect(tytuly()).toEqual(["Zero to One", "Diuna", "Deep Work"]);
     });
 
-    it("ukrycie kolumny i ponowne pokazanie w „Widoczne kolumny” menu „⋯”", async () => {
+    it("ukrycie kolumny i ponowne pokazanie w „Pola” (Widoczne pola)", async () => {
       const user = userEvent.setup();
       const b = blok("projects", PROJECTS);
       render(<PageTable block={b} today={TODAY} />);
@@ -324,16 +367,16 @@ describe("PageTable", () => {
       const repo = b.fields.find((f) => f.name === "Repo")!;
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { hidden_field_ids: [repo.id] });
       expect(screen.queryByRole("columnheader", { name: /Repo/ })).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      // Kolumny tytułu nie da się ukryć; ukryta Repo ma aria-pressed=false
-      expect(within(ustawienia).getByRole("button", { name: "Nazwa", pressed: true })).toBeDisabled();
-      await user.click(within(ustawienia).getByRole("button", { name: "Repo", pressed: false }));
+      await user.click(screen.getByRole("button", { name: /^Pola/ }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Widoczne pola" });
+      // Kolumny tytułu nie da się ukryć; ukryta Repo jest odznaczona
+      expect(within(ustawienia).getByRole("checkbox", { name: "Nazwa" })).toBeDisabled();
+      await user.click(within(ustawienia).getByRole("checkbox", { name: "Repo", checked: false }));
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [] });
       expect(screen.getByRole("columnheader", { name: /Repo/ })).toBeInTheDocument();
     });
 
-    it("kolumna na pozycji 0 (stare dane z serwera) da się ukryć i przywrócić z „⋯”", async () => {
+    it("kolumna na pozycji 0 (stare dane z serwera) da się ukryć i przywrócić w „Pola”", async () => {
       const user = userEvent.setup();
       const zSzablonu = blok("books", BOOKS);
       // Przesuwanie nie stawia już niczego przed tytułem, więc taka kolejność przychodzi tylko z serwera
@@ -342,30 +385,30 @@ describe("PageTable", () => {
         fields: zSzablonu.fields.map((f) => (f.name === "Autor" ? { ...f, position: -1 } : f)),
       };
       render(<PageTable block={b} today={TODAY} />);
-      expect(screen.getAllByRole("columnheader")[0].textContent).toBe("Autor");
+      expect(screen.getAllByRole("columnheader")[2].textContent).toBe("Autor");
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
       const autor = b.fields.find((f) => f.name === "Autor")!;
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [autor.id] });
       expect(screen.queryByRole("columnheader", { name: /Autor/ })).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      const przycisk = within(ustawienia).getByRole("button", { name: "Autor", pressed: false });
+      await user.click(screen.getByRole("button", { name: /^Pola/ }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Widoczne pola" });
+      const przycisk = within(ustawienia).getByRole("checkbox", { name: "Autor", checked: false });
       expect(przycisk).toBeEnabled();
       await user.click(przycisk);
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, { hidden_field_ids: [] });
       expect(screen.getByRole("columnheader", { name: /Autor/ })).toBeInTheDocument();
     });
 
-    it("kolumny tytułu nie da się ukryć ani z menu kolumny, ani z listy „Widoczne kolumny”", async () => {
+    it("kolumny tytułu nie da się ukryć ani z menu kolumny, ani z listy „Widoczne pola”", async () => {
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       const menu = await otworzMenu(user, "Tytuł");
       expect(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" })).toBeDisabled();
       await user.keyboard("{Escape}");
-      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      const ustawienia = await screen.findByRole("dialog", { name: "Ustawienia tabeli" });
-      expect(within(ustawienia).getByRole("button", { name: "Tytuł", pressed: true })).toBeDisabled();
+      await user.click(screen.getByRole("button", { name: "Pola" }));
+      const ustawienia = await screen.findByRole("dialog", { name: "Widoczne pola" });
+      expect(within(ustawienia).getByRole("checkbox", { name: "Tytuł", checked: true })).toBeDisabled();
     });
 
     it("podsumowanie zapisuje column_summaries i liczy stopkę", async () => {
@@ -405,7 +448,7 @@ describe("PageTable", () => {
       const [tytul, autor, status, ...reszta] = b.fields.map((f) => f.id);
       expect(actions.reorderFields).toHaveBeenCalledWith(b.id, [tytul, status, autor, ...reszta]);
       const naglowki = screen.getAllByRole("columnheader").map((h) => h.textContent);
-      expect(naglowki.slice(0, 3)).toEqual(["Tytuł", "Status", "Autor"]);
+      expect(naglowki.slice(2, 5)).toEqual(["Tytuł", "Status", "Autor"]);
     });
 
     it("pierwsza kolumna ma wyłączone „Przesuń w lewo”, ostatnia „Przesuń w prawo”", async () => {
@@ -441,7 +484,7 @@ describe("PageTable", () => {
       await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
       const naglowki = screen.getAllByRole("columnheader").map((h) => h.textContent);
-      expect(naglowki.slice(0, 3)).toEqual(["Tytuł", "Autor", "Status"]);
+      expect(naglowki.slice(2, 5)).toEqual(["Tytuł", "Autor", "Status"]);
     });
 
     it("dodanie opcji „Porzucone” w menu Status woła updateField z kolorem z PALETA", async () => {
@@ -548,7 +591,7 @@ describe("PageTable", () => {
         expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
         expect(within(wiersz("Deep Work")).queryByText("Przeczytane")).not.toBeInTheDocument();
         const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-        expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+        expect(screen.getByText("11 wierszy")).toBeInTheDocument();
         expect(within(stopka).queryByText("7 przeczytanych")).not.toBeInTheDocument();
         expect(within(stopka).queryByText("6 w tym roku")).not.toBeInTheDocument();
       });
@@ -616,7 +659,7 @@ describe("PageTable", () => {
       await user.clear(within(okno).getByRole("textbox", { name: "Szukaj typu" }));
       await user.click(within(okno).getByRole("button", { name: "Dodaj pole" }));
       expect(actions.addField).toHaveBeenCalledWith(b.id, expect.objectContaining({ name: "Notatka", type: "text" }));
-      await waitFor(() => expect(screen.getAllByRole("columnheader")[5].textContent).toContain("Notatka"));
+      await waitFor(() => expect(screen.getAllByRole("columnheader")[7].textContent).toContain("Notatka"));
     });
   });
 
@@ -675,7 +718,7 @@ describe("PageTable", () => {
       );
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      const nowy = screen.getByRole("button", { name: "Nowy" });
+      const nowy = screen.getByRole("button", { name: "Nowy wiersz" });
       await user.click(nowy);
       const status = b.fields.find((f) => f.name === "Status")!;
       const chce = status.config.options!.find((o) => o.label === "Chcę przeczytać")!.id;
@@ -686,8 +729,7 @@ describe("PageTable", () => {
         odpowiedz();
       });
       expect(nowy).toBeEnabled();
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("12 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("12 wierszy")).toBeInTheDocument();
       const tytul = b.fields.find((f) => f.isTitle)!;
       const pole = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
       expect(pole).toBeDefined();
@@ -700,7 +742,7 @@ describe("PageTable", () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       const nowaKomorka = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
       expect(nowaKomorka).toBeDefined();
       await user.click(screen.getByRole("button", { name: "Filtruj" }));
@@ -709,9 +751,11 @@ describe("PageTable", () => {
       const wartosc = within(filtr).getByRole("textbox", { name: "Wartość warunku 1" });
       // Warunek ukrywa nowy (pusty) wiersz, a po wyczyszczeniu wiersz wraca jako świeżo zamontowana komórka
       await user.type(wartosc, "deep");
-      expect(nowaKomorka).not.toBeInTheDocument();
+      await waitFor(() => expect(nowaKomorka).not.toBeInTheDocument());
       await user.clear(wartosc);
-      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true);
+      await waitFor(() =>
+        expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true),
+      );
       expect(wartosc).toHaveFocus();
     });
 
@@ -751,7 +795,7 @@ describe("PageTable", () => {
       ustawienia.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
       const { rerender } = render(<PageTable block={b} today={TODAY} />);
       expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       // Nowy wiersz („Chcę przeczytać”) nie spełnia filtra, a mimo to stoi na końcu z kursorem w tytule
       await waitFor(() => expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation", ""]));
       const pole = screen.getAllByRole("textbox", { name: "Tytuł" })[2];
@@ -775,10 +819,9 @@ describe("PageTable", () => {
       actions.addRow.mockResolvedValue({ ok: false, message: "x" });
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("11 wierszy")).toBeInTheDocument();
     });
 
     it("„Usuń wiersz”: wiersz znika, toast „Usunięto · Cofnij” przywraca", async () => {
@@ -800,10 +843,10 @@ describe("PageTable", () => {
   });
 
   describe("stopka", () => {
-    it("Books: liczba wierszy w pierwszej kolumnie i podsumowania", () => {
+    it("Books: liczba wierszy w stopce ramki, podsumowania kolumn w tfoot", () => {
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("11 wierszy")).toBeInTheDocument();
       expect(within(stopka).getByText("7 przeczytanych")).toBeInTheDocument();
       expect(within(stopka).getByText("śr. 4,1")).toBeInTheDocument();
       expect(within(stopka).getByText("6 w tym roku")).toBeInTheDocument();
@@ -814,20 +857,23 @@ describe("PageTable", () => {
     it("domyślne szerokości z <col>: tytuł 300, ocena 130, a ostatnia kolumna bez szerokości", () => {
       const b = blok("books", BOOKS.slice(0, 2));
       const { container } = render(<PageTable block={b} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const idx = (nazwa: string) => b.fields.findIndex((f) => f.name === nazwa);
       expect(kolumny[idx("Tytuł")].style.width).toBe("300px");
       expect(kolumny[idx("Ocena")].style.width).toBe("130px");
       expect(kolumny[kolumny.length - 1].style.width).toBe("");
     });
 
-    it("tabela ma width równy sumie szerokości plus 56 px i min-width: 100%", () => {
+    it("tabela ma width równy sumie szerokości pól plus 76 px (zaznaczanie i „#”) plus 56 px i min-width: 100%", () => {
       const b = blok("books", BOOKS.slice(0, 2));
       const { container } = render(<PageTable block={b} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const suma = kolumny.slice(0, -1).reduce((a, c) => a + parseInt(c.style.width, 10), 0);
       const tabela = container.querySelector("table") as HTMLElement;
-      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      // Pola + 56 px w zmiennej; 76 px kolumn zaznaczania i „#” dolicza klasa tylko od 800 px
+      expect(tabela.style.getPropertyValue("--szerokosc-tabeli")).toBe(`${suma + 56}px`);
+      expect(tabela.className).toContain("w-[calc(var(--szerokosc-tabeli)+76px)]");
+      expect(tabela.className).toContain("max-[799px]:w-(--szerokosc-tabeli)");
       expect(tabela.style.minWidth).toBe("100%");
       expect(tabela.style.tableLayout).toBe("fixed");
     });
@@ -841,7 +887,7 @@ describe("PageTable", () => {
         content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 10, [ocena.id]: "x" } } },
       };
       const { container } = render(<PageTable block={zle} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("220px");
       expect(kolumny[b.fields.indexOf(ocena)].style.width).toBe("130px");
     });
@@ -857,7 +903,7 @@ describe("PageTable", () => {
       await user.keyboard("{ArrowRight}");
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 240 } });
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("240px");
       expect(kolumny[0].style.width).toBe("300px");
     });
@@ -885,7 +931,7 @@ describe("PageTable", () => {
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
       uchwyt.releasePointerCapture = vi.fn();
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560, buttons: 1 });
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("280px");
@@ -904,7 +950,7 @@ describe("PageTable", () => {
       const { container } = render(<PageTable block={b} today={TODAY} />);
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const kol = kolumny[b.fields.indexOf(autor)];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540, buttons: 1 });
@@ -930,7 +976,7 @@ describe("PageTable", () => {
       const { container } = render(<PageTable block={b} today={TODAY} />);
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
-      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[])[b.fields.indexOf(autor)];
+      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2)[b.fields.indexOf(autor)];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0, buttons: 1 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 600, buttons: 0 });
       expect(kol.style.width).toBe("220px");
@@ -1001,7 +1047,7 @@ describe("PageTable", () => {
       telefon();
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       const arkusz = screen.getByRole("dialog", { name: "Nowy wiersz" });
       expect(within(arkusz).queryByRole("button", { name: "Usuń wiersz" })).not.toBeInTheDocument();
       await user.click(within(arkusz).getByRole("button", { name: "Anuluj" }));
@@ -1193,28 +1239,9 @@ describe("PageTable", () => {
       // Szerokość jak w zwykłej tabeli: suma kolumn + 56 px
       const tabela = screen.getByRole("table");
       const suma = Array.from(tabela.querySelectorAll("col")).reduce((a, c) => a + (parseInt(c.style.width) || 0), 0);
-      expect(tabela.style.width).toBe(`${suma + 56}px`);
-      expect(screen.getByRole("button", { name: "Nowy" })).toBeInTheDocument();
+      expect(tabela.style.getPropertyValue("--szerokosc-tabeli")).toBe(`${suma - 76 + 56}px`);
+      expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
-    });
-
-    it("moduleRowFilter zawęża wiersze także przy zamkniętym sejfie i zgłasza liczbę wierszy; w zwykłej tabeli jest ignorowany", () => {
-      stanSejfu("zablokowany");
-      const liczba = vi.fn();
-      const { unmount } = render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          onLiveRowCount={liczba}
-          moduleRowFilter={(r) => r.values["f-serwis"] === "Nie ma takiego"}
-        />,
-      );
-      expect(screen.queryByDisplayValue("GitHub")).not.toBeInTheDocument();
-      expect(liczba).toHaveBeenCalledWith(1);
-      unmount();
-      render(<PageTable block={blokHasel()} today={TODAY} moduleRowFilter={() => false} />);
-      expect(screen.getByDisplayValue("GitHub")).toBeInTheDocument();
     });
 
     it("menu kolumny modułu jest zablokowane: bez „Usuń pole”, z „Ukryj kolumnę”", async () => {
@@ -1390,36 +1417,67 @@ describe("PageTable", () => {
       expect(writeText).toHaveBeenLastCalledWith("");
     });
 
-    it("moduł: bez nazwy tabeli (pasek i menu „⋯”), `moduleTools` w miejscu nazwy z funkcjami magazynu", async () => {
+    it("moduł: szukajka w pasku tabeli; menu „⋯” jak w S2Passwords", async () => {
       stanSejfu("odblokowany");
       const user = userEvent.setup();
-      render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          moduleTools={({ readOnly }) => <span>Narzędzia modułu {readOnly ? "tylko do odczytu" : "edycja"}</span>}
-        />,
-      );
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" onImportCsv={() => {}} />);
       expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
-      expect(screen.getByText("Narzędzia modułu edycja")).toBeInTheDocument();
+      expect(screen.getByRole("searchbox", { name: "Szukaj" })).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
-      expect(screen.getByText("Sortowanie")).toBeInTheDocument();
-      expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
+      const menu = await screen.findByRole("menu", { name: "Menu tabeli" });
+      expect(within(menu).getByText("Kolumny modułu Hasła są stałe.")).toBeInTheDocument();
+      // Hasła: bez importu CSV (stałe kolumny), także gdy obsługa importu jest podana
+      expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual([
+        "Eksportuj całą tabelę (CSV)",
+        "Zresetuj sejf…",
+      ]);
     });
 
-    it("zamknięty sejf: `moduleTools` dostaje readOnly, a opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
+    it("Hasła (S2Passwords): szukajka w pasku, stopka „sekrety nie są przeszukiwane”, grupa „1 z notatką”", async () => {
+      stanSejfu("odblokowany");
+      const user = userEvent.setup();
+      const blok = blokHasel();
+      // Grupowanie po Kategorii i drugi wiersz bez notatki
+      blok.content = {
+        ...blok.content,
+        settings: { ...(blok.content.settings as object), group_by: "f-kat" },
+      };
+      blok.rows = [
+        ...blok.rows,
+        { id: "row-2", values: { "f-serwis": "Vercel", "f-login": "jan", "f-haslo": null, "f-url": "", "f-kat": "k1", "f-notatka": null }, position: 1, deletedAt: null },
+      ];
+      render(<PageTable block={blok} today={TODAY} module="passwords" templateKey="passwords" />);
+      expect(screen.getByText("2 hasła · sekrety nie są przeszukiwane")).toBeInTheDocument();
+      expect(screen.getByText("1 z notatką")).toBeInTheDocument();
+      // Szukajka paska tabeli szuka po jawnych kolumnach
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "jan");
+      expect(screen.getByText("1 hasło · sekrety nie są przeszukiwane")).toBeInTheDocument();
+    });
+
+    it("Hasła: menu „⋯” bez „Importuj z CSV…”, a eksport pomija kolumny Sekret", async () => {
+      const user = userEvent.setup();
+      stanSejfu("odblokowany");
+      let blob: Blob | null = null;
+      URL.createObjectURL = vi.fn((b: Blob) => {
+        blob = b;
+        return "blob:hasla";
+      });
+      URL.revokeObjectURL = vi.fn();
+      const klik = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" title="Hasła" />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      expect(screen.queryByRole("menuitem", { name: "Importuj z CSV…" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
+      const tekst = await (blob as unknown as Blob).text();
+      const naglowek = tekst.replace(/^\uFEFF/, "").split("\r\n")[0];
+      expect(naglowek).toBe("Serwis,Login,URL,Kategoria");
+      klik.mockRestore();
+    });
+
+    it("zamknięty sejf: opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
       stanSejfu("zablokowany");
       const user = userEvent.setup();
-      render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          moduleTools={({ readOnly }) => <span>{readOnly ? "tylko do odczytu" : "edycja"}</span>}
-        />,
-      );
-      expect(screen.getByText("tylko do odczytu")).toBeInTheDocument();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
       const menu = await otworzMenu(user, "Kategoria");
       expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
       expect(within(menu).queryByRole("button", { name: /Usuń opcję/ })).not.toBeInTheDocument();
@@ -1444,7 +1502,7 @@ describe("PageTable", () => {
     it("zamknięty sejf: tylko do odczytu, bez „Nowy”, kosza i kopiowania; sekrety „zablokowane”", () => {
       stanSejfu("zablokowany");
       render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
-      expect(screen.queryByRole("button", { name: "Nowy" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Nowy wiersz" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Usuń wiersz" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Kopiuj hasło" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Pokaż hasło" })).not.toBeInTheDocument();
@@ -1469,6 +1527,70 @@ describe("PageTable", () => {
       expect(api.readOnly).toBe(false);
       expect(screen.getByText("lista telefonu").parentElement).toHaveClass("min-[800px]:hidden");
       expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).not.toBeNull();
+    });
+
+    it("zakładka „Przeczytane w <rok>” z filtrem „ten rok” pokazuje bieżący rok, inne nazwy bez zmian", () => {
+      stanSejfu("odblokowany");
+      const b = blokHasel();
+      const widok = (id: string, name: string, op: string) => ({
+        id,
+        name,
+        filters: [{ field_id: "f-serwis", op }],
+        sort: [],
+        group_by: null,
+        layout: "table",
+        hidden_field_ids: [],
+      });
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          views: [
+            widok("w1", "Przeczytane w 2024", "this_year"),
+            widok("w2", "Przeczytane w 2024", "empty"),
+            widok("w3", "Moje Przeczytane w 2024", "this_year"),
+          ],
+        },
+      };
+      render(<PageTable block={b} today={TODAY} module="passwords" />);
+      const rok = TODAY.slice(0, 4);
+      expect(screen.getByRole("button", { name: new RegExp(`^Przeczytane w ${rok}`) })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Przeczytane w 2024/ })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Moje Przeczytane w 2024/ })).toBeInTheDocument();
+    });
+
+    it("renderPhone: wiersze po filtrach „Wszystkich”, bez aktywnego widoku webu i bez szukanej frazy", () => {
+      stanSejfu("odblokowany");
+      const b = blokHasel();
+      b.rows = [
+        ...b.rows,
+        { id: "row-2", values: { "f-serwis": "GitLab", "f-login": "x", "f-kat": "k1" }, position: 1, deletedAt: null },
+        { id: "row-3", values: { "f-serwis": "Netflix", "f-login": "y", "f-kat": "k1" }, position: 2, deletedAt: null },
+      ];
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          filters: [{ field_id: "f-serwis", op: "not_equals", value: "Netflix" }],
+          views: [
+            {
+              id: "w1",
+              name: "Tylko GitHub",
+              filters: [{ field_id: "f-serwis", op: "contains", value: "GitHub" }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+          ],
+          active_view_id: "w1",
+        },
+      };
+      const renderPhone = vi.fn((api: unknown) => (api ? <span>lista telefonu</span> : null));
+      render(<PageTable block={b} today={TODAY} module="passwords" renderPhone={renderPhone} />);
+      const api = renderPhone.mock.calls.at(-1)![0] as { rows: { id: string }[] };
+      // Widok webu zawęża do GitHub, a telefon dostaje wszystko poza odfiltrowanym w „Wszystkich”
+      expect(api.rows.map((r) => r.id)).toEqual(["row-1", "row-2"]);
     });
 
     it("renderPhone: „editRow” i „newRow” otwierają arkusz wiersza (istniejący i pusty szkic)", async () => {
@@ -1578,7 +1700,7 @@ describe("PageTable", () => {
       render(<PageTable block={blok("subscriptions", SUBSKRYPCJE)} today={TODAY} />);
       // Netflix 21.11, Disney+ 24.11, Strava 03.12.2026 (kotwica Stravy 03.12.2025 jest najwcześniejsza)
       expect(tytuly()).toEqual(["Netflix", "Disney+", "Strava"]);
-      expect(screen.getByText("Sort: Data odnowienia")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Data odnowienia ↑" })).toBeInTheDocument();
     });
 
     it("wiersz z odznaczoną „Aktywna” ma przezroczystość .55 i „anulowana”", () => {
@@ -1627,5 +1749,452 @@ describe("PageTable", () => {
       expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).toBeNull();
     });
   });
-});
 
+  describe("widoki w zakładkach i pasek narzędzi (S2Table)", () => {
+    // Książki z gotowymi widokami szablonu (rok 2026) i aktywnym widokiem `aktywny`
+    function ksiazkiZWidokami(aktywny: number | null = null): LoadedBlock {
+      const b = blok("books", BOOKS);
+      const widoki = templateViews("books", b.fields, 2026);
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          views: widoki,
+          active_view_id: aktywny === null ? null : widoki[aktywny].id,
+        },
+      };
+      return b;
+    }
+
+    it("zakładki z liczbami jak w makiecie: Wszystkie 11, Czytam 2, Do przeczytania 2, Przeczytane w 2026 6", () => {
+      render(<PageTable block={ksiazkiZWidokami()} today={TODAY} />);
+      const grupa = screen.getByRole("group", { name: "Zapisane widoki" });
+      for (const nazwa of ["Wszystkie 11", "Czytam 2", "Do przeczytania 2", "Przeczytane w 2026 6"]) {
+        expect(within(grupa).getByRole("button", { name: nazwa })).toBeInTheDocument();
+      }
+    });
+
+    it("wybór zakładki zawęża wiersze i zapisuje active_view_id", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami();
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Czytam 2" }));
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, {
+        active_view_id: (b.content.settings as { views: { id: string }[] }).views[0].id,
+      });
+      expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
+      expect(screen.getByRole("button", { name: "Czytam 2" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("„+ Widok” tworzy „Mój widok 1” i go aktywuje (toast „Zapisano…”); kolejny dostaje pierwszy wolny numer", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami();
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Widok" }));
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.views.at(-1).name).toBe("Mój widok 1");
+      expect(patch.active_view_id).toBe(patch.views.at(-1).id);
+      expect(screen.getByRole("button", { name: "Mój widok 1 11" })).toHaveAttribute("aria-pressed", "true");
+      expect(toast).toHaveBeenCalledWith("Zapisano „Mój widok 1” z obecnymi filtrami");
+      await user.click(screen.getByRole("button", { name: "Widok" }));
+      expect(screen.getByRole("button", { name: "Mój widok 2 11" })).toBeInTheDocument();
+      // Po usunięciu „Mój widok 1” numer 1 jest znów wolny
+      await user.click(screen.getByRole("button", { name: "Mój widok 1 11" }));
+      await user.click(screen.getByRole("button", { name: "Menu widoku Mój widok 1" }));
+      await user.click(screen.getByRole("menuitem", { name: "Usuń widok" }));
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Mój widok 1 11" })).toBeNull());
+      await user.click(screen.getByRole("button", { name: "Widok" }));
+      expect(screen.getByRole("button", { name: "Mój widok 1 11" })).toBeInTheDocument();
+    });
+
+    it("menu widoku: Duplikuj widok i Usuń widok z tostem „Cofnij”", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazkiZWidokami(0)} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Menu widoku Czytam" }));
+      await user.click(screen.getByRole("menuitem", { name: "Duplikuj widok" }));
+      expect(screen.getByRole("button", { name: "Czytam (kopia) 2" })).toHaveAttribute("aria-pressed", "true");
+
+      await user.click(screen.getByRole("button", { name: "Menu widoku Czytam (kopia)" }));
+      await user.click(screen.getByRole("menuitem", { name: "Usuń widok" }));
+      await waitFor(() => expect(screen.queryByRole("button", { name: /^Czytam \(kopia\)/ })).toBeNull());
+      expect(screen.getByRole("button", { name: "Wszystkie 11" })).toHaveAttribute("aria-pressed", "true");
+      expect(toast).toHaveBeenCalledWith("Usunięto widok „Czytam (kopia)”", expect.anything());
+      const cofnij = toast.mock.calls.find((c) => c[0] === "Usunięto widok „Czytam (kopia)”")![1].action.onClick;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(screen.getByRole("button", { name: "Czytam (kopia) 2" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("menu widoku: Zmień nazwę zapisuje nową nazwę w widoku", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami(0);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Menu widoku Czytam" }));
+      await user.click(screen.getByRole("menuitem", { name: "Zmień nazwę" }));
+      const pole = await screen.findByRole("textbox", { name: "Nazwa widoku" });
+      await user.clear(pole);
+      await user.type(pole, "Teraz{Enter}");
+      expect(actions.saveTableSettings.mock.calls.at(-1)![1].views[0].name).toBe("Teraz");
+      expect(screen.getByRole("button", { name: "Teraz 2" })).toBeInTheDocument();
+    });
+
+    it("„Zapisz jako widok” w filtrze tworzy widok z warunkiem z filtra", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami();
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Filtruj" }));
+      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
+      await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
+      await user.click(within(filtr).getByRole("button", { name: "Zapisz jako widok" }));
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.views.at(-1).filters).toEqual([{ field_id: b.fields[0].id, op: "contains", value: "deep" }]);
+      expect(screen.getByRole("button", { name: "Mój widok 1 1" })).toHaveAttribute("aria-pressed", "true");
+      // Nowy widok ma warunek z filtra: przycisk „Filtruj · 1” liczy warunki widoku
+      expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+      expect(tytuly()).toEqual(["Deep Work"]);
+      // „Wszystkie” znów pokazują wszystko (filtr przeszedł do nowego widoku)
+      expect(patch.filters).toEqual([]);
+      await user.keyboard("{Escape}");
+      await user.click(screen.getByRole("button", { name: "Wszystkie 11" }));
+      expect(tytuly()).toHaveLength(11);
+      expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
+    });
+
+    it("zmiana filtra przy aktywnym widoku zapisuje się od razu w tym widoku, nie w „Wszystkich”", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami(1);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Filtruj · 1" }));
+      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
+      await user.click(within(filtr).getByRole("button", { name: "Wyczyść" }));
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(Object.keys(patch)).toEqual(["views"]);
+      expect(patch.views[1].filters).toEqual([]);
+      expect(within(filtr).queryByRole("button", { name: "Zapisz jako domyślny" })).toBeNull();
+    });
+
+    it("szukajka filtruje wiersze bez zapisu, także w widoku", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazkiZWidokami()} today={TODAY} />);
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "zycze");
+      expect(tytuly()).toEqual(["Ostatnie życzenie"]);
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      // Liczniki zakładek nie zależą od szukania
+      expect(screen.getByRole("button", { name: "Wszystkie 11" })).toBeInTheDocument();
+    });
+
+    it("„Pola” ukrywa kolumnę w bieżącym widoku (zapis w widoku), „Wszystkie” ją pokazują", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami(0);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Pola" }));
+      await user.click(within(screen.getByRole("dialog", { name: "Widoczne pola" })).getByRole("checkbox", { name: "Autor" }));
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.views[0].hidden_field_ids).toEqual([autor.id]);
+      expect(screen.queryByRole("columnheader", { name: /Autor/ })).toBeNull();
+      expect(screen.getByRole("button", { name: /^Pola/ })).toHaveTextContent("1 ukryte");
+      await user.keyboard("{Escape}");
+      await user.click(screen.getByRole("button", { name: "Wszystkie 11" }));
+      expect(screen.getByRole("columnheader", { name: /Autor/ })).toBeInTheDocument();
+    });
+
+    it("Grupuj i Tabela / Tablica zapisują się w bieżącym widoku", async () => {
+      const user = userEvent.setup();
+      const b = ksiazkiZWidokami(0);
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Grupuj" }));
+      await user.click(screen.getByRole("menuitemradio", { name: "Status" }));
+      const status = b.fields.find((f) => f.name === "Status")!;
+      expect(actions.saveTableSettings.mock.calls.at(-1)![1].views[0].group_by).toBe(status.id);
+      expect(screen.getByRole("button", { name: "Grupuj: Status" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Tablica" }));
+      expect(actions.saveTableSettings.mock.calls.at(-1)![1].views[0].layout).toBe("board");
+    });
+
+    it("moduł przy zamkniętym sejfie: zakładki bez „+ Widok” i bez menu widoku", () => {
+      vault.state = { status: "zablokowany" };
+      const b = ksiazkiZWidokami(0);
+      render(<PageTable block={b} today={TODAY} module="passwords" />);
+      expect(screen.queryByRole("button", { name: "Widok" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Menu widoku Czytam" })).toBeNull();
+    });
+
+    it("newRowRef: funkcja z tabeli dodaje wiersz jak „+ Nowy”", async () => {
+      const ref: { current: (() => void) | null } = { current: null };
+      render(<PageTable block={blok("books", BOOKS)} today={TODAY} newRowRef={ref} />);
+      expect(ref.current).toBeTypeOf("function");
+      await act(async () => {
+        ref.current?.();
+      });
+      expect(actions.addRow).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("ciało tabeli: numery, zaznaczanie, grupy i puste stany (S2Table)", () => {
+    // Blok Książek z nadpisanymi ustawieniami (views: [] — bez dopisywania widoków szablonu)
+    function ksiazki(wiersze: Record<string, unknown>[], ustawienia: Record<string, unknown> = {}) {
+      const b = blok("books", wiersze);
+      const settings = (b.content as { settings: Record<string, unknown> }).settings;
+      Object.assign(settings, { views: [] }, ustawienia);
+      return b;
+    }
+    function opcja(b: LoadedBlock, pole: string, etykieta: string) {
+      const f = b.fields.find((x) => x.name === pole)!;
+      return { pole: f, id: f.config.options!.find((o) => o.label === etykieta)!.id };
+    }
+    // Numery wierszy (kolumna „#”) w kolejności z DOM
+    function numery() {
+      return screen
+        .getAllByRole("checkbox", { name: /^Zaznacz: / })
+        .map((c) => (c.closest("tr")!.querySelectorAll("td")[1] as HTMLElement).textContent);
+    }
+    function grupa(nazwa: string) {
+      return screen.getByRole("button", { name: new RegExp(`(Zwiń|Rozwiń) grupę ${nazwa}$`) }).closest("tr") as HTMLElement;
+    }
+
+    it("kolumna zaznaczania i „#”: numer to pozycja w bieżącym widoku (po filtrze i sorcie)", () => {
+      const b = ksiazki(BOOKS);
+      const { id: czytam, pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
+      expect(numery()).toEqual(["1", "2"]);
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("grupy: nagłówek z odznaką, liczbą i podsumowaniem grupy; numery ciągłe przez grupy", () => {
+      const b = ksiazki(BOOKS, {});
+      const { pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} />);
+      const przeczytane = grupa("Przeczytane");
+      expect(within(przeczytane).getByText("Przeczytane")).toBeInTheDocument();
+      expect(within(przeczytane).getByText("7")).toBeInTheDocument();
+      // Pierwsza kolumna z podsumowaniem poza polem grupy: Ocena (średnia) liczona z wierszy grupy
+      // Bez szablonu: ogólne podsumowanie kolumny
+      expect(within(przeczytane).getByText("śr. 4,1")).toBeInTheDocument();
+      // „Czytam” bez ocen: bez „—”
+      expect(within(grupa("Czytam")).queryByText("—")).toBeNull();
+      expect(within(przeczytane).getByRole("button", { name: "Zwiń grupę Przeczytane" })).toHaveAttribute("aria-expanded", "true");
+      expect(numery()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]);
+    });
+
+    it("zwinięcie grupy zapisuje collapsed_groups bieżącego widoku i chowa wiersze („zwinięte · 7 ukryte”)", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: przeczytaneId } = opcja(b, "Status", "Przeczytane");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Zwiń grupę Przeczytane" }));
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [przeczytaneId] } });
+      const naglowek = grupa("Przeczytane");
+      expect(within(naglowek).getByRole("button", { name: "Rozwiń grupę Przeczytane" })).toHaveAttribute("aria-expanded", "false");
+      expect(within(naglowek).getByText("zwinięte · 7 ukryte")).toBeInTheDocument();
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Diuna" })).toBeNull();
+      // Numery liczą tylko pokazane wiersze
+      expect(numery()).toEqual(["1", "2", "3", "4"]);
+    });
+
+    it("Review Focus 5: nowy wiersz trafiający do zwiniętej grupy rozwija ją i jest widoczny", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: chce } = opcja(b, "Status", "Chcę przeczytać");
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, {
+        group_by: status.id,
+        collapsed_groups: { all: [chce] },
+      });
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Clean Code" })).toBeNull();
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await waitFor(() =>
+        expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [] } }),
+      );
+      expect(screen.getByRole("button", { name: "Zwiń grupę Chcę przeczytać" })).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Clean Code" })).toBeInTheDocument();
+      const pole = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
+      expect(pole).toBeDefined();
+    });
+
+    it("Review Focus 5: wiele pustych wartości w zwiniętej grupie „Bez wartości” — nowy pusty wiersz ją rozwija", async () => {
+      const user = userEvent.setup();
+      const bezStatusu = BOOKS.map((w) => ({ Tytuł: w.Tytuł, Autor: w.Autor }));
+      const b = ksiazki([...bezStatusu.slice(0, 4), ...BOOKS.slice(4)]);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      delete status.config.default_option;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, {
+        group_by: status.id,
+        collapsed_groups: { all: [""] },
+      });
+      render(<PageTable block={b} today={TODAY} />);
+      const bez = grupa("Bez wartości");
+      expect(within(bez).getByText("zwinięte · 4 ukryte")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await waitFor(() =>
+        expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [] } }),
+      );
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toBeInTheDocument();
+      expect(within(grupa("Bez wartości")).getByText("5")).toBeInTheDocument();
+    });
+
+    it("pusta tabela: „Pusta tabela. Dodaj pierwszy wiersz”", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki([]);
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.getByText(/Pusta tabela\./)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Dodaj pierwszy wiersz" }));
+      expect(actions.addRow).toHaveBeenCalledTimes(1);
+    });
+
+    it("nic nie pasuje: „Wyczyść filtry i szukanie” czyści filtry, szukanie i wraca do „Wszystkich”", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: czytam } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "zzz");
+      expect(screen.getByText(/Nic nie pasuje do filtrów\./)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Wyczyść filtry i szukanie" }));
+      expect(screen.getByRole("searchbox", { name: "Szukaj" })).toHaveValue("");
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { filters: [] });
+      expect(numery()).toHaveLength(11);
+    });
+
+    it("zaznaczenie pokazuje pasek akcji; „Zaznacz wszystkie” zaznacza i odznacza widoczne", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("1 zaznaczony");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("11 zaznaczonych");
+      expect(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" })).toHaveAttribute("aria-checked", "true");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("Usuń zaznaczone: deleteRows, toast z „Cofnij” i wyczyszczone zaznaczenie", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      expect(actions.deleteRows).toHaveBeenCalledWith(expect.arrayContaining(["row-1", "row-6"]));
+      expect(toast).toHaveBeenCalledWith("Usunięto 2 wiersze", expect.objectContaining({ action: expect.objectContaining({ label: "Cofnij" }) }));
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Diuna" })).toBeNull();
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("Duplikuj, Zmień: pole grupy i Eksport CSV dostają zaznaczone wiersze", async () => {
+      const user = userEvent.setup();
+      actions.duplicateRows.mockResolvedValue({ ok: true, rows: [] });
+      const eksport = vi.fn();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: przeczytane } = opcja(b, "Status", "Przeczytane");
+      render(<PageTable block={b} today={TODAY} onExportRowsCsv={eksport} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Eksport CSV" }));
+      expect(eksport).toHaveBeenCalledWith(["row-1"]);
+      await user.click(screen.getByRole("button", { name: "Zmień: Status" }));
+      await user.click(screen.getByRole("menuitem", { name: "Przeczytane" }));
+      expect(actions.setRowsValue).toHaveBeenCalledWith(["row-1"], status.id, przeczytane);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Duplikuj" }));
+      expect(actions.duplicateRows).toHaveBeenCalledWith(["row-1"]);
+    });
+
+    it("zmiana filtra albo szukania czyści zaznaczenie", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeInTheDocument();
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "a");
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("stopka: „Nowy wiersz” i „11 książek · 2 w trakcie” (S2Table foot szablonu)", () => {
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} templateKey="books" />);
+      expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
+      expect(screen.getByText("11 książek · 2 w trakcie")).toBeInTheDocument();
+    });
+
+    it("stopka bez szablonu: pierwsze podsumowanie kolumny (bez licznika wierszy)", () => {
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      expect(screen.getByText("11 wierszy · 7 przeczytanych")).toBeInTheDocument();
+    });
+
+    it("stopka i grupy Subskrypcji: suma miesięczna aktywnych bez „Σ”", () => {
+      const b = blok("subscriptions", SUBSKRYPCJE);
+      const kategoria = b.fields.find((f) => f.name === "Kategoria")!;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, { views: [], group_by: kategoria.id });
+      render(<PageTable block={b} today={TODAY} templateKey="subscriptions" />);
+      expect(screen.getByText("3 subskrypcje · 63,83 zł / mies.")).toBeInTheDocument();
+      // Rozrywka: Netflix 43 zł (Disney+ nieaktywny), Sport: Strava 249,99 zł / rok → 20,83 zł / mies.
+      expect(within(grupa("Rozrywka")).getByText("43,00 zł / mies.")).toBeInTheDocument();
+      expect(within(grupa("Sport")).getByText("20,83 zł / mies.")).toBeInTheDocument();
+    });
+
+    it("grupa Książek z szablonu: „śr. ocena 4,1” (S2Table gsum)", () => {
+      const b = ksiazki(BOOKS);
+      const { pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} templateKey="books" />);
+      expect(within(grupa("Przeczytane")).getByText("śr. ocena 4,1")).toBeInTheDocument();
+      expect(within(grupa("Czytam")).queryByText(/śr\./)).toBeNull();
+    });
+
+    it("grupa Projektów: najbliższy termin z nazwą i czasem; grupa „Zrobione” bez podsumowania", () => {
+      const b = blok("projects", PROJECTS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, { views: [], group_by: status.id });
+      render(<PageTable block={b} today={TODAY} templateKey="projects" />);
+      expect(within(grupa("W toku")).getByText("najbliższy termin: Projekt z baz danych — drony · za 5 dni")).toBeInTheDocument();
+      expect(within(grupa("Zrobione")).queryByText(/najbliższy/)).toBeNull();
+      expect(screen.getByText("8 projektów · 3 w toku")).toBeInTheDocument();
+    });
+
+    it("wiersz, który wypada z widoku (szukajka paska), wypada też z zaznaczenia", async () => {
+      const user = userEvent.setup();
+      vault.state = { status: "odblokowany" };
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} module="passwords" />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
+      // Szukanie czyści zaznaczenie całkiem (zmiana frazy), więc zaznaczamy ponownie przy frazie
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "Diuna");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("1 zaznaczony");
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      expect(actions.deleteRows).toHaveBeenCalledWith(["row-6"]);
+    });
+    it("„Zmień” wyprowadzający wiersz poza filtr widoku zdejmuje z niego zaznaczenie", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: czytam } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Zmień: Status" }));
+      await user.click(screen.getByRole("menuitem", { name: "Przeczytane" }));
+      await waitFor(() => expect(screen.queryByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toBeNull());
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("ponad 500 zaznaczonych: toast „Maksymalnie 500 wierszy naraz” bez wołania akcji i bez znikania wierszy", async () => {
+      const user = userEvent.setup();
+      const b = stronaTestowa("empty", "Strona", Array.from({ length: 501 }, (_, i) => ({ Nazwa: `w${i}` }))).blocks[0];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      await user.click(screen.getByRole("button", { name: "Duplikuj" }));
+      expect(toast.error).toHaveBeenCalledWith("Maksymalnie 500 wierszy naraz");
+      expect(actions.deleteRows).not.toHaveBeenCalled();
+      expect(actions.duplicateRows).not.toHaveBeenCalled();
+      expect(screen.getAllByRole("checkbox", { name: /^Zaznacz: / })).toHaveLength(501);
+    }, 30_000);
+  });
+});

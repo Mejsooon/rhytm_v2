@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { PALETA } from "./fields";
-import { buildTemplateBlocks, NEW_TABLE_BLOCK, PENDING_TO_TEMPLATE, TEMPLATE_KEYS, TEMPLATES } from "./templates";
+import {
+  buildTemplateBlocks,
+  LEGACY_TEMPLATE_TITLES,
+  NEW_TABLE_BLOCK,
+  PENDING_TO_TEMPLATE,
+  TEMPLATE_KEYS,
+  TEMPLATES,
+  templateDefaults,
+  templateSummaries,
+  templateViews,
+} from "./templates";
+import type { PageField } from "./fields";
 import type { TableSettings } from "./table-model";
 import { parsePageIcon } from "./page-icons";
 
@@ -11,7 +22,8 @@ function seqId() {
 
 describe("ikony szablonów", () => {
   it("ikony w formacie lucide:<nazwa>, wszystkie parsują się do nazwy Lucide", () => {
-    expect(TEMPLATES.empty.icon).toBe("lucide:table");
+    // S2NewPage: Pusta strona ma ikonę dokumentu (sama strona powstaje bez ikony — „Dodaj ikonę”)
+    expect(TEMPLATES.empty.icon).toBe("lucide:file-text");
     expect(TEMPLATES.books.icon).toBe("lucide:book-open");
     expect(TEMPLATES.projects.icon).toBe("lucide:rocket");
     expect(TEMPLATES.websites.icon).toBe("lucide:globe");
@@ -21,35 +33,45 @@ describe("ikony szablonów", () => {
   });
 });
 
-describe("blok startowy z opisem", () => {
-  it("books: [0] to tekst z intro, [1] to tabela z polami, kartami i stopką", () => {
+describe("bloki nowej strony z szablonu", () => {
+  it("books: sama tabela z polami, kartami i stopką — opis szablonu stoi w nagłówku strony (S2Table), nie w bloku", () => {
     const bloki = buildTemplateBlocks("books", seqId());
-    expect(bloki).toHaveLength(2);
-    expect(bloki[0]).toMatchObject({
-      type: "text",
-      content: { text: "Co czytam, co przeczytałem i co chcę przeczytać." },
-      fields: [],
-      rows: [],
-    });
-    expect(bloki[1].type).toBe("table");
-    expect(bloki[1].fields).toHaveLength(5);
-    const settings = bloki[1].content.settings as TableSettings;
+    expect(bloki).toHaveLength(1);
+    expect(bloki[0].type).toBe("table");
+    expect(bloki[0].fields).toHaveLength(5);
+    const settings = bloki[0].content.settings as TableSettings;
     expect(settings.pinned_cards).toHaveLength(3);
     expect(Object.keys(settings.column_summaries)).toHaveLength(3);
   });
 
-  it("projects i websites: intro z makiet", () => {
-    expect(buildTemplateBlocks("projects", seqId())[0].content).toEqual({
-      text: "Projekty na studia, własne i dla klientów.",
-    });
-    expect(buildTemplateBlocks("websites", seqId())[0].content).toEqual({
-      text: "Strony klientów: URL, klient, status.",
-    });
+  it.each(["projects", "websites", "subscriptions"] as const)("%s: bez bloku tekstu przed tabelą", (key) => {
+    expect(buildTemplateBlocks(key, seqId()).map((b) => b.type)).toEqual(["table"]);
   });
 
   it("empty: strona bez żadnych bloków (decyzja po kroku 2 — szybki start w edytorze)", () => {
-    expect(TEMPLATES.empty.intro).toBe("");
     expect(buildTemplateBlocks("empty", seqId())).toEqual([]);
+  });
+});
+
+describe("S2NewPage: krótki opis karty i „Dodatkowo”", () => {
+  it("hint to podpis karty szablonu z makiety", () => {
+    expect(TEMPLATE_KEYS.map((k) => TEMPLATES[k].hint)).toEqual([
+      "Zacznij od zera",
+      "Twoje książki",
+      "Twoje projekty",
+      "Twoje strony WWW",
+      "Twoje subskrypcje",
+    ]);
+  });
+
+  it("extra to linie „Dodatkowo” z makiety", () => {
+    expect(TEMPLATES.empty.extra).toBe("");
+    expect(TEMPLATES.books.extra).toBe("Średnia ocena w stopce tabeli.");
+    expect(TEMPLATES.projects.extra).toBe("Terminy trafią do kalendarza głównego.\nWidok Tablica z kolumnami statusów.");
+    expect(TEMPLATES.websites.extra).toBe("");
+    expect(TEMPLATES.subscriptions.extra).toBe(
+      "Karty: miesięcznie, rocznie i najbliższe odnowienie.\nOdnowienia w kalendarzu i przypomnienie dzień wcześniej.\nSuma miesięczna w stopce tabeli.",
+    );
   });
 });
 
@@ -185,11 +207,9 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
   it("teksty z NewPage", () => {
     expect(TEMPLATES.empty.name).toBe("Pusta strona");
     expect(TEMPLATES.empty.desc).toBe("Zacznij od zera");
-    expect(TEMPLATES.books.desc).toBe("Twoje książki");
-    expect(TEMPLATES.projects.desc).toBe("Twoje projekty");
-    expect(TEMPLATES.websites.desc).toBe("Twoje strony WWW");
-    expect(TEMPLATES.books.extra).toBe("Liczba przeczytanych w tym roku.");
-    expect(TEMPLATES.projects.extra).toBe("Terminy trafią do kalendarza głównego.");
+    expect(TEMPLATES.books.desc).toBe("Twoje książki: czytane, przeczytane i na później.");
+    expect(TEMPLATES.projects.desc).toBe("Projekty na studia, własne i dla klientów.");
+    expect(TEMPLATES.websites.desc).toBe("Strony, które zbudowałeś albo budujesz dla klientów.");
   });
 
   it("mapuje nazwy z onboardingu", () => {
@@ -219,13 +239,11 @@ describe("szablon Subscriptions", () => {
   it("opis, ikona i pola w kolejności z makiety", () => {
     const { bloki, tabela } = zbuduj();
     expect(TEMPLATES.subscriptions).toMatchObject({
-      name: "Subscriptions",
+      name: "Subskrypcje",
       icon: "lucide:wallet",
-      desc: "Twoje subskrypcje",
-      intro: "Twoje subskrypcje i ich odnowienia.",
-      extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
+      desc: "Twoje subskrypcje i ich odnowienia.",
     });
-    expect(bloki[0]).toMatchObject({ type: "text", content: { text: "Twoje subskrypcje i ich odnowienia." } });
+    expect(bloki).toHaveLength(1);
     expect(tabela.fields.map((f) => [f.name, f.type])).toEqual([
       ["Nazwa", "text"],
       ["Kwota cykliczna", "recurring"],
@@ -282,5 +300,193 @@ describe("szablon Subscriptions", () => {
 
   it("onboarding bez zmian: PENDING_TO_TEMPLATE nie zna Subscriptions", () => {
     expect(PENDING_TO_TEMPLATE.Subscriptions).toBeUndefined();
+  });
+});
+
+
+// Pola szablonu jako PageField z buildTemplateBlocks (te same id co w bloku)
+function polaSzablonu(key: "books" | "projects" | "websites" | "subscriptions"): PageField[] {
+  const tabela = buildTemplateBlocks(key, seqId()).find((b) => b.type === "table")!;
+  return tabela.fields.map((f, i) => ({ id: f.id, name: f.name, type: f.type, config: f.config, position: i, isTitle: f.is_title }));
+}
+
+describe("szablony po polsku", () => {
+  it("nazwy, opisy, tekst przycisku i rzeczownik z makiety S2Table", () => {
+    expect(TEMPLATES.books).toMatchObject({ name: "Książki", newLabel: "Nowa książka", noun: ["książka", "książki", "książek"] });
+    expect(TEMPLATES.projects).toMatchObject({ name: "Projekty", newLabel: "Nowy projekt", noun: ["projekt", "projekty", "projektów"] });
+    expect(TEMPLATES.websites).toMatchObject({ name: "Strony WWW", newLabel: "Nowa strona", noun: ["strona", "strony", "stron"] });
+    expect(TEMPLATES.subscriptions).toMatchObject({
+      name: "Subskrypcje",
+      newLabel: "Nowa subskrypcja",
+      noun: ["subskrypcja", "subskrypcje", "subskrypcji"],
+    });
+    expect(TEMPLATES.empty).toMatchObject({ newLabel: "Nowy wiersz", noun: ["wiersz", "wiersze", "wierszy"] });
+  });
+
+  it("stare angielskie tytuły do migracji", () => {
+    expect(LEGACY_TEMPLATE_TITLES).toEqual({
+      books: "Books",
+      projects: "Projects",
+      websites: "Websites",
+      subscriptions: "Subscriptions",
+    });
+  });
+});
+
+describe("templateViews", () => {
+  it("books: Czytam, Do przeczytania i Przeczytane w bieżącym roku (this_year)", () => {
+    const pola = polaSzablonu("books");
+    const widoki = templateViews("books", pola, 2027);
+    expect(widoki.map((w) => w.name)).toEqual(["Czytam", "Do przeczytania", "Przeczytane w 2027"]);
+    const status = pola.find((f) => f.name === "Status")!;
+    const opcja = (etykieta: string) => status.config.options!.find((o) => o.label === etykieta)!.id;
+    expect(widoki[0].filters).toEqual([{ field_id: status.id, op: "in", value: [opcja("Czytam")] }]);
+    expect(widoki[1].filters).toEqual([{ field_id: status.id, op: "in", value: [opcja("Chcę przeczytać")] }]);
+    const przeczytana = pola.find((f) => f.name === "Przeczytana")!;
+    expect(widoki[2].filters).toEqual([
+      { field_id: status.id, op: "in", value: [opcja("Przeczytane")] },
+      { field_id: przeczytana.id, op: "this_year" },
+    ]);
+  });
+
+  it("books: nazwa trzeciego widoku bierze rok z zegara, gdy go nie podano", () => {
+    const widoki = templateViews("books", polaSzablonu("books"));
+    expect(widoki[2].name).toBe(`Przeczytane w ${new Date().getFullYear()}`);
+  });
+
+  it("subscriptions: Aktywne, Odnowienie w 14 dni, Wstrzymane", () => {
+    const pola = polaSzablonu("subscriptions");
+    const widoki = templateViews("subscriptions", pola);
+    expect(widoki.map((w) => w.name)).toEqual(["Aktywne", "Odnowienie w 14 dni", "Wstrzymane"]);
+    const aktywna = pola.find((f) => f.name === "Aktywna")!;
+    const odnowienie = pola.find((f) => f.name === "Data odnowienia")!;
+    expect(widoki[0].filters).toEqual([{ field_id: aktywna.id, op: "checked" }]);
+    expect(widoki[1].filters).toEqual([
+      { field_id: aktywna.id, op: "checked" },
+      { field_id: odnowienie.id, op: "within_days", value: 14 },
+    ]);
+    expect(widoki[2].filters).toEqual([{ field_id: aktywna.id, op: "unchecked" }]);
+  });
+
+  it("projects: W toku i Archiwum po Statusie", () => {
+    const pola = polaSzablonu("projects");
+    const widoki = templateViews("projects", pola);
+    expect(widoki.map((w) => w.name)).toEqual(["W toku", "Archiwum"]);
+    const status = pola.find((f) => f.name === "Status")!;
+    expect(widoki[1].filters).toEqual([
+      { field_id: status.id, op: "in", value: [status.config.options!.find((o) => o.label === "Zrobione")!.id] },
+    ]);
+  });
+
+  it("websites: Na żywo, W budowie i Dla klientów (Klient różny od „ja”)", () => {
+    const pola = polaSzablonu("websites");
+    const widoki = templateViews("websites", pola);
+    expect(widoki.map((w) => w.name)).toEqual(["Na żywo", "W budowie", "Dla klientów"]);
+    const klient = pola.find((f) => f.name === "Klient")!;
+    expect(widoki[2].filters).toEqual([{ field_id: klient.id, op: "not_equals", value: "ja" }]);
+  });
+
+  it("widoki mają unikalne id, układ tabeli i brak grup", () => {
+    const widoki = templateViews("websites", polaSzablonu("websites"));
+    expect(new Set(widoki.map((w) => w.id)).size).toBe(3);
+    expect(widoki[0]).toMatchObject({ sort: [], group_by: null, layout: "table", hidden_field_ids: [] });
+  });
+
+  it("widok z polem, które użytkownik usunął, jest pomijany", () => {
+    const pola = polaSzablonu("subscriptions").filter((f) => f.name !== "Data odnowienia");
+    expect(templateViews("subscriptions", pola).map((w) => w.name)).toEqual(["Aktywne", "Wstrzymane"]);
+  });
+});
+
+describe("templateDefaults: grupowanie i zwinięte grupy", () => {
+  it("projects grupuje po Statusie i zwija Zrobione", () => {
+    const pola = polaSzablonu("projects");
+    const status = pola.find((f) => f.name === "Status")!;
+    const zrobione = status.config.options!.find((o) => o.label === "Zrobione")!.id;
+    expect(templateDefaults("projects", pola)).toMatchObject({ group_by: status.id, collapsed_groups: { all: [zrobione] } });
+  });
+
+  it("subscriptions grupuje po Kategorii, books i websites po Statusie, bez zwiniętych", () => {
+    const sub = polaSzablonu("subscriptions");
+    expect(templateDefaults("subscriptions", sub)).toMatchObject({
+      group_by: sub.find((f) => f.name === "Kategoria")!.id,
+      collapsed_groups: {},
+    });
+    const books = polaSzablonu("books");
+    expect(templateDefaults("books", books).group_by).toBe(books.find((f) => f.name === "Status")!.id);
+    const web = polaSzablonu("websites");
+    expect(templateDefaults("websites", web).group_by).toBe(web.find((f) => f.name === "Status")!.id);
+  });
+
+  it("passwords: widoki po Kategorii (Praca, Studia, Prywatne) i grupowanie po niej", () => {
+    const kategoria: PageField = {
+      id: "k1",
+      name: "Kategoria",
+      type: "select",
+      config: {
+        options: [
+          { id: "o1", label: "Praca", color: "" },
+          { id: "o2", label: "Studia", color: "" },
+        ],
+      },
+      position: 4,
+      isTitle: false,
+    };
+    const wynik = templateDefaults("passwords", [kategoria]);
+    expect(wynik.group_by).toBe("k1");
+    // Brak opcji „Prywatne” (użytkownik ją usunął) pomija tylko ten widok
+    expect(wynik.views.map((w) => [w.name, w.filters])).toEqual([
+      ["Praca", [{ field_id: "k1", op: "in", value: ["o1"] }]],
+      ["Studia", [{ field_id: "k1", op: "in", value: ["o2"] }]],
+    ]);
+  });
+});
+
+describe("templateSummaries (S2Table: opis pod tabelą i podsumowanie grupy)", () => {
+  it("Książki: stopka liczy „Czytam” jako „w trakcie”, grupa ma średnią ocenę z etykietą „śr. ocena”", () => {
+    const pola = polaSzablonu("books");
+    const status = pola.find((f) => f.name === "Status")!;
+    const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+    const ocena = pola.find((f) => f.name === "Ocena")!;
+    const w = templateSummaries("books", pola);
+    expect(w.footer).toEqual({
+      field_id: status.id,
+      summary: { kind: "count_option", option_id: czytam, unit: ["w trakcie", "w trakcie", "w trakcie"] },
+    });
+    expect(w.group).toEqual({ field_id: ocena.id, kind: "avg", label: "śr. ocena" });
+  });
+
+  it("Projekty: „w toku” i najbliższy termin bez grupy „Zrobione”; Subskrypcje: suma miesięczna; Strony WWW: „na żywo” bez grupy", () => {
+    const projekty = polaSzablonu("projects");
+    const zrobione = projekty.find((f) => f.name === "Status")!.config.options!.find((o) => o.label === "Zrobione")!.id;
+    const p = templateSummaries("projects", projekty);
+    expect(p.footer?.summary.unit).toEqual(["w toku", "w toku", "w toku"]);
+    expect(p.group).toEqual({
+      field_id: projekty.find((f) => f.name === "Termin")!.id,
+      kind: "nearest",
+      label: "najbliższy termin",
+      skip_option_id: zrobione,
+    });
+    const subs = polaSzablonu("subscriptions");
+    const kwota = subs.find((f) => f.type === "recurring")!;
+    expect(templateSummaries("subscriptions", subs)).toEqual({
+      footer: { field_id: kwota.id, summary: { kind: "sum_month" } },
+      group: { field_id: kwota.id, kind: "sum_month" },
+    });
+    const www = templateSummaries("websites", polaSzablonu("websites"));
+    expect(www.footer?.summary.unit).toEqual(["na żywo", "na żywo", "na żywo"]);
+    expect(www.group).toBeNull();
+  });
+
+  it("brak szablonu, pusta strona, Hasła albo brakujące pole / opcja: null", () => {
+    expect(templateSummaries(null, [])).toEqual({ footer: null, group: null });
+    expect(templateSummaries("empty", [])).toEqual({ footer: null, group: null });
+    expect(templateSummaries("passwords", [])).toEqual({ footer: null, group: null });
+    const bezStatusu = polaSzablonu("books").filter((f) => f.name !== "Status");
+    expect(templateSummaries("books", bezStatusu).footer).toBeNull();
+    const bezOpcji = polaSzablonu("books").map((f) =>
+      f.name === "Status" ? { ...f, config: { ...f.config, options: [] } } : f,
+    );
+    expect(templateSummaries("books", bezOpcji).footer).toBeNull();
   });
 });

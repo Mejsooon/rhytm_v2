@@ -210,7 +210,7 @@ describe("CalendarHeader", () => {
     expect(nowy.querySelector("svg")).not.toBeNull();
   });
 
-  it("przy schowanym pasku bocznym web ma przycisk „Pokaż pasek boczny”", () => {
+  it("przy schowanym pasku nagłówek nie ma „Pokaż pasek boczny” (przycisk jest w szynie, S2SidebarCollapsed)", () => {
     render(
       <SidebarStateProvider initialCollapsed>
         <CalendarHeader
@@ -223,7 +223,7 @@ describe("CalendarHeader", () => {
       </SidebarStateProvider>,
     );
     expect(
-      screen.getByRole("button", { name: "Pokaż pasek boczny" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Pokaż pasek boczny" }),
+    ).toBeNull();
   });
 });

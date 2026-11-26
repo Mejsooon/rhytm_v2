@@ -92,10 +92,10 @@ export function AppShell({
       <React.Suspense
         fallback={
           // Szkielet sidebara (web), żeby układ nie skakał podczas ładowania
-          // Gdy ciasteczko mówi „schowany” (data-sidebar ustawia skrypt w layoucie), szkielet jest ukryty
+          // Gdy ciasteczko mówi „schowany” (data-sidebar ustawia skrypt w layoucie), szkielet ma szerokość szyny 56 px
           <div
             data-testid="sidebar-skeleton"
-            className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block [html[data-sidebar=collapsed]_&]:min-[800px]:hidden"
+            className="hidden w-[232px] flex-none border-r border-border-soft bg-panel min-[800px]:block [html[data-sidebar=collapsed]_&]:w-14"
           />
         }
       >

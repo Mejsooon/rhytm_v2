@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
@@ -13,11 +13,20 @@ const actions = vi.hoisted(() => ({
   updateRow: vi.fn(),
   updateBlockContent: vi.fn(),
   reorderFields: vi.fn(),
+  deleteRows: vi.fn(),
+  restoreRows: vi.fn(),
+  duplicateRows: vi.fn(),
+  setRowsValue: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: router.refresh }),
+}));
 vi.mock("../actions", () => actions);
 
 import type { LoadedBlock } from "../load-page";
@@ -774,6 +783,583 @@ describe("useTableStore", () => {
       });
       const ostatni = actions.updateField.mock.calls.at(-1)![1].config.options;
       expect(ostatni.find((o: { id: string }) => o.id === pierwsza.id).label).toBe("Nowa nazwa");
+    });
+  });
+
+  describe("widoki szablonu", () => {
+    it("blok szablonu bez klucza views: jednorazowy zapis widoków i grupowania", async () => {
+      const b = blok();
+      renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      const [blockId, patch] = actions.saveTableSettings.mock.calls[0];
+      expect(blockId).toBe(b.id);
+      expect(patch.views.map((w: { name: string }) => w.name)).toEqual([
+        "Czytam",
+        "Do przeczytania",
+        `Przeczytane w ${new Date().getFullYear()}`,
+      ]);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      expect(patch.group_by).toBe(status.id);
+    });
+
+    it("widoki trafiają od razu do lokalnych ustawień", async () => {
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(result.current.settings.views).toHaveLength(3));
+    });
+
+    it("pusta lista views (użytkownik usunął widoki): bez zapisu", async () => {
+      const b = blok();
+      b.content = { ...b.content, settings: { ...(b.content.settings as object), views: [] } };
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await act(async () => {});
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("bez szablonu, na pustej stronie i bez opcji templateKey: bez zapisu", async () => {
+      const b = blok();
+      const { rerender } = renderHook(({ k }: { k: "empty" | null }) => useTableStore(b, undefined, k), {
+        initialProps: { k: null as "empty" | null },
+      });
+      rerender({ k: "empty" });
+      await act(async () => {});
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("zapis z onlyIfMissing; serwer pomija (widoki już są): bez widoków lokalnie", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: true, skipped: true });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      expect(actions.saveTableSettings.mock.calls[0][2]).toEqual({ onlyIfMissing: "views" });
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("użytkownik zmienił widoki w trakcie zapisu: domyślne ich nie nadpisują", async () => {
+      const d = odroczona<{ ok: true }>();
+      actions.saveTableSettings.mockReturnValueOnce(d.obietnica);
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {
+        await result.current.patchSettings({ views: [] });
+      });
+      await act(async () => {
+        d.rozwiaz({ ok: true });
+      });
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("zapis zwraca ok: false: bez widoków lokalnie, bez wyjątku i bez toasta", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("zapis odrzucony wyjątkiem: bez widoków lokalnie, bez wyjątku i bez toasta", async () => {
+      actions.saveTableSettings.mockRejectedValue(new Error("sieć"));
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("ponowny render nie zapisuje drugi raz", async () => {
+      const b = blok();
+      const { rerender } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      rerender();
+      await act(async () => {});
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("widoki w zakładkach", () => {
+    // Blok „books” z dwoma zapisanymi widokami; drugi aktywny, gdy aktywny = "w2"
+    function blokZWidokami(aktywny: string | null = null): LoadedBlock {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          views: [
+            {
+              id: "w1",
+              name: "Czytam",
+              filters: [{ field_id: status.id, op: "in", value: [czytam.id] }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+            { id: "w2", name: "Pusty", filters: [], sort: [], group_by: null, layout: "table", hidden_field_ids: [] },
+          ],
+          active_view_id: aktywny,
+        },
+      };
+      return b;
+    }
+
+    it("selectView zapisuje active_view_id", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.selectView("w1");
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { active_view_id: "w1" });
+      expect(result.current.settings.active_view_id).toBe("w1");
+      expect(result.current.view.filters).toHaveLength(1);
+    });
+
+    it("addView kopiuje bieżący widok (filtry, sort, ukryte pola) i go aktywuje", async () => {
+      const b = blokZWidokami("w1");
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      await act(async () => {
+        await result.current.addView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.views).toHaveLength(3);
+      const nowy = patch.views[2];
+      expect(nowy.name).toBe("Mój widok 1");
+      expect(nowy.filters).toEqual(result.current.settings.views[0].filters);
+      expect(nowy.hidden_field_ids).toEqual([autor.id]);
+      expect(patch.active_view_id).toBe(nowy.id);
+      expect(result.current.settings.active_view_id).toBe(nowy.id);
+    });
+
+    it("renameView przycina nazwę; pusta nazwa nic nie zapisuje", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.renameView("w2", "  Moje  ");
+      });
+      expect(result.current.settings.views[1].name).toBe("Moje");
+      await act(async () => {
+        await result.current.renameView("w2", "   ");
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+    });
+
+    it("duplicateView dopisuje kopię na końcu listy i ją aktywuje", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.duplicateView("w1");
+      });
+      const widoki = result.current.settings.views;
+      expect(widoki.map((w) => w.name)).toEqual(["Czytam", "Pusty", "Czytam (kopia)"]);
+      expect(widoki[2].id).not.toBe("w1");
+      expect(widoki[2].filters).toEqual(widoki[0].filters);
+      expect(result.current.settings.active_view_id).toBe(widoki[2].id);
+    });
+
+    it("deleteView usuwa aktywny widok (wraca „Wszystkie”), toast „Cofnij” przywraca", async () => {
+      const { result } = (() => { const bb = blokZWidokami("w1"); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.deleteView("w1");
+      });
+      expect(result.current.settings.views.map((w) => w.id)).toEqual(["w2"]);
+      expect(result.current.settings.active_view_id).toBeNull();
+      expect(toast).toHaveBeenCalledWith("Usunięto widok „Czytam”", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls[0][1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(result.current.settings.views.map((w) => w.id)).toEqual(["w1", "w2"]);
+      expect(result.current.settings.active_view_id).toBe("w1");
+    });
+
+    it("patchView przy aktywnym widoku zapisuje do widoku, przy „Wszystkich” do ustawień bazowych", async () => {
+      const b = blokZWidokami("w2");
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id], sort: [{ field_id: autor.id, dir: "desc" }] });
+      });
+      expect(result.current.settings.views[1].hidden_field_ids).toEqual([autor.id]);
+      expect(result.current.settings.views[1].sort).toEqual([{ field_id: autor.id, dir: "desc" }]);
+      expect(result.current.settings.hidden_field_ids).toEqual([]);
+      expect(result.current.view.hidden_field_ids).toEqual([autor.id]);
+
+      await act(async () => {
+        await result.current.selectView(null);
+      });
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      expect(result.current.settings.hidden_field_ids).toEqual([autor.id]);
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { hidden_field_ids: [autor.id] });
+    });
+
+    it("setGroupBy i setLayout trafiają do aktywnego widoku", async () => {
+      const b = blokZWidokami("w2");
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setGroupBy(status.id);
+      });
+      await act(async () => {
+        await result.current.setLayout("board");
+      });
+      expect(result.current.settings.views[1].group_by).toBe(status.id);
+      expect(result.current.settings.views[1].layout).toBe("board");
+      expect(result.current.settings.group_by).toBeNull();
+      expect(result.current.view.layout).toBe("board");
+    });
+
+    it("setQuery zmienia frazę lokalnie, bez zapisu", () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      act(() => result.current.setQuery("clear"));
+      expect(result.current.query).toBe("clear");
+      expect(actions.saveTableSettings).not.toHaveBeenCalled();
+    });
+
+    it("toggleGroup zwija i rozwija grupę w kluczu aktywnego widoku („all” dla Wszystkich)", async () => {
+      const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.toggleGroup("opt-1");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"] });
+      await act(async () => {
+        await result.current.selectView("w1");
+      });
+      await act(async () => {
+        await result.current.toggleGroup("opt-2");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"], w1: ["opt-2"] });
+      await act(async () => {
+        await result.current.toggleGroup("opt-2");
+      });
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"], w1: [] });
+    });
+
+    it("„Cofnij” po usunięciu wstawia widok na jego miejsce w BIEŻĄCEJ liście (późniejsze zmiany zostają)", async () => {
+      const { result } = (() => { const bb = blokZWidokami("w1"); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.deleteView("w1");
+      });
+      await act(async () => {
+        await result.current.renameView("w2", "Inny");
+      });
+      await act(async () => {
+        await result.current.addView("Mój widok 1");
+      });
+      const cofnij = toast.mock.calls[0][1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(result.current.settings.views.map((w) => w.name)).toEqual(["Czytam", "Inny", "Mój widok 1"]);
+      expect(result.current.settings.active_view_id).toBe("w1");
+    });
+
+    it("błąd zapisu przy innym zapisie w toku: bez cofania do starej kopii, po ostatnim zapisie router.refresh()", async () => {
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const ocena = b.fields.find((f) => f.name === "Ocena")!;
+      const pierwszy = odroczona<{ ok: boolean; message?: string }>();
+      const drugi = odroczona<{ ok: boolean }>();
+      actions.saveTableSettings.mockReturnValueOnce(pierwszy.obietnica).mockReturnValueOnce(drugi.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      let a!: Promise<boolean>;
+      let c!: Promise<boolean>;
+      act(() => {
+        a = result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      act(() => {
+        c = result.current.patchView({ hidden_field_ids: [autor.id, ocena.id] });
+      });
+      await act(async () => {
+        pierwszy.rozwiaz({ ok: false, message: "x" });
+        await a;
+      });
+      // Drugi zapis w toku: lokalny stan drugiej zmiany zostaje (bez cofania do [])
+      expect(result.current.settings.hidden_field_ids).toEqual([autor.id, ocena.id]);
+      expect(router.refresh).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(BLAD_ZAPISU);
+      await act(async () => {
+        drugi.rozwiaz({ ok: true });
+        await c;
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("błąd zapisu bez innych zapisów w toku cofa zmianę bez odświeżania", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      expect(result.current.settings.hidden_field_ids).toEqual([]);
+      expect(router.refresh).not.toHaveBeenCalled();
+    });
+
+    it("„+ Widok” przed końcem zapisu widoków szablonu: zapis użytkownika czeka i zawiera widoki szablonu", async () => {
+      const d = odroczona<{ ok: true }>();
+      actions.saveTableSettings.mockReturnValueOnce(d.obietnica);
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      let dodanie!: Promise<boolean>;
+      act(() => {
+        dodanie = result.current.addView("Mój widok 1");
+      });
+      // Zapis użytkownika jeszcze nie poszedł
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        d.rozwiaz({ ok: true });
+        await dodanie;
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(2);
+      const patch = actions.saveTableSettings.mock.calls[1][1];
+      expect(patch.views.map((w: { name: string }) => w.name)).toEqual([
+        "Czytam",
+        "Do przeczytania",
+        `Przeczytane w ${new Date().getFullYear()}`,
+        "Mój widok 1",
+      ]);
+      expect(result.current.settings.views).toHaveLength(4);
+    });
+
+    it("saveFiltersAsView przy „Wszystkich”: filtry przechodzą do nowego widoku, a „Wszystkie” je tracą", async () => {
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const warunek = { field_id: autor.id, op: "contains" as const, value: "Clear" };
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ filters: [warunek] });
+      });
+      await act(async () => {
+        await result.current.saveFiltersAsView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.filters).toEqual([]);
+      expect(patch.views.at(-1).filters).toEqual([warunek]);
+      expect(result.current.settings.filters).toEqual([]);
+      expect(result.current.view.filters).toEqual([warunek]);
+    });
+
+    it("saveFiltersAsView przy zapisanym widoku: widok źródłowy zostaje bez zmian", async () => {
+      const b = blokZWidokami("w1");
+      const { result } = renderHook(() => useTableStore(b));
+      const zrodlo = result.current.settings.views[0];
+      await act(async () => {
+        await result.current.saveFiltersAsView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect("filters" in patch).toBe(false);
+      expect(patch.views[0]).toEqual(zrodlo);
+      expect(patch.views.at(-1).filters).toEqual(zrodlo.filters);
+      expect(result.current.settings.active_view_id).toBe(patch.views.at(-1).id);
+    });
+  });
+
+  describe("akcje na zaznaczonych wierszach", () => {
+    it("removeRows: wiersze znikają od razu, toast „Usunięto 2 wiersze” z „Cofnij” (restoreRows)", async () => {
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeRows(["row-1", "row-2"]);
+      });
+      expect(actions.deleteRows).toHaveBeenCalledWith(["row-1", "row-2"]);
+      expect(result.current.rows).toHaveLength(0);
+      expect(toast).toHaveBeenCalledWith("Usunięto 2 wiersze", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(actions.restoreRows).toHaveBeenCalledWith(["row-1", "row-2"]);
+      expect(result.current.rows.map((r) => r.id).sort()).toEqual(["row-1", "row-2"]);
+    });
+
+    it("removeRows: błąd serwera przywraca wiersze i pokazuje toast błędu", async () => {
+      actions.deleteRows.mockResolvedValue({ ok: false, message: "Nie udało się zapisać zmian." });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeRows(["row-1"]);
+      });
+      expect(result.current.rows.map((r) => r.id).sort()).toEqual(["row-1", "row-2"]);
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    it("duplicateRows: kopie z serwera na końcu, toast „Zduplikowano 1 wiersz”; „Cofnij” usuwa kopie", async () => {
+      actions.duplicateRows.mockResolvedValue({
+        ok: true,
+        rows: [{ id: "kopia-1", values: { a: 1 }, position: 5 }],
+      });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.duplicateRows(["row-1"]);
+      });
+      expect(actions.duplicateRows).toHaveBeenCalledWith(["row-1"]);
+      expect(result.current.rows.map((r) => r.id)).toEqual(["row-1", "row-2", "kopia-1"]);
+      expect(toast).toHaveBeenCalledWith("Zduplikowano 1 wiersz", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(actions.deleteRows).toHaveBeenCalledWith(["kopia-1"]);
+      expect(result.current.rows.map((r) => r.id)).toEqual(["row-1", "row-2"]);
+    });
+
+    it("setRowsValue: od razu lokalnie, jeden zapis, toast „Ustawiono „Przeczytane” dla 2 wierszy”; „Cofnij” wraca do poprzednich wartości", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!.id;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setRowsValue(["row-1", "row-2"], status, przeczytane, "Przeczytane");
+      });
+      expect(actions.setRowsValue).toHaveBeenCalledWith(["row-1", "row-2"], status.id, przeczytane);
+      expect(result.current.rows.every((r) => r.values[status.id] === przeczytane)).toBe(true);
+      expect(toast).toHaveBeenCalledWith(
+        "Ustawiono „Przeczytane” dla 2 wierszy",
+        expect.objectContaining({ action: expect.anything() }),
+      );
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      // row-1 wraca do „Czytam”; row-2 miał już „Przeczytane”, więc nie ma czego cofać
+      expect(actions.setRowsValue).toHaveBeenLastCalledWith(["row-1"], status.id, czytam);
+      expect(result.current.rows.find((r) => r.id === "row-1")!.values[status.id]).toBe(czytam);
+    });
+
+    it("setRowsValue: błąd cofa wartości; pole Sekret nigdy nie jest zapisywane hurtowo", async () => {
+      actions.setRowsValue.mockResolvedValue({ ok: false, message: "Nie udało się zapisać zmian." });
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!.id;
+      const przed = b.rows.find((r) => r.id === "row-1")!.values[status.id];
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setRowsValue(["row-1"], status, przeczytane, "Przeczytane");
+      });
+      expect(result.current.rows.find((r) => r.id === "row-1")!.values[status.id]).toBe(przed);
+      expect(toast.error).toHaveBeenCalled();
+      // Po błędzie (możliwy częściowy zapis) dane wracają z serwera
+      expect(router.refresh).toHaveBeenCalled();
+
+      actions.setRowsValue.mockClear();
+      const sekret = { ...status, id: "f-sekret", type: "secret" as const, config: {} };
+      let wynik = true;
+      await act(async () => {
+        wynik = await result.current.setRowsValue(["row-1"], sekret, "x", "x");
+      });
+      expect(wynik).toBe(false);
+      expect(actions.setRowsValue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("usuwanie opcji i pól a zapisane widoki", () => {
+    function blokZWidokami() {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!;
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          group_by: autor.id,
+          collapsed_groups: { all: ["x"], w1: ["y"], w2: ["z"] },
+          views: [
+            {
+              id: "w1",
+              name: "Widok 1",
+              filters: [
+                { field_id: status.id, op: "in", value: [czytam.id, przeczytane.id] },
+                { field_id: autor.id, op: "contains", value: "a" },
+              ],
+              sort: [{ field_id: autor.id, dir: "asc" }],
+              group_by: autor.id,
+              layout: "table",
+              hidden_field_ids: [autor.id],
+            },
+            {
+              id: "w2",
+              name: "Widok 2",
+              filters: [{ field_id: status.id, op: "not_in", value: [czytam.id] }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+          ],
+        },
+      };
+      return { b, status, autor, czytam, przeczytane };
+    }
+
+    it("removeOption czyści warunki in/not_in także w filtrach zapisanych widoków, jednym zapisem ustawień", async () => {
+      const { b, status, czytam, przeczytane } = blokZWidokami();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeOption(result.current.fields.find((f) => f.id === status.id)!, czytam.id);
+      });
+      const w = result.current.settings.views;
+      expect(w[0].filters[0]).toMatchObject({ value: [przeczytane.id] });
+      expect(w[1].filters).toEqual([]);
+      const [, patch] = actions.saveTableSettings.mock.calls.at(-1)!;
+      expect((patch as { views: unknown[] }).views).toHaveLength(2);
+    });
+
+    it("removeOption: błąd serwera przywraca filtry widoków", async () => {
+      const { b, status, czytam } = blokZWidokami();
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      const przed = JSON.stringify(result.current.settings.views);
+      await act(async () => {
+        await result.current.removeOption(result.current.fields.find((f) => f.id === status.id)!, czytam.id);
+      });
+      expect(JSON.stringify(result.current.settings.views)).toBe(przed);
+    });
+
+    it("removeField usuwa odwołania z widoków (filtry, sort, ukryte, grupowanie), z grupowania bazowego i zwiniętych grup", async () => {
+      const { b, autor, status } = blokZWidokami();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      const s = result.current.settings;
+      expect(s.group_by).toBeNull();
+      expect(s.collapsed_groups).toEqual({ w2: ["z"] });
+      expect(s.views[0]).toMatchObject({ sort: [], group_by: null, hidden_field_ids: [] });
+      expect(s.views[0].filters).toEqual([expect.objectContaining({ field_id: status.id })]);
+      expect(s.views[1].filters).toHaveLength(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(
+        b.id,
+        expect.objectContaining({ group_by: null, collapsed_groups: { w2: ["z"] } }),
+      );
+    });
+
+    it("removeField: błąd usuwania na serwerze przywraca widoki i grupowanie", async () => {
+      const { b, autor } = blokZWidokami();
+      actions.deleteField.mockResolvedValue({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      const przed = JSON.stringify(result.current.settings);
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      expect(JSON.stringify(result.current.settings.views)).toBe(JSON.stringify(JSON.parse(przed).views));
+      expect(result.current.settings.group_by).toBe(autor.id);
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["x"], w1: ["y"], w2: ["z"] });
     });
   });
 });

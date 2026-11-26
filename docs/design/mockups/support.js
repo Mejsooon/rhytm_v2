@@ -62,6 +62,16 @@
     def.helmetAdded = true;
     Array.prototype.forEach.call(def.helmet.children, function (n) { document.head.appendChild(n.cloneNode(true)); });
   }
+  // Kanwa trzyma w szablonach zwykłe <table>/<tr>/<td> z <sc-for> w środku. DOMParser wyrzuciłby
+  // <sc-for> poza tabelę, więc przed parsowaniem zamieniamy tagi tabel w <x-dc> na dc-t-*.
+  function parseHtml(txt) {
+    var a = txt.indexOf('<x-dc>'), b = txt.lastIndexOf('</x-dc>');
+    if (a >= 0 && b > a) {
+      var mid = txt.slice(a, b).replace(/<(\/?)(table|thead|tbody|tfoot|tr|td|th|colgroup|col|caption)(?=[\s>\/])/g, '<$1dc-t-$2');
+      txt = txt.slice(0, a) + mid + txt.slice(b);
+    }
+    return new DOMParser().parseFromString(txt, 'text/html');
+  }
   function loadImports(root, done) {
     var names = {};
     Array.prototype.forEach.call(root.querySelectorAll('dc-import'), function (el) { var n = el.getAttribute('name'); if (n && !defs[n]) names[n] = 1; });
@@ -70,7 +80,7 @@
     var left = list.length;
     list.forEach(function (n) {
       fetch(n + '.dc.html').then(function (r) { return r.text(); }).then(function (txt) {
-        var doc = new DOMParser().parseFromString(txt, 'text/html');
+        var doc = parseHtml(txt);
         defs[n] = parseDef(doc);
         addHelmet(defs[n]);
         loadImports(defs[n].tpl, function () { if (--left === 0) done(); });
@@ -163,13 +173,17 @@
   }
 
   function mount() {
-    var tpl = document.querySelector('x-dc');
-    if (!tpl) return;
-    var page = parseDef(document);
+    var live = document.querySelector('x-dc');
+    if (!live) return;
+    // Własny plik pobieramy jeszcze raz, żeby tabele w szablonie przeszły przez parseHtml.
+    fetch(location.href).then(function (r) { return r.text(); }).then(function (txt) { start(live, parseDef(parseHtml(txt))); }).catch(function () { start(live, parseDef(document)); });
+  }
+  function start(live, page) {
+    var tpl = page.tpl || live;
     addHelmet(page);
     var host = document.createElement('div');
     host.className = 'dc-root';
-    tpl.parentNode.insertBefore(host, tpl);
+    live.parentNode.insertBefore(host, live);
     var inst = new page.Cls(Object.assign({}, page.props));
     inst.props = Object.assign({}, page.props, inst.props);
     if (!inst.state) inst.state = {};

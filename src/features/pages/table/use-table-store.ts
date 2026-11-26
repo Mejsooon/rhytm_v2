@@ -3,6 +3,7 @@
 // Stan tabeli strony z szablonu: pola, wiersze, ustawienia, filtr tymczasowy i edytowany wiersz.
 // Każda zmiana od razu zmienia widok; błąd zapisu cofa ją i pokazuje toast. Nowe dane z serwera
 // zastępują kopię bez gubienia wierszy/pól tymczasowych i zapisów w toku (wzorzec „poprzednie props”).
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,9 +13,13 @@ import {
   changeFieldType,
   deleteField,
   deleteRow,
+  deleteRows,
+  duplicateRows as duplicateRowsAction,
   reorderFields,
   restoreRow,
+  restoreRows,
   saveTableSettings,
+  setRowsValue as setRowsValueAction,
   updateBlockContent,
   updateField,
   updateRow,
@@ -31,7 +36,10 @@ import {
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE, ZAPIS_W_TOKU } from "../messages";
-import type { FilterCond, PageRow, TableSettings } from "../table-model";
+import { rowsLabel } from "../rows-label";
+import type { FilterCond, PageRow, TableSettings, TableView } from "../table-model";
+import { effectiveView, type EffectiveView } from "../table-views";
+import { templateDefaults, type TemplateKey } from "../templates";
 
 export type TableStore = ReturnType<typeof useTableStore>;
 
@@ -47,7 +55,13 @@ export type RowEditing = {
 };
 
 // onStaleGeneration: wołane, gdy serwer odrzuci zapis Sekretu z powodu innej generacji sejfu
-export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void) {
+// templateKey: szablon strony bloku; tabela szablonu bez klucza `views` w zapisanych ustawieniach dostaje
+// jednorazowo gotowe widoki (pusta lista `views: []` = użytkownik je usunął, więc nic nie dopisujemy)
+export function useTableStore(
+  block: LoadedBlock,
+  onStaleGeneration?: () => void,
+  templateKey: TemplateKey | "passwords" | null = null,
+) {
   // Ustawienia z content.settings; brakujące klucze dostają puste wartości
   const surowe = (block.content.settings ?? {}) as Partial<TableSettings>;
   const zSerwera: TableSettings = {
@@ -66,20 +80,42 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
             Object.entries(surowe.column_widths).filter(([id]) => block.fields.some((f) => f.id === id)),
           )
         : {},
+    // Nowe klucze (widoki, grupy): brak w starych ustawieniach = wartości domyślne.
+    // Surowe content.settings zostaje nietknięte, więc „brak klucza views” da się odróżnić od pustej listy
+    views: Array.isArray(surowe.views) ? surowe.views : [],
+    active_view_id: typeof surowe.active_view_id === "string" ? surowe.active_view_id : null,
+    group_by: typeof surowe.group_by === "string" ? surowe.group_by : null,
+    layout: surowe.layout === "board" ? "board" : "table",
+    collapsed_groups:
+      surowe.collapsed_groups && typeof surowe.collapsed_groups === "object" && !Array.isArray(surowe.collapsed_groups)
+        ? surowe.collapsed_groups
+        : {},
   };
 
   const [fields, setFields] = useState<PageField[]>(block.fields);
   const [rows, setRows] = useState<PageRow[]>(block.rows);
   const [settings, setSettings] = useState<TableSettings>(zSerwera);
+  const router = useRouter();
   const [zrodloPol, setZrodloPol] = useState(block.fields);
   const [zrodloWierszy, setZrodloWierszy] = useState(block.rows);
   const [zrodloUstawien, setZrodloUstawien] = useState(block.content.settings);
-  const [tempFilters, setTempFilters] = useState<FilterCond[] | null>(null);
   const [editing, setEditing] = useState<RowEditing | null>(null);
+  // Szukana fraza: tylko stan klienta, nie trafia do ustawień
+  const [query, setQuery] = useState("");
 
   // Zapisy w toku: pola i ustawienia (liczniki), wiersze (id → zmiany do nałożenia na dane z serwera)
   const polaWToku = useRef(0);
   const ustawieniaWToku = useRef(0);
+  // Błąd zapisu ustawień w trakcie innych zapisów: po ostatnim zapisie wyrównujemy ustawienia z serwerem
+  // (router.refresh → nowe props), zamiast cofać do nieaktualnej kopii
+  const wyrownajRef = useRef(false);
+  // Najnowsze ustawienia, także przed rerenderem (kolejne zmiany widoków w tym samym zdarzeniu albo po
+  // czekaniu na zapis widoków szablonu)
+  const ustawieniaRef = useRef(settings);
+  // Zapis widoków szablonu w toku: zmiany widoków użytkownika czekają na jego koniec, żeby go nie nadpisać
+  const zapisSzablonuRef = useRef<Promise<void> | null>(null);
+  // Użytkownik zmienił widoki, grupowanie lub zwinięte grupy od wczytania: domyślne widoki szablonu ich nie nadpiszą
+  const widokiZmienioneRef = useRef(false);
   // zatwierdzone (tylko updateCell): ostatnia wartość komórki potwierdzona przez serwer — do niej wraca błąd
   const wierszeWToku = useRef(
     new Map<string, { n: number; zmiany: Record<string, unknown>; zatwierdzone: Record<string, unknown> }>(),
@@ -136,6 +172,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   useEffect(() => {
     polaRef.current = fields;
     wierszeRef.current = rows;
+    ustawieniaRef.current = settings;
   });
 
   // Otwarty szkic różni się od wartości z chwili otwarcia (nowy wiersz: od wartości startowych)
@@ -381,7 +418,8 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // „+ Nowy” w tabeli: wiersz od razu na serwerze (z opcjami domyślnymi pól, jak addRowDraft),
   // bez tymczasowego id. Zwraca id nowego wiersza albo null (toast pokazany).
-  async function addRowInline(): Promise<string | null> {
+  // `initial`: wartości startowe ponad domyślnymi (np. „Dodaj” w kolumnie tablicy: opcja tej kolumny)
+  async function addRowInline(initial: Record<string, unknown> = {}): Promise<string | null> {
     const values: Record<string, unknown> = {};
     for (const f of fields) {
       if (f.id.startsWith(PREFIKS_TYMCZASOWY)) continue;
@@ -391,6 +429,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       }
       if (f.type === "checkbox" && f.config.default_checked === true) values[f.id] = true;
     }
+    Object.assign(values, initial);
     let wynik: Awaited<ReturnType<typeof addRow>> | null = null;
     try {
       wynik = await addRow(block.id, values);
@@ -407,8 +446,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     return prawdziwy.id;
   }
 
-  // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow)
-  async function removeRow(row: PageRow) {
+  // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow).
+  // `cicho`: bez toastu „Usunięto” (pusta nowa karta tablicy odrzucona przez Esc); błąd i tak pokazuje toast
+  async function removeRow(row: PageRow, cicho = false) {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
     setEditing((e) => (e?.rowId === row.id ? null : e));
     setRows((l) => l.filter((r) => r.id !== row.id));
@@ -423,6 +463,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       toast.error(BLAD_ZAPISU);
       return;
     }
+    if (cicho) return;
     toast("Usunięto", {
       action: {
         label: "Cofnij",
@@ -441,6 +482,174 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         },
       },
     });
+  }
+
+  // „Usuń” z paska zaznaczonych: wiersze znikają od razu, toast „Usunięto N wierszy” z „Cofnij” (restoreRows).
+  // Wiersze bez prawdziwego id (zapis w toku) zostają. Zwraca false przy błędzie (wiersze wracają, toast).
+  async function removeRows(ids: string[]): Promise<boolean> {
+    const usuwane = wierszeRef.current.filter((r) => ids.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY));
+    if (usuwane.length === 0) return true;
+    const idsUsuwanych = usuwane.map((r) => r.id);
+    setEditing((e) => (e?.rowId && idsUsuwanych.includes(e.rowId) ? null : e));
+    setRows((l) => l.filter((r) => !idsUsuwanych.includes(r.id)));
+    let wynik: Awaited<ReturnType<typeof deleteRows>> | null = null;
+    try {
+      wynik = await deleteRows(idsUsuwanych);
+    } catch {
+      wynik = null;
+    }
+    if (!wynik || !wynik.ok) {
+      setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      return false;
+    }
+    toast(`Usunięto ${rowsLabel(usuwane.length)}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+          let przywrocono = false;
+          try {
+            przywrocono = (await restoreRows(idsUsuwanych)).ok;
+          } catch {
+            przywrocono = false;
+          }
+          if (!przywrocono) {
+            setRows((l) => l.filter((r) => !idsUsuwanych.includes(r.id)));
+            toast.error(BLAD_ZAPISU);
+          }
+        },
+      },
+    });
+    return true;
+  }
+
+  // „Duplikuj” z paska zaznaczonych: kopie robi serwer (nowe id, koniec bloku), potem dochodzą na koniec listy.
+  // Toast „Zduplikowano N wierszy” z „Cofnij” (kopie idą do kosza przez deleteRows).
+  async function duplicateRows(ids: string[]): Promise<boolean> {
+    const zrodla = ids.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
+    if (zrodla.length === 0) return true;
+    let wynik: Awaited<ReturnType<typeof duplicateRowsAction>> | null = null;
+    try {
+      wynik = await duplicateRowsAction(zrodla);
+    } catch {
+      wynik = null;
+    }
+    if (!wynik || !wynik.ok) {
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      return false;
+    }
+    const kopie: PageRow[] = wynik.rows.map((w) => ({ id: w.id, values: w.values, position: w.position, deletedAt: null }));
+    const idsKopii = kopie.map((k) => k.id);
+    // Odświeżenie danych mogło już dodać kopie — bez duplikatów
+    setRows((l) => [...l.filter((r) => !idsKopii.includes(r.id)), ...kopie]);
+    toast(`Zduplikowano ${rowsLabel(kopie.length)}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          const usuwane = wierszeRef.current.filter((r) => idsKopii.includes(r.id));
+          setRows((l) => l.filter((r) => !idsKopii.includes(r.id)));
+          let usunieto = false;
+          try {
+            usunieto = (await deleteRows(idsKopii)).ok;
+          } catch {
+            usunieto = false;
+          }
+          if (!usunieto) {
+            setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+            toast.error(BLAD_ZAPISU);
+          }
+        },
+      },
+    });
+    return true;
+  }
+
+  // „Zmień: pole” z paska zaznaczonych: jedna wartość (id opcji albo true / false) w wielu wierszach, od razu lokalnie.
+  // Sekretów nie zapisuje się hurtowo (szyfrogram powstaje tylko w komórce). Błąd cofa komórki, które nadal mają
+  // nową wartość. Toast „Ustawiono „X” dla N wierszy” z „Cofnij” (poprzednie wartości, jeden zapis na wartość).
+  async function setRowsValue(ids: string[], field: PageField, value: unknown, label: string): Promise<boolean> {
+    if (field.type === "secret") return false;
+    const cele = wierszeRef.current.filter((r) => ids.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY));
+    if (cele.length === 0) return true;
+    const pole = polaRef.current.find((f) => f.id === field.id) ?? field;
+    const v = normalizeValue(pole, value);
+    const poprzednie = new Map(cele.map((r) => [r.id, r.values[field.id]]));
+    const idsCelow = cele.map((r) => r.id);
+
+    setRows((l) => l.map((r) => (poprzednie.has(r.id) ? { ...r, values: { ...r.values, [field.id]: v } } : r)));
+    // Zapis w toku: dane z serwera w trakcie nie nadpiszą tych komórek
+    for (const id of idsCelow) {
+      const wToku = wierszeWToku.current.get(id) ?? { n: 0, zmiany: {}, zatwierdzone: {} };
+      wToku.n += 1;
+      wToku.zmiany[field.id] = v;
+      wierszeWToku.current.set(id, wToku);
+    }
+    let wynik: Awaited<ReturnType<typeof setRowsValueAction>> | null = null;
+    try {
+      wynik = await setRowsValueAction(idsCelow, field.id, v);
+    } catch {
+      wynik = null;
+    }
+    for (const id of idsCelow) {
+      const wToku = wierszeWToku.current.get(id);
+      if (!wToku) continue;
+      wToku.n -= 1;
+      if (wToku.n === 0) wierszeWToku.current.delete(id);
+    }
+    if (!wynik || !wynik.ok) {
+      setRows((l) =>
+        l.map((r) =>
+          poprzednie.has(r.id) && Object.is(r.values[field.id], v)
+            ? { ...r, values: { ...r.values, [field.id]: poprzednie.get(r.id) } }
+            : r,
+        ),
+      );
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      // Częściowy zapis możliwy: dane z serwera wyrównują stan po cofnięciu
+      router.refresh();
+      return false;
+    }
+    const n = cele.length;
+    toast(`Ustawiono „${label}” dla ${n} ${n === 1 ? "wiersza" : "wierszy"}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          // Wiersze, które nadal mają ustawioną wartość i miały inną, pogrupowane po poprzedniej wartości
+          const doCofniecia = new Map<string, { wartosc: unknown; ids: string[] }>();
+          for (const r of wierszeRef.current) {
+            if (!poprzednie.has(r.id) || !Object.is(r.values[field.id], v)) continue;
+            const stara = normalizeValue(pole, poprzednie.get(r.id));
+            if (Object.is(stara, v)) continue;
+            const klucz = JSON.stringify(stara);
+            const grupa = doCofniecia.get(klucz) ?? { wartosc: stara, ids: [] };
+            grupa.ids.push(r.id);
+            doCofniecia.set(klucz, grupa);
+          }
+          if (doCofniecia.size === 0) return;
+          const cofane = [...doCofniecia.values()];
+          setRows((l) =>
+            l.map((r) => {
+              const g = cofane.find((x) => x.ids.includes(r.id));
+              return g ? { ...r, values: { ...r.values, [field.id]: g.wartosc } } : r;
+            }),
+          );
+          let cofnieto = false;
+          try {
+            const wyniki = await Promise.all(cofane.map((g) => setRowsValueAction(g.ids, field.id, g.wartosc)));
+            cofnieto = wyniki.every((w) => w.ok);
+          } catch {
+            cofnieto = false;
+          }
+          if (!cofnieto) {
+            toast.error(BLAD_ZAPISU);
+            // Część zapisów mogła przejść: wyrównujemy z serwerem
+            router.refresh();
+          }
+        },
+      },
+    });
+    return true;
   }
 
   // „Dodaj pole” w AddField: kolumna na końcu, do odpowiedzi serwera z tymczasowym id
@@ -475,10 +684,12 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
 
   // Zmiana ustawień (sort, ukryte kolumny, podsumowania…): od razu lokalnie, błąd cofa te klucze
   async function patchSettings(patch: Partial<TableSettings>): Promise<boolean> {
+    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch) widokiZmienioneRef.current = true;
     const poprzednie: Partial<TableSettings> = {};
     for (const k of Object.keys(patch) as (keyof TableSettings)[]) {
-      (poprzednie as Record<string, unknown>)[k] = settings[k];
+      (poprzednie as Record<string, unknown>)[k] = ustawieniaRef.current[k];
     }
+    ustawieniaRef.current = { ...ustawieniaRef.current, ...patch };
     setSettings((s) => ({ ...s, ...patch }));
     ustawieniaWToku.current += 1;
     let udane = false;
@@ -489,11 +700,187 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     }
     ustawieniaWToku.current -= 1;
     if (!udane) {
-      setSettings((s) => ({ ...s, ...poprzednie }));
+      if (ustawieniaWToku.current === 0) {
+        // Nic innego się nie zapisuje: cofamy klucze tej zmiany
+        ustawieniaRef.current = { ...ustawieniaRef.current, ...poprzednie };
+        setSettings((s) => ({ ...s, ...poprzednie }));
+      } else {
+        // Inne zapisy w toku: kopia sprzed zmiany jest już nieaktualna, więc wyrównamy z serwerem po ostatnim
+        wyrownajRef.current = true;
+      }
       toast.error(BLAD_ZAPISU);
+    }
+    if (ustawieniaWToku.current === 0 && wyrownajRef.current) {
+      wyrownajRef.current = false;
+      router.refresh();
     }
     return udane;
   }
+
+  // Ustawienia bieżącego widoku (zapisany widok albo „Wszystkie”)
+  const view: EffectiveView = effectiveView(settings);
+
+  // Zmiany widoków czekają na jednorazowy zapis widoków szablonu (inaczej nadpisałyby go listą bez nich)
+  // i liczą się od najnowszych ustawień. Bez zapisu w toku nie czekają wcale (pole filtra zmienia się od razu).
+  async function poZapisieSzablonu(): Promise<void> {
+    while (zapisSzablonuRef.current) await zapisSzablonuRef.current;
+  }
+
+  // Zmiana filtrów, sortu, grupowania, układu albo ukrytych pól: przy aktywnym zapisanym widoku zapisuje się
+  // w tym widoku (cała lista views), przy „Wszystkich” w ustawieniach bazowych bloku
+  async function patchView(patch: Partial<EffectiveView>): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const aktywny = s.active_view_id === null ? undefined : s.views.find((v) => v.id === s.active_view_id);
+    if (aktywny) {
+      return patchSettings({ views: s.views.map((v) => (v.id === aktywny.id ? { ...v, ...patch } : v)) });
+    }
+    return patchSettings(patch);
+  }
+
+  // Zakładka widoku (null = „Wszystkie”)
+  async function selectView(id: string | null): Promise<boolean> {
+    if (id === ustawieniaRef.current.active_view_id) return true;
+    return patchSettings({ active_view_id: id });
+  }
+
+  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku (filtry, sort, grupowanie, układ, ukryte pola), od razu aktywna.
+  // `przeniesFiltry` („Zapisz jako widok”): przy „Wszystkich” filtry przechodzą do nowego widoku, a „Wszystkie”
+  // wracają do pokazywania wszystkiego (S2Table); zapisany widok źródłowy zostaje bez zmian
+  async function addView(name: string, przeniesFiltry = false): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const biezacy = effectiveView(s);
+    const nowy: TableView = {
+      id: crypto.randomUUID(),
+      name: name.trim().slice(0, 40) || "Mój widok",
+      filters: biezacy.filters,
+      sort: biezacy.sort,
+      group_by: biezacy.group_by,
+      layout: biezacy.layout,
+      hidden_field_ids: biezacy.hidden_field_ids,
+    };
+    const zWszystkich =
+      przeniesFiltry && (s.active_view_id === null || !s.views.some((v) => v.id === s.active_view_id));
+    return patchSettings(
+      zWszystkich
+        ? { views: [...s.views, nowy], active_view_id: nowy.id, filters: [] }
+        : { views: [...s.views, nowy], active_view_id: nowy.id },
+    );
+  }
+
+  async function saveFiltersAsView(name: string): Promise<boolean> {
+    return addView(name, true);
+  }
+
+  // Nowa nazwa widoku: przycięta, 1–40 znaków; pusta nic nie zmienia
+  async function renameView(id: string, name: string): Promise<boolean> {
+    const nazwa = name.trim().slice(0, 40);
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const widok = s.views.find((v) => v.id === id);
+    if (!widok || nazwa === "" || nazwa === widok.name) return true;
+    return patchSettings({ views: s.views.map((v) => (v.id === id ? { ...v, name: nazwa } : v)) });
+  }
+
+  // „Duplikuj widok”: kopia „Nazwa (kopia)” na końcu listy (S2Table), od razu aktywna
+  async function duplicateView(id: string): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const widok = s.views.find((v) => v.id === id);
+    if (!widok) return true;
+    const kopia: TableView = { ...widok, id: crypto.randomUUID(), name: `${widok.name} (kopia)`.slice(0, 40) };
+    return patchSettings({ views: [...s.views, kopia], active_view_id: kopia.id });
+  }
+
+  // „Usuń widok”: usunięty aktywny wraca do „Wszystkich”; „Cofnij” wstawia widok z powrotem na jego miejsce
+  // w BIEŻĄCEJ liście (zmiany innych widoków po usunięciu zostają)
+  async function deleteView(id: string): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const indeks = s.views.findIndex((v) => v.id === id);
+    if (indeks < 0) return true;
+    const widok = s.views[indeks];
+    const bylAktywny = s.active_view_id === id;
+    const patch: Partial<TableSettings> = { views: s.views.filter((v) => v.id !== id) };
+    if (bylAktywny) {
+      patch.active_view_id = null;
+    }
+    const udane = await patchSettings(patch);
+    if (!udane) return false;
+    toast(`Usunięto widok „${widok.name}”`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          if (zapisSzablonuRef.current) await poZapisieSzablonu();
+          const teraz = ustawieniaRef.current;
+          if (teraz.views.some((v) => v.id === id)) return;
+          const widoki = [...teraz.views.slice(0, indeks), widok, ...teraz.views.slice(indeks)];
+          await patchSettings(bylAktywny ? { views: widoki, active_view_id: id } : { views: widoki });
+        },
+      },
+    });
+    return true;
+  }
+
+  // Grupowanie i układ (tabela / tablica) bieżącego widoku
+  async function setGroupBy(fieldId: string | null): Promise<boolean> {
+    return patchView({ group_by: fieldId });
+  }
+  async function setLayout(layout: TableView["layout"]): Promise<boolean> {
+    return patchView({ layout });
+  }
+
+  // Zwinięcie / rozwinięcie grupy w bieżącym widoku (klucz widoku albo "all" dla „Wszystkich”)
+  async function toggleGroup(key: string): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const aktywny = s.active_view_id === null ? undefined : s.views.find((v) => v.id === s.active_view_id);
+    const klucz = aktywny ? aktywny.id : "all";
+    const zwiniete = s.collapsed_groups[klucz] ?? [];
+    return patchSettings({
+      collapsed_groups: {
+        ...s.collapsed_groups,
+        [klucz]: zwiniete.includes(key) ? zwiniete.filter((k) => k !== key) : [...zwiniete, key],
+      },
+    });
+  }
+
+  // Jednorazowe dopisanie widoków szablonu (brak klucza `views` w surowych ustawieniach bloku)
+  const widokiSzablonuRef = useRef(false);
+  useEffect(() => {
+    if (widokiSzablonuRef.current) return;
+    if (templateKey === null || templateKey === "empty") return;
+    const surowaUstawienia = (block.content.settings ?? {}) as Record<string, unknown>;
+    if ("views" in surowaUstawienia) return;
+    widokiSzablonuRef.current = true;
+    const domyslne = templateDefaults(templateKey, block.fields);
+    if (domyslne.views.length === 0 && domyslne.group_by === null) return;
+    const patch: Partial<TableSettings> = {
+      views: domyslne.views,
+      group_by: domyslne.group_by,
+      collapsed_groups: domyslne.collapsed_groups,
+    };
+    // Zapis w tle bez toastu (to nie akcja użytkownika); lokalnie ustawiamy dopiero po potwierdzeniu serwera.
+    // Przy błędzie następne wczytanie bloku spróbuje ponownie
+    ustawieniaWToku.current += 1;
+    const zapis = saveTableSettings(block.id, patch, { onlyIfMissing: "views" })
+      .then((wynik) => {
+        // Serwer pominął zapis (widoki już są) albo użytkownik zmienił widoki w międzyczasie: bez nadpisania
+        if (wynik.ok && !wynik.skipped && !widokiZmienioneRef.current) {
+          ustawieniaRef.current = { ...ustawieniaRef.current, ...patch };
+          setSettings((s) => ({ ...s, ...patch }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        ustawieniaWToku.current -= 1;
+        if (zapisSzablonuRef.current === zapis) zapisSzablonuRef.current = null;
+      });
+    zapisSzablonuRef.current = zapis;
+    // Jednorazowo przy wczytaniu bloku
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Plan zmiany typu kolumny z menu; null, gdy któryś wiersz czeka jeszcze na odpowiedź serwera
   // (zapisałby zmiany w starym typie)
@@ -723,6 +1110,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     // Zapisujemy tylko klucze ustawień, które naprawdę się zmieniają
     const zmianyUstawien: Partial<TableSettings> = {};
     if (JSON.stringify(noweFiltry) !== JSON.stringify(settings.filters)) zmianyUstawien.filters = noweFiltry;
+    // Warunki „jest jednym z” na tej opcji znikają też z filtrów zapisanych widoków
+    const noweWidoki = settings.views.map((v) => ({ ...v, filters: bezOpcji(v.filters) }));
+    if (JSON.stringify(noweWidoki) !== JSON.stringify(settings.views)) zmianyUstawien.views = noweWidoki;
     if (noweKarty.length !== settings.pinned_cards.length) zmianyUstawien.pinned_cards = noweKarty;
     if (Object.keys(nowePodsumowania).length !== Object.keys(settings.column_summaries).length) {
       zmianyUstawien.column_summaries = nowePodsumowania;
@@ -731,7 +1121,6 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     for (const k of Object.keys(zmianyUstawien) as (keyof TableSettings)[]) {
       (poprzednieUstawienia as Record<string, unknown>)[k] = settings[k];
     }
-    const poprzednieTymczasowe = tempFilters;
     // Wiersze z najnowszego stanu (wierszeRef), nie z domknięcia
     const dotknieteWiersze = wierszeRef.current.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
 
@@ -741,7 +1130,6 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       l.map((r) => (dotknieteWiersze.includes(r.id) ? { ...r, values: { ...r.values, [field.id]: null } } : r)),
     );
     setSettings((s) => ({ ...s, ...zmianyUstawien }));
-    setTempFilters((t) => (t ? bezOpcji(t) : t));
 
     // Zapisy w toku: dane z serwera w trakcie nie nadpiszą zmiany
     const zapisywaneWiersze = dotknieteWiersze.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
@@ -812,7 +1200,6 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
         ),
       );
       setSettings((s) => ({ ...s, ...poprzednieUstawienia }));
-      setTempFilters(poprzednieTymczasowe);
       toast.error(BLAD_ZAPISU);
     }
     return udane;
@@ -876,7 +1263,7 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
   // błąd przywraca pole i ustawienia
   async function removeField(field: PageField) {
     if (field.isTitle || field.id.startsWith(PREFIKS_TYMCZASOWY)) return;
-    // Wpisy ustawień i filtru tymczasowego, które usunięcie zabiera — tylko je cofamy przy błędzie
+    // Wpisy ustawień, które usunięcie zabiera — tylko je cofamy przy błędzie
     const nalezy = (id: string) => id === field.id;
     const zabranySort = settings.sort.filter((k) => nalezy(k.field_id));
     const sortPoUsunieciu = JSON.stringify(settings.sort.filter((k) => !nalezy(k.field_id)));
@@ -889,11 +1276,38 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     const zabraneKarty = settings.pinned_cards.filter(
       (c) => nalezy(c.field_id) || c.date_field_id === field.id || c.title_field_id === field.id,
     );
-    const zabraneFiltryTymczasowe = (tempFilters ?? []).filter((c) => nalezy(c.field_id));
+
+    // Odwołania w zapisanych widokach i w grupowaniu „Wszystkich”: serwer czyści tylko ustawienia bazowe,
+    // więc widoki dostają osobny zapis ustawień po usunięciu pola
+    const poprzednieWidoki = settings.views;
+    const poprzedniGroupBy = settings.group_by;
+    const poprzednieZwiniete = settings.collapsed_groups;
+    const widokiPoUsunieciu = settings.views.map((v) =>
+      v.group_by !== field.id &&
+      v.sort.every((k) => !nalezy(k.field_id)) &&
+      v.filters.every((c) => !nalezy(c.field_id)) &&
+      !v.hidden_field_ids.includes(field.id)
+        ? v
+        : {
+            ...v,
+            filters: v.filters.filter((c) => !nalezy(c.field_id)),
+            sort: v.sort.filter((k) => !nalezy(k.field_id)),
+            hidden_field_ids: v.hidden_field_ids.filter((id) => id !== field.id),
+            group_by: v.group_by === field.id ? null : v.group_by,
+          },
+    );
+    const zwinietePoUsunieciu = { ...settings.collapsed_groups };
+    if (settings.group_by === field.id) delete zwinietePoUsunieciu.all;
+    for (const v of settings.views) if (v.group_by === field.id) delete zwinietePoUsunieciu[v.id];
+    const widokiZmienione = JSON.stringify(widokiPoUsunieciu) !== JSON.stringify(settings.views);
+    const grupowanieZmienione = settings.group_by === field.id;
 
     setFields((l) => l.filter((f) => f.id !== field.id));
     setSettings((s) => ({
       ...s,
+      views: s.views.map((v) => widokiPoUsunieciu.find((w) => w.id === v.id) ?? v),
+      group_by: s.group_by === field.id ? null : s.group_by,
+      collapsed_groups: s.group_by === field.id || widokiZmienione ? zwinietePoUsunieciu : s.collapsed_groups,
       sort: s.sort.filter((k) => !nalezy(k.field_id)),
       filters: s.filters.filter((c) => !nalezy(c.field_id)),
       hidden_field_ids: s.hidden_field_ids.filter((id) => id !== field.id),
@@ -908,12 +1322,26 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
           c.field_id !== field.id && c.date_field_id !== field.id && c.title_field_id !== field.id,
       ),
     }));
-    setTempFilters((t) => (t ? t.filter((c) => !nalezy(c.field_id)) : t));
     polaWToku.current += 1;
     ustawieniaWToku.current += 1;
     let udane = false;
     try {
       udane = (await deleteField(field.id)).ok;
+      // Zapis widoków i grupowania dopiero po usunięciu pola
+      if (udane && (widokiZmienione || grupowanieZmienione)) {
+        const zapis = await saveTableSettings(block.id, {
+          views: ustawieniaRef.current.views.map((v) => widokiPoUsunieciu.find((w) => w.id === v.id) ?? v),
+          group_by: grupowanieZmienione ? null : ustawieniaRef.current.group_by,
+          collapsed_groups: Object.fromEntries(
+            Object.entries(ustawieniaRef.current.collapsed_groups).filter(([klucz]) => klucz in zwinietePoUsunieciu),
+          ),
+        });
+        // Pole jest już usunięte na serwerze, więc błąd tego zapisu go nie cofa: odświeżamy dane z serwera
+        if (!zapis.ok) {
+          toast.error(BLAD_ZAPISU);
+          router.refresh();
+        }
+      }
     } catch {
       udane = false;
     }
@@ -923,6 +1351,9 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
       setFields((l) => (l.some((f) => f.id === field.id) ? l : [...l, field]));
       setSettings((s) => ({
         ...s,
+        views: widokiZmienione ? poprzednieWidoki : s.views,
+        group_by: grupowanieZmienione && s.group_by === null ? poprzedniGroupBy : s.group_by,
+        collapsed_groups: widokiZmienione || grupowanieZmienione ? poprzednieZwiniete : s.collapsed_groups,
         // Sort wraca tylko, jeśli w międzyczasie nie został zmieniony
         sort: JSON.stringify(s.sort) === sortPoUsunieciu ? [...s.sort, ...zabranySort] : s.sort,
         filters: [...s.filters, ...zabraneFiltry],
@@ -941,9 +1372,6 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
             : s.column_widths,
         pinned_cards: [...s.pinned_cards, ...zabraneKarty],
       }));
-      if (zabraneFiltryTymczasowe.length > 0) {
-        setTempFilters((t) => (t ? [...t, ...zabraneFiltryTymczasowe] : t));
-      }
       toast.error(BLAD_ZAPISU);
     }
   }
@@ -952,8 +1380,20 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     fields: posortowanePola,
     rows,
     settings,
-    tempFilters,
     editing,
+    view,
+    query,
+    setQuery,
+    patchView,
+    selectView,
+    addView,
+    saveFiltersAsView,
+    renameView,
+    duplicateView,
+    deleteView,
+    setGroupBy,
+    setLayout,
+    toggleGroup,
     startEdit,
     addRowDraft,
     addRowInline,
@@ -962,9 +1402,11 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
     cancelEdit,
     saveRow,
     removeRow,
+    removeRows,
+    duplicateRows,
+    setRowsValue,
     addField,
     patchSettings,
-    setTempFilters,
     planTypeChangeFor,
     applyTypeChange,
     patchField,

@@ -36,6 +36,10 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ status: "ladowanie" }) }));
 vi.mock("../actions", () => actions);
 
+import * as React from "react";
+
+import type { FilterCond } from "../table-model";
+import { FilterPopover } from "./filter-popover";
 import { PageTable } from "./page-table";
 import { DZIS, stronaTestowa, SUBSKRYPCJE } from "./test-page";
 
@@ -111,10 +115,12 @@ describe("filtr tabeli", () => {
     expect(wyzwalacz.className).not.toContain("!bg-active");
     expect(within(filtr).getByText("5 z 5 wierszy").className).toContain("bg-muted");
     expect(within(filtr).getByText("Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.").className).not.toContain("font-mono");
-    // „+ Dodaj warunek” i „Wyczyść”: wysokość 28 px (Button sm), „Zapisz jako domyślny”: wariant główny
+    // „+ Dodaj warunek” i „Wyczyść”: wysokość 28 px (Button sm), „Zapisz jako widok”: wariant główny;
+    // „Zapisz jako domyślny” już nie ma (S2Table: filtr działa i zapisuje się od razu)
     expect(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }).className).toContain("h-7");
     expect(within(filtr).getByRole("button", { name: "Wyczyść" }).className).toContain("bg-transparent");
-    expect(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }).className).toContain("bg-primary");
+    expect(within(filtr).getByRole("button", { name: "Zapisz jako widok" }).className).toContain("bg-primary");
+    expect(within(filtr).queryByRole("button", { name: "Zapisz jako domyślny" })).toBeNull();
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     // Etykieta „Gdzie” jak .lbl (12 px, 500), pole wartości jak FIELD (32 px), usuwanie jako ghost-icon
     expect(within(filtr).getByText("Gdzie").className).not.toContain("font-mono");
@@ -133,7 +139,8 @@ describe("filtr tabeli", () => {
     expect(within(filtr).getByText("Gdzie")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    expect(tytuly()).toEqual(["Deep Work"]);
+    // Wpisana wartość działa po 400 ms bez pisania
+    await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
     expect(within(filtr).getByText("1 z 5 wierszy")).toBeInTheDocument();
   });
 
@@ -161,7 +168,7 @@ describe("filtr tabeli", () => {
       within(screen.getByRole("listbox", { name: "Operator warunku 1" }))
         .getAllByRole("option")
         .map((o) => o.textContent),
-    ).toEqual(["jest jednym z✓", "jest puste"]);
+    ).toEqual(["jest jednym z✓", "nie jest żadnym z", "jest puste"]);
     await user.keyboard("{Escape}");
     const wartosc = within(filtr).getByRole("group", { name: "Wartość warunku 1" });
     await user.click(within(wartosc).getByRole("button", { name: "Przeczytane" }));
@@ -181,10 +188,10 @@ describe("filtr tabeli", () => {
     expect(liczba).toHaveAttribute("inputmode", "decimal");
     await user.type(liczba, "3,5");
     expect(liczba).toHaveValue("3,5");
-    expect(tytuly().sort()).toEqual(["Deep Work", "Diuna"]);
+    await waitFor(() => expect(tytuly().sort()).toEqual(["Deep Work", "Diuna"]));
     await wybierz(user, "Operator warunku 1", "≤");
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "3");
-    expect(tytuly()).toEqual(["Sapiens"]);
+    await waitFor(() => expect(tytuly()).toEqual(["Sapiens"]));
   });
 
   it("Data: operatory przed / po / jest puste i wybór daty", async () => {
@@ -198,7 +205,7 @@ describe("filtr tabeli", () => {
       within(screen.getByRole("listbox", { name: "Operator warunku 1" }))
         .getAllByRole("option")
         .map((o) => o.textContent),
-    ).toEqual(["przed✓", "po", "jest puste"]);
+    ).toEqual(["przed✓", "po", "w ciągu dni", "w tym roku", "jest puste"]);
     await user.keyboard("{Escape}");
     expect(within(filtr).getByRole("button", { name: "Wartość warunku 1" })).toBeInTheDocument();
     await wybierz(user, "Operator warunku 1", "jest puste");
@@ -219,7 +226,7 @@ describe("filtr tabeli", () => {
     expect(screen.getByText("Czytam teraz", { selector: "div" }).parentElement?.textContent).toContain("0");
   });
 
-  it("„Wyczyść” czyści filtr tylko w kliencie; „Zapisz jako domyślny” zapisuje settings.filters", async () => {
+  it("„Wyczyść” czyści filtr i od razu zapisuje settings.filters", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
     const status = dane.blocks[0].fields.find((f) => f.name === "Status")!;
@@ -234,23 +241,19 @@ describe("filtr tabeli", () => {
     await user.click(within(filtr).getByRole("button", { name: "Wyczyść" }));
     expect(tytuly()).toHaveLength(5);
     expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
-    expect(actions.saveTableSettings).not.toHaveBeenCalled();
-
-    await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { filters: [] });
   });
 
-  it("„Zapisz jako domyślny” zapisuje bieżące warunki, po odświeżeniu filtr dalej działa", async () => {
+  it("warunek zapisuje się od razu, po odświeżeniu filtr dalej działa", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
     const { rerender } = render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
     const tytul = dane.blocks[0].fields.find((f) => f.name === "Tytuł")!;
     const zapisane = [{ field_id: tytul.id, op: "contains", value: "deep" }];
-    expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { filters: zapisane });
+    await waitFor(() => expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { filters: zapisane }));
     expect(tytuly()).toEqual(["Deep Work"]);
 
     // Odświeżone dane z serwera mają już zapisany filtr
@@ -277,7 +280,7 @@ describe("filtr tabeli", () => {
       expect(within(filtr).getByText("zł / mies.")).toBeInTheDocument();
       // Strava 249,99 zł / rok = 20,83 zł / mies., Netflix 43, Disney+ 37,99: ≥ 40 zostawia tylko Netflix
       await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "40");
-      expect(tytuly()).toEqual(["Netflix"]);
+      await waitFor(() => expect(tytuly()).toEqual(["Netflix"]));
     });
 
     it("Data odnowienia: wartość to kalendarz jak dla daty, a filtr idzie po następnym odnowieniu", async () => {
@@ -337,3 +340,143 @@ describe("filtr i sortowanie na telefonie (CMFilterSheet)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Filtr i sortowanie" })).toBeNull());
   });
 });
+
+// Filtr sterowany z zewnątrz (bez tabeli): nowe operatory i „Zapisz jako widok”
+describe("FilterPopover — nowe operatory", () => {
+  const pola = stronaTestowa("books", "Books", []).blocks[0].fields;
+  const pole = (nazwa: string) => pola.find((f) => f.name === nazwa)!;
+
+  function Filtr({ start, onSaveAsView }: { start: FilterCond[]; onSaveAsView?: () => void }) {
+    const [filtry, setFiltry] = React.useState(start);
+    const [open, setOpen] = React.useState(true);
+    return (
+      <>
+        <FilterPopover
+          fields={pola}
+          filters={filtry}
+          today={DZIS}
+          shown={1}
+          total={2}
+          open={open}
+          onOpenChange={setOpen}
+          onChange={setFiltry}
+          onSaveAsView={onSaveAsView}
+          triggerClassName=""
+        />
+        <output data-testid="filtry">{JSON.stringify(filtry)}</output>
+      </>
+    );
+  }
+  const filtry = () => JSON.parse(screen.getByTestId("filtry").textContent ?? "[]") as FilterCond[];
+
+  it("data „w ciągu dni”: pole liczby z domyślnym 14 (min 1)", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Przeczytana").id, op: "before" }]} />);
+    await wybierz(user, "Operator warunku 1", "w ciągu dni");
+    expect(filtry()[0]).toEqual({ field_id: pole("Przeczytana").id, op: "within_days", value: 14 });
+    const liczba = screen.getByRole("spinbutton", { name: "Wartość warunku 1" });
+    expect(liczba).toHaveValue(14);
+    expect(liczba).toHaveAttribute("min", "1");
+    await user.clear(liczba);
+    await user.type(liczba, "30");
+    await waitFor(() => expect(filtry()[0].value).toBe(30));
+  });
+
+  it("data „w tym roku”: bez pola wartości, wartość wyczyszczona", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Przeczytana").id, op: "before", value: "2026-01-01" }]} />);
+    await wybierz(user, "Operator warunku 1", "w tym roku");
+    expect(filtry()[0]).toEqual({ field_id: pole("Przeczytana").id, op: "this_year" });
+    expect(screen.queryByRole("button", { name: "Wartość warunku 1" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Wartość warunku 1" })).toBeNull();
+  });
+
+  it("wybór „nie jest żadnym z”: opcje jak w „jest jednym z”", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Status").id, op: "in", value: ["x"] }]} />);
+    await wybierz(user, "Operator warunku 1", "nie jest żadnym z");
+    expect(filtry()[0]).toEqual({ field_id: pole("Status").id, op: "not_in" });
+    const grupa = screen.getByRole("group", { name: "Wartość warunku 1" });
+    await user.click(within(grupa).getByRole("button", { name: "Czytam" }));
+    const czytam = pole("Status").config.options!.find((o) => o.label === "Czytam")!;
+    expect(filtry()[0].value).toEqual([czytam.id]);
+  });
+
+  it("tekst „nie jest równe”: pole tekstu", async () => {
+    const user = userEvent.setup();
+    render(<Filtr start={[{ field_id: pole("Autor").id, op: "contains", value: "abc" }]} />);
+    await wybierz(user, "Operator warunku 1", "nie jest równe");
+    expect(filtry()[0]).toEqual({ field_id: pole("Autor").id, op: "not_equals" });
+    await user.type(screen.getByRole("textbox", { name: "Wartość warunku 1" }), "Clear");
+    await waitFor(() => expect(filtry()[0].value).toBe("Clear"));
+  });
+
+  it("„Zapisz jako widok” woła onSaveAsView; wyzwalacz „Filtruj” z plakietką liczby", async () => {
+    const user = userEvent.setup();
+    const zapisz = vi.fn();
+    render(<Filtr start={[{ field_id: pole("Autor").id, op: "contains", value: "a" }]} onSaveAsView={zapisz} />);
+    expect(screen.getByRole("button", { name: "Filtruj · 1" })).toHaveTextContent("Filtruj1");
+    await user.click(screen.getByRole("button", { name: "Zapisz jako widok" }));
+    expect(zapisz).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("FilterPopover — opóźniony zapis wpisywanej wartości", () => {
+  const pola = stronaTestowa("books", "Books", []).blocks[0].fields;
+  const autor = pola.find((f) => f.name === "Autor")!;
+
+  function Filtr({ onChange, onSaveAsView }: { onChange: (f: FilterCond[]) => void; onSaveAsView?: () => void }) {
+    const [filtry, setFiltry] = React.useState<FilterCond[]>([{ field_id: autor.id, op: "contains" }]);
+    return (
+      <FilterPopover
+        fields={pola}
+        filters={filtry}
+        today={DZIS}
+        shown={1}
+        total={2}
+        open
+        onOpenChange={() => {}}
+        onChange={(f) => {
+          setFiltry(f);
+          onChange(f);
+        }}
+        onSaveAsView={onSaveAsView}
+        triggerClassName=""
+      />
+    );
+  }
+
+  it("tekst zapisuje się raz, 400 ms po ostatnim znaku; pole od razu pokazuje wpisany tekst", async () => {
+    const zmiana = vi.fn();
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} />);
+    const pole = screen.getByRole("textbox", { name: "Wartość warunku 1" });
+    await user.type(pole, "Clear");
+    expect(pole).toHaveValue("Clear");
+    expect(zmiana).not.toHaveBeenCalled();
+    await waitFor(() => expect(zmiana).toHaveBeenCalledTimes(1));
+    expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "contains", value: "Clear" }]);
+    await new Promise((r) => setTimeout(r, 450));
+    expect(zmiana).toHaveBeenCalledTimes(1);
+  });
+
+  it("zmiana operatora zapisuje się od razu", async () => {
+    const zmiana = vi.fn();
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} />);
+    await wybierz(user, "Operator warunku 1", "nie jest równe");
+    expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "not_equals" }]);
+  });
+
+  it("„Zapisz jako widok” najpierw wysyła czekającą wartość", async () => {
+    const zmiana = vi.fn();
+    const zapisz = vi.fn(() => expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "contains", value: "Cl" }]));
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} onSaveAsView={zapisz} />);
+    await user.type(screen.getByRole("textbox", { name: "Wartość warunku 1" }), "Cl");
+    await user.click(screen.getByRole("button", { name: "Zapisz jako widok" }));
+    expect(zapisz).toHaveBeenCalledTimes(1);
+    expect(zmiana).toHaveBeenCalledTimes(1);
+  });
+});
+

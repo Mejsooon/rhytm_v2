@@ -34,6 +34,7 @@ vi.mock("@/features/auth/actions", () => ({
 }));
 
 import { AppSidebar } from "./app-sidebar";
+import { SidebarStateProvider } from "./sidebar-state";
 import type { PageSummary } from "@/features/pages/load-pages";
 
 const uzytkownik = {
@@ -408,5 +409,86 @@ describe("AppSidebar", () => {
     expect(wiersz.className).toContain("shadow-[inset_0_2px_0_var(--foreground)]");
     fireEvent.dragLeave(wiersz, { relatedTarget: screen.getByRole("link", { name: "Ustawienia" }) });
     expect(wiersz.className).not.toContain("shadow-");
+  });
+
+  it("S2PageMenu: menu „⋯” strony w pasku ma pozycje z makiety w kolejności", async () => {
+    const user = userEvent.setup();
+    sciezka = "/strony/a";
+    render(<AppSidebar user={uzytkownik} pages={[strona("a", "Książki", 0, { icon: "lucide:book-open" })]} />);
+    await user.click(screen.getByRole("button", { name: "Menu strony Książki" }));
+    const menu = screen.getByRole("menu", { name: "Strona Książki" });
+    expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual([
+      "Zmień nazwęF2",
+      "Zmień ikonę",
+      "Duplikuj",
+      "Dodaj do ulubionych",
+      "Usuń stronę",
+    ]);
+  });
+
+  it("decyzja 3: bez karty „Plan Free … Przejdź na Pro” i bez „Pomoc i opinie”", () => {
+    render(<AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0)]} />);
+    expect(screen.queryByText(/Plan Free/)).toBeNull();
+    expect(screen.queryByText("Przejdź na Pro")).toBeNull();
+    expect(screen.queryByText("Pomoc i opinie")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Pomoc i opinie" })).toBeNull();
+  });
+
+  it("rozwinięty pasek nie ma zwiniętej nawigacji", () => {
+    render(
+      <SidebarStateProvider initialCollapsed={false}>
+        <AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0)]} />
+      </SidebarStateProvider>,
+    );
+    expect(screen.queryByRole("navigation", { name: "Główna nawigacja (zwinięta)" })).toBeNull();
+  });
+
+  it("S2SidebarCollapsed: schowany pasek to szyna 56 px z ikonami modułów i stron, Ustawieniami i awatarem", async () => {
+    const user = userEvent.setup();
+    sciezka = "/strony/b";
+    render(
+      <SidebarStateProvider initialCollapsed>
+        <AppSidebar
+          user={uzytkownik}
+          pages={[
+            strona("a", "Subskrypcje", 0, { icon: "lucide:wallet" }),
+            strona("b", "Książki", 1, { icon: "lucide:book-open", favorite: true }),
+            strona("c", "", 2, { icon: "" }),
+          ]}
+        />
+      </SidebarStateProvider>,
+    );
+    const szyna = screen.getByRole("navigation", { name: "Główna nawigacja (zwinięta)" });
+    expect(szyna).toHaveClass("w-14", "max-[799px]:hidden");
+    expect(within(szyna).getByRole("img", { name: "rhytm" })).toBeInTheDocument();
+    const pokaz = within(szyna).getByRole("button", { name: "Pokaż pasek boczny" });
+    expect(pokaz.getAttribute("title")).toMatch(/Pokaż pasek boczny · (Ctrl|⌘)\+\\/);
+    expect(within(szyna).getByRole("link", { name: "Szukaj" })).toHaveAttribute("href", "/szukaj");
+    for (const [nazwa, href] of [
+      ["Dziś", "/dzis"],
+      ["Kalendarz", "/kalendarz"],
+      ["Sport", "/sport"],
+      ["Nawyki i sen", "/nawyki"],
+      ["Hasła", "/hasla"],
+    ]) {
+      const link = within(szyna).getByRole("link", { name: nazwa });
+      expect(link).toHaveAttribute("href", href);
+      expect(link).toHaveAttribute("title", nazwa);
+    }
+    // Strony w kolejności paska: ulubione najpierw, potem pozostałe; pusty tytuł → „Bez tytułu”
+    const strony = within(szyna)
+      .getAllByRole("link")
+      .filter((l) => l.getAttribute("href")?.startsWith("/strony/"));
+    expect(strony.map((l) => l.getAttribute("aria-label"))).toEqual(["Książki", "Subskrypcje", "Bez tytułu"]);
+    expect(strony[0]).toHaveAttribute("aria-current", "page");
+    expect(strony[0]).toHaveClass("bg-black/5");
+    expect(strony[0].querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
+    expect(within(szyna).getByRole("link", { name: "Ustawienia" })).toHaveAttribute("href", "/ustawienia/ogolne");
+    expect(within(szyna).getByRole("button", { name: "Konto Mejson" })).toBeInTheDocument();
+    // Decyzja 3: bez „Pomoc i opinie”; bez dzwonka (powiadomienia to osobny pakiet)
+    expect(within(szyna).queryByRole("link", { name: "Pomoc i opinie" })).toBeNull();
+
+    await user.click(pokaz);
+    expect(screen.queryByRole("navigation", { name: "Główna nawigacja (zwinięta)" })).toBeNull();
   });
 });

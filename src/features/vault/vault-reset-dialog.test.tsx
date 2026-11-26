@@ -75,8 +75,9 @@ describe("VaultResetDialog", () => {
     const stopka = within(okno).getByRole("button", { name: "Anuluj" }).parentElement!;
     expect(stopka).toHaveClass("max-[799px]:grid-cols-2");
     expect(within(okno).getByPlaceholderText("RESETUJ").closest("label")).toHaveClass("max-[799px]:text-destructive-foreground");
-    // Liczba sekretów i „Zostaje” z kodu, w jednym zestawie wierszy (karta na telefonie, kafelki na webie)
+    // Liczba sekretów i „Zostaje” z kodu, w jednej karcie (S2VaultReset: siatka na webie, wiersze na telefonie)
     expect(await within(okno).findByText("4 sekrety")).toBeInTheDocument();
-    expect(within(okno).getByText("serwisy, loginy, URL-e")).toBeInTheDocument();
+    expect(within(okno).getByText("serwisy, loginy, URL-e i kategorie")).toBeInTheDocument();
+    expect(within(okno).getByText("4 sekrety").closest(".grid")).toHaveClass("grid-cols-[140px_1fr]");
   });
 });

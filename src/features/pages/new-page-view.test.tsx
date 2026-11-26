@@ -20,84 +20,124 @@ describe("NewPageView", () => {
     createPageFromTemplate.mockResolvedValue({ ok: true, id: "nowa" });
   });
 
-  it("pokazuje 5 szablonów (Pusta strona, Books, Projects, Websites, Subscriptions), bez Passwords i odznaki „szyfr.”", () => {
+  it("S2NewPage: lista szablonów (radio) w kolejności makiety, z krótkim podpisem; Pusta strona na całą szerokość", () => {
     render(<NewPageView />);
-    const karty = screen.getAllByRole("button", { pressed: false }).concat(
-      screen.getAllByRole("button", { pressed: true }),
-    );
-    const nazwy = ["Pusta strona", "Books", "Projects", "Websites", "Subscriptions"];
-    for (const n of nazwy) {
-      expect(karty.some((k) => k.textContent?.includes(n))).toBe(true);
-    }
-    // Hasła to moduł, nie szablon
-    expect(karty.some((k) => k.textContent?.includes("Passwords"))).toBe(false);
-    expect(screen.queryByText("szyfr.")).toBeNull();
-    expect(screen.getByText("Zacznij od zera")).toBeInTheDocument();
-    expect(screen.getByText("Twoje książki")).toBeInTheDocument();
-  });
-
-  it("pokazuje podtytuł powiązany z oknem jako opis", () => {
-    render(<NewPageView />);
-    const podtytul = screen.getByText("Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.");
-    expect(podtytul).toBeVisible();
-    expect(screen.getByRole("dialog", { name: "Nowa strona" })).toHaveAccessibleDescription(
-      "Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.",
-    );
-  });
-
-  it("wyszukiwanie bez dopasowania pokazuje komunikat z frazą", async () => {
-    const user = userEvent.setup();
-    render(<NewPageView />);
-    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
-    await user.type(screen.getByRole("textbox", { name: "Szukaj szablonu" }), "xyz");
-    expect(screen.getByText("Brak szablonu „xyz”.")).toBeInTheDocument();
-    await user.clear(screen.getByRole("textbox", { name: "Szukaj szablonu" }));
-    expect(screen.queryByText(/Brak szablonu/)).toBeNull();
-  });
-
-  it("wybór szablonu zmienia panel „Pola, które powstaną”", async () => {
-    const user = userEvent.setup();
-    render(<NewPageView />);
-    // Domyślnie Pusta strona
-    expect(screen.getByText("Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz z szybkiego startu albo wpisując „/”.")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Books/ }));
-    const lista = screen.getByText("Pola, które powstaną").parentElement!;
-    const wiersze = Array.from(lista.querySelectorAll("div.justify-between")).map((w) => w.textContent);
-    expect(wiersze).toEqual([
-      "TytułTekst",
-      "AutorTekst",
-      "StatusStatus",
-      "OcenaOcena",
-      "PrzeczytanaData",
+    const lista = screen.getByRole("radiogroup", { name: "Szablon" });
+    const karty = within(lista).getAllByRole("radio");
+    expect(karty.map((k) => k.textContent)).toEqual([
+      "Pusta stronaZacznij od zera",
+      "SubskrypcjeTwoje subskrypcje",
+      "KsiążkiTwoje książki",
+      "ProjektyTwoje projekty",
+      "Strony WWWTwoje strony WWW",
     ]);
-    expect(screen.getByText("Liczba przeczytanych w tym roku.")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Books");
-
-    await user.click(screen.getByRole("button", { name: /Projects/ }));
-    // S2NewPage: Termin to zwykła „Data”, bez dopisku o kalendarzu
-    expect(screen.queryByText(/· w kalendarzu/)).toBeNull();
-    expect(screen.getByText("Terminy trafią do kalendarza głównego.")).toBeInTheDocument();
+    expect(karty[0]).toHaveAttribute("aria-checked", "true");
+    expect(karty[0]).toHaveClass("col-span-full");
+    // Hasła to moduł, nie szablon
+    expect(screen.queryByText("Passwords")).toBeNull();
+    expect(screen.queryByText("szyfr.")).toBeNull();
   });
 
-  it("wyszukiwarka filtruje szablony", async () => {
+  it("podtytuł z makiety powiązany z oknem jako opis", () => {
+    render(<NewPageView />);
+    expect(screen.getByRole("dialog", { name: "Nowa strona" })).toHaveAccessibleDescription(
+      "Szablon tworzy stronę z gotową tabelą. Pola, widoki i karty zmienisz później.",
+    );
+  });
+
+  it("Pusta strona: pole „Nazwa strony” puste z „Bez tytułu”, panel z opisem pustej strony", () => {
+    render(<NewPageView />);
+    const nazwa = screen.getByRole("textbox", { name: "Nazwa strony" });
+    expect(nazwa).toHaveValue("");
+    expect(nazwa).toHaveAttribute("placeholder", "Bez tytułu");
+    const panel = screen.getByRole("complementary", { name: "Co powstanie" });
+    expect(within(panel).getByText("Bez tytułu")).toBeInTheDocument();
+    expect(
+      within(panel).getByText("Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz, wpisując „/”."),
+    ).toBeInTheDocument();
+    expect(within(panel).queryByText(/^Pola ·/)).toBeNull();
+  });
+
+  it("Książki: „Pola · 5” z ikonami typów, „Widoki” z „Wszystkie”, „Grupowanie: Status” i „Dodatkowo”", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
-    await user.type(screen.getByRole("textbox", { name: "Szukaj szablonu" }), "web");
-    expect(screen.getByRole("button", { name: /Websites/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Books/ })).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /Książki/ }));
+    expect(screen.getByRole("radio", { name: /Książki/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Książki");
+    const panel = screen.getByRole("complementary", { name: "Co powstanie" });
+    expect(within(panel).getByText("Pola · 5")).toBeInTheDocument();
+    const pola = within(panel).getAllByTestId("pole-szablonu").map((w) => w.textContent);
+    expect(pola).toEqual(["AaTytułTekst", "AaAutorTekst", "◉StatusWybór", "★OcenaOcena", "31PrzeczytanaData"]);
+    const widoki = within(panel).getAllByTestId("widok-szablonu").map((w) => w.textContent);
+    expect(widoki).toEqual(["Wszystkie", "Czytam", "Do przeczytania", `Przeczytane w ${new Date().getFullYear()}`]);
+    expect(within(panel).getByText("Grupowanie: Status")).toBeInTheDocument();
+    expect(within(panel).getByText("Dodatkowo")).toBeInTheDocument();
+    expect(within(panel).getByText("Średnia ocena w stopce tabeli.")).toBeInTheDocument();
+  });
+
+  it("Subskrypcje: typy inteligentne i trzy linie „Dodatkowo”; Strony WWW bez „Dodatkowo”", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("radio", { name: /Subskrypcje/ }));
+    const panel = screen.getByRole("complementary", { name: "Co powstanie" });
+    expect(within(panel).getAllByTestId("pole-szablonu").map((w) => w.textContent)).toEqual([
+      "AaNazwaTekst",
+      "złKwota cyklicznaKwota cykliczna",
+      "31Data odnowieniaData odnowienia",
+      "◉KategoriaWybór",
+      "✓AktywnaCheckbox",
+    ]);
+    expect(within(panel).getByText("Grupowanie: Kategoria")).toBeInTheDocument();
+    expect(within(panel).getByText("Suma miesięczna w stopce tabeli.")).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: /Strony WWW/ }));
+    expect(within(screen.getByRole("complementary", { name: "Co powstanie" })).queryByText("Dodatkowo")).toBeNull();
+    expect(screen.getByText("↗", { selector: "span" })).toBeInTheDocument();
+  });
+
+  it("nazwa wpisana przez użytkownika trafia do nagłówka panelu; zmiana szablonu przywraca jego nazwę", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("radio", { name: /Projekty/ }));
+    const nazwa = screen.getByRole("textbox", { name: "Nazwa strony" });
+    await user.clear(nazwa);
+    await user.type(nazwa, "Studia");
+    expect(within(screen.getByRole("complementary", { name: "Co powstanie" })).getByText("Studia")).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: /Książki/ }));
+    expect(nazwa).toHaveValue("Książki");
+  });
+
+  it("wyszukiwanie filtruje szablony; brak wyniku pokazuje „Pokaż wszystkie”, które czyści frazę", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    const szukaj = screen.getByRole("textbox", { name: "Szukaj szablonu" });
+    await user.type(szukaj, "www");
+    expect(screen.getByRole("radio", { name: /Strony WWW/ })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Książki/ })).toBeNull();
+    await user.clear(szukaj);
+    await user.type(szukaj, "xyz");
+    expect(screen.getByText(/Brak szablonu „xyz”\./)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
+    expect(szukaj).toHaveValue("");
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
   });
 
   it("„Utwórz stronę” woła createPageFromTemplate(key, nazwa) i przechodzi do strony", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
-    await user.click(screen.getByRole("button", { name: /Books/ }));
+    await user.click(screen.getByRole("radio", { name: /Książki/ }));
     const nazwa = screen.getByRole("textbox", { name: "Nazwa strony" });
     await user.clear(nazwa);
     await user.type(nazwa, "Lektury");
     await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
     await waitFor(() => expect(push).toHaveBeenCalledWith("/strony/nowa"));
     expect(createPageFromTemplate).toHaveBeenCalledWith("books", "Lektury");
+  });
+
+  it("Pusta strona bez nazwy: createPageFromTemplate('empty', '')", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
+    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("empty", ""));
   });
 
   it("błąd tworzenia pokazuje toast i zostaje na miejscu", async () => {
@@ -115,63 +155,27 @@ describe("NewPageView", () => {
     render(<NewPageView />);
     // „Anuluj” bez ramki (ghost, .btng z makiet)
     expect(screen.getByRole("button", { name: "Anuluj" })).toHaveClass("border-transparent", "bg-transparent", "hover:bg-accent");
-    expect(screen.getByRole("button", { name: "Anuluj" }).className).not.toContain("border-input");
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
     await user.click(screen.getByRole("button", { name: "Zamknij" }));
     await user.keyboard("{Escape}");
     expect(back).toHaveBeenCalledTimes(3);
   });
 
-  it("karta szablonu ma fokus z shadow-focus i hover", async () => {
+  it("karta szablonu .tpl: zaznaczona ma ramkę i obwódkę primary, fokus shadow-focus", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
-    const karta = screen.getByRole("button", { name: /Books/ });
-    expect(karta).toHaveClass("rounded-xl", "shadow-xs", "hover:bg-panel", "focus-visible:shadow-focus", "outline-none");
-    // Zaznaczona: obwódka primary + cień zaznaczenia w style, fokus jako obrys
+    const karta = screen.getByRole("radio", { name: /Książki/ });
+    expect(karta).toHaveClass("rounded-xl", "shadow-xs", "hover:bg-panel", "focus-visible:shadow-focus", "min-h-14");
     await user.click(karta);
-    expect(karta).toHaveClass("border-primary", "focus-visible:outline-solid", "outline-ring");
-    expect(karta.style.boxShadow).toContain("rgba(38, 38, 38, 0.12)");
-    expect(karta).not.toHaveClass("focus-visible:shadow-focus");
+    expect(karta).toHaveClass("border-primary", "shadow-[0_0_0_1px_var(--primary)]");
   });
 
-  it("okno jak .dlg: tło z rozmyciem, promień, cień pop, szara stopka", () => {
+  it("okno jak .dlg 880 px: tło z rozmyciem, promień, cień pop, szara stopka", () => {
     render(<NewPageView />);
     const okno = screen.getByRole("dialog");
     expect(okno.parentElement).toHaveClass("backdrop-blur-[4px]");
-    expect(okno).toHaveClass("rounded-xl", "border-border", "shadow-pop");
-    expect(screen.getByRole("button", { name: "Utwórz stronę" }).parentElement).toHaveClass(
-      "border-t",
-      "bg-black/[.025]",
-    );
-  });
-
-  it("pola i odznaki typów z tokenów (StatusBadge), pole nazwy jak FIELD", async () => {
-    const user = userEvent.setup();
-    render(<NewPageView />);
-    await user.click(screen.getByRole("button", { name: /Projects/ }));
-    expect(screen.getByText("Data", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
-    expect(screen.getByText("Tekst", { selector: "span" })).toHaveClass("bg-white", "text-foreground");
-    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
-    expect(screen.getByRole("textbox", { name: "Szukaj szablonu" }).parentElement).toHaveClass("h-8", "shadow-xs");
-  });
-
-  it("wybór Subscriptions pokazuje pola z typami inteligentnymi i dopisek z extra", async () => {
-    const user = userEvent.setup();
-    render(<NewPageView />);
-    await user.click(screen.getByRole("button", { name: /Subscriptions/ }));
-    const lista = screen.getByText("Pola, które powstaną").parentElement!;
-    const wiersze = Array.from(lista.querySelectorAll("div.justify-between")).map((w) => w.textContent);
-    expect(wiersze).toEqual([
-      "NazwaTekst",
-      "Kwota cyklicznaKwota cykliczna",
-      "Data odnowieniaData odnowienia",
-      "KategoriaSelect",
-      "AktywnaCheckbox",
-    ]);
-    expect(screen.getByText("Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Subscriptions");
-    await user.click(screen.getByRole("button", { name: "Utwórz stronę" }));
-    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("subscriptions", "Subscriptions"));
+    expect(okno).toHaveClass("w-[min(880px,calc(100%-32px))]", "rounded-xl", "border-border", "shadow-pop");
+    expect(screen.getByRole("button", { name: "Utwórz stronę" }).parentElement).toHaveClass("border-t", "bg-black/[.025]");
   });
 });
 
@@ -204,22 +208,22 @@ describe("NewPageView: telefon (CMNewPage)", () => {
     expect(within(lista).getByRole("button", { name: /Pusta strona/ })).toHaveAttribute("aria-pressed", "true");
     expect(within(lista).getByText("Zacznij od zera")).toBeInTheDocument();
     expect(screen.getByText("bez pól")).toBeInTheDocument();
-    await user.click(within(lista).getByRole("button", { name: /Books/ }));
-    expect(within(lista).getByRole("button", { name: /Books/ })).toHaveAttribute("aria-pressed", "true");
-    expect(within(lista).getByRole("button", { name: /Books/ }).className).toContain("bg-black/[.03]");
-    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Books");
+    await user.click(within(lista).getByRole("button", { name: /Książki/ }));
+    expect(within(lista).getByRole("button", { name: /Książki/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(lista).getByRole("button", { name: /Książki/ }).className).toContain("bg-black/[.03]");
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("Książki");
     expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveClass("h-11", "text-base");
     for (const pole of ["Tytuł", "Autor", "Status", "Ocena", "Przeczytana"]) {
       expect(screen.getByText(pole)).toBeInTheDocument();
     }
-    expect(screen.getByText("Liczba przeczytanych w tym roku.")).toBeInTheDocument();
+    expect(screen.getByText("Średnia ocena w stopce tabeli.")).toBeInTheDocument();
     expect(screen.queryByText("bez pól")).toBeNull();
   });
 
   it("„Utwórz” woła createPageFromTemplate(key, nazwa) i przechodzi do strony; „Anuluj” wraca", async () => {
     const user = userEvent.setup();
     render(<NewPageView />);
-    await user.click(screen.getByRole("button", { name: /Books/ }));
+    await user.click(screen.getByRole("button", { name: /Książki/ }));
     const nazwa = screen.getByRole("textbox", { name: "Nazwa strony" });
     await user.clear(nazwa);
     await user.type(nazwa, "Lektury");
@@ -228,5 +232,13 @@ describe("NewPageView: telefon (CMNewPage)", () => {
     expect(createPageFromTemplate).toHaveBeenCalledWith("books", "Lektury");
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it("Pusta strona na telefonie też bez nazwy („Bez tytułu”): createPageFromTemplate('empty', '')", async () => {
+    const user = userEvent.setup();
+    render(<NewPageView />);
+    expect(screen.getByRole("textbox", { name: "Nazwa strony" })).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Utwórz" }));
+    await waitFor(() => expect(createPageFromTemplate).toHaveBeenCalledWith("empty", ""));
   });
 });

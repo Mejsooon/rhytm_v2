@@ -21,7 +21,8 @@ export const NAZWY_PODSUMOWAN: Record<SummaryKind, string> = {
   in_calendar: "W kalendarzu",
 };
 
-// Komórka stopki tabeli: wynik podsumowania kolumny z wierszy po filtrze (puste dla „Brak”).
+// Komórka stopki tabeli: wynik podsumowania kolumny z wierszy po filtrze (puste dla „Brak”). Ten sam `summarize`
+// liczy podsumowanie w nagłówku grupy (pierwsza kolumna z podsumowaniem, wiersze grupy) i opis pod tabelą.
 // `fields` to wszystkie pola tabeli: sumy Kwoty cyklicznej i podsumowania Daty odnowienia szukają w nich „Aktywnej”.
 export function SummaryCell({
   field,
@@ -42,8 +43,8 @@ export function SummaryCell({
     summary?.kind === "avg" || summary?.kind === "sum_month" || summary?.kind === "sum_year";
   return (
     <td
-      // Stopka jak w S2Books.dc.html: padding 8 × 12 px (wiersz ok. 37 px), linia nad komórką, liczby i kwoty do prawej
-      className={`border-t border-border px-3 py-2 tabular-nums ${
+      // Stopka jak w S2Table (tfoot): wiersz 36 px, tekst 12 px, linia nad komórką, liczby i kwoty do prawej
+      className={`h-9 border-t border-border px-3 text-xs tabular-nums ${
         field.type === "number" || field.type === "recurring" ? "text-right" : ""
       } ${wyrozniona ? "font-semibold text-foreground" : "text-muted-foreground"}`}
     >

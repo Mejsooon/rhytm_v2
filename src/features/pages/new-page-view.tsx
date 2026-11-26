@@ -2,20 +2,21 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Info, Search, X } from "lucide-react";
+import { Check, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, FIELD, StatusBadge } from "@/components/controls";
+import { Button, FIELD } from "@/components/controls";
 import { cn } from "@/lib/utils";
 import { createPageFromTemplate } from "./actions";
-import { FIELD_TYPE_META } from "./fields";
+import { FIELD_TYPE_META, type FieldType } from "./fields";
 import { BLAD_ZAPISU } from "./messages";
 import { MNewPage } from "./mobile/m-new-page";
 import { PageIcon } from "./page-icon";
-import { TEMPLATE_KEYS, TEMPLATES, type TemplateKey } from "./templates";
+import { TEMPLATES, type TemplateKey } from "./templates";
 
-// Wybór szablonu nowej strony (S2NewPage.dc.html): okno .dlg 920 px nad przyciemnionym tłem,
-// po lewej karty szablonów, po prawej „Pola, które powstaną” z tej samej konfiguracji co strony.
+// Wybór szablonu nowej strony (S2NewPage.dc.html): okno .dlg 880 px nad przyciemnionym tłem,
+// po lewej nazwa strony i karty szablonów, po prawej „Co powstanie” (pola, widoki, grupowanie, „Dodatkowo”)
+// z tej samej konfiguracji co strony.
 // Telefon (poniżej 800 px) według mediów; po stronie serwera (i przy hydratacji) układ jest nieustalony (null),
 // więc przy twardym wejściu widać samo tło, a nie błysk niewłaściwego układu. W testach bez matchMedia: web
 function subskrybujTelefon(wywolaj: () => void) {
@@ -27,6 +28,18 @@ function czyTelefon() {
   return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
 }
 
+// Kolejność kart jak w makiecie: Pusta strona na całą szerokość, potem Subskrypcje, Książki, Projekty, Strony WWW
+const KOLEJNOSC: TemplateKey[] = ["empty", "subscriptions", "books", "projects", "websites"];
+// Znaki i nazwy typów pól z makiety (S2NewPage: IC i TN); reszta typów z FIELD_TYPE_META
+const ZNAK_TYPU: Partial<Record<FieldType, string>> = {
+  select: "◉",
+  status: "◉",
+  date: "31",
+  renewal: "31",
+  recurring: "zł",
+};
+const NAZWA_TYPU: Partial<Record<FieldType, string>> = { select: "Wybór", status: "Wybór", url: "Link" };
+
 export function NewPageView() {
   const router = useRouter();
   // Telefon dostaje arkusz CMNewPage (MNewPage) ze wspólnym stanem i zapisem; web zostaje oknem 920 px
@@ -37,19 +50,19 @@ export function NewPageView() {
   );
   const [wybrany, setWybrany] = React.useState<TemplateKey>("empty");
   const [fraza, setFraza] = React.useState("");
-  // Nazwa wpisana przez użytkownika; bez niej pole pokazuje nazwę szablonu
+  // Nazwa wpisana przez użytkownika; bez niej pole pokazuje nazwę szablonu (pusta strona: bez nazwy, „Bez tytułu”)
   const [nazwaWlasna, setNazwaWlasna] = React.useState<string | null>(null);
   const [trwa, setTrwa] = React.useState(false);
 
   const szablon = TEMPLATES[wybrany];
-  const nazwa = nazwaWlasna ?? szablon.name;
+  const nazwa = nazwaWlasna ?? (wybrany === "empty" ? "" : szablon.name);
   const szukane = fraza.trim().toLowerCase();
-  const widoczne = TEMPLATE_KEYS.filter(
-    (k) =>
-      szukane === "" ||
-      TEMPLATES[k].name.toLowerCase().includes(szukane) ||
-      TEMPLATES[k].desc.toLowerCase().includes(szukane),
+  const widoczne = KOLEJNOSC.filter(
+    (k) => szukane === "" || `${TEMPLATES[k].name} ${TEMPLATES[k].hint}`.toLowerCase().includes(szukane),
   );
+  // „Grupowanie: Status” — pole grupowania „Wszystkich” z szablonu
+  const poleGrupy = szablon.fields.find((f) => f.key === szablon.group);
+  const dodatkowo = szablon.extra.split("\n").filter((linia) => linia !== "");
 
   React.useEffect(() => {
     function przyKlawiszu(e: KeyboardEvent) {
@@ -101,8 +114,8 @@ export function NewPageView() {
         aria-modal="true"
         aria-labelledby="np-title"
         aria-describedby="np-desc"
-        // .dlg: promień 16 px, ramka border, cień pop; 64 px od góry jak w makiecie
-        className="mx-auto mt-16 mb-8 flex w-[min(920px,calc(100%-32px))] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop max-[799px]:mt-4"
+        // .dlg 880 px: promień 16 px, ramka border, cień pop; 64 px od góry jak w makiecie
+        className="mx-auto mt-16 mb-8 flex w-[min(880px,calc(100%-32px))] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop max-[799px]:mt-4"
       >
         {/* .dlg-h */}
         <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
@@ -112,37 +125,53 @@ export function NewPageView() {
             </h2>
             {/* .dlg-d: opis okna, 14 px, kolor muted, 4 px od tytułu */}
             <p id="np-desc" className="mt-1 mb-0 text-sm text-muted-foreground">
-              Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.
+              Szablon tworzy stronę z gotową tabelą. Pola, widoki i karty zmienisz później.
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon
-            aria-label="Zamknij"
-            onClick={() => router.back()}
-            className="max-[799px]:size-11"
-          >
+          <Button variant="ghost" size="sm" icon aria-label="Zamknij" onClick={() => router.back()}>
             <X aria-hidden="true" className="size-4" />
           </Button>
         </div>
 
-        <div className="flex flex-wrap">
-          <div className="flex min-w-0 flex-[999_1_380px] flex-col gap-3.5 px-6 pt-1 pb-5">
-            {/* .igroup: 32 px, cień xs, fokus ring + halo na całej grupie */}
-            <label className="flex h-8 items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo max-[799px]:h-11">
-              <Search size={16} aria-hidden="true" />
-              <input
-                type="text"
-                value={fraza}
-                onChange={(e) => setFraza(e.target.value)}
-                placeholder="Szukaj szablonu…"
-                aria-label="Szukaj szablonu"
-                className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground max-[799px]:text-[15px]"
-              />
+        {/* Dwie kolumny: wybór (reszta szerokości) i podgląd „Co powstanie” 320 px */}
+        <div className="grid grid-cols-[minmax(0,1fr)_320px] border-t border-black/[.08]">
+          <div className="flex min-w-0 flex-col gap-4 px-6 py-5">
+            {/* .fld: etykieta nad polem; ikona szablonu w kwadracie 38 px przed polem */}
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              Nazwa strony
+              <span className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="grid size-[38px] flex-none place-items-center rounded-[8px] bg-black/5 text-foreground"
+                >
+                  <PageIcon icon={szablon.icon} size={18} />
+                </span>
+                <input
+                  type="text"
+                  value={nazwa}
+                  maxLength={200}
+                  placeholder="Bez tytułu"
+                  onChange={(e) => setNazwaWlasna(e.target.value)}
+                  className={FIELD}
+                />
+              </span>
             </label>
-            <div className="text-xs font-medium text-muted-foreground">Szablony</div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-muted-foreground">Szablony</span>
+              {/* .igroup 220 × 32 px */}
+              <label className="flex h-8 w-[220px] items-center gap-2 rounded-md border border-input bg-white px-[11px] text-muted-foreground shadow-xs transition-[box-shadow,border-color] duration-150 focus-within:border-ring focus-within:shadow-halo">
+                <Search size={14} aria-hidden="true" />
+                <input
+                  type="text"
+                  value={fraza}
+                  onChange={(e) => setFraza(e.target.value)}
+                  placeholder="Szukaj szablonu…"
+                  aria-label="Szukaj szablonu"
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-faint-foreground"
+                />
+              </label>
+            </div>
+            <div role="radiogroup" aria-label="Szablon" className="grid grid-cols-2 gap-2.5">
               {widoczne.map((klucz) => {
                 const t = TEMPLATES[klucz];
                 const zaznaczony = klucz === wybrany;
@@ -150,92 +179,113 @@ export function NewPageView() {
                   <button
                     key={klucz}
                     type="button"
-                    aria-pressed={zaznaczony}
-                    onClick={() => setWybrany(klucz)}
-                    // Zaznaczona: cień zaznaczenia w style, więc fokus jako obrys zamiast shadow-focus
-                    style={zaznaczony ? { boxShadow: "0 0 0 3px rgba(38,38,38,.12)" } : undefined}
+                    role="radio"
+                    aria-checked={zaznaczony}
+                    onClick={() => {
+                      setWybrany(klucz);
+                      // Nowy szablon podpowiada własną nazwę
+                      setNazwaWlasna(null);
+                    }}
+                    // .tpl: 56 px, promień 12 px; zaznaczona — ramka i obwódka 1 px w kolorze primary
                     className={cn(
-                      "flex min-h-[60px] cursor-pointer flex-col items-start gap-0.5 rounded-xl border bg-white px-3 py-2.5 text-left font-[inherit] text-sm text-foreground shadow-xs transition-[border-color,box-shadow,background-color] duration-150 hover:bg-panel",
-                      zaznaczony
-                        ? "border-primary outline-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
-                        : "border-border outline-none focus-visible:shadow-focus",
+                      "flex min-h-14 w-full cursor-pointer items-center gap-2.5 rounded-xl border bg-white px-3 py-2.5 text-left font-[inherit] text-sm text-foreground shadow-xs outline-none transition-[border-color,box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus",
+                      zaznaczony ? "border-primary shadow-[0_0_0_1px_var(--primary)]" : "border-border",
+                      klucz === "empty" && "col-span-full",
                     )}
                   >
-                    <span className="flex items-center gap-2 font-medium">
-                      <span className="grid size-[26px] place-items-center rounded-[7px] bg-black/[.04] text-foreground">
-                        <PageIcon icon={t.icon} size={16} />
-                      </span>
-                      {t.name}
-                      {/* Odznaka „szyfr.” przy szablonie z polem Sekret (makieta CNewPage) */}
-                      {t.fields.some((f) => f.type === "secret") && (
-                        <StatusBadge tone="green" className="ml-auto">
-                          szyfr.
-                        </StatusBadge>
-                      )}
+                    {/* .tic 30 px */}
+                    <span aria-hidden="true" className="grid size-[30px] flex-none place-items-center rounded-[8px] bg-black/5">
+                      <PageIcon icon={t.icon} size={16} />
                     </span>
-                    {/* Opis pod nazwą, wcięty o ikonę (26 px + 8 px odstępu) */}
-                    <span className="pl-[34px] text-[13px] leading-[1.4] text-muted-foreground">{t.desc}</span>
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="font-medium">{t.name}</span>
+                      <span className="text-[13px] text-muted-foreground">{t.hint}</span>
+                    </span>
                   </button>
                 );
               })}
-              {/* .empty: komunikat na całą szerokość siatki, gdy fraza nic nie znalazła */}
               {widoczne.length === 0 && (
-                <div className="col-span-full flex flex-col items-center gap-2 p-6 text-center">
-                  Brak szablonu „{fraza}”.
+                <div className="col-span-full rounded-xl border border-dashed border-black/[.16] p-5 text-center text-muted-foreground">
+                  Brak szablonu „{fraza}”.{" "}
+                  <Button variant="ghost" size="xs" onClick={() => setFraza("")}>
+                    Pokaż wszystkie
+                  </Button>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-l border-border bg-panel px-6 pt-1 pb-5 max-[799px]:border-t max-[799px]:border-l-0">
-            <div className="text-xs font-medium text-muted-foreground">Pola, które powstaną</div>
-            <div className="text-lg font-semibold">{szablon.name}</div>
-            {/* .frame > .inner: ramka 1,5 px, promień 12 px */}
-            <div className="overflow-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white">
-              {wybrany !== "empty" &&
-                szablon.fields.map((pole) => (
-                  <div
-                    key={pole.key}
-                    className="flex items-center justify-between gap-2.5 border-b border-black/[.06] px-3 py-[9px] text-sm"
-                  >
-                    <span>{pole.name}</span>
-                    {/* S2NewPage: zielona tylko Ocena; Termin w Projects to zwykła „Data” (o kalendarzu mówi opis pod listą) */}
-                    <StatusBadge tone={pole.type === "rating" || pole.type === "secret" ? "green" : "outline"}>
-                      {FIELD_TYPE_META[pole.type].label}
-                    </StatusBadge>
-                  </div>
-                ))}
-              {wybrany === "empty" && (
-                <div className="px-3 py-3.5 text-[13px] text-muted-foreground">
-                  Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz z szybkiego startu albo wpisując „/”.
-                </div>
-              )}
+          <aside
+            aria-label="Co powstanie"
+            className="flex min-w-0 flex-col gap-4 border-l border-black/[.08] bg-panel px-6 py-5"
+          >
+            <div className="flex items-center gap-2">
+              <PageIcon icon={szablon.icon} size={18} />
+              <b className="truncate text-base font-semibold">{nazwa.trim() === "" ? "Bez tytułu" : nazwa}</b>
             </div>
-            {/* .alert.info: osobna karta na każdą linię opisu szablonu */}
-            {szablon.extra
-              .split("\n")
-              .filter((linia) => linia !== "")
-              .map((linia) => (
-                <div
-                  key={linia}
-                  className="flex items-start gap-2.5 rounded-xl border border-info-border bg-info/[.04] px-3.5 py-3 text-[13px]"
-                >
-                  <Info size={16} aria-hidden="true" className="mt-px flex-none" />
-                  <span>{linia}</span>
+            {wybrany === "empty" ? (
+              <p className="m-0 text-[13px] leading-normal text-muted-foreground">
+                Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz, wpisując „/”.
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Pola · {szablon.fields.length}</span>
+                  {/* .frame: biała ramka z wierszami .nprow */}
+                  <div className="overflow-hidden rounded-xl border border-border bg-white">
+                    {szablon.fields.map((pole) => (
+                      <div
+                        key={pole.key}
+                        data-testid="pole-szablonu"
+                        className="flex items-center gap-2.5 border-b border-black/[.06] px-3 py-2 text-sm last:border-b-0"
+                      >
+                        {/* .ftype 22 px: znak typu pola */}
+                        <span
+                          aria-hidden="true"
+                          className="grid size-[22px] flex-none place-items-center rounded-[6px] bg-black/5 text-[11px] font-semibold text-[#404040]"
+                        >
+                          {ZNAK_TYPU[pole.type] ?? FIELD_TYPE_META[pole.type].icon}
+                        </span>
+                        <span className="flex-1">{pole.name}</span>
+                        <span className="text-[13px] text-muted-foreground">
+                          {NAZWA_TYPU[pole.type] ?? FIELD_TYPE_META[pole.type].label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            <div className="flex-1" />
-            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
-              Nazwa strony
-              <input
-                type="text"
-                value={nazwa}
-                maxLength={200}
-                onChange={(e) => setNazwaWlasna(e.target.value)}
-                className={FIELD}
-              />
-            </label>
-          </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Widoki</span>
+                  <span className="flex flex-wrap gap-1.5">
+                    {["Wszystkie", ...szablon.views.map((w) => w.name.replace("{year}", String(new Date().getFullYear())))].map(
+                      (w) => (
+                        // .vchip
+                        <span
+                          key={w}
+                          data-testid="widok-szablonu"
+                          className="inline-flex h-6 items-center rounded-full border border-black/[.12] bg-white px-2.5 text-xs font-medium text-[#404040]"
+                        >
+                          {w}
+                        </span>
+                      ),
+                    )}
+                  </span>
+                  {poleGrupy && <span className="text-[13px] text-muted-foreground">Grupowanie: {poleGrupy.name}</span>}
+                </div>
+              </>
+            )}
+            {dodatkowo.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">Dodatkowo</span>
+                {dodatkowo.map((linia) => (
+                  <span key={linia} className="flex items-start gap-2 text-[13px] leading-[1.45]">
+                    <Check size={14} strokeWidth={2.5} aria-hidden="true" className="mt-0.5 flex-none text-[#15803d]" />
+                    {linia}
+                  </span>
+                ))}
+              </div>
+            )}
+          </aside>
         </div>
 
         {/* .dlg-f: szara stopka */}

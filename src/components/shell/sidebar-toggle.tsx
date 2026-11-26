@@ -8,9 +8,9 @@ import { useSidebarState } from "./sidebar-state";
 
 // Przyciski schowania/pokazania paska bocznego (tylko web, na telefonie ukryte):
 // - sidebar: ghost xs obok „rhytm” (S2Sidebar),
-// - header: ghost sm przed okruszkami, tylko gdy pasek jest schowany (S2SidebarCollapsed).
-export function SidebarToggle({ placement }: { placement: "sidebar" | "header" }) {
-  const { collapsed, toggle } = useSidebarState();
+// - rail: przycisk 36 px w schowanym pasku pod logo (S2SidebarCollapsed, .rail button).
+export function SidebarToggle({ placement }: { placement: "sidebar" | "rail" }) {
+  const { toggle } = useSidebarState();
   // Skrót w podpowiedzi zależy od systemu; na serwerze Ctrl, żeby HTML się zgadzał (po hydratacji ⌘ na Macu)
   const mac = React.useSyncExternalStore(
     () => () => {},
@@ -19,21 +19,33 @@ export function SidebarToggle({ placement }: { placement: "sidebar" | "header" }
   );
   const skrot = mac ? "⌘+\\" : "Ctrl+\\";
 
-  if (placement === "header" && !collapsed) return null;
-
   const etykieta = placement === "sidebar" ? "Schowaj pasek boczny" : "Pokaż pasek boczny";
   const Ikona = placement === "sidebar" ? PanelLeftClose : PanelLeftOpen;
+  if (placement === "rail") {
+    return (
+      <button
+        type="button"
+        aria-label={etykieta}
+        title={`${etykieta} · ${skrot}`}
+        onClick={toggle}
+        // .rail button: 36 px, promień 8 px, kolor rgba(38,38,38,.68), najechanie tło 4%
+        className="grid size-9 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent p-0 text-[rgba(38,38,38,.68)] outline-none hover:bg-black/[.04] hover:text-foreground focus-visible:shadow-focus"
+      >
+        <Ikona size={16} aria-hidden="true" />
+      </button>
+    );
+  }
   return (
     <Button
       variant="ghost"
-      size={placement === "sidebar" ? "xs" : "sm"}
+      size="xs"
       icon
       aria-label={etykieta}
       // Podpowiedź jak w makiecie: „Schowaj pasek boczny · Ctrl+\”
       title={`${etykieta} · ${skrot}`}
       onClick={toggle}
-      // Szara ikona (#686868); w pasku bocznym przycisk wysunięty 4 px w prawo jak w S2Sidebar
-      className={placement === "sidebar" ? "-mr-1 text-muted-foreground max-[799px]:hidden" : "text-muted-foreground max-[799px]:hidden"}
+      // Szara ikona (#686868), przycisk wysunięty 4 px w prawo jak w S2Sidebar
+      className="-mr-1 text-muted-foreground max-[799px]:hidden"
     >
       <Ikona size={16} aria-hidden="true" />
     </Button>

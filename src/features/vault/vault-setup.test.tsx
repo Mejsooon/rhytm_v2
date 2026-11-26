@@ -90,13 +90,22 @@ describe("VaultSetup", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się połączyć z sejfem. Spróbuj ponownie.");
   });
 
-  it("Anuluj i ✕ wywołują onCancel", async () => {
+  it("Anuluj wywołuje onCancel; okno bez ✕ (S2VaultSetup)", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
     render(<VaultSetup onCancel={onCancel} />);
     await user.click(screen.getByRole("button", { name: "Anuluj" }));
-    await user.click(screen.getByRole("button", { name: "Zamknij" }));
-    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Zamknij" })).not.toBeInTheDocument();
+  });
+
+  it("teksty okna webu z S2VaultSetup: opis, ostrzeżenie przed polami, fokus w „Hasło główne”", () => {
+    render(<VaultSetup onCancel={() => {}} />);
+    expect(screen.getByText("Szyfruje hasła i notatki w przeglądarce. My go nie znamy i nie widzimy Twoich sekretów.")).toBeInTheDocument();
+    const ostrzezenie = screen.getByText(/Użyj innego hasła niż do konta\. Zapomnianego hasła głównego/);
+    expect(ostrzezenie).toHaveTextContent("Użyj innego hasła niż do konta. Zapomnianego hasła głównego nie da się odzyskać.");
+    expect(ostrzezenie.compareDocumentPosition(screen.getByLabelText("Hasło główne")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByLabelText("Hasło główne")).toHaveFocus();
   });
 
   describe("ekran telefonu (CMVaultSetup)", () => {

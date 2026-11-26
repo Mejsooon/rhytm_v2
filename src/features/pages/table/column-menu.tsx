@@ -14,6 +14,7 @@ import {
   Repeat,
   Sigma,
   SquareCheck,
+  TextAlignStart,
   Trash2,
 } from "lucide-react";
 
@@ -43,7 +44,8 @@ const IKONA = "size-4 flex-none text-muted-foreground";
 const PODMENU =
   "absolute top-0 z-10 w-[210px] rounded-lg border border-border bg-white bg-clip-padding p-1 shadow-lg max-[799px]:static max-[799px]:mt-1 max-[799px]:w-auto max-[799px]:shadow-none";
 
-// Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Podsumowanie … ›”,
+// Menu kolumny z ColumnMenu.dc.html: nazwa, „Typ: … ›”, sort, „Filtruj po tym polu”, „Grupuj po tym polu” (Wybór,
+// Status; S2Table), „Podsumowanie … ›”,
 // „Pokaż w kalendarzu” (tylko Data), „Ukryj kolumnę” i „Usuń pole”. Wyzwalaczem jest nagłówek kolumny;
 // podmenu (typy, podsumowania) otwierają się obok menu, na telefonie pod pozycją.
 // Opcjonalnie (blok PageTable): „Przesuń w lewo / w prawo” i dla Wyboru sekcja „Opcje” z polem „Nowa opcja…”.
@@ -60,6 +62,7 @@ export function ColumnMenu({
   onPickType,
   onSort,
   onFilter,
+  onGroupBy,
   onSummary,
   onToggleCalendar,
   onConfig,
@@ -86,6 +89,8 @@ export function ColumnMenu({
   onPickType: (type: FieldType) => void;
   onSort: (dir: "asc" | "desc") => void;
   onFilter: () => void;
+  // „Grupuj po tym polu” (S2Table, tylko Wybór i Status); bez niej pozycji nie ma
+  onGroupBy?: () => void;
   onSummary: (kind: SummaryKind) => void;
   onToggleCalendar: () => void;
   // Zmiana configu pola (np. cykl Daty odnowienia); klucz z wartością undefined jest usuwany
@@ -236,6 +241,12 @@ export function ColumnMenu({
           <Funnel aria-hidden="true" className={IKONA} />
           <span className="flex-1">Filtruj po tym polu</span>
         </button>
+        {jestWyborem && onGroupBy && (
+          <button type="button" role="menuitem" onClick={() => wykonaj(onGroupBy)} className={POZYCJA}>
+            <TextAlignStart aria-hidden="true" className={IKONA} />
+            <span className="flex-1">Grupuj po tym polu</span>
+          </button>
+        )}
 
     </>
   );

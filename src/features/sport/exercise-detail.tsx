@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PencilIcon } from "lucide-react";
 
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
   Card,
@@ -264,8 +263,6 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
           aria-label="Okruszki"
           className="flex items-center gap-1.5 text-sm text-muted-foreground"
         >
-          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-          <SidebarToggle placement="header" />
           <Link
             href="/sport"
             className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"

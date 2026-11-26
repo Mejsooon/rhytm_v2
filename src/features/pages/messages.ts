@@ -9,3 +9,8 @@ export const SEJF_ZABLOKOWANY = "Nie zapisano. Sejf musi być odblokowany.";
 export const SEKRET_ZA_DLUGI = "Nie zapisano. Tekst jest za długi.";
 // „Zapisz” wiersza w trakcie zapisu poprzedniej zmiany (drugi zapis nie rusza, ale nie znika bez śladu)
 export const ZAPIS_W_TOKU = "Poczekaj, zapisuję poprzednią zmianę.";
+
+// Akcje na wielu wierszach naraz (limit 500) i import CSV (limit 5000 wierszy)
+export const ZA_DUZO_WIERSZY = "Zaznacz najwyżej 500 wierszy naraz.";
+export const IMPORT_ZA_DUZO = "Plik ma za dużo wierszy. Maksymalnie 5000.";
+export const IMPORT_HASLA = "Do strony Hasła nie można importować CSV.";

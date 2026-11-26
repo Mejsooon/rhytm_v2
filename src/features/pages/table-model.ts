@@ -36,7 +36,15 @@ export type FilterCond = {
     | "before"
     | "after"
     | "empty"
-    | "not_empty";
+    | "not_empty"
+    // Data od dziś do dziś+N dni (value: liczba dni)
+    | "within_days"
+    // Rok daty równy rokowi dziś
+    | "this_year"
+    // Wybór spoza listy value
+    | "not_in"
+    // Tekst różny od value (bez wielkości liter); puste odrzucone
+    | "not_equals";
   value?: unknown;
 };
 
@@ -98,7 +106,34 @@ export type TableSettings = {
   pinned_cards: PinnedCard[];
   // Szerokości kolumn w px (id pola → szerokość, min. 80); brak wpisu = domyślna
   column_widths: Record<string, number>;
+  // Zapisane widoki poza „Wszystkie”
+  views: TableView[];
+  // null = „Wszystkie”
+  active_view_id: string | null;
+  // Grupowanie i układ „Wszystkich”
+  group_by: string | null;
+  layout: "table" | "board";
+  // id widoku albo "all" → klucze zwiniętych grup
+  collapsed_groups: Record<string, string[]>;
 };
+
+// Widok zapisany w ustawieniach tabeli (poza „Wszystkie”)
+export type TableView = {
+  id: string;
+  name: string;
+  filters: FilterCond[];
+  sort: SortKey[];
+  group_by: string | null;
+  layout: "table" | "board";
+  hidden_field_ids: string[];
+};
+
+// Ustawienia w takiej postaci, w jakiej budują je szablony: bez kluczy widoków i grup
+// (brakujące klucze czytamy z domyślnymi wartościami)
+export type StoredTableSettings = Omit<
+  TableSettings,
+  "views" | "active_view_id" | "group_by" | "layout" | "collapsed_groups"
+>;
 
 // Odmiana polska: 1 / 2-4 (poza 12-14) / reszta
 function odmien(n: number, jeden: string, kilka: string, wiele: string): string {
@@ -117,16 +152,16 @@ export function operatorsFor(type: FieldType): FilterCond["op"][] {
       return ["checked", "unchecked"];
     case "select":
     case "status":
-      return ["in", "empty"];
+      return ["in", "not_in", "empty"];
     case "number":
     case "rating":
       return ["gte", "lte", "empty"];
     case "text":
     case "url":
-      return ["contains", "empty"];
+      return ["contains", "not_equals", "empty"];
     case "date":
     case "renewal":
-      return ["before", "after", "empty"];
+      return ["before", "after", "within_days", "this_year", "empty"];
     case "recurring":
       return ["gte", "lte", "empty"];
     // Sekret: serwer i widok widzą tylko szyfrogram, więc można filtrować jedynie puste / niepuste
@@ -173,6 +208,26 @@ export function visibleRows(
         case "in": {
           if (!Array.isArray(cond.value) || cond.value.length === 0) return true;
           return v !== null && cond.value.includes(v);
+        }
+        case "not_in": {
+          if (!Array.isArray(cond.value) || cond.value.length === 0) return true;
+          return v === null || !cond.value.includes(v);
+        }
+        case "not_equals": {
+          if (typeof cond.value !== "string" || cond.value.trim() === "") return true;
+          if (typeof v !== "string") return false;
+          return v.trim().toLowerCase() !== cond.value.trim().toLowerCase();
+        }
+        case "within_days": {
+          if (typeof cond.value !== "number" || !Number.isFinite(cond.value) || today === null) return true;
+          if (typeof v !== "string") return false;
+          const [r, m, d] = today.split("-").map(Number);
+          const koniec = new Date(Date.UTC(r, m - 1, d + Math.trunc(cond.value))).toISOString().slice(0, 10);
+          return v >= today && v <= koniec;
+        }
+        case "this_year": {
+          if (today === null) return true;
+          return typeof v === "string" && v.slice(0, 4) === today.slice(0, 4);
         }
         case "gte":
         case "lte": {

@@ -263,8 +263,10 @@ describe("MEditor (telefon)", () => {
     render(<EditorView data={dane([tabela()])} />);
     const siatka = screen.getByRole("table");
     // Kontener przewija się poziomo, a siatka ma szerokość sumy kolumn (tytuł 300 + status 180) plus 56 px
+    // (kolumny zaznaczania i „#” są na telefonie ukryte i nie liczą się do szerokości)
     expect(siatka.parentElement!.className).toContain("overflow-x-auto");
-    expect(siatka.style.width).toBe("536px");
+    expect(siatka.style.getPropertyValue("--szerokosc-tabeli")).toBe("536px");
+    expect(siatka.className).toContain("max-[799px]:w-(--szerokosc-tabeli)");
     expect(siatka.style.minWidth).toBe("100%");
   });
 
@@ -284,8 +286,8 @@ describe("MEditor (telefon)", () => {
     const user = userEvent.setup();
     const t = tabela();
     const { rerender } = render(<EditorView data={dane([t])} />);
-    const stopka = () => screen.getAllByRole("row").at(-1) as HTMLElement;
-    expect(within(stopka()).getByText("1 wiersz")).toBeTruthy();
+    // Liczba wierszy stoi w stopce ramki (plakietka telefonu)
+    expect(screen.getAllByText("1 wiersz").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "Usuń blok" }));
     await waitFor(() => expect(actions.deleteBlock).toHaveBeenCalledWith("t1"));
@@ -302,7 +304,7 @@ describe("MEditor (telefon)", () => {
       rows: [...t.rows, { id: "r2", values: { f1: "Nowe" }, position: 1, deletedAt: null }],
     };
     rerender(<EditorView data={dane([zSerwera])} />);
-    expect(within(stopka()).getByText("2 wiersze")).toBeTruthy();
+    expect(screen.getAllByText("2 wiersze").length).toBeGreaterThan(0);
   });
 
   it("„Cofnij” po usunięciu bloku tekstu nie odświeża danych", async () => {

@@ -97,26 +97,83 @@ describe("EditorView", () => {
     await waitFor(() => expect(renamePage).toHaveBeenCalledWith("p1", "Plan"));
   });
 
-  it("przycisk ikony (przerywana ramka bez ikony) otwiera IconPicker; wybór zapisuje setPageIcon, błąd cofa", async () => {
+  it("S2EmptyPage: „Dodaj ikonę” nad tytułem otwiera IconPicker; wybrana ikona to przycisk 44 px, „Usuń” z błędem cofa", async () => {
     const user = userEvent.setup();
     render(<EditorView data={dane([])} />);
-    const przycisk = screen.getByRole("button", { name: "Zmień ikonę" });
-    expect(przycisk.className).toContain("border-dashed");
-    expect(przycisk).toHaveClass("rounded-[10px]", "bg-panel");
-    await user.click(przycisk);
+    const dodaj = screen.getByRole("button", { name: "Dodaj ikonę" });
+    // .btng.xs, szary tekst; pusta strona pokazuje go bez najechania
+    expect(dodaj).toHaveClass("h-6", "text-muted-foreground");
+    expect(dodaj).not.toHaveClass("opacity-0");
+    await user.click(dodaj);
     expect(screen.getByRole("group", { name: "Wybór ikony" })).toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Szukaj ikony" }), "ksiazki");
     await user.click(screen.getByRole("button", { name: "book-open" }));
     expect(setPageIcon).toHaveBeenCalledWith("p1", "lucide:book-open");
-    expect(screen.getByRole("button", { name: "Zmień ikonę" }).querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
-    expect(screen.getByRole("button", { name: "Zmień ikonę" }).className).not.toContain("border-dashed");
+    const zmien = screen.getByRole("button", { name: "Zmień ikonę strony" });
+    expect(zmien).toHaveClass("size-11");
+    expect(zmien.querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
+    expect(screen.queryByRole("button", { name: "Dodaj ikonę" })).toBeNull();
 
     setPageIcon.mockResolvedValue({ ok: false, message: "x" });
-    await user.click(screen.getByRole("button", { name: "Zmień ikonę" }));
+    await user.click(screen.getByRole("button", { name: "Zmień ikonę strony" }));
     await user.click(screen.getByRole("button", { name: "Usuń" }));
     expect(setPageIcon).toHaveBeenLastCalledWith("p1", "");
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    expect(screen.getByRole("button", { name: "Zmień ikonę" }).querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
+    expect(screen.getByRole("button", { name: "Zmień ikonę strony" }).querySelector("[data-page-icon]")).toHaveAttribute(
+      "data-page-icon",
+      "book-open",
+    );
+  });
+
+  it("strona bez ikony: „Dodaj ikonę” zawsze widoczne (także z blokami i na stronie z szablonu), sam tekst bez ikony", () => {
+    const { unmount } = render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
+    const dodaj = screen.getByRole("button", { name: "Dodaj ikonę" });
+    expect(dodaj).not.toHaveClass("opacity-0");
+    expect(dodaj.querySelector("svg")).toBeNull();
+    expect(dodaj.textContent).toBe("Dodaj ikonę");
+    unmount();
+    const d = stronaTestowa("books", "Książki", []);
+    render(<EditorView data={{ ...d, page: { ...d.page, icon: "" } }} />);
+    expect(screen.getByRole("button", { name: "Dodaj ikonę" })).not.toHaveClass("opacity-0");
+  });
+
+  it("S2Table: przycisk ikony nad tytułem w odstępie 24 px (nie zachodzi na ramkę nagłówka)", () => {
+    const d = stronaTestowa("books", "Książki", []);
+    render(<EditorView data={{ ...d, page: { ...d.page, icon: "lucide:book-open" } }} />);
+    expect(screen.getByRole("button", { name: "Zmień ikonę strony" }).parentElement).toHaveClass("-top-6");
+  });
+
+  it("dawny blok opisu szablonu (niezmieniony) jest ukryty, bo opis stoi pod tytułem; zmieniony zostaje", () => {
+    const d = stronaTestowa("books", "Książki", []);
+    const intro = (text: string): LoadedBlock => ({ id: "intro", type: "text", position: -1, content: { text }, fields: [], rows: [] });
+    const { unmount } = render(
+      <EditorView data={{ ...d, blocks: [intro("Co czytam, co przeczytałem i co chcę przeczytać."), ...d.blocks] }} />,
+    );
+    expect(screen.queryByDisplayValue("Co czytam, co przeczytałem i co chcę przeczytać.")).toBeNull();
+    expect(screen.getByText("Twoje książki: czytane, przeczytane i na później.")).toBeInTheDocument();
+    unmount();
+    render(<EditorView data={{ ...d, blocks: [intro("Co czytam w tym roku"), ...d.blocks] }} />);
+    expect(screen.getByDisplayValue("Co czytam w tym roku")).toBeInTheDocument();
+  });
+
+  it("S2EmptyPage: tytuł 32 px z „Bez tytułu” w placeholderze", () => {
+    render(<EditorView data={dane([])} />);
+    const tytul = screen.getByRole("textbox", { name: "Nazwa strony" });
+    expect(tytul).toHaveClass("min-[800px]:text-[32px]");
+    expect(tytul).toHaveAttribute("placeholder", "Bez tytułu");
+  });
+
+  it("S2Table: strona z szablonu ma tytuł 24 px bez ikony i opis szablonu pod tytułem", () => {
+    const d = stronaTestowa("books", "Książki", [{ Tytuł: "Diuna", Status: "Czytam" }]);
+    render(<EditorView data={{ ...d, page: { ...d.page, icon: "lucide:book-open" } }} />);
+    const tytul = screen.getByRole("textbox", { name: "Nazwa strony" });
+    expect(tytul).toHaveClass("text-2xl");
+    expect(tytul).not.toHaveClass("min-[800px]:text-[32px]");
+    expect(screen.getByText("Twoje książki: czytane, przeczytane i na później.")).toBeInTheDocument();
+    // Ikona strony nie stoi przy tytule: zmiana ikony po najechaniu (mały przycisk) albo w menu strony w pasku bocznym
+    const zmien = screen.getByRole("button", { name: "Zmień ikonę strony" });
+    expect(zmien).toHaveClass("opacity-0", "group-hover/tytul:opacity-100", "h-6");
+    expect(zmien).not.toHaveClass("size-11");
   });
 
   it("pusty tytuł pokazuje w ścieżce „Bez tytułu”", async () => {
@@ -207,7 +264,7 @@ describe("EditorView", () => {
     expect(screen.queryByRole("listbox", { name: "Bloki" })).toBeNull();
   });
 
-  it("„/tab” zostawia Tabelę, a wstawiona tabela ma pole nazwy z placeholderem „Tabela bez nazwy”", async () => {
+  it("„/tab” zostawia Tabelę, a wstawiona tabela ma zakładki widoków i „Nowy wiersz” w nagłówku", async () => {
     const user = userEvent.setup();
     addBlock.mockResolvedValue({ ok: true, block: blok("t1", "table", 0, { name: "" }) });
     render(<EditorView data={dane([])} />);
@@ -215,8 +272,8 @@ describe("EditorView", () => {
     expect(screen.getAllByRole("option")).toHaveLength(1);
     await user.keyboard("{Enter}");
     await waitFor(() => expect(addBlock).toHaveBeenCalledWith("p1", "table", undefined));
-    const nazwa = await screen.findByRole("textbox", { name: "Nazwa tabeli" });
-    expect(nazwa).toHaveAttribute("placeholder", "Tabela bez nazwy");
+    expect(await screen.findByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
+    expect(within(screen.getAllByRole("banner")[0]).getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
   });
 
   it("Enter na zwykłym tekście wstawia akapit na końcu i czyści pole", async () => {
@@ -230,17 +287,20 @@ describe("EditorView", () => {
     expect(akapity.map((a) => (a as HTMLTextAreaElement).value)).toEqual(["Pierwszy", "Hej"]);
   });
 
-  it("pusta strona pokazuje chipy i link do szablonów; po pierwszym bloku znikają", async () => {
+  it("pusta strona: „albo zacznij od:” z czterema chipami i karta „Wolisz gotowca?”; po pierwszym bloku znikają", async () => {
     const user = userEvent.setup();
     render(<EditorView data={dane([])} />);
     expect(screen.getByText("albo zacznij od:")).toBeInTheDocument();
-    for (const n of ["Tabela", "Lista zadań", "Nagłówek", "Tekst"]) {
-      expect(screen.getByRole("button", { name: new RegExp(n) })).toBeInTheDocument();
+    for (const [znak, n] of [["▦", "Tabela"], ["✓", "Lista zadań"], ["H", "Nagłówek"], ["¶", "Tekst"]]) {
+      const chip = screen.getByRole("button", { name: new RegExp(n) });
+      // .qchip: pigułka 34 px ze znakiem w kwadracie .sic 22 px
+      expect(chip).toHaveClass("h-[34px]", "rounded-full");
+      expect(chip.textContent).toBe(`${znak}${n}`);
     }
-    expect(screen.getByRole("link", { name: "Użyj szablonu →" })).toHaveAttribute("href", "/strony/nowa");
-    // Podpowiedź i link bez czcionki mono, link jak w makiecie (foreground, 500)
-    expect(screen.getByText("albo zacznij od:")).not.toHaveClass("font-mono");
-    expect(screen.getByRole("link", { name: "Użyj szablonu →" })).toHaveClass("font-medium", "text-foreground");
+    const karta = screen.getByText("Wolisz gotowca?").closest("div")!;
+    expect(karta).toHaveClass("border-dashed", "max-w-[560px]");
+    expect(within(karta).getByText("Subskrypcje, Książki, Projekty albo Strony WWW z gotową tabelą i widokami.")).toBeInTheDocument();
+    expect(within(karta).getByRole("link", { name: "Użyj szablonu →" })).toHaveAttribute("href", "/strony/nowa");
     await user.click(screen.getByRole("button", { name: /Tekst/ }));
     await waitFor(() => expect(screen.queryByText("albo zacznij od:")).toBeNull());
     expect(screen.queryByText(/Wolisz gotowca/)).toBeNull();
@@ -381,37 +441,62 @@ describe("EditorView", () => {
     await user.click(trafienie);
     expect(updateBlockContent).toHaveBeenCalledWith("z", { text: "Kup", done: true });
   });
-  it("nagłówek web ma okruszki i menu strony „⋯”; „Szablony” tylko przy pustej stronie (S2EmptyPage)", async () => {
+  it("przycisk główny nagłówka z rzeczownikiem szablonu („Nowa książka”) dodaje wiersz do tabeli", async () => {
     const user = userEvent.setup();
-    const { unmount } = render(<EditorView data={dane([], "Bez tytułu")} />);
-    const pustyNaglowek = screen.getAllByRole("banner")[0];
-    expect(within(pustyNaglowek).getByRole("link", { name: "Szablony" })).toHaveAttribute("href", "/strony/nowa");
-    unmount();
-    render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Books")} />);
+    tabelowe.addRow.mockImplementation(async (_b: string, values: Record<string, unknown>) => ({
+      ok: true,
+      row: { id: "srv-w", values, position: 9, deletedAt: null },
+    }));
+    const d = stronaTestowa("books", "Książki", [{ Tytuł: "Diuna", Status: "Czytam" }]);
+    render(<EditorView data={d} />);
     const naglowek = screen.getAllByRole("banner")[0];
-    expect(naglowek.textContent).toContain("Strony");
-    expect(within(naglowek).getByRole("heading", { level: 1, name: "Books" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Szablony" })).toBeNull();
-    const menu = within(naglowek).getByRole("button", { name: "Menu strony" });
-    // .btn.ic: kwadratowy przycisk 32 px
-    expect(menu).toHaveClass("size-8", "border-input");
-    await user.click(menu);
-    expect(await screen.findByRole("menu", { name: "Strona Books" })).toBeInTheDocument();
+    await user.click(within(naglowek).getByRole("button", { name: "Nowa książka" }));
+    await waitFor(() => expect(tabelowe.addRow).toHaveBeenCalledWith("blok-1", expect.any(Object)));
+    // Wiersze danych mają pole zaznaczania (nagłówki grup szablonu i stopka nie)
+    await waitFor(() =>
+      expect(within(screen.getAllByRole("table")[0]).getAllByRole("checkbox", { name: /^Zaznacz: / })).toHaveLength(2),
+    );
   });
 
-  it("strona z szablonu Books pokazuje blok tekstu i tabelę z kartami", () => {
+  it("strona bez tabeli nie ma przycisku głównego", () => {
+    render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
+    expect(within(screen.getAllByRole("banner")[0]).queryByRole("button", { name: /^Now/ })).toBeNull();
+  });
+
+  it("nagłówek web: okruszki bez menu strony „⋯”; „Szablony” na stronie edytora (S2EmptyPage), nie na stronie z szablonu", () => {
+    const { unmount } = render(<EditorView data={dane([], "")} />);
+    const pustyNaglowek = screen.getAllByRole("banner")[0];
+    expect(within(pustyNaglowek).getByRole("link", { name: "Szablony" })).toHaveAttribute("href", "/strony/nowa");
+    expect(within(pustyNaglowek).getByRole("heading", { level: 1, name: "Bez tytułu" })).toBeInTheDocument();
+    expect(within(pustyNaglowek).queryByRole("button", { name: /Menu strony/ })).toBeNull();
+    unmount();
+    const { unmount: unmount2 } = render(<EditorView data={dane([blok("t", "text", 0, { text: "Notatka" })], "Notatki")} />);
+    const naglowek = screen.getAllByRole("banner")[0];
+    expect(naglowek.textContent).toContain("Strony");
+    expect(within(naglowek).getByRole("heading", { level: 1, name: "Notatki" })).toBeInTheDocument();
+    expect(within(naglowek).getByRole("link", { name: "Szablony" })).toBeInTheDocument();
+    expect(within(naglowek).queryByRole("button", { name: /Menu strony/ })).toBeNull();
+    unmount2();
+    render(<EditorView data={stronaTestowa("books", "Książki", [])} />);
+    const naglowekKsiazek = screen.getAllByRole("banner")[0];
+    expect(within(naglowekKsiazek).queryByRole("link", { name: "Szablony" })).toBeNull();
+    expect(within(naglowekKsiazek).queryByRole("button", { name: /Menu strony/ })).toBeNull();
+    expect(within(naglowekKsiazek).getByRole("button", { name: "Nowa książka" })).toBeInTheDocument();
+  });
+
+  it("strona z szablonu Books (dawna, z blokiem tekstu) pokazuje blok tekstu i tabelę z kartami", () => {
     let n = 0;
-    const [tekst, tabela] = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
+    const [tabela] = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`);
     const d = stronaTestowa("books", "Books", [{ Tytuł: "Diuna", Status: "Czytam" }]);
     const bloki: LoadedBlock[] = [
-      { id: tekst.id, type: "text", position: 0, content: tekst.content, fields: [], rows: [] },
+      { id: "intro", type: "text", position: 0, content: { text: "Co czytam" }, fields: [], rows: [] },
       { ...d.blocks[0], id: tabela.id, position: 1 },
     ];
     render(<EditorView data={{ ...d, blocks: bloki }} />);
-    expect(screen.getByRole("textbox", { name: "Akapit" })).toHaveValue("Co czytam, co przeczytałem i co chcę przeczytać.");
+    expect(screen.getByRole("textbox", { name: "Akapit" })).toHaveValue("Co czytam");
     // Trzy karty i przycisk „Karta” na końcu rzędu
     expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
-    expect(screen.getByRole("textbox", { name: "Nazwa tabeli" })).toHaveValue("Books");
+    expect(screen.getByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Diuna/ })).toBeInTheDocument();
   });
 
@@ -429,7 +514,12 @@ describe("EditorView", () => {
     const tabela = (i: number) => screen.getAllByRole("table")[i];
     const naglowki = (i: number) => within(tabela(i)).getAllByRole("columnheader").map((h) => h.textContent);
     const tytuly = (i: number) =>
-      within(tabela(i)).getAllByRole("row").slice(1, -1).map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
+      within(tabela(i))
+        .getAllByRole("row")
+        .flatMap((r) => {
+          const pole = r.querySelector("td input") as HTMLInputElement | null;
+          return pole ? [pole.value] : [];
+        });
     const naglowkiDrugiej = naglowki(1);
 
     // Ukrycie „Autor” w pierwszej tabeli
@@ -444,9 +534,12 @@ describe("EditorView", () => {
     const filtr = await screen.findByRole("dialog", { name: "Filtr" });
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    expect(tytuly(1)).toEqual(["Deep Work"]);
+    await waitFor(() => expect(tytuly(1)).toEqual(["Deep Work"]));
     expect(tytuly(0)).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.textContent)).toEqual(["Filtruj", "Filtruj · 1"]);
+    expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual([
+      "Filtruj",
+      "Filtruj · 1",
+    ]);
   });
 
   // CMSubs (T16): ekran telefonu tylko dla strony z szablonu Subscriptions z polami Kwota cykliczna i Data odnowienia
@@ -474,10 +567,10 @@ describe("EditorView", () => {
 
   it("Subscriptions: telefon ma „Więcej” (menu strony), a blok tekstu szablonu jest ukryty na telefonie, nie na webie", () => {
     const d = stronaTestowa("subscriptions", "Subscriptions", []);
-    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Twoje subskrypcje i ich odnowienia." }, fields: [], rows: [] };
+    const intro = { id: "intro", type: "text" as const, position: -1, content: { text: "Moje notatki o subskrypcjach" }, fields: [], rows: [] };
     render(<EditorView data={{ ...d, blocks: [intro, ...d.blocks] }} />);
     expect(screen.getByRole("button", { name: "Więcej" })).toBeInTheDocument();
-    const wrapper = screen.getByDisplayValue("Twoje subskrypcje i ich odnowienia.").closest(".group");
+    const wrapper = screen.getByDisplayValue("Moje notatki o subskrypcjach").closest(".group");
     expect(wrapper).toHaveClass("max-[799px]:hidden");
   });
 });

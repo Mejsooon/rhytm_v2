@@ -1,12 +1,16 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Response } from "@playwright/test";
 
 import { adminClient } from "./helpers/konto";
 
 import {
   utworzBooks,
+  utworzProjekty,
   utworzSubscriptions,
   zalozKontoStron,
   zasiejPustaStrone,
+  zasiejWiersze,
 } from "./helpers/strony";
 
 // Silnik stron: strona z szablonu Books, edytor z tabelą, kosz i telefon.
@@ -29,9 +33,9 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // „+ Nowy” zakłada wiersz na serwerze (pojawia się po odpowiedzi) i stawia kursor w komórce tytułu
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz” zakłada wiersz na serwerze (pojawia się po odpowiedzi) i stawia kursor w komórce tytułu
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const tytul = wiersz.getByRole("textbox", { name: "Tytuł", exact: true });
     await expect(tytul).toBeFocused();
@@ -82,6 +86,225 @@ test.describe("strony", () => {
     await expect(karta).toHaveText(/Czytam teraz\s*1/);
   });
 
+  // Cztery książki w różnych statusach (zasiew przez API administratora) i odświeżenie strony
+  const KSIAZKI = [
+    { Tytuł: "Atomic Habits", Autor: "James Clear", Status: "Czytam" },
+    { Tytuł: "Deep Work", Autor: "Cal Newport", Status: "Przeczytane", Ocena: 4, Przeczytana: "2026-10-12" },
+    { Tytuł: "Diuna", Autor: "Frank Herbert", Status: "Przeczytane", Ocena: 5, Przeczytana: "2026-06-15" },
+    { Tytuł: "Clean Code", Autor: "Robert C. Martin", Status: "Chcę przeczytać" },
+  ];
+
+  test("widoki: zakładka szablonu i nowy widok z filtra zostają wybrane po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+
+    // Zakładki szablonu z liczbą wierszy; „Czytam” zawęża tabelę
+    const zakladki = page.getByRole("group", { name: "Zapisane widoki" });
+    const czytam = zakladki.getByRole("button", { name: /^Czytam\s*1$/ });
+    const zapisWidoku = page.waitForResponse(AKCJA_SERWERA);
+    await czytam.click();
+    await zapisWidoku;
+    await expect(czytam).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+    await page.reload();
+    await expect(czytam).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+
+    // „Wszystkie” → filtr „Tytuł zawiera »deep«” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
+    await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
+    await expect(wiersze).toHaveCount(4);
+    await page.getByRole("button", { name: "Filtruj", exact: true }).click();
+    const filtr = page.getByRole("dialog", { name: "Filtr" });
+    await filtr.getByRole("button", { name: "Dodaj warunek" }).click();
+    await filtr.getByRole("textbox", { name: "Wartość warunku 1" }).fill("deep");
+    await expect(wiersze).toHaveCount(1);
+    const zapisNowego = page.waitForResponse(AKCJA_SERWERA);
+    await filtr.getByRole("button", { name: "Zapisz jako widok" }).click();
+    await zapisNowego;
+    const moj = zakladki.getByRole("button", { name: /^Mój widok 1\s*1$/ });
+    await expect(moj).toHaveAttribute("aria-pressed", "true");
+    await page.reload();
+    await expect(moj).toHaveAttribute("aria-pressed", "true");
+    await expect(wiersze).toHaveCount(1);
+    await expect(page.getByRole("textbox", { name: "Tytuł", exact: true })).toHaveValue("Deep Work");
+    // „Wszystkie” bez filtra (zapis jako widok czyści filtr „Wszystkich”)
+    await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
+    await expect(wiersze).toHaveCount(4);
+  });
+
+  test("grupy: Książki grupowane po Statusie, zwinięcie grupy zostaje po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+    await expect(page.getByRole("button", { name: /^Grupuj: Status/ })).toBeVisible();
+    // Nagłówek grupy „Przeczytane”: liczba i średnia ocena grupy
+    await expect(page.getByText("śr. ocena 4,5", { exact: true })).toBeVisible();
+
+    const zapisZwiniecia = page.waitForResponse(AKCJA_SERWERA);
+    await page.getByRole("button", { name: "Zwiń grupę Przeczytane" }).click();
+    await zapisZwiniecia;
+    await expect(wiersze).toHaveCount(2);
+    await expect(page.getByText("zwinięte · 2 ukryte", { exact: true })).toBeVisible();
+    // Zapis ustawień może iść w kilku akcjach (kolejka magazynu): czekamy, aż sieć ucichnie
+    await page.waitForLoadState("networkidle");
+    await page.reload();
+    await expect(wiersze).toHaveCount(2);
+    await page.getByRole("button", { name: "Rozwiń grupę Przeczytane" }).click();
+    await expect(wiersze).toHaveCount(4);
+
+    // Bez grupowania: jedna lista bez nagłówków grup
+    await page.getByRole("button", { name: /^Grupuj: Status/ }).click();
+    await page.getByRole("menuitemradio", { name: "Bez grupowania" }).click();
+    await expect(page.getByRole("button", { name: /grupę Przeczytane/ })).toHaveCount(0);
+    await expect(wiersze).toHaveCount(4);
+  });
+
+  test("tablica: Projekty, przeciągnięcie karty do „Zrobione” zmienia Status i zostaje po odświeżeniu", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzProjekty(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, [
+      { Nazwa: "rhytm", Status: "W toku", Obszar: "Własne" },
+      { Nazwa: "Projekt z baz danych", Status: "Do zrobienia", Obszar: "Studia" },
+    ]);
+    await page.reload();
+    await page.getByRole("button", { name: "Tablica", exact: true }).click();
+    const wToku = page.getByRole("region", { name: "W toku" });
+    const zrobione = page.getByRole("region", { name: "Zrobione" });
+    await expect(wToku.getByRole("article", { name: "rhytm" })).toBeVisible();
+
+    const zapis = page.waitForResponse(AKCJA_SERWERA);
+    await wToku.getByRole("article", { name: "rhytm" }).dragTo(zrobione);
+    await zapis;
+    await expect(zrobione.getByRole("article", { name: "rhytm" })).toBeVisible();
+    await expect(wToku.getByRole("article", { name: "rhytm" })).toHaveCount(0);
+
+    // Układ „Tablica” i nowy Status zostają po odświeżeniu
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Tablica", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("region", { name: "Zrobione" }).getByRole("article", { name: "rhytm" }),
+    ).toBeVisible();
+  });
+
+  test("CSV: import pliku z Excela (BOM, „;”, polskie liczby i daty) i eksport całej tabeli", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    const idStrony = page.url().split("/").at(-1)!;
+
+    // Import: „⋯” → „Importuj z CSV…” → plik → dopasowanie (Cena jako nowe pole Liczba) → „Importuj 2 wiersze”
+    await page.getByRole("button", { name: "Menu tabeli" }).click();
+    await page.getByRole("menuitem", { name: "Importuj z CSV…" }).click();
+    const okno = page.getByRole("dialog", { name: "Importuj z CSV" });
+    await okno.getByLabel("Plik CSV").setInputFiles({
+      name: "ksiazki.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(
+        "\uFEFFTytuł;Autor;Przeczytana;Cena\r\nDiuna;Frank Herbert;15.06.2026;43,50\r\n„Sapiens”;Yuval Noah Harari;11.12.2025;1 234,99\r\n;;;\r\n\r\n",
+        "utf8",
+      ),
+    });
+    await expect(okno.getByText("ksiazki.csv")).toBeVisible();
+    await okno
+      .getByRole("combobox", { name: "Pole dla kolumny Cena" })
+      .selectOption({ label: "Nowe pole · Liczba" });
+    const zapisImportu = page.waitForResponse(AKCJA_SERWERA);
+    await okno.getByRole("button", { name: "Importuj 2 wiersze" }).click();
+    await zapisImportu;
+    await okno.getByRole("button", { name: "Gotowe" }).click();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(2);
+    await expect(
+      page.getByRole("columnheader").getByRole("button", { name: "Cena", exact: true }),
+    ).toBeVisible();
+
+    // W bazie: liczby i daty przeliczone z zapisu polskiego, bez pustych wierszy z końca pliku
+    const admin = adminClient();
+    const { data: blok } = await admin
+      .from("page_blocks")
+      .select("id")
+      .eq("page_id", idStrony)
+      .eq("type", "table")
+      .single();
+    const { data: pola } = await admin
+      .from("page_fields")
+      .select("id, name")
+      .eq("block_id", blok!.id);
+    const id = (nazwa: string) => pola!.find((f) => f.name === nazwa)!.id;
+    const { data: zapisane } = await admin
+      .from("page_rows")
+      .select("values")
+      .eq("block_id", blok!.id)
+      .is("deleted_at", null);
+    const poTytule = new Map(
+      zapisane!.map((r) => [(r.values as Record<string, unknown>)[id("Tytuł")], r.values as Record<string, unknown>]),
+    );
+    expect(poTytule.size).toBe(2);
+    expect(poTytule.get("Diuna")?.[id("Cena")]).toBe(43.5);
+    expect(poTytule.get("Diuna")?.[id("Przeczytana")]).toBe("2026-06-15");
+    expect(poTytule.get("„Sapiens”")?.[id("Cena")]).toBe(1234.99);
+
+    // Eksport całej tabeli: plik „Książki.csv” z nagłówkiem pól i obiema książkami
+    await page.getByRole("button", { name: "Menu tabeli" }).click();
+    const pobranie = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }).click();
+    const plik = await pobranie;
+    expect(plik.suggestedFilename()).toBe("Książki.csv");
+    const csv = readFileSync(await plik.path(), "utf8").replace(/^\uFEFF/, "");
+    const [naglowek, ...reszta] = csv.split("\r\n").filter((l) => l !== "");
+    expect(naglowek.split(",")).toEqual(expect.arrayContaining(["Tytuł", "Autor", "Status", "Cena"]));
+    expect(reszta).toHaveLength(2);
+    expect(csv).toContain("Diuna");
+  });
+
+  test("zaznaczanie: trzy wiersze → „Usuń” → „Cofnij” przywraca wszystkie", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+    const userId = await zalozKontoStron(page, info.project.name);
+    await utworzBooks(page);
+    await zasiejWiersze(userId, page.url().split("/").at(-1)!, KSIAZKI);
+    await page.reload();
+    const wiersze = page.locator("tbody tr:has(input)");
+    await expect(wiersze).toHaveCount(4);
+
+    for (const tytul of ["Atomic Habits", "Deep Work", "Clean Code"])
+      await page.getByRole("checkbox", { name: `Zaznacz: ${tytul}` }).check();
+    const pasek = page.getByRole("toolbar", { name: "Akcje dla zaznaczonych" });
+    await expect(pasek).toContainText("3");
+    const usuniecie = page.waitForResponse(AKCJA_SERWERA);
+    await pasek.getByRole("button", { name: "Usuń" }).click();
+    await usuniecie;
+    await expect(wiersze).toHaveCount(1);
+    await expect(pasek).toHaveCount(0);
+    await expect(page.getByText("Usunięto 3 wiersze")).toBeVisible();
+
+    await page.getByRole("button", { name: "Cofnij" }).click();
+    await expect(wiersze).toHaveCount(4);
+    await page.reload();
+    await expect(wiersze).toHaveCount(4);
+  });
+
   test("Subscriptions: szablon, kwota, cykl, sumy", async ({ page }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
     await zalozKontoStron(page, info.project.name);
@@ -91,9 +314,9 @@ test.describe("strony", () => {
     const sumaRoczna = page.getByTestId("karta").filter({ hasText: "Σ rocznie" });
     const najblizsze = page.getByTestId("karta").filter({ hasText: "Najbliższe odnowienie" });
 
-    // „+ Nowy”: nazwa „Netflix” (Enter zapisuje od razu), potem kwota 43 (zapis przy pisaniu)
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz”: nazwa „Netflix” (Enter zapisuje od razu), potem kwota 43 (zapis przy pisaniu)
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const nazwa = wiersz.getByRole("textbox", { name: "Nazwa", exact: true });
     const zapisNazwy = page.waitForResponse(AKCJA_SERWERA);
@@ -148,8 +371,9 @@ test.describe("strony", () => {
     await page.goto(`/strony/${idStrony}`);
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
-    await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
-    await expect(page.getByRole("columnheader")).toHaveCount(4, { timeout: 20_000 });
+    await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
+    // 3 pola, „+” oraz zaznaczanie i „#” (S2Table)
+    await expect(page.getByRole("columnheader")).toHaveCount(6, { timeout: 20_000 });
 
     // „+” → okno „Nowe pole” → grupa „Inteligentne” → Kwota cykliczna (domyślna nazwa „Cena”)
     await page.getByRole("button", { name: "Dodaj kolumnę" }).click();
@@ -161,11 +385,11 @@ test.describe("strony", () => {
     await okno.getByRole("button", { name: "Dodaj pole" }).click();
     await dodanie;
     const naglowek = page.getByRole("columnheader");
-    await expect(naglowek).toHaveCount(5, { timeout: 20_000 });
+    await expect(naglowek).toHaveCount(7, { timeout: 20_000 });
     await expect(naglowek.getByRole("button", { name: "Cena", exact: true })).toBeVisible();
 
     // Kwota 43 w pierwszym wierszu, podsumowanie „Suma / mies.” → stopka „Σ 43,00 zł / mies.”
-    const kwota = page.locator("tbody tr").first().getByRole("textbox", { name: "Cena", exact: true });
+    const kwota = page.locator("tbody tr:has(input)").first().getByRole("textbox", { name: "Cena", exact: true });
     const zapisKwoty = page.waitForResponse(AKCJA_SERWERA);
     await kwota.fill("43");
     await zapisKwoty;
@@ -214,9 +438,9 @@ test.describe("strony", () => {
       };
     }
 
-    // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const status = wiersz.getByRole("button", { name: /^Status: / });
     await expect(status).toHaveText("Chcę przeczytać");
@@ -354,15 +578,19 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
 
     await page
-      .getByRole("navigation", { name: "Główna nawigacja" })
+      .getByRole("navigation", { name: "Główna nawigacja", exact: true })
       .getByRole("link", { name: "Nowa strona", exact: true })
       .click();
     await expect(page).toHaveURL(/\/strony\/nowa$/);
     const okno = page.getByRole("dialog", { name: "Nowa strona" });
     await expect(okno).toBeVisible();
+    // S2NewPage: karty szablonów po polsku (radio), domyślnie Pusta strona
     await expect(
-      okno.getByRole("button", { name: /^Books/ }),
+      okno.getByRole("radio", { name: /^Książki/ }),
     ).toBeVisible();
+    await expect(
+      okno.getByRole("radio", { name: /^Pusta strona/ }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect(
       okno.getByRole("button", { name: "Utwórz stronę" }),
     ).toBeVisible();
@@ -381,15 +609,15 @@ test.describe("strony", () => {
 
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
-    await expect(page.getByLabel("Nazwa tabeli")).toBeVisible();
+    await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
 
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id):
-    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)
-    await expect(page.getByRole("columnheader")).toHaveCount(4, {
+    // zaznaczanie, „#”, 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)
+    await expect(page.getByRole("columnheader")).toHaveCount(6, {
       timeout: 20_000,
     });
     // Nowa tabela ma dwa puste wiersze
-    const wiersze = page.locator("tbody tr");
+    const wiersze = page.locator("tbody tr:has(input)");
     await expect(wiersze).toHaveCount(2);
     const naglowek = page.getByRole("columnheader");
     const menuKolumny = page.getByRole("dialog", { name: "Kolumna Status" });
@@ -408,8 +636,8 @@ test.describe("strony", () => {
     ).toHaveCount(0);
     await expect(menuKolumny).toHaveCount(0);
 
-    // „+ Nowy” → trzeci wiersz; w jego komórce Status wpisujemy „5” i Enter
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    // „Nowy wiersz” → trzeci wiersz; w jego komórce Status wpisujemy „5” i Enter
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
     await expect(wiersze).toHaveCount(3);
     const komorka = wiersze
       .nth(2)
@@ -441,17 +669,18 @@ test.describe("strony", () => {
     ).toBeVisible();
   });
 
-  test("ikona strony: „Zmień ikonę” → „rakieta” → rocket → ikona w sidebarze", async ({
+  test("ikona strony: menu strony w pasku → „Zmień ikonę” → „rakieta” → rocket → ikona w sidebarze", async ({
     page,
   }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // Ikona z szablonu Books to book-open; wybieramy rakietę z wyszukiwarki ikon
-    const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
+    // Ikona z szablonu Książki to book-open; wybieramy rakietę z wyszukiwarki ikon w menu strony paska (S2PageMenu)
+    const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze.locator("svg.lucide-book-open")).toBeVisible();
-    await page.getByRole("button", { name: "Zmień ikonę", exact: true }).click();
+    await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Zmień ikonę" }).click();
     await page.getByRole("textbox", { name: "Szukaj ikony" }).fill("rakieta");
     await page.getByRole("button", { name: "rocket", exact: true }).click();
 
@@ -468,9 +697,10 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    const wSidebarze = page.getByRole("link", { name: "Books", exact: true });
+    const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze).toBeVisible();
-    await page.getByRole("button", { name: "Menu strony", exact: true }).click();
+    // Menu strony „⋯” jest w pasku bocznym (S2PageMenu)
+    await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
     const potwierdzenie = page.getByRole("alertdialog", { name: /Usunąć stronę/ });
     await expect(potwierdzenie).toBeVisible();
@@ -482,7 +712,7 @@ test.describe("strony", () => {
     await page.goto("/ustawienia/ogolne");
     const kosz = page.locator("#kosz");
     await expect(kosz.getByRole("heading", { name: "Kosz" })).toBeVisible();
-    const pozycja = kosz.getByRole("listitem", { name: "Books" });
+    const pozycja = kosz.getByRole("listitem", { name: "Książki" });
     await expect(pozycja).toContainText("zostało 30 dni");
     await pozycja.getByRole("button", { name: "Przywróć" }).click();
     await expect(kosz.getByText("Kosz jest pusty.")).toBeVisible();
@@ -499,7 +729,7 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzSubscriptions(page);
 
-    await expect(page.getByRole("heading", { name: "Subscriptions", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Subskrypcje", level: 1 })).toBeVisible();
     // Dwa układy są w DOM, więc zawężamy do widocznych
     const miesiecznie = page.getByText("Miesięcznie", { exact: true }).filter({ visible: true }).locator("..");
     await expect(miesiecznie).toContainText("0,00 zł");
@@ -560,6 +790,7 @@ test.describe("strony", () => {
 
     // Strona pojawia się na liście
     await page.goto("/strony");
-    await expect(page.getByRole("link", { name: /Pusta strona/ })).toBeVisible();
+    // Pusta strona bez nazwy to „Bez tytułu” (jak na webie)
+    await expect(page.getByRole("link", { name: /Bez tytułu/ }).first()).toBeVisible();
   });
 });

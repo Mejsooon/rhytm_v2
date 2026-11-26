@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Lock, TriangleAlert, X } from "lucide-react";
+import { Lock, TriangleAlert } from "lucide-react";
 
 import { Button, Checkbox, EmptyState, TextField } from "@/components/controls";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { useVault } from "./vault-provider";
 
 const ETYKIETY = ["Za krótkie", "Słabe", "Średnie", "Mocne", "Bardzo mocne"] as const;
 
-// Ustawienie hasła głównego sejfu (CVaultSetup.dc.html) jako karta w miejscu tabeli.
+// Ustawienie hasła głównego sejfu (S2VaultSetup.dc.html) jako okno; pozycję i przyciemnienie nadaje rodzic.
 // Hasła istnieją tylko w stanie pól i są czyszczone zaraz po wysłaniu.
 // `ekran` (telefon, CMVaultSetup.dc.html): zamiast karty pełny ekran pod nagłówkiem „Hasła” — opis, ostrzeżenie,
 // pola 44 px, miernik, zgoda, „Utwórz sejf” i „Anuluj” (link do listy stron). Obie wersje mają tę samą logikę
@@ -113,48 +113,54 @@ export function VaultSetup({ onCancel, ekran = false }: { onCancel: () => void; 
     );
   }
 
+  // Web (S2VaultSetup): okno 460 px — tytuł i opis, ostrzeżenie, pola z miernikiem (paski i podpis obok), zgoda,
+  // stopka „Anuluj” / „Utwórz sejf”. Pozycję i przyciemnienie nadaje rodzic
   return (
     <form
       aria-labelledby={`${id}-t`}
-      className="mx-auto flex w-full max-w-[500px] flex-col rounded-xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop"
+      className="mx-auto flex w-full max-w-[460px] flex-col rounded-2xl border border-border bg-white bg-clip-padding text-sm text-foreground shadow-pop"
       onSubmit={wyslij}
     >
       {/* Ukryta nazwa użytkownika: menedżer haseł zapisze hasło główne pod osobnym wpisem, nie pod kontem */}
       <input type="text" autoComplete="username" value="Sejf rhytm (hasło główne)" readOnly hidden aria-hidden="true" tabIndex={-1} />
-      <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
-        <div>
-          <h2 id={`${id}-t`} className="m-0 text-lg leading-[1.3] font-semibold">
-            Ustaw hasło główne sejfu
-          </h2>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">
-            Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko szyfrogram.
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" icon aria-label="Zamknij" onClick={onCancel} className="max-[799px]:size-11">
-          <X aria-hidden="true" className="size-4" />
-        </Button>
+      <div className="px-6 pt-6 pb-4">
+        <h2 id={`${id}-t`} className="m-0 text-lg leading-[1.3] font-semibold">
+          Ustaw hasło główne sejfu
+        </h2>
+        <p className="m-0 mt-1 text-sm text-muted-foreground">
+          Szyfruje hasła i notatki w przeglądarce. My go nie znamy i nie widzimy Twoich sekretów.
+        </p>
       </div>
 
       <div className="flex flex-col gap-4 px-6 pb-5">
+        {/* Ostrzeżenie (#fff7ed / #9a3412) przed polami */}
+        <div className="flex items-start gap-2 rounded-[10px] bg-[#fff7ed] px-3 py-2.5 text-[13px] leading-[1.45] text-[#9a3412]">
+          <TriangleAlert aria-hidden="true" className="mt-px size-4 flex-none" />
+          <span>
+            Użyj innego hasła niż do konta. Zapomnianego hasła głównego <b>nie da się odzyskać</b>.
+          </span>
+        </div>
         <TextField
           label="Hasło główne"
           type="password"
           autoComplete="new-password"
+          autoFocus
           value={haslo}
           onChange={(e) => setHaslo(e.target.value)}
           aria-describedby={`${id}-sila`}
         />
-        <div id={`${id}-sila`}>
-          <div className="flex gap-1">
+        {/* Miernik: 4 paski i podpis po prawej (80 px) */}
+        <div id={`${id}-sila`} className="-mt-1 flex items-center gap-2">
+          <div className="grid flex-1 grid-cols-4 gap-1">
             {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
                 data-segment=""
-                className={cn("h-1 flex-1 rounded-sm", i < sila ? kolorPaska : "bg-black/[.08]")}
+                className={cn("h-1 rounded-sm", i < sila ? kolorPaska : "bg-black/[.08]")}
               />
             ))}
           </div>
-          <div aria-live="polite" className={cn("mt-1.5 text-xs", kolorTekstu)}>
+          <div aria-live="polite" className={cn("w-20 text-right text-xs", kolorTekstu)}>
             {ETYKIETY[sila]}
           </div>
         </div>
@@ -166,13 +172,6 @@ export function VaultSetup({ onCancel, ekran = false }: { onCancel: () => void; 
           onChange={(e) => setPowtorz(e.target.value)}
           error={roznia ? "Hasła się różnią." : undefined}
         />
-        <div className="flex items-start gap-2.5 rounded-lg border border-destructive-border bg-destructive/[.04] px-3.5 py-3 text-sm">
-          <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 flex-none" />
-          <span>
-            <b>Nie da się go odzyskać.</b> Jeśli je zapomnisz, jedyna opcja to reset sejfu, który usuwa wszystkie
-            zapisane sekrety. To nie jest hasło do konta.
-          </span>
-        </div>
         <Checkbox
           checked={zgoda}
           onChange={setZgoda}
@@ -185,12 +184,11 @@ export function VaultSetup({ onCancel, ekran = false }: { onCancel: () => void; 
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2 rounded-b-[11px] border-t border-border bg-black/[.025] px-6 py-4">
+      <div className="flex flex-wrap items-center justify-end gap-2 rounded-b-[15px] border-t border-border bg-black/[.025] px-6 py-4">
         <Button variant="ghost" onClick={onCancel}>
           Anuluj
         </Button>
         <Button variant="primary" type="submit" disabled={!mozna}>
-          <Lock aria-hidden="true" className="size-4" />
           Utwórz sejf
         </Button>
       </div>

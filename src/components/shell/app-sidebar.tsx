@@ -25,7 +25,15 @@ const POZYCJA_ZWYKLA = "text-[rgba(38,38,38,.72)] hover:bg-black/[.04] hover:tex
 // Nagłówek grupy .sb-g
 const GRUPA = "text-xs font-medium text-muted-foreground";
 
-// Sidebar web (CSidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
+// Szyna schowanego paska (.rail z S2SidebarCollapsed): przyciski i linki 36 px, promień 8 px
+const POZYCJA_SZYNY =
+  "grid size-9 flex-none place-items-center rounded-[8px] no-underline outline-none transition-colors focus-visible:shadow-focus";
+// Kreska między grupami szyny: 24 × 1 px, 6 px odstępu
+const KRESKA_SZYNY = "my-1.5 h-px w-6 flex-none bg-black/[.08]";
+
+// Sidebar web (S2Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
+// Schowany (Ctrl+\) zamienia się w szynę 56 px z ikonami (S2SidebarCollapsed); karty planu i „Pomoc i opinie”
+// z makiety nie ma (decyzja 3 pakietu Tabele v3).
 // Strony: kolejność z `position`; ulubione są tylko w sekcji „Ulubione” (ukrytej, gdy pusta).
 // Przeciąganie w obrębie sekcji zmienia kolejność, upuszczenie w drugiej sekcji przełącza ulubione.
 // F2 zmienia nazwę aktywnej, „⋯” otwiera menu strony (PageMenu). Pusty tytuł → „Bez tytułu”.
@@ -132,14 +140,79 @@ export function AppSidebar({
       POZYCJA,
       aktywna(href) ? "bg-black/5 text-foreground" : POZYCJA_ZWYKLA,
     );
+  const klasaSzyny = (href: string) =>
+    cn(
+      POZYCJA_SZYNY,
+      aktywna(href)
+        ? "bg-black/5 text-foreground"
+        : "text-[rgba(38,38,38,.68)] hover:bg-black/[.04] hover:text-foreground",
+    );
+
+  if (collapsed) {
+    return (
+      <nav
+        aria-label="Główna nawigacja (zwinięta)"
+        className="sticky top-0 flex h-dvh w-14 flex-none flex-col items-center gap-0.5 overflow-y-auto border-r border-border-soft bg-panel px-2.5 py-2 text-foreground max-[799px]:hidden"
+      >
+        <span className="grid h-10 flex-none place-items-center">
+          <RhytmLogo size={22} />
+        </span>
+        <SidebarToggle placement="rail" />
+        <Link href="/szukaj" aria-label="Szukaj" title="Szukaj · ⌘K" className={klasaSzyny("/szukaj")}>
+          <Search size={16} aria-hidden="true" />
+        </Link>
+        <span aria-hidden="true" className={KRESKA_SZYNY} />
+        {NAV_MODULES.map(({ key, label, href, icon: Ikona }) => (
+          <Link
+            key={key}
+            href={href}
+            aria-label={label}
+            title={label}
+            aria-current={aktywna(href) ? "page" : undefined}
+            className={klasaSzyny(href)}
+          >
+            <Ikona size={16} aria-hidden="true" />
+          </Link>
+        ))}
+        <span aria-hidden="true" className={KRESKA_SZYNY} />
+        {/* Strony w kolejności paska: najpierw ulubione, potem pozostałe */}
+        {[...sekcje[0].lista, ...sekcje[1].lista].map((strona) => {
+          const href = `/strony/${strona.id}`;
+          const tytul = strona.title.trim() === "" ? "Bez tytułu" : strona.title;
+          return (
+            <Link
+              key={strona.id}
+              href={href}
+              aria-label={tytul}
+              title={tytul}
+              aria-current={aktywna(href) ? "page" : undefined}
+              className={klasaSzyny(href)}
+            >
+              <PageIcon icon={strona.icon} size={16} />
+            </Link>
+          );
+        })}
+        <span className="min-h-6 flex-1" />
+        <Link
+          href="/ustawienia/ogolne"
+          aria-label="Ustawienia"
+          title="Ustawienia"
+          aria-current={aktywna("/ustawienia") ? "page" : undefined}
+          className={klasaSzyny("/ustawienia")}
+        >
+          <Settings size={16} aria-hidden="true" />
+        </Link>
+        <AccountPopover user={user} compact />
+      </nav>
+    );
+  }
 
   return (
     <nav
       aria-label="Główna nawigacja"
       className={cn(
-        "sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border-soft bg-panel p-2 text-sm text-foreground",
-        // Schowany pasek znika tylko na webie; na telefonie nawigacja to dolny pasek
-        collapsed ? "min-[800px]:hidden" : "min-[800px]:flex",
+        // Na telefonie nawigacja to dolny pasek
+        "sticky top-0 hidden h-dvh w-[232px] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border-soft bg-panel p-2 text-sm text-foreground min-[800px]:flex",
       )}
     >
       {/* Logo 22 px i nazwa 15 px / 600 w wierszu 40 px */}

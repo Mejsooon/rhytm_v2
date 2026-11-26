@@ -26,10 +26,15 @@ import {
   deleteField,
   deletePage,
   deleteRow,
+  deleteRows,
+  duplicateRows,
+  importCsvRows,
   movePage,
   renamePage,
   restoreRow,
+  restoreRows,
   saveTableSettings,
+  setRowsValue,
   updateRow,
   addField,
   changeFieldType,
@@ -92,6 +97,11 @@ describe("bez sesji", () => {
     ["createPageFromTemplate", () => createPageFromTemplate("books", "")],
     ["deleteRow", () => deleteRow(WIERSZ)],
     ["updateRow", () => updateRow(WIERSZ, {})],
+    ["deleteRows", () => deleteRows([WIERSZ])],
+    ["restoreRows", () => restoreRows([WIERSZ])],
+    ["duplicateRows", () => duplicateRows([WIERSZ])],
+    ["setRowsValue", () => setRowsValue([WIERSZ], POLE_LICZBA, 1)],
+    ["importCsvRows", () => importCsvRows(BLOK, [], [])],
     ["deleteField", () => deleteField(POLE_LICZBA)],
   ])("%s przekierowuje na /logowanie", async (_nazwa, akcja) => {
     getUser.mockResolvedValue({ data: { user: null } });
@@ -125,18 +135,18 @@ describe("strony", () => {
       () => `00000000-0000-4000-8000-${String(++m).padStart(12, "0")}`,
     );
     expect(rpc).toHaveBeenCalledWith("create_page", {
-      p_title: "Books",
+      p_title: "Książki",
       p_icon: "lucide:book-open",
       p_template_key: "books",
       p_blocks: oczekiwane,
     });
   });
 
-  it("createPageFromTemplate('empty') tworzy stronę bez bloków (szybki start w edytorze)", async () => {
+  it("createPageFromTemplate('empty', '') tworzy stronę „Bez tytułu” bez ikony i bez bloków (S2EmptyPage)", async () => {
     await createPageFromTemplate("empty", "");
     expect(rpc).toHaveBeenCalledWith("create_page", {
-      p_title: "Pusta strona",
-      p_icon: "lucide:table",
+      p_title: "",
+      p_icon: "",
       p_template_key: "empty",
       p_blocks: [],
     });
@@ -378,6 +388,26 @@ describe("bloki i ustawienia", () => {
     });
   });
 
+  it("saveTableSettings z onlyIfMissing: gdy klucz views już jest, nic nie zapisuje i zwraca skipped", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "T", settings: { views: [] } } },
+    });
+    const w = await saveTableSettings(BLOK, { views: [] }, { onlyIfMissing: "views" });
+    expect(w).toEqual({ ok: true, skipped: true });
+    expect(tables.page_blocks.update).not.toHaveBeenCalled();
+  });
+
+  it("saveTableSettings z onlyIfMissing: bez klucza views zapisuje normalnie", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "T", settings: { sort: [] } } },
+    });
+    const w = await saveTableSettings(BLOK, { group_by: "g" }, { onlyIfMissing: "views" });
+    expect(w).toEqual({ ok: true });
+    expect(tables.page_blocks.update).toHaveBeenCalledWith({
+      content: { name: "T", settings: { sort: [], group_by: "g" } },
+    });
+  });
+
   it("saveTableSettings przepuszcza column_widths i scala je z resztą ustawień", async () => {
     tables.page_blocks = fakeTable({
       single: { type: "table", content: { name: "T", settings: { sort: [] } } },
@@ -607,4 +637,262 @@ describe("pole Sekret", () => {
     expect(from).not.toHaveBeenCalledWith("page_blocks");
   });
 ;
+});
+
+describe("akcje na wielu wierszach", () => {
+  const ZA_DUZO = Array.from({ length: 501 }, (_, i) => `a4000000-0000-4000-8000-${String(i).padStart(12, "0")}`);
+
+  it("deleteRows ustawia deleted_at dla id użytkownika, restoreRows je zeruje", async () => {
+    expect(await deleteRows([WIERSZ])).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenCalledWith({ deleted_at: "2026-11-19T10:00:00.000Z" });
+    expect(tables.page_rows.in).toHaveBeenCalledWith("id", [WIERSZ]);
+    expect(tables.page_rows.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(await restoreRows([WIERSZ])).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenLastCalledWith({ deleted_at: null });
+  });
+
+  it("więcej niż 500 id, puste i złe id to błąd bez zapytań", async () => {
+    expect((await deleteRows(ZA_DUZO)).ok).toBe(false);
+    expect((await restoreRows(ZA_DUZO)).ok).toBe(false);
+    expect((await duplicateRows(ZA_DUZO)).ok).toBe(false);
+    expect((await setRowsValue(ZA_DUZO, POLE_LICZBA, 1)).ok).toBe(false);
+    expect((await deleteRows([])).ok).toBe(false);
+    expect((await deleteRows(["zle"])).ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("duplicateRows kopiuje wartości na koniec bloku (pozycje liczy serwer), tytuł z dopiskiem „ (kopia)”", async () => {
+    const zrodlowe = [
+      { id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "Dune" }, position: 2, deleted_at: null },
+    ];
+    tables.page_rows = fakeTable({ data: zrodlowe, single: { position: 7 } });
+    tables.page_blocks = fakeTable({ data: [{ id: BLOK }] });
+    tables.page_fields = fakeTable({ data: [{ id: POLE_TYTUL, block_id: BLOK, is_title: true }] });
+    const w = await duplicateRows([WIERSZ]);
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("pages.deleted_at", null);
+    expect(tables.page_rows.insert).toHaveBeenCalledWith([
+      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "Dune (kopia)" }, position: 8 },
+    ]);
+    expect(tables.page_fields.eq).toHaveBeenCalledWith("is_title", true);
+    expect(w).toEqual({
+      ok: true,
+      rows: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune" }, position: 2 }],
+    });
+  });
+
+  it("duplicateRows: pusty tytuł zostaje pusty (bez samego „ (kopia)”), inne pola bez zmian", async () => {
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "  ", [POLE_LICZBA]: 3 }, position: 2, deleted_at: null }],
+      single: { position: 7 },
+    });
+    tables.page_blocks = fakeTable({ data: [{ id: BLOK }] });
+    tables.page_fields = fakeTable({ data: [{ id: POLE_TYTUL, block_id: BLOK, is_title: true }] });
+    await duplicateRows([WIERSZ]);
+    expect(tables.page_rows.insert).toHaveBeenCalledWith([
+      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "  ", [POLE_LICZBA]: 3 }, position: 8 },
+    ]);
+  });
+
+  it("duplicateRows odmawia, gdy blok lub jego strona jest w koszu", async () => {
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, block_id: BLOK, values: {}, position: 2, deleted_at: null }],
+      single: { position: 7 },
+    });
+    tables.page_blocks = fakeTable({ data: [] });
+    expect(await duplicateRows([WIERSZ])).toEqual({ ok: false, message: "Nie znaleziono bloku." });
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
+  it("setRowsValue normalizuje wartość i zmienia tylko to pole", async () => {
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Cena", type: "number", config: {}, position: 1, is_title: false },
+    });
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: 1 } }],
+    });
+    expect(await setRowsValue([WIERSZ], POLE_LICZBA, "43,5")).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenCalledWith({
+      values: { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: 43.5 },
+    });
+  });
+
+  it("setRowsValue odrzuca pole Sekret i wiersze spoza bloku pola", async () => {
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Hasło", type: "secret", config: {}, position: 1, is_title: false },
+    });
+    expect((await setRowsValue([WIERSZ], POLE_LICZBA, "x")).ok).toBe(false);
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Cena", type: "number", config: {}, position: 1, is_title: false },
+    });
+    tables.page_rows = fakeTable({ data: [] });
+    expect((await setRowsValue([WIERSZ], POLE_LICZBA, 1)).ok).toBe(false);
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("importCsvRows", () => {
+  const NOWE_POLE = "a3000000-0000-4000-8000-000000000009";
+  beforeEach(() => {
+    tables.page_blocks = fakeTable({ single: { type: "table", page_id: STRONA, content: {} } });
+    tables.pages = fakeTable({ single: { is_system: false } });
+    tables.page_rows = fakeTable({ data: [], single: { position: 4 } });
+  });
+
+  it("odmawia dla bloku strony systemowej (Hasła)", async () => {
+    tables.pages = fakeTable({ single: { is_system: true } });
+    const w = await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "x" }]);
+    expect(w.ok).toBe(false);
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+    expect(tables.page_fields.insert).not.toHaveBeenCalled();
+  });
+
+  it("odmawia, gdy blok lub strona jest w koszu", async () => {
+    tables.page_blocks = fakeTable({ single: null });
+    expect(await importCsvRows(BLOK, [], [{}])).toEqual({ ok: false, message: "Nie znaleziono bloku." });
+    expect(tables.page_blocks.is).toHaveBeenCalledWith("deleted_at", null);
+    tables.page_blocks = fakeTable({ single: { type: "table", page_id: STRONA, content: {} } });
+    tables.pages = fakeTable({ single: null });
+    expect(await importCsvRows(BLOK, [], [{}])).toEqual({ ok: false, message: "Nie znaleziono strony." });
+    expect(tables.pages.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+  });
+
+  it("odrzuca nowe opcje z kolorem spoza hex", async () => {
+    const w = await importCsvRows(BLOK, [], [{}], { x: [{ id: "o", label: "A", color: "red" }] });
+    expect(w.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("błąd drugiej paczki wierszy: sprząta wiersze, nowe pola i przywraca opcje", async () => {
+    const POLE_WYBOR = "a3000000-0000-4000-8000-000000000007";
+    const NOWE = "a3000000-0000-4000-8000-000000000009";
+    const stary = { options: [{ id: "o1", label: "A", color: "#000" }] };
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_WYBOR, name: "Status", type: "status", config: stary, position: 1, is_title: false },
+      ],
+      single: { id: NOWE, name: "Uwagi", type: "text", config: {}, position: 2, is_title: false },
+    });
+    const udane = { select: vi.fn(() => Promise.resolve({ data: [{ id: "r1" }, { id: "r2" }], error: null })) };
+    const nieudane = { select: vi.fn(() => Promise.resolve({ data: null, error: { message: "x" } })) };
+    tables.page_rows.insert.mockReturnValueOnce(udane).mockReturnValueOnce(nieudane);
+    const w = await importCsvRows(
+      BLOK,
+      [{ name: "Uwagi", type: "text" }],
+      Array.from({ length: 501 }, () => ({ [POLE_TYTUL]: "x" })),
+      { [POLE_WYBOR]: [{ id: "o2", label: "B", color: "#15803d" }] },
+    );
+    expect(w).toEqual({ ok: false, message: "Nie udało się zapisać. Spróbuj ponownie." });
+    expect(tables.page_rows.delete).toHaveBeenCalled();
+    expect(tables.page_rows.in).toHaveBeenCalledWith("id", ["r1", "r2"]);
+    expect(tables.page_fields.delete).toHaveBeenCalled();
+    expect(tables.page_fields.in).toHaveBeenCalledWith("id", [NOWE]);
+    expect(tables.page_fields.update).toHaveBeenLastCalledWith({ config: stary });
+    expect(tables.page_rows.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(tables.page_fields.eq).toHaveBeenCalledWith("user_id", "u1");
+  });
+
+  it("kolumny bez mapowania dostają wartości domyślne pola (checkbox, wybór), zmapowane puste nie", async () => {
+    const POLE_AKTYWNA = "a3000000-0000-4000-8000-0000000000a1";
+    const POLE_KAT = "a3000000-0000-4000-8000-0000000000a2";
+    const POLE_KAT2 = "a3000000-0000-4000-8000-0000000000a3";
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_AKTYWNA, name: "Aktywna", type: "checkbox", config: { default_checked: true }, position: 1, is_title: false },
+        {
+          id: POLE_KAT,
+          name: "Kategoria",
+          type: "select",
+          config: { options: [{ id: "o1", label: "A", color: "#000000" }], default_option: "o1" },
+          position: 2,
+          is_title: false,
+        },
+        {
+          id: POLE_KAT2,
+          name: "Inna",
+          type: "select",
+          config: { options: [{ id: "o1", label: "A", color: "#000000" }], default_option: "nie-ma" },
+          position: 3,
+          is_title: false,
+        },
+      ],
+    });
+    const w = await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "Netflix" }, { [POLE_TYTUL]: "HBO", [POLE_AKTYWNA]: false, [POLE_KAT]: null }]);
+    expect(w.ok).toBe(true);
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "Netflix", [POLE_AKTYWNA]: true, [POLE_KAT]: "o1" });
+    expect(wstawione[1].values).toEqual({ [POLE_TYTUL]: "HBO", [POLE_AKTYWNA]: false });
+  });
+
+  it("odmawia dla więcej niż 5000 wierszy", async () => {
+    const w = await importCsvRows(BLOK, [], Array.from({ length: 5001 }, () => ({})));
+    expect(w.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("nie przyjmuje nowego pola Sekret", async () => {
+    const w = await importCsvRows(BLOK, [{ name: "H", type: "secret" }], []);
+    expect(w.ok).toBe(false);
+  });
+
+  it("dodaje nowe pola na końcu, potem wiersze z pozycją po ostatnim; wartości przez normalizeValue", async () => {
+    tables.page_fields = fakeTable({
+      data: pola,
+      single: { id: NOWE_POLE, name: "Uwagi", type: "text", config: {}, position: 2, is_title: false },
+    });
+    const w = await importCsvRows(
+      BLOK,
+      [{ name: "Uwagi", type: "text" }],
+      [
+        { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: "tekst", "new:0": "hej", obce: "x" },
+        { [POLE_LICZBA]: 5 },
+      ],
+    );
+    expect(w).toEqual({ ok: true, fieldIds: [NOWE_POLE], count: 2 });
+    expect(tables.page_fields.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ block_id: BLOK, user_id: "u1", name: "Uwagi", type: "text", position: 2, is_title: false }),
+    );
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione).toHaveLength(2);
+    expect(wstawione[0]).toMatchObject({ block_id: BLOK, user_id: "u1", position: 5 });
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "Dune", [NOWE_POLE]: "hej" });
+    // pusty tytuł dostaje etykietę pola
+    expect(wstawione[1]).toMatchObject({ position: 6, values: { [POLE_TYTUL]: "Bez nazwy", [POLE_LICZBA]: 5 } });
+  });
+
+  it("nowe opcje rozszerzają config pola wyboru, a wartość spoza opcji jest odrzucana", async () => {
+    const POLE_WYBOR = "a3000000-0000-4000-8000-000000000007";
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_WYBOR, name: "Status", type: "status", config: { options: [{ id: "o1", label: "A", color: "#000" }] }, position: 1, is_title: false },
+      ],
+    });
+    const w = await importCsvRows(
+      BLOK,
+      [],
+      [{ [POLE_WYBOR]: "o2" }, { [POLE_WYBOR]: "zly" }],
+      { [POLE_WYBOR]: [{ id: "o2", label: "B", color: "#15803d" }] },
+    );
+    expect(w).toEqual({ ok: true, fieldIds: [], count: 2 });
+    expect(tables.page_fields.update).toHaveBeenCalledWith({
+      config: { options: [{ id: "o1", label: "A", color: "#000" }, { id: "o2", label: "B", color: "#15803d" }] },
+    });
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values[POLE_WYBOR]).toBe("o2");
+    expect(wstawione[1].values[POLE_WYBOR]).toBeUndefined();
+  });
+
+  it("nie zapisuje wartości pól secret", async () => {
+    const POLE_S = "a3000000-0000-4000-8000-000000000008";
+    tables.page_fields = fakeTable({
+      data: [pola[0], { id: POLE_S, name: "Hasło", type: "secret", config: {}, position: 1, is_title: false }],
+    });
+    await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "x", [POLE_S]: { v: 1, g: 1, iv: "a", ct: "b" } }]);
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "x" });
+  });
 });
