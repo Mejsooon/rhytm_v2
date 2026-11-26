@@ -125,9 +125,9 @@ describe("PageTable", () => {
   });
 
   describe("blok z szablonu (Review Focus 1)", () => {
-    it("buildTemplateBlocks(„books”)[1] pokazuje trzy karty i stopkę", () => {
+    it("buildTemplateBlocks(„books”)[0] pokazuje trzy karty i stopkę", () => {
       let n = 0;
-      const b = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`)[1];
+      const b = buildTemplateBlocks("books", () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`)[0];
       expect(b.type).toBe("table");
       const block: LoadedBlock = {
         id: b.id,

@@ -71,7 +71,7 @@ export async function createBlankPage(): Promise<{ ok: true; id: string } | Blad
   return { ok: true, id: data };
 }
 
-// Strona-tabela z szablonu; pusty tytuł → nazwa szablonu
+// Strona-tabela z szablonu; pusty tytuł → nazwa szablonu (pusta strona: bez nazwy i bez ikony)
 export async function createPageFromTemplate(
   key: TemplateKey,
   title: string,
@@ -89,8 +89,9 @@ export async function createPageFromTemplate(
 
   const szablon = TEMPLATES[klucz.data];
   const { data, error } = await supabase.rpc("create_page", {
-    p_title: tytul.data.trim() === "" ? szablon.name : tytul.data.trim(),
-    p_icon: szablon.icon,
+    // Pusta strona bez nazwy zostaje „Bez tytułu” i bez ikony (S2EmptyPage: „Dodaj ikonę”)
+    p_title: tytul.data.trim() !== "" ? tytul.data.trim() : klucz.data === "empty" ? "" : szablon.name,
+    p_icon: klucz.data === "empty" ? "" : szablon.icon,
     p_template_key: klucz.data,
     p_blocks: buildTemplateBlocks(klucz.data, () => crypto.randomUUID()) as unknown as Json,
   });

@@ -22,7 +22,8 @@ function seqId() {
 
 describe("ikony szablonów", () => {
   it("ikony w formacie lucide:<nazwa>, wszystkie parsują się do nazwy Lucide", () => {
-    expect(TEMPLATES.empty.icon).toBe("lucide:table");
+    // S2NewPage: Pusta strona ma ikonę dokumentu (sama strona powstaje bez ikony — „Dodaj ikonę”)
+    expect(TEMPLATES.empty.icon).toBe("lucide:file-text");
     expect(TEMPLATES.books.icon).toBe("lucide:book-open");
     expect(TEMPLATES.projects.icon).toBe("lucide:rocket");
     expect(TEMPLATES.websites.icon).toBe("lucide:globe");
@@ -32,35 +33,45 @@ describe("ikony szablonów", () => {
   });
 });
 
-describe("blok startowy z opisem", () => {
-  it("books: [0] to tekst z intro, [1] to tabela z polami, kartami i stopką", () => {
+describe("bloki nowej strony z szablonu", () => {
+  it("books: sama tabela z polami, kartami i stopką — opis szablonu stoi w nagłówku strony (S2Table), nie w bloku", () => {
     const bloki = buildTemplateBlocks("books", seqId());
-    expect(bloki).toHaveLength(2);
-    expect(bloki[0]).toMatchObject({
-      type: "text",
-      content: { text: "Co czytam, co przeczytałem i co chcę przeczytać." },
-      fields: [],
-      rows: [],
-    });
-    expect(bloki[1].type).toBe("table");
-    expect(bloki[1].fields).toHaveLength(5);
-    const settings = bloki[1].content.settings as TableSettings;
+    expect(bloki).toHaveLength(1);
+    expect(bloki[0].type).toBe("table");
+    expect(bloki[0].fields).toHaveLength(5);
+    const settings = bloki[0].content.settings as TableSettings;
     expect(settings.pinned_cards).toHaveLength(3);
     expect(Object.keys(settings.column_summaries)).toHaveLength(3);
   });
 
-  it("projects i websites: intro z makiet", () => {
-    expect(buildTemplateBlocks("projects", seqId())[0].content).toEqual({
-      text: "Projekty na studia, własne i dla klientów.",
-    });
-    expect(buildTemplateBlocks("websites", seqId())[0].content).toEqual({
-      text: "Strony klientów: URL, klient, status.",
-    });
+  it.each(["projects", "websites", "subscriptions"] as const)("%s: bez bloku tekstu przed tabelą", (key) => {
+    expect(buildTemplateBlocks(key, seqId()).map((b) => b.type)).toEqual(["table"]);
   });
 
   it("empty: strona bez żadnych bloków (decyzja po kroku 2 — szybki start w edytorze)", () => {
-    expect(TEMPLATES.empty.intro).toBe("");
     expect(buildTemplateBlocks("empty", seqId())).toEqual([]);
+  });
+});
+
+describe("S2NewPage: krótki opis karty i „Dodatkowo”", () => {
+  it("hint to podpis karty szablonu z makiety", () => {
+    expect(TEMPLATE_KEYS.map((k) => TEMPLATES[k].hint)).toEqual([
+      "Zacznij od zera",
+      "Twoje książki",
+      "Twoje projekty",
+      "Twoje strony WWW",
+      "Twoje subskrypcje",
+    ]);
+  });
+
+  it("extra to linie „Dodatkowo” z makiety", () => {
+    expect(TEMPLATES.empty.extra).toBe("");
+    expect(TEMPLATES.books.extra).toBe("Średnia ocena w stopce tabeli.");
+    expect(TEMPLATES.projects.extra).toBe("Terminy trafią do kalendarza głównego.\nWidok Tablica z kolumnami statusów.");
+    expect(TEMPLATES.websites.extra).toBe("");
+    expect(TEMPLATES.subscriptions.extra).toBe(
+      "Karty: miesięcznie, rocznie i najbliższe odnowienie.\nOdnowienia w kalendarzu i przypomnienie dzień wcześniej.\nSuma miesięczna w stopce tabeli.",
+    );
   });
 });
 
@@ -199,8 +210,6 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
     expect(TEMPLATES.books.desc).toBe("Twoje książki: czytane, przeczytane i na później.");
     expect(TEMPLATES.projects.desc).toBe("Projekty na studia, własne i dla klientów.");
     expect(TEMPLATES.websites.desc).toBe("Strony, które zbudowałeś albo budujesz dla klientów.");
-    expect(TEMPLATES.books.extra).toBe("Liczba przeczytanych w tym roku.");
-    expect(TEMPLATES.projects.extra).toBe("Terminy trafią do kalendarza głównego.");
   });
 
   it("mapuje nazwy z onboardingu", () => {
@@ -233,10 +242,8 @@ describe("szablon Subscriptions", () => {
       name: "Subskrypcje",
       icon: "lucide:wallet",
       desc: "Twoje subskrypcje i ich odnowienia.",
-      intro: "Twoje subskrypcje i ich odnowienia.",
-      extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
     });
-    expect(bloki[0]).toMatchObject({ type: "text", content: { text: "Twoje subskrypcje i ich odnowienia." } });
+    expect(bloki).toHaveLength(1);
     expect(tabela.fields.map((f) => [f.name, f.type])).toEqual([
       ["Nazwa", "text"],
       ["Kwota cykliczna", "recurring"],

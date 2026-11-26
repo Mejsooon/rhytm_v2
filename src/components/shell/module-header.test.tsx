@@ -51,24 +51,9 @@ describe("ModuleHeader", () => {
     );
   });
 
-  it("przy schowanym pasku web ma przycisk „Pokaż pasek boczny” przed tytułem", () => {
+  it("przy schowanym pasku nagłówek nie ma „Pokaż pasek boczny” — przycisk jest w szynie (S2SidebarCollapsed)", () => {
     render(
       <SidebarStateProvider initialCollapsed>
-        <ModuleHeader title="Dziś" />
-      </SidebarStateProvider>,
-    );
-    const przycisk = screen.getByRole("button", { name: "Pokaż pasek boczny" });
-    const tytul = screen
-      .getAllByRole("heading", { level: 1, name: "Dziś" })
-      .find((h) => h.closest("header")?.classList.contains("max-[799px]:hidden"))!;
-    expect(
-      przycisk.compareDocumentPosition(tytul) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("przy rozwiniętym pasku web nie ma przycisku „Pokaż pasek boczny”", () => {
-    render(
-      <SidebarStateProvider initialCollapsed={false}>
         <ModuleHeader title="Dziś" />
       </SidebarStateProvider>,
     );

@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { CircleCheckIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import { Button, StatusBadge } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { formatClockTime } from "@/lib/time/timezones";
@@ -96,8 +95,6 @@ export function TemplatesList({
           aria-label="Okruszki"
           className="flex items-center gap-1.5 text-sm text-muted-foreground"
         >
-          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-          <SidebarToggle placement="header" />
           <Link
             href="/sport"
             className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"

@@ -28,10 +28,14 @@ export async function zalozKontoStron(
   return userId;
 }
 
-// Strona z szablonu Books założona przez /strony/nowa (karta „Książki” → „Utwórz stronę”)
+// Strona z szablonu Książki założona przez /strony/nowa (karta „Książki” → „Utwórz stronę”)
 export async function utworzBooks(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
-  await page.getByRole("button", { name: /^Książki/ }).click();
+  // Web (S2NewPage): karty szablonów to radio; telefon (CMNewPage): przyciski z aria-pressed
+  await page
+    .getByRole("radio", { name: /^Książki/ })
+    .or(page.getByRole("button", { name: /^Książki/ }))
+    .click();
   await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Tytuł jest polem „Nazwa strony” na webie i telefonie (h1 jest tylko w nagłówku webowym)
@@ -43,7 +47,11 @@ export async function utworzBooks(page: Page): Promise<void> {
 // Strona z szablonu Subscriptions założona przez /strony/nowa (karta „Subskrypcje” → „Utwórz stronę”)
 export async function utworzSubscriptions(page: Page): Promise<void> {
   await page.goto("/strony/nowa");
-  await page.getByRole("button", { name: /^Subskrypcje/ }).click();
+  // Web (S2NewPage): karty szablonów to radio; telefon (CMNewPage): przyciski z aria-pressed
+  await page
+    .getByRole("radio", { name: /^Subskrypcje/ })
+    .or(page.getByRole("button", { name: /^Subskrypcje/ }))
+    .click();
   await page.getByRole("button", { name: /^Utwórz( stronę)?$/ }).click();
   await expect(page).toHaveURL(/\/strony\/[0-9a-f-]{36}$/);
   // Web: pole „Nazwa strony”. Telefon (CMSubs): własny ekran z nagłówkiem h1, bez pola nazwy

@@ -138,23 +138,9 @@ describe("PasswordsView", () => {
     expect(vault.lock).toHaveBeenCalledTimes(1);
   });
 
-  it("zablokowany przy schowanym pasku: „Pokaż pasek boczny” nad nakładką (poza inert) i działa", async () => {
+  it("zablokowany przy schowanym pasku: moduł nie ma własnego „Pokaż pasek boczny” (jest w szynie poza modułem)", () => {
     vault.state = { status: "zablokowany", remainingMs: 0 };
-    const user = userEvent.setup();
     pokaz(DANE, true);
-    // Jedyny dostępny przycisk (ten z nagłówka jest pod inert + aria-hidden)
-    const przyciski = screen.getAllByRole("button", { name: "Pokaż pasek boczny", hidden: true });
-    const nad = przyciski.filter((b) => b.closest("[inert]") === null);
-    expect(nad).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Pokaż pasek boczny" })).toBe(nad[0]);
-    await user.click(nad[0]);
-    // Pasek pokazany → przycisk znika (SidebarToggle w nagłówku renderuje się tylko przy schowanym pasku)
-    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny", hidden: true })).toBeNull();
-  });
-
-  it("zablokowany przy widocznym pasku: bez przycisku „Pokaż pasek boczny”", () => {
-    vault.state = { status: "zablokowany", remainingMs: 0 };
-    pokaz();
     expect(screen.queryByRole("button", { name: "Pokaż pasek boczny", hidden: true })).toBeNull();
   });
 

@@ -39,7 +39,8 @@ const POZYCJA_ARKUSZA =
 // Skrót po prawej (.mi-sc)
 const SKROT = "ml-auto text-xs tracking-[0.06em] text-muted-foreground";
 
-// Menu strony (CPageMenu.dc.html, CSidebar.dc.html): na webie dymek 240 px, z `sheet` arkusz od dołu (telefon,
+// Menu strony (S2PageMenu.dc.html, S2Sidebar.dc.html): na webie dymek 240 px przy „⋯” strony w pasku bocznym
+// (w nagłówku strony go nie ma), z `sheet` arkusz od dołu (telefon,
 // CMPageMenu.dc.html: pozycje .m-row 44 px bez ikon).
 // Web ma ikony lucide 16 px jak makieta.
 // Na webie kolejność zmienia się przeciąganiem w sidebarze, więc „Przenieś wyżej / niżej” jest tylko w arkuszu.
@@ -52,7 +53,6 @@ export function PageMenu({
   sheet = false,
   triggerClassName,
   triggerLabel,
-  align = "start",
   meta,
 }: {
   page: PageSummary;
@@ -61,10 +61,8 @@ export function PageMenu({
   onRename: () => void;
   sheet?: boolean;
   triggerClassName?: string;
-  // Własna etykieta przycisku (telefon: samo „Menu strony”); domyślnie z tytułem strony
+  // Własna etykieta przycisku (telefon: „Więcej”); domyślnie z tytułem strony
   triggerLabel?: string;
-  // Wyrównanie dymku do przycisku: w sidebarze „start”, w nagłówku przy prawej krawędzi okna „end”
-  align?: "start" | "end";
   // Telefon: dopisek pod nazwą w nagłówku arkusza, np. „11 wierszy · 5 pól”
   meta?: string;
 }) {
@@ -312,7 +310,6 @@ export function PageMenu({
           onOpenChange={zmienOtwarcie}
           // Menu 240 px (.pop, padding 4 px); wybór ikony 300 px z odstępem 8 px jak w CSidebar
           width={widok === "ikony" ? 300 : 240}
-          align={align}
           className={widok === "menu" ? "p-1" : "p-2"}
           ariaLabel={`Menu strony ${tytul}`}
         >

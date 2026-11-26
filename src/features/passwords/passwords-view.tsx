@@ -6,7 +6,6 @@ import { ChevronLeft, Lock, Search } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import type { LoadedPage } from "@/features/pages/load-page";
 import { rowsForm } from "@/features/pages/rows-label";
 import { PageTable } from "@/features/pages/table/page-table";
@@ -325,11 +324,6 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
             aria-hidden="true"
             className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[3px] max-[799px]:hidden"
           />
-          {/* „Pokaż pasek boczny” nad zasłoną, w miejscu przycisku z nagłówka (ten jest pod `inert`): bez niego przy
-              schowanym pasku i zamkniętym sejfie nie dałoby się wyjść z Haseł. Nagłówek: padding 10 px + (36 − 28) / 2 */}
-          <div className="absolute top-3.5 left-6 z-20 max-[799px]:hidden">
-            <SidebarToggle placement="header" />
-          </div>
           {/* Okno „Odblokuj sejf”: poza `inert`, pozycję nadaje rodzic */}
           <div className="absolute top-[160px] left-1/2 z-20 w-[min(400px,calc(100%-32px))] -translate-x-1/2 max-[799px]:hidden">
             <VaultUnlockCard />

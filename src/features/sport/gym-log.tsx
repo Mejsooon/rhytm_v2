@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2Icon, XIcon } from "lucide-react";
 
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
   Checkbox,
@@ -174,8 +173,6 @@ export function GymLog({ data }: { data: WorkoutData }) {
             aria-label="Okruszki"
             className="flex items-center gap-1.5 text-sm text-muted-foreground"
           >
-            {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-            <SidebarToggle placement="header" />
             <Link
               href={`/sport?miesiac=${data10.slice(0, 7)}`}
               className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus"

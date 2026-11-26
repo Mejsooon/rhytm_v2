@@ -891,9 +891,9 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
       await zrzut(page, "strony-menu-tabeli", projekt);
       await page.keyboard.press("Escape");
-      // Menu strony „⋯” w nagłówku (S2PageMenu)
+      // Menu strony „⋯” w pasku bocznym (S2PageMenu)
       await page
-        .getByRole("button", { name: "Menu strony", exact: true })
+        .getByRole("button", { name: "Menu strony Książki", exact: true })
         .click();
       await expect(
         page.getByRole("menu", { name: "Strona Książki" }),
@@ -903,12 +903,12 @@ test.describe("ekrany z sesją", () => {
       // Schowany pasek boczny (S2SidebarCollapsed); potem z powrotem, żeby dalsze zrzuty miały pasek
       await page.keyboard.press("Control+\\");
       await expect(
-        page.getByRole("button", { name: "Pokaż pasek boczny" }),
+        page.getByRole("navigation", { name: "Główna nawigacja (zwinięta)" }),
       ).toBeVisible();
       await zrzut(page, "strony-books-schowany-pasek", projekt);
       await page.keyboard.press("Control+\\");
       await expect(
-        page.getByRole("navigation", { name: "Główna nawigacja" }),
+        page.getByRole("navigation", { name: "Główna nawigacja", exact: true }),
       ).toBeVisible();
 
       // Okienko opcji komórki Status (S2Books, tsel) w nowym wierszu

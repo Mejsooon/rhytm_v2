@@ -142,11 +142,11 @@ describe("strony", () => {
     });
   });
 
-  it("createPageFromTemplate('empty') tworzy stronę bez bloków (szybki start w edytorze)", async () => {
+  it("createPageFromTemplate('empty', '') tworzy stronę „Bez tytułu” bez ikony i bez bloków (S2EmptyPage)", async () => {
     await createPageFromTemplate("empty", "");
     expect(rpc).toHaveBeenCalledWith("create_page", {
-      p_title: "Pusta strona",
-      p_icon: "lucide:table",
+      p_title: "",
+      p_icon: "",
       p_template_key: "empty",
       p_blocks: [],
     });

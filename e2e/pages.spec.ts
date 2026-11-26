@@ -355,15 +355,19 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
 
     await page
-      .getByRole("navigation", { name: "Główna nawigacja" })
+      .getByRole("navigation", { name: "Główna nawigacja", exact: true })
       .getByRole("link", { name: "Nowa strona", exact: true })
       .click();
     await expect(page).toHaveURL(/\/strony\/nowa$/);
     const okno = page.getByRole("dialog", { name: "Nowa strona" });
     await expect(okno).toBeVisible();
+    // S2NewPage: karty szablonów po polsku (radio), domyślnie Pusta strona
     await expect(
-      okno.getByRole("button", { name: /^Books/ }),
+      okno.getByRole("radio", { name: /^Książki/ }),
     ).toBeVisible();
+    await expect(
+      okno.getByRole("radio", { name: /^Pusta strona/ }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect(
       okno.getByRole("button", { name: "Utwórz stronę" }),
     ).toBeVisible();
@@ -442,17 +446,18 @@ test.describe("strony", () => {
     ).toBeVisible();
   });
 
-  test("ikona strony: „Zmień ikonę” → „rakieta” → rocket → ikona w sidebarze", async ({
+  test("ikona strony: menu strony w pasku → „Zmień ikonę” → „rakieta” → rocket → ikona w sidebarze", async ({
     page,
   }, info) => {
     test.skip(info.project.name !== "web", "układ webowy");
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // Ikona z szablonu Books to book-open; wybieramy rakietę z wyszukiwarki ikon
+    // Ikona z szablonu Książki to book-open; wybieramy rakietę z wyszukiwarki ikon w menu strony paska (S2PageMenu)
     const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze.locator("svg.lucide-book-open")).toBeVisible();
-    await page.getByRole("button", { name: "Zmień ikonę", exact: true }).click();
+    await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Zmień ikonę" }).click();
     await page.getByRole("textbox", { name: "Szukaj ikony" }).fill("rakieta");
     await page.getByRole("button", { name: "rocket", exact: true }).click();
 
@@ -471,7 +476,8 @@ test.describe("strony", () => {
 
     const wSidebarze = page.getByRole("link", { name: "Książki", exact: true });
     await expect(wSidebarze).toBeVisible();
-    await page.getByRole("button", { name: "Menu strony", exact: true }).click();
+    // Menu strony „⋯” jest w pasku bocznym (S2PageMenu)
+    await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
     const potwierdzenie = page.getByRole("alertdialog", { name: /Usunąć stronę/ });
     await expect(potwierdzenie).toBeVisible();

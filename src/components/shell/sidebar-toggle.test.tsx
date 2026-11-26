@@ -18,24 +18,15 @@ describe("SidebarToggle", () => {
     await userEvent.click(przycisk);
   });
 
-  it("placement=header: nie renderuje się przy rozwiniętym pasku", () => {
-    render(
-      <SidebarStateProvider initialCollapsed={false}>
-        <SidebarToggle placement="header" />
-      </SidebarStateProvider>,
-    );
-    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny" })).toBeNull();
-  });
-
-  it("placement=header: przy schowanym pasku pokazuje i rozwija pasek", async () => {
+  it("placement=rail: przycisk 36 px „Pokaż pasek boczny” rozwija pasek", async () => {
     render(
       <SidebarStateProvider initialCollapsed>
-        <SidebarToggle placement="header" />
+        <SidebarToggle placement="rail" />
       </SidebarStateProvider>,
     );
     const przycisk = screen.getByRole("button", { name: "Pokaż pasek boczny" });
-    expect(przycisk).toHaveClass("max-[799px]:hidden");
+    expect(przycisk).toHaveClass("size-9");
+    expect(przycisk.getAttribute("title")).toMatch(/Pokaż pasek boczny · (Ctrl|⌘)\+\\/);
     await userEvent.click(przycisk);
-    expect(screen.queryByRole("button", { name: "Pokaż pasek boczny" })).toBeNull();
   });
 });

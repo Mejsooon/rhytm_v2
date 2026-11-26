@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LayoutGrid, Plus, Trash2 } from "lucide-react";
+import { LayoutGrid, Plus, Smile, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { ActionPopover, Button, Chip } from "@/components/controls";
+import { ActionPopover, Button } from "@/components/controls";
+import { cn } from "@/lib/utils";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { renamePage, setPageIcon } from "../actions";
 import { usePagesStore } from "../use-pages-store";
@@ -26,9 +27,11 @@ import { TextBlock } from "./text-block";
 import { TodoBlock } from "./todo-block";
 import { useEditorStore } from "./use-editor-store";
 
-// Edytor bloków każdej strony poza Hasłami (S2Books / S2EmptyPage.dc.html): okruszki z menu strony „⋯”,
-// ikona, tytuł, bloki (tabela to PageTable), linia poleceń, szybki start i link do szablonów.
-// Telefon dostaje ten sam układ w jednej kolumnie.
+// Edytor bloków każdej strony poza Hasłami. Dwa układy webu według makiet:
+// - strona z szablonu (S2Table): okruszki i przycisk główny w nagłówku, tytuł 24 px bez ikony, opis szablonu;
+// - strona edytora (S2EmptyPage): „Szablony” w nagłówku, „Dodaj ikonę” nad tytułem 32 px, bloki, linia poleceń,
+//   szybki start „albo zacznij od:” i karta „Wolisz gotowca?”.
+// Menu strony „⋯” jest w pasku bocznym (S2PageMenu), nie w nagłówku. Telefon dostaje ten sam układ w jednej kolumnie.
 // `pages` — cała lista stron dla „Przenieś wyżej / niżej” w menu strony na telefonie.
 export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSummary[] }) {
   const { page } = data;
@@ -101,6 +104,11 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
   const pierwszaTabela = store.blocks.find((b) => b.type === "table");
   const nowyWierszRef = React.useRef<(() => void) | null>(null);
   const etykietaNowego = TEMPLATES[page.templateKey ?? "empty"].newLabel;
+  // Strona z szablonu (Książki, Projekty…) ma układ S2Table, pozostałe — układ edytora S2EmptyPage
+  const zSzablonu = page.templateKey !== null && page.templateKey !== "empty";
+  const opis = zSzablonu ? TEMPLATES[page.templateKey ?? "empty"].desc : "";
+  // „Dodaj ikonę” i mały „Zmień ikonę” pokazują się po najechaniu na tytuł (albo z fokusem); pusta strona — zawsze
+  const ikonaPoNajechaniu = zSzablonu || !pusta;
   // Subscriptions na telefonie (CMSubs, T16): strona z szablonu Subscriptions, której tabela ma pola Kwota cykliczna
   // i Data odnowienia, dostaje własny ekran zamiast edytora; inne strony zostają przy edytorze (CMEditor)
   const blokSubs =
@@ -123,8 +131,8 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           phoneLabel="Strony"
           webAction={
             <>
-              {/* S2EmptyPage.dc.html: pusta strona ma w nagłówku „Szablony” (.btn) przed menu strony */}
-              {pusta && (
+              {/* S2EmptyPage.dc.html: strona edytora ma w nagłówku „Szablony” (.btn) */}
+              {!zSzablonu && (
                 <Button asChild>
                   <Link href="/strony/nowa">
                     <LayoutGrid size={16} aria-hidden="true" />
@@ -132,18 +140,6 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   </Link>
                 </Button>
               )}
-              {/* .btn.ic z S2Books.dc.html: kwadratowy przycisk 32 px z „⋯” (S2PageMenu.dc.html) */}
-              <PageMenu
-                page={stronaWMenu}
-                pages={pagesStore.pages}
-                store={pagesStore}
-                // „Zmień nazwę” przenosi fokus na tytuł; dymek oddaje fokus przyciskowi, więc chwilę później
-                onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
-                triggerLabel="Menu strony"
-                // Przycisk stoi przy prawej krawędzi okna, więc dymek wyrównany do jego końca
-                align="end"
-                triggerClassName="relative inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-md border border-input bg-white bg-clip-padding text-foreground shadow-btn outline-none transition-[box-shadow,background-color] duration-150 hover:bg-panel focus-visible:shadow-focus aria-expanded:bg-accent [&_svg]:opacity-80"
-              />
               {pierwszaTabela && (
                 <Button variant="primary" onClick={() => nowyWierszRef.current?.()}>
                   <Plus size={16} aria-hidden="true" />
@@ -163,30 +159,55 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
         // Fokus wraca na przycisk menu dopiero po zamknięciu arkusza, więc przenosimy go chwilę później
         onRename={() => setTimeout(() => tytulRef.current?.focus(), 50)}
       >
-        <div className="box-border flex w-full min-w-0 flex-col gap-3 px-6 pt-7 pb-40 max-[799px]:gap-2.5 max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-0">
-          {/* Telefon Subscriptions: tytuł strony rysuje MSubs */}
-          <div className={`mb-2 flex items-center gap-3 ${blokSubs ? "max-[799px]:hidden" : ""}`}>
-            <ActionPopover
-              open={wyborIkony}
-              onOpenChange={setWyborIkony}
-              width={300}
-              ariaLabel="Wybór ikony"
-              trigger={
-                <button
-                  type="button"
-                  aria-label="Zmień ikonę"
-                  className={`flex size-10 cursor-pointer items-center justify-center rounded-[10px] p-0 font-[inherit] max-[799px]:hidden ${
-                    ikona === ""
-                      ? "border border-dashed border-border-strong bg-panel text-muted-foreground"
-                      : "border border-transparent bg-transparent text-foreground"
-                  }`}
-                >
-                  <PageIcon icon={ikona} size={22} />
-                </button>
+        <div
+          className={cn(
+            "box-border flex w-full min-w-0 flex-col gap-3 px-6 pb-40 max-[799px]:gap-2.5 max-[799px]:px-4 max-[799px]:pt-2 max-[799px]:pb-0",
+            // S2Table: 24 px dookoła, 16 px między sekcjami; S2EmptyPage: 48 px od góry, 72 px z lewej, do 1080 px
+            zSzablonu ? "pt-6 min-[800px]:gap-4" : "pt-12 min-[800px]:max-w-[1080px] min-[800px]:pl-[72px]",
+          )}
+        >
+          {/* Tytuł; grupa „tytul” pokazuje po najechaniu przycisk ikony. Telefon Subscriptions: tytuł strony rysuje MSubs */}
+          <div className={cn("group/tytul relative flex flex-col", !zSzablonu && "gap-1.5 min-[800px]:mb-2", blokSubs && "max-[799px]:hidden")}>
+            <div
+              className={
+                zSzablonu
+                  ? // Nad tytułem, w odstępie od nagłówka — bez przesuwania układu S2Table
+                    "absolute -top-[26px] left-0 max-[799px]:hidden"
+                  : "flex min-h-6 items-center max-[799px]:hidden"
               }
             >
-              <IconPicker value={ikona} onPick={zmienIkone} />
-            </ActionPopover>
+              <ActionPopover
+                open={wyborIkony}
+                onOpenChange={setWyborIkony}
+                width={300}
+                ariaLabel="Wybór ikony"
+                trigger={
+                  ikona !== "" && !zSzablonu ? (
+                    // S2EmptyPage: wybrana ikona jako .btng 44 px z ikoną 28 px
+                    <Button variant="ghost" icon aria-label="Zmień ikonę strony" className="size-11 p-0">
+                      <PageIcon icon={ikona} size={28} />
+                    </Button>
+                  ) : (
+                    // .btng.xs w kolorze #686868: „Dodaj ikonę” albo (strona z szablonu) mała ikona i „Zmień ikonę”
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      aria-label={ikona === "" ? undefined : "Zmień ikonę strony"}
+                      className={cn(
+                        "text-muted-foreground",
+                        ikonaPoNajechaniu &&
+                          "opacity-0 transition-opacity duration-[120ms] group-hover/tytul:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100",
+                      )}
+                    >
+                      {ikona === "" ? <Smile size={14} aria-hidden="true" /> : <PageIcon icon={ikona} size={14} />}
+                      {ikona === "" ? "Dodaj ikonę" : "Zmień ikonę"}
+                    </Button>
+                  )
+                }
+              >
+                <IconPicker value={ikona} onPick={zmienIkone} />
+              </ActionPopover>
+            </div>
             <input
               ref={tytulRef}
               type="text"
@@ -195,8 +216,14 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
               onBlur={zapiszTytul}
               placeholder="Bez tytułu"
               aria-label="Nazwa strony"
-              className="min-w-0 flex-1 border-0 bg-transparent font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-foreground outline-none"
+              className={cn(
+                "w-full min-w-0 border-0 bg-transparent p-0 font-[inherit] text-2xl font-semibold tracking-[-0.02em] text-foreground outline-none",
+                // .ttl z S2EmptyPage: 32 px, jasny placeholder
+                !zSzablonu && "placeholder:text-[#d4d4d4] min-[800px]:text-[32px]",
+              )}
             />
+            {/* Opis szablonu pod tytułem (S2Table, .muted) */}
+            {opis !== "" && <p className="mt-1 mb-0 text-sm text-muted-foreground">{opis}</p>}
           </div>
 
           {store.blocks.map((b) => (
@@ -294,29 +321,39 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
           </div>
 
           {pusta && (
-            <div className="flex flex-col gap-3 max-[799px]:hidden">
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="mr-1 text-[13px] text-muted-foreground">
-                  albo zacznij od:
-                </span>
+            <div className="mt-5 flex flex-col gap-3 max-[799px]:hidden">
+              <span className="text-[13px] text-muted-foreground">albo zacznij od:</span>
+              <div className="flex flex-wrap gap-2">
                 {QUICK_START.map((q) => (
-                  <Chip key={q.type} onClick={() => void store.add(q.type)}>
+                  // .qchip: pigułka 34 px, znak bloku w kwadracie .sic 22 px
+                  <button
+                    key={q.type}
+                    type="button"
+                    onClick={() => void store.add(q.type)}
+                    className="inline-flex h-[34px] cursor-pointer items-center gap-2 rounded-full border border-black/[.12] bg-white px-3 font-[inherit] text-sm font-medium text-foreground shadow-xs outline-none hover:bg-panel focus-visible:shadow-focus"
+                  >
                     <span
                       aria-hidden="true"
-                      className="text-xs font-semibold text-muted-foreground"
+                      className="grid size-[22px] flex-none place-items-center rounded-[6px] border border-black/10 bg-white text-[11px] font-semibold text-[#404040]"
                     >
                       {q.icon}
                     </span>
                     {q.label}
-                  </Chip>
+                  </button>
                 ))}
               </div>
-              <p className="mt-6 mb-0 text-[13px] text-muted-foreground">
-                Wolisz gotowca?{" "}
-                <Link href="/strony/nowa" className="font-medium text-foreground underline-offset-[3px]">
-                  Użyj szablonu →
-                </Link>
-              </p>
+              {/* Karta „Wolisz gotowca?”: przerywana ramka, do 560 px, „Użyj szablonu →” jako .btn.xs */}
+              <div className="mt-4 flex max-w-[560px] items-center gap-2.5 rounded-xl border border-dashed border-black/[.16] px-4 py-3.5">
+                <span className="flex-1">
+                  <b className="block font-medium">Wolisz gotowca?</b>
+                  <span className="text-[13px] text-muted-foreground">
+                    Subskrypcje, Książki, Projekty albo Strony WWW z gotową tabelą i widokami.
+                  </span>
+                </span>
+                <Button size="xs" asChild>
+                  <Link href="/strony/nowa">Użyj szablonu →</Link>
+                </Button>
+              </div>
             </div>
           )}
         </div>

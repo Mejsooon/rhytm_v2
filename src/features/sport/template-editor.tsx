@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 
 import { ModuleHeader } from "@/components/shell/module-header";
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import {
   Button,
   FIELD,
@@ -221,8 +220,6 @@ export function TemplateEditor({ data }: { data: TemplateEditorData }) {
           aria-label="Okruszki"
           className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground"
         >
-          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-          <SidebarToggle placement="header" />
           <Link
             href="/sport"
             className="text-muted-foreground no-underline outline-none hover:text-foreground focus-visible:shadow-focus max-[799px]:inline-flex max-[799px]:min-h-11 max-[799px]:items-center"

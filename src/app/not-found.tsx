@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 
-import { SidebarToggle } from "@/components/shell/sidebar-toggle";
 import { Button, Kbd } from "@/components/controls";
 import { AppShell } from "@/components/shell/app-shell";
 
@@ -17,8 +16,6 @@ export default function NotFound() {
           aria-label="Okruszki"
           className="flex items-center gap-1.5 text-sm text-muted-foreground"
         >
-          {/* Przy schowanym pasku: przycisk „Pokaż pasek boczny” przed okruszkami */}
-          <SidebarToggle placement="header" />
           <span>rhytm</span>
           <span aria-hidden="true">/</span>
           <b aria-current="page" className="font-medium text-foreground">

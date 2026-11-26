@@ -51,7 +51,10 @@ export type TemplateView = {
 export type TemplateConfig = {
   name: string;
   icon: string;
+  // Opis pod tytułem strony (S2Table)
   desc: string;
+  // Krótki podpis karty szablonu w oknie „Nowa strona” (S2NewPage)
+  hint: string;
   // Tekst przycisku „Nowy …” i odmiana rzeczownika do licznika wierszy (1 / 2–4 / 5+)
   newLabel: string;
   noun: [string, string, string];
@@ -60,8 +63,7 @@ export type TemplateConfig = {
   group: string | null;
   board: string | null;
   collapsed: string[];
-  // Zdanie pod tytułem nowej strony (blok tekstu na początku); pusty tekst = bez bloku
-  intro: string;
+  // „Dodatkowo” w oknie „Nowa strona” (S2NewPage): linie oddzielone \n; pusty tekst = bez sekcji
   extra: string;
   fields: TemplateField[];
   cards: TemplateCard[];
@@ -84,15 +86,16 @@ const SZARY = PALETA[7];
 export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
   empty: {
     name: "Pusta strona",
-    icon: "lucide:table",
+    // Ikona karty w oknie „Nowa strona”; sama pusta strona powstaje bez ikony (S2EmptyPage: „Dodaj ikonę”)
+    icon: "lucide:file-text",
     desc: "Zacznij od zera",
+    hint: "Zacznij od zera",
     newLabel: "Nowy wiersz",
     noun: ["wiersz", "wiersze", "wierszy"],
     views: [],
     group: null,
     board: null,
     collapsed: [],
-    intro: "",
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
@@ -107,6 +110,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     name: "Książki",
     icon: "lucide:book-open",
     desc: "Twoje książki: czytane, przeczytane i na później.",
+    hint: "Twoje książki",
     newLabel: "Nowa książka",
     noun: ["książka", "książki", "książek"],
     views: [
@@ -123,8 +127,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     group: "status",
     board: "status",
     collapsed: [],
-    intro: "Co czytam, co przeczytałem i co chcę przeczytać.",
-    extra: "Liczba przeczytanych w tym roku.",
+    extra: "Średnia ocena w stopce tabeli.",
     fields: [
       { key: "title", name: "Tytuł", type: "text", is_title: true, config: { empty_label: "Bez tytułu" } },
       { key: "author", name: "Autor", type: "text" },
@@ -176,6 +179,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     name: "Projekty",
     icon: "lucide:rocket",
     desc: "Projekty na studia, własne i dla klientów.",
+    hint: "Twoje projekty",
     newLabel: "Nowy projekt",
     noun: ["projekt", "projekty", "projektów"],
     views: [
@@ -185,8 +189,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     group: "status",
     board: "status",
     collapsed: ["done"],
-    intro: "Projekty na studia, własne i dla klientów.",
-    extra: "Terminy trafią do kalendarza głównego.",
+    extra: "Terminy trafią do kalendarza głównego.\nWidok Tablica z kolumnami statusów.",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       {
@@ -245,6 +248,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     name: "Strony WWW",
     icon: "lucide:globe",
     desc: "Strony, które zbudowałeś albo budujesz dla klientów.",
+    hint: "Twoje strony WWW",
     newLabel: "Nowa strona",
     noun: ["strona", "strony", "stron"],
     views: [
@@ -255,7 +259,6 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     group: "status",
     board: "status",
     collapsed: [],
-    intro: "Strony klientów: URL, klient, status.",
     extra: "",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
@@ -309,6 +312,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     name: "Subskrypcje",
     icon: "lucide:wallet",
     desc: "Twoje subskrypcje i ich odnowienia.",
+    hint: "Twoje subskrypcje",
     newLabel: "Nowa subskrypcja",
     noun: ["subskrypcja", "subskrypcje", "subskrypcji"],
     views: [
@@ -325,8 +329,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     group: "cat",
     board: "cat",
     collapsed: [],
-    intro: "Twoje subskrypcje i ich odnowienia.",
-    extra: "Sumy na miesiąc i rok. Odnowienia trafią do kalendarza głównego.",
+    extra:
+      "Karty: miesięcznie, rocznie i najbliższe odnowienie.\nOdnowienia w kalendarzu i przypomnienie dzień wcześniej.\nSuma miesięczna w stopce tabeli.",
     fields: [
       { key: "name", name: "Nazwa", type: "text", is_title: true, config: { empty_label: "Bez nazwy" } },
       { key: "price", name: "Kwota cykliczna", type: "recurring", config: { default_cycle: "month" } },
@@ -581,19 +585,8 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
   // Pusta strona: bez bloków — edytor pokazuje szybki start „albo zacznij od:” (decyzja po kroku 2)
   if (key === "empty") return [];
 
-  const bloki: CreatePageBlock[] = [];
-  // Zdanie pod tytułem to zwykły blok tekstu przed tabelą
-  if (tpl.intro !== "") {
-    bloki.push({ id: newId(), type: "text", content: { text: tpl.intro }, fields: [], rows: [] });
-  }
-  bloki.push({
-    id: newId(),
-    type: "table",
-    content: { name: tpl.name, settings },
-    fields,
-    rows: [],
-  });
-  return bloki;
+  // Sama tabela: opis szablonu stoi pod tytułem strony (S2Table), nie w bloku tekstu
+  return [{ id: newId(), type: "table", content: { name: tpl.name, settings }, fields, rows: [] }];
 }
 
 // Nowa tabela z menu „/” (spec 6.8): Nazwa, Status (Wybór), Data i dwa puste wiersze
