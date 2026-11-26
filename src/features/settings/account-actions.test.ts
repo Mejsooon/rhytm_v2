@@ -297,12 +297,13 @@ describe("sendSetPasswordLink", () => {
   });
 
   it("wysyła link resetu na adres konta z powrotem do /auth/confirm", async () => {
-    expect(await sendSetPasswordLink()).toEqual({
+    expect(await sendSetPasswordLink("tok")).toEqual({
       ok: true,
       email: "ala@example.com",
     });
     expect(resetPasswordForEmail).toHaveBeenCalledWith("ala@example.com", {
       redirectTo: expect.stringMatching(/\/auth\/confirm$/),
+      captchaToken: "tok",
     });
   });
 
@@ -310,7 +311,7 @@ describe("sendSetPasswordLink", () => {
     resetPasswordForEmail.mockResolvedValue({
       error: { status: 500, message: "x" },
     });
-    expect(await sendSetPasswordLink()).toEqual({
+    expect(await sendSetPasswordLink("tok")).toEqual({
       ok: false,
       message: "Nie udało się wysłać linku. Spróbuj ponownie.",
     });

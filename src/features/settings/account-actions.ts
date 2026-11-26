@@ -150,7 +150,9 @@ export async function changePassword(input: {
 }
 
 // Konto tylko z Google: link do ustawienia hasła (dalej istniejący ekran /nowe-haslo)
-export async function sendSetPasswordLink(): Promise<
+export async function sendSetPasswordLink(
+  turnstileToken: string | null,
+): Promise<
   { ok: true; email: string } | { ok: false; message: string }
 > {
   const supabase = await createClient();
@@ -186,8 +188,11 @@ export async function sendSetPasswordLink(): Promise<
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/confirm`,
+    captchaToken: turnstileToken ?? undefined,
   });
   if (error) {
+    if (error.code === "captcha_failed")
+      return { ok: false, message: "Potwierdź, że nie jesteś botem" };
     if (error.status === 429 || (error.code ?? "").includes("rate_limit"))
       return { ok: false, message: "Za dużo prób. Spróbuj za chwilę." };
     return {

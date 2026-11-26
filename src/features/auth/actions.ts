@@ -12,7 +12,6 @@ import {
   signInSchema,
   signUpSchema,
 } from "@/lib/auth/schemas";
-import { verifyTurnstile } from "@/lib/auth/turnstile";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthFormState = {
@@ -25,6 +24,15 @@ export type AuthFormState = {
 
 // Jeden komunikat dla każdego błędu logowania — nie zdradzamy, czy konto istnieje
 const BLAD_LOGOWANIA = "Nieprawidłowy e-mail lub hasło";
+
+// Turnstile sprawdza Supabase (Auth → Attack Protection), więc nie da się go ominąć, wołając API bezpośrednio.
+// Token dodaje widżet jako ukryte pole cf-turnstile-response.
+const BLAD_BOTA: AuthFormState = { status: "error", message: "Potwierdź, że nie jesteś botem" };
+
+function tokenZFormularza(formData: FormData): string | undefined {
+  const token = formData.get("cf-turnstile-response");
+  return typeof token === "string" ? token : undefined;
+}
 
 export async function signIn(
   _prev: AuthFormState,
@@ -39,27 +47,18 @@ export async function signIn(
     return { status: "error", message: BLAD_LOGOWANIA };
   }
 
-  // 2. Turnstile — token dodaje widżet jako ukryte pole cf-turnstile-response
-  const naglowki = await headers();
-  const ip =
-    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
-  const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(
-    typeof token === "string" ? token : null,
-    ip,
-  );
-  if (!botOk) {
-    return { status: "error", message: "Potwierdź, że nie jesteś botem" };
-  }
-
-  // 3. Logowanie hasłem
+  // 2. Logowanie hasłem
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: { captchaToken: tokenZFormularza(formData) },
+  });
+  if (error?.code === "captcha_failed") return BLAD_BOTA;
   if (error || !data.user) {
     return { status: "error", message: BLAD_LOGOWANIA };
   }
 
-  // 4. Profil decyduje: ekran przywracania (konto do usunięcia), aplikacja albo onboarding
+  // 3. Profil decyduje: ekran przywracania (konto do usunięcia), aplikacja albo onboarding
   const { data: profil, error: bladProfilu } = await supabase
     .from("profiles")
     .select("onboarded_at, deletion_requested_at")
@@ -118,7 +117,7 @@ export async function signInWithGoogle(): Promise<never> {
   redirect(data.url);
 }
 
-// Rejestracja: zod → Turnstile → HIBP → Supabase.
+// Rejestracja: zod → HIBP → Supabase (tam kontrola Turnstile).
 // Sukces i „użytkownik już istnieje” dają TEN SAM stan, żeby nie zdradzać, czy e-mail ma konto.
 export async function signUp(
   _prev: AuthFormState,
@@ -140,20 +139,7 @@ export async function signUp(
     return { status: "error", fieldErrors };
   }
 
-  // 2. Turnstile
-  const naglowki = await headers();
-  const ip =
-    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
-  const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(
-    typeof token === "string" ? token : null,
-    ip,
-  );
-  if (!botOk) {
-    return { status: "error", message: "Potwierdź, że nie jesteś botem" };
-  }
-
-  // 3. Hasło nie może być w wyciekach (serwer sprawdza zawsze, niezależnie od reguły na żywo)
+  // 2. Hasło nie może być w wyciekach (serwer sprawdza zawsze, niezależnie od reguły na żywo)
   if (await isPasswordPwned(parsed.data.password)) {
     return {
       status: "error",
@@ -161,7 +147,7 @@ export async function signUp(
     };
   }
 
-  // 4. Konto w Supabase; link potwierdzający wraca na /auth/confirm
+  // 3. Konto w Supabase; link potwierdzający wraca na /auth/confirm
   const origin = await originZNaglowkow();
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
@@ -170,8 +156,10 @@ export async function signUp(
     options: {
       data: { display_name: parsed.data.displayName },
       emailRedirectTo: `${origin}/auth/confirm`,
+      captchaToken: tokenZFormularza(formData),
     },
   });
+  if (error?.code === "captcha_failed") return BLAD_BOTA;
   const juzIstnieje =
     error?.code === "user_already_exists" ||
     /already registered/i.test(error?.message ?? "");
@@ -189,12 +177,8 @@ export async function checkPasswordLeak(password: string): Promise<boolean> {
   return isPasswordPwned(password);
 }
 
-// Wspólna kontrola ponownego wysłania linku: e-mail (zod) i Turnstile. Publiczna akcja bez nich pozwalałaby zalewać skrzynki.
-// Zwraca błąd do pokazania albo znormalizowany e-mail.
-async function sprawdzPonowneWyslanie(
-  email: string,
-  turnstileToken: string | null,
-): Promise<{ blad: AuthFormState } | { email: string }> {
+// Wspólna kontrola e-maila przy ponownym wysłaniu linku. Zwraca błąd do pokazania albo znormalizowany e-mail.
+function sprawdzEmail(email: string): { blad: AuthFormState } | { email: string } {
   const parsed = resetRequestSchema.safeParse({ email });
   if (!parsed.success) {
     return {
@@ -204,36 +188,32 @@ async function sprawdzPonowneWyslanie(
       },
     };
   }
-  const naglowki = await headers();
-  const ip =
-    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
-  if (!(await verifyTurnstile(turnstileToken, ip))) {
-    return {
-      blad: { status: "error", message: "Potwierdź, że nie jesteś botem" },
-    };
-  }
   return { email: parsed.data.email };
 }
 
-// Ponowne wysłanie linku potwierdzającego. Po przejściu kontroli zawsze „sukces” — nie zdradzamy stanu konta.
+// Ponowne wysłanie linku potwierdzającego. Poza błędem captchy zawsze „sukces” — nie zdradzamy stanu konta.
 export async function resendConfirmation(
   email: string,
   turnstileToken: string | null,
 ): Promise<AuthFormState> {
-  const kontrola = await sprawdzPonowneWyslanie(email, turnstileToken);
+  const kontrola = sprawdzEmail(email);
   if ("blad" in kontrola) return kontrola.blad;
 
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resend({
+  const { error } = await supabase.auth.resend({
     type: "signup",
     email: kontrola.email,
-    options: { emailRedirectTo: `${origin}/auth/confirm` },
+    options: {
+      emailRedirectTo: `${origin}/auth/confirm`,
+      captchaToken: turnstileToken ?? undefined,
+    },
   });
+  if (error?.code === "captcha_failed") return BLAD_BOTA;
   return { status: "success", email: kontrola.email };
 }
 
-// Prośba o reset hasła: zod → Turnstile → Supabase. Zawsze ten sam sukces, niezależnie od tego, czy konto istnieje.
+// Prośba o reset hasła: zod → Supabase. Poza błędem captchy zawsze ten sam sukces, niezależnie od tego, czy konto istnieje.
 export async function requestPasswordReset(
   _prev: AuthFormState,
   formData: FormData,
@@ -248,24 +228,14 @@ export async function requestPasswordReset(
     };
   }
 
-  const naglowki = await headers();
-  const ip =
-    naglowki.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
-  const token = formData.get("cf-turnstile-response");
-  const botOk = await verifyTurnstile(
-    typeof token === "string" ? token : null,
-    ip,
-  );
-  if (!botOk) {
-    return { status: "error", message: "Potwierdź, że nie jesteś botem" };
-  }
-
   // Błąd Supabase (np. brak konta, limit) celowo ignorujemy — odpowiedź dla użytkownika jest zawsze taka sama
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/confirm`,
+    captchaToken: tokenZFormularza(formData),
   });
+  if (error?.code === "captcha_failed") return BLAD_BOTA;
   return { status: "success", email: parsed.data.email };
 }
 
@@ -326,7 +296,7 @@ export async function updatePassword(
   redirect("/dzis");
 }
 
-// Ponowne wysłanie linku (potwierdzenie konta albo reset hasła). Kontrola e-maila i Turnstile, potem zawsze „sukces”.
+// Ponowne wysłanie linku (potwierdzenie konta albo reset hasła). Poza błędem e-maila i captchy zawsze „sukces”.
 export async function resendLink(
   type: "signup" | "recovery",
   email: string,
@@ -335,14 +305,16 @@ export async function resendLink(
   if (type === "signup") {
     return resendConfirmation(email, turnstileToken);
   }
-  const kontrola = await sprawdzPonowneWyslanie(email, turnstileToken);
+  const kontrola = sprawdzEmail(email);
   if ("blad" in kontrola) return kontrola.blad;
 
   const origin = await originZNaglowkow();
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(kontrola.email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(kontrola.email, {
     redirectTo: `${origin}/auth/confirm`,
+    captchaToken: turnstileToken ?? undefined,
   });
+  if (error?.code === "captcha_failed") return BLAD_BOTA;
   return { status: "success", email: kontrola.email };
 }
 
