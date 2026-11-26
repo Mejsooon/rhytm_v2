@@ -4,6 +4,7 @@
 // Konto tylko z Google dostaje zamiast formularza kartę „Ustaw hasło do konta” z linkiem z maila.
 import * as React from "react";
 
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import {
   Button,
   Card,
@@ -47,20 +48,23 @@ export function PasswordCard({
   const [linkWyslany, setLinkWyslany] = React.useState<string | null>(null);
   const [bladLinku, setBladLinku] = React.useState<string | null>(null);
   const [wysylam, setWysylam] = React.useState(false);
+  // Token Turnstile jest jednorazowy: po każdej próbie widżet bierze nowy
+  const [proby, setProby] = React.useState(0);
   const id = React.useId();
 
   if (!hasPassword) {
-    const wyslijLink = async () => {
+    const wyslijLink = async (token: string | null) => {
       setWysylam(true);
       setBladLinku(null);
       try {
-        const wynik = await sendSetPasswordLink();
+        const wynik = await sendSetPasswordLink(token);
         if (wynik.ok) setLinkWyslany(wynik.email);
         else setBladLinku(wynik.message);
       } catch {
         setBladLinku("Nie udało się wysłać linku. Spróbuj ponownie.");
       } finally {
         setWysylam(false);
+        setProby((n) => n + 1);
       }
     };
 
@@ -75,31 +79,34 @@ export function PasswordCard({
             </CardDescription>
           </div>
         </CardHeader>
-        <CardFooter className="mt-5">
-          <span
-            role="status"
-            className={cn(
-              "text-[13px]",
-              bladLinku
-                ? "text-destructive-foreground"
-                : linkWyslany
-                  ? "text-success"
-                  : "text-muted-foreground",
-            )}
-          >
-            {bladLinku ??
-              (linkWyslany ? `Link wysłany na ${linkWyslany}.` : "")}
-          </span>
-          <Button
-            variant="primary"
-            aria-disabled={wysylam}
-            onClick={() => {
-              if (!wysylam) void wyslijLink();
-            }}
-          >
-            Wyślij link
-          </Button>
-        </CardFooter>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const token = new FormData(e.currentTarget).get("cf-turnstile-response");
+            if (!wysylam) void wyslijLink(typeof token === "string" ? token : null);
+          }}
+        >
+          <TurnstileWidget resetKey={proby} />
+          <CardFooter className="mt-5">
+            <span
+              role="status"
+              className={cn(
+                "text-[13px]",
+                bladLinku
+                  ? "text-destructive-foreground"
+                  : linkWyslany
+                    ? "text-success"
+                    : "text-muted-foreground",
+              )}
+            >
+              {bladLinku ??
+                (linkWyslany ? `Link wysłany na ${linkWyslany}.` : "")}
+            </span>
+            <Button type="submit" variant="primary" aria-disabled={wysylam}>
+              Wyślij link
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     );
   }

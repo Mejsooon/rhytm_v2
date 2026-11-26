@@ -12,7 +12,6 @@ const {
   cookieDelete,
   isPasswordPwned,
   maybeSingle,
-  verifyTurnstile,
   pushDelete,
 } = vi.hoisted(() => ({
   pushDelete: vi.fn(),
@@ -27,7 +26,6 @@ const {
   cookieDelete: vi.fn(),
   isPasswordPwned: vi.fn(),
   maybeSingle: vi.fn(),
-  verifyTurnstile: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -50,7 +48,6 @@ vi.mock("@/lib/supabase/server", () => ({
     }),
   }),
 }));
-vi.mock("@/lib/auth/turnstile", () => ({ verifyTurnstile }));
 vi.mock("@/lib/auth/hibp", () => ({ isPasswordPwned }));
 vi.mock("next/headers", () => ({
   headers: async () =>
@@ -97,19 +94,21 @@ describe("signIn", () => {
     vi.clearAllMocks();
   });
 
-  it("błąd Turnstile → „Potwierdź, że nie jesteś botem” (bez próby logowania)", async () => {
-    verifyTurnstile.mockResolvedValue(false);
+  it("przekazuje token do Supabase; captcha_failed → „Potwierdź, że nie jesteś botem”", async () => {
+    signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "captcha_failed", message: "captcha" } });
     const wynik = await signIn({ status: "idle" }, formularz(poprawne));
     expect(wynik).toEqual({
       status: "error",
       message: "Potwierdź, że nie jesteś botem",
     });
-    expect(verifyTurnstile).toHaveBeenCalledWith("tok", "1.2.3.4");
-    expect(signInWithPassword).not.toHaveBeenCalled();
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "a@b.pl",
+      password: "haslo12345",
+      options: { captchaToken: "tok" },
+    });
   });
 
   it("błąd autoryzacji → „Nieprawidłowy e-mail lub hasło”", async () => {
-    verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({
       data: { user: null },
       error: { message: "Invalid login" },
@@ -130,11 +129,10 @@ describe("signIn", () => {
       status: "error",
       message: "Nieprawidłowy e-mail lub hasło",
     });
-    expect(verifyTurnstile).not.toHaveBeenCalled();
+    expect(signInWithPassword).not.toHaveBeenCalled();
   });
 
   it("sukces z ukończonym onboardingiem → przekierowanie na /dzis", async () => {
-    verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({
       data: { user: { id: "u1" } },
       error: null,
@@ -148,7 +146,6 @@ describe("signIn", () => {
   });
 
   it("konto oznaczone do usunięcia → /konto-usuniete", async () => {
-    verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({
       data: { user: { id: "u1" } },
       error: null,
@@ -166,7 +163,6 @@ describe("signIn", () => {
   });
 
   it("stara baza bez kolumny (42703) → drugie zapytanie, /dzis", async () => {
-    verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({
       data: { user: { id: "u1" } },
       error: null,
@@ -183,7 +179,6 @@ describe("signIn", () => {
   });
 
   it("sukces bez onboardingu → /onboarding", async () => {
-    verifyTurnstile.mockResolvedValue(true);
     signInWithPassword.mockResolvedValue({
       data: { user: { id: "u1" } },
       error: null,
@@ -206,7 +201,6 @@ const rejestracja = {
 describe("signUp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyTurnstile.mockResolvedValue(true);
     isPasswordPwned.mockResolvedValue(false);
     signUpMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   });
@@ -220,14 +214,13 @@ describe("signUp", () => {
     expect(signUpMock).not.toHaveBeenCalled();
   });
 
-  it("błąd Turnstile → „Potwierdź, że nie jesteś botem”", async () => {
-    verifyTurnstile.mockResolvedValue(false);
+  it("captcha_failed → „Potwierdź, że nie jesteś botem”", async () => {
+    signUpMock.mockResolvedValue({ data: { user: null }, error: { code: "captcha_failed", message: "captcha" } });
     const wynik = await signUp({ status: "idle" }, formularz(rejestracja));
     expect(wynik).toEqual({
       status: "error",
       message: "Potwierdź, że nie jesteś botem",
     });
-    expect(signUpMock).not.toHaveBeenCalled();
   });
 
   it("hasło z wycieku → błąd, bez wywołania Supabase", async () => {
@@ -246,6 +239,7 @@ describe("signUp", () => {
       options: {
         data: { display_name: "Ala" },
         emailRedirectTo: "http://localhost:3000/auth/confirm",
+        captchaToken: "tok",
       },
     });
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
@@ -288,7 +282,6 @@ describe("checkPasswordLeak", () => {
 describe("resendConfirmation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyTurnstile.mockResolvedValue(true);
   });
 
   it("zły e-mail → błąd pola, bez wysyłki", async () => {
@@ -297,15 +290,12 @@ describe("resendConfirmation", () => {
     expect(resendMock).not.toHaveBeenCalled();
   });
 
-  it("błąd Turnstile → „Potwierdź, że nie jesteś botem”, bez wysyłki", async () => {
-    verifyTurnstile.mockResolvedValue(false);
-    const wynik = await resendConfirmation("ala@przyklad.pl", null);
-    expect(wynik).toEqual({
+  it("captcha_failed → „Potwierdź, że nie jesteś botem”", async () => {
+    resendMock.mockResolvedValue({ data: { user: null }, error: { code: "captcha_failed", message: "captcha" } });
+    expect(await resendConfirmation("ala@przyklad.pl", null)).toEqual({
       status: "error",
       message: "Potwierdź, że nie jesteś botem",
     });
-    expect(verifyTurnstile).toHaveBeenCalledWith(null, "1.2.3.4");
-    expect(resendMock).not.toHaveBeenCalled();
   });
 
   it("wysyła ponownie link i zwraca sukces", async () => {
@@ -314,7 +304,10 @@ describe("resendConfirmation", () => {
     expect(resendMock).toHaveBeenCalledWith({
       type: "signup",
       email: "ala@przyklad.pl",
-      options: { emailRedirectTo: "http://localhost:3000/auth/confirm" },
+      options: {
+        emailRedirectTo: "http://localhost:3000/auth/confirm",
+        captchaToken: "tok",
+      },
     });
     expect(wynik.status).toBe("success");
   });
@@ -330,7 +323,6 @@ describe("resendConfirmation", () => {
 describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyTurnstile.mockResolvedValue(true);
     resendMock.mockResolvedValue({ error: null });
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -364,7 +356,6 @@ describe("adres powrotny (NEXT_PUBLIC_SITE_URL)", () => {
 describe("requestPasswordReset", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyTurnstile.mockResolvedValue(true);
     resetForEmail.mockResolvedValue({ error: null });
   });
 
@@ -375,6 +366,7 @@ describe("requestPasswordReset", () => {
     );
     expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", {
       redirectTo: "http://localhost:3000/auth/confirm",
+      captchaToken: "tok",
     });
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
@@ -388,8 +380,8 @@ describe("requestPasswordReset", () => {
     expect(wynik).toEqual({ status: "success", email: "ala@przyklad.pl" });
   });
 
-  it("błąd Turnstile → komunikat, bez wysyłki", async () => {
-    verifyTurnstile.mockResolvedValue(false);
+  it("captcha_failed → komunikat o bocie", async () => {
+    resetForEmail.mockResolvedValue({ data: { user: null }, error: { code: "captcha_failed", message: "captcha" } });
     const wynik = await requestPasswordReset(
       { status: "idle" },
       formularz({ email: "ala@przyklad.pl" }),
@@ -398,7 +390,6 @@ describe("requestPasswordReset", () => {
       status: "error",
       message: "Potwierdź, że nie jesteś botem",
     });
-    expect(resetForEmail).not.toHaveBeenCalled();
   });
 
   it("zły format e-maila → błąd pola", async () => {
@@ -522,7 +513,6 @@ describe("updatePassword", () => {
 describe("resendLink", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyTurnstile.mockResolvedValue(true);
     resendMock.mockResolvedValue({ error: null });
     resetForEmail.mockResolvedValue({ error: null });
   });
@@ -532,7 +522,10 @@ describe("resendLink", () => {
     expect(resendMock).toHaveBeenCalledWith({
       type: "signup",
       email: "ala@przyklad.pl",
-      options: { emailRedirectTo: "http://localhost:3000/auth/confirm" },
+      options: {
+        emailRedirectTo: "http://localhost:3000/auth/confirm",
+        captchaToken: "tok",
+      },
     });
     expect(wynik.status).toBe("success");
   });
@@ -542,20 +535,21 @@ describe("resendLink", () => {
     const wynik = await resendLink("recovery", "ala@przyklad.pl", "tok");
     expect(resetForEmail).toHaveBeenCalledWith("ala@przyklad.pl", {
       redirectTo: "http://localhost:3000/auth/confirm",
+      captchaToken: "tok",
     });
     expect(wynik.status).toBe("success");
   });
 
-  it("recovery: zły e-mail → błąd pola, błąd Turnstile → komunikat; w obu bez wysyłki", async () => {
+  it("recovery: zły e-mail → błąd pola, captcha_failed → komunikat", async () => {
     expect(
       (await resendLink("recovery", "zle", "tok")).fieldErrors?.email,
     ).toBe("Podaj poprawny e-mail");
-    verifyTurnstile.mockResolvedValue(false);
+    expect(resetForEmail).not.toHaveBeenCalled();
+    resetForEmail.mockResolvedValue({ data: { user: null }, error: { code: "captcha_failed", message: "captcha" } });
     expect(await resendLink("recovery", "ala@przyklad.pl", null)).toEqual({
       status: "error",
       message: "Potwierdź, że nie jesteś botem",
     });
-    expect(resetForEmail).not.toHaveBeenCalled();
   });
 });
 

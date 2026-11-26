@@ -6,6 +6,10 @@ const { changePassword, sendSetPasswordLink } = vi.hoisted(() => ({
   sendSetPasswordLink: vi.fn(),
 }));
 vi.mock("./account-actions", () => ({ changePassword, sendSetPasswordLink }));
+// Widżet Turnstile ładuje skrypt Cloudflare — w testach atrapa z tokenem
+vi.mock("@/components/auth/turnstile-widget", () => ({
+  TurnstileWidget: () => <input type="hidden" name="cf-turnstile-response" value="tok" />,
+}));
 
 import { PasswordCard } from "./password-card";
 
@@ -168,6 +172,7 @@ describe("PasswordCard — konto Google", () => {
         "Link wysłany na ala@example.com.",
       ),
     );
+    expect(sendSetPasswordLink).toHaveBeenCalledWith("tok");
   });
 
   it("błąd wysyłki → komunikat", async () => {

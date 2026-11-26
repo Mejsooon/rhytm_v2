@@ -22,7 +22,7 @@ Do tego kroku nie potrzebujesz kont w internecie. Potrzebujesz Dockera (Supabase
    - `NEXT_PUBLIC_SUPABASE_URL` = wartość `API URL` z `supabase status` (zwykle `http://127.0.0.1:54321`),
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `Publishable key` (starsze CLI: `anon key`),
    - `SUPABASE_SECRET_KEY` = `Secret key` (starsze CLI: `service_role key`): potrzebny tylko testom e2e (zakładają konta testowe), sama aplikacja go nie używa,
-   - klucze Turnstile zostaw testowe, które już są w pliku (`1x00000000000000000000AA` i `1x0000000000000000000000000000000AA`): zawsze przechodzą,
+   - klucze Turnstile zostaw testowe, które już są w pliku (`1x00000000000000000000AA`; tajny testowy jest w `supabase/config.toml`): zawsze przechodzą,
    - `NEXT_PUBLIC_SITE_URL` zostaw `http://localhost:3000`.
    - `RECOVERY_COOKIE_SECRET` = losowy sekret, wygeneruj: `openssl rand -base64 32` (bez niego reset hasła nie działa).
 7. Uruchom aplikację: `pnpm dev` i wejdź na http://localhost:3000.
@@ -89,7 +89,8 @@ Logowanie przez Google nie działa lokalnie, dopóki nie zrobisz kroku 3 (to nor
    - **Hostname**: dodaj `<projekt>.vercel.app` oraz `localhost` (każdy osobno). `localhost` jest potrzebny tylko, gdy lokalna aplikacja używa produkcyjnych kluczy Turnstile; jeśli lokalnie pracujesz wyłącznie z kluczami testowymi z `.env.example`, możesz go usunąć,
    - **Widget Mode**: **Managed**.
 4. Kliknij **Create**.
-5. Skopiuj **Site Key** (publiczny) i **Secret Key** (tajny, patrz krok 7). Wkleisz je w kroku 6.
+5. Skopiuj **Site Key** (publiczny) i **Secret Key** (tajny, patrz krok 7). Site Key wkleisz w kroku 6.
+6. W Supabase: **Authentication → Attack Protection → Enable CAPTCHA protection**, dostawca **Turnstile**, wklej Secret Key i zapisz. Bez tego aplikacja nie ma żadnej ochrony przed botami. Włączaj dopiero po wdrożeniu kodu, który przekazuje token (inaczej logowanie przestanie działać).
 
 ---
 
@@ -123,7 +124,6 @@ Wbudowana poczta Supabase ma bardzo niski limit wysyłki, dlatego podłączamy R
    | `NEXT_PUBLIC_SUPABASE_URL`             | Project URL z kroku 2                                                                               |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key z kroku 2                                                                           |
    | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | Site Key z kroku 4                                                                                  |
-   | `TURNSTILE_SECRET_KEY`                 | Secret Key z kroku 4                                                                                |
    | `NEXT_PUBLIC_SITE_URL`                 | `https://<projekt>.vercel.app` (bez ukośnika na końcu)                                              |
    | `RECOVERY_COOKIE_SECRET`               | nowy losowy sekret: `openssl rand -base64 32` (inny niż lokalny; podpisuje ciasteczko resetu hasła) |
 
