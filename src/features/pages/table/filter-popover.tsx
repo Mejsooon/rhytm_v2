@@ -63,7 +63,7 @@ function czyTelefon() {
 // z warunkami (te same kontrolki co w dymku), sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako widok”.
 export function FilterPopover({
   fields,
-  filters,
+  filters: filtryZapisane,
   today,
   shown,
   total,
@@ -98,6 +98,59 @@ export function FilterPopover({
   );
   // Teksty liczb w trakcie wpisywania (np. „20,”) — wartość warunku trzyma już liczbę
   const [szkice, setSzkice] = React.useState<Record<number, string>>({});
+  // Wpisywana wartość (tekst, liczba) idzie do zapisu dopiero po 400 ms bez pisania; do tego czasu dymek
+  // pokazuje szkic warunków. Wybór pola, operatora, opcji czy daty zapisuje się od razu (i wysyła szkic).
+  const [szkicFiltrow, setSzkicFiltrow] = React.useState<FilterCond[] | null>(null);
+  const filters = szkicFiltrow ?? filtryZapisane;
+  const czasomierz = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const oczekujace = React.useRef<FilterCond[] | null>(null);
+  const onChangeRef = React.useRef(onChange);
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  // Zamknięcie tabeli w trakcie pisania: szkic i tak się zapisuje
+  React.useEffect(
+    () => () => {
+      if (czasomierz.current) clearTimeout(czasomierz.current);
+      if (oczekujace.current) onChangeRef.current(oczekujace.current);
+    },
+    [],
+  );
+
+  // Zapis od razu (anuluje czekający zapis szkicu, bo `next` już go zawiera)
+  function wyslij(next: FilterCond[]) {
+    if (czasomierz.current) clearTimeout(czasomierz.current);
+    czasomierz.current = null;
+    oczekujace.current = null;
+    setSzkicFiltrow(null);
+    onChange(next);
+  }
+
+  // Zapis po 400 ms bez pisania
+  function wpisz(i: number, patch: Partial<FilterCond>) {
+    const next = filters.map((c, j) => (j === i ? { ...c, ...patch } : c));
+    setSzkicFiltrow(next);
+    oczekujace.current = next;
+    if (czasomierz.current) clearTimeout(czasomierz.current);
+    czasomierz.current = setTimeout(() => {
+      czasomierz.current = null;
+      oczekujace.current = null;
+      setSzkicFiltrow(null);
+      onChangeRef.current(next);
+    }, 400);
+  }
+
+  // „Zapisz jako widok”: najpierw czekający szkic, żeby nowy widok miał wpisaną wartość
+  function zapiszJakoWidok() {
+    if (oczekujace.current) wyslij(oczekujace.current);
+    onSaveAsView?.();
+  }
+
+  // Zamknięcie dymku albo arkusza wysyła czekający szkic od razu
+  function zmienOtwarcie(o: boolean) {
+    if (!o && oczekujace.current) wyslij(oczekujace.current);
+    onOpenChange(o);
+  }
 
   const warunki = filters.flatMap((c, i) => {
     const pole = fields.find((f) => f.id === c.field_id);
@@ -105,12 +158,12 @@ export function FilterPopover({
   });
 
   function zmien(i: number, patch: Partial<FilterCond>) {
-    onChange(filters.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+    wyslij(filters.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   }
 
   function dodaj(pole: PageField | undefined) {
     if (!pole) return;
-    onChange([...filters, { field_id: pole.id, op: operatorsFor(pole.type)[0] }]);
+    wyslij([...filters, { field_id: pole.id, op: operatorsFor(pole.type)[0] }]);
   }
 
   const listaWarunkow = (
@@ -209,7 +262,7 @@ export function FilterPopover({
                           const tekst = e.target.value;
                           setSzkice((s) => ({ ...s, [i]: tekst }));
                           const liczba = Math.round(Number(tekst));
-                          if (tekst.trim() !== "" && Number.isFinite(liczba) && liczba >= 1) zmien(i, { value: liczba });
+                          if (tekst.trim() !== "" && Number.isFinite(liczba) && liczba >= 1) wpisz(i, { value: liczba });
                         }}
                         className={cn(FIELD, "min-w-0 flex-1 font-mono")}
                       />
@@ -238,7 +291,7 @@ export function FilterPopover({
                             const tekst = e.target.value;
                             setSzkice((s) => ({ ...s, [i]: tekst }));
                             const liczba = Number(tekst.trim().replace(",", "."));
-                            zmien(i, {
+                            wpisz(i, {
                               value: tekst.trim() !== "" && Number.isFinite(liczba) ? liczba : undefined,
                             });
                           }}
@@ -253,7 +306,7 @@ export function FilterPopover({
                     <TextField
                       label={<span className="sr-only">{nazwaWartosci}</span>}
                       value={typeof c.value === "string" ? c.value : ""}
-                      onChange={(e) => zmien(i, { value: e.target.value })}
+                      onChange={(e) => wpisz(i, { value: e.target.value })}
                     />
                   )}
                 </div>
@@ -265,7 +318,7 @@ export function FilterPopover({
                   aria-label="Usuń warunek"
                   onClick={() => {
                     setSzkice({});
-                    onChange(filters.filter((_, j) => j !== i));
+                    wyslij(filters.filter((_, j) => j !== i));
                   }}
                   className="max-[799px]:order-2 max-[799px]:h-11 max-[799px]:w-11"
                 >
@@ -307,18 +360,18 @@ export function FilterPopover({
         </button>
         <FormDialog
           open={open}
-          onOpenChange={onOpenChange}
+          onOpenChange={zmienOtwarcie}
           title="Filtr i sortowanie"
           phoneHeader="actions"
           phoneCancel={{
             label: "Wyczyść",
             onClick: () => {
               setSzkice({});
-              onChange([]);
+              wyslij([]);
             },
           }}
           phoneSubmit={
-            <Button variant="primary" onClick={() => onOpenChange(false)}>
+            <Button variant="primary" onClick={() => zmienOtwarcie(false)}>
               Gotowe
             </Button>
           }
@@ -387,7 +440,7 @@ export function FilterPopover({
                 Dodaj sortowanie
               </Button>
               {onSaveAsView && (
-                <Button variant="ghost" onClick={onSaveAsView} className="self-start px-1">
+                <Button variant="ghost" onClick={zapiszJakoWidok} className="self-start px-1">
                   Zapisz jako widok
                 </Button>
               )}
@@ -401,7 +454,7 @@ export function FilterPopover({
   return (
     <ActionPopover
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={zmienOtwarcie}
       align="end"
       ariaLabel="Filtr"
       // Dymek wg .pop: padding 14 px (cn = twMerge nadpisuje domyślne 10 px)
@@ -447,14 +500,14 @@ export function FilterPopover({
               size="sm"
               onClick={() => {
                 setSzkice({});
-                onChange([]);
+                wyslij([]);
               }}
               className="max-[799px]:h-11"
             >
               Wyczyść
             </Button>
             {onSaveAsView && (
-              <Button variant="primary" size="sm" onClick={onSaveAsView} className="max-[799px]:h-11">
+              <Button variant="primary" size="sm" onClick={zapiszJakoWidok} className="max-[799px]:h-11">
                 Zapisz jako widok
               </Button>
             )}

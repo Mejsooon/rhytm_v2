@@ -254,7 +254,7 @@ describe("PageTable", () => {
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
       await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
       await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-      expect(tytuly()).toEqual(["Deep Work"]);
+      await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
       expect(karta("Czytam teraz").textContent).toContain("0");
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
@@ -680,9 +680,11 @@ describe("PageTable", () => {
       const wartosc = within(filtr).getByRole("textbox", { name: "Wartość warunku 1" });
       // Warunek ukrywa nowy (pusty) wiersz, a po wyczyszczeniu wiersz wraca jako świeżo zamontowana komórka
       await user.type(wartosc, "deep");
-      expect(nowaKomorka).not.toBeInTheDocument();
+      await waitFor(() => expect(nowaKomorka).not.toBeInTheDocument());
       await user.clear(wartosc);
-      expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true);
+      await waitFor(() =>
+        expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true),
+      );
       expect(wartosc).toHaveFocus();
     });
 
@@ -1710,6 +1712,12 @@ describe("PageTable", () => {
       // Nowy widok ma warunek z filtra: przycisk „Filtruj · 1” liczy warunki widoku
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
       expect(tytuly()).toEqual(["Deep Work"]);
+      // „Wszystkie” znów pokazują wszystko (filtr przeszedł do nowego widoku)
+      expect(patch.filters).toEqual([]);
+      await user.keyboard("{Escape}");
+      await user.click(screen.getByRole("button", { name: "Wszystkie 11" }));
+      expect(tytuly()).toHaveLength(11);
+      expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
     });
 
     it("zmiana filtra przy aktywnym widoku zapisuje się od razu w tym widoku, nie w „Wszystkich”", async () => {

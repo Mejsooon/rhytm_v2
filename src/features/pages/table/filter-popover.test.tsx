@@ -139,7 +139,8 @@ describe("filtr tabeli", () => {
     expect(within(filtr).getByText("Gdzie")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    expect(tytuly()).toEqual(["Deep Work"]);
+    // Wpisana wartość działa po 400 ms bez pisania
+    await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
     expect(within(filtr).getByText("1 z 5 wierszy")).toBeInTheDocument();
   });
 
@@ -187,10 +188,10 @@ describe("filtr tabeli", () => {
     expect(liczba).toHaveAttribute("inputmode", "decimal");
     await user.type(liczba, "3,5");
     expect(liczba).toHaveValue("3,5");
-    expect(tytuly().sort()).toEqual(["Deep Work", "Diuna"]);
+    await waitFor(() => expect(tytuly().sort()).toEqual(["Deep Work", "Diuna"]));
     await wybierz(user, "Operator warunku 1", "≤");
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "3");
-    expect(tytuly()).toEqual(["Sapiens"]);
+    await waitFor(() => expect(tytuly()).toEqual(["Sapiens"]));
   });
 
   it("Data: operatory przed / po / jest puste i wybór daty", async () => {
@@ -252,7 +253,7 @@ describe("filtr tabeli", () => {
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
     const tytul = dane.blocks[0].fields.find((f) => f.name === "Tytuł")!;
     const zapisane = [{ field_id: tytul.id, op: "contains", value: "deep" }];
-    expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { filters: zapisane });
+    await waitFor(() => expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { filters: zapisane }));
     expect(tytuly()).toEqual(["Deep Work"]);
 
     // Odświeżone dane z serwera mają już zapisany filtr
@@ -279,7 +280,7 @@ describe("filtr tabeli", () => {
       expect(within(filtr).getByText("zł / mies.")).toBeInTheDocument();
       // Strava 249,99 zł / rok = 20,83 zł / mies., Netflix 43, Disney+ 37,99: ≥ 40 zostawia tylko Netflix
       await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "40");
-      expect(tytuly()).toEqual(["Netflix"]);
+      await waitFor(() => expect(tytuly()).toEqual(["Netflix"]));
     });
 
     it("Data odnowienia: wartość to kalendarz jak dla daty, a filtr idzie po następnym odnowieniu", async () => {
@@ -378,7 +379,7 @@ describe("FilterPopover — nowe operatory", () => {
     expect(liczba).toHaveAttribute("min", "1");
     await user.clear(liczba);
     await user.type(liczba, "30");
-    expect(filtry()[0].value).toBe(30);
+    await waitFor(() => expect(filtry()[0].value).toBe(30));
   });
 
   it("data „w tym roku”: bez pola wartości, wartość wyczyszczona", async () => {
@@ -407,7 +408,7 @@ describe("FilterPopover — nowe operatory", () => {
     await wybierz(user, "Operator warunku 1", "nie jest równe");
     expect(filtry()[0]).toEqual({ field_id: pole("Autor").id, op: "not_equals" });
     await user.type(screen.getByRole("textbox", { name: "Wartość warunku 1" }), "Clear");
-    expect(filtry()[0].value).toBe("Clear");
+    await waitFor(() => expect(filtry()[0].value).toBe("Clear"));
   });
 
   it("„Zapisz jako widok” woła onSaveAsView; wyzwalacz „Filtruj” z plakietką liczby", async () => {
@@ -417,6 +418,65 @@ describe("FilterPopover — nowe operatory", () => {
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toHaveTextContent("Filtruj1");
     await user.click(screen.getByRole("button", { name: "Zapisz jako widok" }));
     expect(zapisz).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("FilterPopover — opóźniony zapis wpisywanej wartości", () => {
+  const pola = stronaTestowa("books", "Books", []).blocks[0].fields;
+  const autor = pola.find((f) => f.name === "Autor")!;
+
+  function Filtr({ onChange, onSaveAsView }: { onChange: (f: FilterCond[]) => void; onSaveAsView?: () => void }) {
+    const [filtry, setFiltry] = React.useState<FilterCond[]>([{ field_id: autor.id, op: "contains" }]);
+    return (
+      <FilterPopover
+        fields={pola}
+        filters={filtry}
+        today={DZIS}
+        shown={1}
+        total={2}
+        open
+        onOpenChange={() => {}}
+        onChange={(f) => {
+          setFiltry(f);
+          onChange(f);
+        }}
+        onSaveAsView={onSaveAsView}
+        triggerClassName=""
+      />
+    );
+  }
+
+  it("tekst zapisuje się raz, 400 ms po ostatnim znaku; pole od razu pokazuje wpisany tekst", async () => {
+    const zmiana = vi.fn();
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} />);
+    const pole = screen.getByRole("textbox", { name: "Wartość warunku 1" });
+    await user.type(pole, "Clear");
+    expect(pole).toHaveValue("Clear");
+    expect(zmiana).not.toHaveBeenCalled();
+    await waitFor(() => expect(zmiana).toHaveBeenCalledTimes(1));
+    expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "contains", value: "Clear" }]);
+    await new Promise((r) => setTimeout(r, 450));
+    expect(zmiana).toHaveBeenCalledTimes(1);
+  });
+
+  it("zmiana operatora zapisuje się od razu", async () => {
+    const zmiana = vi.fn();
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} />);
+    await wybierz(user, "Operator warunku 1", "nie jest równe");
+    expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "not_equals" }]);
+  });
+
+  it("„Zapisz jako widok” najpierw wysyła czekającą wartość", async () => {
+    const zmiana = vi.fn();
+    const zapisz = vi.fn(() => expect(zmiana).toHaveBeenCalledWith([{ field_id: autor.id, op: "contains", value: "Cl" }]));
+    const user = userEvent.setup();
+    render(<Filtr onChange={zmiana} onSaveAsView={zapisz} />);
+    await user.type(screen.getByRole("textbox", { name: "Wartość warunku 1" }), "Cl");
+    await user.click(screen.getByRole("button", { name: "Zapisz jako widok" }));
+    expect(zapisz).toHaveBeenCalledTimes(1);
+    expect(zmiana).toHaveBeenCalledTimes(1);
   });
 });
 

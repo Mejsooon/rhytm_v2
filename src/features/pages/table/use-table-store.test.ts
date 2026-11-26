@@ -1130,5 +1130,38 @@ describe("useTableStore", () => {
       ]);
       expect(result.current.settings.views).toHaveLength(4);
     });
+
+    it("saveFiltersAsView przy „Wszystkich”: filtry przechodzą do nowego widoku, a „Wszystkie” je tracą", async () => {
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const warunek = { field_id: autor.id, op: "contains" as const, value: "Clear" };
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ filters: [warunek] });
+      });
+      await act(async () => {
+        await result.current.saveFiltersAsView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect(patch.filters).toEqual([]);
+      expect(patch.views.at(-1).filters).toEqual([warunek]);
+      expect(result.current.settings.filters).toEqual([]);
+      expect(result.current.view.filters).toEqual([warunek]);
+    });
+
+    it("saveFiltersAsView przy zapisanym widoku: widok źródłowy zostaje bez zmian", async () => {
+      const b = blokZWidokami("w1");
+      const { result } = renderHook(() => useTableStore(b));
+      const zrodlo = result.current.settings.views[0];
+      await act(async () => {
+        await result.current.saveFiltersAsView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
+      expect("filters" in patch).toBe(false);
+      expect(patch.views[0]).toEqual(zrodlo);
+      expect(patch.views.at(-1).filters).toEqual(zrodlo.filters);
+      expect(result.current.settings.active_view_id).toBe(patch.views.at(-1).id);
+    });
   });
 });
+

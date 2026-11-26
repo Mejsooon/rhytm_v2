@@ -569,8 +569,10 @@ export function useTableStore(
     return patchSettings({ active_view_id: id });
   }
 
-  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku (filtry, sort, grupowanie, układ, ukryte pola), od razu aktywna
-  async function addView(name: string): Promise<boolean> {
+  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku (filtry, sort, grupowanie, układ, ukryte pola), od razu aktywna.
+  // `przeniesFiltry` („Zapisz jako widok”): przy „Wszystkich” filtry przechodzą do nowego widoku, a „Wszystkie”
+  // wracają do pokazywania wszystkiego (S2Table); zapisany widok źródłowy zostaje bez zmian
+  async function addView(name: string, przeniesFiltry = false): Promise<boolean> {
     if (zapisSzablonuRef.current) await poZapisieSzablonu();
     const s = ustawieniaRef.current;
     const biezacy = effectiveView(s);
@@ -584,7 +586,17 @@ export function useTableStore(
       hidden_field_ids: biezacy.hidden_field_ids,
     };
     setTempFilters(null);
-    return patchSettings({ views: [...s.views, nowy], active_view_id: nowy.id });
+    const zWszystkich =
+      przeniesFiltry && (s.active_view_id === null || !s.views.some((v) => v.id === s.active_view_id));
+    return patchSettings(
+      zWszystkich
+        ? { views: [...s.views, nowy], active_view_id: nowy.id, filters: [] }
+        : { views: [...s.views, nowy], active_view_id: nowy.id },
+    );
+  }
+
+  async function saveFiltersAsView(name: string): Promise<boolean> {
+    return addView(name, true);
   }
 
   // Nowa nazwa widoku: przycięta, 1–40 znaków; pusta nic nie zmienia
@@ -1163,7 +1175,7 @@ export function useTableStore(
     patchView,
     selectView,
     addView,
-    saveFiltersAsView: addView,
+    saveFiltersAsView,
     renameView,
     duplicateView,
     deleteView,

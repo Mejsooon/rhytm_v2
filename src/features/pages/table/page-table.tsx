@@ -369,11 +369,11 @@ export function PageTable({
   }
 
   // „+ Widok” i „Zapisz jako widok”: „Mój widok N” (pierwszy wolny numer, S2Table) z bieżącymi filtrami
-  async function dodajWidok() {
+  async function dodajWidok(zFiltra = false) {
     let n = 1;
     while (settings.views.some((v) => v.name === `Mój widok ${n}`)) n++;
     const nazwa = `Mój widok ${n}`;
-    if (await store.addView(nazwa)) toast(`Zapisano „${nazwa}” z obecnymi filtrami`);
+    if (await (zFiltra ? store.saveFiltersAsView(nazwa) : store.addView(nazwa))) toast(`Zapisano „${nazwa}” z obecnymi filtrami`);
   }
 
   // Przycisk główny nagłówka strony dodaje wiersz tą samą drogą co „+ Nowy” (moduł przy zamkniętym sejfie: nic)
@@ -518,7 +518,7 @@ export function PageTable({
                     ? undefined
                     : () => {
                         setFiltrOtwarty(false);
-                        void dodajWidok();
+                        void dodajWidok(true);
                       }
                 }
                 triggerClassName={cn(PRZYCISK_PASKA, filtry.length > 0 && PRZYCISK_PASKA_ON, "max-[799px]:border max-[799px]:border-input")}

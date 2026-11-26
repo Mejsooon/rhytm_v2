@@ -463,7 +463,7 @@ describe("EditorView", () => {
     const filtr = await screen.findByRole("dialog", { name: "Filtr" });
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    expect(tytuly(1)).toEqual(["Deep Work"]);
+    await waitFor(() => expect(tytuly(1)).toEqual(["Deep Work"]));
     expect(tytuly(0)).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: /^Filtruj/ }).map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual([
       "Filtruj",
