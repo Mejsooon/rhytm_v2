@@ -66,6 +66,16 @@ export function useTableStore(block: LoadedBlock, onStaleGeneration?: () => void
             Object.entries(surowe.column_widths).filter(([id]) => block.fields.some((f) => f.id === id)),
           )
         : {},
+    // Nowe klucze (widoki, grupy): brak w starych ustawieniach = wartości domyślne.
+    // Surowe content.settings zostaje nietknięte, więc „brak klucza views” da się odróżnić od pustej listy
+    views: Array.isArray(surowe.views) ? surowe.views : [],
+    active_view_id: typeof surowe.active_view_id === "string" ? surowe.active_view_id : null,
+    group_by: typeof surowe.group_by === "string" ? surowe.group_by : null,
+    layout: surowe.layout === "board" ? "board" : "table",
+    collapsed_groups:
+      surowe.collapsed_groups && typeof surowe.collapsed_groups === "object" && !Array.isArray(surowe.collapsed_groups)
+        ? surowe.collapsed_groups
+        : {},
   };
 
   const [fields, setFields] = useState<PageField[]>(block.fields);

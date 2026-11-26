@@ -161,7 +161,7 @@ describe("filtr tabeli", () => {
       within(screen.getByRole("listbox", { name: "Operator warunku 1" }))
         .getAllByRole("option")
         .map((o) => o.textContent),
-    ).toEqual(["jest jednym z✓", "jest puste"]);
+    ).toEqual(["jest jednym z✓", "nie jest żadnym z", "jest puste"]);
     await user.keyboard("{Escape}");
     const wartosc = within(filtr).getByRole("group", { name: "Wartość warunku 1" });
     await user.click(within(wartosc).getByRole("button", { name: "Przeczytane" }));
@@ -198,7 +198,7 @@ describe("filtr tabeli", () => {
       within(screen.getByRole("listbox", { name: "Operator warunku 1" }))
         .getAllByRole("option")
         .map((o) => o.textContent),
-    ).toEqual(["przed✓", "po", "jest puste"]);
+    ).toEqual(["przed✓", "po", "w ciągu dni", "w tym roku", "jest puste"]);
     await user.keyboard("{Escape}");
     expect(within(filtr).getByRole("button", { name: "Wartość warunku 1" })).toBeInTheDocument();
     await wybierz(user, "Operator warunku 1", "jest puste");

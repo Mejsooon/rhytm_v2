@@ -34,6 +34,10 @@ const NAZWY_OPERATOROW: Record<FilterCond["op"], string> = {
   after: "po",
   empty: "jest puste",
   not_empty: "nie jest puste",
+  within_days: "w ciągu dni",
+  this_year: "w tym roku",
+  not_in: "nie jest żadnym z",
+  not_equals: "nie jest równe",
 };
 
 // Web: jeden wiersz siatki na warunek (jak w makiecie); telefon: warunek jako karta z polem i ✕ w jednym rzędzie

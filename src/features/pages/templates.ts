@@ -2,7 +2,7 @@
 // Pola, opcje i kolory pochodzą z makiet Books / Projects / Websites.
 import { PALETA } from "./fields";
 import type { FieldConfig, FieldType } from "./fields";
-import type { ColumnSummary, PinnedCard, SortKey, TableSettings } from "./table-model";
+import type { ColumnSummary, PinnedCard, SortKey, StoredTableSettings } from "./table-model";
 
 export const TEMPLATE_KEYS = ["empty", "books", "projects", "websites", "subscriptions"] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
@@ -337,7 +337,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
     if (c.unit) card.unit = c.unit;
     return card;
   });
-  const settings: TableSettings = {
+  const settings: StoredTableSettings = {
     sort,
     filters: [],
     hidden_field_ids: [],
@@ -366,7 +366,7 @@ export function buildTemplateBlocks(key: TemplateKey, newId: () => string): Crea
 
 // Nowa tabela z menu „/” (spec 6.8): Nazwa, Status (Wybór), Data i dwa puste wiersze
 export function NEW_TABLE_BLOCK(newId: () => string): CreatePageBlock {
-  const settings: TableSettings = {
+  const settings: StoredTableSettings = {
     sort: [],
     filters: [],
     hidden_field_ids: [],

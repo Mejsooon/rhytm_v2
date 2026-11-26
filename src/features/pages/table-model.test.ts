@@ -26,6 +26,11 @@ const bezUstawien: TableSettings = {
   column_summaries: {},
   pinned_cards: [],
   column_widths: {},
+  views: [],
+  active_view_id: null,
+  group_by: null,
+  layout: "table",
+  collapsed_groups: {},
 };
 
 // Szablon z id pól i opcji, jak po create_page
@@ -85,15 +90,15 @@ function ksiazki() {
 describe("operatorsFor", () => {
   it("zwraca operatory zgodne z typem", () => {
     expect(operatorsFor("checkbox")).toEqual(["checked", "unchecked"]);
-    expect(operatorsFor("select")).toEqual(["in", "empty"]);
-    expect(operatorsFor("status")).toEqual(["in", "empty"]);
+    expect(operatorsFor("select")).toEqual(["in", "not_in", "empty"]);
+    expect(operatorsFor("status")).toEqual(["in", "not_in", "empty"]);
     expect(operatorsFor("number")).toEqual(["gte", "lte", "empty"]);
     expect(operatorsFor("rating")).toEqual(["gte", "lte", "empty"]);
-    expect(operatorsFor("text")).toEqual(["contains", "empty"]);
-    expect(operatorsFor("url")).toEqual(["contains", "empty"]);
-    expect(operatorsFor("date")).toEqual(["before", "after", "empty"]);
+    expect(operatorsFor("text")).toEqual(["contains", "not_equals", "empty"]);
+    expect(operatorsFor("url")).toEqual(["contains", "not_equals", "empty"]);
+    expect(operatorsFor("date")).toEqual(["before", "after", "within_days", "this_year", "empty"]);
     expect(operatorsFor("recurring")).toEqual(["gte", "lte", "empty"]);
-    expect(operatorsFor("renewal")).toEqual(["before", "after", "empty"]);
+    expect(operatorsFor("renewal")).toEqual(["before", "after", "within_days", "this_year", "empty"]);
   });
 });
 
@@ -705,5 +710,63 @@ describe("Subscriptions: computeCard", () => {
       sub: "",
     });
     expect(computeCard(karta(k, 2), k.fields, [], TODAY).value).toBe("Brak odnowień");
+  });
+});
+
+describe("nowe operatory filtrów", () => {
+  const data: PageField = { id: "d", name: "Termin", type: "date", config: {}, position: 0, isTitle: false };
+  const tekst: PageField = { id: "t", name: "Klient", type: "text", config: {}, position: 1, isTitle: false };
+  const wybor: PageField = {
+    id: "s",
+    name: "Status",
+    type: "select",
+    config: { options: [{ id: "o1", label: "A", color: "gray" }, { id: "o2", label: "B", color: "blue" }] },
+    position: 2,
+    isTitle: false,
+  };
+  const dzis = "2026-11-17";
+
+  it("operatorsFor dodaje within_days, this_year, not_in i not_equals", () => {
+    expect(operatorsFor("date")).toEqual(expect.arrayContaining(["within_days", "this_year"]));
+    expect(operatorsFor("renewal")).toEqual(expect.arrayContaining(["within_days", "this_year"]));
+    expect(operatorsFor("select")).toContain("not_in");
+    expect(operatorsFor("status")).toContain("not_in");
+    expect(operatorsFor("text")).toContain("not_equals");
+    expect(operatorsFor("url")).toContain("not_equals");
+  });
+
+  it("within_days 14: dziś..dziś+14 tak, dalej i przeszłość nie", () => {
+    const rows = [
+      wiersz(1, { d: "2026-11-21" }),
+      wiersz(2, { d: "2026-12-02" }),
+      wiersz(3, { d: "2026-11-10" }),
+      wiersz(4, { d: "2026-12-01" }),
+      wiersz(5, {}),
+    ];
+    const wynik = visibleRows([data], rows, bezUstawien, [{ field_id: "d", op: "within_days", value: 14 }], dzis);
+    expect(wynik.map((r) => r.id)).toEqual(["r1", "r4"]);
+  });
+
+  it("this_year: rok daty równy rokowi dziś", () => {
+    const rows = [wiersz(1, { d: "2026-02-03" }), wiersz(2, { d: "2025-12-11" }), wiersz(3, {})];
+    const wynik = visibleRows([data], rows, bezUstawien, [{ field_id: "d", op: "this_year" }], dzis);
+    expect(wynik.map((r) => r.id)).toEqual(["r1"]);
+  });
+
+  it("not_equals na tekście: bez wielkości liter, puste odrzucone", () => {
+    const rows = [
+      wiersz(1, { t: "ja" }),
+      wiersz(2, { t: "JA" }),
+      wiersz(3, { t: "Kowalski" }),
+      wiersz(4, {}),
+    ];
+    const wynik = visibleRows([tekst], rows, bezUstawien, [{ field_id: "t", op: "not_equals", value: "ja" }], dzis);
+    expect(wynik.map((r) => r.id)).toEqual(["r3"]);
+  });
+
+  it("not_in: wartość spoza listy (puste przechodzą)", () => {
+    const rows = [wiersz(1, { s: "o1" }), wiersz(2, { s: "o2" }), wiersz(3, {})];
+    const wynik = visibleRows([wybor], rows, bezUstawien, [{ field_id: "s", op: "not_in", value: ["o1"] }], dzis);
+    expect(wynik.map((r) => r.id)).toEqual(["r2", "r3"]);
   });
 });

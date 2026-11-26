@@ -80,6 +80,10 @@ const filterCond = z.object({
     "after",
     "empty",
     "not_empty",
+    "within_days",
+    "this_year",
+    "not_in",
+    "not_equals",
   ]),
   value: z.unknown().optional(),
 });
@@ -115,6 +119,16 @@ const pinnedCard = z.object({
   width: z.number().int().min(180).max(4000).optional(),
 });
 
+const tableView = z.object({
+  id: z.string().min(1).max(64),
+  name: z.string().trim().min(1).max(40),
+  filters: z.array(filterCond).max(50),
+  sort: z.array(sortKey).max(10),
+  group_by: z.string().min(1).max(64).nullable(),
+  layout: z.enum(["table", "board"]),
+  hidden_field_ids: z.array(z.string()).max(200),
+});
+
 export const tableSettingsPatchSchema = z.object({
   sort: z.array(sortKey).max(10).optional(),
   filters: z.array(filterCond).max(50).optional(),
@@ -122,6 +136,11 @@ export const tableSettingsPatchSchema = z.object({
   column_summaries: z.record(z.string(), columnSummary).optional(),
   pinned_cards: z.array(pinnedCard).max(20).optional(),
   column_widths: z.record(z.string(), z.number().int().min(80).max(4000)).optional(),
+  views: z.array(tableView).max(20).optional(),
+  active_view_id: z.string().min(1).max(64).nullable().optional(),
+  group_by: z.string().min(1).max(64).nullable().optional(),
+  layout: z.enum(["table", "board"]).optional(),
+  collapsed_groups: z.record(z.string(), z.array(z.string().max(64)).max(200)).optional(),
 });
 
 export const rowValuesSchema = z.record(z.string(), z.unknown());
