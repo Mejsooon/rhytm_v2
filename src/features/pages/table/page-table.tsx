@@ -305,7 +305,8 @@ export function PageTable({
 
   // Zaznaczone wiersze (id). Zmiana widoku, filtrów albo szukanej frazy czyści zaznaczenie, zamknięty sejf też.
   const [zaznaczone, setZaznaczone] = React.useState<string[]>([]);
-  const kluczZaznaczenia = JSON.stringify([settings.active_view_id, filtry, store.query, tylkoOdczyt]);
+  // Przełączenie na Tablicę też czyści zaznaczenie (tablica nie ma zaznaczania ani paska akcji)
+  const kluczZaznaczenia = JSON.stringify([settings.active_view_id, filtry, store.query, tylkoOdczyt, widok.layout]);
   const [poprzedniKluczZaznaczenia, setPoprzedniKluczZaznaczenia] = React.useState(kluczZaznaczenia);
   if (poprzedniKluczZaznaczenia !== kluczZaznaczenia) {
     setPoprzedniKluczZaznaczenia(kluczZaznaczenia);
@@ -345,6 +346,11 @@ export function PageTable({
       : undefined) ??
     fields.find((f) => f.type === "select" || f.type === "status") ??
     null;
+  // Pole „Repo” szablonu (klucz repo → prawdziwe pole po nazwie i typie)
+  const polaSzablonuRepo = szablonTablicy?.fields.find((f) => f.key === "repo");
+  const poleRepoTablicy = polaSzablonuRepo
+    ? fields.find((f) => f.name === polaSzablonuRepo.name && f.type === polaSzablonuRepo.type)
+    : undefined;
   // Podsumowania liczą się dla grup tabeli albo kolumn tablicy
   const grupyPodsumowan = React.useMemo(
     () => (tablica && poleTablicy ? groupRows(fields, widoczneWiersze, poleTablicy.id) : grupy),
@@ -532,28 +538,20 @@ export function PageTable({
   }
 
   // „Dodaj” w kolumnie tablicy: wiersz od razu na serwerze z wartością kolumny (null = „Bez wartości”),
-  // potem arkusz nowej karty (jak edycja nazwy nowej karty w makiecie)
-  // Id nowej karty czekającej na wiersz w stanie (setRows po odpowiedzi serwera)
-  const kartaDoOtwarcia = React.useRef<string | null>(null);
+  // potem pole „Nazwa” na nowej karcie (S2Table: edit.fresh). Nowa karta jest przypięta jak „Nowy wiersz”
+  // w tabeli, więc nie znika przez filtr, dopóki nazwa się nie zapisze.
+  const [nowaKarta, setNowaKarta] = React.useState<string | null>(null);
   async function dodajNaTablicy(wartosc: string | null) {
     if (!poleTablicy) return;
     setDodawanie(true);
+    const kolejnosc = widoczneWiersze.map((r) => r.id);
     const id = await store.addRowInline({ [poleTablicy.id]: wartosc });
-    // Ref przed zmianą stanu: render po setDodawanie zobaczy czekającą kartę
-    kartaDoOtwarcia.current = id;
     setDodawanie(false);
+    if (id !== null) {
+      setNowaKarta(id);
+      setPrzypiety({ id, kolejnosc: [...kolejnosc, id] });
+    }
   }
-  React.useEffect(() => {
-    const id = kartaDoOtwarcia.current;
-    if (id === null) return;
-    const nowa = zywe.find((r) => r.id === id);
-    if (!nowa) return;
-    kartaDoOtwarcia.current = null;
-    setWArkuszu(true);
-    void store.startEdit(nowa);
-    // Nowa karta pojawia się w stanie po setRows z addRowInline; „dodawanie” wraca na false już po ustawieniu refa
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zywe, dodawanie]);
 
   // „+ Widok” i „Zapisz jako widok”: „Mój widok N” (pierwszy wolny numer, S2Table) z bieżącymi filtrami
   async function dodajWidok(zFiltra = false) {
@@ -845,7 +843,8 @@ export function PageTable({
         {tablica && (
           <BoardView
             fields={fields}
-            visibleFields={widocznePola}
+            // Pole „Repo” szablonu Projektów nie trafia na kartę (S2Table: c.k !== 'repo')
+            visibleFields={widocznePola.filter((f) => f.id !== poleRepoTablicy?.id)}
             rows={widoczneWiersze}
             boardField={poleTablicy}
             today={today}
@@ -871,6 +870,18 @@ export function PageTable({
             onOpen={(r) => {
               setWArkuszu(true);
               void store.startEdit(r);
+            }}
+            newCardId={nowaKarta}
+            onNameNew={(r, nazwa) => {
+              setNowaKarta(null);
+              setPrzypiety(null);
+              if (tytulowe) void store.updateCell(r, tytulowe, nazwa);
+            }}
+            // Pusta nowa karta znika po cichu (bez toastu „Usunięto”)
+            onDiscardNew={(r) => {
+              setNowaKarta(null);
+              setPrzypiety(null);
+              void store.removeRow(r, true);
             }}
           />
         )}
@@ -1346,7 +1357,7 @@ export function PageTable({
         )}
 
         {/* Pasek akcji dla zaznaczonych (S2Table, .bulk) */}
-        {wybrane.length > 0 && (
+        {wybrane.length > 0 && widok.layout !== "board" && (
           <BulkBar
             count={wybrane.length}
             field={poleZmiany}

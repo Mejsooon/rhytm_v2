@@ -152,6 +152,19 @@ describe("Tablica (kanban)", () => {
     expect(within(k).queryByText("W toku")).toBeNull();
   });
 
+  it("karta Projektów bez pola Repo (makieta pomija repo), choć Repo jest widoczne w widoku", () => {
+    render(
+      <PageTable
+        block={blok("projects", [{ Nazwa: "rhytm v3", Status: "W toku", Obszar: "Własne", Repo: "Mejsooon/rhytm-v3" }])}
+        today={TODAY}
+        templateKey="projects"
+      />,
+    );
+    const k = kartaTablicy("rhytm v3");
+    expect(within(k).getByText("Własne")).toBeInTheDocument();
+    expect(k.textContent).not.toContain("rhytm-v3");
+  });
+
   it("Hasła: karta bez sekretów i URL — tylko serwis i login", () => {
     vault.state = { status: "zablokowany" };
     const pola = [
@@ -194,6 +207,7 @@ describe("Tablica (kanban)", () => {
     expect(k).not.toHaveAttribute("draggable", "true");
     expect(screen.queryByRole("button", { name: "Dodaj" })).toBeNull();
     expect(within(k).queryByRole("button", { name: /Przenieś/ })).toBeNull();
+    expect(screen.queryByText(/Przeciągnij kartę/)).toBeNull();
   });
 
   it("przeciągnięcie karty do innej kolumny zmienia wartość pola tablicy", async () => {
@@ -246,20 +260,83 @@ describe("Tablica (kanban)", () => {
     expect(screen.queryByRole("dialog", { name: /NetScope/ })).toBeNull();
   });
 
-  it("„Dodaj” w kolumnie tworzy wiersz z wartością tej kolumny", async () => {
+  it("„Dodaj” w kolumnie tworzy wiersz z wartością kolumny i pole „Nazwa”; Enter zapisuje nazwę", async () => {
     const user = userEvent.setup();
     const b = blok("projects", PROJECTS);
     const status = b.fields.find((f) => f.name === "Status")!;
+    const tytul = b.fields.find((f) => f.isTitle)!;
     const wstrzymane = status.config.options!.find((o) => o.label === "Wstrzymane")!;
     render(<PageTable block={b} today={TODAY} templateKey="projects" />);
     await user.click(within(kolumna("Wstrzymane")).getByRole("button", { name: "Dodaj" }));
     await waitFor(() =>
       expect(actions.addRow).toHaveBeenCalledWith(b.id, expect.objectContaining({ [status.id]: wstrzymane.id })),
     );
-    // Nowa karta stoi w kolumnie, a jej arkusz otwiera się od razu (jak edycja nazwy nowej karty w makiecie)
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    const wKolumnie = screen.getByRole("region", { name: "Wstrzymane", hidden: true });
-    expect(within(wKolumnie).getAllByRole("article", { hidden: true })).toHaveLength(1);
+    // Pole „Nazwa” z kursorem na nowej karcie w tej kolumnie, bez arkusza
+    const pole = await within(kolumna("Wstrzymane")).findByRole("textbox", { name: "Nazwa" });
+    expect(pole).toHaveFocus();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await user.type(pole, "Nowy projekt{Enter}");
+    await waitFor(() => expect(actions.updateRow).toHaveBeenCalledWith("srv-1", { [tytul.id]: "Nowy projekt" }));
+    expect(within(kolumna("Wstrzymane")).getByRole("button", { name: "Nowy projekt" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Nazwa" })).toBeNull();
+    expect(actions.deleteRow).not.toHaveBeenCalled();
+  });
+
+  it("nowa karta: wyjście z pustego pola „Nazwa” usuwa kartę", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={blok("projects", PROJECTS)} today={TODAY} templateKey="projects" />);
+    await user.click(within(kolumna("Wstrzymane")).getByRole("button", { name: "Dodaj" }));
+    const pole = await screen.findByRole("textbox", { name: "Nazwa" });
+    await user.type(pole, "   ");
+    fireEvent.blur(pole);
+    await waitFor(() => expect(actions.deleteRow).toHaveBeenCalledWith("srv-1"));
+    expect(within(kolumna("Wstrzymane")).queryAllByRole("article")).toHaveLength(0);
+    expect(actions.updateRow).not.toHaveBeenCalled();
+    // Bez toastu „Usunięto” (pusta karta znika po cichu)
+    expect(toast).not.toHaveBeenCalledWith("Usunięto", expect.anything());
+  });
+
+  it("nowa karta: Esc usuwa kartę nawet z wpisaną nazwą", async () => {
+    const user = userEvent.setup();
+    render(<PageTable block={blok("projects", PROJECTS)} today={TODAY} templateKey="projects" />);
+    await user.click(within(kolumna("Wstrzymane")).getByRole("button", { name: "Dodaj" }));
+    const pole = await screen.findByRole("textbox", { name: "Nazwa" });
+    await user.type(pole, "Szkic{Escape}");
+    await waitFor(() => expect(actions.deleteRow).toHaveBeenCalledWith("srv-1"));
+    expect(actions.deleteRow).toHaveBeenCalledTimes(1);
+    expect(actions.updateRow).not.toHaveBeenCalled();
+    expect(within(kolumna("Wstrzymane")).queryAllByRole("article")).toHaveLength(0);
+  });
+
+  it("nowa karta jest przypięta: nie znika przez filtr widoku, dopóki nazwa się nie zapisze", async () => {
+    const user = userEvent.setup();
+    const b = blok("projects", PROJECTS);
+    const obszar = b.fields.find((f) => f.name === "Obszar")!;
+    const studia = obszar.config.options!.find((o) => o.label === "Studia")!;
+    // Filtr „Obszar = Studia”; nowy wiersz dostaje domyślne „Własne”, więc filtr by go chował
+    const zFiltrem = {
+      ...b,
+      content: {
+        ...b.content,
+        settings: { ...(b.content.settings as object), filters: [{ field_id: obszar.id, op: "in", value: [studia.id] }] },
+      },
+    };
+    render(<PageTable block={zFiltrem} today={TODAY} templateKey="projects" />);
+    await user.click(within(kolumna("Wstrzymane")).getByRole("button", { name: "Dodaj" }));
+    expect(await within(kolumna("Wstrzymane")).findByRole("textbox", { name: "Nazwa" })).toBeInTheDocument();
+  });
+
+  it("przełączenie na Tablicę czyści zaznaczenie i tablica nie ma paska akcji", async () => {
+    const user = userEvent.setup();
+    const b = blok("projects", PROJECTS, { layout: "table" });
+    render(<PageTable block={b} today={TODAY} templateKey="projects" />);
+    await user.click(screen.getByRole("checkbox", { name: "Zaznacz: NetScope" }));
+    expect(screen.getByText(/zaznaczon/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Tablica" }));
+    expect(screen.queryByText(/zaznaczon/i)).toBeNull();
+    // Powrót do Tabeli: zaznaczenie nie wraca
+    await user.click(screen.getByRole("button", { name: "Tabela" }));
+    expect(screen.getByRole("checkbox", { name: "Zaznacz: NetScope" })).not.toBeChecked();
   });
 
   it("kliknięcie karty otwiera arkusz wiersza", async () => {

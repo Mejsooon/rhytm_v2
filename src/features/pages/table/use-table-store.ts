@@ -447,8 +447,9 @@ export function useTableStore(
     return prawdziwy.id;
   }
 
-  // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow)
-  async function removeRow(row: PageRow) {
+  // „Usuń”: wiersz od razu znika, toast „Usunięto” z „Cofnij” (restoreRow).
+  // `cicho`: bez toastu „Usunięto” (pusta nowa karta tablicy odrzucona przez Esc); błąd i tak pokazuje toast
+  async function removeRow(row: PageRow, cicho = false) {
     if (row.id.startsWith(PREFIKS_TYMCZASOWY)) return;
     setEditing((e) => (e?.rowId === row.id ? null : e));
     setRows((l) => l.filter((r) => r.id !== row.id));
@@ -463,6 +464,7 @@ export function useTableStore(
       toast.error(BLAD_ZAPISU);
       return;
     }
+    if (cicho) return;
     toast("Usunięto", {
       action: {
         label: "Cofnij",

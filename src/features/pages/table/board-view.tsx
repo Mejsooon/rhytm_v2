@@ -41,6 +41,9 @@ export function BoardView({
   onMove,
   onAdd,
   onOpen,
+  newCardId,
+  onNameNew,
+  onDiscardNew,
 }: {
   // Wszystkie pola (cykl i aktywność Daty odnowienia) i widoczne pola widoku (kolejność pól na karcie)
   fields: PageField[];
@@ -63,12 +66,19 @@ export function BoardView({
   onMove: (row: PageRow, value: string | null) => void;
   onAdd: (value: string | null) => void;
   onOpen: (row: PageRow) => void;
+  // Nowa karta z „Dodaj” (S2Table: edit.fresh): pole „Nazwa” z kursorem zamiast tytułu.
+  // Enter albo wyjście z pola zapisuje nazwę; Esc albo wyjście z pustym polem usuwa nową kartę.
+  newCardId: string | null;
+  onNameNew: (row: PageRow, name: string) => void;
+  onDiscardNew: (row: PageRow) => void;
 }) {
   // Przeciągana karta (id) i kolumna pod kursorem (klucz) — obrys kolumny i przygaszenie karty
   const [przeciagana, setPrzeciagana] = React.useState<string | null>(null);
   const [nadKolumna, setNadKolumna] = React.useState<string | null>(null);
   // Otwarte menu karty „Przenieś do…” (id wiersza)
   const [menuKarty, setMenuKarty] = React.useState<string | null>(null);
+  // Edycja nazwy nowej karty już zakończona (Esc usuwa kartę, a blur po odmontowaniu pola nie zapisuje drugi raz)
+  const nazwaZakonczona = React.useRef<string | null>(null);
 
   if (!boardField) {
     return (
@@ -147,7 +157,8 @@ export function BoardView({
                   (f) => f.type === "renewal" && f.config.active_field_id !== undefined && !rowActive(f, fields, r.values),
                 );
                 const zapisywana = r.id.startsWith(PREFIKS_TYMCZASOWY);
-                const moznaPrzenosic = !readOnly && !zapisywana;
+                const nazywana = r.id === newCardId && !readOnly;
+                const moznaPrzenosic = !readOnly && !zapisywana && !nazywana;
                 // r.meta z makiety: pola karty w kolejności widoku
                 const meta: React.ReactNode[] = [];
                 for (const f of polaKarty) {
@@ -214,7 +225,7 @@ export function BoardView({
                     }}
                     // Kliknięcie karty otwiera arkusz wiersza; kliknięcia z menu (portal) nie liczą się
                     onClick={(e) => {
-                      if (readOnly || zapisywana) return;
+                      if (readOnly || zapisywana || nazywana) return;
                       if (!(e.target instanceof Node) || !e.currentTarget.contains(e.target)) return;
                       if (e.target instanceof Element && e.target.closest("[data-menu-karty]")) return;
                       onOpen(r);
@@ -226,13 +237,41 @@ export function BoardView({
                     )}
                     style={{ opacity: przeciagana === r.id ? 0.45 : nieaktywna ? 0.6 : undefined }}
                   >
-                    <button
-                      type="button"
-                      disabled={readOnly}
-                      className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left font-medium whitespace-normal text-foreground outline-none focus-visible:shadow-focus disabled:cursor-default"
-                    >
-                      {tytul}
-                    </button>
+                    {nazywana ? (
+                      // .cellinp: 30 px, niebieski obrys 2 px
+                      <input
+                        type="text"
+                        aria-label="Nazwa"
+                        defaultValue=""
+                        autoFocus
+                        className="h-[30px] w-full min-w-[120px] rounded-md border-0 bg-white px-2 text-sm text-foreground shadow-[inset_0_0_0_2px_rgba(59,130,246,.55)] outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.currentTarget.blur();
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            nazwaZakonczona.current = r.id;
+                            onDiscardNew(r);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (nazwaZakonczona.current === r.id) return;
+                          nazwaZakonczona.current = r.id;
+                          const nazwa = e.currentTarget.value.trim();
+                          if (nazwa === "") onDiscardNew(r);
+                          else onNameNew(r, nazwa);
+                        }}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={readOnly}
+                        className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left font-medium whitespace-normal text-foreground outline-none focus-visible:shadow-focus disabled:cursor-default"
+                      >
+                        {tytul}
+                      </button>
+                    )}
                     {/* r.meta: pola karty w kolejności widoku */}
                     {meta.length > 0 && <span className="flex flex-wrap items-center gap-1.5">{meta}</span>}
                     {/* .kact: menu karty (klawiatura i czytniki ekranu) — „Przenieś do…” innej kolumny */}
@@ -298,9 +337,12 @@ export function BoardView({
           );
         })}
       </div>
-      <p className="m-0 text-xs text-muted-foreground">
-        Przeciągnij kartę do innej kolumny, żeby zmienić {pole.name.toLowerCase()}.
-      </p>
+      {/* Podpowiedź tylko wtedy, gdy da się przeciągać */}
+      {!readOnly && (
+        <p className="m-0 text-xs text-muted-foreground">
+          Przeciągnij kartę do innej kolumny, żeby zmienić {pole.name.toLowerCase()}.
+        </p>
+      )}
     </div>
   );
 }
