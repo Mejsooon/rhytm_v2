@@ -102,11 +102,10 @@ test.describe("sejf", () => {
 
     await zalozKontoStron(page, info.project.name);
 
-    // Moduł Hasła (S2VaultSetup): okruszki, pod oknem ustawiania tabela tylko do odczytu ze stopką
+    // Moduł Hasła (S2VaultSetup): okruszki, pod oknem ustawiania tabela tylko do odczytu ze stopką.
+    // Treść pod oknem jest inert i aria-hidden, więc okruszki szukamy selektorem, nie rolą
     await page.goto("/hasla");
-    await expect(
-      page.getByRole("heading", { name: "Hasła", level: 1 }),
-    ).toBeVisible();
+    await expect(page.locator("header h1", { hasText: "Hasła" }).first()).toBeVisible();
     await expect(
       page.getByText("0 haseł · sekrety nie są przeszukiwane", { exact: true }),
     ).toBeVisible();
