@@ -205,7 +205,7 @@ function SzczegolyHasla({
 // Moduł Hasła na telefonie (CMPasswords.dc.html): nagłówek (Strony, „Zablokuj sejf”, „Nowe hasło”), tytuł,
 // plakietka z odliczaniem, wyszukiwarka, chipy Kategorii i lista-akordeon (jedno rozwinięcie naraz).
 // Dane i akcje dostaje od PageTable (jeden magazyn z tabelą webu); fraza i Kategoria są stanem widoku modułu,
-// a filtr wierszy robi tabela (`moduleRowFilter`). Teksty jawne: tylko w rozwiniętym wierszu (SzczegolyHasla).
+// a wiersze zawęża już PasswordsView (w `renderPhone`, po jawnych kolumnach). Teksty jawne: tylko w rozwiniętym wierszu (SzczegolyHasla).
 export function MPasswords({
   fields,
   rows,

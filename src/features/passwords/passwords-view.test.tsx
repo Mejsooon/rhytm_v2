@@ -16,7 +16,7 @@ vi.mock("@/features/vault/vault-provider", () => ({ useVault: () => ({ ...vault.
 vi.mock("@/features/vault/actions", () => ({ countSecrets: vi.fn().mockResolvedValue({ ok: true, count: 1 }) }));
 
 // Tabela jest testowana osobno; tu sprawdzamy tylko jej podpięcie: tryb modułu, stan tylko do odczytu
-// i funkcje magazynu przekazane do paska (Kategorie)
+// i funkcje magazynu przekazane do listy telefonu
 const tabela = vi.hoisted(() => ({
   createOption: vi.fn(),
   removeOption: vi.fn(),
@@ -27,17 +27,11 @@ const tabela = vi.hoisted(() => ({
 vi.mock("@/features/pages/table/page-table", () => ({
   PageTable: ({
     module,
-    moduleTools,
-    moduleRowFilter,
-    onLiveRowCount,
     renderPhone,
     newRowRef,
   }: {
     newRowRef?: React.RefObject<(() => void) | null>;
     module?: string;
-    moduleTools?: (api: unknown) => React.ReactNode;
-    moduleRowFilter?: (row: unknown, fields: unknown[]) => boolean;
-    onLiveRowCount?: (n: number) => void;
     renderPhone?: (api: unknown) => React.ReactNode;
   }) => {
     const pola = [
@@ -68,28 +62,19 @@ vi.mock("@/features/pages/table/page-table", () => ({
       config: { options: [{ id: "k1", label: "Praca", color: "#525252" }, { id: "k2", label: "Bank", color: "#525252" }] },
     };
     React.useEffect(() => {
-      onLiveRowCount?.(wiersze.length);
-    }, [onLiveRowCount, wiersze.length]);
-    React.useEffect(() => {
       if (newRowRef) newRowRef.current = tabela.newRow;
     });
     return (
       <div data-testid="tabela" data-module={module}>
         <ul aria-label="Wiersze">
-          {wiersze.filter((w) => !moduleRowFilter || moduleRowFilter(w, pola2)).map((w) => (
+          {wiersze.map((w) => (
             <li key={w.id}>{String(w.values["f-serwis"])}</li>
           ))}
         </ul>
-        {moduleTools?.({
-          fields: pola2,
-          readOnly: tabela.readOnly,
-          createOption: tabela.createOption,
-          removeOption: tabela.removeOption,
-        })}
-        {/* Układ telefonu z tych samych wierszy co tabela (po filtrze modułu) */}
+        {/* Układ telefonu z tych samych wierszy co tabela */}
         {renderPhone && <div className="min-[800px]:hidden">{renderPhone({
           fields: pola2,
-          rows: wiersze.filter((w) => !moduleRowFilter || moduleRowFilter(w, pola2)),
+          rows: wiersze,
           readOnly: tabela.readOnly,
           createOption: tabela.createOption,
           removeOption: tabela.removeOption,
@@ -211,7 +196,7 @@ describe("PasswordsView", () => {
     expect(screen.getByRole("button", { name: "Zablokuj teraz" })).toBeInTheDocument();
   });
 
-  it("brak sejfu (S2VaultSetup): okno ustawiania nad tabelą z przyciemnieniem; „Anuluj” i Esc chowają je, „Ustaw hasło główne” wraca", async () => {
+  it("brak sejfu (S2VaultSetup): okno nad tabelą z przyciemnieniem, treść pod nim inert, fokus w „Hasło główne”; „Anuluj” i Esc z dowolnego miejsca je chowają", async () => {
     vault.state = { status: "brak", remainingMs: 0 };
     tabela.readOnly = true;
     const user = userEvent.setup();
@@ -222,17 +207,27 @@ describe("PasswordsView", () => {
     expect(okno).toHaveAttribute("aria-modal", "true");
     expect(okno).toHaveClass("max-[799px]:hidden");
     expect(container.querySelector(".bg-black\\/\\[\\.32\\]")).not.toBeNull();
-    expect(screen.getByTestId("tabela")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Nowe hasło" })).toBeDisabled();
+    expect(within(okno).getByLabelText("Hasło główne")).toHaveFocus();
+    // Treść pod oknem (nagłówek, tabela) jest inert i aria-hidden; okno i ekran telefonu są poza nią
+    const tresc = screen.getByTestId("tabela").closest("[inert]");
+    expect(tresc).not.toBeNull();
+    expect(tresc).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("button", { name: "Nowe hasło", hidden: true }).closest("[inert]")).toBe(tresc);
+    expect(screen.getByRole("button", { name: "Nowe hasło", hidden: true })).toBeDisabled();
+    expect(okno.closest("[inert]")).toBeNull();
+    expect(screen.getAllByRole("form", { name: "Ustaw hasło główne sejfu" }).every((f) => f.closest("[inert]") === null)).toBe(true);
     await user.click(within(okno).getByRole("button", { name: "Anuluj" }));
     expect(screen.queryByRole("heading", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
     expect(container.querySelector(".bg-black\\/\\[\\.32\\]")).toBeNull();
-    expect(screen.getByTestId("tabela")).toBeInTheDocument();
+    expect(container.querySelector("[inert]")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Ustaw hasło główne" }));
     expect(screen.getAllByRole("heading", { name: "Ustaw hasło główne sejfu" })).toHaveLength(2);
+    // Esc z fokusem poza oknem (na body) też zamyka
+    (document.activeElement as HTMLElement | null)?.blur();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Ustaw hasło główne sejfu" })).not.toBeInTheDocument();
   });
+
   it("telefon, brak sejfu: ekran ustawiania w układzie tylko dla telefonu, z nagłówkiem „Hasła” i linkiem „Anuluj” do /strony", () => {
     vault.state = { status: "brak", remainingMs: 0 };
     pokaz();
@@ -262,10 +257,10 @@ describe("PasswordsView", () => {
     expect(lista()).toHaveLength(3);
     const pole = within(telefon).getByRole("searchbox", { name: "Szukaj haseł" });
     await user.type(pole, "MEJS");
-    expect(lista()).toHaveLength(1);
+    expect(lista()).toEqual([expect.stringContaining("GitHub")]);
     await user.clear(pole);
     await user.type(pole, "bank.pl");
-    expect(lista()).toHaveLength(1);
+    expect(lista()).toEqual([expect.stringContaining("Bank")]);
     await user.clear(pole);
     await user.type(pole, "szyfrogram");
     expect(lista()).toHaveLength(0);
@@ -297,7 +292,7 @@ describe("PasswordsView", () => {
     const telefon = screen.getAllByRole("button", { name: "Nowe hasło" }).map((b) => b.closest(".min-\\[800px\\]\\:hidden")).find((e) => e !== null) as HTMLElement;
     const lista = () => within(telefon).queryAllByRole("button").filter((b) => b.hasAttribute("aria-controls")).map((b) => b.textContent);
     await user.click(within(telefon).getByRole("button", { name: "Praca" }));
-    expect(lista()).toHaveLength(1);
+    expect(lista()).toEqual([expect.stringContaining("GitHub")]);
     expect(within(telefon).getByRole("button", { name: "Praca" })).toHaveAttribute("aria-pressed", "true");
     await user.type(within(telefon).getByRole("searchbox", { name: "Szukaj haseł" }), "bank");
     expect(lista()).toHaveLength(0);

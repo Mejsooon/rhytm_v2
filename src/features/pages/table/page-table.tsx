@@ -119,16 +119,12 @@ const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64
 // dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
 // jest tylko do odczytu (bez „Nowy wiersz”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
 // Filtry, sort, grupowanie, układ i ukryte pola należą do bieżącego widoku (store.view / store.patchView).
-// W module podany pasek modułu (`moduleTools`) stoi nad zakładkami, a szukajki paska wtedy nie ma (moduł ma własną).
 export function PageTable({
   block,
   today,
   onRemove,
   module,
   templateKey = null,
-  moduleTools,
-  moduleRowFilter,
-  onLiveRowCount,
   renderPhone,
   newRowRef,
   title,
@@ -142,20 +138,6 @@ export function PageTable({
   module?: "passwords";
   // Szablon strony bloku (strona Haseł: "passwords"); tabela bez zapisanych widoków dostaje te z szablonu
   templateKey?: TemplateKey | "passwords" | null;
-  // Tylko w trybie modułu: zawartość paska po lewej (w miejscu nazwy tabeli), np. podpis i „Kategorie”.
-  // Dostaje te same funkcje magazynu co komórki, więc opcje Kategorii nie rozjeżdżają się z tabelą.
-  moduleTools?: (api: {
-    fields: PageField[];
-    readOnly: boolean;
-    createOption: (field: PageField, label: string) => Promise<string | null>;
-    removeOption: (field: PageField, optionId: string) => Promise<boolean>;
-  }) => React.ReactNode;
-  // Tylko w trybie modułu: dodatkowy, tymczasowy warunek na wiersze (wyszukiwarka i segment Kategorii z paska).
-  // Stan zostaje u wywołującego (nie jest zapisywany), a warunek działa też przy zamkniętym sejfie;
-  // dostaje tylko pola i wartości jawnych kolumn (wartości sekretów to szyfrogramy).
-  moduleRowFilter?: (row: PageRow, fields: PageField[]) => boolean;
-  // Tylko w trybie modułu: liczba żywych wierszy (bez filtrów), np. do plakietki w nagłówku ekranu
-  onLiveRowCount?: (n: number) => void;
   // Układ telefonu z tego samego magazynu co tabela (moduł Hasła: CMPasswords; strona Subscriptions: CMSubs).
   // Oba układy są w DOM:
   // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „Nowy wiersz”) tylko od 800 px.
@@ -284,10 +266,6 @@ export function PageTable({
   const otworzNowePole = React.useRef<(() => void) | null>(null);
 
   const zywe = React.useMemo(() => rows.filter((r) => r.deletedAt === null), [rows]);
-  const liczbaZywych = zywe.length;
-  React.useEffect(() => {
-    onLiveRowCount?.(liczbaZywych);
-  }, [onLiveRowCount, liczbaZywych]);
   // Bieżący widok (zapisany albo „Wszystkie”): filtry, sort, grupowanie, układ i ukryte pola
   const widok = store.view;
   const widokWszystkich = {
@@ -301,15 +279,10 @@ export function PageTable({
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
   // Szukana fraza (stan klienta) zawęża wiersze po filtrach widoku; sekrety nie są przeszukiwane.
-  // `przedModulem`: wiersze widoku i szukania, zanim zawęzi je filtr modułu Hasła (pusty stan bez „Wyczyść…”)
-  const przedModulem = React.useMemo(() => {
+  const wedlugUstawien = React.useMemo(() => {
     const v = effectiveView(settings);
     return searchRows(fields, visibleRows(fields, rows, { ...settings, filters: v.filters, sort: v.sort }, null, today), store.query);
   }, [fields, rows, settings, store.query, today]);
-  const wedlugUstawien = React.useMemo(
-    () => przedModulem.filter((r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields)),
-    [przedModulem, modul, moduleRowFilter, fields],
-  );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
   const widoczneWiersze = React.useMemo(() => {
@@ -344,7 +317,7 @@ export function PageTable({
     setZaznaczone([]);
   }
   // Zaznaczenie obejmuje tylko wiersze bieżącego widoku (także w zwiniętych grupach, jak visIds w S2Table):
-  // wiersz, który z niego wypada (filtr, szukanie modułu, „Zmień”, kosz), wypada też z zaznaczenia
+  // wiersz, który z niego wypada (filtr, szukanie, „Zmień”, kosz), wypada też z zaznaczenia
   const widoczneIds = React.useMemo(() => new Set(widoczneWiersze.map((r) => r.id)), [widoczneWiersze]);
   if (zaznaczone.some((id) => !widoczneIds.has(id))) setZaznaczone(zaznaczone.filter((id) => widoczneIds.has(id)));
   const zaznaczoneSet = React.useMemo(() => new Set(zaznaczone), [zaznaczone]);
@@ -483,8 +456,6 @@ export function PageTable({
     const p = settings.column_summaries[f.id];
     return p !== undefined && p.kind !== "none";
   });
-  // Pusto tylko przez filtr modułu (szukanie / Kategoria Haseł): „Wyczyść filtry i szukanie” nic by nie dało
-  const pustoPrzezModul = przedModulem.length > 0 && wedlugUstawien.length === 0;
 
   // Nowy wiersz (z „Nowy wiersz” albo przycisku nagłówka) w zwiniętej grupie rozwija ją (Review Focus 5)
   React.useEffect(() => {
@@ -706,17 +677,6 @@ export function PageTable({
           />
         )}
 
-        {/* Moduł: własny pasek nad zakładkami, gdy wywołujący go poda (Hasła od Tabel v3 używają paska tabeli) */}
-        {modul && moduleTools && (
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-            {moduleTools?.({
-              fields,
-              readOnly: tylkoOdczyt,
-              createOption: store.createOption,
-              removeOption: store.removeOption,
-            })}
-          </div>
-        )}
 
         {/* S2Table: zakładki widoków po lewej, pasek narzędzi po prawej, linia pod spodem */}
         <div className="mt-1 flex flex-wrap items-end justify-between gap-2 border-b border-black/[.08]">
@@ -742,8 +702,6 @@ export function PageTable({
             onGroupBy={(id) => void store.setGroupBy(id)}
             onSort={(sort) => void store.patchView({ sort })}
             onHiddenChange={(ids) => void store.patchView({ hidden_field_ids: ids })}
-            // Moduł z własnym paskiem (moduleTools) ma tam własną wyszukiwarkę; Hasła szukają w pasku tabeli
-            showSearch={!(modul && moduleTools)}
             filter={
               <FilterPopover
                 fields={fields}
@@ -1166,7 +1124,6 @@ export function PageTable({
                     ) : (
                       <>
                         Nic nie pasuje do filtrów.{" "}
-                        {!pustoPrzezModul && (
                         <Button
                           variant="ghost"
                           size="xs"
@@ -1181,7 +1138,6 @@ export function PageTable({
                         >
                           Wyczyść filtry i szukanie
                         </Button>
-                        )}
                       </>
                     )}
                   </td>

@@ -117,7 +117,7 @@ test.describe("strony", () => {
     await expect(czytam).toHaveAttribute("aria-pressed", "true");
     await expect(wiersze).toHaveCount(1);
 
-    // „Wszystkie” → filtr „Tytuł zawiera »de«” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
+    // „Wszystkie” → filtr „Tytuł zawiera »deep«” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
     await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
     await expect(wiersze).toHaveCount(4);
     await page.getByRole("button", { name: "Filtruj", exact: true }).click();

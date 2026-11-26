@@ -21,8 +21,9 @@ import { MPasswords } from "./mobile/m-passwords";
 // „Hasła” z plakietką „Odblokowany · blokada po 5 min” i opis. Dalej zwykła tabela strony (zakładki widoków
 // Praca / Studia / Prywatne, pasek z szukajką, grupowanie po Kategorii) w trybie modułu: stałe kolumny,
 // w menu „⋯” „Zresetuj sejf…”, stopka „N haseł · sekrety nie są przeszukiwane”. Stan sejfu:
-// - brak: tabela tylko do odczytu, a nad nią przyciemnienie i okno ustawiania hasła głównego (po „Anuluj”
-//   przycisk „Ustaw hasło główne”); telefon (CMVaultSetup): pełny ekran, a „Anuluj” prowadzi do listy stron,
+// - brak: tabela tylko do odczytu, a nad nią przyciemnienie i okno ustawiania hasła głównego (treść pod nim `inert`,
+//   fokus w „Hasło główne”, Esc z dowolnego miejsca zamyka; po „Anuluj” przycisk „Ustaw hasło główne”);
+//   telefon (CMVaultSetup): pełny ekran poza opakowaniem treści, a „Anuluj” prowadzi do listy stron,
 // - ladowanie: sama głowa strony, bez tabeli i bez nakładki (nie mignie tabela przed sprawdzeniem sejfu),
 // - telefon (CMVault, CMPasswords): przy „ladowanie” sam nagłówek z linkiem „Strony”, przy zablokowanym sejfie pełny
 //   ekran „Sejf jest zablokowany” (bez tabeli pod rozmyciem), przy odblokowanym lista-akordeon `MPasswords` z tego samego
@@ -58,6 +59,21 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
   const bezTabeli = vault.status === "ladowanie";
   // Telefon bez tabeli: sam nagłówek (ładowanie) albo ekran blokady (zablokowany)
   const telefonBezTresci = vault.status === "ladowanie" || zablokowany;
+  // Treść pod oknem (zamknięty sejf albo ustawianie hasła głównego) jest `inert` i `aria-hidden`
+  const podOknem = zablokowany || ustawianie;
+
+  // Esc zamyka okno ustawiania na webie z dowolnego miejsca (treść pod spodem jest inert, więc fokus bywa na body);
+  // telefon ma pełny ekran z linkiem „Anuluj”, więc tam Esc nic nie robi
+  React.useEffect(() => {
+    if (!ustawianie) return;
+    const naKlawisz = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (typeof window.matchMedia === "function" && !window.matchMedia("(min-width: 800px)").matches) return;
+      setAnulowano(true);
+    };
+    document.addEventListener("keydown", naKlawisz);
+    return () => document.removeEventListener("keydown", naKlawisz);
+  }, [ustawianie]);
   const minuty = BLOKADA_MS / 60_000;
 
   return (
@@ -77,19 +93,30 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
           {zablokowany && <VaultUnlockCard ekran />}
         </div>
       )}
-      {/* Opakowanie zawsze to samo (tabela się nie przemontowuje po odblokowaniu); przy zamkniętym sejfie `inert`.
-          Telefon przy ładowaniu i zablokowanym sejfie ma własny ekran powyżej, więc to opakowanie chowa */}
+      {/* Telefon, ustawianie hasła głównego (CMVaultSetup): nagłówek „Hasła” z linkiem „Strony” i pełny ekran,
+          poza opakowaniem, które jest wtedy `inert` pod oknem webu */}
+      {ustawianie && (
+        <div className="flex min-h-0 flex-1 flex-col min-[800px]:hidden">
+          <ModuleHeader title="Hasła" phoneOnly phoneBack={{ href: "/strony", label: "Strony" }} phoneCenterTitle />
+          <div className="px-4 py-4">
+            <VaultSetup ekran onCancel={() => setAnulowano(true)} />
+          </div>
+        </div>
+      )}
+      {/* Opakowanie zawsze to samo (tabela się nie przemontowuje po odblokowaniu); pod oknem (zamknięty sejf,
+          ustawianie hasła głównego) `inert`. Telefon przy ładowaniu, zablokowanym sejfie i ustawianiu ma własny
+          ekran powyżej, więc to opakowanie chowa */}
       <div
-        inert={zablokowany}
-        aria-hidden={zablokowany ? "true" : undefined}
-        className={cn("flex min-w-0 flex-1 flex-col", telefonBezTresci && "max-[799px]:hidden")}
+        inert={podOknem}
+        aria-hidden={podOknem ? "true" : undefined}
+        className={cn("flex min-w-0 flex-1 flex-col", (telefonBezTresci || ustawianie) && "max-[799px]:hidden")}
       >
         {/* Telefon ma własny nagłówek: w MPasswords (odblokowany: „Zablokuj sejf”, „Nowe hasło”) albo na ekranie
             ładowania i blokady powyżej. Web (S2Passwords .topbar): „Zablokuj teraz” i główny „Nowe hasło” */}
         <ModuleHeader
           title="Hasła"
           webParent="Moduły"
-          webOnly={odblokowany || telefonBezTresci}
+          webOnly={odblokowany || telefonBezTresci || ustawianie}
           phoneBack={{ href: "/strony", label: "Strony" }}
           phoneCenterTitle
           webAction={
@@ -136,13 +163,6 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
             )}
 
             {vault.status === "nieobslugiwany" && <VaultBanner />}
-
-            {/* Ustawianie hasła głównego na telefonie: pełny ekran (CMVaultSetup) zamiast listy */}
-            {ustawianie && (
-              <div className="min-[800px]:hidden">
-                <VaultSetup ekran onCancel={() => setAnulowano(true)} />
-              </div>
-            )}
 
             {!blok && (
               <EmptyModule>
@@ -220,9 +240,6 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
             role="dialog"
             aria-modal="true"
             aria-label="Ustaw hasło główne sejfu"
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setAnulowano(true);
-            }}
             className="absolute top-24 left-1/2 z-50 w-[min(460px,calc(100%-32px))] -translate-x-1/2 max-[799px]:hidden"
           >
             <VaultSetup onCancel={() => setAnulowano(true)} />

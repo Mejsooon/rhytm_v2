@@ -1244,25 +1244,6 @@ describe("PageTable", () => {
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
 
-    it("moduleRowFilter zawęża wiersze także przy zamkniętym sejfie i zgłasza liczbę wierszy; w zwykłej tabeli jest ignorowany", () => {
-      stanSejfu("zablokowany");
-      const liczba = vi.fn();
-      const { unmount } = render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          onLiveRowCount={liczba}
-          moduleRowFilter={(r) => r.values["f-serwis"] === "Nie ma takiego"}
-        />,
-      );
-      expect(screen.queryByDisplayValue("GitHub")).not.toBeInTheDocument();
-      expect(liczba).toHaveBeenCalledWith(1);
-      unmount();
-      render(<PageTable block={blokHasel()} today={TODAY} moduleRowFilter={() => false} />);
-      expect(screen.getByDisplayValue("GitHub")).toBeInTheDocument();
-    });
-
     it("menu kolumny modułu jest zablokowane: bez „Usuń pole”, z „Ukryj kolumnę”", async () => {
       stanSejfu("odblokowany");
       const user = userEvent.setup();
@@ -1436,21 +1417,12 @@ describe("PageTable", () => {
       expect(writeText).toHaveBeenLastCalledWith("");
     });
 
-    it("moduł: `moduleTools` nad zakładkami, bez szukajki paska; menu „⋯” jak w S2Passwords", async () => {
+    it("moduł: szukajka w pasku tabeli; menu „⋯” jak w S2Passwords", async () => {
       stanSejfu("odblokowany");
       const user = userEvent.setup();
-      render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          moduleTools={({ readOnly }) => <span>Narzędzia modułu {readOnly ? "tylko do odczytu" : "edycja"}</span>}
-          onImportCsv={() => {}}
-        />,
-      );
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" onImportCsv={() => {}} />);
       expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
-      expect(screen.getByText("Narzędzia modułu edycja")).toBeInTheDocument();
-      expect(screen.queryByRole("searchbox", { name: "Szukaj" })).not.toBeInTheDocument();
+      expect(screen.getByRole("searchbox", { name: "Szukaj" })).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
       const menu = await screen.findByRole("menu", { name: "Menu tabeli" });
       expect(within(menu).getByText("Kolumny modułu Hasła są stałe.")).toBeInTheDocument();
@@ -1502,18 +1474,10 @@ describe("PageTable", () => {
       klik.mockRestore();
     });
 
-    it("zamknięty sejf: `moduleTools` dostaje readOnly, a opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
+    it("zamknięty sejf: opcje Kategorii w menu kolumny są tylko do odczytu", async () => {
       stanSejfu("zablokowany");
       const user = userEvent.setup();
-      render(
-        <PageTable
-          block={blokHasel()}
-          today={TODAY}
-          module="passwords"
-          moduleTools={({ readOnly }) => <span>{readOnly ? "tylko do odczytu" : "edycja"}</span>}
-        />,
-      );
-      expect(screen.getByText("tylko do odczytu")).toBeInTheDocument();
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
       const menu = await otworzMenu(user, "Kategoria");
       expect(within(menu).queryByRole("textbox", { name: "Nowa opcja" })).not.toBeInTheDocument();
       expect(within(menu).queryByRole("button", { name: /Usuń opcję/ })).not.toBeInTheDocument();
@@ -2130,24 +2094,19 @@ describe("PageTable", () => {
       expect(screen.getByText("8 projektów · 3 w toku")).toBeInTheDocument();
     });
 
-    it("wiersz, który wypada z widoku (szukanie modułu Hasła), wypada też z zaznaczenia", async () => {
+    it("wiersz, który wypada z widoku (szukajka paska), wypada też z zaznaczenia", async () => {
       const user = userEvent.setup();
       vault.state = { status: "odblokowany" };
-      const b = ksiazki(BOOKS);
-      const tytul = b.fields.find((f) => f.isTitle)!;
-      const szukaj = (fraza: string) => (r: { values: Record<string, unknown> }) =>
-        String(r.values[tytul.id] ?? "").includes(fraza);
-      const { rerender } = render(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("")} />);
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} module="passwords" />);
       await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
       await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
-      rerender(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("Diuna")} />);
+      // Szukanie czyści zaznaczenie całkiem (zmiana frazy), więc zaznaczamy ponownie przy frazie
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "Diuna");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
       expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("1 zaznaczony");
-      rerender(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("")} />);
-      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "false");
       await user.click(screen.getByRole("button", { name: "Usuń" }));
       expect(actions.deleteRows).toHaveBeenCalledWith(["row-6"]);
     });
-
     it("„Zmień” wyprowadzający wiersz poza filtr widoku zdejmuje z niego zaznaczenie", async () => {
       const user = userEvent.setup();
       const b = ksiazki(BOOKS);
@@ -2159,13 +2118,6 @@ describe("PageTable", () => {
       await user.click(screen.getByRole("menuitem", { name: "Przeczytane" }));
       await waitFor(() => expect(screen.queryByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toBeNull());
       expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
-    });
-
-    it("pusto tylko przez filtr modułu: „Nic nie pasuje do filtrów.” bez przycisku czyszczenia", () => {
-      vault.state = { status: "odblokowany" };
-      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} module="passwords" moduleRowFilter={() => false} />);
-      expect(screen.getByText(/Nic nie pasuje do filtrów\./)).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Wyczyść filtry i szukanie" })).toBeNull();
     });
 
     it("ponad 500 zaznaczonych: toast „Maksymalnie 500 wierszy naraz” bez wołania akcji i bez znikania wierszy", async () => {
