@@ -23,7 +23,9 @@ import {
   DOMYSLNA_SZEROKOSC,
   MIN_SZEROKOSC_KOLUMNY,
   SZEROKOSC_TYTULU,
+  normalizeValue,
   planTypeChange,
+  relativeDue,
   rowActive,
   type FieldConfig,
   type FieldType,
@@ -31,10 +33,10 @@ import {
 } from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
-import { TEMPLATES, type TemplateKey } from "../templates";
+import { TEMPLATES, templateSummaries, type TemplateKey } from "../templates";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { operatorsFor, summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
-import { groupRows, searchRows, viewCount } from "../table-views";
+import { effectiveView, groupRows, searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
 import { BulkBar } from "./bulk-bar";
 import { CardDialog } from "./card-dialog";
@@ -249,7 +251,7 @@ export function PageTable({
   // „Nowa kolumna” z menu „⋯” otwiera okno pola przy „+” w nagłówku
   const otworzNowePole = React.useRef<(() => void) | null>(null);
 
-  const zywe = rows.filter((r) => r.deletedAt === null);
+  const zywe = React.useMemo(() => rows.filter((r) => r.deletedAt === null), [rows]);
   const liczbaZywych = zywe.length;
   React.useEffect(() => {
     onLiveRowCount?.(liczbaZywych);
@@ -266,16 +268,20 @@ export function PageTable({
   const ukryte = new Set(widok.hidden_field_ids);
   const widocznePola = fields.filter((f) => !ukryte.has(f.id));
   // Widok wg filtra i sortu; przy przypiętym wierszu kolejność z chwili przypięcia (patrz `przypiety`)
-  // Szukana fraza (stan klienta) zawęża wiersze po filtrach widoku; sekrety nie są przeszukiwane
-  const wedlugUstawien = searchRows(
-    fields,
-    visibleRows(fields, rows, { ...settings, filters: widok.filters, sort: widok.sort }, null, today),
-    store.query,
-  ).filter((r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields));
+  // Szukana fraza (stan klienta) zawęża wiersze po filtrach widoku; sekrety nie są przeszukiwane.
+  // `przedModulem`: wiersze widoku i szukania, zanim zawęzi je filtr modułu Hasła (pusty stan bez „Wyczyść…”)
+  const przedModulem = React.useMemo(() => {
+    const v = effectiveView(settings);
+    return searchRows(fields, visibleRows(fields, rows, { ...settings, filters: v.filters, sort: v.sort }, null, today), store.query);
+  }, [fields, rows, settings, store.query, today]);
+  const wedlugUstawien = React.useMemo(
+    () => przedModulem.filter((r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields)),
+    [przedModulem, modul, moduleRowFilter, fields],
+  );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
-  let widoczneWiersze = wedlugUstawien;
-  if (przypiety && zywe.some((r) => r.id === przypiety.id)) {
+  const widoczneWiersze = React.useMemo(() => {
+    if (!przypiety || !zywe.some((r) => r.id === przypiety.id)) return wedlugUstawien;
     const poId = new Map(zywe.map((r) => [r.id, r]));
     const wFiltrze = new Set(wedlugUstawien.map((r) => r.id));
     // Wiersze z zapamiętanej kolejności: te, które nadal spełniają filtr, i zawsze przypięty
@@ -285,9 +291,8 @@ export function PageTable({
     });
     const wZamrozonych = new Set(zamrozone.map((r) => r.id));
     // Wiersze, które dopiero teraz spełniają filtr (np. „Cofnij” usunięcia), dochodzą na końcu
-    widoczneWiersze = [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
-  }
-  // Filtr w edycji (stan klienta) albo zapisany domyślny
+    return [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
+  }, [przypiety, zywe, wedlugUstawien]);
   // Filtr działa od razu i zapisuje się w bieżącym widoku (jak sort, grupowanie i pola)
   const filtry = widok.filters;
   // Opcja „zrobione” z karty najbliższego terminu (zrobione terminy nie są pilne)
@@ -305,9 +310,16 @@ export function PageTable({
     setPoprzedniKluczZaznaczenia(kluczZaznaczenia);
     setZaznaczone([]);
   }
-  // Tylko żywe wiersze z prawdziwym id (usunięte w międzyczasie wypadają)
-  const wybrane = zywe.filter((r) => zaznaczone.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY)).map((r) => r.id);
-  const wszystkieZaznaczone = widoczneWiersze.length > 0 && widoczneWiersze.every((r) => zaznaczone.includes(r.id));
+  // Zaznaczenie obejmuje tylko wiersze bieżącego widoku (także w zwiniętych grupach, jak visIds w S2Table):
+  // wiersz, który z niego wypada (filtr, szukanie modułu, „Zmień”, kosz), wypada też z zaznaczenia
+  const widoczneIds = React.useMemo(() => new Set(widoczneWiersze.map((r) => r.id)), [widoczneWiersze]);
+  if (zaznaczone.some((id) => !widoczneIds.has(id))) setZaznaczone(zaznaczone.filter((id) => widoczneIds.has(id)));
+  const zaznaczoneSet = React.useMemo(() => new Set(zaznaczone), [zaznaczone]);
+  // Do akcji idą tylko widoczne wiersze z prawdziwym id
+  const wybrane = widoczneWiersze
+    .filter((r) => zaznaczoneSet.has(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY))
+    .map((r) => r.id);
+  const wszystkieZaznaczone = widoczneWiersze.length > 0 && widoczneWiersze.every((r) => zaznaczoneSet.has(r.id));
   // „Zmień: pole” w pasku: pole grupy, inaczej pierwsze pole Wyboru albo Statusu (Sekret nigdy)
   const poleGrupy = fields.find((f) => f.id === widok.group_by);
   const poleZmiany =
@@ -316,40 +328,96 @@ export function PageTable({
       : (fields.find((f) => f.type === "select" || f.type === "status") ?? null);
 
   // Grupy bieżącego widoku (pole Wyboru, Statusu albo Checkbox; bez grupowania jedna grupa "*")
-  const grupy = groupRows(fields, widoczneWiersze, widok.group_by);
+  const grupy = React.useMemo(() => groupRows(fields, widoczneWiersze, widok.group_by), [fields, widoczneWiersze, widok.group_by]);
   // Zwinięte grupy zapisują się pod id aktywnego widoku albo "all" (jak store.toggleGroup)
   const kluczWidoku =
     settings.active_view_id !== null && settings.views.some((v) => v.id === settings.active_view_id)
       ? settings.active_view_id
       : "all";
   const zwiniete = settings.collapsed_groups[kluczWidoku] ?? [];
-  // Podsumowanie w nagłówku grupy: pierwsza widoczna kolumna z podsumowaniem (poza polem grupy i samą liczbą wierszy)
-  const poleSumyGrupy = widocznePola.find((f) => {
-    const p = settings.column_summaries[f.id];
-    return f.id !== widok.group_by && p !== undefined && p.kind !== "none" && p.kind !== "count";
-  });
-  // Stopka pod tabelą: „11 książek · 9 przeczytanych” — rzeczownik szablonu i pierwsze podsumowanie kolumny
-  // (bez samej liczby wierszy, którą już mówi rzeczownik)
-  const rzeczownik: [string, string, string] =
-    templateKey === "passwords"
-      ? ["hasło", "hasła", "haseł"]
-      : TEMPLATES[templateKey ?? "empty"].noun;
-  const formaLiczby = rowsForm(widoczneWiersze.length);
-  const poleSumyStopki = widocznePola.find((f) => {
-    const p = settings.column_summaries[f.id];
-    return p !== undefined && p.kind !== "none" && p.kind !== "count";
-  });
-  const sumaStopki = poleSumyStopki
-    ? summarize(poleSumyStopki, widoczneWiersze, settings.column_summaries[poleSumyStopki.id], today, fields)
-    : "";
-  const tekstStopki = `${widoczneWiersze.length} ${rzeczownik[formaLiczby === "one" ? 0 : formaLiczby === "few" ? 1 : 2]}${
-    sumaStopki !== "" && sumaStopki !== "—" ? ` · ${sumaStopki}` : ""
-  }`;
+  // Opis pod tabelą i podsumowania grup z szablonu (S2Table: foot, gsum), z prawdziwymi id pól i opcji
+  const podsumowaniaSzablonu = React.useMemo(() => templateSummaries(templateKey, fields), [templateKey, fields]);
+  // Podsumowanie w nagłówku grupy (klucz grupy → tekst). Szablon: średnia ocena „śr. ocena 4,1”, suma miesięczna
+  // „96,98 zł / mies.” albo „najbliższy termin: nazwa · za 4 dni”. Bez szablonu: pierwsza widoczna kolumna
+  // z podsumowaniem (poza polem grupy i samą liczbą wierszy), bez „Σ” i bez „—”.
+  const sumyGrup = React.useMemo(() => {
+    const wynik = new Map<string, string>();
+    const sz = podsumowaniaSzablonu.group;
+    const poleSzablonu = sz ? fields.find((f) => f.id === sz.field_id) : undefined;
+    const ukryteGr = new Set(effectiveView(settings).hidden_field_ids);
+    const grupowanePo = effectiveView(settings).group_by;
+    const poleOgolne = fields.find((f) => {
+      const p = settings.column_summaries[f.id];
+      return !ukryteGr.has(f.id) && f.id !== grupowanePo && p !== undefined && p.kind !== "none" && p.kind !== "count";
+    });
+    const tytul = fields.find((f) => f.isTitle);
+    for (const g of grupy) {
+      let tekst = "";
+      if (sz && poleSzablonu) {
+        if (sz.kind === "avg") {
+          const oceny = g.rows
+            .map((r) => normalizeValue(poleSzablonu, r.values[poleSzablonu.id]))
+            .filter((v): v is number => typeof v === "number" && v > 0);
+          if (oceny.length > 0) {
+            const srednia = oceny.reduce((a, b) => a + b, 0) / oceny.length;
+            tekst = `${sz.label ?? "śr."} ${srednia.toFixed(1).replace(".", ",")}`;
+          }
+        } else if (sz.kind === "sum_month") {
+          const suma = summarize(poleSzablonu, g.rows, { kind: "sum_month" }, today, fields).replace(/^Σ /, "");
+          tekst = suma.startsWith("0,00") ? "" : suma;
+        } else if (g.key !== sz.skip_option_id) {
+          const terminy = g.rows
+            .map((r) => ({ r, d: normalizeValue(poleSzablonu, r.values[poleSzablonu.id]) }))
+            .filter((x): x is { r: PageRow; d: string } => typeof x.d === "string" && x.d >= today)
+            .sort((a, b) => a.d.localeCompare(b.d));
+          const pierwszy = terminy[0];
+          if (pierwszy) {
+            const nazwa =
+              tytul && typeof pierwszy.r.values[tytul.id] === "string" && pierwszy.r.values[tytul.id] !== ""
+                ? (pierwszy.r.values[tytul.id] as string)
+                : (tytul?.config.empty_label ?? "Bez nazwy");
+            tekst = `${sz.label ?? "najbliższy termin"}: ${nazwa} · ${relativeDue(pierwszy.d, today).text}`;
+          }
+        }
+      } else if (poleOgolne) {
+        const t = summarize(poleOgolne, g.rows, settings.column_summaries[poleOgolne.id], today, fields).replace(/^Σ /, "");
+        tekst = t === "—" ? "" : t;
+      }
+      wynik.set(g.key, tekst);
+    }
+    return wynik;
+  }, [grupy, podsumowaniaSzablonu, fields, settings, today]);
+  // Stopka pod tabelą (S2Table foot): „11 książek · 2 w trakcie” — rzeczownik szablonu i opis szablonu;
+  // bez szablonu pierwsze podsumowanie kolumny (bez samej liczby wierszy, którą już mówi rzeczownik), bez „Σ”
+  const tekstStopki = React.useMemo(() => {
+    const rzeczownik: [string, string, string] =
+      templateKey === "passwords" ? ["hasło", "hasła", "haseł"] : TEMPLATES[templateKey ?? "empty"].noun;
+    const forma = rowsForm(widoczneWiersze.length);
+    const sz = podsumowaniaSzablonu.footer;
+    const poleSzablonu = sz ? fields.find((f) => f.id === sz.field_id) : undefined;
+    const ukryteSt = new Set(effectiveView(settings).hidden_field_ids);
+    const poleOgolne = fields.find((f) => {
+      const p = settings.column_summaries[f.id];
+      return !ukryteSt.has(f.id) && p !== undefined && p.kind !== "none" && p.kind !== "count";
+    });
+    const suma =
+      sz && poleSzablonu
+        ? summarize(poleSzablonu, widoczneWiersze, sz.summary, today, fields)
+        : poleOgolne
+          ? summarize(poleOgolne, widoczneWiersze, settings.column_summaries[poleOgolne.id], today, fields)
+          : "";
+    const bezSigmy = suma.replace(/^Σ /, "");
+    return `${widoczneWiersze.length} ${rzeczownik[forma === "one" ? 0 : forma === "few" ? 1 : 2]}${
+      bezSigmy !== "" && bezSigmy !== "—" ? ` · ${bezSigmy}` : ""
+    }`;
+  }, [templateKey, widoczneWiersze, podsumowaniaSzablonu, fields, settings, today]);
   // Stopka z podsumowaniami kolumn tylko wtedy, gdy któraś widoczna kolumna ma podsumowanie
   const saPodsumowania = widocznePola.some((f) => {
     const p = settings.column_summaries[f.id];
     return p !== undefined && p.kind !== "none";
   });
+  // Pusto tylko przez filtr modułu (szukanie / Kategoria Haseł): „Wyczyść filtry i szukanie” nic by nie dało
+  const pustoPrzezModul = przedModulem.length > 0 && wedlugUstawien.length === 0;
 
   // Nowy wiersz (z „Nowy wiersz” albo przycisku nagłówka) w zwiniętej grupie rozwija ją (Review Focus 5)
   React.useEffect(() => {
@@ -730,11 +798,11 @@ export function PageTable({
             a stopka „Nowy wiersz” z liczbą wierszy stoi pod nią w tej samej ramce */}
         <div className={RAMKA}>
         <div className={RAMKA_PRZEWIJANA}>
-          {/* table-layout: fixed; szerokość = 36 px (zaznaczanie) + 40 px („#”) + suma kolumn + 56 px (kolumna „+” albo
-              „Akcje” z koszem), nie węższa niż ramka. Na telefonie zaznaczania i „#” nie ma (arkusz wiersza). */}
+          {/* table-layout: fixed; --szerokosc-tabeli = suma kolumn + 56 px (kolumna „+” albo „Akcje” z koszem); od 800 px
+              klasa dolicza 76 px kolumn zaznaczania (36) i „#” (40), których na telefonie nie ma. Nie węższa niż ramka. */}
           <table
-            className="border-collapse text-sm"
-            style={{ tableLayout: "fixed", width: sumaSzerokosci + 56 + 76, minWidth: "100%" }}
+            className="w-[calc(var(--szerokosc-tabeli)+76px)] border-collapse text-sm max-[799px]:w-(--szerokosc-tabeli)"
+            style={{ tableLayout: "fixed", "--szerokosc-tabeli": `${sumaSzerokosci + 56}px`, minWidth: "100%" } as React.CSSProperties}
           >
             <colgroup>
               <col className="max-[799px]:hidden" style={{ width: 36 }} />
@@ -953,6 +1021,7 @@ export function PageTable({
                     ) : (
                       <>
                         Nic nie pasuje do filtrów.{" "}
+                        {!pustoPrzezModul && (
                         <Button
                           variant="ghost"
                           size="xs"
@@ -967,6 +1036,7 @@ export function PageTable({
                         >
                           Wyczyść filtry i szukanie
                         </Button>
+                        )}
                       </>
                     )}
                   </td>
@@ -974,10 +1044,7 @@ export function PageTable({
               )}
               {grupy.map((g) => {
                 const zwinieta = g.key !== "*" && zwiniete.includes(g.key);
-                const sumaGrupy =
-                  poleSumyGrupy && !zwinieta
-                    ? summarize(poleSumyGrupy, g.rows, settings.column_summaries[poleSumyGrupy.id], today, fields)
-                    : "";
+                const sumaGrupy = zwinieta ? "" : (sumyGrup.get(g.key) ?? "");
                 return (
                   <React.Fragment key={g.key}>
                     {/* Nagłówek grupy (tr.grp): strzałka zwijania, odznaka opcji, liczba wierszy i podsumowanie grupy */}
@@ -1005,7 +1072,7 @@ export function PageTable({
                             <OptionBadge option={{ id: g.key, label: g.label, color: g.color ?? "" }} />
                             <span className="text-xs text-muted-foreground tabular-nums">{g.rows.length}</span>
                             <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-                              {zwinieta ? `zwinięte · ${g.rows.length} ukryte` : sumaGrupy === "—" ? "" : sumaGrupy}
+                              {zwinieta ? `zwinięte · ${g.rows.length} ukryte` : sumaGrupy}
                             </span>
                           </span>
                         </td>
@@ -1016,7 +1083,7 @@ export function PageTable({
                         // Numer wiersza: pozycja wśród pokazanych wierszy, ciągła przez grupy
                         numer += 1;
                         const nr = numer;
-                        const zaznaczony = zaznaczone.includes(r.id);
+                        const zaznaczony = zaznaczoneSet.has(r.id);
                         return (
                 <tr
                   key={r.id}
@@ -1201,14 +1268,27 @@ export function PageTable({
             count={wybrane.length}
             field={poleZmiany}
             onSetValue={(wartosc, etykieta) => {
+              // Akcje serwera przyjmują najwyżej 500 id naraz
+              if (wybrane.length > 500) {
+                toast.error("Maksymalnie 500 wierszy naraz");
+                return;
+              }
               if (poleZmiany) void store.setRowsValue(wybrane, poleZmiany, wartosc, etykieta);
             }}
             onDuplicate={() => {
+              if (wybrane.length > 500) {
+                toast.error("Maksymalnie 500 wierszy naraz");
+                return;
+              }
               setZaznaczone([]);
               void store.duplicateRows(wybrane);
             }}
             onExportCsv={onExportRowsCsv ? () => onExportRowsCsv(wybrane) : undefined}
             onDelete={() => {
+              if (wybrane.length > 500) {
+                toast.error("Maksymalnie 500 wierszy naraz");
+                return;
+              }
               setZaznaczone([]);
               void store.removeRows(wybrane);
             }}

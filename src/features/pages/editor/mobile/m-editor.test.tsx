@@ -263,9 +263,10 @@ describe("MEditor (telefon)", () => {
     render(<EditorView data={dane([tabela()])} />);
     const siatka = screen.getByRole("table");
     // Kontener przewija się poziomo, a siatka ma szerokość sumy kolumn (tytuł 300 + status 180) plus 56 px
-    // i 76 px kolumn zaznaczania i „#” (na telefonie ukrytych)
+    // (kolumny zaznaczania i „#” są na telefonie ukryte i nie liczą się do szerokości)
     expect(siatka.parentElement!.className).toContain("overflow-x-auto");
-    expect(siatka.style.width).toBe("612px");
+    expect(siatka.style.getPropertyValue("--szerokosc-tabeli")).toBe("536px");
+    expect(siatka.className).toContain("max-[799px]:w-(--szerokosc-tabeli)");
     expect(siatka.style.minWidth).toBe("100%");
   });
 

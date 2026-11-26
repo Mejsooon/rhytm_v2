@@ -986,6 +986,20 @@ export async function duplicateRows(
   if (bladBlokow) return { ok: false, message: BLAD_ZAPISU };
   if (!zywe || zywe.length !== blokiIds.length) return { ok: false, message: BRAK_BLOKU };
 
+  // Pole tytułu każdego bloku: kopia dostaje w tytule dopisek „ (kopia)” (S2Table, dupSel); pusty tytuł zostaje pusty
+  const { data: polaTytulu, error: bladTytulu } = await supabase
+    .from("page_fields")
+    .select("id, block_id, is_title")
+    .in("block_id", blokiIds)
+    .eq("user_id", user.id)
+    .eq("is_title", true);
+  if (bladTytulu) return { ok: false, message: BLAD_ZAPISU };
+  const tytulBloku = new Map(
+    ((polaTytulu ?? []) as { id: string; block_id: string; is_title: boolean }[])
+      .filter((p) => p.is_title)
+      .map((p) => [p.block_id, p.id]),
+  );
+
   // Następna wolna pozycja osobno dla każdego bloku
   const nastepna = new Map<string, number>();
   const kopie: { block_id: string; user_id: string; values: Json; position: number }[] = [];
@@ -1003,7 +1017,12 @@ export async function duplicateRows(
     }
     const pozycja = nastepna.get(z.block_id) as number;
     nastepna.set(z.block_id, pozycja + 1);
-    kopie.push({ block_id: z.block_id, user_id: user.id, values: z.values, position: pozycja });
+    const wartosci = { ...((z.values ?? {}) as Record<string, Json>) };
+    const tytul = tytulBloku.get(z.block_id);
+    if (tytul !== undefined && typeof wartosci[tytul] === "string" && (wartosci[tytul] as string).trim() !== "") {
+      wartosci[tytul] = `${wartosci[tytul] as string} (kopia)`;
+    }
+    kopie.push({ block_id: z.block_id, user_id: user.id, values: wartosci, position: pozycja });
   }
 
   const { data, error } = await supabase

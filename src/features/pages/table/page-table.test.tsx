@@ -801,7 +801,10 @@ describe("PageTable", () => {
       const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const suma = kolumny.slice(0, -1).reduce((a, c) => a + parseInt(c.style.width, 10), 0);
       const tabela = container.querySelector("table") as HTMLElement;
-      expect(tabela.style.width).toBe(`${suma + 76 + 56}px`);
+      // Pola + 56 px w zmiennej; 76 px kolumn zaznaczania i „#” dolicza klasa tylko od 800 px
+      expect(tabela.style.getPropertyValue("--szerokosc-tabeli")).toBe(`${suma + 56}px`);
+      expect(tabela.className).toContain("w-[calc(var(--szerokosc-tabeli)+76px)]");
+      expect(tabela.className).toContain("max-[799px]:w-(--szerokosc-tabeli)");
       expect(tabela.style.minWidth).toBe("100%");
       expect(tabela.style.tableLayout).toBe("fixed");
     });
@@ -1167,7 +1170,7 @@ describe("PageTable", () => {
       // Szerokość jak w zwykłej tabeli: suma kolumn + 56 px
       const tabela = screen.getByRole("table");
       const suma = Array.from(tabela.querySelectorAll("col")).reduce((a, c) => a + (parseInt(c.style.width) || 0), 0);
-      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      expect(tabela.style.getPropertyValue("--szerokosc-tabeli")).toBe(`${suma - 76 + 56}px`);
       expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
@@ -1834,6 +1837,7 @@ describe("PageTable", () => {
       expect(within(przeczytane).getByText("Przeczytane")).toBeInTheDocument();
       expect(within(przeczytane).getByText("7")).toBeInTheDocument();
       // Pierwsza kolumna z podsumowaniem poza polem grupy: Ocena (średnia) liczona z wierszy grupy
+      // Bez szablonu: ogólne podsumowanie kolumny
       expect(within(przeczytane).getByText("śr. 4,1")).toBeInTheDocument();
       // „Czytam” bez ocen: bez „—”
       expect(within(grupa("Czytam")).queryByText("—")).toBeNull();
@@ -1975,17 +1979,96 @@ describe("PageTable", () => {
       expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
     });
 
-    it("stopka: „Nowy wiersz” i „11 książek · 7 przeczytanych” (rzeczownik szablonu i pierwsze podsumowanie)", () => {
+    it("stopka: „Nowy wiersz” i „11 książek · 2 w trakcie” (S2Table foot szablonu)", () => {
       render(<PageTable block={ksiazki(BOOKS)} today={TODAY} templateKey="books" />);
       expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
-      expect(screen.getByText("11 książek · 7 przeczytanych")).toBeInTheDocument();
+      expect(screen.getByText("11 książek · 2 w trakcie")).toBeInTheDocument();
     });
 
-    it("stopka Subskrypcji: liczba i suma miesięczna (licznik kolumny Nazwa pominięty)", () => {
-      const b = blok("subscriptions", SUBSKRYPCJE);
-      (b.content as { settings: Record<string, unknown> }).settings.views = [];
-      render(<PageTable block={b} today={TODAY} templateKey="subscriptions" />);
-      expect(screen.getByText("3 subskrypcje · Σ 63,83 zł / mies.")).toBeInTheDocument();
+    it("stopka bez szablonu: pierwsze podsumowanie kolumny (bez licznika wierszy)", () => {
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      expect(screen.getByText("11 wierszy · 7 przeczytanych")).toBeInTheDocument();
     });
+
+    it("stopka i grupy Subskrypcji: suma miesięczna aktywnych bez „Σ”", () => {
+      const b = blok("subscriptions", SUBSKRYPCJE);
+      const kategoria = b.fields.find((f) => f.name === "Kategoria")!;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, { views: [], group_by: kategoria.id });
+      render(<PageTable block={b} today={TODAY} templateKey="subscriptions" />);
+      expect(screen.getByText("3 subskrypcje · 63,83 zł / mies.")).toBeInTheDocument();
+      // Rozrywka: Netflix 43 zł (Disney+ nieaktywny), Sport: Strava 249,99 zł / rok → 20,83 zł / mies.
+      expect(within(grupa("Rozrywka")).getByText("43,00 zł / mies.")).toBeInTheDocument();
+      expect(within(grupa("Sport")).getByText("20,83 zł / mies.")).toBeInTheDocument();
+    });
+
+    it("grupa Książek z szablonu: „śr. ocena 4,1” (S2Table gsum)", () => {
+      const b = ksiazki(BOOKS);
+      const { pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} templateKey="books" />);
+      expect(within(grupa("Przeczytane")).getByText("śr. ocena 4,1")).toBeInTheDocument();
+      expect(within(grupa("Czytam")).queryByText(/śr\./)).toBeNull();
+    });
+
+    it("grupa Projektów: najbliższy termin z nazwą i czasem; grupa „Zrobione” bez podsumowania", () => {
+      const b = blok("projects", PROJECTS);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, { views: [], group_by: status.id });
+      render(<PageTable block={b} today={TODAY} templateKey="projects" />);
+      expect(within(grupa("W toku")).getByText("najbliższy termin: Projekt z baz danych — drony · za 5 dni")).toBeInTheDocument();
+      expect(within(grupa("Zrobione")).queryByText(/najbliższy/)).toBeNull();
+      expect(screen.getByText("8 projektów · 3 w toku")).toBeInTheDocument();
+    });
+
+    it("wiersz, który wypada z widoku (szukanie modułu Hasła), wypada też z zaznaczenia", async () => {
+      const user = userEvent.setup();
+      vault.state = { status: "odblokowany" };
+      const b = ksiazki(BOOKS);
+      const tytul = b.fields.find((f) => f.isTitle)!;
+      const szukaj = (fraza: string) => (r: { values: Record<string, unknown> }) =>
+        String(r.values[tytul.id] ?? "").includes(fraza);
+      const { rerender } = render(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("")} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
+      rerender(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("Diuna")} />);
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("1 zaznaczony");
+      rerender(<PageTable block={b} today={TODAY} module="passwords" moduleRowFilter={szukaj("")} />);
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "false");
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      expect(actions.deleteRows).toHaveBeenCalledWith(["row-6"]);
+    });
+
+    it("„Zmień” wyprowadzający wiersz poza filtr widoku zdejmuje z niego zaznaczenie", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: czytam } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Zmień: Status" }));
+      await user.click(screen.getByRole("menuitem", { name: "Przeczytane" }));
+      await waitFor(() => expect(screen.queryByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toBeNull());
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("pusto tylko przez filtr modułu: „Nic nie pasuje do filtrów.” bez przycisku czyszczenia", () => {
+      vault.state = { status: "odblokowany" };
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} module="passwords" moduleRowFilter={() => false} />);
+      expect(screen.getByText(/Nic nie pasuje do filtrów\./)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Wyczyść filtry i szukanie" })).toBeNull();
+    });
+
+    it("ponad 500 zaznaczonych: toast „Maksymalnie 500 wierszy naraz” bez wołania akcji i bez znikania wierszy", async () => {
+      const user = userEvent.setup();
+      const b = stronaTestowa("empty", "Strona", Array.from({ length: 501 }, (_, i) => ({ Nazwa: `w${i}` }))).blocks[0];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      await user.click(screen.getByRole("button", { name: "Duplikuj" }));
+      expect(toast.error).toHaveBeenCalledWith("Maksymalnie 500 wierszy naraz");
+      expect(actions.deleteRows).not.toHaveBeenCalled();
+      expect(actions.duplicateRows).not.toHaveBeenCalled();
+      expect(screen.getAllByRole("checkbox", { name: /^Zaznacz: / })).toHaveLength(501);
+    }, 30_000);
   });
 });

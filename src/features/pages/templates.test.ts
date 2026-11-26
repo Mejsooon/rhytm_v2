@@ -8,6 +8,7 @@ import {
   TEMPLATE_KEYS,
   TEMPLATES,
   templateDefaults,
+  templateSummaries,
   templateViews,
 } from "./templates";
 import type { PageField } from "./fields";
@@ -431,5 +432,54 @@ describe("templateDefaults: grupowanie i zwinięte grupy", () => {
       ["Praca", [{ field_id: "k1", op: "in", value: ["o1"] }]],
       ["Studia", [{ field_id: "k1", op: "in", value: ["o2"] }]],
     ]);
+  });
+});
+
+describe("templateSummaries (S2Table: opis pod tabelą i podsumowanie grupy)", () => {
+  it("Książki: stopka liczy „Czytam” jako „w trakcie”, grupa ma średnią ocenę z etykietą „śr. ocena”", () => {
+    const pola = polaSzablonu("books");
+    const status = pola.find((f) => f.name === "Status")!;
+    const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+    const ocena = pola.find((f) => f.name === "Ocena")!;
+    const w = templateSummaries("books", pola);
+    expect(w.footer).toEqual({
+      field_id: status.id,
+      summary: { kind: "count_option", option_id: czytam, unit: ["w trakcie", "w trakcie", "w trakcie"] },
+    });
+    expect(w.group).toEqual({ field_id: ocena.id, kind: "avg", label: "śr. ocena" });
+  });
+
+  it("Projekty: „w toku” i najbliższy termin bez grupy „Zrobione”; Subskrypcje: suma miesięczna; Strony WWW: „na żywo” bez grupy", () => {
+    const projekty = polaSzablonu("projects");
+    const zrobione = projekty.find((f) => f.name === "Status")!.config.options!.find((o) => o.label === "Zrobione")!.id;
+    const p = templateSummaries("projects", projekty);
+    expect(p.footer?.summary.unit).toEqual(["w toku", "w toku", "w toku"]);
+    expect(p.group).toEqual({
+      field_id: projekty.find((f) => f.name === "Termin")!.id,
+      kind: "nearest",
+      label: "najbliższy termin",
+      skip_option_id: zrobione,
+    });
+    const subs = polaSzablonu("subscriptions");
+    const kwota = subs.find((f) => f.type === "recurring")!;
+    expect(templateSummaries("subscriptions", subs)).toEqual({
+      footer: { field_id: kwota.id, summary: { kind: "sum_month" } },
+      group: { field_id: kwota.id, kind: "sum_month" },
+    });
+    const www = templateSummaries("websites", polaSzablonu("websites"));
+    expect(www.footer?.summary.unit).toEqual(["na żywo", "na żywo", "na żywo"]);
+    expect(www.group).toBeNull();
+  });
+
+  it("brak szablonu, pusta strona, Hasła albo brakujące pole / opcja: null", () => {
+    expect(templateSummaries(null, [])).toEqual({ footer: null, group: null });
+    expect(templateSummaries("empty", [])).toEqual({ footer: null, group: null });
+    expect(templateSummaries("passwords", [])).toEqual({ footer: null, group: null });
+    const bezStatusu = polaSzablonu("books").filter((f) => f.name !== "Status");
+    expect(templateSummaries("books", bezStatusu).footer).toBeNull();
+    const bezOpcji = polaSzablonu("books").map((f) =>
+      f.name === "Status" ? { ...f, config: { ...f.config, options: [] } } : f,
+    );
+    expect(templateSummaries("books", bezOpcji).footer).toBeNull();
   });
 });

@@ -66,6 +66,11 @@ export type TemplateConfig = {
   fields: TemplateField[];
   cards: TemplateCard[];
   sort: { field: string; dir: "asc" | "desc" }[];
+  // Opis pod tabelą po liczbie wierszy (S2Table, `foot`): licznik opcji z odmianą albo suma miesięczna Kwoty
+  footer: { field: string; kind: "count_option" | "sum_month"; option?: string; unit?: [string, string, string] } | null;
+  // Podsumowanie w nagłówku grupy (S2Table, `gsum`): średnia ocena z etykietą, suma miesięczna albo najbliższy
+  // termin (skip: klucz opcji pola grupy, której grupa nie ma podsumowania, np. „Zrobione”)
+  groupSummary: { field: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip?: string } | null;
   // Stopki kolumn po kluczu pola; option wskazuje klucz opcji tego pola
   summaries: Record<string, { kind: ColumnSummary["kind"]; option?: string; unit?: [string, string, string]; where?: { field: string; option: string } }>;
 };
@@ -94,6 +99,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     ],
     cards: [],
     sort: [],
+    footer: null,
+    groupSummary: null,
     summaries: {},
   },
   books: {
@@ -153,6 +160,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { field: "status", dir: "asc" },
       { field: "date", dir: "desc" },
     ],
+    footer: { field: "status", kind: "count_option", option: "reading", unit: ["w trakcie", "w trakcie", "w trakcie"] },
+    groupSummary: { field: "rating", kind: "avg", label: "śr. ocena" },
     summaries: {
       status: { kind: "count_option", option: "read", unit: ["przeczytana", "przeczytane", "przeczytanych"] },
       rating: { kind: "avg" },
@@ -224,6 +233,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Zrobione", field: "status", aggregation: "count_option_of_total", option: "done" },
     ],
     sort: [{ field: "due", dir: "asc" }],
+    footer: { field: "status", kind: "count_option", option: "wip", unit: ["w toku", "w toku", "w toku"] },
+    groupSummary: { field: "due", kind: "nearest", label: "najbliższy termin", skip: "done" },
     summaries: {
       status: { kind: "count_option", option: "wip", unit: ["w toku", "w toku", "w toku"] },
       due: { kind: "filled", unit: ["termin", "terminy", "terminów"] },
@@ -287,6 +298,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Klienci", field: "client", aggregation: "count_distinct" },
     ],
     sort: [],
+    footer: { field: "status", kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
+    groupSummary: null,
     summaries: {
       url: { kind: "filled", unit: ["link", "linki", "linków"] },
       status: { kind: "count_option", option: "live", unit: ["na żywo", "na żywo", "na żywo"] },
@@ -348,6 +361,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { label: "Najbliższe odnowienie", field: "renewal", aggregation: "next_renewal" },
     ],
     sort: [{ field: "renewal", dir: "asc" }],
+    footer: { field: "price", kind: "sum_month" },
+    groupSummary: { field: "price", kind: "sum_month" },
     summaries: {
       name: { kind: "count", unit: ["subskrypcja", "subskrypcje", "subskrypcji"] },
       price: { kind: "sum_month" },
@@ -448,6 +463,52 @@ export function templateDefaults(
     zwiniete = (poleGrupy.config.options ?? []).filter((o) => etykiety.includes(o.label)).map((o) => o.id);
   }
   return { views, group_by: groupBy, collapsed_groups: zwiniete.length > 0 ? { all: zwiniete } : {} };
+}
+
+// Opis pod tabelą i podsumowanie grupy szablonu z prawdziwymi id pól i opcji (pole po nazwie i typie, opcja po
+// etykiecie — jak w templateDefaults). Brak szablonu, Hasła, brakujące pole albo opcja → null (ogólne podsumowanie)
+export function templateSummaries(
+  key: TemplateKey | "passwords" | null,
+  fields: PageField[],
+): {
+  footer: { field_id: string; summary: ColumnSummary } | null;
+  group: { field_id: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip_option_id?: string } | null;
+} {
+  if (key === null || key === "passwords") return { footer: null, group: null };
+  const tpl = TEMPLATES[key];
+  // Pole szablonu po kluczu i id opcji po kluczu (przez etykietę z szablonu)
+  const pole = (k: string) => {
+    const t = tpl.fields.find((f) => f.key === k);
+    return t ? fields.find((p) => p.name === t.name && p.type === t.type) : undefined;
+  };
+  const opcja = (k: string, klucz: string) => {
+    const etykieta = tpl.fields.find((f) => f.key === k)?.config?.options?.find((o) => o.key === klucz)?.label;
+    return (pole(k)?.config.options ?? []).find((o) => o.label === etykieta)?.id;
+  };
+
+  let footer: { field_id: string; summary: ColumnSummary } | null = null;
+  const st = tpl.footer;
+  const poleStopki = st ? pole(st.field) : undefined;
+  if (st && poleStopki) {
+    const summary: ColumnSummary = { kind: st.kind };
+    const idOpcji = st.option !== undefined ? opcja(st.field, st.option) : undefined;
+    if (st.option === undefined || idOpcji !== undefined) {
+      if (idOpcji !== undefined) summary.option_id = idOpcji;
+      if (st.unit) summary.unit = st.unit;
+      footer = { field_id: poleStopki.id, summary };
+    }
+  }
+
+  let group: { field_id: string; kind: "avg" | "sum_month" | "nearest"; label?: string; skip_option_id?: string } | null = null;
+  const gr = tpl.groupSummary;
+  const poleGrupy = gr ? pole(gr.field) : undefined;
+  if (gr && poleGrupy) {
+    group = { field_id: poleGrupy.id, kind: gr.kind };
+    if (gr.label) group.label = gr.label;
+    const pomin = gr.skip !== undefined && tpl.group !== null ? opcja(tpl.group, gr.skip) : undefined;
+    if (pomin !== undefined) group.skip_option_id = pomin;
+  }
+  return { footer, group };
 }
 
 // Same widoki szablonu (kontrakt z planu)

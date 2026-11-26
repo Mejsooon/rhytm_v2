@@ -661,22 +661,37 @@ describe("akcje na wielu wierszach", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
-  it("duplicateRows kopiuje wartości na koniec bloku (pozycje liczy serwer)", async () => {
+  it("duplicateRows kopiuje wartości na koniec bloku (pozycje liczy serwer), tytuł z dopiskiem „ (kopia)”", async () => {
     const zrodlowe = [
       { id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "Dune" }, position: 2, deleted_at: null },
     ];
     tables.page_rows = fakeTable({ data: zrodlowe, single: { position: 7 } });
     tables.page_blocks = fakeTable({ data: [{ id: BLOK }] });
+    tables.page_fields = fakeTable({ data: [{ id: POLE_TYTUL, block_id: BLOK, is_title: true }] });
     const w = await duplicateRows([WIERSZ]);
     expect(tables.page_blocks.is).toHaveBeenCalledWith("deleted_at", null);
     expect(tables.page_blocks.is).toHaveBeenCalledWith("pages.deleted_at", null);
     expect(tables.page_rows.insert).toHaveBeenCalledWith([
-      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "Dune" }, position: 8 },
+      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "Dune (kopia)" }, position: 8 },
     ]);
+    expect(tables.page_fields.eq).toHaveBeenCalledWith("is_title", true);
     expect(w).toEqual({
       ok: true,
       rows: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune" }, position: 2 }],
     });
+  });
+
+  it("duplicateRows: pusty tytuł zostaje pusty (bez samego „ (kopia)”), inne pola bez zmian", async () => {
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "  ", [POLE_LICZBA]: 3 }, position: 2, deleted_at: null }],
+      single: { position: 7 },
+    });
+    tables.page_blocks = fakeTable({ data: [{ id: BLOK }] });
+    tables.page_fields = fakeTable({ data: [{ id: POLE_TYTUL, block_id: BLOK, is_title: true }] });
+    await duplicateRows([WIERSZ]);
+    expect(tables.page_rows.insert).toHaveBeenCalledWith([
+      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "  ", [POLE_LICZBA]: 3 }, position: 8 },
+    ]);
   });
 
   it("duplicateRows odmawia, gdy blok lub jego strona jest w koszu", async () => {
