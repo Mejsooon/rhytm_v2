@@ -28,7 +28,7 @@ body{margin:0;background:#fafafa}
       <div class="card-p" style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 28px">
         <a href="S2Today.dc.html" class="btn lg" style="width: 100%"><svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true" style="opacity: 1"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"></path><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"></path><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"></path><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"></path></svg>Zaloguj się przez Google</a>
         <div style="display: flex; align-items: center; gap: 12px; color: #686868; font-size: 12px"><span class="sep" style="flex: 1"></span>lub e-mailem<span class="sep" style="flex: 1"></span></div>
-        <label class="fld">E-mail<input class="inp" type="email" placeholder="ty@example.com" autocomplete="email"></label>
+        <label class="fld">E-mail<input class="inp" type="email" placeholder="ty@example.com" autocomplete="email" value="{{email}}" style="{{inpS}}"></label>
         <div class="fld">
           <span style="display: flex; justify-content: space-between; align-items: center"><label for="cl-pw">Hasło</label><a href="S2Forgot.dc.html" style="font-weight: 400; color: #686868; font-size: 13px">Nie pamiętasz hasła?</a></span>
           <span class="igroup" style="padding-right: 3px"><input id="cl-pw" type="{{pwType}}" value="hasło-przykładowe" autocomplete="current-password"><button type="button" class="btng ic xs" aria-label="{{pwLbl}}" aria-pressed="{{pwShown}}" onClick="{{togglePw}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span>
@@ -38,18 +38,29 @@ body{margin:0;background:#fafafa}
           <span style="flex: 1">Weryfikacja zakończona</span>
           <span class="bdg out">Turnstile</span>
         </div>
-        <a href="S2Today.dc.html" class="btnp lg" style="width: 100%">Zaloguj się</a>
+        <sc-if value="{{isErr}}" hint-placeholder-val="{{false}}"><div role="alert" style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 13px; line-height: 1.45"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg><span>{{errTxt}}</span></div></sc-if>
+        <sc-if value="{{isLocked}}" hint-placeholder-val="{{false}}"><span class="btnp lg" aria-disabled="true" style="width: 100%; opacity: .5; cursor: not-allowed">Spróbuj ponownie za {{lockT}}</span></sc-if>
+        <sc-if value="{{notLocked}}" hint-placeholder-val="{{true}}"><a href="S2Today.dc.html" class="btnp lg" style="width: 100%" onClick="{{tryLogin}}">Zaloguj się</a></sc-if>
         <p style="margin: 0; text-align: center; color: #686868">Nie masz konta? <a href="S2Register.dc.html" style="color: #262626; font-weight: 500">Zarejestruj się</a></p>
       </div>
     </form>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900},"err":{"editor":"enum","options":["","bad","locked"],"default":""}}'>
 class Component extends DCLogic {
   renderVals() {
     const shown = !!(this.state && this.state.pw);
+    // Stany z propa: err = złe hasło (zostały 2 próby), locked = 5 błędnych prób → blokada na 15 min
+    const st = this.state || {};
+    const mode = st.mode || this.props.err || '';
+    const isErr = mode === 'bad' || mode === 'locked';
     return {
+      email: mode ? 'mejson@example.com' : '',
+      inpS: isErr ? 'border-color:#fca5a5;box-shadow:0 0 0 3px rgba(239,68,68,.12)' : '',
+      isErr, isLocked: mode === 'locked', notLocked: mode !== 'locked', lockT: '14:52',
+      errTxt: mode === 'locked' ? 'Za dużo nieudanych prób. Logowanie na to konto jest zablokowane na 15 minut — możesz też zresetować hasło.' : 'Nieprawidłowy e-mail lub hasło. Zostały 2 próby, potem logowanie zablokuje się na 15 minut.',
+      tryLogin: () => {},
       pwType: shown ? 'text' : 'password',
       pwShown: shown ? 'true' : 'false',
       pwLbl: shown ? 'Ukryj hasło' : 'Pokaż hasło',

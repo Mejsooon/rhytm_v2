@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Powiadomienia, centrum (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .fch{display:flex;gap:6px;padding:12px 16px 4px;flex:none}
+html body .fch button{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:#fff;font:inherit;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+html body .fch button[aria-pressed="true"]{background:#262626;border-color:#262626;color:#fff}
+html body .nrow{width:100%;display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid var(--border);background:#fff;font:inherit;text-align:left;cursor:pointer;color:inherit;box-sizing:border-box}
+html body .nic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;background:rgba(0,0,0,.05);color:#404040}
+html body .grp{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a;padding:14px 16px 6px;background:#fafafa;border-bottom:1px solid var(--border)}
+html body section.card,html body .card{flex-shrink:0}
+
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="padding: 0 8px"><a href="CMToday.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex: 1; text-align: center">Powiadomienia</h1><a href="CMSettingsNotifications.dc.html" class="btng ic" aria-label="Ustawienia powiadomień"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg></a></header>
+  <div class="fch" role="group" aria-label="Filtr"><button type="button" aria-pressed="{{tabAll}}" onClick="{{pickAll}}">Wszystkie</button><button type="button" aria-pressed="{{tabUnread}}" onClick="{{pickUnread}}">Nieprzeczytane <span class="num">{{unreadN}}</span></button><span style="flex: 1"></span><button type="button" onClick="{{readAll}}" aria-label="Oznacz wszystkie jako przeczytane" style="border: 0; padding: 0 4px; color: #525252; font-size: 13px; white-space: nowrap">Odczytaj</button></div>
+  <div style="flex: 1; overflow-y: auto; padding-top: 8px">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+      <div class="grp">{{g.name}}</div>
+      <sc-for list="{{g.items}}" as="it" hint-placeholder-count="3"><a href="{{it.href}}" class="nrow" onClick="{{it.open}}" style="text-decoration: none"><span class="nic" style="{{it.icS}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{it.path}}"></path></svg></span><span style="flex: 1; min-width: 0"><span style="{{it.tS}}">{{it.title}}</span><span class="hint" style="display: block; font-size: 13px; margin-top: 2px">{{it.sub}}</span></span><span style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px"><span class="hint num" style="font-size: 12px">{{it.when}}</span><sc-if value="{{it.unread}}" hint-placeholder-val="{{false}}"><span aria-label="nieprzeczytane" style="width: 8px; height: 8px; border-radius: 50%; background: #c2410c"></span></sc-if></span></a></sc-for>
+    </sc-for>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px"><b style="font-weight: 600">{{emptyT}}</b><span class="muted">{{emptyD}}</span></div></sc-if>
+    <p class="hint" style="text-align: center; font-size: 12px; padding: 16px">Starsze niż 30 dni znikają same.</p>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}, "none": {"editor": "boolean", "default": false}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const read = st.read || {};
+    const tab = st.tab || 'all';
+    const P = { block: 'M8 2v3M16 2v3M3 9h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z', habit: 'M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 12l3 3 5-6', renew: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5', record: 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4', sport: 'M22 12h-4l-3 9L9 3l-3 9H2' };
+    const ALL0 = [
+      { k: 'a', g: 'Dziś', type: 'block', title: 'Za 10 min: Wykład — bazy danych', sub: '13:00–14:30 · Studia · 3 zadania', when: '12:50', href: 'CMBlockDetail.dc.html' },
+      { k: 'b', g: 'Dziś', type: 'sport', title: 'Dziś w planie: Bieg 10 km', sub: 'Sport · start 16:00 · cel tygodnia 25 km', when: '12:00', href: 'CMRunNew.dc.html' },
+      { k: 'c', g: 'Dziś', type: 'habit', title: 'Rozciąganie czeka na odhaczenie', sub: 'Nawyki · cel: codziennie', when: '11:00', href: 'CMHabits.dc.html' },
+      { k: 'd', g: 'Dziś', type: 'renew', title: 'Spotify odnawia się jutro', sub: 'Subskrypcje · 18.11.2026 · 23,99 zł', when: '09:00', href: 'CMSubs.dc.html' },
+      { k: 'e', g: 'Wcześniej', type: 'record', title: 'Nowy rekord: wyciskanie na ławce', sub: 'Sport · szacowany 1RM 82,5 kg', when: 'czw', href: 'CMExerciseDetail.dc.html' },
+      { k: 'f', g: 'Wcześniej', type: 'habit', title: 'Woda 2 l: 6 dni z rzędu', sub: 'Nawyki · najdłuższa seria to 12 dni', when: 'pn', href: 'CMHabitDetail.dc.html' },
+      { k: 'g', g: 'Wcześniej', type: 'renew', title: 'Odnowiono: iCloud+', sub: 'Subskrypcje · następne 15.12.2026', when: '15.11', href: 'CMSubs.dc.html' }
+    ];
+    const ALL = this.props.none ? [] : ALL0;
+    const initUnread = { a: true, b: true, c: true };
+    const isUnread = (it) => !!initUnread[it.k] && !read[it.k];
+    const vis = ALL.filter((it) => tab === 'all' || isUnread(it));
+    const groups = ['Dziś', 'Wcześniej'].map((g) => ({ name: g, items: vis.filter((it) => it.g === g).map((it) => {
+      const u = isUnread(it);
+      return Object.assign({}, it, { unread: u, path: P[it.type], tS: 'display:block;font-weight:' + (u ? '600' : '500'),
+        icS: it.type === 'record' ? 'background:#f0fdf4;color:#15803d' : it.type === 'renew' ? 'background:#fff7ed;color:#c2410c' : it.type === 'sport' ? 'background:rgba(245,158,11,.14);color:#b45309' : '',
+        open: () => { const r = Object.assign({}, read); r[it.k] = true; this.setState({ read: r }); } });
+    }) })).filter((g) => g.items.length);
+    return {
+      groups, empty: groups.length === 0, emptyT: ALL.length ? 'Wszystko przeczytane' : 'Nie masz jeszcze powiadomień', emptyD: ALL.length ? 'Nowe przypomnienia pojawią się tutaj.' : 'Przypomnienia o blokach, nawykach i odnowieniach pojawią się tutaj.', unreadN: ALL.filter(isUnread).length,
+      tabAll: tab === 'all' ? 'true' : 'false', tabUnread: tab === 'unread' ? 'true' : 'false',
+      pickAll: () => this.setState({ tab: 'all' }), pickUnread: () => this.setState({ tab: 'unread' }),
+      readAll: () => this.setState({ read: { a: true, b: true, c: true } })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -45,7 +45,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -74,7 +74,7 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
 class Component extends DCLogic {
   renderVals() {
     const S = this.state || {};
-    const T = [['empty', 'Pusta strona', 'Bez tabeli. Tabelę, listę albo nagłówek wstawisz, wpisując „/”.', [], ''], ['subs', 'Subscriptions', 'Twoje subskrypcje i ich odnowienia.', ['Nazwa', 'Kwota cykliczna', 'Data odnowienia', 'Kategoria', 'Aktywna'], 'Terminy trafią do kalendarza głównego. Karty: Σ miesięcznie, Σ rocznie, najbliższe odnowienie.'], ['proj', 'Projects', 'Projekty na studia, własne i dla klientów.', ['Nazwa', 'Status', 'Termin', 'Repo', 'Obszar'], 'Terminy trafią do kalendarza głównego.'], ['books', 'Books', 'Co czytam, co przeczytałem i co chcę przeczytać.', ['Tytuł', 'Autor', 'Status', 'Ocena', 'Przeczytana'], 'Karta: liczba przeczytanych w tym roku.'], ['web', 'Websites', 'Strony klientów: URL, klient, status.', ['Nazwa', 'URL', 'Klient', 'Status', 'Hosting'], '']];
+    const T = [['empty', 'Pusta strona', 'Bez tabeli. Tabelę, listę albo nagłówek wstawisz, wpisując „/”.', [], ''], ['subs', 'Subskrypcje', 'Twoje subskrypcje i ich odnowienia.', ['Nazwa', 'Kwota cykliczna', 'Data odnowienia', 'Kategoria', 'Aktywna'], 'Terminy trafią do kalendarza głównego. Karty: Σ miesięcznie, Σ rocznie, najbliższe odnowienie.'], ['proj', 'Projekty', 'Projekty na studia, własne i dla klientów.', ['Nazwa', 'Status', 'Termin', 'Repo', 'Obszar'], 'Terminy trafią do kalendarza głównego.'], ['books', 'Książki', 'Co czytam, co przeczytałem i co chcę przeczytać.', ['Tytuł', 'Autor', 'Status', 'Ocena', 'Przeczytana'], 'Karta: liczba przeczytanych w tym roku.'], ['web', 'Strony WWW', 'Strony klientów: URL, klient, status.', ['Nazwa', 'URL', 'Klient', 'Status', 'Hosting'], '']];
     const tp = S.tp || 'subs', cur = T.find((t) => t[0] === tp);
     return {
       name: S.name ?? cur[1], setName: (e) => this.setState({ name: e.target.value }),

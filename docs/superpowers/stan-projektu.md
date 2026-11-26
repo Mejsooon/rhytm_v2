@@ -1,6 +1,6 @@
 # Stan projektu rhytm (aktualizuj na koniec każdego etapu)
 
-Ostatnia aktualizacja: 2026-11-24 (projekt Dziś; seria autonomiczna).
+Ostatnia aktualizacja: 2026-11-26 (odświeżone makiety z kanwy).
 
 ## Czym jest rhytm
 
@@ -34,6 +34,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
   - **Krok 3** (merge `a69a5b1`): Hasła jako moduł systemowy `/hasla` (strona `is_system`, stałe kolumny, przy zamkniętym sejfie sama karta „Odblokuj sejf”), nowy onboarding. Plan: `plans/2026-11-23-strony-2-krok-3.md`. Migracja `20261125100000_passwords_module.sql` wykonana na produkcji.
 
 ## W toku
+
+- **Nowe makiety (2026-11-26):** kanwa „Rhytm Design” mocno zmieniona przez Mejsona (95 ekranów zmienionych, 79 nowych, sekcja Trener). Kopie w `docs/design/mockups` na gałęzi `docs/makiety-2026-11-26`, różnice w dzienniku 26.11. Czeka na wybór zakresu i kolejności wdrożenia.
 
 - **Seria autonomiczna (2026-11-24):** Dziś → Subscriptions → sprzątanie uwag webu → Etap 3 (telefon). Decyzje podjęte bez Mejsona: `docs/superpowers/do-decyzji-seria.md`.
 - **Projekt Dziś:** scalony (`02a36ba`) i wdrożony; spec `specs/2026-11-24-dzis-design.md`. Migracja `20261126100000_tasks_only_in_blocks.sql` wykonana 24.11 (6 zadań usuniętych).

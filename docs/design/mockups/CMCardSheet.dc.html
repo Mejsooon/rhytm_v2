@@ -45,7 +45,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -66,7 +66,7 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
       <label class="fld">Kolumna<select class="dd"><option>{{col}}</option></select></label>
       <label class="fld">Tylko gdy zaznaczone<select class="dd"><option>— zawsze —</option><option>Przeczytana</option></select></label>
       <label class="fld">Napis<input class="inp" type="text" value="{{label}}"><span class="hint">„{year}” pokaże bieżący rok.</span></label>
-      <p class="hint" style="margin:0">Liczba policzona z kolumny tabeli „Books”. Filtr tabeli nie zmienia kart.</p>
+      <p class="hint" style="margin:0">Liczba policzona z kolumny tabeli „Książki”. Filtr tabeli nie zmienia kart.</p>
     </div>
   </div>
 </div>

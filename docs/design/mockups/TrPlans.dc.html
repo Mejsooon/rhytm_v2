@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Plany wielotygodniowe</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="plany" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Plany</h1><span class="hint num">{{cnt}}</span></div>
+      <button type="button" class="btnp" onClick="{{newPlan}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nowy plan</button>
+    </header>
+    <div style="padding: 24px; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; box-sizing: border-box; width: 100%">
+      <section class="card" style="overflow: hidden">
+        <sc-for list="{{plans}}" as="p" hint-placeholder-count="3"><button type="button" onClick="{{p.pick}}" style="{{p.s}}"><span style="flex: 1; min-width: 0; text-align: left"><span class="ell" style="display: block; font-weight: 500">{{p.n}}</span><span class="hint num ell" style="display: block">{{p.sub}}</span></span><span class="row" style="gap: 0"><sc-for list="{{p.users}}" as="u" hint-placeholder-count="2"><span class="av sm" style="{{u.s}}">{{u.i}}</span></sc-for></span></button></sc-for>
+      </section>
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+        <div class="row" style="gap: 12px; align-items: flex-start">
+          <div style="flex: 1; min-width: 0">
+            <sc-if value="{{nameView}}" hint-placeholder-val="{{true}}"><div class="row" style="gap: 6px"><h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em" class="ell">{{pn}}</h2><button type="button" class="btng ic sm" aria-label="Zmień nazwę" onClick="{{editName}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div></sc-if>
+            <sc-if value="{{nameEdit}}" hint-placeholder-val="{{false}}"><div class="row" style="gap: 6px"><input class="inp" type="text" value="{{nameDraft}}" onChange="{{onNameDraft}}" style="font-size: 18px; font-weight: 600; height: 38px; width: 320px"><button type="button" class="btnp sm" onClick="{{saveName}}">Zapisz</button><button type="button" class="btng sm" onClick="{{cancelName}}">Anuluj</button></div></sc-if>
+            <div class="hint num ell" style="margin-top: 2px">{{psub}}</div>
+          </div>
+          <button type="button" class="btn" onClick="{{dupPlan}}">Duplikuj</button><a href="TrAssign.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>Przypisz plan</a>
+        </div>
+        <sc-if value="{{weekOn}}" hint-placeholder-val="{{false}}">
+          <div class="row" style="gap: 8px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.12); border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04)">
+            <b class="nw" style="font-weight: 600">Tydz. {{wNo}}</b>
+            <input class="inp" type="text" value="{{wNote}}" onChange="{{onWNote}}" placeholder="Notatka do tygodnia, np. +2,5 kg w głównych" style="flex: 1; height: 32px; min-width: 0">
+            <button type="button" class="btn sm nw" aria-pressed="{{wLight}}" onClick="{{toggleLight}}">{{lightT}}</button>
+            <button type="button" class="btn sm nw" onClick="{{dupWeek}}">Duplikuj tydzień</button>
+            <button type="button" class="btng sm nw" style="color: #c2410c" onClick="{{delWeek}}" aria-disabled="{{delDis}}">Usuń</button>
+            <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{closeWeek}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </sc-if>
+        <section class="card" style="overflow: visible">
+          <div style="display: grid; grid-template-columns: 180px repeat(7, minmax(0, 1fr))">
+            <div style="padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,.08)" class="hint">Tydzień</div>
+            <sc-for list="{{dn}}" as="d" hint-placeholder-count="7"><div style="padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,.08); border-left: 1px solid rgba(0,0,0,.06); font-size: 12px; color: #686868">{{d.t}}</div></sc-for>
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="8">
+              <button type="button" onClick="{{w.pick}}" style="{{w.s}}"><span style="min-width: 0; text-align: left"><span class="row" style="gap: 6px"><b style="font-weight: 500" class="nw">Tydz. {{w.no}}</b><sc-if value="{{w.light}}" hint-placeholder-val="{{false}}"><span class="bdg sec" style="font-size: 10px">lżejszy</span></sc-if><sc-for list="{{w.here}}" as="u" hint-placeholder-count="0"><span class="av sm" style="{{u.s}}" title="{{u.t}}">{{u.i}}</span></sc-for></span><span class="hint ell" style="display: block; font-size: 11px">{{w.note}}</span></span></button>
+              <sc-for list="{{w.cells}}" as="c" hint-placeholder-count="7"><div style="{{c.s}}">
+                <button type="button" onClick="{{c.open}}" style="{{c.bs}}"><sc-if value="{{c.has}}" hint-placeholder-val="{{false}}"><span style="{{c.cs}}" class="ell">{{c.t}}</span></sc-if><sc-if value="{{c.empty}}" hint-placeholder-val="{{true}}"><span style="{{c.ps}}">+</span></sc-if></button>
+                <sc-if value="{{c.pop}}" hint-placeholder-val="{{false}}"><div role="menu" class="pop" style="{{c.popS}}">
+                  <div class="mi-lbl" style="padding: 6px 8px 4px">{{c.popT}}</div>
+                  <sc-for list="{{c.opts}}" as="o" hint-placeholder-count="5"><button type="button" role="menuitemradio" aria-checked="{{o.on}}" class="mi" onClick="{{o.pick}}"><span style="{{o.dot}}"></span><span class="ell" style="flex: 1; text-align: left">{{o.t}}</span><sc-if value="{{o.isOn}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if></button></sc-for>
+                  <div class="mi-sep"></div>
+                  <button type="button" class="mi" onClick="{{c.clear}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Odpoczynek</button>
+                  <button type="button" role="checkbox" aria-checked="{{allW}}" onClick="{{toggleAllW}}" class="mi" style="font-size: 12px; color: #686868"><span style="{{allBox}}">{{allTick}}</span>Ustaw we wszystkich tygodniach</button>
+                </div></sc-if>
+              </div></sc-for>
+            </sc-for>
+          </div>
+          <div style="padding: 10px 14px; border-top: 1px solid rgba(0,0,0,.06)"><button type="button" class="btng sm" onClick="{{addWeek}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Dodaj tydzień</button></div>
+        </section>
+        <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}"><div style="padding: 8px 12px; border-radius: 10px; background: #f0fdf4; color: #14532d; font-size: 13px; align-self: flex-start">{{toast}}</div></sc-if>
+        <div class="row hint" style="gap: 8px; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span class="nw">Kliknij dzień, żeby wybrać trening. Kliknij tydzień, żeby dodać notatkę, zduplikować go lub usunąć.</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}, "demo": {"editor": "enum", "options": ["none", "cell"], "default": "none"}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const mk = (n, desc, len, pat, users, note) => ({ n, desc, users, weeks: Array.from({ length: len }, (_, i) => { const w = i + 1; const t = note(w); return { note: t, light: /Deload|Lżejszy/.test(t), cells: Object.assign({}, pat) }; }) });
+    this.state = { p: 0, w: 0, P: [
+      mk('Siła 8 tyg.', '4 treningi / tydz. · progresja +2,5 kg', 8, { 0: 'Nogi A', 1: 'Push A', 3: 'Pull A', 5: 'Bieg spokojny' }, { ola: 3, ania: 1 }, (w) => (w === 4 || w === 8 ? 'Deload −10% ciężaru' : w === 1 ? 'Ciężary startowe' : '+2,5 kg w głównych')),
+      mk('Półmaraton 12 tyg.', '4 biegi / tydz. · szczyt 18 km', 12, { 0: 'Bieg spokojny', 1: 'Bieg — interwały 6 × 800 m', 3: 'Bieg tempo 10 km', 5: 'Bieg spokojny' }, { marta: 7 }, (w) => (w === 12 ? 'Start: półmaraton 21,1 km' : w % 4 === 0 ? 'Lżejszy tydzień' : 'Długi ' + (8 + w) + ' km')),
+      mk('Redukcja + bieg', '2 siłownie + 2 biegi / tydz.', 10, { 0: 'Full body A', 2: 'Bieg spokojny', 4: 'Full body B', 6: 'Bieg spokojny' }, { kuba: 5, pawel: 2 }, (w) => (w % 5 === 0 ? 'Pomiary i zdjęcia' : 'Deficyt ~400 kcal'))
+    ] };
+    // Widok startowy dla makiety: zaznaczony tydzień i otwarta lista przy dniu
+    if (p && p.demo === 'cell') Object.assign(this.state, { w: 2, cell: { w: 1, d: 2 } });
+  }
+  renderVals() {
+    const st = this.state;
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const TPL = ['Push A', 'Pull A', 'Nogi A', 'Push B', 'Full body A', 'Full body B', 'Bieg spokojny', 'Bieg — interwały 6 × 800 m', 'Bieg tempo 10 km'];
+    const run = (t) => /^Bieg/.test(t || '');
+    const SHORT = { 'Bieg spokojny': 'Spokojny', 'Bieg — interwały 6 × 800 m': 'Interwały', 'Bieg tempo 10 km': 'Tempo 10 km' };
+    const P = st.P, sel = Math.min(st.p, P.length - 1), p = P[sel];
+    const pl = (n, a, b, c) => (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) ? b : c);
+    const setPlan = (np) => { const n = P.slice(); n[sel] = np; this.setState({ P: n }); };
+    const setWeeks = (weeks, extra) => { const n = P.slice(); n[sel] = Object.assign({}, p, { weeks }); this.setState(Object.assign({ P: n }, extra || {})); };
+    const flash = (t) => { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); };
+    const people = (o) => Object.keys(o).map((id) => { const c = CL.find((x) => x.id === id); return { i: c.i, t: c.n + ' — tydz. ' + o[id], s: 'background:' + c.c + ';width:18px;height:18px;font-size:8px' }; });
+    const perWeek = (wk) => Object.keys(wk.cells).filter((k) => wk.cells[k]).length;
+    const ws = st.w, cell = st.cell;
+    const weeks = p.weeks.map((wk, i) => {
+      const no = i + 1, on = no === ws;
+      const here = Object.keys(p.users).filter((id) => p.users[id] === no);
+      return {
+        no, note: wk.note || '—', light: wk.light, here: people(Object.fromEntries(here.map((id) => [id, no]))),
+        pick: () => this.setState({ w: on ? 0 : no, cell: null }),
+        s: 'display:flex;align-items:center;padding:8px 14px;border:0;border-bottom:1px solid rgba(0,0,0,.06);font:inherit;color:inherit;cursor:pointer;min-width:0;text-align:left;background:' + (on ? 'rgba(0,0,0,.06)' : wk.light ? '#fafafa' : '#fff') + (on ? ';box-shadow:inset 3px 0 0 #262626' : ''),
+        cells: [0, 1, 2, 3, 4, 5, 6].map((d) => {
+          const t = wk.cells[d];
+          const isPop = !!cell && cell.w === i && cell.d === d;
+          return {
+            has: !!t, empty: !t, t: SHORT[t] || t || '', pop: isPop,
+            cs: 'display:block;padding:5px 8px;border-radius:6px;font-size:12px;font-weight:500;text-align:left;' + (run(t) ? 'background:rgba(245,158,11,.12);color:#92400e' : 'background:rgba(0,0,0,.05);color:#262626') + (wk.light ? ';opacity:.6' : ''),
+            ps: 'display:block;width:100%;text-align:center;color:#c4c4c4;font-size:14px',
+            bs: 'display:block;width:100%;min-height:28px;padding:0;border:0;background:transparent;cursor:pointer;border-radius:6px;font:inherit;' + (isPop ? 'box-shadow:0 0 0 2px #262626' : ''),
+            s: 'position:relative;padding:6px;border-left:1px solid rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.06);min-width:0;display:flex;align-items:center;background:' + (on ? 'rgba(0,0,0,.025)' : 'transparent'),
+            open: () => this.setState({ cell: isPop ? null : { w: i, d }, allW: false }),
+            popS: 'position:absolute;top:calc(100% - 2px);' + (d > 3 ? 'right:0' : 'left:0') + ';z-index:40;width:250px;padding:4px',
+            popT: 'Tydz. ' + no + ' · ' + ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'][d],
+            opts: TPL.map((o) => ({ t: o, isOn: o === t, on: o === t ? 'true' : 'false', dot: 'width:8px;height:8px;border-radius:2px;flex:none;background:' + (run(o) ? '#f59e0b' : '#525252'),
+              pick: () => { const nw = p.weeks.map((x, j) => (st.allW || j === i ? Object.assign({}, x, { cells: Object.assign({}, x.cells, { [d]: o }) }) : x)); setWeeks(nw, { cell: null }); flash(st.allW ? 'Ustawiono „' + o + '” we wszystkich tygodniach.' : 'Tydz. ' + no + ': „' + o + '”.'); } })),
+            clear: () => { const nw = p.weeks.map((x, j) => (st.allW || j === i ? Object.assign({}, x, { cells: Object.assign({}, x.cells, { [d]: '' }) }) : x)); setWeeks(nw, { cell: null }); }
+          };
+        })
+      };
+    });
+    const cur = ws ? p.weeks[ws - 1] : null;
+    const setWeek = (patch) => setWeeks(p.weeks.map((x, j) => (j === ws - 1 ? Object.assign({}, x, patch) : x)));
+    const perW = p.weeks.length ? perWeek(p.weeks[0]) : 0;
+    return {
+      cnt: P.length + ' ' + pl(P.length, 'plan', 'plany', 'planów') + ' wielotygodniowe',
+      plans: P.map((x, i) => ({ n: x.n, sub: x.weeks.length + ' tyg. · ' + x.desc, users: people(x.users).map((u, j) => ({ i: u.i, t: u.t, s: u.s.replace('width:18px;height:18px;font-size:8px', '') + ';box-shadow:0 0 0 2px #fff;' + (j ? 'margin-left:-6px' : '') })),
+        pick: () => this.setState({ p: i, w: 0, cell: null, nameEd: false }), s: 'display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:0;border-top:' + (i ? '1px solid rgba(0,0,0,.06)' : '0') + ';font:inherit;color:inherit;cursor:pointer;background:' + (i === sel ? 'rgba(0,0,0,.05)' : 'transparent') })),
+      pn: p.n, nameView: !st.nameEd, nameEdit: !!st.nameEd, nameDraft: st.nd || '',
+      editName: () => this.setState({ nameEd: true, nd: p.n }), onNameDraft: (e) => this.setState({ nd: e.target.value }),
+      saveName: () => { if (!(st.nd || '').trim()) return; setPlan(Object.assign({}, p, { n: st.nd.trim() })); this.setState({ nameEd: false }); }, cancelName: () => this.setState({ nameEd: false }),
+      psub: p.weeks.length + ' ' + pl(p.weeks.length, 'tydzień', 'tygodnie', 'tygodni') + ' · ' + perW + ' ' + pl(perW, 'trening', 'treningi', 'treningów') + ' / tydz.' + (Object.keys(p.users).length ? ' · przypisany: ' + Object.keys(p.users).map((id) => CL.find((c) => c.id === id).n.split(' ')[0] + ' (tydz. ' + p.users[id] + ')').join(', ') : ' · nieprzypisany'),
+      dupPlan: () => { const c = JSON.parse(JSON.stringify(p)); c.n = p.n + ' (kopia)'; c.users = {}; const n = P.slice(); n.splice(sel + 1, 0, c); this.setState({ P: n, p: sel + 1, w: 0, cell: null }); flash('Zduplikowano plan.'); },
+      newPlan: () => { const n = P.concat([{ n: 'Nowy plan', desc: 'do uzupełnienia', users: {}, weeks: Array.from({ length: 4 }, () => ({ note: '', light: false, cells: {} })) }]); this.setState({ P: n, p: n.length - 1, w: 0, cell: null, nameEd: true, nd: 'Nowy plan' }); },
+      dn: ['Pn', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'].map((t) => ({ t })), weeks,
+      allW: st.allW ? 'true' : 'false', toggleAllW: () => this.setState({ allW: !st.allW }), allTick: st.allW ? '✓' : '', allBox: 'width:16px;height:16px;border-radius:4px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;box-sizing:border-box;' + (st.allW ? 'background:#262626;border:1px solid #262626' : 'border:1.5px solid #a3a3a3'),
+      weekOn: !!cur, wNo: ws, wNote: cur ? cur.note : '', wLight: cur && cur.light ? 'true' : 'false', lightT: cur && cur.light ? '✓ Lżejszy tydzień' : 'Lżejszy tydzień',
+      onWNote: (e) => setWeek({ note: e.target.value }), toggleLight: () => setWeek({ light: !cur.light }),
+      dupWeek: () => { const nw = p.weeks.slice(); nw.splice(ws, 0, JSON.parse(JSON.stringify(cur))); setWeeks(nw, { w: ws + 1 }); flash('Dodano kopię jako tydz. ' + (ws + 1) + '.'); },
+      delWeek: () => { if (p.weeks.length < 2) return; setWeeks(p.weeks.filter((_, j) => j !== ws - 1), { w: 0 }); flash('Usunięto tydz. ' + ws + '.'); },
+      delDis: p.weeks.length < 2 ? 'true' : 'false', closeWeek: () => this.setState({ w: 0 }),
+      addWeek: () => { const last = p.weeks.filter((x) => !x.light).pop() || { note: '', light: false, cells: {} }; setWeeks(p.weeks.concat([Object.assign(JSON.parse(JSON.stringify(last)), { light: false })]), { w: p.weeks.length + 1, cell: null }); },
+      toastOn: !!st.toast, toast: st.toast || ''
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

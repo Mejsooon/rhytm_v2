@@ -10,7 +10,6 @@
 <x-dc>
 <helmet>
 <style>
-body{margin:0;background:#fafafa}
 /* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
    Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
    .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
@@ -45,53 +44,103 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
 html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
-html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .hrow{width:100%;display:flex;align-items:center;gap:10px;min-height:58px;padding:6px 14px;border:0;border-top:1px solid var(--border);background:#fff;font:inherit;text-align:left;cursor:pointer;color:inherit;box-sizing:border-box}
+html body .stbl{width:100%;border-collapse:collapse;font-size:14px}
+html body .stbl td,html body .stbl th{padding:6px 4px;text-align:left;font-variant-numeric:tabular-nums}
+html body .stbl th{font-size:12px;font-weight:500;color:#8a8a8a}
+html body .up{color:#15803d}
+html body section.card,html body .card{flex-shrink:0}
+
 </style>
 </helmet>
-<div class="m-screen" style="display:flex;flex-direction:column">
+<div class="m-screen" style="display: flex; flex-direction: column">
   <div class="m-status"><span>9:41</span><span></span></div>
-  <header class="m-head" style="padding:0 8px"><a href="CMGym.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex:1;text-align:center;font-size:16px">Wyciskanie na ławce</h1><span style="width:44px"></span></header>
-  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px">
-    <section class="card">
-      <div class="card-p" style="display:flex;flex-direction:column;gap:4px"><span class="lbl">Szacowany 1RM</span><div style="display:flex;align-items:baseline;gap:10px"><span class="num" style="font-size:30px;font-weight:600">82,5 kg</span><span class="bdg ok num">+10,5 kg · 8 tyg.</span></div></div>
-      <div class="seg" role="group" aria-label="Metryka" style="display:flex;margin:0 14px 10px"><sc-for list="{{metrics}}" as="m" hint-placeholder-count="2"><button type="button" style="flex:1" aria-pressed="{{m.p}}" onClick="{{m.pick}}">{{m.t}}</button></sc-for></div>
-      <div role="img" aria-label="1RM rośnie z 72 do 82,5 kg w 8 tygodni" style="display:grid;grid-template-columns:repeat(8, minmax(0, 1fr));gap:6px;align-items:end;height:120px;padding:0 14px 6px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="8"><span style="{{b.s}}"></span></sc-for></div>
-      <div class="num muted" style="display:flex;justify-content:space-between;font-size:11px;padding:0 14px 12px"><span>tydz. 39</span><span>tydz. 46</span></div>
+  <header class="m-head" style="padding: 0 8px"><a href="CMGym.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex: 1; text-align: center; font-size: 16px">Wyciskanie na ławce</h1><button type="button" class="btng ic" aria-label="Więcej"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg></button></header>
+  <div style="flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 14px">
+    <p class="hint num" style="margin: 0">Klatka · Sztanga · 11 treningów od 03.09 · szablon „Push”</p>
+    <section class="card" style="display: grid; grid-template-columns: 1fr 1fr; padding: 0; overflow: hidden"><sc-for list="{{stats}}" as="s" hint-placeholder-count="4"><div style="{{s.cs}}"><div class="hint" style="font-size: 12px">{{s.k}}</div><b class="num" style="display: block; font-size: 17px; font-weight: 600">{{s.v}}</b><span class="{{s.subC}}" style="font-size: 12px">{{s.sub}}</span></div></sc-for></section>
+    <section class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 12px">
+      <div class="seg" role="group" aria-label="Miara" style="display: flex"><sc-for list="{{metrics}}" as="m" hint-placeholder-count="3"><button type="button" aria-pressed="{{m.p}}" onClick="{{m.pick}}" style="flex: 1; font-size: 13px">{{m.t}}</button></sc-for></div>
+      <div style="display: flex; align-items: baseline; gap: 8px"><span class="num" style="font-size: 28px; font-weight: 600; letter-spacing: -.02em">{{big}}</span><span class="muted" style="font-size: 13px">{{unit}}</span><span class="bdg ok num" style="margin-left: auto">{{delta}}</span></div>
+      <div role="img" aria-label="{{chartLbl}}" style="display: flex; gap: 5px; align-items: flex-end; height: 120px; border-bottom: 1px solid var(--border)"><sc-for list="{{bars}}" as="b" hint-placeholder-count="9"><button type="button" aria-label="{{b.a}}" onClick="{{b.pick}}" style="flex: 1; height: 100%; display: flex; align-items: flex-end; border: 0; background: transparent; padding: 0; cursor: pointer"><span style="{{b.s}}"></span></button></sc-for></div>
+      <div class="num muted" style="display: flex; justify-content: space-between; font-size: 11px; margin-top: -6px"><span>{{firstL}}</span><span class="num" style="color: #262626">{{tipTxt}}</span><span>12.11</span></div>
     </section>
-    <section class="card">
-      <div class="card-h"><h2 class="card-t">Rekordy</h2></div>
-      <div style="padding:4px 0">
-        <div class="m-row"><span class="muted" style="flex:1">Najcięższa seria</span><span class="num" style="font-weight:500">70 kg × 3</span></div>
-        <div class="m-row"><span class="muted" style="flex:1">Najwięcej powt.</span><span class="num" style="font-weight:500">60 kg × 10</span></div>
-        <div class="m-row"><span class="muted" style="flex:1">Najlepsza seria (szac. 1RM)</span><span class="num" style="font-weight:500">70 kg × 5 <span class="bdg ok">REKORD</span></span></div>
-      </div>
+    <section class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><b style="font-weight: 600">Następny trening</b><span class="bdg sec">zaplanowany</span></div>
+      <div class="hint num">Push · czw 19.11 · 15:00</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px"><span><span class="hint" style="display: block; font-size: 12px">Cel na ostatnią serię</span><b class="num" style="font-weight: 600">72,5 × 6</b></span><span class="hint num" style="text-align: right; font-size: 12px">ostatnio 72,5 × 5<br>+1 powtórzenie</span></div>
+      <a href="CMGym.dc.html" class="btnp" onClick="{{goPush}}" style="justify-content: center">Rozpocznij trening</a>
     </section>
-    <section class="card">
-      <div class="card-h"><h2 class="card-t">Historia</h2><p class="card-d">w szablonie „Push”</p></div>
-      <div style="padding:4px 0"><sc-for list="{{hist}}" as="h" hint-placeholder-count="4"><div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span class="num" style="display:block;font-weight:500">{{h.d}}</span><span class="hint num">{{h.sets}}</span></span><span class="num muted" style="font-size:13px">{{h.rm}}</span></div></sc-for></div>
+    <section class="card" style="padding: 0; overflow: hidden">
+      <div style="display: flex; justify-content: space-between; padding: 14px 14px 8px"><b style="font-weight: 600">Historia</b><span class="hint num">{{histCount}}</span></div>
+      <sc-for list="{{hist}}" as="h" hint-placeholder-count="5">
+        <button type="button" class="hrow" aria-expanded="{{h.exp}}" onClick="{{h.toggle}}"><span style="flex: 1; min-width: 0"><span style="display: flex; align-items: center; gap: 6px"><b class="num" style="font-weight: 500">{{h.dl}}</b><sc-if value="{{h.pr}}" hint-placeholder-val="{{false}}"><span class="bdg ok">rekord</span></sc-if></span><span class="hint num" style="display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.setsTxt}}</span></span><span class="num" style="font-weight: 500">{{h.rm}}</span></button>
+        <sc-if value="{{h.open}}" hint-placeholder-val="{{false}}"><div style="padding: 0 14px 12px"><table class="stbl"><thead><tr><th scope="col">Seria</th><th scope="col">Ciężar</th><th scope="col">Powt.</th><th scope="col" style="text-align: right">Objętość</th></tr></thead><tbody><sc-for list="{{h.sets}}" as="st" hint-placeholder-count="4"><tr><td>{{st.n}}</td><td>{{st.w}}</td><td>{{st.r}}</td><td style="text-align: right">{{st.v}}</td></tr></sc-for></tbody></table></div></sc-if>
+      </sc-for>
+      <sc-if value="{{hasMore}}" hint-placeholder-val="{{true}}"><button type="button" class="btng" onClick="{{toggleMore}}" style="width: 100%; justify-content: center; border-top: 1px solid var(--border); border-radius: 0">{{moreTxt}}</button></sc-if>
+    </section>
+    <section class="card" style="padding: 6px 14px">
+      <div style="padding: 8px 0 4px"><b style="font-weight: 600">Rekordy</b></div>
+      <sc-for list="{{prs}}" as="r" hint-placeholder-count="4"><div style="display: flex; align-items: center; gap: 10px; min-height: 50px; border-top: 1px solid var(--border)"><span style="flex: 1">{{r.t}}</span><sc-if value="{{r.isNew}}" hint-placeholder-val="{{false}}"><span class="bdg ok">nowy</span></sc-if><span style="text-align: right"><b class="num" style="display: block; font-weight: 600">{{r.v}}</b><span class="hint num" style="font-size: 12px">{{r.d}}</span></span></div></sc-for>
     </section>
   </div>
 </div>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
 class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { m: 'rm', open: null, more: false, tip: null }; }
   renderVals() {
     const S = this.state || {};
-    const met = S.met || '1RM';
-    const RM = [72, 73.5, 75, 76, 77.5, 79, 80.5, 82.5], VOL = [1440, 1500, 1560, 1520, 1620, 1700, 1740, 1810];
-    const data = met === '1RM' ? RM : VOL, mn = Math.min.apply(null, data) * 0.9, mx = Math.max.apply(null, data);
+    const m = S.m || 'rm';
+    const RAW = [
+      ['03.09', [[55, 12], [60, 7], [60, 6]], 71.0], ['10.09', [[55, 10], [60, 8], [60, 7]], 72.0], ['17.09', [[55, 10], [60, 8], [62.5, 6]], 72.5],
+      ['24.09', [[55, 10], [62.5, 7], [62.5, 6]], 73.5], ['01.10', [[57.5, 10], [62.5, 8], [65, 5], [65, 5]], 74.5], ['08.10', [[57.5, 10], [65, 6], [65, 6], [65, 5]], 76.0],
+      ['15.10', [[57.5, 10], [65, 6], [67.5, 5], [67.5, 5]], 77.5], ['22.10', [[60, 10], [67.5, 6], [67.5, 6], [67.5, 5]], 79.0], ['29.10', [[60, 10], [67.5, 6], [70, 5], [75, 2]], 80.5],
+      ['05.11', [[60, 10], [70, 6], [70, 5], [70, 5]], 82.0], ['12.11', [[60, 10], [70, 6], [72.5, 5], [72.5, 4]], 82.5]
+    ];
+    const wf = (w) => (w % 1 ? w.toFixed(1).replace('.', ',') : String(w));
+    const f1 = (n) => n.toFixed(1).replace('.', ',');
+    const sp = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const SES = RAW.map((x, i) => ({ i, d: x[0], dl: 'czw ' + x[0], sets: x[1], rm: x[2], vol: x[1].reduce((a, s) => a + s[0] * s[1], 0), hw: Math.max.apply(null, x[1].map((s) => s[0])) }));
+    const L = SES.slice(-9);
+    const val = (s) => (m === 'rm' ? s.rm : m === 'hw' ? s.hw : s.vol);
+    const vals = L.map(val), mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    const lo = mn - (mx - mn) * 0.35;
+    const fmt = (v) => (m === 'vol' ? sp(v) : m === 'rm' ? f1(v) : wf(v));
+    const tip = S.tip;
+    const rmMax = Math.max.apply(null, SES.map((s) => s.rm)), hwMax = Math.max.apply(null, SES.map((s) => s.hw)), volMax = Math.max.apply(null, SES.map((s) => s.vol));
+    const rev = SES.slice().reverse(), shown = S.more ? rev : rev.slice(0, 4);
+    const totSets = L.reduce((a, s) => a + s.sets.length, 0), totVol = L.reduce((a, s) => a + s.vol, 0);
+    const sHw = SES.filter((s) => s.hw === hwMax)[0], sVol = SES.filter((s) => s.vol === volMax)[0];
+    const stats = [['Szac. 1RM', f1(rmMax) + ' kg', '+10,0 kg w 8 tyg.', 'num', 'border-right'], ['Treningi', '9', 'w 8 tygodni', 'hint num', ''], ['Serie robocze', String(totSets), f1(totSets / 9) + ' na trening', 'hint num', 'border-right'], ['Objętość', f1(totVol / 1000) + ' t', sp(totVol / 9) + ' kg na trening', 'hint num', '']]
+      .map((x, i) => ({ k: x[0], v: x[1], sub: x[2], subC: i === 0 ? 'num up' : x[3], cs: 'padding:10px 14px;' + (i % 2 === 0 ? 'border-right:1px solid rgba(0,0,0,.08);' : '') + (i > 1 ? 'border-top:1px solid rgba(0,0,0,.08);' : '') }));
     return {
-      metrics: [['1RM', 'Szac. 1RM'], ['vol', 'Objętość']].map((m) => ({ t: m[1], p: m[0] === met ? 'true' : 'false', pick: () => this.setState({ met: m[0] }) })),
-      bars: data.map((v, i) => ({ s: 'display:block;border-radius:4px 4px 0 0;background:' + (i === data.length - 1 ? 'var(--primary)' : 'rgba(0,0,0,.14)') + ';height:' + Math.round((v - mn) / (mx - mn) * 100) + '%' })),
-      hist: [['czw 12.11', '60×8 · 60×8 · 62,5×6', '82,5 kg'], ['pn 09.11', '60×8 · 60×7 · 60×7', '80,5 kg'], ['czw 05.11', '57,5×8 · 60×6 · 60×6', '79,0 kg'], ['pn 02.11', '57,5×8 · 57,5×8 · 57,5×7', '77,5 kg']].map((h) => ({ d: h[0], sets: h[1], rm: h[2] }))
+      stats,
+      metrics: [['rm', 'Szac. 1RM'], ['hw', 'Najcięższa'], ['vol', 'Objętość']].map((x) => ({ t: x[1], p: m === x[0] ? 'true' : 'false', pick: () => this.setState({ m: x[0], tip: null }) })),
+      big: fmt(vals[vals.length - 1]), unit: m === 'vol' ? 'kg · ostatni trening' : 'kg', delta: (m === 'vol' ? '+' + sp(vals[vals.length - 1] - vals[0]) : '+' + fmt(vals[vals.length - 1] - vals[0])) + ' kg · 8 tyg.',
+      chartLbl: 'Wykres: ' + fmt(vals[0]) + ' → ' + fmt(vals[vals.length - 1]) + ' kg',
+      bars: L.map((s, i) => ({ a: s.dl + ': ' + fmt(vals[i]) + ' kg', pick: () => this.setState({ tip: (this.state || {}).tip === i ? null : i }),
+        s: 'display:block;width:100%;border-radius:4px 4px 1px 1px;height:' + Math.round((vals[i] - lo) / (mx - lo) * 100) + '%;background:' + (i === vals.length - 1 ? '#15803d' : i === tip ? '#262626' : 'rgba(0,0,0,.14)') })),
+      firstL: L[0].d, tipTxt: tip !== null && tip !== undefined ? L[tip].dl + ' · ' + fmt(vals[tip]) + ' kg' : '',
+      goPush: () => { try { sessionStorage.setItem('rh-gym', 'Push'); } catch (e) {} },
+      histCount: SES.length + ' treningów',
+      hist: shown.map((s) => { const open = S.open === s.i; return { dl: s.dl, pr: s.rm === rmMax || s.hw === hwMax, setsTxt: s.sets.map((x) => wf(x[0]) + '×' + x[1]).join(' · '), rm: f1(s.rm) + ' kg',
+        open, exp: open ? 'true' : 'false', toggle: () => this.setState({ open: (this.state || {}).open === s.i ? null : s.i }),
+        sets: s.sets.map((x, j) => ({ n: String(j + 1), w: wf(x[0]) + ' kg', r: String(x[1]), v: sp(x[0] * x[1]) + ' kg' })) }; }),
+      hasMore: SES.length > 4, moreTxt: S.more ? 'Pokaż mniej' : 'Pokaż wszystkie (' + SES.length + ')', toggleMore: () => this.setState({ more: !(this.state || {}).more, open: null }),
+      prs: [{ t: 'Szacowany 1RM', v: f1(rmMax) + ' kg', d: '12.11.2026', isNew: true }, { t: 'Najcięższa seria', v: wf(hwMax) + ' × 2', d: sHw.d + '.2026', isNew: false }, { t: 'Najwięcej powtórzeń', v: '55 × 12', d: '03.09.2026', isNew: false }, { t: 'Objętość treningu', v: sp(volMax) + ' kg', d: sVol.d + '.2026', isNew: false }]
     };
   }
 }
+
 </script>
 </body>
 </html>

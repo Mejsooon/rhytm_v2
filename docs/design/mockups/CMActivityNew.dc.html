@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Nowa aktywność (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .trow{width:100%;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border:0;border-bottom:1px solid var(--border);background:#fff;font:inherit;font-size:15px;text-align:left;cursor:pointer;color:#262626;box-sizing:border-box}
+html body .trow[aria-pressed="true"]{background:rgba(0,0,0,.03);font-weight:500}
+html body .grp{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a;padding:14px 16px 6px}
+html body .sw2{width:30px;height:30px;border-radius:50%;border:0;padding:0;cursor:pointer;display:grid;place-items:center;color:#fff}
+html body .sw2[aria-checked="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px #262626}
+html body .dd5{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+html body .dd5 button{height:36px !important;width:100% !important;padding:0}
+html body .w100{width:100%;justify-content:center}
+html body section.card,html body .card{flex-shrink:0}
+
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+  <header class="m-head" style="flex: none; padding: 0 8px">
+    <sc-if value="{{isPick}}" hint-placeholder-val="{{true}}"><a href="CMSport.dc.html" class="btng ic" aria-label="Zamknij"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></sc-if>
+    <sc-if value="{{isForm}}" hint-placeholder-val="{{false}}"><button type="button" class="btng ic" aria-label="Zmień rodzaj" onClick="{{backPick}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button></sc-if>
+    <h1 class="m-title" style="flex: 1; text-align: center; font-size: 16px">{{headT}}</h1>
+    <span style="width: 44px"></span>
+  </header>
+
+  <sc-if value="{{isPick}}" hint-placeholder-val="{{true}}">
+    <div style="flex: none; padding: 12px 16px 4px"><input class="inp" type="search" placeholder="Szukaj: tenis, rower, pole dance…" aria-label="Szukaj rodzaju aktywności" value="{{q}}" onChange="{{onQ}}" style="width: 100%; box-sizing: border-box"></div>
+    <div style="flex: 1; overflow-y: auto; padding-bottom: 24px">
+      <sc-if value="{{hasRecent}}" hint-placeholder-val="{{true}}"><div class="grp">Ostatnio</div><sc-for list="{{recent}}" as="t" hint-placeholder-count="3"><button type="button" class="trow" aria-pressed="{{t.p}}" onClick="{{t.pick}}"><span style="{{t.dot}}"></span><span style="flex: 1">{{t.t}}</span><span class="hint" style="font-size: 12px">{{t.sub}}</span></button></sc-for></sc-if>
+      <div class="grp">{{allLbl}}</div>
+      <sc-for list="{{types}}" as="t" hint-placeholder-count="8"><button type="button" class="trow" aria-pressed="{{t.p}}" onClick="{{t.pick}}"><span style="{{t.dot}}"></span><span style="flex: 1">{{t.t}}</span><span class="hint" style="font-size: 12px">{{t.sub}}</span></button></sc-for>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <sc-if value="{{noTypes}}" hint-placeholder-val="{{false}}"><span class="muted">Nie ma takiego rodzaju.</span></sc-if>
+        <label class="fld">{{ownLbl}}<input class="inp" type="text" value="{{ownName}}" onChange="{{onOwn}}" placeholder="np. Kalistenika"></label>
+        <label style="display: flex; gap: 10px; align-items: center; font-size: 15px"><input type="checkbox" checked="{{ownDist}}" onChange="{{toggleOwnDist}}">Mierz dystans (km)</label>
+        <button type="button" class="btn w100" onClick="{{saveOwn}}" aria-disabled="{{ownDis}}" style="{{ownS}}">Dodaj własny rodzaj</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isForm}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 12px"><span style="{{typeDot}}"></span><b style="flex: 1; font-size: 17px; font-weight: 600">{{typeName}}</b><button type="button" class="btn" onClick="{{backPick}}" style="height: 36px">Zmień</button></div>
+      <div><span class="lbl" style="display: block; margin-bottom: 8px">Kolor w kalendarzu</span><div role="radiogroup" aria-label="{{swLbl}}" style="display: flex; gap: 8px; flex-wrap: nowrap"><sc-for list="{{swatches}}" as="c" hint-placeholder-count="9"><button type="button" role="radio" class="sw2" aria-checked="{{c.ck}}" aria-label="{{c.n}}" onClick="{{c.pick}}" style="{{c.s}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></div>
+      <div class="seg" role="radiogroup" aria-label="Status" style="display: flex"><sc-for list="{{stats}}" as="k" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{k.p}}" aria-pressed="{{k.p}}" onClick="{{k.pick}}" style="flex: 1">{{k.t}}</button></sc-for></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <label class="fld">Data<input class="inp num" type="text" value="wt, 17.11.2026"></label>
+        <label class="fld">Start<input class="inp num" type="text" value="18:00"></label>
+        <label class="fld">{{timeLbl}}<input class="inp num" type="text" value="{{time}}" onChange="{{onTime}}" placeholder="g:mm"></label>
+        <div class="fld">Kcal<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{kcal}}</div></div>
+        <sc-if value="{{hasDist}}" hint-placeholder-val="{{false}}"><label class="fld">Dystans (km)<input class="inp num" type="text" value="{{km}}" onChange="{{onKm}}" placeholder="0,0"></label><div class="fld">Śr. prędkość<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{speed}}</div></div></sc-if>
+      </div>
+      <sc-if value="{{isDone}}" hint-placeholder-val="{{true}}"><div><span class="lbl" style="display: block; margin-bottom: 6px">Trudność · 1 lekko, 10 maks</span><div class="dd5" role="radiogroup" aria-label="Trudność"><sc-for list="{{dots}}" as="d" hint-placeholder-count="10"><button type="button" role="radio" aria-checked="{{d.on}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.n}}</button></sc-for></div></div></sc-if>
+      <label class="fld">Notatka<input class="inp" type="text" placeholder="{{notePh}}"></label>
+      <label style="display: flex; gap: 10px; align-items: center; font-size: 15px"><input type="checkbox" checked="{{cal}}" onChange="{{toggleCal}}">Pokaż w kalendarzu jako blok</label>
+    </div>
+    <div style="flex: none; padding: 10px 16px 24px; border-top: 1px solid var(--border)"><a href="CMSport.dc.html" class="btnp w100" aria-disabled="{{saveDis}}" style="{{saveS}}">{{saveTxt}}</a></div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}, "form": {"editor": "boolean", "default": false}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { phase: p && p.form ? 'form' : 'pick', type: 'Tenis', st: 'done', time: '1:15', km: '', q: '', ownName: '', ownDist: false, custom: [], diff: 6, cal: true, colors: { 'Tenis': '#65a30d', 'Rower': '#0891b2', 'Pole dance': '#db2777' } }; }
+  renderVals() {
+    const S = this.state;
+    const BASE = [['Tenis', 7.3, 0], ['Rower', 7.5, 1], ['Pole dance', 5, 0], ['Pływanie', 7, 1], ['Joga', 2.5, 0], ['Squash', 12, 0], ['Padel', 6, 0], ['Piłka nożna', 7, 0], ['Koszykówka', 6.5, 0], ['Wspinaczka', 8, 0], ['Taniec', 5, 0], ['Pilates', 3, 0], ['Boks', 9, 0], ['Spacer', 3.5, 1], ['Rolki', 7, 1], ['Narty', 6, 0]];
+    const ALL = BASE.concat(S.custom || []);
+    const RECENT = ['Tenis', 'Rower', 'Pole dance'];
+    const colorOf = (n) => (S.colors || {})[n] || '#7c3aed';
+    const q = (S.q || '').trim().toLowerCase();
+    const T = ALL.filter((x) => x[0] === S.type)[0];
+    const mk = (x) => ({ t: x[0], sub: x[2] ? 'z dystansem' : '', p: S.type === x[0] ? 'true' : 'false', dot: 'width:12px;height:12px;border-radius:50%;flex:none;background:' + colorOf(x[0]), pick: () => this.setState({ type: x[0], phase: 'form' }) });
+    const shown = ALL.filter((x) => !q || x[0].toLowerCase().indexOf(q) >= 0);
+    const PAL = [['#7c3aed', 'fioletowy'], ['#4f46e5', 'indygo'], ['#2563eb', 'niebieski'], ['#0891b2', 'turkusowy'], ['#0d9488', 'morski'], ['#65a30d', 'limonkowy'], ['#ca8a04', 'musztardowy'], ['#dc2626', 'czerwony'], ['#db2777', 'różowy']];
+    const parts = String(S.time).trim().split(':').map((x) => parseInt(x, 10));
+    const min = parts.length === 2 && parts.every((x) => !isNaN(x)) ? parts[0] * 60 + parts[1] : 0;
+    const km = parseFloat(String(S.km).replace(',', '.'));
+    const done = S.st === 'done';
+    const kcal = T && min > 0 ? Math.round(T[1] * 72 * min / 60) : 0;
+    const col = (n) => n >= 8 ? '#ef4444' : n >= 5 ? '#f59e0b' : '#15803d';
+    const d = S.diff;
+    const ownNm = (S.ownName || '').trim();
+    const ownOk = ownNm.length > 0 && !ALL.some((x) => x[0].toLowerCase() === ownNm.toLowerCase());
+    const can = !!T && (!done || min > 0);
+    const qRaw = (S.q || '').trim();
+    return {
+      isPick: S.phase !== 'form', isForm: S.phase === 'form', headT: S.phase === 'form' ? 'Nowa aktywność' : 'Wybierz rodzaj',
+      backPick: () => this.setState({ phase: 'pick' }),
+      q: S.q, onQ: (e) => this.setState({ q: e.target.value, ownName: e.target.value ? e.target.value[0].toUpperCase() + e.target.value.slice(1) : '' }),
+      hasRecent: !q, recent: RECENT.map((n) => mk(ALL.filter((x) => x[0] === n)[0])),
+      allLbl: q ? 'Wyniki' : 'Wszystkie', types: shown.filter((x) => q || RECENT.indexOf(x[0]) < 0).map(mk), noTypes: shown.length === 0,
+      ownLbl: qRaw && shown.length === 0 ? 'Dodaj „' + qRaw + '” jako własny rodzaj' : 'Nie ma na liście? Własny rodzaj',
+      ownName: S.ownName, onOwn: (e) => this.setState({ ownName: e.target.value }),
+      ownDist: !!S.ownDist, toggleOwnDist: () => this.setState({ ownDist: !S.ownDist }),
+      ownDis: ownOk ? 'false' : 'true', ownS: ownOk ? '' : 'opacity:.45;pointer-events:none',
+      saveOwn: () => { if (!ownOk) return; this.setState({ custom: (S.custom || []).concat([[ownNm, 5, S.ownDist ? 1 : 0]]), type: ownNm, ownName: '', q: '', phase: 'form' }); },
+      typeName: T ? T[0] : '', typeDot: 'width:14px;height:14px;border-radius:50%;flex:none;background:' + (T ? colorOf(T[0]) : '#ccc'), swLbl: 'Kolor dla ' + (T ? T[0] : ''),
+      swatches: PAL.map((p) => { const on = T && colorOf(T[0]) === p[0]; return { n: p[1], on: !!on, ck: on ? 'true' : 'false', s: 'background:' + p[0], pick: () => { if (T) this.setState({ colors: Object.assign({}, S.colors || {}, { [T[0]]: p[0] }) }); } }; }),
+      stats: [['done', 'Wykonana'], ['plan', 'Zaplanowana']].map((x) => ({ t: x[1], p: S.st === x[0] ? 'true' : 'false', pick: () => this.setState({ st: x[0] }) })),
+      timeLbl: done ? 'Czas trwania' : 'Planowany czas', time: S.time, onTime: (e) => this.setState({ time: e.target.value }),
+      hasDist: !!(T && T[2]), km: S.km, onKm: (e) => this.setState({ km: e.target.value }),
+      speed: km > 0 && min > 0 ? (km / (min / 60)).toFixed(1).replace('.', ',') + ' km/h' : '—', kcal: kcal ? '≈ ' + kcal : '—',
+      isDone: done,
+      dots: [1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: String(n), on: n === d ? 'true' : 'false', pick: () => this.setState({ diff: n }),
+        s: 'border-radius:10px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;' + (n === d ? 'background:' + col(n) + ';color:#fff;border:1px solid ' + col(n) : n < d ? 'background:' + col(d) + '18;color:#404040;border:1px solid ' + col(d) + '30' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1)') })),
+      notePh: T && T[0] === 'Tenis' ? 'z kim grałeś, wynik, jak szło' : T && T[2] ? 'trasa, pogoda, samopoczucie' : 'co ćwiczyłeś, samopoczucie',
+      cal: S.cal, toggleCal: () => this.setState({ cal: !S.cal }),
+      saveDis: can ? 'false' : 'true', saveS: can ? '' : 'opacity:.45;pointer-events:none',
+      saveTxt: !T ? 'Wybierz rodzaj' : done ? (min > 0 ? 'Zapisz: ' + T[0] : 'Podaj czas trwania') : 'Zaplanuj: ' + T[0]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

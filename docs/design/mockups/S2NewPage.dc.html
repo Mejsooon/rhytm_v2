@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Nowa strona — Strony 2.0 (COSS UI)</title>
+<title>Nowa strona</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -10,81 +10,128 @@
 <x-dc>
 <helmet>
 <style>
-body{margin:0;background:#ffffff}
-.tpl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;font:inherit;font-size:14px;min-height:60px;background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 2px rgba(0,0,0,.04);color:#262626;transition:border-color .15s,box-shadow .15s}
+body{margin:0;background:#ffffff;overflow:hidden}
+.tpl{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;font:inherit;font-size:14px;min-height:56px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.04);color:#262626;box-sizing:border-box;width:100%}
 .tpl:hover{background:#fafafa}
-.tpl[aria-checked="true"]{border-color:#262626;box-shadow:0 0 0 3px rgba(38,38,38,.12)}
+.tpl[aria-checked="true"]{border-color:#262626;box-shadow:0 0 0 1px #262626}
+.tic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:rgba(0,0,0,.05);color:#262626;flex:none}
+.ftype{width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.05);display:grid;place-items:center;font-size:11px;font-weight:600;color:#404040;flex:none}
+.npsec{font-size:12px;font-weight:500;color:#686868}
+.nprow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(0,0,0,.06);font-size:14px}
+.nprow:last-child{border-bottom:0}
+.vchip{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font-size:12px;font-weight:500;color:#404040}
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="subs" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>Subscriptions</b></nav>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2FilterPopover.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="S2AddField.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Pole</a><a href="S2Main.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy wiersz</a></div>
-    </header>
-    <div aria-hidden="true" style="padding: 28px 24px; display: flex; flex-direction: column; gap: 24px; max-width: 1160px; box-sizing: border-box; width: 100%"><div><div style="display: flex; align-items: center; gap: 10px"><span style="display: inline-flex; color: #262626" aria-hidden="true"><dc-import name="S2PageIcon" icon="wallet" size="26" hint-size="26px,26px"></dc-import></span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Subscriptions</h1></div><p class="muted num" style="margin: 10px 0 0; font-size: 14px">13 wierszy · 5 pól · szablon „Subscription tracker”</p></div><div class="frame"><div class="inner"><table class="tbl" style="min-width: 760px"><thead><tr><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16"></path><path d="M22 9v7"></path><path d="M3.304 13h6.392"></path><circle cx="18.5" cy="12.5" r="3.5"></circle></svg>Nazwa</th><th scope="col" class="th" style="text-align: right"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><line x1="4" x2="20" y1="9" y2="9"></line><line x1="4" x2="20" y1="15" y2="15"></line><line x1="10" x2="8" y1="3" y2="21"></line><line x1="16" x2="14" y1="3" y2="21"></line></svg>Kwota cykliczna</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg>Data odnowienia</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="12" r="10"></circle></svg>Kategoria</th><th scope="col" class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #a3a3a3; margin-right: 6px; vertical-align: -2px"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="m16 9-5.5 5.5L8 12"></path></svg>Aktywna</th></tr></thead><tbody><tr><td class="td" style="font-weight: 500">Netflix</td><td class="td num" style="text-align: right">43,00 <span class="muted">/ mies.</span></td><td class="td num">21.11.2026 <span class="muted" style="margin-left: 6px">za 6 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">YouTube Premium</td><td class="td num" style="text-align: right">29,99 <span class="muted">/ mies.</span></td><td class="td num">24.11.2026 <span class="muted" style="margin-left: 6px">za 9 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">iCloud+</td><td class="td num" style="text-align: right">4,99 <span class="muted">/ mies.</span></td><td class="td num">28.11.2026 <span class="muted" style="margin-left: 6px">za 13 dni</span></td><td class="td"><span class="bdg out">Chmura</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Siłownia — karnet</td><td class="td num" style="text-align: right">129,00 <span class="muted">/ mies.</span></td><td class="td num">01.12.2026 <span class="muted" style="margin-left: 6px">za 16 dni</span></td><td class="td"><span class="bdg out">Zdrowie</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Spotify</td><td class="td num" style="text-align: right">23,99 <span class="muted">/ mies.</span></td><td class="td num">02.12.2026 <span class="muted" style="margin-left: 6px">za 17 dni</span></td><td class="td"><span class="bdg out">Rozrywka</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr><tr><td class="td" style="font-weight: 500">Claude Pro</td><td class="td num" style="text-align: right">99,00 <span class="muted">/ mies.</span></td><td class="td num">05.12.2026 <span class="muted" style="margin-left: 6px">za 20 dni</span></td><td class="td"><span class="bdg out">Praca</span></td><td class="td"><span class="cbx" role="checkbox" aria-checked="true" aria-label="Aktywna"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></td></tr></tbody></table></div></div></div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <div role="dialog" aria-modal="true" aria-labelledby="np-t" class="dlg" style="position: absolute; left: 50%; top: 64px; transform: translateX(-50%); width: min(920px, calc(100% - 32px))">
-    <div class="dlg-h"><div><h2 id="np-t" class="dlg-t">Nowa strona</h2><p class="dlg-d">Szablon wstawia zwykłą stronę z gotową tabelą i kartami. Wszystko zmienisz później.</p></div><a href="S2Main.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
-    <div class="dlg-b">
-      <div style="display: flex; flex-wrap: wrap; margin: -4px -24px -20px">
-        <div style="flex: 999 1 380px; min-width: 0; padding: 4px 24px 20px; display: flex; flex-direction: column; gap: 14px">
-          <div class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onInput="{{onQ}}" placeholder="Szukaj szablonu…" aria-label="Szukaj szablonu"></div>
-          <div class="lbl">Szablony</div>
+<div style="position: relative; height: 100vh; min-height: 1000px; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #262626">
+  <dc-import name="S2Table" kind="subs" min-height="1000" hint-size="100%,1000px"></dc-import>
+  <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 40"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="np-t" class="dlg" style="position: absolute; z-index: 41; left: 50%; top: 64px; transform: translateX(-50%); width: min(880px, calc(100% - 32px))">
+    <div class="dlg-h">
+      <div><h2 id="np-t" class="dlg-t">Nowa strona</h2><p class="dlg-d">Szablon tworzy stronę z gotową tabelą. Pola, widoki i karty zmienisz później.</p></div>
+      <a href="S2Main.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a>
+    </div>
+    <div class="dlg-b" style="padding: 0">
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 320px; border-top: 1px solid rgba(0,0,0,.08)">
+        <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <label class="fld">Nazwa strony
+            <span style="display: flex; gap: 8px; align-items: center">
+              <span class="tic" aria-hidden="true" style="width: 38px; height: 38px"><dc-import name="S2PageIcon" icon="{{sel.iconObj}}" size="18" fallback="table" hint-size="18px,18px"></dc-import></span>
+              <input class="inp" type="text" value="{{nameV}}" placeholder="Bez tytułu" onChange="{{onName}}">
+            </span>
+          </label>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+            <span class="npsec">Szablony</span>
+            <span class="igroup" style="width: 220px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Szukaj szablonu…" aria-label="Szukaj szablonu"></span>
+          </div>
           <div role="radiogroup" aria-label="Szablon" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
-            <sc-for list="{{templates}}" as="t" hint-placeholder-count="6">
-              <button type="button" role="radio" aria-checked="{{t.p}}" onClick="{{t.pick}}" class="tpl">
-                <span style="display: flex; align-items: center; gap: 8px; font-weight: 500"><span style="{{t.icS}}" aria-hidden="true"><dc-import name="S2PageIcon" icon="{{t.icon}}" size="16" hint-size="16px,16px"></dc-import></span>{{t.name}}<sc-if value="{{t.lock}}" hint-placeholder-val="{{false}}"><span class="bdg ok" style="margin-left: auto">szyfr.</span></sc-if></span>
-                <span style="font-size: 13px; color: #686868; line-height: 1.4; padding-left: 34px">{{t.desc}}</span>
+            <sc-for list="{{templates}}" as="t" hint-placeholder-count="5">
+              <button type="button" role="radio" aria-checked="{{t.p}}" onClick="{{t.pick}}" class="tpl" style="{{t.s}}">
+                <span class="tic" aria-hidden="true"><dc-import name="S2PageIcon" icon="{{t.iconObj}}" size="16" fallback="table" hint-size="16px,16px"></dc-import></span>
+                <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-weight: 500">{{t.name}}</span><span class="hint">{{t.desc}}</span></span>
               </button>
             </sc-for>
-            <sc-if value="{{none}}" hint-placeholder-val="{{false}}"><div class="empty" style="grid-column: 1 / -1; padding: 24px">Brak szablonu „{{q}}”.</div></sc-if>
+            <sc-if value="{{none}}" hint-placeholder-val="{{false}}"><div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #686868; border: 1px dashed rgba(0,0,0,.16); border-radius: 12px">Brak szablonu „{{q}}”. <button type="button" class="btng xs" onClick="{{clearQ}}">Pokaż wszystkie</button></div></sc-if>
           </div>
         </div>
-        <div style="flex: 1 1 300px; min-width: 0; border-left: 1px solid rgba(0,0,0,.08); padding: 4px 24px 20px; background: #fafafa; display: flex; flex-direction: column; gap: 12px">
-          <div class="lbl">Pola, które powstaną</div>
-          <div style="font-size: 18px; font-weight: 600">{{selName}}</div>
-          <div class="frame"><div class="inner">
-            <sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 14px"><span>{{f.n}}</span><span class="{{f.c}}">{{f.t}}</span></div>
-            </sc-for>
-            <sc-if value="{{emptyT}}" hint-placeholder-val="{{false}}"><div style="padding: 14px 12px; color: #686868; font-size: 13px">Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz z szybkiego startu albo wpisując „/”.</div></sc-if>
-          </div></div>
-          <sc-for list="{{extra}}" as="x" hint-placeholder-count="2"><div class="alert info" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg><span>{{x}}</span></div></sc-for>
-          <div style="flex: 1"></div>
-          <label class="fld">Nazwa strony<input class="inp" type="text" value="{{nameV}}" onChange="{{onName}}"></label>
-        </div>
+
+        <aside aria-label="Co powstanie" style="border-left: 1px solid rgba(0,0,0,.08); background: #fafafa; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 8px"><dc-import name="S2PageIcon" icon="{{sel.iconObj}}" size="18" fallback="table" hint-size="18px,18px"></dc-import><b style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{nameShown}}</b></div>
+
+          <sc-if value="{{hasFields}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span class="npsec">Pola · {{fieldsN}}</span>
+              <div class="frame" style="background: #fff"><div class="inner" style="padding: 0">
+                <sc-for list="{{fields}}" as="f" hint-placeholder-count="5"><div class="nprow"><span class="ftype" aria-hidden="true">{{f.ic}}</span><span style="flex: 1">{{f.n}}</span><span class="hint">{{f.t}}</span></div></sc-for>
+              </div></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span class="npsec">Widoki</span>
+              <span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{views}}" as="v" hint-placeholder-count="3"><span class="vchip">{{v}}</span></sc-for></span>
+              <span class="hint">Grupowanie: {{groupTxt}}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+            <p class="hint" style="margin: 0; line-height: 1.5">Pusta strona bez tabeli. Tabelę, listę albo nagłówek wstawisz, wpisując „/”.</p>
+          </sc-if>
+
+          <sc-if value="{{hasExtras}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span class="npsec">Dodatkowo</span>
+              <sc-for list="{{extras}}" as="x" hint-placeholder-count="2"><span style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.45"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"></path></svg>{{x}}</span></sc-for>
+            </div>
+          </sc-if>
+        </aside>
       </div>
     </div>
-    <div class="dlg-f"><a href="S2Main.dc.html" class="btng">Anuluj</a><a href="S2Books.dc.html" class="btnp">Utwórz stronę</a></div>
+    <div class="dlg-f">
+      <span style="display: flex; gap: 8px"><a href="S2Main.dc.html" class="btng">Anuluj</a><a href="{{sel.href}}" class="btnp">Utwórz stronę</a></span>
+    </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
     const S = this.state || {};
     const picked = S.picked || 'books';
     const q = S.q || '';
-    const ok = 'bdg ok', pl = 'bdg out';
+    const IC = { text: 'Aa', sel: '◉', date: '31', stars: '★', money: 'zł', check: '✓', url: '↗' };
+    const TN = { text: 'Tekst', sel: 'Wybór', date: 'Data', stars: 'Ocena', money: 'Kwota cykliczna', check: 'Checkbox', url: 'Link' };
     const list = [
-      { id: 'empty', icon: 'table', name: 'Pusta strona', desc: 'Zacznij od zera', fields: [], extra: [] },
-      { id: 'books', icon: 'book-open', name: 'Books', desc: 'Twoje książki', fields: [['Tytuł', 'Tekst', pl], ['Autor', 'Tekst', pl], ['Status', 'Status', pl], ['Ocena', 'Ocena', ok], ['Przeczytana', 'Data', pl]], extra: ['Liczba przeczytanych w tym roku.'] },
-      { id: 'proj', icon: 'rocket', name: 'Projects', desc: 'Twoje projekty', fields: [['Nazwa', 'Tekst', pl], ['Status', 'Status', pl], ['Termin', 'Data', pl], ['Repo', 'URL', pl]], extra: ['Terminy trafią do kalendarza głównego.'] },
-      { id: 'web', icon: 'globe', name: 'Websites', desc: 'Twoje strony WWW', fields: [['Nazwa', 'Tekst', pl], ['URL', 'URL', pl], ['Klient', 'Tekst', pl], ['Status', 'Status', pl]], extra: [] },
+      { id: 'empty', icon: 'file-text', name: 'Pusta strona', desc: 'Zacznij od zera', href: 'S2EmptyPage.dc.html', fields: [], views: [], group: '', extras: [] },
+      { id: 'subs', icon: 'wallet', name: 'Subskrypcje', desc: 'Twoje subskrypcje', href: 'S2Main.dc.html',
+        fields: [['Nazwa', 'text'], ['Kwota', 'money'], ['Cykl', 'sel'], ['Odnowienie', 'date'], ['Kategoria', 'sel'], ['Aktywna', 'check']],
+        views: ['Wszystkie', 'Aktywne', 'Odnowienie w 14 dni', 'Wstrzymane'], group: 'Kategoria',
+        extras: ['Karty: miesięcznie, rocznie i najbliższe odnowienie.', 'Odnowienia w kalendarzu i przypomnienie dzień wcześniej.', 'Suma miesięczna w stopce tabeli.'] },
+      { id: 'books', icon: 'book-open', name: 'Książki', desc: 'Twoje książki', href: 'S2Books.dc.html',
+        fields: [['Tytuł', 'text'], ['Autor', 'text'], ['Status', 'sel'], ['Ocena', 'stars'], ['Przeczytana', 'date']],
+        views: ['Wszystkie', 'Czytam', 'Do przeczytania', 'Przeczytane w 2026'], group: 'Status',
+        extras: ['Średnia ocena w stopce tabeli.'] },
+      { id: 'proj', icon: 'rocket', name: 'Projekty', desc: 'Twoje projekty', href: 'S2Projects.dc.html',
+        fields: [['Nazwa', 'text'], ['Status', 'sel'], ['Obszar', 'sel'], ['Termin', 'date'], ['Repo', 'text']],
+        views: ['Wszystkie', 'W toku', 'Archiwum'], group: 'Status',
+        extras: ['Terminy trafią do kalendarza głównego.', 'Widok Tablica z kolumnami statusów.'] },
+      { id: 'web', icon: 'globe', name: 'Strony WWW', desc: 'Twoje strony WWW', href: 'S2Websites.dc.html',
+        fields: [['Nazwa', 'text'], ['URL', 'url'], ['Klient', 'text'], ['Status', 'sel'], ['Hosting', 'sel']],
+        views: ['Wszystkie', 'Na żywo', 'W budowie', 'Dla klientów'], group: 'Status', extras: [] }
     ];
-    const sel = list.find((t) => t.id === picked) || list[1];
-    const shown = list.filter((t) => !q || (t.name + ' ' + t.desc).toLowerCase().includes(q.toLowerCase()));
+    const sel = list.find((t) => t.id === picked) || list[2];
+    const shown = list.filter((t) => !q.trim() || (t.name + ' ' + t.desc).toLowerCase().includes(q.trim().toLowerCase()));
+    const nameV = S.name != null ? S.name : (sel.id === 'empty' ? '' : sel.name);
     return {
-      q, onQ: (e) => this.setState({ q: e.target.value }), none: shown.length === 0,
-      templates: shown.map((t) => ({ name: t.name, desc: t.desc, icon: t.icon, lock: !!t.lock, p: t.id === sel.id ? 'true' : 'false',
-        icS: 'width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:15px;background:' + 'rgba(0,0,0,.04);color:#262626',
-        pick: () => this.setState({ picked: t.id, name: null }) })),
-      selName: sel.name, emptyT: sel.fields.length === 0,
-      fields: sel.fields.map((f) => ({ n: f[0], t: f[1], c: f[2] })), extra: sel.extra,
-      nameV: S.name != null ? S.name : sel.name, onName: (e) => this.setState({ name: e.target.value })
+      q, onQ: (e) => this.setState({ q: e.target.value }), clearQ: () => this.setState({ q: '' }), none: shown.length === 0,
+      templates: shown.map((t) => ({
+        name: t.name, desc: t.desc, iconObj: { kind: 'icon', v: t.icon }, p: t.id === sel.id ? 'true' : 'false',
+        s: t.id === 'empty' ? 'grid-column: 1 / -1' : '',
+        pick: () => this.setState({ picked: t.id, name: null })
+      })),
+      sel: { iconObj: { kind: 'icon', v: sel.icon }, href: sel.href },
+      nameV, nameShown: nameV.trim() || 'Bez tytułu',
+      onName: (e) => this.setState({ name: e.target.value }),
+      hasFields: sel.fields.length > 0, isEmpty: sel.fields.length === 0, fieldsN: sel.fields.length,
+      fields: sel.fields.map((f) => ({ n: f[0], t: TN[f[1]], ic: IC[f[1]] })),
+      views: sel.views, groupTxt: sel.group,
+      hasExtras: sel.extras.length > 0, extras: sel.extras
     };
   }
 }

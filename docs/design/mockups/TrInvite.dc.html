@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Zaproś podopiecznego</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="position: relative; height: 900px; overflow: hidden; font-family: 'Inter', system-ui, sans-serif">
+  <div style="position: absolute; inset: 0; pointer-events: none" aria-hidden="true"><dc-import name="TrClients" hint-size="100%,900px"></dc-import></div>
+  <a href="TrClients.dc.html" class="backdrop" aria-label="Zamknij"></a>
+  <div role="dialog" aria-modal="true" aria-labelledby="inv-t" class="dlg" style="position: absolute; left: 50%; top: 90px; transform: translateX(-50%); width: 520px">
+    <div class="dlg-h"><div><h2 class="dlg-t" id="inv-t">Zaproś podopiecznego</h2><p class="dlg-d">Po akceptacji zobaczysz jego treningi i dodasz mu plan.</p></div><a href="TrClients.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>
+    <div class="dlg-b" style="display: flex; flex-direction: column; gap: 16px">
+      <div class="seg" role="group" aria-label="Sposób" style="align-self: flex-start"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" aria-pressed="{{m.p}}" onClick="{{m.pick}}">{{m.t}}</button></sc-for></div>
+      <sc-if value="{{isLink}}" hint-placeholder-val="{{true}}">
+        <div class="fld"><span class="lbl">Twój link zaproszenia</span>
+          <div class="row" style="gap: 8px"><label class="igroup" style="flex: 1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><input type="text" readonly value="rhytm.pl/z/mejson-7KQ2" style="border: 0; outline: none; background: none; font: inherit; flex: 1; min-width: 0" class="num"></label><button type="button" class="btn nw" onClick="{{copy}}">{{copyT}}</button></div>
+          <span class="hint">Każdy, kto otworzy link i zaakceptuje, trafi na Twoją listę. Link możesz wyłączyć w ustawieniach.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{isMail}}" hint-placeholder-val="{{false}}">
+        <label class="fld">E-mail podopiecznego<input class="inp" type="email" placeholder="np. tomek@gmail.com" value="tomek.mazur@gmail.com"></label>
+        <label class="fld"><span>Wiadomość <span class="hint">(opcjonalnie)</span></span><textarea class="inp" rows="3" style="height: auto; padding-top: 8px; resize: none">Cześć Tomek, zapraszam Cię do rhytm — tu będę wrzucał Twój plan treningowy.</textarea></label>
+      </sc-if>
+      <div class="frame"><div class="inner" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+        <span class="lbl">Co zobaczysz po akceptacji</span>
+        <div class="row" style="gap: 10px"><span style="color: #15803d; display: flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span style="flex: 1">Treningi, biegi i inne aktywności</span><span class="hint">zawsze</span></div>
+        <div class="row" style="gap: 10px"><span style="color: #4338ca; display: flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></span><span style="flex: 1">Sen</span><span class="hint">jeśli podopieczny się zgodzi</span></div>
+        <div class="row" style="gap: 10px"><span style="color: #8a8a8a; display: flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span style="flex: 1">Kalendarz, nawyki, strony, hasła</span><span class="hint">nigdy</span></div>
+      </div></div>
+    </div>
+    <div class="dlg-f" style="justify-content: space-between"><span class="hint num">Wolne miejsca: 10 z 15</span><span class="row" style="gap: 8px"><a href="TrClients.dc.html" class="btng">Anuluj</a><a href="TrClients.dc.html" class="btnp">{{cta}}</a></span></div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const m = st.m || 'link';
+    return {
+      modes: [['link', 'Link'], ['mail', 'E-mail']].map((x) => ({ t: x[1], p: x[0] === m ? 'true' : 'false', pick: () => this.setState({ m: x[0] }) })),
+      isLink: m === 'link', isMail: m === 'mail',
+      copyT: st.copied ? 'Skopiowano ✓' : 'Kopiuj', copy: () => this.setState({ copied: true }),
+      cta: m === 'link' ? 'Gotowe' : 'Wyślij zaproszenie'
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Import z CSV</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="position: relative; height: 900px; overflow: hidden; font-family: 'Inter', system-ui, sans-serif">
+  <div style="position: absolute; inset: 0; pointer-events: none" aria-hidden="true"><dc-import name="S2Books" hint-size="100%,900px"></dc-import></div>
+  <a href="S2Books.dc.html" class="backdrop" aria-label="Zamknij" style="z-index: 40"></a>
+  <div role="dialog" aria-modal="true" aria-labelledby="imp-t" class="dlg" style="position: absolute; z-index: 50; left: 50%; top: 60px; transform: translateX(-50%); width: 640px">
+    <div class="dlg-h"><div><h2 class="dlg-t" id="imp-t">Importuj z CSV</h2><p class="dlg-d">{{stepD}}</p></div><a href="S2Books.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>
+    <div class="dlg-b" style="display: flex; flex-direction: column; gap: 14px">
+      <div class="row" style="gap: 8px; font-size: 12px"><sc-for list="{{steps}}" as="s" hint-placeholder-count="3"><span style="{{s.s}}"><span style="{{s.n}}">{{s.no}}</span>{{s.t}}</span></sc-for></div>
+      <sc-if value="{{s1}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{pickFile}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 16px; border: 1.5px dashed rgba(0,0,0,.18); border-radius: 12px; background: #fafafa; font: inherit; color: inherit; cursor: pointer"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></span><b style="font-weight: 500">Przeciągnij plik CSV albo kliknij, żeby wybrać</b><span class="hint">Pierwszy wiersz to nazwy kolumn · UTF-8 · do 5 000 wierszy</span></button>
+      </sc-if>
+      <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+        <div class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,.035)"><span class="aic" style="background: #fff; width: 30px; height: 30px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></span><span style="flex: 1"><b style="font-weight: 500">goodreads_export.csv</b><div class="hint num">48 wierszy · 6 kolumn</div></span><button type="button" class="btng sm" onClick="{{back}}">Zmień plik</button></div>
+        <span class="lbl">Dopasuj kolumny z pliku do pól tabeli Książki</span>
+        <div class="frame"><div class="inner">
+          <sc-for list="{{map}}" as="m" hint-placeholder-count="5"><div class="row" style="gap: 10px; padding: 8px 12px; border-top: 1px solid rgba(0,0,0,.06)"><span class="num" style="flex: 1; font-weight: 500">{{m.src}}</span><span class="hint">→</span><button type="button" class="btn sm" style="width: 200px; justify-content: space-between" onClick="{{m.cycle}}"><span>{{m.dst}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><span class="hint num ell" style="width: 150px">{{m.ex}}</span></div></sc-for>
+        </div></div>
+        <label class="row" style="gap: 8px; font-size: 13px"><button type="button" class="sw" role="switch" aria-checked="{{skipDup}}" onClick="{{toggleDup}}" aria-label="Pomiń duplikaty"></button>Pomiń wiersze, które już są w tabeli (po tytule)</label>
+      </sc-if>
+      <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+        <div style="padding: 28px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center"><span class="aic" style="background: #f0fdf4; color: #15803d; width: 44px; height: 44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><b style="font-weight: 600; font-size: 16px">Zaimportowano 45 wierszy</b><span class="hint">3 pominięte jako duplikaty · 1 kolumna nie została zaimportowana („ISBN”)</span></div>
+      </sc-if>
+    </div>
+    <div class="dlg-f" style="justify-content: space-between"><span class="hint">{{foot}}</span><span class="row" style="gap: 8px"><sc-if value="{{notDone}}" hint-placeholder-val="{{true}}"><a href="S2Books.dc.html" class="btng">Anuluj</a></sc-if><button type="button" class="btnp" onClick="{{next}}" aria-disabled="{{nextDis}}">{{nextT}}</button></span></div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}, "step": {"editor": "int", "default": 1, "min": 1, "max": 3}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const step = Number(st.step || this.props.step || 1);
+    const F = ['Tytuł', 'Autor', 'Status', 'Ocena', 'Data przeczytania', 'Nie importuj'];
+    const SRC = [['Title', 0, 'Diuna'], ['Author', 1, 'Frank Herbert'], ['Exclusive Shelf', 2, 'read → Przeczytana'], ['My Rating', 3, '5'], ['Date Read', 4, '2026/10/12'], ['ISBN', 5, '9788381886710']];
+    const mp = st.mp || SRC.map((x) => x[1]);
+    return {
+      stepD: step === 1 ? 'Dodaj wiersze do tabeli Książki z pliku CSV.' : step === 2 ? 'Sprawdź, które kolumny trafią do których pól.' : 'Gotowe.',
+      steps: [[1, 'Plik'], [2, 'Kolumny'], [3, 'Gotowe']].map((x) => ({ no: x[0], t: x[1], s: 'display:inline-flex;align-items:center;gap:6px;color:' + (x[0] <= step ? '#262626' : '#a3a3a3') + ';font-weight:' + (x[0] === step ? 600 : 500), n: 'width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;' + (x[0] < step ? 'background:#15803d;color:#fff' : x[0] === step ? 'background:#262626;color:#fff' : 'background:rgba(0,0,0,.06)') })),
+      s1: step === 1, s2: step === 2, s3: step === 3, notDone: step < 3,
+      pickFile: () => this.setState({ step: 2 }), back: () => this.setState({ step: 1 }),
+      map: SRC.map((x, i) => ({ src: x[0], ex: x[2], dst: F[mp[i]], cycle: () => { const n = mp.slice(); n[i] = (n[i] + 1) % F.length; this.setState({ mp: n }); } })),
+      skipDup: st.nd ? 'false' : 'true', toggleDup: () => this.setState({ nd: !st.nd }),
+      foot: step === 2 ? '48 wierszy · ' + mp.filter((v) => v !== 5).length + ' z 6 kolumn' : '',
+      nextT: step === 1 ? 'Dalej' : step === 2 ? 'Importuj 48 wierszy' : 'Gotowe', nextDis: step === 1 ? 'true' : 'false',
+      next: () => { if (step === 1) return; if (step === 2) this.setState({ step: 3 }); }
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

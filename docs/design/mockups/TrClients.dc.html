@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Podopieczni</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="podopieczni" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Podopieczni</h1><span class="hint num">5 aktywnych · 1 zaproszenie</span></div>
+      <div class="row" style="gap: 8px"><a href="TrAssign.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>Przypisz trening</a><a href="TrInvite.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Zaproś podopiecznego</a></div>
+    </header>
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; width: 100%">
+      <div class="row" style="justify-content: space-between">
+        <div class="seg" role="group" aria-label="Filtr"><sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}">{{f.t}} <span class="hint num">{{f.n}}</span></button></sc-for></div>
+        <label class="igroup" style="width: 280px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Szukaj po imieniu" value="{{q}}" onChange="{{onQ}}" style="border: 0; outline: none; background: none; font: inherit; flex: 1; min-width: 0"></label>
+      </div>
+      <section class="card" style="overflow: hidden">
+        <table class="tbl">
+          <thead><tr><th style="padding-left: 16px">Podopieczny</th><th>Plan</th><th>Ten tydzień</th><th>Ostatni trening</th><th>Śr. sen (7 nocy)</th><th>Status</th><th style="width: 40px"></th></tr></thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+              <tr onClick="{{r.go}}">
+                <td style="padding-left: 16px"><a href="{{r.href}}" class="row" style="gap: 10px; text-decoration: none; color: inherit"><span class="av" style="{{r.avS}}">{{r.i}}</span><span style="font-weight: 500">{{r.n}}</span></a></td>
+                <td><div>{{r.plan}}</div><div class="hint num">{{r.wk}}</div></td>
+                <td><div class="row" style="gap: 10px"><div class="pbar" style="width: 90px"><span style="{{r.barS}}"></span></div><span class="num">{{r.wkT}}</span></div></td>
+                <td class="num">{{r.last}}</td>
+                <td><span class="num" style="{{r.sleepS}}">{{r.sleep}}</span></td>
+                <td><span class="{{r.stC}}">{{r.stT}}</span></td>
+                <td><a href="{{r.href}}" class="btng ic sm" aria-label="Otwórz profil" style="color: #8a8a8a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 32px; text-align: center" class="hint">Brak podopiecznych dla tego filtra.</div></sc-if>
+      </section>
+      <p class="hint" style="margin: 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Widzisz tylko treningi i — jeśli podopieczny się zgodził — sen. Kalendarz, nawyki, strony i hasła podopiecznych są dla Ciebie niewidoczne.</p>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const STAT = { ok: ['Na bieżąco', 'bdg ok'], sleep: ['Mało snu', 'bdg warn'], idle: ['5 dni bez treningu', 'bdg warn'], pr: ['Nowy rekord', 'bdg sec'], inv: ['Zaproszenie wysłane', 'bdg out'] };
+    const f = st.f || 'all', q = (st.q || '').toLowerCase();
+    const att = (c) => c.st === 'sleep' || c.st === 'idle';
+    const F = [['all', 'Wszyscy', CL.length], ['att', 'Wymaga uwagi', CL.filter(att).length], ['inv', 'Zaproszeni', CL.filter((c) => c.st === 'inv').length]];
+    const list = CL.filter((c) => (f === 'all' || (f === 'att' ? att(c) : c.st === 'inv')) && c.n.toLowerCase().indexOf(q) >= 0);
+    return {
+      q: st.q || '', onQ: (e) => this.setState({ q: e.target.value }),
+      filters: F.map((x) => ({ t: x[1], n: x[2], p: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      rows: list.map((c) => ({
+        n: c.n, i: c.i, avS: 'background:' + c.c, plan: c.plan, wk: c.wk || 'czeka na akceptację', href: c.st === 'inv' ? 'TrInvite.dc.html' : 'TrClient.dc.html', go: (e) => { const a = e.currentTarget.querySelector('a'); if (a && !e.target.closest('a')) a.click(); },
+        wkT: c.all ? c.done + '/' + c.all + (c.miss ? ' · ' + c.miss + ' pomin.' : '') : '—', barS: c.all ? 'width:' + Math.round(100 * c.done / c.all) + '%;' + (c.miss ? 'background:#c2410c' : '') : 'width:0',
+        last: c.last, sleep: c.st === 'inv' ? '—' : (c.sleep || 'nie udostępnia'), sleepS: c.sleep ? (c.st === 'sleep' ? 'color:#c2410c;font-weight:500' : '') : 'color:#8a8a8a',
+        stT: STAT[c.st][0], stC: STAT[c.st][1]
+      })),
+      empty: !list.length
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

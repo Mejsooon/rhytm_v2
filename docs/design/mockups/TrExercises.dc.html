@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Ćwiczenia</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="cw" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Ćwiczenia</h1><span class="hint num">142 w bibliotece · 4 własne</span></div>
+      <div class="row" style="gap: 8px"><label class="igroup" style="width: 240px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Szukaj ćwiczenia" value="{{q}}" onChange="{{onQ}}" style="border: 0; outline: none; background: none; font: inherit; flex: 1; min-width: 0"></label><button type="button" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nowe ćwiczenie</button></div>
+    </header>
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; width: 100%">
+      <div class="seg" role="group" aria-label="Filtr" style="align-self: flex-start"><sc-for list="{{fl}}" as="f" hint-placeholder-count="4"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}">{{f.t}}</button></sc-for></div>
+      <section class="card" style="overflow: hidden">
+        <table class="tbl"><thead><tr><th style="padding-left: 16px">Ćwiczenie</th><th>Partia</th><th>Pomiar</th><th>W szablonach</th><th>Notatka trenera</th><th>Źródło</th></tr></thead><tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="8"><tr><td style="padding-left: 16px; font-weight: 500">{{r.n}}</td><td>{{r.g}}</td><td><span class="bdg sec nw">{{r.m}}</span></td><td class="num">{{r.u}}</td><td class="hint ell" style="max-width: 260px">{{r.note}}</td><td><span class="{{r.srcC}}">{{r.src}}</span></td></tr></sc-for>
+        </tbody></table>
+      </section>
+      <p class="hint" style="margin: 0">Własne ćwiczenia i notatki (np. wskazówki techniczne) widzą Twoi podopieczni w treningach, które im przypiszesz.</p>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const E = [
+      ['Wyciskanie na ławce', 'Klatka', 'ciężar', 3, 'Łopatki ściągnięte, stopy na ziemi', 0], ['Przysiad', 'Nogi', 'ciężar', 3, 'Do równoległej, kolana nad palcami', 0], ['Martwy ciąg', 'Plecy', 'ciężar', 2, 'Pas od 3. serii', 0],
+      ['Podciąganie', 'Plecy', 'masa ciała', 2, 'Z gumą, jeśli < 5 powtórzeń', 0], ['Pompki na poręczach', 'Klatka', 'masa ciała + obciążenie', 1, '', 0], ['Deska', 'Brzuch', 'czas', 1, '', 0],
+      ['Hip thrust na ławce', 'Pośladki', 'ciężar', 1, 'Pauza 1 s na górze', 1], ['Wiosłowanie na TRX', 'Plecy', 'masa ciała', 0, 'Dla podopiecznych bez sztangi', 1], ['Spacer farmera', 'Całe ciało', 'dystans', 0, '2 × 24 kg', 1], ['Mobilizacja bioder 90/90', 'Mobilność', 'czas', 0, 'Przed każdym treningiem nóg', 1]
+    ];
+    const f = st.f || 'all', q = (st.q || '').toLowerCase();
+    const list = E.filter((e) => (f === 'all' || (f === 'own' ? e[5] : f === 'used' ? e[3] > 0 : e[2] === 'ciężar')) && e[0].toLowerCase().indexOf(q) >= 0);
+    return {
+      q: st.q || '', onQ: (e) => this.setState({ q: e.target.value }),
+      fl: [['all', 'Wszystkie'], ['own', 'Własne'], ['used', 'W moich szablonach']].map((x) => ({ t: x[1], p: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      rows: list.map((e) => ({ n: e[0], g: e[1], m: e[2], u: e[3] ? e[3] + ' szabl.' : '—', note: e[4] || '—', src: e[5] ? 'własne' : 'rhytm', srcC: e[5] ? 'bdg ok nw' : 'bdg out nw' }))
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

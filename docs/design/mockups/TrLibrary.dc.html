@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Szablony</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="szab" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Szablony</h1><span class="hint num">{{cnt}}</span></div>
+      <div class="row" style="gap: 8px"><label class="igroup" style="width: 240px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Szukaj szablonu" value="{{q}}" onChange="{{onQ}}" style="border: 0; outline: none; background: none; font: inherit; flex: 1; min-width: 0"></label><button type="button" class="btnp" onClick="{{newTpl}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nowy szablon</button></div>
+    </header>
+    <div style="padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; align-items: start; box-sizing: border-box; width: 100%">
+      <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div class="seg" role="group" aria-label="Rodzaj" style="align-self: flex-start"><sc-for list="{{fl}}" as="f" hint-placeholder-count="3"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}">{{f.t}}</button></sc-for></div>
+        <section class="card" style="overflow: hidden">
+          <table class="tbl"><thead><tr><th style="padding-left: 16px">Szablon</th><th>Zawartość</th><th>Szac. czas</th><th>Używają</th></tr></thead><tbody>
+            <sc-for list="{{list}}" as="r" hint-placeholder-count="6"><tr onClick="{{r.pick}}" style="{{r.s}}">
+              <td style="padding-left: 16px"><span class="row" style="gap: 10px"><span class="aic" style="{{r.icS}}">{{r.ic}}</span><span style="font-weight: 500">{{r.n}}</span><sc-if value="{{r.isNew}}" hint-placeholder-val="{{false}}"><span class="bdg ok">nowy</span></sc-if></span></td>
+              <td class="num ell" style="max-width: 190px">{{r.c}}</td><td class="num">{{r.t}}</td>
+              <td><span class="row" style="gap: 0"><sc-for list="{{r.users}}" as="u" hint-placeholder-count="2"><span class="av sm" style="{{u.s}}">{{u.i}}</span></sc-for><sc-if value="{{r.none}}" hint-placeholder-val="{{false}}"><span class="hint">—</span></sc-if></span></td>
+            </tr></sc-for>
+          </tbody></table>
+        </section>
+      </div>
+      <section class="card" style="overflow: visible; position: sticky; top: 16px">
+      <sc-if value="{{viewing}}" hint-placeholder-val="{{true}}">
+        <div class="ch" style="align-items: flex-start; position: relative"><div class="row" style="gap: 12px; align-items: flex-start; min-width: 0"><span class="aic" style="{{dIcS}}">{{dIc}}</span><div style="min-width: 0"><h2 class="card-t ell">{{dN}}</h2><p class="card-d num">{{dSub}}</p></div></div>
+          <button type="button" class="btng ic sm" aria-label="Więcej" onClick="{{toggleMore}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+          <sc-if value="{{moreOn}}" hint-placeholder-val="{{false}}"><div role="menu" class="pop" style="position: absolute; right: 12px; top: 44px; z-index: 30; width: 200px; padding: 4px"><button type="button" role="menuitem" class="mi" onClick="{{startEdit}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edytuj</button><button type="button" role="menuitem" class="mi" onClick="{{dup}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Duplikuj</button><div class="mi-sep"></div><button type="button" role="menuitem" class="mi bad" onClick="{{del}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Usuń szablon</button></div></sc-if>
+        </div>
+        <sc-for list="{{dEx}}" as="e" hint-placeholder-count="5"><div class="lrow" style="padding: 10px 16px"><span class="hint num" style="width: 18px">{{e.no}}</span><span class="ell" style="flex: 1; font-weight: 500">{{e.n}}</span><span class="num nw">{{e.s}}</span></div></sc-for>
+        <sc-if value="{{hasNote}}" hint-placeholder-val="{{true}}"><div style="padding: 12px 16px; border-top: 1px solid rgba(0,0,0,.06); font-size: 13px; line-height: 1.5" class="muted"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> {{dNote}}</div></sc-if>
+        <div class="row" style="padding: 12px 16px; border-top: 1px solid rgba(0,0,0,.06); gap: 8px"><button type="button" class="btn sm" onClick="{{startEdit}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edytuj</button><button type="button" class="btn sm" onClick="{{dup}}">Duplikuj</button><span style="flex: 1"></span><a href="TrAssign.dc.html" class="btnp sm">Przypisz</a></div>
+        <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}"><div style="margin: 0 16px 14px; padding: 8px 12px; border-radius: 10px; background: #f0fdf4; color: #14532d; font-size: 13px">{{toast}}</div></sc-if>
+      </sc-if>
+      <sc-if value="{{editing}}" hint-placeholder-val="{{false}}">
+        <div class="ch"><h2 class="card-t">{{edTitle}}</h2><span class="bdg sec">edycja</span></div>
+        <div style="padding: 0 16px 14px; display: flex; flex-direction: column; gap: 12px">
+          <label class="fld">Nazwa<input class="inp" type="text" value="{{dr.n}}" onChange="{{onName}}" placeholder="np. Push B"></label>
+          <div class="seg" role="group" aria-label="Rodzaj" style="align-self: flex-start"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="2"><button type="button" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <sc-for list="{{rows}}" as="x" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.08); border-radius: 10px; background: #fff">
+                <div class="row" style="gap: 6px"><span class="hint num" style="width: 14px">{{x.no}}</span><span class="ell" style="flex: 1; font-weight: 500">{{x.n}}</span><button type="button" class="btng ic xs" aria-label="W górę" onClick="{{x.up}}" aria-disabled="{{x.first}}">↑</button><button type="button" class="btng ic xs" aria-label="W dół" onClick="{{x.down}}" aria-disabled="{{x.last}}">↓</button><button type="button" class="btng ic xs" aria-label="Usuń ćwiczenie" onClick="{{x.rm}}" style="color: #c2410c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <sc-if value="{{isGymEd}}" hint-placeholder-val="{{true}}"><div class="row" style="gap: 8px; padding-left: 20px"><label class="row hint" style="gap: 4px; font-size: 12px">Serie<input class="inp num" type="text" value="{{x.s}}" onChange="{{x.onS}}" style="width: 44px; height: 30px; padding: 0 6px"></label><label class="row hint" style="gap: 4px; font-size: 12px">Powt.<input class="inp num" type="text" value="{{x.r}}" onChange="{{x.onR}}" style="width: 60px; height: 30px; padding: 0 6px"></label><label class="row hint" style="gap: 4px; font-size: 12px; flex: 1">Ciężar<input class="inp num" type="text" value="{{x.w}}" onChange="{{x.onW}}" placeholder="np. 40 kg" style="flex: 1; min-width: 0; height: 30px; padding: 0 6px"></label></div></sc-if>
+                <sc-if value="{{isRunEd}}" hint-placeholder-val="{{false}}"><div class="row" style="gap: 8px; padding-left: 20px"><label class="row hint" style="gap: 4px; font-size: 12px; flex: 1">Dystans / tempo<input class="inp num" type="text" value="{{x.d}}" onChange="{{x.onD}}" placeholder="np. 2 km · 6:00 /km" style="flex: 1; min-width: 0; height: 30px; padding: 0 6px"></label></div></sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{noRows}}" hint-placeholder-val="{{false}}"><div class="hint" style="padding: 12px; text-align: center; border: 1px dashed rgba(0,0,0,.15); border-radius: 8px">Brak ćwiczeń. Dodaj pierwsze poniżej.</div></sc-if>
+            <button type="button" class="btn sm" style="justify-content: center" onClick="{{togglePick}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Dodaj ćwiczenie</button>
+            <sc-if value="{{pickOn}}" hint-placeholder-val="{{false}}"><div class="frame"><div class="inner" style="padding: 8px; display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{pickList}}" as="p" hint-placeholder-count="6"><button type="button" class="chip nw" onClick="{{p.pick}}">{{p.t}}</button></sc-for></div></div></sc-if>
+          </div>
+          <label class="fld">Notatka dla podopiecznych<textarea class="inp" rows="2" value="{{dr.note}}" onChange="{{onNote}}" placeholder="np. przerwy 90 s" style="height: auto; padding-top: 8px; resize: none"></textarea></label>
+          <div class="row" style="justify-content: space-between"><span class="hint num">{{edSum}}</span><span class="row" style="gap: 8px"><button type="button" class="btng" onClick="{{cancelEdit}}">Anuluj</button><button type="button" class="btnp" onClick="{{save}}" aria-disabled="{{saveDis}}">Zapisz</button></span></div>
+        </div>
+      </sc-if>
+      </section>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}, "mode": {"editor": "enum", "options": ["view", "edit", "new"], "default": "view"}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const g = (n, spec) => { const m = /^(\d+) × ([^·]+?)(?: · (.+))?$/.exec(spec); return m ? { n, s: m[1], r: m[2].trim(), w: m[3] || '' } : { n, s: '3', r: spec, w: '' }; };
+    const b = (n, d) => ({ n, d });
+    this.state = { sel: 0, f: 'all', q: '', T: [
+      { n: 'Push A', k: 'g', u: ['ola', 'ania'], note: 'Główne ćwiczenie z przerwą 2:30, pozostałe 90 s. Progresja +2,5 kg, gdy wszystkie serie wejdą.', ex: [g('Wyciskanie na ławce', '4 × 5 · 50 kg'), g('Wyciskanie hantli na skosie', '3 × 10 · 16 kg'), g('Wyciskanie żołnierskie', '3 × 8 · 25 kg'), g('Pompki na poręczach', '3 × maks.'), g('Prostowanie ramion na wyciągu', '2 × 12 · 20 kg')] },
+      { n: 'Pull A', k: 'g', u: ['ola', 'ania', 'pawel'], note: 'Martwy ciąg z pasem od 3. serii. Podciąganie z gumą, jeśli mniej niż 5 powt.', ex: [g('Martwy ciąg', '3 × 5 · 85 kg'), g('Podciąganie', '3 × maks.'), g('Wiosłowanie sztangą', '3 × 8 · 45 kg'), g('Face pull', '3 × 15 · 15 kg'), g('Uginanie ramion', '3 × 10 · 10 kg')] },
+      { n: 'Nogi A', k: 'g', u: ['ola', 'ania', 'pawel'], note: 'Przysiad do równoległej. Wykroki z hantlami 10 kg.', ex: [g('Przysiad', '4 × 5 · 70 kg'), g('Rumuński martwy ciąg', '3 × 8 · 50 kg'), g('Wykroki', '3 × 10 / noga'), g('Prostowanie nóg', '3 × 12'), g('Wspięcia na palce', '3 × 15')] },
+      { n: 'Push B', k: 'g', u: [], note: 'Wariant na tygodnie lżejsze.', ex: [g('Wyciskanie wąsko', '3 × 6'), g('Rozpiętki', '3 × 12'), g('Arnoldki', '3 × 10'), g('Pompki diamentowe', '3 × maks.'), g('Francuskie wyciskanie', '2 × 12')] },
+      { n: 'Full body A', k: 'g', u: ['kuba'], note: 'Na redukcji — przerwy 60–90 s.', ex: [g('Przysiad', '3 × 8'), g('Wyciskanie na ławce', '3 × 8'), g('Wiosłowanie sztangą', '3 × 10'), g('Hip thrust', '3 × 10'), g('Wyciskanie hantli nad głowę', '3 × 10'), g('Deska', '3 × 45 s')] },
+      { n: 'Full body B', k: 'g', u: ['kuba'], note: 'Na redukcji — przerwy 60–90 s.', ex: [g('Martwy ciąg', '3 × 6'), g('Pompki', '3 × maks.'), g('Podciąganie', '3 × maks.'), g('Wykroki', '3 × 10'), g('Face pull', '3 × 15'), g('Brzuszki na wyciągu', '3 × 15')] },
+      { n: 'Bieg — interwały 6 × 800 m', k: 'b', u: ['marta'], note: 'Tempo interwałów odpowiada tempu na 10 km.', ex: [b('Rozgrzewka', '2 km · 6:00 /km'), b('Interwał × 6', '800 m · 4:45 /km'), b('Przerwa w truchcie', '2 min'), b('Schłodzenie', '1,5 km')] },
+      { n: 'Bieg tempo 10 km', k: 'b', u: ['marta'], note: 'Tętno w strefie 4.', ex: [b('Rozgrzewka', '2 km'), b('Tempo', '6 km · 5:05 /km'), b('Schłodzenie', '2 km')] },
+      { n: 'Bieg spokojny', k: 'b', u: ['kuba', 'marta'], note: 'Tempo, przy którym da się rozmawiać.', ex: [b('Bieg ciągły', '6–8 km · strefa 2')] }
+    ] };
+    // Widok startowy dla makiet: otwarty edytor albo pusty nowy szablon
+    if (p && p.mode === 'edit') this.state.dr = JSON.parse(JSON.stringify(this.state.T[0]));
+    if (p && p.mode === 'new') Object.assign(this.state, { dr: { n: '', k: 'g', u: [], note: '', ex: [] }, isNewEd: true, pick: true });
+  }
+  renderVals() {
+    const st = this.state;
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const T = st.T;
+    const pl = (n, a, b, c) => (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) ? b : c);
+    const sets = (t) => t.ex.reduce((s, e) => s + (parseInt(e.s, 10) || 0), 0);
+    const content = (t) => (t.k === 'g' ? t.ex.length + ' ' + pl(t.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + sets(t) + ' ' + pl(sets(t), 'seria', 'serie', 'serii') : t.ex.map((e) => e.n).join(' · '));
+    const est = (t) => (t.k === 'g' ? 'ok. ' + Math.max(10, Math.round(sets(t) * 3.6 / 5) * 5) + ' min' : 'ok. ' + Math.max(20, t.ex.length * 12) + ' min');
+    const spec = (e, k) => (k === 'g' ? e.s + ' × ' + e.r + (e.w ? ' · ' + e.w : '') : e.d);
+    const G = ['S', 'background:rgba(0,0,0,.06);color:#404040'], B = ['B', 'background:rgba(245,158,11,.14);color:#b45309'];
+    const ic = (k) => (k === 'g' ? G : B);
+    const q = (st.q || '').toLowerCase();
+    const sel = Math.min(st.sel, T.length - 1);
+    const d = T[sel];
+    const dr = st.dr;
+    const editing = !!dr;
+    const upd = (patch) => this.setState({ dr: Object.assign({}, st.dr, patch) });
+    const setEx = (i, k, v) => { const ex = st.dr.ex.map((e, j) => (j === i ? Object.assign({}, e, { [k]: v }) : e)); upd({ ex }); };
+    const EXN = dr && dr.k === 'b' ? ['Rozgrzewka', 'Bieg ciągły', 'Interwał', 'Przerwa w truchcie', 'Tempo', 'Podbiegi', 'Schłodzenie'] : ['Wyciskanie na ławce', 'Przysiad', 'Martwy ciąg', 'Podciąganie', 'Wiosłowanie sztangą', 'Wyciskanie żołnierskie', 'Hip thrust', 'Wykroki', 'Face pull', 'Pompki', 'Deska', 'Hip thrust na ławce', 'Spacer farmera'];
+    const flash = (t) => { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); };
+    return {
+      cnt: T.length + ' ' + pl(T.length, 'szablon', 'szablony', 'szablonów'),
+      q: st.q, onQ: (e) => this.setState({ q: e.target.value }),
+      fl: [['all', 'Wszystkie'], ['g', 'Siłownia'], ['b', 'Bieg']].map((x) => ({ t: x[1], p: x[0] === st.f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      list: T.map((t, i) => ({ t, i })).filter((x) => (st.f === 'all' || x.t.k === st.f) && x.t.n.toLowerCase().indexOf(q) >= 0).map((x) => ({
+        n: x.t.n || 'Bez nazwy', c: content(x.t), t: est(x.t), ic: ic(x.t.k)[0], icS: ic(x.t.k)[1], none: !x.t.u.length, isNew: !!x.t.isNew,
+        users: x.t.u.map((id, j) => { const p = CL.find((c) => c.id === id); return { i: p.i, s: 'background:' + p.c + ';box-shadow:0 0 0 2px #fff;' + (j ? 'margin-left:-6px' : '') }; }),
+        pick: () => { if (st.dr) return; this.setState({ sel: x.i, more: false }); }, s: x.i === sel ? 'background:rgba(0,0,0,.035)' : ''
+      })),
+      viewing: !editing, editing,
+      dN: d.n, dSub: content(d) + ' · ' + est(d), dIc: ic(d.k)[0], dIcS: ic(d.k)[1], dNote: d.note, hasNote: !!d.note,
+      dEx: d.ex.map((e, i) => ({ no: i + 1, n: e.n, s: spec(e, d.k) })),
+      moreOn: !!st.more, toggleMore: () => this.setState({ more: !st.more }),
+      toastOn: !!st.toast, toast: st.toast || '',
+      startEdit: () => this.setState({ more: false, pick: false, isNewEd: false, dr: JSON.parse(JSON.stringify(d)) }),
+      newTpl: () => this.setState({ more: false, pick: true, isNewEd: true, dr: { n: '', k: 'g', u: [], note: '', ex: [] } }),
+      dup: () => { const c = JSON.parse(JSON.stringify(d)); c.n = d.n + ' (kopia)'; c.u = []; c.isNew = true; const n = T.slice(); n.splice(sel + 1, 0, c); this.setState({ T: n, sel: sel + 1, more: false }); flash('Zduplikowano jako „' + c.n + '”.'); },
+      del: () => { if (T.length < 2) return; const n = T.filter((_, i) => i !== sel); this.setState({ T: n, sel: Math.max(0, sel - 1), more: false }); flash('Usunięto „' + d.n + '”.'); },
+      edTitle: st.isNewEd ? 'Nowy szablon' : 'Edytuj szablon',
+      dr: dr || { n: '', note: '' },
+      onName: (e) => upd({ n: e.target.value }), onNote: (e) => upd({ note: e.target.value }),
+      kinds: [['g', 'Siłownia'], ['b', 'Bieg']].map((x) => ({ t: x[1], p: dr && dr.k === x[0] ? 'true' : 'false', pick: () => upd({ k: x[0], ex: dr.k === x[0] ? dr.ex : [] }) })),
+      isGymEd: !!dr && dr.k === 'g', isRunEd: !!dr && dr.k === 'b',
+      rows: (dr ? dr.ex : []).map((e, i, a) => ({
+        no: i + 1, n: e.n, s: e.s || '', r: e.r || '', w: e.w || '', d: e.d || '', first: i === 0 ? 'true' : 'false', last: i === a.length - 1 ? 'true' : 'false',
+        onS: (ev) => setEx(i, 's', ev.target.value), onR: (ev) => setEx(i, 'r', ev.target.value), onW: (ev) => setEx(i, 'w', ev.target.value), onD: (ev) => setEx(i, 'd', ev.target.value),
+        up: () => { if (!i) return; const ex = a.slice(); ex.splice(i - 1, 0, ex.splice(i, 1)[0]); upd({ ex }); },
+        down: () => { if (i === a.length - 1) return; const ex = a.slice(); ex.splice(i + 1, 0, ex.splice(i, 1)[0]); upd({ ex }); },
+        rm: () => upd({ ex: a.filter((_, j) => j !== i) })
+      })),
+      noRows: !!dr && !dr.ex.length,
+      pickOn: !!st.pick, togglePick: () => this.setState({ pick: !st.pick }),
+      pickList: EXN.map((t) => ({ t, pick: () => { upd({ ex: dr.ex.concat([dr.k === 'g' ? { n: t, s: '3', r: '10', w: '' } : { n: t, d: '' }]) }); } })),
+      edSum: dr ? (dr.k === 'g' ? dr.ex.length + ' ' + pl(dr.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + sets(dr) + ' ' + pl(sets(dr), 'seria', 'serie', 'serii') + ' · ' + est(dr) : dr.ex.length + ' ' + pl(dr.ex.length, 'odcinek', 'odcinki', 'odcinków')) : '',
+      saveDis: dr && dr.n.trim() && dr.ex.length ? 'false' : 'true',
+      cancelEdit: () => this.setState({ dr: null, pick: false }),
+      save: () => {
+        if (!dr.n.trim() || !dr.ex.length) return;
+        const n = T.slice();
+        if (st.isNewEd) { n.unshift(Object.assign({}, dr, { n: dr.n.trim(), isNew: true })); this.setState({ T: n, sel: 0, dr: null, pick: false, f: 'all', q: '' }); flash('Dodano szablon „' + dr.n.trim() + '”.'); }
+        else { n[sel] = Object.assign({}, dr, { n: dr.n.trim() }); this.setState({ T: n, dr: null, pick: false }); flash('Zapisano zmiany.'); }
+      }
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

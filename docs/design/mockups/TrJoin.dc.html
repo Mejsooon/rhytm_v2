@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Podopieczny — Zaproszenie od trenera</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="min-height: 900px; background: #fafafa; font-family: 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; box-sizing: border-box">
+  <div class="row" style="gap: 8px; margin-bottom: 32px"><svg width="22" height="22" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626"></rect></svg><span style="font-weight: 600; letter-spacing: -0.03em; font-size: 16px">rhytm</span></div>
+  <sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+  <section class="card" style="width: 540px; max-width: 100%">
+    <div style="padding: 28px 28px 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+      <span class="av lg" style="background: #e0f2fe; width: 64px; height: 64px; font-size: 22px">MK</span>
+      <h1 style="margin: 4px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap">Marek Kowal chce zostać Twoim trenerem</h1>
+      <p class="muted" style="margin: 0">Trener personalny · siła, bieganie</p>
+      <div style="margin-top: 6px; padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,.04); font-size: 14px; line-height: 1.5; text-align: left; width: 100%; box-sizing: border-box">„Cześć! Zapraszam do rhytm — tu będę wrzucał Twój plan i komentował treningi.”</div>
+    </div>
+    <div style="padding: 16px 28px; display: flex; flex-direction: column; gap: 4px">
+      <span class="lbl" style="margin-bottom: 6px">Co udostępnisz Markowi</span>
+      <div class="row" style="gap: 12px; padding: 10px 0"><span class="aic" style="background: rgba(0,0,0,.05); color: #404040"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg></span><div style="flex: 1"><div style="font-weight: 500">Treningi i aktywności</div><div class="hint">Zobaczy je, doda nowe i skomentuje</div></div><span class="bdg sec nw">wymagane</span></div>
+      <div class="row" style="gap: 12px; padding: 10px 0; border-top: 1px solid rgba(0,0,0,.06)"><span class="aic" style="background: rgba(79,70,229,.1); color: #4338ca"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></span><div style="flex: 1"><div style="font-weight: 500">Sen</div><div class="hint">Pomaga dobrać obciążenie do regeneracji</div></div><button type="button" class="sw" role="switch" aria-checked="{{sleep}}" aria-label="Udostępnij sen" onClick="{{t_sleep}}"></button></div>
+      <div class="row" style="gap: 12px; padding: 10px 0; border-top: 1px solid rgba(0,0,0,.06)"><span class="aic" style="background: rgba(0,0,0,.04); color: #8a8a8a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><div style="flex: 1"><div style="font-weight: 500">Kalendarz, nawyki, strony i hasła</div><div class="hint">Zostają tylko dla Ciebie</div></div><span class="hint nw">nigdy</span></div>
+      <div class="row" style="gap: 10px; padding: 10px 12px; margin-top: 8px; border-radius: 10px; background: #f0fdf4; color: #14532d; font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Na czas współpracy masz rhytm Pro za darmo.</span></div>
+    </div>
+    <div class="dlg-f" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 16px 28px 24px"><span class="hint">Zmienisz to w Ustawienia → Trener</span><span class="row" style="gap: 8px"><a href="S2Today.dc.html" class="btng">Odrzuć</a><button type="button" class="btnp" onClick="{{accept}}">Akceptuj i dołącz</button></span></div>
+  </section>
+  </sc-if>
+  <sc-if value="{{joined}}" hint-placeholder-val="{{false}}">
+  <section class="card" style="width: 480px; max-width: 100%; padding: 36px 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-sizing: border-box">
+    <span class="aic" style="background: #f0fdf4; color: #15803d; width: 48px; height: 48px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+    <h1 style="margin: 0; font-size: 22px; font-weight: 600">Połączono z Markiem</h1>
+    <p class="muted" style="margin: 0">{{doneTxt}}</p>
+    <div class="row" style="gap: 8px; margin-top: 8px"><a href="TrTraineeChat.dc.html" class="btn">Napisz do Marka</a><a href="TrTraineeSport.dc.html" class="btnp">Przejdź do Sportu</a></div>
+  </section>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const sl = st.sleep === undefined ? true : st.sleep;
+    return {
+      sleep: sl ? 'true' : 'false', t_sleep: () => this.setState({ sleep: !sl }),
+      pending: !st.ok, joined: !!st.ok, accept: () => this.setState({ ok: true }),
+      doneTxt: 'Udostępniasz: treningi' + (sl ? ' i sen' : '') + '. Gdy Marek przypisze plan, zobaczysz go w Sporcie z plakietką „od trenera”.'
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

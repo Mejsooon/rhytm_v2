@@ -10,28 +10,18 @@
 <x-dc>
 <helmet>
 <style>
-body{margin:0;background:#ffffff}
+body{margin:0;background:#ffffff;overflow:hidden}
 
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="nawyki" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <h1 class="h-title">Nawyki i sen</h1>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2SleepDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Wpis snu</a><a href="S2HabitDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy nawyk</a></div>
-    </header>
-    <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
-      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div><div class="card" style="height: 110px"></div></div>
-      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px"><div class="card" style="height: 420px"></div><div class="card" style="height: 420px"></div></div>
-    </div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <div role="dialog" aria-modal="true" aria-labelledby="sl-t" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(480px, calc(100% - 32px))">
+<div style="position: relative; height: 100vh; min-height: 1000px; overflow: hidden; font-family: 'Inter', system-ui, sans-serif">
+  <dc-import name="S2Habits" min-height="1000" hint-size="100%,1000px"></dc-import>
+  <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 40"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="sl-t" class="dlg" style="position: absolute; z-index: 41; left: 50%; top: 110px; transform: translateX(-50%); width: min(480px, calc(100% - 32px))">
     <div class="dlg-h"><div><h2 id="sl-t" class="dlg-t">Wpis snu</h2><p class="dlg-d">Noc z poniedziałku na wtorek</p></div><a href="S2Habits.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
     <div class="dlg-b">
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
-        <label class="fld">Data pobudki<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg><input type="text" value="wt 17.11.2026"></span></label>
+        <div class="fld"><span>Data pobudki</span><span style="position: relative; display: block"><button type="button" class="dd num" onClick="{{dpSl.toggle}}" aria-haspopup="dialog" aria-expanded="{{dpSl.exp}}" aria-label="Data pobudki"><span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868; flex: none"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg>{{dpSl.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dpSl.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; width: 280px; box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-weight: 400" onClick="{{dpSl.stop}}"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px"><b style="font-size: 14px; font-weight: 600">{{dpSl.title}}</b><span style="display: flex; gap: 2px"><button type="button" class="btng ic xs" aria-label="Poprzedni miesiąc" onClick="{{dpSl.prev}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic xs" aria-label="Następny miesiąc" onClick="{{dpSl.next}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 11px; font-weight: 500; color: #686868; text-align: center"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{dpSl.days}}" as="dpd" hint-placeholder-count="42"><button type="button" aria-label="{{dpd.aria}}" aria-pressed="{{dpd.p}}" onClick="{{dpd.pick}}" style="{{dpd.s}}">{{dpd.n}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px; margin-top: 2px"><button type="button" class="btng xs" onClick="{{dpSl.today}}">Dziś</button><button type="button" class="btn xs" onClick="{{dpSl.close}}">Zamknij</button></div></div></sc-if></span></div>
         <label class="fld">Zasnąłem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{from}}" onChange="{{onFrom}}"></span></label>
         <label class="fld">Wstałem<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{to}}" onChange="{{onTo}}"></span></label>
       </div>
@@ -51,10 +41,41 @@ body{margin:0;background:#ffffff}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { from: '23:48', to: '07:00', mood: 4, tags: ['Ekran w łóżku'] }; }
+  constructor(p) { super(p); this.state = { date: '2026-11-17', from: '23:48', to: '07:00', mood: 4, tags: ['Ekran w łóżku'] }; }
   renderVals() {
+    const mkDP = (key, val, set, force, onClose) => {
+      const ST = this.state || {};
+      const TD = '2026-11-17';
+      const MN = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+      const DWS = ['pn', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+      const v0 = val || TD;
+      const open = force ? true : ST.dpOpen === key;
+      const view = (ST.dpKey === key && ST.dpView) || v0.slice(0, 7);
+      const y = +view.slice(0, 4), m = +view.slice(5, 7);
+      const first = Date.UTC(y, m - 1, 1), lead = (new Date(first).getUTCDay() + 6) % 7;
+      const shut = () => { this.setState({ dpOpen: null, dpView: null, dpKey: null }); if (onClose) onClose(); };
+      const pd = (x) => String(x).padStart(2, '0');
+      const vd = new Date(Date.UTC(+v0.slice(0, 4), +v0.slice(5, 7) - 1, +v0.slice(8, 10)));
+      return {
+        open, exp: open ? 'true' : 'false',
+        txt: val ? DWS[(vd.getUTCDay() + 6) % 7] + ', ' + pd(vd.getUTCDate()) + '.' + pd(vd.getUTCMonth() + 1) + '.' + vd.getUTCFullYear() : 'Wybierz datę',
+        toggle: () => this.setState({ dpOpen: open ? null : key, dpView: null, dpKey: null }),
+        title: MN[m - 1] + ' ' + y,
+        prev: () => { const d = new Date(Date.UTC(y, m - 2, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        next: () => { const d = new Date(Date.UTC(y, m, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+        today: () => { set(TD); shut(); }, close: shut,
+        days: Array.from({ length: 42 }, (_, i) => {
+          const d = new Date(first + (i - lead) * 86400000), k = d.toISOString().slice(0, 10);
+          const inM = d.getUTCMonth() === m - 1, sel = k === val, td = k === TD;
+          return { n: String(d.getUTCDate()), aria: DWS[(d.getUTCDay() + 6) % 7] + ' ' + d.getUTCDate() + '.' + pd(d.getUTCMonth() + 1), p: sel ? 'true' : 'false',
+            s: 'height:32px;border-radius:8px;border:0;padding:0;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#262626;color:#fafafa;font-weight:600' : td ? 'background:#fff;color:#262626;font-weight:600;box-shadow:inset 0 0 0 1px #262626' : 'background:transparent;color:' + (inM ? '#262626' : '#b5b5b5')),
+            pick: () => { set(k); shut(); } };
+        })
+      };
+    };
     const toM = (t) => { const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
     const a = toM(this.state.from), b = toM(this.state.to);
     const ok = a !== null && b !== null;
@@ -62,6 +83,7 @@ class Component extends DCLogic {
     const pct = Math.min(100, Math.round(mins / 480 * 100));
     const diff = 480 - mins;
     return {
+      dpSl: mkDP('sleep', this.state.date, (k) => this.setState({ date: k })),
       from: this.state.from, to: this.state.to,
       onFrom: (e) => this.setState({ from: e.target.value }), onTo: (e) => this.setState({ to: e.target.value }),
       dur: ok ? Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0') : '—',

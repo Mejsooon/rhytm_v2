@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Usunąć blok? (COSS UI)</title>
+<title>Usunięcie bloku jednorazowego</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,36 +11,15 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <h1 class="h-title">Kalendarz</h1>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><nav class="seg" aria-label="Widok"><a href="S2CalendarDay.dc.html">Dzień</a><a href="S2Calendar.dc.html" aria-current="page">Tydzień</a><a href="S2CalendarMonth.dc.html">Miesiąc</a></nav><a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a></div>
-    </header>
-    <div aria-hidden="true" style="flex: 1; display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); opacity: .6; background-image: repeating-linear-gradient(to bottom, rgba(0,0,0,.05) 0, rgba(0,0,0,.05) 1px, transparent 1px, transparent 48px); min-height: 800px">
-      <div></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06); position: relative"><div style="position: absolute; left: 3px; right: 3px; top: 482px; height: 45px; border-radius: 8px; background: #f59e0b14; border: 1px solid #f59e0b4d"></div></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div><div style="border-left: 1px solid rgba(0,0,0,.06)"></div>
-    </div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <!-- Blok jednorazowy: zwarte potwierdzenie. Blok cykliczny zamiast tego otwiera okno zakresu (S2ScopeDialog). -->
-  <div role="alertdialog" aria-modal="true" aria-labelledby="usun-t" aria-describedby="usun-d" class="dlg" style="position: absolute; left: 50%; top: 260px; transform: translateX(-50%); width: min(400px, calc(100% - 32px))">
-    <div class="dlg-h" style="padding-bottom: 20px"><div><h2 id="usun-t" class="dlg-t">Usunąć blok?</h2><p id="usun-d" class="dlg-d">„Bieg 10 km” · wt 17.11 · 16:00–17:00</p></div></div>
-    <div class="dlg-f"><a href="{{back}}" class="btng">Anuluj</a><a href="{{back}}" class="btnd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</a></div>
-  </div>
+<div style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <dc-import name="S2Calendar" view="week" open="delete" hint-size="100%,1000px"></dc-import>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  renderVals() {
-    // wraca do widoku COSS, z którego otwarto okno (tydzień, dzień, miesiąc)
-    let back = 'S2Calendar.dc.html';
-    try { const f = sessionStorage.getItem('rh-from'); if (f && /^S2[A-Za-z]+\.dc\.html$/.test(f)) back = f; } catch (e) {}
-    return { back };
-  }
+  renderVals() { return {}; }
 }
 </script>
 </body>

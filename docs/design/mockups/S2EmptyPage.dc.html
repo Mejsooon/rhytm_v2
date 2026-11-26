@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Pusta strona — Strony 2.0 (COSS UI)</title>
+<title>Pusta strona</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,326 +11,165 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-.ed-in{border:0;outline:none;font:inherit;color:#262626;background:transparent;width:100%;min-width:0;box-sizing:border-box;border-radius:6px}
-.ed-in:focus{background:rgba(0,0,0,.02);box-shadow:0 0 0 2px #fff,0 0 0 4px #a3a3a3}
-.epop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;font-weight:400;text-align:left;white-space:normal}
-.trow{display:grid;align-items:center;border-bottom:1px solid rgba(0,0,0,.06)}
-.trow.thead{background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.08)}
-.trow.tfoot{background:rgba(0,0,0,.02);border-bottom:0}
-.trow:not(.thead):not(.tfoot):hover{background:rgba(0,0,0,.02)}
-.gth{padding:8px 12px;font-size:14px;font-weight:500;color:#686868;white-space:nowrap}
-.gtd{padding:8px 12px;min-height:22px}
-.colbtn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;border-radius:6px;padding:3px 6px;margin:-3px -6px;font:inherit;font-weight:500;color:#686868;cursor:pointer;white-space:nowrap}
-.colbtn:hover,.colbtn[aria-expanded="true"]{background:rgba(0,0,0,.05);color:#262626}
-.addcol{width:100%;height:100%;min-height:38px;background:none;border:0;color:#a3a3a3;cursor:pointer;display:grid;place-items:center}
-.addcol:hover{background:rgba(0,0,0,.04);color:#262626}
-.cellbtn{background:none;border:0;padding:0;font:inherit;cursor:pointer;min-height:22px;display:inline-flex;align-items:center;color:#404040}
-.cday{height:30px;padding:0;border:0;border-radius:8px;font:inherit;font-size:13px;cursor:pointer;background:transparent;color:#262626}
-.cday:hover{background:rgba(0,0,0,.04)}
-.ico{width:32px;height:32px;flex:0 0 32px;border:1px solid rgba(0,0,0,.08);border-radius:8px;background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#525252;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.blk{position:relative;padding-right:36px}
-.blk-act{position:absolute;top:4px;right:0;opacity:0;transition:opacity 120ms ease;color:#b91c1c}
-.blk:hover .blk-act,.blk-act:focus-visible{opacity:1}
-.row-del{opacity:0;transition:opacity 120ms ease}
-.addcard{border:1px dashed rgba(0,0,0,.16);border-radius:12px;background:transparent;display:flex;align-items:center;justify-content:center;gap:6px;color:#686868;font:inherit;font-size:14px;font-weight:500;cursor:pointer;min-height:56px;width:160px;text-decoration:none}
-.addcard:hover{background:rgba(0,0,0,.02);color:#262626;border-color:rgba(0,0,0,.24)}
-.trow:hover .row-del,.row-del:focus-visible{opacity:1}
-button[aria-disabled="true"]{opacity:.4;pointer-events:none}
-@media (max-width: 1100px){.tbl-wrap{overflow-x:auto}}
+.ttl{width:100%;border:0;outline:none;background:transparent;font:inherit;font-size:32px;font-weight:600;letter-spacing:-.02em;color:#262626;padding:0}
+.ttl::placeholder{color:#d4d4d4}
+.blk{position:relative;display:flex;align-items:flex-start;gap:6px;margin:0 -36px;padding:2px 0 2px 36px;border-radius:8px}
+.blk .bact{position:absolute;left:4px;top:4px;opacity:0}
+.blk:hover .bact,.blk .bact:focus-visible{opacity:1}
+.bin{flex:1;border:0;outline:none;background:transparent;font:inherit;color:#262626;padding:4px 0;min-width:0}
+.bin::placeholder{color:#c4c4c4}
+.bin.h{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.bin.p{font-size:15px;line-height:1.6}
+.cmd{width:100%;border:0;outline:none;background:transparent;font:inherit;font-size:15px;color:#262626;padding:6px 0}
+.cmd::placeholder{color:#b4b4b4}
+.slash{position:absolute;left:0;top:calc(100% + 4px);width:320px;padding:4px;z-index:20;display:flex;flex-direction:column}
+.sitem{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:14px;color:#262626;text-align:left;cursor:pointer}
+.sitem[aria-selected="true"]{background:rgba(0,0,0,.05)}
+.sic{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;display:grid;place-items:center;font-size:13px;font-weight:600;color:#404040;flex:none}
+.qchip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font:inherit;font-size:14px;font-weight:500;color:#262626;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.qchip:hover{background:#fafafa}
+.todo input{width:16px;height:16px;margin:8px 2px 0 0;accent-color:#262626}
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="empty" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
+<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="empty" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <main class="main" style="position: relative">
     <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Strony</span><span aria-hidden="true">/</span><b>{{crumb}}</b></nav>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2NewPage.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Szablony</a><a href="S2PageMenu.dc.html" class="btn ic" aria-label="Menu strony"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></a></div>
+      <div class="crumb">Strony<span aria-hidden="true">/</span><b>{{crumb}}</b></div>
+      <a href="S2NewPage.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Szablony</a>
     </header>
-    <div style="padding: 28px 24px 160px; max-width: 1160px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
-        <div style="position: relative; flex: none">
-          <button type="button" aria-label="Zmień ikonę" aria-haspopup="dialog" aria-expanded="{{iconExp}}" onClick="{{toggleIcons}}" style="{{iconBtnS}}"><dc-import name="S2PageIcon" icon="{{pageIconVal}}" size="22" hint-size="22px,22px"></dc-import></button>
-          <sc-if value="{{iconOpen}}" hint-placeholder-val="{{false}}">
-            <button type="button" aria-label="Zamknij wybór ikony" tabindex="-1" onClick="{{toggleIcons}}" style="position: fixed; inset: 0; z-index: 25; border: 0; padding: 0; margin: 0; background: transparent; cursor: default"></button>
-            <div class="pop" style="position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; width: 300px; padding: 6px 10px 10px">
-              <dc-import name="S2IconPicker" value="{{pageIconVal}}" on-pick="{{pickIcon}}" hint-size="100%,340px"></dc-import>
+
+    <div style="padding: 48px 24px 64px 72px; max-width: 1080px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 6px">
+      <div style="position: relative; display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <sc-if value="{{hasIcon}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" aria-label="Zmień ikonę strony" onClick="{{toggleIcons}}" style="width: 44px; height: 44px; padding: 0; display: grid; place-items: center"><dc-import name="S2PageIcon" icon="{{icon}}" size="28" fallback="table" hint-size="28px,28px"></dc-import></button></sc-if>
+        <sc-if value="{{noIcon}}" hint-placeholder-val="{{true}}"><button type="button" class="btng xs" onClick="{{toggleIcons}}" style="color: #686868"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>Dodaj ikonę</button></sc-if>
+        <sc-if value="{{iconsOpen}}" hint-placeholder-val="{{false}}">
+          <div class="pop" style="position: absolute; left: 0; top: calc(100% + 6px); width: 300px; padding: 8px; z-index: 30">
+            <dc-import name="S2IconPicker" value="{{icon}}" on-pick="{{pickIcon}}" hint-size="100%,340px"></dc-import>
+            <sc-if value="{{hasIcon}}" hint-placeholder-val="{{false}}"><button type="button" class="btng xs" onClick="{{removeIcon}}" style="margin-top: 6px; color: #686868">Usuń ikonę</button></sc-if>
+          </div>
+        </sc-if>
+      </div>
+      <input class="ttl" type="text" aria-label="Tytuł strony" placeholder="Bez tytułu" value="{{title}}" onChange="{{onTitle}}">
+
+      <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 16px">
+        <sc-for list="{{blocks}}" as="b" hint-placeholder-count="0">
+          <div class="blk">
+            <button type="button" class="btng ic xs bact" aria-label="{{b.delLbl}}" title="Usuń blok" onClick="{{b.del}}" style="color: #a3a3a3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+            <sc-if value="{{b.isH}}" hint-placeholder-val="{{false}}"><input class="bin h" type="text" aria-label="Nagłówek" placeholder="Nagłówek" value="{{b.text}}" onChange="{{b.onText}}"></sc-if>
+            <sc-if value="{{b.isP}}" hint-placeholder-val="{{false}}"><input class="bin p" type="text" aria-label="Tekst" placeholder="Pisz…" value="{{b.text}}" onChange="{{b.onText}}"></sc-if>
+            <sc-if value="{{b.isTodo}}" hint-placeholder-val="{{false}}"><label class="todo" style="display: flex; align-items: flex-start; gap: 8px; flex: 1"><input type="checkbox" checked="{{b.done}}" onChange="{{b.toggle}}" aria-label="Zrobione"><input class="bin p" type="text" aria-label="Zadanie" placeholder="Zadanie" value="{{b.text}}" onChange="{{b.onText}}" style="{{b.textS}}"></label></sc-if>
+            <sc-if value="{{b.isDiv}}" hint-placeholder-val="{{false}}"><hr style="flex: 1; border: 0; border-top: 1px solid rgba(0,0,0,.12); margin: 14px 0"></sc-if>
+            <sc-if value="{{b.isTable}}" hint-placeholder-val="{{false}}">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px 0 12px">
+                <input class="bin" type="text" aria-label="Nazwa tabeli" placeholder="Bez nazwy tabeli" value="{{b.text}}" onChange="{{b.onText}}" style="font-size: 16px; font-weight: 600; padding: 2px 0">
+                <dc-import name="S2Table" kind="blank" embed="{{true}}" card-req="{{b.cardReq}}" hint-size="100%,260px"></dc-import>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="position: relative">
+          <input class="cmd" type="text" aria-label="Nowy blok" placeholder="Wpisz „/”, aby wstawić blok — tabelę, listę, nagłówek…" value="{{cmd}}" onChange="{{onCmd}}" onKeyDown="{{onCmdKey}}" aria-expanded="{{slashOpen}}" aria-controls="slash-menu">
+          <sc-if value="{{slashOn}}" hint-placeholder-val="{{false}}">
+            <div id="slash-menu" role="listbox" aria-label="Bloki" class="pop slash">
+              <div class="mi-lbl" style="padding: 6px 8px 4px">Bloki</div>
+              <sc-for list="{{found}}" as="m" hint-placeholder-count="5">
+                <button type="button" role="option" aria-selected="{{m.hi}}" class="sitem" onClick="{{m.pick}}" onMouseEnter="{{m.hover}}"><span class="sic">{{m.icon}}</span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">{{m.label}}</span><span class="hint">{{m.desc}}</span></span></button>
+              </sc-for>
+              <sc-if value="{{noneFound}}" hint-placeholder-val="{{false}}"><div style="padding: 10px 8px; color: #686868">Brak bloku „{{q}}”</div></sc-if>
+              <div class="mi-sep"></div>
+              <div class="hint" style="display: flex; gap: 12px; padding: 4px 8px 6px; font-size: 12px"><span><span class="kbd">↑</span> <span class="kbd">↓</span> wybór</span><span><span class="kbd">Enter</span> wstaw</span><span><span class="kbd">Esc</span> zamknij</span></div>
             </div>
           </sc-if>
         </div>
-        <input type="text" value="{{title}}" onChange="{{onTitle}}" placeholder="Bez tytułu" aria-label="Nazwa strony" style="border: 0; outline: none; font: inherit; font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #262626; flex: 1; min-width: 0; background: transparent">
-      </div>
 
-      <sc-for list="{{blocks}}" as="b" hint-placeholder-count="0">
-        <div class="blk">
-          <sc-if value="{{b.isH}}" hint-placeholder-val="{{false}}"><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Nagłówek" aria-label="Nagłówek" style="font-size: 20px; font-weight: 600; letter-spacing: -.01em; padding: 6px 0"></sc-if>
-          <sc-if value="{{b.isText}}" hint-placeholder-val="{{false}}"><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Pusty akapit" aria-label="Akapit" style="line-height: 1.6; padding: 3px 0"></sc-if>
-          <sc-if value="{{b.isTodo}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 10px; padding: 3px 0"><button type="button" class="cbx" role="checkbox" aria-checked="{{b.ac}}" aria-label="Zrobione" onClick="{{b.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button><input type="text" class="ed-in" value="{{b.text}}" onChange="{{b.onText}}" placeholder="Zadanie" aria-label="Zadanie" style="{{b.todoS}}"></div></sc-if>
-          <sc-if value="{{b.isDiv}}" hint-placeholder-val="{{false}}"><div class="sep" style="margin: 12px 0"></div></sc-if>
-          <sc-if value="{{b.isTable}}" hint-placeholder-val="{{false}}">
-            <div style="display: flex; flex-direction: column; gap: 8px; margin: 6px 0">
-              <div style="display: flex; flex-wrap: wrap; gap: 12px"><a href="S2CardDialog.dc.html" class="addcard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Karta</a></div>
-              <div style="display: flex; align-items: center; gap: 12px"><input type="text" class="ed-in" value="{{b.t.name}}" onChange="{{b.t.onName}}" placeholder="Tabela bez nazwy" aria-label="Nazwa tabeli" style="font-size: 16px; font-weight: 600; flex: 1; min-width: 0"><a href="S2FilterPopover.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>Filtruj</a><a href="S2TableMenu.dc.html" class="btn ic sm" aria-label="Menu tabeli"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></a></div>
-              <div class="frame"><div class="inner tbl-wrap" style="font-size: 14px; overflow: visible">
-                <div class="trow thead" role="row" style="{{b.t.gridS}}">
-                  <sc-for list="{{b.t.cols}}" as="c" hint-placeholder-count="3"><div class="gth" role="columnheader"><span style="position: relative; display: inline-flex">
-                    <button type="button" class="colbtn" onClick="{{c.toggle}}" aria-haspopup="dialog" aria-expanded="{{c.exp}}"><span style="{{c.svgS}}"></span>{{c.name}}</button>
-                    <sc-if value="{{c.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Ustawienia kolumny" class="pop epop" style="width: 268px">
-                      <div style="padding: 4px"><input type="text" class="inp" value="{{c.name}}" onChange="{{c.onName}}" placeholder="Nazwa kolumny" aria-label="Nazwa kolumny"></div>
-                      <div class="mi-lbl">Typ pola</div>
-                      <sc-for list="{{c.types}}" as="ty" hint-placeholder-count="6"><button type="button" class="mi" onClick="{{ty.pick}}" aria-pressed="{{ty.p}}" style="{{ty.s}}"><span style="width: 20px; display: inline-flex; justify-content: center; color: #686868"><span style="{{ty.svgS}}"></span></span><span style="flex: 1">{{ty.label}}</span><sc-if value="{{ty.on}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for>
-                      <sc-if value="{{c.isSel}}" hint-placeholder-val="{{false}}">
-                        <div class="mi-lbl" style="padding-top: 10px">Opcje</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px"><sc-for list="{{c.opts}}" as="op" hint-placeholder-count="3"><span class="{{op.c}}">{{op.t}}<button type="button" aria-label="Usuń opcję" onClick="{{op.remove}}" style="background: none; border: 0; padding: 0 0 0 2px; cursor: pointer; color: inherit; font: inherit; opacity: .6">×</button></span></sc-for></div>
-                        <div style="display: flex; gap: 6px; padding: 8px 8px 4px"><input type="text" class="inp" value="{{c.newOpt}}" onChange="{{c.onNewOpt}}" onKeyDown="{{c.optKey}}" placeholder="Nowa opcja…" aria-label="Nowa opcja" style="height: 32px"><button type="button" class="btn sm" onClick="{{c.addOpt}}">Dodaj</button></div>
-                      </sc-if>
-                      <div class="mi-sep"></div>
-                      <button type="button" class="mi" onClick="{{c.moveL}}" aria-disabled="{{c.firstD}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Przesuń w lewo</button><button type="button" class="mi" onClick="{{c.moveR}}" aria-disabled="{{c.lastD}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>Przesuń w prawo</button>
-                      <div class="mi-sep"></div>
-                      <button type="button" class="mi bad" onClick="{{c.remove}}" aria-disabled="{{c.delD}}" style="{{c.delS}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń kolumnę</button>
-                    </div></sc-if>
-                  </span></div></sc-for>
-                  <div class="gth" style="padding: 0"><button type="button" class="addcol" onClick="{{b.t.addCol}}" aria-label="Dodaj kolumnę"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
-                </div>
-                <sc-for list="{{b.t.rows}}" as="row" hint-placeholder-count="2"><div class="trow" role="row" style="{{b.t.gridS}}">
-                  <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="3"><div class="gtd" role="cell" style="{{cell.tdS}}">
-                    <sc-if value="{{cell.isText}}" hint-placeholder-val="{{true}}"><input type="text" class="ed-in" value="{{cell.v}}" onChange="{{cell.on}}" placeholder="{{cell.ph}}" aria-label="{{cell.label}}" style="{{cell.inS}}"></sc-if>
-                    <sc-if value="{{cell.isCheck}}" hint-placeholder-val="{{false}}"><button type="button" class="cbx" role="checkbox" aria-checked="{{cell.ac}}" aria-label="{{cell.label}}" onClick="{{cell.toggle}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button></sc-if>
-                    <sc-if value="{{cell.isDate}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex">
-                      <button type="button" class="cellbtn num" onClick="{{cell.d.toggle}}" aria-haspopup="dialog" aria-expanded="{{cell.d.exp}}" aria-label="{{cell.label}}" style="{{cell.d.btnS}}">{{cell.d.txt}}</button>
-                      <sc-if value="{{cell.d.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop epop" style="width: 256px; padding: 10px">
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px"><button type="button" class="btn ic sm" aria-label="Poprzedni miesiąc" onClick="{{cell.d.prev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><span style="font-size: 14px; font-weight: 600">{{cell.d.label}}</span><button type="button" class="btn ic sm" aria-label="Następny miesiąc" onClick="{{cell.d.next}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
-                        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 12px; font-weight: 500; color: #686868; text-align: center; padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
-                        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cell.d.cal}}" as="dc" hint-placeholder-count="35"><button type="button" class="cday num" onClick="{{dc.pick}}" style="{{dc.s}}">{{dc.t}}</button></sc-for></div>
-                        <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); margin-top: 8px; padding-top: 8px"><button type="button" class="btng xs" onClick="{{cell.d.today}}">Dziś</button><button type="button" class="btng xs" onClick="{{cell.d.clear}}" style="color: #686868">Wyczyść</button></div>
-                      </div></sc-if>
-                    </span></sc-if>
-                    <sc-if value="{{cell.isSel}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: inline-flex">
-                      <button type="button" class="cellbtn" onClick="{{cell.sel.toggle}}" aria-haspopup="listbox" aria-expanded="{{cell.sel.exp}}" aria-label="{{cell.label}}"><span class="{{cell.sel.bc}}">{{cell.sel.txt}}</span></button>
-                      <sc-if value="{{cell.sel.open}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="{{cell.label}}" class="pop epop" style="width: 210px; padding: 4px; display: flex; flex-direction: column; gap: 1px">
-                        <sc-for list="{{cell.sel.opts}}" as="o" hint-placeholder-count="3"><button type="button" role="option" class="ddopt" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span class="{{o.bc}}">{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for>
-                        <div class="mi-sep"></div>
-                        <div style="display: flex; justify-content: space-between"><button type="button" class="btng xs" onClick="{{cell.sel.clear}}" style="color: #686868">Wyczyść</button><button type="button" class="btng xs" onClick="{{cell.sel.edit}}">Edytuj opcje</button></div>
-                      </div></sc-if>
-                    </span></sc-if>
-                  </div></sc-for>
-                  <div class="gtd" style="padding: 0; display: flex; align-items: center; justify-content: center"><button type="button" class="row-del btng ic xs" aria-label="Usuń wiersz" onClick="{{row.remove}}" style="color: #b91c1c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>
-                </div></sc-for>
-                <sc-if value="{{b.t.hasFoot}}" hint-placeholder-val="{{false}}"><div class="trow tfoot" style="{{b.t.gridS}}"><sc-for list="{{b.t.foot}}" as="ft" hint-placeholder-count="3"><div class="num" style="{{ft.s}}">{{ft.t}}</div></sc-for><div></div></div></sc-if>
-              </div></div>
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><button type="button" class="btng sm" onClick="{{b.t.addRow}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy</button><span class="bdg sec">{{b.t.meta}}</span></div>
+        <sc-if value="{{isEmpty}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px">
+            <span class="hint">albo zacznij od:</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{quick}}" as="qk" hint-placeholder-count="4"><button type="button" class="qchip" onClick="{{qk.pick}}"><span class="sic" style="width: 22px; height: 22px; font-size: 11px; border-radius: 6px">{{qk.icon}}</span>{{qk.label}}</button></sc-for>
             </div>
-          </sc-if>
-          <button type="button" class="blk-act btng ic xs" aria-label="Usuń blok" onClick="{{b.remove}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-        </div>
-      </sc-for>
-
-      <div style="position: relative; display: flex; align-items: center; gap: 8px">
-        <button type="button" class="btn ic sm" aria-label="Wstaw blok" onClick="{{openMenu}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
-        <input type="text" class="ed-in" value="{{cmd}}" onChange="{{onCmd}}" onKeyDown="{{onKey}}" placeholder="Wpisz „/”, aby wstawić blok — tabelę, listę, nagłówek…" aria-label="Nowy blok" aria-haspopup="listbox" aria-expanded="{{menuExp}}" style="padding: 6px 0; color: #404040">
-        <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}"><div role="listbox" aria-label="Bloki" class="pop epop" style="left: 40px; width: 330px; padding: 4px">
-          <div class="mi-lbl">Bloki</div>
-          <sc-for list="{{menu}}" as="m" hint-placeholder-count="5"><button type="button" role="option" class="mi" aria-selected="{{m.sel}}" onClick="{{m.pick}}" onMouseEnter="{{m.hover}}" style="min-height: 44px; gap: 10px"><span class="ico">{{m.icon}}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="font-weight: 500">{{m.label}}</span><span style="font-size: 12px; color: #686868">{{m.desc}}</span></span></button></sc-for>
-          <sc-if value="{{menuEmpty}}" hint-placeholder-val="{{false}}"><div class="muted" style="padding: 8px; font-size: 13px">Brak bloku „{{q}}”</div></sc-if>
-          <div class="mi-sep"></div>
-          <div class="muted" style="display: flex; gap: 10px; padding: 4px 8px 2px; font-size: 12px"><span><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> wybór</span><span><kbd class="kbd">Enter</kbd> wstaw</span><span><kbd class="kbd">Esc</kbd> zamknij</span></div>
-        </div></sc-if>
+            <div style="margin-top: 16px; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed rgba(0,0,0,.16); border-radius: 12px; max-width: 560px">
+              <span style="flex: 1"><b style="font-weight: 500; display: block">Wolisz gotowca?</b><span class="hint">Subskrypcje, Książki, Projekty albo Strony WWW z gotową tabelą i widokami.</span></span>
+              <a href="S2NewPage.dc.html" class="btn xs" style="text-decoration: none">Użyj szablonu →</a>
+            </div>
+          </div>
+        </sc-if>
       </div>
-
-      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{true}}">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px">
-          <span class="muted" style="font-size: 13px; margin-right: 4px">albo zacznij od:</span>
-          <sc-for list="{{quick}}" as="qk" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{qk.pick}}"><span style="color: #686868; font-size: 12px; font-weight: 600">{{qk.icon}}</span>{{qk.label}}</button></sc-for>
-        </div>
-        <p class="muted" style="margin: 24px 0 0; font-size: 13px">Wolisz gotowca? <a href="S2NewPage.dc.html" style="color: #262626; font-weight: 500; text-underline-offset: 3px">Użyj szablonu →</a></p>
-      </sc-if>
     </div>
-  </main>
 
+    <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+      <div role="status" class="toast" style="position: absolute; right: 24px; bottom: 24px; z-index: 30"><span>{{toastTxt}}</span><button type="button" class="btn xs" onClick="{{undo}}">Cofnij</button></div>
+    </sc-if>
+  </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  componentDidMount() { try { sessionStorage.setItem('rh-page', 'S2EmptyPage.dc.html'); } catch (e) {} }
   renderVals() {
     const S = this.state || {};
-    const TODAY = '2026-11-15';
     const B = S.blocks || [];
-    const P = S.pick || null;
     const cmd = S.cmd || '';
-    const MONF = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
-    const p2 = (x) => String(x).padStart(2, '0');
-    const fmt = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '');
-    const pl = (n, one, few, many) => n + ' ' + (n === 1 ? one : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? few : many);
-    const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const PAL = ['bdg sec', 'bdg info', 'bdg ok', 'bdg warn', 'bdg out', 'bdg bad'];
-    const LUC = {"text": "<path d=\"m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16\"></path><path d=\"M22 9v7\"></path><path d=\"M3.304 13h6.392\"></path><circle cx=\"18.5\" cy=\"12.5\" r=\"3.5\"></circle>", "number": "<line x1=\"4\" x2=\"20\" y1=\"9\" y2=\"9\"></line><line x1=\"4\" x2=\"20\" y1=\"15\" y2=\"15\"></line><line x1=\"10\" x2=\"8\" y1=\"3\" y2=\"21\"></line><line x1=\"16\" x2=\"14\" y1=\"3\" y2=\"21\"></line>", "date": "<path d=\"M8 2v3\"></path><path d=\"M16 2v3\"></path><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"></rect><path d=\"M3 9h18\"></path>", "select": "<circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"12\" r=\"10\"></circle>", "status": "<circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M12 18a6 6 0 0 0 0-12v12z\"></path>", "rating": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\"></path>", "checkbox": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"></rect><path d=\"m16 9-5.5 5.5L8 12\"></path>", "url": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"></path><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"></path>"};
-    const mask = (t, px) => { const u = 'url(data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + LUC[t] + '</svg>') + ')'; return 'display:inline-block;flex:none;vertical-align:-2px;width:' + px + 'px;height:' + px + 'px;background:currentColor;-webkit-mask:' + u + ' center/contain no-repeat;mask:' + u + ' center/contain no-repeat'; };
-    const EKEY = {"text": "text", "num": "number", "date": "date", "sel": "status", "check": "checkbox", "url": "url"};
-    const TYPES = [
-      { k: 'text', icon: 'Aa', label: 'Tekst' }, { k: 'num', icon: '#', label: 'Liczba' }, { k: 'date', icon: '▦', label: 'Data' },
-      { k: 'sel', icon: '◐', label: 'Wybór' }, { k: 'check', icon: '✓', label: 'Checkbox' }, { k: 'url', icon: '↗', label: 'Link' }
-    ];
+    const title = S.title || '';
     const DEFS = [
-      { k: 'table', icon: '▦', label: 'Tabela', desc: 'Wiersze i kolumny z typami pól', kw: 'tabela table baza database' },
+      { k: 'table', icon: '▦', label: 'Tabela', desc: 'Wiersze i kolumny z typami pól', kw: 'tabela table baza' },
       { k: 'todo', icon: '✓', label: 'Lista zadań', desc: 'Punkty do odhaczenia', kw: 'lista zadania todo checkbox' },
-      { k: 'h', icon: 'H', label: 'Nagłówek', desc: 'Tytuł sekcji', kw: 'naglowek heading tytul sekcja' },
-      { k: 'text', icon: '¶', label: 'Tekst', desc: 'Zwykły akapit', kw: 'tekst text akapit' },
-      { k: 'div', icon: '—', label: 'Separator', desc: 'Pozioma linia', kw: 'separator linia divider hr' }
+      { k: 'h', icon: 'H', label: 'Nagłówek', desc: 'Tytuł sekcji', kw: 'naglowek nagłówek heading tytul' },
+      { k: 'p', icon: '¶', label: 'Tekst', desc: 'Zwykły akapit', kw: 'tekst text akapit' },
+      { k: 'div', icon: '—', label: 'Separator', desc: 'Pozioma linia', kw: 'separator linia divider' },
+      { k: 'card', icon: 'Σ', label: 'Karta podsumowania', desc: 'Suma, średnia lub liczba z kolumny tabeli', kw: 'karta podsumowanie statystyka suma srednia średnia liczba card stat' }
     ];
-    const save = (blocks, extra) => this.setState(Object.assign({ blocks }, extra || {}));
-    const updB = (id, fn, extra) => save(B.map((b) => (b.id === id ? fn(b) : b)), extra);
-    const updT = (id, fn, extra) => updB(id, (b) => Object.assign({}, b, { t: fn(b.t) }), extra);
-    const mk = (k, text) => {
-      if (k !== 'table') return { id: nid(), type: k, text: text || '', done: false };
-      return { id: nid(), type: 'table', t: { name: '', rows: [{ id: nid(), v: {} }, { id: nid() + 'b', v: {} }], cols: [
-        { id: 'c1', name: 'Nazwa', type: 'text' },
-        { id: 'c2', name: 'Status', type: 'sel', opts: ['Do zrobienia', 'W toku', 'Zrobione'] },
-        { id: 'c3', name: 'Data', type: 'date' }
-      ] } };
-    };
-    const insert = (k, text) => save(B.concat([mk(k, text)]), { cmd: '', hi: 0, pick: null });
-    const qOf = (val) => (val.charAt(0) === '/' ? val.slice(1).toLowerCase().trim() : null);
-    const filt = (q) => DEFS.filter((d) => !q || (d.label.toLowerCase() + ' ' + d.kw).indexOf(q) >= 0);
-    const q = qOf(cmd);
-    const found = q === null ? [] : filt(q);
-    const hi = Math.max(0, Math.min(S.hi || 0, found.length - 1));
-    const onKey = (e) => {
-      const val = (e.target && e.target.value) || '';
-      const qq = qOf(val);
-      if (qq !== null) {
-        const list = filt(qq);
-        const cur = Math.max(0, Math.min(S.hi || 0, list.length - 1));
-        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ cmd: val, hi: list.length ? (cur + 1) % list.length : 0 }); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ cmd: val, hi: list.length ? (cur - 1 + list.length) % list.length : 0 }); }
-        else if (e.key === 'Enter') { e.preventDefault(); if (list[cur]) insert(list[cur].k); }
-        else if (e.key === 'Escape') { this.setState({ cmd: '', hi: 0 }); }
-      } else if (e.key === 'Enter' && val.trim()) { e.preventDefault(); insert('text', val.trim()); }
-    };
-    const dp = (iso, key, set) => {
-      const open = !!(P && P.kind === 'date' && P.key === key);
-      const mo = open ? (P.mo || 0) : 0;
-      const b = iso || TODAY;
-      const first = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1 + mo, 1));
-      const lead = (first.getUTCDay() + 6) % 7;
-      const nd = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
-      const cal = [];
-      if (open) {
-        for (let k = 0; k < lead; k++) cal.push({ t: '', s: 'visibility:hidden', pick: () => {} });
-        for (let d = 1; d <= nd; d++) {
-          const ds = first.getUTCFullYear() + '-' + p2(first.getUTCMonth() + 1) + '-' + p2(d);
-          cal.push({ t: String(d), s: ds === iso ? 'background:#262626;color:#fafafa;font-weight:600' : ds === TODAY ? 'background:rgba(0,0,0,.05);font-weight:600' : '', pick: () => set(ds, { pick: null }) });
-        }
+    const q = cmd.charAt(0) === '/' ? cmd.slice(1).trim().toLowerCase() : null;
+    const found = q === null ? [] : DEFS.filter((d) => !q || (d.label.toLowerCase() + ' ' + d.kw).includes(q));
+    const hi = Math.min(S.hi || 0, Math.max(0, found.length - 1));
+    const nid = () => 'b' + Date.now() + Math.floor(Math.random() * 1000);
+    const insert = (k, text) => {
+      if (k === 'card') {
+        const req = nid();
+        const t = B.filter((b) => b.k === 'table').pop();
+        if (t) this.setState({ blocks: B.map((b) => b.id === t.id ? Object.assign({}, b, { cardReq: req }) : b), cmd: '', hi: 0, toast: { txt: 'Karta trafi nad tabelę „' + (t.text || 'Bez nazwy tabeli') + '”', prev: B } });
+        else this.setState({ blocks: B.concat([{ id: nid(), k: 'table', text: '', done: false, cardReq: req }]), cmd: '', hi: 0, toast: { txt: 'Karta liczy z tabeli — dodałem pustą tabelę', prev: B } });
+        return;
       }
-      return { txt: iso ? fmt(iso) : '—', open, exp: open ? 'true' : 'false', cal, btnS: iso ? '' : 'color:#a3a3a3',
-        toggle: () => this.setState({ pick: open ? null : { kind: 'date', key, mo: 0 } }),
-        label: MONF[first.getUTCMonth()] + ' ' + first.getUTCFullYear(),
-        prev: () => this.setState({ pick: { kind: 'date', key, mo: mo - 1 } }), next: () => this.setState({ pick: { kind: 'date', key, mo: mo + 1 } }),
-        today: () => set(TODAY, { pick: null }), clear: () => set('', { pick: null }) };
+      this.setState({ blocks: B.concat([{ id: nid(), k, text: text || '', done: false }]), cmd: '', hi: 0 });
     };
-    const conv = (v, from, to) => {
-      if (v === undefined || v === null || v === '' || v === false) return to === 'check' ? false : '';
-      if (from === to) return v;
-      if (to === 'check') return v === true || /^(tak|true|1|x|✓)$/i.test(String(v).trim());
-      if (to === 'num') { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? '' : String(n).replace('.', ','); }
-      if (to === 'date') return /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? v : '';
-      if (from === 'check') return v ? 'Tak' : '';
-      if (from === 'date') return fmt(v);
-      return String(v);
-    };
-    const table = (blk) => {
-      const T = blk.t;
-      const n = T.cols.length;
-      const cols = T.cols.map((c, ci) => {
-        const open = !!(P && P.kind === 'col' && P.b === blk.id && P.c === c.id);
-        const ty = TYPES.filter((t) => t.k === c.type)[0] || TYPES[0];
-        const setCol = (patch, extra) => updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.map((x) => (x.id === c.id ? Object.assign({}, x, patch) : x)) }), extra);
-        const opts = c.opts || [];
-        const addOpt = (raw) => { const v = (raw || '').trim(); if (!v || opts.indexOf(v) >= 0) return; setCol({ opts: opts.concat([v]) }, { newOpt: '' }); };
-        const move = (dir) => { const j = ci + dir; if (j < 0 || j >= n) return; updT(blk.id, (t) => { const a = t.cols.slice(); const tmp = a[ci]; a[ci] = a[j]; a[j] = tmp; return Object.assign({}, t, { cols: a }); }); };
-        return {
-          name: c.name || 'Bez nazwy', icon: ty.icon, svgS: 'color:#a3a3a3;' + mask(EKEY[ty.k], 14), open, exp: open ? 'true' : 'false',
-          toggle: () => this.setState({ pick: open ? null : { kind: 'col', b: blk.id, c: c.id }, newOpt: '' }),
-          onName: (e) => setCol({ name: e.target.value }),
-          types: TYPES.map((t) => ({ icon: t.icon, svgS: mask(EKEY[t.k], 16), label: t.label, on: t.k === c.type, p: t.k === c.type ? 'true' : 'false', s: t.k === c.type ? 'background:rgba(0,0,0,.04);font-weight:500' : '',
-            pick: () => {
-              if (t.k === c.type) return;
-              updT(blk.id, (tt) => {
-                const vals = tt.rows.map((r) => conv(r.v[c.id], c.type, t.k)).filter((v) => typeof v === 'string' && v);
-                const nextOpts = t.k === 'sel' ? (opts.length ? opts : (vals.length ? vals.filter((v, i) => vals.indexOf(v) === i) : ['Opcja 1', 'Opcja 2'])) : c.opts;
-                return Object.assign({}, tt, {
-                  cols: tt.cols.map((x) => (x.id === c.id ? Object.assign({}, x, { type: t.k, opts: nextOpts }) : x)),
-                  rows: tt.rows.map((r) => Object.assign({}, r, { v: Object.assign({}, r.v, { [c.id]: conv(r.v[c.id], c.type, t.k) }) }))
-                });
-              });
-            } })),
-          isSel: c.type === 'sel',
-          opts: opts.map((o, oi) => ({ t: o, c: PAL[oi % PAL.length], remove: () => setCol({ opts: opts.filter((x) => x !== o) }) })),
-          newOpt: S.newOpt || '', onNewOpt: (e) => this.setState({ newOpt: e.target.value }),
-          optKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); addOpt(e.target.value); } },
-          addOpt: () => addOpt(S.newOpt),
-          moveL: () => move(-1), moveR: () => move(1),
-          firstD: ci === 0 ? 'true' : 'false', lastD: ci === n - 1 ? 'true' : 'false',
-          remove: () => { if (n > 1) updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.filter((x) => x.id !== c.id) }), { pick: null }); },
-          delD: n > 1 ? 'false' : 'true', delS: ''
-        };
-      });
-      const rows = T.rows.map((r) => ({
-        remove: () => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.filter((x) => x.id !== r.id) }), { pick: null }),
-        cells: T.cols.map((c, ci) => {
-          const v = r.v[c.id];
-          const key = blk.id + ':' + r.id + ':' + c.id;
-          const set = (val, extra) => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.map((x) => (x.id === r.id ? Object.assign({}, x, { v: Object.assign({}, x.v, { [c.id]: val }) }) : x)) }), extra);
-          const cell = { isText: c.type === 'text' || c.type === 'num' || c.type === 'url', isCheck: c.type === 'check', isDate: c.type === 'date', isSel: c.type === 'sel',
-            label: c.name || 'Pole', tdS: ci === 0 ? 'font-weight:500' : '', d: {}, sel: {},
-            v: v || '', on: (e) => set(e.target.value), ph: ci === 0 ? 'Bez nazwy' : '',
-            inS: c.type === 'num' ? 'text-align:right;font-variant-numeric:tabular-nums' : c.type === 'url' ? 'color:#404040;text-decoration:underline;text-decoration-color:rgba(0,0,0,.2);text-underline-offset:3px' : '' };
-          if (cell.isCheck) { cell.ac = v ? 'true' : 'false'; cell.toggle = () => set(!v); }
-          if (cell.isDate) cell.d = dp(v, key, set);
-          if (cell.isSel) {
-            const opts = c.opts || [];
-            const open = !!(P && P.kind === 'sel' && P.key === key);
-            cell.sel = { txt: v || '—', bc: v ? PAL[Math.max(0, opts.indexOf(v)) % PAL.length] : 'muted', open, exp: open ? 'true' : 'false',
-              toggle: () => this.setState({ pick: open ? null : { kind: 'sel', key } }),
-              opts: opts.map((o, oi) => ({ t: o, bc: PAL[oi % PAL.length], p: o === v ? 'true' : 'false', on: o === v, pick: () => set(o, { pick: null }) })),
-              clear: () => set('', { pick: null }), edit: () => this.setState({ pick: { kind: 'col', b: blk.id, c: c.id }, newOpt: '' }) };
-          }
-          return cell;
-        })
-      }));
-      const foot = T.cols.map((c) => {
-        const s = 'padding:8px 12px;font-size:13px;color:#686868;' + (c.type === 'num' ? 'text-align:right' : '');
-        if (c.type === 'num') { const sum = T.rows.reduce((a, r) => { const x = parseFloat(String(r.v[c.id] || '').replace(',', '.')); return a + (isNaN(x) ? 0 : x); }, 0); return { s, t: 'Suma ' + (Number.isInteger(sum) ? String(sum) : sum.toFixed(2).replace('.', ',')) }; }
-        if (c.type === 'check') return { s, t: T.rows.filter((r) => r.v[c.id]).length + ' / ' + T.rows.length };
-        return { s, t: '' };
-      });
-      return { name: T.name, onName: (e) => updT(blk.id, (t) => Object.assign({}, t, { name: e.target.value })), cols, rows, foot,
-        gridS: 'grid-template-columns:minmax(200px,2fr)' + (n > 1 ? ' repeat(' + (n - 1) + ',minmax(140px,1fr))' : '') + ' 44px;min-width:' + (244 + 140 * (n - 1)) + 'px',
-        hasFoot: T.cols.some((c) => c.type === 'num' || c.type === 'check'),
-        meta: pl(T.rows.length, 'wiersz', 'wiersze', 'wierszy') + ' · ' + pl(n, 'kolumna', 'kolumny', 'kolumn'),
-        addRow: () => updT(blk.id, (t) => Object.assign({}, t, { rows: t.rows.concat([{ id: nid(), v: {} }]) }), { pick: null }),
-        addCol: () => { const id = 'c' + nid(); updT(blk.id, (t) => Object.assign({}, t, { cols: t.cols.concat([{ id, name: 'Kolumna ' + (t.cols.length + 1), type: 'text' }]) }), { pick: { kind: 'col', b: blk.id, c: id }, newOpt: '' }); } };
-    };
-    const blocks = B.map((b) => ({
-      isText: b.type === 'text', isH: b.type === 'h', isTodo: b.type === 'todo', isDiv: b.type === 'div', isTable: b.type === 'table',
-      text: b.text || '', onText: (e) => updB(b.id, (x) => Object.assign({}, x, { text: e.target.value })),
-      ac: b.done ? 'true' : 'false', todoS: b.done ? 'text-decoration:line-through;color:#a3a3a3' : '',
-      toggle: () => updB(b.id, (x) => Object.assign({}, x, { done: !x.done })),
-      remove: () => save(B.filter((x) => x.id !== b.id), { pick: null }),
-      t: b.type === 'table' ? table(b) : {}
-    }));
+    const upd = (id, o) => this.setState({ blocks: B.map((b) => b.id === id ? Object.assign({}, b, o) : b) });
+    const icon = S.icon || null;
     return {
-      title: S.title || '', crumb: S.title || 'Bez tytułu',
-      // Ikona strony: czarna ikona Lucide (S2IconPicker), jak w menu strony w sidebarze.
-      pageIconVal: S.icon || null, iconOpen: !!S.iconOpen, iconExp: S.iconOpen ? 'true' : 'false',
-      toggleIcons: () => this.setState({ iconOpen: !S.iconOpen }), pickIcon: (v) => this.setState({ icon: v, iconOpen: false }),
-      iconBtnS: 'width:40px;height:40px;border-radius:10px;font:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;' + (S.icon ? 'border:1px solid transparent;background:transparent;color:#262626' : 'border:1px dashed rgba(0,0,0,.18);background:#fafafa;color:#686868'),
-      onTitle: (e) => this.setState({ title: e.target.value }),
-      blocks, isEmpty: !B.length, cmd, q: q || '',
-      onCmd: (e) => this.setState({ cmd: e.target.value, hi: 0 }), onKey,
-      openMenu: () => this.setState({ cmd: q === null ? '/' : '', hi: 0, pick: null }),
-      menuOpen: q !== null, menuExp: q !== null ? 'true' : 'false', menuEmpty: q !== null && !found.length,
-      menu: found.map((d, i) => ({ icon: d.icon, label: d.label, desc: d.desc, sel: i === hi ? 'true' : 'false', pick: () => insert(d.k), hover: () => { if ((S.hi || 0) !== i) this.setState({ hi: i }); } })),
-      quick: DEFS.slice(0, 4).map((d) => ({ icon: d.icon, label: d.label, pick: () => insert(d.k) }))
+      crumb: title.trim() || 'Bez tytułu',
+      title, onTitle: (e) => this.setState({ title: e.target.value }),
+      icon, hasIcon: !!icon, noIcon: !icon, iconsOpen: !!S.icons,
+      toggleIcons: () => this.setState({ icons: !S.icons }),
+      pickIcon: (v) => this.setState({ icon: v, icons: false }),
+      removeIcon: () => this.setState({ icon: null, icons: false }),
+      blocks: B.map((b) => ({
+        text: b.text, done: b.done, cardReq: b.cardReq || '',
+        isH: b.k === 'h', isP: b.k === 'p', isTodo: b.k === 'todo', isDiv: b.k === 'div', isTable: b.k === 'table',
+        textS: b.done ? 'color:#a3a3a3;text-decoration:line-through' : '',
+        onText: (e) => upd(b.id, { text: e.target.value }),
+        toggle: () => upd(b.id, { done: !b.done }),
+        delLbl: 'Usuń blok: ' + (DEFS.find((d) => d.k === b.k) || {}).label,
+        del: () => this.setState({ blocks: B.filter((x) => x.id !== b.id), toast: { txt: 'Usunięto blok', prev: B } })
+      })),
+      cmd, q: q || '',
+      slashOn: q !== null, slashOpen: q !== null ? 'true' : 'false', noneFound: q !== null && found.length === 0,
+      found: found.map((d, i) => ({ icon: d.icon, label: d.label, desc: d.k === 'card' && !B.some((b) => b.k === 'table') ? 'Doda też tabelę, z której karta liczy' : d.desc, hi: i === hi ? 'true' : 'false', pick: () => insert(d.k), hover: () => { if (S.hi !== i) this.setState({ hi: i }); } })),
+      onCmd: (e) => this.setState({ cmd: e.target.value, hi: 0 }),
+      onCmdKey: (e) => {
+        if (q !== null) {
+          if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ hi: Math.min(found.length - 1, hi + 1) }); }
+          if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ hi: Math.max(0, hi - 1) }); }
+          if (e.key === 'Enter' && found[hi]) { e.preventDefault(); insert(found[hi].k); }
+          if (e.key === 'Escape') this.setState({ cmd: '' });
+        } else if (e.key === 'Enter' && cmd.trim()) {
+          insert('p', cmd.trim());
+        }
+      },
+      isEmpty: B.length === 0,
+      quick: [DEFS[0], DEFS[1], DEFS[2], DEFS[3]].map((d) => ({ icon: d.icon, label: d.label, pick: () => insert(d.k) })),
+      toastOn: !!S.toast, toastTxt: S.toast ? S.toast.txt : '',
+      undo: () => this.setState({ blocks: S.toast.prev, toast: null })
     };
   }
 }

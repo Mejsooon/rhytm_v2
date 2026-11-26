@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Reset sejfu — Strony 2.0 (COSS UI)</title>
+<title>Hasła — reset sejfu</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,43 +11,15 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-a[aria-disabled="true"]{opacity:.45;pointer-events:none}
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="hasla" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Moduły</span><span aria-hidden="true">/</span><b>Hasła</b></nav>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
-    </header>
-    <div aria-hidden="true" style="padding: 28px 24px; display: flex; flex-direction: column; gap: 20px; max-width: 1160px; box-sizing: border-box; width: 100%">
-      <div style="display: flex; align-items: center; gap: 10px"><span style="display: inline-flex; color: #262626" aria-hidden="true"><dc-import name="S2PageIcon" icon="lock" size="26" hint-size="26px,26px"></dc-import></span><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Hasła</h1></div>
-      <div class="card" style="height: 52px"></div><div class="card" style="height: 300px"></div>
-    </div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <div role="alertdialog" aria-modal="true" aria-labelledby="vr-t" class="dlg" style="position: absolute; left: 50%; top: 130px; transform: translateX(-50%); width: min(460px, calc(100% - 32px))">
-    <div class="dlg-h"><div><h2 id="vr-t" class="dlg-t">Zresetować sejf?</h2><p class="dlg-d">Tej operacji nie da się cofnąć.</p></div><a href="S2Passwords.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
-    <div class="dlg-b">
-      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
-        <div class="card" style="padding: 12px 14px; border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.04); box-shadow: none"><div class="lbl" style="color: #b91c1c">Zostanie usunięte</div><div class="num" style="font-size: 20px; font-weight: 600; margin-top: 4px; color: #b91c1c">4 sekrety</div></div>
-        <div class="card" style="padding: 12px 14px; box-shadow: none"><div class="lbl">Zostaje</div><div style="font-size: 14px; margin-top: 8px">serwisy, loginy, URL-e</div></div>
-      </div>
-      <p class="muted" style="margin: 0; font-size: 14px; line-height: 1.5">Pola „Sekret” zostaną wyczyszczone, a potem ustawisz nowe hasło główne.</p>
-      <label class="fld"><span>Wpisz <kbd class="kbd">RESETUJ</kbd>, żeby potwierdzić</span><input class="inp num" type="text" placeholder="RESETUJ" autocomplete="off" value="{{t}}" onInput="{{onT}}"></label>
-    </div>
-    <div class="dlg-f"><a href="S2Passwords.dc.html" class="btng">Anuluj</a><a href="S2VaultSetup.dc.html" class="btnd" aria-disabled="{{dis}}">Zresetuj sejf</a></div>
-  </div>
+<div style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <dc-import name="S2Table" kind="passwords" open="vaultreset" min-height="1000" hint-size="100%,1000px"></dc-import>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  renderVals() {
-    const t = (this.state && this.state.t) || '';
-    const ok = t.trim().toUpperCase() === 'RESETUJ';
-    return { t, onT: (e) => this.setState({ t: e.target.value }), dis: ok ? 'false' : 'true' };
-  }
+  renderVals() { return {}; }
 }
 </script>
 </body>

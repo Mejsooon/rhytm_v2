@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Plan i płatności (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+html body .feat{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:3px 0}
+html body .feat svg{flex:none;margin-top:3px}
+html body .w100{width:100%;justify-content:center}
+html body section.card,html body .card{flex-shrink:0}
+
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="padding: 0 8px"><a href="CMSettings.dc.html" class="btng ic" aria-label="Wstecz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><h1 class="m-title" style="flex: 1; text-align: center">Plan i płatności</h1><span style="width: 44px"></span></header>
+  <div style="flex: 1; overflow-y: auto; padding: 16px 16px 24px; display: flex; flex-direction: column; gap: 16px">
+    <section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; justify-content: space-between"><span><span class="lbl">Obecny plan</span><b style="display: block; font-size: 20px; font-weight: 600">Free</b></span><span class="bdg sec">0 zł · na zawsze</span></div>
+      <sc-for list="{{usage}}" as="u" hint-placeholder-count="3"><div><div style="display: flex; justify-content: space-between; font-size: 14px"><span>{{u.t}}</span><span class="num" style="{{u.vs}}">{{u.v}}</span></div><div class="prog" style="margin-top: 6px"><div style="{{u.bar}}"></div></div><sc-if value="{{u.full}}" hint-placeholder-val="{{false}}"><span class="hint" style="font-size: 12px; color: #b45309">Limit osiągnięty — nowe dodasz w Pro.</span></sc-if></div></sc-for>
+    </section>
+    <section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; border-color: #262626; box-shadow: 0 0 0 1px #262626">
+      <div style="display: flex; align-items: center; justify-content: space-between"><b style="font-size: 18px; font-weight: 600">rhytm Pro</b><div class="seg" role="radiogroup" aria-label="Okres rozliczenia"><sc-for list="{{periods}}" as="p" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{p.p}}" aria-pressed="{{p.p}}" onClick="{{p.pick}}" style="height: 32px; padding: 0 10px; font-size: 13px">{{p.t}}</button></sc-for></div></div>
+      <div><div style="display: flex; align-items: baseline; gap: 6px; white-space: nowrap"><span class="num" style="font-size: 30px; font-weight: 600; letter-spacing: -.02em">{{price}}</span><span class="muted">{{per}}</span><sc-if value="{{isYear}}" hint-placeholder-val="{{false}}"><span class="bdg ok" style="margin-left: auto; align-self: center">2 mies. gratis</span></sc-if></div><sc-if value="{{isYear}}" hint-placeholder-val="{{false}}"><div class="hint num" style="font-size: 13px">czyli [CENA] zł miesięcznie</div></sc-if></div>
+      <div><sc-for list="{{feats}}" as="f" hint-placeholder-count="4"><div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>{{f}}</span></div></sc-for></div>
+      <button type="button" class="btnp w100" onClick="{{buy}}">{{buyTxt}}</button>
+      <sc-if value="{{bought}}" hint-placeholder-val="{{false}}"><div class="alert info" style="font-size: 13px">Tu otworzy się płatność: Apple Pay, BLIK albo karta.</div></sc-if>
+      <span class="hint" style="font-size: 12px; text-align: center">Anulujesz w każdej chwili. Bez opłat za rezygnację.</span>
+    </section>
+    <section class="card" style="padding: 4px 0">
+      <div class="m-row" style="min-height: 56px"><span style="flex: 1"><span style="display: block; font-weight: 500">Metoda płatności</span><span class="hint">Brak zapisanej metody</span></span></div>
+      <div class="m-row" style="min-height: 56px"><span style="flex: 1"><span style="display: block; font-weight: 500">Faktury</span><span class="hint">Pojawią się po pierwszej płatności</span></span></div>
+      <button type="button" class="m-row" style="min-height: 56px; width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer"><span style="flex: 1; font-weight: 500">Przywróć zakupy</span></button>
+    </section>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = this.state || {};
+    const yr = S.per !== 'm';
+    const U = [['Strony', 3, 5], ['Nawyki', 4, 10], ['Szablony treningów', 3, 3]];
+    return {
+      usage: U.map((u) => ({ t: u[0], v: u[1] + ' / ' + u[2], full: u[1] >= u[2], vs: u[1] >= u[2] ? 'color:#b45309;font-weight:600' : '', bar: 'height:100%;border-radius:999px;background:' + (u[1] >= u[2] ? '#f59e0b' : '#262626') + ';width:' + Math.round(u[1] / u[2] * 100) + '%' })),
+      periods: [['m', 'Miesięcznie'], ['y', 'Rocznie']].map((p) => ({ t: p[1], p: (p[0] === 'y') === yr ? 'true' : 'false', pick: () => this.setState({ per: p[0] }) })),
+      isYear: yr, price: yr ? '[CENA] zł' : '[CENA] zł', per: yr ? '/ rok' : '/ miesiąc',
+      feats: ['Bez limitu stron, nawyków i szablonów', 'Import treningów z Garmin i Amazfit', 'Plany treningowe od trenera', 'Pełna historia statystyk (Free: 6 mies.)'],
+      buyTxt: 'Przejdź na Pro', buy: () => this.setState({ bought: true }), bought: !!S.bought
+    };
+  }
+}
+
+</script>
+</body>
+</html>

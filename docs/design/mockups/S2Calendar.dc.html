@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Kalendarz — tydzień (COSS UI)</title>
+<title>Kalendarz</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,217 +11,911 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-
+.rail a,.rail button{width:36px;height:36px;display:grid;place-items:center;border-radius:8px;color:rgba(38,38,38,.68);border:0;background:transparent;cursor:pointer;padding:0}
+.rail a:hover,.rail button:hover{background:rgba(0,0,0,.04);color:#262626}
+.rail a.on{background:rgba(0,0,0,.05);color:#262626}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:rgba(0,0,0,.05)}
+.seg button{height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#686868;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:#262626;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.mm{display:grid;grid-template-columns:22px repeat(7,minmax(0,1fr));gap:2px 0;font-size:12px;text-align:center}
+.mm>span,.mm>button{height:26px;display:grid;place-items:center;border-radius:6px;border:0;background:transparent;font:inherit;font-size:12px;color:#262626;padding:0;cursor:pointer}
+.mm>button:hover{background:rgba(0,0,0,.05)}
+.mm .wk{color:#a3a3a3;font-size:11px;cursor:default}
+.mm .hd{color:#686868;font-weight:500;height:22px;cursor:default}
+.mm .out{color:#a3a3a3}
+.mm .inweek{background:rgba(0,0,0,.05)}
+.mm .today{background:#262626;color:#fafafa;font-weight:600}
+.mm .today:hover{background:#262626}
+.catrow{display:flex;align-items:center;gap:10px;height:32px;padding:0 8px;border-radius:8px;border:0;background:transparent;font:inherit;font-size:14px;color:#262626;cursor:pointer;width:100%;text-align:left}
+.catrow:hover{background:rgba(0,0,0,.04)}
+.cb{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;box-sizing:border-box;flex:none}
+.plbl{font-size:12px;font-weight:500;color:#686868;padding:0 8px 4px}
+.hcell{flex:1 1 0;min-height:0;border-top:1px solid rgba(0,0,0,.06);box-sizing:border-box}
+.blk2{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;text-align:left;font:inherit;cursor:pointer}
+.blk2:focus-visible{outline:2px solid #262626;outline-offset:1px}
+.dnum{border:0;background:transparent;font:inherit;cursor:pointer;padding:0}
+.dnum:hover{background:rgba(0,0,0,.06)}
+.cpop{position:absolute;width:300px;z-index:20;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;cursor:default;box-sizing:border-box}
+.tsk{display:flex;align-items:center;gap:8px;min-height:28px;font-size:14px;cursor:pointer}
+.tsk input{width:16px;height:16px;margin:0;accent-color:#262626}
+.pill{height:28px;padding:0 10px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font:inherit;font-size:13px;color:#262626;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pill[aria-pressed="true"]{border-color:#262626;box-shadow:0 0 0 1px #262626}
+.sel2{height:34px;border-radius:8px;border:1px solid rgba(0,0,0,.14);background:#fff;font:inherit;font-size:14px;padding:0 8px;color:#262626;width:100%}
+.mcell{border-right:1px solid rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.06);padding:6px;display:flex;flex-direction:column;gap:3px;min-width:0;min-height:0;box-sizing:border-box;overflow:hidden}
+.mchip{display:flex;align-items:center;gap:6px;height:22px;padding:0 6px;border-radius:6px;border:0;font:inherit;font-size:12px;color:#262626;cursor:pointer;text-align:left;min-width:0;width:100%;box-sizing:border-box}
+.mchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px #262626}
+.mchip>span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.more{border:0;background:transparent;font:inherit;font-size:12px;color:#686868;text-align:left;padding:0 6px;cursor:pointer;height:20px}
+.more:hover{color:#262626;text-decoration:underline}
+.ag{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:14px;color:#262626;cursor:pointer;text-align:left}
+.ag:hover{background:rgba(0,0,0,.04)}
 </style>
 </helmet>
-<div class="shell" style="height: 100vh; min-height: 900px; flex-wrap: nowrap; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col" style="flex: 0 0 240px; height: 100%; position: static; overflow-y: auto"><dc-import name="S2Sidebar" active="kalendarz" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0">
-    <header style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
-      <div style="display: flex; align-items: center; gap: 6px">
-        <div style="display: inline-flex"><button type="button" class="btn ic" aria-label="Poprzedni tydzień" style="border-radius: 10px 0 0 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btn" style="border-radius: 0; margin-left: -1px">Dziś</button><button type="button" class="btn ic" aria-label="Następny tydzień" style="border-radius: 0 10px 10px 0; margin-left: -1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div>
-        <h1 style="margin: 0 0 0 8px; font-size: 16px; font-weight: 600">Listopad 2026</h1>
-        <span class="bdg sec num">tydz. 47</span>
+<div class="shell" style="height: 100vh; min-height: 760px; font-family: 'Inter', system-ui, sans-serif">
+  <sc-if value="{{sbOpen}}" hint-placeholder-val="{{true}}"><div class="sb-col"><dc-import name="S2Sidebar" active="kalendarz" on-collapse="{{collapseSb}}" min-height="1000" hint-size="100%,1000px"></dc-import></div></sc-if>
+  <sc-if value="{{sbRail}}" hint-placeholder-val="{{false}}">
+  <nav aria-label="Główna nawigacja (zwinięta)" class="rail" style="{{railS}}">
+    <span style="height: 40px; display: grid; place-items: center"><svg width="22" height="22" viewBox="0 0 48 48" role="img" aria-label="rhytm"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect></svg></span>
+    <button type="button" aria-label="Pokaż pasek boczny (Ctrl+\\)" title="Pokaż pasek boczny · Ctrl+\\" onClick="{{expandRail}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg></button>
+    <a href="S2CommandK.dc.html" aria-label="Szukaj" title="Szukaj · ⌘K"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a>
+    <a href="S2Notifications.dc.html" aria-label="Powiadomienia" title="Powiadomienia" style="position: relative"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span aria-hidden="true" style="position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #c2410c"></span></a>
+    <span aria-hidden="true" style="width: 24px; height: 1px; background: rgba(0,0,0,.08); margin: 6px 0"></span>
+    <a href="S2Today.dc.html" aria-label="Dziś" title="Dziś"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg></a>
+    <a href="S2Calendar.dc.html" class="on" aria-label="Kalendarz" title="Kalendarz" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></a>
+    <a href="S2Sport.dc.html" aria-label="Sport" title="Sport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></a>
+    <a href="S2Habits.dc.html" aria-label="Nawyki i sen" title="Nawyki i sen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg></a>
+    <a href="S2Passwords.dc.html" aria-label="Hasła" title="Hasła"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></a>
+    <span aria-hidden="true" style="width: 24px; height: 1px; background: rgba(0,0,0,.08); margin: 6px 0"></span>
+    <sc-for list="{{railPages}}" as="p" hint-placeholder-count="4"><a href="{{p.href}}" class="{{p.cls}}" aria-label="{{p.l}}" title="{{p.l}}"><dc-import name="S2PageIcon" icon="{{p.icon}}" size="16" fallback="table" hint-size="16px,16px"></dc-import></a></sc-for>
+    <span style="flex: 1"></span>
+    <a href="S2Help.dc.html" aria-label="Pomoc i opinie" title="Pomoc i opinie"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></a>
+    <a href="S2Settings.dc.html" aria-label="Ustawienia" title="Ustawienia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg></a>
+    <span class="avatar" style="width: 28px; height: 28px; font-size: 12px; margin-top: 6px">M</span>
+  </nav>
+  </sc-if>
+  <main class="main" style="position: relative; display: flex; flex-direction: column; min-height: 0; height: 100%">
+    <header class="topbar" style="flex-wrap: wrap; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 8px; min-width: 0">
+        <button type="button" class="btng ic xs" aria-label="{{panelLbl}}" aria-pressed="{{panelPressed}}" onClick="{{togglePanel}}" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path></svg></button>
+        <button type="button" class="btn xs" onClick="{{goToday}}">Dziś</button>
+        <span style="display: inline-flex"><button type="button" class="btng ic xs" aria-label="{{prevLbl}}" onClick="{{goPrev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic xs" aria-label="{{nextLbl}}" onClick="{{goNext}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span>
+        <h1 class="h-title" style="margin-left: 4px; white-space: nowrap">{{title}}</h1><span class="hint num" style="white-space: nowrap">{{sub}}</span>
       </div>
-      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
-        <div style="position: relative">
-          <button type="button" class="btn" aria-expanded="{{catsOpen}}" aria-haspopup="true" onClick="{{toggleCats}}">
-            <span aria-hidden="true" style="display: inline-flex"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d}}"></span></sc-for></span>
-            Kategorie <span class="bdg sec num">{{catsCount}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
-          </button>
-          <sc-if value="{{catsOpenB}}" hint-placeholder-val="{{false}}">
-            <div role="menu" aria-label="Kategorie" class="pop" style="position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; width: 230px; padding: 4px; display: flex; flex-direction: column">
-              <div class="mi-lbl">Pokaż w kalendarzu</div>
-              <sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button type="button" role="menuitemcheckbox" class="mi" aria-checked="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cbx" aria-checked="{{c.pressed}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{c.dot}}"></span><span style="{{c.nameS}}">{{c.name}}</span></button></sc-for>
-              <div class="mi-sep"></div>
-              <a href="S2CategoryDialog.dc.html" class="mi" style="color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Kategoria</a>
-            </div>
-          </sc-if>
-        </div>
-        <nav class="seg" aria-label="Widok"><a href="S2CalendarDay.dc.html">Dzień</a><a href="S2Calendar.dc.html" aria-current="page">Tydzień</a><a href="S2CalendarMonth.dc.html">Miesiąc</a></nav>
-        <a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div role="group" aria-label="Widok kalendarza" class="seg"><button type="button" aria-pressed="{{vDay}}" onClick="{{setDay}}">Dzień</button><button type="button" aria-pressed="{{vWeek}}" onClick="{{setWeek}}">Tydzień</button><button type="button" aria-pressed="{{vMonth}}" onClick="{{setMonth}}">Miesiąc</button></div>
+        <button type="button" class="btnp" onClick="{{newBlock}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</button>
       </div>
     </header>
-    <div id="rh-siatka-tydzien-c" style="flex: 1 1 auto; min-height: 0; overflow: auto">
-      <div style="min-width: 760px">
-        <div style="position: sticky; top: 0; z-index: 4; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,.08)">
-          <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr))">
-            <div></div>
-            <sc-for list="{{days}}" as="d" hint-placeholder-count="7"><div style="padding: 8px 10px 6px; border-left: 1px solid rgba(0,0,0,.06); display: flex; align-items: center; gap: 6px"><span style="font-size: 12px; font-weight: 500; color: #686868">{{d.dow}}</span><span style="{{d.numS}}">{{d.num}}</span></div></sc-for>
+
+    <div style="display: flex; align-items: stretch; flex: 1; min-height: 0">
+      <sc-if value="{{panel}}" hint-placeholder-val="{{true}}">
+      <aside aria-label="Panel kalendarza" style="width: 232px; flex: none; border-right: 1px solid rgba(0,0,0,.08); padding: 16px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+        <section aria-label="{{miniTitle}}">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px 8px"><b style="font-size: 13px; font-weight: 600">{{miniTitle}}</b><span style="display: inline-flex"><button type="button" class="btng ic xs" aria-label="Poprzedni miesiąc" onClick="{{miniPrev}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic xs" aria-label="Następny miesiąc" onClick="{{miniNext}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div>
+          <div class="mm num">
+            <span class="hd"></span><span class="hd">pn</span><span class="hd">wt</span><span class="hd">śr</span><span class="hd">cz</span><span class="hd">pt</span><span class="hd">sb</span><span class="hd">nd</span>
+            <sc-for list="{{mini}}" as="c" hint-placeholder-count="48">
+              <sc-if value="{{c.isWk}}" hint-placeholder-val="{{false}}"><span class="wk">{{c.t}}</span></sc-if>
+              <sc-if value="{{c.isDay}}" hint-placeholder-val="{{true}}"><button type="button" class="{{c.cls}}" aria-label="{{c.aria}}" onClick="{{c.pick}}">{{c.t}}</button></sc-if>
+            </sc-for>
           </div>
-          <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); border-top: 1px solid rgba(0,0,0,.05)">
-            <div style="font-size: 11px; color: #686868; padding: 6px; text-align: right; line-height: 1.2">cały<br>dzień</div>
-            <sc-for list="{{days}}" as="d" hint-placeholder-count="7"><div style="padding: 4px; border-left: 1px solid rgba(0,0,0,.06); min-height: 28px"><sc-if value="{{d.renewal}}" hint-placeholder-val="{{false}}"><a href="S2CalendarRenewal.dc.html" class="bdg out lg" style="width: 100%; justify-content: flex-start; border-style: dashed; text-decoration: none; overflow: hidden"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg><span style="overflow: hidden; text-overflow: ellipsis">{{d.renewal}}</span></a></sc-if></div></sc-for>
+        </section>
+        <section aria-label="Kategorie">
+          <div class="plbl" style="display: flex; justify-content: space-between; align-items: center">Kategorie<button type="button" class="btng ic xs" aria-label="Nowa kategoria" style="color: #686868" onClick="{{openCat}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
+          <sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+            <button type="button" class="catrow" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cb" style="{{c.cbS}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{true}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span><span style="{{c.nameS}}">{{c.name}}</span></button>
+          </sc-for>
+        </section>
+        <section aria-label="Warstwy">
+          <div class="plbl">Warstwy</div>
+          <sc-for list="{{layers}}" as="c" hint-placeholder-count="2">
+            <button type="button" class="catrow" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}"><span class="cb" style="{{c.cbS}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{true}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span><span style="{{c.nameS}}">{{c.name}}</span><span class="hint" style="margin-left: auto">{{c.sub}}</span></button>
+          </sc-for>
+        </section>
+        <div style="flex: 1"></div>
+        <div class="hint" style="padding: 0 8px">{{sumLbl}}: <b class="num" style="color: #262626; font-weight: 500">{{sumH}}</b> zaplanowane</div>
+      </aside>
+      </sc-if>
+
+      <sc-if value="{{isGrid}}" hint-placeholder-val="{{true}}">
+      <div style="flex: 1; min-width: 0; min-height: 0; display: flex">
+        <div style="flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column">
+          <div style="{{gridS}}; border-bottom: 1px solid rgba(0,0,0,.08)">
+            <span class="hint num" style="align-self: end; padding: 0 8px 6px; font-size: 11px">GMT+1</span>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+              <div style="{{d.headS}}">
+                <span style="font-size: 12px; color: #686868; font-weight: 500">{{d.dow}}</span>
+                <button type="button" class="dnum num" style="{{d.numS}}" aria-label="{{d.numLbl}}" onClick="{{d.openDay}}">{{d.num}}</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="{{gridS}}; border-bottom: 1px solid rgba(0,0,0,.08); min-height: 30px">
+            <span class="hint" style="font-size: 11px; padding: 8px; text-align: right">cały dzień</span>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+              <div style="{{d.allS}}">
+                <sc-for list="{{d.renew}}" as="rn" hint-placeholder-count="0"><span style="position: relative; display: block"><button type="button" onClick="{{rn.pick}}" aria-label="{{rn.aria}}" aria-expanded="{{rn.exp}}" style="display: block; width: 100%; box-sizing: border-box; text-align: left; border: 0; font: inherit; cursor: pointer; font-size: 12px; {{rn.sz}} border-radius: 6px; background: #fff7ed; color: #9a3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{rn.t}}</button><sc-if value="{{rn.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="{{rp.aria}}" class="pop cpop" style="{{rn.popS}}" onClick="{{stop}}" onMouseMove="{{stop}}">
+                  <div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 50%; background: #c2410c; flex: none"></span><span class="hint" style="flex: 1">Odnowienie · Subskrypcje</span><button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeRenew}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+                  <div><b style="display: block; font-size: 16px; font-weight: 600">{{rp.name}}</b><span class="hint num">{{rp.when}}</span></div>
+                  <div style="display: grid; grid-template-columns: 90px 1fr; gap: 6px 12px; border-top: 1px solid rgba(0,0,0,.08); padding-top: 10px; font-size: 13px"><span class="hint">Kwota</span><span class="num" style="font-weight: 500">{{rp.amount}}</span><span class="hint">Kategoria</span><span>{{rp.cat}}</span><span class="hint">Cykl</span><span>{{rp.cycle}}</span><span class="hint">Następne</span><span class="num">{{rp.next}}</span></div>
+                  <p class="hint" style="margin: 0">Tylko podgląd.</p>
+                  <a href="S2Main.dc.html" class="btn xs" style="justify-content: center; text-decoration: none">Otwórz w Subskrypcjach</a>
+                </div></sc-if></span></sc-for>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="{{gridS}}; position: relative; flex: 1; min-height: 0">
+            <div style="display: flex; flex-direction: column">
+              <sc-for list="{{hours}}" as="h" hint-placeholder-count="16"><div class="num" style="flex: 1 1 0; min-height: 0; font-size: 11px; color: #686868; text-align: right; padding-right: 8px; box-sizing: border-box; transform: translateY(-7px)">{{h}}</div></sc-for>
+            </div>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+              <div style="{{d.colS}}" onClick="{{d.click}}" onMouseMove="{{d.move}}" onMouseLeave="{{leaveGhost}}">
+                <sc-for list="{{hours}}" as="h" hint-placeholder-count="16"><div class="hcell"></div></sc-for>
+                <sc-if value="{{d.past}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{d.pastS}}"></div></sc-if>
+                <sc-if value="{{d.ghostHere}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{ghostS}}">{{ghostT}}</div></sc-if>
+                <sc-for list="{{d.blocks}}" as="b" hint-placeholder-count="2">
+                  <button type="button" class="blk2" style="{{b.s}}" aria-label="{{b.aria}}" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}">
+                    <span style="display: block; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="font-size: 13px; font-weight: 500; color: #262626">{{b.t}}</span><span class="num" style="font-size: 11px; color: #525252; margin-left: 6px">{{b.time}}{{b.count}}</span></span>
+                  </button>
+                </sc-for>
+                <sc-if value="{{d.isToday}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{nowS}}"><span style="position: absolute; left: -5px; top: -4px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444"></span></div></sc-if>
+
+                <sc-if value="{{d.popHere}}" hint-placeholder-val="{{false}}">
+                  <div role="dialog" aria-label="{{pop.t}}" class="pop cpop" style="{{popS}}" onClick="{{stop}}" onMouseMove="{{stop}}">
+                    <div style="display: flex; align-items: center; gap: 8px">
+                      <span style="{{pop.dotS}}"></span><span class="hint" style="flex: 1">{{pop.c}}</span>
+                      <button type="button" class="btng ic xs" aria-label="Edytuj blok" onClick="{{pop.edit}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+                      <button type="button" class="btng ic xs" aria-label="Usuń blok" onClick="{{pop.del}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                      <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAll}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+                    </div>
+                    <div><b style="display: block; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{pop.t}}</b><span class="hint num">{{pop.when}}</span><sc-if value="{{pop.hasRec}}" hint-placeholder-val="{{false}}"><span class="hint" style="display: flex; align-items: center; gap: 4px; margin-top: 2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>Powtarza się {{pop.recTxt}}</span></sc-if></div>
+                    <div style="border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px">
+                      <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: #686868; padding-bottom: 4px"><span>Zadania</span><span class="num">{{pop.cnt}}</span></div>
+                      <sc-for list="{{pop.tasks}}" as="tk" hint-placeholder-count="3">
+                        <label class="tsk"><input type="checkbox" checked="{{tk.done}}" onChange="{{tk.toggle}}"><span style="{{tk.s}}">{{tk.t}}</span></label>
+                      </sc-for>
+                      <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><p class="hint" style="margin: 2px 0 6px">Brak zadań w tym bloku.</p></sc-if>
+                      <input class="inp" type="text" aria-label="Nowe zadanie" placeholder="+ Dodaj zadanie i naciśnij Enter" value="{{newTask}}" onChange="{{onNewTask}}" onKeyDown="{{onNewTaskKey}}" style="height: 32px; font-size: 13px; margin-top: 4px">
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{d.addHere}}" hint-placeholder-val="{{false}}">
+                  <div role="dialog" aria-label="Nowy wpis" class="pop" style="{{addS}}" onClick="{{stop}}" onMouseMove="{{stop}}">
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
+                      <span style="font-size: 14px; font-weight: 600">Nowy wpis</span>
+                      <span class="hint num">{{addWhen}}</span>
+                      <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAll}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+                    </div>
+                    <button type="button" class="mi" style="min-height: 44px" onClick="{{openBlockDlg}}"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(21,128,61,.08); color: #15803d; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg></span><span style="display: flex; flex-direction: column; text-align: left"><span style="font-weight: 500">Blok</span><span class="hint">czas na zadania, z kategorią</span></span></button>
+                    <a href="S2RunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
+                    <a href="S2GymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">trening siłowy</span></span></a>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 56px repeat(7, minmax(0, 1fr)); position: relative">
-          <div><sc-for list="{{hours}}" as="h" hint-placeholder-count="24"><div class="num" style="height: 48px; box-sizing: border-box; font-size: 11px; color: #686868; padding: 0 8px; text-align: right; transform: translateY(-7px)">{{h}}</div></sc-for></div>
-          <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
-            <div style="{{d.colS}}" onClick="{{d.click}}" onMouseMove="{{d.move}}" onMouseLeave="{{d.leave}}">
-              <sc-if value="{{d.hasGhost}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{d.ghostS}}">{{d.ghostT}}</div></sc-if>
-              <sc-for list="{{d.blocks}}" as="b" hint-placeholder-count="1">
-                <button type="button" aria-pressed="{{b.pressed}}" onClick="{{b.pick}}" style="{{b.style}}">
-                  <span style="display: block; line-height: 1.3; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.title}}</span>
-                  <span class="num" style="display: block; font-size: 11px; color: #525252; margin-top: 1px">{{b.time}} {{b.count}}</span>
-                </button>
+
+        <sc-if value="{{isDay}}" hint-placeholder-val="{{false}}">
+        <aside aria-label="Plan dnia" style="overflow-y: auto; width: 300px; flex: none; border-left: 1px solid rgba(0,0,0,.08); padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+          <h2 class="card-t">Plan dnia</h2>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+            <div class="card" style="padding: 10px 12px"><div class="hint">Bloki</div><b class="num" style="font-size: 18px; font-weight: 600">{{dayN}}</b></div>
+            <div class="card" style="padding: 10px 12px"><div class="hint">Godziny</div><b class="num" style="font-size: 18px; font-weight: 600">{{dayH}}</b></div>
+            <div class="card" style="padding: 10px 12px"><div class="hint">Zadania</div><b class="num" style="font-size: 18px; font-weight: 600">{{dayT}}</b></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{agenda}}" as="a" hint-placeholder-count="4">
+              <button type="button" class="ag" aria-pressed="{{a.pressed}}" onClick="{{a.pick}}"><span style="{{a.dotS}}"></span><span class="num hint" style="flex: none">{{a.time}}</span><span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500">{{a.t}}</span><span class="hint num">{{a.cnt}}</span></button>
+            </sc-for>
+            <sc-if value="{{agendaEmpty}}" hint-placeholder-val="{{false}}"><p class="hint" style="margin: 0; padding: 8px 10px">Brak bloków. Kliknij w siatkę, żeby dodać pierwszy.</p></sc-if>
+          </div>
+        </aside>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{isMonth}}" hint-placeholder-val="{{false}}">
+      <div style="flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-bottom: 1px solid rgba(0,0,0,.08)">
+          <sc-for list="{{mDow}}" as="w" hint-placeholder-count="7"><span style="{{w.s}}">{{w.t}}</span></sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); flex: 1; min-height: 0; position: relative">
+          <sc-for list="{{mCells}}" as="c" hint-placeholder-count="42">
+            <div class="mcell" style="{{c.s}}" onClick="{{c.bg}}">
+              <div style="display: flex; justify-content: flex-end"><button type="button" class="dnum num" style="{{c.numS}}" aria-label="{{c.aria}}" onClick="{{c.open}}">{{c.num}}</button></div>
+              <sc-for list="{{c.renew}}" as="rn" hint-placeholder-count="0"><span style="position: relative; display: block"><button type="button" onClick="{{rn.pick}}" aria-label="{{rn.aria}}" aria-expanded="{{rn.exp}}" style="display: block; width: 100%; box-sizing: border-box; text-align: left; border: 0; font: inherit; cursor: pointer; font-size: 12px; {{rn.sz}} border-radius: 6px; background: #fff7ed; color: #9a3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{rn.t}}</button></span></sc-for>
+              <sc-for list="{{c.chips}}" as="ch" hint-placeholder-count="2">
+                <button type="button" class="mchip" style="{{ch.s}}" aria-label="{{ch.aria}}" aria-pressed="{{ch.pressed}}" onClick="{{ch.pick}}"><span style="{{ch.dotS}}"></span><span><span class="num" style="color: #525252">{{ch.time}}</span> {{ch.t}}</span></button>
               </sc-for>
-              <sc-if value="{{d.today}}" hint-placeholder-val="{{false}}"><div aria-hidden="true" style="{{nowLine}}"><span style="position: absolute; left: -5px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444"></span></div></sc-if>
+              <sc-if value="{{c.hasMore}}" hint-placeholder-val="{{false}}"><button type="button" class="more" onClick="{{c.open}}">+{{c.more}} więcej</button></sc-if>
             </div>
           </sc-for>
-          <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
-            <div role="dialog" aria-label="Szczegóły bloku" class="pop" style="{{pop.style}}">
-              <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0">
-                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-                  <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #686868"><span style="{{pop.dot}}"></span>{{pop.cat}}</span>
-                  <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{pop.title}}</span>
-                  <span class="hint num">{{pop.when}}</span>
+          <sc-if value="{{mRenOn}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="{{rp.aria}}" class="pop cpop" style="{{mRenS}}" onClick="{{stop}}" onMouseMove="{{stop}}">
+                  <div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 50%; background: #c2410c; flex: none"></span><span class="hint" style="flex: 1">Odnowienie · Subskrypcje</span><button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeRenew}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+                  <div><b style="display: block; font-size: 16px; font-weight: 600">{{rp.name}}</b><span class="hint num">{{rp.when}}</span></div>
+                  <div style="display: grid; grid-template-columns: 90px 1fr; gap: 6px 12px; border-top: 1px solid rgba(0,0,0,.08); padding-top: 10px; font-size: 13px"><span class="hint">Kwota</span><span class="num" style="font-weight: 500">{{rp.amount}}</span><span class="hint">Kategoria</span><span>{{rp.cat}}</span><span class="hint">Cykl</span><span>{{rp.cycle}}</span><span class="hint">Następne</span><span class="num">{{rp.next}}</span></div>
+                  <p class="hint" style="margin: 0">Tylko podgląd. Edytujesz na stronie Subskrypcje.</p>
+                  <a href="S2Main.dc.html" class="btn xs" style="justify-content: center; text-decoration: none">Otwórz w Subskrypcjach</a>
                 </div>
-                <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{close}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px">
-                <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Zadania</span><span class="hint num">{{pop.doneN}} z {{pop.total}}</span></div>
-                <div class="prog"><div style="{{pop.bar}}"></div></div>
-                <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><span class="hint" style="padding: 6px 0">Brak zadań w tym bloku.</span></sc-if>
-                <sc-for list="{{pop.tasks}}" as="t" hint-placeholder-count="3"><label style="{{t.s}}"><input type="checkbox" checked="{{t.done}}" onChange="{{t.toggle}}">{{t.title}}</label></sc-for>
-                <label class="igroup" style="height: 30px; margin-top: 2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><input type="text" placeholder="Dodaj zadanie" aria-label="Nowe zadanie" style="font-size: 13px"></label>
-              </div>
-              <sc-if value="{{pop.hasNote}}" hint-placeholder-val="{{true}}"><div style="padding: 0 16px"><div class="lbl">Notatka</div><p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #404040">{{pop.note}}</p></div></sc-if>
-              <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(0,0,0,.08); padding: 12px 16px; background: rgba(0,0,0,.025); border-radius: 0 0 11px 11px">
-                <a href="S2BlockDialog.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Edytuj</a>
-                <a href="{{pop.delHref}}" class="btndo sm">Usuń</a>
-                <sc-if value="{{pop.hasRec}}" hint-placeholder-val="{{false}}"><span class="bdg sec" style="margin-left: auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>{{pop.rec}}</span></sc-if>
-              </div>
-            </div>
           </sc-if>
-          <sc-if value="{{hasAdd}}" hint-placeholder-val="{{false}}">
-            <div role="dialog" aria-label="Nowy wpis" class="pop" style="{{add.style}}">
-              <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 8px 8px">
-                <span style="font-size: 14px; font-weight: 600">Nowy wpis</span>
-                <span class="hint num">{{add.when}}</span>
-                <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAdd}}" style="margin-left: auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
-              </div>
-              <a href="S2BlockDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(21,128,61,.08); color: #15803d; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Blok</span><span class="hint">czas na zadania, z kategorią</span></span></a>
-              <a href="S2RunDialog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245,158,11,.1); color: #b45309; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Bieg</span><span class="hint">dystans, czas, tempo</span></span></a>
-              <a href="S2GymLog.dc.html" class="mi" style="min-height: 44px"><span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,.05); color: #404040; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-weight: 500">Siłownia</span><span class="hint">trening siłowy</span></span></a>
-            </div>
+          <sc-if value="{{mPopOn}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="{{pop.t}}" class="pop cpop" style="{{mPopS}}" onClick="{{stop}}" onMouseMove="{{stop}}">
+                    <div style="display: flex; align-items: center; gap: 8px">
+                      <span style="{{pop.dotS}}"></span><span class="hint" style="flex: 1">{{pop.c}}</span>
+                      <button type="button" class="btng ic xs" aria-label="Edytuj blok" onClick="{{pop.edit}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+                      <button type="button" class="btng ic xs" aria-label="Usuń blok" onClick="{{pop.del}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                      <button type="button" class="btng ic xs" aria-label="Zamknij" onClick="{{closeAll}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+                    </div>
+                    <div><b style="display: block; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{pop.t}}</b><span class="hint num">{{pop.when}}</span><sc-if value="{{pop.hasRec}}" hint-placeholder-val="{{false}}"><span class="hint" style="display: flex; align-items: center; gap: 4px; margin-top: 2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>Powtarza się {{pop.recTxt}}</span></sc-if></div>
+                    <div style="border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px">
+                      <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: #686868; padding-bottom: 4px"><span>Zadania</span><span class="num">{{pop.cnt}}</span></div>
+                      <sc-for list="{{pop.tasks}}" as="tk" hint-placeholder-count="3">
+                        <label class="tsk"><input type="checkbox" checked="{{tk.done}}" onChange="{{tk.toggle}}"><span style="{{tk.s}}">{{tk.t}}</span></label>
+                      </sc-for>
+                      <sc-if value="{{pop.empty}}" hint-placeholder-val="{{false}}"><p class="hint" style="margin: 2px 0 6px">Brak zadań w tym bloku.</p></sc-if>
+                      <input class="inp" type="text" aria-label="Nowe zadanie" placeholder="+ Dodaj zadanie i naciśnij Enter" value="{{newTask}}" onChange="{{onNewTask}}" onKeyDown="{{onNewTaskKey}}" style="height: 32px; font-size: 13px; margin-top: 4px">
+                    </div>
+                  </div>
           </sc-if>
         </div>
       </div>
+      </sc-if>
     </div>
+
+    <sc-if value="{{dlgOn}}" hint-placeholder-val="{{false}}">
+      <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 40"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="bd-title" class="dlg" style="position: absolute; z-index: 41; left: 50%; top: 56px; transform: translateX(-50%); width: min(560px, calc(100% - 32px))">
+        <div class="dlg-h">
+          <div><h2 id="bd-title" class="dlg-t">{{dTitle}}</h2><p class="dlg-d">{{dDesc}}</p></div>
+          <button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{closeDlg}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <div class="dlg-b">
+          <label class="fld">Tytuł<input class="inp" type="text" placeholder="np. Matematyka — ćwiczenia" value="{{dl.t}}" onChange="{{dOnT}}" onKeyDown="{{dOnKey}}"></label>
+          <div class="fld">Kategoria<div role="group" aria-label="Kategoria" style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{dCats}}" as="c" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}"><span class="dot" style="{{c.dot}}"></span>{{c.label}}</button></sc-for>
+            <button type="button" class="chip" style="color: #686868; border-style: dashed; box-shadow: none" onClick="{{openCatFromDlg}}">+ Nowa</button>
+          </div></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 12px">
+            <div class="fld"><span>Dzień</span><span style="position: relative; display: block"><button type="button" class="dd num" onClick="{{dpBlk.toggle}}" aria-haspopup="dialog" aria-expanded="{{dpBlk.exp}}" aria-label="Dzień"><span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868; flex: none"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg>{{dpBlk.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dpBlk.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; width: 280px; box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-weight: 400" onClick="{{dpBlk.stop}}"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px"><b style="font-size: 14px; font-weight: 600">{{dpBlk.title}}</b><span style="display: flex; gap: 2px"><button type="button" class="btng ic xs" aria-label="Poprzedni miesiąc" onClick="{{dpBlk.prev}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic xs" aria-label="Następny miesiąc" onClick="{{dpBlk.next}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 11px; font-weight: 500; color: #686868; text-align: center"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{dpBlk.days}}" as="dpd" hint-placeholder-count="42"><button type="button" aria-label="{{dpd.aria}}" aria-pressed="{{dpd.p}}" onClick="{{dpd.pick}}" style="{{dpd.s}}">{{dpd.n}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px; margin-top: 2px"><button type="button" class="btng xs" onClick="{{dpBlk.today}}">Dziś</button><button type="button" class="btn xs" onClick="{{dpBlk.close}}">Zamknij</button></div></div></sc-if></span></div>
+            <label class="fld">Od<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{dl.from}}" onChange="{{dOnFrom}}" aria-invalid="{{dBadA}}"></span></label>
+            <label class="fld">Do<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="{{dl.to}}" onChange="{{dOnTo}}" aria-invalid="{{dBadA}}"></span></label>
+          </div>
+          <sc-if value="{{dBad}}" hint-placeholder-val="{{false}}"><span class="err" style="margin-top: -6px">Podaj godziny jako GG:MM, „Do” później niż „Od”, w zakresie 07:00–23:00.</span></sc-if>
+          <sc-if value="{{dNew}}" hint-placeholder-val="{{true}}">
+          <div class="fld">Powtarzanie
+            <div class="seg" role="radiogroup" aria-label="Powtarzanie" style="align-self: flex-start"><sc-for list="{{reps}}" as="r" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{r.pressed}}" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}">{{r.label}}</button></sc-for></div>
+            <sc-if value="{{dWeekly}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 400"><sc-for list="{{dDays}}" as="d" hint-placeholder-count="7"><button type="button" aria-pressed="{{d.on}}" onClick="{{d.toggle}}" style="{{d.s}}">{{d.d}}</button></sc-for></div>
+            </sc-if>
+            <span class="hint">{{repInfo}} Każde powtórzenie ma własną, pustą listę zadań.</span>
+          </div>
+          </sc-if>
+          <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><textarea class="inp" rows="2" value="{{dl.note}}" onChange="{{dOnNote}}"></textarea></label>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; color: #686868"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+            <span style="flex: 1">Przypomnij 5 min wcześniej</span>
+            <button type="button" class="sw" role="switch" aria-checked="{{dRemind}}" aria-label="Przypomnienie" onClick="{{dToggleRemind}}"></button>
+          </div>
+        </div>
+        <div class="dlg-f">
+          <button type="button" class="btng" onClick="{{closeDlg}}">Anuluj</button><button type="button" class="btnp" disabled="{{dOff}}" onClick="{{dSave}}">Zapisz blok</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{scopeOn}}" hint-placeholder-val="{{false}}">
+      <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 50"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="sc-title" class="dlg" style="position: absolute; z-index: 51; left: 50%; top: 120px; transform: translateX(-50%); width: min(480px, calc(100% - 32px))">
+        <div class="dlg-h"><div><h2 id="sc-title" class="dlg-t">{{sc.title}}</h2><p class="dlg-d">{{sc.desc}}</p></div><button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{closeScope}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+        <div class="dlg-b">
+          <div role="radiogroup" aria-label="Zakres zmiany" style="display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{scOpts}}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="{{o.s}}"><span style="{{o.dotS}}"></span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{o.t}}</span><span class="hint">{{o.d}}</span></span></button></sc-for>
+          </div>
+          <span class="hint">Zadania z odhaczonych wystąpień nie przepadają.</span>
+        </div>
+        <div class="dlg-f"><button type="button" class="btng" onClick="{{closeScope}}">Anuluj</button><button type="button" class="{{sc.btnCls}}" onClick="{{applyScope}}">{{sc.btn}}</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{confOn}}" hint-placeholder-val="{{false}}">
+      <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 50"></div>
+      <div role="alertdialog" aria-modal="true" aria-labelledby="cf-title" class="dlg" style="position: absolute; z-index: 51; left: 50%; top: 160px; transform: translateX(-50%); width: min(400px, calc(100% - 32px))">
+        <div class="dlg-h"><div><h2 id="cf-title" class="dlg-t">Usunąć blok?</h2><p class="dlg-d">{{confDesc}}</p></div></div>
+        <div class="dlg-f"><button type="button" class="btng" onClick="{{closeConf}}">Anuluj</button><button type="button" class="btnd" onClick="{{doConf}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Usuń</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{catOn}}" hint-placeholder-val="{{false}}">
+      <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 52"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="ct-title" class="dlg" style="position: absolute; z-index: 53; left: 50%; top: 96px; transform: translateX(-50%); width: min(440px, calc(100% - 32px))">
+        <div class="dlg-h"><div><h2 id="ct-title" class="dlg-t">Nowa kategoria</h2><p class="dlg-d">Kolor kropki w kalendarzu i w filtrach.</p></div><button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{closeCat}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+        <div class="dlg-b">
+          <label class="fld">Nazwa<input class="inp" type="text" placeholder="np. Angielski" value="{{cd.name}}" onChange="{{cdOnName}}" onKeyDown="{{cdOnKey}}" aria-invalid="{{cdDupA}}"></label>
+          <sc-if value="{{cdDup}}" hint-placeholder-val="{{false}}"><span class="err" style="margin-top: -6px">Taka kategoria już jest.</span></sc-if>
+          <div class="fld">Kolor
+            <div role="radiogroup" aria-label="Kolor" style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{cdColors}}" as="c" hint-placeholder-count="9"><button type="button" role="radio" aria-checked="{{c.on}}" aria-label="{{c.aria}}" onClick="{{c.pick}}" style="{{c.s}}"></button></sc-for></div>
+            <span class="hint" style="font-weight: 400">wyblakłe są już zajęte, ale można je wybrać</span>
+          </div>
+          <div class="fld">Podgląd
+            <div style="display: flex; align-items: center; gap: 12px; font-weight: 400"><span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px"><span style="{{cdDotS}}"></span>{{cdName}}<span class="hint num">0</span></span><span style="{{cdBlockS}}"><span style="font-size: 13px; font-weight: 500; color: #262626">Angielski</span><span class="num" style="font-size: 11px; color: #525252; margin-left: 6px">18:00–19:00</span></span></div>
+          </div>
+        </div>
+        <div class="dlg-f"><button type="button" class="btng" onClick="{{closeCat}}">Anuluj</button><button type="button" class="btnp" disabled="{{cdOff}}" onClick="{{cdSave}}">Dodaj kategorię</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+      <div role="status" class="toast" style="position: absolute; right: 24px; bottom: 24px; z-index: 30">
+        <span>{{toastT}}</span>
+        <button type="button" class="btn xs" onClick="{{undo}}">Cofnij</button>
+      </div>
+    </sc-if>
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"view":{"editor":"enum","options":["day","week","month"],"default":"week"},"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { sel: 'kod', hidden: { Dom: true }, done: {} }; }
-  componentDidMount() {
-    try { sessionStorage.setItem('rh-from', 'S2Calendar.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {}
-    const el = document.getElementById('rh-siatka-tydzien-c');
-    if (el) el.scrollTop = 6 * 48;
+  constructor(props) {
+    super(props);
+    const o = props && props.open;
+    let s = {};
+    if (o === 'newblock') s = { dlg: { mode: 'new', date: '2026-11-17', from: '10:00', to: '12:30', t: 'rhytm — kod', c: 'Projekty', note: 'Najpierw migracje, potem UI.', remind: true, rep: 'weekly', wd: { 1: true } } };
+    if (o === 'scope') s = { scope: { mode: 'edit', id: 'p3_2026-11-17', ser: 'p3', date: '2026-11-17', t: 'rhytm — kod', recTxt: 'co tydzień we wtorki', change: 'nowa godzina 11:00–13:30', patch: { s: 11, e: 13.5 }, choice: 'one' } };
+    if (o === 'delete') s = { confirmDel: { id: 'p5_2026-11-17', t: 'Bieg 10 km', when: 'wt 17.11 · 16:00–17:00' } };
+    if (o === 'category') s = { catDlg: { name: 'Angielski', color: '#db2777' } };
+    if (o === 'renewal') s = { renew: 'Netflix|2026-11-21' };
+    this.state = s;
   }
   renderVals() {
-    const CATDEF = [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Subscriptions', ''], ['Dom', '#a16207']];
-    const hidden = this.state.hidden;
-    const cats = CATDEF.map((c) => {
-      const on = !hidden[c[0]];
+    const mkDP = (key, val, set, force, onClose) => {
+      const ST = this.state || {};
+      const TD = '2026-11-17';
+      const MN = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+      const DWS = ['pn', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+      const v0 = val || TD;
+      const open = force ? true : ST.dpOpen === key;
+      const view = (ST.dpKey === key && ST.dpView) || v0.slice(0, 7);
+      const y = +view.slice(0, 4), m = +view.slice(5, 7);
+      const first = Date.UTC(y, m - 1, 1), lead = (new Date(first).getUTCDay() + 6) % 7;
+      const shut = () => { this.setState({ dpOpen: null, dpView: null, dpKey: null }); if (onClose) onClose(); };
+      const pd = (x) => String(x).padStart(2, '0');
+      const vd = new Date(Date.UTC(+v0.slice(0, 4), +v0.slice(5, 7) - 1, +v0.slice(8, 10)));
       return {
-        name: c[0], pressed: on ? 'true' : 'false', on, color: c[1],
-        toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }) }),
-        nameS: on ? '' : 'color:#686868',
-        dot: c[1] ? 'width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex:none;' + (on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1]) : 'width:10px;height:8px;flex:none;border-radius:2px;box-sizing:border-box;border:1px dashed ' + (on ? '#404040' : '#a3a3a3')
-      };
-    });
-    const visibleCats = cats.filter((c) => c.on);
-    const openC = !!this.state.catsOpen;
-    const catsOut = {
-      cats, catsOpen: openC ? 'true' : 'false', catsOpenB: openC, toggleCats: () => this.setState({ catsOpen: !openC }),
-      catsCount: visibleCats.length + '/' + cats.length,
-      dots: visibleCats.filter((c) => c.color).slice(0, 4).map((c, i) => 'width:9px;height:9px;border-radius:50%;border:1.5px solid #ffffff;background:' + c.color + (i ? ';margin-left:-4px' : ''))
-    };    const mkTasks = (selB) => selB.tasks.map((t, k) => {
-      const key = selB.id + k;
-      const done = this.state.done[key] !== undefined ? this.state.done[key] : t[1];
-      return { title: t[0], done, toggle: () => this.setState({ done: Object.assign({}, this.state.done, { [key]: !done }) }), s: 'display:flex;align-items:center;gap:10px;min-height:30px;font-size:14px;cursor:pointer;' + (done ? 'color:#686868;text-decoration:line-through' : 'color:#262626') };
-    });
-    const mkPop = (selB, posStyle) => {
-      const tasks = mkTasks(selB);
-      const doneN = tasks.filter((t) => t.done).length;
-      return {
-        title: selB.title, cat: selB.cat, when: selB.day + ' · ' + selB.time, tasks, doneN, total: tasks.length, empty: tasks.length === 0,
-        hasNote: selB.id === 'kod', note: 'Najpierw migracje, potem UI. Okno „+ Pole” wg makiety.', rec: selB.rec ? 'Co tydzień' : '', hasRec: !!selB.rec,
-        delHref: selB.rec ? 'S2ScopeDialog.dc.html' : 'S2DeleteBlockDialog.dc.html',
-        dot: 'width:8px;height:8px;border-radius:50%;background:' + selB.color,
-        bar: 'height:6px;border-radius:999px;background:#15803d;width:' + (tasks.length ? Math.round(doneN / tasks.length * 100) : 0) + '%',
-        style: 'position:absolute;z-index:5;width:340px;display:flex;flex-direction:column;gap:14px;font-size:14px;text-align:left;cursor:default;' + posStyle
+        open, exp: open ? 'true' : 'false',
+        txt: val ? DWS[(vd.getUTCDay() + 6) % 7] + ', ' + pd(vd.getUTCDate()) + '.' + pd(vd.getUTCMonth() + 1) + '.' + vd.getUTCFullYear() : 'Wybierz datę',
+        toggle: () => this.setState({ dpOpen: open ? null : key, dpView: null, dpKey: null }),
+        title: MN[m - 1] + ' ' + y,
+        prev: () => { const d = new Date(Date.UTC(y, m - 2, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        next: () => { const d = new Date(Date.UTC(y, m, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+        today: () => { set(TD); shut(); }, close: shut,
+        days: Array.from({ length: 42 }, (_, i) => {
+          const d = new Date(first + (i - lead) * 86400000), k = d.toISOString().slice(0, 10);
+          const inM = d.getUTCMonth() === m - 1, sel = k === val, td = k === TD;
+          return { n: String(d.getUTCDate()), aria: DWS[(d.getUTCDay() + 6) % 7] + ' ' + d.getUTCDate() + '.' + pd(d.getUTCMonth() + 1), p: sel ? 'true' : 'false',
+            s: 'height:32px;border-radius:8px;border:0;padding:0;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#262626;color:#fafafa;font-weight:600' : td ? 'background:#fff;color:#262626;font-weight:600;box-shadow:inset 0 0 0 1px #262626' : 'background:transparent;color:' + (inM ? '#262626' : '#b5b5b5')),
+            pick: () => { set(k); shut(); } };
+        })
       };
     };
-    const H = 48;
-    const fmt = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + (x % 1 ? '30' : '00');
-    const all = [];
-    const block = (id, day, start, end, title, cat, color, opts) => {
-      const o = opts || {};
-      const sel = this.state.sel === id;
-      const b = {
-        id, cat, title, color, day, start, tasks: o.tasks || [], rec: o.rec || '',
-        time: fmt(start) + '–' + fmt(end), count: o.count ? '· ' + o.count : '',
-        pressed: sel ? 'true' : 'false',
-        pick: () => this.setState({ sel: sel ? null : id, add: null }),
-        style: 'position:absolute;left:3px;right:3px;top:' + (start * H + 1) + 'px;height:' + ((end - start) * H - 3) + 'px;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;text-align:left;font:inherit;cursor:pointer;border-radius:8px;padding:4px 8px;overflow:hidden;color:#262626;background:' + (o.planned ? '#ffffff' : color + '14') + ';border:1px ' + (o.planned ? 'dashed ' + color : 'solid ' + color + '4d') + ';box-shadow:' + (sel ? '0 0 0 2px #fff,0 0 0 4px ' + color + '66' : 'none')
-      };
-      all.push(b);
-      return b;
-    };
-    const days = [
-      { dow: 'pon', num: '16', renewal: '', blocks: [block('m1', 'pon 16.11', 8, 10, 'Matematyka — ćwiczenia', 'Studia', '#0070f3', { count: '0/3', tasks: [['Zadania 4.1–4.6', false], ['Powtórka całek', false], ['Lista 5', false]] }), block('so', 'pon 16.11', 13, 15, 'Systemy operacyjne', 'Studia', '#0070f3')] },
-      { dow: 'wt', num: '17', today: true, renewal: '', blocks: [block('kod', 'wt 17.11', 10, 12.5, 'rhytm — kod', 'Projekty', '#15803d', { count: '2/4', rec: true, tasks: [['Migracja tabel stron', true], ['Szablony w kodzie', true], ['Okno „+ Pole”', false], ['Testy RLS', false]] }), block('bieg', 'wt 17.11', 16, 17, 'Bieg 10 km', 'Sport', '#c2410c')] },
-      { dow: 'śr', num: '18', renewal: '', blocks: [block('kl1', 'śr 18.11', 9, 11, 'Strona klienta', 'Praca', '#7c3aed', { count: '1/2', tasks: [['Galeria zdjęć', true], ['Formularz kontaktu', false]] }), block('bd1', 'śr 18.11', 18, 19.5, 'Bazy danych', 'Studia', '#0070f3')] },
-      { dow: 'czw', num: '19', renewal: '', blocks: [block('bd2', 'czw 19.11', 8, 9.5, 'Bazy danych', 'Studia', '#0070f3'), block('sil', 'czw 19.11', 15, 16.5, 'Siłownia — push', 'Sport', '#c2410c')] },
-      { dow: 'pt', num: '20', renewal: '', blocks: [block('ns', 'pt 20.11', 10, 12, 'NetScope — research', 'Projekty', '#15803d', { count: '0/2', tasks: [['Porównać GUI do nmapa', false], ['Lista funkcji SOFT', false]] }), block('kl2', 'pt 20.11', 14, 15, 'Strona klienta', 'Praca', '#7c3aed')] },
-      { dow: 'sob', num: '21', renewal: 'Netflix · 43,00 zł', blocks: [block('lb', 'sob 21.11', 10, 11.5, 'Długi bieg (plan)', 'Sport', '#c2410c', { planned: true })] },
-      { dow: 'nd', num: '22', renewal: '', blocks: [block('plan', 'nd 22.11', 18, 19, 'Plan tygodnia', 'Projekty', '#15803d')] }
+    const st = this.state || {};
+    const view = st.view || this.props.view || 'week';
+    const TODAY = '2026-11-17', NOW = 11.33, START = 7, END = 23, SPAN = END - START;
+    const pct = (h) => ((h - START) / SPAN * 100) + '%';
+    const len = (h) => (h / SPAN * 100) + '%';
+    const topClamp = (h, px) => 'top:min(' + pct(h) + ', calc(100% - ' + px + 'px))';
+    const anchor = st.anchor || TODAY;
+    const hidden = st.hidden || {};
+    const layersOff = st.layersOff || {};
+    const tasksSt = st.tasks || {};
+    const edits = st.edits || {};
+    const deleted = st.deleted || {};
+    const created = st.created || [];
+
+    // Daty
+    const P = (k) => { const a = k.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); };
+    const K = (d) => d.toISOString().slice(0, 10);
+    const add = (k, n) => { const d = P(k); d.setUTCDate(d.getUTCDate() + n); return K(d); };
+    const dowOf = (k) => (P(k).getUTCDay() + 6) % 7;
+    const monStart = (k) => add(k, -dowOf(k));
+    const ym = (k) => k.slice(0, 7);
+    const addMonth = (k, n) => { const d = P(k.slice(0, 7) + '-01'); d.setUTCMonth(d.getUTCMonth() + n); return K(d); };
+    const isoWeek = (k) => { const d = P(k); const dn = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - dn + 3); const ft = new Date(Date.UTC(d.getUTCFullYear(), 0, 4)); return 1 + Math.round(((d - ft) / 86400000 - 3 + ((ft.getUTCDay() + 6) % 7)) / 7); };
+    const MN = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+    const MG = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const DOW = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+    const DOWL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'];
+    const mIdx = (k) => Number(k.slice(5, 7)) - 1;
+    const dNum = (k) => Number(k.slice(8, 10));
+    const yr = (k) => k.slice(0, 4);
+    const fmt = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+    const durTxt = (h) => (h >= 1 ? Math.floor(h) + ' h' : '') + (h % 1 ? (h >= 1 ? ' ' : '') + '30 min' : '');
+
+    // Dane
+    const CATS = st.cats || [['Studia', '#0070f3'], ['Projekty', '#15803d'], ['Praca', '#7c3aed'], ['Sport', '#c2410c'], ['Dom', '#a16207']];
+    const PALETTE = ['#0070f3', '#15803d', '#7c3aed', '#c2410c', '#a16207', '#db2777', '#0891b2', '#4d7c0f', '#525252'];
+    const LOC = ['w poniedziałki', 'we wtorki', 'w środy', 'w czwartki', 'w piątki', 'w soboty', 'w niedziele'];
+    const recName = (r) => r.length === 7 ? 'codziennie' : (r.join(',') === '0,1,2,3,4' ? 'w dni robocze' : 'co tydzień ' + r.map((i) => LOC[i]).join(', '));
+    const COL = {}; CATS.forEach((c) => { COL[c[0]] = c[1]; });
+    const PAT = [
+      { w: 0, s: 8, e: 10, t: 'Matematyka — ćwiczenia', c: 'Studia', tk: ['Zadania 4.1–4.6', 'Powtórka całek', 'Lista 5'] },
+      { w: 0, s: 13, e: 15, t: 'Systemy operacyjne', c: 'Studia', tk: [] },
+      { w: 1, s: 8, e: 9.5, t: 'Matematyka — ćwiczenia', c: 'Studia', tk: ['Lista 4', 'Powtórka do kolokwium'], today: [true, true] },
+      { w: 1, s: 10, e: 12.5, t: 'rhytm — kod', c: 'Projekty', tk: ['Migracja tabel stron', 'Szablony w kodzie', 'Okno „+ Pole”', 'Testy e2e'], today: [true, true, false, false] },
+      { w: 1, s: 13, e: 14.5, t: 'Wykład — bazy danych', c: 'Studia', tk: ['Notatki z wykładu', 'Zadanie z normalizacji', 'Rozdział 5'] },
+      { w: 1, s: 16, e: 17, t: 'Bieg 10 km', c: 'Sport', tk: [], once: '2026-11-17' },
+      { w: 2, s: 9, e: 11, t: 'Strona klienta', c: 'Praca', tk: ['Galeria zdjęć', 'Formularz kontaktu'] },
+      { w: 2, s: 9.5, e: 10.5, t: 'Konsultacje — matematyka', c: 'Studia', tk: [] },
+      { w: 2, s: 18, e: 19.5, t: 'Bazy danych', c: 'Studia', tk: [] },
+      { w: 3, s: 8, e: 9.5, t: 'Bazy danych', c: 'Studia', tk: [] },
+      { w: 3, s: 15, e: 16.5, t: 'Siłownia — push', c: 'Sport', tk: [] },
+      { w: 3, s: 19, e: 20, t: 'Sprzątanie', c: 'Dom', tk: [] },
+      { w: 4, s: 10, e: 12, t: 'NetScope — research', c: 'Projekty', tk: ['Porównać GUI do nmapa', 'Lista funkcji SOFT'] },
+      { w: 4, s: 14, e: 15, t: 'Strona klienta', c: 'Praca', tk: [] },
+      { w: 5, s: 10, e: 11.5, t: 'Długi bieg', c: 'Sport', tk: [], plan: true },
+      { w: 6, s: 18, e: 19, t: 'Plan tygodnia', c: 'Projekty', tk: [] }
     ];
-    days.forEach((d) => {
-      d.blocks = d.blocks.filter((b) => !hidden[b.cat]);
-      if (hidden.Subscriptions) d.renewal = '';
-      d.today = !!d.today;
-      d.numS = d.today ? 'display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;border-radius:50%;background:#dc2626;color:#ffffff;font-weight:600;font-size:13px;line-height:1;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums' : 'font-weight:600;font-size:13px';
-      d.colS = 'position:relative;height:' + (24 * H) + 'px;border-left:1px solid rgba(0,0,0,.06);background-image:repeating-linear-gradient(to bottom,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px,transparent ' + H + 'px)' + (d.today ? ';background-color:rgba(0,0,0,.015)' : '');
+    const SUBS = [['Netflix', '43,00', 'mies.', '2026-11-21', 'Rozrywka'], ['YouTube Premium', '29,99', 'mies.', '2026-11-24', 'Rozrywka'], ['iCloud+', '4,99', 'mies.', '2026-11-28', 'Chmura'], ['Siłownia — karnet', '129,00', 'mies.', '2026-12-01', 'Zdrowie'], ['Spotify', '23,99', 'mies.', '2026-12-02', 'Rozrywka'], ['Claude Pro', '99,00', 'mies.', '2026-12-05', 'Praca'], ['GitHub Copilot', '40,00', 'mies.', '2026-12-08', 'Praca'], ['Google One 2 TB', '46,99', 'mies.', '2026-12-12', 'Chmura'], ['Strava', '249,99', 'rok', '2027-02-10', 'Sport'], ['Framer Mini', '600,00', 'rok', '2027-03-14', 'Praca'], ['Duolingo Super', '239,99', 'rok', '2027-04-20', 'Nauka'], ['Domena .photo', '120,00', 'rok', '2027-06-09', 'Praca']];
+    const series = st.series || [], sdel = st.sdel || [];
+
+    const blocksOn = (k) => {
+      const base = PAT.map((p, i) => Object.assign({ i }, p)).filter((p) => p.once ? p.once === k : p.w === dowOf(k)).map((p) => ({
+        id: 'p' + p.i + '_' + k, ser: p.once ? null : 'p' + p.i, recTxt: p.once ? '' : 'co tydzień ' + LOC[p.w], date: k, s: p.s, e: p.e, t: p.t, c: p.c, plan: !!p.plan && k >= TODAY,
+        tk0: p.tk.map((t, j) => [t, k < TODAY ? true : (k === TODAY ? !!(p.today || [])[j] : false)])
+      }));
+      const mine = created.filter((b) => b.date === k || (b.rec && k > b.date && b.rec.includes(dowOf(k)))).map((b) => Object.assign({}, b, b.date === k ? {} : { id: b.id + '_' + k, date: k }, { ser: b.rec ? b.id : null, recTxt: b.rec ? recName(b.rec) : '' }));
+      return base.concat(mine)
+        .filter((b) => !deleted[b.id] && !(b.ser && sdel.some((x) => x.key === b.ser && (!x.from || k >= x.from))))
+        .map((b) => {
+          const o = Object.assign({}, b);
+          series.filter((x) => x.key === b.ser && (!x.from || k >= x.from)).forEach((x) => Object.assign(o, x.patch));
+          return Object.assign(o, edits[b.id] || {}, { tasks: tasksSt[b.id] || b.tk0 });
+        });
+    };
+    const visible = (b) => !hidden[b.c] && !(b.c === 'Sport' && layersOff.sport);
+    const renewOn = (k, right, small) => layersOff.odn ? [] : SUBS.filter((x) => x[2] === 'mies.' ? Number(x[3].slice(8)) === dNum(k) : x[3].slice(5) === k.slice(5)).map((x) => {
+      const key = x[0] + '|' + k;
+      const open = st.renew === key;
+      return {
+        t: x[0] + ' — odnowienie', open, exp: open ? 'true' : 'false', aria: 'Odnowienie: ' + x[0] + ', ' + dNum(k) + ' ' + MG[mIdx(k)],
+        sz: small ? 'height: 20px; line-height: 20px; padding: 0 6px;' : 'padding: 2px 8px;',
+        popS: 'top:calc(100% + 4px);' + (right ? 'right:0' : 'left:0'),
+        pick: (e) => { e.stopPropagation(); this.setState({ renew: open ? null : key, sel: null, add: null }); }
+      };
     });
-    const selB = all.find((b) => b.id === this.state.sel && !hidden[b.cat]);
-    const ad = this.state.add;
-    const gh = this.state.ghost;
-    const skip = (e) => { const t = e && e.target; return !!(t && t.closest && t.closest('button,a,[role=dialog],label,input')); };
-    const slot = (e) => { const r = e.currentTarget.getBoundingClientRect(); return Math.max(0, Math.min(23, Math.floor((e.clientY - r.top) / (H / 2)) / 2)); };
-    days.forEach((d, i) => {
-      d.click = (e) => { if (skip(e)) return; const s = slot(e); this.setState({ add: (ad && ad.col === i && ad.start === s) ? null : { col: i, start: s }, sel: null }); };
-      d.move = (e) => { if (skip(e)) { if (this.state.ghost) this.setState({ ghost: null }); return; } const s = slot(e); const g = this.state.ghost; if (!g || g.col !== i || g.start !== s) this.setState({ ghost: { col: i, start: s } }); };
-      d.leave = () => { if (this.state.ghost) this.setState({ ghost: null }); };
-      const g = (ad && ad.col === i) ? ad : (gh && gh.col === i ? gh : null);
-      d.hasGhost = !!g;
-      d.ghostT = g ? '+ ' + fmt(g.start) + '–' + fmt(g.start + 1) : '';
-      d.ghostS = g ? 'position:absolute;left:3px;right:3px;top:' + (g.start * H + 1) + 'px;height:' + (H - 3) + 'px;box-sizing:border-box;border:1px dashed rgba(0,0,0,.24);border-radius:8px;background:rgba(0,0,0,.02);color:#686868;font-size:12px;font-weight:500;padding:4px 8px;pointer-events:none' : '';
-    });
-    const colOf = (id) => days.findIndex((d) => d.blocks.some((b) => b.id === id));
-    let pop = null;
-    if (selB) {
-      const col = colOf(selB.id);
-      const right = col <= 3;
-      const left = right ? 'calc(56px + (100% - 56px) * ' + (col + 1) + ' / 7 + 10px)' : 'calc(56px + (100% - 56px) * ' + col + ' / 7 - 350px)';
-      pop = mkPop(selB, 'left:' + left + ';top:' + (selB.start * H) + 'px;');
+    let rp = { name: '', when: '', amount: '', cat: '', cycle: '', next: '', aria: '' };
+    if (st.renew) {
+      const [nm, k] = st.renew.split('|');
+      const x = SUBS.find((y) => y[0] === nm);
+      if (x) {
+        const dd = Math.round((P(k) - P(TODAY)) / 86400000);
+        const nx = x[2] === 'mies.' ? addMonth(k, 1).slice(0, 8) + k.slice(8) : String(Number(k.slice(0, 4)) + 1) + k.slice(4);
+        rp = { name: x[0], aria: 'Odnowienie ' + x[0], when: DOW[dowOf(k)] + ' ' + dNum(k) + '.' + k.slice(5, 7) + '.' + k.slice(0, 4) + ' · ' + (dd < 0 ? 'minęło' : dd === 0 ? 'dziś' : dd === 1 ? 'jutro' : 'za ' + dd + ' dni'), amount: x[1] + ' zł / ' + x[2], cat: x[4], cycle: x[2] === 'mies.' ? 'co miesiąc' : 'co rok', next: nx.slice(8, 10) + '.' + nx.slice(5, 7) + '.' + nx.slice(0, 4) };
+      }
     }
-    let add = null;
-    if (ad) {
-      const right = ad.col <= 3;
-      const left = right ? 'calc(56px + (100% - 56px) * ' + (ad.col + 1) + ' / 7 + 10px)' : 'calc(56px + (100% - 56px) * ' + ad.col + ' / 7 - 280px)';
-      add = { when: days[ad.col].dow + ' ' + days[ad.col].num + '.11 · ' + fmt(ad.start), style: 'position:absolute;z-index:6;left:' + left + ';width:270px;top:' + (ad.start * H) + 'px;padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default' };
-    }
-    const now = 11 + 20 / 60;
-    return Object.assign({}, catsOut, {
-      days,
-      hours: Array.from({ length: 24 }, (_, i) => (i === 0 ? '' : String(i).padStart(2, '0') + ':00')),
-      hasSel: !!pop, pop, close: () => this.setState({ sel: null }),
-      hasAdd: !!add, add, closeAdd: () => this.setState({ add: null }),
-      nowLine: 'position:absolute;left:0;right:0;top:' + Math.round(now * H) + 'px;border-top:2px solid #ef4444;z-index:3;pointer-events:none'
+    const layout = (bs) => {
+      bs.sort((a, b) => a.s - b.s || b.e - a.e);
+      let cl = [], end = -1;
+      const flush = () => { const n = Math.max(1, ...cl.map((x) => x.col + 1)); cl.forEach((x) => { x.n = n; }); cl = []; end = -1; };
+      bs.forEach((b) => {
+        if (cl.length && b.s >= end) flush();
+        const used = cl.filter((x) => x.e > b.s).map((x) => x.col);
+        let c = 0; while (used.includes(c)) c++;
+        b.col = c; cl.push(b); end = Math.max(end, b.e);
+      });
+      if (cl.length) flush();
+      return bs;
+    };
+    const cntTxt = (b) => b.tasks.length ? b.tasks.filter((t) => t[1]).length + '/' + b.tasks.length : '';
+
+    // Stan wspólny
+    const sel = st.sel || null;
+    const form = st.add || null;
+    const dlg = st.dlg || null;
+    const ghost = st.ghost || null;
+    const closeAll = () => this.setState({ sel: null, add: null, newTask: '', ghost: null });
+    const slotFrom = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      const frac = (e.clientY - r.top) / (r.height || 1);
+      return Math.max(START, Math.min(END - 0.5, START + Math.floor(frac * SPAN * 2) / 2));
+    };
+    const defCat = CATS.find((c) => !hidden[c[0]]) ? 'Projekty' : 'Projekty';
+
+    // Widoki siatki
+    const gridDays = view === 'day' ? [anchor] : (view === 'week' ? [0, 1, 2, 3, 4, 5, 6].map((i) => add(monStart(anchor), i)) : []);
+    let popInfo = null;
+    let totalH = 0;
+    const days = gridDays.map((k, idx) => {
+      const di = dowOf(k);
+      const weekend = di >= 5;
+      const isToday = k === TODAY;
+      const vis = layout(blocksOn(k).filter(visible));
+      vis.forEach((b) => { totalH += b.e - b.s; });
+      const right = view === 'week' && idx >= 5;
+      const blocks = vis.map((b) => {
+        const c = COL[b.c] || '#525252';
+        const isSel = sel === b.id;
+        if (isSel) popInfo = { b, top: b.s, right, k };
+        return {
+          t: b.t, time: fmt(b.s) + '–' + fmt(b.e), count: cntTxt(b) ? ' · ' + cntTxt(b) : '',
+          pressed: isSel ? 'true' : 'false',
+          aria: b.t + ', ' + DOWL[di] + ' ' + fmt(b.s) + '–' + fmt(b.e) + ', ' + b.c,
+          pick: (e) => { e.stopPropagation(); this.setState({ sel: isSel ? null : b.id, add: null, newTask: '', ghost: null }); },
+          s: 'top:calc(' + pct(Math.max(b.s, START)) + ' + 1px);height:max(20px, calc(' + len(Math.min(b.e, END) - Math.max(b.s, START)) + ' - 3px));left:calc(' + (b.col * 100 / b.n) + '% + 3px);width:calc(' + (100 / b.n) + '% - 7px);border-radius:8px;padding:4px 8px;color:#262626;background:' + (b.plan ? '#ffffff' : c + '14') + ';border:1px ' + (b.plan ? 'dashed ' + c : 'solid ' + c + '4d') + ';box-shadow:' + (isSel ? '0 0 0 2px #fff,0 0 0 4px ' + c + '66' : 'none') + ';z-index:' + (isSel ? 3 : 2)
+        };
+      });
+      const pastH = k < TODAY ? (END - START) : (isToday ? NOW - START : 0);
+      return {
+        dow: DOW[di], num: dNum(k), isToday, past: pastH > 0,
+        numLbl: 'Otwórz dzień ' + DOWL[di] + ' ' + dNum(k) + ' ' + MG[mIdx(k)],
+        openDay: () => this.setState({ view: 'day', anchor: k, sel: null, add: null }),
+        headS: 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-left:1px solid rgba(0,0,0,.06);' + (weekend && view === 'week' ? 'background:#fafafa;' : ''),
+        numS: 'font-size:18px;font-weight:600;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;' + (isToday ? 'background:#262626;color:#fafafa' : (k < TODAY ? 'color:#a3a3a3' : 'color:#262626')),
+        allS: 'border-left:1px solid rgba(0,0,0,.06);padding:4px;display:flex;flex-direction:column;gap:2px;' + (weekend && view === 'week' ? 'background:#fafafa;' : ''),
+        renew: renewOn(k, view === 'week' && idx >= 5, false),
+        colS: 'position:relative;display:flex;flex-direction:column;min-height:0;cursor:copy;border-left:1px solid rgba(0,0,0,.06);' + (weekend && view === 'week' ? 'background:#fafafa;' : ''),
+        pastS: 'position:absolute;left:0;right:0;top:0;height:' + len(pastH) + ';background:rgba(0,0,0,.018);pointer-events:none',
+        blocks,
+        popHere: !!popInfo && popInfo.k === k && !form,
+        addHere: !!form && form.date === k,
+        ghostHere: (!!form && form.date === k) || (!!ghost && ghost.date === k && !form && !sel),
+        click: (e) => {
+          if (sel || form) { closeAll(); return; }
+          const s = slotFrom(e);
+          this.setState({ add: { date: k, s }, ghost: null });
+        },
+        move: (e) => {
+          if (form || sel) return;
+          const s = slotFrom(e);
+          if (!(ghost && ghost.date === k && ghost.s === s)) this.setState({ ghost: { date: k, s } });
+        },
+        _right: right
+      };
     });
+
+    // Dymek bloku
+    const sidePos = (top, right) => {
+      if (view === 'day') return topClamp(top, 340) + ';left:calc(50% + 8px)';
+      return topClamp(top, 340) + ';' + (right ? 'right:calc(100% + 6px)' : 'left:calc(100% + 6px)');
+    };
+    let mPopS = '';
+    let mRenS = '', mRenOn = false;
+    if (view === 'month' && st.renew) {
+      const g0 = monStart(ym(anchor) + '-01');
+      const rk = st.renew.split('|')[1];
+      for (let i = 0; i < 42; i++) {
+        if (add(g0, i) !== rk) continue;
+        const c = i % 7, r = Math.floor(i / 7);
+        mRenOn = true;
+        mRenS = (r < 3 ? 'top:calc(' + (r * 100 / 6) + '% + 4px);' : 'bottom:calc(' + ((5 - r) * 100 / 6) + '% + 4px);') + (c >= 4 ? 'right:calc(' + ((7 - c) * 100 / 7) + '% + 6px)' : 'left:calc(' + ((c + 1) * 100 / 7) + '% + 6px)');
+      }
+    }
+    if (view === 'month' && sel && !popInfo) {
+      const g0 = monStart(ym(anchor) + '-01');
+      for (let i = 0; i < 42 && !popInfo; i++) {
+        const k = add(g0, i);
+        const b = blocksOn(k).filter(visible).find((x) => x.id === sel);
+        if (b) {
+          const c = i % 7, r = Math.floor(i / 7);
+          popInfo = { b, top: b.s, right: c >= 4, k, month: true };
+          mPopS = (r < 3 ? 'top:calc(' + (r * 100 / 6) + '% + 4px);' : 'bottom:calc(' + ((5 - r) * 100 / 6) + '% + 4px);') + (c >= 4 ? 'right:calc(' + ((7 - c) * 100 / 7) + '% + 6px)' : 'left:calc(' + ((c + 1) * 100 / 7) + '% + 6px)');
+        }
+      }
+    }
+    let pop = { t: '', c: '', when: '', tasks: [], cnt: '', empty: true, dotS: '' };
+    let popS = '';
+    if (popInfo) {
+      const b = popInfo.b;
+      const setTasks = (arr) => this.setState({ tasks: Object.assign({}, tasksSt, { [b.id]: arr }) });
+      pop = {
+        t: b.t, c: b.c,
+        dotS: 'width:10px;height:10px;border-radius:50%;flex:none;background:' + (COL[b.c] || '#525252'),
+        when: DOWL[dowOf(b.date)] + ', ' + dNum(b.date) + ' ' + MG[mIdx(b.date)] + ' · ' + fmt(b.s) + '–' + fmt(b.e) + ' (' + durTxt(b.e - b.s) + ')',
+        cnt: cntTxt(b),
+        empty: b.tasks.length === 0,
+        tasks: b.tasks.map((tk, j) => ({
+          t: tk[0], done: tk[1],
+          s: tk[1] ? 'color:#686868;text-decoration:line-through' : '',
+          toggle: () => setTasks(b.tasks.map((x, n) => n === j ? [x[0], !x[1]] : x))
+        })),
+        hasRec: !!b.ser, recTxt: b.recTxt || '',
+        edit: () => this.setState({ dlg: { mode: 'edit', id: b.id, ser: b.ser, recTxt: b.recTxt, orig: { s: b.s, e: b.e }, date: b.date, from: fmt(b.s), to: fmt(b.e), t: b.t, c: b.c, note: b.note || '', remind: b.remind !== false, rep: 'none', wd: {} }, sel: null }),
+        del: () => b.ser
+          ? this.setState({ sel: null, scope: { mode: 'delete', id: b.id, ser: b.ser, date: b.date, t: b.t, recTxt: b.recTxt, choice: 'one' } })
+          : this.setState({ sel: null, confirmDel: { id: b.id, t: b.t, when: DOW[dowOf(b.date)] + ' ' + dNum(b.date) + '.' + b.date.slice(5, 7) + ' · ' + fmt(b.s) + '–' + fmt(b.e) } })
+      };
+      popS = sidePos(popInfo.top, popInfo.right);
+      pop._add = (txt) => setTasks(b.tasks.concat([[txt, false]]));
+    }
+
+    const scope = st.scope || null;
+    const confirmDel = st.confirmDel || null;
+    const catDlg = st.catDlg || null;
+    const cdName0 = catDlg ? catDlg.name.trim() : '';
+    const cdDup = !!cdName0 && CATS.some((c) => c[0].toLowerCase() === cdName0.toLowerCase());
+    const cdOff = !cdName0 || cdDup;
+    const cdSave = () => {
+      if (cdOff) return;
+      const nc = CATS.concat([[cdName0, catDlg.color]]);
+      const o = { cats: nc, catDlg: null };
+      if (catDlg.fromDlg && st.dlg) o.dlg = Object.assign({}, st.dlg, { c: cdName0 });
+      this.setState(o);
+    };
+
+    // Menu „Nowy wpis” i okno bloku
+    const addRight = form ? ((days.find((d) => d.addHere) || {})._right) : false;
+    const addS = form ? 'position:absolute;z-index:20;width:270px;padding:4px;display:flex;flex-direction:column;gap:1px;font-size:14px;text-align:left;cursor:default;' + (view === 'day' ? topClamp(form.s, 200) + ';left:calc(50% + 8px)' : topClamp(form.s, 200) + ';' + (addRight ? 'right:calc(100% + 6px)' : 'left:calc(100% + 6px)')) : '';
+    const g = form || ghost;
+    const parseT = (x) => { const m = /^\s*(\d{1,2})[:.](\d{2})\s*$/.exec(x || ''); if (!m) return null; const h = Number(m[1]) + Number(m[2]) / 60; return (Number(m[2]) < 60 && h >= START && h <= END) ? h : null; };
+    const dl = dlg || { t: '', from: '', to: '', note: '' };
+    const dA = dlg ? parseT(dlg.from) : null, dB = dlg ? parseT(dlg.to) : null;
+    const dBad = !!dlg && !!dlg.tried && !(dA !== null && dB !== null && dB > dA);
+    const updD = (o) => this.setState({ dlg: Object.assign({}, dlg, o) });
+    const REPS = [['none', 'Nie powtarzaj'], ['daily', 'Codziennie'], ['weekdays', 'Dni robocze'], ['weekly', 'Co tydzień'], ['custom', 'Własne…']];
+    const DOWS = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'];
+    const wdList = dlg ? Object.keys(dlg.wd || {}).filter((x) => dlg.wd[x]).map(Number).sort() : [];
+    const recOf = (r) => r === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : (r === 'weekdays' ? [0, 1, 2, 3, 4] : (r === 'none' ? null : wdList));
+    const dSave = () => {
+      if (!dlg || !dlg.t.trim()) return;
+      if (!(dA !== null && dB !== null && dB > dA)) { updD({ tried: true }); return; }
+      if (dlg.mode === 'new') {
+        const id = 'n' + Date.now();
+        const rec = recOf(dlg.rep);
+        this.setState({ created: created.concat([{ id, date: dlg.date, s: dA, e: dB, t: dlg.t.trim(), c: dlg.c, note: dlg.note, remind: dlg.remind, rec: rec && rec.length ? rec : null, tk0: [] }]), dlg: null, add: null, sel: id, anchor: view === 'month' ? dlg.date : anchor });
+      } else {
+        const patch = { s: dA, e: dB, t: dlg.t.trim(), c: dlg.c, note: dlg.note, remind: dlg.remind };
+        if (dlg.ser) {
+          const moved = dlg.orig && (dlg.orig.s !== dA || dlg.orig.e !== dB);
+          this.setState({ dlg: null, scope: { mode: 'edit', id: dlg.id, ser: dlg.ser, date: dlg.date, t: dlg.t.trim(), recTxt: dlg.recTxt, change: moved ? 'nowa godzina ' + fmt(dA) + '–' + fmt(dB) : 'zmiana szczegółów', patch, choice: 'one' } });
+        } else {
+          this.setState({ edits: Object.assign({}, edits, { [dlg.id]: patch }), dlg: null, sel: dlg.id });
+        }
+      }
+    };
+    const repInfo = !dlg ? '' : dlg.rep === 'none' ? 'Jednorazowy blok.' : dlg.rep === 'daily' ? 'Każdego dnia, bez końca.' : dlg.rep === 'weekdays' ? 'Pon–pt, bez końca.' : (wdList.length ? 'Co tydzień: ' + wdList.map((i) => DOWS[i]).join(', ') + '.' : 'Wybierz dni tygodnia.');
+
+    // Widok miesiąca
+    const first = ym(anchor) + '-01';
+    const gStart = monStart(first);
+    const mCells = view === 'month' ? Array.from({ length: 42 }, (_, i) => {
+      const k = add(gStart, i);
+      const inM = ym(k) === ym(anchor);
+      const bs = blocksOn(k).filter(visible).sort((a, b) => a.s - b.s);
+      if (inM) bs.forEach((b) => { totalH += b.e - b.s; });
+      const rn = renewOn(k, i % 7 >= 5, true);
+      const max = Math.max(0, 4 - rn.length);
+      const open = () => this.setState({ view: 'day', anchor: k, sel: null, add: null });
+      return {
+        num: dNum(k),
+        aria: 'Otwórz dzień ' + dNum(k) + ' ' + MG[mIdx(k)],
+        s: (i % 7 === 6 ? 'border-right:0;' : '') + (dowOf(k) >= 5 ? 'background:#fafafa;' : '') + (inM ? '' : 'opacity:.5;'),
+        numS: 'font-size:13px;font-weight:500;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;' + (k === TODAY ? 'background:#262626;color:#fafafa' : 'color:' + (k < TODAY ? '#a3a3a3' : '#262626')),
+        renew: rn,
+        chips: bs.slice(0, max).map((b) => {
+          const c = COL[b.c] || '#525252';
+          return {
+            t: b.t, time: fmt(b.s), aria: b.t + ', ' + fmt(b.s),
+            dotS: 'width:6px;height:6px;border-radius:50%;flex:none;background:' + c,
+            s: 'background:' + (b.plan ? '#fff;outline:1px dashed ' + c : c + '14'),
+            pressed: sel === b.id ? 'true' : 'false',
+            pick: (e) => { e.stopPropagation(); this.setState({ sel: sel === b.id ? null : b.id, add: null, newTask: '', renew: null }); }
+          };
+        }),
+        hasMore: bs.length > max, more: bs.length - max,
+        bg: () => { if (sel || st.renew) this.setState({ sel: null, renew: null, add: null, newTask: '' }); },
+        open
+      };
+    }) : [];
+    const mDow = DOW.map((t, i) => ({ t, s: 'font-size:12px;font-weight:500;color:#686868;padding:8px 10px;text-align:right;' + (i >= 5 ? 'background:#fafafa;' : '') }));
+
+    // Mini-kalendarz
+    const miniM = addMonth(anchor, st.miniOff || 0);
+    const mStart = monStart(miniM);
+    const wkStart = monStart(anchor);
+    const mini = [];
+    for (let r = 0; r < 6; r++) {
+      const rowK = add(mStart, r * 7);
+      mini.push({ isWk: true, isDay: false, t: String(isoWeek(rowK)) });
+      for (let c = 0; c < 7; c++) {
+        const k = add(rowK, c);
+        const inM = ym(k) === ym(miniM);
+        const hl = view === 'week' ? (k >= wkStart && k < add(wkStart, 7)) : (view === 'day' ? k === anchor : ym(k) === ym(anchor) && inM);
+        mini.push({
+          isWk: false, isDay: true, t: String(dNum(k)),
+          aria: dNum(k) + ' ' + MG[mIdx(k)] + ' ' + yr(k),
+          cls: k === TODAY ? 'today' : (!inM ? 'out' : (hl && view !== 'month' ? 'inweek' : '')),
+          pick: () => this.setState({ anchor: k, miniOff: 0, sel: null, add: null })
+        });
+      }
+    }
+
+    // Nagłówek i nawigacja
+    let title = '', sub = '';
+    if (view === 'week') {
+      const a = wkStart, b = add(wkStart, 6);
+      title = ym(a) === ym(b) ? MN[mIdx(a)] + ' ' + yr(a) : MN[mIdx(a)].slice(0, 3) + ' – ' + MN[mIdx(b)].slice(0, 3) + ' ' + yr(b);
+      sub = 'tydz. ' + isoWeek(a) + ' · ' + dNum(a) + '–' + dNum(b) + ' ' + MG[mIdx(b)];
+    } else if (view === 'day') {
+      title = DOWL[dowOf(anchor)].charAt(0).toUpperCase() + DOWL[dowOf(anchor)].slice(1) + ', ' + dNum(anchor) + ' ' + MG[mIdx(anchor)];
+      sub = (anchor === TODAY ? 'dziś · ' : '') + 'tydz. ' + isoWeek(anchor);
+    } else {
+      title = MN[mIdx(anchor)] + ' ' + yr(anchor);
+      sub = '';
+    }
+    const step = (n) => {
+      let a;
+      if (view === 'week') a = add(anchor, 7 * n);
+      else if (view === 'day') a = add(anchor, n);
+      else { a = addMonth(anchor, n); if (ym(a) === ym(TODAY)) a = TODAY; }
+      this.setState({ anchor: a, miniOff: 0, sel: null, add: null, ghost: null });
+    };
+    const LBL = { day: 'dzień', week: 'tydzień', month: 'miesiąc' };
+
+    // Plan dnia (widok dnia)
+    const dayBlocks = view === 'day' ? blocksOn(anchor).filter(visible).sort((a, b) => a.s - b.s) : [];
+    const tAll = dayBlocks.reduce((n, b) => n + b.tasks.length, 0);
+    const tDone = dayBlocks.reduce((n, b) => n + b.tasks.filter((t) => t[1]).length, 0);
+    const hrs = [];
+    for (let h = START; h < END; h++) hrs.push(h === START ? '' : String(h).padStart(2, '0') + ':00');
+    const panel = st.panel !== false;
+    const toast = st.toast || null;
+
+    const railOn = !!(this.state || {}).rail;
+    const setRail = (v) => this.setState({ rail: v });
+    return {
+      sbOpen: !railOn, sbRail: railOn, collapseSb: () => setRail(true), expandRail: () => setRail(false),
+      railS: 'width: 56px; flex: none; box-sizing: border-box; background: #fafafa; border-right: 1px solid rgba(0,0,0,.06); padding: 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; min-height: 760px; overflow-y: auto',
+      railPages: [['Subskrypcje', 'wallet', 'S2Main.dc.html'], ['Książki', 'book-open', 'S2Books.dc.html'], ['Projekty', 'rocket', 'S2Projects.dc.html'], ['Strony WWW', 'globe', 'S2Websites.dc.html']].map((p) => ({ l: p[0], icon: { kind: 'icon', v: p[1] }, href: p[2], cls: '' })),
+      view, isGrid: view !== 'month', isDay: view === 'day', isMonth: view === 'month',
+      vDay: view === 'day' ? 'true' : 'false', vWeek: view === 'week' ? 'true' : 'false', vMonth: view === 'month' ? 'true' : 'false',
+      setDay: () => this.setState({ view: 'day', sel: null, add: null }),
+      setWeek: () => this.setState({ view: 'week', sel: null, add: null }),
+      setMonth: () => this.setState({ view: 'month', sel: null, add: null }),
+      title, sub,
+      prevLbl: 'Poprzedni ' + LBL[view], nextLbl: 'Następny ' + LBL[view],
+      goPrev: () => step(-1), goNext: () => step(1),
+      goToday: () => this.setState({ anchor: TODAY, miniOff: 0, sel: null, add: null }),
+      newBlock: () => {
+        const date = view === 'week' ? (wkStart <= TODAY && TODAY < add(wkStart, 7) ? TODAY : wkStart) : anchor;
+        this.setState({ view: view === 'month' ? 'day' : view, anchor: date, sel: null, add: null, dlg: { mode: 'new', date, from: '12:00', to: '13:00', t: '', c: 'Projekty', note: '', remind: true, rep: 'none', wd: { [dowOf(date)]: true } } });
+      },
+      panel, panelPressed: panel ? 'true' : 'false',
+      panelLbl: panel ? 'Schowaj panel kalendarza' : 'Pokaż panel kalendarza',
+      togglePanel: () => this.setState({ panel: !panel }),
+
+      gridS: 'display:grid;grid-template-columns:64px repeat(' + gridDays.length + ',minmax(0,1fr))',
+      days, hours: hrs,
+      nowS: 'position:absolute;left:0;right:0;top:' + pct(NOW) + ';height:0;border-top:2px solid #ef4444;z-index:4;pointer-events:none',
+      ghostS: g ? 'position:absolute;left:3px;right:3px;top:calc(' + pct(g.s) + ' + 1px);height:calc(' + len(Math.min(1, END - g.s)) + ' - 3px);box-sizing:border-box;border:1px dashed rgba(0,0,0,.24);border-radius:8px;background:rgba(0,0,0,.02);color:#686868;font-size:12px;font-weight:500;padding:4px 8px;pointer-events:none;z-index:1;white-space:nowrap;overflow:hidden' : '',
+      ghostT: g ? '+ ' + fmt(g.s) + '–' + fmt(Math.min(END, g.s + 1)) : '',
+      leaveGhost: () => { if (st.ghost) this.setState({ ghost: null }); },
+      stop: (e) => e.stopPropagation(),
+      closeAll,
+
+      pop, popS, mPopS, mRenS, mRenOn, mPopOn: !!popInfo && !!popInfo.month && !dlg,
+      newTask: st.newTask || '',
+      onNewTask: (e) => this.setState({ newTask: e.target.value }),
+      onNewTaskKey: (e) => {
+        if (e.key === 'Enter' && (st.newTask || '').trim() && pop._add) { pop._add(st.newTask.trim()); this.setState({ newTask: '' }); }
+        if (e.key === 'Escape') closeAll();
+      },
+
+      addS, addWhen: form ? DOW[dowOf(form.date)] + ' ' + dNum(form.date) + '.' + String(mIdx(form.date) + 1).padStart(2, '0') + ' · ' + fmt(form.s) : '',
+      openBlockDlg: () => this.setState({ dlg: { mode: 'new', date: form.date, from: fmt(form.s), to: fmt(Math.min(END, form.s + 1)), t: '', c: hidden['Projekty'] ? (CATS.find((x) => !hidden[x[0]]) || CATS[0])[0] : 'Projekty', note: '', remind: true, rep: 'none', wd: { [dowOf(form.date)]: true } } }),
+      dlgOn: !!dlg, dl,
+      dTitle: dlg && dlg.mode === 'edit' ? 'Edytuj blok' : 'Nowy blok',
+      dDesc: dlg && dlg.mode === 'edit' ? 'Zmiana dotyczy tylko tego dnia.' : 'Zadania dodasz po zapisaniu, w dymku bloku.',
+      dNew: !!dlg && dlg.mode === 'new',
+      dpBlk: mkDP('blk', dlg ? dlg.date : '2026-11-17', (k) => { const D = (this.state || {}).dlg; if (D) this.setState({ dlg: Object.assign({}, D, { date: k }, D.mode === 'new' ? { wd: { [dowOf(k)]: true } } : {}) }); }),
+      dDay: dlg ? DOW[dowOf(dlg.date)] + ' ' + dNum(dlg.date) + '.' + String(mIdx(dlg.date) + 1).padStart(2, '0') + '.' + yr(dlg.date) : '',
+      dOnT: (e) => updD({ t: e.target.value }),
+      dOnFrom: (e) => updD({ from: e.target.value }),
+      dOnTo: (e) => updD({ to: e.target.value }),
+      dOnNote: (e) => updD({ note: e.target.value }),
+      dOnKey: (e) => { if (e.key === 'Enter') dSave(); },
+      dBad, dBadA: dBad ? 'true' : 'false',
+      dCats: CATS.map((c) => ({ label: c[0], dot: 'background:' + c[1], pressed: dlg && dlg.c === c[0] ? 'true' : 'false', pick: () => updD({ c: c[0] }) })),
+      reps: REPS.map((r) => ({ label: r[1], pressed: dlg && dlg.rep === r[0] ? 'true' : 'false', pick: () => updD({ rep: r[0] }) })),
+      dWeekly: !!dlg && (dlg.rep === 'weekly' || dlg.rep === 'custom'),
+      dDays: DOWS.map((d, i) => {
+        const on = !!(dlg && (dlg.wd || {})[i]);
+        return { d, on: on ? 'true' : 'false', toggle: () => updD({ wd: Object.assign({}, dlg.wd || {}, { [i]: !on }) }), s: 'width:36px;height:36px;border-radius:10px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;' + (on ? 'background:#262626;color:#fafafa;border:1px solid #262626;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 1px 2px rgba(38,38,38,.24)' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') };
+      }),
+      repInfo,
+      dRemind: dlg && dlg.remind ? 'true' : 'false',
+      dToggleRemind: () => updD({ remind: !dlg.remind }),
+      dOff: !dlg || !dlg.t.trim(),
+      dSave,
+      closeDlg: () => this.setState({ dlg: null, add: null }),
+
+      mCells, mDow,
+      mini, miniTitle: MN[mIdx(miniM)] + ' ' + yr(miniM),
+      miniPrev: () => this.setState({ miniOff: (st.miniOff || 0) - 1 }),
+      miniNext: () => this.setState({ miniOff: (st.miniOff || 0) + 1 }),
+      cats: CATS.map((c) => {
+        const on = !hidden[c[0]];
+        return { name: c[0], on, pressed: on ? 'true' : 'false', cbS: on ? 'background:' + c[1] : 'border:1.5px solid ' + c[1], nameS: on ? '' : 'color:#686868', toggle: () => this.setState({ hidden: Object.assign({}, hidden, { [c[0]]: on }), sel: null }) };
+      }),
+      layers: [['sport', 'Treningi', 'z Sportu'], ['odn', 'Odnowienia', 'z Subskrypcji']].map((l) => {
+        const on = !layersOff[l[0]];
+        return { name: l[1], sub: l[2], on, pressed: on ? 'true' : 'false', cbS: on ? 'background:#262626' : 'border:1.5px solid #a3a3a3', nameS: on ? '' : 'color:#686868', toggle: () => this.setState({ layersOff: Object.assign({}, layersOff, { [l[0]]: on }), sel: null }) };
+      }),
+      sumLbl: view === 'day' ? 'Ten dzień' : (view === 'week' ? 'Ten tydzień' : 'Ten miesiąc'),
+      sumH: (Math.round(totalH * 2) / 2).toString().replace('.', ',') + ' h',
+
+      dayN: dayBlocks.length,
+      dayH: (Math.round(dayBlocks.reduce((n, b) => n + b.e - b.s, 0) * 2) / 2).toString().replace('.', ','),
+      dayT: tAll ? tDone + '/' + tAll : '—',
+      agenda: dayBlocks.map((b) => ({
+        t: b.t, time: fmt(b.s), cnt: cntTxt(b),
+        pressed: sel === b.id ? 'true' : 'false',
+        dotS: 'width:8px;height:8px;border-radius:50%;flex:none;background:' + (COL[b.c] || '#525252'),
+        pick: () => this.setState({ sel: sel === b.id ? null : b.id, add: null })
+      })),
+      agendaEmpty: view === 'day' && dayBlocks.length === 0,
+
+      toastOn: !!toast, toastT: toast ? toast.t : '',
+      undo: () => { if (toast && toast.prev) this.setState(Object.assign({}, toast.prev, { toast: null })); else this.setState({ toast: null }); },
+
+      rp, closeRenew: () => this.setState({ renew: null }),
+
+      scopeOn: !!scope,
+      sc: scope ? {
+        title: scope.mode === 'edit' ? 'Zmieniasz blok, który się powtarza' : 'Usuwasz blok, który się powtarza',
+        desc: '„' + scope.t + '” · ' + scope.recTxt + (scope.change ? ' · ' + scope.change : ''),
+        btn: scope.mode === 'edit' ? 'Zapisz zmianę' : 'Usuń', btnCls: scope.mode === 'edit' ? 'btnp' : 'btnd'
+      } : { title: '', desc: '', btn: '', btnCls: 'btnp' },
+      scOpts: scope ? [
+        ['one', 'Tylko to wystąpienie', DOWL[dowOf(scope.date)] + ', ' + dNum(scope.date) + ' ' + MG[mIdx(scope.date)]],
+        ['next', 'To i następne', 'od ' + dNum(scope.date) + ' ' + MG[mIdx(scope.date)] + ' w przód'],
+        ['all', 'Wszystkie wystąpienia', 'także te wcześniejsze']
+      ].map((o) => {
+        const on = scope.choice === o[0];
+        return { t: o[1], d: o[2], on: on ? 'true' : 'false', pick: () => this.setState({ scope: Object.assign({}, scope, { choice: o[0] }) }),
+          s: 'display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;padding:12px;border-radius:10px;font:inherit;font-size:14px;color:#262626;cursor:pointer;background:#fff;border:1px solid ' + (on ? '#262626;box-shadow:0 0 0 1px #262626' : 'rgba(0,0,0,.12)'),
+          dotS: 'width:16px;height:16px;border-radius:50%;flex:none;margin-top:2px;box-sizing:border-box;' + (on ? 'border:5px solid #262626' : 'border:1.5px solid rgba(0,0,0,.3)') };
+      }) : [],
+      closeScope: () => this.setState({ scope: null }),
+      applyScope: () => {
+        const sp = scope;
+        const prev = { deleted, sdel, series, edits };
+        if (sp.mode === 'edit') {
+          if (sp.choice === 'one') this.setState({ edits: Object.assign({}, edits, { [sp.id]: sp.patch }), scope: null, sel: sp.id });
+          else this.setState({ series: series.concat([{ key: sp.ser, from: sp.choice === 'next' ? sp.date : null, patch: sp.patch }]), scope: null, sel: sp.id });
+        } else {
+          const lbl = sp.choice === 'one' ? 'Usunięto „' + sp.t + '” z ' + dNum(sp.date) + '.' + sp.date.slice(5, 7) : (sp.choice === 'next' ? 'Usunięto „' + sp.t + '” od ' + dNum(sp.date) + '.' + sp.date.slice(5, 7) : 'Usunięto wszystkie „' + sp.t + '”');
+          if (sp.choice === 'one') this.setState({ deleted: Object.assign({}, deleted, { [sp.id]: true }), scope: null, toast: { t: lbl, prev } });
+          else this.setState({ sdel: sdel.concat([{ key: sp.ser, from: sp.choice === 'next' ? sp.date : null }]), scope: null, toast: { t: lbl, prev } });
+        }
+      },
+
+      confOn: !!confirmDel,
+      confDesc: confirmDel ? '„' + confirmDel.t + '” · ' + confirmDel.when : '',
+      closeConf: () => this.setState({ confirmDel: null }),
+      doConf: () => this.setState({ deleted: Object.assign({}, deleted, { [confirmDel.id]: true }), confirmDel: null, toast: { t: 'Usunięto „' + confirmDel.t + '”', prev: { deleted, sdel, series, edits } } }),
+
+      catOn: !!catDlg,
+      cd: catDlg || { name: '' },
+      openCat: () => this.setState({ catDlg: { name: '', color: (PALETTE.find((p) => !CATS.some((c) => c[1] === p)) || PALETTE[0]) } }),
+      openCatFromDlg: () => this.setState({ catDlg: { name: '', color: (PALETTE.find((p) => !CATS.some((c) => c[1] === p)) || PALETTE[0]), fromDlg: true } }),
+      closeCat: () => this.setState({ catDlg: null }),
+      cdOnName: (e) => this.setState({ catDlg: Object.assign({}, catDlg, { name: e.target.value }) }),
+      cdOnKey: (e) => { if (e.key === 'Enter' && !cdOff) cdSave(); },
+      cdDup, cdDupA: cdDup ? 'true' : 'false',
+      cdColors: PALETTE.map((p) => {
+        const on = catDlg && catDlg.color === p;
+        const used = CATS.some((c) => c[1] === p);
+        return { on: on ? 'true' : 'false', aria: 'Kolor ' + p + (used ? ', zajęty' : ''), pick: () => this.setState({ catDlg: Object.assign({}, catDlg, { color: p }) }),
+          s: 'width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;background:' + p + ';opacity:' + (used && !on ? '.35' : '1') + ';border:2px solid #fff;box-shadow:0 0 0 ' + (on ? '2px #262626' : '1px rgba(0,0,0,.12)') };
+      }),
+      cdName: catDlg && catDlg.name.trim() ? catDlg.name.trim() : 'Nowa kategoria',
+      cdDotS: 'width:10px;height:10px;border-radius:50%;background:' + (catDlg ? catDlg.color : '#525252'),
+      cdBlockS: 'display:inline-block;padding:4px 8px;border-radius:8px;white-space:nowrap;background:' + (catDlg ? catDlg.color : '#525252') + '14;border:1px solid ' + (catDlg ? catDlg.color : '#525252') + '4d',
+      cdOff, cdSave
+    };
   }
 }
 </script>

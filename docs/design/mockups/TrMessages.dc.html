@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Wiadomości</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="wiad" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main" style="display: flex; flex-direction: column">
+    <header class="topbar"><div class="row" style="gap: 10px"><h1 class="h-title">Wiadomości</h1><span class="hint num">3 nieprzeczytane</span></div></header>
+    <div style="flex: 1; display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; height: 836px">
+      <div style="border-right: 1px solid rgba(0,0,0,.08); display: flex; flex-direction: column; min-height: 0">
+        <div style="padding: 12px"><label class="igroup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Szukaj rozmów" style="border: 0; outline: none; background: none; font: inherit; flex: 1; min-width: 0"></label></div>
+        <div style="flex: 1; overflow: auto">
+          <sc-for list="{{convs}}" as="c" hint-placeholder-count="5">
+            <button type="button" onClick="{{c.pick}}" style="{{c.s}}">
+              <span class="av" style="{{c.avS}}">{{c.i}}</span>
+              <span style="flex: 1; min-width: 0; text-align: left"><span class="row" style="gap: 6px"><span class="ell" style="flex: 1; font-weight: 500">{{c.n}}</span><span class="hint num nw" style="font-size: 11px">{{c.time}}</span></span><span class="row" style="gap: 6px"><span class="ell" style="{{c.lastS}}">{{c.last}}</span><sc-if value="{{c.unread}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: #262626; flex: none"></span></sc-if></span></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr); min-height: 0"><aside aria-label="Czat" style="display: flex; flex-direction: column; min-height: 0; background: #fff">
+      <div class="row" style="padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.08); gap: 10px">
+        <span class="av" style="{{cAv}}">{{cIni}}</span>
+        <div style="flex: 1; min-width: 0"><div class="ell" style="font-weight: 500">{{cName}}</div><div class="hint ell">{{cSub}} · <a href="TrClient.dc.html" style="color: #262626">profil</a></div></div>
+        
+      </div>
+      <div style="flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+          <sc-if value="{{m.day}}" hint-placeholder-val="{{false}}"><div class="hint num" style="text-align: center; padding: 4px 0">{{m.dayT}}</div></sc-if>
+          <div style="{{m.wrapS}}">
+            <sc-if value="{{m.isCard}}" hint-placeholder-val="{{false}}"><a href="{{m.href}}" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(0,0,0,.1); border-radius: 12px; background: #fff; text-decoration: none; color: inherit; max-width: 260px"><span class="aic" style="background: rgba(0,0,0,.05); color: #404040; width: 30px; height: 30px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg></span><span style="min-width: 0"><span class="ell" style="display: block; font-weight: 500">{{m.t}}</span><span class="hint num ell" style="display: block">{{m.sub}}</span></span></a></sc-if>
+            <sc-if value="{{m.isText}}" hint-placeholder-val="{{true}}"><div style="{{m.bubS}}">{{m.t}}</div></sc-if>
+            <span class="hint num" style="font-size: 11px">{{m.time}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-top: 1px solid rgba(0,0,0,.08); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+        <sc-if value="{{attOpen}}" hint-placeholder-val="{{false}}">
+          <div class="pop" style="padding: 4px; display: flex; flex-direction: column"><div class="mi-lbl" style="padding: 6px 8px 4px">Dołącz trening</div><sc-for list="{{attList}}" as="a" hint-placeholder-count="3"><button type="button" class="mi" onClick="{{a.pick}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg><span style="flex: 1; text-align: left" class="ell">{{a.t}}</span><span class="hint num">{{a.sub}}</span></button></sc-for></div>
+        </sc-if>
+        <div class="row" style="gap: 6px">
+          <button type="button" class="btng ic sm" aria-label="Dołącz trening" title="Dołącz trening" onClick="{{toggleAtt}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+          <input class="inp" type="text" placeholder="Napisz wiadomość…" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1; min-width: 0">
+          <button type="button" class="btnp ic" aria-label="Wyślij" onClick="{{send}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></button>
+        </div>
+      </div>
+    </aside></div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const sel = st.sel || 'ola';
+    const C = [
+      ['ola', 'Ostatnia seria wyciskania była ciężka…', '8:32', true], ['kuba', 'Sorki, w poniedziałek nie dałem rady 😕', 'wczoraj', true], ['ania', 'Przysiad 80 × 3! 🎉', 'wczoraj', true],
+      ['marta', 'Ty: Super tempo na długim, tak trzymaj', 'pn', false], ['pawel', 'Ty: Paweł, jak się czujesz? Wszystko ok?', 'pn', false]
+    ];
+    const read = st.read || {};
+    const c = CL.find((x) => x.id === sel);
+    const CONV = {
+      ola: [{ day: 'pn 16.11', t: 'Nogi zrobione, przysiad 70 × 5 wszedł bez problemu 💪', time: '19:42' }, { me: true, t: 'Świetnie! W tym tygodniu dokładamy 2,5 kg do wyciskania.', time: '20:05' }, { day: 'dziś', card: 'Push A · wt 17.11', sub: '14/15 serii · rekord 50 kg × 5', time: '8:31' }, { t: 'Ostatnia seria wyciskania była ciężka, zrobiłam tylko 4 powtórzenia.', time: '8:32' }],
+      kuba: [{ day: 'pn 16.11', me: true, t: 'Kuba, widzę pominięty Full body A. Wszystko ok?', time: '21:10' }, { day: 'wczoraj', t: 'Sorki, w poniedziałek nie dałem rady 😕 Mało śpię ostatnio przez pracę.', time: '7:15' }],
+      ania: [{ day: 'wczoraj', card: 'Nogi A · pn 16.11', sub: '16/16 serii · rekord 80 kg × 3', time: '18:40' }, { t: 'Przysiad 80 × 3! 🎉', time: '18:41' }],
+      marta: [{ day: 'pn 16.11', card: 'Bieg długi 12 km', sub: '1:05:12 · 5:26 /km', time: '10:02' }, { me: true, t: 'Super tempo na długim, tak trzymaj', time: '12:30' }],
+      pawel: [{ day: 'pn 16.11', me: true, t: 'Paweł, jak się czujesz? Wszystko ok?', time: '20:00' }]
+    };
+    const MSG0 = CONV[sel];
+    const ATT = [['Pull A · czw 19.11', 'zaplanowany'], ['Push A · wt 17.11', 'wykonany'], ['Szablon: Full body B', 'z biblioteki']];
+    const st2 = st;
+    const getSent = () => (st.sentBy || {})[sel] || [];
+    const sentPatch = (arr) => ({ sentBy: { ...(st.sentBy || {}), [sel]: arr } });
+    const me = (m) => m.me;
+    const sent = (typeof getSent === 'function') ? getSent() : (st.sent || []);
+    const putSent = (arr, extra) => this.setState(Object.assign((typeof sentPatch === 'function') ? sentPatch(arr) : { sent: arr }, extra || {}));
+    const all = MSG0.concat(sent);
+    const msgs = all.map((m, i) => ({
+      day: !!m.day, dayT: m.day || '', isCard: !!m.card, isText: !m.card, t: m.card ? m.card : m.t, sub: m.sub || '', href: m.href || 'TrWorkout.dc.html', time: m.time,
+      wrapS: 'display:flex;flex-direction:column;gap:3px;' + (m.me ? 'align-items:flex-end' : 'align-items:flex-start'),
+      bubS: 'max-width:260px;padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.45;' + (m.me ? 'background:#262626;color:#fff;border-bottom-right-radius:4px' : 'background:rgba(0,0,0,.05);border-bottom-left-radius:4px')
+    }));
+    const draft = st.draft || '';
+    const chatVals = {
+      msgs, draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      send: () => { if (!draft.trim()) return; putSent(sent.concat([{ me: true, t: draft.trim(), time: 'teraz' }]), { draft: '' }); },
+      attOpen: !!st.att, toggleAtt: () => this.setState({ att: !st.att }),
+      attList: ATT.map((a) => ({ t: a[0], sub: a[1], pick: () => putSent(sent.concat([{ me: true, card: a[0], sub: a[1], time: 'teraz' }]), { att: false }) }))
+    };
+    return {
+      convs: C.map((x) => { const p = CL.find((y) => y.id === x[0]); const on = x[0] === sel; const un = x[3] && !read[x[0]] && !on;
+        return { n: p.n, i: p.i, avS: 'background:' + p.c, last: x[1], time: x[2], unread: un, lastS: 'flex:1;font-size:13px;' + (un ? 'color:#262626;font-weight:500' : 'color:#686868'),
+          s: 'display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;font:inherit;color:inherit;cursor:pointer;background:' + (on ? 'rgba(0,0,0,.05)' : 'transparent'),
+          pick: () => this.setState({ sel: x[0], read: { ...read, [x[0]]: true }, draft: '', att: false }) }; }),
+      cName: c.n, cSub: c.plan + ' · ' + c.wk, cAv: 'background:' + c.c, cIni: c.i,
+      ...chatVals
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

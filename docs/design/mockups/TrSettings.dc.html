@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Ustawienia trenera</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.nrow{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px;padding:8px 20px;box-sizing:border-box;border-top:1px solid rgba(0,0,0,.06)}
+.nrow:first-child{border-top:0}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 1400px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="ust" min-height="1400" on-nav="{{onNav}}" hint-size="100%,1400px"></dc-import></div>
+  <main class="main">
+    <header class="topbar"><nav class="crumb" aria-label="Okruszki"><span>Ustawienia trenera</span></nav></header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje" class="snav" style="flex: 0 0 200px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 16px">
+        <a href="#profil" aria-current="page">Profil trenera</a><a href="#pakiet">Pakiet i rozliczenia</a><a href="#zapr">Zaproszenia</a><a href="#pow">Powiadomienia</a>
+      </nav>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Ustawienia trenera</h1><p class="muted" style="margin: 4px 0 0">To widzą Twoi podopieczni i osoby z linku zaproszenia.</p></div>
+        <section class="card" id="profil">
+          <div class="ch"><div><h2 class="card-t">Profil trenera</h2><p class="card-d">Pokazuje się na ekranie zaproszenia i w czacie.</p></div></div>
+          <div class="card-p" style="display: flex; flex-direction: column; gap: 16px">
+            <div class="row" style="gap: 14px"><span class="avatar" style="width: 56px; height: 56px; font-size: 20px">M</span><button type="button" class="btn sm">Zmień zdjęcie</button></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px"><label class="fld">Imię i nazwisko<input class="inp" type="text" value="Mejson"></label><label class="fld">Tytuł<input class="inp" type="text" value="Trener personalny"></label></div>
+            <div class="fld"><span>Specjalizacje</span><div class="row" style="gap: 6px; flex-wrap: wrap"><sc-for list="{{spec}}" as="s" hint-placeholder-count="5"><button type="button" class="chip nw" aria-pressed="{{s.p}}" onClick="{{s.pick}}">{{s.t}}</button></sc-for></div></div>
+            <label class="fld">O mnie<textarea class="inp" rows="3" style="height: auto; padding-top: 8px; resize: none">Pomagam zacząć z siłownią i bieganiem bez kontuzji. Plany dopasowuję do tego, ile masz czasu w tygodniu.</textarea></label>
+          </div>
+          <div class="dlg-f" style="border-top: 1px solid rgba(0,0,0,.06)"><button type="button" class="btnp">Zapisz</button></div>
+        </section>
+        <section class="card" id="pakiet">
+          <div class="ch" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px"><div><h2 class="card-t">Pakiet Trener</h2><p class="card-d num">149 zł / mies. · następna płatność 03.12.2026</p></div><a href="S2SettingsPlan.dc.html" class="btn sm">Zmień pakiet</a></div>
+          <div class="card-p" style="display: flex; flex-direction: column; gap: 12px">
+            <div class="row" style="gap: 16px"><span style="font-weight: 500; width: 140px">Podopieczni</span><div class="pbar" style="flex: 1"><span style="width: 33%"></span></div><span class="num" style="width: 60px; text-align: right">5 / 15</span></div>
+            <div class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; background: #f0fdf4; color: #14532d; font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Twoi podopieczni mają rhytm Pro za darmo, dopóki z Tobą współpracują.</span></div>
+          </div>
+        </section>
+        <section class="card" id="zapr">
+          <div style="padding: 18px 20px 14px; display: flex; flex-direction: column; gap: 4px"><h2 class="card-t" style="margin: 0">Zaproszenia</h2><p class="card-d" style="margin: 0">Link, przez który podopieczni dołączają do Ciebie.</p></div>
+          <div style="border-top: 1px solid rgba(0,0,0,.06)">
+            <div class="nrow"><div style="min-width: 0"><div style="font-weight: 500">Link zaproszenia aktywny</div><div class="hint num ell">rhytm.pl/z/mejson-7KQ2</div></div><div class="row" style="gap: 8px"><button type="button" class="btn sm">Wygeneruj nowy</button><button type="button" class="sw" role="switch" aria-checked="{{linkOn}}" aria-label="Link aktywny" onClick="{{t_linkOn}}"></button></div></div>
+            <div class="nrow"><div><div style="font-weight: 500">Akceptuj ręcznie</div><div class="hint">Nowa osoba z linku czeka, aż ją zatwierdzisz.</div></div><button type="button" class="sw" role="switch" aria-checked="{{manual}}" aria-label="Akceptuj ręcznie" onClick="{{t_manual}}"></button></div>
+          </div>
+        </section>
+        <section class="card" id="pow">
+          <div style="padding: 18px 20px 14px; display: flex; flex-direction: column; gap: 4px"><h2 class="card-t" style="margin: 0">Powiadomienia trenera</h2><p class="card-d" style="margin: 0">Push i e-mail. Godziny ciszy z Twoich ustawień konta.</p></div>
+          <div style="border-top: 1px solid rgba(0,0,0,.06)">
+            <div class="nrow"><div style="font-weight: 500">Nowa wiadomość od podopiecznego</div><button type="button" class="sw" role="switch" aria-checked="{{nMsg}}" aria-label="Nowa wiadomość" onClick="{{t_nMsg}}"></button></div>
+            <div class="nrow"><div><div style="font-weight: 500">Pominięty trening</div><div class="hint">Gdy minie dzień bez wykonania zaplanowanego treningu.</div></div><button type="button" class="sw" role="switch" aria-checked="{{nMiss}}" aria-label="Pominięty trening" onClick="{{t_nMiss}}"></button></div>
+            <div class="nrow"><div style="font-weight: 500">Nowy rekord podopiecznego</div><button type="button" class="sw" role="switch" aria-checked="{{nPr}}" aria-label="Nowy rekord" onClick="{{t_nPr}}"></button></div>
+            <div class="nrow"><div><div style="font-weight: 500">Podsumowanie tygodnia</div><div class="hint">W poniedziałek o 8:00 — realizacja planów i kto wymaga uwagi.</div></div><button type="button" class="sw" role="switch" aria-checked="{{nWeek}}" aria-label="Podsumowanie tygodnia" onClick="{{t_nWeek}}"></button></div>
+          </div>
+        </section>
+        <section class="card" style="border-color: #fecaca">
+          <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 24px; padding: 18px 20px"><div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><h2 class="card-t" style="margin: 0">Wyłącz panel trenera</h2><p class="card-d" style="margin: 0">Podopieczni dostaną powiadomienie, a ich dane zostaną tylko u nich.</p></div><button type="button" class="btnd" style="flex: none">Wyłącz</button></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const D = { linkOn: true, manual: false, nMsg: true, nMiss: true, nPr: true, nWeek: true };
+    const v = (k) => (st[k] === undefined ? D[k] : st[k]);
+    const out = {};
+    Object.keys(D).forEach((k) => { out[k] = v(k) ? 'true' : 'false'; out['t_' + k] = () => this.setState({ [k]: !v(k) }); });
+    const sp = st.sp || { 'Siła': true, 'Bieganie': true, 'Redukcja': true };
+    out.spec = ['Siła', 'Bieganie', 'Redukcja', 'Mobilność', 'Przygotowanie do zawodów'].map((t) => ({ t, p: sp[t] ? 'true' : 'false', pick: () => this.setState({ sp: { ...sp, [t]: !sp[t] } }) }));
+    return out;
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

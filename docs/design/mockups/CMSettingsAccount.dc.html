@@ -45,12 +45,14 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
 html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
 html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+html body .m-screen .card-h:has(> .card-d){flex-direction:column;align-items:flex-start;gap:4px}
+html body .m-screen .card :is(.card-h,.card-p,.foot,.m-row){padding-left:16px;padding-right:16px}
 </style>
 </helmet>
 <div class="m-screen" style="display:flex;flex-direction:column">
@@ -82,7 +84,12 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
       <div class="card-h"><h2 class="card-t">Eksport danych</h2><p class="card-d">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div>
       <div class="foot" style="gap:10px"><span class="num" style="flex:1;font-size:12px;{{expS}}">{{expTxt}}</span><button type="button" class="btn" onClick="{{exp}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 10l5 5 5-5M5 21h14"></path></svg>{{expBtn}}</button></div>
     </section>
+    <section class="card" style="border-color:#fecaca">
+      <div class="card-h"><h2 class="card-t">Usuń konto</h2><p class="card-d">Konto wyłączymy od razu, a usuniemy na stałe po 30 dniach — razem ze stronami, sejfem i danymi modułów. Do tego czasu przywrócisz je, logując się. Najpierw pobierz eksport.</p></div>
+      <div class="foot"><button type="button" class="btndo" style="width:100%" onClick="{{delOpen}}">Usuń konto…</button></div>
+    </section>
   </div>
+  <sc-if value="{{delAsk}}" hint-placeholder-val="{{false}}"><div class="backdrop" style="position:absolute" onClick="{{delCancel}}"></div><div role="alertdialog" aria-label="Usuń konto" class="dlg m-sheet"><div class="m-grab"></div><div style="padding:16px;display:flex;flex-direction:column;gap:12px"><h2 class="m-title" style="font-size:18px">Usunąć konto?</h2><p class="muted" style="margin:0;line-height:1.5">Po 30 dniach znikną na stałe strony, kalendarz, sport, nawyki i sejf. Subskrypcja Pro zostanie anulowana.</p><label class="fld" style="color:#b91c1c">Wpisz USUŃ, żeby potwierdzić<input class="inp" type="text" autocomplete="off" value="{{delTxt}}" onInput="{{onDel}}" placeholder="USUŃ"></label><a href="CMAccountDeletion.dc.html" class="btnd" style="{{delS}}" aria-disabled="{{delDis}}">Usuń konto</a><button type="button" class="btng" style="width:100%;justify-content:center" onClick="{{delCancel}}">Anuluj</button></div></div></sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
@@ -123,7 +130,9 @@ class Component extends DCLogic {
       expTxt: S.exp ? 'rhytm-export-' + last + '.json · 2,4 MB · pobrano' : 'ostatni eksport: nigdy',
       expS: S.exp ? 'color:#15803d' : 'color:var(--muted-foreground)',
       expBtn: S.exp ? 'Pobierz ponownie' : 'Pobierz .json',
-      exp: () => this.setState({ exp: true })
+      exp: () => this.setState({ exp: true }),
+      delAsk: !!S.del, delTxt: S.delTxt || '', delDis: (S.delTxt || '').trim().toUpperCase() === 'USUŃ' ? 'false' : 'true', delS: 'width:100%' + ((S.delTxt || '').trim().toUpperCase() === 'USUŃ' ? '' : ';opacity:.5;pointer-events:none'),
+      delOpen: () => this.setState({ del: true, delTxt: '' }), delCancel: () => this.setState({ del: false }), onDel: (e) => this.setState({ delTxt: e.target.value })
     };
   }
 }

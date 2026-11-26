@@ -44,74 +44,244 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
 html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
 
 body{margin:0;background:#ffffff}
+html body .fch{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;flex:none;scrollbar-width:none}
+html body .fch button{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:#fff;font:inherit;font-size:14px;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+html body .fch button[aria-pressed="true"]{background:#262626;border-color:#262626;color:#fff}
+html body .arow{width:100%;display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 14px;border:0;border-top:1px solid var(--border);background:#fff;font:inherit;text-align:left;cursor:pointer;color:inherit;box-sizing:border-box}
+html body .arow:first-child{border-top:0}
+html body .aic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+html body .wkh{display:flex;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,.025);font-size:12px;font-weight:500;color:var(--muted-foreground);border-top:1px solid var(--border)}
+html body .dg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+html body .dg>div{padding:8px 12px}
+html body .dg>div:nth-child(even){border-left:1px solid var(--border)}
+html body .dg>div:nth-child(n+3){border-top:1px solid var(--border)}
+html body .mc{aspect-ratio:1/1.05;border:0;background:transparent;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding-top:6px;cursor:pointer;border-radius:10px}
+html body .mc[aria-pressed="true"]{background:rgba(0,0,0,.05)}
+html body .shrow{display:flex;align-items:center;gap:12px;min-height:56px;padding:4px 4px;border-radius:10px;color:inherit;text-decoration:none}
+html body section.card,html body .card{flex-shrink:0}
+
 </style>
 </helmet>
 <div class="m-screen" style="display: flex; flex-direction: column">
+  <header class="m-head" style="flex: none; padding-top: 4px; padding-bottom: 4px"><div style="flex: 1; min-width: 0"><div class="lbl num">{{headLbl}}</div><h1 class="m-title">Sport</h1></div><a href="CMWorkoutTemplates.dc.html" class="btng ic" aria-label="Szablony treningów"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg></a><button type="button" class="btnp ic" aria-label="Dodaj aktywność" aria-haspopup="dialog" onClick="{{openAdd}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></header>
+  <div class="seg" role="tablist" aria-label="Widok" style="display: flex; flex: none; margin: 12px 16px 10px"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{t.p}}" aria-pressed="{{t.p}}" onClick="{{t.pick}}" style="flex: 1">{{t.t}}</button></sc-for></div>
+  <div class="fch" role="group" aria-label="Rodzaj aktywności"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}"><span style="{{f.dot}}"></span>{{f.t}}</button></sc-for></div>
+  <div class="m-body" style="flex: 1; overflow-y: auto; padding-top: 4px; padding-bottom: 24px; display: flex; flex-direction: column; gap: 16px">
 
-  <header class="m-head" style="flex: none; padding-top: 4px; padding-bottom: 4px"><div style="flex: 1; min-width: 0"><div class="lbl">Tydzień 46 · 9–15.11</div><h1 class="m-title">Sport</h1></div><a href="CMRunNew.dc.html" class="btng ic" aria-label="Nowa aktywność"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
-  <div class="seg" role="group" aria-label="Zakres" style="display: flex; flex: none; margin: 12px 16px 8px"><sc-for list="{{ranges}}" as="r" hint-placeholder-count="2"><button type="button" aria-pressed="{{r.p}}" onClick="{{r.pick}}" style="flex: 1">{{r.t}}</button></sc-for></div>
-  <div class="m-body" style="flex: 1; overflow-y: auto; padding-top: 4px; display: flex; flex-direction: column; gap: 16px">
-    <section class="card" style="padding: 16px">
-      <div class="lbl">Bieganie</div>
-      <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px"><span class="num" style="font-size: 34px; font-weight: 600; letter-spacing: -.02em">{{km}}</span><span class="muted" style="font-size: 13px">/ {{goal}} km</span></div>
-      <div class="prog" style="margin-top: 10px"><div style="{{progS}}"></div></div>
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border)">
-        <div><div class="lbl">Biegi</div><div class="num" style="font-size: 17px; font-weight: 600; margin-top: 2px">{{runs}}</div></div>
-        <div><div class="lbl">Śr. tempo</div><div class="num" style="font-size: 17px; font-weight: 600; margin-top: 2px">{{pace}}</div></div>
-        <div><div class="lbl">Siłownia</div><div class="num" style="font-size: 17px; font-weight: 600; margin-top: 2px">{{gym}}×</div></div>
-      </div>
-    </section>
-    <section class="card" style="padding: 14px">
-      <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="card-t" style="font-size: 15px">Kilometry</h2><span class="num muted" style="font-size: 12px">{{barTxt}}</span></div>
-      <div style="height: 120px; display: flex; align-items: flex-end; gap: {{gap}}px; margin-top: 12px; border-bottom: 1px solid var(--border)"><sc-for list="{{bars}}" as="b" hint-placeholder-count="7"><button type="button" aria-label="{{b.label}}" onClick="{{b.pick}}" style="{{b.s}}"></button></sc-for></div>
-      <div class="hint num" style="display: flex; justify-content: space-between; margin-top: 6px"><sc-for list="{{axis}}" as="x" hint-placeholder-count="7"><span>{{x.t}}</span></sc-for></div>
-    </section>
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
-      <a href="CMRunNew.dc.html" class="btnp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Bieg</a>
-      <a href="CMGym.dc.html" class="btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg>Trening</a>
-      <a href="CMWorkoutTemplates.dc.html" class="btn" style="grid-column: 1 / -1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>Szablony</a>
-    </div>
-    <section><h2 class="card-t" style="margin-bottom: 8px; font-size: 15px">Ostatnie</h2><div class="card" style="overflow: hidden">
-      <a href="CMRunNew.dc.html" class="m-row" style="padding-top: 10px; padding-bottom: 10px"><span style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245,158,11,.1); color: #b45309; display: flex; align-items: center; justify-content: center; flex: none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Długi bieg · 10,0 km</span><span class="hint num">sob 14.11 · 54:40 · 5:28/km</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
-      <a href="CMRunNew.dc.html" class="m-row" style="padding-top: 10px; padding-bottom: 10px"><span style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245,158,11,.1); color: #b45309; display: flex; align-items: center; justify-content: center; flex: none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Interwały · 4,4 km</span><span class="hint num">pt 13.11 · 6× 800 m · 4:35/km</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
-      <a href="CMGym.dc.html" class="m-row" style="padding-top: 10px; padding-bottom: 10px"><span style="width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: var(--foreground); display: flex; align-items: center; justify-content: center; flex: none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Siłownia — Pull</span><span class="hint num">czw 12.11 · 5 ćwiczeń · 58 min</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
-    </div></section>
+    <sc-if value="{{isOv}}" hint-placeholder-val="{{true}}">
+      <section class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600">{{per.title}}</span><div class="seg" role="group" aria-label="Okres"><sc-for list="{{periods}}" as="p" hint-placeholder-count="3"><button type="button" aria-pressed="{{p.p}}" onClick="{{p.pick}}" style="height: 32px; padding: 0 10px; font-size: 13px">{{p.t}}</button></sc-for></div></div>
+        <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap"><span class="num" style="font-size: 34px; font-weight: 600; letter-spacing: -.02em; line-height: 1">{{per.big}}</span><span class="muted" style="font-size: 13px">{{per.unit}}</span><span class="{{per.dC}}" style="margin-left: 4px">{{per.delta}}</span></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px"><sc-for list="{{per.stats}}" as="s" hint-placeholder-count="4"><div><div class="hint" style="font-size: 12px">{{s.k}}</div><div class="num" style="font-weight: 600">{{s.v}}</div></div></sc-for></div>
+        <div style="display: flex; align-items: flex-end; gap: 6px; height: 110px; border-bottom: 1px solid var(--border)"><sc-for list="{{per.bars}}" as="b" hint-placeholder-count="7"><button type="button" aria-label="{{b.aria}}" onClick="{{b.pick}}" style="flex: 1; height: 100%; display: flex; align-items: flex-end; border: 0; background: transparent; padding: 0; cursor: pointer"><span style="{{b.s}}"></span></button></sc-for></div>
+        <div style="{{per.lblS}}"><sc-for list="{{per.bars}}" as="b" hint-placeholder-count="7"><span style="text-align: center">{{b.l}}</span></sc-for></div>
+        <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}"><div class="hint num" style="text-align: center; margin-top: -4px">{{tipTxt}}</div></sc-if>
+      </section>
+
+      <section class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">Ten tydzień</span><span class="hint num">16–22 lis</span></div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px"><sc-for list="{{week}}" as="d" hint-placeholder-count="7"><div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span class="hint" style="font-size: 11px">{{d.l}}</span><span aria-label="{{d.t}}" style="{{d.s}}">{{d.n}}</span></div></sc-for></div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--border); background: rgba(0,0,0,.015)"><span class="aic" style="{{nx.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="flex: 1; min-width: 0"><b style="display: block; font-weight: 600">{{nx.t}}</b><span class="hint num">{{nx.w}}</span></span><a href="{{nx.href}}" class="btn" onClick="{{nx.go}}" style="height: 36px">{{nx.cta}}</a></div>
+      </section>
+
+      <section class="card" style="padding: 0; overflow: hidden">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 14px 10px"><span style="font-weight: 600">Aktywności</span><span class="hint num">{{actCount}}</span></div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+          <div class="wkh"><span>{{g.t}}</span><span class="num">{{g.sum}}</span></div>
+          <sc-for list="{{g.rows}}" as="a" hint-placeholder-count="2">
+            <button type="button" class="arow" aria-expanded="{{a.exp}}" onClick="{{a.toggle}}"><span class="aic" style="{{a.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.path}}"></path></svg></span><span style="flex: 1; min-width: 0"><span style="display: flex; align-items: center; gap: 6px"><b style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.name}}</b><sc-if value="{{a.plan}}" hint-placeholder-val="{{false}}"><span class="bdg sec">plan</span></sc-if><sc-if value="{{a.rec}}" hint-placeholder-val="{{false}}"><span class="bdg ok">rekord</span></sc-if></span><span class="hint num" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.when}}</span></span><span class="num" style="font-weight: 500; white-space: nowrap">{{a.m}}</span></button>
+            <sc-if value="{{a.open}}" hint-placeholder-val="{{false}}"><div style="padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; background: #fff"><div class="dg"><sc-for list="{{a.stats}}" as="s" hint-placeholder-count="4"><div><div class="hint" style="font-size: 11px">{{s.k}}</div><div class="num" style="font-weight: 600">{{s.v}}</div></div></sc-for></div><sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><div style="font-size: 13px; color: #525252">„{{a.note}}”</div></sc-if><div style="display: flex; gap: 8px"><a href="{{a.href}}" class="btnp" onClick="{{a.go}}" style="flex: 1; justify-content: center">{{a.cta}}</a><button type="button" class="btn ic" aria-label="Usuń" onClick="{{a.del}}" style="color: var(--destructive-foreground, #dc2626)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg></button></div></div></sc-if>
+          </sc-for>
+        </sc-for>
+        <sc-if value="{{noActs}}" hint-placeholder-val="{{false}}"><div class="muted" style="padding: 24px 14px; text-align: center; border-top: 1px solid var(--border)">Brak aktywności w tym widoku.</div></sc-if>
+      </section>
+
+      <section class="card" style="padding: 14px 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px"><span style="font-weight: 600">Rekordy</span><span class="hint">najlepsze wyniki</span></div>
+        <sc-for list="{{prs}}" as="r" hint-placeholder-count="3"><a href="{{r.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; border-top: 1px solid var(--border); color: inherit; text-decoration: none"><span style="{{r.dot}}"></span><span style="flex: 1; min-width: 0">{{r.t}}</span><sc-if value="{{r.isNew}}" hint-placeholder-val="{{false}}"><span class="bdg ok">nowy</span></sc-if><span style="text-align: right"><b class="num" style="display: block; font-weight: 600">{{r.v}}</b><span class="hint num" style="font-size: 12px">{{r.d}}</span></span></a></sc-for>
+        <sc-if value="{{noPrs}}" hint-placeholder-val="{{false}}"><div class="hint" style="padding: 8px 0">Brak rekordów w tym filtrze.</div></sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isCal}}" hint-placeholder-val="{{false}}">
+      <section class="card" style="padding: 12px 10px 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px 8px"><b style="font-weight: 600">Listopad 2026</b><span class="hint">stuknij dzień</span></div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 11px; color: var(--muted-foreground); padding-bottom: 4px"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{cal}}" as="cd" hint-placeholder-count="35"><button type="button" class="mc" aria-pressed="{{cd.p}}" aria-label="{{cd.aria}}" onClick="{{cd.pick}}"><span style="{{cd.ns}}">{{cd.n}}</span><span style="display: flex; gap: 3px"><sc-for list="{{cd.dots}}" as="x" hint-placeholder-count="1"><span style="{{x}}"></span></sc-for></span></button></sc-for></div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 6px 0; font-size: 12px; color: var(--muted-foreground)"><sc-for list="{{legend}}" as="l" hint-placeholder-count="5"><span style="display: flex; align-items: center; gap: 5px"><span style="{{l.dot}}"></span>{{l.t}}</span></sc-for></div>
+      </section>
+      <section class="card" style="padding: 0; overflow: hidden">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 14px 10px"><span style="font-weight: 600">{{dayTitle}}</span><a href="#" class="hint" onClick="{{openAdd}}">+ dodaj</a></div>
+        <sc-for list="{{dayRows}}" as="a" hint-placeholder-count="1"><a href="{{a.href}}" onClick="{{a.go}}" class="arow" style="text-decoration: none"><span class="aic" style="{{a.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.path}}"></path></svg></span><span style="flex: 1; min-width: 0"><b style="display: block; font-weight: 500">{{a.name}}</b><span class="hint num">{{a.when}}</span></span><span class="num" style="font-weight: 500">{{a.m}}</span></a></sc-for>
+        <sc-if value="{{dayEmpty}}" hint-placeholder-val="{{false}}"><div class="muted" style="padding: 20px 14px; text-align: center; border-top: 1px solid var(--border)">Dzień odpoczynku.</div></sc-if>
+      </section>
+    </sc-if>
   </div>
+
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}"><div role="status" class="toast" style="position: absolute; left: 16px; right: 16px; bottom: 80px; z-index: 30; display: flex; justify-content: space-between; align-items: center"><span>{{toastTxt}}</span><button type="button" class="btn" style="height: 32px" onClick="{{undo}}">Cofnij</button></div></sc-if>
+
+  <sc-if value="{{addOn}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" class="backdrop" style="position: absolute; z-index: 40" onClick="{{closeAdd}}"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="add-t" class="dlg m-sheet" style="z-index: 41; padding-bottom: 24px">
+      <div class="m-grab"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 4px"><h2 id="add-t" class="m-title" style="font-size: 17px">Dodaj aktywność</h2><button type="button" class="btng ic" aria-label="Zamknij" onClick="{{closeAdd}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div>
+      <div style="padding: 0 12px; display: flex; flex-direction: column">
+        <a href="CMRunNew.dc.html" class="shrow"><span class="aic" style="background: rgba(245,158,11,.14); color: #b45309"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span><span style="flex: 1"><b style="display: block; font-weight: 500">Bieg</b><span class="hint">dystans, czas, tempo</span></span></a>
+        <a href="CMGym.dc.html" class="shrow" onClick="{{gEmpty}}"><span class="aic" style="background: rgba(0,0,0,.06); color: #404040"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12M3 9v6M21 9v6M6 7v10M18 7v10"></path></svg></span><span style="flex: 1"><b style="display: block; font-weight: 500">Trening siłowy</b><span class="hint">pusty albo z szablonu</span></span></a>
+        <div style="display: flex; gap: 6px; padding: 0 4px 8px 52px"><a href="CMGym.dc.html" class="chip" onClick="{{gPush}}">Push</a><a href="CMGym.dc.html" class="chip" onClick="{{gPull}}">Pull</a><a href="CMGym.dc.html" class="chip" onClick="{{gNogi}}">Nogi</a></div>
+        <a href="CMActivityNew.dc.html" class="shrow"><span class="aic" style="background: rgba(124,58,237,.1); color: #6d28d9"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M5.5 6.5c4 3 9 3 13 0M5.5 17.5c4-3 9-3 13 0"></path></svg></span><span style="flex: 1"><b style="display: block; font-weight: 500">Inna aktywność</b><span class="hint">tenis, rower, joga, pole dance…</span></span></a>
+      </div>
+    </div>
+  </sc-if>
+
   <dc-import name="CMTabBar" active="sport" hint-size="390px,64px"></dc-import>
 </div>
+
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}, "tab": {"editor": "enum", "options": ["ov", "cal"], "default": "ov"}, "add": {"editor": "boolean", "default": false}}'>
 class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: props && props.tab === 'cal' ? 'cal' : 'ov', f: 'all', per: 'month', tip: null, sel: null, day: 17, gone: {}, toast: null, add: !!(props && props.add) }; }
   renderVals() {
     const S = this.state || {};
-    const r = S.r || 'w';
-    const W = [0, 4.0, 0, 0, 4.4, 10.0, 0];
-    const M = [22, 31.5, 26, 18.4];
-    const vals = r === 'w' ? W : M;
-    const labels = r === 'w' ? ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'] : ['t. 43', 't. 44', 't. 45', 't. 46'];
-    const max = Math.max.apply(null, vals) || 1;
-    const km = r === 'w' ? 18.4 : 97.9, goal = r === 'w' ? 25 : 100;
-    const sel = S.b;
-    const f = (n) => String(n).replace('.', ',');
+    const RUN = '#f59e0b', GYM = '#525252';
+    const SPC = { 'Tenis': '#65a30d', 'Rower': '#0891b2', 'Pole dance': '#db2777' };
+    const col = (x) => (x[1] === 'run' ? RUN : x[1] === 'gym' ? GYM : SPC[x[2]] || '#7c3aed');
+    const P_RUN = 'M22 12h-4l-3 9L9 3l-3 9H2', P_GYM = 'M6 12h12M3 9v6M21 9v6M6 7v10M18 7v10', P_OTH = 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M5.5 6.5c4 3 9 3 13 0M5.5 17.5c4-3 9-3 13 0';
+    // [dzień, typ, nazwa, km, tempo, czas, trudność, plan, wynik, serie, godzina, rekord, notatka]
+    const BASE = [
+      [1, 'run', 'Spokojny', 8.0, '6:02', '48:16', '5/10', 0, '', '', '09:00', 0, ''],
+      [3, 'run', 'Rozruch', 6.0, '5:55', '35:30', '4/10', 0, '', '', '17:00', 0, ''],
+      [4, 'gym', 'Pull', 0, '', '1:24:00', '7/10', 0, '5 640 kg', '15 serii', '16:00', 0, ''],
+      [5, 'oth', 'Pole dance', 0, '', '1:00:00', '6/10', 0, '≈ 360 kcal', '', '19:00', 0, 'Nowa figura: ayesha z pomocą.'],
+      [6, 'gym', 'Pull', 0, '', '1:28:00', '7/10', 0, '5 980 kg', '15 serii', '16:00', 0, ''],
+      [8, 'run', 'Spokojny', 10.0, '5:58', '59:40', '5/10', 0, '', '', '10:00', 0, ''],
+      [10, 'run', 'Interwały 6 × 400 m', 6.4, '5:18', '33:55', '9/10', 0, '', '', '17:00', 0, '6 × 400 m, przerwa 90 s.'],
+      [12, 'gym', 'Push', 0, '', '1:31:00', '8/10', 0, '6 420 kg', '16 serii', '16:00', 1, 'Nowy rekord w wyciskaniu: 72,5 × 5.'],
+      [13, 'oth', 'Tenis', 0, '', '1:15:00', '6/10', 0, '≈ 655 kcal', '', '18:00', 0, 'Z Kubą, 6:4 4:6. Serwis do poprawy.'],
+      [15, 'run', 'Długi bieg', 12.0, '5:51', '1:10:12', '7/10', 0, '', '', '09:00', 1, 'Ostatnie 2 km mocniej, nogi dobrze.'],
+      [17, 'run', 'Bieg 10 km', 10, '', '', '', 1, '', '', '16:00', 0, ''],
+      [19, 'gym', 'Push', 0, '', '', '', 1, '', '13 serii', '15:00', 0, ''],
+      [20, 'oth', 'Rower', 25, '', '', '', 1, '', '', '14:00', 0, ''],
+      [21, 'run', 'Długi bieg', 14, '', '', '', 1, '', '', '10:00', 0, '']
+    ];
+    const gone = S.gone || {};
+    const ALL = BASE.filter((x) => !gone[x[0]]);
+    const f = S.f || 'all';
+    const L = ALL.filter((x) => f === 'all' || x[1] === f);
+    const DOW = ['nd', 'pn', 'wt', 'śr', 'czw', 'pt', 'sob'];
+    const dIdx = (d) => new Date(Date.UTC(2026, 10, d)).getUTCDay();
+    const p2 = (n) => String(n).padStart(2, '0');
+    const km1 = (x) => x.toFixed(1).replace('.', ',');
+    const pl = (n, a, b, c) => n + ' ' + (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? b : c);
+    const setG = (t) => () => { try { sessionStorage.setItem('rh-gym', t); } catch (e) {} };
+    const tint = (c) => 'background:' + (c === GYM ? 'rgba(0,0,0,.06)' : c + '1f') + ';color:' + (c === GYM ? '#404040' : c);
+    // wykres
+    const per = S.per || 'month';
+    const PD = {
+      week: { title: '16–22 lis', l: ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'], run: [0, 0, 0, 0, 0, 0, 0], gym: [0, 0, 0, 0, 0, 0, 0], oth: [0, 0, 0, 0, 0, 0, 0], ghostRun: { i: 1, v: 10 }, prev: '9–15 lis: 18,4 km' },
+      month: { title: 'Listopad 2026', l: ['t44', 't45', 't46', 't47', 't48'], run: [8, 16, 18.4, 0, 0], gym: [0, 2, 1, 0, 0], oth: [0, 1, 1, 0, 0], ghostRun: { i: 3, v: 24 }, prev: '+18% vs październik' },
+      year: { title: '2026', l: ['s', 'l', 'm', 'k', 'm', 'c', 'l', 's', 'w', 'p', 'l', 'g'], run: [62, 58, 71, 80, 92, 85, 76, 88, 95, 104, 42.4, 0], gym: [6, 7, 8, 8, 9, 6, 5, 7, 8, 8, 3, 0], oth: [0, 0, 1, 2, 3, 4, 5, 4, 3, 3, 2, 0], ghostRun: null, prev: '+21% vs 2025' }
+    }[per];
+    const metric = f === 'gym' ? 'gym' : f === 'oth' ? 'oth' : 'run';
+    const vals = PD[metric];
+    const cur = per === 'week' ? 1 : per === 'month' ? 3 : 10;
+    const mx = Math.max.apply(null, vals.concat([PD.ghostRun && metric === 'run' ? PD.ghostRun.v : 0, 1]));
+    const sum = vals.reduce((a, x) => a + x, 0);
+    const barCol = metric === 'run' ? RUN : metric === 'gym' ? GYM : '#7c3aed';
+    const tipI = S.tip;
+    const bars = vals.map((v, i) => {
+      const ghost = metric === 'run' && PD.ghostRun && PD.ghostRun.i === i && !v;
+      const h = Math.round((ghost ? PD.ghostRun.v : v) / mx * 100);
+      return { l: PD.l[i], aria: PD.l[i] + ': ' + (metric === 'run' ? km1(v) + ' km' : v), pick: () => this.setState({ tip: (this.state || {}).tip === i ? null : i }),
+        s: 'display:block;width:100%;border-radius:5px 5px 2px 2px;height:' + Math.max(v || ghost ? 3 : 0, h) + '%;' + (ghost ? 'border:1.5px dashed #a3a3a3;box-sizing:border-box' : 'background:' + (i === cur ? '#262626' : barCol + (i === tipI ? '' : '99'))) };
+    });
+    const tipTxt = tipI !== null && tipI !== undefined && tipI < vals.length ? PD.l[tipI] + ': ' + (metric === 'run' ? km1(vals[tipI]) + ' km' : pl(vals[tipI], 'trening', 'treningi', 'treningów')) : '';
+    const doneN = L.filter((x) => !x[7]);
+    const stats = per === 'week' ? (metric === 'run' ? [{ k: 'Biegi', v: '0 z 2' }, { k: 'Śr. tempo', v: '—' }, { k: 'Czas', v: '0 min' }, { k: 'Siłownia', v: '0 z 1' }] : metric === 'gym' ? [{ k: 'Serie', v: '0 z 13' }, { k: 'Objętość', v: '0 kg' }, { k: 'Rekordy', v: '—' }, { k: 'W planie', v: 'czw · Push' }] : [{ k: 'Aktywności', v: '0' }, { k: 'Czas', v: '0 min' }, { k: 'W planie', v: 'pt · Rower' }, { k: 'Śr. trudność', v: '—' }]) : metric === 'run' ? [{ k: 'Biegi', v: String(doneN.filter((x) => x[1] === 'run').length) }, { k: 'Śr. tempo', v: '5:49 /km' }, { k: 'Czas', v: '4 h 08 min' }, { k: 'Siłownia', v: pl(ALL.filter((x) => x[1] === 'gym' && !x[7]).length, 'trening', 'treningi', 'treningów') }]
+      : metric === 'gym' ? [{ k: 'Serie', v: '46' }, { k: 'Objętość', v: '18 040 kg' }, { k: 'Rekordy', v: '1' }, { k: 'Śr. trudność', v: '7,3/10' }]
+      : [{ k: 'Aktywności', v: String(doneN.length) }, { k: 'Czas', v: '2 h 15 min' }, { k: 'Najczęściej', v: 'Tenis' }, { k: 'Śr. trudność', v: '6/10' }];
+    const perV = { title: PD.title, big: metric === 'run' ? km1(sum) : String(sum), unit: metric === 'run' ? 'km' : metric === 'gym' ? 'treningi siłowe' : 'inne aktywności',
+      delta: per === 'week' ? (metric === 'run' ? 'plan 24 km' : 'w toku') : PD.prev, dC: per === 'week' ? 'bdg sec' : 'bdg ok', stats, bars,
+      lblS: 'display:grid;gap:6px;font-size:11px;color:#686868;margin-top:-6px;grid-template-columns:repeat(' + vals.length + ',minmax(0,1fr))' };
+    // lista
+    const sel = S.sel;
+    const detail = (x) => {
+      const run = x[1] === 'run', gym = x[1] === 'gym', plan = !!x[7];
+      const stats = run ? (plan ? [{ k: 'Plan', v: km1(x[3]) + ' km' }, { k: 'Start', v: x[10] }, { k: 'Cel tempa', v: '5:50 /km' }, { k: 'Trudność', v: '—' }] : [{ k: 'Dystans', v: km1(x[3]) + ' km' }, { k: 'Czas', v: x[5] }, { k: 'Tempo', v: x[4] + ' /km' }, { k: 'Trudność', v: x[6] }])
+        : gym ? (plan ? [{ k: 'Szablon', v: x[2] }, { k: 'Start', v: x[10] }, { k: 'Ćwiczenia', v: '4' }, { k: 'Serie', v: '13' }] : [{ k: 'Objętość', v: x[8] }, { k: 'Serie', v: x[9] }, { k: 'Czas', v: x[5] }, { k: 'Trudność', v: x[6] }])
+        : (plan ? [{ k: 'Start', v: x[10] }, { k: 'Plan', v: x[3] ? km1(x[3]) + ' km' : '—' }, { k: 'Rodzaj', v: x[2] }, { k: 'Kcal', v: '—' }] : [{ k: 'Czas', v: x[5] }, { k: x[3] ? 'Dystans' : 'Trudność', v: x[3] ? km1(x[3]) + ' km' : x[6] }, { k: 'Kcal', v: x[8] }, { k: 'Start', v: x[10] }]);
+      return { stats, href: run ? 'CMRunNew.dc.html' : gym ? 'CMGym.dc.html' : 'CMActivityNew.dc.html', go: gym ? setG(['Push', 'Pull', 'Nogi'].indexOf(x[2]) >= 0 ? x[2] : 'Push') : () => {},
+        cta: plan ? (gym ? 'Rozpocznij trening' : 'Uzupełnij dane') : (gym ? 'Otwórz trening' : run ? 'Edytuj bieg' : 'Edytuj aktywność') };
+    };
+    const row = (x) => {
+      const open = sel === x[0], d = detail(x), c = col(x);
+      return Object.assign({ name: x[2], plan: !!x[7], rec: !!x[11], ic: tint(c), path: x[1] === 'run' ? P_RUN : x[1] === 'gym' ? P_GYM : P_OTH,
+        when: DOW[dIdx(x[0])] + ' ' + p2(x[0]) + '.11 · ' + x[10] + (x[6] ? ' · ' + x[6] : ''),
+        m: x[1] === 'run' || x[3] ? km1(x[3]) + ' km' : x[1] === 'gym' ? (x[8] || x[9]) : x[5] || '—',
+        open, exp: open ? 'true' : 'false', toggle: () => this.setState({ sel: open ? null : x[0] }),
+        hasNote: !!x[12], note: x[12],
+        del: () => this.setState({ gone: Object.assign({}, gone, { [x[0]]: 1 }), sel: null, toast: { t: 'Usunięto „' + x[2] + '”', k: x[0] } }) }, d);
+    };
+    const groups = [['Tydz. 47 · 16–22 lis', 16, 22], ['Tydz. 46 · 9–15 lis', 9, 15], ['Tydz. 45 · 2–8 lis', 2, 8], ['Tydz. 44 · do 1 lis', -5, 1]].map((g) => {
+      const rs = L.filter((x) => x[0] >= g[1] && x[0] <= g[2]).sort((a, b) => b[0] - a[0]);
+      const k = rs.filter((x) => x[1] === 'run' && !x[7]).reduce((a, x) => a + x[3], 0);
+      return { t: g[0], sum: [k ? km1(k) + ' km' : '', rs.filter((x) => !x[7]).length ? rs.filter((x) => !x[7]).length + ' wyk.' : '', rs.filter((x) => x[7]).length ? rs.filter((x) => x[7]).length + ' w planie' : ''].filter(Boolean).join(' · '), rows: rs.map(row) };
+    }).filter((g) => g.rows.length);
+    // ten tydzień
+    const week = [16, 17, 18, 19, 20, 21, 22].map((d, i) => {
+      const it = ALL.find((x) => x[0] === d), c = it ? col(it) : '';
+      return { l: ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'][i], n: String(d), t: d + ' lis: ' + (it ? it[2] + (it[7] ? ' (plan)' : '') : 'odpoczynek'),
+        s: 'width:34px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;box-sizing:border-box;' + (it ? (it[7] ? 'border:1.5px dashed ' + c + ';color:#262626' : 'background:' + c + ';color:#fff') : 'background:rgba(0,0,0,.04);color:#a3a3a3') + (d === 17 ? ';box-shadow:0 0 0 2px #fff,0 0 0 3.5px #262626' : '') };
+    });
+    const next = ALL.filter((x) => x[7] && x[0] >= 17).sort((a, b) => a[0] - b[0])[0];
+    const nx = next ? { t: next[2], w: (next[0] === 17 ? 'dziś' : DOW[dIdx(next[0])] + ' ' + next[0] + '.11') + ' · ' + next[10], ic: tint(col(next)), href: detail(next).href, go: detail(next).go, cta: next[1] === 'gym' ? 'Rozpocznij' : 'Uzupełnij' } : { t: 'Brak planu', w: 'dodaj trening', ic: tint(RUN), href: 'CMRunNew.dc.html', go: () => {}, cta: 'Dodaj' };
+    const PRS = [
+      { t: '10 km', v: '58:04', d: '15.11.2026', c: RUN, k: 'run', n: 1, href: 'CMRunNew.dc.html' },
+      { t: 'Najdłuższy bieg', v: '16,0 km', d: '27.09.2026', c: RUN, k: 'run', href: 'CMRunNew.dc.html' },
+      { t: 'Wyciskanie · 1RM', v: '82,5 kg', d: '12.11.2026', c: GYM, k: 'gym', n: 1, href: 'CMExerciseDetail.dc.html' },
+      { t: 'Martwy ciąg · 1RM', v: '131 kg', d: '06.11.2026', c: GYM, k: 'gym', href: 'CMExerciseDetail.dc.html' },
+      { t: 'Rower · najdłuższa trasa', v: '42,0 km', d: '04.10.2026', c: SPC['Rower'], k: 'oth', href: 'CMActivityNew.dc.html' }
+    ];
+    const prs = PRS.filter((r) => f === 'all' || r.k === f).map((r) => ({ t: r.t, v: r.v, d: r.d, isNew: !!r.n, href: r.href, dot: 'width:8px;height:8px;border-radius:50%;flex:none;background:' + r.c }));
+    // kalendarz
+    const day = S.day || 17;
+    const cal = [];
+    for (let i = 0; i < 35; i++) {
+      const d = i - 5, inM = d >= 1 && d <= 30;
+      const its = inM ? L.filter((x) => x[0] === d) : [];
+      cal.push({ n: String(inM ? d : (d < 1 ? 31 + d : d - 30)), p: inM && d === day ? 'true' : 'false', aria: inM ? d + ' listopada' + (its.length ? ': ' + its.map((x) => x[2]).join(', ') : '') : '',
+        pick: () => { if (inM) this.setState({ day: d }); },
+        ns: 'font-size:13px;font-variant-numeric:tabular-nums;' + (d === 17 ? 'display:grid;place-items:center;width:24px;height:24px;border-radius:999px;background:#262626;color:#fff;font-weight:600' : 'color:' + (inM ? '#262626' : '#c4c4c4')),
+        dots: its.map((x) => 'width:6px;height:6px;border-radius:50%;box-sizing:border-box;' + (x[7] ? 'border:1.5px solid ' + col(x) : 'background:' + col(x))) });
+    }
+    const dayItems = L.filter((x) => x[0] === day);
+    const toast = S.toast;
+    const FL = [['all', 'Wszystko', null], ['run', 'Bieg', RUN], ['gym', 'Siłownia', GYM], ['oth', 'Inne', '#7c3aed']];
     return {
-      ranges: [['w', 'Tydzień'], ['m', 'Miesiąc']].map((x) => ({ t: x[1], p: x[0] === r ? 'true' : 'false', pick: () => this.setState({ r: x[0], b: null }) })),
-      km: f(km), goal, runs: r === 'w' ? 3 : 12, pace: r === 'w' ? '5:12' : '5:19', gym: r === 'w' ? 2 : 8,
-      progS: 'height:100%;border-radius:999px;background:#f59e0b;width:' + Math.min(100, km / goal * 100) + '%',
-      gap: r === 'w' ? 10 : 24,
-      bars: vals.map((v, i) => ({ label: labels[i] + ': ' + f(v) + ' km', pick: () => this.setState({ b: i }),
-        s: 'flex:1;border:0;padding:0;cursor:pointer;border-radius:6px 6px 0 0;min-height:4px;height:' + Math.max(4, Math.round(v / max * 116)) + 'px;background:' + (sel === i ? '#262626' : v ? '#f59e0b' : 'rgba(0,0,0,.08)') })),
-      axis: labels.map((t) => ({ t })),
-      barTxt: sel == null ? 'stuknij słupek' : labels[sel] + ' · ' + f(vals[sel]) + ' km'
+      headLbl: (S.tab || 'ov') === 'cal' ? 'Kalendarz treningów' : 'Listopad · ' + km1(ALL.filter((x) => x[1] === 'run' && !x[7]).reduce((a, x) => a + x[3], 0)) + ' km biegu',
+      tabs: [['ov', 'Przegląd'], ['cal', 'Kalendarz']].map((x) => ({ t: x[1], p: (S.tab || 'ov') === x[0] ? 'true' : 'false', pick: () => this.setState({ tab: x[0] }) })),
+      filters: FL.map((x) => ({ t: x[1], p: f === x[0] ? 'true' : 'false', dot: x[2] ? 'width:8px;height:8px;border-radius:50%;background:' + x[2] : 'display:none', pick: () => this.setState({ f: x[0], tip: null, sel: null }) })),
+      isOv: (S.tab || 'ov') === 'ov', isCal: S.tab === 'cal',
+      periods: [['week', 'Tydz.'], ['month', 'Mies.'], ['year', 'Rok']].map((x) => ({ t: x[1], p: per === x[0] ? 'true' : 'false', pick: () => this.setState({ per: x[0], tip: null }) })),
+      per: perV, hasTip: !!tipTxt, tipTxt,
+      week, nx, groups, noActs: groups.length === 0, actCount: pl(L.filter((x) => !x[7]).length, 'wykonana', 'wykonane', 'wykonanych') + ' · ' + L.filter((x) => x[7]).length + ' w planie',
+      prs, noPrs: prs.length === 0,
+      cal, legend: [['Bieg', RUN], ['Siłownia', GYM]].concat(Object.keys(SPC).map((k) => [k, SPC[k]])).map((l) => ({ t: l[0], dot: 'width:8px;height:8px;border-radius:50%;background:' + l[1] })),
+      dayTitle: DOW[dIdx(day)] + ' ' + day + ' listopada', dayRows: dayItems.map((x) => { const r = row(x); return r; }), dayEmpty: dayItems.length === 0,
+      openAdd: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ add: true }); }, closeAdd: () => this.setState({ add: false }), addOn: !!S.add,
+      gPush: setG('Push'), gPull: setG('Pull'), gNogi: setG('Nogi'), gEmpty: setG('Pusty'),
+      toastOn: !!toast, toastTxt: toast ? toast.t : '', undo: () => { const g = Object.assign({}, gone); if (toast) delete g[toast.k]; this.setState({ gone: g, toast: null }); }
     };
   }
 }
+
 </script>
 </body>
 </html>

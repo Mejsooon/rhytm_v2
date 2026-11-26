@@ -45,12 +45,14 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
 html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
 html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer}
+html body .m-screen .card-h:has(> .card-d){flex-direction:column;align-items:flex-start;gap:4px}
+html body .m-screen .card :is(.card-h,.card-p,.foot,.m-row){padding-left:16px;padding-right:16px}
 </style>
 </helmet>
 <div class="m-screen" style="display:flex;flex-direction:column">
@@ -69,8 +71,8 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
       <div class="card-h"><h2 class="card-t">Cele</h2><p class="card-d">Pokazywane na ekranie Dziś, w Sporcie i przy śnie.</p></div>
       <div style="padding:4px 0">
         <div class="m-row" style="min-height:60px"><span style="flex:1">Cel snu</span><span class="m-step"><button type="button" aria-label="Krócej" onClick="{{sleepDown}}">−</button><span class="num">{{sleep}}</span><button type="button" aria-label="Dłużej" onClick="{{sleepUp}}">+</button></span></div>
-        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{trOn}}" aria-label="Treningi w tygodniu" onClick="{{trToggle}}"></button><span style="flex:1">Treningi w tygodniu</span><span class="m-step"><button type="button" aria-label="Mniej treningów" onClick="{{trDown}}">−</button><span class="num">{{tr}}</span><button type="button" aria-label="Więcej treningów" onClick="{{trUp}}">+</button></span></div>
-        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{kmOn}}" aria-label="Kilometry biegu w tygodniu" onClick="{{kmToggle}}"></button><span style="flex:1">Km biegu w tygodniu</span><span class="m-step"><button type="button" aria-label="Mniej kilometrów" onClick="{{kmDown}}">−</button><span class="num">{{km}}</span><button type="button" aria-label="Więcej kilometrów" onClick="{{kmUp}}">+</button></span></div>
+        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{trOn}}" aria-label="Treningi w tygodniu" onClick="{{trToggle}}"></button><span style="flex:1;min-width:0"><span style="display:block">Treningi</span><span class="hint">na tydzień</span></span><span class="m-step"><button type="button" aria-label="Mniej treningów" onClick="{{trDown}}">−</button><span class="num">{{tr}}</span><button type="button" aria-label="Więcej treningów" onClick="{{trUp}}">+</button></span></div>
+        <div class="m-row" style="min-height:60px"><button type="button" class="sw m-hit" role="switch" aria-checked="{{kmOn}}" aria-label="Kilometry biegu w tygodniu" onClick="{{kmToggle}}"></button><span style="flex:1;min-width:0"><span style="display:block">Bieg</span><span class="hint">km na tydzień</span></span><span class="m-step"><button type="button" aria-label="Mniej kilometrów" onClick="{{kmDown}}">−</button><span class="num">{{km}}</span><button type="button" aria-label="Więcej kilometrów" onClick="{{kmUp}}">+</button></span></div>
       </div>
       <div class="card-p" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px">
         <label class="fld">Waga (kg)<input class="inp num" type="text" inputMode="decimal" placeholder="np. 75" value="78"></label>
@@ -91,8 +93,8 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
     <section class="card">
       <div class="card-h"><h2 class="card-t">Kosz</h2><p class="card-d">Usunięte strony i wiersze znikają na dobre po 30 dniach.</p></div>
       <div style="padding:4px 0">
-        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Websites</span><span class="hint num">strona · usunięta 20.11 · zostało 26 dni</span></span><button type="button" class="btn">Przywróć</button></div>
-        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Disney+</span><span class="hint num">wiersz w Subscriptions · zostało 29 dni</span></span><button type="button" class="btn">Przywróć</button></div>
+        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Strony WWW</span><span class="hint num">strona · usunięta 20.11 · zostało 26 dni</span></span><button type="button" class="btn">Przywróć</button></div>
+        <div class="m-row" style="min-height:56px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Disney+</span><span class="hint num">wiersz w Subskrypcje · zostało 29 dni</span></span><button type="button" class="btn">Przywróć</button></div>
       </div>
     </section>
     <section class="card">
@@ -103,11 +105,7 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
         <a href="CMSettingsAccount.dc.html" class="m-row" style="min-height:60px"><span style="flex:1;min-width:0"><span style="display:block;font-weight:500">Hasło do konta</span><span class="hint num">zmienione 15.11.2026</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
       </div>
     </section>
-    <section class="card" style="border-color:rgba(239,68,68,.24)">
-      <div class="card-h"><h2 class="card-t">Usuń konto</h2><p class="card-d">Konto zostanie usunięte po 30 dniach razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je przywrócić, logując się. Zdjęcie profilowe usuwamy od razu.</p></div>
-      <sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}"><div class="card-p" style="display:flex;flex-direction:column;gap:8px"><label class="fld" style="color:#b91c1c">Wpisz <span class="kbd">USUŃ</span>, żeby potwierdzić<input class="inp" type="text" autocomplete="off" placeholder="USUŃ" value="{{word}}" onInput="{{typeWord}}"></label></div></sc-if>
-      <div class="foot" style="background:rgba(239,68,68,.04);border-top-color:rgba(239,68,68,.16);gap:8px;justify-content:flex-end"><sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" onClick="{{delToggle}}">Anuluj</button></sc-if><a href="{{delHref}}" class="btnd" style="{{delS}}" aria-disabled="{{delDis}}" onClick="{{delClick}}">Usuń konto</a></div>
-    </section>
+    <a href="CMSettingsAccount.dc.html" class="hint" style="text-decoration:none;text-align:center;padding:4px 0">Hasło, sesje, eksport i usunięcie konta są w <span style="color:var(--foreground);font-weight:500">Konto i bezpieczeństwo →</span></a>
   </div>
 </div>
 </x-dc>

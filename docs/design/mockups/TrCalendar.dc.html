@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Kalendarz treningów</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="kal" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Kalendarz treningów</h1><div class="row" style="gap: 4px; margin-left: 6px"><button type="button" class="btn sm ic" aria-label="Poprzedni tydzień"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="btn sm">Dziś</button><button type="button" class="btn sm ic" aria-label="Następny tydzień"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div><b class="num" style="font-weight: 500">tydz. 47 · 16–22 listopada</b></div>
+      <div class="row" style="gap: 8px"><div class="seg" role="group" aria-label="Rodzaj"><sc-for list="{{fl}}" as="f" hint-placeholder-count="3"><button type="button" aria-pressed="{{f.p}}" onClick="{{f.pick}}">{{f.t}}</button></sc-for></div><a href="TrAssign.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Przypisz trening</a></div>
+    </header>
+    <div style="padding: 24px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 12px">
+      <section class="card" style="overflow: hidden">
+        <div style="display: grid; grid-template-columns: 210px repeat(7, minmax(0, 1fr))">
+          <div style="padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08)" class="hint">Podopieczny</div>
+          <sc-for list="{{hd}}" as="h" hint-placeholder-count="7"><div style="{{h.s}}"><span class="num nw">{{h.t}}</span></div></sc-for>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+            <a href="TrClientWorkouts.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.06); text-decoration: none; color: inherit; min-width: 0"><span class="av" style="{{r.avS}}">{{r.i}}</span><span style="min-width: 0"><span class="ell" style="display: block; font-weight: 500">{{r.n}}</span><span class="hint num ell" style="display: block">{{r.sub}}</span></span></a>
+            <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="7"><div style="{{c.s}}"><sc-for list="{{c.items}}" as="it" hint-placeholder-count="1"><a href="TrWorkout.dc.html" style="{{it.s}}"><span class="ell" style="font-weight: 500; font-size: 13px">{{it.t}}</span><span class="hint num ell" style="font-size: 11px">{{it.sub}}</span></a></sc-for></div></sc-for>
+          </sc-for>
+        </div>
+      </section>
+      <div class="row hint" style="gap: 16px; font-size: 12px"><span class="row" style="gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #52525214; border: 1px solid #5252524d"></span>siłownia — wykonany</span><span class="row" style="gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #f59e0b14; border: 1px solid #f59e0b4d"></span>bieg — wykonany</span><span class="row" style="gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #fff; border: 1px dashed #8a8a8a"></span>zaplanowany</span><span class="row" style="gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #c2410c14; border: 1px solid #c2410c4d"></span>pominięty</span><span style="margin-left: auto">Kliknij trening, żeby zobaczyć szczegóły i skomentować.</span></div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const f = st.f || 'all';
+    // [dzień 0-6, nazwa, opis, stan, rodzaj]
+    const T = {
+      ola: [[0, 'Nogi A', '58 min', 'done', 'g'], [1, 'Push A', '52 min · rekord', 'done', 'g'], [3, 'Pull A', '18:00', 'plan', 'g'], [5, 'Bieg 6 km', '9:00', 'plan', 'b']],
+      kuba: [[0, 'Full body A', 'nie wykonany', 'miss', 'g'], [0, 'Bieg 6 km', '38:40', 'done', 'b'], [1, 'Full body B', '19:30', 'plan', 'g'], [3, 'Bieg 8 km', '7:00', 'plan', 'b'], [4, 'Full body A', '19:30', 'plan', 'g']],
+      marta: [[0, 'Bieg długi 12 km', '1:05:12', 'done', 'b'], [1, 'Bieg spokojny 8 km', '18:00', 'plan', 'b'], [3, 'Interwały 6 × 800', '18:00', 'plan', 'b'], [5, 'Bieg tempo 10 km', '8:30', 'plan', 'b']],
+      pawel: [[0, 'Push A', 'nie wykonany', 'miss', 'g'], [2, 'Pull A', '20:00', 'plan', 'g'], [4, 'Nogi A', '20:00', 'plan', 'g'], [6, 'Push A', '11:00', 'plan', 'g']],
+      ania: [[0, 'Nogi A', '61 min · rekord', 'done', 'g'], [2, 'Push A', '17:30', 'plan', 'g'], [4, 'Pull A', '17:30', 'plan', 'g']]
+    };
+    // Jak bloki w kalendarzu: wykonany = tło w kolorze sportu, zaplanowany = białe z przerywaną ramką, pominięty = czerwony odcień
+    const SC = { g: '#525252', b: '#f59e0b' };
+    const itS = (k, kind) => { const c = k === 'miss' ? '#c2410c' : (SC[kind] || '#525252');
+      return 'display:flex;flex-direction:column;gap:1px;padding:4px 8px;border-radius:8px;text-decoration:none;color:#262626;min-width:0;white-space:nowrap;overflow:hidden;' + (k === 'plan' ? 'background:#ffffff;border:1px dashed ' + c : 'background:' + c + '14;border:1px solid ' + c + '4d') + (k === 'miss' ? ';text-decoration:line-through;text-decoration-color:rgba(194,65,12,.6)' : ''); };
+    const DN = ['pn 16', 'wt 17', 'śr 18', 'czw 19', 'pt 20', 'sob 21', 'nd 22'];
+    const cellS = (i) => 'display:flex;flex-direction:column;gap:4px;padding:6px;min-height:72px;border-left:1px solid rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.06);min-width:0;' + (i === 1 ? 'background:rgba(0,0,0,.02)' : '');
+    const rows = CL.filter((c) => T[c.id]).map((c) => ({ n: c.n, i: c.i, avS: 'background:' + c.c, sub: c.plan + ' · ' + c.done + '/' + c.all,
+      cells: DN.map((_, d) => ({ s: cellS(d), items: T[c.id].filter((x) => x[0] === d && (f === 'all' || x[4] === f)).map((x) => ({ t: x[1], sub: x[2], s: itS(x[3], x[4]) })) })) }));
+    return {
+      fl: [['all', 'Wszystko'], ['g', 'Siłownia'], ['b', 'Bieg']].map((x) => ({ t: x[1], p: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) })),
+      hd: DN.map((t, i) => ({ t: t + (i === 1 ? ' · dziś' : ''), s: 'padding:10px 8px;border-bottom:1px solid rgba(0,0,0,.08);border-left:1px solid rgba(0,0,0,.06);font-size:12px;' + (i === 1 ? 'font-weight:600;color:#262626;background:rgba(0,0,0,.02)' : 'color:#686868') })),
+      rows
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

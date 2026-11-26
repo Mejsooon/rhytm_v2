@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Centrum powiadomień</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.ntab{height:28px;padding:0 10px;border-radius:999px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#686868;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.ntab[aria-pressed="true"]{background:rgba(0,0,0,.06);color:#262626}
+.nitem{display:flex;gap:12px;padding:12px 16px;border:0;background:transparent;width:100%;text-align:left;font:inherit;color:#262626;cursor:pointer;border-top:1px solid rgba(0,0,0,.06)}
+.nitem:hover{background:#fafafa}
+.nic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;background:rgba(0,0,0,.04);color:#262626}
+.ngrp{font-size:12px;font-weight:500;color:#686868;padding:12px 16px 6px}
+</style>
+</helmet>
+<div style="position: relative; min-height: 1000px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #262626">
+  <dc-import name="S2Today" bell="{{true}}" hint-size="100%,1000px"></dc-import>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.04)"></div>
+  <section role="dialog" aria-label="Powiadomienia" class="pop" style="position: absolute; left: 236px; top: 44px; width: 400px; max-width: calc(100% - 24px); padding: 0; z-index: 10; overflow: hidden; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px 16px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Powiadomienia</h2>
+      <button type="button" class="btng xs" onClick="{{readAll}}">Oznacz wszystkie jako przeczytane</button>
+    </header>
+    <div role="group" aria-label="Filtr powiadomień" style="display: flex; gap: 4px; padding: 0 12px 10px">
+      <button type="button" class="ntab" aria-pressed="{{tabAll}}" onClick="{{pickAll}}">Wszystkie</button>
+      <button type="button" class="ntab" aria-pressed="{{tabUnread}}" onClick="{{pickUnread}}">Nieprzeczytane <span class="bdg sec num">{{unreadN}}</span></button>
+    </div>
+    <div style="max-height: 520px; overflow-y: auto">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <div class="ngrp">{{g.name}}</div>
+        <sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+          <button type="button" class="nitem" onClick="{{it.open}}">
+            <span class="nic" style="{{it.icS}}" aria-hidden="true">
+              <sc-if value="{{it.isRenew}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg></sc-if>
+              <sc-if value="{{it.isBlock}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></sc-if>
+              <sc-if value="{{it.isHabit}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg></sc-if>
+              <sc-if value="{{it.isRecord}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg></sc-if>
+            </span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+              <span style="{{it.tS}}">{{it.title}}</span>
+              <span class="hint">{{it.sub}}</span>
+            </span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none">
+              <span class="hint num">{{it.when}}</span>
+              <sc-if value="{{it.unread}}" hint-placeholder-val="{{true}}"><span role="img" aria-label="nieprzeczytane" style="width: 8px; height: 8px; border-radius: 50%; background: #2563eb"></span></sc-if>
+            </span>
+          </button>
+        </sc-for>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 40px 24px 48px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center"><span class="empty-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></span><b style="font-weight: 600">{{emptyT}}</b><span class="hint" style="max-width: 280px; line-height: 1.5">{{emptyD}}</span></div></sc-if>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+        <div style="padding: 32px 16px; text-align: center; color: #686868">Wszystko przeczytane.</div>
+      </sc-if>
+    </div>
+    <footer style="border-top: 1px solid rgba(0,0,0,.08); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center">
+      <span class="hint">Starsze niż 30 dni znikają same.</span>
+      <a href="S2SettingsNotifications.dc.html" class="btng xs" style="text-decoration: none">Ustawienia powiadomień</a>
+    </footer>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000},"none":{"editor":"boolean","default":false}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const read = st.read || {};
+    const tab = st.tab || 'all';
+    const ALL0 = [
+      { k: 'a', g: 'Dziś', type: 'block', title: 'Za 10 min: Wykład — bazy danych', sub: '13:00–14:30 · Studia · 3 zadania', when: '12:50' },
+      { k: 'b', g: 'Dziś', type: 'habit', title: 'Rozciąganie czeka na odhaczenie', sub: 'Przypomnienie nawyku · cel: codziennie', when: '11:00' },
+      { k: 'c', g: 'Dziś', type: 'renew', title: 'Spotify odnawia się jutro', sub: 'Subskrypcje · 18.11.2026', when: '09:00' },
+      { k: 'd', g: 'Wcześniej', type: 'record', title: 'Nowy rekord: wyciskanie na ławce', sub: 'Sport · szacowany 1RM wyższy niż w październiku', when: 'pn' },
+      { k: 'e', g: 'Wcześniej', type: 'habit', title: 'Woda 2 l: 6 dni z rzędu', sub: 'Nawyki · najdłuższa seria to 12 dni', when: 'pn' },
+      { k: 'f', g: 'Wcześniej', type: 'renew', title: 'Odnowiono: iCloud+', sub: 'Subskrypcje · następne odnowienie 15.12.2026', when: '15.11' }
+    ];
+    const ALL = this.props.none ? [] : ALL0;
+    const initUnread = { a: true, b: true, c: true };
+    const isUnread = (it) => !!initUnread[it.k] && !read[it.k];
+    const vis = ALL.filter((it) => tab === 'all' || isUnread(it));
+    const groups = ['Dziś', 'Wcześniej'].map((g) => ({
+      name: g,
+      items: vis.filter((it) => it.g === g).map((it) => {
+        const u = isUnread(it);
+        return Object.assign({}, it, {
+          unread: u,
+          isRenew: it.type === 'renew', isBlock: it.type === 'block', isHabit: it.type === 'habit', isRecord: it.type === 'record',
+          tS: 'font-weight:' + (u ? '600' : '500'),
+          icS: it.type === 'record' ? 'background:#f0fdf4;color:#15803d' : (it.type === 'renew' ? 'background:#fff7ed;color:#c2410c' : ''),
+          open: () => { const r = Object.assign({}, read); r[it.k] = true; this.setState({ read: r }); }
+        });
+      })
+    })).filter((g) => g.items.length);
+    const unreadN = ALL.filter(isUnread).length;
+    return {
+      groups,
+      empty: groups.length === 0,
+      emptyT: ALL.length ? 'Wszystko przeczytane' : 'Nie masz jeszcze powiadomień',
+      emptyD: ALL.length ? 'Nowe przypomnienia o blokach, nawykach i odnowieniach pojawią się tutaj.' : 'Tu zobaczysz przypomnienia o blokach, nawykach, odnowieniach subskrypcji i nowe rekordy.',
+      unreadN,
+      tabAll: tab === 'all' ? 'true' : 'false',
+      tabUnread: tab === 'unread' ? 'true' : 'false',
+      pickAll: () => this.setState({ tab: 'all' }),
+      pickUnread: () => this.setState({ tab: 'unread' }),
+      readAll: () => this.setState({ read: { a: true, b: true, c: true } })
+    };
+  }
+}
+</script>
+</body>
+</html>

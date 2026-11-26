@@ -45,7 +45,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -60,7 +60,7 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
   <div class="dlg m-sheet" role="dialog" aria-label="Odnowienie Netflix" style="padding-bottom:20px">
     <div class="m-grab" aria-hidden="true"></div>
     <div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;align-items:center;gap:8px"><span class="bdg sec">↻ Odnowienie · Subscriptions</span><span style="flex:1"></span><a href="CMCalendarDay.dc.html" class="btng ic" aria-label="Zamknij"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="bdg sec">↻ Odnowienie · Subskrypcje</span><span style="flex:1"></span><a href="CMCalendarDay.dc.html" class="btng ic" aria-label="Zamknij"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
       <div><h2 style="margin:0;font-size:22px;font-weight:600">Netflix</h2><p class="num" style="margin:4px 0 0;font-size:17px;font-weight:500">43,00 zł / mies.</p></div>
       <div class="card" style="padding:4px 0">
         <div class="m-row"><span class="muted" style="flex:1">Cykl</span><span>co miesiąc</span></div>
@@ -68,8 +68,8 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
         <div class="m-row"><span class="muted" style="flex:1">Następne</span><span class="num">pon 14.12.2026 · za 29 dni</span></div>
         <div class="m-row"><span class="muted" style="flex:1">Kategoria</span><span class="bdg info">Rozrywka</span></div>
       </div>
-      <p class="hint" style="margin:0">Tylko podgląd. Edytujesz na stronie Subscriptions.</p>
-      <a href="CMSubs.dc.html" class="btn" style="width:100%">Otwórz w Subscriptions</a>
+      <p class="hint" style="margin:0">Tylko podgląd. Edytujesz na stronie „Subskrypcje”.</p>
+      <a href="CMSubs.dc.html" class="btn" style="width:100%">Otwórz stronę Subskrypcje</a>
     </div>
   </div>
 </div>

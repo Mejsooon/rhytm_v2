@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Pulpit (widok)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrSidebar" active="pulpit" min-height="900" on-nav="{{onNav}}" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="row" style="gap: 10px"><h1 class="h-title">Pulpit</h1><span class="bdg sec lg num">wtorek · 17.11.2026</span><span class="hint num">tydz. 47</span></div>
+      <div class="row" style="gap: 8px"><a href="TrAssign.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>Przypisz trening</a><a href="TrInvite.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Zaproś podopiecznego</a></div>
+    </header>
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; width: 100%">
+      <div class="kpis">
+        <div class="kpi"><span class="hint">Aktywni podopieczni</span><b class="num">5</b><span class="hint">+ 1 zaproszenie czeka</span></div>
+        <div class="kpi"><span class="hint">Treningi w tym tygodniu</span><b class="num">5 <span style="font-size: 15px; color: #8a8a8a; font-weight: 500">/ 19</span></b><div class="pbar"><span style="width: 26%"></span></div><span class="hint">do końca tygodnia jeszcze 14</span></div>
+        <div class="kpi"><span class="hint">Pominięte treningi</span><b class="num" style="color: #c2410c">2</b><span class="hint">Kuba 1 · Paweł 1</span></div>
+        <div class="kpi"><span class="hint">Nieprzeczytane wiadomości</span><b class="num">3</b><a href="TrMessages.dc.html" class="hint" style="color: #262626; text-decoration: underline">Otwórz wiadomości</a></div>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start">
+        <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+          <section class="card" style="overflow: hidden">
+            <div class="ch" style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="card-t">Wymaga uwagi</h2><span class="hint num">{{attN}}</span></div>
+            <sc-for list="{{att}}" as="a" hint-placeholder-count="4">
+              <div class="lrow">
+                <a href="TrClient.dc.html" class="av" style="{{a.avS}}">{{a.i}}</a>
+                <span class="aic" style="{{a.icS}}">{{a.ic}}</span>
+                <div style="flex: 1; min-width: 0"><div class="ell" style="font-weight: 500">{{a.n}}</div><div class="hint ell">{{a.why}}</div></div>
+                <a href="{{a.href}}" class="btn sm nw">{{a.act}}</a>
+                <button type="button" class="btng ic sm" aria-label="Oznacz jako załatwione" title="Załatwione" onClick="{{a.done}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button>
+              </div>
+            </sc-for>
+            <sc-if value="{{attEmpty}}" hint-placeholder-val="{{false}}"><div class="lrow"><span class="hint">Wszystko załatwione. Nic nie wymaga uwagi.</span></div></sc-if>
+          </section>
+          <section class="card" style="overflow: hidden">
+            <div class="ch" style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="card-t">Ostatnie aktywności</h2><a href="TrCalendar.dc.html" class="hint" style="color: #262626">Kalendarz treningów</a></div>
+            <sc-for list="{{feed}}" as="f" hint-placeholder-count="4">
+              <div style="border-top: 1px solid rgba(0,0,0,.06); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px">
+                <div class="row">
+                  <span class="av" style="{{f.avS}}">{{f.i}}</span>
+                  <div style="flex: 1; min-width: 0"><div class="ell"><b style="font-weight: 500">{{f.n}}</b> <span class="muted">{{f.verb}}</span> <a href="TrWorkout.dc.html" style="color: #262626; font-weight: 500">{{f.what}}</a></div><div class="hint num ell">{{f.meta}}</div></div>
+                  <sc-if value="{{f.pr}}" hint-placeholder-val="{{false}}"><span class="bdg ok nw"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> rekord</span></sc-if>
+                  <span class="hint num nw">{{f.when}}</span>
+                  <button type="button" class="btng sm nw" onClick="{{f.toggle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>{{f.cLbl}}</button>
+                </div>
+                <sc-if value="{{f.hasSent}}" hint-placeholder-val="{{false}}"><div style="margin-left: 40px; padding: 8px 12px; border-radius: 10px; background: rgba(0,0,0,.035); font-size: 13px" class="ell"><b style="font-weight: 500">Ty:</b> {{f.sent}}</div></sc-if>
+                <sc-if value="{{f.open}}" hint-placeholder-val="{{false}}">
+                  <div class="row" style="margin-left: 40px; gap: 8px"><input class="inp" type="text" placeholder="Komentarz do treningu…" value="{{f.draft}}" onChange="{{f.onDraft}}" style="flex: 1"><button type="button" class="btnp sm" onClick="{{f.send}}">Wyślij</button></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+          <section class="card" style="overflow: hidden">
+            <div class="ch" style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="card-t">Realizacja tygodnia</h2><span class="hint num">pn 16 – nd 22.11</span></div>
+            <sc-for list="{{week}}" as="w" hint-placeholder-count="5">
+              <a href="TrClient.dc.html" class="lrow" style="padding: 10px 16px">
+                <span class="av sm" style="{{w.avS}}">{{w.i}}</span>
+                <span class="ell" style="width: 120px; font-weight: 500">{{w.n}}</span>
+                <div class="pbar" style="flex: 1"><span style="{{w.barS}}"></span></div>
+                <span class="num nw" style="width: 34px; text-align: right">{{w.t}}</span>
+              </a>
+            </sc-for>
+          </section>
+          <section class="card" style="overflow: hidden">
+            <div class="ch" style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="card-t">Dziś zaplanowane</h2><span class="hint num">3 treningi</span></div>
+            <a href="TrWorkout.dc.html" class="lrow"><span class="av sm" style="background: #dbeafe">ON</span><span style="flex: 1" class="ell"><b style="font-weight: 500">Push A</b> <span class="hint">· Ola</span></span><span class="bdg ok nw"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> wykonany</span></a>
+            <a href="TrWorkout.dc.html" class="lrow"><span class="av sm" style="background: #fef3c7">MZ</span><span style="flex: 1" class="ell"><b style="font-weight: 500">Bieg spokojny 8 km</b> <span class="hint">· Marta</span></span><span class="hint num nw">18:00</span></a>
+            <a href="TrWorkout.dc.html" class="lrow"><span class="av sm" style="background: #fee2e2">KW</span><span style="flex: 1" class="ell"><b style="font-weight: 500">Full body B</b> <span class="hint">· Kuba</span></span><span class="hint num nw">19:30</span></a>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const av = (id) => 'background:' + CL.find((c) => c.id === id).c;
+    const ini = (id) => CL.find((c) => c.id === id).i;
+    const S = { warn: 'background:#fff7ed;color:#c2410c', moon: 'background:rgba(79,70,229,.1);color:#4338ca', ok: 'background:#f0fdf4;color:#15803d', idle: 'background:rgba(0,0,0,.05);color:#686868' };
+    const ATT = [
+      { k: 'kuba', id: 'kuba', n: 'Kuba Wiśniewski', why: 'Średnio 5:50 snu z 7 nocy · pominięty Full body A (pn)', ic: '☾', s: 'moon', act: 'Napisz', href: 'TrMessages.dc.html' },
+      { k: 'pawel', id: 'pawel', n: 'Paweł Lis', why: '5 dni bez treningu · pominięty Push A (pn)', ic: '!', s: 'warn', act: 'Napisz', href: 'TrMessages.dc.html' },
+      { k: 'ania', id: 'ania', n: 'Ania Kowalczyk', why: 'Nowy rekord: przysiad 80 kg × 3', ic: '★', s: 'ok', act: 'Pogratuluj', href: 'TrMessages.dc.html' },
+      { k: 'marta', id: 'marta', n: 'Marta Zielińska', why: 'Za tydzień kończy 7. tydzień planu · sprawdź tydz. 8', ic: '✓', s: 'idle', act: 'Sprawdź plan', href: 'TrPlans.dc.html' }
+    ];
+    const done = st.done || {};
+    const att = ATT.filter((a) => !done[a.k]).map((a) => ({ ...a, i: ini(a.id), avS: av(a.id) + ';text-decoration:none', icS: S[a.s] + ';width:28px;height:28px;font-size:13px', done: () => this.setState({ done: { ...done, [a.k]: true } }) }));
+    const FEED = [
+      { k: 'f1', id: 'ola', n: 'Ola', verb: 'ukończyła', what: 'Push A', meta: '52 min · 14 z 15 serii · objętość 6 120 kg', when: 'dziś 7:30', pr: true },
+      { k: 'f2', id: 'marta', n: 'Marta', verb: 'przebiegła', what: 'Bieg długi 12 km', meta: '1:05:12 · 5:26 /km · tętno śr. 152', when: 'wczoraj', pr: false },
+      { k: 'f3', id: 'ania', n: 'Ania', verb: 'ukończyła', what: 'Nogi A', meta: '61 min · 16 z 16 serii · przysiad 80 kg × 3', when: 'wczoraj', pr: true },
+      { k: 'f4', id: 'kuba', n: 'Kuba', verb: 'przebiegł', what: 'Bieg 6 km', meta: '38:40 · 6:27 /km · plan 8 km', when: 'pn 16.11', pr: false }
+    ];
+    const open = st.open || null, sent = st.sent || {}, draft = st.draft || '';
+    const feed = FEED.map((f) => ({ ...f, i: ini(f.id), avS: av(f.id), open: open === f.k, draft, hasSent: !!sent[f.k], sent: sent[f.k] || '',
+      cLbl: sent[f.k] ? 'Skomentowano' : 'Skomentuj',
+      toggle: () => this.setState({ open: open === f.k ? null : f.k, draft: '' }),
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      send: () => { if (!draft.trim()) return; this.setState({ sent: { ...sent, [f.k]: draft.trim() }, open: null, draft: '' }); } }));
+    const week = CL.filter((c) => c.all).map((c) => ({ n: c.n, i: c.i, avS: 'background:' + c.c, t: c.done + '/' + c.all, barS: 'width:' + Math.round(100 * c.done / c.all) + '%;' + (c.miss ? 'background:#c2410c' : '') }));
+    return { att, attN: att.length ? att.length + ' do sprawdzenia' : '', attEmpty: !att.length, feed, week };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

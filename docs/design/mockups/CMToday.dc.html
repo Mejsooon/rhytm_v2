@@ -45,7 +45,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -74,8 +74,9 @@ html body .plan-block{display:flex;align-items:center;gap:12px;min-height:56px;p
 <div class="m-screen" style="background:#fafafa">
   <div class="m-status"><span>9:41</span><span></span></div>
   <header class="m-head" style="background:transparent;border-bottom:0;padding-top:4px">
-    <div style="flex:1;min-width:0"><div class="hint num">Niedziela · 15 listopada</div><h1 class="m-title">Dziś</h1></div>
+    <div style="flex:1;min-width:0"><div class="hint num">Wtorek · 17 listopada</div><h1 class="m-title">Dziś</h1></div>
     <a href="CMSearch.dc.html" class="btng ic" aria-label="Szukaj"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a>
+    <a href="CMNotifications.dc.html" class="btng ic" aria-label="Powiadomienia, 3 nieprzeczytane" style="position: relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span aria-hidden="true" style="position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #c2410c; box-shadow: 0 0 0 2px #fafafa"></span></a>
     <a href="CMSettings.dc.html" class="btng ic" aria-label="Konto i ustawienia"><span class="avatar">M</span></a>
   </header>
   <div class="scroll" style="height:696px;overflow-y:auto;padding:12px 16px 120px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
@@ -85,7 +86,7 @@ html body .plan-block{display:flex;align-items:center;gap:12px;min-height:56px;p
         <sc-for list="{{week}}" as="w" hint-placeholder-count="4"><div class="wrow">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px"><span style="font-weight:500">{{w.label}}</span><span class="num"><b style="font-size:16px;font-weight:600">{{w.value}}</b> <span class="hint">{{w.unit}}</span></span></div>
           <div class="bar"><span style="{{w.barS}}"></span></div>
-          <span class="hint num" style="font-size:12px">{{w.right}}</span>
+          <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="hint num" style="font-size:12px">{{w.right}}</span><span class="num" style="{{w.trS}}">{{w.tr}}</span></span>
         </div></sc-for>
       </div>
     </section>
@@ -125,11 +126,11 @@ class Component extends DCLogic {
     const passa = (n, u) => n === 0 ? 'zacznij passę' : u === 't' ? n + ' tyg. z rzędu' : n === 1 ? '1 dzień z rzędu' : n + ' dni z rzędu';
     return {
       week: [
-        { label: 'Treningi', value: '2', unit: '/ 4', barS: 'width:50%', right: 'jeszcze 2' },
-        { label: 'Bieg', value: '10', unit: '/ 25 km', barS: 'width:40%', right: 'jeszcze 15 km' },
-        { label: 'Nawyki', value: '78 %', unit: 'dni z celem', barS: 'width:78%', right: '—' },
-        { label: 'Sen', value: '7:25', unit: '/ 8:00 śr.', barS: 'width:93%', right: '1 z 2 nocy ≥ cel' }
-      ],
+        { label: 'Treningi', value: '2', unit: '/ 4', barS: 'width:50%', right: 'jeszcze 2', tr: '↑ +1 vs tydz. 46', k: 'up' },
+        { label: 'Bieg', value: '10', unit: '/ 25 km', barS: 'width:40%', right: 'jeszcze 15 km', tr: '↓ −4 km vs tydz. 46', k: 'dn' },
+        { label: 'Nawyki', value: '78 %', unit: 'dni z celem', barS: 'width:78%', right: '2 z 5 dziś', tr: '↑ +6 pkt', k: 'up' },
+        { label: 'Sen', value: '7:25', unit: '/ 8:00 śr.', barS: 'width:93%', right: '1 z 2 nocy ≥ cel', tr: 'bez zmian', k: 'eq' }
+      ].map((w) => Object.assign({}, w, { trS: 'font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap;' + (w.k === 'up' ? 'background:#f0fdf4;color:#15803d' : w.k === 'dn' ? 'background:#fff7ed;color:#c2410c' : 'background:rgba(0,0,0,.04);color:#686868') })),
       habits: HAB.map((x) => {
         const on = !!H[x[0]];
         return { t: x[1], on: on ? 'true' : 'false', streak: passa(x[2], x[3]), hasStreak: x[2] > 0,

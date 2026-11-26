@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Szablony treningów (COSS UI)</title>
+<title>Szablony treningów</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -18,15 +18,15 @@ body{margin:0;background:#ffffff}
   <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
   <main class="main">
     <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Sport</span><span aria-hidden="true">/</span><b><sc-if value="{{isList}}" hint-placeholder-val="{{true}}">Szablony treningów</sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btng xs" onClick="{{cancel}}" style="color: #686868; font-weight: 400; margin-left: -7px">Szablony treningów</button><span aria-hidden="true" style="color: #686868; font-weight: 400"> / </span>{{crumb}}</sc-if></b></nav>
+      <nav class="crumb" aria-label="Okruszki"><a href="S2Sport.dc.html" style="color: inherit; text-decoration: none">Sport</a><span aria-hidden="true">/</span><b><sc-if value="{{isList}}" hint-placeholder-val="{{true}}">Szablony treningów</sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btng xs" onClick="{{cancel}}" style="color: #686868; font-weight: 400; margin-left: -7px">Szablony treningów</button><span aria-hidden="true" style="color: #686868; font-weight: 400"> / </span>{{crumb}}</sc-if></b></nav>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><sc-if value="{{isList}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{newT}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy szablon</button></sc-if><sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" onClick="{{cancel}}">Anuluj</button><button type="button" class="btnp" onClick="{{saveT}}" aria-disabled="{{saveDis}}">Zapisz szablon</button></sc-if></div>
     </header>
-    <div style="padding: 28px 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
       <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
       <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Szablony treningów</h1><p class="muted" style="margin: 6px 0 0">Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.</p></div>
       <sc-if value="{{flash}}" hint-placeholder-val="{{false}}"><div role="status" class="alert ok" style="align-items: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #15803d; flex: none"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg><span>{{flashTxt}}</span></div></sc-if>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px">
-        <sc-for list="{{cards}}" as="t" hint-placeholder-count="3"><section class="card"><div class="card-h" style="align-items: center"><span class="card-t">{{t.name}}</span><span class="bdg sec num">{{t.last}}</span></div><div style="padding: 8px 24px 0; display: flex; flex-direction: column; gap: 8px; flex: 1"><span class="hint num">{{t.meta}}</span><div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{t.ex}}" as="x" hint-placeholder-count="4"><span class="bdg out">{{x}}</span></sc-for></div></div><div style="display: flex; gap: 8px; padding: 16px 24px 20px"><a href="S2GymLog.dc.html" class="btnp sm">Rozpocznij</a><button type="button" class="btn sm" onClick="{{t.edit}}">Edytuj</button></div></section></sc-for>
+        <sc-for list="{{cards}}" as="t" hint-placeholder-count="3"><section class="card"><div class="card-h" style="align-items: center"><span class="card-t">{{t.name}}</span><span class="bdg sec num">{{t.last}}</span></div><div style="padding: 8px 24px 0; display: flex; flex-direction: column; gap: 8px; flex: 1"><span class="hint num">{{t.meta}}</span><div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{t.ex}}" as="x" hint-placeholder-count="4"><span class="bdg out">{{x}}</span></sc-for></div></div><div style="display: flex; gap: 8px; padding: 16px 24px 20px"><a href="S2GymLog.dc.html" class="btnp sm" onClick="{{t.go}}">Rozpocznij</a><button type="button" class="btn sm" onClick="{{t.edit}}">Edytuj</button></div></section></sc-for>
         <button type="button" onClick="{{newT}}" class="card" style="min-height: 190px; border-style: dashed; box-shadow: none; align-items: center; justify-content: center; gap: 8px; font: inherit; color: #686868; cursor: pointer; background: transparent"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>Nowy szablon</button>
       </div>
       </sc-if>
@@ -78,7 +78,7 @@ class Component extends DCLogic {
     const out = { isList: !D, isEdit: !!D,
       newT: () => this.setState({ draft: { id: 'n' + nid(), name: '', last: '—', days: [], ex: [] }, isNew: true, pick: false, q: '', tried: false, flash: '' }),
       flash: !!S.flash, flashTxt: S.flash || '',
-      cards: T.map((t) => ({ name: t.name, last: 'ostatnio: ' + t.last, edit: () => open(t),
+      cards: T.map((t) => ({ name: t.name, last: 'ostatnio: ' + t.last, edit: () => open(t), go: () => { try { sessionStorage.setItem('rh-gym', ['Push', 'Pull', 'Nogi'].indexOf(t.name) >= 0 ? t.name : 'Push'); } catch (e) {} },
         meta: pl(t.ex.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ' · ' + pl(t.ex.reduce((a, e) => a + e.sets, 0), 'seria', 'serie', 'serii') + (t.days.length ? ' · ' + t.days.slice().sort().map((i) => WD[i]).join(', ') : ''),
         ex: t.ex.length ? t.ex.map((e) => e.name) : ['Brak ćwiczeń'] })) };
     if (!D) return out;

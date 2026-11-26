@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Onboarding (5 kroków)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#fafafa}
+.uc{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font:inherit;font-size:14px;color:#262626;cursor:pointer;white-space:nowrap}
+.uc:hover{background:#f5f5f5}
+.uc[aria-pressed="true"]{background:#262626;border-color:#262626;color:#fff}
+.grp{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a;margin-bottom:8px}
+.cc{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid rgba(0,0,0,.1);border-radius:12px;background:#fff;font:inherit;text-align:left;cursor:pointer;color:#262626}
+.cc:hover{background:#fafafa}
+.cc[aria-pressed="true"]{border-color:#262626;box-shadow:inset 0 0 0 1px #262626}
+.lg{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.sg{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px dashed rgba(0,0,0,.25);background:#fff;font:inherit;font-size:13px;color:#404040;cursor:pointer}
+.sg:hover{border-style:solid;background:#fafafa}
+.brow{display:grid;grid-template-columns:8px 64px 14px 64px minmax(0,1fr) 28px;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(0,0,0,.08);border-radius:10px;background:#fff}
+.tin{width:100%;height:30px;box-sizing:border-box;border:1px solid rgba(0,0,0,.1);border-radius:8px;font:inherit;font-size:13px;text-align:center;font-variant-numeric:tabular-nums;outline:none}
+.tin:focus{border-color:#262626}
+.gin{width:56px;height:30px;box-sizing:border-box;border:1px solid rgba(0,0,0,.12);border-radius:8px;font:inherit;font-size:13px;text-align:center;outline:none;font-variant-numeric:tabular-nums}
+.stp{display:flex;align-items:center;gap:8px;border:0;background:transparent;font:inherit;font-size:13px;color:#8a8a8a;cursor:pointer;padding:0}
+.stp b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;background:rgba(0,0,0,.06);color:#686868}
+.stp[data-s="cur"]{color:#262626;font-weight:500}
+.stp[data-s="cur"] b{background:#262626;color:#fff}
+.stp[data-s="done"] b{background:#15803d;color:#fff}
+.pvb{display:flex;align-items:center;justify-content:space-between;gap:8px;height:32px;padding:0 10px;border-radius:8px;box-sizing:border-box;font-size:12px}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #fafafa; color: #262626; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+  <header style="height: 64px; display: flex; align-items: center; gap: 24px; padding: 0 24px">
+    <span style="display: flex; align-items: center; gap: 8px; font-weight: 600"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity=".55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity=".25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity=".55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity=".25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity=".25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626" opacity=".55"></rect></svg>rhytm</span>
+    <nav aria-label="Kroki" style="display: flex; gap: 18px; margin: 0 auto"><sc-for list="{{steps}}" as="x" hint-placeholder-count="5"><button type="button" class="stp" data-s="{{x.st}}" onClick="{{x.go}}" aria-current="{{x.cur}}"><b>{{x.n}}</b>{{x.t}}</button></sc-for></nav>
+    <a href="S2Login.dc.html" class="btng sm" style="color: #686868">Wyloguj</a>
+  </header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px 32px">
+    <div class="card" style="width: 100%; max-width: 1140px; height: 740px; overflow: hidden; display: grid; grid-template-columns: 540px 1fr">
+      <div style="display: flex; flex-direction: column; min-height: 0">
+        <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 32px 40px 20px; display: flex; flex-direction: column; gap: 20px">
+
+          <sc-if value="{{s1}}" hint-placeholder-val="{{true}}">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.02em">Cześć! Jak mamy się do Ciebie zwracać?</h1><p class="muted" style="margin: 6px 0 0">Imię zobaczysz na stronie Dziś. Resztę wykryliśmy sami.</p></div>
+            <div style="display: flex; align-items: center; gap: 16px">
+              <span class="avatar" style="width: 56px; height: 56px; font-size: 18px; background: #262626; color: #fafafa; box-shadow: none">{{initials}}</span>
+              <label class="fld" style="flex: 1">Imię lub pseudonim<input class="inp" type="text" value="{{name}}" onChange="{{onName}}" autocomplete="nickname"></label>
+            </div>
+            <button type="button" class="btng sm" style="align-self: flex-start; padding-left: 0">+ Dodaj zdjęcie (opcjonalnie)</button>
+            <div style="border: 1px solid rgba(0,0,0,.08); border-radius: 12px; overflow: hidden">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(0,0,0,.02)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Wykryte z przeglądarki</span><span class="hint num">{{detTxt}}</span></span>
+                <button type="button" class="btn sm" aria-expanded="{{setExp}}" onClick="{{toggleSet}}">{{setBtn}}</button>
+              </div>
+              <sc-if value="{{setOpen}}" hint-placeholder-val="{{false}}">
+                <div style="padding: 14px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(0,0,0,.08)">
+                  <div class="fld"><span>Strefa czasowa</span><div class="seg" role="radiogroup" aria-label="Strefa czasowa" style="display: flex"><sc-for list="{{tzs}}" as="z" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{z.p}}" aria-pressed="{{z.p}}" onClick="{{z.pick}}" style="flex: 1">{{z.t}}</button></sc-for></div></div>
+                  <div class="fld"><span>Tydzień zaczyna się od</span><div class="seg" role="radiogroup" aria-label="Początek tygodnia" style="display: flex"><sc-for list="{{weeks}}" as="z" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{z.p}}" aria-pressed="{{z.p}}" onClick="{{z.pick}}" style="flex: 1">{{z.t}}</button></sc-for></div></div>
+                  <div class="fld"><span>Format godziny</span><div class="seg" role="radiogroup" aria-label="Format godziny" style="display: flex"><sc-for list="{{clocks}}" as="z" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{z.p}}" aria-pressed="{{z.p}}" onClick="{{z.pick}}" style="flex: 1">{{z.t}}</button></sc-for></div></div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.02em">Do czego użyjesz rhytm?</h1><p class="muted" style="margin: 6px 0 0">Zaznacz wszystko, co pasuje. Ułożymy z tego kategorie, moduły i strony.</p></div>
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="3"><div><div class="grp">{{g.t}}</div><div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{g.items}}" as="u" hint-placeholder-count="4"><button type="button" class="uc" aria-pressed="{{u.p}}" onClick="{{u.toggle}}">{{u.t}}</button></sc-for></div></div></sc-for>
+            <sc-if value="{{hasGoals}}" hint-placeholder-val="{{true}}">
+              <div style="border: 1px solid rgba(0,0,0,.08); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+                <span style="font-weight: 500">Cele na tydzień <span class="hint">· zmienisz je w każdej chwili</span></span>
+                <sc-for list="{{goals}}" as="o" hint-placeholder-count="2"><label style="display: flex; align-items: center; gap: 10px"><span style="flex: 1">{{o.t}}</span><input class="gin" type="text" inputMode="decimal" value="{{o.v}}" onChange="{{o.on}}" aria-label="{{o.t}}"><span class="hint" style="width: 72px">{{o.u}}</span></label></sc-for>
+              </div>
+            </sc-if>
+          </sc-if>
+
+          <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.02em">Masz już kalendarz?</h1><p class="muted" style="margin: 6px 0 0">Pokażemy Twoje wydarzenia obok bloków, żeby nic się nie nakładało. Tylko do odczytu, niczego nie zmienimy.</p></div>
+            <div style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{cals}}" as="c" hint-placeholder-count="3"><button type="button" class="cc" aria-pressed="{{c.p}}" onClick="{{c.pick}}"><span class="lg" style="{{c.ls}}">{{c.l}}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{c.t}}</span><span class="hint">{{c.d}}</span></span><span class="{{c.bc}}">{{c.b}}</span></button></sc-for></div>
+            <sc-if value="{{calOn}}" hint-placeholder-val="{{false}}">
+              <div style="border: 1px solid rgba(0,0,0,.08); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+                <span style="display: flex; align-items: center; gap: 8px"><span class="bdg ok">połączono</span><span class="hint">mejson@gmail.com · które kalendarze pokazać?</span></span>
+                <sc-for list="{{subcals}}" as="k" hint-placeholder-count="3"><label style="display: flex; align-items: center; gap: 10px; cursor: pointer"><input type="checkbox" checked="{{k.on}}" onChange="{{k.toggle}}"><span style="{{k.dot}}"></span><span style="flex: 1">{{k.t}}</span><span class="hint num">{{k.n}}</span></label></sc-for>
+              </div>
+            </sc-if>
+            <p class="hint" style="margin: 0">Bez połączenia też wszystko działa. Kalendarz podłączysz później w Ustawieniach › Kalendarz.</p>
+          </sc-if>
+
+          <sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.02em">Zaplanuj dzisiaj</h1><p class="muted" style="margin: 6px 0 0">Dodaj 2–3 bloki na dziś. Tak działa rhytm: dzień ułożony z bloków, a zadania w środku.</p></div>
+            <div><div class="grp">Podpowiedzi</div><div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{sugs}}" as="x" hint-placeholder-count="4"><button type="button" class="sg" onClick="{{x.add}}"><span style="{{x.dot}}"></span>{{x.t}}</button></sc-for><sc-if value="{{noSugs}}" hint-placeholder-val="{{false}}"><span class="hint">Wszystkie podpowiedzi dodane.</span></sc-if></div></div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <sc-for list="{{blocks}}" as="b" hint-placeholder-count="2"><div class="brow"><span style="{{b.dot}}"></span><input class="tin" type="text" value="{{b.s}}" onChange="{{b.onS}}" aria-label="{{b.sl}}"><span class="hint" style="text-align: center">–</span><input class="tin" type="text" value="{{b.e}}" onChange="{{b.onE}}" aria-label="{{b.el}}"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500">{{b.t}}</span><button type="button" class="btng ic xs" aria-label="{{b.dl}}" onClick="{{b.del}}" style="color: #a3a3a3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></div></sc-for>
+              <sc-if value="{{noBlocks}}" hint-placeholder-val="{{false}}"><div style="padding: 18px; border: 1px dashed rgba(0,0,0,.15); border-radius: 10px; text-align: center" class="hint">Kliknij podpowiedź albo wpisz własny blok poniżej.</div></sc-if>
+            </div>
+            <div style="display: flex; gap: 8px"><input class="inp" type="text" placeholder="Własny blok, np. Nauka angielskiego" value="{{own}}" onChange="{{onOwn}}" style="flex: 1"><button type="button" class="btn" onClick="{{addOwn}}" aria-disabled="{{ownDis}}" style="{{ownS}}">Dodaj</button></div>
+          </sc-if>
+
+          <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+            <div><h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.02em">Przypomnienia</h1><p class="muted" style="margin: 6px 0 0">Damy znać przed blokiem, żebyś nie musiał pilnować zegarka.</p></div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid rgba(0,0,0,.1); border-radius: 12px">
+              <span style="flex: 1"><span style="display: block; font-weight: 500">Powiadomienia w przeglądarce</span><span class="hint">{{permTxt}}</span></span>
+              <sc-if value="{{permOff}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp sm" onClick="{{allow}}">Zezwól</button></sc-if><sc-if value="{{permOn}}" hint-placeholder-val="{{false}}"><span class="bdg ok">Włączone</span></sc-if>
+            </div>
+            <div style="border: 1px solid rgba(0,0,0,.1); border-radius: 12px; padding: 0 14px">
+              <sc-for list="{{rems}}" as="r" hint-placeholder-count="3"><label style="{{r.rs}}"><span style="flex: 1"><span style="display: block; font-weight: 500">{{r.t}}</span><span class="hint">{{r.w}}</span></span><button type="button" class="sw" role="switch" aria-checked="{{r.on}}" onClick="{{r.toggle}}" aria-label="{{r.t}}"></button></label></sc-for>
+            </div>
+            <div style="padding-top: 8px; border-top: 1px solid rgba(0,0,0,.08)">
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 500">Skąd o nas wiesz?</span><span class="hint">opcjonalnie · jedno kliknięcie</span></div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px"><sc-for list="{{srcs}}" as="x" hint-placeholder-count="8"><button type="button" class="uc" aria-pressed="{{x.p}}" onClick="{{x.pick}}" style="height: 30px; font-size: 13px; padding: 0 12px">{{x.t}}</button></sc-for></div>
+            </div>
+          </sc-if>
+
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 14px 40px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.02)">
+          <sc-if value="{{hasBack}}" hint-placeholder-val="{{false}}"><button type="button" class="btng" onClick="{{back}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Wstecz</button></sc-if>
+          <span style="flex: 1"></span>
+          <sc-if value="{{canSkip}}" hint-placeholder-val="{{true}}"><button type="button" class="btng" onClick="{{skip}}" style="color: #686868">Pomiń</button></sc-if>
+          <sc-if value="{{notLast}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{next}}" aria-disabled="{{nextDis}}" style="{{nextS}}">{{nextTxt}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></sc-if>
+          <sc-if value="{{isLast}}" hint-placeholder-val="{{false}}"><a href="S2EmptyToday.dc.html" class="btnp">Zacznij korzystać<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a></sc-if>
+        </div>
+      </div>
+
+      <div style="position: relative; border-left: 1px solid rgba(0,0,0,.08); background: #f4f4f4; padding: 28px; overflow: hidden">
+        <div aria-hidden="true" style="height: 100%; border-radius: 14px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.06); display: grid; grid-template-columns: 156px 1fr; overflow: hidden; font-size: 12px">
+          <div style="background: #fafafa; border-right: 1px solid rgba(0,0,0,.06); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px">
+            <div style="{{pv.hProf}}"><span class="avatar" style="width: 24px; height: 24px; font-size: 10px; background: #262626; color: #fff; box-shadow: none">{{initials}}</span><span style="min-width: 0"><b style="display: block; font-weight: 600; font-size: 12px">{{pvName}}</b><span class="hint" style="font-size: 10px">{{pv.tz}}</span></span></div>
+            <div style="{{pv.hSide}}">
+              <div class="hint" style="font-size: 10px; padding: 6px 6px 2px">Moduły</div>
+              <sc-for list="{{pv.mods}}" as="m" hint-placeholder-count="4"><div style="{{m.s}}">{{m.t}}</div></sc-for>
+              <div class="hint" style="font-size: 10px; padding: 8px 6px 2px">Strony</div>
+              <sc-for list="{{pv.pages}}" as="m" hint-placeholder-count="2"><div style="padding: 4px 6px">{{m}}</div></sc-for>
+              <sc-if value="{{pv.noPages}}" hint-placeholder-val="{{false}}"><div class="hint" style="padding: 4px 6px; font-size: 11px">brak</div></sc-if>
+            </div>
+          </div>
+          <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; position: relative">
+            <div><b style="font-size: 15px; font-weight: 600">{{pv.hello}}</b><div class="hint num" style="font-size: 11px; margin-top: 2px">{{pv.sub}}</div></div>
+            <div style="{{pv.hCats}}"><sc-for list="{{pv.cats}}" as="c" hint-placeholder-count="3"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(0,0,0,.04); font-size: 11px"><span style="{{c.dot}}"></span>{{c.t}}</span></sc-for></div>
+            <div style="{{pv.hDay}}">
+              <sc-for list="{{pv.rows}}" as="r" hint-placeholder-count="4"><div style="display: grid; grid-template-columns: 74px 1fr; gap: 8px; align-items: center"><span class="hint num" style="font-size: 11px">{{r.time}}</span><div class="pvb" style="{{r.s}}"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.t}}</span><span class="hint" style="font-size: 10px">{{r.tag}}</span></div></div></sc-for>
+              <sc-if value="{{pv.empty}}" hint-placeholder-val="{{false}}"><div class="hint" style="padding: 24px 8px; text-align: center; border: 1px dashed rgba(0,0,0,.12); border-radius: 10px">Pusty dzień. W kroku 4 dodasz pierwsze bloki.</div></sc-if>
+            </div>
+            <sc-if value="{{pv.toast}}" hint-placeholder-val="{{false}}"><div style="position: absolute; right: 14px; bottom: 14px; width: 230px; background: #262626; color: #fafafa; border-radius: 12px; padding: 10px 12px; box-shadow: 0 10px 25px rgba(0,0,0,.2)"><b style="display: block; font-weight: 600">{{pv.toastT}}</b><span style="font-size: 11px; color: #d4d4d4">{{pv.toastD}}</span></div></sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"int","default":1,"min":1,"max":5},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const st = Math.min(5, Math.max(1, Number((props && props.step) || 1)));
+    // stan „po drodze”: kolejne kroki pokazujemy z wypełnionymi poprzednimi
+    this.state = {
+      step: st, name: 'Mejson', tz: 'Europe/Warsaw', week: 'pn', clock: '24', setOpen: false,
+      uses: { studia: true, run: true, gym: true, habits: true, sleep: true, pass: true },
+      goals: { run: '25', gym: '3', sleep: '8' },
+      cal: st >= 4 ? 'google' : null, sub: { pryw: true, uczelnia: true, urodziny: false },
+      blocks: st >= 5 ? [{ id: 'b1', s: '08:00', e: '09:30', t: 'Zajęcia', c: 'Studia' }, { id: 'b2', s: '17:00', e: '18:00', t: 'Bieg 8 km', c: 'Sport' }] : [],
+      own: '', perm: false, rem: { before: true, renew: true, habits: false }, src: null
+    };
+  }
+  renderVals() {
+    const S = this.state;
+    const step = S.step;
+    const U = S.uses || {};
+    const nm = (S.name || '').trim();
+    const initials = (nm || 'Ty').split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    const CAT = { Studia: '#3b82f6', Praca: '#8b5cf6', Projekty: '#15803d', Dom: '#eab308', Sport: '#f59e0b' };
+    const dot = (c, n) => 'width:' + (n || 8) + 'px;height:' + (n || 8) + 'px;border-radius:50%;flex:none;display:inline-block;background:' + c;
+    const T = ['Profil', 'Do czego', 'Kalendarz', 'Pierwszy dzień', 'Przypomnienia'];
+    const go = (n) => this.setState({ step: n });
+    // krok 2 — wybory
+    const GR = [
+      ['Plan dnia', [['studia', 'Studia'], ['praca', 'Praca'], ['firma', 'Klienci i zlecenia'], ['dom', 'Dom i sprawy']]],
+      ['Ruch', [['run', 'Bieganie'], ['gym', 'Siłownia'], ['oth', 'Inne sporty']]],
+      ['Reszta', [['habits', 'Nawyki'], ['sleep', 'Sen'], ['pass', 'Hasła'], ['subs', 'Subskrypcje'], ['proj', 'Projekty'], ['books', 'Książki']]]
+    ];
+    const togU = (k) => this.setState({ uses: Object.assign({}, (this.state || {}).uses, { [k]: !((this.state || {}).uses || {})[k] }) });
+    const G = S.goals || {};
+    const setGoal = (k) => (e) => this.setState({ goals: Object.assign({}, (this.state || {}).goals, { [k]: e.target.value }) });
+    const goals = [U.run ? { t: 'Bieganie', v: G.run, u: 'km', on: setGoal('run') } : null, U.gym ? { t: 'Siłownia', v: G.gym, u: 'treningi', on: setGoal('gym') } : null, U.sleep ? { t: 'Sen', v: G.sleep, u: 'h na noc', on: setGoal('sleep') } : null].filter(Boolean);
+    const cats = [];
+    if (U.studia) cats.push('Studia'); if (U.praca) cats.push('Praca'); if (U.firma) cats.push('Projekty'); if (U.dom) cats.push('Dom');
+    if (U.run || U.gym || U.oth) cats.push('Sport');
+    if (!cats.length) cats.push('Dom');
+    const mods = ['Dziś', 'Kalendarz'].concat(U.run || U.gym || U.oth ? ['Sport'] : []).concat(U.habits || U.sleep ? ['Nawyki i sen'] : []).concat(U.pass ? ['Hasła'] : []);
+    const pages = [].concat(U.subs ? ['Subskrypcje'] : []).concat(U.proj || U.firma ? ['Projekty'] : []).concat(U.books ? ['Książki'] : []);
+    // krok 3 — kalendarz
+    const CALS = [['google', 'G', 'Google Calendar', 'Najczęściej używany', 'background:#fff;border:1px solid rgba(0,0,0,.12);color:#4285f4'], ['outlook', 'O', 'Outlook', 'Konto Microsoft lub uczelniane', 'background:#0078d4;color:#fff'], ['apple', 'A', 'Apple iCloud', 'Kalendarz z iPhone’a', 'background:#262626;color:#fff']];
+    const SUB = [['pryw', 'Prywatny', '#4285f4', '6 w tym tygodniu'], ['uczelnia', 'Uczelnia — plan zajęć', '#0b8043', '11 w tym tygodniu'], ['urodziny', 'Urodziny', '#8e24aa', '1 w tym tygodniu']];
+    const subOn = S.sub || {};
+    const EXT = [['10:00', '11:30', 'Wykład — Systemy operacyjne', 'uczelnia'], ['13:00', '13:30', 'Dentysta', 'pryw']];
+    // krok 4 — bloki
+    const SUG = [U.studia ? ['08:00', '09:30', 'Zajęcia', 'Studia'] : null, U.studia ? ['18:30', '20:00', 'Nauka do kolokwium', 'Studia'] : null, U.praca ? ['09:00', '17:00', 'Praca', 'Praca'] : null, U.firma ? ['14:00', '16:00', 'Projekt klienta', 'Projekty'] : null,
+      U.dom ? ['20:00', '20:30', 'Zakupy i pranie', 'Dom'] : null, U.run ? ['17:00', '18:00', 'Bieg 8 km', 'Sport'] : null, U.gym ? ['16:00', '17:30', 'Siłownia — Push', 'Sport'] : null, U.oth ? ['19:00', '20:00', 'Tenis', 'Sport'] : null].filter(Boolean);
+    const B = S.blocks || [];
+    const has = (t) => B.some((b) => b.t === t);
+    const upB = (id, p) => this.setState({ blocks: (this.state || {}).blocks.map((b) => (b.id === id ? Object.assign({}, b, p) : b)) });
+    const ownT = (S.own || '').trim();
+    // krok 5
+    const R = S.rem || {};
+    const REMS = [['before', 'Przed blokiem', '10 min wcześniej'], ['renew', 'Odnowienie subskrypcji', 'Dzień wcześniej, o 9:00'], ['habits', 'Nawyki', 'O godzinie ustawionej przy nawyku']];
+    const SRC = ['Od znajomego', 'Uczelnia', 'TikTok', 'Instagram', 'YouTube', 'Wyszukiwarka', 'ChatGPT / AI', 'Inne'];
+    // podgląd
+    const HI = 'border-radius:10px;box-shadow:0 0 0 2px #fff,0 0 0 4px #15803d;';
+    const t12 = (x) => { if (S.clock !== '12') return x; const p = x.split(':'); const h = +p[0]; return ((h % 12) || 12) + ':' + p[1] + (h < 12 ? ' AM' : ' PM'); };
+    const rows = [];
+    if (S.cal) EXT.filter((x) => subOn[x[3]]).forEach((x) => rows.push({ k: x[0], time: t12(x[0]), t: x[2], tag: 'Google', s: 'background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.06);color:#525252' }));
+    B.forEach((b) => rows.push({ k: b.s, time: t12(b.s), t: b.t, tag: b.c, s: 'background:' + CAT[b.c] + '14;border:1px solid ' + CAT[b.c] + '55;color:#262626' }));
+    rows.sort((a, b) => a.k.localeCompare(b.k));
+    const firstB = B.slice().sort((a, b) => a.s.localeCompare(b.s))[0];
+    const nextOk = step !== 1 || nm.length > 0;
+    return {
+      steps: T.map((t, i) => ({ n: String(i + 1), t, st: i + 1 === step ? 'cur' : i + 1 < step ? 'done' : 'todo', cur: i + 1 === step ? 'step' : 'false', go: () => go(i + 1) })),
+      s1: step === 1, s2: step === 2, s3: step === 3, s4: step === 4, s5: step === 5,
+      initials, name: S.name, onName: (e) => this.setState({ name: e.target.value }), pvName: nm || 'Ty',
+      detTxt: (S.tz === 'Europe/Warsaw' ? 'Warszawa (UTC+1)' : S.tz === 'Europe/London' ? 'Londyn (UTC+0)' : 'Nowy Jork (UTC−5)') + ' · tydzień od ' + (S.week === 'pn' ? 'poniedziałku' : 'niedzieli') + ' · zegar ' + (S.clock === '24' ? '24 h' : '12 h'),
+      setOpen: !!S.setOpen, setExp: S.setOpen ? 'true' : 'false', setBtn: S.setOpen ? 'Gotowe' : 'Zmień', toggleSet: () => this.setState({ setOpen: !(this.state || {}).setOpen }),
+      tzs: [['Europe/Warsaw', 'Warszawa'], ['Europe/London', 'Londyn'], ['America/New_York', 'Nowy Jork']].map((x) => ({ t: x[1], p: S.tz === x[0] ? 'true' : 'false', pick: () => this.setState({ tz: x[0] }) })),
+      weeks: [['pn', 'Poniedziałek'], ['nd', 'Niedziela']].map((x) => ({ t: x[1], p: S.week === x[0] ? 'true' : 'false', pick: () => this.setState({ week: x[0] }) })),
+      clocks: [['24', '24 h · 14:30'], ['12', '12 h · 2:30 PM']].map((x) => ({ t: x[1], p: S.clock === x[0] ? 'true' : 'false', pick: () => this.setState({ clock: x[0] }) })),
+      groups: GR.map((g) => ({ t: g[0], items: g[1].map((x) => ({ t: x[1], p: U[x[0]] ? 'true' : 'false', toggle: () => togU(x[0]) })) })),
+      hasGoals: goals.length > 0, goals,
+      cals: CALS.map((c) => { const on = S.cal === c[0]; return { t: c[2], d: on ? 'Połączono · mejson@gmail.com' : c[3], l: c[1], ls: c[4], p: on ? 'true' : 'false', b: on ? 'Rozłącz' : 'Połącz', bc: on ? 'btn sm' : 'btnp sm', pick: () => this.setState({ cal: on ? null : c[0] }) }; }),
+      calOn: !!S.cal,
+      subcals: SUB.map((k) => ({ t: k[1], n: k[3], on: !!subOn[k[0]], dot: dot(k[2]), toggle: () => this.setState({ sub: Object.assign({}, (this.state || {}).sub, { [k[0]]: !((this.state || {}).sub || {})[k[0]] }) }) })),
+      sugs: SUG.filter((x) => !has(x[2])).map((x) => ({ t: x[2] + ' · ' + t12(x[0]), dot: dot(CAT[x[3]]), add: () => this.setState({ blocks: ((this.state || {}).blocks || []).concat([{ id: 'b' + Date.now(), s: x[0], e: x[1], t: x[2], c: x[3] }]) }) })),
+      noSugs: SUG.filter((x) => !has(x[2])).length === 0,
+      blocks: B.slice().sort((a, b) => a.s.localeCompare(b.s)).map((b) => ({ s: b.s, e: b.e, t: b.t, dot: dot(CAT[b.c]), sl: b.t + ' — początek', el: b.t + ' — koniec', dl: 'Usuń ' + b.t,
+        onS: (e) => upB(b.id, { s: e.target.value }), onE: (e) => upB(b.id, { e: e.target.value }), del: () => this.setState({ blocks: (this.state || {}).blocks.filter((x) => x.id !== b.id) }) })),
+      noBlocks: B.length === 0,
+      own: S.own, onOwn: (e) => this.setState({ own: e.target.value }),
+      ownDis: ownT ? 'false' : 'true', ownS: ownT ? '' : 'opacity:.45;pointer-events:none',
+      addOwn: () => { if (!ownT) return; this.setState({ own: '', blocks: ((this.state || {}).blocks || []).concat([{ id: 'b' + Date.now(), s: '20:30', e: '21:30', t: ownT, c: cats[0] }]) }); },
+      permOff: !S.perm, permOn: !!S.perm, permTxt: S.perm ? 'Przeglądarka pozwoliła na powiadomienia' : 'Przeglądarka zapyta o zgodę', allow: () => this.setState({ perm: true }),
+      rems: REMS.map((r, i) => ({ t: r[1], w: r[2], on: R[r[0]] ? 'true' : 'false', rs: 'display:flex;align-items:center;gap:12px;min-height:56px;' + (i < REMS.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,.08)' : ''), toggle: () => this.setState({ rem: Object.assign({}, (this.state || {}).rem, { [r[0]]: !((this.state || {}).rem || {})[r[0]] }) }) })),
+      srcs: SRC.map((x) => ({ t: x, p: S.src === x ? 'true' : 'false', pick: () => this.setState({ src: (this.state || {}).src === x ? null : x }) })),
+      hasBack: step > 1, back: () => go(step - 1),
+      canSkip: step === 3 || step === 4, skip: () => go(step + 1),
+      notLast: step < 5, isLast: step === 5,
+      next: () => { if (nextOk) go(step + 1); }, nextDis: nextOk ? 'false' : 'true', nextS: nextOk ? '' : 'opacity:.45;pointer-events:none',
+      nextTxt: step === 3 && !S.cal ? 'Dalej bez kalendarza' : step === 4 && !B.length ? 'Dalej' : 'Dalej',
+      pv: {
+        tz: S.tz, hello: 'Dzień dobry, ' + (nm || 'Ty'), sub: 'Wtorek, 17 listopada · tydzień od ' + (S.week === 'pn' ? 'pon.' : 'niedz.') + ' · ' + (S.clock === '24' ? '24 h' : '12 h'),
+        mods: mods.map((m, i) => ({ t: m, s: 'padding:4px 6px;border-radius:6px;' + (i === 0 ? 'background:rgba(0,0,0,.06);font-weight:500' : '') })),
+        pages, noPages: pages.length === 0,
+        cats: cats.map((c) => ({ t: c, dot: dot(CAT[c], 6) })),
+        rows, empty: rows.length === 0,
+        hProf: 'display:flex;align-items:center;gap:8px;padding:6px;' + (step === 1 ? HI : ''),
+        hSide: 'margin-top:4px;padding:2px;' + (step === 2 ? HI : ''),
+        hCats: 'display:flex;flex-wrap:wrap;gap:6px;padding:2px;' + (step === 2 ? HI : ''),
+        hDay: 'display:flex;flex-direction:column;gap:6px;padding:4px;' + (step === 3 || step === 4 ? HI : ''),
+        toast: step === 5 && !!S.perm && !!R.before && !!firstB,
+        toastT: firstB ? 'Za 10 min · ' + firstB.t : '', toastD: firstB ? 'Start o ' + t12(firstB.s) : ''
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

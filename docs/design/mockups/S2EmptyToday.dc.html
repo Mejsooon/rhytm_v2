@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Dziś — nowe konto (COSS UI)</title>
+<title>Dziś, nowe konto</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,81 +11,118 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-.bar{height:8px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden}
-.bar>span{display:block;height:100%;border-radius:999px;background:#262626}
-.hr-row{display:grid;grid-template-columns:56px 1fr;min-height:48px;border-top:1px solid rgba(0,0,0,.06)}
-.blk{border-radius:8px;padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin:4px 0}
-.chk{display:flex;align-items:center;gap:10px;min-height:36px;font-size:14px}
-.hpill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;font:inherit;font-size:14px;font-weight:500;color:#262626;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.hpill:hover{background:#fafafa}
-.htile{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px 16px;border-radius:12px;border:1px solid rgba(0,0,0,.1);background:#fff;font:inherit;font-size:14px;color:#262626;cursor:pointer;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.htile:hover{background:#fafafa}
-.hcbx{width:18px;height:18px;border-radius:6px;border:1.5px solid rgba(0,0,0,.3);display:grid;place-items:center;box-sizing:border-box}
-.gap{display:grid;grid-template-columns:56px 1fr;align-items:center;min-height:30px;border-top:1px solid rgba(0,0,0,.06)}.gap:first-child{border-top:0}.gap-big{min-height:84px;align-items:stretch}.gap-big>span:first-child{padding-top:8px}.gap-big>span:last-child{align-self:center}
-.gap>span:last-child{display:flex;align-items:center;gap:8px;color:#686868;font-size:12px}
-.gap>span:last-child::before,.gap>span:last-child::after{content:"";flex:1;border-top:1px dashed rgba(0,0,0,.14)}
-.wdot{width:14px;height:14px;border-radius:50%;display:inline-block;flex:none}
-@media (max-width:1100px){.cols{grid-template-columns:1fr !important}}
+.step{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06)}
+.step:first-child{border-top:0}
+.scbx{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(0,0,0,.3);display:grid;place-items:center;box-sizing:border-box;flex:none;background:#fff;padding:0;cursor:pointer}
+.ph{border:1px dashed rgba(0,0,0,.16);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:6px;color:#686868;font-size:14px}
 </style>
 </helmet>
-<div class="shell" style="min-height: 800px; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="800" hint-size="100%,800px"></dc-import></div>
+<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="1000" hint-size="100%,1000px"></dc-import></div>
   <main class="main">
     <header class="topbar">
-      <div style="display: flex; align-items: center; gap: 10px"><h1 class="h-title">Dziś</h1><span class="bdg sec lg num">wtorek · 17.11.2026</span><span class="hint num">tydz. 47</span></div>
+      <div style="display: flex; align-items: center; gap: 10px"><h1 class="h-title">Dziś</h1><span class="bdg sec lg num">wtorek · 17.11.2026</span></div>
       <a href="S2BlockDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy blok</a>
     </header>
-    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
-      <section aria-labelledby="week-title" style="display: flex; flex-direction: column; gap: 12px">
-        <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="week-title" class="card-t">Ten tydzień</h2><span class="hint num">pn 16 – nd 22.11</span></div>
-        <div class="card" style="padding: 8px 20px">
-          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; ">
-            <span style="font-weight: 500">Treningi</span>
-            <div class="bar"><span style="width: 0%"></span></div>
-            <span class="num"><b style="font-size: 16px; font-weight: 600">0</b> <span class="hint">/ 4</span></span>
-            <span class="hint num" style="text-align: right">jeszcze 4</span>
+    <div style="padding: 24px; width: 100%; max-width: 1040px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+      <div>
+        <h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em">Cześć, Mejson</h2>
+        <p class="muted" style="margin: 4px 0 0">Kilka kroków i „Dziś” zacznie pokazywać Twój tydzień.</p>
+      </div>
+
+      <sc-if value="{{showList}}" hint-placeholder-val="{{true}}">
+      <section class="card" aria-labelledby="start-title">
+        <div class="card-h" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px">
+          <div style="flex: 1; min-width: 0">
+            <h2 id="start-title" class="card-t">Pierwsze kroki</h2>
+            <p class="card-d">{{doneCount}} z 6 zrobione</p>
+            <div role="progressbar" aria-label="Postęp pierwszych kroków" aria-valuemin="0" aria-valuemax="6" aria-valuenow="{{doneCount}}" style="margin-top: 10px; height: 6px; border-radius: 999px; background: rgba(0,0,0,.06); overflow: hidden; max-width: 360px"><span style="{{barS}}"></span></div>
           </div>
-          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
-            <span style="font-weight: 500">Bieg</span>
-            <div class="bar"><span style="width: 0%"></span></div>
-            <span class="num"><b style="font-size: 16px; font-weight: 600">0</b> <span class="hint">/ 25 km</span></span>
-            <span class="hint num" style="text-align: right">jeszcze 25 km</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
-            <span style="font-weight: 500">Nawyki</span>
-            <div class="bar"><span style="width: 0%"></span></div>
-            <span class="num"><b style="font-size: 16px; font-weight: 600">0 %</b> <span class="hint">dni z celem</span></span>
-            <span class="hint num" style="text-align: right">—</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px 120px; gap: 16px; align-items: center; min-height: 48px; border-top: 1px solid rgba(0,0,0,.06)">
-            <span style="font-weight: 500">Sen</span>
-            <div class="bar"><span style="width: 0%"></span></div>
-            <span class="num"><b style="font-size: 16px; font-weight: 600">—</b> <span class="hint">/ 8:00 śr.</span></span>
-            <span class="hint num" style="text-align: right">brak wpisów</span>
-          </div>
+          <button type="button" class="btng xs" onClick="{{hide}}">Ukryj listę</button>
+        </div>
+        <div style="border-top: 1px solid rgba(0,0,0,.08)">
+          <sc-for list="{{steps}}" as="st" hint-placeholder-count="6">
+            <div class="step">
+              <button type="button" class="scbx" style="{{st.boxS}}" aria-pressed="{{st.pressed}}" aria-label="{{st.aria}}" onClick="{{st.toggle}}">
+                <sc-if value="{{st.done}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+              </button>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="{{st.titleS}}">{{st.title}}</span>
+                <span class="hint">{{st.sub}}</span>
+              </span>
+              <sc-if value="{{st.todo}}" hint-placeholder-val="{{true}}"><a href="{{st.href}}" class="btn xs" style="text-decoration: none">{{st.cta}}</a></sc-if>
+              <sc-if value="{{st.done}}" hint-placeholder-val="{{false}}"><span class="bdg ok">Zrobione</span></sc-if>
+            </div>
+          </sc-for>
         </div>
       </section>
-      <section aria-labelledby="hab-title" style="display: flex; flex-direction: column; gap: 12px">
-        <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="hab-title" class="card-t">Nawyki na dziś</h2></div>
-        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><a href="S2HabitDialog.dc.html" class="htile" style="border-style: dashed; box-shadow: none; flex-direction: row; align-items: center; justify-content: center; min-height: 74px; color: #686868; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Utwórz nowy nawyk</a></div>
+      </sc-if>
+      <sc-if value="{{hidden}}" hint-placeholder-val="{{false}}">
+        <div role="status" class="ph" style="flex-direction: row; align-items: center; justify-content: space-between">
+          <span>Lista „Pierwsze kroki” jest ukryta. Wrócisz do niej z menu Pomoc i opinie.</span>
+          <button type="button" class="btn xs" onClick="{{show}}">Pokaż</button>
+        </div>
+      </sc-if>
+
+      <section aria-labelledby="week-title" style="display: flex; flex-direction: column; gap: 12px">
+        <h2 id="week-title" class="card-t">Ten tydzień</h2>
+        <div class="ph">
+          <b style="color: #262626; font-weight: 500">Tu pojawią się Twoje statystyki</b>
+          <span>Treningi, kilometry, nawyki i sen, z porównaniem do poprzedniego tygodnia. Wystarczy pierwszy trening albo wpis snu.</span>
+        </div>
       </section>
-      <div class="cols" style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start">
-        <section aria-labelledby="plan-title" style="display: flex; flex-direction: column; gap: 12px">
-          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="plan-title" class="card-t">Plan dnia</h2><span class="hint">00:00–24:00 · 0 bloków</span></div>
-          <div class="frame"><div class="inner" style="padding: 10px 12px 4px">
-            <div class="gap gap-big" style="min-height: 84px"><span class="hint num">00:00</span><span class="num">24 h wolne</span></div>
-            <div style="display: grid; grid-template-columns: 56px 1fr; padding: 0 0 20px"><span></span><div style="display: flex; flex-direction: column; align-items: center; gap: 10px"><span class="hint">Nie masz jeszcze bloków na dziś.</span><a href="S2BlockDialog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Dodaj pierwszy blok</a></div></div>
-            <div class="hr-row" style="min-height: 40px"><span class="hint num" style="padding-top: 8px">23:00</span><div></div></div>
-          </div></div>
-        </section>
-      </div>
+
+      <section aria-labelledby="plan-title" style="display: flex; flex-direction: column; gap: 12px">
+        <h2 id="plan-title" class="card-t">Plan dnia</h2>
+        <div class="ph" style="align-items: flex-start">
+          <b style="color: #262626; font-weight: 500">Brak bloków na dziś</b>
+          <span>Blok to czas na zadania, np. „Matematyka 8:00–9:30” z listą rzeczy do zrobienia.</span>
+          <a href="S2BlockDialog.dc.html" class="btn xs" style="margin-top: 6px; text-decoration: none">Dodaj pierwszy blok</a>
+        </div>
+      </section>
     </div>
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":800}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
 class Component extends DCLogic {
-  renderVals() { return {}; }
+  renderVals() {
+    const st = this.state || {};
+    const done = st.done || { profil: true };
+    const LIST = [
+      { k: 'profil', title: 'Uzupełnij profil', sub: 'Nazwa, waga i wzrost do liczenia kcal biegów.', cta: 'Otwórz', href: 'S2Settings.dc.html' },
+      { k: 'blok', title: 'Dodaj pierwszy blok w kalendarzu', sub: 'Zaplanuj czas i wpisz zadania na ten blok.', cta: 'Dodaj blok', href: 'S2BlockDialog.dc.html' },
+      { k: 'nawyk', title: 'Utwórz pierwszy nawyk', sub: 'Codziennie albo w wybrane dni tygodnia.', cta: 'Nowy nawyk', href: 'S2HabitDialog.dc.html' },
+      { k: 'trening', title: 'Zapisz trening', sub: 'Bieg albo siłownia. Pojawi się też w kalendarzu.', cta: 'Nowy bieg', href: 'S2RunDialog.dc.html' },
+      { k: 'push', title: 'Włącz powiadomienia', sub: 'Przypomnienia nawyków, start bloku, odnowienia.', cta: 'Włącz', href: 'S2SettingsNotifications.dc.html' },
+      { k: 'strona', title: 'Utwórz stronę z szablonu', sub: 'Książki, Subskrypcje, Projekty albo pusta strona.', cta: 'Wybierz szablon', href: 'S2NewPage.dc.html' }
+    ];
+    const n = LIST.filter((s) => done[s.k]).length;
+    return {
+      doneCount: n,
+      barS: 'display:block;height:100%;border-radius:999px;background:#15803d;width:' + Math.round(n / 6 * 100) + '%',
+      showList: !st.hidden,
+      hidden: !!st.hidden,
+      hide: () => this.setState({ hidden: true }),
+      show: () => this.setState({ hidden: false }),
+      steps: LIST.map((s) => {
+        const d = !!done[s.k];
+        return Object.assign({}, s, {
+          done: d,
+          todo: !d,
+          pressed: d ? 'true' : 'false',
+          aria: (d ? 'Odznacz: ' : 'Oznacz jako zrobione: ') + s.title,
+          boxS: d ? 'background:#15803d;border-color:#15803d' : '',
+          titleS: 'font-weight:500;' + (d ? 'color:#686868;text-decoration:line-through' : 'color:#262626'),
+          toggle: () => {
+            const nd = Object.assign({}, done);
+            nd[s.k] = !d;
+            this.setState({ done: nd });
+          }
+        });
+      })
+    };
+  }
 }
 </script>
 </body>
