@@ -19,13 +19,7 @@ export { matchesWord } from "./match-word";
 export { WordConfirm } from "./word-confirm";
 export { DatePicker } from "./date-picker";
 export { TimePicker } from "./time-picker";
-export {
-  buildMonthGrid,
-  formatDatePl,
-  monthTitlePl,
-  todayIso,
-  type IsoDate,
-} from "./calendar-math";
+export type { IsoDate } from "./calendar-math";
 export { Stepper } from "./stepper";
 export {
   Card,
