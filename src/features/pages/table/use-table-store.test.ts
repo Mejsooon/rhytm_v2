@@ -13,6 +13,10 @@ const actions = vi.hoisted(() => ({
   updateRow: vi.fn(),
   updateBlockContent: vi.fn(),
   reorderFields: vi.fn(),
+  deleteRows: vi.fn(),
+  restoreRows: vi.fn(),
+  duplicateRows: vi.fn(),
+  setRowsValue: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
@@ -1163,5 +1167,102 @@ describe("useTableStore", () => {
       expect(result.current.settings.active_view_id).toBe(patch.views.at(-1).id);
     });
   });
-});
 
+  describe("akcje na zaznaczonych wierszach", () => {
+    it("removeRows: wiersze znikają od razu, toast „Usunięto 2 wiersze” z „Cofnij” (restoreRows)", async () => {
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeRows(["row-1", "row-2"]);
+      });
+      expect(actions.deleteRows).toHaveBeenCalledWith(["row-1", "row-2"]);
+      expect(result.current.rows).toHaveLength(0);
+      expect(toast).toHaveBeenCalledWith("Usunięto 2 wiersze", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(actions.restoreRows).toHaveBeenCalledWith(["row-1", "row-2"]);
+      expect(result.current.rows.map((r) => r.id).sort()).toEqual(["row-1", "row-2"]);
+    });
+
+    it("removeRows: błąd serwera przywraca wiersze i pokazuje toast błędu", async () => {
+      actions.deleteRows.mockResolvedValue({ ok: false, message: "Nie udało się zapisać zmian." });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeRows(["row-1"]);
+      });
+      expect(result.current.rows.map((r) => r.id).sort()).toEqual(["row-1", "row-2"]);
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    it("duplicateRows: kopie z serwera na końcu, toast „Zduplikowano 1 wiersz”; „Cofnij” usuwa kopie", async () => {
+      actions.duplicateRows.mockResolvedValue({
+        ok: true,
+        rows: [{ id: "kopia-1", values: { a: 1 }, position: 5 }],
+      });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.duplicateRows(["row-1"]);
+      });
+      expect(actions.duplicateRows).toHaveBeenCalledWith(["row-1"]);
+      expect(result.current.rows.map((r) => r.id)).toEqual(["row-1", "row-2", "kopia-1"]);
+      expect(toast).toHaveBeenCalledWith("Zduplikowano 1 wiersz", expect.objectContaining({ action: expect.anything() }));
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(actions.deleteRows).toHaveBeenCalledWith(["kopia-1"]);
+      expect(result.current.rows.map((r) => r.id)).toEqual(["row-1", "row-2"]);
+    });
+
+    it("setRowsValue: od razu lokalnie, jeden zapis, toast „Ustawiono „Przeczytane” dla 2 wierszy”; „Cofnij” wraca do poprzednich wartości", async () => {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!.id;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!.id;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setRowsValue(["row-1", "row-2"], status, przeczytane, "Przeczytane");
+      });
+      expect(actions.setRowsValue).toHaveBeenCalledWith(["row-1", "row-2"], status.id, przeczytane);
+      expect(result.current.rows.every((r) => r.values[status.id] === przeczytane)).toBe(true);
+      expect(toast).toHaveBeenCalledWith(
+        "Ustawiono „Przeczytane” dla 2 wierszy",
+        expect.objectContaining({ action: expect.anything() }),
+      );
+      const cofnij = toast.mock.calls.at(-1)![1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      // row-1 wraca do „Czytam”; row-2 miał już „Przeczytane”, więc nie ma czego cofać
+      expect(actions.setRowsValue).toHaveBeenLastCalledWith(["row-1"], status.id, czytam);
+      expect(result.current.rows.find((r) => r.id === "row-1")!.values[status.id]).toBe(czytam);
+    });
+
+    it("setRowsValue: błąd cofa wartości; pole Sekret nigdy nie jest zapisywane hurtowo", async () => {
+      actions.setRowsValue.mockResolvedValue({ ok: false, message: "Nie udało się zapisać zmian." });
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!.id;
+      const przed = b.rows.find((r) => r.id === "row-1")!.values[status.id];
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.setRowsValue(["row-1"], status, przeczytane, "Przeczytane");
+      });
+      expect(result.current.rows.find((r) => r.id === "row-1")!.values[status.id]).toBe(przed);
+      expect(toast.error).toHaveBeenCalled();
+
+      actions.setRowsValue.mockClear();
+      const sekret = { ...status, id: "f-sekret", type: "secret" as const, config: {} };
+      let wynik = true;
+      await act(async () => {
+        wynik = await result.current.setRowsValue(["row-1"], sekret, "x", "x");
+      });
+      expect(wynik).toBe(false);
+      expect(actions.setRowsValue).not.toHaveBeenCalled();
+    });
+  });
+});

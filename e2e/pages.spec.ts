@@ -29,9 +29,9 @@ test.describe("strony", () => {
     await zalozKontoStron(page, info.project.name);
     await utworzBooks(page);
 
-    // „+ Nowy” zakłada wiersz na serwerze (pojawia się po odpowiedzi) i stawia kursor w komórce tytułu
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz” zakłada wiersz na serwerze (pojawia się po odpowiedzi) i stawia kursor w komórce tytułu
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const tytul = wiersz.getByRole("textbox", { name: "Tytuł", exact: true });
     await expect(tytul).toBeFocused();
@@ -91,9 +91,9 @@ test.describe("strony", () => {
     const sumaRoczna = page.getByTestId("karta").filter({ hasText: "Σ rocznie" });
     const najblizsze = page.getByTestId("karta").filter({ hasText: "Najbliższe odnowienie" });
 
-    // „+ Nowy”: nazwa „Netflix” (Enter zapisuje od razu), potem kwota 43 (zapis przy pisaniu)
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz”: nazwa „Netflix” (Enter zapisuje od razu), potem kwota 43 (zapis przy pisaniu)
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const nazwa = wiersz.getByRole("textbox", { name: "Nazwa", exact: true });
     const zapisNazwy = page.waitForResponse(AKCJA_SERWERA);
@@ -149,7 +149,8 @@ test.describe("strony", () => {
     await page.getByRole("combobox", { name: "Nowy blok" }).fill("/tab");
     await page.getByRole("combobox", { name: "Nowy blok" }).press("Enter");
     await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
-    await expect(page.getByRole("columnheader")).toHaveCount(4, { timeout: 20_000 });
+    // 3 pola, „+” oraz zaznaczanie i „#” (S2Table)
+    await expect(page.getByRole("columnheader")).toHaveCount(6, { timeout: 20_000 });
 
     // „+” → okno „Nowe pole” → grupa „Inteligentne” → Kwota cykliczna (domyślna nazwa „Cena”)
     await page.getByRole("button", { name: "Dodaj kolumnę" }).click();
@@ -161,11 +162,11 @@ test.describe("strony", () => {
     await okno.getByRole("button", { name: "Dodaj pole" }).click();
     await dodanie;
     const naglowek = page.getByRole("columnheader");
-    await expect(naglowek).toHaveCount(5, { timeout: 20_000 });
+    await expect(naglowek).toHaveCount(7, { timeout: 20_000 });
     await expect(naglowek.getByRole("button", { name: "Cena", exact: true })).toBeVisible();
 
     // Kwota 43 w pierwszym wierszu, podsumowanie „Suma / mies.” → stopka „Σ 43,00 zł / mies.”
-    const kwota = page.locator("tbody tr").first().getByRole("textbox", { name: "Cena", exact: true });
+    const kwota = page.locator("tbody tr:has(input)").first().getByRole("textbox", { name: "Cena", exact: true });
     const zapisKwoty = page.waitForResponse(AKCJA_SERWERA);
     await kwota.fill("43");
     await zapisKwoty;
@@ -214,9 +215,9 @@ test.describe("strony", () => {
       };
     }
 
-    // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     const status = wiersz.getByRole("button", { name: /^Status: / });
     await expect(status).toHaveText("Chcę przeczytać");
@@ -384,12 +385,12 @@ test.describe("strony", () => {
     await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
 
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id):
-    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)
-    await expect(page.getByRole("columnheader")).toHaveCount(4, {
+    // zaznaczanie, „#”, 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę)
+    await expect(page.getByRole("columnheader")).toHaveCount(6, {
       timeout: 20_000,
     });
     // Nowa tabela ma dwa puste wiersze
-    const wiersze = page.locator("tbody tr");
+    const wiersze = page.locator("tbody tr:has(input)");
     await expect(wiersze).toHaveCount(2);
     const naglowek = page.getByRole("columnheader");
     const menuKolumny = page.getByRole("dialog", { name: "Kolumna Status" });
@@ -408,8 +409,8 @@ test.describe("strony", () => {
     ).toHaveCount(0);
     await expect(menuKolumny).toHaveCount(0);
 
-    // „+ Nowy” → trzeci wiersz; w jego komórce Status wpisujemy „5” i Enter
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
+    // „Nowy wiersz” → trzeci wiersz; w jego komórce Status wpisujemy „5” i Enter
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
     await expect(wiersze).toHaveCount(3);
     const komorka = wiersze
       .nth(2)

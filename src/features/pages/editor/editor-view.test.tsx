@@ -392,7 +392,10 @@ describe("EditorView", () => {
     const naglowek = screen.getAllByRole("banner")[0];
     await user.click(within(naglowek).getByRole("button", { name: "Nowa książka" }));
     await waitFor(() => expect(tabelowe.addRow).toHaveBeenCalledWith("blok-1", expect.any(Object)));
-    await waitFor(() => expect(within(screen.getAllByRole("table")[0]).getAllByRole("row")).toHaveLength(4));
+    // Wiersze danych mają pole zaznaczania (nagłówki grup szablonu i stopka nie)
+    await waitFor(() =>
+      expect(within(screen.getAllByRole("table")[0]).getAllByRole("checkbox", { name: /^Zaznacz: / })).toHaveLength(2),
+    );
   });
 
   it("strona bez tabeli nie ma przycisku głównego", () => {
@@ -448,7 +451,12 @@ describe("EditorView", () => {
     const tabela = (i: number) => screen.getAllByRole("table")[i];
     const naglowki = (i: number) => within(tabela(i)).getAllByRole("columnheader").map((h) => h.textContent);
     const tytuly = (i: number) =>
-      within(tabela(i)).getAllByRole("row").slice(1, -1).map((r) => (r.querySelector("td input") as HTMLInputElement | null)?.value);
+      within(tabela(i))
+        .getAllByRole("row")
+        .flatMap((r) => {
+          const pole = r.querySelector("td input") as HTMLInputElement | null;
+          return pole ? [pole.value] : [];
+        });
     const naglowkiDrugiej = naglowki(1);
 
     // Ukrycie „Autor” w pierwszej tabeli

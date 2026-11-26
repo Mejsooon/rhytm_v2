@@ -13,9 +13,13 @@ import {
   changeFieldType,
   deleteField,
   deleteRow,
+  deleteRows,
+  duplicateRows as duplicateRowsAction,
   reorderFields,
   restoreRow,
+  restoreRows,
   saveTableSettings,
+  setRowsValue as setRowsValueAction,
   updateBlockContent,
   updateField,
   updateRow,
@@ -32,6 +36,7 @@ import {
 } from "../fields";
 import type { LoadedBlock } from "../load-page";
 import { BLAD_ZAPISU, SEJF_ZMIENIL_SIE, ZAPIS_W_TOKU } from "../messages";
+import { rowsLabel } from "../rows-label";
 import type { FilterCond, PageRow, TableSettings, TableView } from "../table-model";
 import { effectiveView, type EffectiveView } from "../table-views";
 import { templateDefaults, type TemplateKey } from "../templates";
@@ -474,6 +479,172 @@ export function useTableStore(
         },
       },
     });
+  }
+
+  // „Usuń” z paska zaznaczonych: wiersze znikają od razu, toast „Usunięto N wierszy” z „Cofnij” (restoreRows).
+  // Wiersze bez prawdziwego id (zapis w toku) zostają. Zwraca false przy błędzie (wiersze wracają, toast).
+  async function removeRows(ids: string[]): Promise<boolean> {
+    const usuwane = wierszeRef.current.filter((r) => ids.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY));
+    if (usuwane.length === 0) return true;
+    const idsUsuwanych = usuwane.map((r) => r.id);
+    setEditing((e) => (e?.rowId && idsUsuwanych.includes(e.rowId) ? null : e));
+    setRows((l) => l.filter((r) => !idsUsuwanych.includes(r.id)));
+    let wynik: Awaited<ReturnType<typeof deleteRows>> | null = null;
+    try {
+      wynik = await deleteRows(idsUsuwanych);
+    } catch {
+      wynik = null;
+    }
+    if (!wynik || !wynik.ok) {
+      setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      return false;
+    }
+    toast(`Usunięto ${rowsLabel(usuwane.length)}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+          let przywrocono = false;
+          try {
+            przywrocono = (await restoreRows(idsUsuwanych)).ok;
+          } catch {
+            przywrocono = false;
+          }
+          if (!przywrocono) {
+            setRows((l) => l.filter((r) => !idsUsuwanych.includes(r.id)));
+            toast.error(BLAD_ZAPISU);
+          }
+        },
+      },
+    });
+    return true;
+  }
+
+  // „Duplikuj” z paska zaznaczonych: kopie robi serwer (nowe id, koniec bloku), potem dochodzą na koniec listy.
+  // Toast „Zduplikowano N wierszy” z „Cofnij” (kopie idą do kosza przez deleteRows).
+  async function duplicateRows(ids: string[]): Promise<boolean> {
+    const zrodla = ids.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
+    if (zrodla.length === 0) return true;
+    let wynik: Awaited<ReturnType<typeof duplicateRowsAction>> | null = null;
+    try {
+      wynik = await duplicateRowsAction(zrodla);
+    } catch {
+      wynik = null;
+    }
+    if (!wynik || !wynik.ok) {
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      return false;
+    }
+    const kopie: PageRow[] = wynik.rows.map((w) => ({ id: w.id, values: w.values, position: w.position, deletedAt: null }));
+    const idsKopii = kopie.map((k) => k.id);
+    // Odświeżenie danych mogło już dodać kopie — bez duplikatów
+    setRows((l) => [...l.filter((r) => !idsKopii.includes(r.id)), ...kopie]);
+    toast(`Zduplikowano ${rowsLabel(kopie.length)}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          const usuwane = wierszeRef.current.filter((r) => idsKopii.includes(r.id));
+          setRows((l) => l.filter((r) => !idsKopii.includes(r.id)));
+          let usunieto = false;
+          try {
+            usunieto = (await deleteRows(idsKopii)).ok;
+          } catch {
+            usunieto = false;
+          }
+          if (!usunieto) {
+            setRows((l) => [...l, ...usuwane.filter((r) => !l.some((x) => x.id === r.id))]);
+            toast.error(BLAD_ZAPISU);
+          }
+        },
+      },
+    });
+    return true;
+  }
+
+  // „Zmień: pole” z paska zaznaczonych: jedna wartość (id opcji albo true / false) w wielu wierszach, od razu lokalnie.
+  // Sekretów nie zapisuje się hurtowo (szyfrogram powstaje tylko w komórce). Błąd cofa komórki, które nadal mają
+  // nową wartość. Toast „Ustawiono „X” dla N wierszy” z „Cofnij” (poprzednie wartości, jeden zapis na wartość).
+  async function setRowsValue(ids: string[], field: PageField, value: unknown, label: string): Promise<boolean> {
+    if (field.type === "secret") return false;
+    const cele = wierszeRef.current.filter((r) => ids.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY));
+    if (cele.length === 0) return true;
+    const pole = polaRef.current.find((f) => f.id === field.id) ?? field;
+    const v = normalizeValue(pole, value);
+    const poprzednie = new Map(cele.map((r) => [r.id, r.values[field.id]]));
+    const idsCelow = cele.map((r) => r.id);
+
+    setRows((l) => l.map((r) => (poprzednie.has(r.id) ? { ...r, values: { ...r.values, [field.id]: v } } : r)));
+    // Zapis w toku: dane z serwera w trakcie nie nadpiszą tych komórek
+    for (const id of idsCelow) {
+      const wToku = wierszeWToku.current.get(id) ?? { n: 0, zmiany: {}, zatwierdzone: {} };
+      wToku.n += 1;
+      wToku.zmiany[field.id] = v;
+      wierszeWToku.current.set(id, wToku);
+    }
+    let wynik: Awaited<ReturnType<typeof setRowsValueAction>> | null = null;
+    try {
+      wynik = await setRowsValueAction(idsCelow, field.id, v);
+    } catch {
+      wynik = null;
+    }
+    for (const id of idsCelow) {
+      const wToku = wierszeWToku.current.get(id);
+      if (!wToku) continue;
+      wToku.n -= 1;
+      if (wToku.n === 0) wierszeWToku.current.delete(id);
+    }
+    if (!wynik || !wynik.ok) {
+      setRows((l) =>
+        l.map((r) =>
+          poprzednie.has(r.id) && Object.is(r.values[field.id], v)
+            ? { ...r, values: { ...r.values, [field.id]: poprzednie.get(r.id) } }
+            : r,
+        ),
+      );
+      toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      return false;
+    }
+    const n = cele.length;
+    toast(`Ustawiono „${label}” dla ${n} ${n === 1 ? "wiersza" : "wierszy"}`, {
+      action: {
+        label: "Cofnij",
+        onClick: async () => {
+          // Wiersze, które nadal mają ustawioną wartość i miały inną, pogrupowane po poprzedniej wartości
+          const doCofniecia = new Map<string, { wartosc: unknown; ids: string[] }>();
+          for (const r of wierszeRef.current) {
+            if (!poprzednie.has(r.id) || !Object.is(r.values[field.id], v)) continue;
+            const stara = normalizeValue(pole, poprzednie.get(r.id));
+            if (Object.is(stara, v)) continue;
+            const klucz = JSON.stringify(stara);
+            const grupa = doCofniecia.get(klucz) ?? { wartosc: stara, ids: [] };
+            grupa.ids.push(r.id);
+            doCofniecia.set(klucz, grupa);
+          }
+          if (doCofniecia.size === 0) return;
+          const cofane = [...doCofniecia.values()];
+          setRows((l) =>
+            l.map((r) => {
+              const g = cofane.find((x) => x.ids.includes(r.id));
+              return g ? { ...r, values: { ...r.values, [field.id]: g.wartosc } } : r;
+            }),
+          );
+          let cofnieto = false;
+          try {
+            const wyniki = await Promise.all(cofane.map((g) => setRowsValueAction(g.ids, field.id, g.wartosc)));
+            cofnieto = wyniki.every((w) => w.ok);
+          } catch {
+            cofnieto = false;
+          }
+          if (!cofnieto) {
+            toast.error(BLAD_ZAPISU);
+            // Część zapisów mogła przejść: wyrównujemy z serwerem
+            router.refresh();
+          }
+        },
+      },
+    });
+    return true;
   }
 
   // „Dodaj pole” w AddField: kolumna na końcu, do odpowiedzi serwera z tymczasowym id
@@ -1190,6 +1361,9 @@ export function useTableStore(
     cancelEdit,
     saveRow,
     removeRow,
+    removeRows,
+    duplicateRows,
+    setRowsValue,
     addField,
     patchSettings,
     setTempFilters,

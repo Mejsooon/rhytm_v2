@@ -307,7 +307,7 @@ describe("menu kolumny", () => {
       expect(actions.deleteField).toHaveBeenCalledWith(pole.id);
       expect(screen.queryByRole("columnheader", { name: /Przeczytana/ })).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Status ↑" })).toBeInTheDocument();
-      expect(within(screen.getAllByRole("row").at(-1) as HTMLElement).getByText("4 wiersze")).toBeInTheDocument();
+      expect(screen.getByText("4 wiersze")).toBeInTheDocument();
     });
 
     it("błąd cofa kolumnę i pokazuje toast", async () => {
@@ -386,6 +386,20 @@ describe("menu kolumny", () => {
     expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
   });
 
+  it("„Grupuj po tym polu” (tylko Wybór i Status) grupuje bieżący widok po kolumnie", async () => {
+    const user = userEvent.setup();
+    const b = stronaTestowa("books", "Books", BOOKS).blocks[0];
+    render(<PageTable block={b} today={DZIS} />);
+    const autor = await otworzMenu(user, "Autor");
+    expect(within(autor).queryByRole("menuitem", { name: "Grupuj po tym polu" })).toBeNull();
+    await user.keyboard("{Escape}");
+    const menu = await otworzMenu(user, "Status");
+    await user.click(within(menu).getByRole("menuitem", { name: "Grupuj po tym polu" }));
+    const status = b.fields.find((f) => f.name === "Status")!;
+    expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { group_by: status.id });
+    expect(screen.getByRole("button", { name: "Grupuj: Status" })).toBeInTheDocument();
+  });
+
   describe("wyścigi przy błędzie zapisu", () => {
     it("nieudane usunięcie pola cofa tylko swoje ślady — sort zmieniony w międzyczasie zostaje", async () => {
       const user = userEvent.setup();
@@ -449,7 +463,7 @@ describe("menu kolumny", () => {
     // Na webie „Nowy” dodaje wiersz wprost na serwerze (bez tymczasowego id), więc wiersz czekający
     // na serwer powstaje tylko w arkuszu telefonu (poniżej 800 px): „Nowy” → nazwa → „Zapisz”
     window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
-    await user.click(screen.getByRole("button", { name: "Nowy" }));
+    await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
     await user.type(screen.getByRole("textbox", { name: "Nazwa" }), "Nowy");
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
     // Telefon: nagłówek otwiera arkusz „Kolumna”, a typ wybiera się chipem

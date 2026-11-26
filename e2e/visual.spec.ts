@@ -767,8 +767,8 @@ test.describe("ekrany z sesją", () => {
       });
 
       // Wiersz z hasłem (S2Passwords: odblokowany)
-      await page.getByRole("button", { name: "Nowy", exact: true }).click();
-      const wiersz = page.locator("tbody tr");
+      await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+      const wiersz = page.locator("tbody tr:has(input)");
       await expect(wiersz).toHaveCount(1);
       const serwis = wiersz.getByRole("textbox", {
         name: "Serwis",
@@ -912,9 +912,9 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
 
       // Okienko opcji komórki Status (S2Books, tsel) w nowym wierszu
-      // „+ Nowy” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
-      await page.getByRole("button", { name: "Nowy", exact: true }).click();
-      await expect(page.locator("tbody tr")).toHaveCount(1);
+      // „Nowy wiersz” zakłada wiersz na serwerze: wiersz pojawia się dopiero po odpowiedzi
+      await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+      await expect(page.locator("tbody tr:has(input)")).toHaveCount(1);
       await page
         .locator("tbody tr")
         .getByRole("button", { name: /^Status: / })
@@ -986,8 +986,9 @@ test.describe("ekrany z sesją", () => {
       await expect(page.getByRole("group", { name: "Zapisane widoki" })).toBeVisible();
     }
     // Kolumny pojawiają się po odpowiedzi serwera (do tego czasu blok ma tymczasowe id)
-    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę); ta sama tabela na webie i telefonie
-    await expect(page.getByRole("columnheader")).toHaveCount(4, {
+    // 3 pola + nagłówek z przyciskiem „+” (Dodaj kolumnę); na webie także zaznaczanie i „#” (S2Table),
+    // na telefonie te kolumny są ukryte
+    await expect(page.getByRole("columnheader")).toHaveCount(projekt === "web" ? 6 : 4, {
       timeout: 20_000,
     });
     await zrzut(page, "strony-edytor", projekt);
@@ -1096,7 +1097,7 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "strony-subscriptions-wiersz", projekt);
       return;
     }
-    await expect(page.locator("tbody tr")).toHaveCount(3);
+    await expect(page.locator("tbody tr:has(input)")).toHaveCount(3);
     await expect(page.getByTestId("karta")).toHaveCount(3);
     await zrzut(page, "strony-subscriptions", projekt);
 

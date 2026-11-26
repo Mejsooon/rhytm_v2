@@ -14,6 +14,10 @@ const actions = vi.hoisted(() => ({
   updateRow: vi.fn(),
   updateBlockContent: vi.fn(),
   reorderFields: vi.fn(),
+  deleteRows: vi.fn(),
+  restoreRows: vi.fn(),
+  duplicateRows: vi.fn(),
+  setRowsValue: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
@@ -136,13 +140,12 @@ describe("PageTable", () => {
       // Trzy karty i przycisk „Karta” na końcu rzędu
       expect(screen.getByTestId("przypiete-karty").children).toHaveLength(4);
       expect(screen.getByRole("group", { name: "Zapisane widoki" })).toBeInTheDocument();
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("0 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("0 wierszy")).toBeInTheDocument();
     });
   });
 
   describe("pasek tabeli", () => {
-    it("zakładki, pasek narzędzi (S2Table) i „+ Nowy” pod ramką; bez nazwy tabeli i plakietki sortu", () => {
+    it("zakładki, pasek narzędzi (S2Table) i „Nowy wiersz” w stopce ramki (poza tabelą); bez nazwy tabeli i plakietki sortu", () => {
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
       expect(screen.queryByText(/^Sort:/)).not.toBeInTheDocument();
@@ -154,8 +157,8 @@ describe("PageTable", () => {
       expect(screen.getByRole("button", { name: "Pola" })).toBeInTheDocument();
       expect(screen.getByRole("searchbox", { name: "Szukaj" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Menu tabeli" })).toBeInTheDocument();
-      const nowy = screen.getByRole("button", { name: "Nowy" });
-      // „+ Nowy” stoi pod ramką z tabelą, nie w stopce
+      const nowy = screen.getByRole("button", { name: "Nowy wiersz" });
+      // „Nowy wiersz” stoi w stopce ramki pod tabelą, nie w wierszu tfoot
       expect(nowy.closest("table")).toBeNull();
     });
 
@@ -313,7 +316,7 @@ describe("PageTable", () => {
         fields: zSzablonu.fields.map((f) => (f.name === "Autor" ? { ...f, position: -1 } : f)),
       };
       render(<PageTable block={b} today={TODAY} />);
-      expect(screen.getAllByRole("columnheader")[0].textContent).toBe("Autor");
+      expect(screen.getAllByRole("columnheader")[2].textContent).toBe("Autor");
       const menu = await otworzMenu(user, "Autor");
       await user.click(within(menu).getByRole("menuitem", { name: "Ukryj kolumnę" }));
       const autor = b.fields.find((f) => f.name === "Autor")!;
@@ -376,7 +379,7 @@ describe("PageTable", () => {
       const [tytul, autor, status, ...reszta] = b.fields.map((f) => f.id);
       expect(actions.reorderFields).toHaveBeenCalledWith(b.id, [tytul, status, autor, ...reszta]);
       const naglowki = screen.getAllByRole("columnheader").map((h) => h.textContent);
-      expect(naglowki.slice(0, 3)).toEqual(["Tytuł", "Status", "Autor"]);
+      expect(naglowki.slice(2, 5)).toEqual(["Tytuł", "Status", "Autor"]);
     });
 
     it("pierwsza kolumna ma wyłączone „Przesuń w lewo”, ostatnia „Przesuń w prawo”", async () => {
@@ -412,7 +415,7 @@ describe("PageTable", () => {
       await user.click(within(menu).getByRole("menuitem", { name: "Przesuń w prawo" }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
       const naglowki = screen.getAllByRole("columnheader").map((h) => h.textContent);
-      expect(naglowki.slice(0, 3)).toEqual(["Tytuł", "Autor", "Status"]);
+      expect(naglowki.slice(2, 5)).toEqual(["Tytuł", "Autor", "Status"]);
     });
 
     it("dodanie opcji „Porzucone” w menu Status woła updateField z kolorem z PALETA", async () => {
@@ -519,7 +522,7 @@ describe("PageTable", () => {
         expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
         expect(within(wiersz("Deep Work")).queryByText("Przeczytane")).not.toBeInTheDocument();
         const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-        expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+        expect(screen.getByText("11 wierszy")).toBeInTheDocument();
         expect(within(stopka).queryByText("7 przeczytanych")).not.toBeInTheDocument();
         expect(within(stopka).queryByText("6 w tym roku")).not.toBeInTheDocument();
       });
@@ -587,7 +590,7 @@ describe("PageTable", () => {
       await user.clear(within(okno).getByRole("textbox", { name: "Szukaj typu" }));
       await user.click(within(okno).getByRole("button", { name: "Dodaj pole" }));
       expect(actions.addField).toHaveBeenCalledWith(b.id, expect.objectContaining({ name: "Notatka", type: "text" }));
-      await waitFor(() => expect(screen.getAllByRole("columnheader")[5].textContent).toContain("Notatka"));
+      await waitFor(() => expect(screen.getAllByRole("columnheader")[7].textContent).toContain("Notatka"));
     });
   });
 
@@ -646,7 +649,7 @@ describe("PageTable", () => {
       );
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      const nowy = screen.getByRole("button", { name: "Nowy" });
+      const nowy = screen.getByRole("button", { name: "Nowy wiersz" });
       await user.click(nowy);
       const status = b.fields.find((f) => f.name === "Status")!;
       const chce = status.config.options!.find((o) => o.label === "Chcę przeczytać")!.id;
@@ -657,8 +660,7 @@ describe("PageTable", () => {
         odpowiedz();
       });
       expect(nowy).toBeEnabled();
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("12 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("12 wierszy")).toBeInTheDocument();
       const tytul = b.fields.find((f) => f.isTitle)!;
       const pole = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
       expect(pole).toBeDefined();
@@ -671,7 +673,7 @@ describe("PageTable", () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       const nowaKomorka = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
       expect(nowaKomorka).toBeDefined();
       await user.click(screen.getByRole("button", { name: "Filtruj" }));
@@ -724,7 +726,7 @@ describe("PageTable", () => {
       ustawienia.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
       const { rerender } = render(<PageTable block={b} today={TODAY} />);
       expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation"]);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       // Nowy wiersz („Chcę przeczytać”) nie spełnia filtra, a mimo to stoi na końcu z kursorem w tytule
       await waitFor(() => expect(tytuly()).toEqual(["Atomic Habits", "Hacking: The Art of Exploitation", ""]));
       const pole = screen.getAllByRole("textbox", { name: "Tytuł" })[2];
@@ -748,10 +750,9 @@ describe("PageTable", () => {
       actions.addRow.mockResolvedValue({ ok: false, message: "x" });
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Nie udało się zapisać. Spróbuj ponownie."));
-      const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("11 wierszy")).toBeInTheDocument();
     });
 
     it("„Usuń wiersz”: wiersz znika, toast „Usunięto · Cofnij” przywraca", async () => {
@@ -773,10 +774,10 @@ describe("PageTable", () => {
   });
 
   describe("stopka", () => {
-    it("Books: liczba wierszy w pierwszej kolumnie i podsumowania", () => {
+    it("Books: liczba wierszy w stopce ramki, podsumowania kolumn w tfoot", () => {
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
       const stopka = screen.getAllByRole("row").at(-1) as HTMLElement;
-      expect(within(stopka).getByText("11 wierszy")).toBeInTheDocument();
+      expect(screen.getByText("11 wierszy")).toBeInTheDocument();
       expect(within(stopka).getByText("7 przeczytanych")).toBeInTheDocument();
       expect(within(stopka).getByText("śr. 4,1")).toBeInTheDocument();
       expect(within(stopka).getByText("6 w tym roku")).toBeInTheDocument();
@@ -787,20 +788,20 @@ describe("PageTable", () => {
     it("domyślne szerokości z <col>: tytuł 300, ocena 130, a ostatnia kolumna bez szerokości", () => {
       const b = blok("books", BOOKS.slice(0, 2));
       const { container } = render(<PageTable block={b} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const idx = (nazwa: string) => b.fields.findIndex((f) => f.name === nazwa);
       expect(kolumny[idx("Tytuł")].style.width).toBe("300px");
       expect(kolumny[idx("Ocena")].style.width).toBe("130px");
       expect(kolumny[kolumny.length - 1].style.width).toBe("");
     });
 
-    it("tabela ma width równy sumie szerokości plus 56 px i min-width: 100%", () => {
+    it("tabela ma width równy sumie szerokości pól plus 76 px (zaznaczanie i „#”) plus 56 px i min-width: 100%", () => {
       const b = blok("books", BOOKS.slice(0, 2));
       const { container } = render(<PageTable block={b} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const suma = kolumny.slice(0, -1).reduce((a, c) => a + parseInt(c.style.width, 10), 0);
       const tabela = container.querySelector("table") as HTMLElement;
-      expect(tabela.style.width).toBe(`${suma + 56}px`);
+      expect(tabela.style.width).toBe(`${suma + 76 + 56}px`);
       expect(tabela.style.minWidth).toBe("100%");
       expect(tabela.style.tableLayout).toBe("fixed");
     });
@@ -814,7 +815,7 @@ describe("PageTable", () => {
         content: { ...b.content, settings: { ...(b.content.settings as object), column_widths: { [autor.id]: 10, [ocena.id]: "x" } } },
       };
       const { container } = render(<PageTable block={zle} today={TODAY} />);
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("220px");
       expect(kolumny[b.fields.indexOf(ocena)].style.width).toBe("130px");
     });
@@ -830,7 +831,7 @@ describe("PageTable", () => {
       await user.keyboard("{ArrowRight}");
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
       expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { column_widths: { [autor.id]: 240 } });
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("240px");
       expect(kolumny[0].style.width).toBe("300px");
     });
@@ -858,7 +859,7 @@ describe("PageTable", () => {
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
       uchwyt.releasePointerCapture = vi.fn();
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 560, buttons: 1 });
       expect(kolumny[b.fields.indexOf(autor)].style.width).toBe("280px");
@@ -877,7 +878,7 @@ describe("PageTable", () => {
       const { container } = render(<PageTable block={b} today={TODAY} />);
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
-      const kolumny = Array.from(container.querySelectorAll("col")) as HTMLElement[];
+      const kolumny = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2);
       const kol = kolumny[b.fields.indexOf(autor)];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 540, buttons: 1 });
@@ -903,7 +904,7 @@ describe("PageTable", () => {
       const { container } = render(<PageTable block={b} today={TODAY} />);
       const uchwyt = screen.getByRole("separator", { name: /Autor/ });
       uchwyt.setPointerCapture = vi.fn();
-      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[])[b.fields.indexOf(autor)];
+      const kol = (Array.from(container.querySelectorAll("col")) as HTMLElement[]).slice(2)[b.fields.indexOf(autor)];
       fireEvent.pointerDown(uchwyt, { pointerId: 1, clientX: 500, button: 0, buttons: 1 });
       fireEvent.pointerMove(uchwyt, { pointerId: 1, clientX: 600, buttons: 0 });
       expect(kol.style.width).toBe("220px");
@@ -974,7 +975,7 @@ describe("PageTable", () => {
       telefon();
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      await user.click(screen.getByRole("button", { name: "Nowy" }));
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
       const arkusz = screen.getByRole("dialog", { name: "Nowy wiersz" });
       expect(within(arkusz).queryByRole("button", { name: "Usuń wiersz" })).not.toBeInTheDocument();
       await user.click(within(arkusz).getByRole("button", { name: "Anuluj" }));
@@ -1167,7 +1168,7 @@ describe("PageTable", () => {
       const tabela = screen.getByRole("table");
       const suma = Array.from(tabela.querySelectorAll("col")).reduce((a, c) => a + (parseInt(c.style.width) || 0), 0);
       expect(tabela.style.width).toBe(`${suma + 56}px`);
-      expect(screen.getByRole("button", { name: "Nowy" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Dodaj kartę" })).toBeInTheDocument();
     });
 
@@ -1424,7 +1425,7 @@ describe("PageTable", () => {
     it("zamknięty sejf: tylko do odczytu, bez „Nowy”, kosza i kopiowania; sekrety „zablokowane”", () => {
       stanSejfu("zablokowany");
       render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
-      expect(screen.queryByRole("button", { name: "Nowy" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Nowy wiersz" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Usuń wiersz" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Kopiuj hasło" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Pokaż hasło" })).not.toBeInTheDocument();
@@ -1790,5 +1791,201 @@ describe("PageTable", () => {
       expect(actions.addRow).toHaveBeenCalledTimes(1);
     });
   });
-});
 
+  describe("ciało tabeli: numery, zaznaczanie, grupy i puste stany (S2Table)", () => {
+    // Blok Książek z nadpisanymi ustawieniami (views: [] — bez dopisywania widoków szablonu)
+    function ksiazki(wiersze: Record<string, unknown>[], ustawienia: Record<string, unknown> = {}) {
+      const b = blok("books", wiersze);
+      const settings = (b.content as { settings: Record<string, unknown> }).settings;
+      Object.assign(settings, { views: [] }, ustawienia);
+      return b;
+    }
+    function opcja(b: LoadedBlock, pole: string, etykieta: string) {
+      const f = b.fields.find((x) => x.name === pole)!;
+      return { pole: f, id: f.config.options!.find((o) => o.label === etykieta)!.id };
+    }
+    // Numery wierszy (kolumna „#”) w kolejności z DOM
+    function numery() {
+      return screen
+        .getAllByRole("checkbox", { name: /^Zaznacz: / })
+        .map((c) => (c.closest("tr")!.querySelectorAll("td")[1] as HTMLElement).textContent);
+    }
+    function grupa(nazwa: string) {
+      return screen.getByRole("button", { name: new RegExp(`(Zwiń|Rozwiń) grupę ${nazwa}$`) }).closest("tr") as HTMLElement;
+    }
+
+    it("kolumna zaznaczania i „#”: numer to pozycja w bieżącym widoku (po filtrze i sorcie)", () => {
+      const b = ksiazki(BOOKS);
+      const { id: czytam, pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
+      expect(numery()).toEqual(["1", "2"]);
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("grupy: nagłówek z odznaką, liczbą i podsumowaniem grupy; numery ciągłe przez grupy", () => {
+      const b = ksiazki(BOOKS, {});
+      const { pole: status } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} />);
+      const przeczytane = grupa("Przeczytane");
+      expect(within(przeczytane).getByText("Przeczytane")).toBeInTheDocument();
+      expect(within(przeczytane).getByText("7")).toBeInTheDocument();
+      // Pierwsza kolumna z podsumowaniem poza polem grupy: Ocena (średnia) liczona z wierszy grupy
+      expect(within(przeczytane).getByText("śr. 4,1")).toBeInTheDocument();
+      // „Czytam” bez ocen: bez „—”
+      expect(within(grupa("Czytam")).queryByText("—")).toBeNull();
+      expect(within(przeczytane).getByRole("button", { name: "Zwiń grupę Przeczytane" })).toHaveAttribute("aria-expanded", "true");
+      expect(numery()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]);
+    });
+
+    it("zwinięcie grupy zapisuje collapsed_groups bieżącego widoku i chowa wiersze („zwinięte · 7 ukryte”)", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: przeczytaneId } = opcja(b, "Status", "Przeczytane");
+      (b.content as { settings: Record<string, unknown> }).settings.group_by = status.id;
+      render(<PageTable block={b} today={TODAY} />);
+      await user.click(screen.getByRole("button", { name: "Zwiń grupę Przeczytane" }));
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [przeczytaneId] } });
+      const naglowek = grupa("Przeczytane");
+      expect(within(naglowek).getByRole("button", { name: "Rozwiń grupę Przeczytane" })).toHaveAttribute("aria-expanded", "false");
+      expect(within(naglowek).getByText("zwinięte · 7 ukryte")).toBeInTheDocument();
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Diuna" })).toBeNull();
+      // Numery liczą tylko pokazane wiersze
+      expect(numery()).toEqual(["1", "2", "3", "4"]);
+    });
+
+    it("Review Focus 5: nowy wiersz trafiający do zwiniętej grupy rozwija ją i jest widoczny", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: chce } = opcja(b, "Status", "Chcę przeczytać");
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, {
+        group_by: status.id,
+        collapsed_groups: { all: [chce] },
+      });
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Clean Code" })).toBeNull();
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await waitFor(() =>
+        expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [] } }),
+      );
+      expect(screen.getByRole("button", { name: "Zwiń grupę Chcę przeczytać" })).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Clean Code" })).toBeInTheDocument();
+      const pole = screen.getAllByRole("textbox", { name: "Tytuł" }).find((i) => i === document.activeElement);
+      expect(pole).toBeDefined();
+    });
+
+    it("Review Focus 5: wiele pustych wartości w zwiniętej grupie „Bez wartości” — nowy pusty wiersz ją rozwija", async () => {
+      const user = userEvent.setup();
+      const bezStatusu = BOOKS.map((w) => ({ Tytuł: w.Tytuł, Autor: w.Autor }));
+      const b = ksiazki([...bezStatusu.slice(0, 4), ...BOOKS.slice(4)]);
+      const status = b.fields.find((f) => f.name === "Status")!;
+      delete status.config.default_option;
+      Object.assign((b.content as { settings: Record<string, unknown> }).settings, {
+        group_by: status.id,
+        collapsed_groups: { all: [""] },
+      });
+      render(<PageTable block={b} today={TODAY} />);
+      const bez = grupa("Bez wartości");
+      expect(within(bez).getByText("zwinięte · 4 ukryte")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Nowy wiersz" }));
+      await waitFor(() =>
+        expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { collapsed_groups: { all: [] } }),
+      );
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toBeInTheDocument();
+      expect(within(grupa("Bez wartości")).getByText("5")).toBeInTheDocument();
+    });
+
+    it("pusta tabela: „Pusta tabela. Dodaj pierwszy wiersz”", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki([]);
+      render(<PageTable block={b} today={TODAY} />);
+      expect(screen.getByText(/Pusta tabela\./)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Dodaj pierwszy wiersz" }));
+      expect(actions.addRow).toHaveBeenCalledTimes(1);
+    });
+
+    it("nic nie pasuje: „Wyczyść filtry i szukanie” czyści filtry, szukanie i wraca do „Wszystkich”", async () => {
+      const user = userEvent.setup();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: czytam } = opcja(b, "Status", "Czytam");
+      (b.content as { settings: Record<string, unknown> }).settings.filters = [{ field_id: status.id, op: "in", value: [czytam] }];
+      render(<PageTable block={b} today={TODAY} />);
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "zzz");
+      expect(screen.getByText(/Nic nie pasuje do filtrów\./)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Wyczyść filtry i szukanie" }));
+      expect(screen.getByRole("searchbox", { name: "Szukaj" })).toHaveValue("");
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { filters: [] });
+      expect(numery()).toHaveLength(11);
+    });
+
+    it("zaznaczenie pokazuje pasek akcji; „Zaznacz wszystkie” zaznacza i odznacza widoczne", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      expect(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" })).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("1 zaznaczony");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toHaveTextContent("11 zaznaczonych");
+      expect(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" })).toHaveAttribute("aria-checked", "true");
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz wszystkie widoczne" }));
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("Usuń zaznaczone: deleteRows, toast z „Cofnij” i wyczyszczone zaznaczenie", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Diuna" }));
+      await user.click(screen.getByRole("button", { name: "Usuń" }));
+      expect(actions.deleteRows).toHaveBeenCalledWith(expect.arrayContaining(["row-1", "row-6"]));
+      expect(toast).toHaveBeenCalledWith("Usunięto 2 wiersze", expect.objectContaining({ action: expect.objectContaining({ label: "Cofnij" }) }));
+      expect(screen.queryByRole("checkbox", { name: "Zaznacz: Diuna" })).toBeNull();
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("Duplikuj, Zmień: pole grupy i Eksport CSV dostają zaznaczone wiersze", async () => {
+      const user = userEvent.setup();
+      actions.duplicateRows.mockResolvedValue({ ok: true, rows: [] });
+      const eksport = vi.fn();
+      const b = ksiazki(BOOKS);
+      const { pole: status, id: przeczytane } = opcja(b, "Status", "Przeczytane");
+      render(<PageTable block={b} today={TODAY} onExportRowsCsv={eksport} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Eksport CSV" }));
+      expect(eksport).toHaveBeenCalledWith(["row-1"]);
+      await user.click(screen.getByRole("button", { name: "Zmień: Status" }));
+      await user.click(screen.getByRole("menuitem", { name: "Przeczytane" }));
+      expect(actions.setRowsValue).toHaveBeenCalledWith(["row-1"], status.id, przeczytane);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      await user.click(screen.getByRole("button", { name: "Duplikuj" }));
+      expect(actions.duplicateRows).toHaveBeenCalledWith(["row-1"]);
+    });
+
+    it("zmiana filtra albo szukania czyści zaznaczenie", async () => {
+      const user = userEvent.setup();
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} />);
+      await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+      expect(screen.getByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeInTheDocument();
+      await user.type(screen.getByRole("searchbox", { name: "Szukaj" }), "a");
+      expect(screen.queryByRole("toolbar", { name: "Akcje dla zaznaczonych" })).toBeNull();
+    });
+
+    it("stopka: „Nowy wiersz” i „11 książek · 7 przeczytanych” (rzeczownik szablonu i pierwsze podsumowanie)", () => {
+      render(<PageTable block={ksiazki(BOOKS)} today={TODAY} templateKey="books" />);
+      expect(screen.getByRole("button", { name: "Nowy wiersz" })).toBeInTheDocument();
+      expect(screen.getByText("11 książek · 7 przeczytanych")).toBeInTheDocument();
+    });
+
+    it("stopka Subskrypcji: liczba i suma miesięczna (licznik kolumny Nazwa pominięty)", () => {
+      const b = blok("subscriptions", SUBSKRYPCJE);
+      (b.content as { settings: Record<string, unknown> }).settings.views = [];
+      render(<PageTable block={b} today={TODAY} templateKey="subscriptions" />);
+      expect(screen.getByText("3 subskrypcje · Σ 63,83 zł / mies.")).toBeInTheDocument();
+    });
+  });
+});

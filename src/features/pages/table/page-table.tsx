@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Ellipsis, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Ellipsis, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   ActionPopover,
   Button,
+  Checkbox,
   MENU_ITEM,
   MENU_ITEM_DANGER,
   MENU_SEPARATOR,
@@ -30,15 +31,17 @@ import {
 } from "../fields";
 import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
-import type { TemplateKey } from "../templates";
-import { rowsLabel } from "../rows-label";
-import { operatorsFor, visibleRows, type PageRow, type PinnedCard } from "../table-model";
-import { searchRows, viewCount } from "../table-views";
+import { TEMPLATES, type TemplateKey } from "../templates";
+import { rowsForm, rowsLabel } from "../rows-label";
+import { operatorsFor, summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
+import { groupRows, searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
+import { BulkBar } from "./bulk-bar";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
 import { FilterPopover } from "./filter-popover";
 import { MRowSheet } from "./mobile/m-row-sheet";
+import { OptionBadge } from "./option-badge";
 import { PinnedCards } from "./pinned-cards";
 import { SummaryCell } from "./summary-cell";
 import { TableCell } from "./table-cell";
@@ -56,9 +59,11 @@ const NAGLOWEK =
 const UCHWYT_KOLUMNY =
   "absolute top-0 -right-1 bottom-0 z-[3] w-2 cursor-col-resize touch-none outline-none after:absolute after:top-1.5 after:bottom-1.5 after:left-[3px] after:w-0.5 after:rounded-sm after:bg-transparent after:transition-colors after:duration-[120ms] after:content-[''] group-hover/kol:after:bg-[rgba(59,130,246,.6)] focus-visible:after:bg-[rgba(59,130,246,.6)] data-[on=true]:after:bg-[rgba(59,130,246,.6)] max-[799px]:hidden";
 
-// Ramka z poziomym przewijaniem i cienkim suwakiem (.tbl-wrap)
+// Ramka tabeli (.frame): obramowanie 1,5 px, promień 12 px; w środku tabela z przewijaniem i stopka „Nowy wiersz”
+const RAMKA = "min-w-0 rounded-xl border-[1.5px] border-black/[.14] bg-white";
+// Poziome przewijanie tabeli z cienkim suwakiem (.tbl-wrap)
 const RAMKA_PRZEWIJANA =
-  "overflow-x-auto overflow-y-hidden rounded-xl border-[1.5px] border-black/[.14] bg-white [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
+  "overflow-x-auto overflow-y-hidden rounded-t-xl [scrollbar-color:rgba(0,0,0,.2)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-black/[.18] [&::-webkit-scrollbar-thumb:hover]:bg-black/30 [&::-webkit-scrollbar-track]:bg-transparent";
 
 // Co moduł Hasła dostaje od tabeli na telefonie (prop `renderPhone`): te same wiersze i pola co tabela webu,
 // czyli jeden stan (bez drugiego wczytywania), oraz akcje magazynu i arkusza wiersza
@@ -99,13 +104,14 @@ const AKCJA_WIERSZA =
 const POZYCJA = cn(MENU_ITEM, "disabled:cursor-not-allowed disabled:opacity-[.64] disabled:hover:bg-transparent");
 
 // Jeden blok tabeli (S2Table.dc.html): przypięte karty, zakładki widoków („Wszystkie” i zapisane widoki),
-// pasek narzędzi (Tabela/Tablica, Grupuj, Filtruj, sort, Pola, szukajka, menu „⋯”), ramka z tabelą (menu kolumn, „+” dodające pole, wiersze z komórkami edytowanymi wprost
-// jak w Notion, kosz po najechaniu, stopka z liczbą wierszy i podsumowaniami) i „+ Nowy” pod ramką.
+// pasek narzędzi (Tabela/Tablica, Grupuj, Filtruj, sort, Pola, szukajka, menu „⋯”), ramka z tabelą (zaznaczanie i „#”,
+// menu kolumn, „+” dodające pole, zwijane grupy, wiersze z komórkami edytowanymi wprost jak w Notion, kosz po najechaniu,
+// puste stany, podsumowania kolumn) i stopką ramki („Nowy wiersz” i „11 książek · …”) oraz pasek akcji zaznaczonych.
 // Na telefonie dotknięcie wiersza otwiera arkusz.
 // Działa tylko na danych bloku — bez tytułu strony. `onRemove` (z edytora) usuwa cały blok tabeli.
 // `module="passwords"` (moduł Hasła, S2Passwords.dc.html): stałe kolumny (menu kolumny zablokowane, bez „+”
 // dodającego kolumnę), kolumna „Akcje” z oczkiem i „Kopiuj hasło”, a przy zamkniętym sejfie cała tabela
-// jest tylko do odczytu (bez „+ Nowy”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
+// jest tylko do odczytu (bez „Nowy wiersz”, kosza i arkusza). Tekst jawny żyje tylko w komórkach i arkuszu.
 // Filtry, sort, grupowanie, układ i ukryte pola należą do bieżącego widoku (store.view / store.patchView).
 // W module pasek modułu (`moduleTools`) stoi nad zakładkami, a szukajki paska nie ma (moduł ma własną).
 export function PageTable({
@@ -121,6 +127,7 @@ export function PageTable({
   newRowRef,
   onImportCsv,
   onExportCsv,
+  onExportRowsCsv,
 }: {
   block: LoadedBlock;
   today: IsoDate;
@@ -144,14 +151,16 @@ export function PageTable({
   onLiveRowCount?: (n: number) => void;
   // Układ telefonu z tego samego magazynu co tabela (moduł Hasła: CMPasswords; strona Subscriptions: CMSubs).
   // Oba układy są w DOM:
-  // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „+ Nowy”) tylko od 800 px.
+  // wynik funkcji widać poniżej 800 px, a tabelę webu (z paskiem, kartami i „Nowy wiersz”) tylko od 800 px.
   // Arkusz wiersza (MRowSheet) i okna zostają wspólne.
   renderPhone?: (api: PhoneTableApi) => React.ReactNode;
-  // Przycisk główny w nagłówku strony („Nowa książka”): tabela wpisuje tu funkcję dodającą wiersz jak „+ Nowy”
+  // Przycisk główny w nagłówku strony („Nowa książka”): tabela wpisuje tu funkcję dodającą wiersz jak „Nowy wiersz”
   newRowRef?: React.RefObject<(() => void) | null>;
   // Pozycje CSV w menu „⋯”; bez nich są wyłączone
   onImportCsv?: () => void;
   onExportCsv?: () => void;
+  // „Eksport CSV” w pasku zaznaczonych (id zaznaczonych wierszy); bez niego pozycja jest wyłączona
+  onExportRowsCsv?: (ids: string[]) => void;
 }) {
   const vault = useVault();
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
@@ -208,7 +217,7 @@ export function PageTable({
     setWArkuszu(false);
     if (editing !== null) store.cancelEdit();
   }
-  // „+ Nowy” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
+  // „Nowy wiersz” czeka na serwer (przycisk wyłączony); id nowego wiersza dostaje kursor w komórce tytułu
   const [dodawanie, setDodawanie] = React.useState(false);
   const [nowyId, setNowyId] = React.useState<string | null>(null);
   // Wiersz z fokusem albo świeżo dodany („przypięty”) i kolejność wierszy (id) z chwili przypięcia.
@@ -287,6 +296,71 @@ export function PageTable({
     kartaTerminu?.done_option_id !== undefined
       ? { fieldId: kartaTerminu.field_id, optionId: kartaTerminu.done_option_id }
       : null;
+
+  // Zaznaczone wiersze (id). Zmiana widoku, filtrów albo szukanej frazy czyści zaznaczenie, zamknięty sejf też.
+  const [zaznaczone, setZaznaczone] = React.useState<string[]>([]);
+  const kluczZaznaczenia = JSON.stringify([settings.active_view_id, filtry, store.query, tylkoOdczyt]);
+  const [poprzedniKluczZaznaczenia, setPoprzedniKluczZaznaczenia] = React.useState(kluczZaznaczenia);
+  if (poprzedniKluczZaznaczenia !== kluczZaznaczenia) {
+    setPoprzedniKluczZaznaczenia(kluczZaznaczenia);
+    setZaznaczone([]);
+  }
+  // Tylko żywe wiersze z prawdziwym id (usunięte w międzyczasie wypadają)
+  const wybrane = zywe.filter((r) => zaznaczone.includes(r.id) && !r.id.startsWith(PREFIKS_TYMCZASOWY)).map((r) => r.id);
+  const wszystkieZaznaczone = widoczneWiersze.length > 0 && widoczneWiersze.every((r) => zaznaczone.includes(r.id));
+  // „Zmień: pole” w pasku: pole grupy, inaczej pierwsze pole Wyboru albo Statusu (Sekret nigdy)
+  const poleGrupy = fields.find((f) => f.id === widok.group_by);
+  const poleZmiany =
+    poleGrupy && (poleGrupy.type === "select" || poleGrupy.type === "status" || poleGrupy.type === "checkbox")
+      ? poleGrupy
+      : (fields.find((f) => f.type === "select" || f.type === "status") ?? null);
+
+  // Grupy bieżącego widoku (pole Wyboru, Statusu albo Checkbox; bez grupowania jedna grupa "*")
+  const grupy = groupRows(fields, widoczneWiersze, widok.group_by);
+  // Zwinięte grupy zapisują się pod id aktywnego widoku albo "all" (jak store.toggleGroup)
+  const kluczWidoku =
+    settings.active_view_id !== null && settings.views.some((v) => v.id === settings.active_view_id)
+      ? settings.active_view_id
+      : "all";
+  const zwiniete = settings.collapsed_groups[kluczWidoku] ?? [];
+  // Podsumowanie w nagłówku grupy: pierwsza widoczna kolumna z podsumowaniem (poza polem grupy i samą liczbą wierszy)
+  const poleSumyGrupy = widocznePola.find((f) => {
+    const p = settings.column_summaries[f.id];
+    return f.id !== widok.group_by && p !== undefined && p.kind !== "none" && p.kind !== "count";
+  });
+  // Stopka pod tabelą: „11 książek · 9 przeczytanych” — rzeczownik szablonu i pierwsze podsumowanie kolumny
+  // (bez samej liczby wierszy, którą już mówi rzeczownik)
+  const rzeczownik: [string, string, string] =
+    templateKey === "passwords"
+      ? ["hasło", "hasła", "haseł"]
+      : TEMPLATES[templateKey ?? "empty"].noun;
+  const formaLiczby = rowsForm(widoczneWiersze.length);
+  const poleSumyStopki = widocznePola.find((f) => {
+    const p = settings.column_summaries[f.id];
+    return p !== undefined && p.kind !== "none" && p.kind !== "count";
+  });
+  const sumaStopki = poleSumyStopki
+    ? summarize(poleSumyStopki, widoczneWiersze, settings.column_summaries[poleSumyStopki.id], today, fields)
+    : "";
+  const tekstStopki = `${widoczneWiersze.length} ${rzeczownik[formaLiczby === "one" ? 0 : formaLiczby === "few" ? 1 : 2]}${
+    sumaStopki !== "" && sumaStopki !== "—" ? ` · ${sumaStopki}` : ""
+  }`;
+  // Stopka z podsumowaniami kolumn tylko wtedy, gdy któraś widoczna kolumna ma podsumowanie
+  const saPodsumowania = widocznePola.some((f) => {
+    const p = settings.column_summaries[f.id];
+    return p !== undefined && p.kind !== "none";
+  });
+
+  // Nowy wiersz (z „Nowy wiersz” albo przycisku nagłówka) w zwiniętej grupie rozwija ją (Review Focus 5)
+  React.useEffect(() => {
+    if (nowyId === null) return;
+    const nowy = zywe.find((r) => r.id === nowyId);
+    if (!nowy) return;
+    const grupa = groupRows(fields, [nowy], widok.group_by)[0];
+    if (grupa && grupa.key !== "*" && zwiniete.includes(grupa.key)) void store.toggleGroup(grupa.key);
+    // Tylko przy nowym wierszu (zmiana nowyId); zwinięcie później zostaje wyborem użytkownika
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nowyId]);
 
   // Szerokość każdej widocznej kolumny: szkic z przeciągania, zapisana (tylko skończona i ≥ 80), inaczej domyślna wg typu
   const szerokosci = widocznePola.map((f) => {
@@ -376,7 +450,7 @@ export function PageTable({
     if (await (zFiltra ? store.saveFiltersAsView(nazwa) : store.addView(nazwa))) toast(`Zapisano „${nazwa}” z obecnymi filtrami`);
   }
 
-  // Przycisk główny nagłówka strony dodaje wiersz tą samą drogą co „+ Nowy” (moduł przy zamkniętym sejfie: nic)
+  // Przycisk główny nagłówka strony dodaje wiersz tą samą drogą co „Nowy wiersz” (moduł przy zamkniętym sejfie: nic)
   React.useEffect(() => {
     if (!newRowRef) return;
     newRowRef.current = tylkoOdczyt ? null : () => void nowyWiersz();
@@ -393,6 +467,9 @@ export function PageTable({
       : edytowany && tytulowe && typeof edytowany.values[tytulowe.id] === "string"
         ? (edytowany.values[tytulowe.id] as string)
         : (tytulowe?.config.empty_label ?? "Bez tytułu");
+
+  // Licznik numerów wierszy (kolumna „#”) liczony w trakcie rysowania grup
+  let numer = 0;
 
   return (
     <>
@@ -649,14 +726,19 @@ export function PageTable({
         {/* Okno resetu sejfu montujemy dopiero po wyborze z menu */}
         {resetSejfu && <VaultResetDialog open onOpenChange={(o) => setResetSejfu(o)} />}
 
-        {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą */}
+        {/* .frame > .inner: ramka 1,5 px, promień 12 px; tabela przewija się poziomo, gdy kolumny się nie mieszczą,
+            a stopka „Nowy wiersz” z liczbą wierszy stoi pod nią w tej samej ramce */}
+        <div className={RAMKA}>
         <div className={RAMKA_PRZEWIJANA}>
-          {/* table-layout: fixed; szerokość = suma kolumn + 56 px (kolumna „+” albo „Akcje” z koszem), nie węższa niż ramka */}
+          {/* table-layout: fixed; szerokość = 36 px (zaznaczanie) + 40 px („#”) + suma kolumn + 56 px (kolumna „+” albo
+              „Akcje” z koszem), nie węższa niż ramka. Na telefonie zaznaczania i „#” nie ma (arkusz wiersza). */}
           <table
             className="border-collapse text-sm"
-            style={{ tableLayout: "fixed", width: sumaSzerokosci + 56, minWidth: "100%" }}
+            style={{ tableLayout: "fixed", width: sumaSzerokosci + 56 + 76, minWidth: "100%" }}
           >
             <colgroup>
+              <col className="max-[799px]:hidden" style={{ width: 36 }} />
+              <col className="max-[799px]:hidden" style={{ width: 40 }} />
               {widocznePola.map((f, i) => (
                 <col key={f.id} style={{ width: szerokosci[i] }} />
               ))}
@@ -665,6 +747,21 @@ export function PageTable({
             </colgroup>
             <thead>
               <tr>
+                {/* „Zaznacz wszystkie widoczne” (.ck) i „#” (szary, #a3a3a3) */}
+                <th scope="col" className={cn(NAGLOWEK, "w-9 pr-0 pl-3 max-[799px]:hidden")}>
+                  {!tylkoOdczyt && (
+                    <span className="inline-flex align-middle">
+                      <Checkbox
+                        checked={wszystkieZaznaczone}
+                        ariaLabel="Zaznacz wszystkie widoczne"
+                        onChange={(c) => setZaznaczone(c ? widoczneWiersze.map((r) => r.id) : [])}
+                      />
+                    </span>
+                  )}
+                </th>
+                <th scope="col" className={cn(NAGLOWEK, "text-left font-normal text-faint-foreground max-[799px]:hidden")}>
+                  #
+                </th>
                 {widocznePola.map((f, kolumna) => {
                   // Przesuwanie liczy się po wszystkich kolumnach (także ukrytych), jak kolejność na serwerze
                   const indeks = fields.indexOf(f);
@@ -705,6 +802,7 @@ export function PageTable({
                           else void store.applyTypeChange(f, typ, plan, false);
                         }}
                         onSort={(dir) => void store.patchView({ sort: [{ field_id: f.id, dir }] })}
+                        onGroupBy={() => void store.setGroupBy(f.id)}
                         onFilter={() => {
                           bezZwrotuFokusu.current = true;
                           void store.patchView({ filters: [...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }] });
@@ -839,9 +937,90 @@ export function PageTable({
               </tr>
             </thead>
             <tbody>
-              {widoczneWiersze.map((r) => (
+              {/* Puste stany (S2Table): pusta tabela albo nic nie pasuje do filtrów i szukania */}
+              {widoczneWiersze.length === 0 && (
+                <tr>
+                  <td colSpan={widocznePola.length + 3} className="h-20 text-center text-muted-foreground">
+                    {zywe.length === 0 ? (
+                      <>
+                        Pusta tabela.{" "}
+                        {!tylkoOdczyt && (
+                          <Button variant="ghost" size="xs" disabled={dodawanie} onClick={() => void nowyWiersz()}>
+                            Dodaj pierwszy wiersz
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        Nic nie pasuje do filtrów.{" "}
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => {
+                            // Szukanie i filtry „Wszystkich” znikają, a tabela wraca do zakładki „Wszystkie”
+                            store.setQuery("");
+                            const patch: { filters?: []; active_view_id?: null } = {};
+                            if (settings.filters.length > 0) patch.filters = [];
+                            if (settings.active_view_id !== null) patch.active_view_id = null;
+                            if (Object.keys(patch).length > 0) void store.patchSettings(patch);
+                          }}
+                        >
+                          Wyczyść filtry i szukanie
+                        </Button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )}
+              {grupy.map((g) => {
+                const zwinieta = g.key !== "*" && zwiniete.includes(g.key);
+                const sumaGrupy =
+                  poleSumyGrupy && !zwinieta
+                    ? summarize(poleSumyGrupy, g.rows, settings.column_summaries[poleSumyGrupy.id], today, fields)
+                    : "";
+                return (
+                  <React.Fragment key={g.key}>
+                    {/* Nagłówek grupy (tr.grp): strzałka zwijania, odznaka opcji, liczba wierszy i podsumowanie grupy */}
+                    {g.key !== "*" && (
+                      <tr>
+                        <td
+                          colSpan={widocznePola.length + 3}
+                          className="h-9 border-b border-black/[.06] bg-[#fafafa] px-3 max-[799px]:px-2"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              icon
+                              aria-expanded={!zwinieta}
+                              aria-label={`${zwinieta ? "Rozwiń" : "Zwiń"} grupę ${g.label}`}
+                              onClick={() => void store.toggleGroup(g.key)}
+                              className="text-muted-foreground"
+                            >
+                              <ChevronDown
+                                aria-hidden="true"
+                                className={cn("size-3.5 transition-transform", zwinieta && "-rotate-90")}
+                              />
+                            </Button>
+                            <OptionBadge option={{ id: g.key, label: g.label, color: g.color ?? "" }} />
+                            <span className="text-xs text-muted-foreground tabular-nums">{g.rows.length}</span>
+                            <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                              {zwinieta ? `zwinięte · ${g.rows.length} ukryte` : sumaGrupy === "—" ? "" : sumaGrupy}
+                            </span>
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {!zwinieta &&
+                      g.rows.map((r) => {
+                        // Numer wiersza: pozycja wśród pokazanych wierszy, ciągła przez grupy
+                        numer += 1;
+                        const nr = numer;
+                        const zaznaczony = zaznaczone.includes(r.id);
+                        return (
                 <tr
                   key={r.id}
+                  data-zaznaczony={zaznaczony || undefined}
                   // Wiersz nieaktywny (odznaczona „Aktywna” wskazana przez Datę odnowienia) jest przygaszony (S2Main)
                   style={
                     fields.some(
@@ -883,9 +1062,31 @@ export function PageTable({
                     if (cel instanceof Element && cel.closest("tr")?.parentElement === e.currentTarget.parentElement) return;
                     setPrzypiety(null);
                   }}
-                  // Na telefonie pola i przyciski komórek nie łapią dotyku: dostaje go wiersz
-                  className="group/wiersz max-[799px]:cursor-pointer max-[799px]:[&_a]:pointer-events-none max-[799px]:[&_button]:pointer-events-none max-[799px]:[&_input]:pointer-events-none"
+                  // Na telefonie pola i przyciski komórek nie łapią dotyku: dostaje go wiersz.
+                  // Zaznaczony wiersz ma niebieskawe tło (tr.row.sel td: #f5f8ff)
+                  className="group/wiersz data-[zaznaczony=true]:[&>td]:bg-[#f5f8ff] max-[799px]:cursor-pointer max-[799px]:[&_a]:pointer-events-none max-[799px]:[&_button]:pointer-events-none max-[799px]:[&_input]:pointer-events-none"
                 >
+                  {/* Zaznaczanie wiersza (.ck) i numer („#”, szary) — tylko web */}
+                  <td className="h-11 border-b border-border pr-0 pl-3 group-last/wiersz:border-b-0 max-[799px]:hidden">
+                    {!tylkoOdczyt && (
+                      <span className="inline-flex align-middle">
+                        <Checkbox
+                          checked={zaznaczony}
+                          ariaLabel={`Zaznacz: ${
+                            tytulowe && typeof r.values[tytulowe.id] === "string" && r.values[tytulowe.id] !== ""
+                              ? (r.values[tytulowe.id] as string)
+                              : "bez nazwy"
+                          }`}
+                          onChange={(c) =>
+                            setZaznaczone((l) => (c ? [...l.filter((id) => id !== r.id), r.id] : l.filter((id) => id !== r.id)))
+                          }
+                        />
+                      </span>
+                    )}
+                  </td>
+                  <td className="h-11 border-b border-border px-3 text-xs text-muted-foreground tabular-nums group-last/wiersz:border-b-0 max-[799px]:hidden">
+                    {nr}
+                  </td>
                   {widocznePola.map((f) => (
                     <TableCell
                       key={f.id}
@@ -943,17 +1144,19 @@ export function PageTable({
                     )}
                   </td>
                 </tr>
-              ))}
+                        );
+                      })}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
-            <tfoot>
-              {/* Stopka: liczba wierszy (po filtrze) w pierwszej kolumnie, dalej podsumowania kolumn; padding 8 × 12 px jak w S2Books */}
-              <tr className="bg-black/[.02]">
-                {widocznePola.map((f, i) =>
-                  i === 0 ? (
-                    <td key={f.id} className="border-t border-border px-3 py-2 text-muted-foreground tabular-nums">
-                      {rowsLabel(widoczneWiersze.length)}
-                    </td>
-                  ) : (
+            {/* Stopka z podsumowaniami kolumn (S2Books: „średnio 4,1”), tylko gdy któraś kolumna ma podsumowanie */}
+            {saPodsumowania && (
+              <tfoot>
+                <tr className="bg-black/[.02]">
+                  <td className="border-t border-border max-[799px]:hidden" />
+                  <td className="border-t border-border max-[799px]:hidden" />
+                  {widocznePola.map((f) => (
                     <SummaryCell
                       key={f.id}
                       field={f}
@@ -962,42 +1165,55 @@ export function PageTable({
                       summary={settings.column_summaries[f.id]}
                       today={today}
                     />
-                  ),
-                )}
-                <td className="border-t border-border" />
-              </tr>
-            </tfoot>
+                  ))}
+                  <td className="border-t border-border" />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
-
-        {/* „+ Nowy” pod ramką (.btng.sm, szary tekst); w module przy zamkniętym sejfie go nie ma.
-            Telefon (CMEditor): „Nowy wiersz” (.btng muted) i plakietka z liczbą wierszy po prawej */}
-        {!tylkoOdczyt && (
-          <div className="flex items-center gap-3 max-[799px]:justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
+        {/* Stopka ramki: „Nowy wiersz” (.tb) i opis liczby wierszy („11 książek · 9 przeczytanych”); w module przy
+            zamkniętym sejfie bez przycisku. Telefon (CMEditor): plakietka z liczbą wierszy po prawej */}
+        <div className="flex min-h-12 items-center justify-between gap-3 border-t border-black/[.06] px-3 py-1.5 text-[13px] text-muted-foreground">
+          {!tylkoOdczyt ? (
+            <button
+              type="button"
               disabled={dodawanie}
               onClick={() => void nowyWiersz()}
-              className="text-muted-foreground max-[799px]:hidden"
+              className={cn(PRZYCISK_PASKA, "-ml-2.5 disabled:cursor-not-allowed disabled:opacity-[.64] max-[799px]:h-11")}
             >
-              <Plus aria-hidden="true" className="size-4" />
-              Nowy
-            </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              disabled={dodawanie}
-              onClick={() => void nowyWiersz()}
-              className="text-muted-foreground min-[800px]:hidden"
-            >
-              <Plus aria-hidden="true" className="size-4" />
+              <Plus aria-hidden="true" className="size-3.5" />
               Nowy wiersz
-            </Button>
-            <StatusBadge tone="gray" className="min-[800px]:hidden">
-              {rowsLabel(widoczneWiersze.length)}
-            </StatusBadge>
-          </div>
+            </button>
+          ) : (
+            <span />
+          )}
+          <span className="tabular-nums max-[799px]:hidden">{tekstStopki}</span>
+          <StatusBadge tone="gray" className="min-[800px]:hidden">
+            {rowsLabel(widoczneWiersze.length)}
+          </StatusBadge>
+        </div>
+        </div>
+
+        {/* Pasek akcji dla zaznaczonych (S2Table, .bulk) */}
+        {wybrane.length > 0 && (
+          <BulkBar
+            count={wybrane.length}
+            field={poleZmiany}
+            onSetValue={(wartosc, etykieta) => {
+              if (poleZmiany) void store.setRowsValue(wybrane, poleZmiany, wartosc, etykieta);
+            }}
+            onDuplicate={() => {
+              setZaznaczone([]);
+              void store.duplicateRows(wybrane);
+            }}
+            onExportCsv={onExportRowsCsv ? () => onExportRowsCsv(wybrane) : undefined}
+            onDelete={() => {
+              setZaznaczone([]);
+              void store.removeRows(wybrane);
+            }}
+            onClear={() => setZaznaczone([])}
+          />
         )}
 
         {zmianaTypu && (

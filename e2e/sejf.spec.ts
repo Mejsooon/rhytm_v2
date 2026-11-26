@@ -147,9 +147,9 @@ test.describe("sejf", () => {
     ).toBeVisible();
     await page.keyboard.press("Escape");
 
-    // „+ Nowy” zakłada wiersz na serwerze; kursor trafia do komórki Serwis
-    await page.getByRole("button", { name: "Nowy", exact: true }).click();
-    const wiersz = page.locator("tbody tr");
+    // „Nowy wiersz” zakłada wiersz na serwerze; kursor trafia do komórki Serwis
+    await page.getByRole("button", { name: "Nowy wiersz", exact: true }).last().click();
+    const wiersz = page.locator("tbody tr:has(input)");
     await expect(wiersz).toHaveCount(1);
     await expect(page.getByText("1 hasło", { exact: true })).toBeVisible();
     const komorkaSerwis = wiersz.getByRole("textbox", {
