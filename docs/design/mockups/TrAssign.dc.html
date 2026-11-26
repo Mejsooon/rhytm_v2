@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Przypisz trening lub plan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="position: relative; height: 900px; overflow: hidden; font-family: 'Inter', system-ui, sans-serif">
+  <div style="position: absolute; inset: 0; pointer-events: none" aria-hidden="true"><dc-import name="TrClient" chat="false" hint-size="100%,900px"></dc-import></div>
+  <a href="TrClient.dc.html" class="backdrop" aria-label="Zamknij"></a>
+  <div role="dialog" aria-modal="true" aria-labelledby="as-t" class="dlg" style="position: absolute; left: 50%; top: 40px; transform: translateX(-50%); width: 640px; max-height: 820px; display: flex; flex-direction: column">
+    <div class="dlg-h"><div><h2 class="dlg-t" id="as-t">Przypisz trening</h2><p class="dlg-d">Pojawi się w Sporcie podopiecznego z plakietką „od trenera”.</p></div><a href="TrClient.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>
+    <div class="dlg-b" style="display: flex; flex-direction: column; gap: 18px; overflow: auto">
+      <div class="seg" role="group" aria-label="Rodzaj" style="align-self: flex-start"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="2"><button type="button" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      <div class="fld"><span class="lbl">{{whatLbl}}</span>
+        <div class="frame"><div class="inner" style="display: flex; flex-direction: column">
+          <sc-for list="{{opts}}" as="o" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{o.p}}" onClick="{{o.pick}}" style="{{o.s}}"><span style="{{o.dot}}"></span><span style="flex: 1; min-width: 0; text-align: left"><span class="ell" style="display: block; font-weight: 500">{{o.t}}</span><span class="hint num ell" style="display: block">{{o.sub}}</span></span><span class="hint num nw">{{o.meta}}</span></button></sc-for>
+        </div></div>
+      </div>
+      <div class="fld"><span class="lbl">Komu</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{people}}" as="p" hint-placeholder-count="5"><button type="button" class="chip" aria-pressed="{{p.p}}" onClick="{{p.pick}}" style="white-space: nowrap"><span class="av sm" style="{{p.avS}}">{{p.i}}</span>{{p.n}}</button></sc-for></div>
+      </div>
+      <sc-if value="{{isTpl}}" hint-placeholder-val="{{true}}">
+        <div class="fld"><span class="lbl">Kiedy</span>
+          <div class="row" style="gap: 6px; flex-wrap: wrap"><sc-for list="{{dates}}" as="d" hint-placeholder-count="4"><button type="button" class="chip nw" aria-pressed="{{d.p}}" onClick="{{d.pick}}">{{d.t}}</button></sc-for><input class="inp num" type="text" value="18:00" aria-label="Godzina" style="width: 80px"></div>
+        </div>
+        <div class="row" style="justify-content: space-between"><div><div style="font-weight: 500">Powtarzaj co tydzień</div><div class="hint">Ten sam dzień i godzina, aż wyłączysz.</div></div><button type="button" class="sw" role="switch" aria-checked="{{rep}}" aria-label="Powtarzaj co tydzień" onClick="{{toggleRep}}"></button></div>
+      </sc-if>
+      <sc-if value="{{isPlan}}" hint-placeholder-val="{{false}}">
+        <div class="fld"><span class="lbl">Start planu</span>
+          <div class="row" style="gap: 6px; flex-wrap: wrap"><sc-for list="{{starts}}" as="d" hint-placeholder-count="3"><button type="button" class="chip nw" aria-pressed="{{d.p}}" onClick="{{d.pick}}">{{d.t}}</button></sc-for></div>
+          <span class="hint">Treningi z planu wpiszą się w kalendarz podopiecznego tydzień po tygodniu. Możesz je potem edytować pojedynczo.</span>
+        </div>
+      </sc-if>
+      <label class="fld"><span>Wiadomość <span class="hint">(opcjonalnie)</span></span><input class="inp" type="text" placeholder="np. Pamiętaj o rozgrzewce barków"></label>
+    </div>
+    <div class="dlg-f" style="justify-content: space-between"><span class="hint ell" style="max-width: 360px">{{sum}}</span><span class="row" style="gap: 8px"><a href="TrClient.dc.html" class="btng">Anuluj</a><a href="{{doneHref}}" class="btnp nw" aria-disabled="{{dis}}">Przypisz</a></span></div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const CL = [
+  { id: 'ola', n: 'Ola Nowak', i: 'ON', c: '#dbeafe', plan: 'Siła 8 tyg.', wk: 'tydz. 3 z 8', done: 2, all: 4, miss: 0, last: 'dziś · Push A', sleep: '7:20', st: 'ok' },
+  { id: 'kuba', n: 'Kuba Wiśniewski', i: 'KW', c: '#fee2e2', plan: 'Redukcja + bieg', wk: 'tydz. 5 z 10', done: 1, all: 4, miss: 1, last: 'pn 16.11 · bieg 6 km', sleep: '5:50', st: 'sleep' },
+  { id: 'marta', n: 'Marta Zielińska', i: 'MZ', c: '#fef3c7', plan: 'Półmaraton 12 tyg.', wk: 'tydz. 7 z 12', done: 1, all: 4, miss: 0, last: 'wczoraj · bieg 12 km', sleep: '', st: 'ok' },
+  { id: 'pawel', n: 'Paweł Lis', i: 'PL', c: '#e0e7ff', plan: 'Hipertrofia', wk: 'tydz. 2 z 6', done: 0, all: 4, miss: 1, last: 'czw 12.11 · Pull', sleep: '6:40', st: 'idle' },
+  { id: 'ania', n: 'Ania Kowalczyk', i: 'AK', c: '#dcfce7', plan: 'Siła 8 tyg.', wk: 'tydz. 1 z 8', done: 1, all: 3, miss: 0, last: 'wczoraj · Nogi A', sleep: '7:50', st: 'pr' },
+  { id: 'tomek', n: 'Tomek Mazur', i: 'TM', c: '#f3e8ff', plan: '—', wk: '', done: 0, all: 0, miss: 0, last: '—', sleep: '', st: 'inv' }
+];
+    const k = st.k || 'tpl';
+    const TPL = [['Push A', '5 ćwiczeń · 15 serii', 'ok. 55 min'], ['Pull A', '5 ćwiczeń · 15 serii', 'ok. 55 min'], ['Nogi A', '5 ćwiczeń · 16 serii', 'ok. 60 min'], ['Full body B', '6 ćwiczeń · 18 serii', 'ok. 65 min'], ['Bieg — interwały 6 × 400 m', 'rozgrzewka 2 km · przerwy 90 s', 'ok. 40 min'], ['Bieg spokojny', '6–8 km · tempo konwersacyjne', 'ok. 45 min']];
+    const PLN = [['Siła 8 tyg.', '4 treningi / tydz. · progresja +2,5 kg', '8 tyg.'], ['Półmaraton 12 tyg.', '4 biegi / tydz. · szczyt 18 km', '12 tyg.'], ['Redukcja + bieg', '2 siłownie + 2 biegi / tydz.', '10 tyg.']];
+    const L = k === 'tpl' ? TPL : PLN;
+    const sel = st.o === undefined ? (k === 'tpl' ? 1 : 0) : st.o;
+    const ppl = st.ppl || { ola: true };
+    const act = CL.filter((c) => c.st !== 'inv');
+    const D = ['czw 19.11', 'pt 20.11', 'sob 21.11', 'nd 22.11', 'pn 23.11'];
+    const d = st.d || 'czw 19.11';
+    const S = ['pn 23.11', 'pn 30.11', 'pn 07.12'];
+    const sd = st.sd || 'pn 23.11';
+    const who = act.filter((c) => ppl[c.id]).map((c) => c.n.split(' ')[0]);
+    const whoT = who.length === 0 ? 'nikomu' : who.length <= 2 ? who.join(' i ') : who.length + ' osobom';
+    return {
+      kinds: [['tpl', 'Pojedynczy trening'], ['plan', 'Plan wielotygodniowy']].map((x) => ({ t: x[1], p: x[0] === k ? 'true' : 'false', pick: () => this.setState({ k: x[0], o: undefined }) })),
+      whatLbl: k === 'tpl' ? 'Szablon' : 'Plan', isTpl: k === 'tpl', isPlan: k === 'plan',
+      opts: L.map((x, i) => ({ t: x[0], sub: x[1], meta: x[2], p: i === sel ? 'true' : 'false', pick: () => this.setState({ o: i }),
+        s: 'display:flex;align-items:center;gap:12px;padding:10px 14px;border:0;border-top:' + (i ? '1px solid rgba(0,0,0,.06)' : '0') + ';background:' + (i === sel ? 'rgba(0,0,0,.035)' : 'transparent') + ';font:inherit;color:inherit;cursor:pointer;width:100%',
+        dot: 'width:16px;height:16px;border-radius:50%;flex:none;box-sizing:border-box;' + (i === sel ? 'border:5px solid #262626' : 'border:1.5px solid #a3a3a3') })),
+      people: act.map((c) => ({ n: c.n.split(' ')[0], i: c.i, avS: 'background:' + c.c, p: ppl[c.id] ? 'true' : 'false', pick: () => this.setState({ ppl: { ...ppl, [c.id]: !ppl[c.id] } }) })),
+      dates: D.map((t) => ({ t, p: t === d ? 'true' : 'false', pick: () => this.setState({ d: t }) })),
+      starts: S.map((t) => ({ t, p: t === sd ? 'true' : 'false', pick: () => this.setState({ sd: t }) })),
+      rep: st.rep ? 'true' : 'false', toggleRep: () => this.setState({ rep: !st.rep }),
+      sum: who.length ? 'Przypiszesz „' + L[sel][0] + '” — ' + whoT + (k === 'tpl' ? ', ' + d + ' 18:00' + (st.rep ? ', co tydzień' : '') : ', start ' + sd) : 'Wybierz co najmniej jedną osobę',
+      dis: who.length ? 'false' : 'true', doneHref: who.length ? 'TrClientWorkouts.dc.html' : '#'
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

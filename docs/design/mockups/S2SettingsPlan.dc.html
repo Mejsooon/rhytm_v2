@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ustawienia: Plan i płatności</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.seg{display:inline-flex;gap:4px;padding:3px;border-radius:10px;background:rgba(0,0,0,.05)}
+.seg button{height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#686868;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button[aria-pressed="true"]{background:#fff;color:#262626;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.use{display:grid;grid-template-columns:140px minmax(0,1fr) 80px;gap:16px;align-items:center;min-height:40px}
+.use+.use{border-top:1px solid rgba(0,0,0,.06)}
+.ubar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden}
+.ubar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.plan{border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;background:#fff}
+.feat{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.feat svg{flex:none;margin-top:2px}
+</style>
+</helmet>
+<div class="shell" style="font-family: 'Inter', system-ui, sans-serif; min-height: 1160px">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1160" hint-size="100%,1160px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Plan i płatności</b></nav>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <span class="snav-l" style="padding-top: 0">Konto</span>
+        <a href="S2Settings.dc.html">Ogólne</a>
+        <a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a>
+        <a href="S2SettingsPlan.dc.html" aria-current="page">Plan i płatności <span class="bdg sec">Free</span></a>
+        <a href="S2SettingsNotifications.dc.html">Powiadomienia</a>
+        <span class="snav-l">Moduły</span>
+        <a href="S2SettingsCalendar.dc.html">Kalendarz</a>
+        <a href="S2SettingsVault.dc.html">Sejf</a>
+        </nav>
+
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Plan i płatności</h1><p class="muted" style="margin: 4px 0 0">Twój plan, wykorzystanie limitów i faktury.</p></div>
+
+        <section class="card">
+          <div class="card-h" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap">
+            <div><h2 class="card-t">Obecny plan: Free</h2><p class="card-d">Bez karty i bez limitu czasu.</p></div>
+            <a href="#pro" class="btnp" style="text-decoration: none">Przejdź na Pro</a>
+          </div>
+          <div class="card-p">
+            <div class="use"><span style="font-weight: 500">Strony</span><div class="ubar"><span style="width: 60%"></span></div><span class="num" style="text-align: right">3 / 5</span></div>
+            <div class="use"><span style="font-weight: 500">Nawyki</span><div class="ubar"><span style="width: 40%"></span></div><span class="num" style="text-align: right">4 / 10</span></div>
+            <div class="use"><span style="font-weight: 500">Szablony treningów</span><div class="ubar"><span style="width: 100%; background: #c2410c"></span></div><span class="num" style="text-align: right; color: #c2410c">3 / 3</span></div>
+          </div>
+        </section>
+
+        <section id="pro" style="display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 class="card-t">Porównaj plany</h2>
+            <div role="group" aria-label="Okres rozliczenia" class="seg">
+              <button type="button" aria-pressed="{{mOn}}" onClick="{{setM}}">Miesięcznie</button>
+              <button type="button" aria-pressed="{{yOn}}" onClick="{{setY}}">Rocznie <span class="bdg ok">2 mies. gratis</span></button>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+            <div class="plan">
+              <div style="display: flex; justify-content: space-between; align-items: center"><b style="font-size: 16px; font-weight: 600">Free</b><span class="bdg sec">Obecny plan</span></div>
+              <div><span class="num" style="font-size: 28px; font-weight: 600; letter-spacing: -.02em">0 zł</span> <span class="hint">na zawsze</span></div>
+              <button type="button" class="btn" disabled="{{true}}" style="justify-content: center">Twój plan</button>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Kalendarz bloków z zadaniami</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Sport, nawyki i sen ze statystykami</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Sejf na hasła</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Do 5 stron, 10 nawyków, 3 szablonów treningów</div>
+              </div>
+            </div>
+            <div class="plan" style="border-color: #262626; box-shadow: 0 0 0 1px #262626">
+              <div style="display: flex; justify-content: space-between; align-items: center"><b style="font-size: 16px; font-weight: 600">rhytm Pro</b></div>
+              <div><span class="num" style="font-size: 28px; font-weight: 600; letter-spacing: -.02em">{{price}}</span> <span class="hint">{{per}}</span></div>
+              <button type="button" class="btnp" style="justify-content: center" onClick="{{buy}}">{{buyTxt}}</button>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Wszystko z Free, bez limitów</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Import treningów z Garmin i Amazfit</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Plany treningowe od trenera</div>
+                <div class="feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Pełna historia statystyk (Free: 6 mies.)</div>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{bought}}" hint-placeholder-val="{{false}}">
+            <div role="status" class="toast" style="align-self: flex-start">Tu otworzy się płatność (Stripe / Przelewy24).</div>
+          </sc-if>
+        </section>
+
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Metoda płatności</h2><p class="card-d">Karta albo BLIK, dodasz ją przy przejściu na Pro.</p></div></div>
+          <div class="card-p"><span class="hint">Brak zapisanej metody płatności.</span></div>
+        </section>
+
+        <section class="card">
+          <div class="card-h" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px"><div><h2 class="card-t">Faktury</h2><p class="card-d">Do pobrania jako PDF. Dane do faktury podasz przy płatności.</p></div></div>
+          <div class="card-p" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 24px; padding-bottom: 24px; text-align: center">
+            <b style="font-weight: 500">Brak faktur</b>
+            <span class="hint">Pojawią się tu po pierwszej płatności.</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const y = !!st.yearly;
+    return {
+      mOn: y ? 'false' : 'true',
+      yOn: y ? 'true' : 'false',
+      setM: () => this.setState({ yearly: false }),
+      setY: () => this.setState({ yearly: true }),
+      price: y ? '[CENA] zł' : '[CENA] zł',
+      per: y ? '/ rok' : '/ mies.',
+      buyTxt: y ? 'Przejdź na Pro rocznie' : 'Przejdź na Pro',
+      bought: !!st.bought,
+      buy: () => this.setState({ bought: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

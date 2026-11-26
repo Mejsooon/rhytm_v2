@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Nowa aktywność</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.ach{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(0,0,0,.1);background:#fff;font:inherit;font-size:13px;color:#404040;cursor:pointer;white-space:nowrap}
+.ach:hover{background:rgba(0,0,0,.03)}
+.ach[aria-checked="true"]{font-weight:500;color:#262626}
+.sw2{width:26px;height:26px;border-radius:50%;border:0;padding:0;cursor:pointer;display:grid;place-items:center;color:#fff}
+.sw2[aria-checked="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px #262626}
+.ach.add{border-style:dashed;color:#686868}
+
+</style>
+</helmet>
+<div class="shell" style="min-height: 1000px; position: relative; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <h1 class="h-title">Sport</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><a href="S2WorkoutTemplates.dc.html" class="btn">Szablony</a><a href="S2GymLog.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"></path></svg>Trening siłowy</a><a href="S2RunDialog.dc.html" class="btnp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowy bieg</a></div>
+    </header>
+    <div aria-hidden="true" style="padding: 24px; opacity: .6; display: flex; flex-direction: column; gap: 24px">
+      <div class="card" style="height: 520px"></div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px"><div class="card" style="height: 260px"></div><div class="card" style="height: 260px"></div></div>
+    </div>
+  </main>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div aria-hidden="true" class="backdrop"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="ac-t" class="dlg" style="position: absolute; left: 50%; top: 40px; transform: translateX(-50%); width: min(600px, calc(100% - 32px))">
+    <div class="dlg-h"><div><h2 id="ac-t" class="dlg-t">Nowa aktywność</h2><p class="dlg-d">Wszystko poza biegiem i siłownią: tenis, rower, joga, pole dance…</p></div><a href="S2Sport.dc.html" class="btng ic sm" aria-label="Zamknij"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a></div>
+    <div class="dlg-b">
+      <div class="fld"><span>Rodzaj aktywności</span>
+        <div style="position: relative"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input class="inp" type="text" placeholder="Szukaj: tenis, rower, pole dance…" aria-label="Szukaj rodzaju aktywności" value="{{q}}" onChange="{{onQ}}" style="padding-left: 34px; width: 100%; box-sizing: border-box"></div>
+        <div role="radiogroup" aria-label="Rodzaj aktywności" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{types}}" as="t" hint-placeholder-count="12"><button type="button" role="radio" class="ach" aria-checked="{{t.ck}}" onClick="{{t.pick}}" style="{{t.s}}"><span style="{{t.dot}}"></span>{{t.t}}</button></sc-for>
+          <button type="button" class="ach add" aria-checked="{{ownCk}}" role="radio" onClick="{{pickOwn}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>{{ownTxt}}</button>
+        </div>
+        <sc-if value="{{ownOn}}" hint-placeholder-val="{{false}}">
+          <div style="border: 1px solid rgba(0,0,0,.08); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,.015)">
+            <div style="display: flex; gap: 8px; align-items: flex-end"><label class="fld" style="flex: 1">Nazwa nowego rodzaju<input class="inp" type="text" value="{{ownName}}" onChange="{{onOwn}}" placeholder="np. Kalistenika"></label><button type="button" class="btn" onClick="{{saveOwn}}" aria-disabled="{{ownDis}}" style="{{ownS}}">Dodaj rodzaj</button></div>
+            <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{ownDist}}" onChange="{{toggleOwnDist}}">Mierz dystans (km)</label>
+          </div>
+        </sc-if>
+        <sc-if value="{{hasType}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 2px"><span style="font-size: 13px; color: #404040">Kolor „{{typeName}}”</span>
+            <div role="radiogroup" aria-label="{{swLbl}}" style="display: flex; gap: 8px"><sc-for list="{{swatches}}" as="c" hint-placeholder-count="9"><button type="button" role="radio" class="sw2" aria-checked="{{c.ck}}" aria-label="{{c.n}}" onClick="{{c.pick}}" style="{{c.s}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div>
+            <span class="hint">w kalendarzu i na liście</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{noTypes}}" hint-placeholder-val="{{false}}"><span class="hint">Nie ma takiego rodzaju — dodaj go przyciskiem „{{ownTxt}}”.</span></sc-if>
+      </div>
+      <div class="fld">Status
+        <div class="seg" role="radiogroup" aria-label="Status" style="align-self: flex-start"><sc-for list="{{stats}}" as="k" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{k.p}}" aria-pressed="{{k.p}}" onClick="{{k.pick}}">{{k.t}}</button></sc-for></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <div class="fld"><span>Data</span><span style="position: relative; display: block"><button type="button" class="dd num" onClick="{{dpAc.toggle}}" aria-haspopup="dialog" aria-expanded="{{dpAc.exp}}" aria-label="Data"><span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #686868; flex: none"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path></svg>{{dpAc.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{dpAc.open}}" hint-placeholder-val="{{false}}"><div role="dialog" aria-label="Wybierz datę" class="pop" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; width: 280px; box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-weight: 400" onClick="{{dpAc.stop}}"><div style="display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px"><b style="font-size: 14px; font-weight: 600">{{dpAc.title}}</b><span style="display: flex; gap: 2px"><button type="button" class="btng ic xs" aria-label="Poprzedni miesiąc" onClick="{{dpAc.prev}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button><button type="button" class="btng ic xs" aria-label="Następny miesiąc" onClick="{{dpAc.next}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 11px; font-weight: 500; color: #686868; text-align: center"><span>pn</span><span>wt</span><span>śr</span><span>cz</span><span>pt</span><span>sb</span><span>nd</span></div><div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px"><sc-for list="{{dpAc.days}}" as="dpd" hint-placeholder-count="42"><button type="button" aria-label="{{dpd.aria}}" aria-pressed="{{dpd.p}}" onClick="{{dpd.pick}}" style="{{dpd.s}}">{{dpd.n}}</button></sc-for></div><div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px; margin-top: 2px"><button type="button" class="btng xs" onClick="{{dpAc.today}}">Dziś</button><button type="button" class="btn xs" onClick="{{dpAc.close}}">Zamknij</button></div></div></sc-if></span></div>
+        <label class="fld">Start<span class="igroup num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input type="text" value="16:00"></span></label>
+        <label class="fld">{{timeLbl}}<input class="inp num" type="text" value="{{time}}" onChange="{{onTime}}" placeholder="g:mm"></label>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-if value="{{hasDist}}" hint-placeholder-val="{{false}}"><label class="fld">Dystans (km)<input class="inp num" type="text" value="{{km}}" onChange="{{onKm}}" placeholder="0,0"></label><div class="fld">Śr. prędkość<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{speed}}</div></div></sc-if>
+        <div class="fld">Kcal<div class="inp num" style="display: flex; align-items: center; background: rgba(0,0,0,.025); box-shadow: none">{{kcal}}</div></div>
+      </div>
+      <sc-if value="{{isDone}}" hint-placeholder-val="{{true}}"><div class="fld"><span>Trudność <span class="hint">1 = bardzo lekko, 10 = maks</span></span>
+        <div role="radiogroup" aria-label="Trudność" style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{dots}}" as="d" hint-placeholder-count="10"><button type="button" role="radio" aria-checked="{{d.on}}" onClick="{{d.pick}}" style="{{d.s}}">{{d.n}}</button></sc-for></div>
+      </div></sc-if>
+      <label class="fld"><span>Notatka <span class="hint">opcjonalnie</span></span><input class="inp" type="text" placeholder="{{notePh}}"></label>
+      <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{cal}}" onChange="{{toggleCal}}">Pokaż w kalendarzu głównym jako blok</label>
+    </div>
+    <div class="dlg-f"><a href="S2Sport.dc.html" class="btng">Anuluj</a><a href="S2Sport.dc.html" class="btnp" aria-disabled="{{saveDis}}" style="{{saveS}}">{{saveTxt}}</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { date: '2026-11-17', diff: 6, cal: true, type: 'Tenis', st: 'done', time: '1:15', km: '', q: '', own: false, ownName: '', ownDist: false, custom: [], colors: { 'Tenis': '#65a30d', 'Rower': '#0891b2', 'Pole dance': '#db2777' } }; }
+  renderVals() {
+    const mkDP = (key, val, set, force, onClose) => {
+      const ST = this.state || {};
+      const TD = '2026-11-17';
+      const MN = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+      const DWS = ['pn', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+      const v0 = val || TD;
+      const open = force ? true : ST.dpOpen === key;
+      const view = (ST.dpKey === key && ST.dpView) || v0.slice(0, 7);
+      const y = +view.slice(0, 4), m = +view.slice(5, 7);
+      const first = Date.UTC(y, m - 1, 1), lead = (new Date(first).getUTCDay() + 6) % 7;
+      const shut = () => { this.setState({ dpOpen: null, dpView: null, dpKey: null }); if (onClose) onClose(); };
+      const pd = (x) => String(x).padStart(2, '0');
+      const vd = new Date(Date.UTC(+v0.slice(0, 4), +v0.slice(5, 7) - 1, +v0.slice(8, 10)));
+      return {
+        open, exp: open ? 'true' : 'false',
+        txt: val ? DWS[(vd.getUTCDay() + 6) % 7] + ', ' + pd(vd.getUTCDate()) + '.' + pd(vd.getUTCMonth() + 1) + '.' + vd.getUTCFullYear() : 'Wybierz datę',
+        toggle: () => this.setState({ dpOpen: open ? null : key, dpView: null, dpKey: null }),
+        title: MN[m - 1] + ' ' + y,
+        prev: () => { const d = new Date(Date.UTC(y, m - 2, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        next: () => { const d = new Date(Date.UTC(y, m, 1)); this.setState({ dpKey: key, dpView: d.toISOString().slice(0, 7) }); },
+        stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+        today: () => { set(TD); shut(); }, close: shut,
+        days: Array.from({ length: 42 }, (_, i) => {
+          const d = new Date(first + (i - lead) * 86400000), k = d.toISOString().slice(0, 10);
+          const inM = d.getUTCMonth() === m - 1, sel = k === val, td = k === TD;
+          return { n: String(d.getUTCDate()), aria: DWS[(d.getUTCDay() + 6) % 7] + ' ' + d.getUTCDate() + '.' + pd(d.getUTCMonth() + 1), p: sel ? 'true' : 'false',
+            s: 'height:32px;border-radius:8px;border:0;padding:0;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer;' + (sel ? 'background:#262626;color:#fafafa;font-weight:600' : td ? 'background:#fff;color:#262626;font-weight:600;box-shadow:inset 0 0 0 1px #262626' : 'background:transparent;color:' + (inM ? '#262626' : '#b5b5b5')),
+            pick: () => { set(k); shut(); } };
+        })
+      };
+    };
+    const S = this.state;
+    // [nazwa, MET, dystans]
+    const BASE = [['Tenis', 7.3, 0], ['Rower', 7.5, 1], ['Pływanie', 7, 1], ['Pole dance', 5, 0], ['Joga', 2.5, 0], ['Squash', 12, 0], ['Padel', 6, 0], ['Piłka nożna', 7, 0], ['Koszykówka', 6.5, 0], ['Wspinaczka', 8, 0], ['Taniec', 5, 0], ['Pilates', 3, 0], ['Boks', 9, 0], ['Spacer', 3.5, 1], ['Rolki', 7, 1], ['Narty', 6, 0]];
+    const ALL = BASE.concat(S.custom || []);
+    const q = (S.q || '').trim().toLowerCase();
+    const shown = ALL.filter((x) => !q || x[0].toLowerCase().indexOf(q) >= 0);
+    const T = ALL.filter((x) => x[0] === S.type)[0];
+    const d = S.diff;
+    const km = parseFloat(String(S.km).replace(',', '.'));
+    const parts = String(S.time).trim().split(':').map((x) => parseInt(x, 10));
+    const min = parts.length === 2 && parts.every((x) => !isNaN(x)) ? parts[0] * 60 + parts[1] : (parts.length === 1 && !isNaN(parts[0]) ? parts[0] : 0);
+    const done = S.st === 'done';
+    const kcal = T && min > 0 ? Math.round(T[1] * 72 * min / 60) : 0;
+    const col = (n) => n >= 8 ? '#ef4444' : n >= 5 ? '#f59e0b' : '#15803d';
+    const ownNm = (S.ownName || '').trim();
+    const ownOk = ownNm.length > 0 && !ALL.some((x) => x[0].toLowerCase() === ownNm.toLowerCase());
+    const can = !!T && (!done || min > 0);
+    const qRaw = (S.q || '').trim();
+    const PAL = [['#7c3aed', 'fioletowy'], ['#4f46e5', 'indygo'], ['#2563eb', 'niebieski'], ['#0891b2', 'turkusowy'], ['#0d9488', 'morski'], ['#65a30d', 'limonkowy'], ['#ca8a04', 'musztardowy'], ['#dc2626', 'czerwony'], ['#db2777', 'różowy']];
+    const colorOf = (n) => (S.colors || {})[n] || '#7c3aed';
+    return {
+      dpAc: mkDP('ac', S.date, (k) => this.setState({ date: k })),
+      q: S.q, onQ: (e) => this.setState({ q: e.target.value }),
+      types: shown.map((x) => { const on = S.type === x[0] && !S.own, c = colorOf(x[0]); return { t: x[0], ck: on ? 'true' : 'false', pick: () => this.setState({ type: x[0], own: false }),
+        dot: 'width:8px;height:8px;border-radius:50%;flex:none;background:' + c, s: on ? 'background:' + c + '1a;border-color:' + c + ';box-shadow:inset 0 0 0 1px ' + c : '' }; }),
+      hasType: !!T && !S.own, typeName: T ? T[0] : '', swLbl: 'Kolor dla ' + (T ? T[0] : ''),
+      swatches: PAL.map((p) => { const on = T && colorOf(T[0]) === p[0]; return { n: p[1], on: !!on, ck: on ? 'true' : 'false', s: 'background:' + p[0], pick: () => { if (!T) return; this.setState({ colors: Object.assign({}, S.colors || {}, { [T[0]]: p[0] }) }); } }; }),
+      noTypes: shown.length === 0,
+      ownTxt: qRaw && shown.length === 0 ? 'Dodaj „' + qRaw + '”' : 'Własny rodzaj',
+      ownCk: S.own ? 'true' : 'false', ownOn: !!S.own,
+      pickOwn: () => this.setState({ own: !S.own, ownName: S.own ? '' : qRaw ? qRaw[0].toUpperCase() + qRaw.slice(1) : '' }),
+      ownName: S.ownName, onOwn: (e) => this.setState({ ownName: e.target.value }),
+      ownDist: !!S.ownDist, toggleOwnDist: () => this.setState({ ownDist: !S.ownDist }),
+      ownDis: ownOk ? 'false' : 'true', ownS: ownOk ? '' : 'opacity:.45;pointer-events:none',
+      saveOwn: () => { if (!ownOk) return; this.setState({ custom: (S.custom || []).concat([[ownNm, 5, S.ownDist ? 1 : 0]]), type: ownNm, own: false, ownName: '', q: '' }); },
+      stats: [['done', 'Wykonana'], ['plan', 'Zaplanowana']].map((x) => ({ t: x[1], p: S.st === x[0] ? 'true' : 'false', pick: () => this.setState({ st: x[0] }) })),
+      timeLbl: done ? 'Czas trwania' : 'Planowany czas', time: S.time, onTime: (e) => this.setState({ time: e.target.value }),
+      hasDist: !!(T && T[2]), km: S.km, onKm: (e) => this.setState({ km: e.target.value }),
+      speed: km > 0 && min > 0 ? (km / (min / 60)).toFixed(1).replace('.', ',') + ' km/h' : '—',
+      kcal: kcal ? '≈ ' + kcal : '—',
+      isDone: done,
+      dots: [1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: String(n), on: n === d ? 'true' : 'false', pick: () => this.setState({ diff: n }),
+        s: 'width:32px;height:32px;border-radius:10px;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer;' + (n === d ? 'background:' + col(n) + ';color:#fff;border:1px solid ' + col(n) + ';box-shadow:inset 0 1px 0 rgba(255,255,255,.2)' : n < d ? 'background:' + col(d) + '18;color:#404040;border:1px solid ' + col(d) + '30' : 'background:#fff;color:#404040;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)') })),
+      notePh: T ? (T[0] === 'Tenis' ? 'z kim grałeś, wynik, jak szło' : T[2] ? 'trasa, pogoda, samopoczucie' : 'co ćwiczyłeś, samopoczucie') : 'opcjonalnie',
+      cal: S.cal, toggleCal: () => this.setState({ cal: !S.cal }),
+      saveDis: can ? 'false' : 'true', saveS: can ? '' : 'opacity:.45;pointer-events:none',
+      saveTxt: !T ? 'Wybierz rodzaj' : done ? (min > 0 ? 'Zapisz: ' + T[0] : 'Podaj czas trwania') : 'Zaplanuj: ' + T[0]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Telefon — Subscriptions (COSS UI)</title>
+<title>Telefon — Subskrypcje (COSS UI)</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -44,7 +44,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -57,7 +57,7 @@ body{margin:0;background:#ffffff}
 
   <header class="m-head" style="flex: none; padding: 0 8px; border-bottom: 0"><a href="CMPages.dc.html" class="btng ic" aria-label="Strony"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a><div style="flex: 1"></div><a href="CMRowEdit.dc.html" class="btng ic" aria-label="Nowy wiersz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a></header>
   <div class="m-body" style="flex: 1; overflow-y: auto; padding-top: 0; display: flex; flex-direction: column; gap: 16px">
-    <h1 class="m-title" style="font-size: 24px">Subscriptions</h1>
+    <h1 class="m-title" style="font-size: 24px">Subskrypcje</h1>
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
       <div class="card" style="padding: 14px 16px"><div class="lbl">Miesięcznie</div><div class="num" style="font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px">{{sumM}}</div></div>
       <div class="card" style="padding: 14px 16px"><div class="lbl">Rocznie</div><div class="num" style="font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px">{{sumY}}</div></div>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Podopieczny — Wiadomości z trenerem</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrUserSidebar" active="wiad" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main" style="display: flex; flex-direction: column">
+    <header class="topbar"><div class="row" style="gap: 10px"><h1 class="h-title">Wiadomości</h1></div></header>
+    <div style="flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; height: 836px">
+      <div style="display: grid; min-height: 0"><aside aria-label="Czat" style="display: flex; flex-direction: column; min-height: 0; background: #fff">
+      <div class="row" style="padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.08); gap: 10px">
+        <span class="av" style="{{cAv}}">{{cIni}}</span>
+        <div style="flex: 1; min-width: 0"><div class="ell" style="font-weight: 500">Marek Kowal</div><div class="hint ell">Twój trener · zwykle odpisuje w ciągu godziny</div></div>
+        
+      </div>
+      <div style="flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+          <sc-if value="{{m.day}}" hint-placeholder-val="{{false}}"><div class="hint num" style="text-align: center; padding: 4px 0">{{m.dayT}}</div></sc-if>
+          <div style="{{m.wrapS}}">
+            <sc-if value="{{m.isCard}}" hint-placeholder-val="{{false}}"><a href="{{m.href}}" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(0,0,0,.1); border-radius: 12px; background: #fff; text-decoration: none; color: inherit; max-width: 260px"><span class="aic" style="background: rgba(0,0,0,.05); color: #404040; width: 30px; height: 30px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg></span><span style="min-width: 0"><span class="ell" style="display: block; font-weight: 500">{{m.t}}</span><span class="hint num ell" style="display: block">{{m.sub}}</span></span></a></sc-if>
+            <sc-if value="{{m.isText}}" hint-placeholder-val="{{true}}"><div style="{{m.bubS}}">{{m.t}}</div></sc-if>
+            <span class="hint num" style="font-size: 11px">{{m.time}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-top: 1px solid rgba(0,0,0,.08); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+        <sc-if value="{{attOpen}}" hint-placeholder-val="{{false}}">
+          <div class="pop" style="padding: 4px; display: flex; flex-direction: column"><div class="mi-lbl" style="padding: 6px 8px 4px">Dołącz trening</div><sc-for list="{{attList}}" as="a" hint-placeholder-count="3"><button type="button" class="mi" onClick="{{a.pick}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg><span style="flex: 1; text-align: left" class="ell">{{a.t}}</span><span class="hint num">{{a.sub}}</span></button></sc-for></div>
+        </sc-if>
+        <div class="row" style="gap: 6px">
+          <button type="button" class="btng ic sm" aria-label="Dołącz trening" title="Dołącz trening" onClick="{{toggleAtt}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+          <input class="inp" type="text" placeholder="Napisz wiadomość…" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1; min-width: 0">
+          <button type="button" class="btnp ic" aria-label="Wyślij" onClick="{{send}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></button>
+        </div>
+      </div>
+    </aside></div>
+      <aside style="border-left: 1px solid rgba(0,0,0,.08); padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center"><span class="av lg" style="background: #e0f2fe">MK</span><b style="font-weight: 600">Marek Kowal</b><span class="hint">Trener personalny · od 03.11</span></div>
+        <div class="frame"><div class="inner" style="padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+          <div class="row" style="justify-content: space-between"><span class="muted">Plan</span><span class="nw">Siła 8 tyg. · tydz. 3</span></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Następny trening</span><span class="nw">Pull A · czw</span></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Udostępniasz</span><span class="nw">treningi, sen</span></div>
+        </div></div>
+        <a href="TrTraineeSport.dc.html" class="btn" style="justify-content: center">Zobacz plan</a>
+        <a href="TrTraineeSettings.dc.html" class="btng" style="justify-content: center">Ustawienia współpracy</a>
+      </aside>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const MSG0 = [
+      { day: 'pn 16.11', me: true, t: 'Nogi zrobione, przysiad 70 × 5 wszedł bez problemu 💪', time: '19:42' },
+      { t: 'Świetnie! W tym tygodniu dokładamy 2,5 kg do wyciskania.', time: '20:05' },
+      { day: 'dziś', me: true, card: 'Push A · wt 17.11', sub: '14/15 serii · rekord 50 kg × 5', time: '8:31', href: 'TrTraineeSport.dc.html' },
+      { me: true, t: 'Ostatnia seria wyciskania była ciężka, zrobiłem tylko 4 powtórzenia.', time: '8:32' },
+      { t: 'Spoko, w czwartek zostajemy na 50 kg i domkniesz 4 × 5. Pull wrzuciłem Ci na 18:00.', time: '9:10' },
+      { card: 'Pull A · czw 19.11', sub: 'od trenera · 5 ćwiczeń', time: '9:10', href: 'TrTraineeSport.dc.html' }
+    ];
+    const ATT = [['Push A · wt 17.11', 'wykonany · 14/15 serii'], ['Nogi A · pn 16.11', 'wykonany · 15/15 serii'], ['Bieg 5 km · 08.11', '29:12']];
+    const me = (m) => m.me;
+    const sent = (typeof getSent === 'function') ? getSent() : (st.sent || []);
+    const putSent = (arr, extra) => this.setState(Object.assign((typeof sentPatch === 'function') ? sentPatch(arr) : { sent: arr }, extra || {}));
+    const all = MSG0.concat(sent);
+    const msgs = all.map((m, i) => ({
+      day: !!m.day, dayT: m.day || '', isCard: !!m.card, isText: !m.card, t: m.card ? m.card : m.t, sub: m.sub || '', href: m.href || 'TrWorkout.dc.html', time: m.time,
+      wrapS: 'display:flex;flex-direction:column;gap:3px;' + (m.me ? 'align-items:flex-end' : 'align-items:flex-start'),
+      bubS: 'max-width:260px;padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.45;' + (m.me ? 'background:#262626;color:#fff;border-bottom-right-radius:4px' : 'background:rgba(0,0,0,.05);border-bottom-left-radius:4px')
+    }));
+    const draft = st.draft || '';
+    const chatVals = {
+      msgs, draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      send: () => { if (!draft.trim()) return; putSent(sent.concat([{ me: true, t: draft.trim(), time: 'teraz' }]), { draft: '' }); },
+      attOpen: !!st.att, toggleAtt: () => this.setState({ att: !st.att }),
+      attList: ATT.map((a) => ({ t: a[0], sub: a[1], pick: () => putSent(sent.concat([{ me: true, card: a[0], sub: a[1], time: 'teraz' }]), { att: false }) }))
+    };
+    return { cAv: 'background:#e0f2fe', cIni: 'MK', ...chatVals };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

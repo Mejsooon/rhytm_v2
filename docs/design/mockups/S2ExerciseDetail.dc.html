@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Szczegóły ćwiczenia (COSS UI)</title>
+<title>Szczegóły ćwiczenia</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="coss/coss.css">
 </head>
@@ -11,47 +11,235 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-
+.sst{display:flex;flex-direction:column;gap:2px;min-width:0;padding:14px 20px}
+.sst+.sst{border-left:1px solid rgba(0,0,0,.08)}
+.sst b{font-size:18px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hrow{width:100%;box-sizing:border-box;border-left:0;border-right:0;border-bottom:0;background:transparent;font:inherit;text-align:left;cursor:pointer;display:grid;grid-template-columns:88px minmax(0,1fr) 88px 88px 64px 16px;align-items:center;gap:12px;white-space:nowrap;padding:11px 24px;border-top:1px solid rgba(0,0,0,.06);color:#262626}
+.hrow:hover{background:rgba(0,0,0,.02)}
+.hrow[aria-expanded="true"]{background:rgba(0,0,0,.025)}
+.hdet{padding:4px 24px 16px 124px;background:rgba(0,0,0,.025);display:flex;flex-direction:column;gap:12px}
+.stbl{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;overflow:hidden}
+.stbl th{font-weight:500;color:#686868;text-align:left;padding:7px 12px;font-size:12px;border-bottom:1px solid rgba(0,0,0,.08)}
+.stbl td{padding:7px 12px;border-top:1px solid rgba(0,0,0,.05);font-variant-numeric:tabular-nums}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(0,0,0,.06);color:#262626}
+.prow:first-child{border-top:0}
+.ell{overflow:hidden;text-overflow:ellipsis}
+.up{color:#15803d}
 </style>
 </helmet>
-<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="1000" hint-size="100%,1000px"></dc-import></div>
-  <main class="main">
+<div class="shell" style="min-height: 1100px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="sport" min-height="1100" hint-size="100%,1100px"></dc-import></div>
+  <main class="main" style="position: relative">
     <header class="topbar">
-      <nav class="crumb" aria-label="Okruszki"><span>Sport</span><span aria-hidden="true">/</span><span>Ćwiczenia</span><span aria-hidden="true">/</span><b>Wyciskanie na ławce</b></nav>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"><label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer"><button type="button" class="sw" role="switch" aria-checked="{{bw}}" onClick="{{toggleBw}}" aria-label="Z masą ciała"></button>Z masą ciała</label><button type="button" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>Zmień nazwę</button></div>
+      <nav class="crumb" aria-label="Okruszki"><a href="S2Sport.dc.html" style="color: inherit; text-decoration: none">Sport</a><span aria-hidden="true">/</span><span>Ćwiczenia</span><span aria-hidden="true">/</span><b>Wyciskanie na ławce</b></nav>
+      <div style="display: flex; gap: 8px; align-items: center"><label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer"><button type="button" class="sw" role="switch" aria-checked="{{bw}}" onClick="{{toggleBw}}" aria-label="Z masą ciała"></button>Z masą ciała</label><button type="button" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>Zmień nazwę</button></div>
     </header>
-    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
-      <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Wyciskanie na ławce</h1><div style="display: flex; gap: 6px; margin-top: 8px"><span class="bdg sec lg">24 treningi</span><span class="bdg sec lg num">od 04.09.2026</span><span class="bdg out lg">w szablonie „Push”</span><sc-if value="{{bwOn}}" hint-placeholder-val="{{false}}"><span class="bdg info lg">z masą ciała</span></sc-if></div></div>
-      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px"><div class="card" style="padding: 16px 18px"><div class="lbl">Szac. 1RM</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">82,5 <span style="font-size: 14px; font-weight: 400; color: #686868">kg</span></div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Najcięższa seria</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">75 × 2</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">Najwięcej powt.</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px">60 × 12</div></div><div class="card" style="padding: 16px 18px"><div class="lbl">8 tygodni</div><div class="num" style="font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 8px; color: #15803d">+10,5 kg</div></div></div>
-      <section class="card">
-        <div class="card-h" style="align-items: center"><h2 class="card-t">Szacowany 1RM</h2><div class="seg" role="group" aria-label="Zakres"><button type="button" aria-pressed="{{r3}}" onClick="{{set3}}">3 mies.</button><button type="button" aria-pressed="{{r8}}" onClick="{{set8}}">8 tyg.</button></div></div>
-        <div style="padding: 12px 24px 20px">
-        <svg viewBox="0 0 620 200" width="100%" height="220" role="img" aria-label="1RM rośnie z 72 do 82,5 kg w 8 tygodni" style="display: block">
-          <line x1="0" y1="170" x2="620" y2="170" stroke="rgba(0,0,0,.08)"></line><line x1="0" y1="110" x2="620" y2="110" stroke="rgba(0,0,0,.05)" stroke-dasharray="4 4"></line><line x1="0" y1="50" x2="620" y2="50" stroke="rgba(0,0,0,.05)" stroke-dasharray="4 4"></line>
-          <text x="612" y="166" font-size="11" fill="#686868" font-family="Inter, sans-serif" text-anchor="end">70</text><text x="612" y="106" font-size="11" fill="#686868" font-family="Inter, sans-serif" text-anchor="end">75</text><text x="612" y="46" font-size="11" fill="#686868" font-family="Inter, sans-serif" text-anchor="end">80</text>
-          <polygon points="20,170 20,146 100,128 180,122 260,98 340,80 420,74 500,50 580,20 580,170" fill="rgba(38,38,38,.04)"></polygon>
-          <polyline points="20,146 100,128 180,122 260,98 340,80 420,74 500,50 580,20" fill="none" stroke="#262626" stroke-width="2" stroke-linejoin="round"></polyline><circle cx="20" cy="146" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="100" cy="128" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="180" cy="122" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="260" cy="98" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="340" cy="80" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="420" cy="74" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="500" cy="50" r="3.5" fill="#fff" stroke="#262626" stroke-width="2"></circle><circle cx="580" cy="20" r="5" fill="#15803d" stroke="#fff" stroke-width="2"></circle>
-        </svg>
+
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+      <div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Wyciskanie na ławce</h1>
+        <p class="muted num" style="margin: 4px 0 0; display: flex; align-items: center; gap: 8px">{{subline}}<sc-if value="{{bwOn}}" hint-placeholder-val="{{false}}"><span class="bdg info">z masą ciała</span></sc-if></p>
+      </div>
+
+      <section class="card" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; overflow: hidden">
+        <sc-for list="{{stats}}" as="s" hint-placeholder-count="4"><div class="sst"><span class="hint">{{s.k}}</span><b>{{s.v}}</b><span class="{{s.subC}}" style="font-size: 12px">{{s.sub}}</span></div></sc-for>
+      </section>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start">
+        <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <section class="card">
+            <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between; padding-bottom: 8px; gap: 12px">
+              <div class="seg" role="group" aria-label="Miara"><sc-for list="{{metrics}}" as="m" hint-placeholder-count="3"><button type="button" aria-pressed="{{m.p}}" onClick="{{m.pick}}">{{m.t}}</button></sc-for></div>
+              <div class="seg" role="group" aria-label="Zakres"><sc-for list="{{ranges}}" as="r" hint-placeholder-count="2"><button type="button" aria-pressed="{{r.p}}" onClick="{{r.pick}}">{{r.t}}</button></sc-for></div>
+            </div>
+            <div style="padding: 4px 24px 20px; display: flex; flex-direction: column; gap: 16px">
+              <div style="display: flex; align-items: baseline; gap: 10px"><span class="num" style="font-size: 32px; font-weight: 600; letter-spacing: -.03em; line-height: 1">{{ch.big}}</span><span class="muted">{{ch.unit}}</span><span class="{{ch.deltaC}}" style="margin-left: 4px">{{ch.delta}}</span></div>
+              <div style="padding-right: 44px">
+                <div style="position: relative; height: 200px" onMouseLeave="{{tipOff}}">
+                  <sc-for list="{{ch.grid}}" as="g" hint-placeholder-count="3"><div style="{{g.s}}"></div><span class="num" style="{{g.ls}}">{{g.t}}</span></sc-for>
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" aria-hidden="true" style="position: absolute; inset: 0; overflow: visible; display: block">
+                    <polygon points="{{ch.area}}" fill="rgba(38,38,38,.05)"></polygon>
+                    <polyline points="{{ch.pts}}" fill="none" stroke="#262626" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
+                  </svg>
+                  <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}"><div style="{{tip.lineS}}"></div></sc-if>
+                  <sc-for list="{{ch.dots}}" as="d" hint-placeholder-count="9"><div style="{{d.s}}"></div></sc-for>
+                  <sc-for list="{{ch.cols}}" as="c" hint-placeholder-count="9"><div style="{{c.s}}" onMouseEnter="{{c.enter}}" aria-label="{{c.lbl}}"></div></sc-for>
+                  <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}"><div role="tooltip" style="{{tip.s}}"><div class="num" style="font-size: 12px; color: #686868">{{tip.a}}</div><div class="num" style="font-weight: 600; margin-top: 2px">{{tip.b}}</div><div class="num" style="font-size: 12px; color: #686868; margin-top: 2px">{{tip.c}}</div></div></sc-if>
+                </div>
+                <div style="position: relative; height: 18px; margin-top: 8px"><sc-for list="{{ch.xl}}" as="x" hint-placeholder-count="9"><span class="num" style="{{x.s}}">{{x.t}}</span></sc-for></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" style="overflow: hidden">
+            <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between; padding-bottom: 14px"><h2 class="card-t">Historia</h2><span class="hint num">{{histCount}}</span></div>
+            <div style="display: grid; grid-template-columns: 88px minmax(0,1fr) 88px 88px 64px 16px; gap: 12px; padding: 0 24px 8px; font-size: 12px; font-weight: 500; color: #686868; white-space: nowrap"><span>Data</span><span>Serie</span><span style="text-align: right">Szac. 1RM</span><span style="text-align: right">Objętość</span><span></span><span></span></div>
+            <sc-for list="{{hist}}" as="h" hint-placeholder-count="5">
+              <button type="button" class="hrow" aria-expanded="{{h.exp}}" onClick="{{h.toggle}}">
+                <span class="num" style="color: #525252">{{h.dl}}</span>
+                <span class="num ell">{{h.setsTxt}}</span>
+                <span class="num" style="text-align: right; font-weight: 500">{{h.rm}}</span>
+                <span class="num" style="text-align: right; color: #525252">{{h.vol}}</span>
+                <span style="text-align: right"><sc-if value="{{h.pr}}" hint-placeholder-val="{{false}}"><span class="bdg ok">rekord</span></sc-if></span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{h.chevS}}"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+              <sc-if value="{{h.open}}" hint-placeholder-val="{{false}}">
+                <div class="hdet">
+                  <table class="stbl"><thead><tr><th scope="col">Seria</th><th scope="col">Ciężar</th><th scope="col">Powt.</th><th scope="col" style="text-align: right">Objętość</th></tr></thead><tbody><sc-for list="{{h.sets}}" as="st" hint-placeholder-count="4"><tr><td>{{st.n}}</td><td>{{st.w}}</td><td>{{st.r}}</td><td style="text-align: right">{{st.v}}</td></tr></sc-for></tbody></table>
+                  <div style="display: flex; align-items: center; gap: 8px"><a href="S2GymLog.dc.html" class="btn sm" onClick="{{goPush}}">Otwórz trening</a><span class="hint">{{h.note}}</span></div>
+                </div>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{hasMore}}" hint-placeholder-val="{{true}}"><button type="button" class="btng" onClick="{{toggleMore}}" style="width: 100%; justify-content: center; border-radius: 0; border-top: 1px solid rgba(0,0,0,.06); height: 44px">{{moreTxt}}</button></sc-if>
+          </section>
         </div>
-      </section>
-      <section class="card" style="overflow: hidden">
-        <div class="card-h" style="padding-bottom: 14px"><h2 class="card-t">Historia</h2></div>
-        <div style="overflow-x: auto; border-top: 1px solid rgba(0,0,0,.08)"><table class="tbl" style="min-width: 520px"><thead><tr><th scope="col" class="th" style="padding-left: 24px">Data</th><th scope="col" class="th">Najlepsza seria</th><th scope="col" class="th">Szac. 1RM</th><th scope="col" class="th" style="padding-right: 24px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rekord</span></th></tr></thead><tbody><tr><td class="td num" style="padding-left: 24px; color: #525252">czw 19.11</td><td class="td num" style="font-weight: 500">72,5 × 5</td><td class="td num">82,5 kg</td><td class="td" style="padding-right: 24px; text-align: right"><span class="bdg ok">REKORD</span></td></tr><tr><td class="td num" style="padding-left: 24px; color: #525252">czw 12.11</td><td class="td num" style="font-weight: 500">70 × 6</td><td class="td num">82,0 kg</td><td class="td" style="padding-right: 24px; text-align: right"></td></tr><tr><td class="td num" style="padding-left: 24px; color: #525252">pt 06.11</td><td class="td num" style="font-weight: 500">70 × 5</td><td class="td num">80,5 kg</td><td class="td" style="padding-right: 24px; text-align: right"></td></tr><tr><td class="td num" style="padding-left: 24px; color: #525252">pt 30.10</td><td class="td num" style="font-weight: 500">67,5 × 6</td><td class="td num">79,0 kg</td><td class="td" style="padding-right: 24px; text-align: right"></td></tr><tr><td class="td num" style="padding-left: 24px; color: #525252">pt 23.10</td><td class="td num" style="font-weight: 500">67,5 × 5</td><td class="td num">77,5 kg</td><td class="td" style="padding-right: 24px; text-align: right"></td></tr></tbody></table></div>
-      </section>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <section class="card">
+            <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between; padding-bottom: 12px"><h2 class="card-t">Następny trening</h2><span class="bdg sec">zaplanowany</span></div>
+            <div style="padding: 0 24px 20px; display: flex; flex-direction: column; gap: 14px">
+              <div><div style="font-weight: 500">Push</div><div class="hint num" style="margin-top: 2px">czwartek, 19 listopada · 15:00</div></div>
+              <div style="border: 1px solid rgba(0,0,0,.08); border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px"><div style="min-width: 0"><div class="hint" style="font-size: 12px">Cel na ostatnią serię</div><div class="num" style="font-weight: 600; margin-top: 2px">72,5 × 6</div></div><span class="hint num" style="text-align: right">ostatnio 72,5 × 5<br>+1 powtórzenie</span></div>
+              <a href="S2GymLog.dc.html" class="btnp" style="justify-content: center" onClick="{{goPush}}">Rozpocznij trening</a>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between; padding-bottom: 4px"><h2 class="card-t">Rekordy</h2><span class="hint">najlepsze wyniki</span></div>
+            <div style="padding: 0 24px 12px">
+              <sc-for list="{{prs}}" as="r" hint-placeholder-count="4"><div class="prow"><span style="flex: 1; min-width: 0">{{r.t}}</span><sc-if value="{{r.isNew}}" hint-placeholder-val="{{false}}"><span class="bdg ok">nowy</span></sc-if><span style="text-align: right"><b class="num" style="font-weight: 600; display: block">{{r.v}}</b><span class="hint num">{{r.d}}</span></span></div></sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   </main>
-
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
 class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { m: 'rm', r: '8', tip: null, open: null, more: false, bw: false }; }
   renderVals() {
     const S = this.state || {};
+    const m = S.m || 'rm';
+    const r = S.r || '8';
+    // [data krótka, dzień tyg., serie [kg, powt.], szac. 1RM]
+    const RAW = [
+      ['03.09', 'czw', [[55, 12], [60, 7], [60, 6]], 71.0],
+      ['10.09', 'czw', [[55, 10], [60, 8], [60, 7]], 72.0],
+      ['17.09', 'czw', [[55, 10], [60, 8], [62.5, 6]], 72.5],
+      ['24.09', 'czw', [[55, 10], [62.5, 7], [62.5, 6]], 73.5],
+      ['01.10', 'czw', [[57.5, 10], [62.5, 8], [65, 5], [65, 5]], 74.5],
+      ['08.10', 'czw', [[57.5, 10], [65, 6], [65, 6], [65, 5]], 76.0],
+      ['15.10', 'czw', [[57.5, 10], [65, 6], [67.5, 5], [67.5, 5]], 77.5],
+      ['22.10', 'czw', [[60, 10], [67.5, 6], [67.5, 6], [67.5, 5]], 79.0],
+      ['29.10', 'czw', [[60, 10], [67.5, 6], [70, 5], [75, 2]], 80.5],
+      ['05.11', 'czw', [[60, 10], [70, 6], [70, 5], [70, 5]], 82.0],
+      ['12.11', 'czw', [[60, 10], [70, 6], [72.5, 5], [72.5, 4]], 82.5]
+    ];
+    const wf = (w) => (w % 1 ? w.toFixed(1).replace('.', ',') : String(w));
+    const sp = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const f1 = (n) => n.toFixed(1).replace('.', ',');
+    const pl = (n, a, b, c) => n + ' ' + (n === 1 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? b : c);
+    const SES = RAW.map((x, i) => {
+      const vol = x[2].reduce((a, s) => a + s[0] * s[1], 0);
+      const hw = Math.max.apply(null, x[2].map((s) => s[0]));
+      return { i, d: x[0], dl: x[1] + ' ' + x[0], sets: x[2], rm: x[3], vol, hw };
+    });
+    const rmMax = Math.max.apply(null, SES.map((s) => s.rm));
+    const hwMax = Math.max.apply(null, SES.map((s) => s.hw));
+    const volMax = Math.max.apply(null, SES.map((s) => s.vol));
+    const L = r === '8' ? SES.slice(-9) : SES;
+    const n = L.length;
+    const valOf = (s) => (m === 'rm' ? s.rm : m === 'hw' ? s.hw : s.vol);
+    const vTxt = (v) => (m === 'vol' ? sp(v) + ' kg' : m === 'rm' ? f1(v) + ' kg' : wf(v) + ' kg');
+    const vals = L.map(valOf);
+    const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    const st = m === 'vol' ? 250 : 2.5;
+    let lo = Math.floor(mn / st) * st, hi = Math.ceil(mx / st) * st;
+    if (hi - lo < 2 * st) hi = lo + 2 * st;
+    if (Math.round((hi - lo) / st) % 2) hi += st;
+    const span = hi - lo, lo2 = lo - span * 0.08, hi2 = hi + span * 0.08;
+    const yP = (v) => 100 - (v - lo2) / (hi2 - lo2) * 100;
+    const xP = (i) => (n === 1 ? 50 : i / (n - 1) * 100);
+    const xs = L.map((s, i) => xP(i)), ys = vals.map(yP);
+    const pts = xs.map((x, i) => x.toFixed(2) + ',' + ys[i].toFixed(2)).join(' ');
+    const area = xs[0].toFixed(2) + ',100 ' + pts + ' ' + xs[n - 1].toFixed(2) + ',100';
+    const grid = [lo, (lo + hi) / 2, hi].map((v) => {
+      const y = yP(v).toFixed(2);
+      return { t: m === 'vol' ? sp(v) : wf(v), s: 'position:absolute;left:0;right:0;top:' + y + '%;border-top:1px dashed rgba(0,0,0,.08)', ls: 'position:absolute;right:-44px;width:36px;text-align:right;top:' + y + '%;transform:translateY(-50%);font-size:11px;color:#686868' };
+    });
+    const tipI = S.tip;
+    const best = (s) => { let b = s.sets[0]; s.sets.forEach((x) => { if (x[0] * (1 + x[1] / 30) > b[0] * (1 + b[1] / 30)) b = x; }); return wf(b[0]) + ' × ' + b[1]; };
+    const dots = L.map((s, i) => {
+      const last = i === n - 1, on = tipI === i;
+      const sz = on ? 10 : last ? 9 : 7;
+      return { s: 'position:absolute;pointer-events:none;left:' + xs[i].toFixed(2) + '%;top:' + ys[i].toFixed(2) + '%;width:' + sz + 'px;height:' + sz + 'px;transform:translate(-50%,-50%);border-radius:50%;box-sizing:border-box;' + (last ? 'background:#15803d;border:2px solid #fff;box-shadow:0 0 0 1px #15803d' : 'background:#fff;border:2px solid #262626') };
+    });
+    const cols = L.map((s, i) => {
+      const a = i === 0 ? 0 : (xs[i - 1] + xs[i]) / 2, b = i === n - 1 ? 100 : (xs[i] + xs[i + 1]) / 2;
+      return { s: 'position:absolute;top:0;bottom:0;left:' + a.toFixed(2) + '%;width:' + (b - a).toFixed(2) + '%;cursor:default', lbl: s.dl + ': ' + vTxt(vals[i]), enter: () => { if ((this.state || {}).tip !== i) this.setState({ tip: i }); } };
+    });
+    const xl = L.map((s, i) => ({ t: s.d, s: 'position:absolute;top:0;left:' + xs[i].toFixed(2) + '%;transform:translateX(' + (i === 0 ? '0' : i === n - 1 ? '-100%' : '-50%') + ');font-size:11px;color:' + (tipI === i ? '#262626' : '#686868') + ';white-space:nowrap' }));
+    const hasTip = tipI !== null && tipI !== undefined && tipI < n;
+    let tip = { a: '', b: '', c: '', s: '', lineS: '' };
+    if (hasTip) {
+      const s = L[tipI], x = xs[tipI];
+      const tx = x > 75 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)';
+      tip = { a: s.dl + '.2026', b: vTxt(vals[tipI]), c: m === 'vol' ? pl(s.sets.length, 'seria', 'serie', 'serii') : 'najlepsza seria ' + best(s),
+        s: 'position:absolute;z-index:5;pointer-events:none;top:0;left:' + x.toFixed(2) + '%;transform:' + tx + ';background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:8px 12px;white-space:nowrap',
+        lineS: 'position:absolute;top:0;bottom:0;left:' + x.toFixed(2) + '%;border-left:1px solid rgba(0,0,0,.15);pointer-events:none' };
+    }
+    const first = vals[0], lastV = vals[n - 1], dv = lastV - first;
+    const rngTxt = r === '8' ? 'w 8 tyg.' : 'od początku';
+    const ch = {
+      big: m === 'vol' ? sp(lastV) : wf(lastV), unit: m === 'rm' ? 'kg · szacowany 1RM' : m === 'hw' ? 'kg · najcięższa seria' : 'kg · objętość ostatniego treningu',
+      delta: (dv >= 0 ? '+' : '−') + (m === 'vol' ? sp(Math.abs(dv)) : wf(Math.abs(dv))) + ' kg ' + rngTxt, deltaC: dv >= 0 ? 'bdg ok' : 'bdg warn',
+      pts, area, grid, dots, cols, xl
+    };
+    const totSets = L.reduce((a, s) => a + s.sets.length, 0), totVol = L.reduce((a, s) => a + s.vol, 0);
+    const rmD = L[n - 1].rm - L[0].rm;
+    const stats = [
+      { k: 'Szac. 1RM', v: wf(L[n - 1].rm) + ' kg', sub: '+' + f1(rmD) + ' kg ' + rngTxt, subC: 'num up' },
+      { k: 'Treningi', v: String(n), sub: r === '8' ? 'ok. 1 w tygodniu' : 'od 03.09.2026', subC: 'hint num' },
+      { k: 'Serie robocze', v: String(totSets), sub: f1(totSets / n) + ' na trening', subC: 'hint num' },
+      { k: 'Objętość', v: f1(totVol / 1000) + ' t', sub: sp(totVol / n) + ' kg na trening', subC: 'hint num' }
+    ];
+    // historia — najnowsze pierwsze
+    const rev = SES.slice().reverse();
+    const shown = S.more ? rev : rev.slice(0, 5);
+    const hist = shown.map((s) => {
+      const open = S.open === s.i;
+      const pr = s.rm === rmMax || s.hw === hwMax;
+      return {
+        dl: s.dl, setsTxt: s.sets.map((x) => wf(x[0]) + '×' + x[1]).join(' · '), rm: f1(s.rm) + ' kg', vol: sp(s.vol) + ' kg', pr,
+        exp: open ? 'true' : 'false', open, chevS: 'transition:transform .15s;transform:rotate(' + (open ? 90 : 0) + 'deg)',
+        toggle: () => this.setState({ open: (this.state || {}).open === s.i ? null : s.i }),
+        sets: s.sets.map((x, j) => ({ n: String(j + 1), w: wf(x[0]) + ' kg', r: String(x[1]), v: sp(x[0] * x[1]) + ' kg' })),
+        note: 'Trening Push · ' + pl(s.sets.length, 'seria robocza', 'serie robocze', 'serii roboczych') + (s.rm === rmMax ? ' · rekord 1RM' : s.hw === hwMax ? ' · rekord ciężaru' : '')
+      };
+    });
+    const sesOf = (pred) => SES.filter(pred)[0];
+    const sRm = sesOf((s) => s.rm === rmMax), sHw = sesOf((s) => s.hw === hwMax), sVol = sesOf((s) => s.vol === volMax);
+    const hwSet = sHw.sets.filter((x) => x[0] === hwMax)[0];
+    let rep = null; SES.forEach((s) => s.sets.forEach((x) => { if (!rep || x[1] > rep.x[1]) rep = { x, s }; }));
+    const prs = [
+      { t: 'Szacowany 1RM', v: wf(rmMax) + ' kg', d: sRm.d + '.2026', isNew: true },
+      { t: 'Najcięższa seria', v: wf(hwSet[0]) + ' × ' + hwSet[1], d: sHw.d + '.2026', isNew: false },
+      { t: 'Najwięcej powtórzeń', v: wf(rep.x[0]) + ' × ' + rep.x[1], d: rep.s.d + '.2026', isNew: false },
+      { t: 'Objętość treningu', v: sp(volMax) + ' kg', d: sVol.d + '.2026', isNew: false }
+    ];
     const bw = !!S.bw;
-    const r = S.r || 8;
-    return { bw: bw ? 'true' : 'false', bwOn: bw, toggleBw: () => this.setState({ bw: !bw }),
-      r3: r === 3 ? 'true' : 'false', r8: r === 8 ? 'true' : 'false', set3: () => this.setState({ r: 3 }), set8: () => this.setState({ r: 8 }) };
+    return {
+      subline: 'Klatka piersiowa · Sztanga · ' + pl(SES.length, 'trening', 'treningi', 'treningów') + ' od 03.09.2026 · w szablonie „Push”',
+      bw: bw ? 'true' : 'false', bwOn: bw, toggleBw: () => this.setState({ bw: !bw }),
+      stats,
+      metrics: [['rm', 'Szac. 1RM'], ['hw', 'Najcięższa seria'], ['vol', 'Objętość']].map((x) => ({ t: x[1], p: m === x[0] ? 'true' : 'false', pick: () => this.setState({ m: x[0], tip: null }) })),
+      ranges: [['8', '8 tyg.'], ['all', 'Wszystko']].map((x) => ({ t: x[1], p: r === x[0] ? 'true' : 'false', pick: () => this.setState({ r: x[0], tip: null }) })),
+      ch, hasTip, tip, tipOff: () => { if ((this.state || {}).tip !== null) this.setState({ tip: null }); },
+      hist, histCount: pl(SES.length, 'trening', 'treningi', 'treningów'),
+      hasMore: SES.length > 5, moreTxt: S.more ? 'Pokaż mniej' : 'Pokaż wszystkie (' + SES.length + ')', toggleMore: () => this.setState({ more: !(this.state || {}).more, open: null }),
+      prs, goPush: () => { try { sessionStorage.setItem('rh-gym', 'Push'); } catch (e) {} }
+    };
   }
 }
 </script>

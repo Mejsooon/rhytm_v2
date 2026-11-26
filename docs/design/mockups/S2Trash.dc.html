@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kosz — usunięte strony</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar"><nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Kosz</b></nav></header>
+    <div style="padding: 28px 24px; max-width: 760px; width: 100%; box-sizing: border-box; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+      <div><h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em">Kosz</h1><p class="muted" style="margin: 4px 0 0">Usunięte strony i wiersze tabel zostają tu 30 dni. Potem znikają na stałe.</p></div>
+      <section class="card" style="overflow: hidden">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="2"><div class="lrow" style="padding: 14px 16px"><span class="aic" style="background: rgba(0,0,0,.05); color: #686868"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></span><div style="flex: 1; min-width: 0"><div style="font-weight: 500">{{r.n}}</div><div class="hint num">{{r.d}}</div></div><button type="button" class="btn sm" onClick="{{r.restore}}">Przywróć</button><button type="button" class="btng sm" style="color: #b91c1c" onClick="{{r.del}}">Usuń na zawsze</button></div></sc-for>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 36px; text-align: center" class="hint">Kosz jest pusty.</div></sc-if>
+      </section>
+      <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}"><div role="status" style="align-self: flex-start; padding: 10px 14px; border-radius: 10px; background: #262626; color: #fff; font-size: 13px">{{toast}}</div></sc-if>
+      <p class="hint" style="margin: 0">Do kosza wchodzisz z Ustawienia → Ogólne, z ⌘K („Kosz”) albo z linku na stronie 404. Przywrócona strona wraca na koniec listy w pasku bocznym.</p>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const R = [['a', 'Strony WWW', 'strona · usunięta 20.11 · zostało 26 dni'], ['b', 'Disney+', 'wiersz w Subskrypcje · usunięty 23.11 · zostało 29 dni']];
+    const g = st.g || {};
+    const left = R.filter((r) => !g[r[0]]);
+    return {
+      rows: left.map((r) => ({ n: r[1], d: r[2], restore: () => this.setState({ g: Object.assign({}, g, { [r[0]]: 1 }), toast: 'Przywrócono „' + r[1] + '”.' }), del: () => this.setState({ g: Object.assign({}, g, { [r[0]]: 1 }), toast: 'Usunięto na zawsze „' + r[1] + '”.' }) })),
+      empty: !left.length, toastOn: !!st.toast, toast: st.toast || ''
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

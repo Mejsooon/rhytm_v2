@@ -11,40 +11,32 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-
+.ck-wrap{position:relative;height:900px;overflow:hidden;font-family:'Inter',system-ui,sans-serif}
+.ck-bg{position:absolute;inset:0;pointer-events:none}
+.ck-it{min-height:44px;text-decoration:none}
+.ck-it.on{background:rgba(0,0,0,.05)}
+.ck-ic{width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none;background:rgba(0,0,0,.05);color:#686868}
+.ck-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ck-m{white-space:nowrap}
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <h1 class="h-title">Dziś</h1>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
-    </header>
-    <div aria-hidden="true" style="padding: 28px 24px; opacity: .6">
-      <div style="font-size: 24px; font-weight: 600">Dziś</div><div style="margin-top: 24px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div></div><div class="card" style="margin-top: 24px; height: 520px"></div>
-    </div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <div role="dialog" aria-modal="true" aria-label="Szukaj" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(620px, calc(100% - 32px)); overflow: hidden">
+<div class="ck-wrap">
+  <div class="ck-bg" aria-hidden="true"><dc-import name="S2Today" hint-size="100%,1000px"></dc-import></div>
+  <a href="S2Today.dc.html" aria-label="Zamknij" class="backdrop"></a>
+  <div role="dialog" aria-modal="true" aria-label="Szukaj" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(640px, calc(100% - 32px)); overflow: hidden">
     <label style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.08); color: #686868">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <input type="text" value="{{q}}" onChange="{{onQ}}" aria-label="Szukaj" placeholder="Szukaj stron, wierszy i akcji…" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
+      <input type="text" value="{{q}}" onChange="{{onQ}}" onKeyDown="{{onKey}}" aria-label="Szukaj" placeholder="Szukaj stron, bloków, treningów i akcji…" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
       <span class="kbd">esc</span>
     </label>
-    <div role="listbox" aria-label="Wyniki" style="padding: 4px 8px 8px; max-height: 440px; overflow: auto">
+    <div role="listbox" aria-label="Wyniki" style="padding: 4px 8px 8px; max-height: 440px; overflow: auto; box-sizing: border-box">
       <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
         <div class="mi-lbl" style="padding-top: 10px">{{g.name}}</div>
         <sc-for list="{{g.items}}" as="it" hint-placeholder-count="2">
-          <a href="{{it.href}}" class="mi" role="option" aria-selected="{{it.sel}}" onMouseEnter="{{it.enter}}" style="{{it.s}}">
-            <span style="color: #686868; display: flex">
-              <sc-if value="{{it.isRow}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18M9 10v11"></path></svg></sc-if>
-              <sc-if value="{{it.isMod}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></sc-if>
-              <sc-if value="{{it.isPage}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg></sc-if>
-              <sc-if value="{{it.isAct}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if>
-            </span>
-            <span style="flex: 1">{{it.a}}<b style="font-weight: 600">{{it.b}}</b>{{it.c}}</span>
-            <span class="hint num">{{it.meta}}</span>
+          <a href="{{it.href}}" class="{{it.cls}}" role="option" aria-selected="{{it.sel}}" onMouseEnter="{{it.enter}}" onClick="{{it.click}}">
+            <span class="ck-ic" style="{{it.icS}}">{{it.ic}}</span>
+            <span class="ck-t">{{it.a}}<b style="font-weight: 600">{{it.b}}</b>{{it.c}}</span>
+            <span class="hint num ck-m">{{it.meta}}</span>
             <sc-if value="{{it.hasKey}}" hint-placeholder-val="{{false}}"><span class="kbd">{{it.key}}</span></sc-if>
             <sc-if value="{{it.first}}" hint-placeholder-val="{{false}}"><span class="kbd">↵</span></sc-if>
           </a>
@@ -52,8 +44,8 @@ body{margin:0;background:#ffffff}
       </sc-for>
       <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div class="empty"><span class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span><span style="font-weight: 500">Brak wyników</span></div></sc-if>
     </div>
-    <div style="display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.025); font-size: 12px; color: #686868">
-      <span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↑</span><span class="kbd">↓</span> wybierz</span><span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↵</span> otwórz</span><span style="margin-left: auto; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>sekrety nie są przeszukiwane</span>
+    <div style="display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-top: 1px solid rgba(0,0,0,.08); background: rgba(0,0,0,.025); font-size: 12px; color: #686868; white-space: nowrap">
+      <span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↑</span><span class="kbd">↓</span> wybierz</span><span style="display: flex; align-items: center; gap: 4px"><span class="kbd">↵</span> otwórz</span><span style="margin-left: auto; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>hasła nie są przeszukiwane</span>
     </div>
   </div>
 </div>
@@ -62,33 +54,83 @@ body{margin:0;background:#ffffff}
 class Component extends DCLogic {
   constructor(p) { super(p); this.state = { q: 'spo', sel: 0 }; }
   renderVals() {
-    const q = this.state.q.trim().toLowerCase();
-    // [grupa, nazwa, opis, cel, rodzaj, skrót]
-    const ALL = [
-      ['Wiersze stron', 'Spotify', 'Subscriptions · 23,99 zł / mies.', 'S2Main.dc.html', 'row', ''],
-      ['Wiersze stron', 'Książka o sporcie', 'Books · Czytam', 'S2EmptyPage.dc.html', 'row', ''],
-      ['Moduły', 'Sport', 'moduł', 'S2Sport.dc.html', 'mod', ''],
-      ['Moduły', 'Kalendarz', 'moduł', 'S2Calendar.dc.html', 'mod', ''],
-      ['Strony', 'Subscriptions', '5 wierszy', 'S2Main.dc.html', 'page', ''],
-      ['Strony', 'Projects', '8 wierszy', 'S2Projects.dc.html', 'page', ''],
-      ['Akcje', 'Nowa strona', '', 'S2NewPage.dc.html', 'act', 'N'],
-      ['Akcje', 'Nowy blok', '', 'S2BlockDialog.dc.html', 'act', '']
+    const raw = this.state.q;
+    const q = raw.trim().toLowerCase();
+    const I = (c, bg) => 'background:' + bg + ';color:' + c;
+    const RUN = I('#b45309', 'rgba(245,158,11,.14)'), GYM = I('#404040', 'rgba(0,0,0,.06)'), HAB = I('#15803d', '#f0fdf4');
+    const gym = (t) => () => { try { sessionStorage.setItem('rh-gym', t); } catch (e) {} };
+    // [grupa, nazwa, opis, cel, litera ikony, styl ikony, skrót, akcja]
+    const DATA = [
+      ['Strony', 'Subskrypcje', '13 wierszy', 'S2Main.dc.html', '$', ''],
+      ['Strony', 'Książki', '11 wierszy', 'S2Books.dc.html', 'K', ''],
+      ['Strony', 'Projekty', '8 wierszy', 'S2Projects.dc.html', 'P', ''],
+      ['Strony', 'Strony WWW', '4 wiersze', 'S2Websites.dc.html', 'W', ''],
+      ['Wiersze stron', 'Spotify', 'Subskrypcje · 23,99 zł / mies.', 'S2Main.dc.html', '$', ''],
+      ['Wiersze stron', 'Netflix', 'Subskrypcje · 43,00 zł / mies.', 'S2Main.dc.html', '$', ''],
+      ['Wiersze stron', 'Książka o sporcie', 'Książki · czytam', 'S2Books.dc.html', 'K', ''],
+      ['Kalendarz', 'rhytm — kod', 'dziś 10:30–12:30', 'S2Calendar.dc.html', '▦', ''],
+      ['Kalendarz', 'Bazy danych — projekt', 'dziś 19:00', 'S2Calendar.dc.html', '▦', ''],
+      ['Sport', 'Bieg 10 km', 'dziś 16:00 · zaplanowany', 'S2Sport.dc.html', 'B', RUN],
+      ['Sport', 'Szablon Push', 'trening siłowy · 6 ćwiczeń', 'S2GymLog.dc.html', 'S', GYM, '', gym('Push')],
+      ['Sport', 'Szablon Pull', 'trening siłowy · 5 ćwiczeń', 'S2GymLog.dc.html', 'S', GYM, '', gym('Pull')],
+      ['Sport', 'Wyciskanie na ławce', 'ćwiczenie · historia i rekordy', 'S2ExerciseDetail.dc.html', 'S', GYM],
+      ['Sport', 'Tenis', 'aktywność · sob 21.11', 'S2Sport.dc.html', 'T', I('#65a30d', '#65a30d1f')],
+      ['Sport', 'Pole dance', 'aktywność · czw 19.11', 'S2Sport.dc.html', 'P', I('#db2777', '#db27771f')],
+      ['Nawyki i sen', 'Woda 2 l', 'nawyk · seria 13 dni', 'S2HabitDetail.dc.html', 'N', HAB],
+      ['Nawyki i sen', 'Czytanie 20 min', 'nawyk · seria 6 dni', 'S2HabitDetail.dc.html', 'N', HAB],
+      ['Przejdź do', 'Dziś', '', 'S2Today.dc.html', '→', ''],
+      ['Przejdź do', 'Kalendarz', '', 'S2Calendar.dc.html', '→', ''],
+      ['Przejdź do', 'Sport', '', 'S2Sport.dc.html', '→', ''],
+      ['Przejdź do', 'Nawyki i sen', '', 'S2Habits.dc.html', '→', ''],
+      ['Przejdź do', 'Hasła', 'sejf', 'S2Passwords.dc.html', '→', ''],
+      ['Przejdź do', 'Archiwum nawyków', '3 nawyki', 'S2HabitsArchive.dc.html', '→', ''],
+      ['Przejdź do', 'Kosz', 'usunięte strony · 30 dni', 'S2Trash.dc.html', '→', ''],
+      ['Przejdź do', 'Ustawienia', '', 'S2Settings.dc.html', '→', ''],
+      ['Przejdź do', 'Pomoc i skróty', '', 'S2Help.dc.html', '→', '']
     ];
-    const hit = ALL.filter((r) => !q || r[1].toLowerCase().indexOf(q) >= 0 || r[0] === 'Akcje');
+    const ACT = [
+      ['Akcje', 'Nowy blok', '', 'S2BlockDialog.dc.html', '+', '', 'B'],
+      ['Akcje', 'Rozpocznij trening', 'siłownia', 'S2GymLog.dc.html', '+', '', '', gym('Pusty')],
+      ['Akcje', 'Zapisz bieg', '', 'S2RunDialog.dc.html', '+', ''],
+      ['Akcje', 'Dodaj aktywność', 'tenis, rower…', 'S2ActivityDialog.dc.html', '+', ''],
+      ['Akcje', 'Zapisz sen', '', 'S2SleepDialog.dc.html', '+', ''],
+      ['Akcje', 'Nowy nawyk', '', 'S2HabitDialog.dc.html', '+', ''],
+      ['Akcje', 'Nowa strona', '', 'S2NewPage.dc.html', '+', '', 'N']
+    ];
+    const RECENT = ['Spotify', 'Szablon Push', 'Woda 2 l', 'rhytm — kod'];
+    const match = (r) => (r[1] + ' ' + r[2]).toLowerCase().indexOf(q) >= 0;
+    let rows;
+    if (!q) {
+      rows = DATA.filter((r) => RECENT.indexOf(r[1]) >= 0).map((r) => ['Ostatnio'].concat(r.slice(1)))
+        .concat([['Akcje', 'Szybko dodaj…', 'bieg, blok, sen…', 'S2QuickAdd.dc.html', '+', '', '⌘⇧K']], ACT.slice(0, 4));
+    } else {
+      const qa = ['Akcje', 'Szybko dodaj „' + raw.trim() + '”', '', 'S2QuickAdd.dc.html', '+', I('#15803d', '#f0fdf4'), '⌘⇧K', () => { try { sessionStorage.setItem('rh-qa', raw.trim()); } catch (e) {} }];
+      rows = DATA.filter(match).concat(ACT.filter(match), [qa]);
+    }
+    const n = rows.length;
+    const sel = Math.min(this.state.sel, Math.max(n - 1, 0));
     const groups = [];
-    hit.forEach((r, i) => {
+    rows.forEach((r, i) => {
       let g = groups.find((x) => x.name === r[0]);
       if (!g) { g = { name: r[0], items: [] }; groups.push(g); }
-      const idx = r[1].toLowerCase().indexOf(q);
-      const has = q && idx >= 0;
-      const on = i === this.state.sel;
-      g.items.push({ a: has ? r[1].slice(0, idx) : r[1], b: has ? r[1].slice(idx, idx + q.length) : '', c: has ? r[1].slice(idx + q.length) : '', meta: r[2], href: r[3],
-        isRow: r[4] === 'row', isMod: r[4] === 'mod', isPage: r[4] === 'page', isAct: r[4] === 'act',
-        key: r[5], hasKey: !!r[5],
-        sel: on ? 'true' : 'false', first: on, enter: () => this.setState({ sel: i }),
-        s: 'min-height:44px;' + (on ? 'background:rgba(0,0,0,.05)' : '') });
+      const idx = q ? r[1].toLowerCase().indexOf(q) : -1;
+      const has = idx >= 0;
+      const on = i === sel;
+      g.items.push({
+        a: has ? r[1].slice(0, idx) : r[1], b: has ? r[1].slice(idx, idx + q.length) : '', c: has ? r[1].slice(idx + q.length) : '',
+        meta: r[2], href: r[3], ic: r[4], icS: r[5] || '', key: r[6] || '', hasKey: !!r[6],
+        click: r[7] || (() => {}),
+        sel: on ? 'true' : 'false', first: on, cls: 'mi ck-it' + (on ? ' on' : ''), enter: () => this.setState({ sel: i })
+      });
     });
-    return { q: this.state.q, onQ: (e) => this.setState({ q: e.target.value, sel: 0 }), groups, empty: hit.length === 0 };
+    return {
+      q: raw, groups, empty: n === 0,
+      onQ: (e) => this.setState({ q: e.target.value, sel: 0 }),
+      onKey: (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ sel: (sel + 1) % n }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ sel: (sel - 1 + n) % n }); }
+      }
+    };
   }
 }
 </script>

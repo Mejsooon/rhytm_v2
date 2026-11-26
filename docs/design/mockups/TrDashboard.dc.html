@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Trener — Pulpit (interaktywny)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="position: relative; height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div style="height: 900px; overflow: auto">
+    <sc-if value="{{v.pulpit}}" hint-placeholder-val="{{true}}"><dc-import name="TrHome"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.clients}}" hint-placeholder-val="{{false}}"><dc-import name="TrClients"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.invite}}" hint-placeholder-val="{{false}}"><dc-import name="TrInvite"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.cal}}" hint-placeholder-val="{{false}}"><dc-import name="TrCalendar"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.msg}}" hint-placeholder-val="{{false}}"><dc-import name="TrMessages"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.client}}" hint-placeholder-val="{{false}}"><dc-import name="TrClient" tab="przeglad" on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.clientW}}" hint-placeholder-val="{{false}}"><dc-import name="TrClient" tab="treningi" chat="false" on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.clientS}}" hint-placeholder-val="{{false}}"><dc-import name="TrClient" tab="sen" chat="false" on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.workout}}" hint-placeholder-val="{{false}}"><dc-import name="TrWorkout"  on-nav="{{nav}}" hint-size="100%,1000px"></dc-import></sc-if>
+    <sc-if value="{{v.assign}}" hint-placeholder-val="{{false}}"><dc-import name="TrAssign"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.lib}}" hint-placeholder-val="{{false}}"><dc-import name="TrLibrary"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.plans}}" hint-placeholder-val="{{false}}"><dc-import name="TrPlans"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.ex}}" hint-placeholder-val="{{false}}"><dc-import name="TrExercises"  on-nav="{{nav}}" hint-size="100%,900px"></dc-import></sc-if>
+    <sc-if value="{{v.set}}" hint-placeholder-val="{{false}}"><dc-import name="TrSettings"  on-nav="{{nav}}" hint-size="100%,1400px"></dc-import></sc-if>
+    <sc-if value="{{v.konto}}" hint-placeholder-val="{{false}}"><dc-import name="S2Today"  on-nav="{{nav}}" hint-size="100%,1000px"></dc-import></sc-if>
+  </div>
+  <sc-if value="{{isKonto}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{backCoach}}" style="position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; border: 0; background: #262626; color: #fff; font: inherit; font-weight: 500; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Wróć do panelu trenera <span style="opacity: .6; font-size: 12px">⌘⇧T</span></button></sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { view: 'pulpit' }; }
+  renderVals() {
+    const view = this.state.view;
+    const MAP = { TrDashboard: 'pulpit', TrHome: 'pulpit', TrClients: 'clients', TrInvite: 'invite', TrCalendar: 'cal', TrMessages: 'msg', TrClient: 'client', TrClientWorkouts: 'clientW', TrClientSleep: 'clientS',
+      TrWorkout: 'workout', TrAssign: 'assign', TrLibrary: 'lib', TrPlans: 'plans', TrExercises: 'ex', TrSettings: 'set', S2Today: 'konto' };
+    const v = {};
+    Object.values(MAP).forEach((k) => { v[k] = k === view; });
+    return {
+      v, isKonto: view === 'konto',
+      backCoach: () => this.setState({ view: 'pulpit' }),
+      // Komponenty wołają nav(nazwa makiety); zwraca true, gdy widok jest w tym pulpicie.
+      nav: (name) => { const to = MAP[name]; if (!to) return false; this.setState({ view: to }); return true; }
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

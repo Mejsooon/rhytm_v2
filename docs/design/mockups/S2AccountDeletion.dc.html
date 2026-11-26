@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Konto zaplanowane do usunięcia</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="min-height: 900px; background: #fafafa; font-family: 'Inter', system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px"><div class="row" style="gap: 8px"><svg width="22" height="22" viewBox="0 0 48 48" role="img" aria-label="rhytm" style="flex: none"><rect x="4" y="4" width="11" height="11" rx="3" fill="#262626"></rect><rect x="18" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="4" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="4" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="18" y="18" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="32" y="18" width="11" height="11" rx="3" fill="#15803d"></rect><rect x="4" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.25"></rect><rect x="18" y="32" width="11" height="11" rx="3" fill="#262626" opacity="0.55"></rect><rect x="32" y="32" width="11" height="11" rx="3" fill="#262626"></rect></svg><span style="font-weight: 600; letter-spacing: -0.03em; font-size: 16px">rhytm</span></div><a href="S2Login.dc.html" class="btng">Wyloguj się</a></header>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px">
+    <section class="card" style="width: 460px; max-width: 100%; padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+        <span class="aic" style="background: #fef2f2; color: #b91c1c; width: 44px; height: 44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg></span>
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.015em">Konto zaplanowane do usunięcia</h1>
+        <p class="muted" style="margin: 0; line-height: 1.55">Konto <b style="color: #262626; font-weight: 500">mejson@example.com</b> zostanie usunięte na stałe <b style="color: #262626; font-weight: 500" class="num">17.12.2026</b> (za 30 dni). Do tego czasu nic nie znika — możesz je przywrócić jednym kliknięciem.</p>
+        <div class="frame"><div class="inner" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+          <div class="row" style="justify-content: space-between"><span class="muted">Strony, kalendarz, sport, nawyki</span><span class="nw">zachowane do 17.12</span></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Sejf z hasłami</span><span class="nw">zachowany do 17.12</span></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Subskrypcja Pro</span><span class="nw">anulowana</span></div>
+        </div></div>
+        <span class="hint">7 dni przed usunięciem wyślemy przypomnienie na e-mail.</span>
+        <div class="row" style="gap: 8px; margin-top: 4px"><button type="button" class="btnp" style="flex: 1" onClick="{{restore}}">Przywróć konto</button><button type="button" class="btn" onClick="{{exp}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{expT}}</button></div>
+      </sc-if>
+      <sc-if value="{{restored}}" hint-placeholder-val="{{false}}">
+        <span class="aic" style="background: #f0fdf4; color: #15803d; width: 44px; height: 44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600">Konto przywrócone</h1>
+        <p class="muted" style="margin: 0; line-height: 1.55">Wszystko jest tak, jak zostawiłeś. Plan Pro trzeba włączyć ponownie w Ustawieniach.</p>
+        <a href="S2Today.dc.html" class="btnp">Przejdź do Dziś</a>
+      </sc-if>
+    </section>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    return { pending: !st.ok, restored: !!st.ok, restore: () => this.setState({ ok: true }), exp: () => this.setState({ exp: true }), expT: st.exp ? 'Pobrano .json ✓' : 'Pobierz eksport' };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

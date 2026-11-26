@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ustawienia — Plan i płatności (Pro aktywny)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.nrow{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:8px 20px;box-sizing:border-box;border-top:1px solid rgba(0,0,0,.06)}
+.hd{padding:18px 20px 14px;display:flex;flex-direction:column;gap:4px}
+.hd .card-t,.hd .card-d{margin:0}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 1200px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" pro="true" min-height="1200" hint-size="100%,1200px"></dc-import></div>
+  <main class="main">
+    <header class="topbar"><nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Plan i płatności</b></nav></header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <span class="snav-l" style="padding-top: 0">Konto</span>
+        <a href="S2Settings.dc.html">Ogólne</a><a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a><a href="S2SettingsPlanPro.dc.html" aria-current="page">Plan i płatności <span class="bdg ok">Pro</span></a><a href="S2SettingsNotifications.dc.html">Powiadomienia</a>
+        <span class="snav-l">Moduły</span>
+        <a href="S2SettingsCalendar.dc.html">Kalendarz</a><a href="S2SettingsVault.dc.html">Sejf</a>
+      </nav>
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Plan i płatności</h1><p class="muted" style="margin: 4px 0 0">Twój plan, metoda płatności i faktury.</p></div>
+        <sc-if value="{{justPaid}}" hint-placeholder-val="{{true}}"><div role="status" style="display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span style="flex: 1">Płatność przyjęta — masz rhytm Pro. Limity stron, nawyków i szablonów zniknęły.</span><button type="button" class="btng ic sm" aria-label="Zamknij" onClick="{{hidePaid}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></sc-if>
+        <section class="card">
+          <div class="hd" style="flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 16px"><div style="display: flex; flex-direction: column; gap: 4px"><h2 class="card-t">Obecny plan: rhytm Pro <span class="bdg ok">aktywny</span></h2><p class="card-d num">{{planD}}</p></div><button type="button" class="btn" onClick="{{toggleCycle}}">{{cycleBtn}}</button></div>
+          <div class="nrow"><span class="muted">Strony</span><span class="num">7 · bez limitu</span></div>
+          <div class="nrow"><span class="muted">Nawyki</span><span class="num">4 · bez limitu</span></div>
+          <div class="nrow"><span class="muted">Szablony treningów</span><span class="num">5 · bez limitu</span></div>
+        </section>
+        <section class="card">
+          <div class="hd"><h2 class="card-t">Metoda płatności</h2><p class="card-d">Pobieramy płatność automatycznie w dniu odnowienia.</p></div>
+          <div class="nrow"><span class="row" style="gap: 10px"><span class="aic" style="background: rgba(0,0,0,.05); color: #404040; width: 40px; height: 28px; border-radius: 6px; font-size: 11px; font-weight: 600">VISA</span><span><b style="font-weight: 500" class="num">•••• 4242</b><div class="hint num">wygasa 08/2028</div></span></span><button type="button" class="btn sm">Zmień</button></div>
+        </section>
+        <section class="card">
+          <div class="hd"><h2 class="card-t">Faktury</h2><p class="card-d">PDF z danymi podanymi przy płatności.</p></div>
+          <sc-for list="{{inv}}" as="i" hint-placeholder-count="3"><div class="nrow"><span class="num">{{i.d}}</span><span class="num muted">{{i.n}}</span><span class="num">{{i.a}}</span><span class="bdg ok">opłacona</span><button type="button" class="btng sm">Pobierz PDF</button></div></sc-for>
+        </section>
+        <section class="card" style="border-color: #fecaca">
+          <sc-if value="{{active}}" hint-placeholder-val="{{true}}"><div class="hd" style="flex-direction: row; justify-content: space-between; align-items: center; gap: 24px"><div style="display: flex; flex-direction: column; gap: 4px"><h2 class="card-t">Anuluj subskrypcję</h2><p class="card-d num">Pro zostanie do końca opłaconego okresu ({{endD}}). Potem wrócisz na Free — dane zostaną, ale nowe strony i nawyki ponad limit będą tylko do odczytu.</p></div><button type="button" class="btnd" style="flex: none" onClick="{{askCancel}}">Anuluj subskrypcję</button></div></sc-if>
+          <sc-if value="{{cancelled}}" hint-placeholder-val="{{false}}"><div class="hd" style="flex-direction: row; justify-content: space-between; align-items: center; gap: 24px"><div style="display: flex; flex-direction: column; gap: 4px"><h2 class="card-t">Subskrypcja anulowana</h2><p class="card-d num">Pro działa do {{endD}}. Nie pobierzemy kolejnej płatności.</p></div><button type="button" class="btnp" style="flex: none" onClick="{{resume}}">Wznów subskrypcję</button></div></sc-if>
+        </section>
+      </div>
+    </div>
+    <sc-if value="{{confirm}}" hint-placeholder-val="{{false}}">
+      <div style="position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center"><div class="backdrop" style="position: fixed"></div>
+        <div role="alertdialog" aria-label="Anuluj subskrypcję" class="dlg" style="position: relative; width: 440px"><div class="dlg-h"><div><h2 class="dlg-t">Anulować rhytm Pro?</h2><p class="dlg-d num" style="line-height: 1.5">Pro zostanie do {{endD}}. Potem wrócisz na Free: 5 stron, 10 nawyków i 3 szablony — reszta zostanie tylko do odczytu, nic nie usuniemy.</p></div></div>
+          <div class="dlg-f"><button type="button" class="btng" onClick="{{keep}}">Zostaję przy Pro</button><button type="button" class="btnd" onClick="{{doCancel}}">Anuluj subskrypcję</button></div></div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const y = st.y === undefined ? true : st.y;
+    const end = y ? '03.11.2027' : '03.12.2026';
+    return {
+      justPaid: !st.hp, hidePaid: () => this.setState({ hp: true }),
+      planD: (y ? '[CENA] zł / rok' : '[CENA] zł / mies.') + ' · odnawia się ' + end, cycleBtn: y ? 'Zmień na miesięczny' : 'Zmień na roczny', toggleCycle: () => this.setState({ y: !y }),
+      inv: [['03.11.2026', 'FV/2026/11/0142', '[CENA] zł'], ['03.11.2025', 'FV/2025/11/0098', '[CENA] zł']].map((r) => ({ d: r[0], n: r[1], a: r[2] })),
+      endD: end, active: !st.c, cancelled: !!st.c, confirm: !!st.ask,
+      askCancel: () => this.setState({ ask: true }), keep: () => this.setState({ ask: false }), doCancel: () => this.setState({ ask: false, c: true }), resume: () => this.setState({ c: false })
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

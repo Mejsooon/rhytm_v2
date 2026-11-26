@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Kalendarz</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav a:hover{background:rgba(0,0,0,.04);color:#262626}
+.snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
+.nrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.nrow:last-child{border-bottom:0}
+[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.12);border-top-color:#262626;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.seg{display:inline-flex;gap:4px;padding:3px;border-radius:10px;background:rgba(0,0,0,.05)}
+.seg button{height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#686868;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:#262626;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cdot{width:10px;height:10px;border-radius:50%;flex:none}
+.sel{height:32px;padding:0 10px;border:1px solid rgba(0,0,0,.1);border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#262626;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+</style>
+</helmet>
+<div class="shell" style="min-height: 1060px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Kalendarz</b></nav>
+    </header>
+    <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <span class="snav-l" style="padding-top: 0">Konto</span>
+        <a href="S2Settings.dc.html">Ogólne</a>
+        <a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a>
+        <a href="S2SettingsPlan.dc.html">Plan i płatności <span class="bdg sec">Free</span></a>
+        <a href="S2SettingsNotifications.dc.html">Powiadomienia</a>
+        <span class="snav-l">Moduły</span>
+        <a href="S2SettingsCalendar.dc.html" aria-current="page">Kalendarz</a>
+        <a href="S2SettingsVault.dc.html">Sejf</a>
+        </nav>
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Kalendarz</h1><p class="muted" style="margin: 4px 0 0">Domyślny widok, siatka godzin i kategorie bloków.</p></div>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">Widok</h2><p class="card-d">Jak kalendarz otwiera się po wejściu.</p></div></div>
+          <div class="card-p" style="padding-top: 0; padding-bottom: 6px">
+            <div class="nrow"><div><div style="font-weight: 500">Widok domyślny</div><div class="muted" style="font-size: 13px">{{viewSub}}</div></div><div role="group" aria-label="Widok domyślny" class="seg"><sc-for list="{{views}}" as="o" hint-placeholder-count="3"><button type="button" aria-pressed="{{o.p}}" onClick="{{o.pick}}">{{o.t}}</button></sc-for></div></div>
+            <div class="nrow"><div><div style="font-weight: 500">Godziny siatki</div><div class="muted" style="font-size: 13px">Siatka zawsze wypełnia całą wysokość ekranu</div></div><span style="display: flex; align-items: center; gap: 8px"><span style="position: relative; display: block; width: 120px"><button type="button" class="dd num" onClick="{{dd.from.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.from.exp}}" aria-label="Od"><span>{{dd.from.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{dd.from.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Od" style="max-height: 240px; overflow: auto"><sc-for list="{{dd.from.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt num" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span><span class="muted">–</span><span style="position: relative; display: block; width: 120px"><button type="button" class="dd num" onClick="{{dd.to.toggle}}" aria-haspopup="listbox" aria-expanded="{{dd.to.exp}}" aria-label="Do"><span>{{dd.to.txt}}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#686868" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"></path></svg></button><sc-if value="{{dd.to.open}}" hint-placeholder-val="{{false}}"><div class="ddpop" role="listbox" aria-label="Do" style="max-height: 240px; overflow: auto"><sc-for list="{{dd.to.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="ddopt num" role="option" aria-selected="{{o.p}}" onClick="{{o.pick}}"><span>{{o.t}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></button></sc-for></div></sc-if></span></span></div>
+            <div class="nrow"><div><div style="font-weight: 500">Domyślna długość bloku</div><div class="muted" style="font-size: 13px">Po kliknięciu w pustą godzinę</div></div><div role="group" aria-label="Długość bloku" class="seg"><sc-for list="{{lens}}" as="o" hint-placeholder-count="3"><button type="button" aria-pressed="{{o.p}}" onClick="{{o.pick}}">{{o.t}}</button></sc-for></div></div>
+            <div class="nrow"><div><div style="font-weight: 500">Pokazuj odnowienia subskrypcji</div><div class="muted" style="font-size: 13px">Chipy ze stron typu Subskrypcje nad dniem</div></div><button type="button" class="sw" role="switch" aria-checked="{{renew}}" aria-label="Odnowienia subskrypcji" onClick="{{renewT}}"></button></div>
+            <div class="nrow" style="border-bottom: 0"><div><div style="font-weight: 500">Numery tygodni</div><div class="muted" style="font-size: 13px">W widoku miesiąca i mini-kalendarzu</div></div><button type="button" class="sw" role="switch" aria-checked="{{wk}}" aria-label="Numery tygodni" onClick="{{wkT}}"></button></div>
+          </div>
+          <div class="foot" style="justify-content: space-between"><span role="status" style="{{msgS}}">{{msg}}</span><a href="S2Calendar.dc.html" class="btn sm">Otwórz kalendarz</a></div>
+        </section>
+        <section class="card">
+          <div class="card-h" style="flex-direction: row; align-items: center; justify-content: space-between"><div><h2 class="card-t">Kategorie</h2><p class="card-d">{{catCount}}</p></div><a href="S2CategoryDialog.dc.html" class="btn sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nowa kategoria</a></div>
+          <div class="card-p" style="padding-top: 0">
+            <sc-for list="{{cats}}" as="c" hint-placeholder-count="5"><div class="nrow" style="padding: 10px 0"><div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 240px"><span class="cdot" style="{{c.dot}}"></span><sc-if value="{{c.view}}" hint-placeholder-val="{{true}}"><span style="font-weight: 500">{{c.t}}</span><span class="muted num" style="font-size: 13px">{{c.n}}</span></sc-if><sc-if value="{{c.edit}}" hint-placeholder-val="{{false}}"><input class="inp" type="text" value="{{c.t}}" onChange="{{c.onName}}" aria-label="Nazwa kategorii" style="max-width: 220px"><span style="display: flex; gap: 4px"><sc-for list="{{c.pal}}" as="p" hint-placeholder-count="6"><button type="button" aria-label="{{p.lbl}}" aria-pressed="{{p.on}}" onClick="{{p.pick}}" style="{{p.s}}"></button></sc-for></span></sc-if></div><span style="display: flex; gap: 4px"><sc-if value="{{c.view}}" hint-placeholder-val="{{true}}"><button type="button" class="btng sm ic" aria-label="{{c.editLbl}}" onClick="{{c.open}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button><button type="button" class="btng sm ic" aria-label="{{c.delLbl}}" onClick="{{c.del}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></sc-if><sc-if value="{{c.edit}}" hint-placeholder-val="{{false}}"><button type="button" class="btnp sm" onClick="{{c.done}}">Gotowe</button></sc-if></span></div></sc-for>
+          </div>
+          <sc-if value="{{undo}}" hint-placeholder-val="{{false}}"><div class="foot" style="justify-content: space-between"><span style="font-size: 13px; color: #686868">{{undoTxt}}</span><button type="button" class="btn sm" onClick="{{undoDo}}">Cofnij</button></div></sc-if>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2SettingsCalendar.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
+  renderVals() {
+    const S = this.state || {};
+    const BASE = [['Studia', '#0070f3', 14], ['Projekty', '#15803d', 9], ['Praca', '#7c3aed', 6], ['Sport', '#c2410c', 8], ['Dom', '#a16207', 3]];
+    const cats = S.cats || BASE;
+    const PAL = [['Niebieski', '#0070f3'], ['Zielony', '#15803d'], ['Fioletowy', '#7c3aed'], ['Pomarańczowy', '#c2410c'], ['Złoty', '#a16207'], ['Różowy', '#db2777']];
+    const h = (n) => String(n).padStart(2, '0') + ':00';
+    const from = S.from == null ? 7 : S.from, to = S.to == null ? 23 : S.to;
+    const OPEN = S.dd || null;
+    const say = (m) => ({ msg: m });
+    const mkDD = (key, val, list, set) => {
+      const open = OPEN === key;
+      return { open, exp: open ? 'true' : 'false', txt: h(val), toggle: () => this.setState({ dd: open ? null : key }),
+        opts: list.map((v) => ({ t: h(v), p: v === val ? 'true' : 'false', on: v === val, pick: () => this.setState(Object.assign({ dd: null }, set(v))) })) };
+    };
+    const rng = (a, b) => { const r = []; for (let i = a; i <= b; i++) r.push(i); return r; };
+    const view = S.view || 'week', len = S.len || 60;
+    const plN = (n) => n === 1 ? 'blok' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'bloki' : 'bloków';
+    return {
+      views: [['day', 'Dzień'], ['week', 'Tydzień'], ['month', 'Miesiąc']].map((o) => ({ t: o[1], p: view === o[0] ? 'true' : 'false', pick: () => this.setState({ view: o[0], msg: 'Zapisano — kalendarz otworzy się w widoku: ' + o[1].toLowerCase() }) })),
+      viewSub: view === 'day' ? 'Jeden dzień z godzinami' : view === 'week' ? 'Pn–Nd z godzinami' : 'Cały miesiąc, bez godzin',
+      lens: [[30, '30 min'], [60, '1 h'], [90, '1,5 h']].map((o) => ({ t: o[1], p: len === o[0] ? 'true' : 'false', pick: () => this.setState({ len: o[0], msg: 'Zapisano — nowy blok trwa ' + o[1] }) })),
+      dd: {
+        from: mkDD('from', from, rng(0, to - 4), (v) => ({ from: v, msg: 'Zapisano — siatka ' + h(v) + '–' + h(to) })),
+        to: mkDD('to', to, rng(from + 4, 24), (v) => ({ to: v, msg: 'Zapisano — siatka ' + h(from) + '–' + h(v) }))
+      },
+      renew: S.renew === false ? 'false' : 'true', renewT: () => this.setState({ renew: S.renew === false, msg: 'Zapisano' }),
+      wk: S.wk ? 'true' : 'false', wkT: () => this.setState({ wk: !S.wk, msg: 'Zapisano' }),
+      msg: S.msg || 'Zmiany zapisują się od razu.', msgS: 'font-size:13px;color:' + (S.msg ? '#15803d' : '#686868'),
+      catCount: cats.length + ' kategorii · kolor bloku zależy od kategorii',
+      cats: cats.map((c, i) => {
+        const ed = S.edit === i;
+        const upd = (patch) => this.setState({ cats: cats.map((x, j) => j === i ? [patch.t || x[0], patch.c || x[1], x[2]] : x) });
+        return { t: c[0], n: c[2] + ' ' + plN(c[2]), dot: 'background:' + c[1], view: !ed, edit: ed,
+          editLbl: 'Edytuj ' + c[0], delLbl: 'Usuń ' + c[0],
+          open: () => this.setState({ edit: i }), done: () => this.setState({ edit: null }),
+          onName: (e) => upd({ t: e.target.value }),
+          del: () => this.setState({ prev: cats, cats: cats.filter((x, j) => j !== i), undoTxt: 'Usunięto „' + c[0] + '” — ' + c[2] + ' ' + plN(c[2]) + ' trafi do „Bez kategorii”.', edit: null }),
+          pal: PAL.map((p) => ({ lbl: p[0], on: p[1] === c[1] ? 'true' : 'false', pick: () => upd({ c: p[1] }),
+            s: 'width:22px;height:22px;border-radius:50%;border:0;cursor:pointer;background:' + p[1] + ';box-shadow:' + (p[1] === c[1] ? '0 0 0 2px #fff,0 0 0 4px ' + p[1] : 'none') })) };
+      }),
+      undo: !!S.undoTxt, undoTxt: S.undoTxt || '', undoDo: () => this.setState({ cats: S.prev, prev: null, undoTxt: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>

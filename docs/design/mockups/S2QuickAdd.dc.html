@@ -11,66 +11,89 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-
+.qa-wrap{position:relative;height:900px;overflow:hidden;font-family:'Inter',system-ui,sans-serif}
+.qa-bg{position:absolute;inset:0;pointer-events:none}
+.qa-cell{padding:10px 14px;min-width:0}
+.qa-cell+.qa-cell{border-left:1px solid rgba(0,0,0,.08)}
+.qa-val{margin-top:6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qa-typ{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-weight:500}
+.qa-ic{width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
+.qa-ex{white-space:nowrap}
 </style>
 </helmet>
-<div class="shell" style="min-height: 900px; position: relative; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="dzis" min-height="900" hint-size="100%,900px"></dc-import></div>
-  <main class="main">
-    <header class="topbar">
-      <h1 class="h-title">Dziś</h1>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
-    </header>
-    <div aria-hidden="true" style="padding: 28px 24px; opacity: .6">
-      <div style="font-size: 24px; font-weight: 600">Dziś</div><div style="margin-top: 24px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px"><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div><div class="card" style="height: 130px"></div></div><div class="card" style="margin-top: 24px; height: 520px"></div>
-    </div>
-  </main>
-  <div aria-hidden="true" class="backdrop"></div>
-  <div role="dialog" aria-modal="true" aria-label="Szybkie dodawanie" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(620px, calc(100% - 32px)); overflow: hidden">
+<div class="qa-wrap">
+  <div class="qa-bg" aria-hidden="true"><dc-import name="S2Today" hint-size="100%,1000px"></dc-import></div>
+  <a href="S2Today.dc.html" aria-label="Zamknij" class="backdrop"></a>
+  <div role="dialog" aria-modal="true" aria-label="Szybkie dodawanie" class="dlg" style="position: absolute; left: 50%; top: 110px; transform: translateX(-50%); width: min(640px, calc(100% - 32px)); overflow: hidden">
     <label style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.08)">
       <span style="color: #15803d; display: flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
-      <input type="text" value="{{q}}" onChange="{{onQ}}" aria-label="Co dodać?" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
-      <span class="kbd">Ctrl K</span>
+      <input type="text" value="{{q}}" onChange="{{onQ}}" aria-label="Co dodać?" placeholder="Np. bieg 10 km jutro 18:00" style="flex: 1; border: 0; outline: none; font: inherit; font-size: 16px; color: #262626; background: none">
+      <span class="kbd">esc</span>
     </label>
     <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
       <div class="lbl">Rozumiem to tak</div>
-      <div class="frame"><div class="inner" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
-        <div style="padding: 10px 14px"><div class="lbl">Typ</div><div style="margin-top: 6px"><span class="{{typCls}}">{{typ}}</span></div></div>
-        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Dzień</div><div class="num" style="margin-top: 6px; font-weight: 500">{{day}}</div></div>
-        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Godzina</div><div class="num" style="margin-top: 6px; font-weight: 500">{{time}}</div></div>
-        <div style="padding: 10px 14px; border-left: 1px solid rgba(0,0,0,.08)"><div class="lbl">Dystans</div><div class="num" style="margin-top: 6px; font-weight: 500">{{dist}}</div></div>
+      <div class="frame"><div class="inner" style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr">
+        <div class="qa-cell"><div class="lbl">Typ</div><div class="qa-val"><span class="qa-typ"><span class="qa-ic" style="{{icS}}">{{icT}}</span>{{typ}}</span></div></div>
+        <div class="qa-cell"><div class="lbl">Dzień</div><div class="qa-val num">{{day}}</div></div>
+        <div class="qa-cell"><div class="lbl">{{tLbl}}</div><div class="qa-val num">{{time}}</div></div>
+        <div class="qa-cell"><div class="lbl">{{xLbl}}</div><div class="qa-val num">{{xVal}}</div></div>
       </div></div>
       <p class="muted" style="margin: 0; font-size: 13px">{{note}}</p>
       <div class="lbl" style="margin-top: 4px">Przykłady</div>
-      <div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{ex}}" as="e" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{e.pick}}">{{e.x}}</button></sc-for></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{ex}}" as="e" hint-placeholder-count="6"><button type="button" class="chip qa-ex" aria-pressed="{{e.p}}" onClick="{{e.pick}}">{{e.x}}</button></sc-for></div>
     </div>
     <div class="dlg-f" style="justify-content: space-between">
-      <a href="{{full}}" class="btn sm">Otwórz pełny formularz</a>
-      <span style="display: flex; align-items: center; gap: 10px"><span class="hint" style="display: flex; align-items: center; gap: 4px"><span class="kbd">↵</span> zapisz</span><button type="button" class="btnp">{{save}}</button></span>
+      <a href="{{full}}" class="btn sm" onClick="{{go}}">Otwórz pełny formularz</a>
+      <span style="display: flex; align-items: center; gap: 10px"><span class="hint" style="display: flex; align-items: center; gap: 4px; white-space: nowrap"><span class="kbd">↵</span> zapisz</span><a href="{{after}}" class="btnp" onClick="{{go}}">{{save}}</a></span>
     </div>
   </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { q: 'bieg 10 km jutro 18:00' }; }
+  constructor(p) {
+    super(p);
+    let q = 'bieg 10 km jutro 18:00';
+    // Tekst przekazany z wyszukiwarki ⌘K („Szybko dodaj …”)
+    try { const s = sessionStorage.getItem('rh-qa'); if (s) { q = s; sessionStorage.removeItem('rh-qa'); } } catch (e) {}
+    this.state = { q };
+  }
   renderVals() {
     const q = this.state.q;
     const low = q.toLowerCase();
-    // [typ, klasa plakietki, przycisk zapisu, pełny formularz, opis pod podglądem]
-    const type = /bieg/.test(low) ? ['Bieg', 'warn', 'Zapisz bieg', 'S2RunDialog.dc.html', 'Zapiszemy jako zaplanowany bieg. Czas i tempo uzupełnisz po treningu.']
-      : /siłown|silown|push|pull/.test(low) ? ['Siłownia', 'sec', 'Zapisz trening', 'S2GymLog.dc.html', 'Zapiszemy jako zaplanowany trening siłowy. Serie uzupełnisz po treningu.']
-      : /sen /.test(low + ' ') ? ['Sen', 'info', 'Zapisz sen', 'S2SleepDialog.dc.html', 'Zapiszemy jako ostatnią noc.']
-      : /nawyk/.test(low) ? ['Nawyk', 'ok', 'Dodaj nawyk', 'S2HabitDialog.dc.html', 'Dodamy nowy nawyk do odhaczania.']
-      : ['Blok', 'out', 'Zapisz blok', 'S2BlockDialog.dc.html', 'Zapiszemy jako blok w kalendarzu. Zadania dodasz w dymku bloku.'];
-    const t = (low.match(/(\d{1,2}:\d{2})/) || [])[1] || '—';
+    // Dziś = wtorek 17.11 (jak na makiecie Dziś)
+    const DAYS = [['pn', 'pn 23.11'], ['wt', 'wt 24.11'], ['śr', 'śr 18.11'], ['czw', 'czw 19.11'], ['pt', 'pt 20.11'], ['sob', 'sob 21.11'], ['nd', 'nd 22.11']];
+    let day = 'dziś 17.11';
+    if (/jutro/.test(low)) day = 'jutro 18.11';
+    else DAYS.forEach((d) => { if (new RegExp('(^|\\s)' + d[0] + '(\\s|$)').test(low)) day = d[1]; });
+    const pad = (h) => (h.length === 1 ? '0' + h : h);
+    const hm = (s) => (s.indexOf(':') >= 0 ? pad(s.split(':')[0]) + ':' + s.split(':')[1] : pad(s) + ':00');
+    const rng = low.match(/(\d{1,2}(?::\d{2})?)\s?[–-]\s?(\d{1,2}(?::\d{2})?)/);
+    const one = (low.match(/(\d{1,2}:\d{2})/) || [])[1];
+    const mins = (a, b) => { const f = (s) => +s.split(':')[0] * 60 + +s.split(':')[1]; let d = f(b) - f(a); if (d <= 0) d += 1440; return d; };
+    const dur = (m) => Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
+    const time = rng ? hm(rng[1]) + '–' + hm(rng[2]) : one ? hm(one) : '—';
+    const len = rng ? dur(mins(hm(rng[1]), hm(rng[2]))) : '—';
     const km = (low.match(/(\d+[.,]?\d*)\s?km/) || [])[1];
-    const day = /jutro/.test(low) ? 'śr 18.11' : /\bpt\b/.test(low) ? 'pt 20.11' : 'wt 17.11';
+    const tpl = /push/.test(low) ? 'Push' : /pull/.test(low) ? 'Pull' : /nogi/.test(low) ? 'Nogi' : '';
+    const OTH = [['tenis', 'Tenis', '#65a30d'], ['rower', 'Rower', '#0891b2'], ['pole dance', 'Pole dance', '#db2777']];
+    const oth = OTH.filter((o) => low.indexOf(o[0]) >= 0)[0];
+    const ic = (c, bg) => 'background:' + bg + ';color:' + c;
+    // t: [typ, ikona-litera, styl ikony, etykieta 3. kolumny, etykieta 4., wartość 4., opis, przycisk, pełny formularz, po zapisie]
+    let t;
+    if (/bieg/.test(low)) t = ['Bieg', 'B', ic('#b45309', 'rgba(245,158,11,.14)'), 'Godzina', 'Dystans', km ? km.replace('.', ',') + ' km' : '—', 'Zapiszemy jako zaplanowany bieg w Sporcie i w kalendarzu. Czas i tempo uzupełnisz po treningu.', 'Zapisz bieg', 'S2RunDialog.dc.html', 'S2Sport.dc.html'];
+    else if (/siłown|silown|trening|push|pull|nogi/.test(low)) t = ['Siłownia', 'S', ic('#404040', 'rgba(0,0,0,.06)'), 'Godzina', 'Szablon', tpl || 'pusty', 'Zaplanujemy trening' + (tpl ? ' z szablonu ' + tpl : '') + '. W dniu treningu klikniesz Rozpocznij i odhaczysz serie.', 'Zaplanuj trening', 'S2GymLog.dc.html', 'S2Sport.dc.html'];
+    else if (oth) t = [oth[1], oth[1][0], ic(oth[2], oth[2] + '1f'), rng ? 'Godziny' : 'Godzina', 'Czas trwania', len, 'Zapiszemy jako aktywność „' + oth[1] + '” w Sporcie, w jej kolorze.', 'Zapisz aktywność', 'S2ActivityDialog.dc.html', 'S2Sport.dc.html'];
+    else if (/(^|\s)sen(\s|$)/.test(low)) t = ['Sen', 'Z', ic('#4338ca', 'rgba(79,70,229,.1)'), 'Od – do', 'Długość', len, 'Zapiszemy jako ostatnią noc w Nawykach i śnie.', 'Zapisz sen', 'S2SleepDialog.dc.html', 'S2Habits.dc.html'];
+    else if (/nawyk/.test(low)) t = ['Nawyk', 'N', ic('#15803d', '#f0fdf4'), 'Przypomnienie', 'Powtarzanie', 'codziennie', 'Dodamy nowy nawyk do odhaczania na ekranie Dziś.', 'Dodaj nawyk', 'S2HabitDialog.dc.html', 'S2Habits.dc.html'];
+    else t = ['Blok', '▦', ic('#686868', 'rgba(0,0,0,.05)'), rng ? 'Godziny' : 'Godzina', 'Czas trwania', len, 'Zapiszemy jako blok w kalendarzu. Kategorię i zadania dodasz w dymku bloku.', 'Zapisz blok', 'S2BlockDialog.dc.html', 'S2Calendar.dc.html'];
+    const ex = ['bieg 10 km jutro 18:00', 'siłownia push pt 17:00', 'tenis sob 10–12', 'blok nauka matma jutro 8–10', 'sen 23:40–7:10', 'nawyk woda 2 l'];
     return {
       q, onQ: (e) => this.setState({ q: e.target.value }),
-      typ: type[0], typCls: 'bdg lg ' + type[1], save: type[2], full: type[3], note: type[4],
-      day, time: t, dist: km ? km + ' km' : '—',
-      ex: ['siłownia push pt 17:00', 'sen 23:40–7:10', 'blok nauka matma jutro 8–10', 'nawyk woda'].map((x) => ({ x, pick: () => this.setState({ q: x }) }))
+      typ: t[0], day: t[0] === 'Sen' && day === 'dziś 17.11' ? 'noc 16/17.11' : day, icT: t[1], icS: t[2], tLbl: t[3], xLbl: t[4], xVal: t[5], note: t[6], save: t[7], full: t[8], after: t[9],
+      time,
+      go: () => { if (t[0] === 'Siłownia') { try { sessionStorage.setItem('rh-gym', tpl || 'Pusty'); } catch (e) {} } },
+      ex: ex.map((x) => ({ x, p: x === q ? 'true' : 'false', pick: () => this.setState({ q: x }) }))
     };
   }
 }

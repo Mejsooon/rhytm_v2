@@ -45,7 +45,7 @@ html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,
 
 /* Krok +/− */
 html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
-html body .m-step button{width:44px;height:44px;border:0;background:#fff;font:inherit;font-size:18px;cursor:pointer}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
 html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 
 /* Przycisk pływający (FAB) — nad paskiem zakładek */
@@ -57,10 +57,10 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
   <header class="m-head" style="padding:0 8px"><span class="btng ic" aria-hidden="true"></span><div style="flex:1"></div></header>
   <div class="m-body" style="opacity:.45;display:flex;flex-direction:column;gap:12px" aria-hidden="true"><div style="height:28px;width:60%;border-radius:8px;background:rgba(0,0,0,.08)"></div><div class="card" style="height:90px"></div><div class="card" style="height:300px"></div></div>
   <a href="CMEditor.dc.html" class="backdrop" aria-label="Zamknij"></a>
-  <div class="dlg m-sheet" role="dialog" aria-label="Menu strony Books" style="padding-bottom:20px">
+  <div class="dlg m-sheet" role="dialog" aria-label="Menu strony Książki" style="padding-bottom:20px">
     <div class="m-grab" aria-hidden="true"></div>
     <sc-if value="{{menu}}" hint-placeholder-val="{{true}}"><div style="padding:8px 0 0">
-      <div style="padding:4px 16px 10px;display:flex;align-items:center;gap:10px"><span class="empty-ic" style="width:36px;height:36px" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></span><span style="flex:1;min-width:0"><span style="display:block;font-weight:600">Books</span><span class="hint num">11 wierszy · 5 pól</span></span></div>
+      <div style="padding:4px 16px 10px;display:flex;align-items:center;gap:10px"><span class="empty-ic" style="width:36px;height:36px" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></span><span style="flex:1;min-width:0"><span style="display:block;font-weight:600">Książki</span><span class="hint num">11 wierszy · 5 pól</span></span></div>
       <div style="border-top:1px solid var(--border)">
         <button type="button" class="m-row row-btn" onClick="{{toRename}}">Zmień nazwę</button>
         <button type="button" class="m-row row-btn" onClick="{{toIcon}}">Zmień ikonę</button>
@@ -69,9 +69,9 @@ html body button.m-row.row-btn{width:100%;border:0;background:none;font:inherit;
         <button type="button" class="m-row row-btn" style="color:#b91c1c" onClick="{{toDel}}">Usuń stronę</button>
       </div>
     </div></sc-if>
-    <sc-if value="{{rename}}" hint-placeholder-val="{{false}}"><div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-size:18px;font-weight:600">Zmień nazwę</h2><label class="fld">Nazwa strony<input class="inp" type="text" value="Books"></label><div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><button type="button" class="btn" onClick="{{back}}">Anuluj</button><button type="button" class="btnp" onClick="{{back}}">Zapisz</button></div></div></sc-if>
+    <sc-if value="{{rename}}" hint-placeholder-val="{{false}}"><div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-size:18px;font-weight:600">Zmień nazwę</h2><label class="fld">Nazwa strony<input class="inp" type="text" value="Książki"></label><div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><button type="button" class="btn" onClick="{{back}}">Anuluj</button><button type="button" class="btnp" onClick="{{back}}">Zapisz</button></div></div></sc-if>
     <sc-if value="{{icon}}" hint-placeholder-val="{{false}}"><div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-size:18px;font-weight:600">Zmień ikonę</h2><input class="inp" type="search" placeholder="Szukaj ikony" aria-label="Szukaj ikony"><div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:6px"><sc-for list="{{icons}}" as="i" hint-placeholder-count="12"><button type="button" class="btng" aria-label="{{i.t}}" aria-pressed="{{i.p}}" onClick="{{back}}" style="height:48px;{{i.s}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.d}}"></path></svg></button></sc-for></div></div></sc-if>
-    <sc-if value="{{del}}" hint-placeholder-val="{{false}}"><div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-size:18px;font-weight:600">Usunąć stronę „Books”?</h2><p class="muted" style="margin:0">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p><div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><button type="button" class="btn" onClick="{{back}}">Anuluj</button><a href="CMPages.dc.html" class="btnd">Usuń stronę</a></div></div></sc-if>
+    <sc-if value="{{del}}" hint-placeholder-val="{{false}}"><div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-size:18px;font-weight:600">Usunąć stronę „Książki”?</h2><p class="muted" style="margin:0">11 wierszy trafi do kosza na 30 dni. Daty z tej strony znikną z kalendarza.</p><div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px"><button type="button" class="btn" onClick="{{back}}">Anuluj</button><a href="CMPages.dc.html" class="btnd">Usuń stronę</a></div></div></sc-if>
   </div>
 </div>
 </x-dc>
@@ -84,7 +84,7 @@ class Component extends DCLogic {
     return {
       menu: v === 'menu', rename: v === 'rename', icon: v === 'icon', del: v === 'del',
       toRename: () => this.setState({ v: 'rename' }), toIcon: () => this.setState({ v: 'icon' }), toDel: () => this.setState({ v: 'del' }), back: () => this.setState({ v: 'menu' }),
-      dupTxt: S.dup ? 'Zduplikowano jako „Books (kopia)” ✓' : 'Duplikuj', dup: () => this.setState({ dup: true }),
+      dupTxt: S.dup ? 'Zduplikowano jako „Książki (kopia)” ✓' : 'Duplikuj', dup: () => this.setState({ dup: true }),
       favTxt: S.fav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych', fav: () => this.setState({ fav: !S.fav }),
       icons: I.map((x, i) => ({ t: x[0], d: x[1], p: i === 0 ? 'true' : 'false', s: i === 0 ? 'background:var(--accent)' : '' }))
     };

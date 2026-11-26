@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Telefon — Sport, nowe konto (COSS UI)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+/* CM-BASE — wspólne dodatki mobilne COSS. Ten blok ma być IDENTYCZNY w każdym pliku CM*.
+   Wszystko inne bierzemy z arkusza coss/coss.css (klasy .btn/.btnp/.btng/.btns/.btnd/.btndo,
+   .inp/.igroup/.dd, .fld/.lbl/.hint/.err, .cbx/.sw/input[type=checkbox|radio], .seg/.tabs/.chip/.dot, .bdg.*,
+   .card/.card-h/.card-t/.card-d/.card-p/.foot, .frame>.inner, .sep, .pop/.mi/.mi-sep/.mi-lbl, .backdrop, .dlg*,
+   .toast, .alert.*, .kbd, .prog, .avatar, .empty/.empty-ic, .num, .muted, .h-title). */
+
+/* Ekran telefonu */
+html body .m-screen{position:relative;width:390px;height:844px;overflow:hidden;background:#fff;color:var(--foreground);font-size:14px}
+html body .m-status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:14px;font-weight:600}
+html body .m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:52px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:#fff}
+html body .m-title{margin:0;font-size:18px;font-weight:600;letter-spacing:-.011em}
+html body .m-body{padding:16px}
+
+/* Cele dotykowe ≥44 px na telefonie (nadpisują rozmiary webowe arkusza) */
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo){height:44px}
+html body .m-screen :is(.btn,.btnp,.btnd,.btng,.btns,.btndo).ic{width:44px}
+html body .m-screen :is(.inp,.dd,.igroup){height:44px;font-size:16px}
+html body .m-screen textarea.inp{height:auto}
+html body .m-screen .seg :is(a,button){height:40px}
+html body .m-screen .chip{height:36px}
+html body .m-screen .mi{min-height:44px}
+html body .m-hit{position:relative}
+html body .m-hit::before{content:"";position:absolute;inset:-14px}
+
+/* Wiersz listy (ustawienia, strony, wyniki wyszukiwania) */
+html body .m-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+html body .m-row:last-child{border-bottom:0}
+
+/* Arkusz od dołu = .dlg przyklejony do dołu */
+html body .m-sheet{position:absolute;left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:88%;overflow:auto}
+html body .m-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.14);margin:8px auto 0}
+
+/* Krok +/− */
+html body .m-step{display:inline-flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius);box-shadow:var(--shadow-xs5);overflow:hidden}
+html body .m-step button{width:44px;height:44px;padding:0;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;color:var(--foreground)}
+html body .m-step span{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Przycisk pływający (FAB) — nad paskiem zakładek */
+html body .m-fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 16px -4px rgba(38,38,38,.32);cursor:pointer}
+
+body{margin:0;background:#ffffff}
+</style>
+</helmet>
+<div class="m-screen" style="display: flex; flex-direction: column">
+  <div class="m-status"><span>9:41</span><span></span></div>
+  <header class="m-head" style="flex: none"><h1 class="m-title">Sport</h1></header>
+  <div style="flex: 1; overflow-y: auto; padding: 32px 16px 96px; display: flex; flex-direction: column; gap: 16px">
+    <div class="empty" style="padding: 0; align-items: flex-start; text-align: left"><span class="empty-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><h2 style="margin: 6px 0 0; font-size: 20px; font-weight: 600">Zacznij od pierwszego treningu</h2><p class="muted" style="margin: 0; line-height: 1.55">Zapisz bieg, trening siłowy albo inną aktywność. Statystyki, rekordy i kalendarz pojawią się po pierwszym wpisie.</p></div>
+    <div style="display: flex; flex-direction: column; gap: 8px"><a href="CMGym.dc.html" class="btnp" style="width: 100%">Rozpocznij trening siłowy</a><a href="CMRunNew.dc.html" class="btn" style="width: 100%">Zapisz bieg</a><a href="CMActivityNew.dc.html" class="btn" style="width: 100%">Inna aktywność</a></div>
+    <div class="lbl" style="margin: 8px 4px -8px">Co tu zobaczysz</div>
+    <div class="card" style="padding: 4px 0"><div class="m-row" style="min-height: 56px"><span class="aic" style="background: rgba(0,0,0,.04); color: #404040; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M6 20v-4M6 8V4M18 20v-4M18 8V4M3 10v4M21 10v4M6 12h12"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Treningi i szablony</span><span class="hint">Serie, ciężary i przerwy z licznikiem</span></span></div><div class="m-row" style="min-height: 56px"><span class="aic" style="background: rgba(0,0,0,.04); color: #404040; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Biegi</span><span class="hint">Dystans, czas, tempo, cel tygodnia</span></span></div><div class="m-row" style="min-height: 56px"><span class="aic" style="background: rgba(0,0,0,.04); color: #404040; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">Rekordy</span><span class="hint">1RM i najlepsze czasy liczone same</span></span></div></div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0"><dc-import name="CMTabBar" active="sport" hint-size="390px,64px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

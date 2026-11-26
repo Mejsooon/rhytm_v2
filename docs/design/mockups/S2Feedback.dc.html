@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Komponent: komunikaty, błędy i ładowanie</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div style="min-height: 900px; padding: 40px; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; background: #fafafa; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-content: start">
+  <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px"><h2 class="card-t" style="margin: 0">Toasty (dół ekranu, 4 s)</h2>
+    <div role="status" style="display: flex; gap: 12px; align-items: center; padding: 8px 8px 8px 14px; border-radius: 10px; background: #262626; color: #fff; font-size: 13px; align-self: flex-start">Usunięto blok „Wykład — bazy danych”<button type="button" class="btng sm" style="color: #fff">Cofnij</button></div>
+    <div role="status" style="display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #262626; color: #fff; font-size: 13px; align-self: flex-start"><span style="color: #4ade80; display: flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Zapisano trening Push</div>
+    <div role="alert" style="display: flex; gap: 10px; align-items: center; padding: 8px 8px 8px 14px; border-radius: 10px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 13px; align-self: flex-start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>Nie udało się zapisać zmian<button type="button" class="btn sm">Ponów</button></div>
+    <p class="hint" style="margin: 0">Cofnij — po każdym usunięciu (blok, wiersz, nawyk, aktywność, strona). Ponów — gdy zapis się nie udał; zmiany zostają lokalnie do skutku.</p>
+  </section>
+  <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px"><h2 class="card-t" style="margin: 0">Brak połączenia</h2>
+    <div role="status" style="display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b"></span><span style="flex: 1">Jesteś offline. Zmiany zapiszą się, gdy wróci internet.</span><span class="num">3 zmiany czekają</span></div>
+    <div role="status" style="display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span style="flex: 1">Znów online — zapisano 3 zmiany.</span></div>
+    <p class="hint" style="margin: 0">Pasek pojawia się nad treścią strony, pod górnym paskiem. Sejf (Hasła) offline jest tylko do odczytu.</p>
+  </section>
+  <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px"><h2 class="card-t" style="margin: 0">Błędy w formularzach</h2>
+    <label class="fld">Nazwa bloku<input class="inp" type="text" value="" placeholder="np. Nauka SQL" style="border-color: #fca5a5; box-shadow: 0 0 0 3px rgba(239,68,68,.12)"><span style="font-size: 12px; color: #b91c1c">Podaj nazwę bloku.</span></label>
+    <label class="fld">Godziny<span class="row" style="gap: 8px"><input class="inp num" type="text" value="14:00" style="width: 90px"><span class="hint">–</span><input class="inp num" type="text" value="13:30" style="width: 90px; border-color: #fca5a5; box-shadow: 0 0 0 3px rgba(239,68,68,.12)"></span><span style="font-size: 12px; color: #b91c1c">Koniec musi być po początku.</span></label>
+    <p class="hint" style="margin: 0">Błąd pokazujemy pod polem po próbie zapisu (nie w trakcie pisania). Przycisk Zapisz zostaje aktywny.</p>
+  </section>
+  <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px"><h2 class="card-t" style="margin: 0">Ładowanie</h2>
+    <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 14px; width: 40%; border-radius: 6px; background: rgba(0,0,0,.07)"></div><div style="height: 44px; border-radius: 10px; background: rgba(0,0,0,.05)"></div><div style="height: 44px; border-radius: 10px; background: rgba(0,0,0,.05)"></div><div style="height: 44px; width: 80%; border-radius: 10px; background: rgba(0,0,0,.05)"></div></div>
+    <div class="row" style="gap: 8px"><button type="button" class="btnp" aria-disabled="true" style="opacity: .7">Zapisywanie…</button><span class="hint">przycisk w trakcie zapisu</span></div>
+    <p class="hint" style="margin: 0">Szkielety zamiast spinnerów przy pierwszym wczytaniu listy, tabeli i wykresów (powyżej ~300 ms).</p>
+  </section>
+  <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px; grid-column: span 2"><h2 class="card-t" style="margin: 0">Potwierdzenia usuwania</h2>
+    <div class="row" style="gap: 24px; align-items: flex-start; flex-wrap: wrap">
+      <div style="flex: 1; min-width: 260px"><b style="font-weight: 500">Bez okna, z Cofnij</b><div class="hint" style="line-height: 1.5">Blok jednorazowy, wiersz tabeli, aktywność, wpis snu, odhaczenie nawyku.</div></div>
+      <div style="flex: 1; min-width: 260px"><b style="font-weight: 500">Okno potwierdzenia</b><div class="hint" style="line-height: 1.5">Blok cykliczny (wybór zakresu), strona, tabela, nawyk z historią, szablon treningu.</div></div>
+      <div style="flex: 1; min-width: 260px"><b style="font-weight: 500">Wpisanie słowa</b><div class="hint" style="line-height: 1.5">Usunięcie konta (USUŃ) i reset sejfu (RESETUJ).</div></div>
+    </div>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>

@@ -11,7 +11,8 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-.snav a{display:flex;align-items:center;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
 .snav a:hover{background:rgba(0,0,0,.04);color:#262626}
 .snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
 .nrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.06)}
@@ -24,19 +25,29 @@ body{margin:0;background:#ffffff}
 .nrow[style*="opacity"] [aria-disabled="true"]{opacity:1}
 </style>
 </helmet>
-<div class="shell" style="min-height: 1000px; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1000" hint-size="100%,1000px"></dc-import></div>
+<div class="shell" style="min-height: 1120px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1120" hint-size="100%,1120px"></dc-import></div>
   <main class="main">
     <header class="topbar">
       <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Powiadomienia</b></nav>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
     </header>
     <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
-      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px"><a href="S2Settings.dc.html">Ogólne</a><a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a><a href="S2Vault.dc.html">Sejf</a><a href="S2SettingsNotifications.dc.html" aria-current="page">Powiadomienia</a><a href="S2CategoryDialog.dc.html">Kategorie kalendarza</a></nav>
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <span class="snav-l" style="padding-top: 0">Konto</span>
+        <a href="S2Settings.dc.html">Ogólne</a>
+        <a href="S2SettingsAccount.dc.html">Konto i bezpieczeństwo</a>
+        <a href="S2SettingsPlan.dc.html">Plan i płatności <span class="bdg sec">Free</span></a>
+        <a href="S2SettingsNotifications.dc.html" aria-current="page">Powiadomienia</a>
+        <span class="snav-l">Moduły</span>
+        <a href="S2SettingsCalendar.dc.html">Kalendarz</a>
+        <a href="S2SettingsVault.dc.html">Sejf</a>
+        </nav>
       <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Powiadomienia</h1>
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Powiadomienia</h1><p class="muted" style="margin: 4px 0 0">Co, kiedy i na którym urządzeniu ma Ci przypominać.</p></div>
         <section class="card">
-          <div class="card-p" style="padding-top: 6px; padding-bottom: 6px">
+          <div class="card-h"><div><h2 class="card-t">Kanały i pory</h2><p class="card-d">Rodzaje powiadomień i godziny, w których mają milczeć.</p></div></div>
+          <div class="card-p" style="padding-top: 0; padding-bottom: 6px">
             <div class="nrow"><div><div style="font-weight: 500">Push na tym urządzeniu</div><div class="muted" style="font-size: 13px">{{pushSub}}</div></div><button type="button" class="sw" role="switch" aria-checked="{{pushOn}}" aria-label="Push na tym urządzeniu" onClick="{{togglePush}}"></button></div>
             <sc-for list="{{kinds}}" as="k" hint-placeholder-count="3"><div class="nrow" style="{{k.rowS}}"><div><div style="font-weight: 500">{{k.t}}</div><div class="muted" style="font-size: 13px">{{k.d}}</div></div><button type="button" class="sw" role="switch" aria-checked="{{k.on}}" aria-disabled="{{k.dis}}" aria-label="{{k.t}}" onClick="{{k.toggle}}"></button></div></sc-for>
             <div class="nrow"><div><div style="font-weight: 500; display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Cicha noc</div><div class="muted" style="font-size: 13px">{{quietSub}}</div></div><span style="display: flex; align-items: center; gap: 8px"><sc-if value="{{quietOnB}}" hint-placeholder-val="{{true}}"><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{qf.toggle}}" aria-haspopup="dialog" aria-expanded="{{qf.exp}}" aria-label="Cicha noc od" style="width: auto; height: 30px; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{qf.txt}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{qf.open}}" hint-placeholder-val="{{false}}"><div class="pop" role="dialog" aria-label="Cicha noc od" style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="lbl">Godzina</div><div class="tgrid"><sc-for list="{{qf.hours}}" as="c" hint-placeholder-count="24"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div><div class="lbl">Minuty</div><div class="tgrid"><sc-for list="{{qf.mins}}" as="c" hint-placeholder-count="12"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">:{{c.t}}</button></sc-for></div><div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px"><button type="button" class="btn xs" onClick="{{qf.close}}">Gotowe</button></div></div></sc-if></span><span class="muted">–</span><span style="position: relative; display: inline-flex"><button type="button" class="dd num" onClick="{{qt.toggle}}" aria-haspopup="dialog" aria-expanded="{{qt.exp}}" aria-label="Cicha noc do" style="width: auto; height: 30px; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>{{qt.txt}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><sc-if value="{{qt.open}}" hint-placeholder-val="{{false}}"><div class="pop" role="dialog" aria-label="Cicha noc do" style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; padding: 10px; display: flex; flex-direction: column; gap: 8px"><div class="lbl">Godzina</div><div class="tgrid"><sc-for list="{{qt.hours}}" as="c" hint-placeholder-count="24"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">{{c.t}}</button></sc-for></div><div class="lbl">Minuty</div><div class="tgrid"><sc-for list="{{qt.mins}}" as="c" hint-placeholder-count="12"><button type="button" class="tcell num" aria-pressed="{{c.p}}" onClick="{{c.pick}}">:{{c.t}}</button></sc-for></div><div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,0,0,.08); padding-top: 8px"><button type="button" class="btn xs" onClick="{{qt.close}}">Gotowe</button></div></div></sc-if></span></sc-if><button type="button" class="sw" role="switch" aria-checked="{{quietOn}}" aria-label="Cicha noc" onClick="{{toggleQuiet}}"></button></span></div>
@@ -61,7 +72,7 @@ body{margin:0;background:#ffffff}
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
 class Component extends DCLogic {
   componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2SettingsNotifications.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   renderVals() {

@@ -11,7 +11,8 @@
 <helmet>
 <style>
 body{margin:0;background:#ffffff}
-.snav a{display:flex;align-items:center;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
+.snav-l{display:block;padding:14px 10px 4px;font-size:12px;font-weight:500;color:#8a8a8a}
+.snav a{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:8px;color:#686868;text-decoration:none;font-weight:500}
 .snav a:hover{background:rgba(0,0,0,.04);color:#262626}
 .snav a[aria-current="page"]{background:rgba(0,0,0,.05);color:#262626}
 .nrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.06)}
@@ -20,17 +21,33 @@ body{margin:0;background:#ffffff}
 .spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.12);border-top-color:#262626;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </helmet>
-<div class="shell" style="min-height: 1060px; font-family: 'Inter', system-ui, sans-serif">
-  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1060" hint-size="100%,1060px"></dc-import></div>
+<div class="shell" style="min-height: 1400px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="S2Sidebar" active="ustawienia" min-height="1400" hint-size="100%,1400px"></dc-import></div>
   <main class="main">
     <header class="topbar">
       <nav class="crumb" aria-label="Okruszki"><span>Ustawienia</span><span aria-hidden="true">/</span><b>Konto i bezpieczeństwo</b></nav>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"></div>
     </header>
     <div style="padding: 28px 24px; max-width: 1100px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
-      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px"><a href="S2Settings.dc.html">Ogólne</a><a href="S2SettingsAccount.dc.html" aria-current="page">Konto i bezpieczeństwo</a><a href="S2VaultSetup.dc.html">Sejf</a><a href="S2SettingsNotifications.dc.html">Powiadomienia</a><a href="S2CategoryDialog.dc.html">Kategorie kalendarza</a></nav>
+      <nav aria-label="Sekcje ustawień" class="snav" style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px">
+        <span class="snav-l" style="padding-top: 0">Konto</span>
+        <a href="S2Settings.dc.html">Ogólne</a>
+        <a href="S2SettingsAccount.dc.html" aria-current="page">Konto i bezpieczeństwo</a>
+        <a href="S2SettingsPlan.dc.html">Plan i płatności <span class="bdg sec">Free</span></a>
+        <a href="S2SettingsNotifications.dc.html">Powiadomienia</a>
+        <span class="snav-l">Moduły</span>
+        <a href="S2SettingsCalendar.dc.html">Kalendarz</a>
+        <a href="S2SettingsVault.dc.html">Sejf</a>
+        </nav>
       <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Konto i bezpieczeństwo</h1>
+        <div><h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em">Konto i bezpieczeństwo</h1><p class="muted" style="margin: 4px 0 0">E-mail, hasło, zalogowane urządzenia i Twoje dane.</p></div>
+        <section class="card">
+          <div class="card-h"><div><h2 class="card-t">E-mail</h2><p class="card-d">Na ten adres logujesz się i dostajesz przypomnienia.</p></div></div>
+          <div class="card-p" style="padding-top: 0">
+            <div class="nrow" style="border-bottom: 0"><div><div style="font-weight: 500; display: flex; align-items: center; gap: 8px">mejson@example.com <span class="bdg ok">Potwierdzony</span></div><div class="muted" style="font-size: 13px">{{mailLine}}</div></div><sc-if value="{{mailIdle}}" hint-placeholder-val="{{true}}"><button type="button" class="btn" onClick="{{mailOpen}}">Zmień e-mail</button></sc-if>
+              <sc-if value="{{mailEditing}}" hint-placeholder-val="{{false}}"><div style="flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start"><label style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 4px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nowy e-mail</span><input class="inp" type="email" value="{{mail}}" onChange="{{onMail}}" placeholder="nowy@adres.pl" aria-invalid="{{mailInv}}"><sc-if value="{{mailErr}}" hint-placeholder-val="{{false}}"><span class="err">To nie wygląda na adres e-mail.</span></sc-if></label><button type="button" class="btnp" onClick="{{mailSend}}">Wyślij link</button><button type="button" class="btng" onClick="{{mailCancel}}">Anuluj</button></div></sc-if></div>
+          </div>
+        </section>
         <section class="card">
           <div class="card-h"><div><h2 class="card-t">Zmień hasło do konta</h2><p class="card-d">Hasło do konta nie otwiera sejfu.</p></div></div>
           <div class="card-p" style="display: flex; flex-direction: column; gap: 14px">
@@ -52,8 +69,13 @@ body{margin:0;background:#ffffff}
           <sc-if value="{{sessMsg}}" hint-placeholder-val="{{false}}"><div class="card-p" style="padding-top: 0"><div role="status" class="alert ok" style="font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>{{sessMsgTxt}}</span></div></div></sc-if>
         </section>
         <section class="card">
-          <div class="card-h"><div><h2 class="card-t">Eksport danych</h2><p class="card-d">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div></div>
+          <div class="card-h" style="padding-bottom: 20px"><div><h2 class="card-t">Eksport danych</h2><p class="card-d">Wszystkie moduły i strony jako JSON. Sekrety zostają zaszyfrowane.</p></div></div>
           <div class="foot" style="justify-content: space-between"><span style="display: inline-flex; align-items: center; gap: 8px"><sc-if value="{{busy}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span></sc-if><span class="num" style="{{expS}}">{{expTxt}}</span></span><button type="button" class="btn" onClick="{{exportNow}}" aria-disabled="{{busyS}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>{{expBtn}}</button></div>
+        </section>
+        <section class="card" style="border-color: rgba(239,68,68,.24)">
+          <div class="card-h" style="padding-bottom: 20px"><div><h2 class="card-t">Usuń konto</h2><p class="card-d">Konto zostanie wyłączone od razu i usunięte na stałe po 30 dniach — razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je przywrócić, logując się. Przed usunięciem pobierz eksport.</p></div></div>
+          <sc-if value="{{delIdle}}" hint-placeholder-val="{{true}}"><div class="foot" style="justify-content: flex-end; background: rgba(239,68,68,.04); border-top-color: rgba(239,68,68,.16)"><button type="button" class="btnd" onClick="{{delOpen}}">Usuń konto</button></div></sc-if>
+          <sc-if value="{{delAsk}}" hint-placeholder-val="{{false}}"><div class="foot" style="align-items: flex-end; background: rgba(239,68,68,.04); border-top-color: rgba(239,68,68,.16)"><label class="fld" style="flex: 1 1 240px; color: #b91c1c"><span>Wpisz <span class="kbd" style="background: #fff; color: #b91c1c; box-shadow: inset 0 0 0 1px rgba(239,68,68,.24)">USUŃ</span>, żeby potwierdzić</span><input class="inp" type="text" value="{{delTxt}}" onChange="{{onDel}}" placeholder="USUŃ" autocomplete="off"></label><span style="display: flex; gap: 8px"><button type="button" class="btng" onClick="{{delCancel}}">Anuluj</button><a href="S2AccountDeletion.dc.html" class="btnd" aria-disabled="{{delDis}}" style="{{delS}}">Usuń konto</a></span></div></sc-if>
         </section>
       </div>
     </div>
@@ -61,7 +83,7 @@ body{margin:0;background:#ffffff}
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
 class Component extends DCLogic {
   componentDidMount() { try { sessionStorage.setItem('rh-from', 'S2SettingsAccount.dc.html'); sessionStorage.removeItem('rh-from-sub'); } catch (e) {} }
   renderVals() {
@@ -76,7 +98,21 @@ class Component extends DCLogic {
     const out = S.out || {};
     const left = SESS.filter((s) => !out[s[0]]);
     const pl = (n) => n === 1 ? '1 aktywna sesja' : n + (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? ' aktywne sesje' : ' aktywnych sesji');
+    const mailState = S.mail || 'idle', mail = S.mailTxt || '';
+    const mailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const mailErr = !!S.mailTried && !mailRe.test(mail);
+    const delTxt = S.delTxt || '', delOk = delTxt.trim().toUpperCase() === 'USUŃ';
     return {
+      mailIdle: mailState !== 'edit', mailEditing: mailState === 'edit', mail, mailErr, mailInv: mailErr ? 'true' : 'false',
+      mailLine: mailState === 'sent' ? 'Wysłaliśmy link potwierdzający na ' + S.mailTo + ' — zmiana po kliknięciu' : 'Zmiana wymaga potwierdzenia na nowym adresie',
+      mailOpen: () => this.setState({ mail: 'edit', mailTxt: '', mailTried: false }),
+      onMail: (e) => this.setState({ mailTxt: e.target.value }),
+      mailSend: () => { if (mailRe.test(mail)) this.setState({ mail: 'sent', mailTo: mail }); else this.setState({ mailTried: true }); },
+      mailCancel: () => this.setState({ mail: 'idle' }),
+      delIdle: !S.del, delAsk: !!S.del, delTxt,
+      delOpen: () => this.setState({ del: true, delTxt: '' }), delCancel: () => this.setState({ del: false }),
+      onDel: (e) => this.setState({ delTxt: e.target.value }),
+      delDis: delOk ? 'false' : 'true', delS: delOk ? '' : 'opacity:.64;pointer-events:none;box-shadow:none',
       cur, nw, rep,
       onCur: (e) => this.setState({ cur: e.target.value, pwDone: false }), onNw: (e) => this.setState({ nw: e.target.value, pwDone: false }), onRep: (e) => this.setState({ rep: e.target.value, pwDone: false }),
       bars: [0, 1, 2, 3].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (i < score ? col : 'rgba(0,0,0,.08)') })),
@@ -92,7 +128,7 @@ class Component extends DCLogic {
       sessMsg: !!S.sessMsgTxt, sessMsgTxt: S.sessMsgTxt || '',
       busy: S.exp === 'busy', busyS: S.exp === 'busy' ? 'true' : 'false',
       expTxt: S.exp === 'busy' ? 'przygotowuję plik…' : S.exp === 'done' ? 'rhytm-export-2026-11-16.json · 2,4 MB · pobrano' : 'ostatni eksport: nigdy',
-      expS: 'font-size:12px;color:' + (S.exp === 'done' ? '#15803d' : '#686868'),
+      expS: 'font-size:13px;color:' + (S.exp === 'done' ? '#15803d' : '#686868'),
       expBtn: S.exp === 'done' ? 'Pobierz ponownie' : 'Pobierz .json',
       exportNow: () => { this.setState({ exp: 'busy' }); setTimeout(() => this.setState({ exp: 'done' }), 900); }
     };

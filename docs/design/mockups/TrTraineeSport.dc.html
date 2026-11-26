@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Podopieczny — Sport: plan od trenera</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="coss/coss.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#ffffff}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;color:#262626}
+.av.lg{width:44px;height:44px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12px;color:#686868;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);white-space:nowrap}
+.tbl td{padding:0 12px;height:52px;border-bottom:1px solid rgba(0,0,0,.06);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:rgba(0,0,0,.02)}
+.tabs{display:flex;gap:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tabs a,.tabs button{height:40px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:500;color:#686868;text-decoration:none;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.tabs [aria-current="page"],.tabs [aria-selected="true"]{color:#262626;box-shadow:inset 0 -2px 0 #262626}
+.pbar{height:6px;border-radius:999px;background:rgba(0,0,0,.06);overflow:hidden;min-width:60px}
+.pbar>span{display:block;height:100%;border-radius:999px;background:#262626}
+.nw{white-space:nowrap}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.aic{width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.06);text-decoration:none;color:inherit}
+.lrow:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi b{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.ch{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:52px;box-sizing:border-box}
+.ch .card-t{margin:0}
+.ch .card-d{margin:2px 0 0}
+.coach-b{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;white-space:nowrap}
+
+</style>
+</helmet>
+<div style="display: contents" onClick="{{navRoute}}">
+<div class="shell" style="min-height: 900px; font-family: 'Inter', system-ui, sans-serif">
+  <div class="sb-col"><dc-import name="TrUserSidebar" active="sport" min-height="900" hint-size="100%,900px"></dc-import></div>
+  <main class="main">
+    <header class="topbar"><div class="row" style="gap: 10px"><h1 class="h-title">Sport</h1><div class="tabs" style="border: 0; margin-left: 12px; gap: 16px"><a href="S2Sport.dc.html">Przegląd</a><a href="#" aria-current="page">Plan od trenera</a><a href="S2WorkoutTemplates.dc.html">Szablony</a></div></div><a href="TrTraineeChat.dc.html" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Napisz do trenera</a></header>
+    <div style="padding: 24px; display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 24px; align-items: start; box-sizing: border-box; width: 100%">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <section class="card" style="overflow: hidden; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-direction: row; align-items: center; gap: 12px; min-width: 0">
+            <span class="av" style="background: #e0f2fe; width: 36px; height: 36px; font-size: 12px">MK</span>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="ell" style="font-weight: 600">Siła 8 tyg.</span><span class="hint num ell">od Marka Kowala · tydz. 3 z 8</span></div>
+            <span class="coach-b">od trenera</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div class="pbar"><span style="width: 31%"></span></div>
+            <div class="hint num" style="display: flex; justify-content: space-between; font-size: 12px"><span>start 02.11</span><span>koniec 27.12</span></div>
+          </div>
+        </section>
+        <section class="card" style="overflow: hidden">
+          <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 14px 16px"><h2 class="card-t" style="margin: 0">Ten tydzień</h2><span class="hint num">2 z 4 wykonane</span></div>
+          <sc-for list="{{wk}}" as="w" hint-placeholder-count="4"><button type="button" onClick="{{w.pick}}" style="{{w.s}}"><span class="hint num nw" style="width: 64px; flex: none; text-align: left">{{w.d}}</span><span style="flex: 1; min-width: 0; text-align: left"><span class="ell" style="display: block; font-weight: 500">{{w.t}}</span><span class="hint num ell" style="display: block">{{w.sub}}</span></span><span class="{{w.bC}}">{{w.bT}}</span></button></sc-for>
+        </section>
+      </div>
+      <section class="card" style="overflow: hidden">
+        <div class="ch" style="display: flex; gap: 12px; align-items: flex-start"><div style="flex: 1; min-width: 0"><div class="row" style="gap: 8px"><h2 class="card-t" style="font-size: 20px">{{dT}}</h2><span class="coach-b">od trenera</span></div><p class="card-d num">{{dSub}}</p></div><sc-if value="{{canStart}}" hint-placeholder-val="{{true}}"><a href="S2GymLog.dc.html" class="btnp" onClick="{{start}}">Rozpocznij trening</a></sc-if><sc-if value="{{isDone}}" hint-placeholder-val="{{false}}"><span class="bdg ok lg nw">✓ wykonany</span></sc-if></div>
+        <div style="display: flex; gap: 12px; align-items: flex-start; margin: 4px 16px 20px; padding: 14px 16px; border-radius: 12px; background: rgba(0,0,0,.035)"><span class="av" style="background: #e0f2fe">MK</span><div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="hint">Notatka od Marka</span><span style="font-size: 14px; line-height: 1.55">{{dNote}}</span></div></div>
+        <table class="tbl"><thead><tr><th style="padding-left: 16px">Ćwiczenie</th><th>Serie</th><th>Ciężar</th><th>Przerwa</th></tr></thead><tbody>
+          <sc-for list="{{dEx}}" as="e" hint-placeholder-count="5"><tr style="cursor: default"><td style="padding-left: 16px; font-weight: 500">{{e.n}}</td><td class="num">{{e.s}}</td><td class="num">{{e.k}}</td><td class="num hint">{{e.r}}</td></tr></sc-for>
+        </tbody></table>
+        <div style="border-top: 1px solid rgba(0,0,0,.06); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; background: #fcfcfc">
+          <span class="lbl">Komentarze</span>
+          <sc-for list="{{dCm}}" as="c" hint-placeholder-count="1"><div class="row" style="gap: 8px; align-items: flex-start"><span class="av sm" style="{{c.avS}}">{{c.i}}</span><div style="font-size: 13px; line-height: 1.45"><b style="font-weight: 500">{{c.who}}</b> <span class="hint num">{{c.time}}</span><div>{{c.t}}</div></div></div></sc-for>
+          <div class="row" style="gap: 8px"><input class="inp" type="text" placeholder="Odpowiedz trenerowi…" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1; height: 32px"><button type="button" class="btnp sm" onClick="{{send}}">Wyślij</button></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const MK = { i: 'MK', avS: 'background:#e0f2fe', who: 'Marek' }, ME = { i: 'M', avS: 'background:#e5e5e5', who: 'Ty' };
+    const W = [
+      ['pn 16.11', 'Nogi A', '58 min · 15/15 serii', 'done', 'Przysiad do równoległej, wykroki z hantlami 10 kg.', [['Przysiad', '4 × 5', '70 kg', '2:30'], ['Rumuński martwy ciąg', '3 × 8', '50 kg', '2:00'], ['Wykroki', '3 × 10 / noga', '10 kg', '1:30'], ['Prostowanie nóg', '3 × 12', '30 kg', '1:00'], ['Wspięcia na palce', '3 × 15', '40 kg', '1:00']], [[MK, 'pn 20:05', 'Super robota, przysiad wygląda coraz pewniej 👊']]],
+      ['wt 17.11', 'Push A', '52 min · 14/15 serii · rekord', 'done', 'W tym tygodniu +2,5 kg na wyciskaniu. Ostatnia seria może być ciężka — to OK.', [['Wyciskanie na ławce', '4 × 5', '50 kg', '2:30'], ['Wyciskanie hantli na skosie', '3 × 10', '16 kg', '1:30'], ['Wyciskanie żołnierskie', '3 × 8', '25 kg', '1:30'], ['Pompki na poręczach', '3 × maks.', 'masa ciała', '1:30'], ['Prostowanie ramion na wyciągu', '2 × 12', '20 kg', '1:00']], [[ME, '8:32', 'Ostatnia seria ciężka, zabrakło jednego powtórzenia.'], [MK, '9:10', 'Spoko, w czwartek zostajemy na 50 kg i domkniesz 4 × 5.']]],
+      ['czw 19.11', 'Pull A', '5 ćwiczeń · ok. 55 min', 'plan', 'Martwy ciąg z pasem od 3. serii. Podciąganie z gumą, jeśli mniej niż 5 powtórzeń.', [['Martwy ciąg', '3 × 5', '90 kg', '3:00'], ['Podciąganie', '3 × maks.', 'masa ciała', '2:00'], ['Wiosłowanie sztangą', '3 × 8', '45 kg', '1:30'], ['Face pull', '3 × 15', '15 kg', '1:00'], ['Uginanie ramion', '3 × 10', '10 kg', '1:00']], []],
+      ['sob 21.11', 'Bieg 6 km', 'tempo 6:00 /km', 'plan', 'Spokojnie, strefa 2. Jeśli nogi ciężkie po czwartku — skróć do 5 km.', [['Rozgrzewka', '1 km', '—', '—'], ['Bieg ciągły', '5 km', '6:00 /km', '—']], []]
+    ];
+    const sel = st.sel === undefined ? 2 : st.sel;
+    const d = W[sel];
+    const B = { done: ['bdg ok nw', '✓ wykonany'], plan: ['bdg out nw', 'zaplanowany'] };
+    const extra = (st.cm || {})[sel] || [];
+    const draft = st.draft || '';
+    return {
+      wk: W.map((w, i) => ({ d: w[0], t: w[1], sub: w[2], bC: B[w[3]][0], bT: B[w[3]][1], pick: () => this.setState({ sel: i, draft: '' }),
+        s: 'display:flex;flex-direction:row;align-items:center;gap:12px;width:100%;min-height:56px;box-sizing:border-box;padding:10px 16px;border:0;border-top:1px solid rgba(0,0,0,.06);font:inherit;color:inherit;text-align:left;cursor:pointer;background:' + (i === sel ? 'rgba(0,0,0,.05)' : 'transparent') })),
+      dT: d[1], dSub: d[0] + ' · ' + d[2], dNote: d[4], canStart: d[3] === 'plan' && d[1] !== 'Bieg 6 km', isDone: d[3] === 'done',
+      start: () => { try { sessionStorage.setItem('rh-gym', 'Pull'); } catch (e) {} },
+      dEx: d[5].map((e) => ({ n: e[0], s: e[1], k: e[2], r: e[3] })),
+      dCm: d[6].concat(extra).map((c) => ({ i: c[0].i, avS: c[0].avS, who: c[0].who, time: c[1], t: c[2] })),
+      draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      send: () => { if (!draft.trim()) return; const n = { ...(st.cm || {}) }; n[sel] = extra.concat([[ME, 'teraz', draft.trim()]]); this.setState({ cm: n, draft: '' }); }
+    };
+  }
+}
+// W interaktywnym pulpicie trenera linki przełączają widok zamiast skakać do innej makiety.
+(() => {
+  const rv = Component.prototype.renderVals;
+  Component.prototype.renderVals = function () {
+    const o = rv.call(this) || {};
+    const nav = this.props.onNav;
+    o.onNav = typeof nav === 'function' ? nav : null;
+    o.navRoute = (e) => {
+      if (typeof nav !== 'function' || e.defaultPrevented) return;
+      let a = e.target;
+      while (a && a.tagName !== 'A') a = a.parentElement;
+      if (!a || !a.getAttribute('href')) return;
+      if (a.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      const name = a.getAttribute('href').split('/').pop().replace('.dc.html', '');
+      if (nav(name)) { e.preventDefault(); e.stopPropagation(); }
+    };
+    return o;
+  };
+})();
+</script>
+</body>
+</html>
