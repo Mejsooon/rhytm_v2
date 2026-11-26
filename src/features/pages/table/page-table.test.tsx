@@ -229,6 +229,7 @@ describe("PageTable", () => {
         expect(tekst).toContain("Atomic Habits");
         expect(tekst).toContain("Clean Code");
         expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+        expect(toast).toHaveBeenCalledWith("Wyeksportowano 11 wierszy do Moje książki.csv");
       });
 
       it("„Eksport CSV” w pasku pobiera tylko zaznaczone wiersze jako „<tytuł> — zaznaczone.csv”", async () => {
@@ -237,6 +238,7 @@ describe("PageTable", () => {
         await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
         await user.click(screen.getByRole("button", { name: "Eksport CSV" }));
         expect(pobrania[0].nazwa).toBe("Książki — zaznaczone.csv");
+        expect(toast).toHaveBeenCalledWith("Wyeksportowano 1 wiersz do Książki — zaznaczone.csv");
         const tekst = await pobrania[0].blob.text();
         expect(tekst).toContain("Atomic Habits");
         expect(tekst).not.toContain("Clean Code");
@@ -251,7 +253,7 @@ describe("PageTable", () => {
         expect(within(okno).getByText("Dodaj wiersze do tabeli Książki z pliku CSV.")).toBeInTheDocument();
       });
 
-      it("udany import zamyka okno, pokazuje toast z liczbą i odświeża dane", async () => {
+      it("udany import odświeża dane i pokazuje krok „Gotowe”", async () => {
         const user = userEvent.setup();
         actions.importCsvRows.mockResolvedValue({ ok: true, fieldIds: [], count: 2 });
         render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
@@ -262,8 +264,9 @@ describe("PageTable", () => {
         Object.defineProperty(plik, "text", { value: () => Promise.resolve(tresc) });
         await user.upload(await screen.findByLabelText("Plik CSV"), plik);
         await user.click(await screen.findByRole("button", { name: "Importuj 2 wiersze" }));
-        await waitFor(() => expect(toast).toHaveBeenCalledWith("Zaimportowano 2 wiersze"));
+        expect(await screen.findByText("Zaimportowano 2 wiersze")).toBeInTheDocument();
         expect(router.refresh).toHaveBeenCalled();
+        await user.click(screen.getByRole("button", { name: "Gotowe" }));
         expect(screen.queryByRole("dialog", { name: "Importuj z CSV" })).not.toBeInTheDocument();
       });
     });
@@ -1456,6 +1459,26 @@ describe("PageTable", () => {
         "Eksportuj całą tabelę (CSV)",
         "Zresetuj sejf…",
       ]);
+    });
+
+    it("Hasła: menu „⋯” bez „Importuj z CSV…”, a eksport pomija kolumny Sekret", async () => {
+      const user = userEvent.setup();
+      stanSejfu("odblokowany");
+      let blob: Blob | null = null;
+      URL.createObjectURL = vi.fn((b: Blob) => {
+        blob = b;
+        return "blob:hasla";
+      });
+      URL.revokeObjectURL = vi.fn();
+      const klik = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      render(<PageTable block={blokHasel()} today={TODAY} module="passwords" title="Hasła" />);
+      await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+      expect(screen.queryByRole("menuitem", { name: "Importuj z CSV…" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
+      const tekst = await (blob as unknown as Blob).text();
+      const naglowek = tekst.replace(/^\uFEFF/, "").split("\r\n")[0];
+      expect(naglowek).toBe("Serwis,Login,URL,Kategoria");
+      klik.mockRestore();
     });
 
     it("zamknięty sejf: `moduleTools` dostaje readOnly, a opcje Kategorii w menu kolumny są tylko do odczytu", async () => {

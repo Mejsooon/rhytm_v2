@@ -149,8 +149,8 @@ export const rowValuesSchema = z.record(z.string(), z.unknown());
 // Akcje na wielu wierszach: od 1 do 500 id
 export const rowIdsSchema = z.array(idSchema).min(1, ZA_DUZO_WIERSZY).max(500, ZA_DUZO_WIERSZY);
 
-// Import CSV: do 2000 wierszy, nowe pola bez typu Sekret, nowe opcje wyboru (klucz = id pola albo „new:<indeks>”)
-export const importRowsSchema = z.array(rowValuesSchema).max(2000, IMPORT_ZA_DUZO);
+// Import CSV: do 5000 wierszy, nowe pola bez typu Sekret, nowe opcje wyboru (klucz = id pola albo „new:<indeks>”)
+export const importRowsSchema = z.array(rowValuesSchema).max(5000, IMPORT_ZA_DUZO);
 export const importNewFieldsSchema = z
   .array(z.object({ name: fieldNameSchema, type: fieldTypeSchema.exclude(["secret"]) }))
   .max(100);

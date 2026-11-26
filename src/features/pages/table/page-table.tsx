@@ -196,6 +196,7 @@ export function PageTable({
     link.click();
     link.remove();
     URL.revokeObjectURL(adres);
+    toast(`Wyeksportowano ${rowsLabel(doEksportu.length)} do ${link.download}`);
   };
   const importujCsv = onImportCsv ?? (modul ? undefined : () => setImportCsvOtwarty(true));
   const eksportujCsv = onExportCsv ?? (() => pobierzCsv(null));
@@ -655,14 +656,7 @@ export function PageTable({
             tableName={nazwaTabeli}
             fields={fields}
             rows={rows}
-            onImported={(liczba, pominiete) => {
-              toast(
-                pominiete > 0
-                  ? `Zaimportowano ${rowsLabel(liczba)} · ${pominiete} pominięte jako duplikaty`
-                  : `Zaimportowano ${rowsLabel(liczba)}`,
-              );
-              router.refresh();
-            }}
+            onImported={() => router.refresh()}
           />
         )}
         {oknoKarty && (

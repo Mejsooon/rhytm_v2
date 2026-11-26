@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Layers } from "lucide-react";
+import { Check, ChevronDown, Layers } from "lucide-react";
 
 import { Button, FIELD, FormDialog, Switch } from "@/components/controls";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ import type { PageRow } from "../table-model";
 const TYPY_NOWEGO: FieldType[] = ["text", "number", "date", "checkbox", "url", "select", "status", "rating"];
 
 // Limit wierszy jednego importu (jak w akcji serwera)
-const MAX_WIERSZY = 2000;
+const MAX_WIERSZY = 5000;
 
 function kolumnLabel(n: number) {
   const forma = rowsForm(n);
@@ -26,7 +26,7 @@ function kolumnLabel(n: number) {
 
 // Import z CSV (S2ImportCSV / S2ImportCSVMap): krok 1 „Plik” (wybór albo upuszczenie pliku), krok 2 „Kolumny”
 // (kolumna pliku → pole tabeli / nowe pole z typem / „Nie importuj”, przełącznik pomijania duplikatów po tytule).
-// Krok „Gotowe” z makiety zastępuje zamknięcie okna i toast wywołującego (`onImported`).
+// Krok 3 „Gotowe”: liczba zaimportowanych wierszy, pominięte duplikaty i kolumny; „Gotowe” zamyka okno.
 export function CsvImportDialog({
   open,
   onOpenChange,
@@ -43,18 +43,21 @@ export function CsvImportDialog({
   fields: PageField[];
   // Wiersze już w tabeli (do pomijania duplikatów po tytule)
   rows: PageRow[];
-  // Liczba zaimportowanych i pominiętych jako duplikaty wierszy
-  onImported: (count: number, pominiete: number) => void;
+  // Wywoływane zaraz po udanym zapisie (odświeżenie danych tabeli)
+  onImported: () => void;
 }) {
   const [nazwaPliku, setNazwaPliku] = React.useState("");
   const [naglowek, setNaglowek] = React.useState<string[]>([]);
   const [wiersze, setWiersze] = React.useState<string[][]>([]);
   const [mapowanie, setMapowanie] = React.useState<CsvMapping>([]);
-  const [krok, setKrok] = React.useState<1 | 2>(1);
+  const [krok, setKrok] = React.useState<1 | 2 | 3>(1);
+  const [wynikImportu, setWynikImportu] = React.useState<{ count: number; pominiete: number; kolumny: string[] } | null>(null);
   const [pomijajDuplikaty, setPomijajDuplikaty] = React.useState(true);
   const [blad, setBlad] = React.useState<string | null>(null);
   const [zapisuje, setZapisuje] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  // Synchroniczna blokada podwójnego zapisu (stan „zapisuje” zmienia się dopiero po rerenderze)
+  const zapisRef = React.useRef(false);
 
   async function wczytaj(plik: File | undefined) {
     if (!plik) return;
@@ -69,7 +72,7 @@ export function CsvImportDialog({
       return;
     }
     if (wynik.rows.length > MAX_WIERSZY) {
-      setBlad("Plik ma więcej niż 2 000 wierszy.");
+      setBlad("Plik ma więcej niż 5 000 wierszy.");
       return;
     }
     setNazwaPliku(plik.name);
@@ -79,37 +82,58 @@ export function CsvImportDialog({
     setKrok(2);
   }
 
-  // Wartości do zapisu: konwersja z mapowania i pominięcie duplikatów po tytule (pole tytułowe, jeśli zmapowane)
-  const wynikKonwersji = krok === 2 ? csvToValues(wiersze, mapowanie, fields) : null;
-  const poleTytulu = fields.find((f) => f.isTitle) ?? fields[0];
-  const istniejace = new Set(
-    rows
-      .map((w) => w.values[poleTytulu?.id ?? ""])
-      .filter((v): v is string => typeof v === "string" && v.trim() !== "")
-      .map((v) => v.trim().toLowerCase()),
+  // Wartości do zapisu: konwersja z mapowania i pominięcie duplikatów po tytule (tylko gdy kolumna pliku
+  // trafia do pola tytułowego tabeli: pole isTitle albo pierwsze pole tekstowe)
+  const wynikKonwersji = React.useMemo(
+    () => (krok === 2 ? csvToValues(wiersze, mapowanie, fields) : null),
+    [krok, wiersze, mapowanie, fields],
+  );
+  const poleTytulu = fields.find((f) => f.isTitle) ?? (fields[0]?.type === "text" ? fields[0] : undefined);
+  const tytulZmapowany = !!poleTytulu && mapowanie.some((m) => m.target.kind === "field" && m.target.field_id === poleTytulu.id);
+  const istniejace = React.useMemo(
+    () =>
+      new Set(
+        rows
+          .map((w) => w.values[poleTytulu?.id ?? ""])
+          .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+          .map((v) => v.trim().toLowerCase()),
+      ),
+    [rows, poleTytulu],
   );
   const doZapisu = (wynikKonwersji?.rows ?? []).filter((w) => {
     const tytul = poleTytulu ? w[poleTytulu.id] : null;
-    if (!pomijajDuplikaty || typeof tytul !== "string") return true;
+    if (!pomijajDuplikaty || !tytulZmapowany || typeof tytul !== "string") return true;
     return !istniejace.has(tytul.trim().toLowerCase());
   });
   const pominiete = (wynikKonwersji?.rows.length ?? 0) - doZapisu.length;
   const zaimportowaneKolumny = mapowanie.filter((m) => m.target.kind !== "skip").length;
 
   async function importuj() {
-    if (!wynikKonwersji || doZapisu.length === 0 || zapisuje) return;
+    if (!wynikKonwersji || doZapisu.length === 0 || zapisRef.current) return;
+    zapisRef.current = true;
     setZapisuje(true);
     setBlad(null);
     const nowePola: { name: string; type: FieldType }[] = [];
     for (const m of mapowanie) if (m.target.kind === "new") nowePola.push({ name: m.target.name, type: m.target.type });
-    const wynik = await importCsvRows(blockId, nowePola, doZapisu, wynikKonwersji.newOptions);
-    setZapisuje(false);
-    if (!wynik.ok) {
-      setBlad(wynik.message);
-      return;
+    try {
+      const wynik = await importCsvRows(blockId, nowePola, doZapisu, wynikKonwersji.newOptions);
+      if (!wynik.ok) {
+        setBlad(wynik.message);
+        return;
+      }
+      setWynikImportu({
+        count: wynik.count,
+        pominiete,
+        kolumny: mapowanie.filter((m) => m.target.kind === "skip").map((m) => naglowek[m.column]?.trim() || `Kolumna ${m.column + 1}`),
+      });
+      setKrok(3);
+      onImported();
+    } catch {
+      setBlad("Nie udało się zaimportować pliku.");
+    } finally {
+      zapisRef.current = false;
+      setZapisuje(false);
     }
-    onOpenChange(false);
-    onImported(wynik.count, pominiete);
   }
 
   const kroki = [
@@ -123,7 +147,7 @@ export function CsvImportDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Importuj z CSV"
-      description={krok === 1 ? `Dodaj wiersze do tabeli ${tableName} z pliku CSV.` : "Sprawdź, które kolumny trafią do których pól."}
+      description={krok === 3 ? "Gotowe." : krok === 1 ? `Dodaj wiersze do tabeli ${tableName} z pliku CSV.` : "Sprawdź, które kolumny trafią do których pól."}
       contentClassName="min-[800px]:w-[min(640px,calc(100%-32px))]"
       footerClassName="justify-between"
       footer={
@@ -132,17 +156,20 @@ export function CsvImportDialog({
             {krok === 2 ? `${rowsLabel(wiersze.length)} · ${zaimportowaneKolumny} z ${kolumnLabel(naglowek.length)}` : ""}
           </span>
           <span className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
-              Anuluj
-            </Button>
+            {krok < 3 && (
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                Anuluj
+              </Button>
+            )}
             <Button
               variant="primary"
-              aria-disabled={krok === 1 || doZapisu.length === 0 || zapisuje}
+              aria-disabled={krok === 1 || zapisuje || (krok === 2 && doZapisu.length === 0)}
               onClick={() => {
                 if (krok === 2) void importuj();
+                if (krok === 3) onOpenChange(false);
               }}
             >
-              {krok === 1 ? "Dalej" : `Importuj ${rowsLabel(doZapisu.length)}`}
+              {krok === 1 ? "Dalej" : krok === 2 ? `Importuj ${rowsLabel(wiersze.length)}` : "Gotowe"}
             </Button>
           </span>
         </>
@@ -201,8 +228,29 @@ export function CsvImportDialog({
             <Layers size={16} aria-hidden="true" />
           </span>
           <b className="font-medium">Przeciągnij plik CSV albo kliknij, żeby wybrać</b>
-          <span className="text-xs text-muted-foreground">Pierwszy wiersz to nazwy kolumn · UTF-8 · do 2 000 wierszy</span>
+          <span className="text-xs text-muted-foreground">Pierwszy wiersz to nazwy kolumn · UTF-8 · do 5 000 wierszy</span>
         </button>
+      )}
+
+      {krok === 3 && wynikImportu && (
+        <div className="flex flex-col items-center gap-2 px-4 py-7 text-center">
+          <span className="inline-flex size-11 items-center justify-center rounded-[9px] bg-[#f0fdf4] text-[#15803d]">
+            <Check size={20} aria-hidden="true" />
+          </span>
+          <b className="text-base font-semibold">Zaimportowano {rowsLabel(wynikImportu.count)}</b>
+          {(wynikImportu.pominiete > 0 || wynikImportu.kolumny.length > 0) && (
+            <span className="text-xs text-muted-foreground">
+              {[
+                wynikImportu.pominiete > 0 ? `${wynikImportu.pominiete} pominięte jako duplikaty` : null,
+                wynikImportu.kolumny.length > 0
+                  ? `${wynikImportu.kolumny.length === 1 ? "1 kolumna nie została zaimportowana" : `${wynikImportu.kolumny.length} ${rowsForm(wynikImportu.kolumny.length) === "few" ? "kolumny nie zostały zaimportowane" : "kolumn nie zostało zaimportowanych"}`} (${wynikImportu.kolumny.map((k) => `„${k}”`).join(", ")})`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          )}
+        </div>
       )}
 
       {krok === 2 && (
@@ -217,7 +265,7 @@ export function CsvImportDialog({
                 {rowsLabel(wiersze.length)} · {kolumnLabel(naglowek.length)}
               </span>
             </span>
-            <Button size="sm" variant="secondary" onClick={() => setKrok(1)}>
+            <Button size="sm" variant="ghost" disabled={zapisuje} onClick={() => setKrok(1)}>
               Zmień plik
             </Button>
           </div>
@@ -276,7 +324,7 @@ export function CsvImportDialog({
             })}
           </div>
           <label className="flex items-center gap-2 text-[13px]">
-            <Switch checked={pomijajDuplikaty} onChange={setPomijajDuplikaty} ariaLabel="Pomiń duplikaty" />
+            <Switch checked={pomijajDuplikaty && tytulZmapowany} onChange={setPomijajDuplikaty} ariaLabel="Pomiń duplikaty" disabled={zapisuje || !tytulZmapowany} />
             Pomiń wiersze, które już są w tabeli (po tytule)
           </label>
         </>

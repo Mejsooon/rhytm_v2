@@ -794,8 +794,8 @@ describe("importCsvRows", () => {
     expect(tables.page_fields.eq).toHaveBeenCalledWith("user_id", "u1");
   });
 
-  it("odmawia dla więcej niż 2000 wierszy", async () => {
-    const w = await importCsvRows(BLOK, [], Array.from({ length: 2001 }, () => ({})));
+  it("odmawia dla więcej niż 5000 wierszy", async () => {
+    const w = await importCsvRows(BLOK, [], Array.from({ length: 5001 }, () => ({})));
     expect(w.ok).toBe(false);
     expect(from).not.toHaveBeenCalled();
   });

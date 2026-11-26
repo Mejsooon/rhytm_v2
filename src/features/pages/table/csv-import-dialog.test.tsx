@@ -98,7 +98,13 @@ describe("CsvImportDialog", () => {
       { "f-tytul": "Deep Work", "new:0": 123 },
       { "f-tytul": "Sapiens", "new:0": 456 },
     ]);
-    await waitFor(() => expect(onImported).toHaveBeenCalledWith(2, 0));
+    await waitFor(() => expect(onImported).toHaveBeenCalledTimes(1));
+    // Krok 3: „Gotowe.”, liczba wierszy, bez Anuluj; „Gotowe” zamyka okno
+    expect(await screen.findByText("Zaimportowano 2 wiersze")).toBeInTheDocument();
+    expect(screen.getByText("Gotowe.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Anuluj" })).not.toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Gotowe" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -108,13 +114,15 @@ describe("CsvImportDialog", () => {
     const { onImported } = otworz();
     await wybierz(user, plik("Tytuł,Autor,ISBN\nDiuna,F. Herbert,1\nDeep Work,Cal Newport,2\n"));
     await user.selectOptions(await screen.findByLabelText("Pole dla kolumny ISBN"), "skip");
-    expect(screen.getByRole("button", { name: "Importuj 1 wiersz" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Importuj 1 wiersz" }));
+    // Przycisk liczy wszystkie wiersze pliku; pominięte duplikaty widać dopiero w kroku 3
+    await user.click(screen.getByRole("button", { name: "Importuj 2 wiersze" }));
     await waitFor(() => expect(actions.importCsvRows).toHaveBeenCalled());
     const [, nowe, wiersze] = actions.importCsvRows.mock.calls[0];
     expect(nowe).toEqual([]);
     expect(wiersze).toEqual([{ "f-tytul": "Deep Work", "f-autor": "Cal Newport" }]);
-    await waitFor(() => expect(onImported).toHaveBeenCalledWith(1, 1));
+    expect(await screen.findByText("Zaimportowano 1 wiersz")).toBeInTheDocument();
+    expect(screen.getByText("1 pominięte jako duplikaty · 1 kolumna nie została zaimportowana („ISBN”)")).toBeInTheDocument();
+    expect(onImported).toHaveBeenCalledTimes(1);
   });
 
   it("wyłączone pomijanie duplikatów importuje wszystkie wiersze", async () => {
@@ -125,6 +133,40 @@ describe("CsvImportDialog", () => {
     await user.click(await screen.findByRole("switch", { name: "Pomiń duplikaty" }));
     await user.click(screen.getByRole("button", { name: "Importuj 2 wiersze" }));
     await waitFor(() => expect(actions.importCsvRows.mock.calls[0][2]).toHaveLength(2));
+  });
+
+  it("przełącznik duplikatów jest wyłączony, gdy tytuł nie jest zmapowany", async () => {
+    const user = userEvent.setup();
+    otworz();
+    await wybierz(user, plik("Autor\nCal Newport\n"));
+    expect(await screen.findByRole("switch", { name: "Pomiń duplikaty" })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("podwójne kliknięcie „Importuj” zapisuje raz; „Zmień plik” i przełącznik są wyłączone w trakcie zapisu", async () => {
+    const user = userEvent.setup();
+    let koniec: (v: unknown) => void = () => {};
+    actions.importCsvRows.mockReturnValue(new Promise((r) => (koniec = r)));
+    otworz();
+    await wybierz(user, plik("Tytuł\nDeep Work\n"));
+    const przycisk = await screen.findByRole("button", { name: "Importuj 1 wiersz" });
+    await user.click(przycisk);
+    await user.click(przycisk);
+    expect(actions.importCsvRows).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Zmień plik" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Pomiń duplikaty" })).toHaveAttribute("aria-disabled", "true");
+    koniec({ ok: true, fieldIds: [], count: 1 });
+    expect(await screen.findByText("Zaimportowano 1 wiersz")).toBeInTheDocument();
+  });
+
+  it("wyjątek z akcji: komunikat w oknie i można spróbować ponownie", async () => {
+    const user = userEvent.setup();
+    actions.importCsvRows.mockRejectedValueOnce(new Error("sieć")).mockResolvedValueOnce({ ok: true, fieldIds: [], count: 1 });
+    otworz();
+    await wybierz(user, plik("Tytuł\nDeep Work\n"));
+    await user.click(await screen.findByRole("button", { name: "Importuj 1 wiersz" }));
+    expect(await screen.findByText("Nie udało się zaimportować pliku.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Importuj 1 wiersz" }));
+    expect(await screen.findByText("Zaimportowano 1 wiersz")).toBeInTheDocument();
   });
 
   it("nieznana etykieta statusu trafia do newOptions", async () => {
