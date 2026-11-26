@@ -10,7 +10,6 @@ import { utworzSubscriptions } from "./strony";
 
 // Stały tydzień testów: poniedziałek 11.01.2027, wtorek 12.01, kolejny wtorek 19.01.
 // Daty są w przyszłości i niezależne od „dziś”, więc testy nie zależą od zegara.
-export const PONIEDZIALEK = "2027-01-11";
 export const WTOREK = "2027-01-12";
 export const SRODA = "2027-01-13";
 export const NASTEPNY_WTOREK = "2027-01-19";
