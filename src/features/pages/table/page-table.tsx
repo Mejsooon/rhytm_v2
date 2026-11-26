@@ -283,6 +283,11 @@ export function PageTable({
     const v = effectiveView(settings);
     return searchRows(fields, visibleRows(fields, rows, { ...settings, filters: v.filters, sort: v.sort }, null, today), store.query);
   }, [fields, rows, settings, store.query, today]);
+  // Telefon (MSubs, MPasswords) nie zna zakładek webu ani szukajki: dostaje wiersze po samych filtrach i sorcie „Wszystkich”
+  const wierszeTelefonu = React.useMemo(
+    () => visibleRows(fields, rows, { ...settings, filters: settings.filters, sort: settings.sort }, null, today),
+    [fields, rows, settings, today],
+  );
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
   if (przypiety && !zywe.some((r) => r.id === przypiety.id)) setPrzypiety(null);
   const widoczneWiersze = React.useMemo(() => {
@@ -599,7 +604,7 @@ export function PageTable({
         <div className="min-[800px]:hidden">
           <UkladTelefonu render={renderPhone} api={{
             fields,
-            rows: widoczneWiersze,
+            rows: wierszeTelefonu,
             readOnly: tylkoOdczyt,
             createOption: store.createOption,
             removeOption: store.removeOption,
@@ -683,7 +688,15 @@ export function PageTable({
           <ViewTabs
             tabs={[
               { id: null, name: "Wszystkie", count: viewCount(fields, rows, widokWszystkich, today) },
-              ...settings.views.map((v) => ({ id: v.id, name: v.name, count: viewCount(fields, rows, v, today) })),
+              ...settings.views.map((v) => ({
+                id: v.id,
+                // Widok „Przeczytane w <rok>” z filtrem „ten rok” nie zamraża roku: na zakładce jest bieżący
+                name:
+                  /^Przeczytane w \d{4}$/.test(v.name) && v.filters.some((c) => c.op === "this_year")
+                    ? `Przeczytane w ${today.slice(0, 4)}`
+                    : v.name,
+                count: viewCount(fields, rows, v, today),
+              })),
             ]}
             activeId={settings.active_view_id !== null && settings.views.some((v) => v.id === settings.active_view_id) ? settings.active_view_id : null}
             readOnly={tylkoOdczyt}

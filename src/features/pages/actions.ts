@@ -1266,6 +1266,18 @@ export async function importCsvRows(
       const pole = pola[i];
       if (pole.type === "secret") continue;
       let v = normalizeValue(pole, surowy[kluczePol[i]]);
+      // Kolumna bez mapowania (brak klucza w wierszu) dostaje wartość domyślną pola, jak w „Nowy wiersz”
+      if (!(kluczePol[i] in surowy)) {
+        const domyslna = pole.config.default_option;
+        if (
+          (pole.type === "select" || pole.type === "status") &&
+          domyslna !== undefined &&
+          (pole.config.options ?? []).some((o) => o.id === domyslna)
+        ) {
+          v = domyslna;
+        }
+        if (pole.type === "checkbox" && pole.config.default_checked === true) v = true;
+      }
       if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;
       if (v !== null) wartosci[pole.id] = v;
     }

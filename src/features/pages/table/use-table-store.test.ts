@@ -910,15 +910,13 @@ describe("useTableStore", () => {
       return b;
     }
 
-    it("selectView zapisuje active_view_id i czyści filtr tymczasowy", async () => {
+    it("selectView zapisuje active_view_id", async () => {
       const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
-      act(() => result.current.setTempFilters([]));
       await act(async () => {
         await result.current.selectView("w1");
       });
       expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { active_view_id: "w1" });
       expect(result.current.settings.active_view_id).toBe("w1");
-      expect(result.current.tempFilters).toBeNull();
       expect(result.current.view.filters).toHaveLength(1);
     });
 
@@ -1254,6 +1252,8 @@ describe("useTableStore", () => {
       });
       expect(result.current.rows.find((r) => r.id === "row-1")!.values[status.id]).toBe(przed);
       expect(toast.error).toHaveBeenCalled();
+      // Po błędzie (możliwy częściowy zapis) dane wracają z serwera
+      expect(router.refresh).toHaveBeenCalled();
 
       actions.setRowsValue.mockClear();
       const sekret = { ...status, id: "f-sekret", type: "secret" as const, config: {} };
@@ -1263,6 +1263,103 @@ describe("useTableStore", () => {
       });
       expect(wynik).toBe(false);
       expect(actions.setRowsValue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("usuwanie opcji i pól a zapisane widoki", () => {
+    function blokZWidokami() {
+      const b = blok();
+      const status = b.fields.find((f) => f.name === "Status")!;
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const czytam = status.config.options!.find((o) => o.label === "Czytam")!;
+      const przeczytane = status.config.options!.find((o) => o.label === "Przeczytane")!;
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          group_by: autor.id,
+          collapsed_groups: { all: ["x"], w1: ["y"], w2: ["z"] },
+          views: [
+            {
+              id: "w1",
+              name: "Widok 1",
+              filters: [
+                { field_id: status.id, op: "in", value: [czytam.id, przeczytane.id] },
+                { field_id: autor.id, op: "contains", value: "a" },
+              ],
+              sort: [{ field_id: autor.id, dir: "asc" }],
+              group_by: autor.id,
+              layout: "table",
+              hidden_field_ids: [autor.id],
+            },
+            {
+              id: "w2",
+              name: "Widok 2",
+              filters: [{ field_id: status.id, op: "not_in", value: [czytam.id] }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+          ],
+        },
+      };
+      return { b, status, autor, czytam, przeczytane };
+    }
+
+    it("removeOption czyści warunki in/not_in także w filtrach zapisanych widoków, jednym zapisem ustawień", async () => {
+      const { b, status, czytam, przeczytane } = blokZWidokami();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeOption(result.current.fields.find((f) => f.id === status.id)!, czytam.id);
+      });
+      const w = result.current.settings.views;
+      expect(w[0].filters[0]).toMatchObject({ value: [przeczytane.id] });
+      expect(w[1].filters).toEqual([]);
+      const [, patch] = actions.saveTableSettings.mock.calls.at(-1)!;
+      expect((patch as { views: unknown[] }).views).toHaveLength(2);
+    });
+
+    it("removeOption: błąd serwera przywraca filtry widoków", async () => {
+      const { b, status, czytam } = blokZWidokami();
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      const przed = JSON.stringify(result.current.settings.views);
+      await act(async () => {
+        await result.current.removeOption(result.current.fields.find((f) => f.id === status.id)!, czytam.id);
+      });
+      expect(JSON.stringify(result.current.settings.views)).toBe(przed);
+    });
+
+    it("removeField usuwa odwołania z widoków (filtry, sort, ukryte, grupowanie), z grupowania bazowego i zwiniętych grup", async () => {
+      const { b, autor, status } = blokZWidokami();
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      const s = result.current.settings;
+      expect(s.group_by).toBeNull();
+      expect(s.collapsed_groups).toEqual({ w2: ["z"] });
+      expect(s.views[0]).toMatchObject({ sort: [], group_by: null, hidden_field_ids: [] });
+      expect(s.views[0].filters).toEqual([expect.objectContaining({ field_id: status.id })]);
+      expect(s.views[1].filters).toHaveLength(1);
+      expect(actions.saveTableSettings).toHaveBeenCalledWith(
+        b.id,
+        expect.objectContaining({ group_by: null, collapsed_groups: { w2: ["z"] } }),
+      );
+    });
+
+    it("removeField: błąd usuwania na serwerze przywraca widoki i grupowanie", async () => {
+      const { b, autor } = blokZWidokami();
+      actions.deleteField.mockResolvedValue({ ok: false, message: "x" });
+      const { result } = renderHook(() => useTableStore(b));
+      const przed = JSON.stringify(result.current.settings);
+      await act(async () => {
+        await result.current.removeField(autor);
+      });
+      expect(JSON.stringify(result.current.settings.views)).toBe(JSON.stringify(JSON.parse(przed).views));
+      expect(result.current.settings.group_by).toBe(autor.id);
+      expect(result.current.settings.collapsed_groups).toEqual({ all: ["x"], w1: ["y"], w2: ["z"] });
     });
   });
 });

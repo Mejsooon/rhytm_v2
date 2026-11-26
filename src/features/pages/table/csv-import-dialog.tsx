@@ -16,6 +16,8 @@ const TYPY_NOWEGO: FieldType[] = ["text", "number", "date", "checkbox", "url", "
 
 // Limit wierszy jednego importu (jak w akcji serwera)
 const MAX_WIERSZY = 5000;
+// Szacowany rozmiar danych jednego importu (wiersze + nowe pola + nowe opcje), powyżej którego Server Action by odrzuciła żądanie
+const MAX_BAJTOW_IMPORTU = 3.8 * 1024 * 1024;
 
 function kolumnLabel(n: number) {
   const forma = rowsForm(n);
@@ -115,6 +117,14 @@ export function CsvImportDialog({
     setBlad(null);
     const nowePola: { name: string; type: FieldType }[] = [];
     for (const m of mapowanie) if (m.target.kind === "new") nowePola.push({ name: m.target.name, type: m.target.type });
+    // Server Action ma limit ciała żądania (ok. 4 MB): za duży import dostaje czytelny komunikat zamiast ogólnego błędu
+    const rozmiar = new TextEncoder().encode(JSON.stringify([doZapisu, nowePola, wynikKonwersji.newOptions])).length;
+    if (rozmiar > MAX_BAJTOW_IMPORTU) {
+      setBlad("Plik jest za duży do zaimportowania naraz — podziel go na mniejsze części.");
+      zapisRef.current = false;
+      setZapisuje(false);
+      return;
+    }
     try {
       const wynik = await importCsvRows(blockId, nowePola, doZapisu, wynikKonwersji.newOptions);
       if (!wynik.ok) {

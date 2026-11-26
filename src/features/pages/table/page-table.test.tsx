@@ -1529,6 +1529,70 @@ describe("PageTable", () => {
       expect(screen.getByRole("table").closest(".max-\\[799px\\]\\:hidden")).not.toBeNull();
     });
 
+    it("zakładka „Przeczytane w <rok>” z filtrem „ten rok” pokazuje bieżący rok, inne nazwy bez zmian", () => {
+      stanSejfu("odblokowany");
+      const b = blokHasel();
+      const widok = (id: string, name: string, op: string) => ({
+        id,
+        name,
+        filters: [{ field_id: "f-serwis", op }],
+        sort: [],
+        group_by: null,
+        layout: "table",
+        hidden_field_ids: [],
+      });
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          views: [
+            widok("w1", "Przeczytane w 2024", "this_year"),
+            widok("w2", "Przeczytane w 2024", "empty"),
+            widok("w3", "Moje Przeczytane w 2024", "this_year"),
+          ],
+        },
+      };
+      render(<PageTable block={b} today={TODAY} module="passwords" />);
+      const rok = TODAY.slice(0, 4);
+      expect(screen.getByRole("button", { name: new RegExp(`^Przeczytane w ${rok}`) })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Przeczytane w 2024/ })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Moje Przeczytane w 2024/ })).toBeInTheDocument();
+    });
+
+    it("renderPhone: wiersze po filtrach „Wszystkich”, bez aktywnego widoku webu i bez szukanej frazy", () => {
+      stanSejfu("odblokowany");
+      const b = blokHasel();
+      b.rows = [
+        ...b.rows,
+        { id: "row-2", values: { "f-serwis": "GitLab", "f-login": "x", "f-kat": "k1" }, position: 1, deletedAt: null },
+        { id: "row-3", values: { "f-serwis": "Netflix", "f-login": "y", "f-kat": "k1" }, position: 2, deletedAt: null },
+      ];
+      b.content = {
+        ...b.content,
+        settings: {
+          ...(b.content.settings as object),
+          filters: [{ field_id: "f-serwis", op: "not_equals", value: "Netflix" }],
+          views: [
+            {
+              id: "w1",
+              name: "Tylko GitHub",
+              filters: [{ field_id: "f-serwis", op: "contains", value: "GitHub" }],
+              sort: [],
+              group_by: null,
+              layout: "table",
+              hidden_field_ids: [],
+            },
+          ],
+          active_view_id: "w1",
+        },
+      };
+      const renderPhone = vi.fn((api: unknown) => (api ? <span>lista telefonu</span> : null));
+      render(<PageTable block={b} today={TODAY} module="passwords" renderPhone={renderPhone} />);
+      const api = renderPhone.mock.calls.at(-1)![0] as { rows: { id: string }[] };
+      // Widok webu zawęża do GitHub, a telefon dostaje wszystko poza odfiltrowanym w „Wszystkich”
+      expect(api.rows.map((r) => r.id)).toEqual(["row-1", "row-2"]);
+    });
+
     it("renderPhone: „editRow” i „newRow” otwierają arkusz wiersza (istniejący i pusty szkic)", async () => {
       stanSejfu("odblokowany");
       let api: { rows: unknown[]; editRow: (r: never) => void; newRow: () => void } | null = null;

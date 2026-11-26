@@ -181,6 +181,20 @@ describe("CsvImportDialog", () => {
     expect(wiersze[0]["f-status"]).toBe(opcje["f-status"][0].id);
   });
 
+  it("za duży ładunek importu (powyżej ok. 3,8 MB): komunikat „podziel go”, bez wywołania akcji", async () => {
+    const user = userEvent.setup();
+    otworz();
+    const dlugi = "x".repeat(800);
+    const wiersze = Array.from({ length: 5000 }, (_, i) => `Książka ${i},${dlugi}`).join("\n");
+    // Rozmiar pliku podany jako mały, żeby minąć limit 1 MB samego pliku
+    await wybierz(user, plik(`Tytuł,Autor\n${wiersze}\n`, "duzy.csv", 1000));
+    await user.click(await screen.findByRole("button", { name: /^Importuj/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Plik jest za duży do zaimportowania naraz — podziel go na mniejsze części.",
+    );
+    expect(actions.importCsvRows).not.toHaveBeenCalled();
+  });
+
   it("plik większy niż 1 MB: komunikat w oknie i zostaje krok 1", async () => {
     const user = userEvent.setup();
     otworz();

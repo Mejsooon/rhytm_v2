@@ -99,7 +99,6 @@ export function useTableStore(
   const [zrodloPol, setZrodloPol] = useState(block.fields);
   const [zrodloWierszy, setZrodloWierszy] = useState(block.rows);
   const [zrodloUstawien, setZrodloUstawien] = useState(block.content.settings);
-  const [tempFilters, setTempFilters] = useState<FilterCond[] | null>(null);
   const [editing, setEditing] = useState<RowEditing | null>(null);
   // Szukana fraza: tylko stan klienta, nie trafia do ustawień
   const [query, setQuery] = useState("");
@@ -607,6 +606,8 @@ export function useTableStore(
         ),
       );
       toast.error(wynik && !wynik.ok ? wynik.message : BLAD_ZAPISU);
+      // Częściowy zapis możliwy: dane z serwera wyrównują stan po cofnięciu
+      router.refresh();
       return false;
     }
     const n = cele.length;
@@ -739,7 +740,6 @@ export function useTableStore(
 
   // Zakładka widoku (null = „Wszystkie”)
   async function selectView(id: string | null): Promise<boolean> {
-    setTempFilters(null);
     if (id === ustawieniaRef.current.active_view_id) return true;
     return patchSettings({ active_view_id: id });
   }
@@ -760,7 +760,6 @@ export function useTableStore(
       layout: biezacy.layout,
       hidden_field_ids: biezacy.hidden_field_ids,
     };
-    setTempFilters(null);
     const zWszystkich =
       przeniesFiltry && (s.active_view_id === null || !s.views.some((v) => v.id === s.active_view_id));
     return patchSettings(
@@ -791,7 +790,6 @@ export function useTableStore(
     const widok = s.views.find((v) => v.id === id);
     if (!widok) return true;
     const kopia: TableView = { ...widok, id: crypto.randomUUID(), name: `${widok.name} (kopia)`.slice(0, 40) };
-    setTempFilters(null);
     return patchSettings({ views: [...s.views, kopia], active_view_id: kopia.id });
   }
 
@@ -807,7 +805,6 @@ export function useTableStore(
     const patch: Partial<TableSettings> = { views: s.views.filter((v) => v.id !== id) };
     if (bylAktywny) {
       patch.active_view_id = null;
-      setTempFilters(null);
     }
     const udane = await patchSettings(patch);
     if (!udane) return false;
@@ -1113,6 +1110,9 @@ export function useTableStore(
     // Zapisujemy tylko klucze ustawień, które naprawdę się zmieniają
     const zmianyUstawien: Partial<TableSettings> = {};
     if (JSON.stringify(noweFiltry) !== JSON.stringify(settings.filters)) zmianyUstawien.filters = noweFiltry;
+    // Warunki „jest jednym z” na tej opcji znikają też z filtrów zapisanych widoków
+    const noweWidoki = settings.views.map((v) => ({ ...v, filters: bezOpcji(v.filters) }));
+    if (JSON.stringify(noweWidoki) !== JSON.stringify(settings.views)) zmianyUstawien.views = noweWidoki;
     if (noweKarty.length !== settings.pinned_cards.length) zmianyUstawien.pinned_cards = noweKarty;
     if (Object.keys(nowePodsumowania).length !== Object.keys(settings.column_summaries).length) {
       zmianyUstawien.column_summaries = nowePodsumowania;
@@ -1121,7 +1121,6 @@ export function useTableStore(
     for (const k of Object.keys(zmianyUstawien) as (keyof TableSettings)[]) {
       (poprzednieUstawienia as Record<string, unknown>)[k] = settings[k];
     }
-    const poprzednieTymczasowe = tempFilters;
     // Wiersze z najnowszego stanu (wierszeRef), nie z domknięcia
     const dotknieteWiersze = wierszeRef.current.filter((r) => r.values[field.id] === optionId).map((r) => r.id);
 
@@ -1131,7 +1130,6 @@ export function useTableStore(
       l.map((r) => (dotknieteWiersze.includes(r.id) ? { ...r, values: { ...r.values, [field.id]: null } } : r)),
     );
     setSettings((s) => ({ ...s, ...zmianyUstawien }));
-    setTempFilters((t) => (t ? bezOpcji(t) : t));
 
     // Zapisy w toku: dane z serwera w trakcie nie nadpiszą zmiany
     const zapisywaneWiersze = dotknieteWiersze.filter((id) => !id.startsWith(PREFIKS_TYMCZASOWY));
@@ -1202,7 +1200,6 @@ export function useTableStore(
         ),
       );
       setSettings((s) => ({ ...s, ...poprzednieUstawienia }));
-      setTempFilters(poprzednieTymczasowe);
       toast.error(BLAD_ZAPISU);
     }
     return udane;
@@ -1266,7 +1263,7 @@ export function useTableStore(
   // błąd przywraca pole i ustawienia
   async function removeField(field: PageField) {
     if (field.isTitle || field.id.startsWith(PREFIKS_TYMCZASOWY)) return;
-    // Wpisy ustawień i filtru tymczasowego, które usunięcie zabiera — tylko je cofamy przy błędzie
+    // Wpisy ustawień, które usunięcie zabiera — tylko je cofamy przy błędzie
     const nalezy = (id: string) => id === field.id;
     const zabranySort = settings.sort.filter((k) => nalezy(k.field_id));
     const sortPoUsunieciu = JSON.stringify(settings.sort.filter((k) => !nalezy(k.field_id)));
@@ -1279,11 +1276,38 @@ export function useTableStore(
     const zabraneKarty = settings.pinned_cards.filter(
       (c) => nalezy(c.field_id) || c.date_field_id === field.id || c.title_field_id === field.id,
     );
-    const zabraneFiltryTymczasowe = (tempFilters ?? []).filter((c) => nalezy(c.field_id));
+
+    // Odwołania w zapisanych widokach i w grupowaniu „Wszystkich”: serwer czyści tylko ustawienia bazowe,
+    // więc widoki dostają osobny zapis ustawień po usunięciu pola
+    const poprzednieWidoki = settings.views;
+    const poprzedniGroupBy = settings.group_by;
+    const poprzednieZwiniete = settings.collapsed_groups;
+    const widokiPoUsunieciu = settings.views.map((v) =>
+      v.group_by !== field.id &&
+      v.sort.every((k) => !nalezy(k.field_id)) &&
+      v.filters.every((c) => !nalezy(c.field_id)) &&
+      !v.hidden_field_ids.includes(field.id)
+        ? v
+        : {
+            ...v,
+            filters: v.filters.filter((c) => !nalezy(c.field_id)),
+            sort: v.sort.filter((k) => !nalezy(k.field_id)),
+            hidden_field_ids: v.hidden_field_ids.filter((id) => id !== field.id),
+            group_by: v.group_by === field.id ? null : v.group_by,
+          },
+    );
+    const zwinietePoUsunieciu = { ...settings.collapsed_groups };
+    if (settings.group_by === field.id) delete zwinietePoUsunieciu.all;
+    for (const v of settings.views) if (v.group_by === field.id) delete zwinietePoUsunieciu[v.id];
+    const widokiZmienione = JSON.stringify(widokiPoUsunieciu) !== JSON.stringify(settings.views);
+    const grupowanieZmienione = settings.group_by === field.id;
 
     setFields((l) => l.filter((f) => f.id !== field.id));
     setSettings((s) => ({
       ...s,
+      views: s.views.map((v) => widokiPoUsunieciu.find((w) => w.id === v.id) ?? v),
+      group_by: s.group_by === field.id ? null : s.group_by,
+      collapsed_groups: s.group_by === field.id || widokiZmienione ? zwinietePoUsunieciu : s.collapsed_groups,
       sort: s.sort.filter((k) => !nalezy(k.field_id)),
       filters: s.filters.filter((c) => !nalezy(c.field_id)),
       hidden_field_ids: s.hidden_field_ids.filter((id) => id !== field.id),
@@ -1298,12 +1322,26 @@ export function useTableStore(
           c.field_id !== field.id && c.date_field_id !== field.id && c.title_field_id !== field.id,
       ),
     }));
-    setTempFilters((t) => (t ? t.filter((c) => !nalezy(c.field_id)) : t));
     polaWToku.current += 1;
     ustawieniaWToku.current += 1;
     let udane = false;
     try {
       udane = (await deleteField(field.id)).ok;
+      // Zapis widoków i grupowania dopiero po usunięciu pola
+      if (udane && (widokiZmienione || grupowanieZmienione)) {
+        const zapis = await saveTableSettings(block.id, {
+          views: ustawieniaRef.current.views.map((v) => widokiPoUsunieciu.find((w) => w.id === v.id) ?? v),
+          group_by: grupowanieZmienione ? null : ustawieniaRef.current.group_by,
+          collapsed_groups: Object.fromEntries(
+            Object.entries(ustawieniaRef.current.collapsed_groups).filter(([klucz]) => klucz in zwinietePoUsunieciu),
+          ),
+        });
+        // Pole jest już usunięte na serwerze, więc błąd tego zapisu go nie cofa: odświeżamy dane z serwera
+        if (!zapis.ok) {
+          toast.error(BLAD_ZAPISU);
+          router.refresh();
+        }
+      }
     } catch {
       udane = false;
     }
@@ -1313,6 +1351,9 @@ export function useTableStore(
       setFields((l) => (l.some((f) => f.id === field.id) ? l : [...l, field]));
       setSettings((s) => ({
         ...s,
+        views: widokiZmienione ? poprzednieWidoki : s.views,
+        group_by: grupowanieZmienione && s.group_by === null ? poprzedniGroupBy : s.group_by,
+        collapsed_groups: widokiZmienione || grupowanieZmienione ? poprzednieZwiniete : s.collapsed_groups,
         // Sort wraca tylko, jeśli w międzyczasie nie został zmieniony
         sort: JSON.stringify(s.sort) === sortPoUsunieciu ? [...s.sort, ...zabranySort] : s.sort,
         filters: [...s.filters, ...zabraneFiltry],
@@ -1331,9 +1372,6 @@ export function useTableStore(
             : s.column_widths,
         pinned_cards: [...s.pinned_cards, ...zabraneKarty],
       }));
-      if (zabraneFiltryTymczasowe.length > 0) {
-        setTempFilters((t) => (t ? [...t, ...zabraneFiltryTymczasowe] : t));
-      }
       toast.error(BLAD_ZAPISU);
     }
   }
@@ -1342,7 +1380,6 @@ export function useTableStore(
     fields: posortowanePola,
     rows,
     settings,
-    tempFilters,
     editing,
     view,
     query,
@@ -1370,7 +1407,6 @@ export function useTableStore(
     setRowsValue,
     addField,
     patchSettings,
-    setTempFilters,
     planTypeChangeFor,
     applyTypeChange,
     patchField,

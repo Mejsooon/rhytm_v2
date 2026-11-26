@@ -794,6 +794,39 @@ describe("importCsvRows", () => {
     expect(tables.page_fields.eq).toHaveBeenCalledWith("user_id", "u1");
   });
 
+  it("kolumny bez mapowania dostają wartości domyślne pola (checkbox, wybór), zmapowane puste nie", async () => {
+    const POLE_AKTYWNA = "a3000000-0000-4000-8000-0000000000a1";
+    const POLE_KAT = "a3000000-0000-4000-8000-0000000000a2";
+    const POLE_KAT2 = "a3000000-0000-4000-8000-0000000000a3";
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_AKTYWNA, name: "Aktywna", type: "checkbox", config: { default_checked: true }, position: 1, is_title: false },
+        {
+          id: POLE_KAT,
+          name: "Kategoria",
+          type: "select",
+          config: { options: [{ id: "o1", label: "A", color: "#000000" }], default_option: "o1" },
+          position: 2,
+          is_title: false,
+        },
+        {
+          id: POLE_KAT2,
+          name: "Inna",
+          type: "select",
+          config: { options: [{ id: "o1", label: "A", color: "#000000" }], default_option: "nie-ma" },
+          position: 3,
+          is_title: false,
+        },
+      ],
+    });
+    const w = await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "Netflix" }, { [POLE_TYTUL]: "HBO", [POLE_AKTYWNA]: false, [POLE_KAT]: null }]);
+    expect(w.ok).toBe(true);
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "Netflix", [POLE_AKTYWNA]: true, [POLE_KAT]: "o1" });
+    expect(wstawione[1].values).toEqual({ [POLE_TYTUL]: "HBO", [POLE_AKTYWNA]: false });
+  });
+
   it("odmawia dla więcej niż 5000 wierszy", async () => {
     const w = await importCsvRows(BLOK, [], Array.from({ length: 5001 }, () => ({})));
     expect(w.ok).toBe(false);

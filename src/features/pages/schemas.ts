@@ -127,13 +127,13 @@ const tableView = z.object({
   sort: z.array(sortKey).max(10),
   group_by: z.string().min(1).max(64).nullable(),
   layout: z.enum(["table", "board"]),
-  hidden_field_ids: z.array(z.string()).max(200),
+  hidden_field_ids: z.array(z.string().max(64)).max(200),
 });
 
 export const tableSettingsPatchSchema = z.object({
   sort: z.array(sortKey).max(10).optional(),
   filters: z.array(filterCond).max(50).optional(),
-  hidden_field_ids: z.array(z.string()).max(200).optional(),
+  hidden_field_ids: z.array(z.string().max(64)).max(200).optional(),
   column_summaries: z.record(z.string(), columnSummary).optional(),
   pinned_cards: z.array(pinnedCard).max(20).optional(),
   column_widths: z.record(z.string(), z.number().int().min(80).max(4000)).optional(),
@@ -141,7 +141,11 @@ export const tableSettingsPatchSchema = z.object({
   active_view_id: z.string().min(1).max(64).nullable().optional(),
   group_by: z.string().min(1).max(64).nullable().optional(),
   layout: z.enum(["table", "board"]).optional(),
-  collapsed_groups: z.record(z.string(), z.array(z.string().max(64)).max(200)).optional(),
+  // Zwinięte grupy: do 50 kluczy (widoki i „all”), do 200 wpisów w kluczu
+  collapsed_groups: z
+    .record(z.string().max(64), z.array(z.string().max(64)).max(200))
+    .refine((o) => Object.keys(o).length <= 50)
+    .optional(),
 });
 
 export const rowValuesSchema = z.record(z.string(), z.unknown());
@@ -161,7 +165,7 @@ export const importOptionsSchema = z.record(
     .array(
       z.object({
         id: z.string().min(1).max(64),
-        label: z.string().max(60),
+        label: z.string().min(1).max(60),
         color: z.string().max(16).regex(/^(#[0-9a-fA-F]{3,8})?$/, "Kolor ma nieprawidłowy format."),
       }),
     )
