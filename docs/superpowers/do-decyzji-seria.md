@@ -151,3 +151,25 @@ Pełna lista C1–C18 w `specs/2026-11-24-ustawienia-web-design.md`. Najważniej
 | Bieg z wyniku otwiera `/sport?miesiac=…&bieg=<id>` | obsługuje biegi spoza wczytanych tygodni | brak |
 | Gwiazdka `*` usuwana z frazy | w składni PostgREST działa jak `%` | brak |
 | Serie nawyków w meta liczone z ostatnich 1000 odhaczeń z 366 dni | jedno zapytanie zamiast N | niski: bardzo długie serie zaniżone |
+
+## Pakiet Tabele v3 (seria „nowe makiety”, 2026-11-26)
+Decyzje Mejsona przed pakietem: polskie nazwy dla stron z domyślnym tytułem (migracja), import i eksport CSV teraz, karta planu i „Pomoc i opinie” ukryte, gotowe widoki szablonów dla istniejących stron.
+
+| # | Decyzja Claude | Dlaczego | Koszt pomyłki |
+|---|---|---|---|
+| 1 | Filtr „Klient ≠ ja” pomija puste wartości. | Tak liczy makieta (`r.client && r.client !== 'ja'`). | Niski. |
+| 2 | Kwota cykliczna w CSV to jedna kolumna „43.00 / mies.”, checkbox „tak/nie”. | Czytelne w Excelu. | Niski: import tej kolumny nie odtworzy cyklu. |
+| 3 | Eksport CSV dopisuje „'” przed komórkami zaczynającymi się od = + − @ (ochrona przed formułami w Excelu); import zdejmuje ten znak. | Bezpieczeństwo pliku z obcych danych. | Niski. |
+| 4 | Duplikat wiersza kopiuje szyfrogram Sekretów 1:1 i dopisuje „ (kopia)” do niepustego tytułu (pusty zostaje pusty, makieta: „Bez nazwy (kopia)”). | Bezpieczne kryptograficznie (ta sama treść). | Niski. |
+| 5 | Zmiany filtra, sortu, grupy, układu i pól zapisują się od razu w aktywnym widoku; wpisywanie wartości filtra z opóźnieniem 0,4 s. „Zapisz jako widok” z „Wszystkich” przenosi filtr do nowego widoku. | Makieta nie ma „Zapisz jako domyślny”. | Niski. |
+| 6 | Sortowanie ma jeden klucz (jak makieta); nie ma „Usuń sortowanie”, nie da się wrócić do kolejności dodania. | Makieta. | Niski. |
+| 7 | Nazwa tabeli zniknęła z interfejsu (zostaje w danych); przy dwóch tabelach na stronie nie da się ich nazwać. | Makieta jej nie ma. | Niski. |
+| 8 | Strony z szablonów raz dostają gotowe widoki i grupowanie „Wszystkich” (wygląd zmienia się jednorazowo). | Decyzja 4 Mejsona. | Niski: widoki można usunąć. |
+| 9 | Tablica: kolumna „Bez wartości” dla wierszy bez opcji; własny pusty stan „Tablica potrzebuje pola Wybór albo Status.”; „Nowa kolumna” wyłączona na tablicy; Repo nie pokazuje się na kartach Projektów. | Makieta nie ma tych stanów. | Niski. |
+| 10 | Import CSV: do 5 000 wierszy, limit ciała Server Actions podniesiony do 4 MB; dopasowanie kolumn przez listę (z „Nowe pole · typ”), a nie przycisk przełączający jak w makiecie. | Nowe pole potrzebuje typu. | Niski. |
+| 11 | Nazwa pliku eksportu to tytuł strony (makieta: małymi literami), zaznaczone: „— zaznaczone”. | Czytelność. | Niski. |
+| 12 | Strony z szablonu nie dostają już bloku tekstu na górze; dawny niezmieniony opis jest ukrywany (bez migracji). Pusta strona to „Bez tytułu” na webie i telefonie. | Makieta S2Table/S2EmptyPage. | Niski. |
+| 13 | Duplikuj, ulubione i usuń stronę są tylko w menu „⋯” przy stronie w pasku bocznym (nagłówek ich nie ma, jak w makiecie). „Pokaż pasek boczny” jest tylko w schowanym pasku z ikonami. | Makieta. | Niski. |
+| 14 | Hasła na webie: bez banera z odliczaniem, plakietek z liczbą haseł i dymku „Kategorie” (makieta ich nie ma); nowe teksty okna ustawiania sejfu widać też w Ustawienia → Sejf. | Makieta. | Niski. |
+| 15 | **Do potwierdzenia:** moduł Hasła ma Kategorię bez opcji, więc zakładki Praca / Studia / Prywatne z makiety się nie pojawiają. Dodanie domyślnych opcji wymaga migracji. | — | Mała migracja, jeśli chcesz. |
+| 16 | Kafelki z literą przy Serwisie (S2Passwords) jeszcze nie są zrobione. | Odłożone. | Niski. |
