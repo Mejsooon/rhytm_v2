@@ -19,6 +19,11 @@ const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: router.refresh }),
+}));
 vi.mock("../actions", () => actions);
 // Sejf (VaultProvider jest w powłoce aplikacji); tabele bez Sekretu go nie używają, moduł Hasła ustawia stan sam
 const vault = vi.hoisted(() => ({ state: { status: "ladowanie" } as Record<string, unknown> }));
@@ -241,7 +246,7 @@ describe("PageTable", () => {
   });
 
   describe("filtr", () => {
-    it("warunek zawęża tabelę i karty; „Zapisz jako domyślny” zapisuje settings.filters", async () => {
+    it("warunek zawęża tabelę i karty i od razu zapisuje settings.filters", async () => {
       const user = userEvent.setup();
       const b = blok("books", BOOKS);
       render(<PageTable block={b} today={TODAY} />);
@@ -252,8 +257,9 @@ describe("PageTable", () => {
       expect(tytuly()).toEqual(["Deep Work"]);
       expect(karta("Czytam teraz").textContent).toContain("0");
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
-      await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
-      expect(actions.saveTableSettings).toHaveBeenCalledWith(b.id, { filters: [expect.objectContaining({ op: "contains", value: "deep" })] });
+      expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
+        filters: [expect.objectContaining({ op: "contains", value: "deep" })],
+      });
     });
 
     it("„Filtruj po tym polu” otwiera filtr z warunkiem dla pola", async () => {
@@ -1364,6 +1370,7 @@ describe("PageTable", () => {
           today={TODAY}
           module="passwords"
           moduleTools={({ readOnly }) => <span>Narzędzia modułu {readOnly ? "tylko do odczytu" : "edycja"}</span>}
+          onImportCsv={() => {}}
         />,
       );
       expect(screen.queryByRole("textbox", { name: "Nazwa tabeli" })).not.toBeInTheDocument();
@@ -1372,8 +1379,8 @@ describe("PageTable", () => {
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
       const menu = await screen.findByRole("menu", { name: "Menu tabeli" });
       expect(within(menu).getByText("Kolumny modułu Hasła są stałe.")).toBeInTheDocument();
+      // Hasła: bez importu CSV (stałe kolumny), także gdy obsługa importu jest podana
       expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual([
-        "Importuj z CSV…",
         "Eksportuj całą tabelę (CSV)",
         "Zresetuj sejf…",
       ]);
@@ -1635,19 +1642,25 @@ describe("PageTable", () => {
       expect(screen.getByRole("button", { name: "Czytam 2" })).toHaveAttribute("aria-pressed", "true");
     });
 
-    it("„+ Widok” tworzy „Nowy widok” i go aktywuje (toast „Zapisano…”)", async () => {
+    it("„+ Widok” tworzy „Mój widok 1” i go aktywuje (toast „Zapisano…”); kolejny dostaje pierwszy wolny numer", async () => {
       const user = userEvent.setup();
       const b = ksiazkiZWidokami();
       render(<PageTable block={b} today={TODAY} />);
       await user.click(screen.getByRole("button", { name: "Widok" }));
       const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
-      expect(patch.views.at(-1).name).toBe("Nowy widok");
+      expect(patch.views.at(-1).name).toBe("Mój widok 1");
       expect(patch.active_view_id).toBe(patch.views.at(-1).id);
-      expect(screen.getByRole("button", { name: "Nowy widok 11" })).toHaveAttribute("aria-pressed", "true");
-      expect(toast).toHaveBeenCalledWith("Zapisano „Nowy widok” z obecnymi filtrami");
-      // Druga nazwa nie powtarza pierwszej
+      expect(screen.getByRole("button", { name: "Mój widok 1 11" })).toHaveAttribute("aria-pressed", "true");
+      expect(toast).toHaveBeenCalledWith("Zapisano „Mój widok 1” z obecnymi filtrami");
       await user.click(screen.getByRole("button", { name: "Widok" }));
-      expect(screen.getByRole("button", { name: "Nowy widok 2 11" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Mój widok 2 11" })).toBeInTheDocument();
+      // Po usunięciu „Mój widok 1” numer 1 jest znów wolny
+      await user.click(screen.getByRole("button", { name: "Mój widok 1 11" }));
+      await user.click(screen.getByRole("button", { name: "Menu widoku Mój widok 1" }));
+      await user.click(screen.getByRole("menuitem", { name: "Usuń widok" }));
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Mój widok 1 11" })).toBeNull());
+      await user.click(screen.getByRole("button", { name: "Widok" }));
+      expect(screen.getByRole("button", { name: "Mój widok 1 11" })).toBeInTheDocument();
     });
 
     it("menu widoku: Duplikuj widok i Usuń widok z tostem „Cofnij”", async () => {
@@ -1693,23 +1706,23 @@ describe("PageTable", () => {
       await user.click(within(filtr).getByRole("button", { name: "Zapisz jako widok" }));
       const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
       expect(patch.views.at(-1).filters).toEqual([{ field_id: b.fields[0].id, op: "contains", value: "deep" }]);
-      expect(screen.getByRole("button", { name: "Nowy widok 1" })).toHaveAttribute("aria-pressed", "true");
-      // Filtr tymczasowy przeszedł do widoku: przycisk „Filtruj · 1” liczy warunki widoku
+      expect(screen.getByRole("button", { name: "Mój widok 1 1" })).toHaveAttribute("aria-pressed", "true");
+      // Nowy widok ma warunek z filtra: przycisk „Filtruj · 1” liczy warunki widoku
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
       expect(tytuly()).toEqual(["Deep Work"]);
     });
 
-    it("„Zapisz jako domyślny” przy aktywnym widoku zapisuje filtr w tym widoku, nie w „Wszystkich”", async () => {
+    it("zmiana filtra przy aktywnym widoku zapisuje się od razu w tym widoku, nie w „Wszystkich”", async () => {
       const user = userEvent.setup();
       const b = ksiazkiZWidokami(1);
       render(<PageTable block={b} today={TODAY} />);
       await user.click(screen.getByRole("button", { name: "Filtruj · 1" }));
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
       await user.click(within(filtr).getByRole("button", { name: "Wyczyść" }));
-      await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
       const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
       expect(Object.keys(patch)).toEqual(["views"]);
       expect(patch.views[1].filters).toEqual([]);
+      expect(within(filtr).queryByRole("button", { name: "Zapisz jako domyślny" })).toBeNull();
     });
 
     it("szukajka filtruje wiersze bez zapisu, także w widoku", async () => {

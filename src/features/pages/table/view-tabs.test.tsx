@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -99,5 +99,23 @@ describe("ViewTabs", () => {
     renderuj();
     await user.dblClick(screen.getByRole("button", { name: "Wszystkie 11" }));
     expect(screen.queryByRole("textbox", { name: "Nazwa widoku" })).not.toBeInTheDocument();
+  });
+
+  it("blur zaraz po Esc nie zapisuje nazwy", async () => {
+    const user = userEvent.setup();
+    const w = renderuj("w1");
+    await user.dblClick(screen.getByRole("button", { name: "Czytam 2" }));
+    const pole = screen.getByRole("textbox", { name: "Nazwa widoku" });
+    await user.type(pole, "x");
+    // Esc i blur w tym samym zdarzeniu (zanim pole zniknie)
+    act(() => {
+      fireEvent.keyDown(pole, { key: "Escape" });
+      fireEvent.blur(pole);
+    });
+    expect(w.onRename).not.toHaveBeenCalled();
+    // Kolejna zmiana nazwy działa normalnie
+    await user.dblClick(screen.getByRole("button", { name: "Czytam 2" }));
+    await user.type(screen.getByRole("textbox", { name: "Nazwa widoku" }), "!{Enter}");
+    expect(w.onRename).toHaveBeenCalledWith("w1", "Czytam!");
   });
 });

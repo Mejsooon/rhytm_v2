@@ -260,7 +260,7 @@ export function PageTable({
   // Szukana fraza (stan klienta) zawęża wiersze po filtrach widoku; sekrety nie są przeszukiwane
   const wedlugUstawien = searchRows(
     fields,
-    visibleRows(fields, rows, { ...settings, filters: widok.filters, sort: widok.sort }, store.tempFilters, today),
+    visibleRows(fields, rows, { ...settings, filters: widok.filters, sort: widok.sort }, null, today),
     store.query,
   ).filter((r) => !modul || !moduleRowFilter || moduleRowFilter(r, fields));
   // Przypięty wiersz usunięty (kosz, odświeżenie): przypięcie znika, widok liczy się normalnie
@@ -279,7 +279,8 @@ export function PageTable({
     widoczneWiersze = [...zamrozone, ...wedlugUstawien.filter((r) => !wZamrozonych.has(r.id))];
   }
   // Filtr w edycji (stan klienta) albo zapisany domyślny
-  const filtry = store.tempFilters ?? widok.filters;
+  // Filtr działa od razu i zapisuje się w bieżącym widoku (jak sort, grupowanie i pola)
+  const filtry = widok.filters;
   // Opcja „zrobione” z karty najbliższego terminu (zrobione terminy nie są pilne)
   const kartaTerminu = settings.pinned_cards.find((c) => c.aggregation === "nearest_date");
   const zrobione =
@@ -367,10 +368,11 @@ export function PageTable({
     }
   }
 
-  // „+ Widok” i „Zapisz jako widok”: „Nowy widok” (z numerem, gdy nazwa jest zajęta) z bieżącymi filtrami
+  // „+ Widok” i „Zapisz jako widok”: „Mój widok N” (pierwszy wolny numer, S2Table) z bieżącymi filtrami
   async function dodajWidok() {
-    let nazwa = "Nowy widok";
-    for (let n = 2; settings.views.some((v) => v.name === nazwa); n++) nazwa = `Nowy widok ${n}`;
+    let n = 1;
+    while (settings.views.some((v) => v.name === `Mój widok ${n}`)) n++;
+    const nazwa = `Mój widok ${n}`;
     if (await store.addView(nazwa)) toast(`Zapisano „${nazwa}” z obecnymi filtrami`);
   }
 
@@ -510,13 +512,7 @@ export function PageTable({
                 total={zywe.length}
                 open={filtrOtwarty}
                 onOpenChange={setFiltrOtwarty}
-                onChange={store.setTempFilters}
-                onSave={() => {
-                  // Filtr tymczasowy znika dopiero po udanym zapisie (do bieżącego widoku)
-                  void store.patchView({ filters: filtry }).then((udane) => {
-                    if (udane) store.setTempFilters(null);
-                  });
-                }}
+                onChange={(filters) => void store.patchView({ filters })}
                 onSaveAsView={
                   tylkoOdczyt
                     ? undefined
@@ -591,19 +587,21 @@ export function PageTable({
                     </>
                   )}
                   <div className={MENU_SEPARATOR} />
-                  {/* CSV: obsługę dostarcza wywołujący (import i eksport w osobnym kroku) */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    disabled={!onImportCsv || tylkoOdczyt}
-                    onClick={() => {
-                      setMenuTabeli(false);
-                      onImportCsv?.();
-                    }}
-                    className={POZYCJA}
-                  >
-                    Importuj z CSV…
-                  </button>
+                  {/* CSV: obsługę dostarcza wywołujący (import i eksport w osobnym kroku); Hasła bez importu */}
+                  {!modul && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={!onImportCsv}
+                      onClick={() => {
+                        setMenuTabeli(false);
+                        onImportCsv?.();
+                      }}
+                      className={POZYCJA}
+                    >
+                      Importuj z CSV…
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
@@ -709,7 +707,7 @@ export function PageTable({
                         onSort={(dir) => void store.patchView({ sort: [{ field_id: f.id, dir }] })}
                         onFilter={() => {
                           bezZwrotuFokusu.current = true;
-                          store.setTempFilters([...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }]);
+                          void store.patchView({ filters: [...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }] });
                           setFiltrOtwarty(true);
                         }}
                         onSummary={(kind) => {

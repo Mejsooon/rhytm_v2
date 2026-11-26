@@ -57,10 +57,10 @@ function czyTelefon() {
 }
 
 // Filtr tabeli z FilterPopover.dc.html: warunki „Gdzie … i …”, operatory zależne od typu pola,
-// licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako domyślny”. Zmiany idą do stanu klienta —
-// zapisuje je dopiero „Zapisz jako domyślny”. Wyzwalaczem jest przycisk „Filtruj” w nagłówku strony.
+// licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako widok” (S2Table). Każda zmiana działa od razu — wywołujący
+// zapisuje ją w bieżącym widoku. Wyzwalaczem jest przycisk „Filtruj” w pasku tabeli.
 // Telefon (CMFilterSheet): przycisk „Filtr i sortowanie” 44 px i arkusz „Wyczyść · Filtr i sortowanie · Gotowe”
-// z warunkami (te same kontrolki co w dymku), sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako domyślny”.
+// z warunkami (te same kontrolki co w dymku), sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako widok”.
 export function FilterPopover({
   fields,
   filters,
@@ -70,7 +70,6 @@ export function FilterPopover({
   open,
   onOpenChange,
   onChange,
-  onSave,
   onSaveAsView,
   triggerClassName,
   sort,
@@ -85,7 +84,6 @@ export function FilterPopover({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: (filters: FilterCond[]) => void;
-  onSave: () => void;
   // „Zapisz jako widok”: nowy zapisany widok z bieżącymi warunkami (bez tej funkcji przycisku nie ma)
   onSaveAsView?: () => void;
   triggerClassName: string;
@@ -388,9 +386,11 @@ export function FilterPopover({
                 <Plus aria-hidden="true" className="size-4" />
                 Dodaj sortowanie
               </Button>
-              <Button variant="ghost" onClick={onSave} className="self-start px-1">
-                Zapisz jako domyślny
-              </Button>
+              {onSaveAsView && (
+                <Button variant="ghost" onClick={onSaveAsView} className="self-start px-1">
+                  Zapisz jako widok
+                </Button>
+              )}
             </div>
           )}
         </FormDialog>
@@ -454,13 +454,10 @@ export function FilterPopover({
               Wyczyść
             </Button>
             {onSaveAsView && (
-              <Button size="sm" onClick={onSaveAsView} className="max-[799px]:h-11">
+              <Button variant="primary" size="sm" onClick={onSaveAsView} className="max-[799px]:h-11">
                 Zapisz jako widok
               </Button>
             )}
-            <Button variant="primary" size="sm" onClick={onSave} className="max-[799px]:h-11">
-              Zapisz jako domyślny
-            </Button>
           </div>
         </div>
         <p className="m-0 text-xs text-muted-foreground">

@@ -3,6 +3,7 @@
 // Stan tabeli strony z szablonu: pola, wiersze, ustawienia, filtr tymczasowy i edytowany wiersz.
 // Każda zmiana od razu zmienia widok; błąd zapisu cofa ją i pokazuje toast. Nowe dane z serwera
 // zastępują kopię bez gubienia wierszy/pól tymczasowych i zapisów w toku (wzorzec „poprzednie props”).
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -89,6 +90,7 @@ export function useTableStore(
   const [fields, setFields] = useState<PageField[]>(block.fields);
   const [rows, setRows] = useState<PageRow[]>(block.rows);
   const [settings, setSettings] = useState<TableSettings>(zSerwera);
+  const router = useRouter();
   const [zrodloPol, setZrodloPol] = useState(block.fields);
   const [zrodloWierszy, setZrodloWierszy] = useState(block.rows);
   const [zrodloUstawien, setZrodloUstawien] = useState(block.content.settings);
@@ -100,6 +102,14 @@ export function useTableStore(
   // Zapisy w toku: pola i ustawienia (liczniki), wiersze (id → zmiany do nałożenia na dane z serwera)
   const polaWToku = useRef(0);
   const ustawieniaWToku = useRef(0);
+  // Błąd zapisu ustawień w trakcie innych zapisów: po ostatnim zapisie wyrównujemy ustawienia z serwerem
+  // (router.refresh → nowe props), zamiast cofać do nieaktualnej kopii
+  const wyrownajRef = useRef(false);
+  // Najnowsze ustawienia, także przed rerenderem (kolejne zmiany widoków w tym samym zdarzeniu albo po
+  // czekaniu na zapis widoków szablonu)
+  const ustawieniaRef = useRef(settings);
+  // Zapis widoków szablonu w toku: zmiany widoków użytkownika czekają na jego koniec, żeby go nie nadpisać
+  const zapisSzablonuRef = useRef<Promise<void> | null>(null);
   // Użytkownik zmienił widoki, grupowanie lub zwinięte grupy od wczytania: domyślne widoki szablonu ich nie nadpiszą
   const widokiZmienioneRef = useRef(false);
   // zatwierdzone (tylko updateCell): ostatnia wartość komórki potwierdzona przez serwer — do niej wraca błąd
@@ -158,6 +168,7 @@ export function useTableStore(
   useEffect(() => {
     polaRef.current = fields;
     wierszeRef.current = rows;
+    ustawieniaRef.current = settings;
   });
 
   // Otwarty szkic różni się od wartości z chwili otwarcia (nowy wiersz: od wartości startowych)
@@ -497,13 +508,12 @@ export function useTableStore(
 
   // Zmiana ustawień (sort, ukryte kolumny, podsumowania…): od razu lokalnie, błąd cofa te klucze
   async function patchSettings(patch: Partial<TableSettings>): Promise<boolean> {
-    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch || "active_view_id" in patch) {
-      widokiZmienioneRef.current = true;
-    }
+    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch) widokiZmienioneRef.current = true;
     const poprzednie: Partial<TableSettings> = {};
     for (const k of Object.keys(patch) as (keyof TableSettings)[]) {
-      (poprzednie as Record<string, unknown>)[k] = settings[k];
+      (poprzednie as Record<string, unknown>)[k] = ustawieniaRef.current[k];
     }
+    ustawieniaRef.current = { ...ustawieniaRef.current, ...patch };
     setSettings((s) => ({ ...s, ...patch }));
     ustawieniaWToku.current += 1;
     let udane = false;
@@ -514,82 +524,101 @@ export function useTableStore(
     }
     ustawieniaWToku.current -= 1;
     if (!udane) {
-      setSettings((s) => ({ ...s, ...poprzednie }));
+      if (ustawieniaWToku.current === 0) {
+        // Nic innego się nie zapisuje: cofamy klucze tej zmiany
+        ustawieniaRef.current = { ...ustawieniaRef.current, ...poprzednie };
+        setSettings((s) => ({ ...s, ...poprzednie }));
+      } else {
+        // Inne zapisy w toku: kopia sprzed zmiany jest już nieaktualna, więc wyrównamy z serwerem po ostatnim
+        wyrownajRef.current = true;
+      }
       toast.error(BLAD_ZAPISU);
+    }
+    if (ustawieniaWToku.current === 0 && wyrownajRef.current) {
+      wyrownajRef.current = false;
+      router.refresh();
     }
     return udane;
   }
 
   // Ustawienia bieżącego widoku (zapisany widok albo „Wszystkie”)
   const view: EffectiveView = effectiveView(settings);
-  const aktywnyWidok =
-    settings.active_view_id === null ? undefined : settings.views.find((v) => v.id === settings.active_view_id);
+
+  // Zmiany widoków czekają na jednorazowy zapis widoków szablonu (inaczej nadpisałyby go listą bez nich)
+  // i liczą się od najnowszych ustawień. Bez zapisu w toku nie czekają wcale (pole filtra zmienia się od razu).
+  async function poZapisieSzablonu(): Promise<void> {
+    while (zapisSzablonuRef.current) await zapisSzablonuRef.current;
+  }
 
   // Zmiana filtrów, sortu, grupowania, układu albo ukrytych pól: przy aktywnym zapisanym widoku zapisuje się
   // w tym widoku (cała lista views), przy „Wszystkich” w ustawieniach bazowych bloku
   async function patchView(patch: Partial<EffectiveView>): Promise<boolean> {
-    if (aktywnyWidok) {
-      return patchSettings({
-        views: settings.views.map((v) => (v.id === aktywnyWidok.id ? { ...v, ...patch } : v)),
-      });
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const aktywny = s.active_view_id === null ? undefined : s.views.find((v) => v.id === s.active_view_id);
+    if (aktywny) {
+      return patchSettings({ views: s.views.map((v) => (v.id === aktywny.id ? { ...v, ...patch } : v)) });
     }
     return patchSettings(patch);
   }
 
-  // Zakładka widoku (null = „Wszystkie”); filtr tymczasowy dotyczył poprzedniego widoku, więc znika
+  // Zakładka widoku (null = „Wszystkie”)
   async function selectView(id: string | null): Promise<boolean> {
     setTempFilters(null);
-    if (id === settings.active_view_id) return true;
+    if (id === ustawieniaRef.current.active_view_id) return true;
     return patchSettings({ active_view_id: id });
   }
 
-  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku z filtrem tymczasowym, od razu aktywna
+  // „+ Widok” i „Zapisz jako widok”: kopia bieżącego widoku (filtry, sort, grupowanie, układ, ukryte pola), od razu aktywna
   async function addView(name: string): Promise<boolean> {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const biezacy = effectiveView(s);
     const nowy: TableView = {
       id: crypto.randomUUID(),
-      name: name.trim().slice(0, 40) || "Nowy widok",
-      filters: tempFilters ?? view.filters,
-      sort: view.sort,
-      group_by: view.group_by,
-      layout: view.layout,
-      hidden_field_ids: view.hidden_field_ids,
+      name: name.trim().slice(0, 40) || "Mój widok",
+      filters: biezacy.filters,
+      sort: biezacy.sort,
+      group_by: biezacy.group_by,
+      layout: biezacy.layout,
+      hidden_field_ids: biezacy.hidden_field_ids,
     };
     setTempFilters(null);
-    return patchSettings({ views: [...settings.views, nowy], active_view_id: nowy.id });
+    return patchSettings({ views: [...s.views, nowy], active_view_id: nowy.id });
   }
 
   // Nowa nazwa widoku: przycięta, 1–40 znaków; pusta nic nie zmienia
   async function renameView(id: string, name: string): Promise<boolean> {
     const nazwa = name.trim().slice(0, 40);
-    const widok = settings.views.find((v) => v.id === id);
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const widok = s.views.find((v) => v.id === id);
     if (!widok || nazwa === "" || nazwa === widok.name) return true;
-    return patchSettings({ views: settings.views.map((v) => (v.id === id ? { ...v, name: nazwa } : v)) });
+    return patchSettings({ views: s.views.map((v) => (v.id === id ? { ...v, name: nazwa } : v)) });
   }
 
-  // „Duplikuj widok”: kopia „Nazwa (kopia)” zaraz za oryginałem, od razu aktywna
+  // „Duplikuj widok”: kopia „Nazwa (kopia)” na końcu listy (S2Table), od razu aktywna
   async function duplicateView(id: string): Promise<boolean> {
-    const i = settings.views.findIndex((v) => v.id === id);
-    if (i < 0) return true;
-    const kopia: TableView = {
-      ...settings.views[i],
-      id: crypto.randomUUID(),
-      name: `${settings.views[i].name} (kopia)`.slice(0, 40),
-    };
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const widok = s.views.find((v) => v.id === id);
+    if (!widok) return true;
+    const kopia: TableView = { ...widok, id: crypto.randomUUID(), name: `${widok.name} (kopia)`.slice(0, 40) };
     setTempFilters(null);
-    return patchSettings({
-      views: [...settings.views.slice(0, i + 1), kopia, ...settings.views.slice(i + 1)],
-      active_view_id: kopia.id,
-    });
+    return patchSettings({ views: [...s.views, kopia], active_view_id: kopia.id });
   }
 
-  // „Usuń widok”: usunięty aktywny wraca do „Wszystkich”; toast z „Cofnij” przywraca listę i aktywny widok
+  // „Usuń widok”: usunięty aktywny wraca do „Wszystkich”; „Cofnij” wstawia widok z powrotem na jego miejsce
+  // w BIEŻĄCEJ liście (zmiany innych widoków po usunięciu zostają)
   async function deleteView(id: string): Promise<boolean> {
-    const widok = settings.views.find((v) => v.id === id);
-    if (!widok) return true;
-    const poprzednieWidoki = settings.views;
-    const poprzedniAktywny = settings.active_view_id;
-    const patch: Partial<TableSettings> = { views: settings.views.filter((v) => v.id !== id) };
-    if (poprzedniAktywny === id) {
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const indeks = s.views.findIndex((v) => v.id === id);
+    if (indeks < 0) return true;
+    const widok = s.views[indeks];
+    const bylAktywny = s.active_view_id === id;
+    const patch: Partial<TableSettings> = { views: s.views.filter((v) => v.id !== id) };
+    if (bylAktywny) {
       patch.active_view_id = null;
       setTempFilters(null);
     }
@@ -598,7 +627,13 @@ export function useTableStore(
     toast(`Usunięto widok „${widok.name}”`, {
       action: {
         label: "Cofnij",
-        onClick: () => patchSettings({ views: poprzednieWidoki, active_view_id: poprzedniAktywny }),
+        onClick: async () => {
+          if (zapisSzablonuRef.current) await poZapisieSzablonu();
+          const teraz = ustawieniaRef.current;
+          if (teraz.views.some((v) => v.id === id)) return;
+          const widoki = [...teraz.views.slice(0, indeks), widok, ...teraz.views.slice(indeks)];
+          await patchSettings(bylAktywny ? { views: widoki, active_view_id: id } : { views: widoki });
+        },
       },
     });
     return true;
@@ -614,11 +649,14 @@ export function useTableStore(
 
   // Zwinięcie / rozwinięcie grupy w bieżącym widoku (klucz widoku albo "all" dla „Wszystkich”)
   async function toggleGroup(key: string): Promise<boolean> {
-    const klucz = aktywnyWidok ? aktywnyWidok.id : "all";
-    const zwiniete = settings.collapsed_groups[klucz] ?? [];
+    if (zapisSzablonuRef.current) await poZapisieSzablonu();
+    const s = ustawieniaRef.current;
+    const aktywny = s.active_view_id === null ? undefined : s.views.find((v) => v.id === s.active_view_id);
+    const klucz = aktywny ? aktywny.id : "all";
+    const zwiniete = s.collapsed_groups[klucz] ?? [];
     return patchSettings({
       collapsed_groups: {
-        ...settings.collapsed_groups,
+        ...s.collapsed_groups,
         [klucz]: zwiniete.includes(key) ? zwiniete.filter((k) => k !== key) : [...zwiniete, key],
       },
     });
@@ -642,15 +680,20 @@ export function useTableStore(
     // Zapis w tle bez toastu (to nie akcja użytkownika); lokalnie ustawiamy dopiero po potwierdzeniu serwera.
     // Przy błędzie następne wczytanie bloku spróbuje ponownie
     ustawieniaWToku.current += 1;
-    void saveTableSettings(block.id, patch, { onlyIfMissing: "views" })
+    const zapis = saveTableSettings(block.id, patch, { onlyIfMissing: "views" })
       .then((wynik) => {
         // Serwer pominął zapis (widoki już są) albo użytkownik zmienił widoki w międzyczasie: bez nadpisania
-        if (wynik.ok && !wynik.skipped && !widokiZmienioneRef.current) setSettings((s) => ({ ...s, ...patch }));
+        if (wynik.ok && !wynik.skipped && !widokiZmienioneRef.current) {
+          ustawieniaRef.current = { ...ustawieniaRef.current, ...patch };
+          setSettings((s) => ({ ...s, ...patch }));
+        }
       })
       .catch(() => {})
       .finally(() => {
         ustawieniaWToku.current -= 1;
+        if (zapisSzablonuRef.current === zapis) zapisSzablonuRef.current = null;
       });
+    zapisSzablonuRef.current = zapis;
     // Jednorazowo przy wczytaniu bloku
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

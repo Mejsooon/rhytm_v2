@@ -18,6 +18,11 @@ const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
 vi.mock("sonner", () => ({ toast }));
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/strony/p1",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: router.refresh }),
+}));
 vi.mock("../actions", () => actions);
 
 import type { LoadedBlock } from "../load-page";
@@ -913,22 +918,24 @@ describe("useTableStore", () => {
       expect(result.current.view.filters).toHaveLength(1);
     });
 
-    it("addView kopiuje bieżący widok z filtrem tymczasowym, aktywuje go i czyści filtr tymczasowy", async () => {
+    it("addView kopiuje bieżący widok (filtry, sort, ukryte pola) i go aktywuje", async () => {
       const b = blokZWidokami("w1");
       const autor = b.fields.find((f) => f.name === "Autor")!;
       const { result } = renderHook(() => useTableStore(b));
-      act(() => result.current.setTempFilters([{ field_id: autor.id, op: "contains", value: "Clear" }]));
       await act(async () => {
-        await result.current.addView("Nowy widok");
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
       });
-      const patch = actions.saveTableSettings.mock.calls[0][1];
+      await act(async () => {
+        await result.current.addView("Mój widok 1");
+      });
+      const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
       expect(patch.views).toHaveLength(3);
       const nowy = patch.views[2];
-      expect(nowy.name).toBe("Nowy widok");
-      expect(nowy.filters).toEqual([{ field_id: autor.id, op: "contains", value: "Clear" }]);
+      expect(nowy.name).toBe("Mój widok 1");
+      expect(nowy.filters).toEqual(result.current.settings.views[0].filters);
+      expect(nowy.hidden_field_ids).toEqual([autor.id]);
       expect(patch.active_view_id).toBe(nowy.id);
       expect(result.current.settings.active_view_id).toBe(nowy.id);
-      expect(result.current.tempFilters).toBeNull();
     });
 
     it("renameView przycina nazwę; pusta nazwa nic nie zapisuje", async () => {
@@ -943,16 +950,16 @@ describe("useTableStore", () => {
       expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
     });
 
-    it("duplicateView wstawia kopię za oryginałem i ją aktywuje", async () => {
+    it("duplicateView dopisuje kopię na końcu listy i ją aktywuje", async () => {
       const { result } = (() => { const bb = blokZWidokami(); return renderHook(() => useTableStore(bb)); })();
       await act(async () => {
         await result.current.duplicateView("w1");
       });
       const widoki = result.current.settings.views;
-      expect(widoki.map((w) => w.name)).toEqual(["Czytam", "Czytam (kopia)", "Pusty"]);
-      expect(widoki[1].id).not.toBe("w1");
-      expect(widoki[1].filters).toEqual(widoki[0].filters);
-      expect(result.current.settings.active_view_id).toBe(widoki[1].id);
+      expect(widoki.map((w) => w.name)).toEqual(["Czytam", "Pusty", "Czytam (kopia)"]);
+      expect(widoki[2].id).not.toBe("w1");
+      expect(widoki[2].filters).toEqual(widoki[0].filters);
+      expect(result.current.settings.active_view_id).toBe(widoki[2].id);
     });
 
     it("deleteView usuwa aktywny widok (wraca „Wszystkie”), toast „Cofnij” przywraca", async () => {
@@ -1033,6 +1040,95 @@ describe("useTableStore", () => {
         await result.current.toggleGroup("opt-2");
       });
       expect(result.current.settings.collapsed_groups).toEqual({ all: ["opt-1"], w1: [] });
+    });
+
+    it("„Cofnij” po usunięciu wstawia widok na jego miejsce w BIEŻĄCEJ liście (późniejsze zmiany zostają)", async () => {
+      const { result } = (() => { const bb = blokZWidokami("w1"); return renderHook(() => useTableStore(bb)); })();
+      await act(async () => {
+        await result.current.deleteView("w1");
+      });
+      await act(async () => {
+        await result.current.renameView("w2", "Inny");
+      });
+      await act(async () => {
+        await result.current.addView("Mój widok 1");
+      });
+      const cofnij = toast.mock.calls[0][1].action.onClick as () => Promise<void>;
+      await act(async () => {
+        await cofnij();
+      });
+      expect(result.current.settings.views.map((w) => w.name)).toEqual(["Czytam", "Inny", "Mój widok 1"]);
+      expect(result.current.settings.active_view_id).toBe("w1");
+    });
+
+    it("błąd zapisu przy innym zapisie w toku: bez cofania do starej kopii, po ostatnim zapisie router.refresh()", async () => {
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const ocena = b.fields.find((f) => f.name === "Ocena")!;
+      const pierwszy = odroczona<{ ok: boolean; message?: string }>();
+      const drugi = odroczona<{ ok: boolean }>();
+      actions.saveTableSettings.mockReturnValueOnce(pierwszy.obietnica).mockReturnValueOnce(drugi.obietnica);
+      const { result } = renderHook(() => useTableStore(b));
+      let a!: Promise<boolean>;
+      let c!: Promise<boolean>;
+      act(() => {
+        a = result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      act(() => {
+        c = result.current.patchView({ hidden_field_ids: [autor.id, ocena.id] });
+      });
+      await act(async () => {
+        pierwszy.rozwiaz({ ok: false, message: "x" });
+        await a;
+      });
+      // Drugi zapis w toku: lokalny stan drugiej zmiany zostaje (bez cofania do [])
+      expect(result.current.settings.hidden_field_ids).toEqual([autor.id, ocena.id]);
+      expect(router.refresh).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(BLAD_ZAPISU);
+      await act(async () => {
+        drugi.rozwiaz({ ok: true });
+        await c;
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("błąd zapisu bez innych zapisów w toku cofa zmianę bez odświeżania", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const b = blokZWidokami();
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      const { result } = renderHook(() => useTableStore(b));
+      await act(async () => {
+        await result.current.patchView({ hidden_field_ids: [autor.id] });
+      });
+      expect(result.current.settings.hidden_field_ids).toEqual([]);
+      expect(router.refresh).not.toHaveBeenCalled();
+    });
+
+    it("„+ Widok” przed końcem zapisu widoków szablonu: zapis użytkownika czeka i zawiera widoki szablonu", async () => {
+      const d = odroczona<{ ok: true }>();
+      actions.saveTableSettings.mockReturnValueOnce(d.obietnica);
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      let dodanie!: Promise<boolean>;
+      act(() => {
+        dodanie = result.current.addView("Mój widok 1");
+      });
+      // Zapis użytkownika jeszcze nie poszedł
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        d.rozwiaz({ ok: true });
+        await dodanie;
+      });
+      expect(actions.saveTableSettings).toHaveBeenCalledTimes(2);
+      const patch = actions.saveTableSettings.mock.calls[1][1];
+      expect(patch.views.map((w: { name: string }) => w.name)).toEqual([
+        "Czytam",
+        "Do przeczytania",
+        `Przeczytane w ${new Date().getFullYear()}`,
+        "Mój widok 1",
+      ]);
+      expect(result.current.settings.views).toHaveLength(4);
     });
   });
 });

@@ -115,10 +115,12 @@ describe("filtr tabeli", () => {
     expect(wyzwalacz.className).not.toContain("!bg-active");
     expect(within(filtr).getByText("5 z 5 wierszy").className).toContain("bg-muted");
     expect(within(filtr).getByText("Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.").className).not.toContain("font-mono");
-    // „+ Dodaj warunek” i „Wyczyść”: wysokość 28 px (Button sm), „Zapisz jako domyślny”: wariant główny
+    // „+ Dodaj warunek” i „Wyczyść”: wysokość 28 px (Button sm), „Zapisz jako widok”: wariant główny;
+    // „Zapisz jako domyślny” już nie ma (S2Table: filtr działa i zapisuje się od razu)
     expect(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }).className).toContain("h-7");
     expect(within(filtr).getByRole("button", { name: "Wyczyść" }).className).toContain("bg-transparent");
-    expect(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }).className).toContain("bg-primary");
+    expect(within(filtr).getByRole("button", { name: "Zapisz jako widok" }).className).toContain("bg-primary");
+    expect(within(filtr).queryByRole("button", { name: "Zapisz jako domyślny" })).toBeNull();
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     // Etykieta „Gdzie” jak .lbl (12 px, 500), pole wartości jak FIELD (32 px), usuwanie jako ghost-icon
     expect(within(filtr).getByText("Gdzie").className).not.toContain("font-mono");
@@ -223,7 +225,7 @@ describe("filtr tabeli", () => {
     expect(screen.getByText("Czytam teraz", { selector: "div" }).parentElement?.textContent).toContain("0");
   });
 
-  it("„Wyczyść” czyści filtr tylko w kliencie; „Zapisz jako domyślny” zapisuje settings.filters", async () => {
+  it("„Wyczyść” czyści filtr i od razu zapisuje settings.filters", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
     const status = dane.blocks[0].fields.find((f) => f.name === "Status")!;
@@ -238,23 +240,19 @@ describe("filtr tabeli", () => {
     await user.click(within(filtr).getByRole("button", { name: "Wyczyść" }));
     expect(tytuly()).toHaveLength(5);
     expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
-    expect(actions.saveTableSettings).not.toHaveBeenCalled();
-
-    await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
     expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { filters: [] });
   });
 
-  it("„Zapisz jako domyślny” zapisuje bieżące warunki, po odświeżeniu filtr dalej działa", async () => {
+  it("warunek zapisuje się od razu, po odświeżeniu filtr dalej działa", async () => {
     const user = userEvent.setup();
     const dane = stronaTestowa("books", "Books", BOOKS);
     const { rerender } = render(<PageTable block={(dane).blocks[0]} today={DZIS} />);
     const filtr = await otworzFiltr(user);
     await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
     await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-    await user.click(within(filtr).getByRole("button", { name: "Zapisz jako domyślny" }));
     const tytul = dane.blocks[0].fields.find((f) => f.name === "Tytuł")!;
     const zapisane = [{ field_id: tytul.id, op: "contains", value: "deep" }];
-    expect(actions.saveTableSettings).toHaveBeenCalledWith("blok-1", { filters: zapisane });
+    expect(actions.saveTableSettings).toHaveBeenLastCalledWith("blok-1", { filters: zapisane });
     expect(tytuly()).toEqual(["Deep Work"]);
 
     // Odświeżone dane z serwera mają już zapisany filtr
@@ -361,7 +359,6 @@ describe("FilterPopover — nowe operatory", () => {
           open={open}
           onOpenChange={setOpen}
           onChange={setFiltry}
-          onSave={() => {}}
           onSaveAsView={onSaveAsView}
           triggerClassName=""
         />

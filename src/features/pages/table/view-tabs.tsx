@@ -38,8 +38,14 @@ export function ViewTabs({
   const [zmiana, setZmiana] = React.useState<{ id: string; nazwa: string } | null>(null);
   // Menu „Zmień nazwę” nie oddaje fokusu przyciskowi „⋯”, bo fokus idzie do pola nazwy
   const bezZwrotuFokusu = React.useRef(false);
+  // Esc anulował zmianę nazwy: blur, który przychodzi przy chowaniu pola, nie zapisuje
+  const anulowano = React.useRef(false);
 
   function zatwierdz() {
+    if (anulowano.current) {
+      anulowano.current = false;
+      return;
+    }
     if (!zmiana) return;
     setZmiana(null);
     if (zmiana.nazwa.trim() !== "") onRename(zmiana.id, zmiana.nazwa);
@@ -70,6 +76,7 @@ export function ViewTabs({
                 }
                 if (e.key === "Escape") {
                   e.preventDefault();
+                  anulowano.current = true;
                   setZmiana(null);
                 }
               }}
@@ -84,7 +91,9 @@ export function ViewTabs({
               aria-pressed={aktywna}
               onClick={() => onSelect(id)}
               onDoubleClick={() => {
-                if (id !== null && !readOnly) setZmiana({ id, nazwa: t.name });
+                if (id === null || readOnly) return;
+                anulowano.current = false;
+                setZmiana({ id, nazwa: t.name });
               }}
               className={cn(ZAKLADKA, kropki ? "mr-0" : "mr-[18px]")}
             >
@@ -124,6 +133,7 @@ export function ViewTabs({
                     onClick={() => {
                       bezZwrotuFokusu.current = true;
                       setMenu(null);
+                      anulowano.current = false;
                       setZmiana({ id, nazwa: t.name });
                     }}
                     className={MENU_ITEM}
