@@ -158,6 +158,8 @@ test.describe("strony", () => {
     await zapisZwiniecia;
     await expect(wiersze).toHaveCount(2);
     await expect(page.getByText("zwinięte · 2 ukryte", { exact: true })).toBeVisible();
+    // Zapis ustawień może iść w kilku akcjach (kolejka magazynu): czekamy, aż sieć ucichnie
+    await page.waitForLoadState("networkidle");
     await page.reload();
     await expect(wiersze).toHaveCount(2);
     await page.getByRole("button", { name: "Rozwiń grupę Przeczytane" }).click();

@@ -1050,7 +1050,9 @@ test.describe("ekrany z sesją", () => {
     await expect(page.locator("tbody tr:has(input)")).toHaveCount(2);
     await zrzut(page, "strony-projekty", projekt);
     await page.getByRole("button", { name: "Tablica", exact: true }).click();
-    await expect(page.getByText("Projekt z baz danych")).toBeVisible();
+    await expect(
+      page.getByRole("article", { name: "Projekt z baz danych" }),
+    ).toBeVisible();
     await zrzut(page, "strony-projekty-tablica", projekt);
   });
 
