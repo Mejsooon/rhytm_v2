@@ -49,8 +49,10 @@ select is((select f.name from public.page_fields as f where f.block_id = current
   'Serwis', 'tytułem jest Serwis');
 select is((select f.config from public.page_fields as f where f.block_id = current_setting('test.sys_block')::uuid and f.name = 'Serwis'),
   '{"empty_label":"Bez nazwy"}'::jsonb, 'Serwis z empty_label „Bez nazwy”');
-select is((select f.config from public.page_fields as f where f.block_id = current_setting('test.sys_block')::uuid and f.name = 'Kategoria'),
-  '{"options":[]}'::jsonb, 'Kategoria bez opcji');
+select is((select array_agg(e.opt ->> 'label' order by e.ord) from public.page_fields as f,
+    jsonb_array_elements(f.config -> 'options') with ordinality as e(opt, ord)
+  where f.block_id = current_setting('test.sys_block')::uuid and f.name = 'Kategoria'),
+  array['Praca', 'Studia', 'Prywatne'], 'Kategoria z domyślnymi opcjami Praca, Studia, Prywatne');
 
 select set_config('test.f_haslo', (select f.id::text from public.page_fields as f
   where f.block_id = current_setting('test.sys_block')::uuid and f.name = 'Hasło'), true);

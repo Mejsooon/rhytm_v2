@@ -171,5 +171,5 @@ Decyzje Mejsona przed pakietem: polskie nazwy dla stron z domyślnym tytułem (m
 | 12 | Strony z szablonu nie dostają już bloku tekstu na górze; dawny niezmieniony opis jest ukrywany (bez migracji). Pusta strona to „Bez tytułu” na webie i telefonie. | Makieta S2Table/S2EmptyPage. | Niski. |
 | 13 | Duplikuj, ulubione i usuń stronę są tylko w menu „⋯” przy stronie w pasku bocznym (nagłówek ich nie ma, jak w makiecie). „Pokaż pasek boczny” jest tylko w schowanym pasku z ikonami. | Makieta. | Niski. |
 | 14 | Hasła na webie: bez banera z odliczaniem, plakietek z liczbą haseł i dymku „Kategorie” (makieta ich nie ma); nowe teksty okna ustawiania sejfu widać też w Ustawienia → Sejf. | Makieta. | Niski. |
-| 15 | **Do potwierdzenia:** moduł Hasła ma Kategorię bez opcji, więc zakładki Praca / Studia / Prywatne z makiety się nie pojawiają. Dodanie domyślnych opcji wymaga migracji. | — | Mała migracja, jeśli chcesz. |
+| 15 | Mejson (26.11): Hasła dostają domyślne kategorie Praca / Studia / Prywatne (migracja `20261130110000_hasla_kategorie.sql`; tylko gdy pole nie ma opcji; nowe hasło domyślnie „Prywatne” jak w makiecie). | Makieta S2Passwords. | Niski. |
 | 16 | Kafelki z literą przy Serwisie (S2Passwords) jeszcze nie są zrobione. | Odłożone. | Niski. |
