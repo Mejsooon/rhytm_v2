@@ -908,11 +908,14 @@ export async function restoreRow(rowId: string): Promise<{ ok: true } | Blad> {
 
 // ---------- Ustawienia tabeli ----------
 
-// Scala podane klucze z content.settings bloku tabeli (pozostałe ustawienia zostają)
+// Scala podane klucze z content.settings bloku tabeli (pozostałe ustawienia zostają).
+// opts.onlyIfMissing "views": zapis tylko wtedy, gdy w zapisanych ustawieniach nie ma jeszcze klucza `views`
+// (jednorazowe widoki szablonu nie nadpisują widoków zapisanych w międzyczasie); wtedy wynik ma skipped: true
 export async function saveTableSettings(
   blockId: string,
   patch: Partial<TableSettings>,
-): Promise<{ ok: true } | Blad> {
+  opts?: { onlyIfMissing?: "views" },
+): Promise<{ ok: true; skipped?: true } | Blad> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -933,8 +936,10 @@ export async function saveTableSettings(
   if (!blok || blok.type !== "table") return { ok: false, message: BRAK_BLOKU };
 
   const tresc = (blok.content ?? {}) as Record<string, unknown>;
+  const zapisane = (tresc.settings ?? {}) as Record<string, unknown>;
+  if (opts?.onlyIfMissing && opts.onlyIfMissing in zapisane) return { ok: true, skipped: true };
   const ustawienia = {
-    ...((tresc.settings ?? {}) as Record<string, unknown>),
+    ...zapisane,
     ...zmiany.data,
   };
   const { error } = await supabase

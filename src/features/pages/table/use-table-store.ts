@@ -97,6 +97,8 @@ export function useTableStore(
   // Zapisy w toku: pola i ustawienia (liczniki), wiersze (id → zmiany do nałożenia na dane z serwera)
   const polaWToku = useRef(0);
   const ustawieniaWToku = useRef(0);
+  // Użytkownik zmienił widoki, grupowanie lub zwinięte grupy od wczytania: domyślne widoki szablonu ich nie nadpiszą
+  const widokiZmienioneRef = useRef(false);
   // zatwierdzone (tylko updateCell): ostatnia wartość komórki potwierdzona przez serwer — do niej wraca błąd
   const wierszeWToku = useRef(
     new Map<string, { n: number; zmiany: Record<string, unknown>; zatwierdzone: Record<string, unknown> }>(),
@@ -492,6 +494,7 @@ export function useTableStore(
 
   // Zmiana ustawień (sort, ukryte kolumny, podsumowania…): od razu lokalnie, błąd cofa te klucze
   async function patchSettings(patch: Partial<TableSettings>): Promise<boolean> {
+    if ("views" in patch || "group_by" in patch || "collapsed_groups" in patch) widokiZmienioneRef.current = true;
     const poprzednie: Partial<TableSettings> = {};
     for (const k of Object.keys(patch) as (keyof TableSettings)[]) {
       (poprzednie as Record<string, unknown>)[k] = settings[k];
@@ -530,9 +533,10 @@ export function useTableStore(
     // Zapis w tle bez toastu (to nie akcja użytkownika); lokalnie ustawiamy dopiero po potwierdzeniu serwera.
     // Przy błędzie następne wczytanie bloku spróbuje ponownie
     ustawieniaWToku.current += 1;
-    void saveTableSettings(block.id, patch)
+    void saveTableSettings(block.id, patch, { onlyIfMissing: "views" })
       .then((wynik) => {
-        if (wynik.ok) setSettings((s) => ({ ...s, ...patch }));
+        // Serwer pominął zapis (widoki już są) albo użytkownik zmienił widoki w międzyczasie: bez nadpisania
+        if (wynik.ok && !wynik.skipped && !widokiZmienioneRef.current) setSettings((s) => ({ ...s, ...patch }));
       })
       .catch(() => {})
       .finally(() => {

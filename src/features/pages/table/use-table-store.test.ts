@@ -818,6 +818,51 @@ describe("useTableStore", () => {
       expect(actions.saveTableSettings).not.toHaveBeenCalled();
     });
 
+    it("zapis z onlyIfMissing; serwer pomija (widoki już są): bez widoków lokalnie", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: true, skipped: true });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      expect(actions.saveTableSettings.mock.calls[0][2]).toEqual({ onlyIfMissing: "views" });
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("użytkownik zmienił widoki w trakcie zapisu: domyślne ich nie nadpisują", async () => {
+      const d = odroczona<{ ok: true }>();
+      actions.saveTableSettings.mockReturnValueOnce(d.obietnica);
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {
+        await result.current.patchSettings({ views: [] });
+      });
+      await act(async () => {
+        d.rozwiaz({ ok: true });
+      });
+      expect(result.current.settings.views).toEqual([]);
+    });
+
+    it("zapis zwraca ok: false: bez widoków lokalnie, bez wyjątku i bez toasta", async () => {
+      actions.saveTableSettings.mockResolvedValue({ ok: false, message: "x" });
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("zapis odrzucony wyjątkiem: bez widoków lokalnie, bez wyjątku i bez toasta", async () => {
+      actions.saveTableSettings.mockRejectedValue(new Error("sieć"));
+      const b = blok();
+      const { result } = renderHook(() => useTableStore(b, undefined, "books"));
+      await waitFor(() => expect(actions.saveTableSettings).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(result.current.settings.views).toEqual([]);
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
     it("ponowny render nie zapisuje drugi raz", async () => {
       const b = blok();
       const { rerender } = renderHook(() => useTableStore(b, undefined, "books"));

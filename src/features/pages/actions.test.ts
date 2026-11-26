@@ -378,6 +378,26 @@ describe("bloki i ustawienia", () => {
     });
   });
 
+  it("saveTableSettings z onlyIfMissing: gdy klucz views już jest, nic nie zapisuje i zwraca skipped", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "T", settings: { views: [] } } },
+    });
+    const w = await saveTableSettings(BLOK, { views: [] }, { onlyIfMissing: "views" });
+    expect(w).toEqual({ ok: true, skipped: true });
+    expect(tables.page_blocks.update).not.toHaveBeenCalled();
+  });
+
+  it("saveTableSettings z onlyIfMissing: bez klucza views zapisuje normalnie", async () => {
+    tables.page_blocks = fakeTable({
+      single: { type: "table", content: { name: "T", settings: { sort: [] } } },
+    });
+    const w = await saveTableSettings(BLOK, { group_by: "g" }, { onlyIfMissing: "views" });
+    expect(w).toEqual({ ok: true });
+    expect(tables.page_blocks.update).toHaveBeenCalledWith({
+      content: { name: "T", settings: { sort: [], group_by: "g" } },
+    });
+  });
+
   it("saveTableSettings przepuszcza column_widths i scala je z resztą ustawień", async () => {
     tables.page_blocks = fakeTable({
       single: { type: "table", content: { name: "T", settings: { sort: [] } } },
