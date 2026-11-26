@@ -1,6 +1,7 @@
 // Walidacja danych stron (lustro reguł z migracji 20261120120000_pages.sql).
 import { z } from "zod";
 import { idSchema } from "@/features/calendar/schemas";
+import { IMPORT_ZA_DUZO, ZA_DUZO_WIERSZY } from "./messages";
 
 export { idSchema };
 
@@ -144,3 +145,16 @@ export const tableSettingsPatchSchema = z.object({
 });
 
 export const rowValuesSchema = z.record(z.string(), z.unknown());
+
+// Akcje na wielu wierszach: od 1 do 500 id
+export const rowIdsSchema = z.array(idSchema).min(1, ZA_DUZO_WIERSZY).max(500, ZA_DUZO_WIERSZY);
+
+// Import CSV: do 2000 wierszy, nowe pola bez typu Sekret, nowe opcje wyboru (klucz = id pola albo „new:<indeks>”)
+export const importRowsSchema = z.array(rowValuesSchema).max(2000, IMPORT_ZA_DUZO);
+export const importNewFieldsSchema = z
+  .array(z.object({ name: fieldNameSchema, type: fieldTypeSchema.exclude(["secret"]) }))
+  .max(100);
+export const importOptionsSchema = z.record(
+  z.string().max(64),
+  z.array(z.object({ id: z.string().min(1).max(64), label: z.string().max(60), color: z.string().max(16) })).max(100),
+);

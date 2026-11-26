@@ -7,8 +7,8 @@ import type { Json } from "@/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { isSecretValue } from "@/features/vault/crypto";
 import { normalizeValue } from "./fields";
-import { BLAD_ZAPISU, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE, SEKRET_ZA_DLUGI } from "./messages";
-import type { CellValue, FieldConfig, FieldType, PageField } from "./fields";
+import { BLAD_ZAPISU, IMPORT_HASLA, SEJF_ZABLOKOWANY, SEJF_ZMIENIL_SIE, SEKRET_ZA_DLUGI } from "./messages";
+import type { CellValue, FieldConfig, FieldOption, FieldType, PageField } from "./fields";
 import type { BlockType, LoadedBlock } from "./load-page";
 import {
   blockContentSchema,
@@ -17,8 +17,12 @@ import {
   fieldNameSchema,
   fieldTypeSchema,
   idSchema,
+  importNewFieldsSchema,
+  importOptionsSchema,
+  importRowsSchema,
   pageIconSchema,
   pageTitleSchema,
+  rowIdsSchema,
   rowValuesSchema,
   tableSettingsPatchSchema,
 } from "./schemas";
@@ -904,6 +908,315 @@ export async function restoreRow(rowId: string): Promise<{ ok: true } | Blad> {
     .eq("user_id", user.id);
   if (error) return { ok: false, message: BLAD_ZAPISU };
   return { ok: true };
+}
+
+// ---------- Wiele wierszy naraz ----------
+
+// Miękkie usunięcie zaznaczonych wierszy (do 500); „Cofnij” woła restoreRows
+export async function deleteRows(ids: string[]): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idsOk = rowIdsSchema.safeParse(ids);
+  if (!idsOk.success) return { ok: false, message: idsOk.error.issues[0].message };
+
+  const { error } = await supabase
+    .from("page_rows")
+    .update({ deleted_at: new Date().toISOString() })
+    .in("id", idsOk.data)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  return { ok: true };
+}
+
+export async function restoreRows(ids: string[]): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idsOk = rowIdsSchema.safeParse(ids);
+  if (!idsOk.success) return { ok: false, message: idsOk.error.issues[0].message };
+
+  const { error } = await supabase
+    .from("page_rows")
+    .update({ deleted_at: null })
+    .in("id", idsOk.data)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  return { ok: true };
+}
+
+// Kopie trafiają na koniec bloku swoich wierszy (pozycje liczy serwer), w kolejności źródeł
+export async function duplicateRows(
+  ids: string[],
+): Promise<{ ok: true; rows: { id: string; values: Record<string, unknown>; position: number }[] } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idsOk = rowIdsSchema.safeParse(ids);
+  if (!idsOk.success) return { ok: false, message: idsOk.error.issues[0].message };
+
+  const { data: zrodla, error: bladOdczytu } = await supabase
+    .from("page_rows")
+    .select("id, block_id, values, position, deleted_at")
+    .in("id", idsOk.data)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .order("position", { ascending: true });
+  if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
+  if (!zrodla || zrodla.length === 0) return { ok: false, message: BRAK_WIERSZA };
+
+  // Następna wolna pozycja osobno dla każdego bloku
+  const nastepna = new Map<string, number>();
+  const kopie: { block_id: string; user_id: string; values: Json; position: number }[] = [];
+  for (const z of zrodla) {
+    if (!nastepna.has(z.block_id)) {
+      const { data: ostatni, error: bladPozycji } = await supabase
+        .from("page_rows")
+        .select("position")
+        .eq("block_id", z.block_id)
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (bladPozycji) return { ok: false, message: BLAD_ZAPISU };
+      nastepna.set(z.block_id, (ostatni?.position ?? -1) + 1);
+    }
+    const pozycja = nastepna.get(z.block_id) as number;
+    nastepna.set(z.block_id, pozycja + 1);
+    kopie.push({ block_id: z.block_id, user_id: user.id, values: z.values, position: pozycja });
+  }
+
+  const { data, error } = await supabase
+    .from("page_rows")
+    .insert(kopie)
+    .select("id, values, position, deleted_at");
+  if (error || !data) return { ok: false, message: BLAD_ZAPISU };
+  return {
+    ok: true,
+    rows: data.map((w) => ({
+      id: w.id,
+      values: (w.values ?? {}) as Record<string, unknown>,
+      position: w.position,
+    })),
+  };
+}
+
+// Ustawia jedno pole w wielu wierszach tego samego bloku; wartość przez normalizeValue (zły typ → puste)
+export async function setRowsValue(
+  ids: string[],
+  fieldId: string,
+  value: unknown,
+): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idsOk = rowIdsSchema.safeParse(ids);
+  const poleOk = idSchema.safeParse(fieldId);
+  if (!idsOk.success) return { ok: false, message: idsOk.error.issues[0].message };
+  if (!poleOk.success) return { ok: false, message: BLAD_ZAPISU };
+
+  const { data: p, error: bladPola } = await supabase
+    .from("page_fields")
+    .select("id, block_id, name, type, config, position, is_title")
+    .eq("id", fieldId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (bladPola) return { ok: false, message: BLAD_ZAPISU };
+  if (!p) return { ok: false, message: BRAK_POLA };
+  // Szyfrogramy powstają tylko w przeglądarce przy odblokowanym sejfie, nie hurtowo
+  if (p.type === "secret") return { ok: false, message: SEKRET_TYP };
+
+  const pole: PageField = {
+    id: p.id,
+    name: p.name,
+    type: p.type as FieldType,
+    config: p.config as FieldConfig,
+    position: p.position,
+    isTitle: p.is_title,
+  };
+  let nowa = normalizeValue(pole, value);
+  if (pole.isTitle && nowa === null) nowa = pole.config.empty_label ?? BEZ_TYTULU;
+
+  // Tylko żywe wiersze z bloku tego pola; każdy wiersz musi się znaleźć
+  const unikalne = [...new Set(idsOk.data)];
+  const { data: wiersze, error: bladWierszy } = await supabase
+    .from("page_rows")
+    .select("id, values")
+    .in("id", unikalne)
+    .eq("block_id", p.block_id)
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+  if (bladWierszy) return { ok: false, message: BLAD_ZAPISU };
+  if (!wiersze || wiersze.length !== unikalne.length) return { ok: false, message: BRAK_WIERSZA };
+
+  const wyniki = await Promise.all(
+    wiersze.map((w) =>
+      supabase
+        .from("page_rows")
+        .update({ values: { ...((w.values ?? {}) as Record<string, unknown>), [pole.id]: nowa } as Json })
+        .eq("id", w.id)
+        .eq("user_id", user.id),
+    ),
+  );
+  if (wyniki.some((w) => w.error)) return { ok: false, message: BLAD_ZAPISU };
+  return { ok: true };
+}
+
+// Import CSV w jednej akcji: nowe pola na końcu, nowe opcje wyboru, potem wiersze po ostatnim.
+// W wierszach klucz „new:<indeks>” wskazuje nowe pole (kolejność newFields); pola Sekret są pomijane.
+// newOptions: klucz = id istniejącego pola wyboru albo „new:<indeks>”.
+// Zapisy idą po kolei (bez transakcji): przy błędzie w połowie zostają dodane wcześniejsze pola.
+export async function importCsvRows(
+  blockId: string,
+  newFields: { name: string; type: FieldType }[],
+  rows: Record<string, unknown>[],
+  newOptions: Record<string, FieldOption[]> = {},
+): Promise<{ ok: true; fieldIds: string[]; count: number } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idOk = idSchema.safeParse(blockId);
+  const nowePola = importNewFieldsSchema.safeParse(newFields ?? []);
+  const wiersze = importRowsSchema.safeParse(rows ?? []);
+  const opcje = importOptionsSchema.safeParse(newOptions ?? {});
+  if (!idOk.success) return { ok: false, message: idOk.error.issues[0].message };
+  if (!wiersze.success) return { ok: false, message: wiersze.error.issues[0].message };
+  if (!nowePola.success || !opcje.success) return { ok: false, message: BLAD_ZAPISU };
+
+  const { data: blok, error: bladBloku } = await supabase
+    .from("page_blocks")
+    .select("type, page_id")
+    .eq("id", blockId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (bladBloku) return { ok: false, message: BLAD_ZAPISU };
+  if (!blok || blok.type !== "table") return { ok: false, message: BRAK_BLOKU };
+
+  // Strona systemowa (Hasła) ma stałe kolumny i nie przyjmuje importu
+  const { data: strona, error: bladStrony } = await supabase
+    .from("pages")
+    .select("is_system")
+    .eq("id", blok.page_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (bladStrony) return { ok: false, message: BLAD_ZAPISU };
+  if (!strona) return { ok: false, message: BRAK_STRONY };
+  if (strona.is_system) return { ok: false, message: IMPORT_HASLA };
+
+  const { data: istniejace, error: bladPol } = await supabase
+    .from("page_fields")
+    .select("id, name, type, config, position, is_title")
+    .eq("block_id", blockId);
+  if (bladPol) return { ok: false, message: BLAD_ZAPISU };
+
+  const pola: PageField[] = [];
+  const kluczePol: string[] = [];
+  let ostatniaPozycjaPola = -1;
+  for (const p of istniejace ?? []) {
+    ostatniaPozycjaPola = Math.max(ostatniaPozycjaPola, p.position);
+    let config = p.config as FieldConfig;
+    const dodatkowe = opcje.data[p.id];
+    if ((p.type === "select" || p.type === "status") && dodatkowe && dodatkowe.length > 0) {
+      // Nowe opcje dochodzą na koniec, bez duplikatów id i do limitu 100
+      const stare = config.options ?? [];
+      const doDodania = dodatkowe.filter((o) => !stare.some((s) => s.id === o.id)).slice(0, 100 - stare.length);
+      if (doDodania.length > 0) {
+        config = { ...config, options: [...stare, ...doDodania] };
+        const { error: bladOpcji } = await supabase
+          .from("page_fields")
+          .update({ config: config as Json })
+          .eq("id", p.id)
+          .eq("user_id", user.id);
+        if (bladOpcji) return { ok: false, message: BLAD_ZAPISU };
+      }
+    }
+    pola.push({
+      id: p.id,
+      name: p.name,
+      type: p.type as FieldType,
+      config,
+      position: p.position,
+      isTitle: p.is_title,
+    });
+    kluczePol.push(p.id);
+  }
+
+  const noweIds: string[] = [];
+  for (let i = 0; i < nowePola.data.length; i++) {
+    const nowe = nowePola.data[i];
+    const config: FieldConfig =
+      (nowe.type === "select" || nowe.type === "status") && opcje.data[`new:${i}`]
+        ? { options: opcje.data[`new:${i}`] }
+        : {};
+    const { data, error } = await supabase
+      .from("page_fields")
+      .insert({
+        block_id: blockId,
+        user_id: user.id,
+        name: nowe.name,
+        type: nowe.type,
+        config: config as Json,
+        position: ostatniaPozycjaPola + 1 + i,
+        is_title: false,
+      })
+      .select("id, name, type, config, position, is_title")
+      .single();
+    if (error || !data) return { ok: false, message: BLAD_ZAPISU };
+    noweIds.push(data.id);
+    pola.push({
+      id: data.id,
+      name: data.name,
+      type: data.type as FieldType,
+      config: data.config as FieldConfig,
+      position: data.position,
+      isTitle: data.is_title,
+    });
+    kluczePol.push(`new:${i}`);
+  }
+
+  const { data: ostatni, error: bladPozycji } = await supabase
+    .from("page_rows")
+    .select("position")
+    .eq("block_id", blockId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (bladPozycji) return { ok: false, message: BLAD_ZAPISU };
+  const pierwsza = (ostatni?.position ?? -1) + 1;
+
+  // Wartości przez normalizeValue; puste komórki nie są zapisywane, pusty tytuł dostaje etykietę pola
+  const doWstawienia: { block_id: string; user_id: string; values: Json; position: number }[] = [];
+  for (let r = 0; r < wiersze.data.length; r++) {
+    const surowy = wiersze.data[r];
+    const wartosci: Record<string, CellValue> = {};
+    for (let i = 0; i < pola.length; i++) {
+      const pole = pola[i];
+      if (pole.type === "secret") continue;
+      let v = normalizeValue(pole, surowy[kluczePol[i]]);
+      if (pole.isTitle && v === null) v = pole.config.empty_label ?? BEZ_TYTULU;
+      if (v !== null) wartosci[pole.id] = v;
+    }
+    doWstawienia.push({ block_id: blockId, user_id: user.id, values: wartosci as Json, position: pierwsza + r });
+  }
+  for (let od = 0; od < doWstawienia.length; od += 500) {
+    const { error } = await supabase.from("page_rows").insert(doWstawienia.slice(od, od + 500));
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  }
+  return { ok: true, fieldIds: noweIds, count: doWstawienia.length };
 }
 
 // ---------- Ustawienia tabeli ----------

@@ -26,10 +26,15 @@ import {
   deleteField,
   deletePage,
   deleteRow,
+  deleteRows,
+  duplicateRows,
+  importCsvRows,
   movePage,
   renamePage,
   restoreRow,
+  restoreRows,
   saveTableSettings,
+  setRowsValue,
   updateRow,
   addField,
   changeFieldType,
@@ -92,6 +97,11 @@ describe("bez sesji", () => {
     ["createPageFromTemplate", () => createPageFromTemplate("books", "")],
     ["deleteRow", () => deleteRow(WIERSZ)],
     ["updateRow", () => updateRow(WIERSZ, {})],
+    ["deleteRows", () => deleteRows([WIERSZ])],
+    ["restoreRows", () => restoreRows([WIERSZ])],
+    ["duplicateRows", () => duplicateRows([WIERSZ])],
+    ["setRowsValue", () => setRowsValue([WIERSZ], POLE_LICZBA, 1)],
+    ["importCsvRows", () => importCsvRows(BLOK, [], [])],
     ["deleteField", () => deleteField(POLE_LICZBA)],
   ])("%s przekierowuje na /logowanie", async (_nazwa, akcja) => {
     getUser.mockResolvedValue({ data: { user: null } });
@@ -627,4 +637,154 @@ describe("pole Sekret", () => {
     expect(from).not.toHaveBeenCalledWith("page_blocks");
   });
 ;
+});
+
+describe("akcje na wielu wierszach", () => {
+  const ZA_DUZO = Array.from({ length: 501 }, (_, i) => `a4000000-0000-4000-8000-${String(i).padStart(12, "0")}`);
+
+  it("deleteRows ustawia deleted_at dla id użytkownika, restoreRows je zeruje", async () => {
+    expect(await deleteRows([WIERSZ])).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenCalledWith({ deleted_at: "2026-11-19T10:00:00.000Z" });
+    expect(tables.page_rows.in).toHaveBeenCalledWith("id", [WIERSZ]);
+    expect(tables.page_rows.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(await restoreRows([WIERSZ])).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenLastCalledWith({ deleted_at: null });
+  });
+
+  it("więcej niż 500 id, puste i złe id to błąd bez zapytań", async () => {
+    expect((await deleteRows(ZA_DUZO)).ok).toBe(false);
+    expect((await restoreRows(ZA_DUZO)).ok).toBe(false);
+    expect((await duplicateRows(ZA_DUZO)).ok).toBe(false);
+    expect((await setRowsValue(ZA_DUZO, POLE_LICZBA, 1)).ok).toBe(false);
+    expect((await deleteRows([])).ok).toBe(false);
+    expect((await deleteRows(["zle"])).ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("duplicateRows kopiuje wartości na koniec bloku (pozycje liczy serwer)", async () => {
+    const zrodlowe = [
+      { id: WIERSZ, block_id: BLOK, values: { [POLE_TYTUL]: "Dune" }, position: 2, deleted_at: null },
+    ];
+    tables.page_rows = fakeTable({ data: zrodlowe, single: { position: 7 } });
+    const w = await duplicateRows([WIERSZ]);
+    expect(tables.page_rows.insert).toHaveBeenCalledWith([
+      { block_id: BLOK, user_id: "u1", values: { [POLE_TYTUL]: "Dune" }, position: 8 },
+    ]);
+    expect(w).toEqual({
+      ok: true,
+      rows: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune" }, position: 2 }],
+    });
+  });
+
+  it("setRowsValue normalizuje wartość i zmienia tylko to pole", async () => {
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Cena", type: "number", config: {}, position: 1, is_title: false },
+    });
+    tables.page_rows = fakeTable({
+      data: [{ id: WIERSZ, values: { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: 1 } }],
+    });
+    expect(await setRowsValue([WIERSZ], POLE_LICZBA, "43,5")).toEqual({ ok: true });
+    expect(tables.page_rows.update).toHaveBeenCalledWith({
+      values: { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: 43.5 },
+    });
+  });
+
+  it("setRowsValue odrzuca pole Sekret i wiersze spoza bloku pola", async () => {
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Hasło", type: "secret", config: {}, position: 1, is_title: false },
+    });
+    expect((await setRowsValue([WIERSZ], POLE_LICZBA, "x")).ok).toBe(false);
+    tables.page_fields = fakeTable({
+      single: { id: POLE_LICZBA, block_id: BLOK, name: "Cena", type: "number", config: {}, position: 1, is_title: false },
+    });
+    tables.page_rows = fakeTable({ data: [] });
+    expect((await setRowsValue([WIERSZ], POLE_LICZBA, 1)).ok).toBe(false);
+    expect(tables.page_rows.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("importCsvRows", () => {
+  const NOWE_POLE = "a3000000-0000-4000-8000-000000000009";
+  beforeEach(() => {
+    tables.page_blocks = fakeTable({ single: { type: "table", page_id: STRONA, content: {} } });
+    tables.pages = fakeTable({ single: { is_system: false } });
+    tables.page_rows = fakeTable({ data: [], single: { position: 4 } });
+  });
+
+  it("odmawia dla bloku strony systemowej (Hasła)", async () => {
+    tables.pages = fakeTable({ single: { is_system: true } });
+    const w = await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "x" }]);
+    expect(w.ok).toBe(false);
+    expect(tables.page_rows.insert).not.toHaveBeenCalled();
+    expect(tables.page_fields.insert).not.toHaveBeenCalled();
+  });
+
+  it("odmawia dla więcej niż 2000 wierszy", async () => {
+    const w = await importCsvRows(BLOK, [], Array.from({ length: 2001 }, () => ({})));
+    expect(w.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("nie przyjmuje nowego pola Sekret", async () => {
+    const w = await importCsvRows(BLOK, [{ name: "H", type: "secret" }], []);
+    expect(w.ok).toBe(false);
+  });
+
+  it("dodaje nowe pola na końcu, potem wiersze z pozycją po ostatnim; wartości przez normalizeValue", async () => {
+    tables.page_fields = fakeTable({
+      data: pola,
+      single: { id: NOWE_POLE, name: "Uwagi", type: "text", config: {}, position: 2, is_title: false },
+    });
+    const w = await importCsvRows(
+      BLOK,
+      [{ name: "Uwagi", type: "text" }],
+      [
+        { [POLE_TYTUL]: "Dune", [POLE_LICZBA]: "tekst", "new:0": "hej", obce: "x" },
+        { [POLE_LICZBA]: 5 },
+      ],
+    );
+    expect(w).toEqual({ ok: true, fieldIds: [NOWE_POLE], count: 2 });
+    expect(tables.page_fields.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ block_id: BLOK, user_id: "u1", name: "Uwagi", type: "text", position: 2, is_title: false }),
+    );
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione).toHaveLength(2);
+    expect(wstawione[0]).toMatchObject({ block_id: BLOK, user_id: "u1", position: 5 });
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "Dune", [NOWE_POLE]: "hej" });
+    // pusty tytuł dostaje etykietę pola
+    expect(wstawione[1]).toMatchObject({ position: 6, values: { [POLE_TYTUL]: "Bez nazwy", [POLE_LICZBA]: 5 } });
+  });
+
+  it("nowe opcje rozszerzają config pola wyboru, a wartość spoza opcji jest odrzucana", async () => {
+    const POLE_WYBOR = "a3000000-0000-4000-8000-000000000007";
+    tables.page_fields = fakeTable({
+      data: [
+        pola[0],
+        { id: POLE_WYBOR, name: "Status", type: "status", config: { options: [{ id: "o1", label: "A", color: "#000" }] }, position: 1, is_title: false },
+      ],
+    });
+    const w = await importCsvRows(
+      BLOK,
+      [],
+      [{ [POLE_WYBOR]: "o2" }, { [POLE_WYBOR]: "zly" }],
+      { [POLE_WYBOR]: [{ id: "o2", label: "B", color: "#15803d" }] },
+    );
+    expect(w).toEqual({ ok: true, fieldIds: [], count: 2 });
+    expect(tables.page_fields.update).toHaveBeenCalledWith({
+      config: { options: [{ id: "o1", label: "A", color: "#000" }, { id: "o2", label: "B", color: "#15803d" }] },
+    });
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values[POLE_WYBOR]).toBe("o2");
+    expect(wstawione[1].values[POLE_WYBOR]).toBeUndefined();
+  });
+
+  it("nie zapisuje wartości pól secret", async () => {
+    const POLE_S = "a3000000-0000-4000-8000-000000000008";
+    tables.page_fields = fakeTable({
+      data: [pola[0], { id: POLE_S, name: "Hasło", type: "secret", config: {}, position: 1, is_title: false }],
+    });
+    await importCsvRows(BLOK, [], [{ [POLE_TYTUL]: "x", [POLE_S]: { v: 1, g: 1, iv: "a", ct: "b" } }]);
+    const wstawione = tables.page_rows.insert.mock.calls[0][0];
+    expect(wstawione[0].values).toEqual({ [POLE_TYTUL]: "x" });
+  });
 });
