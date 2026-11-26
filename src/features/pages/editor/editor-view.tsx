@@ -240,6 +240,7 @@ export function EditorView({ data, pages }: { data: LoadedPage; pages?: PageSumm
                   block={b}
                   today={data.today}
                   templateKey={page.templateKey}
+                  title={sciezka}
                   newRowRef={b === pierwszaTabela ? nowyWierszRef : undefined}
                   // „Usuń tabelę” w menu „⋯” tabeli (S2TableMenu) usuwa blok jak kosz obok
                   onRemove={() => void store.remove(b.id)}

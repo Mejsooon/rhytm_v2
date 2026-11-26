@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown, Ellipsis, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -36,12 +37,14 @@ import type { LoadedBlock } from "../load-page";
 import { TEMPLATES, templateSummaries, type TemplateKey } from "../templates";
 import { rowsForm, rowsLabel } from "../rows-label";
 import { operatorsFor, summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
+import { toCsv } from "../csv";
 import { effectiveView, groupRows, searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
 import { BoardView } from "./board-view";
 import { BulkBar } from "./bulk-bar";
 import { CardDialog } from "./card-dialog";
 import { ColumnMenu } from "./column-menu";
+import { CsvImportDialog } from "./csv-import-dialog";
 import { FilterPopover } from "./filter-popover";
 import { MRowSheet } from "./mobile/m-row-sheet";
 import { OptionBadge } from "./option-badge";
@@ -128,6 +131,7 @@ export function PageTable({
   onLiveRowCount,
   renderPhone,
   newRowRef,
+  title,
   onImportCsv,
   onExportCsv,
   onExportRowsCsv,
@@ -159,7 +163,9 @@ export function PageTable({
   renderPhone?: (api: PhoneTableApi) => React.ReactNode;
   // Przycisk główny w nagłówku strony („Nowa książka”): tabela wpisuje tu funkcję dodającą wiersz jak „Nowy wiersz”
   newRowRef?: React.RefObject<(() => void) | null>;
-  // Pozycje CSV w menu „⋯”; bez nich są wyłączone
+  // Tytuł strony: nazwa pobieranego pliku CSV i tabeli w oknie importu (bez niego: nazwa tabeli)
+  title?: string;
+  // Własna obsługa CSV zamiast wbudowanej (import: okno „Importuj z CSV”, eksport: pobranie pliku)
   onImportCsv?: () => void;
   onExportCsv?: () => void;
   // „Eksport CSV” w pasku zaznaczonych (id zaznaczonych wierszy); bez niego pozycja jest wyłączona
@@ -169,7 +175,31 @@ export function PageTable({
   // Zapis Sekretu odrzucony przez inną generację sejfu blokuje sejf
   const store = useTableStore(block, vault.onStaleGeneration, templateKey);
   const { fields, rows, settings, editing } = store;
+  const router = useRouter();
+  // Okno importu CSV montujemy dopiero po otwarciu (każde zaczyna od kroku „Plik”)
+  const [importCsvOtwarty, setImportCsvOtwarty] = React.useState(false);
   const modul = module === "passwords";
+  const nazwaTabeli = title ?? store.tableName;
+
+  // Eksport CSV: plik „<tytuł strony>.csv” (całość) albo „<tytuł strony> — zaznaczone.csv” (podane id wierszy);
+  // pola Sekret pomija toCsv. Pobranie przez tymczasowy link z Blob, adres zwalniamy zaraz po kliknięciu.
+  const pobierzCsv = (idWierszy: string[] | null) => {
+    const zaznaczone = idWierszy ? new Set(idWierszy) : null;
+    const doEksportu = rows.filter((r) => !r.id.startsWith(PREFIKS_TYMCZASOWY) && (!zaznaczone || zaznaczone.has(r.id)));
+    const baza = nazwaTabeli.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "").trim() || "Tabela";
+    const blob = new Blob([toCsv(fields, doEksportu)], { type: "text/csv;charset=utf-8" });
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = adres;
+    link.download = zaznaczone ? `${baza} — zaznaczone.csv` : `${baza}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(adres);
+  };
+  const importujCsv = onImportCsv ?? (modul ? undefined : () => setImportCsvOtwarty(true));
+  const eksportujCsv = onExportCsv ?? (() => pobierzCsv(null));
+  const eksportujZaznaczone = onExportRowsCsv ?? ((ids: string[]) => pobierzCsv(ids));
   const odblokowany = vault.status === "odblokowany";
   // Moduł przy zamkniętym sejfie: nic się nie edytuje
   const tylkoOdczyt = modul && !odblokowany;
@@ -615,6 +645,26 @@ export function PageTable({
           onEdit={(index) => setOknoKarty({ karta: settings.pinned_cards[index] ?? null })}
         />
         {/* Okno karty montujemy dopiero po otwarciu, żeby każde zaczynało od stanu startowego */}
+        {importCsvOtwarty && (
+          <CsvImportDialog
+            open
+            onOpenChange={(o) => {
+              if (!o) setImportCsvOtwarty(false);
+            }}
+            blockId={block.id}
+            tableName={nazwaTabeli}
+            fields={fields}
+            rows={rows}
+            onImported={(liczba, pominiete) => {
+              toast(
+                pominiete > 0
+                  ? `Zaimportowano ${rowsLabel(liczba)} · ${pominiete} pominięte jako duplikaty`
+                  : `Zaimportowano ${rowsLabel(liczba)}`,
+              );
+              router.refresh();
+            }}
+          />
+        )}
         {oknoKarty && (
           <CardDialog
             open
@@ -782,10 +832,10 @@ export function PageTable({
                     <button
                       type="button"
                       role="menuitem"
-                      disabled={!onImportCsv}
+                      disabled={!importujCsv}
                       onClick={() => {
                         setMenuTabeli(false);
-                        onImportCsv?.();
+                        importujCsv?.();
                       }}
                       className={POZYCJA}
                     >
@@ -795,10 +845,9 @@ export function PageTable({
                   <button
                     type="button"
                     role="menuitem"
-                    disabled={!onExportCsv}
                     onClick={() => {
                       setMenuTabeli(false);
-                      onExportCsv?.();
+                      eksportujCsv();
                     }}
                     className={POZYCJA}
                   >
@@ -1377,7 +1426,7 @@ export function PageTable({
               setZaznaczone([]);
               void store.duplicateRows(wybrane);
             }}
-            onExportCsv={onExportRowsCsv ? () => onExportRowsCsv(wybrane) : undefined}
+            onExportCsv={() => eksportujZaznaczone(wybrane)}
             onDelete={() => {
               if (wybrane.length > 500) {
                 toast.error("Maksymalnie 500 wierszy naraz");

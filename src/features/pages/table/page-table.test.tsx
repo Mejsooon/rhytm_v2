@@ -18,6 +18,7 @@ const actions = vi.hoisted(() => ({
   restoreRows: vi.fn(),
   duplicateRows: vi.fn(),
   setRowsValue: vi.fn(),
+  importCsvRows: vi.fn(),
 }));
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),
@@ -182,8 +183,7 @@ describe("PageTable", () => {
         "Eksportuj całą tabelę (CSV)",
         "Usuń tabelę",
       ]);
-      // Bez obsługi CSV (krok importu i eksportu) pozycje są wyłączone
-      expect(within(menu).getByRole("menuitem", { name: "Importuj z CSV…" })).toBeDisabled();
+      expect(within(menu).getByRole("menuitem", { name: "Importuj z CSV…" })).toBeEnabled();
       await user.click(within(menu).getByRole("menuitem", { name: "Usuń tabelę" }));
       expect(usun).toHaveBeenCalledTimes(1);
     });
@@ -200,6 +200,72 @@ describe("PageTable", () => {
       await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
       await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
       expect(eksportuj).toHaveBeenCalledTimes(1);
+    });
+
+    describe("CSV (wbudowany import i eksport)", () => {
+      let pobrania: { nazwa: string; blob: Blob }[];
+      beforeEach(() => {
+        pobrania = [];
+        let ostatni: Blob | null = null;
+        URL.createObjectURL = vi.fn((b: Blob) => {
+          ostatni = b;
+          return "blob:test";
+        });
+        URL.revokeObjectURL = vi.fn();
+        vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+          if (ostatni) pobrania.push({ nazwa: this.download, blob: ostatni });
+        });
+      });
+      afterEach(() => vi.restoreAllMocks());
+
+      it("„Eksportuj całą tabelę (CSV)” pobiera „<tytuł>.csv” z całą tabelą i zwalnia adres", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title={'Moje: książki?'} />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Eksportuj całą tabelę (CSV)" }));
+        expect(pobrania).toHaveLength(1);
+        expect(pobrania[0].nazwa).toBe("Moje książki.csv");
+        const tekst = await pobrania[0].blob.text();
+        expect(tekst).toContain("Atomic Habits");
+        expect(tekst).toContain("Clean Code");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+      });
+
+      it("„Eksport CSV” w pasku pobiera tylko zaznaczone wiersze jako „<tytuł> — zaznaczone.csv”", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("checkbox", { name: "Zaznacz: Atomic Habits" }));
+        await user.click(screen.getByRole("button", { name: "Eksport CSV" }));
+        expect(pobrania[0].nazwa).toBe("Książki — zaznaczone.csv");
+        const tekst = await pobrania[0].blob.text();
+        expect(tekst).toContain("Atomic Habits");
+        expect(tekst).not.toContain("Clean Code");
+      });
+
+      it("„Importuj z CSV…” otwiera okno importu", async () => {
+        const user = userEvent.setup();
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Importuj z CSV…" }));
+        const okno = await screen.findByRole("dialog", { name: "Importuj z CSV" });
+        expect(within(okno).getByText("Dodaj wiersze do tabeli Książki z pliku CSV.")).toBeInTheDocument();
+      });
+
+      it("udany import zamyka okno, pokazuje toast z liczbą i odświeża dane", async () => {
+        const user = userEvent.setup();
+        actions.importCsvRows.mockResolvedValue({ ok: true, fieldIds: [], count: 2 });
+        render(<PageTable block={blok("books", BOOKS)} today={TODAY} title="Książki" />);
+        await user.click(screen.getByRole("button", { name: "Menu tabeli" }));
+        await user.click(screen.getByRole("menuitem", { name: "Importuj z CSV…" }));
+        const tresc = "Tytuł\nNowa A\nNowa B\n";
+        const plik = new File([tresc], "x.csv", { type: "text/csv" });
+        Object.defineProperty(plik, "text", { value: () => Promise.resolve(tresc) });
+        await user.upload(await screen.findByLabelText("Plik CSV"), plik);
+        await user.click(await screen.findByRole("button", { name: "Importuj 2 wiersze" }));
+        await waitFor(() => expect(toast).toHaveBeenCalledWith("Zaimportowano 2 wiersze"));
+        expect(router.refresh).toHaveBeenCalled();
+        expect(screen.queryByRole("dialog", { name: "Importuj z CSV" })).not.toBeInTheDocument();
+      });
     });
 
     it("„⋯” → „Dodaj kartę statystyki” otwiera okno karty", async () => {
