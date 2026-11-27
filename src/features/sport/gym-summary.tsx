@@ -142,7 +142,7 @@ export function GymSummary({ data, onEdit }: { data: WorkoutData; onEdit: () => 
   };
 
   return (
-    <div className="flex min-w-0 flex-col">
+    <div data-testid="gym" className="flex min-w-0 flex-col">
       <header className="flex min-h-[52px] items-center gap-2 border-b border-border px-2 py-1.5 min-[800px]:px-6">
         <Button variant="ghost" icon asChild className="min-[800px]:hidden">
           <Link href={powrot} aria-label="Wróć do Sportu">

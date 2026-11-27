@@ -132,7 +132,7 @@ export function GymLog({ data, onDone }: { data: WorkoutData; onDone?: () => voi
     setCzeka(true);
     // Szablon przed zakończeniem: bierze też nieodhaczone serie
     if (dane.template) await wyslij(() => saveSessionAsTemplate(session.id, session.title));
-    const ok = await wyslij(() => finishWorkout(session.id, { difficulty: dane.difficulty, note: dane.note }));
+    const ok = await wyslij(() => finishWorkout(session.id, { difficulty: dane.difficulty, note: dane.note.trim() || undefined }));
     setCzeka(false);
     if (!ok) return;
     setOkno(null);
@@ -186,7 +186,7 @@ export function GymLog({ data, onDone }: { data: WorkoutData; onDone?: () => voi
   );
 
   return (
-    <div className="flex min-w-0 flex-col">
+    <div data-testid="gym" className="flex min-w-0 flex-col">
       <header className="flex min-h-[52px] items-center gap-2 border-b border-border px-2 py-1.5 min-[800px]:px-6">
         <Button variant="ghost" icon asChild className="min-[800px]:hidden">
           <Link href={powrot} aria-label="Wróć do Sportu">
@@ -451,7 +451,7 @@ function ExerciseCard({
           </Link>
         )}
         {exercise.kind !== "wr" && (
-          <StatusBadge tone="gray" className="max-[799px]:hidden">
+          <StatusBadge tone="gray">
             {rodzaj.label}
           </StatusBadge>
         )}

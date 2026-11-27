@@ -37,7 +37,7 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 - **Pakiet 2 Kalendarz:** scalony 27.11, sprawdzony przez Mejsona.
 
-- **Pakiet 3 Sport** (spec `specs/2026-11-27-sport-v2-design.md`): część A (przegląd i inne aktywności) scalona 27.11, migracja `20261202100000_inne_aktywnosci.sql` na produkcji; czeka na sprawdzenie. Dalej: B (siłownia, web i telefon), C (ćwiczenia i szablony) — na sygnał Mejsona.
+- **Pakiet 3 Sport** (spec `specs/2026-11-27-sport-v2-design.md`): część A (przegląd i inne aktywności) scalona 27.11, migracja `20261202100000_inne_aktywnosci.sql` na produkcji; czeka na sprawdzenie. Część B (dziennik siłowni i podsumowanie, web i telefon; spec `specs/2026-11-27-silownia-v2-design.md`) w pull requeście z `feat/sport-silownia`: przed scaleniem Mejson uruchamia migrację `20261203100000_silownia.sql`. Dalej: C (ćwiczenia i szablony) na sygnał Mejsona.
 
 - **Filtr tabeli jak w makiecie:** scalony do `main`.
 

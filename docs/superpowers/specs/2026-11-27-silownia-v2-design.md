@@ -57,6 +57,9 @@ Okno zakończenia: Czas / Objętość / Serie, nowe rekordy, „N nieodhaczonych
 - „Edytuj” zakończonego treningu otwiera dziennik bez licznika, z przyciskiem „Gotowe”.
 - „Powtórz trening” tworzy nowy trening na dziś z tymi samymi seriami, nieodhaczonymi.
 
+- Serie z szablonu, „Dodaj serię” i dodane ćwiczenie są **puste** (jak w makiecie); wartości z ostatniego razu widać w „Poprzednio” i jako podpowiedź w polu. Dotąd były wypełniane z góry. Koszt: przywrócenie wypełniania.
+- Web i telefon to jeden ekran z progiem 800 px (dawny `m-gym` usunięty). Koszt: różnice układu poprawia się klasami.
+
 ## Poza zakresem
 Szczegóły ćwiczenia i szablony (część C), powiadomienia o końcu przerwy.
 

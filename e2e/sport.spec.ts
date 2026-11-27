@@ -68,7 +68,7 @@ test.describe("sport (web)", () => {
     );
   });
 
-  test("szablon „Push” → plan w kalendarzu → Rozpocznij → ciężary puste → ✓ → Zakończ → drugi start z ciężarami z ostatniego razu", async ({
+  test("szablon „Push” → plan w kalendarzu → Rozpocznij → puste serie → ✓ → Zakończ → drugi start z wynikami w „Poprzednio”", async ({
     page,
   }, info) => {
     const userId = await zalozKontoNawykow(page, info.project.name);
@@ -104,26 +104,26 @@ test.describe("sport (web)", () => {
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
     const sesjaId = page.url().split("/").pop() ?? "";
 
-    const trening = page.getByTestId("web-gym");
-    // Bez historii: ciężary puste, powtórzenia z „8–10”
+    const trening = page.getByTestId("gym");
+    // Serie z szablonu są puste (bez historii podpowiedź powtórzeń z „8–10”)
     const kg1 = trening.getByLabel("Wyciskanie, seria 1 — ciężar");
     const kg2 = trening.getByLabel("Wyciskanie, seria 2 — ciężar");
+    const powt1 = trening.getByLabel("Wyciskanie, seria 1 — powtórzenia");
+    const powt2 = trening.getByLabel("Wyciskanie, seria 2 — powtórzenia");
     await expect(kg1).toHaveValue("");
-    await expect(kg2).toHaveValue("");
-    await expect(
-      trening.getByLabel("Wyciskanie, seria 1 — powtórzenia"),
-    ).toHaveValue("8");
+    await expect(powt1).toHaveValue("");
+    await expect(powt1).toHaveAttribute("placeholder", "8");
 
     await kg1.fill("60");
     await kg1.press("Enter");
-    await trening
-      .getByRole("checkbox", { name: "Wyciskanie, seria 1 zrobiona" })
-      .click();
+    await powt1.fill("8");
+    await powt1.press("Enter");
+    await trening.getByRole("button", { name: "Wyciskanie, seria 1 zrobiona" }).click();
     await kg2.fill("62,5");
     await kg2.press("Enter");
-    await trening
-      .getByRole("checkbox", { name: "Wyciskanie, seria 2 zrobiona" })
-      .click();
+    await powt2.fill("8");
+    await powt2.press("Enter");
+    await trening.getByRole("button", { name: "Wyciskanie, seria 2 zrobiona" }).click();
     await expect(trening.getByTestId("serie")).toHaveText("2 / 3");
     await expect(trening.getByTestId("objetosc")).toHaveText("980 kg");
 
@@ -140,6 +140,9 @@ test.describe("sport (web)", () => {
       .toEqual([60, 62.5]);
 
     await trening.getByRole("button", { name: "Zakończ trening" }).click();
+    const okno = page.getByRole("dialog", { name: "Zakończyć trening?" });
+    await expect(okno).toContainText("1 nieodhaczona seria zostanie pominięta.");
+    await okno.getByRole("button", { name: "Zapisz trening" }).click();
     await expect(page).toHaveURL(/\/sport\?miesiac=\d{4}-\d{2}$/);
 
     // Drugi start: jutrzejsze wystąpienie z kalendarza Sportu
@@ -157,13 +160,12 @@ test.describe("sport (web)", () => {
       .click();
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
     expect(page.url().split("/").pop()).not.toBe(sesjaId);
-    const drugi = page.getByTestId("web-gym");
-    await expect(drugi.getByLabel("Wyciskanie, seria 1 — ciężar")).toHaveValue(
-      "60",
-    );
-    await expect(drugi.getByLabel("Wyciskanie, seria 2 — ciężar")).toHaveValue(
-      "62,5",
-    );
+    const drugi = page.getByTestId("gym");
+    // Puste serie, a „Poprzednio” z pierwszego treningu; odhaczenie wpisuje wynik
+    await expect(drugi.getByLabel("Wyciskanie, seria 1 — ciężar")).toHaveValue("");
+    await drugi.getByRole("button", { name: "Wyciskanie, seria 1 zrobiona" }).click();
+    await expect(drugi.getByLabel("Wyciskanie, seria 1 — ciężar")).toHaveValue("60");
+    await expect(drugi.getByRole("button", { name: /Wpisz poprzedni wynik 62,5 × 8/ })).toBeVisible();
   });
 
   test("„Usuń” wystąpienie szablonu → znika, także po odświeżeniu", async ({
@@ -245,7 +247,7 @@ test.describe("sport (web)", () => {
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
     await expect(
       page
-        .getByTestId("web-gym")
+        .getByTestId("gym")
         .getByRole("heading", { name: "Trening siłowy", level: 1 }),
     ).toBeVisible();
   });
@@ -297,20 +299,18 @@ test.describe("sport (telefon)", () => {
     await m.getByRole("button", { name: "Trening", exact: true }).click();
     await page.getByRole("button", { name: "Push", exact: true }).click();
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
-    const trening = page.getByTestId("m-gym");
+    const trening = page.getByTestId("gym");
     await expect(
       trening
         .getByRole("progressbar", { name: "Postęp serii" })
         .locator(":scope > div"),
     ).toHaveAttribute("style", /width: 0%/);
-    await trening
-      .getByRole("checkbox", { name: "Wyciskanie, seria 1", exact: true })
-      .click();
+    await trening.getByRole("button", { name: "Wyciskanie, seria 1 zrobiona" }).click();
     await expect(
       trening
         .getByRole("progressbar", { name: "Postęp serii" })
         .locator(":scope > div"),
     ).toHaveAttribute("style", /width: 50%/);
-    await expect(trening.getByTestId("m-serie")).toHaveText(/^1\/2 serii/);
+    await expect(trening.getByTestId("serie")).toHaveText("1 / 2");
   });
 });
