@@ -150,23 +150,31 @@ test.describe("Dziś: menu i pierwsze kroki (web)", () => {
   test("ręczne odhaczenie kroku zostaje po odświeżeniu, ukryta lista znika", async ({
     page,
   }, info) => {
-    await zalozKontoNawykow(page, info.project.name);
+    const userId = await zalozKontoNawykow(page, info.project.name);
     await page.goto("/dzis");
     const web = page.getByTestId("web-dzis");
+    // Zapis sprawdzamy w bazie: strona wysyła też inne POST-y, więc czekanie na odpowiedź
+    // potrafiło złapać nie ten i odświeżenie ucinało zapis
+    const profil = async () => {
+      const { data } = await adminClient()
+        .from("profiles")
+        .select("first_steps, first_steps_hidden")
+        .eq("user_id", userId)
+        .single();
+      return data;
+    };
     const kroki = web.getByRole("region", { name: "Pierwsze kroki" });
 
-    const zapis = poZapisie(page);
     await kroki.getByRole("button", { name: "Oznacz jako zrobione: Włącz powiadomienia" }).click();
-    await zapis;
+    await expect.poll(async () => (await profil())?.first_steps).toEqual({ push: true });
     await page.reload();
     await expect(
       kroki.getByRole("button", { name: "Odznacz: Włącz powiadomienia" }),
     ).toBeVisible();
 
-    const ukrycie = poZapisie(page);
     await kroki.getByRole("button", { name: "Ukryj listę" }).click();
     await expect(web.getByRole("status")).toContainText("jest ukryta");
-    await ukrycie;
+    await expect.poll(async () => (await profil())?.first_steps_hidden).toBe(true);
     await page.reload();
     await expect(web.getByRole("heading", { name: "Plan dnia" })).toBeVisible();
     await expect(kroki).toBeHidden();
@@ -180,8 +188,12 @@ test.describe("Dziś: menu i pierwsze kroki (web)", () => {
     await expect(
       page.getByTestId("web-dzis").getByRole("heading", { name: "Plan dnia" }),
     ).toBeVisible();
-    await page.keyboard.press("Control+Shift+K");
     const okno = page.getByRole("dialog", { name: "Szybkie dodawanie" });
+    // Skrót działa dopiero po hydratacji, a nagłówek widać już z HTML serwera
+    await expect(async () => {
+      await page.keyboard.press("Control+Shift+K");
+      await expect(okno).toBeVisible({ timeout: 1000 });
+    }).toPass();
     await okno.getByLabel("Co dodać?").fill("bieg 10 km jutro 18:00");
     await expect(okno.getByTestId("rozumiem")).toContainText("10 km");
     await okno.getByLabel("Co dodać?").press("Enter");

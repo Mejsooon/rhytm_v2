@@ -52,7 +52,7 @@ test.describe("powłoka aplikacji", () => {
     // Wcześniejszy wstrzyknięty element zniknąłby przy podmianie, a strona nie dałaby się przewinąć.
     const tresc = page
       .getByTestId("web-dzis")
-      .getByText("Nie masz jeszcze bloków na dziś.");
+      .getByText("Brak bloków na dziś");
     await expect(tresc).toBeVisible();
     const sidebar = page.getByRole("navigation", { name: "Główna nawigacja" });
     await expect(sidebar).toBeVisible();
@@ -109,7 +109,7 @@ test.describe("powłoka aplikacji", () => {
     await expect(
       page
         .getByTestId("web-dzis")
-        .getByText("Nie masz jeszcze bloków na dziś."),
+        .getByText("Brak bloków na dziś"),
     ).toBeVisible();
     await expect(nawigacja).toBeHidden();
 
