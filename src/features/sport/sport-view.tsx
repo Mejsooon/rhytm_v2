@@ -21,6 +21,7 @@ import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { createGymSession, type GymSessionInput } from "./actions";
+import { ActivityDialog } from "./activity-dialog";
 import { DeleteSessionDialog } from "./delete-session-dialog";
 import { MRunNew } from "./mobile/m-run-new";
 import { MSport } from "./mobile/m-sport";
@@ -33,7 +34,7 @@ import { RecordCard } from "./record-card";
 import { RunDialog } from "./run-dialog";
 import { WeekTiles } from "./week-tiles";
 
-type Filtr = "all" | "run" | "gym";
+type Filtr = "all" | "run" | "gym" | "other";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
@@ -251,6 +252,13 @@ export function SportView({
     })();
   }, [nowyData, nowyStart, profile.timezone, month, router]);
 
+  // Okno innej aktywności: undefined = zamknięte, null = nowa. Wybrany w kalendarzu wpis „inny”
+  // otwiera to samo okno zamiast dymku.
+  const [aktywnosc, setAktywnosc] = useState<SportItem | null | undefined>(undefined);
+  const wybranaInna = data.items.find((i) => i.key === wybrany && i.kind === "other") ?? null;
+  const godzinaAktywnosci = (i: SportItem | null | undefined) =>
+    i ? `${String(Math.floor(i.startMin / 60)).padStart(2, "0")}:${String(i.startMin % 60).padStart(2, "0")}` : null;
+
   // Filtr działa na kalendarz i „Ostatnie treningi”
   const widoczne =
     filtr === "all" ? data.items : data.items.filter((i) => i.kind === filtr);
@@ -365,6 +373,7 @@ export function SportView({
                   </Link>
                 </div>
               </ActionPopover>
+              <Button onClick={() => setAktywnosc(null)}>Inna aktywność</Button>
               <Button
                 variant="primary"
                 onClick={() =>
@@ -429,6 +438,7 @@ export function SportView({
                 { value: "all", label: "Wszystko" },
                 { value: "run", label: "Bieg" },
                 { value: "gym", label: "Siłownia" },
+                { value: "other", label: "Inne" },
               ]}
             />
           </div>
@@ -436,7 +446,7 @@ export function SportView({
           <MonthCalendar
             data={data}
             items={widoczne}
-            selectedKey={wybrany}
+            selectedKey={wybranaInna ? null : wybrany}
             addDate={dodaj}
             onSelect={zaznacz}
             onAddDay={dodajWDniu}
@@ -488,6 +498,7 @@ export function SportView({
             exercises={data.exercises}
             profileWeight={profile.weightKg}
             onOpenRun={otworzBieg}
+            onOpenActivity={(item) => setAktywnosc(item)}
           />
         </div>
       </div>
@@ -511,6 +522,26 @@ export function SportView({
           today={today}
           profile={profile}
           onClose={zamknijBieg}
+        />
+      )}
+
+      {(aktywnosc !== undefined || wybranaInna) && (
+        <ActivityDialog
+          key={(wybranaInna ?? aktywnosc)?.key ?? "nowa"}
+          item={wybranaInna ?? aktywnosc ?? null}
+          date={(wybranaInna ?? aktywnosc)?.date ?? today}
+          start={godzinaAktywnosci(wybranaInna ?? aktywnosc) ?? godzinaTeraz()}
+          profile={profile}
+          kinds={data.activityKinds ?? []}
+          onDelete={(item) => {
+            setAktywnosc(undefined);
+            setWybrany(null);
+            setDoUsuniecia(item);
+          }}
+          onClose={() => {
+            setAktywnosc(undefined);
+            setWybrany(null);
+          }}
         />
       )}
 

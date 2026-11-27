@@ -116,7 +116,9 @@ export function MSport({
   // Trening z `?wybrany=` na telefonie (wywoływane raz na klucz)
   onSelected: (item: SportItem) => void;
 }) {
-  const { today, profile, items } = data;
+  const { today, profile } = data;
+  // Inne aktywności dojdą na telefon w pakiecie Telefon; tu nie mogą udawać biegu ani siłowni
+  const items = data.items.filter((i) => i.kind !== "other");
   const [zakres, setZakres] = useState<"w" | "m">("w");
   const [slupek, setSlupek] = useState<number | null>(null);
   const [menuTreningu, setMenuTreningu] = useState(false);
@@ -201,7 +203,7 @@ export function MSport({
         });
   const najwiecej = Math.max(0, ...slupki.map((s) => s.km)) || 1;
 
-  const ostatnie = data.recent.slice(0, 5);
+  const ostatnie = data.recent.filter((i) => i.kind !== "other").slice(0, 5);
   // Plany bieżącego tygodnia (items są posortowane wg daty i godziny)
   const zaplanowane = items.filter(
     (i) => i.planned && i.date >= biezacy && i.date <= koniecTygodnia,

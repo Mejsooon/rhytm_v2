@@ -7,6 +7,7 @@ import type { Database } from "@/types/database";
 import type { BlockRow, ExceptionRow, Recurrence } from "./occurrences";
 import { addDays } from "./view-range";
 import type { TaskRow } from "@/features/tasks/model";
+import { loadActivities } from "@/features/sport/load-sport";
 import {
   sessionItems,
   templateOccurrences,
@@ -287,8 +288,9 @@ export async function loadCalendar(
     if (error) throw new Error(error.message);
     biegi = (data ?? []) as RunRow[];
   }
+  const aktywnosci = await loadActivities(supabase, userId, pokazane);
   const sport = [
-    ...sessionItems(pokazane, biegi),
+    ...sessionItems(pokazane, biegi, aktywnosci),
     ...templateOccurrences(
       (szablonyRes.data ?? []) as TemplateRow[],
       (pominieciaRes.data ?? []) as SkipRow[],

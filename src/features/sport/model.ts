@@ -7,6 +7,7 @@ import {
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
 import type { Database } from "@/types/database";
 import type { RunInput } from "./actions";
+import { ACTIVITY_COLORS, activityKinds, type ActivityKindRow } from "./activities";
 
 export type { IsoDate };
 
@@ -18,6 +19,7 @@ export type TemplateRow = Tables["workout_templates"]["Row"];
 export type TemplateItemRow = Tables["workout_template_items"]["Row"];
 export type SkipRow = Tables["template_skips"]["Row"];
 export type ExerciseRow = Tables["exercises"]["Row"];
+export type ActivityRow = Tables["activities"]["Row"];
 
 export type RunKind = "easy" | "tempo" | "intervals" | "long" | "race";
 
@@ -31,7 +33,9 @@ export const RUN_KIND_LABEL: Record<RunKind, string> = {
 
 export type SportItem = {
   key: string; // s:{id} dla sesji, t:{templateId}:{date} dla wystąpienia szablonu
-  kind: "run" | "gym";
+  kind: "run" | "gym" | "other";
+  // Kolor rodzaju innej aktywności
+  color?: string;
   sessionId: string | null;
   templateId: string | null;
   date: IsoDate;
@@ -419,12 +423,17 @@ export function templateOccurrences(
 export function sessionItems(
   sessions: SessionRow[],
   runs: RunRow[],
+  activities: ActivityRow[] = [],
+  customKinds: ActivityKindRow[] = [],
 ): SportItem[] {
   const biegi = new Map(runs.map((r) => [r.session_id, r]));
+  const inne = new Map(activities.map((a) => [a.session_id, a]));
+  const kolory = new Map(activityKinds(customKinds).map((k) => [k.name.toLowerCase(), k.color]));
 
   return sessions.map((s) => {
     const bieg = s.type === "run" ? (biegi.get(s.id) ?? null) : null;
-    const kind: "run" | "gym" = s.type === "run" ? "run" : "gym";
+    const kind: SportItem["kind"] = s.type === "run" ? "run" : s.type === "other" ? "other" : "gym";
+    const inna = kind === "other" ? (inne.get(s.id) ?? null) : null;
     const planned =
       kind === "run" ? !bieg || bieg.duration_s === null : !s.completed;
     const startMin = minutyZGodziny(s.start_local.slice(11, 16));
@@ -442,6 +451,8 @@ export function sessionItems(
         bieg && bieg.duration_s !== null
           ? Math.round(bieg.duration_s / 60)
           : 60;
+    } else if (kind === "other") {
+      durationMin = inna?.duration_s != null ? Math.round(inna.duration_s / 60) : 60;
     } else {
       durationMin = 90;
     }
@@ -457,11 +468,11 @@ export function sessionItems(
       title: s.title,
       planned,
       showInCalendar: s.show_in_calendar,
-      distanceKm: bieg ? bieg.distance_km : null,
-      durationS: bieg ? bieg.duration_s : null,
-      kcal: bieg ? bieg.kcal : null,
-      difficulty:
-        kind === "run" ? (bieg ? bieg.difficulty : null) : s.difficulty,
+      distanceKm: (bieg ?? inna)?.distance_km ?? null,
+      durationS: (bieg ?? inna)?.duration_s ?? null,
+      kcal: (bieg ?? inna)?.kcal ?? null,
+      difficulty: kind === "gym" ? s.difficulty : ((bieg ?? inna)?.difficulty ?? null),
+      ...(kind === "other" && { color: kolory.get(s.title.toLowerCase()) ?? ACTIVITY_COLORS[0] }),
       runKind: bieg ? (bieg.kind as RunKind) : null,
       note: s.note,
     };

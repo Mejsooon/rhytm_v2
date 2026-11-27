@@ -276,7 +276,11 @@ export async function searchAll(q: string): Promise<SearchResult> {
     elementySportu.push({
       title: s.title,
       meta: bieg && typeof km === "number" ? `${dzien} · ${formatKm(km)} km` : dzien,
-      href: bieg ? `/sport?miesiac=${data.slice(0, 7)}&bieg=${s.id}` : `/sport/trening/${s.id}`,
+      href: bieg
+        ? `/sport?miesiac=${data.slice(0, 7)}&bieg=${s.id}`
+        : s.type === "other"
+          ? `/sport?miesiac=${data.slice(0, 7)}&wybrany=s:${s.id}`
+          : `/sport/trening/${s.id}`,
     });
   }
   if (elementySportu.length > 0) grupy.push({ title: "Sport", items: elementySportu });

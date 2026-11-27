@@ -10,6 +10,7 @@ import { weekdayOf } from "@/features/calendar/view-range";
 import type { RunRequest } from "./item-popover";
 import type { SessionSets } from "./load-sport";
 import {
+  formatDuration,
   formatKm,
   formatPace,
   formatVolume,
@@ -32,6 +33,7 @@ export function RecentTable({
   exercises,
   profileWeight,
   onOpenRun,
+  onOpenActivity,
 }: {
   // Wykonane treningi malejąco, już po filtrze
   items: SportItem[];
@@ -43,6 +45,7 @@ export function RecentTable({
   exercises: ExerciseRow[];
   profileWeight: number | null;
   onOpenRun: (req: RunRequest) => void;
+  onOpenActivity?: (item: SportItem) => void;
 }) {
   const router = useRouter();
   const zMasaCiala = new Set(
@@ -53,6 +56,7 @@ export function RecentTable({
   function otworz(item: SportItem) {
     if (!item.sessionId) return;
     if (item.kind === "run") onOpenRun({ sessionId: item.sessionId });
+    else if (item.kind === "other") onOpenActivity?.(item);
     else router.push(`/sport/trening/${item.sessionId}`);
   }
 
@@ -107,6 +111,9 @@ export function RecentTable({
                 km > 0 && item.durationS !== null
                   ? `${formatPace(item.durationS / km)}/km`
                   : "—";
+            } else if (item.kind === "other") {
+              wynik = item.distanceKm !== null ? `${formatKm(item.distanceKm)} km` : item.kcal !== null ? `≈ ${item.kcal} kcal` : "—";
+              dodatkowo = item.durationS !== null ? formatDuration(item.durationS) : "—";
             } else {
               const serie =
                 setsHistory.find((s) => s.sessionId === item.sessionId)?.sets ??
@@ -134,7 +141,7 @@ export function RecentTable({
                 </td>
                 <td className={KOMORKA}>
                   <StatusBadge tone={bieg ? "orange" : "gray"}>
-                    {bieg ? "BIEG" : "SIŁA"}
+                    {bieg ? "BIEG" : item.kind === "other" ? "INNE" : "SIŁA"}
                   </StatusBadge>{" "}
                   <span className="ml-1.5 font-medium">{item.title}</span>
                 </td>
