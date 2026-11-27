@@ -2,7 +2,7 @@
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { MIESIACE } from "@/components/controls/calendar-math";
 import { addDays, isoWeekNumber, weekdayOf } from "@/features/calendar/view-range";
-import type { SportItem } from "./model";
+import { plPlural, type SportItem } from "./model";
 
 export type Okres = "tydzien" | "miesiac" | "rok";
 export type Filtr = "all" | "run" | "gym" | "other";
@@ -95,7 +95,25 @@ export function metric(items: SportItem[], filtr: Filtr, planned = false): numbe
   return lista.reduce((s, i) => s + (i.kind === "run" ? (i.distanceKm ?? 0) : 0), 0);
 }
 
-export type Rekord = { key: string; label: string; value: string; date: IsoDate; kind: "run" | "gym" | "other" };
+// itemKey: aktywność, w której padł rekord (plakietka „rekord” i klik w rekord)
+export type Rekord = { key: string; label: string; value: string; date: IsoDate; kind: "run" | "gym" | "other"; itemKey?: string };
+
+// Dymek słupka: biegi i kilometry, siłownia i inne aktywności; przyszłość pokazuje plan
+export function barInfo(items: SportItem[], filtr: Filtr, today: IsoDate, trwa: boolean): string {
+  const lista = filtr === "all" ? items : items.filter((i) => i.kind === filtr);
+  const zrobione = lista.filter((i) => !i.planned);
+  const s = stats(zrobione);
+  const czesci: string[] = [];
+  if (s.runs > 0) czesci.push(`${plPlural(s.runs, "bieg", "biegi", "biegów")} · ${s.km.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} km`);
+  if (s.gym > 0) czesci.push(plPlural(s.gym, "trening siłowy", "treningi siłowe", "treningów siłowych"));
+  for (const i of zrobione.filter((x) => x.kind === "other")) czesci.push(i.title.toLowerCase());
+  const plan = lista.filter((i) => i.planned && i.date >= today);
+  if (plan.length > 0) {
+    czesci.push(`plan: ${plan.map((i) => (i.kind === "run" && i.distanceKm !== null ? `${i.title} ${i.distanceKm.toLocaleString("pl-PL")} km` : i.title)).join(", ")}`);
+  }
+  if (czesci.length === 0) return "—";
+  return `${czesci.join(" · ")}${trwa && zrobione.length > 0 ? " (trwa)" : ""}`;
+}
 
 // Rekordy biegowe i aktywności z dystansem (1RM ćwiczeń dokłada widok z historii serii)
 export function runRecords(items: SportItem[], formatTime: (s: number) => string): Rekord[] {
@@ -105,17 +123,17 @@ export function runRecords(items: SportItem[], formatTime: (s: number) => string
   for (const [cel, od, doKm] of [[5, 4.9, 5.2], [10, 9.8, 10.4]] as const) {
     const pasujace = biegi.filter((i) => i.distanceKm! >= od && i.distanceKm! <= doKm && i.durationS !== null);
     const naj = pasujace.sort((a, b) => a.durationS! - b.durationS!)[0];
-    if (naj) wynik.push({ key: `km${cel}`, label: `${cel} km`, value: formatTime(naj.durationS!), date: naj.date, kind: "run" });
+    if (naj) wynik.push({ key: `km${cel}`, label: `${cel} km`, value: formatTime(naj.durationS!), date: naj.date, kind: "run", itemKey: naj.key });
   }
   const km = (d: number) => `${d.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
   const najdluzszy = [...biegi].sort((a, b) => b.distanceKm! - a.distanceKm!)[0];
-  if (najdluzszy) wynik.push({ key: "long", label: "Najdłuższy bieg", value: km(najdluzszy.distanceKm!), date: najdluzszy.date, kind: "run" });
+  if (najdluzszy) wynik.push({ key: "long", label: "Najdłuższy bieg", value: km(najdluzszy.distanceKm!), date: najdluzszy.date, kind: "run", itemKey: najdluzszy.key });
   const inne = new Map<string, SportItem>();
   for (const i of zrobione.filter((x) => x.kind === "other")) {
     if (i.distanceKm! > (inne.get(i.title)?.distanceKm ?? 0)) inne.set(i.title, i);
   }
   for (const [nazwa, i] of inne) {
-    wynik.push({ key: `o:${nazwa}`, label: `${nazwa} · najdłuższa trasa`, value: km(i.distanceKm!), date: i.date, kind: "other" });
+    wynik.push({ key: `o:${nazwa}`, label: `${nazwa} · najdłuższa trasa`, value: km(i.distanceKm!), date: i.date, kind: "other", itemKey: i.key });
   }
   return wynik;
 }

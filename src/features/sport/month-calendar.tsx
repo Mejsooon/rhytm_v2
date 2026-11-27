@@ -41,6 +41,7 @@ export function MonthCalendar({
   onStartGym,
   onDelete,
   suspended = false,
+  onOpenActivity,
 }: {
   data: SportMonthData;
   // Treningi po filtrze Wszystko / Bieg / Siłownia
@@ -54,6 +55,8 @@ export function MonthCalendar({
   onDelete: (item: SportItem) => void;
   // Okno potwierdzenia usunięcia jest otwarte: Esc i klik poza kalendarzem nie zamykają dymka
   suspended?: boolean;
+  // Edycja innej aktywności; null = nowa w wybranym dniu
+  onOpenActivity?: (item: SportItem | null, date: IsoDate) => void;
 }) {
   const { profile, month, today } = data;
   const wiersze = monthGrid(month, profile.weekStart);
@@ -233,6 +236,7 @@ export function MonthCalendar({
                         onOpenRun={onOpenRun}
                         onStartGym={onStartGym}
                         onDelete={onDelete}
+                        onOpenActivity={(w) => onOpenActivity?.(w, w.date)}
                       />
                     )}
 
@@ -305,6 +309,15 @@ export function MonthCalendar({
                             <span className="text-xs text-muted-foreground">
                               pusty trening siłowy
                             </span>
+                          </span>
+                        </button>
+                        <button type="button" className={OPCJA} onClick={() => onOpenActivity?.(null, date)}>
+                          <span aria-hidden="true" className="grid size-7 flex-none place-items-center rounded-[8px] bg-[#7c3aed1a] text-[#6d28d9]">
+                            <Activity size={15} />
+                          </span>
+                          <span className="flex flex-col">
+                            <span className="font-medium">Inna aktywność</span>
+                            <span className="text-xs text-muted-foreground">tenis, rower, joga, pole dance…</span>
                           </span>
                         </button>
                         {data.templates.length > 0 && (
