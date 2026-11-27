@@ -19,9 +19,14 @@ import {
 import { EXERCISE_LIBRARY } from "./library";
 import type { WorkoutData } from "./load-sport";
 import {
+  isBodyweightKind,
+  kindOf,
+  parseDuration,
   parseKgInput,
+  parseKm,
   parseRepsInput,
   sessionVolume,
+  type ExerciseKind,
   type GymSetRow,
 } from "./model";
 
@@ -29,11 +34,33 @@ import {
 export type GymExercise = {
   id: string;
   name: string;
+  kind: ExerciseKind;
   bodyweight: boolean;
   sets: GymSetRow[];
 };
-export type DraftField = "kg" | "reps";
-type Szkic = { kg?: string; reps?: string };
+export type DraftField = "kg" | "reps" | "time" | "km";
+type Szkic = Partial<Record<DraftField, string>>;
+
+// Czas serii: "1:30" albo same sekundy "45"
+const czytajCzas = (tekst: string) => {
+  const t = tekst.trim();
+  if (t === "") return null;
+  const s = /^\d{1,4}$/.test(t) ? Number(t) : parseDuration(t);
+  return s === null || s < 1 || s > 86400 ? undefined : s;
+};
+const czytajKm = (tekst: string) => {
+  if (tekst.trim() === "") return null;
+  const km = parseKm(tekst);
+  return km === null || km <= 0 || km > 300 ? undefined : km;
+};
+
+// Pole formularza → kolumna serii i czytnik (undefined = zły zapis)
+const POLA = {
+  kg: { kolumna: "weight_kg", czytaj: parseKgInput },
+  reps: { kolumna: "reps", czytaj: parseRepsInput },
+  time: { kolumna: "duration_s", czytaj: czytajCzas },
+  km: { kolumna: "distance_km", czytaj: czytajKm },
+} as const;
 
 // Serie i ćwiczenia utworzone na ekranie, zanim serwer nada im id
 const TYMCZASOWE = "tmp-";
@@ -89,8 +116,7 @@ function bezSzkicuPola(
   const nowe = new Map(szkice);
   const szkic = { ...nowe.get(setId) };
   delete szkic[field];
-  if (szkic.kg !== undefined || szkic.reps !== undefined)
-    nowe.set(setId, szkic);
+  if (Object.keys(szkic).length > 0) nowe.set(setId, szkic);
   else nowe.delete(setId);
   return nowe;
 }
@@ -118,6 +144,11 @@ function nalozOperacje(b: Baza, op: Operacja): Baza {
         ...ostatnia,
         id: op.setId,
         set_no: ostatnia.set_no + 1,
+        weight_kg: null,
+        reps: null,
+        duration_s: null,
+        distance_km: null,
+        set_type: "N",
         done: false,
       };
       return { ...b, sets: [...b.sets, nowa] };
@@ -156,6 +187,9 @@ function nalozOperacje(b: Baza, op: Operacja): Baza {
             weight_kg: null,
             reps: null,
             done: false,
+            set_type: "N",
+            duration_s: null,
+            distance_km: null,
           })),
         ],
       };
@@ -196,14 +230,12 @@ export function useGymStore(data: WorkoutData) {
   const sets = poZmianach.sets.map((s) => {
     const szkic = biezacy.szkice.get(s.id);
     if (!szkic) return s;
-    const kg = szkic.kg !== undefined ? parseKgInput(szkic.kg) : undefined;
-    const reps =
-      szkic.reps !== undefined ? parseRepsInput(szkic.reps) : undefined;
-    return {
-      ...s,
-      ...(kg !== undefined ? { weight_kg: kg } : {}),
-      ...(reps !== undefined ? { reps } : {}),
-    };
+    const wynik = { ...s };
+    for (const [pole, tekst] of Object.entries(szkic) as [DraftField, string][]) {
+      const wartosc = POLA[pole].czytaj(tekst);
+      if (wartosc !== undefined) wynik[POLA[pole].kolumna] = wartosc;
+    }
+    return wynik;
   });
 
   // Ćwiczenia w kolejności pozycji, serie po numerze
@@ -226,11 +258,12 @@ export function useGymStore(data: WorkoutData) {
       const zBiblioteki = EXERCISE_LIBRARY.find(
         (l) => l.name.toLowerCase() === name.toLowerCase(),
       );
-      const bodyweight = zBazy
-        ? zBazy.bodyweight
-        : (zBiblioteki?.bodyweight ?? false);
+      const kind: ExerciseKind = zBazy
+        ? kindOf(zBazy)
+        : (zBiblioteki?.kind ?? "wr");
+      const bodyweight = isBodyweightKind(kind);
       if (bodyweight) bodyweightIds.add(s.exercise_id);
-      cwiczenie = { id: s.exercise_id, name, bodyweight, sets: [] };
+      cwiczenie = { id: s.exercise_id, name, kind, bodyweight, sets: [] };
       exercises.push(cwiczenie);
     }
     cwiczenie.sets.push(s);
@@ -301,19 +334,14 @@ export function useGymStore(data: WorkoutData) {
   async function commitDraft(setId: string, field: DraftField) {
     const tekst = biezacy.szkice.get(setId)?.[field];
     if (tekst === undefined) return;
-    const wartosc =
-      field === "kg" ? parseKgInput(tekst) : parseRepsInput(tekst);
+    const { kolumna, czytaj } = POLA[field];
+    const wartosc = czytaj(tekst);
     const seria = poZmianach.sets.find((s) => s.id === setId);
-    const obecna = seria
-      ? field === "kg"
-        ? seria.weight_kg
-        : seria.reps
-      : undefined;
     if (
       wartosc === undefined ||
       !seria ||
       isTempId(setId) ||
-      wartosc === obecna
+      wartosc === seria[kolumna]
     ) {
       // Tylko porzucenie szkicu
       setStan((s) => ({
@@ -322,8 +350,7 @@ export function useGymStore(data: WorkoutData) {
       }));
       return;
     }
-    const patch: SetPatch =
-      field === "kg" ? { weight_kg: wartosc } : { reps: wartosc };
+    const patch: SetPatch = { [kolumna]: wartosc };
     await wykonaj(
       { typ: "zmiana", setId, patch },
       () => updateSet(setId, patch),
@@ -332,13 +359,25 @@ export function useGymStore(data: WorkoutData) {
     );
   }
 
-  async function toggleDone(setId: string) {
+  // Zmiana pól serii naraz (typ serii, „Poprzednio”, odhaczenie)
+  async function update(setId: string, patch: SetPatch) {
+    if (isTempId(setId)) return;
+    // Szkice pól, które nadpisujemy, znikają
+    setStan((s) => {
+      let szkice = s.szkice;
+      for (const [pole, { kolumna }] of Object.entries(POLA)) {
+        if (kolumna in patch) szkice = bezSzkicuPola(szkice, setId, pole as DraftField);
+      }
+      return { ...s, szkice };
+    });
+    await wykonaj({ typ: "zmiana", setId, patch }, () => updateSet(setId, patch));
+  }
+
+  // Odhaczenie; `wypelnij` to wartości z „Poprzednio” dla pustej serii
+  async function toggleDone(setId: string, wypelnij: SetPatch = {}) {
     const seria = poZmianach.sets.find((s) => s.id === setId);
-    if (!seria || isTempId(setId)) return;
-    const patch = { done: !seria.done };
-    await wykonaj({ typ: "zmiana", setId, patch }, () =>
-      updateSet(setId, patch),
-    );
+    if (!seria) return;
+    await update(setId, seria.done ? { done: false } : { ...wypelnij, done: true });
   }
 
   async function addSet(exerciseId: string) {
@@ -392,6 +431,7 @@ export function useGymStore(data: WorkoutData) {
     totalCount: sets.length,
     setDraft,
     commitDraft,
+    update,
     toggleDone,
     addSet,
     deleteSet,

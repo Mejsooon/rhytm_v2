@@ -69,7 +69,8 @@ export type WorkoutData = {
   templateName: string | null; // „z szablonu „…”” — szablon mógł zmienić nazwę albo zniknąć
   sets: GymSetRow[]; // rosnąco po exercise_position, set_no
   exercises: ExerciseRow[]; // wszystkie ćwiczenia użytkownika (nazwy + dymek wyszukiwania)
-  history: SessionSets[]; // sesje z seriami ćwiczeń tego treningu (łącznie z nim)
+  history: SessionSets[]; // wszystkie sesje z seriami (także „ostatnio” w oknie dodawania ćwiczeń)
+  templateItems: TemplateItemRow[]; // plan z szablonu tego treningu (puste bez szablonu)
 };
 
 export type TemplatesData = {
@@ -465,9 +466,7 @@ export async function loadWorkout(
     if (wynik.error) throw new Error(wynik.error.message);
   }
   const sets = (serieRes.data ?? []) as GymSetRow[];
-  const history = await loadSetsHistory(supabase, userId, [
-    ...new Set(sets.map((s) => s.exercise_id)),
-  ]);
+  const history = await loadSetsHistory(supabase, userId);
 
   let templateName: string | null = null;
   if (sesja.template_id) {
@@ -480,6 +479,17 @@ export async function loadWorkout(
     if (bladSzablonu) throw new Error(bladSzablonu.message);
     templateName = szablon?.name ?? null;
   }
+  let templateItems: TemplateItemRow[] = [];
+  if (sesja.template_id) {
+    const { data: pozycje, error: bladPozycji } = await supabase
+      .from("workout_template_items")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("template_id", sesja.template_id)
+      .order("position", { ascending: true });
+    if (bladPozycji) throw new Error(bladPozycji.message);
+    templateItems = (pozycje ?? []) as TemplateItemRow[];
+  }
 
   return {
     today: todayIso(profile.timezone),
@@ -489,6 +499,7 @@ export async function loadWorkout(
     sets,
     exercises: (cwiczeniaRes.data ?? []) as ExerciseRow[],
     history,
+    templateItems,
   };
 }
 

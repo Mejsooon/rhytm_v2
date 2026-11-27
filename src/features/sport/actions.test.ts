@@ -34,10 +34,14 @@ import {
   setExerciseBodyweight,
   skipTemplateOccurrence,
   updateSet,
+  copyWorkout,
+  discardWorkout,
+  saveExercise,
+  startWorkout,
+  updateExercise,
 } from "./actions";
 
 const SESJA = "b1000000-0000-4000-8000-000000000001";
-const STARA = "b1000000-0000-4000-8000-000000000002";
 const SZABLON = "c1000000-0000-4000-8000-000000000001";
 const PRZYSIAD = "d1000000-0000-4000-8000-000000000001";
 const MARTWY = "d1000000-0000-4000-8000-000000000002";
@@ -105,6 +109,11 @@ describe("bez sesji", () => {
     ["deleteSet", () => deleteSet(SERIA)],
     ["removeExercise", () => removeExercise(SESJA, PRZYSIAD)],
     ["finishWorkout", () => finishWorkout(SESJA)],
+    ["startWorkout", () => startWorkout(SESJA)],
+    ["discardWorkout", () => discardWorkout(SESJA)],
+    ["copyWorkout", () => copyWorkout(SESJA)],
+    ["saveExercise", () => saveExercise({ name: "Plank", kind: "dur", group: "", equipment: "" })],
+    ["updateExercise", () => updateExercise(PRZYSIAD, { rest_s: 60 })],
     [
       "saveTemplate",
       () =>
@@ -272,41 +281,11 @@ describe("createGymSession", () => {
     expect((tables.gym_sets as Fake).insert).not.toHaveBeenCalled();
   });
 
-  it("z szablonu: start z godziny szablonu, serie z ostatnich ciężarów, last_used_at", async () => {
+  it("z szablonu: start z godziny szablonu, puste serie, przerwa i last_used_at", async () => {
     tables.workout_templates = fakeTable({ single: szablon });
     tables.workout_template_items = fakeTable({ data: pozycje });
     const wstawienie = fakeTable({ single: { id: SESJA } });
-    tables.sport_sessions = [
-      wstawienie,
-      fakeTable({
-        data: [{ id: STARA, start_local: "2026-11-13T17:00:00" }],
-      }),
-    ];
-    // Ostatnia wykonana sesja z przysiadem: 2 serie (trzecia bierze ostatnią)
-    tables.gym_sets = fakeTable({
-      data: [
-        {
-          id: "s1",
-          session_id: STARA,
-          exercise_id: PRZYSIAD,
-          exercise_position: 1,
-          set_no: 1,
-          weight_kg: 60,
-          reps: 8,
-          done: true,
-        },
-        {
-          id: "s2",
-          session_id: STARA,
-          exercise_id: PRZYSIAD,
-          exercise_position: 1,
-          set_no: 2,
-          weight_kg: 62.5,
-          reps: 6,
-          done: true,
-        },
-      ],
-    });
+    tables.sport_sessions = [wstawienie];
 
     const w = await createGymSession({
       date: "2026-11-20",
@@ -322,81 +301,22 @@ describe("createGymSession", () => {
         template_date: "2026-11-20",
       }),
     );
-    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
-      expect.objectContaining({
-        session_id: SESJA,
-        exercise_id: PRZYSIAD,
-        set_no: 1,
-        weight_kg: 60,
-        reps: 8,
-        done: false,
-      }),
-      expect.objectContaining({ set_no: 2, weight_kg: 62.5, reps: 6 }),
-      expect.objectContaining({ set_no: 3, weight_kg: 62.5, reps: 6 }),
-    ]);
+    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith(
+      [1, 2, 3].map((nr) =>
+        expect.objectContaining({
+          session_id: SESJA,
+          exercise_id: PRZYSIAD,
+          set_no: nr,
+          weight_kg: null,
+          reps: null,
+          done: false,
+        }),
+      ),
+    );
+    expect((tables.exercises as Fake).update).toHaveBeenCalledWith({ rest_s: 120 });
     expect((tables.workout_templates as Fake).update).toHaveBeenCalledWith({
       last_used_at: "2026-11-18T10:00:00.000Z",
     });
-  });
-
-  it("serie z najnowszej wykonanej sesji, gdy starsza też ma to ćwiczenie", async () => {
-    const NOWSZA = "b1000000-0000-4000-8000-000000000003";
-    tables.workout_templates = fakeTable({ single: szablon });
-    tables.workout_template_items = fakeTable({ data: pozycje });
-    const historia = fakeTable({
-      // baza zwraca malejąco po start_local
-      data: [
-        { id: NOWSZA, start_local: "2026-11-16T17:00:00" },
-        { id: STARA, start_local: "2026-11-09T17:00:00" },
-      ],
-    });
-    tables.sport_sessions = [fakeTable({ single: { id: SESJA } }), historia];
-    tables.gym_sets = fakeTable({
-      data: [
-        {
-          id: "s1",
-          session_id: STARA,
-          exercise_id: PRZYSIAD,
-          exercise_position: 1,
-          set_no: 1,
-          weight_kg: 50,
-          reps: 10,
-          done: true,
-        },
-        {
-          id: "s2",
-          session_id: NOWSZA,
-          exercise_id: PRZYSIAD,
-          exercise_position: 1,
-          set_no: 1,
-          weight_kg: 70,
-          reps: 5,
-          done: true,
-        },
-      ],
-    });
-
-    await createGymSession({
-      date: "2026-11-20",
-      start: "17:00",
-      templateId: SZABLON,
-    });
-
-    // Historia ograniczona: wykonane treningi siłowe od najnowszego, z limitem
-    expect(historia.eq).toHaveBeenCalledWith("completed", true);
-    expect(historia.order).toHaveBeenCalledWith("start_local", {
-      ascending: false,
-    });
-    expect(historia.limit).toHaveBeenCalledWith(50);
-    expect((tables.gym_sets as Fake).in).toHaveBeenCalledWith("session_id", [
-      NOWSZA,
-      STARA,
-    ]);
-    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
-      expect.objectContaining({ set_no: 1, weight_kg: 70, reps: 5 }),
-      expect.objectContaining({ set_no: 2, weight_kg: 70, reps: 5 }),
-      expect.objectContaining({ set_no: 3, weight_kg: 70, reps: 5 }),
-    ]);
   });
 
   it("dziś po godzinie szablonu start = teraz", async () => {
@@ -415,110 +335,6 @@ describe("createGymSession", () => {
     );
   });
 
-  it("bez historii: kg puste, powtórzenia z reps_text", async () => {
-    tables.workout_templates = fakeTable({ single: szablon });
-    tables.workout_template_items = fakeTable({ data: pozycje });
-    tables.sport_sessions = [fakeTable({ single: { id: SESJA } })];
-    await createGymSession({
-      date: "2026-11-20",
-      start: "17:00",
-      templateId: SZABLON,
-    });
-    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
-      expect.objectContaining({ set_no: 1, weight_kg: null, reps: 8 }),
-      expect.objectContaining({ set_no: 2, weight_kg: null, reps: 8 }),
-      expect.objectContaining({ set_no: 3, weight_kg: null, reps: 8 }),
-    ]);
-  });
-});
-
-describe("addExercise", () => {
-  it("„przysiad” przy istniejącym „Przysiad” używa istniejącego ćwiczenia", async () => {
-    tables.exercises = fakeTable({
-      data: [{ id: PRZYSIAD, name: "Przysiad" }],
-    });
-    const w = await addExercise(SESJA, "przysiad");
-    expect(w).toEqual({ ok: true, id: PRZYSIAD });
-    expect((tables.exercises as Fake).insert).not.toHaveBeenCalled();
-    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
-      expect.objectContaining({
-        exercise_id: PRZYSIAD,
-        exercise_position: 1,
-        set_no: 1,
-        weight_kg: null,
-        reps: null,
-        done: false,
-      }),
-      expect.objectContaining({ set_no: 2 }),
-      expect.objectContaining({ set_no: 3 }),
-    ]);
-  });
-
-  it("nowe ćwiczenie z biblioteki dostaje grupę mięśni", async () => {
-    tables.exercises = fakeTable({ data: [], single: { id: MARTWY } });
-    const w = await addExercise(SESJA, "martwy ciąg");
-    expect(w).toEqual({ ok: true, id: MARTWY });
-    expect((tables.exercises as Fake).insert).toHaveBeenCalledWith({
-      user_id: "u1",
-      name: "martwy ciąg",
-      muscle_group: "plecy",
-      bodyweight: false,
-    });
-  });
-
-  it("nowe ćwiczenie z masą ciała z biblioteki dostaje flagę bodyweight", async () => {
-    tables.exercises = fakeTable({ data: [], single: { id: MARTWY } });
-    await addExercise(SESJA, "Dipy");
-    expect((tables.exercises as Fake).insert).toHaveBeenCalledWith({
-      user_id: "u1",
-      name: "Dipy",
-      muscle_group: "triceps",
-      bodyweight: true,
-    });
-  });
-
-  it("nowe ćwiczenie spoza biblioteki nie jest z masą ciała", async () => {
-    tables.exercises = fakeTable({ data: [], single: { id: MARTWY } });
-    await addExercise(SESJA, "Muscle-up");
-    expect((tables.exercises as Fake).insert).toHaveBeenCalledWith({
-      user_id: "u1",
-      name: "Muscle-up",
-      muscle_group: null,
-      bodyweight: false,
-    });
-  });
-
-  it("wyścig przy tworzeniu (23505) czyta ćwiczenie po nazwie z „*” bez wzorca", async () => {
-    const ponownie = fakeTable({
-      data: [
-        { id: MARTWY, name: "Wyciskanie*" },
-        { id: LAWKA, name: "Wyciskanie na ławce" },
-      ],
-    });
-    tables.exercises = [
-      fakeTable({ data: [] }),
-      fakeTable({ error: { code: "23505", message: "dup" } }),
-      ponownie,
-    ];
-    const w = await addExercise(SESJA, "wyciskanie*");
-    expect(w).toEqual({ ok: true, id: MARTWY });
-    expect(ponownie.eq).toHaveBeenCalledWith("user_id", "u1");
-  });
-
-  it("pozycja za ostatnim ćwiczeniem treningu", async () => {
-    tables.exercises = fakeTable({
-      data: [{ id: PRZYSIAD, name: "Przysiad" }],
-    });
-    tables.gym_sets = fakeTable({
-      data: [{ exercise_id: MARTWY, exercise_position: 2 }],
-    });
-    await addExercise(SESJA, "Przysiad");
-    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ exercise_position: 3 }),
-      ]),
-    );
-  });
 });
 
 describe("serie", () => {
@@ -533,7 +349,7 @@ describe("serie", () => {
     expect((tables.gym_sets as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
   });
 
-  it("addSet kopiuje ciężar i powtórzenia poprzedniej serii", async () => {
+  it("addSet dokłada pustą serię na końcu ćwiczenia", async () => {
     tables.gym_sets = fakeTable({
       data: [
         { exercise_position: 2, set_no: 1, weight_kg: 60, reps: 8 },
@@ -549,8 +365,8 @@ describe("serie", () => {
         exercise_id: PRZYSIAD,
         exercise_position: 2,
         set_no: 3,
-        weight_kg: 62.5,
-        reps: 6,
+        weight_kg: null,
+        reps: null,
         done: false,
       }),
     );
@@ -630,44 +446,59 @@ describe("serie — wyścig numeru serii (23505)", () => {
 });
 
 describe("finishWorkout", () => {
-  it("oznacza wykonany i ustawia koniec = teraz w strefie profilu", async () => {
-    tables.sport_sessions = fakeTable({
-      data: [{ id: SESJA }],
-      single: { id: SESJA, start_local: "2026-11-18T09:30:00" },
-    });
-    const w = await finishWorkout(SESJA);
-    expect(w).toEqual({ ok: true });
+  beforeEach(() => {
+    tables.gym_sets = fakeTable({ data: [{ id: SERIA }] });
+  });
+  const sesja = (start_local: string, started_at: string | null = null) =>
+    fakeTable({ data: [{ id: SESJA }], single: { id: SESJA, start_local, started_at } });
+
+  it("usuwa nieodhaczone serie, oznacza wykonany i ustawia koniec = teraz w strefie profilu", async () => {
+    tables.sport_sessions = sesja("2026-11-18T09:30:00");
+    expect(await finishWorkout(SESJA)).toEqual({ ok: true });
+    expect((tables.gym_sets as Fake).delete).toHaveBeenCalled();
+    expect((tables.gym_sets as Fake).eq).toHaveBeenCalledWith("done", false);
     expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
       completed: true,
       end_local: "2026-11-18T11:00:00",
     });
   });
 
-  it("zapisuje trudność", async () => {
-    tables.sport_sessions = fakeTable({
-      data: [{ id: SESJA }],
-      single: { id: SESJA, start_local: "2026-11-18T09:30:00" },
-    });
-    const w = await finishWorkout(SESJA, 7);
-    expect(w).toEqual({ ok: true });
+  it("zapisuje trudność i notatkę", async () => {
+    tables.sport_sessions = sesja("2026-11-18T09:30:00");
+    await finishWorkout(SESJA, { difficulty: 7, note: "dobra energia" });
     expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
       completed: true,
       end_local: "2026-11-18T11:00:00",
       difficulty: 7,
+      note: "dobra energia",
     });
   });
 
   it("trudność spoza 1–10 → błąd, bez zapisu", async () => {
-    const w = await finishWorkout(SESJA, 11);
+    const w = await finishWorkout(SESJA, { difficulty: 11 });
     expect(w.ok).toBe(false);
     expect((tables.sport_sessions as Fake).update).not.toHaveBeenCalled();
   });
 
-  it("dziś, ale start jeszcze nie minął → koniec = start + 90 min", async () => {
-    tables.sport_sessions = fakeTable({
-      data: [{ id: SESJA }],
-      single: { id: SESJA, start_local: "2026-11-18T17:00:00" },
+  it("bez zrobionej serii nic nie usuwa i nie kończy", async () => {
+    tables.gym_sets = fakeTable({ data: [] });
+    tables.sport_sessions = sesja("2026-11-18T09:30:00");
+    expect((await finishWorkout(SESJA)).ok).toBe(false);
+    expect((tables.gym_sets as Fake).delete).not.toHaveBeenCalled();
+    expect((tables.sport_sessions as Fake).update).not.toHaveBeenCalled();
+  });
+
+  it("z licznikiem koniec = start + czas licznika", async () => {
+    tables.sport_sessions = sesja("2026-11-18T10:00:00", "2026-11-18T09:15:00.000Z");
+    await finishWorkout(SESJA);
+    expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
+      completed: true,
+      end_local: "2026-11-18T10:45:00",
     });
+  });
+
+  it("dziś, ale start jeszcze nie minął → koniec = start + 90 min", async () => {
+    tables.sport_sessions = sesja("2026-11-18T17:00:00");
     await finishWorkout(SESJA);
     expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
       completed: true,
@@ -676,10 +507,7 @@ describe("finishWorkout", () => {
   });
 
   it("trening z innego dnia → koniec = start + 90 min (także przez północ)", async () => {
-    tables.sport_sessions = fakeTable({
-      data: [{ id: SESJA }],
-      single: { id: SESJA, start_local: "2026-11-15T23:00:00" },
-    });
+    tables.sport_sessions = sesja("2026-11-15T23:00:00");
     await finishWorkout(SESJA);
     expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
       completed: true,
@@ -924,6 +752,7 @@ describe("setExerciseBodyweight", () => {
     expect(w).toEqual({ ok: true });
     expect((tables.exercises as Fake).update).toHaveBeenCalledWith({
       bodyweight: true,
+      kind: "wbw",
     });
     expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("id", PRZYSIAD);
     expect((tables.exercises as Fake).eq).toHaveBeenCalledWith("user_id", "u1");
@@ -995,5 +824,49 @@ describe("usuwanie i pominięcia", () => {
       { template_id: SZABLON, user_id: "u1", date: "2026-11-20" },
       { onConflict: "template_id,date", ignoreDuplicates: true },
     );
+  });
+});
+
+describe("start, kopia i ćwiczenia", () => {
+  it("startWorkout: trening z dziś zaczyna się teraz i rusza licznik", async () => {
+    tables.sport_sessions = fakeTable({ single: { start_local: "2026-11-18T17:00:00", started_at: null, completed: false } });
+    expect(await startWorkout(SESJA)).toEqual({ ok: true });
+    expect((tables.sport_sessions as Fake).update).toHaveBeenCalledWith({
+      started_at: "2026-11-18T10:00:00.000Z",
+      start_local: "2026-11-18T11:00:00",
+      end_local: null,
+    });
+  });
+
+  it("startWorkout: drugi raz nie przestawia licznika", async () => {
+    tables.sport_sessions = fakeTable({ single: { start_local: "2026-11-18T09:00:00", started_at: "2026-11-18T08:00:00Z", completed: false } });
+    await startWorkout(SESJA);
+    expect((tables.sport_sessions as Fake).update).not.toHaveBeenCalled();
+  });
+
+  it("copyWorkout: nowy trening z nieodhaczonymi seriami", async () => {
+    tables.sport_sessions = fakeTable({ single: { id: SESJA, title: "Push", start_local: "2026-11-11T17:00:00" } });
+    tables.gym_sets = fakeTable({ data: [{ exercise_id: PRZYSIAD, exercise_position: 1, set_no: 1, weight_kg: 60, reps: 5, set_type: "W" }] });
+    expect(await copyWorkout(SESJA, "2026-11-25")).toEqual({ ok: true, id: SESJA });
+    expect((tables.sport_sessions as Fake).insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Push", start_local: "2026-11-25T17:00:00" }),
+    );
+    expect((tables.gym_sets as Fake).insert).toHaveBeenCalledWith([
+      expect.objectContaining({ session_id: SESJA, weight_kg: 60, reps: 5, set_type: "W", done: false }),
+    ]);
+  });
+
+  it("saveExercise: zmiana rodzaju czyści serie tego treningu", async () => {
+    tables.exercises = fakeTable({ single: { kind: null, bodyweight: false } });
+    await saveExercise({ id: PRZYSIAD, name: "Przysiad", kind: "dur", group: "nogi", equipment: "" }, SESJA);
+    expect((tables.gym_sets as Fake).update).toHaveBeenCalledWith({ weight_kg: null, reps: null, duration_s: null, distance_km: null, done: false });
+  });
+
+  it("saveExercise: ten sam rodzaj nie rusza serii; zajęta nazwa ma komunikat", async () => {
+    tables.exercises = fakeTable({ single: { kind: "wr", bodyweight: false } });
+    await saveExercise({ id: PRZYSIAD, name: "Przysiad 2", kind: "wr", group: "", equipment: "" }, SESJA);
+    expect((tables.gym_sets as Fake).update).not.toHaveBeenCalled();
+    tables.exercises = fakeTable({ error: { code: "23505", message: "dup" } });
+    expect(await saveExercise({ name: "Przysiad", kind: "wr", group: "", equipment: "" })).toEqual({ ok: false, message: "Masz już ćwiczenie o tej nazwie." });
   });
 });

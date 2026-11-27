@@ -4,7 +4,6 @@ import {
   effectiveKg,
   epley1rm,
   kgVsLast,
-  lastSetsSummary,
   parseKgInput,
   parseRepsInput,
   firstReps,
@@ -28,15 +27,17 @@ import {
   sessionVolume,
   sportItemHref,
   templateOccurrences,
-  templateSets,
   weekStats,
   type GymSetRow,
   type RunRow,
   type SessionRow,
   type SkipRow,
-  type TemplateItemRow,
   type TemplateRow,
   type SportItem,
+  formatSet,
+  kindOf,
+  previousSets,
+  setLabels,
 } from "./model";
 
 const set = (o: Partial<GymSetRow>): GymSetRow => ({
@@ -49,6 +50,9 @@ const set = (o: Partial<GymSetRow>): GymSetRow => ({
   weight_kg: 60,
   reps: 8,
   done: true,
+  set_type: "N",
+  duration_s: null,
+  distance_km: null,
   ...o,
 });
 
@@ -220,65 +224,6 @@ describe("runFormInput", () => {
   });
 });
 
-describe("lastSetsSummary", () => {
-  const historia = [
-    {
-      sessionId: "s1",
-      startLocal: "2026-11-03T10:00:00",
-      completed: true,
-      sets: [set({ id: "a1", weight_kg: 50, reps: 10 })],
-    },
-    {
-      sessionId: "s2",
-      startLocal: "2026-11-10T10:00:00",
-      completed: true,
-      sets: [
-        set({ id: "b2", set_no: 2, weight_kg: 60, reps: 8 }),
-        set({ id: "b1", set_no: 1, weight_kg: 60, reps: 8 }),
-        set({ id: "b3", set_no: 3, weight_kg: 62.5, reps: 6 }),
-        set({ id: "b4", set_no: 4, weight_kg: 70, reps: 6, done: false }),
-        set({ id: "inne", exercise_id: "e2", weight_kg: 100 }),
-      ],
-    },
-    {
-      sessionId: "teraz",
-      startLocal: "2026-11-17T10:00:00",
-      completed: true,
-      sets: [set({ id: "c1", weight_kg: 65 })],
-    },
-  ];
-
-  it("ostatnia wcześniejsza sesja: zrobione serie × powt. pierwszej · maks. kg", () => {
-    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
-      "ost. 3×8 · 62,5 kg",
-    );
-  });
-
-  it("masa ciała bez kg; brak wcześniejszej sesji → null", () => {
-    const mc = [
-      {
-        sessionId: "s1",
-        startLocal: "2026-11-03T10:00:00",
-        completed: true,
-        sets: [
-          set({ id: "a1", weight_kg: null, reps: 12 }),
-          set({ id: "a2", set_no: 2, weight_kg: null, reps: 10 }),
-        ],
-      },
-      {
-        sessionId: "teraz",
-        startLocal: "2026-11-17T10:00:00",
-        completed: true,
-        sets: [],
-      },
-    ];
-    expect(lastSetsSummary(mc, "teraz", "e1", false)).toBe("ost. 2×12");
-    expect(lastSetsSummary(historia, "s1", "e1", false)).toBeNull();
-    expect(lastSetsSummary(historia, "teraz", "e9", false)).toBeNull();
-    expect(lastSetsSummary(historia, "brak", "e1", false)).toBeNull();
-  });
-});
-
 describe("recordSetIds", () => {
   it("pierwsza sesja bez rekordu, potem tylko najcięższa seria ponad max", () => {
     const wynik = recordSetIds(
@@ -407,7 +352,7 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
     expect([...recordSetIds([b, a], "e1", false, null)]).toEqual(["b1"]);
   });
 
-  it("kgVsLast i lastSetsSummary pomijają niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
+  it("kgVsLast pomija niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
     const historia = [
       {
         sessionId: "a",
@@ -436,9 +381,6 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
     ];
     expect(kgVsLast(historia, "teraz", "e1", false, null)).toBe(2.5);
     expect(kgVsLast(historia, "b", "e1", false, null)).toBe(2.5);
-    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
-      "ost. 1×8 · 62,5 kg",
-    );
   });
 });
 
@@ -493,6 +435,7 @@ describe("templateOccurrences", () => {
 
 describe("sessionItems", () => {
   const sesja = (o: Partial<SessionRow>): SessionRow => ({
+    started_at: null,
     id: "s1",
     user_id: "u",
     type: "run",
@@ -707,81 +650,8 @@ describe("monthGrid", () => {
   });
 });
 
-describe("templateSets i firstReps", () => {
-  const poz: TemplateItemRow = {
-    id: "i1",
-    user_id: "u",
-    template_id: "t1",
-    exercise_id: "e1",
-    position: 3,
-    sets_count: 3,
-    reps_text: "8–10",
-    rest_s: 120,
-  };
-  it("serie z historii, brakujące kopiują ostatnią", () => {
-    const hist = new Map([
-      [
-        "e1",
-        [
-          set({ set_no: 1, weight_kg: 60, reps: 8 }),
-          set({ set_no: 2, weight_kg: 62.5, reps: 6 }),
-        ],
-      ],
-    ]);
-    expect(templateSets([poz], hist)).toEqual([
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 1,
-        weight_kg: 60,
-        reps: 8,
-      },
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 2,
-        weight_kg: 62.5,
-        reps: 6,
-      },
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 3,
-        weight_kg: 62.5,
-        reps: 6,
-      },
-    ]);
-  });
-  it("bez historii kg puste, powtórzenia z reps_text", () => {
-    const w = templateSets([poz], new Map());
-    expect(w).toHaveLength(3);
-    expect(w.every((s) => s.weight_kg === null && s.reps === 8)).toBe(true);
-  });
-  it("null powt. w historii wraca do reps_text", () => {
-    const hist = new Map([
-      ["e1", [set({ set_no: 1, weight_kg: 60, reps: null })]],
-    ]);
-    const w = templateSets([poz], hist);
-    expect(w[0]).toMatchObject({ weight_kg: 60, reps: 8 });
-  });
-  it("to samo ćwiczenie drugi raz w szablonie jest pomijane (jedno ćwiczenie w treningu)", () => {
-    const w = templateSets(
-      [
-        { ...poz, id: "i1", position: 1, sets_count: 2 },
-        { ...poz, id: "i2", exercise_id: "e2", position: 2, sets_count: 1 },
-        { ...poz, id: "i3", position: 3, sets_count: 4 },
-      ],
-      new Map(),
-    );
-    expect(
-      w.map((s) => [s.exercise_id, s.exercise_position, s.set_no]),
-    ).toEqual([
-      ["e1", 1, 1],
-      ["e1", 1, 2],
-      ["e2", 2, 1],
-    ]);
-  });
-  it("firstReps", () => {
+describe("firstReps", () => {
+  it("pierwsza liczba z zapisu powtórzeń", () => {
     expect(firstReps("8–10")).toBe(8);
     expect(firstReps("12")).toBe(12);
     expect(firstReps("AMRAP")).toBeNull();
@@ -806,7 +676,7 @@ describe("searchExercises", () => {
       .map((e) => e.name)
       .sort();
     expect(zMasaCiala).toEqual(
-      ["Dipy", "Plank", "Podciąganie", "Pompki", "Pompki na poręczach"].sort(),
+      ["Dipy", "Podciąganie", "Pompki", "Pompki na poręczach"].sort(),
     );
     expect(EXERCISE_LIBRARY.find((e) => e.name === "Dipy")?.group).toBe(
       "triceps",
@@ -1029,18 +899,55 @@ describe("ćwiczenia z masą ciała w historii", () => {
   it("„vs ostatnio” porównuje mc + dociążenie", () => {
     expect(kgVsLast(historia, "s2", "e1", true, 72)).toBe(5);
   });
+});
 
-  it("„ost.” pokazuje mc albo mc + dociążenie", () => {
-    const dalej = [
-      ...historia,
-      {
-        sessionId: "s3",
-        startLocal: "2026-11-17T10:00:00",
-        completed: true,
-        sets: [],
-      },
-    ];
-    expect(lastSetsSummary(dalej, "s3", "e1", true)).toBe("ost. 2×10 · mc + 5");
-    expect(lastSetsSummary(dalej, "s2", "e1", true)).toBe("ost. 1×12 · mc");
+describe("typy serii i rodzaje ćwiczeń", () => {
+  const historia = [
+    { sessionId: "a", startLocal: "2026-11-01T10:00:00", completed: true, sets: [set({ id: "a1", session_id: "a", weight_kg: 70 })] },
+    {
+      sessionId: "b",
+      startLocal: "2026-11-08T10:00:00",
+      completed: true,
+      sets: [
+        set({ id: "b1", session_id: "b", weight_kg: 100, set_type: "W" }),
+        set({ id: "b2", session_id: "b", set_no: 2, weight_kg: 90, set_type: "D" }),
+        set({ id: "b3", session_id: "b", set_no: 3, weight_kg: 72.5 }),
+      ],
+    },
+  ];
+
+  it("rozgrzewka nie liczy się do objętości, drop set tak", () => {
+    expect(sessionVolume(historia[1].sets, new Set(), null)).toBe(90 * 8 + 72.5 * 8);
+  });
+
+  it("rekord pomija rozgrzewkę i drop set", () => {
+    expect([...recordSetIds(historia, "e1", false, null)]).toEqual(["b3"]);
+    expect(kgVsLast(historia, "b", "e1", false, null)).toBe(2.5);
+  });
+
+  it("poprzednio to zrobione serie ostatniej wcześniejszej sesji", () => {
+    expect(previousSets(historia, "b", "e1").map((s) => s.id)).toEqual(["a1"]);
+    expect(previousSets(historia, "nowa", "e1").map((s) => s.id)).toEqual(["b1", "b2", "b3"]);
+    expect(previousSets(historia, "a", "e1")).toEqual([]);
+  });
+
+  it("etykiety: robocze numerowane, reszta literą", () => {
+    expect(setLabels([{ set_type: "W" }, { set_type: "N" }, { set_type: "D" }, { set_type: "N" }, { set_type: "F" }])).toEqual(["R", "1", "D", "2", "F"]);
+  });
+
+  it("rodzaj: starsze ćwiczenie z masą ciała ma +kg", () => {
+    expect(kindOf({ kind: null, bodyweight: true })).toBe("wbw");
+    expect(kindOf({ kind: null, bodyweight: false })).toBe("wr");
+    expect(kindOf({ kind: "dur", bodyweight: false })).toBe("dur");
+  });
+
+  it("zapis wyniku serii zależy od rodzaju", () => {
+    const s = set({ weight_kg: 72.5, reps: 5, duration_s: 90, distance_km: 5 });
+    expect(formatSet(s, "wr")).toBe("72,5 × 5");
+    expect(formatSet(s, "wbw")).toBe("+72,5 × 5");
+    expect(formatSet(s, "bw")).toBe("5 powt.");
+    expect(formatSet(s, "dur")).toBe("01:30");
+    expect(formatSet(s, "dist")).toBe("5,0 km · 01:30");
+    expect(formatSet(set({ reps: null }), "wr")).toBeNull();
   });
 });

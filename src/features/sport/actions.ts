@@ -13,16 +13,17 @@ import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
 import { EXERCISE_LIBRARY } from "./library";
 import {
+  kindOf,
   RUN_KIND_LABEL,
   runKcal,
-  templateSets,
-  type GymSetRow,
   type RunKind,
   type TemplateItemRow,
 } from "./model";
 import {
-  difficultySchema,
+  exerciseInputSchema,
+  exerciseMetaSchema,
   exerciseNameSchema,
+  finishSchema,
   gymSessionInputSchema,
   idSchema,
   isoDateSchema,
@@ -41,8 +42,7 @@ const BLAD_PRZYWROCENIA_POZYCJI =
   "Nie udało się zapisać ćwiczeń szablonu ani przywrócić poprzednich. Dodaj je ponownie.";
 const ZAJETA_NAZWA = "Masz już ćwiczenie o tej nazwie.";
 const DOMYSLNE_POWTORZENIA = "8–10";
-const SESJE_HISTORII = 50;
-const ROZMIAR_STRONY = 1000;
+const ZABRAKLO_SERII = "Odhacz przynajmniej jedną serię albo odrzuć trening.";
 
 export type RunInput = {
   id?: string;
@@ -71,6 +71,17 @@ export type SetPatch = {
   weight_kg?: number | null;
   reps?: number | null;
   done?: boolean;
+  set_type?: "N" | "W" | "D" | "F";
+  duration_s?: number | null;
+  distance_km?: number | null;
+};
+
+export type ExerciseInput = {
+  id?: string;
+  name: string;
+  kind: "wr" | "bw" | "wbw" | "dur" | "dist";
+  group: string;
+  equipment: string;
 };
 
 export type TemplateInput = {
@@ -134,6 +145,8 @@ async function exerciseIdsByName(
         name: nazwa,
         muscle_group: zBiblioteki?.group ?? null,
         bodyweight: zBiblioteki?.bodyweight ?? false,
+        kind: zBiblioteki?.kind ?? null,
+        equipment: zBiblioteki?.equipment ?? null,
       })
       .select("id")
       .single();
@@ -428,78 +441,32 @@ export async function createGymSession(
   }
   if (bladSesji || !nowa) return { ok: false, message: BLAD_ZAPISU };
 
-  // Pozycje szablonu i ostatnia wykonana sesja z każdym ćwiczeniem (kg i powt. „jak ostatnio”)
+  // Serie puste: poprzednie wyniki pokazuje kolumna „Poprzednio”.
+  // Ćwiczenie powtórzone w szablonie bierzemy raz (numer serii jest unikalny w sesji).
   const { data: pozycje, error: bladPozycji } = await supabase
     .from("workout_template_items")
     .select("*")
     .eq("template_id", szablon.id)
     .eq("user_id", user.id)
     .order("position", { ascending: true });
-  let bladHistorii = bladPozycji !== null;
-  const ostatnieSerie = new Map<string, GymSetRow[]>();
-  const idCwiczen = [...new Set((pozycje ?? []).map((p) => p.exercise_id))];
-  if (!bladHistorii && idCwiczen.length > 0) {
-    // Ostatnie wykonane treningi siłowe, od najnowszego (ograniczone: ćwiczenie,
-    // którego nie było w ostatnich SESJE_HISTORII treningach, startuje bez historii)
-    const { data: sesje, error: bladSesjiHistorii } = await supabase
-      .from("sport_sessions")
-      .select("id, start_local")
-      .eq("user_id", user.id)
-      .eq("type", "gym")
-      .eq("completed", true)
-      .order("start_local", { ascending: false })
-      .limit(SESJE_HISTORII);
-    bladHistorii = bladSesjiHistorii !== null;
-    const idSesji = (sesje ?? []).map((s) => s.id);
-
-    // Serie ćwiczeń szablonu z tych treningów, stronami (PostgREST obcina odpowiedź do 1000 wierszy)
-    const serie: GymSetRow[] = [];
-    if (!bladHistorii && idSesji.length > 0) {
-      for (let od = 0; ; od += ROZMIAR_STRONY) {
-        const { data, error } = await supabase
-          .from("gym_sets")
-          .select("*")
-          .eq("user_id", user.id)
-          .in("session_id", idSesji)
-          .in("exercise_id", idCwiczen)
-          .order("id", { ascending: true })
-          .range(od, od + ROZMIAR_STRONY - 1);
-        if (error) {
-          bladHistorii = true;
-          break;
-        }
-        serie.push(...((data ?? []) as GymSetRow[]));
-        if ((data ?? []).length < ROZMIAR_STRONY) break;
-      }
-    }
-
-    // Dla każdego ćwiczenia: serie z najnowszej wykonanej sesji, w której wystąpiło
-    for (const cwiczenie of idCwiczen) {
-      const najnowsza = idSesji.find((id) =>
-        serie.some((z) => z.session_id === id && z.exercise_id === cwiczenie),
-      );
-      if (!najnowsza) continue;
-      ostatnieSerie.set(
-        cwiczenie,
-        serie.filter(
-          (z) => z.session_id === najnowsza && z.exercise_id === cwiczenie,
-        ),
-      );
-    }
-  }
-
-  const noweSerie = bladHistorii
-    ? null
-    : templateSets((pozycje ?? []) as TemplateItemRow[], ostatnieSerie);
-  let bladSerii = noweSerie === null;
-  if (noweSerie && noweSerie.length > 0) {
+  const pierwsze = ((pozycje ?? []) as TemplateItemRow[]).filter(
+    (p, i, wszystkie) => wszystkie.findIndex((x) => x.exercise_id === p.exercise_id) === i,
+  );
+  let bladSerii = bladPozycji !== null;
+  if (!bladSerii && pierwsze.length > 0) {
     const { error } = await supabase.from("gym_sets").insert(
-      noweSerie.map((s) => ({
-        ...s,
-        user_id: user.id,
-        session_id: nowa.id,
-        done: false,
-      })),
+      pierwsze.flatMap((p) =>
+        Array.from({ length: p.sets_count }, (_, i) => ({
+          user_id: user.id,
+          session_id: nowa.id,
+          exercise_id: p.exercise_id,
+          exercise_position: p.position,
+          set_no: i + 1,
+          weight_kg: null,
+          reps: null,
+          done: false,
+        })),
+      ),
     );
     bladSerii = error !== null;
   }
@@ -507,6 +474,14 @@ export async function createGymSession(
     // Bez serii sesja z szablonu byłaby pusta, a drugie „Rozpocznij” już by jej nie uzupełniło
     await supabase.from("sport_sessions").delete().eq("id", nowa.id);
     return { ok: false, message: BLAD_ZAPISU };
+  }
+  // Przerwa należy do ćwiczenia — start z szablonu przepisuje przerwę z szablonu (błąd nie cofa treningu)
+  for (const p of pierwsze) {
+    await supabase
+      .from("exercises")
+      .update({ rest_s: p.rest_s })
+      .eq("id", p.exercise_id)
+      .eq("user_id", user.id);
   }
 
   // „ostatnio” na karcie szablonu; błąd tutaj nie cofa treningu
@@ -620,6 +595,9 @@ export async function updateSet(
     zmiany.weight_kg = parsed.data.weight_kg;
   if (parsed.data.reps !== undefined) zmiany.reps = parsed.data.reps;
   if (parsed.data.done !== undefined) zmiany.done = parsed.data.done;
+  if (parsed.data.set_type !== undefined) zmiany.set_type = parsed.data.set_type;
+  if (parsed.data.duration_s !== undefined) zmiany.duration_s = parsed.data.duration_s;
+  if (parsed.data.distance_km !== undefined) zmiany.distance_km = parsed.data.distance_km;
   if (Object.keys(zmiany).length === 0) return { ok: true };
 
   const { data: zmienione, error } = await supabase
@@ -661,7 +639,7 @@ export async function addSet(
   for (let proba = 1; proba <= 2 && nowaId === null; proba++) {
     const { data: serie, error: bladSerii } = await supabase
       .from("gym_sets")
-      .select("exercise_position, set_no, weight_kg, reps")
+      .select("exercise_position, set_no")
       .eq("session_id", sessionId)
       .eq("exercise_id", exerciseId)
       .eq("user_id", user.id)
@@ -679,8 +657,8 @@ export async function addSet(
         exercise_id: exerciseId,
         exercise_position: poprzednia.exercise_position,
         set_no: Math.max(...lista.map((s) => s.set_no)) + 1,
-        weight_kg: poprzednia.weight_kg,
-        reps: poprzednia.reps,
+        weight_kg: null,
+        reps: null,
         done: false,
       })
       .select("id")
@@ -753,11 +731,55 @@ export async function removeExercise(
   return { ok: true };
 }
 
-// „Zakończ trening”: wykonany, koniec = teraz w strefie profilu.
-// Trudność (1–10) trafia do sport_sessions.difficulty; bez parametru zostaje dotychczasowa.
+// „Rozpocznij” albo pierwsza odhaczona seria: rusza licznik. Trening z dzisiaj zaczyna się teraz.
+export async function startWorkout(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+  if (!idSchema.safeParse(id).success)
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const profil = await profileFor(supabase, user.id);
+  if (!profil) return { ok: false, message: BLAD_ZAPISU };
+  const { data: sesja, error: bladSesji } = await supabase
+    .from("sport_sessions")
+    .select("start_local, started_at, completed")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("type", "gym")
+    .maybeSingle();
+  if (bladSesji) return { ok: false, message: BLAD_ZAPISU };
+  if (!sesja) return { ok: false, message: BRAK_TRENINGU };
+  if (sesja.completed || sesja.started_at) return { ok: true };
+
+  const dzis = todayIso(profil.timezone);
+  const teraz = minutesNow(profil.timezone);
+  const { error } = await supabase
+    .from("sport_sessions")
+    .update({
+      started_at: new Date().toISOString(),
+      ...(sesja.start_local.slice(0, 10) === dzis && {
+        start_local: `${dzis}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`,
+        // Koniec z planu mógłby wypaść przed nowym startem (baza wymaga end_local > start_local)
+        end_local: null,
+      }),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+
+  revalidateSport();
+  revalidatePath("/sport/trening/[id]", "page");
+  revalidatePath("/dzis");
+  return { ok: true };
+}
+
+// „Zapisz trening”: nieodhaczone serie znikają, trening jest wykonany.
 export async function finishWorkout(
   id: string,
-  difficulty?: number | null,
+  dane: { difficulty?: number | null; note?: string } = {},
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -767,21 +789,16 @@ export async function finishWorkout(
 
   if (!idSchema.safeParse(id).success)
     return { ok: false, message: BLAD_ZAPISU };
-  if (difficulty !== undefined && difficulty !== null) {
-    const parsed = difficultySchema.safeParse(difficulty);
-    if (!parsed.success) {
-      return {
-        ok: false,
-        message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU,
-      };
-    }
-  }
+  const parsed = finishSchema.safeParse(dane);
+  if (!parsed.success)
+    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+  const { difficulty, note } = parsed.data;
 
   const profil = await profileFor(supabase, user.id);
   if (!profil) return { ok: false, message: BLAD_ZAPISU };
   const { data: sesja, error: bladSesji } = await supabase
     .from("sport_sessions")
-    .select("id, start_local")
+    .select("id, start_local, started_at")
     .eq("id", id)
     .eq("user_id", user.id)
     .eq("type", "gym")
@@ -789,23 +806,51 @@ export async function finishWorkout(
   if (bladSesji) return { ok: false, message: BLAD_ZAPISU };
   if (!sesja) return { ok: false, message: BRAK_TRENINGU };
 
-  // Koniec = teraz w strefie profilu. Gdy trening nie jest z dziś albo „teraz” nie wypada po starcie
-  // (baza wymaga end_local > start_local), koniec = start + 90 min, jak domyślny czas treningu.
-  const dzis = todayIso(profil.timezone);
-  const teraz = minutesNow(profil.timezone);
+  // Bez ani jednej zrobionej serii usunęlibyśmy cały trening
+  const { data: zrobione, error: bladZrobionych } = await supabase
+    .from("gym_sets")
+    .select("id")
+    .eq("session_id", id)
+    .eq("user_id", user.id)
+    .eq("done", true)
+    .limit(1);
+  if (bladZrobionych) return { ok: false, message: BLAD_ZAPISU };
+  if (!zrobione || zrobione.length === 0)
+    return { ok: false, message: ZABRAKLO_SERII };
+
+  // Koniec: start + czas z licznika (do 6 h — dłuższy to zapomniany licznik). Bez licznika: teraz,
+  // a dla treningu nie z dziś albo „teraz” przed startem — start + 90 min.
   const start = sesja.start_local.slice(0, 19);
-  let koniec = `${dzis}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`;
-  if (start.slice(0, 10) !== dzis || koniec <= start) {
-    koniec = new Date(Date.parse(`${start}Z`) + 90 * 60000)
-      .toISOString()
-      .slice(0, 19);
+  const poMinutach = (min: number) =>
+    new Date(Date.parse(`${start}Z`) + min * 60000).toISOString().slice(0, 19);
+  const licznik = sesja.started_at
+    ? Math.round((Date.now() - Date.parse(sesja.started_at)) / 60000)
+    : null;
+  let koniec: string;
+  if (licznik !== null && licznik <= 360) {
+    koniec = poMinutach(Math.max(1, licznik));
+  } else {
+    const dzis = todayIso(profil.timezone);
+    const teraz = minutesNow(profil.timezone);
+    koniec = `${dzis}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`;
+    if (start.slice(0, 10) !== dzis || koniec <= start) koniec = poMinutach(90);
   }
+
+  const { error: bladUsuniecia } = await supabase
+    .from("gym_sets")
+    .delete()
+    .eq("session_id", id)
+    .eq("user_id", user.id)
+    .eq("done", false);
+  if (bladUsuniecia) return { ok: false, message: BLAD_ZAPISU };
+
   const { data: zmienione, error } = await supabase
     .from("sport_sessions")
     .update({
       completed: true,
       end_local: koniec,
       ...(difficulty !== undefined ? { difficulty } : {}),
+      ...(note !== undefined ? { note } : {}),
     })
     .eq("id", id)
     .eq("user_id", user.id)
@@ -817,6 +862,190 @@ export async function finishWorkout(
   revalidateSport();
   revalidatePath("/sport/trening/[id]", "page");
   revalidatePath("/dzis");
+  return { ok: true };
+}
+
+// „Odrzuć trening”: usuwa niezakończony trening bez pomijania dnia szablonu — plan wraca
+export async function discardWorkout(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+  if (!idSchema.safeParse(id).success)
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const { data: usuniete, error } = await supabase
+    .from("sport_sessions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("type", "gym")
+    .eq("completed", false)
+    .select("id");
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!usuniete || usuniete.length === 0)
+    return { ok: false, message: BRAK_TRENINGU };
+
+  revalidateSport();
+  revalidatePath("/dzis");
+  return { ok: true };
+}
+
+// „Powtórz trening” i „Duplikuj na inny dzień”: nowy trening z tymi samymi seriami, nieodhaczonymi.
+// Bez date — dziś, teraz; z date — ten dzień o godzinie oryginału.
+export async function copyWorkout(id: string, date?: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+  if (
+    !idSchema.safeParse(id).success ||
+    (date !== undefined && !isoDateSchema.safeParse(date).success)
+  )
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const profil = await profileFor(supabase, user.id);
+  if (!profil) return { ok: false, message: BLAD_ZAPISU };
+  const { data: sesja, error: bladSesji } = await supabase
+    .from("sport_sessions")
+    .select("title, start_local")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("type", "gym")
+    .maybeSingle();
+  if (bladSesji) return { ok: false, message: BLAD_ZAPISU };
+  if (!sesja) return { ok: false, message: BRAK_TRENINGU };
+  const { data: serie, error: bladSerii } = await supabase
+    .from("gym_sets")
+    .select("exercise_id, exercise_position, set_no, weight_kg, reps, duration_s, distance_km, set_type")
+    .eq("session_id", id)
+    .eq("user_id", user.id);
+  if (bladSerii) return { ok: false, message: BLAD_ZAPISU };
+
+  const teraz = minutesNow(profil.timezone);
+  const start = date
+    ? `${date}T${sesja.start_local.slice(11, 19)}`
+    : `${todayIso(profil.timezone)}T${dwie(Math.floor(teraz / 60))}:${dwie(teraz % 60)}:00`;
+  const { data: nowa, error } = await supabase
+    .from("sport_sessions")
+    .insert({ user_id: user.id, type: "gym", title: sesja.title, start_local: start })
+    .select("id")
+    .single();
+  if (error || !nowa) return { ok: false, message: BLAD_ZAPISU };
+  if (serie && serie.length > 0) {
+    const { error: bladKopii } = await supabase
+      .from("gym_sets")
+      .insert(serie.map((s) => ({ ...s, user_id: user.id, session_id: nowa.id, done: false })));
+    if (bladKopii) {
+      await supabase.from("sport_sessions").delete().eq("id", nowa.id);
+      return { ok: false, message: BLAD_ZAPISU };
+    }
+  }
+
+  revalidateSport();
+  revalidatePath("/dzis");
+  return { ok: true, id: nowa.id };
+}
+
+// Własne albo edytowane ćwiczenie. Zmiana rodzaju czyści serie tego ćwiczenia w treningu sessionId.
+export async function saveExercise(
+  input: ExerciseInput,
+  sessionId?: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const parsed = exerciseInputSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+  if (sessionId !== undefined && !idSchema.safeParse(sessionId).success)
+    return { ok: false, message: BLAD_ZAPISU };
+  const dane = parsed.data;
+  const pola = {
+    name: dane.name,
+    kind: dane.kind,
+    bodyweight: dane.kind === "bw" || dane.kind === "wbw",
+    muscle_group: dane.group || null,
+    equipment: dane.equipment || null,
+  };
+
+  let id = dane.id;
+  let zmianaRodzaju = false;
+  if (id) {
+    const { data: stare, error: bladOdczytu } = await supabase
+      .from("exercises")
+      .select("kind, bodyweight")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (bladOdczytu) return { ok: false, message: BLAD_ZAPISU };
+    if (!stare) return { ok: false, message: BRAK_CWICZENIA };
+    zmianaRodzaju = kindOf(stare) !== dane.kind;
+    const { error } = await supabase
+      .from("exercises")
+      .update(pola)
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (error)
+      return { ok: false, message: error.code === "23505" ? ZAJETA_NAZWA : BLAD_ZAPISU };
+  } else {
+    const { data: nowe, error } = await supabase
+      .from("exercises")
+      .insert({ ...pola, user_id: user.id })
+      .select("id")
+      .single();
+    if (error || !nowe)
+      return { ok: false, message: error?.code === "23505" ? ZAJETA_NAZWA : BLAD_ZAPISU };
+    id = nowe.id;
+  }
+
+  if (zmianaRodzaju && sessionId) {
+    const { error } = await supabase
+      .from("gym_sets")
+      .update({ weight_kg: null, reps: null, duration_s: null, distance_km: null, done: false })
+      .eq("session_id", sessionId)
+      .eq("exercise_id", id)
+      .eq("user_id", user.id);
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  }
+
+  revalidateSport();
+  revalidatePath("/sport/trening/[id]", "page");
+  return { ok: true, id };
+}
+
+// Notatka i przerwa ćwiczenia (wspólne dla wszystkich treningów)
+export async function updateExercise(
+  id: string,
+  meta: { note?: string; rest_s?: number },
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const parsed = exerciseMetaSchema.safeParse(meta);
+  if (!idSchema.safeParse(id).success || !parsed.success)
+    return { ok: false, message: BLAD_ZAPISU };
+  const { note, rest_s } = parsed.data;
+
+  const { error } = await supabase
+    .from("exercises")
+    .update({
+      ...(note !== undefined ? { note: note.trim() || null } : {}),
+      ...(rest_s !== undefined ? { rest_s } : {}),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+
+  revalidatePath("/sport/trening/[id]", "page");
   return { ok: true };
 }
 
@@ -1104,7 +1333,7 @@ export async function setExerciseBodyweight(
 
   const { data: zmienione, error } = await supabase
     .from("exercises")
-    .update({ bodyweight })
+    .update({ bodyweight, kind: bodyweight ? "wbw" : "wr" })
     .eq("id", id)
     .eq("user_id", user.id)
     .select("id");

@@ -86,6 +86,9 @@ export const setPatchSchema = z.object({
     .nullable()
     .optional(),
   done: z.boolean().optional(),
+  set_type: z.enum(["N", "W", "D", "F"]).optional(),
+  duration_s: z.number().int().min(1, "Czas od 1 s do 24 h.").max(86400, "Czas od 1 s do 24 h.").nullable().optional(),
+  distance_km: z.number().positive("Dystans od 0 do 300 km.").max(300, "Dystans od 0 do 300 km.").nullable().optional(),
 });
 
 export const difficultySchema = trudnosc;
@@ -131,3 +134,23 @@ export const templateInputSchema = z.object({
 });
 
 export const templateNameSchema = templateInputSchema.shape.name;
+
+// Własne i edytowane ćwiczenie z dziennika
+export const exerciseInputSchema = z.object({
+  id: idSchema.optional(),
+  name: exerciseNameSchema,
+  kind: z.enum(["wr", "bw", "wbw", "dur", "dist"]),
+  group: z.string().max(30),
+  equipment: z.string().max(30),
+});
+
+// Notatka i przerwa ćwiczenia
+export const exerciseMetaSchema = z.object({
+  note: z.string().max(500, "Notatka może mieć maksymalnie 500 znaków.").optional(),
+  rest_s: z.number().int().min(0).max(1800).optional(),
+});
+
+export const finishSchema = z.object({
+  difficulty: trudnosc.nullable().optional(),
+  note: notatka.optional(),
+});

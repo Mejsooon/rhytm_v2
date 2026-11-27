@@ -702,7 +702,7 @@ test.describe("ekrany z sesją", () => {
     await page.goto(`/sport/trening/${trening}`);
     await expect(
       page
-        .getByTestId(projekt === "web" ? "web-gym" : "m-gym")
+        .getByTestId("gym")
         .getByRole("heading", { name: "Push", level: 1 }),
     ).toBeVisible();
     await zrzut(page, "sport-trening", projekt);

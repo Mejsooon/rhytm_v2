@@ -181,7 +181,7 @@ describe("useGymStore", () => {
     });
     const tymczasowa = serieWyciskania(result)[4];
     expect(tymczasowa.id.startsWith("tmp-")).toBe(true);
-    expect(tymczasowa).toMatchObject({ weight_kg: 72.5, reps: 4, done: false });
+    expect(tymczasowa).toMatchObject({ weight_kg: null, reps: null, done: false });
     await act(async () => obietnica);
     expect(serieWyciskania(result)[4].id).toBe("w5");
   });
@@ -240,6 +240,10 @@ describe("useGymStore", () => {
           muscle_group: "plecy",
           created_at: null,
           bodyweight: false,
+          kind: null,
+          equipment: null,
+          note: null,
+          rest_s: null,
         },
       ],
       sets: [

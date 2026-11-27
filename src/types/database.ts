@@ -193,6 +193,10 @@ export type Database = {
       };
       exercises: {
         Row: {
+          equipment: string | null;
+          kind: string | null;
+          note: string | null;
+          rest_s: number | null;
           bodyweight: boolean;
           created_at: string | null;
           id: string;
@@ -201,6 +205,10 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          equipment?: string | null;
+          kind?: string | null;
+          note?: string | null;
+          rest_s?: number | null;
           bodyweight?: boolean;
           created_at?: string | null;
           id?: string;
@@ -209,6 +217,10 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          equipment?: string | null;
+          kind?: string | null;
+          note?: string | null;
+          rest_s?: number | null;
           bodyweight?: boolean;
           created_at?: string | null;
           id?: string;
@@ -220,6 +232,9 @@ export type Database = {
       };
       gym_sets: {
         Row: {
+          distance_km: number | null;
+          duration_s: number | null;
+          set_type: string;
           done: boolean;
           exercise_id: string;
           exercise_position: number;
@@ -231,6 +246,9 @@ export type Database = {
           weight_kg: number | null;
         };
         Insert: {
+          distance_km?: number | null;
+          duration_s?: number | null;
+          set_type?: string;
           done?: boolean;
           exercise_id: string;
           exercise_position: number;
@@ -242,6 +260,9 @@ export type Database = {
           weight_kg?: number | null;
         };
         Update: {
+          distance_km?: number | null;
+          duration_s?: number | null;
+          set_type?: string;
           done?: boolean;
           exercise_id?: string;
           exercise_position?: number;
@@ -864,6 +885,7 @@ export type Database = {
       };
       sport_sessions: {
         Row: {
+          started_at: string | null;
           completed: boolean;
           created_at: string | null;
           difficulty: number | null;
@@ -879,6 +901,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          started_at?: string | null;
           completed?: boolean;
           created_at?: string | null;
           difficulty?: number | null;
@@ -894,6 +917,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          started_at?: string | null;
           completed?: boolean;
           created_at?: string | null;
           difficulty?: number | null;
