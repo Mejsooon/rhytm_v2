@@ -7,6 +7,13 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 const pusty: ProfileRow = {
   avatar_path: null,
+  calendar_block_min: 60,
+  calendar_from_hour: 7,
+  calendar_show_renewals: true,
+  calendar_show_sport: true,
+  calendar_to_hour: 23,
+  calendar_view: "week",
+  calendar_week_numbers: true,
   clock: null,
   created_at: null,
   currency: null,

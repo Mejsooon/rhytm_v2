@@ -327,7 +327,7 @@ test.describe("ekrany z sesją", () => {
     await zrzut(page, "404-zalogowany", info.project.name);
   });
 
-  test("zrzuty /kalendarz i /ustawienia/kategorie (makiety Calendar…, MCalendar…, BlockDialog, ScopeDialog, CategoryDialog, Settings)", async ({
+  test("zrzuty /kalendarz i /ustawienia/kalendarz (makiety Calendar…, MCalendar…, BlockDialog, ScopeDialog, CategoryDialog, Settings)", async ({
     page,
   }, info) => {
     const projekt = info.project.name;
@@ -447,11 +447,11 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "kalendarz-miesiac", projekt);
     }
 
-    await page.goto("/ustawienia/kategorie");
+    await page.goto("/ustawienia/kalendarz");
     await expect(
       page
         .getByTestId("karta-kategorie")
-        .getByRole("heading", { name: "Kategorie kalendarza" }),
+        .getByRole("heading", { name: "Kategorie" }),
     ).toBeVisible();
     await zrzut(page, "ustawienia-kategorie", projekt);
   });

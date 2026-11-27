@@ -6,6 +6,8 @@ import { connection } from "next/server";
 import { todayIso } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { AccountCard } from "@/features/settings/account-card";
+import { loadCalendarSettings } from "@/features/calendar/settings";
+import { CalendarSettingsCard } from "@/features/settings/calendar-card";
 import { CategoriesCard } from "@/features/settings/categories-card";
 import { DeleteAccountCard } from "@/features/settings/delete-account-card";
 import { ExportCard } from "@/features/settings/export-card";
@@ -269,8 +271,8 @@ async function Powiadomienia() {
   );
 }
 
-// Karta Kategorie kalendarza z listą w kolejności z bazy (dane zależą od ciasteczek → connection + Suspense)
-async function Kategorie() {
+// Karty Widok i Kategorie (kategorie w kolejności z bazy) (dane zależą od ciasteczek → connection + Suspense)
+async function Kalendarz() {
   await connection();
   const supabase = await createClient();
   const {
@@ -278,12 +280,20 @@ async function Kategorie() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/logowanie");
 
-  const { data } = await supabase
-    .from("categories")
-    .select("id, name, color, position, is_system, hidden")
-    .eq("user_id", user.id)
-    .order("position", { ascending: true });
-  return <CategoriesCard categories={data ?? []} />;
+  const [{ data }, ustawienia] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, name, color, position, is_system, hidden")
+      .eq("user_id", user.id)
+      .order("position", { ascending: true }),
+    loadCalendarSettings(supabase, user.id),
+  ]);
+  return (
+    <>
+      <CalendarSettingsCard settings={ustawienia} />
+      <CategoriesCard categories={data ?? []} />
+    </>
+  );
 }
 
 export default async function ZakladkaPage({
@@ -327,9 +337,9 @@ export default async function ZakladkaPage({
             <Suspense fallback={null}>
               <Konto />
             </Suspense>
-          ) : tab.slug === "kategorie" ? (
+          ) : tab.slug === "kalendarz" ? (
             <Suspense fallback={null}>
-              <Kategorie />
+              <Kalendarz />
             </Suspense>
           ) : tab.slug === "sejf" ? (
             <VaultCard />

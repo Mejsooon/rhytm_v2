@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export const SETTINGS_TABS: readonly {
-  slug: "ogolne" | "konto" | "sejf" | "powiadomienia" | "kategorie";
+  slug: "ogolne" | "konto" | "sejf" | "powiadomienia" | "kalendarz";
   label: string;
   description?: string;
   // Opis pod nazwą w indeksie ustawień na telefonie (CMSettings, `.hint`)
@@ -31,9 +31,10 @@ export const SETTINGS_TABS: readonly {
     phoneHint: "Push, cicha noc, urządzenia",
   },
   {
-    slug: "kategorie",
-    label: "Kategorie kalendarza",
-    phoneHint: "Kolory i kolejność kategorii",
+    slug: "kalendarz",
+    label: "Kalendarz",
+    description: "Domyślny widok, siatka godzin i kategorie bloków.",
+    phoneHint: "Widok, godziny i kategorie",
   },
 ];
 

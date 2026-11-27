@@ -10,7 +10,7 @@ describe("SettingsTabs", () => {
       "konto",
       "sejf",
       "powiadomienia",
-      "kategorie",
+      "kalendarz",
     ]);
     render(<SettingsTabs active="ogolne" />);
     const nav = screen.getByRole("navigation", { name: "Sekcje ustawień" });
@@ -31,14 +31,8 @@ describe("SettingsTabs", () => {
     );
   });
 
-  it("SETTINGS_TABS: tylko Ogólne ma podtytuł z makiety", () => {
-    expect(SETTINGS_TABS.find((t) => t.slug === "ogolne")?.description).toBe(
-      "Profil, cele i podstawowe preferencje aplikacji.",
-    );
-    const reszta = SETTINGS_TABS.filter((t) => t.slug !== "ogolne");
-    for (const t of reszta) {
-      expect(t.description).toBeUndefined();
-    }
+  it("SETTINGS_TABS: Ogólne i Kalendarz mają podtytuły z makiet", () => {
+    expect(SETTINGS_TABS.filter((t) => t.description).map((t) => t.slug)).toEqual(["ogolne", "kalendarz"]);
   });
 
   it("zakładka: wysokość 32 px, zaokrąglenie 8 px, aktywna z tłem i aria-current", () => {
