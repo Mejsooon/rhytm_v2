@@ -200,7 +200,7 @@ export function SportOverview({
     let naj: (Rekord & { kg: number }) | null = null;
     for (const sesja of setsHistory.filter((x) => x.completed)) {
       for (const seria of sesja.sets) {
-        if (seria.exercise_id !== cw.id || !seria.done || !seria.weight_kg || !seria.reps) continue;
+        if (seria.exercise_id !== cw.id || !seria.done || !seria.weight_kg || !seria.reps || seria.set_type === "W" || seria.set_type === "D") continue;
         const kg = epley1rm(seria.weight_kg, seria.reps);
         if (!naj || kg > naj.kg) {
           naj = { key: cw.id, label: `${cw.name} · 1RM`, value: `${liczba(kg)} kg`, date: sesja.startLocal.slice(0, 10), kind: "gym", itemKey: `s:${sesja.sessionId}`, kg };

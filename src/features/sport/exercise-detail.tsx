@@ -102,7 +102,8 @@ export function ExerciseDetail({ data }: { data: ExerciseData }) {
     for (const s of h.sets) {
       if (s.exercise_id !== exercise.id || !s.done) continue;
       if (rekordowe.has(s.id)) rekord = true;
-      if (s.reps === null || s.reps < 1) continue;
+      // Rozgrzewka nie wchodzi do objętości ani rekordów
+      if (s.reps === null || s.reps < 1 || s.set_type === "W") continue;
       const ef = effectiveKg(s.weight_kg, zMasaCiala, wagaProfilu);
       komplet.push(`${formatKg(s.weight_kg, zMasaCiala)}×${s.reps}`);
       if (ef !== null) objetosc += ef * s.reps;

@@ -322,42 +322,6 @@ export function kgVsLast(
   return poprzednia === null ? null : teraz - poprzednia.max;
 }
 
-// „ost. 3×8 · 60 kg” (MGym): ostatnia wcześniejsza (wg historyOrder) zakończona sesja ze zrobionymi seriami ćwiczenia —
-// liczba zrobionych serii × powt. pierwszej z nich · maks. ciężar (masa ciała: bez kg).
-// Ćwiczenie z masą ciała: „· mc” albo „· mc + 5” (maks. dociążenie). Brak → null.
-export function lastSetsSummary(
-  history: HistorySession[],
-  sessionId: string,
-  exerciseId: string,
-  bodyweight: boolean,
-): string | null {
-  const biezaca = history.find((h) => h.sessionId === sessionId);
-  if (!biezaca) return null;
-
-  let poprzednia: { h: HistorySession; sets: GymSetRow[] } | null = null;
-  for (const h of history) {
-    if (!h.completed || historyOrder(h, biezaca) >= 0) continue;
-    const zrobione = h.sets.filter(
-      (s) => s.exercise_id === exerciseId && liczySieDoRekordu(s),
-    );
-    if (zrobione.length === 0) continue;
-    if (poprzednia === null || historyOrder(h, poprzednia.h) > 0)
-      poprzednia = { h, sets: zrobione };
-  }
-  if (poprzednia === null) return null;
-
-  const serie = [...poprzednia.sets].sort((a, b) => a.set_no - b.set_no);
-  let max: number | null = null;
-  for (const s of serie) {
-    if (s.weight_kg !== null && (max === null || s.weight_kg > max))
-      max = s.weight_kg;
-  }
-  const powt = serie[0].reps === null ? "—" : String(serie[0].reps);
-  if (bodyweight)
-    return `ost. ${serie.length}×${powt} · ${formatKg(max, true)}`;
-  return `ost. ${serie.length}×${powt}${max === null ? "" : ` · ${formatKg(max)} kg`}`;
-}
-
 // Pole „kg” w treningu: "72,5" / "72.5" -> 72.5; puste albo „mc” -> null (masa ciała);
 // zły zapis albo poza 0–1000 (do 0,01) -> undefined
 export function parseKgInput(text: string): number | null | undefined {

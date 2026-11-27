@@ -4,7 +4,6 @@ import {
   effectiveKg,
   epley1rm,
   kgVsLast,
-  lastSetsSummary,
   parseKgInput,
   parseRepsInput,
   firstReps,
@@ -225,65 +224,6 @@ describe("runFormInput", () => {
   });
 });
 
-describe("lastSetsSummary", () => {
-  const historia = [
-    {
-      sessionId: "s1",
-      startLocal: "2026-11-03T10:00:00",
-      completed: true,
-      sets: [set({ id: "a1", weight_kg: 50, reps: 10 })],
-    },
-    {
-      sessionId: "s2",
-      startLocal: "2026-11-10T10:00:00",
-      completed: true,
-      sets: [
-        set({ id: "b2", set_no: 2, weight_kg: 60, reps: 8 }),
-        set({ id: "b1", set_no: 1, weight_kg: 60, reps: 8 }),
-        set({ id: "b3", set_no: 3, weight_kg: 62.5, reps: 6 }),
-        set({ id: "b4", set_no: 4, weight_kg: 70, reps: 6, done: false }),
-        set({ id: "inne", exercise_id: "e2", weight_kg: 100 }),
-      ],
-    },
-    {
-      sessionId: "teraz",
-      startLocal: "2026-11-17T10:00:00",
-      completed: true,
-      sets: [set({ id: "c1", weight_kg: 65 })],
-    },
-  ];
-
-  it("ostatnia wcześniejsza sesja: zrobione serie × powt. pierwszej · maks. kg", () => {
-    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
-      "ost. 3×8 · 62,5 kg",
-    );
-  });
-
-  it("masa ciała bez kg; brak wcześniejszej sesji → null", () => {
-    const mc = [
-      {
-        sessionId: "s1",
-        startLocal: "2026-11-03T10:00:00",
-        completed: true,
-        sets: [
-          set({ id: "a1", weight_kg: null, reps: 12 }),
-          set({ id: "a2", set_no: 2, weight_kg: null, reps: 10 }),
-        ],
-      },
-      {
-        sessionId: "teraz",
-        startLocal: "2026-11-17T10:00:00",
-        completed: true,
-        sets: [],
-      },
-    ];
-    expect(lastSetsSummary(mc, "teraz", "e1", false)).toBe("ost. 2×12");
-    expect(lastSetsSummary(historia, "s1", "e1", false)).toBeNull();
-    expect(lastSetsSummary(historia, "teraz", "e9", false)).toBeNull();
-    expect(lastSetsSummary(historia, "brak", "e1", false)).toBeNull();
-  });
-});
-
 describe("recordSetIds", () => {
   it("pierwsza sesja bez rekordu, potem tylko najcięższa seria ponad max", () => {
     const wynik = recordSetIds(
@@ -412,7 +352,7 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
     expect([...recordSetIds([b, a], "e1", false, null)]).toEqual(["b1"]);
   });
 
-  it("kgVsLast i lastSetsSummary pomijają niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
+  it("kgVsLast pomija niezakończone wcześniejsze sesje; remis startu → sessionId", () => {
     const historia = [
       {
         sessionId: "a",
@@ -441,9 +381,6 @@ describe("historia: tylko zakończone treningi, stała kolejność przy tej same
     ];
     expect(kgVsLast(historia, "teraz", "e1", false, null)).toBe(2.5);
     expect(kgVsLast(historia, "b", "e1", false, null)).toBe(2.5);
-    expect(lastSetsSummary(historia, "teraz", "e1", false)).toBe(
-      "ost. 1×8 · 62,5 kg",
-    );
   });
 });
 
@@ -961,20 +898,6 @@ describe("ćwiczenia z masą ciała w historii", () => {
 
   it("„vs ostatnio” porównuje mc + dociążenie", () => {
     expect(kgVsLast(historia, "s2", "e1", true, 72)).toBe(5);
-  });
-
-  it("„ost.” pokazuje mc albo mc + dociążenie", () => {
-    const dalej = [
-      ...historia,
-      {
-        sessionId: "s3",
-        startLocal: "2026-11-17T10:00:00",
-        completed: true,
-        sets: [],
-      },
-    ];
-    expect(lastSetsSummary(dalej, "s3", "e1", true)).toBe("ost. 2×10 · mc + 5");
-    expect(lastSetsSummary(dalej, "s2", "e1", true)).toBe("ost. 1×12 · mc");
   });
 });
 

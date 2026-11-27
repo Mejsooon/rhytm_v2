@@ -15,6 +15,7 @@ import type { GymSessionInput } from "./actions";
 import type { SessionSets, TemplateWithItems } from "./load-sport";
 import {
   effectiveKg,
+  sessionVolume,
   formatDuration,
   formatKg,
   formatKm,
@@ -165,18 +166,8 @@ export function ItemPopover({
     const zMasaCiala = new Set(
       exercises.filter((e) => e.bodyweight).map((e) => e.id),
     );
-    let objetosc = 0;
-    let zrobione = 0;
-    for (const s of serieSesji) {
-      if (!s.done) continue;
-      zrobione += 1;
-      const ef = effectiveKg(
-        s.weight_kg,
-        zMasaCiala.has(s.exercise_id),
-        profileWeight,
-      );
-      if (ef !== null && s.reps !== null) objetosc += ef * s.reps;
-    }
+    const objetosc = sessionVolume(serieSesji, zMasaCiala, profileWeight);
+    const zrobione = serieSesji.filter((s) => s.done).length;
     let rekordy = 0;
     for (const id of idCwiczen) {
       const rekordoweSerie = recordSetIds(

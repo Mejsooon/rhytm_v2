@@ -2,7 +2,7 @@
 
 // „+ Ćwiczenie” z dymkiem wyszukiwania (GymLog.dc.html): ćwiczenia użytkownika + biblioteka bez już
 // dodanych, „+ Dodaj „…”” dla własnej nazwy, Enter wybiera pierwszy wynik, Esc zamyka.
-import { useState, type ReactElement } from "react";
+import { useState } from "react";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
 import {
@@ -24,12 +24,6 @@ export function ExercisePicker({
   excludeNames,
   onPick,
   side = "top",
-  trigger = (
-    <Button aria-label="+ Ćwiczenie">
-      <PlusIcon aria-hidden="true" className="size-4" />
-      Ćwiczenie
-    </Button>
-  ),
 }: {
   exercises: ExerciseRow[];
   // Ćwiczenia już dodane do treningu
@@ -37,8 +31,6 @@ export function ExercisePicker({
   onPick: (name: string) => void;
   // Trening (GymLog) otwiera dymek w górę, edytor szablonu (WorkoutTemplates) w dół
   side?: "top" | "bottom";
-  // Przycisk otwierający (telefon: „Dodaj ćwiczenie” z MGym); jeden element — Radix przejmuje klik
-  trigger?: ReactElement;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -71,7 +63,12 @@ export function ExercisePicker({
       width={320}
       className="p-1"
       ariaLabel="Dodaj ćwiczenie"
-      trigger={trigger}
+      trigger={
+        <Button aria-label="+ Ćwiczenie">
+          <PlusIcon aria-hidden="true" className="size-4" />
+          Ćwiczenie
+        </Button>
+      }
     >
       <div className="flex flex-col">
         {/* .igroup bez ramki, z linią pod spodem (CGymLog) */}

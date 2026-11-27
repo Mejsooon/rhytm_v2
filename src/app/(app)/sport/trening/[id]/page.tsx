@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { ModuleHeader } from "@/components/shell/module-header";
-import { GymLog } from "@/features/sport/gym-log";
+import { GymView } from "@/features/sport/gym-view";
 import { loadWorkout } from "@/features/sport/load-sport";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,7 +23,7 @@ async function Trening({ params }: { params: Parametry }) {
   // Brak treningu, cudzy albo bieg → 404
   if (!dane) notFound();
 
-  return <GymLog data={dane} />;
+  return <GymView data={dane} />;
 }
 
 export default function TreningPage({ params }: { params: Parametry }) {
