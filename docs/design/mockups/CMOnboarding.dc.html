@@ -100,7 +100,7 @@ html body section.card,html body .card{flex-shrink:0}
 
     <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
       <div><h1 class="m-title" style="font-size: 26px; line-height: 32px">Masz już kalendarz?</h1><p class="muted" style="margin: 8px 0 0">Pokażemy Twoje wydarzenia obok bloków. Tylko do odczytu.</p></div>
-      <div style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{cals}}" as="c" hint-placeholder-count="3"><button type="button" class="cc" aria-pressed="{{c.p}}" onClick="{{c.pick}}"><span class="lg" style="{{c.ls}}">{{c.l}}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{c.t}}</span><span class="hint" style="font-size: 13px">{{c.d}}</span></span><span class="{{c.bc}}">{{c.b}}</span></button></sc-for></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{cals}}" as="c" hint-placeholder-count="1"><button type="button" class="cc" aria-pressed="{{c.p}}" onClick="{{c.pick}}"><span class="lg" style="{{c.ls}}">{{c.l}}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-weight: 500">{{c.t}}</span><span class="hint" style="font-size: 13px">{{c.d}}</span></span><span class="{{c.bc}}">{{c.b}}</span></button></sc-for></div>
       <sc-if value="{{calOn}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px"><span class="hint" style="font-size: 13px">Które kalendarze pokazać?</span><sc-for list="{{subcals}}" as="k" hint-placeholder-count="3"><label style="display: flex; align-items: center; gap: 10px; min-height: 32px"><input type="checkbox" checked="{{k.on}}" onChange="{{k.toggle}}"><span style="{{k.dot}}"></span><span style="flex: 1">{{k.t}}</span><span class="hint num" style="font-size: 12px">{{k.n}}</span></label></sc-for></div></sc-if>
       <p class="hint" style="margin: 0">Podłączysz go też później w Ustawieniach.</p>
     </sc-if>
@@ -114,7 +114,7 @@ html body section.card,html body .card{flex-shrink:0}
     </sc-if>
 
     <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
-      <div><h1 class="m-title" style="font-size: 26px; line-height: 32px">Przypomnienia</h1><p class="muted" style="margin: 8px 0 0">Damy znać przed blokiem, żebyś nie pilnował zegarka.</p></div>
+      <div><h1 class="m-title" style="font-size: 26px; line-height: 32px">Przypomnienia</h1><p class="muted" style="margin: 8px 0 0">Damy znać przed blokiem — nie musisz pilnować zegarka.</p></div>
       <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px"><span style="flex: 1"><span style="display: block; font-weight: 500">Powiadomienia push</span><span class="hint" style="font-size: 13px">{{permTxt}}</span></span><sc-if value="{{permOff}}" hint-placeholder-val="{{true}}"><button type="button" class="btnp" onClick="{{allow}}" style="height: 36px">Zezwól</button></sc-if><sc-if value="{{permOn}}" hint-placeholder-val="{{false}}"><span class="bdg ok">Włączone</span></sc-if></div>
       <div style="border: 1px solid var(--border); border-radius: 12px; padding: 0 14px"><sc-for list="{{rems}}" as="r" hint-placeholder-count="3"><label style="{{r.rs}}"><span style="flex: 1"><span style="display: block; font-weight: 500">{{r.t}}</span><span class="hint" style="font-size: 13px">{{r.w}}</span></span><button type="button" class="sw" role="switch" aria-checked="{{r.on}}" onClick="{{r.toggle}}" aria-label="{{r.t}}"></button></label></sc-for></div>
       <div><div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 500">Skąd o nas wiesz?</span><span class="hint" style="font-size: 12px">opcjonalnie</span></div><div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px"><sc-for list="{{srcs}}" as="x" hint-placeholder-count="8"><button type="button" class="uc" aria-pressed="{{x.p}}" onClick="{{x.pick}}" style="height: 34px; font-size: 14px; padding: 0 12px">{{x.t}}</button></sc-for></div></div>
@@ -170,7 +170,7 @@ class Component extends DCLogic {
     const mods = ['Dziś', 'Kalendarz'].concat(U.run || U.gym || U.oth ? ['Sport'] : []).concat(U.habits || U.sleep ? ['Nawyki i sen'] : []).concat(U.pass ? ['Hasła'] : []);
     const pages = [].concat(U.subs ? ['Subskrypcje'] : []).concat(U.proj || U.firma ? ['Projekty'] : []).concat(U.books ? ['Książki'] : []);
     // krok 3 — kalendarz
-    const CALS = [['google', 'G', 'Google Calendar', 'Najczęściej używany', 'background:#fff;border:1px solid rgba(0,0,0,.12);color:#4285f4'], ['outlook', 'O', 'Outlook', 'Konto Microsoft lub uczelniane', 'background:#0078d4;color:#fff'], ['apple', 'A', 'Apple iCloud', 'Kalendarz z iPhone’a', 'background:#262626;color:#fff']];
+    const CALS = [['google', 'G', 'Google Calendar', 'Najczęściej używany', 'background:#fff;border:1px solid rgba(0,0,0,.12);color:#4285f4']];
     const SUB = [['pryw', 'Prywatny', '#4285f4', '6 w tym tygodniu'], ['uczelnia', 'Uczelnia — plan zajęć', '#0b8043', '11 w tym tygodniu'], ['urodziny', 'Urodziny', '#8e24aa', '1 w tym tygodniu']];
     const subOn = S.sub || {};
     const EXT = [['10:00', '11:30', 'Wykład — Systemy operacyjne', 'uczelnia'], ['13:00', '13:30', 'Dentysta', 'pryw']];
