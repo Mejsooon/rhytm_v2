@@ -25,7 +25,8 @@ test.describe("sport (web)", () => {
     await page.goto("/sport");
     const web = page.getByTestId("web-sport");
 
-    await web.getByRole("button", { name: "Nowy bieg", exact: true }).click();
+    await web.getByRole("button", { name: "Dodaj aktywność" }).click();
+    await page.getByRole("button", { name: "Bieg", exact: true }).click();
     const okno = page.getByRole("dialog", { name: "Nowy bieg" });
     await okno.getByLabel("Dystans (km)").fill("10");
     await okno.getByLabel("Czas", { exact: true }).fill("58:00");
@@ -34,6 +35,7 @@ test.describe("sport (web)", () => {
     await expect(okno).toBeHidden();
 
     // Kalendarz Sportu: wykonany bieg w dzisiejszej komórce
+    await web.getByRole("tab", { name: "Kalendarz" }).click();
     await expect(
       web.getByRole("button", {
         name: `Spokojny, ${etykietaDnia(dzis)}`,
@@ -91,6 +93,7 @@ test.describe("sport (web)", () => {
 
     await page.goto("/sport");
     const web = page.getByTestId("web-sport");
+    await web.getByRole("tab", { name: "Kalendarz" }).click();
     await web
       .getByRole("button", { name: `Push, ${etykietaDnia(dzis)}`, exact: true })
       .click();
@@ -140,6 +143,7 @@ test.describe("sport (web)", () => {
     await expect(page).toHaveURL(/\/sport\?miesiac=\d{4}-\d{2}$/);
 
     // Drugi start: jutrzejsze wystąpienie z kalendarza Sportu
+    await page.getByTestId("web-sport").getByRole("tab", { name: "Kalendarz" }).click();
     await page
       .getByTestId("web-sport")
       .getByRole("button", {
@@ -175,6 +179,7 @@ test.describe("sport (web)", () => {
 
     await page.goto("/sport");
     const web = page.getByTestId("web-sport");
+    await web.getByRole("tab", { name: "Kalendarz" }).click();
     const plan = web.getByRole("button", {
       name: `Push, ${etykietaDnia(dzis)}`,
       exact: true,
@@ -205,6 +210,7 @@ test.describe("sport (web)", () => {
     await expect(
       web.getByRole("heading", { name: "Sport", level: 1 }),
     ).toBeVisible();
+    await web.getByRole("tab", { name: "Kalendarz" }).click();
     await expect(plan).toBeHidden();
   });
 

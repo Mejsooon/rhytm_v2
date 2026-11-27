@@ -21,7 +21,7 @@ type Fake = ReturnType<typeof fakeTable>;
 function klient(tables: Record<string, Fake | Fake[]>) {
   return {
     from: (nazwa: string) => {
-      const t = tables[nazwa];
+      const t = tables[nazwa] ?? fakeTable({ data: [] });
       if (!Array.isArray(t)) return t;
       return t.length > 1 ? t.shift() : t[0];
     },
@@ -94,6 +94,7 @@ beforeEach(() => {
       miesiacSesji,
       fakeTable({ data: [sesjaBiegu] }), // ostatnie biegi
       fakeTable({ data: [sesjaSilowa] }), // ostatnie siłowe
+      fakeTable({ data: [] }), // ostatnie inne aktywności
       // sesje siłowe do historii serii (celowo malejąco)
       fakeTable({
         data: [
@@ -277,7 +278,7 @@ describe("loadSportMonth", () => {
   });
 
   it("historia: przy tym samym starcie kolejność po id sesji (stała dla REKORDU)", async () => {
-    (tables.sport_sessions as ReturnType<typeof fakeTable>[])[3] = fakeTable({
+    (tables.sport_sessions as ReturnType<typeof fakeTable>[])[4] = fakeTable({
       data: [
         {
           id: STARA,

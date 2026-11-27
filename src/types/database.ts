@@ -13,6 +13,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          difficulty: number | null;
+          distance_km: number | null;
+          duration_s: number | null;
+          kcal: number | null;
+          kind: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          difficulty?: number | null;
+          distance_km?: number | null;
+          duration_s?: number | null;
+          kcal?: number | null;
+          kind: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          difficulty?: number | null;
+          distance_km?: number | null;
+          duration_s?: number | null;
+          kcal?: number | null;
+          kind?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      activity_kinds: {
+        Row: {
+          color: string;
+          has_distance: boolean;
+          id: string;
+          name: string;
+          user_id: string;
+        };
+        Insert: {
+          color: string;
+          has_distance?: boolean;
+          id?: string;
+          name: string;
+          user_id: string;
+        };
+        Update: {
+          color?: string;
+          has_distance?: boolean;
+          id?: string;
+          name?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       block_exceptions: {
         Row: {
           block_id: string;

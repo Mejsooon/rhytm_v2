@@ -9,6 +9,7 @@ import {
   historyOrder,
   monthGrid,
   sessionItems,
+  type ActivityRow,
   templateOccurrences,
   type ExerciseRow,
   type GymSetRow,
@@ -19,6 +20,7 @@ import {
   type TemplateItemRow,
   type TemplateRow,
 } from "./model";
+import type { ActivityKindRow } from "./activities";
 import { idSchema } from "./schemas";
 
 export type SportProfile = {
@@ -56,6 +58,8 @@ export type SportMonthData = {
   exercises: ExerciseRow[];
   setsHistory: SessionSets[]; // wszystkie sesje siłowe użytkownika z seriami
   templates: TemplateWithItems[];
+  // Własne rodzaje innych aktywności i zmienione kolory
+  activityKinds?: ActivityKindRow[];
 };
 
 export type WorkoutData = {
@@ -195,6 +199,48 @@ function joinTemplates(
   }));
 }
 
+// Dane innych aktywności dla sesji typu „other” z podanej listy
+export async function loadActivities(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  sessions: Pick<SessionRow, "id" | "type">[],
+): Promise<ActivityRow[]> {
+  const ids = [...new Set(sessions.filter((s) => s.type === "other").map((s) => s.id))];
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("activities").select("*").eq("user_id", userId).in("session_id", ids);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ActivityRow[];
+}
+
+// Wszystkie sesje użytkownika jako wpisy (przegląd: wykres roku i rekordy), czytane stronami
+export async function loadSportAll(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<SportItem[]> {
+  async function strony<T>(tabela: "sport_sessions" | "runs" | "activities", klucz: string): Promise<T[]> {
+    const wynik: T[] = [];
+    for (let od = 0; ; od += ROZMIAR_STRONY) {
+      const { data, error } = await supabase
+        .from(tabela)
+        .select("*")
+        .eq("user_id", userId)
+        .order(klucz, { ascending: true })
+        .range(od, od + ROZMIAR_STRONY - 1);
+      if (error) throw new Error(error.message);
+      wynik.push(...((data ?? []) as T[]));
+      if ((data ?? []).length < ROZMIAR_STRONY) return wynik;
+    }
+  }
+  const [sesje, biegi, aktywnosci, rodzaje] = await Promise.all([
+    strony<SessionRow>("sport_sessions", "id"),
+    strony<RunRow>("runs", "session_id"),
+    strony<ActivityRow>("activities", "session_id"),
+    supabase.from("activity_kinds").select("name, color, has_distance").eq("user_id", userId),
+  ]);
+  if (rodzaje.error) throw new Error(rodzaje.error.message);
+  return sessionItems(sesje, biegi, aktywnosci, (rodzaje.data ?? []) as ActivityKindRow[]);
+}
+
 // Strona /sport: miesiąc (siatka 6 tygodni) i 12 ostatnich tygodni (kafelki i wykres).
 // Sesje czytamy tylko z tych dwóch zakresów; serie — całą historię użytkownika (karta rekordu,
 // REKORD i dymki potrzebują wcześniejszych sesji, a przy tej skali to setki wierszy).
@@ -231,6 +277,8 @@ export async function loadSportMonth(
     pominieciaRes,
     cwiczeniaRes,
     setsHistory,
+    ostatnieInneRes,
+    rodzajeRes,
   ] = await Promise.all([
     supabase
       .from("sport_sessions")
@@ -280,6 +328,15 @@ export async function loadSportMonth(
       .eq("user_id", userId)
       .order("name", { ascending: true }),
     loadSetsHistory(supabase, userId),
+    supabase
+      .from("sport_sessions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("type", "other")
+      .eq("completed", true)
+      .order("start_local", { ascending: false })
+      .limit(10),
+    supabase.from("activity_kinds").select("name, color, has_distance").eq("user_id", userId).order("name"),
   ]);
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
   for (const wynik of [
@@ -290,6 +347,8 @@ export async function loadSportMonth(
     pozycjeRes,
     pominieciaRes,
     cwiczeniaRes,
+    ostatnieInneRes,
+    rodzajeRes,
   ]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
@@ -298,6 +357,7 @@ export async function loadSportMonth(
   const ostatnie = [
     ...((ostatnieBiegiRes.data ?? []) as SessionRow[]),
     ...((ostatnieSilowniaRes.data ?? []) as SessionRow[]),
+    ...((ostatnieInneRes.data ?? []) as SessionRow[]),
   ];
 
   // Dane biegów dla sesji z obu list
@@ -316,6 +376,9 @@ export async function loadSportMonth(
     if (error) throw new Error(error.message);
     biegi = (data ?? []) as RunRow[];
   }
+
+  const aktywnosci = await loadActivities(supabase, userId, [...sesje, ...ostatnie]);
+  const rodzaje = (rodzajeRes.data ?? []) as ActivityKindRow[];
 
   const szablony = (szablonyRes.data ?? []) as TemplateRow[];
   const pominiecia = (pominieciaRes.data ?? []) as SkipRow[];
@@ -337,11 +400,12 @@ export async function loadSportMonth(
     }
   }
 
-  const items = [...sessionItems(sesje, biegi), ...wystapienia.values()].sort(
+  const items = [...sessionItems(sesje, biegi, aktywnosci, rodzaje), ...wystapienia.values()].sort(
     (a, b) =>
       a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.startMin - b.startMin,
   );
-  const recent = sessionItems(ostatnie, biegi).sort((a, b) =>
+  // Ta sama sesja mogła wpaść z dwóch zapytań
+  const recent = sessionItems([...new Map(ostatnie.map((s) => [s.id, s])).values()], biegi, aktywnosci, rodzaje).sort((a, b) =>
     a.date !== b.date ? (a.date > b.date ? -1 : 1) : b.startMin - a.startMin,
   );
   const exercises = (cwiczeniaRes.data ?? []) as ExerciseRow[];
@@ -354,6 +418,7 @@ export async function loadSportMonth(
     recent,
     exercises,
     setsHistory,
+    activityKinds: rodzaje,
     templates: joinTemplates(
       szablony,
       (pozycjeRes.data ?? []) as TemplateItemRow[],

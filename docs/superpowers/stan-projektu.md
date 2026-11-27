@@ -35,7 +35,9 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-- **Pakiet 2 Kalendarz:** scalony do `main` 27.11, migracja `20261201100000_kalendarz_ustawienia.sql` na produkcji. Czeka na sprawdzenie przez Mejsona; następny: Sport i trening siłowy — na sygnał.
+- **Pakiet 2 Kalendarz:** scalony 27.11, sprawdzony przez Mejsona.
+
+- **Pakiet 3 Sport** (spec `specs/2026-11-27-sport-v2-design.md`): część A (przegląd i inne aktywności) scalona 27.11, migracja `20261202100000_inne_aktywnosci.sql` na produkcji; czeka na sprawdzenie. Dalej: B (siłownia, web i telefon), C (ćwiczenia i szablony) — na sygnał Mejsona.
 
 - **Filtr tabeli jak w makiecie:** scalony do `main`.
 

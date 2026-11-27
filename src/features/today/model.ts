@@ -61,7 +61,7 @@ export type WeekTiles = {
     done: number;
     total: number;
     // Zaplanowane treningi od teraz do końca tygodnia, rosnąco
-    upcoming: { kind: "run" | "gym"; date: IsoDate; startMin: number }[];
+    upcoming: { kind: "run" | "gym" | "other"; date: IsoDate; startMin: number }[];
   };
   // Słupki kafelków: 7 wartości od weekStartDate, null dla dni po dziś
   days: {
@@ -251,7 +251,7 @@ export function weekTiles(input: {
 
 export type PlanItem = {
   key: string;
-  kind: "block" | "run" | "gym";
+  kind: "block" | "run" | "gym" | "other";
   title: string;
   startMin: number;
   endMin: number; // najwyżej 1440 (trening przez północ jest ucięty)

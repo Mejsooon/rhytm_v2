@@ -21,6 +21,9 @@ import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { minutesNow } from "@/features/calendar/load-calendar";
 import { createGymSession, type GymSessionInput } from "./actions";
+import { ActivityDialog } from "./activity-dialog";
+import { SportOverview } from "./overview";
+import { stats } from "./overview-model";
 import { DeleteSessionDialog } from "./delete-session-dialog";
 import { MRunNew } from "./mobile/m-run-new";
 import { MSport } from "./mobile/m-sport";
@@ -28,12 +31,9 @@ import type { RunRequest } from "./item-popover";
 import type { SportMonthData } from "./load-sport";
 import type { SportItem } from "./model";
 import { BIEG, MonthCalendar, SILA } from "./month-calendar";
-import { RecentTable } from "./recent-table";
-import { RecordCard } from "./record-card";
 import { RunDialog } from "./run-dialog";
-import { WeekTiles } from "./week-tiles";
 
-type Filtr = "all" | "run" | "gym";
+type Filtr = "all" | "run" | "gym" | "other";
 
 const BLAD_ZAPISU = "Nie udało się zapisać. Spróbuj ponownie.";
 
@@ -44,6 +44,7 @@ export function SportView({
   runId = null,
   newRun = null,
   runItem = null,
+  all,
 }: {
   data: SportMonthData;
   // ?wybrany={klucz} (z kalendarza głównego) — dymek tego treningu otwarty od razu
@@ -56,6 +57,8 @@ export function SportView({
   newRun?: { date: IsoDate | null; start: string | null } | null;
   // Bieg z `?bieg=` spoza wczytanych danych (wczytany po stronie serwera)
   runItem?: SportItem | null;
+  // Wszystkie sesje (przegląd); bez nich przegląd liczy z danych miesiąca
+  all?: SportItem[];
 }) {
   const router = useRouter();
   const { profile, month, today } = data;
@@ -251,14 +254,33 @@ export function SportView({
     })();
   }, [nowyData, nowyStart, profile.timezone, month, router]);
 
+  // Okno innej aktywności: undefined = zamknięte, null = nowa. Wybrany w kalendarzu wpis „inny”
+  // otwiera to samo okno zamiast dymku.
+  const [aktywnosc, setAktywnosc] = useState<SportItem | null | undefined>(undefined);
+  const wybranaInna = data.items.find((i) => i.key === wybrany && i.kind === "other") ?? null;
+  const godzinaAktywnosci = (i: SportItem | null | undefined) =>
+    i ? `${String(Math.floor(i.startMin / 60)).padStart(2, "0")}:${String(i.startMin % 60).padStart(2, "0")}` : null;
+
   // Filtr działa na kalendarz i „Ostatnie treningi”
   const widoczne =
     filtr === "all" ? data.items : data.items.filter((i) => i.kind === filtr);
-  const ostatnie =
-    filtr === "all" ? data.recent : data.recent.filter((i) => i.kind === filtr);
-  const wykonaneWMiesiacu = widoczne.filter(
-    (i) => !i.planned && i.date.slice(0, 7) === month,
-  ).length;
+  // Przegląd: wszystkie sesje plus wystąpienia szablonów (te nie mają jeszcze sesji)
+  const wszystkie = [
+    ...(all ?? [...new Map([...data.items, ...data.recent].map((i) => [i.key, i])).values()].filter((i) => i.sessionId !== null)),
+    ...data.items.filter((i) => i.sessionId === null),
+  ];
+  // ?wybrany= prowadzi do dymka w kalendarzu
+  const [zakladka, setZakladka] = useState<"przeglad" | "kalendarz">(selectedKey ? "kalendarz" : "przeglad");
+  const wMiesiacu = stats(wszystkie.filter((i) => i.date.slice(0, 7) === today.slice(0, 7)));
+  const podtytul = `${MIESIACE[Number(today.slice(5, 7)) - 1]}: ${wMiesiacu.km.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} km biegu · biegi: ${wMiesiacu.runs} · siłownia: ${wMiesiacu.gym} · inne: ${wMiesiacu.other}`;
+
+  function otworzZPrzegladu(item: SportItem) {
+    const start = `${String(Math.floor(item.startMin / 60)).padStart(2, "0")}:${String(item.startMin % 60).padStart(2, "0")}`;
+    if (item.kind === "other") setAktywnosc(item);
+    else if (item.kind === "run" && item.sessionId) otworzBieg({ sessionId: item.sessionId });
+    else if (item.sessionId) router.push(`/sport/trening/${item.sessionId}`);
+    else void rozpocznijSilownie({ date: item.date, start, templateId: item.templateId ?? undefined });
+  }
 
   // Sąsiednie miesiące dla ‹ ›
   const [rok, mies] = month.split("-").map(Number);
@@ -318,9 +340,31 @@ export function SportView({
                 align="end"
                 width={220}
                 className="p-1"
-                trigger={<Button>+ Trening siłowy</Button>}
+                trigger={<Button variant="primary">Dodaj aktywność</Button>}
               >
                 <div className="flex flex-col">
+                  <button
+                    type="button"
+                    className={MENU_ITEM}
+                    onClick={() => {
+                      setMenuSilowni(false);
+                      otworzBieg({ date: today, start: godzinaTeraz() });
+                    }}
+                  >
+                    Bieg
+                  </button>
+                  <button
+                    type="button"
+                    className={MENU_ITEM}
+                    onClick={() => {
+                      setMenuSilowni(false);
+                      setAktywnosc(null);
+                    }}
+                  >
+                    Inna aktywność
+                  </button>
+                  <div className={MENU_SEPARATOR} />
+                  <div className={MENU_LABEL}>Trening siłowy</div>
                   <button
                     type="button"
                     className={MENU_ITEM}
@@ -365,21 +409,68 @@ export function SportView({
                   </Link>
                 </div>
               </ActionPopover>
-              <Button
-                variant="primary"
-                onClick={() =>
-                  otworzBieg({ date: today, start: godzinaTeraz() })
-                }
-              >
-                Nowy bieg
-              </Button>
             </>
           }
         />
 
         <div className="box-border flex w-full flex-col gap-5 px-6 pt-5 pb-6">
-          {/* Wiersz nawigacji: grupa ‹ Dziś › z miesiącem po lewej, filtr .seg po prawej */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="text-2xl font-semibold tracking-[-0.02em]">Sport</div>
+              <p className="m-0 mt-1 text-muted-foreground">{podtytul}</p>
+            </div>
+            <Segment
+              ariaLabel="Aktywność"
+              value={filtr}
+              onChange={(v) => {
+                setFiltr(v);
+                setWybrany(null);
+                setDodaj(null);
+              }}
+              options={[
+                { value: "all", label: "Wszystko" },
+                { value: "run", label: "Bieg" },
+                { value: "gym", label: "Siłownia" },
+                { value: "other", label: "Inne" },
+              ]}
+            />
+          </div>
+          <div role="tablist" aria-label="Widok sportu" className="flex gap-5 border-b border-border">
+            {([["przeglad", "Przegląd"], ["kalendarz", "Kalendarz"]] as const).map(([klucz, nazwa]) => (
+              <button
+                key={klucz}
+                type="button"
+                role="tab"
+                aria-selected={zakladka === klucz}
+                onClick={() => {
+                  if (zakladka === klucz) return;
+                  setZakladka(klucz);
+                  setWybrany(null);
+                  setDodaj(null);
+                }}
+                className="-mb-px cursor-pointer border-0 border-b-2 border-solid border-transparent bg-transparent px-0 pb-2 text-sm font-medium text-muted-foreground outline-none focus-visible:shadow-focus aria-selected:border-primary aria-selected:text-foreground"
+              >
+                {nazwa}
+              </button>
+            ))}
+          </div>
+
+          {zakladka === "przeglad" && (
+            <SportOverview
+              items={wszystkie}
+              filtr={filtr}
+              today={today}
+              initialDate={month === today.slice(0, 7) ? today : `${month}-01`}
+              profile={profile}
+              exercises={data.exercises}
+              setsHistory={data.setsHistory}
+              onOpen={otworzZPrzegladu}
+            />
+          )}
+
+          {zakladka === "kalendarz" && (
+            <>
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2.5">
               <div className="inline-flex">
                 <Button
@@ -417,26 +508,12 @@ export function SportView({
                 {`${MIESIACE[mies - 1]} ${rok}`}
               </span>
             </div>
-            <Segment
-              ariaLabel="Aktywność"
-              value={filtr}
-              onChange={(v) => {
-                setFiltr(v);
-                setWybrany(null);
-                setDodaj(null);
-              }}
-              options={[
-                { value: "all", label: "Wszystko" },
-                { value: "run", label: "Bieg" },
-                { value: "gym", label: "Siłownia" },
-              ]}
-            />
           </div>
 
           <MonthCalendar
             data={data}
             items={widoczne}
-            selectedKey={wybrany}
+            selectedKey={wybranaInna ? null : wybrany}
             addDate={dodaj}
             onSelect={zaznacz}
             onAddDay={dodajWDniu}
@@ -467,28 +544,8 @@ export function SportView({
               Zaplanowany, bez danych
             </span>
           </div>
-
-          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch gap-6">
-            <WeekTiles items={data.items} today={today} profile={profile} />
-            <RecordCard
-              exercises={data.exercises}
-              setsHistory={data.setsHistory}
-              profileWeight={profile.weightKg}
-              onNewGym={() =>
-                void rozpocznijSilownie({ date: today, start: godzinaTeraz() })
-              }
-            />
-          </div>
-
-          <RecentTable
-            items={ostatnie}
-            month={month}
-            doneInMonth={wykonaneWMiesiacu}
-            setsHistory={data.setsHistory}
-            exercises={data.exercises}
-            profileWeight={profile.weightKg}
-            onOpenRun={otworzBieg}
-          />
+            </>
+          )}
         </div>
       </div>
 
@@ -511,6 +568,26 @@ export function SportView({
           today={today}
           profile={profile}
           onClose={zamknijBieg}
+        />
+      )}
+
+      {(aktywnosc !== undefined || wybranaInna) && (
+        <ActivityDialog
+          key={(wybranaInna ?? aktywnosc)?.key ?? "nowa"}
+          item={wybranaInna ?? aktywnosc ?? null}
+          date={(wybranaInna ?? aktywnosc)?.date ?? today}
+          start={godzinaAktywnosci(wybranaInna ?? aktywnosc) ?? godzinaTeraz()}
+          profile={profile}
+          kinds={data.activityKinds ?? []}
+          onDelete={(item) => {
+            setAktywnosc(undefined);
+            setWybrany(null);
+            setDoUsuniecia(item);
+          }}
+          onClose={() => {
+            setAktywnosc(undefined);
+            setWybrany(null);
+          }}
         />
       )}
 

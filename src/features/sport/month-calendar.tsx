@@ -181,7 +181,7 @@ export function MonthCalendar({
                     )}
 
                     {naDzien.map((item) => {
-                      const kolor = item.kind === "run" ? BIEG : SILA;
+                      const kolor = item.kind === "run" ? BIEG : item.kind === "other" ? (item.color ?? SILA) : SILA;
                       const wcisniety = item.key === selectedKey;
                       // Bieg wykonany: „8,0”; zaplanowany: „10 km” (bez dystansu — tytuł); siłownia: nazwa
                       let krotko = item.title;

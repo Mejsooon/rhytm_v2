@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { ModuleHeader } from "@/components/shell/module-header";
-import { loadSportMonth, loadSportRun } from "@/features/sport/load-sport";
+import { loadSportAll,
+  loadSportMonth, loadSportRun } from "@/features/sport/load-sport";
 import { SportView } from "@/features/sport/sport-view";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,7 +37,10 @@ async function Sport({ searchParams }: { searchParams: Parametry }) {
     parametry.miesiac ??
     (parametry.nowy === "bieg" && nowaData ? nowaData.slice(0, 7) : "");
   // Zły albo brak `miesiac` → loader pokaże bieżący miesiąc
-  const dane = await loadSportMonth(supabase, user.id, miesiac);
+  const [dane, wszystkie] = await Promise.all([
+    loadSportMonth(supabase, user.id, miesiac),
+    loadSportAll(supabase, user.id),
+  ]);
 
   // ?bieg={id}: bieg spoza wczytanych tygodni (np. stary) czytamy osobno
   const runId = parametry.bieg ?? null;
@@ -75,6 +79,7 @@ async function Sport({ searchParams }: { searchParams: Parametry }) {
 
   return (
     <SportView
+      all={wszystkie}
       data={dane}
       selectedKey={parametry.wybrany ?? null}
       newGym={nowySilowy}
