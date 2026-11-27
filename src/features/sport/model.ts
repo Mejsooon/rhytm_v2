@@ -195,6 +195,7 @@ export function sessionVolume(
     weight_kg: number | null;
     reps: number | null;
     done: boolean;
+    set_type?: string;
   }[],
   bodyweightIds: ReadonlySet<string>,
   profileWeight: number | null,
@@ -206,7 +207,8 @@ export function sessionVolume(
       bodyweightIds.has(s.exercise_id),
       profileWeight,
     );
-    if (s.done && kg !== null && s.reps !== null) {
+    // Seria rozgrzewkowa nie liczy się do objętości (drop set liczy się)
+    if (s.done && s.set_type !== "W" && kg !== null && s.reps !== null) {
       suma += kg * s.reps;
     }
   }
@@ -234,6 +236,10 @@ export function historyOrder(
   return 0;
 }
 
+// Do rekordów i porównań liczą się zrobione serie robocze (N i F) — bez rozgrzewki (W) i drop setów (D)
+const liczySieDoRekordu = (s: { done: boolean; set_type?: string }) =>
+  s.done && s.set_type !== "W" && s.set_type !== "D";
+
 // REKORD: zrobiona seria z (efektywnym) ciężarem > max ciężaru zrobionych serii tego ćwiczenia
 // we wcześniejszych zakończonych sesjach. Pierwsza sesja nie daje rekordu; w jednej sesji
 // plakietkę dostaje tylko najcięższa seria (przy remisie pierwsza wg set_no).
@@ -252,7 +258,7 @@ export function recordSetIds(
       .filter(
         (s) =>
           s.exercise_id === exerciseId &&
-          s.done &&
+          liczySieDoRekordu(s) &&
           effectiveKg(s.weight_kg, bodyweight, profileWeight) !== null,
       )
       .sort((a, b) => a.set_no - b.set_no);
@@ -292,7 +298,8 @@ export function kgVsLast(
     let max: number | null = null;
     for (const s of sets) {
       const kg = effectiveKg(s.weight_kg, bodyweight, profileWeight);
-      if (s.exercise_id !== exerciseId || !s.done || kg === null) continue;
+      if (s.exercise_id !== exerciseId || !liczySieDoRekordu(s) || kg === null)
+        continue;
       if (max === null || kg > max) max = kg;
     }
     return max;
@@ -331,7 +338,7 @@ export function lastSetsSummary(
   for (const h of history) {
     if (!h.completed || historyOrder(h, biezaca) >= 0) continue;
     const zrobione = h.sets.filter(
-      (s) => s.exercise_id === exerciseId && s.done,
+      (s) => s.exercise_id === exerciseId && liczySieDoRekordu(s),
     );
     if (zrobione.length === 0) continue;
     if (poprzednia === null || historyOrder(h, poprzednia.h) > 0)
@@ -616,4 +623,80 @@ export function formatLastUsed(iso: string | null, timeZone: string): string {
     day: "2-digit",
   }).format(new Date(iso));
   return `${DNI_KROTKO[weekdayOf(dzien)]} ${dzien.slice(8, 10)}.${dzien.slice(5, 7)}`;
+}
+
+export type ExerciseKind = "wr" | "bw" | "wbw" | "dur" | "dist";
+
+// Rodzaje pomiaru: nazwa, przykład i nagłówki kolumn (a = null: jedna kolumna)
+export const EXERCISE_KINDS: Record<
+  ExerciseKind,
+  { label: string; hint: string; a: string | null; b: string }
+> = {
+  wr: { label: "Ciężar i powtórzenia", hint: "np. wyciskanie, przysiad, wiosłowanie", a: "kg", b: "Powt." },
+  bw: { label: "Masa ciała", hint: "np. pompki, podciąganie, dipy", a: null, b: "Powt." },
+  wbw: { label: "Masa ciała z obciążeniem", hint: "np. podciąganie z obciążeniem", a: "+kg", b: "Powt." },
+  dur: { label: "Czas", hint: "np. plank, rozciąganie, mobilizacja", a: null, b: "Czas" },
+  dist: { label: "Dystans i czas", hint: "np. rower, wioślarz, spacer farmera", a: "km", b: "Czas" },
+};
+
+// Rodzaj ćwiczenia; starsze ćwiczenia bez kind: z masą ciała mają kolumnę +kg (nie gubią dociążeń)
+export function kindOf(e: { kind: string | null; bodyweight: boolean }): ExerciseKind {
+  if (e.kind && e.kind in EXERCISE_KINDS) return e.kind as ExerciseKind;
+  return e.bodyweight ? "wbw" : "wr";
+}
+
+export const isBodyweightKind = (k: ExerciseKind) => k === "bw" || k === "wbw";
+
+// Typy serii w kolejności przełączania kliknięciem numeru
+export const SET_TYPES = [
+  { value: "N", label: null, name: "robocza" },
+  { value: "W", label: "R", name: "rozgrzewkowa" },
+  { value: "D", label: "D", name: "drop set" },
+  { value: "F", label: "F", name: "do upadku" },
+] as const;
+export type SetType = (typeof SET_TYPES)[number]["value"];
+
+// Etykiety serii ćwiczenia: robocze numerowane 1, 2, 3…, pozostałe literą
+export function setLabels(sets: { set_type: string }[]): string[] {
+  let nr = 0;
+  return sets.map((s) => SET_TYPES.find((t) => t.value === s.set_type)?.label ?? String(++nr));
+}
+
+type WynikSerii = {
+  weight_kg: number | null;
+  reps: number | null;
+  duration_s: number | null;
+  distance_km: number | null;
+};
+
+// "72,5 × 5", "+10 × 10", "12 powt.", "1:00", "5,0 km · 25:00"; brak wyniku -> null
+export function formatSet(s: WynikSerii, kind: ExerciseKind): string | null {
+  if (kind === "dur") return s.duration_s === null ? null : formatDuration(s.duration_s);
+  if (kind === "dist") {
+    if (s.distance_km === null) return null;
+    const km = `${formatKm(s.distance_km)} km`;
+    return s.duration_s === null ? km : `${km} · ${formatDuration(s.duration_s)}`;
+  }
+  if (s.reps === null) return null;
+  if (kind === "bw") return `${s.reps} powt.`;
+  if (kind === "wbw") return s.weight_kg ? `+${formatKg(s.weight_kg)} × ${s.reps}` : `${s.reps} powt.`;
+  return s.weight_kg === null ? `${s.reps} powt.` : `${formatKg(s.weight_kg)} × ${s.reps}`;
+}
+
+// „Poprzednio”: zrobione serie ćwiczenia z ostatniej wcześniejszej zakończonej sesji (po numerze)
+export function previousSets(
+  history: HistorySession[],
+  sessionId: string,
+  exerciseId: string,
+): GymSetRow[] {
+  const biezaca = history.find((h) => h.sessionId === sessionId);
+  let wynik: { h: HistorySession; sets: GymSetRow[] } | null = null;
+  for (const h of history) {
+    if (!h.completed || h.sessionId === sessionId) continue;
+    if (biezaca && historyOrder(h, biezaca) >= 0) continue;
+    const zrobione = h.sets.filter((s) => s.exercise_id === exerciseId && s.done);
+    if (zrobione.length === 0) continue;
+    if (wynik === null || historyOrder(h, wynik.h) > 0) wynik = { h, sets: zrobione };
+  }
+  return wynik ? [...wynik.sets].sort((a, b) => a.set_no - b.set_no) : [];
 }

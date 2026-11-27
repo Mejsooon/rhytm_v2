@@ -54,6 +54,10 @@ function dane(zmiany: Partial<ExerciseData> = {}): ExerciseData {
       muscle_group: "Klatka",
       created_at: null,
       bodyweight: false,
+      kind: null,
+      equipment: null,
+      note: null,
+      rest_s: null,
     },
     history: [
       sesja("sa", "2026-09-10", [

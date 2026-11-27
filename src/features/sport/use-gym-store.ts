@@ -156,6 +156,9 @@ function nalozOperacje(b: Baza, op: Operacja): Baza {
             weight_kg: null,
             reps: null,
             done: false,
+            set_type: "N",
+            duration_s: null,
+            distance_km: null,
           })),
         ],
       };

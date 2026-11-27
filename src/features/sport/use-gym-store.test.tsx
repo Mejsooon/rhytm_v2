@@ -240,6 +240,10 @@ describe("useGymStore", () => {
           muscle_group: "plecy",
           created_at: null,
           bodyweight: false,
+          kind: null,
+          equipment: null,
+          note: null,
+          rest_s: null,
         },
       ],
       sets: [

@@ -37,6 +37,10 @@ import {
   type TemplateItemRow,
   type TemplateRow,
   type SportItem,
+  formatSet,
+  kindOf,
+  previousSets,
+  setLabels,
 } from "./model";
 
 const set = (o: Partial<GymSetRow>): GymSetRow => ({
@@ -49,6 +53,9 @@ const set = (o: Partial<GymSetRow>): GymSetRow => ({
   weight_kg: 60,
   reps: 8,
   done: true,
+  set_type: "N",
+  duration_s: null,
+  distance_km: null,
   ...o,
 });
 
@@ -493,6 +500,7 @@ describe("templateOccurrences", () => {
 
 describe("sessionItems", () => {
   const sesja = (o: Partial<SessionRow>): SessionRow => ({
+    started_at: null,
     id: "s1",
     user_id: "u",
     type: "run",
@@ -1042,5 +1050,56 @@ describe("ćwiczenia z masą ciała w historii", () => {
     ];
     expect(lastSetsSummary(dalej, "s3", "e1", true)).toBe("ost. 2×10 · mc + 5");
     expect(lastSetsSummary(dalej, "s2", "e1", true)).toBe("ost. 1×12 · mc");
+  });
+});
+
+describe("typy serii i rodzaje ćwiczeń", () => {
+  const historia = [
+    { sessionId: "a", startLocal: "2026-11-01T10:00:00", completed: true, sets: [set({ id: "a1", session_id: "a", weight_kg: 70 })] },
+    {
+      sessionId: "b",
+      startLocal: "2026-11-08T10:00:00",
+      completed: true,
+      sets: [
+        set({ id: "b1", session_id: "b", weight_kg: 100, set_type: "W" }),
+        set({ id: "b2", session_id: "b", set_no: 2, weight_kg: 90, set_type: "D" }),
+        set({ id: "b3", session_id: "b", set_no: 3, weight_kg: 72.5 }),
+      ],
+    },
+  ];
+
+  it("rozgrzewka nie liczy się do objętości, drop set tak", () => {
+    expect(sessionVolume(historia[1].sets, new Set(), null)).toBe(90 * 8 + 72.5 * 8);
+  });
+
+  it("rekord pomija rozgrzewkę i drop set", () => {
+    expect([...recordSetIds(historia, "e1", false, null)]).toEqual(["b3"]);
+    expect(kgVsLast(historia, "b", "e1", false, null)).toBe(2.5);
+  });
+
+  it("poprzednio to zrobione serie ostatniej wcześniejszej sesji", () => {
+    expect(previousSets(historia, "b", "e1").map((s) => s.id)).toEqual(["a1"]);
+    expect(previousSets(historia, "nowa", "e1").map((s) => s.id)).toEqual(["b1", "b2", "b3"]);
+    expect(previousSets(historia, "a", "e1")).toEqual([]);
+  });
+
+  it("etykiety: robocze numerowane, reszta literą", () => {
+    expect(setLabels([{ set_type: "W" }, { set_type: "N" }, { set_type: "D" }, { set_type: "N" }, { set_type: "F" }])).toEqual(["R", "1", "D", "2", "F"]);
+  });
+
+  it("rodzaj: starsze ćwiczenie z masą ciała ma +kg", () => {
+    expect(kindOf({ kind: null, bodyweight: true })).toBe("wbw");
+    expect(kindOf({ kind: null, bodyweight: false })).toBe("wr");
+    expect(kindOf({ kind: "dur", bodyweight: false })).toBe("dur");
+  });
+
+  it("zapis wyniku serii zależy od rodzaju", () => {
+    const s = set({ weight_kg: 72.5, reps: 5, duration_s: 90, distance_km: 5 });
+    expect(formatSet(s, "wr")).toBe("72,5 × 5");
+    expect(formatSet(s, "wbw")).toBe("+72,5 × 5");
+    expect(formatSet(s, "bw")).toBe("5 powt.");
+    expect(formatSet(s, "dur")).toBe("01:30");
+    expect(formatSet(s, "dist")).toBe("5,0 km · 01:30");
+    expect(formatSet(set({ reps: null }), "wr")).toBeNull();
   });
 });

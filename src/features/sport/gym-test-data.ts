@@ -29,6 +29,9 @@ export const seriaTreningu = (
   weight_kg: kg,
   reps: powt,
   done,
+  set_type: "N",
+  duration_s: null,
+  distance_km: null,
 });
 
 // Wyciskanie: 70×6 ✓, 70×6 ✓, 72,5×5 ✓, 72,5×4; pompki na poręczach: mc×12, mc×10.
@@ -68,6 +71,7 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
       template_date: "2026-11-19",
       created_at: null,
       difficulty: null,
+      started_at: null,
     },
     templateName: "Push",
     sets,
@@ -79,6 +83,10 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
         muscle_group: "triceps",
         created_at: null,
         bodyweight: false,
+        kind: null,
+        equipment: null,
+        note: null,
+        rest_s: null,
       },
       {
         id: WYCISKANIE,
@@ -87,6 +95,10 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
         muscle_group: "klatka",
         created_at: null,
         bodyweight: false,
+        kind: null,
+        equipment: null,
+        note: null,
+        rest_s: null,
       },
     ],
     history: [

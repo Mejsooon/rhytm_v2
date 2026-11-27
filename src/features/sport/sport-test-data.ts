@@ -61,6 +61,9 @@ const seria = (
   weight_kg: kg,
   reps: powt,
   done: true,
+  set_type: "N",
+  duration_s: null,
+  distance_km: null,
 });
 
 export function daneSportu(
@@ -164,6 +167,10 @@ export function daneSportu(
         muscle_group: "Klatka",
         created_at: null,
         bodyweight: false,
+        kind: null,
+        equipment: null,
+        note: null,
+        rest_s: null,
       },
       {
         id: WYCISKANIE,
@@ -172,6 +179,10 @@ export function daneSportu(
         muscle_group: "Klatka",
         created_at: null,
         bodyweight: false,
+        kind: null,
+        equipment: null,
+        note: null,
+        rest_s: null,
       },
     ],
     setsHistory: [
