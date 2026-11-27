@@ -19,10 +19,12 @@ import {
 } from "@/features/habits/load-habits";
 import type { Checks, Habit } from "@/features/habits/model";
 import type { SleepLog } from "@/features/habits/sleep";
+import type { ActivityKindRow } from "@/features/sport/activities";
 import type { SportItem } from "@/features/sport/model";
 import type { TaskRow } from "@/features/tasks/model";
 import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
+import { firstStepsDone, type FirstStepKey } from "./first-steps-model";
 import { weekStart } from "./model";
 
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
@@ -45,7 +47,18 @@ export type TodayData = {
     weeklyKmGoal: number;
     workoutsGoalOn: boolean;
     weeklyWorkoutsGoal: number;
+    // Godziny aktywne planu dnia (Ustawienia → Kalendarz)
+    fromHour: number;
+    toHour: number;
+    // Waga do liczenia kcal w oknach biegu i aktywności
+    weightKg: number | null;
   };
+  // Szablony siłowni i własne rodzaje aktywności (menu dodawania i „Szybko dodaj”)
+  templates: { id: string; name: string }[];
+  activityKinds: ActivityKindRow[];
+  // „Pierwsze kroki” i to, czy karta tygodnia ma już z czego liczyć (kiedykolwiek)
+  firstSteps: { hidden: boolean; done: Record<FirstStepKey, boolean> };
+  hasStats: boolean;
   today: IsoDate;
   nowMin: number;
   weekStartDate: IsoDate;
@@ -57,7 +70,7 @@ export type TodayData = {
   tasks: TaskRow[];
   habits: Habit[];
   checks: Checks;
-  // Tydzień (zawiera dziś)
+  // Ostatnie 60 dni
   sleepLogs: SleepLog[];
   // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
   sportItems: SportItem[];
@@ -72,7 +85,7 @@ export async function loadToday(
   const { data: p, error: blad } = await supabase
     .from("profiles")
     .select(
-      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal",
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour, weight_kg, height_cm, first_steps, first_steps_hidden",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -91,12 +104,17 @@ export async function loadToday(
     weeklyKmGoal: p?.weekly_km_goal ?? DOMYSLNY_CEL_KM,
     workoutsGoalOn: p?.workouts_goal_on ?? false,
     weeklyWorkoutsGoal: p?.weekly_workouts_goal ?? DOMYSLNY_CEL_TRENINGOW,
+    fromHour: p?.calendar_from_hour ?? 7,
+    toHour: p?.calendar_to_hour ?? 23,
+    weightKg: p?.weight_kg ?? null,
   };
 
   const today = todayIso(timezone, now);
   const nowMin = minutesNow(timezone, now);
   const weekStartDate = weekStart(today, startTygodnia);
   const koniecTygodnia = addDays(weekStartDate, 6);
+  // Treningi i sen także z poprzedniego tygodnia (porównanie w karcie „Ten tydzień”)
+  const odPoprzedniego = addDays(weekStartDate, -7);
 
   const [
     kalendarz,
@@ -104,12 +122,14 @@ export async function loadToday(
     wersjeRes,
     odhaczenia,
     senRes,
+    szablonyRes,
+    rodzajeRes,
   ] = await Promise.all([
     // Bloki, wyjątki, zadania tygodnia, kategorie i treningi tygodnia (wszystkie)
     loadCalendar(
       supabase,
       userId,
-      { from: weekStartDate, to: koniecTygodnia },
+      { from: odPoprzedniego, to: koniecTygodnia },
       {
         timezone,
         weekStart: startTygodnia,
@@ -135,15 +155,45 @@ export async function loadToday(
       .from("sleep_logs")
       .select("*")
       .eq("user_id", userId)
-      .gte("date", weekStartDate)
+      // 60 dni jak w Nawykach: okno snu z menu musi znaleźć starszy wpis, inaczej by go nadpisało
+      .gte("date", addDays(today, -60))
       .lte("date", koniecTygodnia)
       .order("date", { ascending: true }),
+    supabase
+      .from("workout_templates")
+      .select("id, name")
+      .eq("user_id", userId)
+      .order("name"),
+    supabase
+      .from("activity_kinds")
+      .select("name, color, has_distance")
+      .eq("user_id", userId)
+      .order("name"),
   ]);
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
-  for (const wynik of [nawykiRes, wersjeRes, senRes]) {
+  for (const wynik of [nawykiRes, wersjeRes, senRes, szablonyRes, rodzajeRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
+
+  // Czy cokolwiek takiego istnieje (same liczniki, bez wierszy)
+  const ile = (tabela: "blocks" | "sport_sessions" | "sleep_logs" | "push_subscriptions") =>
+    supabase.from(tabela).select("user_id", { count: "exact", head: true }).eq("user_id", userId);
+  const liczniki = await Promise.all([
+    ile("blocks"),
+    ile("sport_sessions"),
+    ile("sleep_logs"),
+    ile("push_subscriptions"),
+    supabase
+      .from("pages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_system", false),
+  ]);
+  for (const wynik of liczniki) {
+    if (wynik.error) throw new Error(wynik.error.message);
+  }
+  const [bloki, treningi, noce, push, strony] = liczniki.map((w) => (w.count ?? 0) > 0);
 
   // Zadania tygodnia (kafelki i plan dnia)
   const tasks = kalendarz.tasks;
@@ -157,7 +207,21 @@ export async function loadToday(
   }
 
   return {
+    firstSteps: {
+      hidden: p?.first_steps_hidden ?? false,
+      done: firstStepsDone(p?.first_steps, {
+        profil: Boolean(p?.display_name && p?.weight_kg && p?.height_cm),
+        blok: bloki,
+        nawyk: (nawykiRes.data ?? []).length > 0,
+        trening: treningi,
+        push,
+        strona: strony,
+      }),
+    },
+    hasStats: treningi || noce || odhaczenia.length > 0,
     profile,
+    templates: szablonyRes.data ?? [],
+    activityKinds: rodzajeRes.data ?? [],
     today,
     nowMin,
     weekStartDate,

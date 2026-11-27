@@ -218,3 +218,6 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Kalendarz w wynikach: 5 bloków wybieranych po `start_local desc` przed liczeniem najbliższego wystąpienia — powtarzalny blok z dawną datą startu może wypaść.
 - Sport szuka tylko po tytule; `router.replace("/dzis")` po `?szybko=blok` przeładowuje RSC Dziś.
 - `settings.spec.ts:187/280`: w karcie konta chwilowo dwie kopie formularza (SSR + klient pod `Suspense`) — test zawężony do widocznej; przyczyna w kodzie niezbadana.
+
+## Niestabilne e2e: ustawienia na telefonie (27.11)
+- `[mobile] settings.spec.ts` (sesje `:341`, eksport `:409`): „strict mode violation”, tekst w karcie znaleziony dwa razy (`getByTestId('karta-…').getByText(…)`). Prawdopodobnie poprzednia trasa trzymana ukryta w DOM — pomaga `filter({ visible: true })`.

@@ -4,7 +4,11 @@
 import type { IsoDate } from "@/components/controls/calendar-math";
 import type { CategoryRow } from "@/features/calendar/load-calendar";
 import type { Occurrence } from "@/features/calendar/occurrences";
-import { addDays, viewRange } from "@/features/calendar/view-range";
+import {
+  addDays,
+  isoWeekNumber,
+  viewRange,
+} from "@/features/calendar/view-range";
 import {
   currentStreak,
   dayStats,
@@ -462,10 +466,42 @@ export type WeekBar = {
   unit: string; // szary dopisek, np. „/ 4”, „/ 25 km”, „dni z celem”
   percent: number;
   right: string; // prawa kolumna
+  // Zmiana wobec tych samych dni poprzedniego tygodnia (web); null = nie ma czego porównać
+  delta: { text: string; dir: "up" | "down" | "same" } | null;
+  // Prawa kolumna na webie, gdy inna niż na telefonie
+  webRight?: string;
 };
+
+// Plakietka „+1 vs tydz. 46” / „−4 km vs tydz. 46” / „bez zmian”
+function zmiana(
+  roznica: number | null,
+  jednostka: string,
+  tydzien: number,
+): WeekBar["delta"] {
+  if (roznica === null) return null;
+  const r = Math.round(roznica * 10) / 10;
+  if (r === 0) return { text: "bez zmian", dir: "same" };
+  const liczba = String(Math.abs(r)).replace(".", ",");
+  return {
+    text: `${r > 0 ? "+" : "−"}${liczba}${jednostka} vs tydz. ${tydzien}`,
+    dir: r > 0 ? "up" : "down",
+  };
+}
 
 export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
   const t = weekTiles(input);
+  // Poprzedni tydzień tylko do tego samego dnia, żeby porównywać równe okresy
+  const wtedy = addDays(input.today, -7);
+  const poprzedni = weekTiles({
+    ...input,
+    today: wtedy,
+    weekStartDate: addDays(input.weekStartDate, -7),
+    tasks: [],
+    sportItems: input.sportItems.filter((i) => i.date <= wtedy),
+    sleepLogs: input.sleepLogs.filter((l) => l.date <= wtedy),
+  });
+  const tydzien = isoWeekNumber(wtedy);
+  const dzis = dayStats(input.habits, input.checks, input.today, input.today);
   // Pasek: zaokrąglony procent z zakresu 0–100 (cel 0 → pusty pasek)
   const procent = (czesc: number, calosc: number) =>
     calosc <= 0
@@ -505,6 +541,7 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
         : treningiBrakuje === 0
           ? "cel osiągnięty"
           : `jeszcze ${treningiBrakuje}`,
+      delta: zmiana(t.workouts.done - poprzedni.workouts.done, "", tydzien),
     },
     {
       label: "Bieg",
@@ -523,6 +560,7 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
           : biegOsiagniety
             ? "cel osiągnięty"
             : `jeszcze ${km(Math.max(0.1, biegBrakuje))} km`,
+      delta: zmiana(t.run.km - poprzedni.run.km, " km", tydzien),
     },
     {
       label: "Nawyki",
@@ -530,6 +568,14 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
       unit: "dni z celem",
       percent: procent(t.habits.percent ?? 0, 100),
       right: "—",
+      webRight: dzis.planned > 0 ? `${dzis.done} z ${dzis.planned} dziś` : "—",
+      delta: zmiana(
+        t.habits.percent === null || poprzedni.habits.percent === null
+          ? null
+          : t.habits.percent - poprzedni.habits.percent,
+        " pkt",
+        tydzien,
+      ),
     },
     {
       label: "Sen",
@@ -540,6 +586,13 @@ export function weekBars(input: Parameters<typeof weekTiles>[0]): WeekBar[] {
         sen.nights === 0
           ? "brak wpisów"
           : `${sen.nightsAtGoal} z ${sen.nights} nocy ≥ cel`,
+      delta: zmiana(
+        sen.avgMin === null || poprzedni.sleep.avgMin === null
+          ? null
+          : sen.avgMin - poprzedni.sleep.avgMin,
+        " min",
+        tydzien,
+      ),
     },
   ];
 }
@@ -604,9 +657,28 @@ export type DayPlanRow =
 
 // Wiersze planu dnia: wpisy (z `dayPlan`, rosnąco po starcie) poprzedzielane przerwami.
 // Przerwa to odcinek 0–1440 bez żadnego wpisu; nakładające się wpisy łączą się w jedno pokrycie.
-export function dayPlanRows(plan: PlanItem[]): DayPlanRow[] {
+// Zakres siatki: godziny aktywne rozszerzone o wpisy, które się w nich nie mieszczą
+export function dayPlanRange(
+  plan: PlanItem[],
+  fromHour: number,
+  toHour: number,
+): { from: number; to: number } {
+  return {
+    from: Math.min(
+      fromHour * 60,
+      ...plan.map((p) => Math.floor(p.startMin / 60) * 60),
+    ),
+    to: Math.max(toHour * 60, ...plan.map((p) => Math.ceil(p.endMin / 60) * 60)),
+  };
+}
+
+export function dayPlanRows(
+  plan: PlanItem[],
+  od = 0,
+  koniec = 1440,
+): DayPlanRow[] {
   const wiersze: DayPlanRow[] = [];
-  let pokryte = 0;
+  let pokryte = od;
   // Dodaje przerwę [od, do) jako wiersz z gotowym tekstem
   const przerwa = (od: number, do_: number) => {
     const minuty = do_ - od;
@@ -625,7 +697,7 @@ export function dayPlanRows(plan: PlanItem[]): DayPlanRow[] {
     wiersze.push({ type: "item", item });
     pokryte = Math.max(pokryte, item.endMin);
   }
-  if (pokryte < 1440) przerwa(pokryte, 1440);
+  if (pokryte < koniec) przerwa(pokryte, koniec);
   return wiersze;
 }
 

@@ -139,6 +139,79 @@ test.describe("Dziś (web)", () => {
   });
 });
 
+test.describe("Dziś: menu i pierwsze kroki (web)", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+  });
+
+  test("ręczne odhaczenie kroku zostaje po odświeżeniu, ukryta lista znika", async ({
+    page,
+  }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/dzis");
+    const web = page.getByTestId("web-dzis");
+    // Zapis sprawdzamy w bazie: strona wysyła też inne POST-y, więc czekanie na odpowiedź
+    // potrafiło złapać nie ten i odświeżenie ucinało zapis
+    const profil = async () => {
+      const { data } = await adminClient()
+        .from("profiles")
+        .select("first_steps, first_steps_hidden")
+        .eq("user_id", userId)
+        .single();
+      return data;
+    };
+    const kroki = web.getByRole("region", { name: "Pierwsze kroki" });
+
+    await kroki.getByRole("button", { name: "Oznacz jako zrobione: Włącz powiadomienia" }).click();
+    await expect.poll(async () => (await profil())?.first_steps).toEqual({ push: true });
+    await page.reload();
+    await expect(
+      kroki.getByRole("button", { name: "Odznacz: Włącz powiadomienia" }),
+    ).toBeVisible();
+
+    await kroki.getByRole("button", { name: "Ukryj listę" }).click();
+    await expect(web.getByRole("status")).toContainText("jest ukryta");
+    await expect.poll(async () => (await profil())?.first_steps_hidden).toBe(true);
+    await page.reload();
+    await expect(web.getByRole("heading", { name: "Plan dnia" })).toBeVisible();
+    await expect(kroki).toBeHidden();
+  });
+
+  test("Ctrl+Shift+K → „bieg 10 km jutro 18:00” → Enter → bieg w bazie", async ({
+    page,
+  }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/dzis");
+    await expect(
+      page.getByTestId("web-dzis").getByRole("heading", { name: "Plan dnia" }),
+    ).toBeVisible();
+    const okno = page.getByRole("dialog", { name: "Szybkie dodawanie" });
+    // Skrót działa dopiero po hydratacji, a nagłówek widać już z HTML serwera
+    await expect(async () => {
+      await page.keyboard.press("Control+Shift+K");
+      await expect(okno).toBeVisible({ timeout: 1000 });
+    }).toPass();
+    await okno.getByLabel("Co dodać?").fill("bieg 10 km jutro 18:00");
+    await expect(okno.getByTestId("rozumiem")).toContainText("10 km");
+    await okno.getByLabel("Co dodać?").press("Enter");
+    await expect(okno).toBeHidden();
+    await expect
+      .poll(async () => {
+        const { data } = await adminClient()
+          .from("sport_sessions")
+          .select("type, start_local")
+          .eq("user_id", userId);
+        return data ?? [];
+      })
+      .toEqual([
+        { type: "run", start_local: `${przesunDate(dzisWarszawa(), 1)}T18:00:00` },
+      ]);
+  });
+});
+
 test.describe("Dziś (telefon)", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");

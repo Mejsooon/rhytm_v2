@@ -25,6 +25,10 @@ function zadanie(id: string, done: boolean): TaskRow {
 
 function dane(tasks: TaskRow[]): TodayData {
   return {
+    templates: [],
+    firstSteps: { hidden: true, done: { profil: true, blok: true, nawyk: true, trening: true, push: true, strona: true } },
+    hasStats: true,
+    activityKinds: [],
     profile: {
       timezone: "Europe/Warsaw",
       weekStart: "mon",
@@ -36,6 +40,9 @@ function dane(tasks: TaskRow[]): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
+      fromHour: 7,
+      toHour: 23,
+      weightKg: null,
     },
     today: "2026-11-17",
     nowMin: 600,

@@ -226,7 +226,7 @@ test.describe("Dziś: nawyki na dziś (web)", () => {
     test.skip(info.project.name !== "web", "układ webowy");
   });
 
-  test("bez nawyków: „Utwórz nowy nawyk” → okno → zapis → kafelek „zacznij passę” → klik odhacza", async ({
+  test("nowe konto: „Nowy nawyk” z Pierwszych kroków → okno → zapis → kafelek „zacznij passę” → klik odhacza", async ({
     page,
   }, info) => {
     await zalozKontoNawykow(page, info.project.name);
@@ -235,7 +235,10 @@ test.describe("Dziś: nawyki na dziś (web)", () => {
       .getByTestId("web-dzis")
       .getByRole("region", { name: "Nawyki na dziś" });
 
-    await nawyki.getByRole("button", { name: "Utwórz nowy nawyk" }).click();
+    await page
+      .getByTestId("web-dzis")
+      .getByRole("button", { name: "Nowy nawyk", exact: true })
+      .click();
     const okno = page.getByRole("dialog", { name: "Nowy nawyk" });
     await okno.getByLabel("Nazwa").fill("Woda");
     await okno.getByRole("button", { name: "Dodaj nawyk" }).click();

@@ -134,9 +134,9 @@ test.describe("ekrany z sesją", () => {
     await expect(page).toHaveURL(/\/dzis$/);
     // Ten sam tekst pustego planu jest w obu układach — zawężamy do aktywnego
     await expect(
-      page
-        .getByTestId(info.project.name === "web" ? "web-dzis" : "m-dzis")
-        .getByText("Nie masz jeszcze bloków na dziś."),
+      info.project.name === "web"
+        ? page.getByTestId("web-dzis").getByText("Brak bloków na dziś")
+        : page.getByTestId("m-dzis").getByText("Nie masz jeszcze bloków na dziś."),
     ).toBeVisible();
     await zrzut(page, "dzis", info.project.name);
   });

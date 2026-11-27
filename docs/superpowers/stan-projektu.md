@@ -35,6 +35,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
+- **Pakiet „Dziś, Nawyki i sen” (od 2026-11-27, gałąź `feat/dzis-v2`):** część A (Dziś, spec `specs/2026-11-27-dzis-v2-design.md`) scalona 27.11, migracja `20261204100000_pierwsze_kroki.sql` na produkcji; czeka na sprawdzenie. Część B (Nawyki i sen) na sygnał Mejsona.
+
 - **Pakiet 2 Kalendarz:** scalony 27.11, sprawdzony przez Mejsona.
 
 - **Pakiet 3 Sport** (spec `specs/2026-11-27-sport-v2-design.md`): część A (przegląd i inne aktywności) scalona 27.11, migracja `20261202100000_inne_aktywnosci.sql` na produkcji; czeka na sprawdzenie. Część B (dziennik siłowni i podsumowanie, web i telefon; spec `specs/2026-11-27-silownia-v2-design.md`) scalona 27.11, migracja `20261203100000_silownia.sql` na produkcji; czeka na sprawdzenie. Część C (szczegóły ćwiczenia i opis szablonów, web; spec `specs/2026-11-27-cwiczenia-v2-design.md`) scalona 27.11, bez migracji; czeka na sprawdzenie. Pakiet 3 Sport zbudowany w całości; następny w serii: Dziś, Nawyki i sen — na sygnał Mejsona.

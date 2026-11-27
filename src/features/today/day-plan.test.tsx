@@ -96,6 +96,10 @@ const biegPlan: SportItem = {
 // Wtorek 17.11.2026, 10:20
 function dane(nadpisz: Partial<TodayData> = {}): TodayData {
   return {
+    templates: [],
+    firstSteps: { hidden: true, done: { profil: true, blok: true, nawyk: true, trening: true, push: true, strona: true } },
+    hasStats: true,
+    activityKinds: [],
     profile: {
       timezone: "Europe/Warsaw",
       weekStart: "mon",
@@ -107,6 +111,9 @@ function dane(nadpisz: Partial<TodayData> = {}): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
+      fromHour: 7,
+      toHour: 23,
+      weightKg: null,
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -171,7 +178,7 @@ describe("DayPlan", () => {
     expect(
       screen.getByRole("heading", { name: "Plan dnia" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("00:00–24:00 · 3 bloki")).toBeInTheDocument();
+    expect(screen.getByText(/godziny aktywne 07:00–23:00 · 3 bloki/)).toBeInTheDocument();
   });
 
   it("lista: przerwy przed, między i po wpisach, nakładki bez przerwy, na końcu wiersz 23:00", () => {
@@ -179,20 +186,19 @@ describe("DayPlan", () => {
     const lista = screen.getByTestId("plan-dnia-lista");
     const wiersze = Array.from(lista.children).map((w) => w.textContent);
     expect(wiersze).toEqual([
-      "00:008 h wolne",
+      "07:001 h wolne",
       expect.stringMatching(/^08:00Matematyka/),
       // Matematyka 08:00–09:30 i rhytm — kod 10:00–12:30
       "09:3030 min wolne",
       expect.stringMatching(/^10:00rhytm — kod/),
       "12:303 h 30 min wolne",
       expect.stringMatching(/^16:00Bieg 10 km/),
-      "17:007 h wolne",
-      "23:00",
+      "17:006 h wolne do 23:00",
     ]);
     // ≥ 3 h: wysoka przerwa, krótsza — niska
     const przerwy = within(lista).getAllByTestId("przerwa");
-    expect(przerwy[0]).toHaveClass("min-h-[84px]");
-    expect(przerwy[1]).toHaveClass("min-h-[30px]");
+    expect(przerwy[0]).toHaveClass("min-h-[30px]");
+    expect(przerwy[2]).toHaveClass("min-h-[84px]");
     // Bez siatki z osią, czerwonej linii i przewijania
     expect(screen.queryByTestId("os-dnia")).not.toBeInTheDocument();
     expect(screen.queryByTestId("linia-teraz")).not.toBeInTheDocument();
@@ -437,7 +443,7 @@ describe("DayPlan", () => {
     const lista = screen.getByTestId("plan-dnia-lista");
     const wiersze = Array.from(lista.children).map((w) => w.textContent);
     expect(wiersze).toEqual([
-      "00:0023 h wolne",
+      "07:0016 h wolne",
       expect.stringMatching(/^23:00Czytanie/),
     ]);
   });
@@ -454,9 +460,9 @@ describe("DayPlan", () => {
     const lista = screen.getByTestId("plan-dnia-lista");
     const wiersze = Array.from(lista.children).map((w) => w.textContent);
     expect(wiersze).toEqual([
-      "00:0022 h wolne",
+      "07:0015 h wolne",
       expect.stringMatching(/^22:00Wieczór/),
-      "23:3030 min wolne",
+      "23:3030 min wolne do 24:00",
     ]);
   });
 
@@ -472,21 +478,16 @@ describe("DayPlan", () => {
     const lista = screen.getByTestId("plan-dnia-lista");
     const wiersze = Array.from(lista.children).map((w) => w.textContent);
     expect(wiersze).toEqual([
-      "00:0022 h wolne",
+      "07:0015 h wolne",
       expect.stringMatching(/^22:00Wieczór/),
-      "23:001 h wolne",
     ]);
   });
 
-  it("pusty dzień: „24 h wolne”, zachęta i „Dodaj pierwszy blok”, potem 23:00", async () => {
+  it("pusty dzień: ramka „Brak bloków na dziś” zamiast listy, „Dodaj pierwszy blok”", async () => {
     render(<Plan d={dane({ occurrencesToday: [], sportItems: [] })} />);
-    expect(screen.getByText("00:00–24:00 · 0 bloków")).toBeInTheDocument();
-    const lista = screen.getByTestId("plan-dnia-lista");
-    expect(Array.from(lista.children).map((w) => w.textContent)).toEqual([
-      "00:0024 h wolne",
-      "Nie masz jeszcze bloków na dziś.Dodaj pierwszy blok",
-      "23:00",
-    ]);
+    expect(screen.getByText(/· 0 bloków/)).toBeInTheDocument();
+    expect(screen.getByText("Brak bloków na dziś")).toBeInTheDocument();
+    expect(screen.queryByTestId("plan-dnia-lista")).not.toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Dodaj pierwszy blok" }),
     );
